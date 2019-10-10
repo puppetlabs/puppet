@@ -1242,10 +1242,17 @@ Generated on #{Time.now}.
       if !Puppet::FileSystem.symlink?(configured_environment_path)
         parameters = { :ensure => 'directory' }
         unless Puppet::FileSystem.exist?(configured_environment_path)
+<<<<<<< HEAD
           parameters.merge!(:mode => '0750')
           if Puppet.features.root?
             parameters.merge!(:owner => Puppet[:user]) if service_user_available?
             parameters.merge!(:group => Puppet[:group]) if service_group_available?
+=======
+          parameters[:mode] = '0750'
+          if Puppet.features.root?
+            parameters[:owner] = Puppet[:user] if service_user_available?
+            parameters[:group] = Puppet[:group] if service_group_available?
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
           end
         end
         catalog.add_resource(Puppet::Resource.new(:file, configured_environment_path, :parameters => parameters))

@@ -338,7 +338,11 @@ module Puppet
       end
 
       def weekday_integer?(value)
+<<<<<<< HEAD
         value.is_a?(Integer) && (0..6).include?(value)
+=======
+        value.is_a?(Integer) && (0..6).cover?(value)
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
       end
 
       def weekday_string?(value)

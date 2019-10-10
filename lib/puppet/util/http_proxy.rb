@@ -195,7 +195,11 @@ module Puppet::Util::HttpProxy
 
       headers = { 'Accept' => '*/*', 'User-Agent' => Puppet[:http_user_agent] }
       if Puppet.features.zlib?
+<<<<<<< HEAD
         headers.merge!({"Accept-Encoding" => Puppet::Network::HTTP::Compression::ACCEPT_ENCODING})
+=======
+        headers["Accept-Encoding"] = Puppet::Network::HTTP::Compression::ACCEPT_ENCODING
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
       end
 
       response = proxy.send(:head, current_uri, headers)

@@ -255,7 +255,14 @@ END
       'certificate' => Puppet[:hostcert],
       'private key password file' => Puppet[:passfile]
     }
+<<<<<<< HEAD
     paths.merge!('local CA certificate' => Puppet[:localcacert], 'local CRL' => Puppet[:hostcrl]) if options[:localca]
+=======
+    if options[:localca]
+      paths['local CA certificate'] = Puppet[:localcacert]
+      paths['local CRL'] = Puppet[:hostcrl]
+    end
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
     paths.each_pair do |label, path|
       if Puppet::FileSystem.exist?(path)
         Puppet::FileSystem.unlink(path)

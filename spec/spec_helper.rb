@@ -52,12 +52,18 @@ Pathname.glob("#{dir}/shared_examples/**/*.rb") do |behaviour|
   require behaviour.relative_path_from(Pathname.new(dir))
 end
 
+require 'webmock/rspec'
 require 'vcr'
 VCR.configure do |vcr|
   vcr.cassette_library_dir = File.expand_path('vcr/cassettes', PuppetSpec::FIXTURE_DIR)
   vcr.hook_into :webmock
   vcr.configure_rspec_metadata!
+  # Uncomment next line to debug vcr
+  # vcr.debug_logger = $stderr
 end
+
+# Disable VCR by default
+VCR.turn_off!
 
 RSpec.configure do |config|
   include PuppetSpec::Fixtures
@@ -151,6 +157,24 @@ RSpec.configure do |config|
     FileUtils.mkdir_p Puppet[:statedir]
 
     Puppet::Test::TestHelper.before_each_test()
+  end
+
+  config.around :each do |example|
+    # Ignore requests from Facter GCE fact in Travis
+    stub_request(:get, "http://metadata/computeMetadata/v1beta1/?alt=json&recursive=true") # facter 2
+    stub_request(:get, "http://metadata.google.internal/computeMetadata/v1/?recursive=true&alt=json") # facter 3
+
+    # Enable VCR if the example is tagged with `:vcr` metadata.
+    if example.metadata[:vcr]
+      VCR.turn_on!
+      begin
+        example.run
+      ensure
+        VCR.turn_off!
+      end
+    else
+      example.run
+    end
   end
 
   config.after :each do

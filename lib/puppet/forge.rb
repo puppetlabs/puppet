@@ -58,7 +58,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     matches = []
     uri = "/v3/modules?query=#{term}"
     if Puppet[:module_groups]
-      uri += "&module_groups=#{Puppet[:module_groups].gsub('+', ' ')}"
+      uri += "&module_groups=#{Puppet[:module_groups].tr('+', ' ')}"
     end
 
     while uri
@@ -94,7 +94,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     name = input.tr('/', '-')
     uri = "/v3/releases?module=#{name}&sort_by=version&exclude_fields=#{MODULE_RELEASE_EXCLUSIONS}"
     if Puppet[:module_groups]
-      uri += "&module_groups=#{Puppet[:module_groups].gsub('+', ' ')}"
+      uri += "&module_groups=#{Puppet[:module_groups].tr('+', ' ')}"
     end
     releases = []
 
@@ -254,6 +254,10 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   def decode_uri(uri)
     return if uri.nil?
 
+<<<<<<< HEAD
     URI.decode(uri.gsub('+', ' '))
+=======
+    URI.decode(uri.tr('+', ' '))
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
   end
 end

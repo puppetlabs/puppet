@@ -50,7 +50,11 @@ module Puppet::Network
       case service_name
         when :puppet then service = '_x-puppet'
         when :file   then service = '_x-puppet-fileserver'
+<<<<<<< HEAD
         else              service = "_x-puppet-#{service_name.to_s}"
+=======
+        else              service = "_x-puppet-#{service_name}"
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
       end
       record_name = "#{service}._tcp.#{domain}"
 
@@ -72,7 +76,11 @@ module Puppet::Network
       else
         each_priority(records) do |recs|
           while next_rr = recs.delete(find_weighted_server(recs)) #rubocop:disable Lint/AssignmentInCondition
+<<<<<<< HEAD
             Puppet.debug "Yielding next server of #{next_rr.target.to_s}:#{next_rr.port}"
+=======
+            Puppet.debug "Yielding next server of #{next_rr.target}:#{next_rr.port}"
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
             yield next_rr.target.to_s, next_rr.port
           end
         end

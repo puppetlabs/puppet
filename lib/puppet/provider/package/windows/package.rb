@@ -80,7 +80,11 @@ class Puppet::Provider::Package::Windows
 
     def self.replace_forward_slashes(value)
       if value.include?('/')
+<<<<<<< HEAD
         value = value.gsub('/', "\\")
+=======
+        value = value.tr('/', "\\")
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
         Puppet.debug('Package source parameter contained /s - replaced with \\s')
       end
       value

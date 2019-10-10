@@ -107,7 +107,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # using both useradd and luseradd
     if (!@resource.allowdupe?) && @resource.forcelocal?
        if @resource.should(:uid) && finduser('uid', @resource.should(:uid).to_s)
+<<<<<<< HEAD
            raise(Puppet::Error, "UID #{@resource.should(:uid).to_s} already exists, use allowdupe to force user creation")
+=======
+           raise(Puppet::Error, "UID #{@resource.should(:uid)} already exists, use allowdupe to force user creation")
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
        end
     elsif @resource.allowdupe? && (!@resource.forcelocal?)
        return ["-o"]
@@ -116,7 +120,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def check_valid_shell
-    unless File.exists?(@resource.should(:shell))
+    unless File.exist?(@resource.should(:shell))
       raise(Puppet::Error, "Shell #{@resource.should(:shell)} must exist")
     end
     unless File.executable?(@resource.should(:shell).to_s)

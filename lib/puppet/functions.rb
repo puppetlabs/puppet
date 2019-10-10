@@ -624,8 +624,12 @@ module Puppet::Functions
       # Get location to use in case of error - this produces ruby filename and where call to 'type' occurred
       # but strips off the rest of the internal "where" as it is not meaningful to user.
       #
+<<<<<<< HEAD
       rb_location = caller[0]
 
+=======
+      rb_location = caller(1, 1).first
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
       begin
         result = parser.parse_string("type #{assignment_string}", nil)
       rescue StandardError => e

@@ -120,6 +120,17 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     [indirection, method, key, params]
   end
 
+  def self.request_to_uri(request)
+    uri, body = request_to_uri_and_body(request)
+    "#{uri}?#{body}"
+  end
+
+  def self.request_to_uri_and_body(request)
+    url_prefix = IndirectionType.url_prefix_for(request.indirection_name.to_s)
+    indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
+    ["#{url_prefix}/#{indirection}/#{Puppet::Util.uri_encode(request.key)}", "environment=#{request.environment.name}&#{request.query_string}"]
+  end
+
   private
 
   # Execute our find.
@@ -163,11 +174,19 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     end
 
     rendered_result = nil
+<<<<<<< HEAD
 
     rendered_format = first_response_formatter_for(indirection.model, request) do |format|
       rendered_result = indirection.model.render_multiple(format, result)
     end
 
+=======
+
+    rendered_format = first_response_formatter_for(indirection.model, request) do |format|
+      rendered_result = indirection.model.render_multiple(format, result)
+    end
+
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
     response.respond_with(200, rendered_format, rendered_result)
   end
 
@@ -255,20 +274,10 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     method
   end
 
-  def self.request_to_uri(request)
-    uri, body = request_to_uri_and_body(request)
-    "#{uri}?#{body}"
-  end
-
-  def self.request_to_uri_and_body(request)
-    url_prefix = IndirectionType.url_prefix_for(request.indirection_name.to_s)
-    indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
-    ["#{url_prefix}/#{indirection}/#{Puppet::Util.uri_encode(request.key)}", "environment=#{request.environment.name}&#{request.query_string}"]
-  end
-
   def self.pluralize(indirection)
     return(indirection == "status" ? "statuses" : indirection + "s")
   end
+  private_class_method :pluralize
 
   def plurality(indirection)
     # NOTE These specific hooks for paths are ridiculous, but it's a *many*-line

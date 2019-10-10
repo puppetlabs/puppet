@@ -605,8 +605,7 @@ Puppet::Type.newtype(:file) do
     # remote system.
     mark_children_for_purging(children) if self.purge?
 
-    # REVISIT: sort_by is more efficient?
-    result = children.values.sort { |a, b| a[:path] <=> b[:path] }
+    result = children.values.sort_by { |a| a[:path] }
     remove_less_specific_files(result)
   end
 

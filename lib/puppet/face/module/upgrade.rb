@@ -63,7 +63,7 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     when_invoked do |name, options|
-      name = name.gsub('/', '-')
+      name = name.tr('/', '-')
       Puppet.notice _("Preparing to upgrade '%{name}' ...") % { name: name }
       Puppet::ModuleTool.set_option_defaults options
       Puppet::ModuleTool::Applications::Upgrader.new(name, options).run

@@ -101,7 +101,7 @@ module Puppet::SSL::Oids
   #    shortname: 'myothershortname'
   #    longname: 'Other Long name'
   def self.parse_custom_oid_file(custom_oid_file, map_key='oid_mapping')
-    if File.exists?(custom_oid_file) && File.readable?(custom_oid_file)
+    if File.exist?(custom_oid_file) && File.readable?(custom_oid_file)
       mapping = nil
       begin
         mapping = Puppet::Util::Yaml.safe_load_file(custom_oid_file, [Symbol])

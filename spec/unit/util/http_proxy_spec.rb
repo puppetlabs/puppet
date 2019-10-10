@@ -291,6 +291,7 @@ describe Puppet::Util::HttpProxy do
 
   describe '.request_with_redirects' do
     let(:dest) { URI.parse('http://mydomain.com/some/path') }
+<<<<<<< HEAD
     let(:http_ok) { double('http ok', :code => 200, :message => 'HTTP OK') }
 
     it 'generates accept and accept-encoding headers' do
@@ -301,12 +302,28 @@ describe Puppet::Util::HttpProxy do
                      'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
                      'User-Agent' => /Puppet/})
       end.and_return(http_ok)
+=======
+
+    it 'generates accept and accept-encoding headers' do
+      stub_request(:head, dest)
+
+      headers = {
+        'Accept' => '*/*',
+        'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+        'User-Agent' => /Puppet/
+      }
+      stub_request(:get, dest).with(headers: headers)
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 
       subject.request_with_redirects(dest, :get, 0)
     end
 
     it 'can return a compressed response body' do
+<<<<<<< HEAD
       allow_any_instance_of(Net::HTTP).to receive(:head).and_return(http_ok)
+=======
+      stub_request(:head, dest)
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 
       compressed_body = [
         0x1f, 0x8b, 0x08, 0x08, 0xe9, 0x08, 0x7a, 0x5a, 0x00, 0x03,
@@ -314,9 +331,13 @@ describe Puppet::Util::HttpProxy do
         0x00, 0x7a, 0x7a, 0x6f, 0xed, 0x03, 0x00, 0x00, 0x00
       ].pack('C*')
 
+<<<<<<< HEAD
       response = double('http ok', :code => 200, :message => 'HTTP OK', :body => compressed_body)
       allow(response).to receive(:[]).with('content-encoding').and_return('gzip')
       expect_any_instance_of(Net::HTTP).to receive(:get).and_return(response)
+=======
+      stub_request(:get, dest).to_return(status: 200, body: compressed_body, headers: { 'Content-Encoding' => 'gzip' })
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 
       expect(
         uncompress_body(subject.request_with_redirects(dest, :get, 0))
@@ -324,6 +345,7 @@ describe Puppet::Util::HttpProxy do
     end
 
     it 'generates accept and accept-encoding headers when a block is provided' do
+<<<<<<< HEAD
       allow_any_instance_of(Net::HTTP).to receive(:head).and_return(http_ok)
       expect_any_instance_of(Net::HTTP).to receive(:request_get) do |_, _, headers, &block|
         expect(headers)
@@ -331,6 +353,16 @@ describe Puppet::Util::HttpProxy do
                      'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
                      'User-Agent' => /Puppet/})
       end.and_return(http_ok)
+=======
+      stub_request(:head, dest)
+
+      headers = {
+        'Accept' => '*/*',
+        'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+        'User-Agent' => /Puppet/
+      }
+      stub_request(:get, dest).with(headers: headers)
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 
       subject.request_with_redirects(dest, :get, 0) do
         # unused
@@ -338,7 +370,11 @@ describe Puppet::Util::HttpProxy do
     end
 
     it 'only makes a single HEAD request' do
+<<<<<<< HEAD
       expect_any_instance_of(Net::HTTP).to receive(:head).with(anything, anything).and_return(http_ok)
+=======
+      stub_request(:head, dest)
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 
       subject.request_with_redirects(dest, :head, 0)
     end
@@ -346,6 +382,7 @@ describe Puppet::Util::HttpProxy do
     it 'preserves query parameters' do
       url = URI.parse('http://mydomain.com/some/path?foo=bar')
 
+<<<<<<< HEAD
       expect_any_instance_of(Net::HTTP).to receive(:head) do |_method, path, _headers|
         expect(path).to eq(url)
       end.and_return(http_ok)
@@ -353,6 +390,10 @@ describe Puppet::Util::HttpProxy do
       expect_any_instance_of(Net::HTTP).to receive(:request_get) do |_http, path, _headers, &block|
         expect(path).to eq(url)
       end.and_return(http_ok)
+=======
+      stub_request(:head, url)
+      stub_request(:get, url)
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 
       subject.request_with_redirects(url, :get, 0) do
         # unused

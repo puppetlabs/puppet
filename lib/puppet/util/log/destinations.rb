@@ -34,7 +34,7 @@ Puppet::Util::Log.newdesttype :syslog do
       end
     else
       msg.to_s.split("\n").each do |line|
-        @syslog.send(msg.level, "(%s) %s" % [msg.source.to_s.gsub("%", ""),
+        @syslog.send(msg.level, "(%s) %s" % [msg.source.to_s.delete("%"),
             line.gsub("%", '%%')
           ]
         )
@@ -78,7 +78,11 @@ Puppet::Util::Log.newdesttype :file do
 
     # create the log file, if it doesn't already exist
     need_array_start = false
+<<<<<<< HEAD
     file_exists = File.exists?(path)
+=======
+    file_exists = Puppet::FileSystem.exist?(path)
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
     if @json == 1
       need_array_start = true
       if file_exists

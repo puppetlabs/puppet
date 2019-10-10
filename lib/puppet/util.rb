@@ -324,7 +324,11 @@ module Util
     params = { :scheme => 'file' }
 
     if Puppet::Util::Platform.windows?
+<<<<<<< HEAD
       path = path.gsub(/\\/, '/')
+=======
+      path = path.tr('\\', '/')
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 
       unc = /^\/\/([^\/]+)(\/.+)/.match(path)
       if unc

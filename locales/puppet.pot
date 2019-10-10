@@ -6,11 +6,19 @@
 #, fuzzy
 msgid ""
 msgstr ""
+<<<<<<< HEAD
 "Project-Id-Version: Puppet automation framework 6.10.0-16-gc7a8e5e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
 "POT-Creation-Date: 2019-09-30 23:18+0000\n"
 "PO-Revision-Date: 2019-09-30 23:18+0000\n"
+=======
+"Project-Id-Version: Puppet automation framework 6.10.0-67-ge1843d8\n"
+"\n"
+"Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
+"POT-Creation-Date: 2019-10-09 00:33+0000\n"
+"PO-Revision-Date: 2019-10-09 00:33+0000\n"
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -1970,13 +1978,21 @@ msgid ""
 "Parsing of type string '\"%{type_string}\"' failed with message: <%{message}>.\n"
 msgstr ""
 
+<<<<<<< HEAD
 #: ../lib/puppet/functions.rb:635
+=======
+#: ../lib/puppet/functions.rb:634
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 msgid ""
 "Parsing of 'type \"%{assignment_string}\"' failed with message: <%{message}>.\n"
 "Called from <%{ruby_file_location}>"
 msgstr ""
 
+<<<<<<< HEAD
 #: ../lib/puppet/functions.rb:644
+=======
+#: ../lib/puppet/functions.rb:643
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 msgid ""
 "Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'.\n"
 "Called from <%{ruby_file_location}>"
@@ -6413,6 +6429,7 @@ msgstr ""
 
 #: ../lib/puppet/provider.rb:470
 msgid "'%{parameter_name}' is not a valid parameter for %{resource_type}"
+<<<<<<< HEAD
 msgstr ""
 
 #: ../lib/puppet/provider.rb:556
@@ -6532,6 +6549,127 @@ msgstr ""
 msgid "%{name} is not a valid attribute for %{resource_type}"
 msgstr ""
 
+=======
+msgstr ""
+
+#: ../lib/puppet/provider.rb:556
+msgid "No resource and no name in property hash in %{class_name} instance"
+msgstr ""
+
+#: ../lib/puppet/provider/aix_object.rb:124
+msgid "Invalid value %{value}: %{property} must be an Integer!"
+msgstr ""
+
+#: ../lib/puppet/provider/aix_object.rb:374
+msgid "Could not set %{property} on %{resource}[%{name}]: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/aix_object.rb:400
+msgid "attributes is setting the %{properties} properties via. the %{attributes} attributes, respectively! Please specify these property values in the resource declaration instead."
+msgstr ""
+
+#: ../lib/puppet/provider/aix_object.rb:402 ../lib/puppet/provider/aix_object.rb:411
+msgid "Could not set attributes on %{resource}[%{name}]: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/aix_object.rb:423
+msgid "aix.object_info(): Could not find %{resource}[%{name}]"
+msgstr ""
+
+#: ../lib/puppet/provider/aix_object.rb:469 ../lib/puppet/provider/nameservice.rb:182 ../lib/puppet/provider/nameservice/directoryservice.rb:425
+msgid "Could not create %{resource} %{name}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/aix_object.rb:481 ../lib/puppet/provider/nameservice.rb:196
+msgid "Could not delete %{resource} %{name}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/command.rb:22
+msgid "Command %{name} is missing"
+msgstr ""
+
+#: ../lib/puppet/provider/exec.rb:19
+msgid "Cannot understand environment setting %{setting}"
+msgstr ""
+
+#: ../lib/puppet/provider/exec.rb:26
+msgid "Overriding environment setting '%{var}' with '%{value}'"
+msgstr ""
+
+#: ../lib/puppet/provider/exec.rb:30
+msgid "Empty environment setting '%{var}'"
+msgstr ""
+
+#: ../lib/puppet/provider/exec.rb:99
+msgid "'%{command}' is not qualified and no path was specified. Please qualify the command or specify a path."
+msgstr ""
+
+#: ../lib/puppet/provider/exec/posix.rb:21 ../lib/puppet/provider/exec/posix.rb:38 ../lib/puppet/provider/exec/windows.rb:40 ../lib/puppet/provider/exec/windows.rb:53
+msgid "Could not find command '%{exe}'"
+msgstr ""
+
+#: ../lib/puppet/provider/exec/posix.rb:23 ../lib/puppet/provider/exec/windows.rb:42
+msgid "'%{exe}' is a %{klass}, not a file"
+msgstr ""
+
+#: ../lib/puppet/provider/exec/posix.rb:25
+msgid "'%{exe}' is not executable"
+msgstr ""
+
+#: ../lib/puppet/provider/file/posix.rb:72
+msgid "Apparently using negative UID (%{currentvalue}) on a platform that does not consistently handle them"
+msgstr ""
+
+#: ../lib/puppet/provider/file/posix.rb:90 ../lib/puppet/provider/file/windows.rb:46
+msgid "Failed to set owner to '%{should}': %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/file/posix.rb:104
+msgid "Apparently using negative GID (%{currentvalue}) on a platform that does not consistently handle them"
+msgstr ""
+
+#: ../lib/puppet/provider/file/posix.rb:122 ../lib/puppet/provider/file/windows.rb:59
+msgid "Failed to set group to '%{should}': %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/file/posix.rb:139 ../lib/puppet/provider/file/windows.rb:78
+msgid "failed to set mode %{mode} on %{path}: %{message}"
+msgstr ""
+
+#: ../lib/puppet/provider/file/windows.rb:87
+msgid "Can only manage owner, group, and mode on filesystems that support Windows ACLs, such as NTFS"
+msgstr ""
+
+#. TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+#: ../lib/puppet/provider/file/windows.rb:129
+msgid "%{resource_name}: %{mode_part_type} set to SYSTEM. SYSTEM permissions cannot be set below FullControl ('7')"
+msgstr ""
+
+#: ../lib/puppet/provider/group/aix.rb:47
+msgid "No AIX group exists with a group name or gid of %{group}!"
+msgstr ""
+
+#: ../lib/puppet/provider/group/groupadd.rb:13 ../lib/puppet/provider/group/pw.rb:14
+msgid "GID must be an integer"
+msgstr ""
+
+#: ../lib/puppet/provider/group/groupadd.rb:60
+msgid "GID %{resource} already exists, use allowdupe to force group creation"
+msgstr ""
+
+#: ../lib/puppet/provider/ldap.rb:80
+msgid "No LDAP Configuration defined for %{class_name}"
+msgstr ""
+
+#: ../lib/puppet/provider/ldap.rb:81
+msgid "Invalid LDAP Configuration defined for %{class_name}"
+msgstr ""
+
+#: ../lib/puppet/provider/nameservice.rb:45
+msgid "%{name} is not a valid attribute for %{resource_type}"
+msgstr ""
+
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 #: ../lib/puppet/provider/nameservice.rb:60
 msgid "listbyname is deprecated and will be removed in a future release of Puppet. Please use `self.instances` to obtain a list of users."
 msgstr ""
@@ -6821,6 +6959,13 @@ msgstr ""
 msgid "Refusing to install package group %{resource_name}, because allow_virtual is false."
 msgstr ""
 
+<<<<<<< HEAD
+=======
+#: ../lib/puppet/provider/package/pip.rb:54
+msgid "Cannot resolve pip version"
+msgstr ""
+
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 #: ../lib/puppet/provider/package/pkg.rb:53 ../lib/puppet/provider/package/pkg.rb:63
 msgid "Unknown format %{resource_name}: %{full_flags}[%{bad_flag}]"
 msgstr ""
@@ -7278,6 +7423,7 @@ msgstr ""
 #. TRANSLATORS 'alias' should not be translated
 #: ../lib/puppet/resource/catalog.rb:210
 msgid "Cannot alias %{resource} to %{key} at %{resource_declaration}; resource %{newref} already declared"
+<<<<<<< HEAD
 msgstr ""
 
 #: ../lib/puppet/resource/catalog.rb:292
@@ -7292,6 +7438,22 @@ msgstr ""
 msgid "Could not intern from data: Could not find relationship target %{target} for %{source}"
 msgstr ""
 
+=======
+msgstr ""
+
+#: ../lib/puppet/resource/catalog.rb:292
+msgid "Unknown resource type %{type}"
+msgstr ""
+
+#: ../lib/puppet/resource/catalog.rb:446
+msgid "Could not intern from data: Could not find relationship source %{source} for %{target}"
+msgstr ""
+
+#: ../lib/puppet/resource/catalog.rb:453
+msgid "Could not intern from data: Could not find relationship target %{target} for %{source}"
+msgstr ""
+
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 #: ../lib/puppet/resource/catalog.rb:543
 msgid "Could not create class file %{file}: %{detail}"
 msgstr ""

@@ -155,7 +155,11 @@ HELP
     with_contents = options[:references].length <= 1
     exit_code = 0
     require 'puppet/util/reference'
+<<<<<<< HEAD
     options[:references].sort { |a,b| a.to_s <=> b.to_s }.each do |name|
+=======
+    options[:references].sort_by(&:to_s).each do |name|
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
       section = Puppet::Util::Reference.reference(name)
       raise _("Could not find reference %{name}") % { name: name } unless section
 

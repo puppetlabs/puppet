@@ -12,8 +12,8 @@ AllCops:
     - 'tasks/**/*'
     - 'ext/suse/puppet.spec'
     - 'lib/puppet/vendor/**/*'
-    - 'lib/puppet/parser/parser.rb'
     - 'lib/puppet/pops/parser/eparser.rb'
+<<<<<<< HEAD
     - 'lib/semantic_puppet/dependency/module_release.rb'
 
 Lint/ConditionPosition:
@@ -27,6 +27,8 @@ Lint/UnreachableCode:
 
 Lint/UselessComparison:
   Enabled: true
+=======
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 
 # MAYBE useful - no return inside ensure block.
 Lint/EnsureReturn:
@@ -35,18 +37,6 @@ Lint/EnsureReturn:
 # MAYBE useful - errors when rescue {} happens.
 Lint/HandleExceptions:
   Enabled: false
-
-# MAYBE useful - catches while 1
-Lint/LiteralInCondition:
-  Enabled: false
-
-Lint/ShadowingOuterLocalVariable:
-  Enabled: true
-
-# Can catch complicated strings.
-Lint/LiteralInInterpolation:
-  Enabled: true
-
 
 # DISABLED really useless. Detects return as last statement.
 Style/RedundantReturn:
@@ -105,21 +95,10 @@ Lint/EndAlignment:
   Enabled: false
 
 # DISABLED
-Lint/DeprecatedClassMethods:
-  Enabled: false
-
-# DISABLED
-Lint/Loop:
-  Enabled: false
-
-# DISABLED
 Lint/ParenthesesAsGroupedExpression:
   Enabled: false
 
 Lint/RescueException:
-  Enabled: false
-
-Lint/StringConversionInInterpolation:
   Enabled: false
 
 Lint/UnusedBlockArgument:
@@ -128,6 +107,7 @@ Lint/UnusedBlockArgument:
 Lint/UnusedMethodArgument:
   Enabled: false
 
+<<<<<<< HEAD
 Lint/UselessAccessModifier:
   Enabled: true
 
@@ -137,6 +117,8 @@ Lint/UselessAssignment:
 Lint/Void:
   Enabled: true
 
+=======
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 Layout/AccessModifierIndentation:
   Enabled: false
 
@@ -490,9 +472,6 @@ Layout/SpaceBeforeFirstArg:
 Style/ModuleFunction:
   Enabled: false
 
-Lint/Debugger:
-  Enabled: false
-
 Style/IfWithSemicolon:
   Enabled: false
 
@@ -560,12 +539,15 @@ Metrics/ModuleLength:
   Enabled: false
 
 Layout/EmptyLinesAroundMethodBody:
+<<<<<<< HEAD
   Enabled: false
 
 Lint/IneffectiveAccessModifier:
   Enabled: false
 
 Performance/StringReplacement:
+=======
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
   Enabled: false
 
 Layout/ClosingParenthesisIndentation:
@@ -601,13 +583,7 @@ Performance/RedundantBlockCall:
 Style/IdenticalConditionalBranches:
   Enabled: false
 
-Performance/RedundantMatch:
-  Enabled: false
-
 Style/CommandLiteral:
-  Enabled: false
-
-Performance/Casecmp:
   Enabled: false
 
 Lint/NestedMethodDefinition:
@@ -616,46 +592,23 @@ Lint/NestedMethodDefinition:
 Layout/SpaceInsideStringInterpolation:
   Enabled: false
 
-Performance/RedundantMerge:
-  Enabled: false
-
-Performance/ReverseEach:
-  Enabled: false
-
 Style/NestedModifier:
   Enabled: false
 
-Lint/NonLocalExitFromIterator:
-  Enabled: false
-
-Performance/Count:
-  Enabled: false
-
+<<<<<<< HEAD
+Layout/SpaceInsideStringInterpolation:
+=======
 Style/NestedParenthesizedCalls:
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
   Enabled: false
 
 Layout/RescueEnsureAlignment:
-  Enabled: false
-
-Lint/DuplicateMethods:
-  Enabled: false
-
-Performance/RangeInclude:
   Enabled: false
 
 Style/TrailingUnderscoreVariable:
   Enabled: false
 
 Lint/LiteralInInterpolation:
-  Enabled: false
-
-Performance/DoubleStartEndWith:
-  Enabled: false
-
-Performance/RedundantSortBy:
-  Enabled: true
-
-Performance/TimesMap:
   Enabled: false
 
 Layout/InitialIndentation:
@@ -670,9 +623,83 @@ Style/SymbolLiteral:
 Style/IfUnlessModifierOfIfUnless:
   Enabled: false
 
+<<<<<<< HEAD
+Layout/RescueEnsureAlignment:
+=======
 Style/ZeroLengthPredicate:
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
   Enabled: false
 
+Bundler/OrderedGems:
+  Enabled: false
+
+Layout/EmptyLineAfterMagicComment:
+  Enabled: false
+
+Layout/EmptyLinesAroundBeginBody:
+  Enabled: false
+
+Layout/EmptyLinesAroundExceptionHandlingKeywords:
+  Enabled: false
+
+Layout/IndentHeredoc:
+  Enabled: false
+
+<<<<<<< HEAD
+Performance/RedundantSortBy:
+  Enabled: true
+=======
+Layout/MultilineArrayBraceLayout:
+  Enabled: false
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
+
+Layout/MultilineHashBraceLayout:
+  Enabled: false
+
+<<<<<<< HEAD
+Layout/InitialIndentation:
+=======
+Layout/MultilineMethodCallBraceLayout:
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
+  Enabled: false
+
+Layout/MultilineMethodDefinitionBraceLayout:
+  Enabled: false
+
+Layout/SpaceInsidePercentLiteralDelimiters:
+  Enabled: false
+
+Lint/EmptyWhen:
+  Enabled: false
+
+Lint/InheritException:
+  Enabled: false
+
+Lint/ScriptPermission:
+  Enabled: false
+
+Metrics/BlockLength:
+  Enabled: false
+
+Style/EmptyCaseCondition:
+  Enabled: false
+
+Style/EmptyMethod:
+  Enabled: false
+
+Style/FormatStringToken:
+  Enabled: false
+
+Style/InverseMethods:
+  Enabled: false
+
+Style/MethodMissing:
+  Enabled: false
+
+Style/MixinGrouping:
+  Enabled: false
+
+<<<<<<< HEAD
 Bundler/OrderedGems:
   Enabled: false
 
@@ -747,6 +774,8 @@ Style/MethodMissing:
 Style/MixinGrouping:
   Enabled: false
 
+=======
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 Style/MultilineIfModifier:
   Enabled: false
 
@@ -777,9 +806,12 @@ GetText/DecorateFunctionMessage:
 GetText/DecorateString:
   Enabled: false
 
+<<<<<<< HEAD
 GetText/DecorateStringFormattingUsingInterpolation:
   Enabled: true
 
+=======
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 GetText/DecorateStringFormattingUsingPercent:
   Enabled: false
 

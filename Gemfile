@@ -39,8 +39,13 @@ group(:test) do
   gem "rake", *location_for(ENV['RAKE_LOCATION'] || '~> 12.2')
   gem "rspec", "~> 3.1", require: false
   gem "rspec-its", "~> 1.1", require: false
+<<<<<<< HEAD
   gem 'vcr', '~> 2.9', require: false
   gem 'webmock', '~> 1.24', require: false
+=======
+  gem 'vcr', '~> 5.0', require: false
+  gem 'webmock', '~> 3.0', require: false
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
   gem 'yard', require: false
 
   gem 'rubocop', '~> 0.49', require: false, platforms: [:ruby]
@@ -65,7 +70,7 @@ group(:documentation) do
   gem 'ronn', '~> 0.7.3', require: false, platforms: [:ruby]
 end
 
-if File.exists? "#{__FILE__}.local"
+if File.exist? "#{__FILE__}.local"
   eval(File.read("#{__FILE__}.local"), binding)
 end
 

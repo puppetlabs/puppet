@@ -101,7 +101,11 @@ module Puppet::ModuleTool
 
       contents = data.keys.map do |k|
         value = (Puppet::Util::Json.dump(data[k], :pretty => true) rescue data[k].to_json)
+<<<<<<< HEAD
         %Q("#{k.to_s}": #{value})
+=======
+        %Q("#{k}": #{value})
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
       end
 
       "{\n" + contents.join(",\n").gsub(/^/, '  ') + "\n}\n"

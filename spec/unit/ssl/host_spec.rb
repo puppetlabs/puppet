@@ -1,5 +1,8 @@
 require 'spec_helper'
+<<<<<<< HEAD
 require 'webmock/rspec'
+=======
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 require 'puppet/test_ca'
 
 require 'puppet/ssl/host'
@@ -153,6 +156,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     allow(host).to receive(:key).and_return(key)
     expect(sslcert).to receive(:check_private_key).with("private_key").and_return(true)
     expect{ host.validate_certificate_with_key(certificate) }.not_to raise_error
+<<<<<<< HEAD
   end
 
   it "should output agent-specific commands when validation fails" do
@@ -165,6 +169,20 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     expect { host.validate_certificate_with_key(certificate) }.to raise_error(Puppet::Error, /puppet ssl clean \n/)
   end
 
+=======
+  end
+
+  it "should output agent-specific commands when validation fails" do
+    host = Puppet::SSL::Host.new("foo")
+    key = double('key', :content => "private_key")
+    sslcert = double('sslcert')
+    certificate = double('cert', {:content => sslcert, :fingerprint => 'DEADBEEF'})
+    allow(host).to receive(:key).and_return(key)
+    expect(sslcert).to receive(:check_private_key).with("private_key").and_return(false)
+    expect { host.validate_certificate_with_key(certificate) }.to raise_error(Puppet::Error, /puppet ssl clean \n/)
+  end
+
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
   it "should output device-specific commands when validation fails" do
     Puppet[:certname] = "device.example.com"
     host = Puppet::SSL::Host.new("device.example.com", true)
@@ -308,10 +326,13 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       allow(@host).to receive(:validate_certificate_with_key)
       allow(@host).to receive(:http_client).and_return(@http)
       allow(@host).to receive(:ssl_store).and_return(double("ssl store"))
+<<<<<<< HEAD
 
       WebMock.disable_net_connect!
       allow_any_instance_of(Net::HTTP).to receive(:start)
       allow_any_instance_of(Net::HTTP).to receive(:finish)
+=======
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
     end
 
     let(:ca_cert_response) { @pki[:ca_bundle] }

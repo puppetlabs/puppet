@@ -57,7 +57,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def get_start_link_count
     # Start links don't include '.service'. Just search for the service name.
-    if @resource[:name].match(/\.service/)
+    if @resource[:name] =~ /\.service/
       link_name = @resource[:name].split('.')[0]
     else
       link_name = @resource[:name]
@@ -87,7 +87,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     # The indirect state indicates that the unit is not enabled.
     return :false if output == 'indirect'
     return :true if (code == 0)
-    if (output.empty?) && (code > 0) && (Facter.value(:osfamily).downcase == 'debian')
+    if (output.empty?) && (code > 0) && (Facter.value(:osfamily).casecmp('debian').zero?)
       ret = debian_enabled?
       return ret if ret
     end

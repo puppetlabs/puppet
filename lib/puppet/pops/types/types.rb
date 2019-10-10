@@ -340,7 +340,11 @@ class PAnyType < TypedModelObject
   # @raises ArgumentError
   #
   def self.new_function(type)
+<<<<<<< HEAD
     raise ArgumentError.new("Creation of new instance of type '#{type.to_s}' is not supported")
+=======
+    raise ArgumentError.new("Creation of new instance of type '#{type}' is not supported")
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
   end
 
   # Answers the question if instances of this type can represent themselves as a string that
@@ -1268,7 +1272,7 @@ class PFloatType < PNumericType
         else
           begin
             # support a binary as float
-            if from[0] == '0' && from[1].downcase == 'b'
+            if from[0] == '0' && from[1].casecmp('b').zero?
               from = Integer(from)
             end
             Float(from)
@@ -1700,7 +1704,11 @@ class PRegexpType < PScalarType
   # @param regexp [Regexp] the regular expression
   # @return [String] the Regexp as a slash delimited string with slashes escaped
   def self.regexp_to_s_with_delimiters(regexp)
+<<<<<<< HEAD
     regexp.options == 0 ? regexp.inspect : "/#{regexp.to_s}/"
+=======
+    regexp.options == 0 ? regexp.inspect : "/#{regexp}/"
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
   end
 
   # @param regexp [Regexp] the regular expression

@@ -123,10 +123,10 @@ Puppet::Face.define(:module, '1.0.0') do
       unmet_grouped.each do |type, deps|
         unless deps.empty?
           unmet_grouped[type].sort_by { |dep| dep[:name] }.each do |dep|
-            dep_name           = dep[:name].gsub('/', '-')
+            dep_name           = dep[:name].tr('/', '-')
             installed_version  = dep[:mod_details][:installed_version]
             version_constraint = dep[:version_constraint]
-            parent_name        = dep[:parent][:name].gsub('/', '-')
+            parent_name        = dep[:parent][:name].tr('/', '-')
             parent_version     = dep[:parent][:version]
 
             msg = _("'%{parent_name}' (%{parent_version}) requires '%{dependency_name}' (%{dependency_version})") % { parent_name: parent_name, parent_version: parent_version, dependency_name: dep_name, dependency_version: version_constraint }
@@ -146,7 +146,11 @@ Puppet::Face.define(:module, '1.0.0') do
     error_display_order.each do |type|
       unless @unmet_deps[type].empty?
         @unmet_deps[type].keys.sort.each do |dep|
+<<<<<<< HEAD
           name    = dep.gsub('/', '-')
+=======
+          name    = dep.tr('/', '-')
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
           errors  = @unmet_deps[type][dep][:errors]
           version = @unmet_deps[type][dep][:version]
 
@@ -214,7 +218,7 @@ Puppet::Face.define(:module, '1.0.0') do
           dep[:reason] == :missing
         end
         missing_deps.map do |mis_mod|
-          str = "#{colorize(:bg_red, _('UNMET DEPENDENCY'))} #{mis_mod[:name].gsub('/', '-')} "
+          str = "#{colorize(:bg_red, _('UNMET DEPENDENCY'))} #{mis_mod[:name].tr('/', '-')} "
           str << "(#{colorize(:cyan, mis_mod[:version_constraint])})"
           node[:dependencies] << { :text => str }
         end
@@ -239,7 +243,7 @@ Puppet::Face.define(:module, '1.0.0') do
   #
   def list_build_node(mod, parent, params)
     str = ''
-    str << (mod.forge_name ? mod.forge_name.gsub('/', '-') : mod.name)
+    str << (mod.forge_name ? mod.forge_name.tr('/', '-') : mod.name)
     str << ' (' + colorize(:cyan, mod.version ? "v#{mod.version}" : '???') + ')'
 
     unless File.dirname(mod.path) == params[:path]

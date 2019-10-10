@@ -173,12 +173,14 @@ module Puppet::Pops
 
     protected
 
-    # Returns the type used to validate the options hash
-    #
-    # @return [Types::PStructType] the puppet type
-    #
-    def self.options_t
-      @options_t ||=Types::TypeParser.singleton.parse("Struct[{strategy=>Optional[Pattern[/#{key}/]]}]")
+    class << self
+      # Returns the type used to validate the options hash
+      #
+      # @return [Types::PStructType] the puppet type
+      #
+      def options_t
+        @options_t ||=Types::TypeParser.singleton.parse("Struct[{strategy=>Optional[Pattern[/#{key}/]]}]")
+      end
     end
 
     # Returns the type used to validate the options hash
@@ -383,6 +385,7 @@ module Puppet::Pops
 
     protected
 
+<<<<<<< HEAD
     # Returns a type that allows all deep_merge options except 'preserve_unmergeables' since we force
     # the setting of that option to false
     #
@@ -395,6 +398,22 @@ module Puppet::Pops
           'merge_hash_arrays=>Optional[Boolean],'\
           'sort_merged_arrays=>Optional[Boolean],'\
           '}]')
+=======
+    class << self
+      # Returns a type that allows all deep_merge options except 'preserve_unmergeables' since we force
+      # the setting of that option to false
+      #
+      # @return [Types::PAnyType] the puppet type used when validating the options hash
+      def options_t
+        @options_t ||= Types::TypeParser.singleton.parse('Struct[{'\
+                                                         "strategy=>Optional[Pattern[#{key}]],"\
+                                                         'knockout_prefix=>Optional[String],'\
+                                                         'merge_debug=>Optional[Boolean],'\
+                                                         'merge_hash_arrays=>Optional[Boolean],'\
+                                                         'sort_merged_arrays=>Optional[Boolean],'\
+                                                         '}]')
+      end
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
     end
 
     def value_t

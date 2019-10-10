@@ -55,12 +55,17 @@ class Puppet::Configurer::Downloader
       :noop => false
     }
     if !Puppet::Util::Platform.windows?
+<<<<<<< HEAD
       defargs.merge!(
         {
           :owner => Process.uid,
           :group => Process.gid
         }
       )
+=======
+      defargs[:owner] = Process.uid
+      defargs[:group] = Process.gid
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
     end
     return defargs
   end

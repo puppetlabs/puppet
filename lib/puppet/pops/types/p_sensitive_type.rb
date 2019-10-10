@@ -22,7 +22,7 @@ class PSensitiveType < PTypeWithContainedType
     end
 
     def inspect
-      "#<#{to_s}>"
+      "#<#{self}>"
     end
   end
 

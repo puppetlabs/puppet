@@ -11,7 +11,11 @@ module Puppet::ModuleTranslations
     modules.each do |mod|
       next unless mod.forge_name && mod.has_translations?(Puppet::GettextConfig.current_locale)
 
+<<<<<<< HEAD
       module_name = mod.forge_name.gsub('/', '-')
+=======
+      module_name = mod.forge_name.tr('/', '-')
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
       if Puppet::GettextConfig.load_translations(module_name, mod.locale_directory, :po)
         Puppet.debug "Loaded translations for #{module_name}."
       elsif Puppet::GettextConfig.gettext_loaded?

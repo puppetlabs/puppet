@@ -230,14 +230,14 @@ These options should be specified as an array where each element is either a str
       str2 = str2.gsub(front_strip_re, '')
 
       # "handle the tilde separator, it sorts before everything else"
-      if /^~/.match(str1) && /^~/.match(str2)
+      if str1 =~ /^~/ && str2 =~ /^~/
         # if they both have ~, strip it
         str1 = str1[1..-1]
         str2 = str2[1..-1]
         next
-      elsif /^~/.match(str1)
+      elsif str1 =~ /^~/
         return -1
-      elsif /^~/.match(str2)
+      elsif str2 =~ /^~/
         return 1
       end
 
@@ -246,7 +246,7 @@ These options should be specified as an array where each element is either a str
       # "grab first completely alpha or completely numeric segment"
       isnum = false
       # if the first char of str1 is a digit, grab the chunk of continuous digits from each string
-      if /^[0-9]+/.match(str1)
+      if str1 =~ /^[0-9]+/
         if str1 =~ /^[0-9]+/
           segment1 = $~.to_s
           str1 = $~.post_match
@@ -342,7 +342,11 @@ These options should be specified as an array where each element is either a str
       r = s[ri+1,s.length]
       arch = r.scan(ARCH_REGEX)[0]
       if arch
+<<<<<<< HEAD
         a = arch.gsub(/\./, '')
+=======
+        a = arch.delete('.')
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
         r.gsub!(ARCH_REGEX, '')
       end
     else

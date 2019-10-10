@@ -46,6 +46,7 @@ describe Puppet::Util::Log.desttypes[:file] do
 
     describe "on POSIX systems", :if => Puppet.features.posix? do
       describe "with a normal file" do
+<<<<<<< HEAD
         let (:abspath) { '/tmp/log' }
         let (:relpath) { 'log' }
 
@@ -91,6 +92,57 @@ describe Puppet::Util::Log.desttypes[:file] do
         end
       end
 
+=======
+        let (:parent) { Pathname.new('/tmp') }
+        let (:abspath) { '/tmp/log' }
+        let (:relpath) { 'log' }
+
+        it_behaves_like "file destination"
+
+        it "logs an error if it can't chown the file owner & group" do
+          allow(File).to receive(:exist?).with(parent).and_return(true)
+          expect(File).to receive(:exist?).with(Pathname.new(abspath)).and_return(false)
+          expect(FileUtils).to receive(:chown).with(Puppet[:user], Puppet[:group], abspath).and_raise(Errno::EPERM)
+          expect(Puppet.features).to receive(:root?).and_return(true)
+          expect(Puppet).to receive(:err).with("Unable to set ownership to #{Puppet[:user]}:#{Puppet[:group]} for log file: #{abspath}")
+
+          @class.new(abspath)
+        end
+
+        it "doesn't attempt to chown when running as non-root" do
+          allow(File).to receive(:exist?).with(parent).and_return(true)
+          expect(File).to receive(:exist?).with(Pathname.new(abspath)).and_return(false)
+          expect(FileUtils).not_to receive(:chown).with(Puppet[:user], Puppet[:group], abspath)
+          expect(Puppet.features).to receive(:root?).and_return(false)
+
+          @class.new(abspath)
+        end
+
+        it "doesn't attempt to chown when file already exists" do
+          allow(File).to receive(:exist?).with(parent).and_return(true)
+          expect(File).to receive(:exist?).with(Pathname.new(abspath)).and_return(true)
+          expect(FileUtils).not_to receive(:chown).with(Puppet[:user], Puppet[:group], abspath)
+          expect(Puppet.features).to receive(:root?).and_return(true)
+
+          @class.new(abspath)
+        end
+      end
+
+      describe "with a JSON file" do
+        let (:abspath) { '/tmp/log.json' }
+        let (:relpath) { 'log.json' }
+
+        it_behaves_like "file destination"
+
+        it "should log messages as JSON" do
+          msg = Puppet::Util::Log.new(:level => :info, :message => "don't panic")
+          dest = @class.new(abspath)
+          dest.handle(msg)
+          expect(JSON.parse(File.read(abspath) + ']')).to include(a_hash_including({"message" => "don't panic"}))
+        end
+      end
+
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
       describe "with a JSON lines file" do
         let (:abspath) { '/tmp/log.jsonl' }
         let (:relpath) { 'log.jsonl' }

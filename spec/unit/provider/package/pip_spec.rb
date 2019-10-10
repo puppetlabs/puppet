@@ -349,6 +349,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
   end
 
   context "pip_version" do
+<<<<<<< HEAD
     it "should look up version if pip is present" do
       allow(described_class).to receive(:pip_cmd).and_return('/fake/bin/pip')
       p = double("process")
@@ -372,5 +373,61 @@ describe Puppet::Type.type(:package).provider(:pip) do
       end
       it { is_expected.to be > 100 }
     end
+=======
+    let(:pip) { '/fake/bin/pip' }
+
+    it "should look up version if pip is present" do
+      allow(described_class).to receive(:pip_cmd).and_return(pip)
+      process = ['pip 8.0.2 from /usr/local/lib/python2.7/dist-packages (python 2.7)']
+      allow(described_class).to receive(:execpipe).with([pip, '--version']).and_yield(process)
+
+      expect(described_class.pip_version(pip)).to eq('8.0.2')
+    end
+
+    it "parses multiple lines of output" do
+      allow(described_class).to receive(:pip_cmd).and_return(pip)
+      process = [
+        "/usr/local/lib/python2.7/dist-packages/urllib3/contrib/socks.py:37: DependencyWarning: SOCKS support in urllib3 requires the installation of optional dependencies: specifically, PySocks. For more information, see https://urllib3.readthedocs.io/en/latest/contrib.html#socks-proxies",
+        "  DependencyWarning",
+        "pip 1.5.6 from /usr/lib/python2.7/dist-packages (python 2.7)"
+      ]
+      allow(described_class).to receive(:execpipe).with([pip, '--version']).and_yield(process)
+
+      expect(described_class.pip_version(pip)).to eq('1.5.6')
+    end
+
+    it "raises if there isn't a version string" do
+      allow(described_class).to receive(:pip_cmd).and_return(pip)
+      allow(described_class).to receive(:execpipe).with([pip, '--version']).and_yield([""])
+      expect {
+        described_class.pip_version(pip)
+      }.to raise_error(Puppet::Error, 'Cannot resolve pip version')
+    end
+
+    it "quotes commands with spaces" do
+      pip = 'C:\Program Files\Python27\Scripts\pip.exe'
+      allow(described_class).to receive(:pip_cmd).and_return(pip)
+      process = ["pip 18.1 from c:\program files\python27\lib\site-packages\pip (python 2.7)\r\n"]
+      allow(described_class).to receive(:execpipe).with(["\"#{pip}\"", '--version']).and_yield(process)
+
+      expect(described_class.pip_version(pip)).to eq('18.1')
+    end
+  end
+
+  context 'calculated specificity' do
+    context 'when is not defaultfor' do
+      subject { described_class.specificity }
+      it { is_expected.to eql 1 }
+    end
+
+    context 'when is defaultfor' do
+      let(:os) {  Facter.value(:operatingsystem) }
+      subject do
+        described_class.defaultfor(operatingsystem: os)
+        described_class.specificity
+      end
+      it { is_expected.to be > 100 }
+    end
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
   end
 end

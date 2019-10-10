@@ -318,7 +318,11 @@ class Puppet::Interface
       when String then
         input.strip.split(/,/).map do |part|
           part = part.strip
+<<<<<<< HEAD
           if part.match(/^\d+$/)
+=======
+          if part =~ /^\d+$/
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
             part.to_i
           else
             found = part.split(/-/)

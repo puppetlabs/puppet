@@ -36,6 +36,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
       ["pip.exe"]
     else
       ["pip", "pip-python"]
+<<<<<<< HEAD
     end
   end
 
@@ -44,7 +45,26 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
       process.collect do |line|
         return line.strip.match(/^pip (\d+\.\d+\.?\d*).*$/)[1]
       end
+=======
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
     end
+  end
+
+  def self.pip_version(command)
+    version = nil
+    execpipe [quote(command), '--version'] do |process|
+      process.collect do |line|
+        md = line.strip.match(/^pip (\d+\.\d+\.?\d*).*$/)
+        if md
+          version = md[1]
+          break
+        end
+      end
+    end
+
+    raise Puppet::Error, _("Cannot resolve pip version") unless version
+
+    version
   end
 
   # Return an array of structured information about every installed package
@@ -91,6 +111,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   def self.parse(line)
     if line.chomp =~ /^([^=]+)===?([^=]+)$/
       {:ensure => $2, :name => $1, :provider => name}
+<<<<<<< HEAD
     end
   end
 
@@ -103,6 +124,25 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
 
     self.class.instances(command).each do |pkg|
       return pkg.properties if @resource[:name].downcase == pkg.name.downcase
+    end
+    return nil
+  end
+
+  # Use pip CLI to look up versions from PyPI repositories,
+  # honoring local pip config such as custom repositories.
+=======
+    end
+  end
+
+  # Return structured information about a particular package or `nil`
+  # if the package is not installed or `pip` itself is not available.
+
+  def query
+    command = resource_or_provider_command
+    self.class.validate_command(command)
+
+    self.class.instances(command).each do |pkg|
+      return pkg.properties if @resource[:name].casecmp(pkg.name).zero?
     end
     return nil
   end
@@ -201,6 +241,100 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
 
     execute([command, command_options])
   end
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
+
+  def latest
+    command = resource_or_provider_command
+    self.class.validate_command(command)
+
+<<<<<<< HEAD
+    command_version = self.class.pip_version(command)
+    if Puppet::Util::Package.versioncmp(command_version, '1.5.4') == -1
+      latest_with_old_pip
+    else
+      latest_with_new_pip
+    end
+  end
+
+  def latest_with_new_pip
+    command = resource_or_provider_command
+    self.class.validate_command(command)
+
+    # Less resource intensive approach for pip version 1.5.4 and above
+    execpipe [command, "install", "#{@resource[:name]}==versionplease"] do |process|
+      process.collect do |line|
+        # PIP OUTPUT: Could not find a version that satisfies the requirement Django==versionplease (from versions: 1.1.3, 1.8rc1)
+        if line =~ /from versions: /
+          textAfterLastMatch = $'.chomp(")\n")
+          versionList = textAfterLastMatch.split(', ').sort do |x,y|
+            Puppet::Util::Package.versioncmp(x, y)
+          end
+          return versionList.last
+        end
+      end
+      return nil
+    end
+  end
+
+  def latest_with_old_pip
+    command = resource_or_provider_command
+    self.class.validate_command(command)
+
+    Dir.mktmpdir("puppet_pip") do |dir|
+      execpipe [command, "install", "#{@resource[:name]}", "-d", "#{dir}", "-v"] do |process|
+        process.collect do |line|
+          # PIP OUTPUT: Using version 0.10.1 (newest of versions: 0.10.1, 0.10, 0.9, 0.8.1, 0.8, 0.7.2, 0.7.1, 0.7, 0.6.1, 0.6, 0.5.2, 0.5.1, 0.5, 0.4, 0.3.1, 0.3, 0.2, 0.1)
+          if line =~ /Using version (.+?) \(newest of versions/
+            return $1
+          end
+        end
+        return nil
+      end
+    end
+  end
+
+  # Install a package.  The ensure parameter may specify installed,
+  # latest, a version number, or, in conjunction with the source
+  # parameter, an SCM revision.  In that case, the source parameter
+  # gives the fully-qualified URL to the repository.
+
+  def install
+    command = resource_or_provider_command
+    self.class.validate_command(command)
+
+    command_options = %w{install -q}
+    command_options +=  install_options if @resource[:install_options]
+    if @resource[:source]
+      if String === @resource[:ensure]
+        command_options << "#{@resource[:source]}@#{@resource[:ensure]}#egg=#{@resource[:name]}"
+      else
+        command_options << "#{@resource[:source]}#egg=#{@resource[:name]}"
+      end
+    else
+      case @resource[:ensure]
+      when String
+        command_options << "#{@resource[:name]}==#{@resource[:ensure]}"
+      when :latest
+        command_options << "--upgrade" << @resource[:name]
+      else
+        command_options << @resource[:name]
+      end
+    end
+
+    execute([command, command_options])
+  end
+
+  # Uninstall a package. Uninstall won't work reliably on Debian/Ubuntu unless this issue gets fixed.
+  # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=562544
+
+  def uninstall
+    command = resource_or_provider_command
+    self.class.validate_command(command)
+
+    command_options = ["uninstall", "-y", "-q", @resource[:name]]
+
+    execute([command, command_options])
+  end
 
   def update
     install
@@ -209,4 +343,18 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   def install_options
     join_options(@resource[:install_options])
   end
+=======
+  def install_options
+    join_options(@resource[:install_options])
+  end
+
+  def self.quote(path)
+    if path.include?(" ")
+      "\"#{path}\""
+    else
+      path
+    end
+  end
+  private_class_method :quote
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 end

@@ -210,8 +210,13 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
           compiler.compile()
 
+<<<<<<< HEAD
         rescue Puppet::ParseErrorWithIssue, Puppet::Error
           # already logged and handled by the compiler for these two cases
+=======
+        rescue Puppet::Error
+          # already logged and handled by the compiler, including Puppet::ParseErrorWithIssue
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
           exit(1)
         end
 

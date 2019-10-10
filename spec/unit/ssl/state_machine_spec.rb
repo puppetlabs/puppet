@@ -1,5 +1,8 @@
 require 'spec_helper'
+<<<<<<< HEAD
 require 'webmock/rspec'
+=======
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 require 'puppet_spec/files'
 
 require 'puppet/ssl'
@@ -28,11 +31,14 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
   let(:refused_message) { %r{Connection refused|No connection could be made because the target machine actively refused it} }
 
   before(:each) do
+<<<<<<< HEAD
     WebMock.disable_net_connect!
 
     allow_any_instance_of(Net::HTTP).to receive(:start)
     allow_any_instance_of(Net::HTTP).to receive(:finish)
 
+=======
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
     Puppet[:ssl_lockfile] = tmpfile('ssllock')
     allow(Kernel).to receive(:sleep)
   end

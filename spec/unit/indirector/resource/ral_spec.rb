@@ -48,7 +48,11 @@ describe "Puppet::Resource::Ral" do
     end
 
     it "should convert ral resources into regular resources" do
+<<<<<<< HEAD
       my_resource = double("my user resource")
+=======
+      my_resource = double("my user resource", :title => "my user resource")
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
       my_instance = double("my user", :name => "root", :to_resource => my_resource)
 
       expect(Puppet::Type::User).to receive(:instances).and_return([ my_instance ])
@@ -56,7 +60,11 @@ describe "Puppet::Resource::Ral" do
     end
 
     it "should filter results by name if there's a name in the key" do
+<<<<<<< HEAD
       my_resource = double("my user resource")
+=======
+      my_resource = double("my user resource", title: "my user resource")
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
       allow(my_resource).to receive(:to_resource).and_return(my_resource)
       allow(my_resource).to receive(:[]).with(:name).and_return("root")
 
@@ -74,11 +82,19 @@ describe "Puppet::Resource::Ral" do
     end
 
     it "should filter results by query parameters" do
+<<<<<<< HEAD
       wrong_resource = double("my user resource")
       allow(wrong_resource).to receive(:to_resource).and_return(wrong_resource)
       allow(wrong_resource).to receive(:[]).with(:name).and_return("root")
 
       my_resource = double("wrong resource")
+=======
+      wrong_resource = double("my user resource", title: "my user resource")
+      allow(wrong_resource).to receive(:to_resource).and_return(wrong_resource)
+      allow(wrong_resource).to receive(:[]).with(:name).and_return("root")
+
+      my_resource = double("wrong resource", title: "wrong resource")
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
       allow(my_resource).to receive(:to_resource).and_return(my_resource)
       allow(my_resource).to receive(:[]).with(:name).and_return("bob")
 

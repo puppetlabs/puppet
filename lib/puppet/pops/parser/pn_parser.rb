@@ -48,6 +48,26 @@ class PNParser
     parse_next
   end
 
+<<<<<<< HEAD
+=======
+  def self.char_types
+    unless instance_variable_defined?(:@char_types)
+      @char_types = Array.new(0x80, TYPE_IDENTIFIER)
+      @char_types[0] = TYPE_END
+      [0x09, 0x0d, 0x0a, 0x20].each { |n| @char_types[n] = TYPE_WS }
+      [TOKEN_LP, TOKEN_RP, TOKEN_LB, TOKEN_RB, TOKEN_LC, TOKEN_RC].each { |n| @char_types[n] = TYPE_DELIM }
+      @char_types[0x2d] = TYPE_MINUS
+      (0x30..0x39).each { |n| @char_types[n] = TYPE_DIGIT }
+      (0x41..0x5a).each { |n| @char_types[n] = TYPE_ALPHA }
+      (0x61..0x7a).each { |n| @char_types[n] = TYPE_ALPHA }
+      @char_types[TOKEN_KEY] = TYPE_KEY_START
+      @char_types[TOKEN_STRING] = TYPE_STRING_START
+      @char_types.freeze
+    end
+    @char_types
+  end
+
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
   private
 
   def parse_next
@@ -128,6 +148,7 @@ class PNParser
   end
 
   # All methods below belong to the PN lexer
+<<<<<<< HEAD
   def self.char_types
     unless instance_variable_defined?(:@char_types)
       @char_types = Array.new(0x80, TYPE_IDENTIFIER)
@@ -144,6 +165,8 @@ class PNParser
     end
     @char_types
   end
+=======
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
 
   def next_token
     skip_white

@@ -342,7 +342,14 @@ class Puppet::X509::CertProvider
   def permissions_for_setting(name)
     setting = Puppet.settings.setting(name)
     perm = { mode: setting.mode.to_i(8) }
+<<<<<<< HEAD
     perm.merge!(owner: setting.owner, group: setting.group) if Puppet.features.root? && !Puppet::Util::Platform.windows?
+=======
+    if Puppet.features.root? && !Puppet::Util::Platform.windows?
+      perm[:owner] = setting.owner
+      perm[:group] = setting.group
+    end
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
     perm
   end
 end

@@ -55,7 +55,7 @@ class WindowsDaemon < Win32::Daemon
     # end
 
     puppet = File.join(basedir, 'bin', 'puppet.bat')
-    unless File.exists?(puppet)
+    unless File.exist?(puppet)
       log_err("File not found: '#{puppet}'")
       return
     end

@@ -58,7 +58,11 @@ class Puppet::Util::Reference
 
   def self.references(environment)
     instance_loader(:reference).loadall(environment)
+<<<<<<< HEAD
     loaded_instances(:reference).sort { |a,b| a.to_s <=> b.to_s }
+=======
+    loaded_instances(:reference).sort_by(&:to_s)
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
   end
 
   attr_accessor :page, :depth, :header, :title, :dynamic

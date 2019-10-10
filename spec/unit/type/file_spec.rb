@@ -477,6 +477,9 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "#recurse" do
+    let(:name) { 'bar' }
+    let(:child) { double('puppet_type_file') }
+
     before do
       file[:recurse] = true
       @metadata = Puppet::FileServing::Metadata
@@ -485,8 +488,14 @@ describe Puppet::Type.type(:file) do
     describe "and a source is set" do
       it "should pass the already-discovered resources to recurse_remote" do
         file[:source] = File.expand_path(__FILE__)
+<<<<<<< HEAD
         allow(file).to receive(:recurse_local).and_return(:foo => "bar")
         expect(file).to receive(:recurse_remote).with(:foo => "bar").and_return([])
+=======
+        allow(child).to receive(:[]).with(:path).and_return(name)
+        allow(file).to receive(:recurse_local).and_return(name => child)
+        expect(file).to receive(:recurse_remote).with(name => child).and_return([])
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
         file.recurse
       end
     end
@@ -494,8 +503,14 @@ describe Puppet::Type.type(:file) do
     describe "and a target is set" do
       it "should use recurse_link" do
         file[:target] = File.expand_path(__FILE__)
+<<<<<<< HEAD
         allow(file).to receive(:recurse_local).and_return(:foo => "bar")
         expect(file).to receive(:recurse_link).with(:foo => "bar").and_return([])
+=======
+        allow(child).to receive(:[]).with(:path).and_return(name)
+        allow(file).to receive(:recurse_local).and_return(name => child)
+        expect(file).to receive(:recurse_link).with(name => child).and_return([])
+>>>>>>> 0f9c4b5e8b7f56ba94587b04dc6702a811c0a6b7
         file.recurse
       end
     end
