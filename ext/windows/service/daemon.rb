@@ -27,6 +27,9 @@ class WindowsDaemon < Win32::Daemon
   end
 
   def service_main(*argsv)
+    base_dir = File.expand_path(File.join(File.dirname(__FILE__), '..'))
+    load_env(base_dir)
+
     argsv = (argsv << ARGV).flatten.compact
     args = argsv.join(' ')
     @loglevel = LEVELS.index(argsv.index('--debug') ? :debug : :notice)
@@ -37,7 +40,6 @@ class WindowsDaemon < Win32::Daemon
       FileUtils.mkdir_p(File.dirname(LOG_FILE))
       args = args.gsub("--logtofile","")
     end
-    basedir = File.expand_path(File.join(File.dirname(__FILE__), '..'))
 
     # The puppet installer registers a 'Puppet' event source.  For the moment events will be logged with this key, but
     # it may be a good idea to split the Service and Puppet events later so it's easier to read in the windows Event Log.
@@ -54,7 +56,10 @@ class WindowsDaemon < Win32::Daemon
     #   )
     # end
 
-    puppet = File.join(basedir, 'bin', 'puppet.bat')
+    puppet = File.join(base_dir, 'puppet', 'bin', 'puppet').tr('/', '\\')
+    ruby = File.join(base_dir, "sys", "ruby", "bin", "ruby.exe").tr('/', '\\')
+    ruby_puppet_cmd = "\"#{ruby}\" \"#{puppet}\""
+
     unless File.exist?(puppet)
       log_err("File not found: '#{puppet}'")
       return
@@ -62,17 +67,18 @@ class WindowsDaemon < Win32::Daemon
     log_debug("Using '#{puppet}'")
 
     cmdline_debug = argsv.index('--debug') ? :debug : nil
-    @loglevel = parse_log_level(puppet, cmdline_debug)
+    @loglevel = parse_log_level(ruby_puppet_cmd, cmdline_debug)
     log_notice('Service started')
 
     service = self
     @run_thread = Thread.new do
       begin
         while service.running? do
-          runinterval = service.parse_runinterval(puppet)
+          runinterval = service.parse_runinterval(ruby_puppet_cmd)
+
           if service.state == RUNNING or service.state == IDLE
             service.log_notice("Executing agent with arguments: #{args}")
-            pid = Process.create(:command_line => "\"#{puppet}\" agent --onetime #{args}", :creation_flags => CREATE_NEW_CONSOLE).process_id
+            pid = Process.create(:command_line => "#{ruby_puppet_cmd} agent --onetime #{args}", :creation_flags => CREATE_NEW_CONSOLE).process_id
             service.log_debug("Process created: #{pid}")
           else
             service.log_debug("Service is paused.  Not invoking Puppet agent")
@@ -153,7 +159,7 @@ class WindowsDaemon < Win32::Daemon
 
   def parse_runinterval(puppet_path)
     begin
-      runinterval = %x{ "#{puppet_path}" agent --configprint runinterval }.to_i
+      runinterval = %x{ #{puppet_path} agent --configprint runinterval }.to_i
       if runinterval == 0
         runinterval = 1800
         log_err("Failed to determine runinterval, defaulting to #{runinterval} seconds")
@@ -168,7 +174,7 @@ class WindowsDaemon < Win32::Daemon
 
   def parse_log_level(puppet_path,cmdline_debug)
     begin
-      loglevel = %x{ "#{puppet_path}" agent --configprint log_level}.chomp
+      loglevel = %x{ #{puppet_path} agent --configprint log_level}.chomp
       unless loglevel
         loglevel = :notice
         log_err("Failed to determine loglevel, defaulting to #{loglevel}")
@@ -179,6 +185,40 @@ class WindowsDaemon < Win32::Daemon
     end
 
     LEVELS.index(cmdline_debug ? cmdline_debug : loglevel.to_sym)
+  end
+
+  private
+
+  def load_env(base_dir)
+    # ENV that uses backward slashes
+    ENV['FACTERDIR'] = File.join(base_dir, 'facter').tr('/', '\\')
+    ENV['FACTER_env_windows_installdir'] = base_dir.tr('/', '\\')
+    ENV['HIERA_DIR'] = File.join(base_dir, 'hiera').tr('/', '\\')
+    ENV['MCOLLECTIVE_DIR'] = File.join(base_dir, 'mcollective').tr('/', '\\')
+    ENV['PL_BASEDIR'] = base_dir.tr('/', '\\')
+    ENV['PUPPET_DIR'] = File.join(base_dir, 'puppet').tr('/', '\\')
+    ENV['RUBYOPT'] = 'rubygems'
+    ENV['RUBY_DIR'] = File.join(base_dir, 'sys', 'ruby').tr('/', '\\')
+    ENV['OPENSSL_CONF'] = File.join(base_dir, 'puppet', 'ssl', 'openssl.cnf').tr('/', '\\')
+    ENV['SSL_CERT_DIR'] = File.join(base_dir, 'puppet', 'ssl', 'certs').tr('/', '\\')
+    ENV['SSL_CERT_FILE'] = File.join(base_dir, 'puppet', 'ssl', 'cert.pem').tr('/', '\\')
+    ENV['Path'] = [
+      File.join(base_dir, 'puppet', 'bin'),
+      File.join(base_dir, 'facter', 'bin'),
+      File.join(base_dir, 'hiera', 'bin'),
+      File.join(base_dir, 'mcollective', 'bin'),
+      File.join(base_dir, 'bin'),
+      File.join(base_dir, 'sys', 'ruby', 'bin'),
+      File.join(base_dir, 'sys', 'tools', 'bin')
+    ].join(';').tr('/', '\\') + ';' + ENV['Path']
+
+    # ENV that uses forward slashes
+    ENV['RUBYLIB'] = [
+      File.join(base_dir, 'puppet','lib'),
+      File.join(base_dir, 'facter', 'lib'),
+      File.join(base_dir, 'hiera', 'lib'),
+      File.join(base_dir, 'mcollective', 'lib')
+    ].join(';') + ';' + ENV['RUBYLIB']
   end
 end
 
