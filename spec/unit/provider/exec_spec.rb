@@ -81,7 +81,8 @@ describe Puppet::Provider::Exec do
           MANIFEST
         }.to raise_error do |err|
           expect(err).to be_a(Puppet::Error)
-          expect(err.message).to match(/'echo supersecret' is not qualified and no path was specified. Please qualify the command or specify a path./)
+          expect(err.message).to match(/'echo' is not qualified and no path was specified. Please qualify the command or specify a path./)
+          expect(err.message).to_not match(/#{supersecret}/)
         end
       end
 
