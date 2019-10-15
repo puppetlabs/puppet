@@ -173,6 +173,16 @@ describe 'FileBased module loader' do
         .to raise_error(Puppet::ParseError, /Failed to load metadata for task testmodule::foo: 'parameters' must be a hash/)
     end
 
+    it 'raises and error when `implementations` `requirements` key is not an array' do
+      metadata = { 'implementations' => { 'name' => 'foo.py', 'requirements' => 'foo'} }
+      module_dir = dir_containing('testmodule', 'tasks' => {'foo.py' => '', 'foo.json' => metadata.to_json})
+
+      module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, 'testmodule', module_dir)
+      expect{module_loader.load_typed(typed_name(:task, 'testmodule::foo'))}
+        .to raise_error(Puppet::Module::Task::InvalidMetadata,
+        /Task metadata for task testmodule::foo does not specify implementations as an array/)
+    end
+
     it 'raises and error when top-level `files` is not an array' do
       metadata = { 'files' => 'foo' }
       module_dir = dir_containing('testmodule', 'tasks' => {'foo.py' => '', 'foo.json' => metadata.to_json})

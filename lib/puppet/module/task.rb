@@ -154,6 +154,10 @@ class Puppet::Module
         end
 
         implementations = metadata['implementations'].map do |impl|
+          unless impl['requirements'].is_a?(Array) || impl['requirements'].nil?
+            msg = _("Task metadata for task %{name} does not specify requirements as an array" % { name: name })
+            raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
+          end
           path = executables.find { |real_impl| File.basename(real_impl) == impl['name'] }
           unless path
             msg = _("Task metadata for task %{name} specifies missing implementation %{implementation}" % { name: name, implementation: impl['name'] })
