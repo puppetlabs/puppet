@@ -318,24 +318,48 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   end
 
   describe "#comment" do
-    before do
-      described_class.has_feature :libuser
-    end
+    before { described_class.has_feature :libuser }
 
-    let(:passwd_line) { "myuser:x:1492:1000:local comment:/home/myuser:/bin/bash" }
+    let(:content) { "myuser:x:x:x:local comment:x:x" }
 
     it "should return the local comment string when forcelocal is true" do
       resource[:forcelocal] = true
-      allow(provider).to receive(:finduser).with('account', 'myuser').and_return(passwd_line)
-      expect(provider).to receive(:localcomment).and_return('local comment')
-      provider.comment
+      allow(File).to receive(:open).with('/etc/passwd').and_yield(content)
+      expect(provider.comment).to eq('local comment')
     end
 
     it "should fall back to nameservice comment string when forcelocal is false" do
       resource[:forcelocal] = false
       allow(provider).to receive(:get).with(:comment).and_return('remote comment')
       expect(provider).not_to receive(:localcomment)
-      provider.comment
+      expect(provider.comment).to eq('remote comment')
+    end
+  end
+
+  describe "#finduser" do
+    before { allow(File).to receive(:open).with('/etc/passwd').and_yield(content) }
+
+    let(:content) { "sample_account:sample_password:sample_uid:sample_gid:sample_gecos:sample_directory:sample_shell" }
+    let(:output) do
+      {
+        account: 'sample_account',
+        password: 'sample_password',
+        uid: 'sample_uid',
+        gid: 'sample_gid',
+        gecos: 'sample_gecos',
+        directory: 'sample_directory',
+        shell: 'sample_shell',
+      }
+    end
+
+    [:account, :password, :uid, :gid, :gecos, :directory, :shell].each do |key|
+      it "finds an user by #{key} when asked" do
+        expect(provider.finduser(key, "sample_#{key}")).to eq(output)
+      end
+    end
+
+    it "returns false when specified key/value pair is not found" do
+      expect(provider.finduser(:account, 'invalid_account')).to eq(false)
     end
   end
 
