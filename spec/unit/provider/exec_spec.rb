@@ -146,7 +146,6 @@ describe Puppet::Provider::Exec do
     end
 
     it "redacts the command on failure" do
-      pending("output should be redacted on failure")
       command = echo_from_ruby_exit_1(supersecret)
 
       apply_compiled_manifest(<<-MANIFEST)
