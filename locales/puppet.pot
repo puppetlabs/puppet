@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.4.4-77-gd07bca3\n"
+"Project-Id-Version: Puppet automation framework 6.4.4-80-g368ab98\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-10-14 18:00+0000\n"
-"PO-Revision-Date: 2019-10-14 18:00+0000\n"
+"POT-Creation-Date: 2019-10-15 00:30+0000\n"
+"PO-Revision-Date: 2019-10-15 00:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -3083,7 +3083,7 @@ msgid ""
 "        A namespaced module name (ex. author-modulename) matching the expression /^[a-zA-Z0-9]+[-][a-z][a-z0-9_]*$/\n"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:24 ../lib/puppet/module/task.rb:215
+#: ../lib/puppet/module/task.rb:24 ../lib/puppet/module/task.rb:219
 msgid "Task names must start with a lowercase letter and be composed of only lowercase letters, numbers, and underscores"
 msgstr ""
 
@@ -3123,19 +3123,23 @@ msgstr ""
 msgid "Task metadata for task %{name} does not specify implementations as an array"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:159
+#: ../lib/puppet/module/task.rb:158
+msgid "Task metadata for task %{name} does not specify requirements as an array"
+msgstr ""
+
+#: ../lib/puppet/module/task.rb:163
 msgid "Task metadata for task %{name} specifies missing implementation %{implementation}"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:171
+#: ../lib/puppet/module/task.rb:175
 msgid "No source besides task metadata was found in directory %{directory} for task %{name}"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:175
+#: ../lib/puppet/module/task.rb:179
 msgid "Multiple executables were found in directory %{directory} for task %{name}; define 'implementations' in metadata to differentiate between them"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:229
+#: ../lib/puppet/module/task.rb:233
 msgid "Error reading metadata: %{message}"
 msgstr ""
 
