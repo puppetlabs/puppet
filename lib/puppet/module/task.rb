@@ -76,11 +76,23 @@ class Puppet::Module
     # Find task's required lib files and retrieve paths for both 'files' and 'implementation:files' metadata keys
     def self.find_extra_files(metadata, envname = nil)
       return [] if metadata.nil?
+      
+      files = metadata.fetch('files', [])
+      unless files.is_a?(Array)
+        msg = _("The 'files' task metadata expects an array, got %{files}.") % {files: files}
+        raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
+      end
+      impl_files = metadata.fetch('implementations', []).flat_map do |impl| 
+        file_array = impl.fetch('files', [])
+        unless file_array.is_a?(Array)
+          msg = _("The 'files' task metadata expects an array, got %{files}.") % {files: file_array}
+          raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
+        end
+        file_array
+      end
 
-      files = metadata.fetch('files', []) +
-        metadata.fetch('implementations', []).flat_map { |impl| impl.fetch('files', []) }
-
-      files.uniq.flat_map do |file|
+      combined_files = files + impl_files
+      combined_files.uniq.flat_map do |file|
         module_name, mount, endpath = file.split("/", 3)
         # If there's a mount directory with no trailing slash this will be nil
         # We want it to be empty to construct a path
@@ -142,6 +154,10 @@ class Puppet::Module
         end
 
         implementations = metadata['implementations'].map do |impl|
+          unless impl['requirements'].is_a?(Array) || impl['requirements'].nil?
+            msg = _("Task metadata for task %{name} does not specify requirements as an array" % { name: name })
+            raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
+          end
           path = executables.find { |real_impl| File.basename(real_impl) == impl['name'] }
           unless path
             msg = _("Task metadata for task %{name} specifies missing implementation %{implementation}" % { name: name, implementation: impl['name'] })
