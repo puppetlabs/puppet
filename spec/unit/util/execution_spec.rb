@@ -128,6 +128,13 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
 
           call_exec_posix('test command', { :cwd => cwd }, @stdin, @stdout, @stderr)
         end
+
+        it "should not change the current working directory if cwd is unspecified" do
+          expect(Dir).to receive(:chdir).never
+          expect(Kernel).to receive(:exec).with('test command')
+
+          call_exec_posix('test command', {}, @stdin, @stdout, @stderr)
+        end
       end
 
       it "should return the pid of the child process" do
@@ -170,6 +177,15 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
           )
 
           call_exec_windows('test command', { :cwd => cwd }, @stdin, @stdout, @stderr)
+        end
+
+        it "should not change the current working directory if cwd is unspecified" do
+          expect(Dir).to receive(:chdir).never
+          expect(Process).to receive(:create) do |args|
+            expect(args[:cwd]).to be_nil
+          end
+
+          call_exec_windows('test command', {}, @stdin, @stdout, @stderr)
         end
       end
 
