@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.17-6-gbb1a4cc\n"
+"Project-Id-Version: Puppet automation framework 5.5.17-47-g930597b\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-10-07 16:31+0000\n"
-"PO-Revision-Date: 2019-10-07 16:31+0000\n"
+"POT-Creation-Date: 2019-10-21 08:16+0000\n"
+"PO-Revision-Date: 2019-10-21 08:16+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -44,7 +44,7 @@ msgstr ""
 msgid "Please supply a parameter to perform a Hiera lookup"
 msgstr ""
 
-#: ../lib/hiera_puppet.rb:74 ../lib/puppet/indirector/hiera.rb:79
+#: ../lib/hiera_puppet.rb:74 ../lib/puppet/indirector/hiera.rb:81
 msgid "Config file %{hiera_config} not found, using Hiera defaults"
 msgstr ""
 
@@ -241,7 +241,7 @@ msgstr ""
 msgid "You must specify the hosts to apply to; valid values are an array or the symbol :all"
 msgstr ""
 
-#: ../lib/puppet/application/describe.rb:181
+#: ../lib/puppet/application/describe.rb:175
 msgid "Display help about resource types"
 msgstr ""
 
@@ -2356,11 +2356,11 @@ msgid "Got an event from invalid vertex %{source}"
 msgstr ""
 
 #. TRANSLATORS "negative or zero" refers to the count of paths
-#: ../lib/puppet/graph/simple_graph.rb:199
+#: ../lib/puppet/graph/simple_graph.rb:200
 msgid "negative or zero max_paths"
 msgstr ""
 
-#: ../lib/puppet/graph/simple_graph.rb:231
+#: ../lib/puppet/graph/simple_graph.rb:232
 msgid ""
 "Found %{num} dependency cycle:\n"
 msgid_plural ""
@@ -2368,12 +2368,12 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../lib/puppet/graph/simple_graph.rb:240
+#: ../lib/puppet/graph/simple_graph.rb:241
 msgid "Cycle graph written to %{filename}."
 msgstr ""
 
 #. TRANSLATORS '--graph' refers to a command line option and OmniGraffle and GraphViz are program names and should not be translated
-#: ../lib/puppet/graph/simple_graph.rb:243
+#: ../lib/puppet/graph/simple_graph.rb:244
 msgid "Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz"
 msgstr ""
 
@@ -2963,7 +2963,7 @@ msgstr ""
 msgid "Could not understand URL %{key}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/resource/ral.rb:61
+#: ../lib/puppet/indirector/resource/ral.rb:59
 msgid "Could not find type %{request_type}"
 msgstr ""
 
@@ -4036,45 +4036,45 @@ msgstr ""
 msgid "No request key specified in %{uri}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:122
+#: ../lib/puppet/network/http/api/indirected_routes.rb:133
 msgid "Could not find %{value0} %{key}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:129
+#: ../lib/puppet/network/http/api/indirected_routes.rb:140
 msgid "Rendered result in %{format}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:135
+#: ../lib/puppet/network/http/api/indirected_routes.rb:146
 msgid "Sent response"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:143
+#: ../lib/puppet/network/http/api/indirected_routes.rb:154
 msgid "Could not find %{indirection} %{key}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:155
+#: ../lib/puppet/network/http/api/indirected_routes.rb:166
 msgid "Could not find instances in %{indirection} with '%{key}'"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:202 ../lib/puppet/network/http/request.rb:60
+#: ../lib/puppet/network/http/api/indirected_routes.rb:213 ../lib/puppet/network/http/request.rb:60
 msgid "No supported formats are acceptable (Accept: %{accepted_formats})"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:227
+#: ../lib/puppet/network/http/api/indirected_routes.rb:238
 msgid "The request body is invalid: %{message}"
 msgstr ""
 
 #. TRANSLATORS "mime-type" is a keyword and should not be translated
 #. TRANSLATORS "mime-type" is a keyword and should not be translated
-#: ../lib/puppet/network/http/api/indirected_routes.rb:233 ../lib/puppet/network/http/request.rb:31
+#: ../lib/puppet/network/http/api/indirected_routes.rb:244 ../lib/puppet/network/http/request.rb:31
 msgid "Client sent a mime-type (%{header}) that doesn't correspond to a format we support"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:239
+#: ../lib/puppet/network/http/api/indirected_routes.rb:250
 msgid "No support for http method %{http_method}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:243
+#: ../lib/puppet/network/http/api/indirected_routes.rb:254
 msgid "No support for plurality %{indirection} for %{http_method} operations"
 msgstr ""
 
@@ -4300,7 +4300,7 @@ msgstr ""
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:570 ../lib/puppet/pops/loaders.rb:298
+#: ../lib/puppet/node/environment.rb:572 ../lib/puppet/pops/loaders.rb:298
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -5978,11 +5978,11 @@ msgstr ""
 msgid "Hiera configuration recreated due to change of scope variables used in interpolation expressions"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/hiera_config.rb:427
+#: ../lib/puppet/pops/lookup/hiera_config.rb:428
 msgid "%{config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/hiera_config.rb:527
+#: ../lib/puppet/pops/lookup/hiera_config.rb:528
 msgid "%{config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5"
 msgstr ""
 
@@ -6118,39 +6118,39 @@ msgstr ""
 msgid "illegal comma separated argument list"
 msgstr ""
 
-#: ../lib/puppet/pops/parser/pn_parser.rb:64
+#: ../lib/puppet/pops/parser/pn_parser.rb:81
 msgid "unexpected end of input"
 msgstr ""
 
-#: ../lib/puppet/pops/parser/pn_parser.rb:66
+#: ../lib/puppet/pops/parser/pn_parser.rb:83
 msgid "unexpected %{value}"
 msgstr ""
 
-#: ../lib/puppet/pops/parser/pn_parser.rb:103
+#: ../lib/puppet/pops/parser/pn_parser.rb:120
 msgid "map key expected"
 msgstr ""
 
-#: ../lib/puppet/pops/parser/pn_parser.rb:114
+#: ../lib/puppet/pops/parser/pn_parser.rb:131
 msgid "expected identifier to follow '('"
 msgstr ""
 
-#: ../lib/puppet/pops/parser/pn_parser.rb:125
+#: ../lib/puppet/pops/parser/pn_parser.rb:142
 msgid "missing '%{token}' to end list"
 msgstr ""
 
-#: ../lib/puppet/pops/parser/pn_parser.rb:186
+#: ../lib/puppet/pops/parser/pn_parser.rb:187
 msgid "expected identifier after ':'"
 msgstr ""
 
-#: ../lib/puppet/pops/parser/pn_parser.rb:225
+#: ../lib/puppet/pops/parser/pn_parser.rb:226
 msgid "unterminated quote"
 msgstr ""
 
-#: ../lib/puppet/pops/parser/pn_parser.rb:251
+#: ../lib/puppet/pops/parser/pn_parser.rb:252
 msgid "malformed octal quote"
 msgstr ""
 
-#: ../lib/puppet/pops/parser/pn_parser.rb:266 ../lib/puppet/pops/parser/pn_parser.rb:271 ../lib/puppet/pops/parser/pn_parser.rb:275
+#: ../lib/puppet/pops/parser/pn_parser.rb:267 ../lib/puppet/pops/parser/pn_parser.rb:272 ../lib/puppet/pops/parser/pn_parser.rb:276
 msgid "digit expected"
 msgstr ""
 
@@ -6707,7 +6707,7 @@ msgstr ""
 msgid "Overriding environment setting '%{var}' with '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/provider/exec.rb:91
+#: ../lib/puppet/provider/exec.rb:95
 msgid "'%{command}' is not qualified and no path was specified. Please qualify the command or specify a path."
 msgstr ""
 
@@ -7020,6 +7020,10 @@ msgstr ""
 
 #: ../lib/puppet/provider/package/blastwave.rb:80 ../lib/puppet/provider/package/pkgutil.rb:73 ../lib/puppet/provider/package/pkgutil.rb:145
 msgid "Cannot match %{line}"
+msgstr ""
+
+#: ../lib/puppet/provider/package/dnfmodule.rb:30
+msgid "Modules are not supported on DNF versions lower than 3.0.1"
 msgstr ""
 
 #: ../lib/puppet/provider/package/dpkg.rb:82
@@ -7481,7 +7485,7 @@ msgstr ""
 msgid "Could not build docs for indirector %{name}, terminus %{terminus}: could not locate terminus."
 msgstr ""
 
-#: ../lib/puppet/reference/metaparameter.rb:30
+#: ../lib/puppet/reference/metaparameter.rb:28
 msgid "incorrect metaparams: %{detail}"
 msgstr ""
 
@@ -7515,11 +7519,11 @@ msgid ""
 "  - Missing features %{values}\n"
 msgstr ""
 
-#: ../lib/puppet/reference/type.rb:80
+#: ../lib/puppet/reference/type.rb:76
 msgid "Could not retrieve property %{sname} on type %{type_name}"
 msgstr ""
 
-#: ../lib/puppet/reference/type.rb:83
+#: ../lib/puppet/reference/type.rb:79
 msgid "No docs for %{type}[%{sname}]"
 msgstr ""
 
@@ -8573,31 +8577,31 @@ msgstr ""
 msgid "Could not find parent provider %{parent} of %{name}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1931
+#: ../lib/puppet/type.rb:1929
 msgid "Invalid %{resource} provider '%{provider_class}'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2014
+#: ../lib/puppet/type.rb:2012
 msgid "Could not find %{name} provider of %{provider}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2131
+#: ../lib/puppet/type.rb:2129
 msgid "You cannot add relationships without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2438
+#: ../lib/puppet/type.rb:2436
 msgid "Unable to mark '%{name}' as sensitive: %{name} is a parameter and not a property, and cannot be automatically redacted."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2441
+#: ../lib/puppet/type.rb:2439
 msgid "Unable to mark '%{name}' as sensitive: the property itself was not assigned a value."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2443
+#: ../lib/puppet/type.rb:2441
 msgid "Unable to mark '%{name}' as sensitive: the property itself is not defined on %{type}."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2501
+#: ../lib/puppet/type.rb:2499
 msgid "Could not set %{attribute} on %{class_name}: %{detail}"
 msgstr ""
 
@@ -8737,34 +8741,34 @@ msgstr ""
 msgid "Could not find filebucket %{backup} specified in backup"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:729
+#: ../lib/puppet/type/file.rb:728
 msgid "Could not back up file of type %{current_type}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:744
+#: ../lib/puppet/type/file.rb:743
 msgid "Could not remove files of type %{current_type}"
 msgstr ""
 
 #. TRANSLATORS "source_permissions => ignore" should not be translated
-#: ../lib/puppet/type/file.rb:755
+#: ../lib/puppet/type/file.rb:754
 msgid "Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore."
 msgstr ""
 
 #. TRANSLATORS "stat" is a program name and should not be translated
-#: ../lib/puppet/type/file.rb:836 ../lib/puppet/type/k5login.rb:97 ../lib/puppet/type/tidy.rb:345
+#: ../lib/puppet/type/file.rb:835 ../lib/puppet/type/k5login.rb:97 ../lib/puppet/type/tidy.rb:345
 msgid "Could not stat; permission denied"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:961
+#: ../lib/puppet/type/file.rb:960
 msgid "Not removing directory; use 'force' to override"
 msgstr ""
 
 #. TRANSLATORS refers to a file which could not be backed up
-#: ../lib/puppet/type/file.rb:986
+#: ../lib/puppet/type/file.rb:985
 msgid "Could not back up; will not remove"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:1000
+#: ../lib/puppet/type/file.rb:999
 msgid "File written to disk did not match checksum; discarding changes (%{content_checksum} vs %{newsum})"
 msgstr ""
 
@@ -9993,7 +9997,7 @@ msgstr ""
 msgid "Could not open SELinux category translation file %{path}."
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:247
+#: ../lib/puppet/util/selinux.rb:249
 msgid "got a relative path in SELinux find_fs: %{path}"
 msgstr ""
 
@@ -10233,39 +10237,39 @@ msgstr ""
 msgid "Failed to open registry key '%{key}\\%{path}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:128
+#: ../lib/puppet/util/windows/registry.rb:130
 msgid "Failed to enumerate %{key} registry keys at index %{index}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:159
+#: ../lib/puppet/util/windows/registry.rb:161
 msgid "Failed to enumerate %{key} registry values at index %{index}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:189
+#: ../lib/puppet/util/windows/registry.rb:191
 msgid "Failed to query registry %{key} for sizes"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:225
+#: ../lib/puppet/util/windows/registry.rb:227
 msgid "Type mismatch (expect %{rtype} but %{type} present)"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:247
+#: ../lib/puppet/util/windows/registry.rb:249
 msgid "Type %{type} is not supported."
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:252
+#: ../lib/puppet/util/windows/registry.rb:254
 msgid "A value in the registry key %{parent_key_name}%{key} is corrupt or invalid"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:274
+#: ../lib/puppet/util/windows/registry.rb:276
 msgid "Failed to read registry value %{value} at %{key}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:292
+#: ../lib/puppet/util/windows/registry.rb:294
 msgid "Failed to delete registry value %{name} at %{key}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:307
+#: ../lib/puppet/util/windows/registry.rb:309
 msgid "Failed to delete registry key %{name} at %{key}"
 msgstr ""
 
