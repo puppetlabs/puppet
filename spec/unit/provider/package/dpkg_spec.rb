@@ -287,9 +287,21 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
     provider.purge
   end
 
-  it "raises error if package name is nil" do
-    expect {provider.package_not_installed?(nil)}.to raise_error(ArgumentError,"Package name is nil or empty")
-    expect {provider.package_not_installed?("")}.to raise_error(ArgumentError,"Package name is nil or empty")
+  context "package_not_installed?" do
+    it "returns true if package is not found" do
+      expect(provider).to receive(:dpkgquery).with("-W", "--showformat", "'${Status} ${Package} ${Version}\\n'", resource_name).and_raise(Puppet::ExecutionFailure.new("eh"))
+      expect(provider.package_not_installed?).to eq(true)
+    end
+
+    it "returns true if package is not installed" do
+      expect(provider).to receive(:dpkgquery).with("-W", "--showformat", "'${Status} ${Package} ${Version}\\n'", resource_name).and_return("unknown ok not-installed #{resource_name}")
+      expect(provider.package_not_installed?).to eq(true)
+    end
+
+    it "returns false if package is installed" do
+      expect(provider).to receive(:dpkgquery).with("-W", "--showformat", "'${Status} ${Package} ${Version}\\n'", resource_name).and_return("install ok installed resource_name 1.2.3")
+      expect(provider.package_not_installed?).to eq(false)
+    end
   end
 end
 
