@@ -481,8 +481,8 @@ module Puppet
     end
 
     newparam(:flavor) do
-      desc "OpenBSD supports 'flavors', which are further specifications for
-        which type of package you want."
+      desc "OpenBSD and DNF modules support 'flavors', which are
+        further specifications for which type of package you want."
     end
 
     newparam(:install_only, :boolean => false, :parent => Puppet::Parameter::Boolean, :required_features => :install_only) do
