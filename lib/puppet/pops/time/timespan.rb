@@ -1,3 +1,5 @@
+require 'puppet/concurrent/thread_local_singleton'
+
 module Puppet::Pops
 module Time
   NSECS_PER_USEC = 1000
@@ -581,9 +583,7 @@ module Time
 
     # Parses a string into a Timestamp::Format instance
     class FormatParser
-      def self.singleton
-        @singleton
-      end
+      extend Puppet::Concurrent::ThreadLocalSingleton
 
       def initialize
         @formats = Hash.new { |hash, str| hash[str] = internal_parse(str) }
@@ -706,8 +706,6 @@ module Time
         end
         Format.new(str, bld)
       end
-
-      @singleton = FormatParser.new
     end
 
     class Format
