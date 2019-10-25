@@ -10,7 +10,7 @@ module Puppet::Util::HttpProxy
       http = Net::HTTP.new(uri.host, uri.port, nil, nil, nil, nil)
       # Net::HTTP defaults the proxy port even though we said not to
       # use one. Set it to nil so caller is not surprised
-      http.proxy_port = nil
+      http.proxy_port = nil if http.respond_to?(:proxy_port=)
       http
     end
   end
