@@ -125,14 +125,13 @@ Puppet::Type.type(:user).provide :windows_adsi do
 
   def password=(value)
     if user.disabled?
-      warning _("The user account '%s' is disabled; puppet will not reset the password" % @resource[:name])
+      info _("The user account '%s' is disabled; The password will still be changed" % @resource[:name])
     elsif user.locked_out?
-      warning _("The user account '%s' is locked out; puppet will not reset the password" % @resource[:name])
+      info _("The user account '%s' is locked out; The password will still be changed" % @resource[:name])
     elsif user.expired?
-      warning _("The user account '%s' is expired; puppet will not reset the password" % @resource[:name])
-    else
-      user.password = value
+      info _("The user account '%s' is expired; The password will still be changed" % @resource[:name])
     end
+    user.password = value
   end
 
   def uid
