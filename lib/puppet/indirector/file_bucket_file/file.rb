@@ -250,7 +250,7 @@ module Puppet::FileBucketFile
     # @return [void]
     # @api private
     def copy_bucket_file_to_contents_file(contents_file, bucket_file)
-      Puppet::Util.replace_file(contents_file, 0440) do |of|
+      Puppet::FileSystem.replace_file(contents_file, 0440) do |of|
         # PUP-1044 writes all of the contents
         bucket_file.stream() do |src|
           FileUtils.copy_stream(src, of)

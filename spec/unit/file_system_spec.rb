@@ -988,7 +988,7 @@ describe "Puppet::FileSystem" do
         it 'rejects unsupported modes' do
           expect {
             Puppet::FileSystem.replace_file(dest, 0755) { |_| }
-          }.to raise_error(ArgumentError, /Only modes 0644, 0640 and 0600 are allowed/)
+          }.to raise_error(ArgumentError, /Only modes 0644, 0640, 0660, and 0440 are allowed/)
         end
       end
     end
@@ -1065,10 +1065,24 @@ describe "Puppet::FileSystem" do
           end
         end
 
-        it 'applies the specified mode' do
+        it 'applies 0644 mode' do
           Puppet::FileSystem.replace_file(dest, 0644) { |f| f.write(content) }
 
           expects_public_file(dest)
+        end
+
+        [0660, 0640, 0600, 0440].each do |mode|
+          it "applies #{mode} mode" do
+            Puppet::FileSystem.replace_file(dest, mode) { |f| f.write(content) }
+            current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+            sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+
+            expect(sd.dacl).to contain_exactly(
+              an_object_having_attributes(sid: Puppet::Util::Windows::SID::LocalSystem, mask: 0x1f01ff),
+              an_object_having_attributes(sid: Puppet::Util::Windows::SID::BuiltinAdministrators, mask: 0x1f01ff),
+              an_object_having_attributes(sid: current_sid, mask: 0x1f01ff),
+            )
+          end
         end
 
         it 'raises Errno::EACCES if access is denied' do
