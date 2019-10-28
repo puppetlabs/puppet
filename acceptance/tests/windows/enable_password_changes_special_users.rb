@@ -13,12 +13,12 @@ test_name 'Puppet should change passwords for disabled, expired, or locked out W
     return <<-MANIFEST
     user { '#{username}':
       ensure   => 'present',
-      password => '#{NEW_PASSWORD}' 
+      password => '#{NEW_PASSWORD}'
     }
     MANIFEST
   end
 
-  INITIAL_PASSWORD='1nitialP@ssword'
+  INITIAL_PASSWORD='iP@ssword'
   NEW_PASSWORD="Password-#{rand(999999).to_i}"
 
   agents.each do |host|
