@@ -100,11 +100,9 @@ describe 'loaders' do
     expect(loaders.puppet_cache_loader()).to be_a(Puppet::Pops::Loader::ModuleLoaders::LibRootedFileBased)
   end
 
-  it 'creates a cached_puppet loader that can load version 3 functions, version 4 functions, and data types' do
+  it 'creates a cached_puppet loader that can load version 4 functions, version 3 functions, and data types, in that order' do
     loaders = Puppet::Pops::Loaders.new(empty_test_env, true)
-    expect(loaders.puppet_cache_loader.loadables).to include(:func_3x)
-    expect(loaders.puppet_cache_loader.loadables).to include(:func_4x)
-    expect(loaders.puppet_cache_loader.loadables).to include(:datatype)
+    expect(loaders.puppet_cache_loader.loadables).to eq([:func_4x, :func_3x, :datatype])
   end
 
   it 'does not create a cached_puppet loader when for_agent is the default false value' do
