@@ -46,14 +46,8 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
 
     # Determine the daemon path.
     def defpath
-      unless @defpath
-        ["/var/lib/service", "/etc"].each do |path|
-          if Puppet::FileSystem.exist?(path)
-            @defpath = path
-            break
-          end
-        end
-        raise "Could not find the daemon directory (tested [/var/lib/service,/etc])" unless @defpath
+      @defpath ||= ["/var/lib/service", "/etc"].find do |path|
+        Puppet::FileSystem.exist?(path) && FileTest.directory?(path)
       end
       @defpath
     end
@@ -65,6 +59,10 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
   # ie enabled or not
   def self.instances
     path = self.defpath
+    unless path
+      Puppet.info("#{self.name} is unsuitable because service directory is nil")
+      return
+    end
     unless FileTest.directory?(path)
       Puppet.notice "Service path #{path} does not exist"
       return
