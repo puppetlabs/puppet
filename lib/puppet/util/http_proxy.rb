@@ -4,13 +4,15 @@ require 'puppet/network/http'
 
 module Puppet::Util::HttpProxy
   def self.proxy(uri)
-    if self.no_proxy?(uri)
-      proxy_class = Net::HTTP::Proxy(nil)
+    if http_proxy_host && !no_proxy?(uri)
+      Net::HTTP.new(uri.host, uri.port, self.http_proxy_host, self.http_proxy_port, self.http_proxy_user, self.http_proxy_password)
     else
-      proxy_class = Net::HTTP::Proxy(self.http_proxy_host, self.http_proxy_port, self.http_proxy_user, self.http_proxy_password)
+      http = Net::HTTP.new(uri.host, uri.port, nil, nil, nil, nil)
+      # Net::HTTP defaults the proxy port even though we said not to
+      # use one. Set it to nil so caller is not surprised
+      http.proxy_port = nil if http.respond_to?(:proxy_port=)
+      http
     end
-
-    return proxy_class.new(uri.host, uri.port)
   end
 
   def self.http_proxy_env
