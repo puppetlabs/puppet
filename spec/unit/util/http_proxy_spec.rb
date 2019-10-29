@@ -60,6 +60,58 @@ describe Puppet::Util::HttpProxy do
         expects_direct_connection_to(http, www)
       end
     end
+
+    context 'when setting no_proxy' do
+      before :each do
+        Puppet[:http_proxy_host] = host
+        Puppet[:http_proxy_port] = port
+      end
+
+      it 'connects directly to the server when HTTP_PROXY environment variable is set, but server matches no_proxy setting' do
+        Puppet[:no_proxy] = www.host
+
+        Puppet::Util.withenv('HTTP_PROXY' => "http://#{host}:#{port}") do
+          http = subject.proxy(www)
+          expects_direct_connection_to(http, www)
+        end
+      end
+
+      it 'connects directly to the server when no_proxy matches wildcard domain' do
+        Puppet[:no_proxy] = '*.example.com'
+
+        http = subject.proxy(www)
+        expects_direct_connection_to(http, www)
+      end
+
+      it 'connects directly to the server when no_proxy matches dotted domain' do
+        Puppet[:no_proxy] = '.example.com'
+
+        http = subject.proxy(www)
+        expects_direct_connection_to(http, www)
+      end
+
+      it 'connects directly to the server when no_proxy matches domain like ruby does' do
+        pending("PUP-10106 Puppet doesn't match domains like ruby")
+        Puppet[:no_proxy] = 'example.com'
+
+        http = subject.proxy(www)
+        expects_direct_connection_to(http, www)
+      end
+
+      it 'connects directly to the server when it is a subdomain of no_proxy' do
+        Puppet[:no_proxy] = '*.com'
+
+        http = subject.proxy(www)
+        expects_direct_connection_to(http, www)
+      end
+
+      it 'connects directly to the server when no_proxy is *' do
+        Puppet[:no_proxy] = '*'
+
+        http = subject.proxy(www)
+        expects_direct_connection_to(http, www)
+      end
+    end
   end
 
   describe ".http_proxy_env" do
