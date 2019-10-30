@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.4.4-101-g3f2d412\n"
+"Project-Id-Version: Puppet automation framework 6.4.4-113-g43f04de\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-10-28 15:45+0000\n"
-"PO-Revision-Date: 2019-10-28 15:45+0000\n"
+"POT-Creation-Date: 2019-10-30 10:30+0000\n"
+"PO-Revision-Date: 2019-10-30 10:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -6432,7 +6432,7 @@ msgid "Empty environment setting '%{var}'"
 msgstr ""
 
 #: ../lib/puppet/provider/exec.rb:100
-msgid "'%{command}' is not qualified and no path was specified. Please qualify the command or specify a path."
+msgid "'%{exe}' is not qualified and no path was specified. Please qualify the command or specify a path."
 msgstr ""
 
 #: ../lib/puppet/provider/exec/posix.rb:21 ../lib/puppet/provider/exec/posix.rb:38 ../lib/puppet/provider/exec/windows.rb:40 ../lib/puppet/provider/exec/windows.rb:53
@@ -8285,64 +8285,64 @@ msgstr ""
 msgid "Command exceeded timeout"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:162
+#: ../lib/puppet/type/exec.rb:166
 msgid "[command redacted] returned %{status} instead of one of [%{expected}]"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:164
+#: ../lib/puppet/type/exec.rb:168
 msgid "'%{cmd}' returned %{status} instead of one of [%{expected}]"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:182
+#: ../lib/puppet/type/exec.rb:186
 msgid "Command must be a String, got value of class %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:214
+#: ../lib/puppet/type/exec.rb:218
 msgid "Unable to execute commands as other users on Windows"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:216
+#: ../lib/puppet/type/exec.rb:220
 msgid "Only root can execute commands as other users"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:272
+#: ../lib/puppet/type/exec.rb:276
 msgid "Invalid environment setting '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:285
+#: ../lib/puppet/type/exec.rb:289
 msgid "The umask specification is invalid: %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:301
+#: ../lib/puppet/type/exec.rb:305
 msgid "The timeout must be a number."
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:318
+#: ../lib/puppet/type/exec.rb:322
 msgid "Tries must be an integer"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:322
+#: ../lib/puppet/type/exec.rb:326
 msgid "Tries must be an integer >= 1"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:335
+#: ../lib/puppet/type/exec.rb:339
 msgid "try_sleep must be a number"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:339
+#: ../lib/puppet/type/exec.rb:343
 msgid "try_sleep cannot be a negative number"
 msgstr ""
 
 #. TRANSLATORS 'creates' is a parameter name and should not be translated
-#: ../lib/puppet/type/exec.rb:411
+#: ../lib/puppet/type/exec.rb:415
 msgid "Checking that 'creates' path '%{creates_path}' exists"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:456 ../lib/puppet/type/exec.rb:512
+#: ../lib/puppet/type/exec.rb:460 ../lib/puppet/type/exec.rb:516
 msgid "Check %{value} exceeded timeout"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:599
+#: ../lib/puppet/type/exec.rb:603
 msgid "'%{cmd}' won't be executed because of failed check '%{check}'"
 msgstr ""
 
@@ -9195,7 +9195,7 @@ msgstr ""
 msgid "Could not write crontab for %{path}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/http_proxy.rb:220
+#: ../lib/puppet/util/http_proxy.rb:222
 msgid "Too many HTTP redirections for %{uri}"
 msgstr ""
 
