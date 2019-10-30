@@ -107,7 +107,9 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
   # note that this path can be overridden in the resource
   # definition
   def daemon
-    File.join(resource[:path], resource[:name])
+    path = resource[:path]
+    raise Puppet::Error.new("#{self.class.name} must specify a path for daemon directory") unless path
+    File.join(path, resource[:name])
   end
 
   def status
