@@ -150,16 +150,13 @@ RSpec.describe Puppet::Type.type(:exec) do
         end
       end
 
-      it "should redact the command on failure" do
+      it "should redact the sensitive command on failure" do
         output = "output1\noutput2\n"
         expect { exec_tester('false', 1, :output => output, :logoutput => :on_failure, :sensitive_parameters => [:command]).refresh }.
             to raise_error(Puppet::Error, /^\[command redacted\] returned 1 instead of/)
 
-        output.split("\n").each do |line|
-          log = @logs.shift
-          expect(log.level).to eq(:err)
-          expect(log.message).to eq(line)
-        end
+        expect(@logs).to include(an_object_having_attributes(level: :err, message: '[output redacted]'))
+        expect(@logs).to_not include(an_object_having_attributes(message: /output1|output2/))
       end
 
       it "should log the output on failure when returns is specified as an array" do
@@ -177,7 +174,7 @@ RSpec.describe Puppet::Type.type(:exec) do
         end
       end
 
-      it "should redact the command on failure when returns is specified as an array" do
+      it "should redact the sensitive command on failure when returns is specified as an array" do
         output = "output1\noutput2\n"
 
         expect {
@@ -185,11 +182,8 @@ RSpec.describe Puppet::Type.type(:exec) do
                       :logoutput => :on_failure, :sensitive_parameters => [:command]).refresh
         }.to raise_error(Puppet::Error, /^\[command redacted\] returned 1 instead of/)
 
-        output.split("\n").each do |line|
-          log = @logs.shift
-          expect(log.level).to eq(:err)
-          expect(log.message).to eq(line)
-        end
+        expect(@logs).to include(an_object_having_attributes(level: :err, message: '[output redacted]'))
+        expect(@logs).to_not include(an_object_having_attributes(message: /output1|output2/))
       end
 
       it "shouldn't log the output on success" do

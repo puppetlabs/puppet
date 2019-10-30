@@ -100,6 +100,6 @@ class Puppet::Provider::Exec < Puppet::Provider
   def validatecmd(command)
     exe = extractexe(command)
     # if we're not fully qualified, require a path
-    self.fail _("'%{command}' is not qualified and no path was specified. Please qualify the command or specify a path.") % { command: command } if !absolute_path?(exe) and resource[:path].nil?
+    self.fail _("'%{exe}' is not qualified and no path was specified. Please qualify the command or specify a path.") % { exe: exe } if !absolute_path?(exe) and resource[:path].nil?
   end
 end
