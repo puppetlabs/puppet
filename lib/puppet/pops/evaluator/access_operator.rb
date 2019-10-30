@@ -27,7 +27,7 @@ class AccessOperator
   protected
 
   def access_Object(o, scope, keys)
-    type = Puppet::Pops::Types::TypeCalculator.infer(o)
+    type = Puppet::Pops::Types::TypeCalculator.infer_callable_methods_t(o)
     if type.is_a?(Puppet::Pops::Types::TypeWithMembers)
       access_func = type['[]']
       return access_func.invoke(o, scope, keys) unless access_func.nil?

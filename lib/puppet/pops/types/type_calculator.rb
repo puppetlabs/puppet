@@ -120,6 +120,30 @@ class TypeCalculator
     singleton.infer(o)
   end
 
+  # Infers a type if given object may have callable members, else returns nil.
+  # Caller must check for nil or if returned type supports members.
+  # This is a much cheaper call than doing a call to the general infer(o) method.
+  #
+  # @api private
+  def self.infer_callable_methods_t(o)
+    # If being a value that cannot have Pcore based methods callable from Puppet Language
+    if (o.is_a?(String) || 
+      o.is_a?(Numeric) || 
+      o.is_a?(TrueClass) ||
+      o.is_a?(FalseClass) ||
+      o.is_a?(Regexp) ||
+      o.instance_of?(Array) ||
+      o.instance_of?(Hash) ||
+      Types::PUndefType::DEFAULT.instance?(o)
+      )
+      return nil
+    end
+    # For other objects (e.g. PObjectType instances, and runtime types) full inference needed, since that will
+    # cover looking into the runtime type registry.
+    #
+    infer(o)
+  end
+
   # @api public
   def self.generalize(o)
     singleton.generalize(o)
