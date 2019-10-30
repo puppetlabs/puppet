@@ -680,5 +680,15 @@ describe Puppet::Parser::Scope do
       @scope.setvar("orange", :undef)
       expect(@scope.to_hash).to eq({'pear' => :green, 'apple' => :red })
     end
+
+    it "should not delete values that are :undef in inner scope when include_undef is true" do
+      @scope.new_ephemeral true
+      @scope.setvar("orange", :tangerine)
+      @scope.setvar("pear", :green)
+      @scope.new_ephemeral true
+      @scope.setvar("apple", :red)
+      @scope.setvar("orange", :undef)
+      expect(@scope.to_hash(true, true)).to eq({'pear' => :green, 'apple' => :red, 'orange' => :undef })
+    end
   end
 end
