@@ -150,9 +150,13 @@ module Puppet
             end
           end
           unless log == :false
-            @output.split(/\n/).each { |line|
-              self.send(log, line)
-            }
+            if @resource.parameter(:command).sensitive
+              self.send(log, "[output redacted]")
+            else
+              @output.split(/\n/).each { |line|
+                self.send(log, line)
+              }
+            end
           end
         end
 
