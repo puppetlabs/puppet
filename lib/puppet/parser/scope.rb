@@ -66,8 +66,8 @@ class Puppet::Parser::Scope
       false
     end
 
-    def add_entries_to(target = {})
-      @parent.add_entries_to(target) unless @parent.nil?
+    def add_entries_to(target = {}, include_undef = false)
+      @parent.add_entries_to(target, include_undef) unless @parent.nil?
       # do not include match data ($0-$n)
       target
     end
@@ -105,10 +105,10 @@ class Puppet::Parser::Scope
       @symbols.include?(name)
     end
 
-    def add_entries_to(target = {})
+    def add_entries_to(target = {}, include_undef = false)
       super
       @symbols.each do |k, v|
-        if v == :undef || v.nil?
+        if (v == :undef || v.nil?) && !include_undef
           target.delete(k)
         else
           target[ k ] = v
@@ -160,7 +160,7 @@ class Puppet::Parser::Scope
       raise Puppet::ParseError, _("Numerical variables cannot be deleted: Attempt to delete: $%{name}") % { name: name }
     end
 
-    def add_entries_to(target = {})
+    def add_entries_to(target = {}, include_undef = false)
       # do not include match data ($0-$n)
       super
     end
@@ -662,8 +662,9 @@ class Puppet::Parser::Scope
   # Returns a Hash containing all variables and their values, optionally (and
   # by default) including the values defined in parent. Local values
   # shadow parent values. Ephemeral scopes for match results ($0 - $n) are not included.
+  # Optionally include the variables that are explicitly set to `undef`.
   #
-  def to_hash(recursive = true)
+  def to_hash(recursive = true, include_undef = false)
     if recursive and has_enclosing_scope?
       target = enclosing_scope.to_hash(recursive)
       if !(inherited = inherited_scope).nil?
@@ -674,7 +675,7 @@ class Puppet::Parser::Scope
     end
 
     # add all local scopes
-    @ephemeral.last.add_entries_to(target)
+    @ephemeral.last.add_entries_to(target, include_undef)
     target
   end
 
