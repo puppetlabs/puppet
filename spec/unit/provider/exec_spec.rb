@@ -131,7 +131,7 @@ describe Puppet::Provider::Exec do
       end
     end
 
-    it "redacts the command on success" do
+    it "redacts the command on success", unless: Puppet::Util::Platform.jruby? do
       command = echo_from_ruby_exit_0(supersecret)
 
       apply_compiled_manifest(<<-MANIFEST)
@@ -146,7 +146,7 @@ describe Puppet::Provider::Exec do
       expect(@logs).to_not include(an_object_having_attributes(message: /#{supersecret}/))
     end
 
-    it "redacts the command on failure" do
+    it "redacts the command on failure", unless: Puppet::Util::Platform.jruby? do
       command = echo_from_ruby_exit_1(supersecret)
 
       apply_compiled_manifest(<<-MANIFEST)
@@ -161,7 +161,7 @@ describe Puppet::Provider::Exec do
       expect(@logs).to_not include(an_object_having_attributes(message: /#{supersecret}/))
     end
 
-    context "when handling checks" do
+    context "when handling checks", unless: Puppet::Util::Platform.jruby? do
       let(:onlyifsecret) { "onlyifsecret" }
       let(:unlesssecret) { "unlesssecret" }
 
