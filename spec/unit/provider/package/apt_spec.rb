@@ -86,6 +86,34 @@ Version table:
     provider.run_preseed
   end
 
+  describe ".instances" do
+    before do
+      allow(Puppet::Type::Package::ProviderDpkg).to receive(:instances).and_return([resource])
+    end
+
+    context "when package is manual marked" do
+      before do
+        allow(described_class).to receive(:aptmark).with('showmanual').and_return("#{resource.name}\n")
+      end
+
+      it 'sets mark to manual' do
+        expect(resource).to receive(:mark=).with(:manual)
+        described_class.instances
+      end
+    end
+
+    context 'when package is not manual marked ' do
+      before do
+        allow(described_class).to receive(:aptmark).with('showmanual').and_return('')
+      end
+
+      it 'does not set mark to manual' do
+        expect(resource).not_to receive(:mark=).with(:manual)
+        described_class.instances
+      end
+    end
+  end
+
   describe "when installing" do
     it "should preseed if a responsefile is provided" do
       resource[:responsefile] = "/my/file"
