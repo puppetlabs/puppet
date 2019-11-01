@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-osfamilies = { 'windows' => ['pip.exe'], 'other' => ['pip', 'pip-python'] }
+osfamilies = { 'windows' => ['pip.exe'], 'other' => ['pip', 'pip-python', 'pip2', 'pip-2'] }
 
 describe Puppet::Type.type(:package).provider(:pip) do
 
