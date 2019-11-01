@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.10.1-157-gb6d0627\n"
+"Project-Id-Version: Puppet automation framework 6.10.1-189-g398aaf5\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-10-30 20:33+0000\n"
-"PO-Revision-Date: 2019-10-30 20:33+0000\n"
+"POT-Creation-Date: 2019-11-01 22:08+0000\n"
+"PO-Revision-Date: 2019-11-01 22:08+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -4618,79 +4618,79 @@ msgstr ""
 msgid "class %{classname} has not been evaluated"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:702
+#: ../lib/puppet/parser/scope.rb:703
 msgid "Default already defined for %{type} { %{param} }; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:762
+#: ../lib/puppet/parser/scope.rb:763
 msgid "Cannot assign to a numeric match result variable '$%{name}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:765
+#: ../lib/puppet/parser/scope.rb:766
 msgid "Scope variable name %{name} is a %{class_type}, not a string"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:770 ../lib/puppet/parser/scope.rb:775
+#: ../lib/puppet/parser/scope.rb:771 ../lib/puppet/parser/scope.rb:776
 msgid "Attempt to assign to a reserved variable name: '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:780
+#: ../lib/puppet/parser/scope.rb:781
 msgid "Cannot reassign variable '$%{name}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:834
+#: ../lib/puppet/parser/scope.rb:835
 msgid "Unsupported data type: '%{klass}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1011
+#: ../lib/puppet/parser/scope.rb:1012
 msgid "Invalid regex match data. Got a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1019
+#: ../lib/puppet/parser/scope.rb:1020
 msgid "Scope#find_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1024
+#: ../lib/puppet/parser/scope.rb:1025
 msgid "Scope#find_builtin_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1029
+#: ../lib/puppet/parser/scope.rb:1030
 msgid "Scope#find_defined_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1043
+#: ../lib/puppet/parser/scope.rb:1044
 msgid "Function %{name} not defined despite being loaded!"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1050
+#: ../lib/puppet/parser/scope.rb:1051
 msgid "Scope#resolve_type_and_title() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1070
+#: ../lib/puppet/parser/scope.rb:1071
 msgid "Cannot use undef as a class name"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1072
+#: ../lib/puppet/parser/scope.rb:1073
 msgid "Cannot use empty string as a class name"
 msgstr ""
 
 #. TRANSLATORS "Class" and "Type" are Puppet keywords and should not be translated
-#: ../lib/puppet/parser/scope.rb:1081
+#: ../lib/puppet/parser/scope.rb:1082
 msgid "Cannot use an unspecific Class[] Type"
 msgstr ""
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1108
+#: ../lib/puppet/parser/scope.rb:1109
 msgid "Cannot use an unspecific Resource[] where a Resource['class', name] is expected"
 msgstr ""
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1112
+#: ../lib/puppet/parser/scope.rb:1113
 msgid "Cannot use a Resource[%{type_name}] where a Resource['class', name] is expected"
 msgstr ""
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1116
+#: ../lib/puppet/parser/scope.rb:1117
 msgid "Cannot use an unspecific Resource['class'] where a Resource['class', name] is expected"
 msgstr ""
 
@@ -6647,19 +6647,19 @@ msgstr ""
 msgid "Mac OS X packages must specify a package source"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:39
+#: ../lib/puppet/provider/package/apt.rb:43
 msgid "/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure."
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:84 ../lib/puppet/provider/package/fink.rb:50
+#: ../lib/puppet/provider/package/apt.rb:88 ../lib/puppet/provider/package/fink.rb:50
 msgid "Could not find latest version"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:95 ../lib/puppet/provider/package/fink.rb:61
+#: ../lib/puppet/provider/package/apt.rb:99 ../lib/puppet/provider/package/fink.rb:61
 msgid "Preseeding %{response} to debconf-set-selections"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:99 ../lib/puppet/provider/package/fink.rb:65
+#: ../lib/puppet/provider/package/apt.rb:103 ../lib/puppet/provider/package/fink.rb:65
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
@@ -6695,11 +6695,15 @@ msgstr ""
 msgid "Modules are not supported on DNF versions lower than 3.0.1"
 msgstr ""
 
-#: ../lib/puppet/provider/package/dpkg.rb:85
+#: ../lib/puppet/provider/package/dpkg.rb:90
 msgid "You cannot install dpkg packages without a source"
 msgstr ""
 
-#: ../lib/puppet/provider/package/dpkg.rb:110
+#: ../lib/puppet/provider/package/dpkg.rb:115
+msgid "Could not update: You cannot install dpkg packages without a source"
+msgstr ""
+
+#: ../lib/puppet/provider/package/dpkg.rb:119
 msgid "source doesn't contain named package, but %{name}"
 msgstr ""
 
@@ -7056,7 +7060,7 @@ msgid "Overrides file could not be read, trying again."
 msgstr ""
 
 #. TRANSLATORS 'runsvdir' is a linux service name and should not be translated
-#: ../lib/puppet/provider/service/runit.rb:93
+#: ../lib/puppet/provider/service/runit.rb:87
 msgid "Waiting 5 seconds for runsvdir to discover service %{service}"
 msgstr ""
 
