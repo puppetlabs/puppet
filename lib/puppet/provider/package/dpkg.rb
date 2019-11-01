@@ -5,8 +5,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     and not `apt`, you must specify the source of any packages you want
     to manage."
 
-  has_feature :holdable
-
+  has_feature :holdable, :virtual_packages
   commands :dpkg => "/usr/bin/dpkg"
   commands :dpkg_deb => "/usr/bin/dpkg-deb"
   commands :dpkgquery => "/usr/bin/dpkg-query"
@@ -45,16 +44,22 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   # Note: self:: is required here to keep these constants in the context of what will
   # eventually become this Puppet::Type::Package::ProviderDpkg class.
   self::DPKG_QUERY_FORMAT_STRING = %Q{'${Status} ${Package} ${Version}\\n'}
+  self::DPKG_QUERY_PROVIDES_FORMAT_STRING = %Q{'${Status} ${Package} ${Version} [${Provides}]\\n'}
   self::FIELDS_REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
+  self::FIELDS_REGEX_WITH_PROVIDES = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*) \[.*\]$}
   self::FIELDS= [:desired, :error, :status, :name, :ensure]
+
+  def self.defaultto_allow_virtual
+    false
+  end
 
   # @param line [String] one line of dpkg-query output
   # @return [Hash,nil] a hash of FIELDS or nil if we failed to match
   # @api private
-  def self.parse_line(line)
+  def self.parse_line(line, regex=self::FIELDS_REGEX)
     hash = nil
 
-    match = self::FIELDS_REGEX.match(line)
+    match = regex.match(line)
     if match
       hash = {}
 
@@ -105,7 +110,11 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
   # Return the version from the package.
   def latest
-    output = dpkg_deb "--show", @resource[:source]
+    source = @resource[:source]
+    unless source
+      @resource.fail _("Could not update: You cannot install dpkg packages without a source")
+    end
+    output = dpkg_deb "--show", source
     matches = /^(\S+)\t(\S+)$/.match(output).captures
     warning _("source doesn't contain named package, but %{name}") % { name: matches[0] } unless matches[0].match( Regexp.escape(@resource[:name]) )
     matches[1]
@@ -116,6 +125,20 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
     # list out our specific package
     begin
+      if @resource.allow_virtual?
+        output = dpkgquery(
+          "-W",
+          "--showformat",
+          self.class::DPKG_QUERY_PROVIDES_FORMAT_STRING
+          #the regex searches for the resource[:name] in the dpkquery result in which the Provides field is also available
+          #it will search for the packages only in the brackets ex: [rubygems]
+        ).lines.find {|package| package.match(/[\[ ](#{Regexp.escape(@resource[:name])})[\],]/)}
+        if output
+          hash = self.class.parse_line(output,self.class::FIELDS_REGEX_WITH_PROVIDES)
+          Puppet.info("Package #{@resource[:name]} is virtual, defaulting to #{hash[:name]}")
+          @resource[:name] = hash[:name]
+        end
+      end
       output = dpkgquery(
         "-W",
         "--showformat",
