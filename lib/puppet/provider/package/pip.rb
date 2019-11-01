@@ -130,14 +130,17 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     end
   end
 
+  # Less resource-intensive approach for pip version 1.5.4 and newer.
+
   def latest_with_new_pip
     command = resource_or_provider_command
     self.class.validate_command(command)
 
-    # Less resource intensive approach for pip version 1.5.4 and above
-    execpipe [command, "install", "#{@resource[:name]}==versionplease"] do |process|
+    command_and_options = [command, 'install', "#{@resource[:name]}==versionplease"]
+    command_and_options << install_options if @resource[:install_options]
+    execpipe command_and_options do |process|
       process.collect do |line|
-        # PIP OUTPUT: Could not find a version that satisfies the requirement Django==versionplease (from versions: 1.1.3, 1.8rc1)
+        # PIP OUTPUT: Could not find a version that satisfies the requirement example==versionplease (from versions: 1.2.3, 4.5.6)
         if line =~ /from versions: /
           textAfterLastMatch = $'.chomp(")\n")
           versionList = textAfterLastMatch.split(', ').sort do |x,y|
@@ -150,14 +153,18 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     end
   end
 
+  # More resource-intensive approach for pip version 1.5.3 and older.
+
   def latest_with_old_pip
     command = resource_or_provider_command
     self.class.validate_command(command)
 
     Dir.mktmpdir("puppet_pip") do |dir|
-      execpipe [command, "install", "#{@resource[:name]}", "-d", "#{dir}", "-v"] do |process|
+      command_and_options = [command, 'install', "#{@resource[:name]}", '-d', "#{dir}", '-v']
+      command_and_options << install_options if @resource[:install_options]
+      execpipe command_and_options do |process|
         process.collect do |line|
-          # PIP OUTPUT: Using version 0.10.1 (newest of versions: 0.10.1, 0.10, 0.9, 0.8.1, 0.8, 0.7.2, 0.7.1, 0.7, 0.6.1, 0.6, 0.5.2, 0.5.1, 0.5, 0.4, 0.3.1, 0.3, 0.2, 0.1)
+          # PIP OUTPUT: Using version 0.10.1 (newest of versions: 1.2.3, 4.5.6)
           if line =~ /Using version (.+?) \(newest of versions/
             return $1
           end

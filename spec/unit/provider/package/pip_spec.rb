@@ -205,6 +205,13 @@ describe Puppet::Type.type(:package).provider(:pip) do
         @resource[:name] = "fake_package"
         expect(@provider.latest).to eq(nil)
       end
+
+      it "should use 'install_options' when specified" do
+        expect(Puppet::Util::Execution).to receive(:execpipe).with(array_including([["--index=https://fake.example.com"]])).once
+        @resource[:name] = "fake_package"
+        @resource[:install_options] = ['--index' => 'https://fake.example.com']
+        expect(@provider.latest).to eq(nil)
+      end
     end
 
     context "with pip version >= 1.5.4" do
@@ -258,6 +265,13 @@ describe Puppet::Type.type(:package).provider(:pip) do
         @resource[:name] = "real_package"
         latest = @provider.latest
         expect(latest).to eq('15.0.2')
+      end
+
+      it "should use 'install_options' when specified" do
+        expect(Puppet::Util::Execution).to receive(:execpipe).with(array_including([["--index=https://fake.example.com"]])).once
+        @resource[:name] = "fake_package"
+        @resource[:install_options] = ['--index' => 'https://fake.example.com']
+        expect(@provider.latest).to eq(nil)
       end
     end
   end
