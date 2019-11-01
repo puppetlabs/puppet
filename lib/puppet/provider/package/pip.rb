@@ -36,7 +36,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     if Puppet.features.microsoft_windows?
       ["pip.exe"]
     else
-      ["pip", "pip-python"]
+      ["pip", "pip-python", "pip2", "pip-2"]
     end
   end
 
