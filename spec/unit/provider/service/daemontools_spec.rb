@@ -163,4 +163,28 @@ describe 'Puppet::Type::Service::Provider::Daemontools',
       expect(@provider.status).to  eq(:stopped)
     end
   end
+
+  context '.instances' do
+    before do
+      allow(described_class).to receive(:defpath).and_return(path)
+    end
+
+    context 'when defpath is nil' do
+      let(:path) { nil }
+
+      it 'returns info message' do
+        expect(Puppet).to receive(:info).with(/daemontools is unsuitable because service directory is nil/)
+        described_class.instances
+      end
+    end
+
+    context 'when defpath does not exist' do
+      let(:path) { '/inexistent_path' }
+
+      it 'returns notice about missing path' do
+        expect(Puppet).to receive(:notice).with(/Service path #{path} does not exist/)
+        described_class.instances
+      end
+    end
+  end
 end

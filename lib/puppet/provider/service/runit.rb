@@ -40,14 +40,8 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
     # this is necessary to autodetect a valid resource
     # default path, since there is no standard for such directory.
     def defpath
-      unless @defpath
-        ["/etc/sv", "/var/lib/service"].each do |path|
-          if Puppet::FileSystem.exist?(path)
-            @defpath = path
-            break
-          end
-        end
-        raise "Could not find the daemon directory (tested [/etc/sv,/var/lib/service])" unless @defpath
+      @defpath ||= ["/var/lib/service", "/etc/sv"].find do |path|
+        Puppet::FileSystem.exist?(path) && FileTest.directory?(path)
       end
       @defpath
     end
