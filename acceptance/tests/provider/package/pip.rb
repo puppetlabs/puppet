@@ -11,8 +11,13 @@ test_name "pip provider should install, use install_options with latest, and uni
   agents.each do |agent|
     step "Setup: Install EPEL Repository, Python and Pip" do
       package_present(agent, 'epel-release')
-      package_present(agent, 'python')
-      package_present(agent, 'python-pip')
+      if agent.platform =~ /el-8/
+        package_present(agent, 'python2')
+        package_present(agent, 'python2-pip')
+      else
+        package_present(agent, 'python')
+        package_present(agent, 'python-pip')
+      end
     end
 
     step "Install a pip package" do
