@@ -8,7 +8,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     These options should be specified as an array where each element is either a
      string or a hash."
 
-  has_feature :versionable, :install_options
+  has_feature :versionable, :install_options, :virtual_packages
 
   commands :aptget => "/usr/bin/apt-get"
   commands :aptcache => "/usr/bin/apt-cache"
@@ -21,6 +21,10 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # disable common apt helpers to allow non-interactive package installs
   ENV['APT_LISTBUGS_FRONTEND'] = "none"
   ENV['APT_LISTCHANGES_FRONTEND'] = "none"
+
+  def self.defaultto_allow_virtual
+    false
+  end
 
   # A derivative of DPKG; this is how most people actually manage
   # Debian boxes, and the only thing that differs is that it can
