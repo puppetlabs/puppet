@@ -552,7 +552,7 @@ module Puppet
     },
     :no_proxy => {
       :default    => "localhost, 127.0.0.1",
-      :desc       => "List of domain names that should not go through `http_proxy_host`. Environment variable no_proxy or NO_PROXY will override this value.",
+      :desc       => "List of domain names that should not go through `http_proxy_host`. Environment variable no_proxy or NO_PROXY will override this value. Names can be specified as an FQDN `host.example.com`, wildcard `*.example.com`, dotted domain `.example.com`, or suffix `example.com`.",
     },
     :http_keepalive_timeout => {
       :default    => "4s",
