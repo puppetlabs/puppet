@@ -139,7 +139,7 @@ describe 'Puppet::Type::Service::Provider::Runit', unless: Puppet::Util::Platfor
 
   context '.instances' do
     before do
-      allow(described_class).to receive(:defpath).and_return(path)
+      allow(provider_class).to receive(:defpath).and_return(path)
     end
 
     context 'when defpath is nil' do
@@ -147,7 +147,7 @@ describe 'Puppet::Type::Service::Provider::Runit', unless: Puppet::Util::Platfor
 
       it 'returns info message' do
         expect(Puppet).to receive(:info).with(/runit is unsuitable because service directory is nil/)
-        described_class.instances
+        provider_class.instances
       end
     end
 
@@ -156,7 +156,7 @@ describe 'Puppet::Type::Service::Provider::Runit', unless: Puppet::Util::Platfor
 
       it 'returns notice about missing path' do
         expect(Puppet).to receive(:notice).with(/Service path #{path} does not exist/)
-        described_class.instances
+        provider_class.instances
       end
     end
   end
