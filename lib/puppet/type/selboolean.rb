@@ -9,9 +9,23 @@ module Puppet
     end
 
     newproperty(:value) do
-      desc "Whether the SELinux boolean should be enabled or disabled."
-      newvalue(:on)
-      newvalue(:off)
+      value_doc = 'Valid values are: "on"/"true"/"off"/"false"'
+      desc <<-EOT
+        Whether the SELinux boolean should be enabled or disabled.
+        #{value_doc}
+      EOT
+
+      newvalues(:on, :off, :true, :false)
+      munge do |value|
+        case value
+        when true, :true, 'true', :on, 'on'
+          :on
+        when false, :false, 'false', :off, 'off'
+          :off
+        else
+          raise ArgumentError, _("Invalid value %{value}. %{doc}") % { value: value.inspect, doc: value_doc}
+        end
+      end
     end
 
     newparam(:persistent) do

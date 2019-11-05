@@ -24,12 +24,10 @@ describe Puppet::Type.type(:selboolean), "when validating values" do
     allow(@provider_class).to receive(:new).and_return(@provider)
   end
 
-  it "should support :on as a value to :value" do
-    Puppet::Type.type(:selboolean).new(:name => "yay", :value => :on)
-  end
-
-  it "should support :off as a value to :value" do
-    Puppet::Type.type(:selboolean).new(:name => "yay", :value => :off)
+  [:on, :off, :true, :false, true, false].each do |val|
+    it "should support #{val.inspect} as a value to :value" do
+      Puppet::Type.type(:selboolean).new(:name => "yay", :value => val)
+    end
   end
 
   it "should support :true as a value to :persistent" do
