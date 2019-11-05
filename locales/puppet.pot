@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.17-61-gc944d03\n"
+"Project-Id-Version: Puppet automation framework 5.5.17-84-g86890cf\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-10-30 05:45+0000\n"
-"PO-Revision-Date: 2019-10-30 05:45+0000\n"
+"POT-Creation-Date: 2019-11-05 08:01+0000\n"
+"PO-Revision-Date: 2019-11-05 08:01+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -7391,7 +7391,7 @@ msgid "Overrides file could not be read, trying again."
 msgstr ""
 
 #. TRANSLATORS 'runsvdir' is a linux service name and should not be translated
-#: ../lib/puppet/provider/service/runit.rb:93
+#: ../lib/puppet/provider/service/runit.rb:87
 msgid "Waiting 5 seconds for runsvdir to discover service %{service}"
 msgstr ""
 
@@ -8996,6 +8996,10 @@ msgstr ""
 
 #: ../lib/puppet/type/scheduled_task.rb:34 ../lib/puppet/type/scheduled_task.rb:48
 msgid "Must be specified using an absolute path."
+msgstr ""
+
+#: ../lib/puppet/type/selboolean.rb:26
+msgid "Invalid value %{value}. %{doc}"
 msgstr ""
 
 #: ../lib/puppet/type/service.rb:94
