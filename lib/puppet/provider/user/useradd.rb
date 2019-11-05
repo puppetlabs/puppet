@@ -55,35 +55,44 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
      get(:uid)
   end
 
+  def comment
+     return localcomment if @resource.forcelocal?
+     get(:comment)
+  end
+
   def finduser(key, value)
     passwd_file = "/etc/passwd"
-    passwd_keys = ['account', 'password', 'uid', 'gid', 'gecos', 'directory', 'shell']
+    passwd_keys = [:account, :password, :uid, :gid, :gecos, :directory, :shell]
     index = passwd_keys.index(key)
     File.open(passwd_file) do |f|
       f.each_line do |line|
-         user = line.split(":")
-         if user[index] == value
-             f.close
-             return user
-         end
+        user = line.split(":")
+        if user[index] == value
+          return Hash[passwd_keys.zip(user)]
+        end
       end
     end
     false
   end
 
   def local_username
-    finduser('uid', @resource.uid)
+    finduser(:uid, @resource.uid)
   end
 
   def localuid
-    user = finduser('account', resource[:name])
-    return user[2] if user
+    user = finduser(:account, resource[:name])
+    return user[:uid] if user
     false
+  end
+
+  def localcomment
+    user = finduser(:account, resource[:name])
+    user[:gecos]
   end
 
   def shell=(value)
     check_valid_shell
-    set("shell", value)
+    set(:shell, value)
   end
 
   verify :gid, "GID must be an integer" do |value|
@@ -106,7 +115,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # to ensure consistent behaviour of the useradd provider when
     # using both useradd and luseradd
     if (!@resource.allowdupe?) && @resource.forcelocal?
-       if @resource.should(:uid) && finduser('uid', @resource.should(:uid).to_s)
+       if @resource.should(:uid) && finduser(:uid, @resource.should(:uid).to_s)
            raise(Puppet::Error, "UID #{@resource.should(:uid)} already exists, use allowdupe to force user creation")
        end
     elsif @resource.allowdupe? && (!@resource.forcelocal?)
