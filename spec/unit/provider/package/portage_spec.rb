@@ -42,13 +42,13 @@ describe Puppet::Type.type(:package).provider(:portage) do
     allow(@unslotted_provider).to receive(:qatom).and_return({:category=>"dev-lang", :pn=>"ruby", :pv=>nil, :pr=>nil, :slot=>nil, :pfx=>nil, :sfx=>nil})
     allow(@unslotted_provider.class).to receive(:emerge).with('--list-sets').and_return(package_sets)
     @slotted_provider = described_class.new(@slotted_resource)
-    allow(@slotted_provider).to receive(:qatom).and_return({:category=>"dev-lang", :pn=>"ruby", :pv=>nil, :pr=>nil, :slot=>":2.1", :pfx=>nil, :sfx=>nil})
+    allow(@slotted_provider).to receive(:qatom).and_return({:category=>"dev-lang", :pn=>"ruby", :pv=>nil, :pr=>nil, :slot=>"2.1", :pfx=>nil, :sfx=>nil})
     allow(@slotted_provider.class).to receive(:emerge).with('--list-sets').and_return(package_sets)
     @versioned_provider = described_class.new(@versioned_resource)
     allow(@versioned_provider).to receive(:qatom).and_return({:category=>"dev-lang", :pn=>"ruby", :pv=>"1.9.3", :pr=>nil, :slot=>nil, :pfx=>nil, :sfx=>nil})
     allow(@versioned_provider.class).to receive(:emerge).with('--list-sets').and_return(package_sets)
     @versioned_slotted_provider = described_class.new(@versioned_slotted_resource)
-    allow(@versioned_slotted_provider).to receive(:qatom).and_return({:category=>"dev-lang", :pn=>"ruby", :pv=>"1.9.3", :pr=>nil, :slot=>":1.9", :pfx=>"=", :sfx=>nil})
+    allow(@versioned_slotted_provider).to receive(:qatom).and_return({:category=>"dev-lang", :pn=>"ruby", :pv=>"1.9.3", :pr=>nil, :slot=>"1.9", :pfx=>"=", :sfx=>nil})
     allow(@versioned_slotted_provider.class).to receive(:emerge).with('--list-sets').and_return(package_sets)
     @set_provider = described_class.new(@set_resource)
     allow(@set_provider).to receive(:qatom).and_return({:category=>nil, :pn=>"@system", :pv=>nil, :pr=>nil, :slot=>nil, :pfx=>nil, :sfx=>nil})
@@ -166,7 +166,7 @@ describe Puppet::Type.type(:package).provider(:portage) do
   end
 
   it "can extract the slot from the package name" do
-    expect(@slotted_provider.qatom[:slot]).to eq(':2.1')
+    expect(@slotted_provider.qatom[:slot]).to eq('2.1')
   end
 
   it "returns nil for as the slot when no slot is specified" do
@@ -182,7 +182,7 @@ describe Puppet::Type.type(:package).provider(:portage) do
     expect(@versioned_slotted_provider.qatom[:category]).to eq('dev-lang')
     expect(@versioned_slotted_provider.qatom[:pn]).to eq('ruby')
     expect(@versioned_slotted_provider.qatom[:pv]).to eq('1.9.3')
-    expect(@versioned_slotted_provider.qatom[:slot]).to eq(':1.9')
+    expect(@versioned_slotted_provider.qatom[:slot]).to eq('1.9')
   end
 
   it "can handle search output with slots for unslotted packages" do

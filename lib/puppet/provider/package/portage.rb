@@ -70,7 +70,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     name = qatom[:pfx] + name if qatom[:pfx]
     name = name + '-' + qatom[:pv] if qatom[:pv]
     name = name + '-' + qatom[:pr] if qatom[:pr]
-    name = name + qatom[:slot] if qatom[:slot]
+    name = name + ':' + qatom[:slot] if qatom[:slot]
     cmd << '--update' if [:latest].include?(should)
     cmd += install_options if @resource[:install_options]
     cmd << name
@@ -84,7 +84,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     name = qatom[:pfx] + name if qatom[:pfx]
     name = name + '-' + qatom[:pv] if qatom[:pv]
     name = name + '-' + qatom[:pr] if qatom[:pr]
-    name = name + qatom[:slot] if qatom[:slot]
+    name = name + ':' + qatom[:slot] if qatom[:slot]
     cmd += uninstall_options if @resource[:uninstall_options]
     cmd << name
     if [:purged].include?(should)
@@ -247,7 +247,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     # [2.7.12: 2.7
     #  3.4.5:  3.4
     #  3.5.2:  3.5]
-    version_for_slot = versions_and_slots.find { |version_and_slot| version_and_slot.last == slot[1..-1] }
+    version_for_slot = versions_and_slots.find { |version_and_slot| version_and_slot.last == slot }
     # [3.5.2:  3.5]
     version_for_slot.first if version_for_slot
     # 3.5.2
