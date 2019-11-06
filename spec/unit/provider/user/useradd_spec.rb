@@ -317,6 +317,52 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
   end
 
+  describe "#comment" do
+    before { described_class.has_feature :libuser }
+
+    let(:content) { "myuser:x:x:x:local comment:x:x" }
+
+    it "should return the local comment string when forcelocal is true" do
+      resource[:forcelocal] = true
+      allow(File).to receive(:open).with('/etc/passwd').and_yield(content)
+      expect(provider.comment).to eq('local comment')
+    end
+
+    it "should fall back to nameservice comment string when forcelocal is false" do
+      resource[:forcelocal] = false
+      allow(provider).to receive(:get).with(:comment).and_return('remote comment')
+      expect(provider).not_to receive(:localcomment)
+      expect(provider.comment).to eq('remote comment')
+    end
+  end
+
+  describe "#finduser" do
+    before { allow(File).to receive(:open).with('/etc/passwd').and_yield(content) }
+
+    let(:content) { "sample_account:sample_password:sample_uid:sample_gid:sample_gecos:sample_directory:sample_shell" }
+    let(:output) do
+      {
+        account: 'sample_account',
+        password: 'sample_password',
+        uid: 'sample_uid',
+        gid: 'sample_gid',
+        gecos: 'sample_gecos',
+        directory: 'sample_directory',
+        shell: 'sample_shell',
+      }
+    end
+
+    [:account, :password, :uid, :gid, :gecos, :directory, :shell].each do |key|
+      it "finds an user by #{key} when asked" do
+        expect(provider.finduser(key, "sample_#{key}")).to eq(output)
+      end
+    end
+
+    it "returns false when specified key/value pair is not found" do
+      expect(provider.finduser(:account, 'invalid_account')).to eq(false)
+    end
+  end
+
   describe "#check_allow_dup" do
     it "should return an array with a flag if dup is allowed" do
       resource[:allowdupe] = :true
