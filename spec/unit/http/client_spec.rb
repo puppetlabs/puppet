@@ -349,4 +349,62 @@ describe Puppet::HTTP::Client do
       expect(response.body).to eq('followed')
     end
   end
+
+  context "when response indicates an overloaded server" do
+    def retry_after(datetime)
+      stub_request(:get, uri)
+        .to_return(status: [503, 'Service Unavailable'], headers: {'Retry-After' => datetime}).then
+        .to_return(status: 200)
+    end
+
+    it "returns a 503 response if Retry-After is not set" do
+      stub_request(:get, uri).to_return(status: [503, 'Service Unavailable'])
+
+      expect(client.get(uri).code).to eq(503)
+    end
+
+    it "raises if Retry-After is not convertible to an Integer or RFC 2822 Date" do
+      stub_request(:get, uri).to_return(status: [503, 'Service Unavailable'], headers: {'Retry-After' => 'foo'})
+
+      expect {
+        client.get(uri)
+      }.to raise_error(Puppet::HTTP::ProtocolError, /Failed to parse Retry-After header 'foo' as an integer or RFC 2822 date/)
+    end
+
+    it "should sleep and retry if Retry-After is an Integer" do
+      retry_after('42')
+
+      expect(::Kernel).to receive(:sleep).with(42)
+
+      client.get(uri)
+    end
+
+    it "should sleep and retry if Retry-After is an RFC 2822 Date" do
+      retry_after('Wed, 13 Apr 2005 15:18:05 GMT')
+
+      now = DateTime.new(2005, 4, 13, 8, 17, 5, '-07:00')
+      allow(DateTime).to receive(:now).and_return(now)
+
+      expect(::Kernel).to receive(:sleep).with(60)
+
+      client.get(uri)
+    end
+
+    it "should sleep for no more than the Puppet runinterval" do
+      retry_after('60')
+      Puppet[:runinterval] = 30
+
+      expect(::Kernel).to receive(:sleep).with(30)
+
+      client.get(uri)
+    end
+
+    it "should sleep for 0 seconds if the RFC 2822 date has past" do
+      retry_after('Wed, 13 Apr 2005 15:18:05 GMT')
+
+      expect(::Kernel).to receive(:sleep).with(0)
+
+      client.get(uri)
+    end
+  end
 end

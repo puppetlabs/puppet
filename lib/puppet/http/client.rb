@@ -1,5 +1,5 @@
 class Puppet::HTTP::Client
-  def initialize(pool: Puppet::Network::HTTP::Pool.new, ssl_context: nil, redirect_limit: 10)
+  def initialize(pool: Puppet::Network::HTTP::Pool.new, ssl_context: nil, redirect_limit: 10, retry_limit: 100)
     @pool = pool
     @default_headers = {
       'X-Puppet-Version' => Puppet.version,
@@ -7,6 +7,7 @@ class Puppet::HTTP::Client
     }.freeze
     @default_ssl_context = ssl_context
     @redirector = Puppet::HTTP::Redirector.new(redirect_limit)
+    @retry_after_handler = Puppet::HTTP::RetryAfterHandler.new(retry_limit, Puppet[:runinterval])
   end
 
   def connect(uri, ssl_context: nil, &block)
@@ -70,6 +71,7 @@ class Puppet::HTTP::Client
 
   def execute_streaming(request, ssl_context:, &block)
     redirects = 0
+    retries = 0
 
     loop do
       connect(request.uri, ssl_context: ssl_context) do |http|
@@ -82,6 +84,14 @@ class Puppet::HTTP::Client
               request = @redirector.redirect_to(request, response, redirects)
               redirects += 1
               next
+            elsif @retry_after_handler.retry_after?(request, response)
+              interval = @retry_after_handler.retry_after_interval(request, response, retries)
+              retries += 1
+              if interval
+                Puppet.warning(_("Sleeping for %{interval} seconds before retrying the request") % { interval: interval })
+                ::Kernel.sleep(interval)
+                next
+              end
             end
 
             yield response

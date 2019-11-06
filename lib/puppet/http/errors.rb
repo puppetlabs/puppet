@@ -10,4 +10,12 @@ module Puppet::HTTP
       super(_("Too many HTTP redirections for %{addr}") % { addr: addr})
     end
   end
+
+  class TooManyRetryAfters < HTTPError
+    def initialize(addr)
+      super(_("Too many HTTP retries for %{addr}") % { addr: addr})
+    end
+  end
+
+
 end
