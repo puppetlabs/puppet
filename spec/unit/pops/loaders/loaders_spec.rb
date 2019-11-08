@@ -52,6 +52,10 @@ describe 'loaders' do
 
   # Loaders caches the puppet_system_loader, must reset between tests
 
+  before :each do
+    allow(File).to receive(:read).and_call_original
+  end
+
   context 'when loading pp resource types using auto loading' do
     let(:pp_resources) { config_dir('pp_resources') }
     let(:environments) { Puppet::Environments::Directories.new(my_fixture_dir, []) }
