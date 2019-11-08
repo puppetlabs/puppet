@@ -1,6 +1,7 @@
 require 'puppet/application'
 require 'puppet/configurer'
 require 'puppet/util/network_device'
+require 'puppet/ssl/oids'
 
 class Puppet::Application::Device < Puppet::Application
 
@@ -413,6 +414,8 @@ Licensed under the Apache 2.0 License
 
   def setup
     setup_logs
+
+    Puppet::SSL::Oids.register_puppet_oids
 
     # setup global device-specific defaults; creates all necessary directories, etc
     Puppet.settings.use :main, :agent, :device, :ssl
