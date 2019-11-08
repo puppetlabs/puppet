@@ -306,7 +306,6 @@ module Puppet
         :default  => ! Puppet::Util::Platform.windows?,
         :type     => :boolean,
         :desc     => "Whether Puppet should manage the owner, group, and mode of files it uses internally.
-
           **Note**: For Windows agents, the default is `false` for versions 4.10.13 and greater, versions 5.5.6 and greater, and versions 6.0 and greater.",
     },
     :onetime => {
