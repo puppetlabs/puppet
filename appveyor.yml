@@ -4,6 +4,11 @@ install:
 build: off
 matrix:
   fast_finish: true
+  exclude:
+    - platform: Ruby25-x64
+      LOCALE: ja-JP
+    - platform: Ruby24-x64
+      LOCALE: ja-JP
 
 # Ruby versions under test
 platform:
