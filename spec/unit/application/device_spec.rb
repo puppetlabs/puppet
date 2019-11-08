@@ -170,6 +170,12 @@ describe Puppet::Application::Device do
 
       device.handle_facts(true)
     end
+
+    it "should register ssl OIDs" do
+      expect(Puppet::SSL::Oids).to receive(:register_puppet_oids)
+
+      device.setup
+    end
   end
 
   describe "during setup" do
