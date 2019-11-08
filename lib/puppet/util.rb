@@ -359,7 +359,7 @@ module Util
     path = URI.unescape(uri.path.encode(Encoding::UTF_8))
 
     if Puppet::Util::Platform.windows? && uri.scheme == 'file'
-      if uri.host
+      if uri.host && !uri.host.empty?
         path = "//#{uri.host}" + path # UNC
       else
         path.sub!(/^\//, '')

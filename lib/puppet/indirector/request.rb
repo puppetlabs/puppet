@@ -272,7 +272,7 @@ class Puppet::Indirector::Request
       return
     end
 
-    @server = uri.host if uri.host
+    @server = uri.host if uri.host && !uri.host.empty?
 
     # If the URI class can look up the scheme, it will provide a port,
     # otherwise it will default to '0'.

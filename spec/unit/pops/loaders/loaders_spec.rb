@@ -52,6 +52,10 @@ describe 'loaders' do
 
   # Loaders caches the puppet_system_loader, must reset between tests
 
+  before :each do
+    allow(File).to receive(:read).and_call_original
+  end
+
   context 'when loading pp resource types using auto loading' do
     let(:pp_resources) { config_dir('pp_resources') }
     let(:environments) { Puppet::Environments::Directories.new(my_fixture_dir, []) }
@@ -455,7 +459,9 @@ describe 'loaders' do
     end
 
     it "a function with syntax error has helpful error message" do
-      expect { loader.load_typed(typed_name(:function, 'func_with_syntax_error')) }.to raise_error(/syntax error, unexpected keyword_end/)
+      expect {
+        loader.load_typed(typed_name(:function, 'func_with_syntax_error'))
+      }.to raise_error(/syntax error, unexpected (keyword_)?end/)
     end
   end
 
