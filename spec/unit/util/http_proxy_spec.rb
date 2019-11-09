@@ -79,9 +79,15 @@ describe Puppet::Util::HttpProxy do
         expects_direct_connection_to(http, www)
       end
 
-      it 'connects directly to the server when no_proxy matches domain like ruby does' do
-        pending("PUP-10106 Puppet doesn't match domains like ruby")
+      it 'connects directly to the server when no_proxy matches a domain suffix like ruby does' do
         Puppet[:no_proxy] = 'example.com'
+
+        http = subject.proxy(www)
+        expects_direct_connection_to(http, www)
+      end
+
+      it 'connects directly to the server when no_proxy matches a partial suffix like ruby does' do
+        Puppet[:no_proxy] = 'ample.com'
 
         http = subject.proxy(www)
         expects_direct_connection_to(http, www)
