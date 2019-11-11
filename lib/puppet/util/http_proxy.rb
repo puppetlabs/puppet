@@ -52,14 +52,6 @@ module Puppet::Util::HttpProxy
       host, port = d.split(':')
       host = Regexp.escape(host).gsub('\*', '.*')
 
-      #If the host of this no_proxy value starts with '.', this entry is
-      #a domain level entry. Don't pin the regex to the beginning of the entry.
-      #If it does not start with a '.' then it is a host specific entry and
-      #should be matched to the destination starting at the beginning.
-      unless host =~ /^\\\./
-        host = "^#{host}"
-      end
-
       #If this no_proxy entry specifies a port, we want to match it against
       #the destination port.  Otherwise just match hosts.
       if port

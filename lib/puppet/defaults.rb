@@ -546,9 +546,10 @@ module Puppet
     },
     :http_proxy_host => {
       :default    => "none",
-      :desc       => "The HTTP proxy host to use for outgoing connections.  Note: You
+      :desc       => "The HTTP proxy host to use for outgoing connections. The proxy will be bypassed if
+      the server's hostname matches the NO_PROXY environment variable or `no_proxy` setting. Note: You
       may need to use a FQDN for the server hostname when using a proxy. Environment variable
-      http_proxy or HTTP_PROXY will override this value",
+      http_proxy or HTTP_PROXY will override this value. ",
     },
     :http_proxy_port => {
       :default    => 3128,
@@ -574,7 +575,7 @@ module Puppet
     },
     :no_proxy => {
       :default    => "localhost, 127.0.0.1",
-      :desc       => "List of domain names that should not go through `http_proxy_host`. Environment variable no_proxy or NO_PROXY will override this value.",
+      :desc       => "List of host or domain names that should not go through `http_proxy_host`. Environment variable no_proxy or NO_PROXY will override this value. Names can be specified as an FQDN `host.example.com`, wildcard `*.example.com`, dotted domain `.example.com`, or suffix `example.com`.",
     },
     :http_keepalive_timeout => {
       :default    => "4s",
