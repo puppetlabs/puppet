@@ -306,7 +306,6 @@ module Puppet
         :default  => ! Puppet::Util::Platform.windows?,
         :type     => :boolean,
         :desc     => "Whether Puppet should manage the owner, group, and mode of files it uses internally.
-        
           **Note**: For Windows agents, the default is `false` for versions 4.10.13 and greater, versions 5.5.6 and greater, and versions 6.0 and greater.",
     },
     :onetime => {
@@ -535,6 +534,16 @@ module Puppet
     :facts_terminus => {
       :default => 'facter',
       :desc => "The node facts terminus.",
+    },
+    :trusted_external_command => {
+      :default  => nil,
+      :desc     => "The external trusted facts script to use.
+        This setting's value can be set to the path to an executable command that
+        can produce external trusted facts. The command must:
+
+        * Take the name of a node as a command-line argument.
+        * Return a JSON hash with the external trusted facts for this node.
+        * For unknown or invalid nodes, exit with a non-zero exit code.",
     },
     :default_file_terminus => {
       :type       => :terminus,

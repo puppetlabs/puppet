@@ -30,6 +30,21 @@ describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java'
     cert
   end
 
+  let(:external_data) {
+    {
+      'string' => 'a',
+      'integer' => 1,
+      'boolean' => true,
+      'hash' => { 'one' => 'two' },
+      'array' => ['b', 2, {}]
+    }
+  }
+
+  def allow_external_trusted_data(certname, data)
+    Puppet[:trusted_external_command] = '/usr/bin/generate_data.sh'
+    allow(Puppet::Util::Execution).to receive(:execute).with(['/usr/bin/generate_data.sh', certname], anything).and_return(JSON.dump(data))
+  end
+
   context "when remote" do
     it "has no cert information when it isn't authenticated" do
       trusted = Puppet::Context::TrustedInformation.remote(false, 'ignored', nil)
@@ -61,6 +76,14 @@ describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java'
       expect(trusted.certname).to eq('cert name')
       expect(trusted.extensions).to eq({})
     end
+
+    it 'contains external trusted data' do
+      allow_external_trusted_data('cert name', external_data)
+
+      trusted = Puppet::Context::TrustedInformation.remote(true, 'cert name', nil)
+
+      expect(trusted.external).to eq(external_data)
+    end
   end
 
   context "when local" do
@@ -85,6 +108,14 @@ describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java'
       expect(trusted.hostname).to be_nil
       expect(trusted.domain).to be_nil
     end
+
+    it 'contains external trusted data' do
+      allow_external_trusted_data('cert name', external_data)
+
+      trusted = Puppet::Context::TrustedInformation.remote(true, 'cert name', nil)
+
+      expect(trusted.external).to eq(external_data)
+    end
   end
 
   it "converts itself to a hash" do
@@ -98,7 +129,8 @@ describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java'
         '1.3.6.1.4.1.34380.1.2.2' => 'more CSR specific info',
       },
       'hostname' => 'cert name',
-      'domain' => nil
+      'domain' => nil,
+      'external' => {},
     })
   end
 
@@ -113,7 +145,8 @@ describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java'
         '1.3.6.1.4.1.34380.1.2.2' => 'more CSR specific info',
       },
       'hostname' => 'hostname',
-      'domain' => 'domain.long'
+      'domain' => 'domain.long',
+      'external' => {},
     })
   end
 
