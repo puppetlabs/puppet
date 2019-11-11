@@ -75,8 +75,9 @@ class Puppet::Context::TrustedInformation
   end
 
   def self.retrieve_trusted_external(certname)
-    deep_freeze(Puppet::TrustedExternal.retrieve(certname))
+    deep_freeze(Puppet::TrustedExternal.retrieve(certname) || {})
   end
+  private_class_method :retrieve_trusted_external
 
   # Deeply freezes the given object. The object and its content must be of the types:
   # Array, Hash, Numeric, Boolean, Regexp, NilClass, or String. All other types raises an Error.
@@ -98,6 +99,7 @@ class Puppet::Context::TrustedInformation
     end
     object
   end
+  private_class_method :deep_freeze
 
   def to_h
     {
