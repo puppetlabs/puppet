@@ -110,7 +110,8 @@ test_name "certificate extensions available as trusted data" do
             '1.3.6.1.4.1.34380.1.2.2' => 'webops'
           },
           'hostname' => agent_hostname,
-          'domain' => agent_domain
+          'domain' => agent_domain,
+          'externa' => {}
         },
         trusted_data)
     end
