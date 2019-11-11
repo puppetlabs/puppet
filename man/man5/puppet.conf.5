@@ -858,7 +858,7 @@ The maximum amount of time a persistent HTTP connection can remain idle in the c
 .IP "" 0
 .
 .SS "http_proxy_host"
-The HTTP proxy host to use for outgoing connections\. Note: You may need to use a FQDN for the server hostname when using a proxy\. Environment variable http_proxy or HTTP_PROXY will override this value
+The HTTP proxy host to use for outgoing connections\. The proxy will be bypassed if the server\'s hostname matches the NO_PROXY environment variable or \fBno_proxy\fR setting\. Note: You may need to use a FQDN for the server hostname when using a proxy\. Environment variable http_proxy or HTTP_PROXY will override this value\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: none
@@ -1238,7 +1238,7 @@ The short name for the EC curve used to generate the EC private key\. Valid valu
 .IP "" 0
 .
 .SS "no_proxy"
-List of domain names that should not go through \fBhttp_proxy_host\fR\. Environment variable no_proxy or NO_PROXY will override this value\.
+List of host or domain names that should not go through \fBhttp_proxy_host\fR\. Environment variable no_proxy or NO_PROXY will override this value\. Names can be specified as an FQDN \fBhost\.example\.com\fR, wildcard \fB*\.example\.com\fR, dotted domain \fB\.example\.com\fR, or suffix \fBexample\.com\fR\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: localhost, 127\.0\.0\.1
