@@ -111,7 +111,7 @@ test_name "certificate extensions available as trusted data" do
           },
           'hostname' => agent_hostname,
           'domain' => agent_domain,
-          'externa' => {}
+          'external' => {}
         },
         trusted_data)
     end
