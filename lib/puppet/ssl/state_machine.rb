@@ -236,6 +236,7 @@ class Puppet::SSL::StateMachine
       cert = OpenSSL::X509::Certificate.new(
         route.get_certificate(Puppet[:certname], ssl_context: @ssl_context)
       )
+      Puppet.info _("Downloaded certificate for %{name} from %{url}") % { name: Puppet[:certname], url: route.url }
       # verify client cert before saving
       next_ctx = @ssl_provider.create_context(
         cacerts: @ssl_context.cacerts, crls: @ssl_context.crls, private_key: @private_key, client_cert: cert

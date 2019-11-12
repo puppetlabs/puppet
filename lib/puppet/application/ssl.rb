@@ -164,12 +164,10 @@ HELP
     route = create_route(ssl_context)
     route.put_certificate_request(Puppet[:certname], csr, ssl_context: ssl_context)
     @cert_provider.save_request(Puppet[:certname], csr)
-    Puppet.notice _("Submitted certificate request for '%{name}' to https://%{server}:%{port}") % {
-      name: Puppet[:certname], server: Puppet[:ca_server], port: Puppet[:ca_port]
-    }
+    Puppet.notice _("Submitted certificate request for '%{name}' to %{url}") % { name: Puppet[:certname], url: route.url }
   rescue Puppet::HTTP::ResponseError => e
     if e.response.code == 400
-      raise Puppet::Error.new(_("Could not submit certificate request for '%{name}' to https://%{server}:%{port} due to a conflict on the server") % { name: Puppet[:certname], server: Puppet[:ca_server], port: Puppet[:ca_port] })
+      raise Puppet::Error.new(_("Could not submit certificate request for '%{name}' to %{url} due to a conflict on the server") % { name: Puppet[:certname], url: route.url })
     else
       raise Puppet::Error.new(_("Failed to submit certificate request: %{message}") % { message: e.message }, e)
     end
@@ -180,25 +178,20 @@ HELP
   def download_cert(ssl_context)
     key = @cert_provider.load_private_key(Puppet[:certname])
 
-    Puppet.info _("Downloading certificate '%{name}' from https://%{server}:%{port}") % {
-      name: Puppet[:certname], server: Puppet[:ca_server], port: Puppet[:ca_port]
-    }
-
     # try to download cert
     route = create_route(ssl_context)
+    Puppet.info _("Downloading certificate '%{name}' from %{url}") % { name: Puppet[:certname], url: route.url }
+
     x509 = route.get_certificate(Puppet[:certname], ssl_context: ssl_context)
     cert = OpenSSL::X509::Certificate.new(x509)
     Puppet.notice _("Downloaded certificate '%{name}' with fingerprint %{fingerprint}") % { name: Puppet[:certname], fingerprint: fingerprint(cert) }
+
     # verify client cert before saving
     @ssl_provider.create_context(
       cacerts: ssl_context.cacerts, crls: ssl_context.crls, private_key: key, client_cert: cert
     )
     @cert_provider.save_client_cert(Puppet[:certname], cert)
     @cert_provider.delete_request(Puppet[:certname])
-
-    Puppet.notice _("Downloaded certificate '%{name}' with fingerprint %{fingerprint}") % {
-      name: Puppet[:certname], fingerprint: fingerprint(cert)
-    }
     cert
   rescue Puppet::HTTP::ResponseError => e
     if e.response.code == 404
