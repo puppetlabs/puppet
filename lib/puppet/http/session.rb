@@ -27,7 +27,7 @@ class Puppet::HTTP::Session
           Puppet.info("Resolved service '#{name}' to #{service.url}")
           return service
         rescue Puppet::HTTP::ConnectionError => e
-          Puppet.err("Connection to #{service.url} failed #{e.message}, trying next route")
+          Puppet.debug("Connection to #{service.url} failed #{e.message}, trying next route")
         end
       end
     end

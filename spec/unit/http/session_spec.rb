@@ -31,12 +31,13 @@ describe Puppet::HTTP::Session do
 
   context 'when routing' do
     it 'returns the first resolved service' do
+      Puppet[:log_level] = :debug
       resolvers = [DummyResolver.new(bad_service), DummyResolver.new(good_service)]
       session = described_class.new(client, resolvers)
       resolved = session.route_to(:ca)
 
       expect(resolved).to eq(good_service)
-      expect(@logs).to include(an_object_having_attributes(level: :err, message: "Connection to #{uri} failed whoops, trying next route"))
+      expect(@logs).to include(an_object_having_attributes(level: :debug, message: "Connection to #{uri} failed whoops, trying next route"))
     end
 
     it 'only resolves once per session' do
