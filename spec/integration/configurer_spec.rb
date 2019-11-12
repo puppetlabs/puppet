@@ -65,8 +65,6 @@ describe Puppet::Configurer do
 
     describe 'resubmitting facts' do
       context 'when resubmit_facts is set to false' do
-        before(:each) { Puppet[:resubmit_facts] = false }
-
         it 'should not send data' do
           expect(@configurer).to receive(:resubmit_facts).never
 
@@ -110,11 +108,9 @@ describe Puppet::Configurer do
         it 'records time spent resubmitting facts' do
           report = Puppet::Transaction::Report.new
 
-          allow(report).to receive(:add_times)
-          expect(report).to receive(:add_times).with(:resubmit_facts,
-                                                     kind_of(Numeric))
-
           @configurer.run(catalog: @catalog, report: report)
+
+          expect(report.metrics['time'].values).to include(["resubmit_facts", anything, Numeric])
         end
       end
     end
