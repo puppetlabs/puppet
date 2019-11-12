@@ -19,12 +19,12 @@ class Puppet::HTTP::Session
     return cached if cached
 
     @resolvers.each do |resolver|
-      Puppet.info("Resolving service '#{name}' using #{resolver.class}")
+      Puppet.debug("Resolving service '#{name}' using #{resolver.class}")
       resolver.resolve(self, name) do |service|
         begin
           service.connect(ssl_context: ssl_context)
           @resolved_services[name] = service
-          Puppet.info("Resolved service '#{name}' to #{service.url}")
+          Puppet.debug("Resolved service '#{name}' to #{service.url}")
           return service
         rescue Puppet::HTTP::ConnectionError => e
           Puppet.debug("Connection to #{service.url} failed #{e.message}, trying next route")
