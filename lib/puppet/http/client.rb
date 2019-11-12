@@ -83,7 +83,7 @@ class Puppet::HTTP::Client
         http.request(request) do |nethttp|
           response = Puppet::HTTP::Response.new(nethttp)
           begin
-            Puppet.info("HTTP #{request.method.upcase} returned #{response.code} #{response.reason}")
+            Puppet.debug("HTTP #{request.method.upcase} #{request.uri} returned #{response.code} #{response.reason}")
 
             if @redirector.redirect?(request, response)
               request = @redirector.redirect_to(request, response, redirects)
