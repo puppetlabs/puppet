@@ -459,7 +459,7 @@ class Puppet::Configurer
       Puppet::Node::Facts.indirection.terminus_class = :rest
 
       server = Puppet::Node::Facts::Rest.server
-      Puppet.notice(_("Uploading facts for '%{node}' to: '%{server}'") % {
+      Puppet.info(_("Uploading facts for %{node} to %{server}") % {
                     node: facts.name,
                     server: server})
 
