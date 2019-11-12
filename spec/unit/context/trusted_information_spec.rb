@@ -45,6 +45,12 @@ describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java'
     allow(Puppet::Util::Execution).to receive(:execute).with(['/usr/bin/generate_data.sh', certname], anything).and_return(JSON.dump(data))
   end
 
+  it "defaults external to an empty hash" do
+    trusted = Puppet::Context::TrustedInformation.new(false, 'ignored', nil)
+
+    expect(trusted.external).to eq({})
+  end
+
   context "when remote" do
     it "has no cert information when it isn't authenticated" do
       trusted = Puppet::Context::TrustedInformation.remote(false, 'ignored', nil)
