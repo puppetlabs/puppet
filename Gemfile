@@ -20,7 +20,7 @@ gem "puppet-resource_api", *location_for(ENV['RESOURCE_API_LOCATION'] || ["~> 1.
 
 group(:features) do
   gem 'diff-lcs', '~> 1.3', require: false
-  gem 'hiera-eyaml', require: false
+  gem 'hiera-eyaml', *location_for(ENV['HIERA_EYAML_LOCATION'])
   gem 'hocon', '~> 1.0', require: false
   # requires native libshadow headers/libs
   #gem 'ruby-shadow', '~> 2.5', require: false, platforms: [:ruby]
