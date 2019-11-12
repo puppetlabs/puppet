@@ -29,12 +29,12 @@ class Puppet::Context::TrustedInformation
   # @return [String]
   attr_reader :hostname
 
-  # Additional external facts loaded through `trusted_external_terminus`.
+  # Additional external facts loaded through `trusted_external_command`.
   #
   # @return [Hash]
   attr_reader :external
 
-  def initialize(authenticated, certname, extensions, external)
+  def initialize(authenticated, certname, extensions, external = {})
     @authenticated = authenticated.freeze
     @certname = certname.freeze
     @extensions = extensions.freeze
