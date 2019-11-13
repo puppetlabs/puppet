@@ -89,6 +89,8 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   #
   # @api private
   def setsockopts(netio)
+    return unless netio
+
     socket = netio.io
     socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE, true)
   end

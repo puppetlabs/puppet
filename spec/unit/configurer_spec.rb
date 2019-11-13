@@ -749,6 +749,7 @@ describe Puppet::Configurer do
       end
 
       it "should not make a node request" do
+        expects_new_catalog_only(@catalog)
         expect(Puppet::Node.indirection).not_to receive(:find)
 
         @agent.run
