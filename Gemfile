@@ -74,7 +74,7 @@ group(:development, :test) do
   gem 'hashdiff', '0.3.8'
   gem 'webmock', '~> 1.24'
   gem 'vcr', '~> 2.9'
-  gem "hiera-eyaml", *location_for(ENV['HIERA_EYAML_LOCATION'] || "< 3.1.0")
+  gem "hiera-eyaml", *location_for(ENV['HIERA_EYAML_LOCATION'])
 
   gem 'memory_profiler', :platforms => [:mri_21, :mri_22, :mri_23, :mri_24, :mri_25]
 end
