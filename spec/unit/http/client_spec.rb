@@ -6,6 +6,10 @@ describe Puppet::HTTP::Client do
   let(:uri) { URI.parse('https://www.example.com') }
   let(:client) { described_class.new }
 
+  it 'creates unique sessions' do
+    expect(client.create_session).to_not eq(client.create_session)
+  end
+
   context "when connecting" do
     it 'connects to HTTP URLs' do
       uri = URI.parse('http://www.example.com')

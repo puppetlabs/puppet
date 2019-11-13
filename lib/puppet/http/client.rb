@@ -8,6 +8,11 @@ class Puppet::HTTP::Client
     @default_ssl_context = ssl_context
     @redirector = Puppet::HTTP::Redirector.new(redirect_limit)
     @retry_after_handler = Puppet::HTTP::RetryAfterHandler.new(retry_limit, Puppet[:runinterval])
+    @resolvers = build_resolvers
+  end
+
+  def create_session
+    Puppet::HTTP::Session.new(self, @resolvers)
   end
 
   def connect(uri, ssl_context: nil, &block)
@@ -78,7 +83,7 @@ class Puppet::HTTP::Client
         http.request(request) do |nethttp|
           response = Puppet::HTTP::Response.new(nethttp)
           begin
-            Puppet.info("HTTP #{request.method.upcase} returned #{response.code} #{response.reason}")
+            Puppet.debug("HTTP #{request.method.upcase} #{request.uri} returned #{response.code} #{response.reason}")
 
             if @redirector.redirect?(request, response)
               request = @redirector.redirect_to(request, response, redirects)
@@ -136,5 +141,16 @@ class Puppet::HTTP::Client
     if user && password
       request.basic_auth(user, password)
     end
+  end
+
+  def build_resolvers
+    resolvers = []
+
+    if Puppet[:use_srv_records]
+      resolvers << Puppet::HTTP::Resolver::SRV.new(domain: Puppet[:srv_domain])
+    end
+
+    resolvers << Puppet::HTTP::Resolver::Settings.new
+    resolvers.freeze
   end
 end
