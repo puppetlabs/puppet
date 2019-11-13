@@ -1731,6 +1731,11 @@ EOT
       :type     => :boolean,
       :desc     => "Whether to send reports after every transaction.",
     },
+    :resubmit_facts => {
+      :default  => false,
+      :type     => :boolean,
+      :desc     => "Whether to send updated facts after every transaction.",
+    },
     :lastrunfile =>  {
       :default  => "$statedir/last_run_summary.yaml",
       :type     => :file,
