@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.10.1-265-g5405b2f\n"
+"Project-Id-Version: Puppet automation framework 6.10.1-270-g4f448a3\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-11-13 01:33+0000\n"
-"PO-Revision-Date: 2019-11-13 01:33+0000\n"
+"POT-Creation-Date: 2019-11-13 02:48+0000\n"
+"PO-Revision-Date: 2019-11-13 02:48+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -600,32 +600,40 @@ msgstr ""
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:409
+#: ../lib/puppet/configurer.rb:417
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:413
+#: ../lib/puppet/configurer.rb:421
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:425 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:433 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:434
+#: ../lib/puppet/configurer.rb:442
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:446
+#: ../lib/puppet/configurer.rb:462
+msgid "Uploading facts for %{node} to %{server}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:473
+msgid "Failed to submit facts: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:488
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:464
+#: ../lib/puppet/configurer.rb:506
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:484
+#: ../lib/puppet/configurer.rb:526
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
