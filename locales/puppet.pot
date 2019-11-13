@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.10.1-189-g398aaf5\n"
+"Project-Id-Version: Puppet automation framework 6.10.1-265-g5405b2f\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-11-01 22:08+0000\n"
-"PO-Revision-Date: 2019-11-01 22:08+0000\n"
+"POT-Creation-Date: 2019-11-13 01:33+0000\n"
+"PO-Revision-Date: 2019-11-13 01:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -174,7 +174,7 @@ msgstr ""
 msgid "No help available for puppet %{app_name}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:24 ../lib/puppet/application/device.rb:23
+#: ../lib/puppet/application/agent.rb:24 ../lib/puppet/application/device.rb:24
 msgid "Cancelling startup"
 msgstr ""
 
@@ -244,51 +244,51 @@ msgstr ""
 msgid "Display help about resource types"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:82
+#: ../lib/puppet/application/device.rb:83
 msgid "Manage remote network devices"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:229
+#: ../lib/puppet/application/device.rb:230
 msgid "resource command requires target"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:232
+#: ../lib/puppet/application/device.rb:233
 msgid "facts command requires target"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:235
+#: ../lib/puppet/application/device.rb:236
 msgid "missing argument: --target is required when using --apply"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:236
+#: ../lib/puppet/application/device.rb:237
 msgid "%{file} does not exist, cannot apply"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:254
+#: ../lib/puppet/application/device.rb:255
 msgid "Target device / certificate '%{target}' not found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:256
+#: ../lib/puppet/application/device.rb:257
 msgid "No device found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:315
+#: ../lib/puppet/application/device.rb:316
 msgid "retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:330
+#: ../lib/puppet/application/device.rb:331
 msgid "retrieving facts from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:353
+#: ../lib/puppet/application/device.rb:354
 msgid "starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:391 ../lib/puppet/application/resource.rb:196
+#: ../lib/puppet/application/device.rb:392 ../lib/puppet/application/resource.rb:196
 msgid "You must specify the type to display"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:392 ../lib/puppet/application/resource.rb:197
+#: ../lib/puppet/application/device.rb:393 ../lib/puppet/application/resource.rb:197
 msgid "Could not find type %{type}"
 msgstr ""
 
@@ -657,8 +657,12 @@ msgstr ""
 msgid "Attempted to pop, but already at root of the context stack."
 msgstr ""
 
-#: ../lib/puppet/context/trusted_information.rb:48
+#: ../lib/puppet/context/trusted_information.rb:58
 msgid "TrustedInformation expected a certificate, but none was given."
+msgstr ""
+
+#: ../lib/puppet/context/trusted_information.rb:98 ../lib/puppet/parser/scope.rb:835
+msgid "Unsupported data type: '%{klass}'"
 msgstr ""
 
 #: ../lib/puppet/daemon.rb:83
@@ -694,29 +698,29 @@ msgid "Valid values are %{values}."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:495
+#: ../lib/puppet/defaults.rb:494
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:497
+#: ../lib/puppet/defaults.rb:496
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:676
+#: ../lib/puppet/defaults.rb:686
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:757
+#: ../lib/puppet/defaults.rb:767
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:938
+#: ../lib/puppet/defaults.rb:948
 msgid "Setting 'ssl_client_ca_auth' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1017 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1027 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
@@ -2207,6 +2211,46 @@ msgstr ""
 #. TRANSLATORS '--graph' refers to a command line option and OmniGraffle and GraphViz are program names and should not be translated
 #: ../lib/puppet/graph/simple_graph.rb:244
 msgid "Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz"
+msgstr ""
+
+#: ../lib/puppet/http/client.rb:26
+msgid "Failed to connect to %{uri}: %{message}"
+msgstr ""
+
+#: ../lib/puppet/http/client.rb:91
+msgid "Sleeping for %{interval} seconds before retrying the request"
+msgstr ""
+
+#: ../lib/puppet/http/client.rb:120
+msgid "Request to %{uri} interrupted after %{elapsed} seconds"
+msgstr ""
+
+#: ../lib/puppet/http/client.rb:122
+msgid "Request to %{uri} timed out after %{elapsed} seconds"
+msgstr ""
+
+#: ../lib/puppet/http/client.rb:124
+msgid "Request to %{uri} failed after %{elapsed} seconds: %{message}"
+msgstr ""
+
+#: ../lib/puppet/http/errors.rb:10
+msgid "Too many HTTP redirections for %{addr}"
+msgstr ""
+
+#: ../lib/puppet/http/errors.rb:16
+msgid "Too many HTTP retries for %{addr}"
+msgstr ""
+
+#: ../lib/puppet/http/redirector.rb:42
+msgid "Location response header is missing"
+msgstr ""
+
+#: ../lib/puppet/http/redirector.rb:46
+msgid "Location URI is invalid: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/http/retry_after_handler.rb:44
+msgid "Failed to parse Retry-After header '%{retry_after}' as an integer or RFC 2822 date"
 msgstr ""
 
 #: ../lib/puppet/indirector.rb:25
@@ -3890,15 +3934,15 @@ msgstr ""
 msgid "Received a %{status_code} response from %{server_hostname}. Sleeping for %{retry_sleep} seconds before retrying the request."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:332
+#: ../lib/puppet/network/http/connection.rb:331
 msgid "request %{uri} interrupted after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:334
+#: ../lib/puppet/network/http/connection.rb:333
 msgid "request %{uri} timed out after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:336
+#: ../lib/puppet/network/http/connection.rb:335
 msgid "request %{uri} failed: %{msg}"
 msgstr ""
 
@@ -4636,10 +4680,6 @@ msgstr ""
 
 #: ../lib/puppet/parser/scope.rb:781
 msgid "Cannot reassign variable '$%{name}'"
-msgstr ""
-
-#: ../lib/puppet/parser/scope.rb:835
-msgid "Unsupported data type: '%{klass}'"
 msgstr ""
 
 #: ../lib/puppet/parser/scope.rb:1012
@@ -9283,7 +9323,7 @@ msgstr ""
 msgid "Could not write crontab for %{path}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/http_proxy.rb:223
+#: ../lib/puppet/util/http_proxy.rb:215
 msgid "Too many HTTP redirections for %{uri}"
 msgstr ""
 
