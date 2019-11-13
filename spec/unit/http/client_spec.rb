@@ -83,8 +83,8 @@ describe Puppet::HTTP::Client do
       client.get(uri, params: {:foo => "bar=baz"})
     end
 
-    it "includes custom headers" do
-      stub_request(:get, uri).with(headers: { 'X-Foo' => 'Bar' })
+    it "merges custom headers with default ones" do
+      stub_request(:get, uri).with(headers: { 'X-Foo' => 'Bar', 'X-Puppet-Version' => /./, 'User-Agent' => /./ })
 
       client.get(uri, headers: {'X-Foo' => 'Bar'})
     end
@@ -200,22 +200,24 @@ describe Puppet::HTTP::Client do
     let(:baz_url) { "https://www.example.com:8140/baz" }
     let(:other_host)  { "https://other.example.com:8140/qux" }
 
-    def redirect_to(status: 302, url:, body: nil)
-      { status: status, headers: { 'Location' => url }, body: body }
+    def redirect_to(status: 302, url:)
+      { status: status, headers: { 'Location' => url }, body: "Redirected to #{url}" }
     end
 
     it "preserves GET method" do
       stub_request(:get, start_url).to_return(redirect_to(url: bar_url))
       stub_request(:get, bar_url).to_return(status: 200)
 
-      client.get(start_url)
+      response = client.get(start_url)
+      expect(response).to be_success
     end
 
     it "preserves PUT method" do
       stub_request(:put, start_url).to_return(redirect_to(url: bar_url))
       stub_request(:put, bar_url).to_return(status: 200)
 
-      client.put(start_url, body: "", content_type: 'text/plain')
+      response = client.put(start_url, body: "", content_type: 'text/plain')
+      expect(response).to be_success
     end
 
     it "preserves query parameters" do
@@ -223,7 +225,8 @@ describe Puppet::HTTP::Client do
       stub_request(:get, start_url).with(query: query).to_return(redirect_to(url: bar_url))
       stub_request(:get, bar_url).with(query: query).to_return(status: 200)
 
-      client.get(start_url, params: query)
+      response = client.get(start_url, params: query)
+      expect(response).to be_success
     end
 
     it "preserves custom and default headers when redirecting" do
@@ -231,7 +234,8 @@ describe Puppet::HTTP::Client do
       stub_request(:get, start_url).with(headers: headers).to_return(redirect_to(url: bar_url))
       stub_request(:get, bar_url).with(headers: headers).to_return(status: 200)
 
-      client.get(start_url, headers: headers)
+      response = client.get(start_url, headers: headers)
+      expect(response).to be_success
     end
 
     it "redirects given a relative location" do
@@ -239,7 +243,8 @@ describe Puppet::HTTP::Client do
       stub_request(:get, start_url).to_return(redirect_to(url: relative_url))
       stub_request(:get, "https://www.example.com:8140/people.html").to_return(status: 200)
 
-      client.get(start_url)
+      response = client.get(start_url)
+      expect(response).to be_success
     end
 
     it "preserves query parameters given a relative location" do
@@ -248,15 +253,34 @@ describe Puppet::HTTP::Client do
       stub_request(:get, start_url).with(query: query).to_return(redirect_to(url: relative_url))
       stub_request(:get, "https://www.example.com:8140/people.html").with(query: query).to_return(status: 200)
 
-      client.get(start_url, params: query)
+      response = client.get(start_url, params: query)
+      expect(response).to be_success
     end
 
-    [301, 302, 307].each do |code|
-      it "redirects on #{code}" do
+    it "preserves request body for each request" do
+      data = 'some data'
+      stub_request(:put, start_url).with(body: data).to_return(redirect_to(url: bar_url))
+      stub_request(:put, bar_url).with(body: data).to_return(status: 200)
+
+      response = client.put(start_url, body: data, content_type: 'text/plain')
+      expect(response).to be_success
+    end
+
+    it "returns the body from the final response" do
+      stub_request(:get, start_url).to_return(redirect_to(url: bar_url))
+      stub_request(:get, bar_url).to_return(status: 200, body: 'followed')
+
+      response = client.get(start_url)
+      expect(response.body).to eq('followed')
+    end
+
+    [301, 307].each do |code|
+      it "also redirects on #{code}" do
         stub_request(:get, start_url).to_return(redirect_to(status: code, url: bar_url))
         stub_request(:get, bar_url).to_return(status: 200)
 
-        client.get(start_url)
+        response = client.get(start_url)
+        expect(response).to be_success
       end
     end
 
@@ -308,21 +332,19 @@ describe Puppet::HTTP::Client do
     it "follows multiple redirects if equal to or less than the redirect limit" do
       stub_request(:get, start_url).to_return(redirect_to(url: bar_url))
       stub_request(:get, bar_url).to_return(redirect_to(url: baz_url))
-      stub_request(:get, baz_url).to_return(status: 200, body: 'followed')
+      stub_request(:get, baz_url).to_return(status: 200)
 
       client = described_class.new(redirect_limit: 2)
       response = client.get(start_url)
       expect(response).to be_success
-      expect(response.body).to eq('followed')
     end
 
     it "redirects to a different host" do
       stub_request(:get, start_url).to_return(redirect_to(url: other_host))
-      stub_request(:get, other_host).to_return(status: 200, body: 'followed')
+      stub_request(:get, other_host).to_return(status: 200)
 
       response = client.get(start_url)
       expect(response).to be_success
-      expect(response.body).to eq('followed')
     end
 
     it "redirects from http to https" do
@@ -330,11 +352,10 @@ describe Puppet::HTTP::Client do
       https = URI("https://example.com/bar")
 
       stub_request(:get, http).to_return(redirect_to(url: https))
-      stub_request(:get, https).to_return(status: 200, body: 'followed')
+      stub_request(:get, https).to_return(status: 200)
 
       response = client.get(http)
       expect(response).to be_success
-      expect(response.body).to eq('followed')
     end
 
     it "redirects from https to http" do
@@ -342,11 +363,10 @@ describe Puppet::HTTP::Client do
       https = URI("https://example.com/bar")
 
       stub_request(:get, https).to_return(redirect_to(url: http))
-      stub_request(:get, http).to_return(status: 200, body: 'followed')
+      stub_request(:get, http).to_return(status: 200)
 
       response = client.get(https)
       expect(response).to be_success
-      expect(response.body).to eq('followed')
     end
   end
 
