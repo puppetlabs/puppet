@@ -266,4 +266,30 @@ describe Puppet::Network::HTTP::Connection do
 
     subject.get('/path')
   end
+
+  describe 'connection request errors' do
+    it "logs and raises generic http errors" do
+      generic_error = Net::HTTPError.new('generic error', double("response"))
+      expect_any_instance_of(Net::HTTP).to receive(:request).and_raise(generic_error)
+
+      expect(Puppet).to receive(:log_exception).with(anything, /^.*failed: generic error$/)
+      expect { subject.get('/foo') }.to raise_error(generic_error)
+    end
+
+    it "logs and raises timeout errors" do
+      timeout_error = Timeout::Error.new
+      expect_any_instance_of(Net::HTTP).to receive(:request).and_raise(timeout_error)
+
+      expect(Puppet).to receive(:log_exception).with(anything, /^.*timed out after .* seconds$/)
+      expect { subject.get('/foo') }.to raise_error(timeout_error)
+    end
+
+    it "logs and raises eof errors" do
+      eof_error = EOFError
+      expect_any_instance_of(Net::HTTP).to receive(:request).and_raise(eof_error)
+
+      expect(Puppet).to receive(:log_exception).with(anything, /^.*interrupted after .* seconds$/)
+      expect { subject.get('/foo') }.to raise_error(eof_error)
+    end
+  end
 end
