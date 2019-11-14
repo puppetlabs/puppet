@@ -1,6 +1,7 @@
 require 'uri'
 require 'puppet/util/connection'
 
+# @deprecated Use {Puppet::HTTP::Client} instead.
 module Puppet::Rest
   class Route
     attr_reader :server

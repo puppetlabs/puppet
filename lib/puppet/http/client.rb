@@ -39,9 +39,8 @@ class Puppet::HTTP::Client
     end
 
     request = Net::HTTP::Get.new(url, @default_headers.merge(headers))
-    apply_auth(request, user, password)
 
-    execute_streaming(request, ssl_context: ssl_context) do |response|
+    execute_streaming(request, ssl_context: ssl_context, user: user, password: password) do |response|
       if block_given?
         yield response
       else
@@ -61,9 +60,8 @@ class Puppet::HTTP::Client
     request.body = body
     request['Content-Length'] = body.bytesize
     request['Content-Type'] = content_type
-    apply_auth(request, user, password)
 
-    execute_streaming(request, ssl_context: ssl_context) do |response|
+    execute_streaming(request, ssl_context: ssl_context, user: user, password: password) do |response|
       response.read_body
     end
   end
@@ -74,12 +72,14 @@ class Puppet::HTTP::Client
 
   private
 
-  def execute_streaming(request, ssl_context:, &block)
+  def execute_streaming(request, ssl_context:, user: nil, password: nil, &block)
     redirects = 0
     retries = 0
 
     loop do
       connect(request.uri, ssl_context: ssl_context) do |http|
+        apply_auth(request, user, password)
+
         http.request(request) do |nethttp|
           response = Puppet::HTTP::Response.new(nethttp)
           begin

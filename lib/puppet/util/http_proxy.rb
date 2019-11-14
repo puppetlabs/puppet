@@ -1,6 +1,6 @@
 require 'uri'
 require 'puppet/ssl/openssl_loader'
-require 'puppet/network/http'
+require 'puppet/http'
 
 module Puppet::Util::HttpProxy
   def self.proxy(uri)
@@ -187,7 +187,7 @@ module Puppet::Util::HttpProxy
 
       headers = { 'Accept' => '*/*', 'User-Agent' => Puppet[:http_user_agent] }
       if Puppet.features.zlib?
-        headers["Accept-Encoding"] = Puppet::Network::HTTP::Compression::ACCEPT_ENCODING
+        headers["Accept-Encoding"] = Puppet::HTTP::ACCEPT_ENCODING
       end
 
       response = proxy.send(:head, current_uri, headers)

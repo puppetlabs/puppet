@@ -5,6 +5,7 @@ require 'puppet/http'
 describe Puppet::HTTP::Client do
   let(:uri) { URI.parse('https://www.example.com') }
   let(:client) { described_class.new }
+  let(:credentials) { ['user', 'pass'] }
 
   it 'creates unique sessions' do
     expect(client.create_session).to_not eq(client.create_session)
@@ -158,8 +159,6 @@ describe Puppet::HTTP::Client do
   end
 
   context "Basic Auth" do
-    let(:credentials) { ['user', 'pass'] }
-
     it "submits credentials for GET requests" do
       stub_request(:get, uri).with(basic_auth: credentials)
 
@@ -240,6 +239,13 @@ describe Puppet::HTTP::Client do
 
       response = client.get(start_url, headers: headers)
       expect(response).to be_success
+    end
+
+    it "preserves basic authorization" do
+      stub_request(:get, start_url).with(basic_auth: credentials).to_return(redirect_to(url: bar_url))
+      stub_request(:get, bar_url).with(basic_auth: credentials).to_return(status: 200)
+
+      client.get(start_url, user: 'user', password: 'pass')
     end
 
     it "redirects given a relative location" do

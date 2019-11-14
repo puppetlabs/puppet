@@ -3,6 +3,7 @@ require 'puppet/rest/route'
 require 'puppet/network/http_pool'
 require 'puppet/network/http/compression'
 
+# @deprecated Use {Puppet::HTTP::Client} instead.
 module Puppet::Rest
   module Routes
     extend Puppet::Network::HTTP::Compression.module
@@ -10,6 +11,8 @@ module Puppet::Rest
     ACCEPT_ENCODING = 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3'
 
     def self.ca
+      Puppet.deprecation_warning("Puppet::Rest::Routes is deprecated, use Puppet::HTTP::Client instead")
+
       @ca ||= Route.new(api: '/puppet-ca/v1/',
                         server_setting: :ca_server,
                         port_setting: :ca_port,
