@@ -15,6 +15,7 @@ class WindowsDaemon < Win32::Daemon
 
   @run_thread = nil
   @LOG_TO_FILE = false
+  @loglevel = 0
   LOG_FILE =  File.expand_path(File.join(Dir::COMMON_APPDATA, 'PuppetLabs', 'puppet', 'var', 'log', 'windows.log'))
   LEVELS = [:debug, :info, :notice, :warning, :err, :alert, :emerg, :crit]
   LEVELS.each do |level|
@@ -27,9 +28,6 @@ class WindowsDaemon < Win32::Daemon
   end
 
   def service_main(*argsv)
-    base_dir = File.expand_path(File.join(File.dirname(__FILE__), '..'))
-    load_env(base_dir)
-
     argsv = (argsv << ARGV).flatten.compact
     args = argsv.join(' ')
     @loglevel = LEVELS.index(argsv.index('--debug') ? :debug : :notice)
@@ -40,6 +38,9 @@ class WindowsDaemon < Win32::Daemon
       FileUtils.mkdir_p(File.dirname(LOG_FILE))
       args = args.gsub("--logtofile","")
     end
+
+    base_dir = File.expand_path(File.join(File.dirname(__FILE__), '..'))
+    load_env(base_dir)
 
     # The puppet installer registers a 'Puppet' event source.  For the moment events will be logged with this key, but
     # it may be a good idea to split the Service and Puppet events later so it's easier to read in the windows Event Log.
@@ -190,35 +191,40 @@ class WindowsDaemon < Win32::Daemon
   private
 
   def load_env(base_dir)
-    # ENV that uses backward slashes
-    ENV['FACTERDIR'] = File.join(base_dir, 'facter').tr('/', '\\')
-    ENV['FACTER_env_windows_installdir'] = base_dir.tr('/', '\\')
-    ENV['HIERA_DIR'] = File.join(base_dir, 'hiera').tr('/', '\\')
-    ENV['MCOLLECTIVE_DIR'] = File.join(base_dir, 'mcollective').tr('/', '\\')
-    ENV['PL_BASEDIR'] = base_dir.tr('/', '\\')
-    ENV['PUPPET_DIR'] = File.join(base_dir, 'puppet').tr('/', '\\')
-    ENV['RUBYOPT'] = 'rubygems'
-    ENV['RUBY_DIR'] = File.join(base_dir, 'sys', 'ruby').tr('/', '\\')
-    ENV['OPENSSL_CONF'] = File.join(base_dir, 'puppet', 'ssl', 'openssl.cnf').tr('/', '\\')
-    ENV['SSL_CERT_DIR'] = File.join(base_dir, 'puppet', 'ssl', 'certs').tr('/', '\\')
-    ENV['SSL_CERT_FILE'] = File.join(base_dir, 'puppet', 'ssl', 'cert.pem').tr('/', '\\')
-    ENV['Path'] = [
-      File.join(base_dir, 'puppet', 'bin'),
-      File.join(base_dir, 'facter', 'bin'),
-      File.join(base_dir, 'hiera', 'bin'),
-      File.join(base_dir, 'mcollective', 'bin'),
-      File.join(base_dir, 'bin'),
-      File.join(base_dir, 'sys', 'ruby', 'bin'),
-      File.join(base_dir, 'sys', 'tools', 'bin')
-    ].join(';').tr('/', '\\') + ';' + ENV['Path']
+    begin
+      # ENV that uses backward slashes
+      ENV['FACTERDIR'] = File.join(base_dir, 'facter').tr('/', '\\')
+      ENV['FACTER_env_windows_installdir'] = base_dir.tr('/', '\\')
+      ENV['HIERA_DIR'] = File.join(base_dir, 'hiera').tr('/', '\\')
+      ENV['MCOLLECTIVE_DIR'] = File.join(base_dir, 'mcollective').tr('/', '\\')
+      ENV['PL_BASEDIR'] = base_dir.tr('/', '\\')
+      ENV['PUPPET_DIR'] = File.join(base_dir, 'puppet').tr('/', '\\')
+      ENV['RUBYOPT'] = 'rubygems'
+      ENV['RUBY_DIR'] = File.join(base_dir, 'sys', 'ruby').tr('/', '\\')
+      ENV['OPENSSL_CONF'] = File.join(base_dir, 'puppet', 'ssl', 'openssl.cnf').tr('/', '\\')
+      ENV['SSL_CERT_DIR'] = File.join(base_dir, 'puppet', 'ssl', 'certs').tr('/', '\\')
+      ENV['SSL_CERT_FILE'] = File.join(base_dir, 'puppet', 'ssl', 'cert.pem').tr('/', '\\')
+      ENV['Path'] = [
+        File.join(base_dir, 'puppet', 'bin'),
+        File.join(base_dir, 'facter', 'bin'),
+        File.join(base_dir, 'hiera', 'bin'),
+        File.join(base_dir, 'mcollective', 'bin'),
+        File.join(base_dir, 'bin'),
+        File.join(base_dir, 'sys', 'ruby', 'bin'),
+        File.join(base_dir, 'sys', 'tools', 'bin')
+      ].join(';').tr('/', '\\') + ';' + ENV['Path']
 
-    # ENV that uses forward slashes
-    ENV['RUBYLIB'] = [
-      File.join(base_dir, 'puppet','lib'),
-      File.join(base_dir, 'facter', 'lib'),
-      File.join(base_dir, 'hiera', 'lib'),
-      File.join(base_dir, 'mcollective', 'lib')
-    ].join(';') + ';' + ENV['RUBYLIB']
+      # ENV that uses forward slashes
+      ENV['RUBYLIB'] = [
+        File.join(base_dir, 'puppet','lib'),
+        File.join(base_dir, 'facter', 'lib'),
+        File.join(base_dir, 'hiera', 'lib'),
+        File.join(base_dir, 'mcollective', 'lib'),
+        ENV['RUBYLIB']
+      ].compact.join(';') + ';'
+    rescue => e
+      log_exception(e)
+    end
   end
 end
 
