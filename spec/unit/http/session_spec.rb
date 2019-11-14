@@ -37,7 +37,7 @@ describe Puppet::HTTP::Session do
       resolved = session.route_to(:ca)
 
       expect(resolved).to eq(good_service)
-      expect(@logs).to include(an_object_having_attributes(level: :debug, message: "Connection to #{uri} failed whoops, trying next route"))
+      expect(@logs).to include(an_object_having_attributes(level: :debug, message: "Connection to #{uri} failed, trying next route: whoops"))
     end
 
     it 'only resolves once per session' do

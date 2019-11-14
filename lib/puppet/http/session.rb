@@ -18,6 +18,8 @@ class Puppet::HTTP::Session
     cached = @resolved_services[name]
     return cached if cached
 
+    errors = []
+
     @resolvers.each do |resolver|
       Puppet.debug("Resolving service '#{name}' using #{resolver.class}")
       resolver.resolve(self, name) do |service|
@@ -27,10 +29,13 @@ class Puppet::HTTP::Session
           Puppet.debug("Resolved service '#{name}' to #{service.url}")
           return service
         rescue Puppet::HTTP::ConnectionError => e
-          Puppet.debug("Connection to #{service.url} failed #{e.message}, trying next route")
+          errors << e
+          Puppet.debug("Connection to #{service.url} failed, trying next route: #{e.message}")
         end
       end
     end
+
+    errors.each { |e| Puppet.log_exception(e) }
 
     raise Puppet::HTTP::RouteError, "No more routes to #{name}"
   end
