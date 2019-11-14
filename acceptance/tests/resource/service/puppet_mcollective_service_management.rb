@@ -1,6 +1,5 @@
 test_name "Puppet and Mcollective services should be manageable with Puppet"
 
-confine :except, :platform => 'windows' # See MCO-727
 confine :except, :platform => /centos-4|el-4/ # PUP-5257
 
 tag 'audit:medium',
@@ -30,6 +29,9 @@ end
 agents.each do |agent|
 
   ['puppet', 'mcollective'].each do |service|
+    # skip mcollective on windows: MCO-727
+    next if service == 'mcollective' && agent.platform =~ /windows/
+
     # --- service management using `puppet apply` --- #
     step "#{service} service management using `puppet apply`"
     set_service_initial_status(agent, service, 'stopped')
