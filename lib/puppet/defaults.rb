@@ -35,7 +35,7 @@ module Puppet
   def self.default_basemodulepath
     if Puppet::Util::Platform.windows?
       path = ['$codedir/modules']
-      installdir = Facter.value(:env_windows_installdir)
+      installdir = ENV["FACTER_env_windows_installdir"]
       if installdir
         path << "#{installdir}/puppet/modules"
       end
@@ -47,7 +47,7 @@ module Puppet
 
   def self.default_vendormoduledir
     if Puppet::Util::Platform.windows?
-      installdir = Facter.value(:env_windows_installdir)
+      installdir = ENV["FACTER_env_windows_installdir"]
       if installdir
         "#{installdir}\\puppet\\vendor_modules"
       else

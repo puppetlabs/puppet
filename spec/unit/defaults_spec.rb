@@ -139,7 +139,7 @@ describe "Defaults" do
       let(:installdir) { 'C:\Program Files\Puppet Labs\Puppet' }
 
       it 'includes user and system modules' do
-        allow(Facter).to receive(:value).with(:env_windows_installdir).and_return(installdir)
+        allow(ENV).to receive(:[]).with("FACTER_env_windows_installdir").and_return(installdir)
 
         expect(
           Puppet.default_basemodulepath
@@ -147,7 +147,7 @@ describe "Defaults" do
       end
 
       it 'includes user modules if installdir fact is missing' do
-        allow(Facter).to receive(:value).with(:env_windows_installdir).and_return(nil)
+        allow(ENV).to receive(:[]).with("FACTER_env_windows_installdir").and_return(nil)
 
         expect(
           Puppet.default_basemodulepath
@@ -167,7 +167,7 @@ describe "Defaults" do
       let(:installdir) { 'C:\Program Files\Puppet Labs\Puppet' }
 
       it 'includes the default vendormoduledir' do
-        allow(Facter).to receive(:value).with(:env_windows_installdir).and_return(installdir)
+        allow(ENV).to receive(:[]).with("FACTER_env_windows_installdir").and_return(installdir)
 
         expect(
           Puppet.default_vendormoduledir
@@ -175,7 +175,7 @@ describe "Defaults" do
       end
 
       it 'is nil if installdir fact is missing' do
-        allow(Facter).to receive(:value).with(:env_windows_installdir).and_return(nil)
+        allow(ENV).to receive(:[]).with("FACTER_env_windows_installdir").and_return(nil)
 
         expect(Puppet.default_vendormoduledir).to be_nil
       end
