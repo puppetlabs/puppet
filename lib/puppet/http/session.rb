@@ -1,10 +1,4 @@
 class Puppet::HTTP::Session
-  ServiceType = Struct.new(:service_class, :api, :server_setting, :port_setting)
-
-  SERVICE_TYPES = {
-    ca: ServiceType.new(Puppet::HTTP::Service::Ca, '/puppet-ca/v1', :ca_server, :ca_port),
-  }.freeze
-
   def initialize(client, resolvers)
     @client = client
     @resolvers = resolvers
@@ -12,7 +6,7 @@ class Puppet::HTTP::Session
   end
 
   def route_to(name, ssl_context: nil)
-    raise ArgumentError, "Unknown service #{name}" if SERVICE_TYPES[name].nil?
+    raise ArgumentError, "Unknown service #{name}" unless Puppet::HTTP::Service.valid_name?(name)
 
     cached = @resolved_services[name]
     return cached if cached
@@ -40,15 +34,6 @@ class Puppet::HTTP::Session
   end
 
   def create_service(name, server = nil, port = nil)
-    service_type = SERVICE_TYPES[name]
-    raise ArgumentError, "Unknown service #{name}" unless service_type
-
-    server ||= Puppet[service_type.server_setting]
-    port   ||= Puppet[service_type.port_setting]
-    url = URI::HTTPS.build(host: server,
-                           port: port,
-                           path: service_type.api
-                          ).freeze
-    service_type.service_class.new(@client, url)
+    Puppet::HTTP::Service.create_service(@client, name, server, port)
   end
 end
