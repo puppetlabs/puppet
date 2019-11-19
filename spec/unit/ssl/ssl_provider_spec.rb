@@ -73,6 +73,11 @@ describe Puppet::SSL::SSLProvider do
         sslctx.verify_peer = false
       }.to raise_error(/can't modify frozen/)
     end
+
+    it 'verifies peer' do
+      sslctx = subject.create_root_context(config)
+      expect(sslctx.verify_peer).to eq(true)
+    end
   end
 
   context 'when creating a system ssl context' do
@@ -114,6 +119,11 @@ describe Puppet::SSL::SSLProvider do
       subject.create_system_context(cacerts: [])
     end
 
+    it 'verifies peer' do
+      sslctx = subject.create_system_context(cacerts: [])
+      expect(sslctx.verify_peer).to eq(true)
+    end
+
     it 'disable revocation' do
       sslctx = subject.create_system_context(cacerts: [])
       expect(sslctx.revocation).to eq(false)
@@ -149,6 +159,11 @@ describe Puppet::SSL::SSLProvider do
 
       sslctx = subject.create_root_context(config.merge(crls: expired))
       expect(sslctx.crls).to eq(expired)
+    end
+
+    it 'verifies peer' do
+      sslctx = subject.create_root_context(config)
+      expect(sslctx.verify_peer).to eq(true)
     end
   end
 
@@ -395,6 +410,11 @@ describe Puppet::SSL::SSLProvider do
       expect {
         sslctx.verify_peer = false
       }.to raise_error(/can't modify frozen/)
+    end
+
+    it 'verifies peer' do
+      sslctx = subject.create_context(config)
+      expect(sslctx.verify_peer).to eq(true)
     end
   end
 
