@@ -154,6 +154,19 @@ module Puppet
         end
       end
     },
+    :merge_dependency_warnings => {
+      :default => false,
+      :type    => :boolean,
+      :desc    => "Whether to merge class-level dependency failure warnings.
+
+        When a class has a failed dependency, every resource in the class
+        generates a notice level message about the dependency failure,
+        and a warning level message about skipping the resource.
+
+        If true, all messages caused by a class dependency failure are merged
+        into one message associated with the class.
+        ",
+    },
     :strict => {
       :default    => :warning,
       :type       => :symbolic_enum,
