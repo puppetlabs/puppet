@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.4.4-188-g95eb8fc\n"
+"Project-Id-Version: Puppet automation framework 6.4.4-202-gf6dc7df\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-11-14 15:32+0000\n"
-"PO-Revision-Date: 2019-11-14 15:32+0000\n"
+"POT-Creation-Date: 2019-11-19 13:47+0000\n"
+"PO-Revision-Date: 2019-11-19 13:47+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -702,25 +702,25 @@ msgid "Valid values are %{values}."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:495
+#: ../lib/puppet/defaults.rb:508
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:497
+#: ../lib/puppet/defaults.rb:510
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:677
+#: ../lib/puppet/defaults.rb:690
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:758
+#: ../lib/puppet/defaults.rb:771
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:989 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1002 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
@@ -3854,15 +3854,15 @@ msgstr ""
 msgid "Received a %{status_code} response from %{server_hostname}. Sleeping for %{retry_sleep} seconds before retrying the request."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:332
+#: ../lib/puppet/network/http/connection.rb:331
 msgid "request %{uri} interrupted after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:334
+#: ../lib/puppet/network/http/connection.rb:333
 msgid "request %{uri} timed out after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:336
+#: ../lib/puppet/network/http/connection.rb:335
 msgid "request %{uri} failed: %{msg}"
 msgstr ""
 
@@ -7300,7 +7300,7 @@ msgstr ""
 msgid "Could not find resource %{resource} when converting %{message} resources"
 msgstr ""
 
-#: ../lib/puppet/resource/status.rb:139 ../lib/puppet/transaction.rb:266
+#: ../lib/puppet/resource/status.rb:139 ../lib/puppet/transaction.rb:270
 msgid "Could not evaluate: %{detail}"
 msgstr ""
 
@@ -8049,64 +8049,72 @@ msgstr ""
 msgid "PP syntax checker: \"%{message}\""
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:86
+#: ../lib/puppet/transaction.rb:90
 msgid "Some pre-run checks failed"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:102
+#: ../lib/puppet/transaction.rb:106
 msgid "Applying configuration version '%{version}'"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:125
+#: ../lib/puppet/transaction.rb:129
 msgid "Provider %{name} is not functional on this host"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:141
+#: ../lib/puppet/transaction.rb:145
 msgid "Could not find a suitable provider for %{type}"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:148
+#: ../lib/puppet/transaction.rb:152
 msgid "post_resource_eval failed for provider %{provider}"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:165
+#: ../lib/puppet/transaction.rb:169
 msgid "resource is part of a dependency cycle"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:167
+#: ../lib/puppet/transaction.rb:171
 msgid "One or more resource dependency cycles detected in graph"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:180
+#: ../lib/puppet/transaction.rb:184
 msgid "Somehow left a component in the relationship graph"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:182
+#: ../lib/puppet/transaction.rb:186
 msgid "Starting to evaluate the resource"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:184
+#: ../lib/puppet/transaction.rb:188
 msgid "Evaluated in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:297
+#: ../lib/puppet/transaction.rb:304
+msgid "Class dependency %{dep} has failures: %{status}"
+msgstr ""
+
+#: ../lib/puppet/transaction.rb:310
 msgid "Dependency %{dep} has failures: %{status}"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:318
+#: ../lib/puppet/transaction.rb:332
 msgid "Prefetch failed for %{type_name} provider '%{name}'"
 msgstr ""
 
 #. TRANSLATORS `prefetch` is a function name and should not be translated
-#: ../lib/puppet/transaction.rb:363 ../lib/puppet/transaction.rb:366
+#: ../lib/puppet/transaction.rb:377 ../lib/puppet/transaction.rb:380
 msgid "Could not prefetch %{type_name} provider '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:399
+#: ../lib/puppet/transaction.rb:417
+msgid "Skipping resources in class because of failed class dependencies"
+msgstr ""
+
+#: ../lib/puppet/transaction.rb:421
 msgid "Skipping because of failed dependencies"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:404
+#: ../lib/puppet/transaction.rb:426
 msgid "Skipping because provider prefetch failed"
 msgstr ""
 
