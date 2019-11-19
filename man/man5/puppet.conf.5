@@ -1182,6 +1182,20 @@ The maximum amount of time the Puppet agent should wait for its certificate requ
 .
 .IP "" 0
 .
+.SS "merge_dependency_warnings"
+Whether to merge class\-level dependency failure warnings\.
+.
+.P
+When a class has a failed dependency, every resource in the class generates a notice level message about the dependency failure, and a warning level message about skipping the resource\.
+.
+.P
+If true, all messages caused by a class dependency failure are merged into one message associated with the class\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: false
+.
+.IP "" 0
+.
 .SS "mkusers"
 Whether to create the necessary user and group that puppet agent will run as\.
 .
