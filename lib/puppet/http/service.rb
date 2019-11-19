@@ -1,6 +1,21 @@
 class Puppet::HTTP::Service
   attr_reader :url
 
+  SERVICE_NAMES = [:ca].freeze
+
+  def self.create_service(client, name, server = nil, port = nil)
+    case name
+    when :ca
+      Puppet::HTTP::Service::Ca.new(client, server, port)
+    else
+      raise ArgumentError, "Unknown service #{name}"
+    end
+  end
+
+  def self.valid_name?(name)
+    SERVICE_NAMES.include?(name)
+  end
+
   def initialize(client, url)
     @client = client
     @url = url
@@ -14,5 +29,14 @@ class Puppet::HTTP::Service
 
   def connect(ssl_context: nil)
     @client.connect(@url, ssl_context: ssl_context)
+  end
+
+  protected
+
+  def build_url(api, server, port)
+    URI::HTTPS.build(host: server,
+                     port: port,
+                     path: api
+                    ).freeze
   end
 end

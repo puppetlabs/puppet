@@ -29,4 +29,24 @@ describe Puppet::HTTP::Service do
 
     service.connect(ssl_context: other_ctx)
   end
+
+  it 'raises for unknown service names' do
+    expect {
+      described_class.create_service(client, :westbound)
+    }.to raise_error(ArgumentError, "Unknown service westbound")
+  end
+
+  [:ca].each do |name|
+    it "returns true for #{name}" do
+      expect(described_class.valid_name?(name)).to eq(true)
+    end
+  end
+
+  it "returns false when the service name is a string" do
+    expect(described_class.valid_name?("ca")).to eq(false)
+  end
+
+  it "returns false for unknown service names" do
+    expect(described_class.valid_name?(:westbound)).to eq(false)
+  end
 end

@@ -5,7 +5,9 @@ class Puppet::HTTP::Resolver::SRV < Puppet::HTTP::Resolver
   end
 
   def resolve(session, name, &block)
-    # This assumes the route name is the same as the DNS SRV name
+    # Here we pass our HTTP service name as the DNS SRV service name
+    # This is fine for :ca, but note that :puppet and :file are handled
+    # specially in `each_srv_record`.
     @delegate.each_srv_record(@srv_domain, name) do |server, port|
       yield session.create_service(name, server, port)
     end

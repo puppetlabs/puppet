@@ -74,29 +74,4 @@ describe Puppet::HTTP::Session do
       }.to raise_error(ArgumentError, "Unknown service westbound")
     end
   end
-
-  context 'when creating services' do
-    let(:session) { described_class.new(client, []) }
-
-    it 'defaults the server and port based on settings' do
-      Puppet[:ca_server] = 'ca.example.com'
-      Puppet[:ca_port] = 8141
-      service = session.create_service(:ca)
-
-      expect(service.url.to_s).to eq("https://ca.example.com:8141/puppet-ca/v1")
-    end
-
-    it 'accepts server and port arguments' do
-      service = session.create_service(:ca, 'ca2.example.com', 8142)
-
-      expect(service.url.to_s).to eq("https://ca2.example.com:8142/puppet-ca/v1")
-    end
-
-    it 'raises for unknown service names' do
-      expect {
-        session = described_class.new(client, [])
-        session.create_service(:westbound)
-      }.to raise_error(ArgumentError, "Unknown service westbound")
-    end
-  end
 end

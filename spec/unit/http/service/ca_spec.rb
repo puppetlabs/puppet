@@ -5,13 +5,42 @@ require 'puppet/http'
 describe Puppet::HTTP::Service::Ca do
   let(:ssl_context) { Puppet::SSL::SSLContext.new }
   let(:client) { Puppet::HTTP::Client.new(ssl_context: ssl_context) }
-  let(:base_url) { URI.parse('https://www.example.com') }
-  let(:subject) { described_class.new(client, base_url) }
+  let(:subject) { client.create_session.route_to(:ca) }
+
+  before :each do
+    Puppet[:ca_server] = 'www.example.com'
+    Puppet[:ca_port] = 443
+  end
+
+  context 'when routing to the CA service' do
+    let(:cert) { cert_fixture('ca.pem') }
+    let(:pem) { cert.to_pem }
+
+    it 'defaults the server and port based on settings' do
+      Puppet[:ca_server] = 'ca.example.com'
+      Puppet[:ca_port] = 8141
+
+      stub_request(:get, "https://ca.example.com:8141/puppet-ca/v1/certificate/ca").to_return(body: pem)
+
+      subject.get_certificate('ca')
+    end
+
+    it 'fallbacks to server and masterport' do
+      Puppet[:ca_server] = nil
+      Puppet[:ca_port] = nil
+      Puppet[:server] = 'ca2.example.com'
+      Puppet[:masterport] = 8142
+
+      stub_request(:get, "https://ca2.example.com:8142/puppet-ca/v1/certificate/ca").to_return(body: pem)
+
+      subject.get_certificate('ca')
+    end
+  end
 
   context 'when getting certificates' do
     let(:cert) { cert_fixture('ca.pem') }
     let(:pem) { cert.to_pem }
-    let(:url) { "https://www.example.com/certificate/ca" }
+    let(:url) { "https://www.example.com/puppet-ca/v1/certificate/ca" }
 
     it 'gets a certificate from the "certificate" endpoint' do
       stub_request(:get, url).to_return(body: pem)
@@ -41,7 +70,7 @@ describe Puppet::HTTP::Service::Ca do
   context 'when getting CRLs' do
     let(:crl) { crl_fixture('crl.pem') }
     let(:pem) { crl.to_pem }
-    let(:url) { "https://www.example.com/certificate_revocation_list/ca" }
+    let(:url) { "https://www.example.com/puppet-ca/v1/certificate_revocation_list/ca" }
 
     it 'gets a CRL from "certificate_revocation_list" endpoint' do
       stub_request(:get, url).to_return(body: pem)
@@ -83,7 +112,7 @@ describe Puppet::HTTP::Service::Ca do
   context 'when submitting a CSR' do
     let(:request) { request_fixture('request.pem') }
     let(:pem) { request.to_pem }
-    let(:url) { "https://www.example.com/certificate_request/infinity" }
+    let(:url) { "https://www.example.com/puppet-ca/v1/certificate_request/infinity" }
 
     it 'submits a CSR to the "certificate_request" endpoint' do
       stub_request(:put, url).with(body: pem, headers: { 'Content-Type' => 'text/plain' })
