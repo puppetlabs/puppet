@@ -99,76 +99,84 @@ describe Puppet::Forge do
     end
   end
 
-  let(:forge) { Puppet::Forge.new }
-
-  def repository_responds_with(response, &block)
-    if block_given?
-      allow_any_instance_of(Puppet::Forge::Repository).to receive(:make_http_request, &block).and_return(response)
-    else
-      allow_any_instance_of(Puppet::Forge::Repository).to receive(:make_http_request).and_return(response)
-    end
+  let(:release_response) do
+    releases = JSON.parse(http_response)
+    releases['results'] = []
+    JSON.dump(releases)
   end
 
+  let(:forge) { Puppet::Forge.new }
+
   it "returns a list of matches from the forge when there are matches for the search term" do
-    repository_responds_with(double(:body => http_response, :code => '200'))
+    stub_request(:get, "https://forgeapi.puppet.com/v3/modules?query=bacula").to_return(status: 200, body: http_response)
+
     expect(forge.search('bacula')).to eq(search_results)
   end
 
   context "when module_groups are defined" do
-    let(:release_response) do
-      releases = JSON.parse(http_response)
-      releases['results'] = []
-      JSON.dump(releases)
-    end
-
     before :each do
-      repository_responds_with(double(:body => release_response, :code => '200')) {|uri| uri =~ /module_groups=foo/}
       Puppet[:module_groups] = "foo"
     end
 
     it "passes module_groups with search" do
+      stub_request(:get, "https://forgeapi.puppet.com/v3/modules")
+        .with(query: hash_including("module_groups" => "foo"))
+        .to_return(status: 200, body: release_response)
+
       forge.search('bacula')
     end
 
     it "passes module_groups with fetch" do
+      stub_request(:get, "https://forgeapi.puppet.com/v3/releases")
+        .with(query: hash_including("module_groups" => "foo"))
+        .to_return(status: 200, body: release_response)
+
       forge.fetch('puppetlabs-bacula')
     end
   end
 
   # See PUP-8008
   context "when multiple module_groups are defined" do
-    let(:release_response) do
-      releases = JSON.parse(http_response)
-      releases['results'] = []
-      JSON.dump(releases)
-    end
-
     context "with space seperator" do
       before :each do
-        repository_responds_with(double(:body => release_response, :code => '200')) {|uri| uri =~ /module_groups=foo bar/}
         Puppet[:module_groups] = "foo bar"
       end
 
       it "passes module_groups with search" do
+        stub_request(:get, %r{forgeapi.puppet.com/v3/modules}).with do |req|
+          expect(req.uri.query).to match(/module_groups=foo%20bar/)
+        end.to_return(status: 200, body: release_response)
+
         forge.search('bacula')
       end
 
       it "passes module_groups with fetch" do
+        stub_request(:get, %r{forgeapi.puppet.com/v3/releases}).with do |req|
+          expect(req.uri.query).to match(/module_groups=foo%20bar/)
+        end.to_return(status: 200, body: release_response)
+
         forge.fetch('puppetlabs-bacula')
       end
     end
 
     context "with plus seperator" do
       before :each do
-        repository_responds_with(double(:body => release_response, :code => '200')) {|uri| uri =~ /module_groups=foo bar/}
         Puppet[:module_groups] = "foo+bar"
       end
 
       it "passes module_groups with search" do
+        stub_request(:get, %r{forgeapi.puppet.com/v3/modules}).with do |req|
+          expect(req.uri.query).to match(/module_groups=foo%20bar/)
+        end.to_return(status: 200, body: release_response)
+
         forge.search('bacula')
       end
 
       it "passes module_groups with fetch" do
+        stub_request(:get, %r{forgeapi.puppet.com/v3/releases}).with do |req|
+          expect(req.uri.query).to match(/module_groups=foo%20bar/)
+        end.to_return(status: 200, body: release_response)
+
         forge.fetch('puppetlabs-bacula')
       end
     end
@@ -176,10 +184,10 @@ describe Puppet::Forge do
     # See PUP-8008
     context "when there are multiple pages of results" do
       before(:each) do
-        expect_any_instance_of(Puppet::Forge::Repository).to receive(:make_http_request) {|_, uri| uri =~ /module_groups=foo bar/ && uri !=~ /offset/ }.and_return(double(:body => first_page, :code => '200'))
-
-        # Request for second page should not have module_groups already encoded
-        expect_any_instance_of(Puppet::Forge::Repository).to receive(:make_http_request) {|_, uri| uri =~ /module_groups=foo bar/ && uri =~ /offset=1/ }.and_return(double(:body => last_page, :code => '200'))
+        stub_request(:get, %r{forgeapi.puppet.com}).with do |req|
+          expect(req.uri.query).to match(/module_groups=foo%20bar/)
+        end.to_return(status: 200, body: first_page)
+          .to_return(status: 200, body: last_page)
       end
 
       context "with space seperator" do
@@ -242,7 +250,7 @@ describe Puppet::Forge do
 
   context "when the connection to the forge fails" do
     before :each do
-      repository_responds_with(double(:body => '{}', :code => '404', :message => "not found"))
+      stub_request(:get, /forgeapi.puppet.com/).to_return(status: [404, 'not found'])
     end
 
     it "raises an error for search" do
@@ -255,25 +263,22 @@ describe Puppet::Forge do
   end
 
   context "when the API responds with an error" do
-    before :each do
-      repository_responds_with(double(:body => '{"error":"invalid module"}', :code => '410', :message => "Gone"))
-    end
-
     it "raises an error for fetch" do
+      stub_request(:get, /forgeapi.puppet.com/).to_return(status: [410, 'Gone'], body: '{"error":"invalid module"}')
+
       expect { forge.fetch('puppetlabs/bacula') }.to raise_error Puppet::Forge::Errors::ResponseError, "Request to Puppet Forge failed. Detail: 410 Gone."
     end
   end
 
   context "when the forge returns a module with unparseable dependencies" do
-    before :each do
+    it "ignores modules with unparseable dependencies" do
       response = JSON.parse(http_response)
       release = response['results'][0]['current_release']
       release['metadata']['dependencies'] = [{'name' => 'broken-garbage >= 1.0.0', 'version_requirement' => 'banana'}]
       response['results'] = [release]
-      repository_responds_with(double(:body => JSON.dump(response), :code => '200'))
-    end
 
-    it "ignores modules with unparseable dependencies" do
+      stub_request(:get, /forgeapi.puppet.com/).to_return(status: 200, body: JSON.dump(response))
+
       expect(forge.fetch('puppetlabs/bacula')).to be_empty
     end
   end
