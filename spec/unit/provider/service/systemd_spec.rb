@@ -255,13 +255,13 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
   describe "#daemon_reload?" do
     it "should skip the systemctl daemon_reload if not required by the service" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','show', '--', 'sshd.service','--property=NeedDaemonReload'], :failonfail => false).and_return("no")
+      expect(provider).to receive(:execute).with(['/bin/systemctl', 'show', '--property=NeedDaemonReload', '--', 'sshd.service'], :failonfail => false).and_return("no")
       provider.daemon_reload?
     end
     it "should run a systemctl daemon_reload if the service has been modified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','show', '--', 'sshd.service','--property=NeedDaemonReload'], :failonfail => false).and_return("yes")
-      expect(provider).to receive(:execute).with(['/bin/systemctl', '--', 'daemon-reload'], :failonfail => false)
+      expect(provider).to receive(:execute).with(['/bin/systemctl', 'show', '--property=NeedDaemonReload', '--', 'sshd.service'], :failonfail => false).and_return("yes")
+      expect(provider).to receive(:execute).with(['/bin/systemctl', 'daemon-reload'], :failonfail => false)
       provider.daemon_reload?
     end
   end
