@@ -15,7 +15,7 @@ module Puppet::FileBucketFile
       request.options[:bucket_path] ||= Puppet[:bucketdir]
       # If filebucket mode is 'list'
       if request.options[:list_all]
-        return nil unless ::File.exists?(request.options[:bucket_path])
+        return nil unless ::File.exist?(request.options[:bucket_path])
         return list(request)
       end
       checksum, files_original_path = request_to_checksum_and_path(request)

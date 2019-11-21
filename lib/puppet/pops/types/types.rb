@@ -340,7 +340,7 @@ class PAnyType < TypedModelObject
   # @raises ArgumentError
   #
   def self.new_function(type)
-    raise ArgumentError.new("Creation of new instance of type '#{type.to_s}' is not supported")
+    raise ArgumentError.new("Creation of new instance of type '#{type}' is not supported")
   end
 
   # Answers the question if instances of this type can represent themselves as a string that
@@ -843,14 +843,16 @@ INTEGER_HEX = '(?:0[xX][0-9A-Fa-f]+)'
 INTEGER_OCT = '(?:0[0-7]+)'
 INTEGER_BIN = '(?:0[bB][01]+)'
 INTEGER_DEC = '(?:0|[1-9]\d*)'
+INTEGER_DEC_OR_OCT = '(?:\d+)'
 SIGN_PREFIX = '[+-]?\s*'
 
 OPTIONAL_FRACTION = '(?:\.\d+)?'
 OPTIONAL_EXPONENT = '(?:[eE]-?\d+)?'
 FLOAT_DEC = '(?:' + INTEGER_DEC + OPTIONAL_FRACTION + OPTIONAL_EXPONENT + ')'
 
-INTEGER_PATTERN = '\A' + SIGN_PREFIX + '(?:' + INTEGER_DEC + '|' + INTEGER_HEX + '|' + INTEGER_OCT + '|' + INTEGER_BIN + ')\z'
-FLOAT_PATTERN = '\A' + SIGN_PREFIX + '(?:' + FLOAT_DEC + '|' + INTEGER_HEX + '|' + INTEGER_OCT + '|' + INTEGER_BIN + ')\z'
+INTEGER_PATTERN          = '\A' + SIGN_PREFIX + '(?:' + INTEGER_DEC + '|' + INTEGER_HEX + '|' + INTEGER_OCT + '|' + INTEGER_BIN + ')\z'
+INTEGER_PATTERN_LENIENT = '\A' + SIGN_PREFIX + '(?:' + INTEGER_DEC_OR_OCT + '|' + INTEGER_HEX + '|' + INTEGER_BIN + ')\z'
+FLOAT_PATTERN            = '\A' + SIGN_PREFIX + '(?:' + FLOAT_DEC + '|' + INTEGER_HEX + '|' + INTEGER_OCT + '|' + INTEGER_BIN + ')\z'
 
 # @api public
 #
@@ -1089,7 +1091,7 @@ class PIntegerType < PNumericType
     @@new_function ||= Puppet::Functions.create_loaded_function(:new, loader) do
       local_types do
         type 'Radix       = Variant[Default, Integer[2,2], Integer[8,8], Integer[10,10], Integer[16,16]]'
-        type "Convertible = Variant[Numeric, Boolean, Pattern[/#{INTEGER_PATTERN}/], Timespan, Timestamp]"
+        type "Convertible = Variant[Numeric, Boolean, Pattern[/#{INTEGER_PATTERN_LENIENT}/], Timespan, Timestamp]"
         type 'NamedArgs   = Struct[{from => Convertible, Optional[radix] => Radix, Optional[abs] => Boolean}]'
       end
 
@@ -1266,7 +1268,7 @@ class PFloatType < PNumericType
         else
           begin
             # support a binary as float
-            if from[0] == '0' && from[1].downcase == 'b'
+            if from[0] == '0' && from[1].casecmp('b').zero?
               from = Integer(from)
             end
             Float(from)
@@ -1697,7 +1699,7 @@ class PRegexpType < PScalarType
   # @param regexp [Regexp] the regular expression
   # @return [String] the Regexp as a slash delimited string with slashes escaped
   def self.regexp_to_s_with_delimiters(regexp)
-    regexp.options == 0 ? regexp.inspect : "/#{regexp.to_s}/"
+    regexp.options == 0 ? regexp.inspect : "/#{regexp}/"
   end
 
   # @param regexp [Regexp] the regular expression

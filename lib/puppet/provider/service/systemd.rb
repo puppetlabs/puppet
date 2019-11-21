@@ -1,5 +1,7 @@
 # Manage systemd services using systemctl
 
+require 'puppet/file_system'
+
 Puppet::Type.type(:service).provide :systemd, :parent => :base do
   desc "Manages `systemd` services using `systemctl`.
 
@@ -9,14 +11,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   commands :systemctl => "systemctl"
 
-  if Facter.value(:osfamily).downcase == 'debian'
-    # With multiple init systems on Debian, it is possible to have
-    # pieces of systemd around (e.g. systemctl) but not really be
-    # using systemd.  We do not do this on other platforms as it can
-    # cause issues when running in a chroot without /run mounted
-    # (PUP-5577)
-    confine :exists => "/run/systemd/system"
-  end
+  confine :true => Puppet::FileSystem.exist?('/proc/1/comm') && Puppet::FileSystem.read('/proc/1/comm').include?('systemd')
 
   defaultfor :osfamily => [:archlinux]
   defaultfor :osfamily => :redhat, :operatingsystemmajrelease => ["7", "8"]
@@ -24,8 +19,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   defaultfor :osfamily => :suse
   defaultfor :osfamily => :coreos
   defaultfor :operatingsystem => :amazon, :operatingsystemmajrelease => ["2"]
-  defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ["8", "stretch/sid", "9", "buster/sid"]
-
+  defaultfor :operatingsystem => :debian
+  notdefaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ["5", "6", "7"] # These are using the "debian" method
   defaultfor :operatingsystem => :LinuxMint
   notdefaultfor :operatingsystem => :LinuxMint, :operatingsystemmajrelease => ["10", "11", "12", "13", "14", "15", "16", "17"] # These are using upstart
   defaultfor :operatingsystem => :ubuntu
@@ -49,7 +44,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   # in the provider's believed state of the service and the actual state.
   # @param action [String,Symbol] One of 'enable', 'disable', 'mask' or 'unmask'
   def systemctl_change_enable(action)
-    output = systemctl(action, @resource[:name])
+    output = systemctl(action, '--', @resource[:name])
   rescue
     raise Puppet::Error, "Could not #{action} #{self.name}: #{output}", $!.backtrace
   ensure
@@ -62,7 +57,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def get_start_link_count
     # Start links don't include '.service'. Just search for the service name.
-    if @resource[:name].match(/\.service/)
+    if @resource[:name] =~ /\.service/
       link_name = @resource[:name].split('.')[0]
     else
       link_name = @resource[:name]
@@ -73,7 +68,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def cached_enabled?
     return @cached_enabled if @cached_enabled
-    cmd = [command(:systemctl), 'is-enabled', @resource[:name]]
+    cmd = [command(:systemctl), 'is-enabled', '--', @resource[:name]]
     @cached_enabled = execute(cmd, :failonfail => false).strip
   end
 
@@ -92,7 +87,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     # The indirect state indicates that the unit is not enabled.
     return :false if output == 'indirect'
     return :true if (code == 0)
-    if (output.empty?) && (code > 0) && (Facter.value(:osfamily).downcase == 'debian')
+    if (output.empty?) && (code > 0) && (Facter.value(:osfamily).casecmp('debian').zero?)
       ret = debian_enabled?
       return ret if ret
     end
@@ -132,7 +127,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   # This function is called only on start & restart unit options.
   # Reference: (PUP-3483) Systemd provider doesn't scan for changed units
   def daemon_reload?
-    cmd = [command(:systemctl), 'show', @resource[:name], '--property=NeedDaemonReload']
+    cmd = [command(:systemctl), 'show', '--property=NeedDaemonReload', '--', @resource[:name]]
     daemon_reload = execute(cmd, :failonfail => false).strip.split('=').last
     if daemon_reload == 'yes'
       daemon_reload_cmd = [command(:systemctl), 'daemon-reload']
@@ -155,20 +150,20 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   end
 
   def restartcmd
-    [command(:systemctl), "restart", @resource[:name]]
+    [command(:systemctl), "restart", '--', @resource[:name]]
   end
 
   def startcmd
     self.unmask
-    [command(:systemctl), "start", @resource[:name]]
+    [command(:systemctl), "start", '--', @resource[:name]]
   end
 
   def stopcmd
-    [command(:systemctl), "stop", @resource[:name]]
+    [command(:systemctl), "stop", '--', @resource[:name]]
   end
 
   def statuscmd
-    [command(:systemctl), "is-active", @resource[:name]]
+    [command(:systemctl), "is-active", '--', @resource[:name]]
   end
 
   def restart

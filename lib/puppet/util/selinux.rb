@@ -13,12 +13,16 @@ require 'pathname'
 
 module Puppet::Util::SELinux
 
-  def selinux_support?
+  def self.selinux_support?
     return false unless defined?(Selinux)
     if Selinux.is_selinux_enabled == 1
       return true
     end
     false
+  end
+
+  def selinux_support?
+    Puppet::Util::SELinux.selinux_support?
   end
 
   # Retrieve and return the full context of the file.  If we don't have
@@ -202,7 +206,9 @@ module Puppet::Util::SELinux
         # If possible we use read_nonblock in a loop rather than read to work-
         # a linux kernel bug.  See ticket #1963 for details.
         mountfh = File.open("/proc/mounts")
-        mounts += mountfh.read_nonblock(1024) while true
+        loop do
+          mounts += mountfh.read_nonblock(1024)
+        end
       else
         # Otherwise we shell out and let cat do it for us
         mountfh = IO.popen("/bin/cat /proc/mounts")

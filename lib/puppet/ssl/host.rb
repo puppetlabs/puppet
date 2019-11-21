@@ -7,14 +7,6 @@ require 'puppet/ssl/state_machine'
 require 'puppet/rest/errors'
 require 'puppet/rest/routes'
 
-begin
-  # This may fail when being loaded from Puppet Server. However loading the
-  # client monkey patches the SSL Store and we need to have those monkey
-  # patches in as soon as possible on the agent.
-  require 'puppet/rest/client'
-rescue LoadError
-end
-
 # The class that manages all aspects of our SSL certificates --
 # private keys, public keys, requests, etc.
 class Puppet::SSL::Host
@@ -124,16 +116,12 @@ class Puppet::SSL::Host
     true
   end
 
-  def http_client(ssl_context)
-    Puppet::Rest::Client.new(ssl_context: ssl_context)
-  end
-
   def certificate
     unless @certificate
       generate_key unless key
 
       # get CA and optional CRL
-      sm = Puppet::SSL::StateMachine.new
+      sm = Puppet::SSL::StateMachine.new(onetime: true)
       sm.ensure_ca_certificates
 
       cert = get_host_certificate
@@ -284,7 +272,7 @@ ERROR_STRING
       exit(1)
     end
 
-    while true
+    loop do
       sleep time
       begin
         break if certificate

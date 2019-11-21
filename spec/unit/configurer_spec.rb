@@ -1005,7 +1005,7 @@ describe Puppet::Configurer do
       @agent.run :catalog => catalog
     end
 
-    it "should select a server when provided" do
+    it "should select a server when it receives 200 OK response" do
       Puppet.settings[:server_list] = ["myserver:123"]
       response = Net::HTTPOK.new(nil, 200, 'OK')
       allow(Puppet::Network::HttpPool).to receive(:connection).with('myserver', 123, anything).and_return(double('request', get: response))

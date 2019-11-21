@@ -95,6 +95,17 @@ module Puppet
           end
         end
       end
+
+      def assert_service_startmode_delayed(host, name)
+        get_delayed_service = "\"Get-ChildItem HKLM:\\SYSTEM\\CurrentControlSet\\Services"\
+          " | Where-Object { \\$_.Property -Contains 'DelayedAutoStart' -And \\$_.PsChildName -Like '#{name}' }"\
+          " | Select-Object -ExpandProperty PSChildName\""
+
+        on(host, powershell(get_delayed_service)) do |result|
+          svc = result.stdout.chomp
+          assert(!svc.empty?, "Service #{name} does not exist or is not a delayed service")
+        end
+      end
     end
   end
 end

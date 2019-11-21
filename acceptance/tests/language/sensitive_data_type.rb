@@ -39,9 +39,9 @@ tag 'audit:high',
     {:type => 'notify', :parameters => {:namevar => "3:meh", :message => '"3:${Sensitive.new(\'sekrit3\')}"'},
        :assertions => [{:refute_match => 'sekrit3'}, {:assert_match => "3:#{notify_redacted}"}]},
     {:type => 'notify', :parameters => {:namevar => "4:meh", :message => "Sensitive.new($meh4)"}, :pre_code => '$meh4="sekrit4"',
-       :assertions => {:expect_failure => {:refute_match => 'sekrit4', :message => 'you can always spill redacted data, if you want to'}}},
+       :assertions => [{:refute_match => 'sekrit4'}, {:assert_match => file_redacted}]},
     {:type => 'notify', :parameters => {:namevar => "5:meh", :message => "$meh5"}, :pre_code => '$meh5=Sensitive.new("sekrit5")',
-       :assertions => {:expect_failure => {:refute_match => 'sekrit5', :message => 'you can always spill redacted data, if you want to'}}},
+      :assertions => [{:refute_match => 'sekrit5'}, {:assert_match => file_redacted}]},
     {:type => 'notify', :parameters => {:namevar => "6:meh", :message => '"6:${meh6}"'}, :pre_code => '$meh6=Sensitive.new("sekrit6")',
        :assertions => [{:refute_match => 'sekrit6'}, {:assert_match => "6:#{notify_redacted}"}]},
     {:type => 'notify', :parameters => {:namevar => "7:${Sensitive('sekrit7')}"},
@@ -102,7 +102,7 @@ tag 'audit:high',
     with_puppet_running_on(master,{}) do
       agents.each do |agent|
         # redirect logging to a temp location to avoid platform specific syslogs
-        on(agent, puppet("agent -t --debug --trace --show_diff --server #{master.hostname} --environment #{tmp_environment}"), :accept_all_exit_codes => true) do |result|
+        on(agent, puppet("agent -t --debug --trace --show_diff --environment #{tmp_environment}"), :accept_all_exit_codes => true) do |result|
           assert_equal(result.exit_code, 2,'puppet agent run failed')
 
           run_assertions(assertion_code, result) unless agent['locale'] == 'ja'

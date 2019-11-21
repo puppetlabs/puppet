@@ -7,6 +7,8 @@ require 'puppet/daemon'
 describe Puppet::Application::Agent do
   include PuppetSpec::Files
 
+  let(:machine) { double(ensure_client_certificate: nil) }
+
   before :each do
     @puppetd = Puppet::Application[:agent]
 
@@ -27,9 +29,8 @@ describe Puppet::Application::Agent do
     allow(Puppet::Node.indirection).to receive(:cache_class=)
     allow(Puppet::Node::Facts.indirection).to receive(:terminus_class=)
 
-    expect($stderr).not_to receive(:puts)
-
     allow(Puppet.settings).to receive(:use)
+    allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
   end
 
   it "should operate in agent run_mode" do
@@ -125,7 +126,7 @@ describe Puppet::Application::Agent do
       allow(@agent).to receive(:run).and_return(2)
       Puppet[:onetime] = true
 
-      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 0).and_return(double(ensure_client_certificate: nil))
+      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 0).and_return(machine)
 
       expect { execute_agent }.to exit_with 0
     end
@@ -135,13 +136,20 @@ describe Puppet::Application::Agent do
       Puppet[:onetime] = true
       @puppetd.handle_waitforcert(60)
 
-      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 60).and_return(double(ensure_client_certificate: nil))
+      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 60).and_return(machine)
 
       expect { execute_agent }.to exit_with 0
     end
 
     it "should use a default value for waitforcert when --onetime and --waitforcert are not specified" do
+      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 120).and_return(machine)
+
+      execute_agent
+    end
+
+    it "should register ssl OIDs" do
       expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 120).and_return(double(ensure_client_certificate: nil))
+      expect(Puppet::SSL::Oids).to receive(:register_puppet_oids)
 
       execute_agent
     end
@@ -149,7 +157,7 @@ describe Puppet::Application::Agent do
     it "should use the waitforcert setting when checking for a signed certificate" do
       Puppet[:waitforcert] = 10
 
-      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 10).and_return(double(ensure_client_certificate: nil))
+      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 10).and_return(machine)
 
       execute_agent
     end
@@ -386,8 +394,6 @@ describe Puppet::Application::Agent do
     it "should inform the daemon about our agent if :client is set to 'true'" do
       @puppetd.options[:client] = true
 
-      allow(Puppet::SSL::StateMachine).to receive(:new).and_return(double(ensure_client_certificate: nil))
-
       execute_agent
 
       expect(@daemon.agent).to eq(@agent)
@@ -398,8 +404,6 @@ describe Puppet::Application::Agent do
       Puppet[:daemonize] = true
       allow(Signal).to receive(:trap)
 
-      allow(Puppet::SSL::StateMachine).to receive(:new).and_return(double(ensure_client_certificate: nil))
-
       expect(@daemon).to receive(:daemonize)
 
       execute_agent
@@ -408,22 +412,7 @@ describe Puppet::Application::Agent do
     it "should wait for a certificate" do
       @puppetd.options[:waitforcert] = 123
 
-      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 123).and_return(double(ensure_client_certificate: nil))
-
-      execute_agent
-    end
-
-    it "should not wait for a certificate in fingerprint mode" do
-      @puppetd.options[:fingerprint] = true
-      @puppetd.options[:waitforcert] = 123
-      @puppetd.options[:digest] = 'MD5'
-
-      certificate = double('certificate')
-      allow(certificate).to receive(:to_der).and_return('ABCDE')
-      ssl_context = double('ssl_context', client_cert: certificate)
-      allow(Puppet::SSL::StateMachine).to receive(:new).with(onetime: true).and_return(double(ensure_client_certificate: ssl_context))
-
-      expect(@puppetd).to receive(:puts).with('(MD5) 2E:CD:DE:39:59:05:1D:91:3F:61:B1:45:79:EA:13:6D')
+      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 123).and_return(machine)
 
       execute_agent
     end
@@ -478,7 +467,6 @@ describe Puppet::Application::Agent do
 
     it "should dispatch to onetime if --onetime is used" do
       Puppet[:onetime] = true
-      allow(Puppet::SSL::StateMachine).to receive(:new).and_return(double(ensure_client_certificate: nil))
 
       expect(@puppetd).to receive(:onetime)
 
@@ -487,7 +475,6 @@ describe Puppet::Application::Agent do
 
     it "should dispatch to main if --onetime and --fingerprint are not used" do
       Puppet[:onetime] = false
-      allow(Puppet::SSL::StateMachine).to receive(:new).and_return(double(ensure_client_certificate: nil))
 
       expect(@puppetd).to receive(:main)
 
@@ -501,7 +488,7 @@ describe Puppet::Application::Agent do
         @puppetd.options[:client] = :client
         @puppetd.options[:detailed_exitcodes] = false
 
-        allow(Puppet::SSL::StateMachine).to receive(:new).and_return(double(ensure_client_certificate: nil))
+
       end
 
       it "should setup traps" do
@@ -552,26 +539,54 @@ describe Puppet::Application::Agent do
 
     describe "with --fingerprint" do
       before :each do
-        @cert = double('cert')
         @puppetd.options[:fingerprint] = true
         @puppetd.options[:digest] = :MD5
       end
 
       it "should fingerprint the certificate if it exists" do
-        allow(@cert).to receive(:to_der).and_return('ABCDE')
-        ssl_context = double('ssl_context', client_cert: @cert)
-        allow(Puppet::SSL::StateMachine).to receive(:new).with(onetime: true).and_return(double(ensure_client_certificate: ssl_context))
+        cert = cert_fixture('signed.pem')
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_return(cert)
 
-        expect(@puppetd).to receive(:puts).with('(MD5) 2E:CD:DE:39:59:05:1D:91:3F:61:B1:45:79:EA:13:6D')
+        expect(@puppetd).to receive(:puts).with('(MD5) A6:00:3E:C1:DF:CF:E8:44:A6:4F:8D:92:E8:B2:D9:47')
 
         @puppetd.fingerprint
+      end
+
+      it "should fingerprint the request if it exists" do
+        request = request_fixture('request.pem')
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_return(nil)
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_request).and_return(request)
+
+        expect(@puppetd).to receive(:puts).with('(MD5) 04:D0:69:23:32:2F:48:77:FE:2F:F2:0C:4E:90:BE:AC')
+
+        @puppetd.fingerprint
+      end
+
+      it "should print an error to stderr if neither exist" do
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_return(nil)
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_request).and_return(nil)
+
+        expect {
+          expect {
+            @puppetd.fingerprint
+          }.to exit_with(1)
+        }.to output(/Fingerprint asked but neither the certificate, nor the certificate request have been issued/).to_stderr
+      end
+
+      it "should log an error if an exception occurs" do
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_raise(Puppet::Error, "Invalid PEM")
+
+        expect {
+          @puppetd.fingerprint
+        }.to exit_with(1)
+
+        expect(@logs).to include(an_object_having_attributes(message: /Failed to generate fingerprint: Invalid PEM/))
       end
     end
 
     describe "without --onetime and --fingerprint" do
       before :each do
         allow(Puppet).to receive(:notice)
-        allow(Puppet::SSL::StateMachine).to receive(:new).and_return(double(ensure_client_certificate: nil))
       end
 
       it "should start our daemon" do
@@ -579,6 +594,24 @@ describe Puppet::Application::Agent do
 
         execute_agent
       end
+    end
+  end
+
+  describe "when starting in daemon mode on non-windows", :unless => Puppet.features.microsoft_windows? do
+    before :each do
+      allow(Puppet).to receive(:notice)
+      Puppet[:daemonize] = true
+    end
+
+    it "should not print config in default mode" do
+      execute_agent
+      expect(@logs).to be_empty
+    end
+
+    it "should print config in debug mode" do
+      @puppetd.options[:debug] = true
+      execute_agent
+      expect(@logs).to include(an_object_having_attributes(level: :debug, message: /agent_catalog_run_lockfile=/))
     end
   end
 

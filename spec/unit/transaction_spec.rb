@@ -3,6 +3,7 @@ require 'matchers/include_in_order'
 require 'puppet_spec/compiler'
 
 require 'puppet/transaction'
+require 'puppet/type/exec'
 require 'puppet/type/notify'
 require 'fileutils'
 
@@ -779,6 +780,24 @@ describe Puppet::Transaction do
 
       transaction.evaluate
     end
+
+    it "should call Selinux.matchpathcon_fini in case Selinux is enabled ", :if => Puppet.features.posix? do
+      unless defined?(Selinux)
+        module Selinux
+          def self.is_selinux_enabled
+            true
+          end
+        end
+      end
+
+      resource = Puppet::Type.type(:file).new(:path => make_absolute("/tmp/foo"))
+      transaction = transaction_with_resource(resource)
+
+      expect(Selinux).to receive(:matchpathcon_fini)
+      expect(Puppet::Util::SELinux).to receive(:selinux_support?).and_return(true)
+
+      transaction.evaluate
+    end
   end
 
   describe 'when checking application run state' do
@@ -947,6 +966,51 @@ describe Puppet::Transaction do
         notify { ['notify1', 'notify2', 'notify3']: }
       MANIFEST
       expect(times_send_log_with_skipping_called).to eq(3)
+    end
+  end
+
+  describe "failed dependency is depended on multiple times" do
+    it "notifies and warns the failed class dependency once" do
+      Puppet.settings[:merge_dependency_warnings] = true
+
+      command_string = File.expand_path('/my/command')
+      allow(Puppet::Util::Execution).to receive(:execute).with([command_string]).and_raise(Puppet::ExecutionFailure, "Failed")
+
+      # Exec['exec1'] is outside of a class, so it's warning is not subject to being coalesced.
+      times_send_log_with_skipping_called = 0
+      allow_any_instance_of(Puppet::Type::Exec).to receive(:send_log) {times_send_log_with_skipping_called += 1; nil}.with(:warning, "Skipping because of failed dependencies")
+
+      # Class['declared_class'] depends upon Class['required_class'] which contains a resource with a failure.
+      times_send_log_with_class_dependency_called = 0
+      allow_any_instance_of(Puppet::Type).to receive(:send_log) {times_send_log_with_class_dependency_called += 1; nil}.with(:notice, "Class dependency Exec[exec2] has failures: true")
+      times_send_log_with_class_skipping_called = 0
+      allow_any_instance_of(Puppet::Type).to receive(:send_log) {times_send_log_with_class_skipping_called += 1; nil}.with(:warning, "Skipping resources in class because of failed class dependencies")
+
+      apply_compiled_manifest(<<-MANIFEST)
+        class required_class {
+          exec { 'exec2':
+            command => '#{command_string}'
+          }
+        }
+        class declared_class {
+          require required_class
+          exec { 'exec3':
+            command => '#{command_string}'
+          }
+          exec { 'exec4':
+            command => '#{command_string}'
+          }
+        }
+        exec { 'exec1':
+          command => '#{command_string}',
+          require => Exec['exec2']
+        }
+        include declared_class
+      MANIFEST
+
+      expect(times_send_log_with_skipping_called).to eq(1)
+      expect(times_send_log_with_class_dependency_called).to eq(1)
+      expect(times_send_log_with_class_skipping_called).to eq(1)
     end
   end
 end

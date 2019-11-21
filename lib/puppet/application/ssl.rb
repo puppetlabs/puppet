@@ -112,6 +112,8 @@ HELP
       Puppet.settings.use(:main, :agent)
     end
 
+    Puppet::SSL::Oids.register_puppet_oids
+
     certname = Puppet[:certname]
     action = command_line.args.first
     case action
@@ -247,7 +249,10 @@ END
       'certificate' => Puppet[:hostcert],
       'private key password file' => Puppet[:passfile]
     }
-    paths.merge!('local CA certificate' => Puppet[:localcacert], 'local CRL' => Puppet[:hostcrl]) if options[:localca]
+    if options[:localca]
+      paths['local CA certificate'] = Puppet[:localcacert]
+      paths['local CRL'] = Puppet[:hostcrl]
+    end
     paths.each_pair do |label, path|
       if Puppet::FileSystem.exist?(path)
         Puppet::FileSystem.unlink(path)

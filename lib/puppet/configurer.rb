@@ -227,7 +227,7 @@ class Puppet::Configurer
         if options[:catalog].nil? && do_failover
           server, port = find_functional_server
           if server.nil?
-            raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet[:server_list] }
+            raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet.settings.value(:server_list, Puppet[:environment].to_sym, true) }
           else
             #TRANSLATORS 'server_list' is the name of a setting and should not be translated
             Puppet.debug _("Selected puppet server from the `server_list` setting: %{server}:%{port}") % { server: server, port: port }
@@ -382,6 +382,14 @@ class Puppet::Configurer
       execute_postrun_command or return nil
     end
   ensure
+    if Puppet[:resubmit_facts]
+      # TODO: Should mark the report as "failed" if an error occurs and
+      #       resubmit_facts returns false. There is currently no API for this.
+      resubmit_facts_time = thinmark { resubmit_facts }
+
+      report.add_times(:resubmit_facts, resubmit_facts_time)
+    end
+
     report.cached_catalog_status ||= @cached_catalog_status
     report.add_times(:total, Time.now - start)
     report.finalize_report
@@ -427,6 +435,40 @@ class Puppet::Configurer
     end
   rescue => detail
     Puppet.log_exception(detail, _("Could not save last run local report: %{detail}") % { detail: detail })
+  end
+
+  # Submit updated facts to the Puppet Server
+  #
+  # This method will clear all current fact values, load a fresh set of
+  # fact data, and then submit it to the Puppet Server.
+  #
+  # @return [true] If fact submission succeeds.
+  # @return [false] If an exception is raised during fact generation or
+  #   submission.
+  def resubmit_facts
+    ::Facter.clear
+    facts = find_facts
+
+    saved_fact_terminus = Puppet::Node::Facts.indirection.terminus_class
+    begin
+      Puppet::Node::Facts.indirection.terminus_class = :rest
+
+      server = Puppet::Node::Facts::Rest.server
+      Puppet.info(_("Uploading facts for %{node} to %{server}") % {
+                    node: facts.name,
+                    server: server})
+
+      Puppet::Node::Facts.indirection.save(facts, nil, :environment => Puppet::Node::Environment.remote(@environment))
+
+      return true
+    ensure
+      Puppet::Node::Facts.indirection.terminus_class = saved_fact_terminus
+    end
+  rescue => detail
+    Puppet.log_exception(detail, _("Failed to submit facts: %{detail}") %
+                                 { detail: detail })
+
+    return false
   end
 
   private

@@ -15,7 +15,7 @@ step "Agent parses a JSON catalog" do
     ruby = Puppet::Acceptance::CommandUtils.ruby_command(agent)
   
     # Refresh the catalog
-    on(agent, puppet("agent --test --server #{master}"))
+    on(agent, puppet("agent --test"))
 
     # The catalog file should be parseable JSON
     json_catalog = File.join(agent.puppet['client_datadir'], 'catalog',
@@ -23,6 +23,6 @@ step "Agent parses a JSON catalog" do
     on(agent, "cat #{json_catalog} | #{ruby} -rjson -e 'JSON.parse(STDIN.read)'")
 
     # Can the agent parse it as JSON?
-    on(agent, puppet("catalog find --terminus json --server #{master} > /dev/null"))
+    on(agent, puppet("catalog find --terminus json > /dev/null"))
   end
 end

@@ -183,7 +183,7 @@ class Application
 
     # used to declare code that handle an option
     def option(*options, &block)
-      long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1' ).gsub('-','_')
+      long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1' ).tr('-','_')
       fname = "handle_#{long}".intern
       if (block_given?)
         define_method(fname, &block)
@@ -395,7 +395,7 @@ class Application
   end
 
   def setup_logs
-    handle_logdest_arg(Puppet[:logdest])
+    handle_logdest_arg(Puppet[:logdest]) if !options[:setdest]
 
     unless options[:setdest]
       if options[:debug] || options[:verbose]
@@ -418,7 +418,7 @@ class Application
   end
 
   def handle_logdest_arg(arg)
-    return if options[:setdest] || arg.nil?
+    return if arg.nil?
 
     begin
       Puppet[:logdest] = arg

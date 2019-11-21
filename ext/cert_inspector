@@ -75,15 +75,15 @@ class X509Collector
       end
     when OpenSSL::X509::Certificate
       signature_desc = who_signed(meaning, key_names, keys)
-      "Certificate assigning name #{meaning.subject.to_s} to #{key_names[meaning.public_key.to_s]}\n    serial number #{meaning.serial}\n    issued by #{meaning.issuer.to_s}\n    signed by #{signature_desc}"
+      "Certificate assigning name #{meaning.subject} to #{key_names[meaning.public_key.to_s]}\n    serial number #{meaning.serial}\n    issued by #{meaning.issuer}\n    signed by #{signature_desc}"
     when OpenSSL::X509::Request
       signature_desc = who_signed(meaning, key_names, keys)
-      "Certificate request for #{meaning.subject.to_s} having key #{key_names[meaning.public_key.to_s]}\n    signed by #{signature_desc}"
+      "Certificate request for #{meaning.subject} having key #{key_names[meaning.public_key.to_s]}\n    signed by #{signature_desc}"
     when OpenSSL::X509::CRL
       signature_desc = who_signed(meaning, key_names, keys)
       revoked_serial_numbers = meaning.revoked.map { |r| r.serial }
       revoked_desc = if revoked_serial_numbers.count > 0 then "serial numbers #{revoked_serial_numbers.inspect}" else "nothing" end
-      "Certificate revocation list revoking #{revoked_desc}\n    issued by #{meaning.issuer.to_s}\n    signed by #{signature_desc}"
+      "Certificate revocation list revoking #{revoked_desc}\n    issued by #{meaning.issuer}\n    signed by #{signature_desc}"
     else
       "Unknown"
     end

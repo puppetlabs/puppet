@@ -242,6 +242,58 @@ describe Puppet::Util::Windows::Registry do
         end
       end
     end
+
+    context 'whean reading null byte' do
+      let(:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let(:puppet_key) { 'SOFTWARE\\Puppet Labs' }
+      let(:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
+      let(:value_name) { SecureRandom.uuid }
+
+      after(:each) do
+        hklm.open(puppet_key, Win32::Registry::KEY_ALL_ACCESS) do |reg|
+          subject.delete_key(reg, subkey_name)
+        end
+      end
+
+      [
+        {
+          name: 'REG_SZ',
+          type: Win32::Registry::REG_SZ,
+          value: "reg sz\u0000 string",
+          expected_value: "reg sz  string"
+        },
+        {
+          name: 'REG_SZ_2',
+          type: Win32::Registry::REG_SZ,
+          value: "reg sz\x00 string",
+          expected_value: "reg sz  string"
+        },
+        {
+          name: 'REG_EXPAND_SZ',
+          type: Win32::Registry::REG_EXPAND_SZ,
+          value: "\0reg expand string",
+          expected_value: " reg expand string"
+        }
+      ].each do |pair|
+        it 'replaces null bytes with spaces' do
+          hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg|
+            reg.write(value_name, pair[:type], pair[:value])
+          end
+
+          hklm.open("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_READ) do |reg|
+            vals = subject.values(reg)
+
+            expect(vals).to have_key(value_name)
+            subject.each_value(reg) do |_subkey, type, _data|
+              expect(type).to eq(pair[:type])
+            end
+
+            written = vals[value_name]
+            expect(written).to eq(pair[:expected_value])
+          end
+        end
+      end
+    end
   end
 
   context "#values_by_name" do

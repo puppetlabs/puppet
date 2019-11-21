@@ -238,6 +238,7 @@ Licensed under the Apache 2.0 License
     libdir = Puppet[:libdir]
     vardir = Puppet[:vardir]
     confdir = Puppet[:confdir]
+    ssldir = Puppet[:ssldir]
     certname = Puppet[:certname]
 
     env = Puppet::Node::Environment.remote(Puppet[:environment])
@@ -267,18 +268,35 @@ Licensed under the Apache 2.0 License
             port = ":#{device_url.port}" if device_url.port
 
             # override local $vardir and $certname
+            Puppet[:ssldir] = ::File.join(Puppet[:deviceconfdir], device.name, 'ssl')
             Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
             Puppet[:libdir] = options[:libdir] || ::File.join(Puppet[:devicedir], device.name, 'lib')
             Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
             Puppet[:certname] = device.name
             ssl_context = nil
 
+            # create device directory under $deviceconfdir
+            Puppet::FileSystem.dir_mkpath(Puppet[:ssldir]) unless Puppet::FileSystem.dir_exist?(Puppet[:ssldir])
+
             # this will reload and recompute default settings and create device-specific sub vardir
             Puppet.settings.use :main, :agent, :ssl
 
+            # Workaround for PUP-8736: store ssl certs outside the cache directory to prevent accidental removal and keep the old path as symlink
+            optssldir = File.join(Puppet[:confdir], 'ssl')
+            Puppet::FileSystem.symlink(Puppet[:ssldir], optssldir) unless Puppet::FileSystem.exist?(optssldir)
+
             unless options[:resource] || options[:facts] || options[:apply]
-              # ask for a ssl cert if needed, but at least
-              # setup the ssl system for this device.
+              # Since it's too complicated to fix properly in the default settings, we workaround for PUP-9642 here.
+              # See https://github.com/puppetlabs/puppet/pull/7483#issuecomment-483455997 for details.
+              # This has to happen after `settings.use` above, so the directory is created and before `setup_host` below, where the SSL
+              # routines would fail with access errors
+              if Puppet.features.root? && !Puppet::Util::Platform.windows?
+                user = Puppet::Type.type(:user).new(name: Puppet[:user]).exists? ? Puppet[:user] : nil
+                group = Puppet::Type.type(:group).new(name: Puppet[:group]).exists? ? Puppet[:group] : nil
+                Puppet.debug("Fixing perms for #{user}:#{group} on #{Puppet[:confdir]}")
+                FileUtils.chown(user, group, Puppet[:confdir]) if user || group
+              end
+
               ssl_context = setup_context
 
               unless options[:libdir]
@@ -288,7 +306,7 @@ Licensed under the Apache 2.0 License
               end
             end
 
-            # this init the device singleton, so that the facts terminus
+            # this inits the device singleton, so that the facts terminus
             # and the various network_device provider can use it
             Puppet::Util::NetworkDevice.init(device)
 
@@ -297,10 +315,10 @@ Licensed under the Apache 2.0 License
               Puppet.info _("retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { resource: type, target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
               resources = find_resources(type, name)
               if options[:to_yaml]
-                text = resources.map do |resource|
-                  resource.prune_parameters(:parameters_to_include => @extra_params).to_hierayaml.force_encoding(Encoding.default_external)
-                end.join("\n")
-                text.prepend("#{type.downcase}:\n")
+                data = resources.map do |resource|
+                  resource.prune_parameters(:parameters_to_include => @extra_params).to_hiera_hash
+                end.inject(:merge!)
+                text = YAML.dump(type.downcase => data)
               else
                 text = resources.map do |resource|
                   resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest.force_encoding(Encoding.default_external)
@@ -350,6 +368,7 @@ Licensed under the Apache 2.0 License
             Puppet[:libdir] = libdir
             Puppet[:vardir] = vardir
             Puppet[:confdir] = confdir
+            Puppet[:ssldir] = ssldir
             Puppet[:certname] = certname
           end
         end

@@ -66,7 +66,6 @@ EOF
         on(agent, puppet("agent --test",
                   "--waitforcert 0",
                   "--ssldir", "'#{testdirs[agent]}/ssldir-autosign'",
-                  "--server", fqdn,
                   "--certname #{certname}"), :acceptable_exit_codes => [0,2])
         unless agent['locale'] == 'ja'
           assert_key_generated(agent)
@@ -107,7 +106,6 @@ EOF
         on(agent, puppet("agent --test",
                         "--waitforcert 0",
                         "--ssldir", "'#{testdirs[agent]}/ssldir-reject'",
-                        "--server", fqdn,
                         "--certname #{certname}"), :acceptable_exit_codes => [1])
         unless agent['locale'] == 'ja'
           assert_key_generated(agent)
@@ -176,7 +174,6 @@ custom_attributes:
         on(agent, puppet("agent --test",
                          "--waitforcert 0",
                          "--ssldir", "'#{testdirs[agent]}/ssldir-attrs'",
-                         "--server", fqdn,
                          "--csr_attributes '#{agent_csr_attributes[agent]}'",
                          "--certname #{certname}"), :acceptable_exit_codes => [0,2])
         assert_key_generated(agent) unless agent['locale'] == 'ja'

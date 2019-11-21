@@ -59,5 +59,57 @@ describe Puppet::Configurer do
       expect(summary["time"]).to be_key("notify")
       expect(summary["time"]["last_run"]).to be_between(t1, t2)
     end
+
+    describe 'resubmitting facts' do
+      context 'when resubmit_facts is set to false' do
+        it 'should not send data' do
+          expect(@configurer).to receive(:resubmit_facts).never
+
+          @configurer.run(catalog: @catalog)
+        end
+      end
+
+      context 'when resubmit_facts is set to true' do
+        let(:test_facts) { Puppet::Node::Facts.new('configurer.test') }
+        let(:fact_rest_terminus) { Puppet::Node::Facts.indirection.terminus(:rest) }
+
+        before(:each) do
+          Puppet[:resubmit_facts] = true
+
+          allow(@configurer).to receive(:find_facts).and_return(test_facts)
+          allow(fact_rest_terminus).to receive(:save)
+        end
+
+        it 'sends fact data using the rest terminus' do
+          expect(fact_rest_terminus).to receive(:save)
+
+          @configurer.run(catalog: @catalog)
+        end
+
+        it 'logs errors that occur during fact generation' do
+          allow(@configurer).to receive(:find_facts).and_raise('error generating facts')
+          expect(Puppet).to receive(:log_exception).with(instance_of(RuntimeError),
+                                                         /^Failed to submit facts/)
+
+          @configurer.run(catalog: @catalog)
+        end
+
+        it 'logs errors that occur during fact submission' do
+          allow(fact_rest_terminus).to receive(:save).and_raise('error sending facts')
+          expect(Puppet).to receive(:log_exception).with(instance_of(RuntimeError),
+                                                         /^Failed to submit facts/)
+
+          @configurer.run(catalog: @catalog)
+        end
+
+        it 'records time spent resubmitting facts' do
+          report = Puppet::Transaction::Report.new
+
+          @configurer.run(catalog: @catalog, report: report)
+
+          expect(report.metrics['time'].values).to include(["resubmit_facts", anything, Numeric])
+        end
+      end
+    end
   end
 end

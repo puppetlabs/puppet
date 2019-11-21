@@ -220,6 +220,10 @@ module Puppet
 
         See the `periodmatch` attribute for tuning whether to match
         times by their distance apart or by their specific value.
+        
+        > **Tip**: You can use `period => never,` to prevent a resource from being applied
+        in the given `range`. This is useful if you need to create a blackout window to
+        perform sensitive operations without interruption.
       EOT
 
       newvalues(:hourly, :daily, :weekly, :monthly, :never)
@@ -334,7 +338,7 @@ module Puppet
       end
 
       def weekday_integer?(value)
-        value.is_a?(Integer) && (0..6).include?(value)
+        value.is_a?(Integer) && (0..6).cover?(value)
       end
 
       def weekday_string?(value)

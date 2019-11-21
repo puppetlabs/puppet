@@ -4,6 +4,12 @@ require 'matchers/resource'
 
 require 'puppet/indirector/catalog/compiler'
 
+def set_facts(fact_hash)
+  fact_hash.each do |key, value|
+    allow(Facter).to receive(:value).with(key).and_return(value)
+  end
+end
+
 describe Puppet::Resource::Catalog::Compiler do
   let(:compiler) { described_class.new }
   let(:node_name) { "foo" }
@@ -16,8 +22,11 @@ describe Puppet::Resource::Catalog::Compiler do
   describe "when initializing" do
     before do
       expect(Puppet).to receive(:version).and_return(1)
-      expect(Facter).to receive(:value).with('fqdn').and_return("my.server.com")
-      expect(Facter).to receive(:value).with('ipaddress').and_return("my.ip.address")
+      set_facts({
+        'fqdn'       => "my.server.com",
+        'ipaddress'  => "my.ip.address",
+        'ipaddress6' => nil
+        })
     end
 
     it "should gather data about itself" do
@@ -390,9 +399,12 @@ describe Puppet::Resource::Catalog::Compiler do
 
   describe "after finding nodes" do
     before do
-      expect(Puppet).to receive(:version).and_return(1)
-      expect(Facter).to receive(:value).with('fqdn').and_return("my.server.com")
-      expect(Facter).to receive(:value).with('ipaddress').and_return("my.ip.address")
+      allow(Puppet).to receive(:version).and_return(1)
+      set_facts({
+        'fqdn'       => "my.server.com",
+        'ipaddress'  => "my.ip.address",
+        'ipaddress6' => nil
+        })
       @request = Puppet::Indirector::Request.new(:catalog, :find, node_name, nil)
       allow(compiler).to receive(:compile)
       allow(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(node)
@@ -411,6 +423,51 @@ describe Puppet::Resource::Catalog::Compiler do
     it "should add the server's IP address to the node's parameters as 'serverip'" do
       expect(node).to receive(:merge).with(hash_including("serverip" => "my.ip.address"))
       compiler.find(@request)
+    end
+
+    it "shouldn't warn if there is at least one ip fact" do
+      expect(node).to receive(:merge).with(hash_including("serverip" => "my.ip.address"))
+      compiler.find(@request)
+      expect(@logs).not_to be_any {|log| log.level == :warning and log.message =~ /Could not retrieve either serverip or serverip6 fact/}
+    end
+  end
+
+  describe "in an IPv6 only environment" do
+    before do |example|
+      allow(Puppet).to receive(:version).and_return(1)
+      set_facts({
+        'fqdn'       => "my.server.com",
+        'ipaddress'  => nil,
+      })
+      if example.metadata[:nil_ipv6]
+        set_facts({
+          'ipaddress6' => nil
+        })
+      else
+        set_facts({
+          'ipaddress6' => "my.ipv6.address"
+        })
+      end
+      @request = Puppet::Indirector::Request.new(:catalog, :find, node_name, nil)
+      allow(compiler).to receive(:compile)
+      allow(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(node)
+    end
+
+    it "should populate the :serverip6 fact" do
+      expect(node).to receive(:merge).with(hash_including("serverip6" => "my.ipv6.address"))
+      compiler.find(@request)
+    end
+
+    it "shouldn't warn if there is at least one ip fact" do
+      expect(node).to receive(:merge).with(hash_including("serverip6" => "my.ipv6.address"))
+      compiler.find(@request)
+      expect(@logs).not_to be_any {|log| log.level == :warning and log.message =~ /Could not retrieve either serverip or serverip6 fact/}
+    end
+
+    it "should warn if there are no ip facts", :nil_ipv6 do
+      expect(node).to receive(:merge)
+      compiler.find(@request)
+      expect(@logs).to be_any {|log| log.level == :warning and log.message =~ /Could not retrieve either serverip or serverip6 fact/}
     end
   end
 

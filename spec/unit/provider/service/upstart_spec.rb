@@ -33,35 +33,16 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
   end
 
   context "upstart daemon existence confine" do
-    # We have a separate method here because our search for the upstart daemon
-    # confine expects it to be the last confine declared in the upstart provider.
-    # If in the future we add other confines below it or change its order, these
-    # unit tests will fail. Placing knowledge of where this confine is located
-    # in one place makes updating it less painful in case we ever need to do this.
-    def assert_upstart_daemon_existence_confine_is(expected_value)
-      # Reload our provider to evaluate the :confine block
-      provider_class = Puppet::Type.type(:service).provider(:upstart)
-
-      upstart_daemon_existence_confine = provider_class.confine_collection.instance_variable_get(:@confines)[-1]
-      expect(upstart_daemon_existence_confine.valid?).to be(expected_value)
-    end
-
     let(:initctl_version) { ['/sbin/initctl', 'version', '--quiet'] }
 
     before(:each) do
-      # Stub out /sbin/initctl
       allow(Puppet::Util).to receive(:which).with('/sbin/initctl').and_return('/sbin/initctl')
-
-      # Both of our tests are asserting the confine :true block that shells out to
-      # `initctl version --quiet`. Its expression is evaluated at provider load-time.
-      # Hence before each test, we want to reload the upstart provider so that the
-      # confine is re-evaluated.
-      Puppet::Type.type(:service).unprovide(:upstart)
     end
 
     it "should return true when the daemon is running" do
       expect(Puppet::Util::Execution).to receive(:execute).with(initctl_version, instance_of(Hash))
-      assert_upstart_daemon_existence_confine_is(true)
+
+      expect(provider_class).to be_has_initctl
     end
 
     it "should return false when the daemon is not running" do
@@ -69,7 +50,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
         .with(initctl_version, instance_of(Hash))
         .and_raise(Puppet::ExecutionFailure, "initctl failed!")
 
-      assert_upstart_daemon_existence_confine_is(false)
+      expect(provider_class).to_not be_has_initctl
     end
   end
 

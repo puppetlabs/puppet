@@ -56,7 +56,7 @@ class Puppet::Property::Ensure < Puppet::Property
       else
         return _('%{name} changed %{is} to %{should}') % { name: name, is: is_to_s(currentvalue), should: should_to_s(newvalue) }
       end
-    rescue Puppet::Error, Puppet::DevError
+    rescue Puppet::Error
       raise
     rescue => detail
       raise Puppet::DevError, _("Could not convert change %{name} to string: %{detail}") % { name: self.name, detail: detail }, detail.backtrace

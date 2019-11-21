@@ -99,7 +99,7 @@ master_opts = {
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
-    on(agent, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [2])
+    on(agent, puppet('agent', "-t"), :acceptable_exit_codes => [2])
 
     assert_match("name: postgres shell: /bin/bash", stdout)
   end

@@ -1,3 +1,4 @@
+# coding: utf-8
 # Define the different packaging systems.  Each package system is implemented
 # in a module, which then gets used to individually extend each package object.
 # This allows packages to exist on the same machine using different packaging
@@ -20,8 +21,8 @@ module Puppet
       requires in order to function, and you must meet those requirements
       to use a given provider.
 
-      You can declare multiple package resources with the same `name`, as long
-      as they specify different providers and have unique titles.
+      You can declare multiple package resources with the same `name` as long
+      as they have unique titles, and specify different providers and commands.
 
       Note that you must use the _title_ to make a reference to a package
       resource; `Package[<NAME>]` is not a synonym for `Package[<TITLE>]` like
@@ -56,6 +57,7 @@ module Puppet
         a user or another package. Held is considered a superset of
         installed.",
       :methods => [:hold]
+    feature :install_only, "The provider accepts options to only install packages never update (kernels, etc.)"
     feature :install_options, "The provider accepts options to be
       passed to the installer command."
     feature :uninstall_options, "The provider accepts options to be
@@ -65,6 +67,8 @@ module Puppet
       provider-specific.",
       :methods => [:package_settings_insync?, :package_settings, :package_settings=]
     feature :virtual_packages, "The provider accepts virtual package names for install and uninstall."
+
+    feature :targetable, "The provider accepts a targeted package management command."
 
     ensurable do
       desc <<-EOT
@@ -275,20 +279,55 @@ module Puppet
       [:provider]
     end
 
-    # We have more than one namevar, so we need title_patterns. However, we
-    # cheat and set the patterns to map to name only and completely ignore
-    # provider. So far, the logic that determines uniqueness appears to just
-    # "Do The Right Thing™" when the provider is explicitly set by the user.
+    # Specify a targeted package management command.
+    newparam(:command, :required_features => :targetable) do
+      desc <<-EOT
+        The targeted command to use when managing a package:
+
+          package { 'mysql':
+            provider => gem,
+          }
+
+          package { 'mysql-opt':
+            name     => 'mysql',
+            provider => gem,
+            command  => '/opt/ruby/bin/gem',
+          }
+
+        Each provider defines a package management command; and uses the first
+        instance of the command found in the PATH.
+
+        Providers supporting the targetable feature allow you to specify the
+        absolute path of the package management command; useful when multiple
+        instances of the command are installed, or the command is not in the PATH.
+      EOT
+
+      isnamevar
+      defaultto :default
+    end
+
+    # We have more than one namevar, so we need title_patterns.
+    # However, we cheat and set the patterns to map to name only
+    # and completely ignore provider (and command, for targetable providers).
+    # So far, the logic that determines uniqueness appears to just
+    # "Do The Right Thing™" when provider (and command) are explicitly set.
     #
     # The following resources will be seen as unique by puppet:
     #
     #     # Uniqueness Key: ['mysql', nil]
-    #     package{'mysql': }
+    #     package {'mysql': }
     #
-    #     # Uniqueness Key: ['mysql', 'gem']
-    #     package{'gem-mysql':
+    #     # Uniqueness Key: ['mysql', 'gem', nil]
+    #     package {'gem-mysql':
+    #       name     => 'mysql,
+    #       provider => gem,
+    #     }
+    #
+    #     # Uniqueness Key: ['mysql', 'gem', '/opt/ruby/bin/gem']
+    #     package {'gem-mysql-opt':
     #       name     => 'mysql,
     #       provider => gem
+    #       command  => '/opt/ruby/bin/gem',
     #     }
     #
     # This does not handle the case where providers like 'yum' and 'rpm' should
@@ -446,8 +485,16 @@ module Puppet
     end
 
     newparam(:flavor) do
-      desc "OpenBSD supports 'flavors', which are further specifications for
-        which type of package you want."
+      desc "OpenBSD and DNF modules support 'flavors', which are
+        further specifications for which type of package you want."
+    end
+
+    newparam(:install_only, :boolean => false, :parent => Puppet::Parameter::Boolean, :required_features => :install_only) do
+      desc <<-EOT
+        It should be set for packages that should only ever be installed,
+        never updated. Kernels in particular fall into this category.
+      EOT
+      defaultto false
     end
 
     newparam(:install_options, :parent => Puppet::Parameter::PackageOptions, :required_features => :install_options) do
@@ -501,7 +548,14 @@ module Puppet
     newparam(:allow_virtual, :boolean => true, :parent => Puppet::Parameter::Boolean, :required_features => :virtual_packages) do
       desc 'Specifies if virtual package names are allowed for install and uninstall.'
 
-      defaultto true
+      defaultto do
+        provider_class = provider.class
+        if provider_class.respond_to?(:defaultto_allow_virtual)
+          provider_class.defaultto_allow_virtual
+        else
+          true
+        end
+      end
     end
 
     autorequire(:file) do

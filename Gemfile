@@ -20,11 +20,11 @@ gem "puppet-resource_api", *location_for(ENV['RESOURCE_API_LOCATION'] || ["~> 1.
 
 group(:features) do
   gem 'diff-lcs', '~> 1.3', require: false
-  gem 'hiera-eyaml', require: false
+  gem 'hiera-eyaml', *location_for(ENV['HIERA_EYAML_LOCATION'])
   gem 'hocon', '~> 1.0', require: false
   # requires native libshadow headers/libs
-  # gem 'libshadow', '~> 1.0', require: false, platforms: [:ruby]
-  gem 'minitar', '~> 0.6', require: false
+  #gem 'ruby-shadow', '~> 2.5', require: false, platforms: [:ruby]
+  gem 'minitar', '~> 0.9', require: false
   gem 'msgpack', '~> 1.2', require: false
   gem 'rdoc', '~> 6.0', require: false, platforms: [:ruby]
   # requires native augeas headers/libs
@@ -40,8 +40,8 @@ group(:test) do
   gem "rspec", "~> 3.1", require: false
   gem "rspec-its", "~> 1.1", require: false
   gem "rspec-collection_matchers", "~> 1.1", require: false
-  gem 'vcr', '~> 2.9', require: false
-  gem 'webmock', '~> 1.24', require: false
+  gem 'vcr', '~> 5.0', require: false
+  gem 'webmock', '~> 3.0', require: false
   gem 'yard', require: false
 
   gem 'rubocop', '~> 0.49', require: false, platforms: [:ruby]
@@ -66,7 +66,7 @@ group(:documentation) do
   gem 'ronn', '~> 0.7.3', require: false, platforms: [:ruby]
 end
 
-if File.exists? "#{__FILE__}.local"
+if File.exist? "#{__FILE__}.local"
   eval(File.read("#{__FILE__}.local"), binding)
 end
 

@@ -52,7 +52,11 @@ class Puppet::Provider::Exec < Puppet::Provider
     # This is backwards compatible all the way to Ruby 1.8.7.
     Timeout::timeout(resource[:timeout], Timeout::Error) do
       cwd = resource[:cwd]
-      cwd ||= Dir.pwd
+      # It's ok if cwd is nil. In that case Puppet::Util::Execution.execute() simply will not attempt to
+      # change the working directory, which is exactly the right behavior when no cwd parameter is
+      # expressed on the resource.  Moreover, attempting to change to the directory that is already
+      # the working directory can fail under some circumstances, so avoiding the directory change attempt
+      # is preferable to defaulting cwd to that directory.
 
       # note that we are passing "false" for the "override_locale" parameter, which ensures that the user's
       # default/system locale will be respected.  Callers may override this behavior by setting locale-related
@@ -93,6 +97,6 @@ class Puppet::Provider::Exec < Puppet::Provider
   def validatecmd(command)
     exe = extractexe(command)
     # if we're not fully qualified, require a path
-    self.fail _("'%{command}' is not qualified and no path was specified. Please qualify the command or specify a path.") % { command: command } if !absolute_path?(exe) and resource[:path].nil?
+    self.fail _("'%{exe}' is not qualified and no path was specified. Please qualify the command or specify a path.") % { exe: exe } if !absolute_path?(exe) and resource[:path].nil?
   end
 end

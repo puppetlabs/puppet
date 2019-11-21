@@ -30,6 +30,16 @@ module Puppet
       end
     end
 
+    module PackageUtils
+      def package_present(host, package, version = nil)
+          host.install_package(package, '', version)
+      end
+
+      def package_absent(host, package, cmdline_args = '', opts = {})
+          host.uninstall_package(package, cmdline_args, opts)
+      end
+    end
+
     module CommandUtils
       def ruby_command(host)
         "env PATH=\"#{host['privatebindir']}:${PATH}\" ruby"

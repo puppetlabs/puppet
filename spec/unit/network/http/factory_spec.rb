@@ -43,10 +43,11 @@ describe Puppet::Network::HTTP::Factory do
   context "proxy settings" do
     let(:proxy_host) { 'myhost' }
     let(:proxy_port) { 432 }
+    let(:proxy_user) { 'mo' }
+    let(:proxy_pass) { 'password' }
 
-    it "should not set a proxy if the value is 'none'" do
+    it "should not set a proxy if the http_proxy_host setting is 'none'" do
       Puppet[:http_proxy_host] = 'none'
-      expect(Puppet::Util::HttpProxy).to receive(:no_proxy?).and_return(false)
       conn = create_connection(site)
 
       expect(conn.proxy_address).to be_nil
@@ -55,7 +56,18 @@ describe Puppet::Network::HTTP::Factory do
     it 'should not set a proxy if a no_proxy env var matches the destination' do
       Puppet[:http_proxy_host] = proxy_host
       Puppet[:http_proxy_port] = proxy_port
-      expect(Puppet::Util::HttpProxy).to receive(:no_proxy?).and_return(true)
+      Puppet::Util.withenv('NO_PROXY' => site.host) do
+        conn = create_connection(site)
+
+        expect(conn.proxy_address).to be_nil
+        expect(conn.proxy_port).to be_nil
+      end
+    end
+
+    it 'should not set a proxy if the no_proxy setting matches the destination' do
+      Puppet[:http_proxy_host] = proxy_host
+      Puppet[:http_proxy_port] = proxy_port
+      Puppet[:no_proxy] = site.host
       conn = create_connection(site)
 
       expect(conn.proxy_address).to be_nil
@@ -64,7 +76,6 @@ describe Puppet::Network::HTTP::Factory do
 
     it 'sets proxy_address' do
       Puppet[:http_proxy_host] = proxy_host
-      expect(Puppet::Util::HttpProxy).to receive(:no_proxy?).and_return(false)
       conn = create_connection(site)
 
       expect(conn.proxy_address).to eq(proxy_host)
@@ -73,10 +84,21 @@ describe Puppet::Network::HTTP::Factory do
     it 'sets proxy address and port' do
       Puppet[:http_proxy_host] = proxy_host
       Puppet[:http_proxy_port] = proxy_port
-      expect(Puppet::Util::HttpProxy).to receive(:no_proxy?).and_return(false)
       conn = create_connection(site)
 
       expect(conn.proxy_port).to eq(proxy_port)
+    end
+
+    it 'sets proxy user and password' do
+      Puppet[:http_proxy_host] = proxy_host
+      Puppet[:http_proxy_port] = proxy_port
+      Puppet[:http_proxy_user] = proxy_user
+      Puppet[:http_proxy_password] = proxy_pass
+
+      conn = create_connection(site)
+
+      expect(conn.proxy_user).to eq(proxy_user)
+      expect(conn.proxy_pass).to eq(proxy_pass)
     end
   end
 
@@ -100,6 +122,12 @@ describe Puppet::Network::HTTP::Factory do
     conn = create_connection(site)
 
     expect(conn.keep_alive_timeout).to eq(2147483647)
+  end
+
+  it "disables ruby's max retry on 2.5 and up", if: RUBY_VERSION.to_f >= 2.5 do
+    conn = create_connection(site)
+
+    expect(conn.max_retries).to eq(0)
   end
 
   context 'source address' do

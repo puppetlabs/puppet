@@ -18,6 +18,10 @@ class TaskInstantiator
     task = { 'name' => name, 'metadata' => metadata, 'files' => files }
 
     begin
+      unless metadata['parameters'].is_a?(Hash) || metadata['parameters'].nil?
+        msg = _('Failed to load metadata for task %{name}: \'parameters\' must be a hash') % { name: name }
+        raise Puppet::ParseError.new(msg, metadata_file)
+      end
       task['parameters'] = convert_types(metadata['parameters'])
 
       Types::TypeFactory.task.from_hash(task)

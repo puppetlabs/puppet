@@ -55,35 +55,44 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
      get(:uid)
   end
 
+  def comment
+     return localcomment if @resource.forcelocal?
+     get(:comment)
+  end
+
   def finduser(key, value)
     passwd_file = "/etc/passwd"
-    passwd_keys = ['account', 'password', 'uid', 'gid', 'gecos', 'directory', 'shell']
+    passwd_keys = [:account, :password, :uid, :gid, :gecos, :directory, :shell]
     index = passwd_keys.index(key)
     File.open(passwd_file) do |f|
       f.each_line do |line|
-         user = line.split(":")
-         if user[index] == value
-             f.close
-             return user
-         end
+        user = line.split(":")
+        if user[index] == value
+          return Hash[passwd_keys.zip(user)]
+        end
       end
     end
     false
   end
 
   def local_username
-    finduser('uid', @resource.uid)
+    finduser(:uid, @resource.uid)
   end
 
   def localuid
-    user = finduser('account', resource[:name])
-    return user[2] if user
+    user = finduser(:account, resource[:name])
+    return user[:uid] if user
     false
+  end
+
+  def localcomment
+    user = finduser(:account, resource[:name])
+    user[:gecos]
   end
 
   def shell=(value)
     check_valid_shell
-    set("shell", value)
+    set(:shell, value)
   end
 
   verify :gid, "GID must be an integer" do |value|
@@ -105,18 +114,18 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # because by default duplicates are allowed.  This check is
     # to ensure consistent behaviour of the useradd provider when
     # using both useradd and luseradd
-    if not @resource.allowdupe? and @resource.forcelocal?
-       if @resource.should(:uid) and finduser('uid', @resource.should(:uid).to_s)
-           raise(Puppet::Error, "UID #{@resource.should(:uid).to_s} already exists, use allowdupe to force user creation")
+    if (!@resource.allowdupe?) && @resource.forcelocal?
+       if @resource.should(:uid) && finduser(:uid, @resource.should(:uid).to_s)
+           raise(Puppet::Error, "UID #{@resource.should(:uid)} already exists, use allowdupe to force user creation")
        end
-    elsif @resource.allowdupe? and not @resource.forcelocal?
+    elsif @resource.allowdupe? && (!@resource.forcelocal?)
        return ["-o"]
     end
     []
   end
 
   def check_valid_shell
-    unless File.exists?(@resource.should(:shell))
+    unless File.exist?(@resource.should(:shell))
       raise(Puppet::Error, "Shell #{@resource.should(:shell)} must exist")
     end
     unless File.executable?(@resource.should(:shell).to_s)
@@ -126,16 +135,16 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def check_manage_home
     cmd = []
-    if @resource.managehome? and not @resource.forcelocal?
+    if @resource.managehome? && (!@resource.forcelocal?)
       cmd << "-m"
-    elsif not @resource.managehome? and Facter.value(:osfamily) == 'RedHat'
+    elsif (!@resource.managehome?) && Facter.value(:osfamily) == 'RedHat'
       cmd << "-M"
     end
     cmd
   end
 
   def check_system_users
-    if self.class.system_users? and resource.system?
+    if self.class.system_users? && resource.system?
       ["-r"]
     else
       []
@@ -147,17 +156,33 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # validproperties is a list of properties in undefined order
     # sort them to have a predictable command line in tests
     Puppet::Type.type(:user).validproperties.sort.each do |property|
-      next if property == :ensure
-      next if property_manages_password_age?(property)
-      next if property == :groups and @resource.forcelocal?
-      next if property == :expiry and @resource.forcelocal?
+      value = get_value_for_property(property)
+      next if value.nil?
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
-      if value = @resource.should(property) and value != ""
-        cmd << flag(property) << munge(property, value)
-      end
+      cmd << flag(property) << munge(property, value)
     end
     cmd
+  end
+
+  def get_value_for_property(property)
+    return nil if property == :ensure
+    return nil if property_manages_password_age?(property)
+    return nil if property == :groups and @resource.forcelocal?
+    return nil if property == :expiry and @resource.forcelocal?
+    value = @resource.should(property)
+    return nil if !value || value == ""
+
+    value
+  end
+
+  def has_sensitive_data?(property = nil)
+    #Check for sensitive values?
+    properties = property ? [property] : Puppet::Type.type(:user).validproperties
+    properties.any? do |prop|
+      p = @resource.parameter(prop)
+      p && p.respond_to?(:is_sensitive) && p.is_sensitive
+    end
   end
 
   def addcmd
@@ -167,7 +192,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     else
       cmd = [command(:add)]
     end
-    if not @resource.should(:gid) and Puppet::Util.gid(@resource[:name])
+    if (!@resource.should(:gid)) && Puppet::Util.gid(@resource[:name])
       cmd += ["-g", @resource[:name]]
     end
     cmd += add_properties
@@ -203,7 +228,10 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     else
       cmd = [command(:delete)]
     end
-    cmd += @resource.managehome? ? ['-r'] : []
+    # Solaris `userdel -r` will fail if the homedir does not exist.
+    if @resource.managehome? && (('Solaris' != Facter.value(:operatingsystem)) || Dir.exist?(Dir.home(@resource[:name])))
+      cmd << '-r'
+    end
     cmd << @resource[:name]
   end
 
@@ -239,10 +267,10 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       check_valid_shell
     end
      super
-     if @resource.forcelocal? and self.groups?
+     if @resource.forcelocal? && self.groups?
        set(:groups, @resource[:groups])
      end
-     if @resource.forcelocal? and @resource[:expiry]
+     if @resource.forcelocal? && @resource[:expiry]
        set(:expiry, @resource[:expiry])
      end
   end

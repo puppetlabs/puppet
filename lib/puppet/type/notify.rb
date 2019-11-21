@@ -11,11 +11,12 @@ module Puppet
     newproperty(:message, :idempotent => false) do
       desc "The message to be sent to the log."
       def sync
+        message = @sensitive ? 'Sensitive [value redacted]' : self.should
         case @resource["withpath"]
         when :true
-          send(@resource[:loglevel], self.should)
+          send(@resource[:loglevel], message)
         else
-          Puppet.send(@resource[:loglevel], self.should)
+          Puppet.send(@resource[:loglevel], message)
         end
         return
       end

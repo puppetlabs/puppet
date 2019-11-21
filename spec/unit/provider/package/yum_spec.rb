@@ -12,6 +12,40 @@ describe Puppet::Type.type(:package).provider(:yum) do
     expect(described_class.specificity).to be < 200
   end
 
+  describe "should have logical defaults" do
+    [2, 2018].each do |ver|
+      it "should be the default provider on Amazon Linux #{ver}" do
+        allow(Facter).to receive(:value).with(:operatingsystem).and_return('amazon')
+        allow(Facter).to receive(:value).with(:osfamily).and_return('redhat')
+        allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return(ver)
+        expect(described_class).to be_default
+      end
+    end
+
+    Array(4..7).each do |ver|
+      it "should be default for redhat #{ver}" do
+        allow(Facter).to receive(:value).with(:operatingsystem).and_return('redhat')
+        allow(Facter).to receive(:value).with(:osfamily).and_return('redhat')
+        allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return(ver.to_s)
+        expect(described_class).to be_default
+      end
+    end
+
+    it "should not be default for redhat 8" do
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('redhat')
+      allow(Facter).to receive(:value).with(:osfamily).and_return('redhat')
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('8')
+      expect(described_class).not_to be_default
+    end
+
+    it "should not be default for Ubuntu 16.04" do
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('ubuntu')
+      allow(Facter).to receive(:value).with(:osfamily).and_return('ubuntu')
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('16.04')
+      expect(described_class).not_to be_default
+    end
+  end
+
   describe "when supplied the source param" do
     let(:name) { 'baz' }
 
@@ -29,6 +63,13 @@ describe Puppet::Type.type(:package).provider(:yum) do
     end
 
     before { allow(described_class).to receive(:command).with(:cmd).and_return("/usr/bin/yum") }
+
+  describe 'provider features' do
+    it { is_expected.to be_versionable }
+    it { is_expected.to be_install_options }
+    it { is_expected.to be_virtual_packages }
+    it { is_expected.to be_install_only }
+  end
 
     context "when installing" do
       it "should use the supplied source as the explicit path to a package to install" do

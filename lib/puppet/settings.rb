@@ -84,6 +84,46 @@ class Puppet::Settings
     "puppet.conf"
   end
 
+  def stringify_settings(section, settings = :all)
+    values_from_the_selected_section =
+      values(nil, section.to_sym)
+
+    loader_settings = {
+      :environmentpath => values_from_the_selected_section.interpolate(:environmentpath),
+      :basemodulepath => values_from_the_selected_section.interpolate(:basemodulepath),
+    }
+
+    Puppet.override(Puppet.base_context(loader_settings),
+                    _("New environment loaders generated from the requested section.")) do
+      # And now we can lookup values that include those from environments configured from
+      # the requested section
+      values = values(Puppet[:environment].to_sym, section.to_sym)
+
+      to_be_rendered = {}
+      settings = Puppet.settings.to_a.collect(&:first) if settings == :all
+      settings.sort.each do |setting_name|
+        to_be_rendered[setting_name] = values.print(setting_name.to_sym)
+      end
+
+      stringifyhash(to_be_rendered)
+    end
+  end
+
+  def stringifyhash(hash)
+    newhash = {}
+    hash.each do |key, val|
+      key = key.to_s
+      if val.is_a? Hash
+        newhash[key] = stringifyhash(val)
+      elsif val.is_a? Symbol
+        newhash[key] = val.to_s
+      else
+        newhash[key] = val
+      end
+    end
+    newhash
+  end
+
   # Create a new collection of config settings.
   def initialize
     @config = {}
@@ -1189,10 +1229,10 @@ Generated on #{Time.now}.
       if !Puppet::FileSystem.symlink?(configured_environment_path)
         parameters = { :ensure => 'directory' }
         unless Puppet::FileSystem.exist?(configured_environment_path)
-          parameters.merge!(:mode => '0750')
+          parameters[:mode] = '0750'
           if Puppet.features.root?
-            parameters.merge!(:owner => Puppet[:user]) if service_user_available?
-            parameters.merge!(:group => Puppet[:group]) if service_group_available?
+            parameters[:owner] = Puppet[:user] if service_user_available?
+            parameters[:group] = Puppet[:group] if service_group_available?
           end
         end
         catalog.add_resource(Puppet::Resource.new(:file, configured_environment_path, :parameters => parameters))

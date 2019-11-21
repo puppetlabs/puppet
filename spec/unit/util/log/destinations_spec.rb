@@ -46,13 +46,15 @@ describe Puppet::Util::Log.desttypes[:file] do
 
     describe "on POSIX systems", :if => Puppet.features.posix? do
       describe "with a normal file" do
+        let (:parent) { Pathname.new('/tmp') }
         let (:abspath) { '/tmp/log' }
         let (:relpath) { 'log' }
 
         it_behaves_like "file destination"
 
         it "logs an error if it can't chown the file owner & group" do
-          expect(File).to receive(:exists?).with(abspath).and_return(false)
+          allow(File).to receive(:exist?).with(parent).and_return(true)
+          expect(File).to receive(:exist?).with(Pathname.new(abspath)).and_return(false)
           expect(FileUtils).to receive(:chown).with(Puppet[:user], Puppet[:group], abspath).and_raise(Errno::EPERM)
           expect(Puppet.features).to receive(:root?).and_return(true)
           expect(Puppet).to receive(:err).with("Unable to set ownership to #{Puppet[:user]}:#{Puppet[:group]} for log file: #{abspath}")
@@ -61,7 +63,8 @@ describe Puppet::Util::Log.desttypes[:file] do
         end
 
         it "doesn't attempt to chown when running as non-root" do
-          expect(File).to receive(:exists?).with(abspath).and_return(false)
+          allow(File).to receive(:exist?).with(parent).and_return(true)
+          expect(File).to receive(:exist?).with(Pathname.new(abspath)).and_return(false)
           expect(FileUtils).not_to receive(:chown).with(Puppet[:user], Puppet[:group], abspath)
           expect(Puppet.features).to receive(:root?).and_return(false)
 
@@ -69,7 +72,8 @@ describe Puppet::Util::Log.desttypes[:file] do
         end
 
         it "doesn't attempt to chown when file already exists" do
-          expect(File).to receive(:exists?).with(abspath).and_return(true)
+          allow(File).to receive(:exist?).with(parent).and_return(true)
+          expect(File).to receive(:exist?).with(Pathname.new(abspath)).and_return(true)
           expect(FileUtils).not_to receive(:chown).with(Puppet[:user], Puppet[:group], abspath)
           expect(Puppet.features).to receive(:root?).and_return(true)
 

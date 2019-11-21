@@ -9,6 +9,8 @@ describe Puppet::Type.type(:package).provider(:rpm) do
     myresource 0 1.2.3.4 5.el4 noarch
     mysummaryless 0 1.2.3.4 5.el4 noarch
     tomcat 1 1.2.3.4 5.el4 x86_64
+    kernel 1 1.2.3.4 5.el4 x86_64
+    kernel 1 1.2.3.6 5.el4 x86_64
     '
     RPM_OUTPUT
   end
@@ -56,7 +58,9 @@ describe Puppet::Type.type(:package).provider(:rpm) do
   describe "self.instances" do
     describe "with a modern version of RPM" do
       it "includes all the modern flags" do
-        expect(Puppet::Util::Execution).to receive(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf '#{nevra_format}'").and_yield(packages)
+        expect(Puppet::Util::Execution).to receive(:execpipe)
+          .with("/bin/rpm -qa --nosignature --nodigest --qf '#{nevra_format}' | sort")
+          .and_yield(packages)
 
         described_class.instances
       end
@@ -66,7 +70,9 @@ describe Puppet::Type.type(:package).provider(:rpm) do
       let(:rpm_version) { "RPM version 4.0.2\n" }
 
       it "excludes the --nosignature flag" do
-        expect(Puppet::Util::Execution).to receive(:execpipe).with("/bin/rpm -qa  --nodigest --qf '#{nevra_format}'").and_yield(packages)
+        expect(Puppet::Util::Execution).to receive(:execpipe)
+          .with("/bin/rpm -qa  --nodigest --qf '#{nevra_format}' | sort")
+          .and_yield(packages)
 
         described_class.instances
       end
@@ -76,14 +82,18 @@ describe Puppet::Type.type(:package).provider(:rpm) do
       let(:rpm_version) { "RPM version 3.0.5\n" }
 
       it "excludes the --nodigest flag" do
-        expect(Puppet::Util::Execution).to receive(:execpipe).with("/bin/rpm -qa   --qf '#{nevra_format}'").and_yield(packages)
+        expect(Puppet::Util::Execution).to receive(:execpipe)
+        .with("/bin/rpm -qa   --qf '#{nevra_format}' | sort")
+        .and_yield(packages)
 
         described_class.instances
       end
     end
 
     it "returns an array of packages" do
-      expect(Puppet::Util::Execution).to receive(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf '#{nevra_format}'").and_yield(packages)
+      expect(Puppet::Util::Execution).to receive(:execpipe)
+        .with("/bin/rpm -qa --nosignature --nodigest --qf '#{nevra_format}' | sort")
+        .and_yield(packages)
 
       installed_packages = described_class.instances
 
@@ -153,6 +163,17 @@ describe Puppet::Type.type(:package).provider(:rpm) do
           :ensure      => "1:1.2.3.4-5.el4",
         }
       )
+      expect(installed_packages[6].properties).to eq(
+        {
+          :provider    => :rpm,
+          :name        => "kernel",
+          :epoch       => "1",
+          :version     => "1.2.3.4",
+          :release     => "5.el4",
+          :arch        => "x86_64",
+          :ensure      => "1:1.2.3.4-5.el4; 1:1.2.3.6-5.el4",
+        }
+      )
     end
   end
 
@@ -167,7 +188,8 @@ describe Puppet::Type.type(:package).provider(:rpm) do
 
     describe "when not already installed" do
       it "only includes the '-i' flag" do
-        expect(Puppet::Util::Execution).to receive(:execute).with(["/bin/rpm", ["-i"], '/path/to/package'], execute_options)
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(["/bin/rpm", ["-i"], '/path/to/package'], execute_options)
         provider.install
       end
     end
@@ -184,7 +206,8 @@ describe Puppet::Type.type(:package).provider(:rpm) do
       end
 
       it "includes the options" do
-        expect(Puppet::Util::Execution).to receive(:execute).with(["/bin/rpm", ["-i", "-D", "--test=value", "-Q"], '/path/to/package'], execute_options)
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(["/bin/rpm", ["-i", "-D", "--test=value", "-Q"], '/path/to/package'], execute_options)
         provider.install
       end
     end
@@ -197,7 +220,8 @@ describe Puppet::Type.type(:package).provider(:rpm) do
       end
 
       it "includes the '-U --oldpackage' flags" do
-         expect(Puppet::Util::Execution).to receive(:execute).with(["/bin/rpm", ["-U", "--oldpackage"], '/path/to/package'], execute_options)
+         expect(Puppet::Util::Execution).to receive(:execute)
+           .with(["/bin/rpm", ["-U", "--oldpackage"], '/path/to/package'], execute_options)
          provider.install
       end
     end
@@ -207,14 +231,16 @@ describe Puppet::Type.type(:package).provider(:rpm) do
     it "retrieves version string after querying rpm for version from source file" do
       expect(resource).to receive(:[]).with(:source).and_return('source-string')
       expect(Puppet::Util::Execution).to receive(:execute)
-        .with(["/bin/rpm", "-q", "--qf", "'#{nevra_format}'", "-p", "source-string"])
+        .with(["/bin/rpm", "-q", "--qf", "#{nevra_format}", "-p", "source-string"])
         .and_return(Puppet::Util::Execution::ProcessOutput.new("myresource 0 1.2.3.4 5.el4 noarch\n", 0))
       expect(provider.latest).to eq("1.2.3.4-5.el4")
     end
 
     it "raises an error if the rpm command fails" do
       expect(resource).to receive(:[]).with(:source).and_return('source-string')
-      expect(Puppet::Util::Execution).to receive(:execute).with(["/bin/rpm", "-q", "--qf", "'#{nevra_format}'", "-p", "source-string"]).and_raise(Puppet::ExecutionFailure, 'rpm command failed')
+      expect(Puppet::Util::Execution).to receive(:execute)
+        .with(["/bin/rpm", "-q", "--qf", "#{nevra_format}", "-p", "source-string"])
+        .and_raise(Puppet::ExecutionFailure, 'rpm command failed')
 
       expect {
         provider.latest
@@ -225,52 +251,115 @@ describe Puppet::Type.type(:package).provider(:rpm) do
   describe "#uninstall" do
     let(:resource) do
       Puppet::Type.type(:package).new(
-        :name     => 'myresource',
-        :ensure   => :installed
+        :name   => resource_name,
+        :ensure => :installed
       )
     end
 
-    describe "on a modern RPM" do
+    describe "on an ancient RPM" do
+      let(:rpm_version) { "RPM version 3.0.6\n" }
+
       before(:each) do
         expect(Puppet::Util::Execution).to receive(:execute)
-          .with(["/bin/rpm", "-q", "myresource", '--nosignature', '--nodigest', "--qf", "'#{nevra_format}'"], execute_options)
-          .and_return(Puppet::Util::Execution::ProcessOutput.new("myresource 0 1.2.3.4 5.el4 noarch\n", 0))
+          .with(["/bin/rpm", "-q", resource_name, '', '', '--qf', "#{nevra_format}"], execute_options)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new("#{resource_name} 0 1.2.3.4 5.el4 noarch\n", 0))
       end
 
-      let(:rpm_version) { "RPM version 4.10.0\n" }
-
-      it "includes the architecture in the package name" do
+      it "excludes the architecture from the package name" do
         expect(Puppet::Util::Execution).to receive(:execute)
-          .with(["/bin/rpm", ["-e"], 'myresource-1.2.3.4-5.el4.noarch'], execute_options)
+          .with(["/bin/rpm", ["-e"], resource_name], execute_options)
           .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0)).at_most(:once)
         provider.uninstall
       end
     end
 
-    describe "on an ancient RPM" do
+    describe "on a modern RPM" do
+      let(:rpm_version) { "RPM version 4.10.0\n" }
+
+
       before(:each) do
         expect(Puppet::Util::Execution).to receive(:execute)
-          .with(["/bin/rpm", "-q", "myresource", '', '', '--qf', "'#{nevra_format}'"], execute_options)
-          .and_return(Puppet::Util::Execution::ProcessOutput.new("myresource 0 1.2.3.4 5.el4 noarch\n", 0))
+          .with(["/bin/rpm", "-q", resource_name, '--nosignature', '--nodigest', "--qf", "#{nevra_format}"], execute_options)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new("#{resource_name} 0 1.2.3.4 5.el4 noarch\n", 0))
       end
-
-      let(:rpm_version) { "RPM version 3.0.6\n" }
 
       it "excludes the architecture from the package name" do
         expect(Puppet::Util::Execution).to receive(:execute)
-          .with(["/bin/rpm", ["-e"], 'myresource-1.2.3.4-5.el4'], execute_options)
+          .with(["/bin/rpm", ["-e"], resource_name], execute_options)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0)).at_most(:once)
+        provider.uninstall
+      end
+    end
+
+    describe "on a modern RPM when architecture is specified" do
+      let(:rpm_version) { "RPM version 4.10.0\n" }
+
+      let(:resource) do
+        Puppet::Type.type(:package).new(
+          :name   => "#{resource_name}.noarch",
+          :ensure => :absent,
+        )
+      end
+
+      before(:each) do
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(["/bin/rpm", "-q", "#{resource_name}.noarch", '--nosignature', '--nodigest', "--qf", "#{nevra_format}"], execute_options)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new("#{resource_name} 0 1.2.3.4 5.el4 noarch\n", 0))
+      end
+
+      it "includes the architecture in the package name" do
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(["/bin/rpm", ["-e"], "#{resource_name}.noarch"], execute_options)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0)).at_most(:once)
+        provider.uninstall
+      end
+    end
+
+    describe "when version and release are specified" do
+      let(:resource) do
+        Puppet::Type.type(:package).new(
+          :name   => "#{resource_name}-1.2.3.4-5.el4",
+          :ensure => :absent,
+        )
+      end
+
+      before(:each) do
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(["/bin/rpm", "-q", "#{resource_name}-1.2.3.4-5.el4", '--nosignature', '--nodigest', "--qf", "#{nevra_format}"], execute_options)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new("#{resource_name} 0 1.2.3.4 5.el4 noarch\n", 0))
+      end
+
+      it "includes the version and release in the package name" do
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(["/bin/rpm", ["-e"], "#{resource_name}-1.2.3.4-5.el4"], execute_options)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0)).at_most(:once)
+        provider.uninstall
+      end
+    end
+
+    describe "when only version is specified" do
+      let(:resource) do
+        Puppet::Type.type(:package).new(
+          :name   => "#{resource_name}-1.2.3.4",
+          :ensure => :absent,
+        )
+      end
+
+      before(:each) do
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(["/bin/rpm", "-q", "#{resource_name}-1.2.3.4", '--nosignature', '--nodigest', "--qf", "#{nevra_format}"], execute_options)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new("#{resource_name} 0 1.2.3.4 5.el4 noarch\n", 0))
+      end
+
+      it "includes the version in the package name" do
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(["/bin/rpm", ["-e"], "#{resource_name}-1.2.3.4"], execute_options)
           .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0)).at_most(:once)
         provider.uninstall
       end
     end
 
     describe "when uninstalled with options" do
-      before(:each) do
-        expect(Puppet::Util::Execution).to receive(:execute)
-          .with(["/bin/rpm", "-q", "myresource", '--nosignature', '--nodigest', "--qf", "'#{nevra_format}'"], execute_options)
-          .and_return(Puppet::Util::Execution::ProcessOutput.new("myresource 0 1.2.3.4 5.el4 noarch\n", 0))
-      end
-
       let(:resource) do
         Puppet::Type.type(:package).new(
           :name              => resource_name,
@@ -280,8 +369,15 @@ describe Puppet::Type.type(:package).provider(:rpm) do
         )
       end
 
+      before(:each) do
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(["/bin/rpm", "-q", resource_name, '--nosignature', '--nodigest', "--qf", "#{nevra_format}"], execute_options)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new("#{resource_name} 0 1.2.3.4 5.el4 noarch\n", 0))
+      end
+
       it "includes the options" do
-        expect(Puppet::Util::Execution).to receive(:execute).with(["/bin/rpm", ["-e", "--nodeps"], 'myresource-1.2.3.4-5.el4.noarch'], execute_options)
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(["/bin/rpm", ["-e", "--nodeps"], resource_name], execute_options)
         provider.uninstall
       end
     end
@@ -291,7 +387,7 @@ describe Puppet::Type.type(:package).provider(:rpm) do
     def parser_test(rpm_output_string, gold_hash, number_of_debug_logs = 0)
       expect(Puppet).to receive(:debug).exactly(number_of_debug_logs).times()
       expect(Puppet::Util::Execution).to receive(:execute)
-        .with(["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", "'#{nevra_format}'"], execute_options)
+        .with(["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", "#{nevra_format}"], execute_options)
         .and_return(Puppet::Util::Execution::ProcessOutput.new(rpm_output_string, 0))
       expect(provider.query).to eq(gold_hash)
     end
@@ -330,8 +426,10 @@ describe Puppet::Type.type(:package).provider(:rpm) do
     describe "when the package is not found" do
       before do
         expect(Puppet).not_to receive(:debug)
-        expected_args = ["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", "'#{nevra_format}'"]
-        expect(Puppet::Util::Execution).to receive(:execute).with(expected_args, execute_options).and_raise(Puppet::ExecutionFailure.new("package #{resource_name} is not installed"))
+        expected_args = ["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", "#{nevra_format}"]
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(expected_args, execute_options)
+          .and_raise(Puppet::ExecutionFailure.new("package #{resource_name} is not installed"))
       end
 
       it "does not log or fail if allow_virtual is false" do
@@ -341,16 +439,20 @@ describe Puppet::Type.type(:package).provider(:rpm) do
 
       it "does not log or fail if allow_virtual is true" do
         resource[:allow_virtual] = true
-        expected_args = ['/bin/rpm', '-q', resource_name, '--nosignature', '--nodigest', '--qf', "'#{nevra_format}'", '--whatprovides']
-        expect(Puppet::Util::Execution).to receive(:execute).with(expected_args, execute_options).and_raise(Puppet::ExecutionFailure.new("package #{resource_name} is not provided"))
+        expected_args = ['/bin/rpm', '-q', resource_name, '--nosignature', '--nodigest', '--qf', "#{nevra_format}", '--whatprovides']
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(expected_args, execute_options)
+          .and_raise(Puppet::ExecutionFailure.new("package #{resource_name} is not provided"))
         expect(provider.query).to be_nil
       end
     end
 
     it "parses virtual package" do
       provider.resource[:allow_virtual] = true
-      expected_args = ["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", "'#{nevra_format}'"]
-      expect(Puppet::Util::Execution).to receive(:execute).with(expected_args, execute_options).and_raise(Puppet::ExecutionFailure.new("package #{resource_name} is not installed"))
+      expected_args = ["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", "#{nevra_format}"]
+      expect(Puppet::Util::Execution).to receive(:execute)
+        .with(expected_args, execute_options)
+        .and_raise(Puppet::ExecutionFailure.new("package #{resource_name} is not installed"))
       expect(Puppet::Util::Execution).to receive(:execute)
         .with(expected_args + ["--whatprovides"], execute_options)
         .and_return(Puppet::Util::Execution::ProcessOutput.new("myresource 0 1.2.3.4 5.el4 noarch\n", 0))
@@ -658,6 +760,127 @@ describe Puppet::Type.type(:package).provider(:rpm) do
       allow(provider).to receive(:rpmvercmp).and_return(0)
       expect(provider).to receive(:rpmvercmp).with('s1', 's2')
       provider.compare_values('s1', 's2')
+    end
+  end
+
+
+  describe 'insync?' do
+    context 'for multiple versions' do
+      let(:is) { '1:1.2.3.4-5.el4; 1:5.6.7.8-5.el4' }
+      it 'returns true if there is match and feature is enabled' do
+        resource[:install_only] = true
+        resource[:ensure] = '1:1.2.3.4-5.el4'
+        expect(provider).to be_insync(is)
+      end
+      it 'returns false if there is match and feature is not enabled' do
+        resource[:ensure] = '1:1.2.3.4-5.el4'
+        expect(provider).to_not be_insync(is)
+      end
+      it 'returns false if no match and feature is enabled' do
+        resource[:install_only] = true
+        resource[:ensure] = '1:1.2.3.6-5.el4'
+        expect(provider).to_not be_insync(is)
+      end
+      it 'returns false if no match and feature is not enabled' do
+        resource[:ensure] = '1:1.2.3.6-5.el4'
+        expect(provider).to_not be_insync(is)
+      end
+    end
+    context 'for simple versions' do
+      let(:is) { '1:1.2.3.4-5.el4' }
+      it 'returns true if there is match and feature is enabled' do
+        resource[:install_only] = true
+        resource[:ensure] = '1:1.2.3.4-5.el4'
+        expect(provider).to be_insync(is)
+      end
+      it 'returns true if there is match and feature is not enabled' do
+        resource[:ensure] = '1:1.2.3.4-5.el4'
+        expect(provider).to be_insync(is)
+      end
+      it 'returns false if no match and feature is enabled' do
+        resource[:install_only] = true
+        resource[:ensure] = '1:1.2.3.6-5.el4'
+        expect(provider).to_not be_insync(is)
+      end
+      it 'returns false if no match and feature is not enabled' do
+        resource[:ensure] = '1:1.2.3.6-5.el4'
+        expect(provider).to_not be_insync(is)
+      end
+    end
+  end
+
+  describe 'rpm multiversion to hash' do
+    it 'should return empty hash for empty imput' do
+      package_hash = described_class.nevra_to_multiversion_hash('')
+      expect(package_hash).to eq({})
+    end
+
+    it 'should return package hash for one package input' do
+      package_list = <<-RPM_OUTPUT
+kernel-devel 1 1.2.3.4 5.el4 x86_64
+RPM_OUTPUT
+      package_hash = described_class.nevra_to_multiversion_hash(package_list)
+      expect(package_hash).to eq(
+        {
+          :arch => "x86_64",
+          :ensure => "1:1.2.3.4-5.el4",
+          :epoch => "1",
+          :name => "kernel-devel",
+          :provider => :rpm,
+          :release => "5.el4",
+          :version => "1.2.3.4",
+        }
+      )
+    end
+
+    it 'should return package hash with versions concatenated in ensure for two package input' do
+      package_list = <<-RPM_OUTPUT
+kernel-devel 1 1.2.3.4 5.el4 x86_64
+kernel-devel 1 5.6.7.8 5.el4 x86_64
+RPM_OUTPUT
+      package_hash = described_class.nevra_to_multiversion_hash(package_list)
+      expect(package_hash).to eq(
+        {
+          :arch => "x86_64",
+          :ensure => "1:1.2.3.4-5.el4; 1:5.6.7.8-5.el4",
+          :epoch => "1",
+          :name => "kernel-devel",
+          :provider => :rpm,
+          :release => "5.el4",
+          :version => "1.2.3.4",
+        }
+      )
+    end
+
+    it 'should return list of packages for one multiversion and one package input' do
+      package_list = <<-RPM_OUTPUT
+kernel-devel 1 1.2.3.4 5.el4 x86_64
+kernel-devel 1 5.6.7.8 5.el4 x86_64
+basesystem 0 8.0 5.1.1.el5.centos noarch
+RPM_OUTPUT
+      package_hash = described_class.nevra_to_multiversion_hash(package_list)
+      expect(package_hash).to eq(
+        [
+          {
+            :arch => "x86_64",
+            :ensure => "1:1.2.3.4-5.el4; 1:5.6.7.8-5.el4",
+            :epoch => "1",
+            :name => "kernel-devel",
+            :provider => :rpm,
+            :release => "5.el4",
+            :version => "1.2.3.4",
+          },
+          {
+            :provider => :rpm,
+            :name => "basesystem",
+            :epoch => "0",
+            :version => "8.0",
+            :release => "5.1.1.el5.centos",
+            :arch => "noarch",
+            :ensure => "8.0-5.1.1.el5.centos",
+          }
+        ]
+      )
     end
   end
 end

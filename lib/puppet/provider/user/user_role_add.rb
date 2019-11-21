@@ -36,7 +36,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   has_features :manages_homedir, :allows_duplicates, :manages_solaris_rbac, :manages_passwords, :manages_password_age, :manages_shell
 
   def check_valid_shell
-    unless File.exists?(@resource.should(:shell))
+    unless File.exist?(@resource.should(:shell))
       raise(Puppet::Error, "Shell #{@resource.should(:shell)} must exist")
     end
     unless File.executable?(@resource.should(:shell).to_s)
@@ -200,6 +200,10 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   def password_warn_days
     return :absent unless shadow_entry
     shadow_entry[5].empty? ? -1 : shadow_entry[5]
+  end
+
+  def has_sensitive_data?(property = nil)
+    false
   end
 
   # Read in /etc/shadow, find the line for our used and rewrite it with the

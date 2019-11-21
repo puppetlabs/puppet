@@ -346,7 +346,7 @@ class Puppet::Transaction::Report
     report = raw_summary
 
     ret = ""
-    report.keys.sort { |a,b| a.to_s <=> b.to_s }.each do |key|
+    report.keys.sort_by(&:to_s).each do |key|
       ret += "#{Puppet::Util::Metric.labelize(key)}:\n"
 
       report[key].keys.sort { |a,b|

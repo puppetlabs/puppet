@@ -176,7 +176,7 @@ step "Ensure nodes are classified based on the node name fact" do
   }
 
   with_puppet_running_on(master, master_opts, testdir) do
-    on(agents, puppet('agent', "--no-daemonize --verbose --onetime --node_name_fact kernel --server #{master}")) do
+    on(agents, puppet('agent', "--no-daemonize --verbose --onetime --node_name_fact kernel")) do
       assert_match(/defined 'message'.*#{success_message}/, stdout)
     end
   end

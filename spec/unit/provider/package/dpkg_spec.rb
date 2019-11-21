@@ -1,18 +1,20 @@
 require 'spec_helper'
 require 'stringio'
 
-describe Puppet::Type.type(:package).provider(:dpkg) do
+describe Puppet::Type.type(:package).provider(:dpkg), unless: Puppet::Util::Platform.jruby? do
   let(:bash_version) { '4.2-5ubuntu3' }
   let(:bash_installed_output) { "install ok installed bash #{bash_version}\n" }
   let(:bash_installed_io) { StringIO.new(bash_installed_output) }
   let(:vim_installed_output) { "install ok installed vim 2:7.3.547-6ubuntu5\n" }
   let(:all_installed_io) { StringIO.new([bash_installed_output, vim_installed_output].join) }
   let(:args) { ['-W', '--showformat', %Q{'${Status} ${Package} ${Version}\\n'}] }
+  let(:args_with_provides) { ['/bin/dpkg-query','-W', '--showformat', %Q{'${Status} ${Package} ${Version} [${Provides}]\\n'}]}
   let(:execute_options) do
     {:failonfail => true, :combine => true, :custom_environment => {}}
   end
-  let(:resource_name) { 'package' }
+  let(:resource_name) { 'python' }
   let(:resource) { double('resource', :[] => resource_name) }
+  let(:dpkg_query_result) { 'install ok installed python 2.7.13' }
   let(:provider) { described_class.new(resource) }
 
   it "has documentation" do
@@ -68,105 +70,247 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
       expect(Puppet::Util::Execution).to receive(:execute).with(query_args, execute_options).and_return(Puppet::Util::Execution::ProcessOutput.new(output, 0))
     end
 
+    def dpkg_query_execution_with_multiple_args_returns(output, *args)
+      args.each do |arg|
+        allow(Puppet::Util::Execution).to receive(:execute).with(arg, execute_options).and_return(Puppet::Util::Execution::ProcessOutput.new(output, 0))
+      end
+    end
+
     before do
       allow(Puppet::Util).to receive(:which).with('/usr/bin/dpkg-query').and_return(dpkgquery_path)
     end
 
     it "considers the package purged if dpkg-query fails" do
+      allow(resource).to receive(:allow_virtual?).and_return(false)
       allow(Puppet::Util::Execution).to receive(:execute).with(query_args, execute_options).and_raise(Puppet::ExecutionFailure.new("eh"))
 
       expect(provider.query[:ensure]).to eq(:purged)
     end
 
-    it "returns a hash of the found package status for an installed package" do
-      dpkg_query_execution_returns(bash_installed_output)
-
-      expect(provider.query).to eq({:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg})
-    end
-
-    it "considers the package absent if the dpkg-query result cannot be interpreted" do
-      dpkg_query_execution_returns('some-bad-data')
-
-      expect(provider.query[:ensure]).to eq(:absent)
-    end
-
-    it "fails if an error is discovered" do
-      dpkg_query_execution_returns(bash_installed_output.gsub("ok","error"))
-
-      expect { provider.query }.to raise_error(Puppet::Error)
-    end
-
-    it "considers the package purged if it is marked 'not-installed'" do
-      not_installed_bash = bash_installed_output.gsub("installed", "not-installed")
-      not_installed_bash.gsub!(bash_version, "")
-      dpkg_query_execution_returns(not_installed_bash)
-
-      expect(provider.query[:ensure]).to eq(:purged)
-    end
-
-    it "considers the package absent if it is marked 'config-files'" do
-      dpkg_query_execution_returns(bash_installed_output.gsub("installed","config-files"))
-      expect(provider.query[:ensure]).to eq(:absent)
-    end
-
-    it "considers the package absent if it is marked 'half-installed'" do
-      dpkg_query_execution_returns(bash_installed_output.gsub("installed","half-installed"))
-      expect(provider.query[:ensure]).to eq(:absent)
-    end
-
-    it "considers the package absent if it is marked 'unpacked'" do
-      dpkg_query_execution_returns(bash_installed_output.gsub("installed","unpacked"))
-      expect(provider.query[:ensure]).to eq(:absent)
-    end
-
-    it "considers the package absent if it is marked 'half-configured'" do
-      dpkg_query_execution_returns(bash_installed_output.gsub("installed","half-configured"))
-      expect(provider.query[:ensure]).to eq(:absent)
-    end
-
-    it "considers the package held if its state is 'hold'" do
-      dpkg_query_execution_returns(bash_installed_output.gsub("install","hold"))
-      expect(provider.query[:ensure]).to eq(:held)
-    end
-
-    context "parsing tests" do
-      let(:resource_name) { 'name' }
-      let(:package_hash) do
-        {
-          :desired => 'desired',
-          :error => 'ok',
-          :status => 'status',
-          :name => resource_name,
-          :ensure => 'ensure',
-          :provider => :dpkg,
-        }
-      end
-      let(:package_not_found_hash) do
-        {:ensure => :purged, :status => 'missing', :name => resource_name, :error => 'ok'}
+    context "allow_virtual true" do
+      before do
+        allow(resource).to receive(:allow_virtual?).and_return(true)
       end
 
-      def parser_test(dpkg_output_string, gold_hash, number_of_debug_logs = 0)
-        dpkg_query_execution_returns(dpkg_output_string)
-        expect(Puppet).not_to receive(:warning)
-        expect(Puppet).to receive(:debug).exactly(number_of_debug_logs).times
+      context "virtual_packages" do
+        let(:query_output) { 'install ok installed python 2.7.13 [python-ctypes, python-email, python-importlib, python-profiler, python-wsgiref, python-gold]' }
+        let(:virtual_packages_query_args) do
+          result = args_with_provides.dup
+          result.push(resource_name)
+        end
 
-        expect(provider.query).to eq(gold_hash)
+        it "considers the package purged if dpkg-query fails" do
+          allow(Puppet::Util::Execution).to receive(:execute).with(args_with_provides, execute_options).and_raise(Puppet::ExecutionFailure.new("eh"))
+          expect(provider.query[:ensure]).to eq(:purged)
+        end
+
+        it "returns a hash of the found package status for an installed package" do
+          dpkg_query_execution_with_multiple_args_returns(query_output, args_with_provides,virtual_packages_query_args)
+          dpkg_query_execution_with_multiple_args_returns(dpkg_query_result, args, query_args)
+          expect(provider.query).to eq(:ensure => "2.7.13", :error => "ok", :desired => "install", :name => "python", :status => "installed", :provider => :dpkg)
+        end
+
+        it "considers the package absent if the dpkg-query result cannot be interpreted" do
+          dpkg_query_execution_with_multiple_args_returns('some-bad-data',args_with_provides,virtual_packages_query_args)
+          dpkg_query_execution_with_multiple_args_returns('some-bad-data', args, query_args)
+          expect(provider.query[:ensure]).to eq(:absent)
+        end
+
+        it "fails if an error is discovered" do
+          dpkg_query_execution_with_multiple_args_returns(query_output.gsub("ok","error"),args_with_provides,virtual_packages_query_args)
+          dpkg_query_execution_with_multiple_args_returns(dpkg_query_result.gsub("ok","error"), args, query_args)
+          expect { provider.query }.to raise_error(Puppet::Error,  /Package python, version 2.7.13 is in error state: error/)
+        end
+
+        it "considers the package purged if it is marked 'not-installed" do
+          not_installed_query = query_output.gsub("installed", "not-installed").delete!('2.7.13')
+          dpkg_query_execution_with_multiple_args_returns(not_installed_query, args_with_provides,virtual_packages_query_args)
+          dpkg_query_execution_with_multiple_args_returns(dpkg_query_result.gsub("installed", "not-installed").delete!('2.7.13'), args, query_args)
+          expect(provider.query[:ensure]).to eq(:purged)
+        end
+
+        it "considers the package absent if it is marked 'config-files'" do
+          dpkg_query_execution_with_multiple_args_returns(query_output.gsub("installed","config-files"),args_with_provides,virtual_packages_query_args)
+          dpkg_query_execution_with_multiple_args_returns(dpkg_query_result.gsub("installed","config-files"), args, query_args)
+          expect(provider.query[:ensure]).to eq(:absent)
+        end
+
+        it "considers the package absent if it is marked 'half-installed'" do
+          dpkg_query_execution_with_multiple_args_returns(query_output.gsub("installed","half-installed"),args_with_provides,virtual_packages_query_args)
+          dpkg_query_execution_with_multiple_args_returns(dpkg_query_result.gsub("installed","half-installed"), args, query_args)
+          expect(provider.query[:ensure]).to eq(:absent)
+        end
+
+        it "considers the package absent if it is marked 'unpacked'" do
+          dpkg_query_execution_with_multiple_args_returns(query_output.gsub("installed","unpacked"),args_with_provides,virtual_packages_query_args)
+          dpkg_query_execution_with_multiple_args_returns(dpkg_query_result.gsub("installed","unpacked"), args, query_args)
+          expect(provider.query[:ensure]).to eq(:absent)
+        end
+
+        it "considers the package absent if it is marked 'half-configured'" do
+          dpkg_query_execution_with_multiple_args_returns(query_output.gsub("installed","half-configured"),args_with_provides,virtual_packages_query_args)
+          dpkg_query_execution_with_multiple_args_returns(dpkg_query_result.gsub("installed","half-configured"), args, query_args)
+          expect(provider.query[:ensure]).to eq(:absent)
+        end
+
+        it "considers the package held if its state is 'hold'" do
+          dpkg_query_execution_with_multiple_args_returns(query_output.gsub("install","hold"),args_with_provides,virtual_packages_query_args)
+          dpkg_query_execution_with_multiple_args_returns(dpkg_query_result.gsub("install","hold"), args, query_args)
+          expect(provider.query[:ensure]).to eq(:held)
+        end
+
+        context "regex check for query search" do
+          let(:resource_name) { 'python-email' }
+          let(:resource) { instance_double('Puppet::Type::Package') }
+          before do
+            allow(resource).to receive(:[]).with(:name).and_return(resource_name)
+            allow(resource).to receive(:[]=)
+          end
+
+          it "checks if virtual package regex for query is correctand phisical package is installed" do
+            dpkg_query_execution_with_multiple_args_returns(query_output,args_with_provides,virtual_packages_query_args)
+            dpkg_query_execution_with_multiple_args_returns(dpkg_query_result, args, query_args)
+            expect(provider.query).to match({:desired=>"install", :ensure=>"2.7.13", :error=>"ok", :name=>"python", :provider=>:dpkg, :status=>"installed"})
+          end
+
+          context "regex check with no partial matching" do
+            let(:resource_name) { 'python-em' }
+
+            it "checks if virtual package regex for query is correct and regext dosen't make partial matching" do
+              expect(provider).to receive(:dpkgquery).with('-W', '--showformat', %Q{'${Status} ${Package} ${Version} [${Provides}]\\n'}).and_return(query_output)
+              expect(provider).to receive(:dpkgquery).with('-W', '--showformat', %Q{'${Status} ${Package} ${Version}\\n'}, resource_name).and_return("#{dpkg_query_result} #{resource_name}")
+
+              provider.query
+            end
+
+            context "regex check with special characters" do
+              let(:resource_name) { 'g++' }
+
+              it "checks if virtual package regex for query is correct and regext dosen't make partial matching" do
+                expect(Puppet).to_not receive(:info).with(/is virtual/)
+                expect(provider).to receive(:dpkgquery).with('-W', '--showformat', %Q{'${Status} ${Package} ${Version} [${Provides}]\\n'}).and_return(query_output)
+                expect(provider).to receive(:dpkgquery).with('-W', '--showformat', %Q{'${Status} ${Package} ${Version}\\n'}, resource_name).and_return("#{dpkg_query_result} #{resource_name}")
+
+                provider.query
+              end
+            end
+          end
+        end
+      end
+    end
+
+    context "allow_virtual false" do
+      before do
+        allow(resource).to receive(:allow_virtual?).and_return(false)
       end
 
-      it "parses properly even if optional ensure field is missing" do
-        no_ensure = 'desired ok status name '
-        parser_test(no_ensure, package_hash.merge(:ensure => ''))
+      it "returns a hash of the found package status for an installed package" do
+        dpkg_query_execution_returns(bash_installed_output)
+
+        expect(provider.query).to eq({:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg})
       end
 
-      it "provides debug logging of unparsable lines" do
-        parser_test('an unexpected dpkg msg with an exit code of 0', package_not_found_hash.merge(:ensure => :absent), 1)
+      it "considers the package absent if the dpkg-query result cannot be interpreted" do
+        allow(resource).to receive(:allow_virtual?).and_return(false)
+        dpkg_query_execution_returns('some-bad-data')
+        expect(provider.query[:ensure]).to eq(:absent)
       end
 
-      it "does not log if execution returns with non-zero exit code" do
-        expect(Puppet::Util::Execution).to receive(:execute).with(query_args, execute_options).and_raise(Puppet::ExecutionFailure.new("failed"))
-        expect(Puppet).not_to receive(:debug)
+      it "fails if an error is discovered" do
+        dpkg_query_execution_returns(bash_installed_output.gsub("ok","error"))
+        expect { provider.query }.to raise_error(Puppet::Error)
+      end
 
-        expect(provider.query).to eq(package_not_found_hash)
+      it "considers the package purged if it is marked 'not-installed'" do
+        not_installed_bash = bash_installed_output.gsub("installed", "not-installed")
+        not_installed_bash.gsub!(bash_version, "")
+        dpkg_query_execution_returns(not_installed_bash)
+
+        expect(provider.query[:ensure]).to eq(:purged)
+      end
+
+      it "considers the package absent if it is marked 'config-files'" do
+        dpkg_query_execution_returns(bash_installed_output.gsub("installed","config-files"))
+        expect(provider.query[:ensure]).to eq(:absent)
+      end
+
+      it "considers the package absent if it is marked 'half-installed'" do
+        dpkg_query_execution_returns(bash_installed_output.gsub("installed","half-installed"))
+        expect(provider.query[:ensure]).to eq(:absent)
+      end
+
+      it "considers the package absent if it is marked 'unpacked'" do
+        dpkg_query_execution_returns(bash_installed_output.gsub("installed","unpacked"))
+        expect(provider.query[:ensure]).to eq(:absent)
+      end
+
+      it "considers the package absent if it is marked 'half-configured'" do
+        dpkg_query_execution_returns(bash_installed_output.gsub("installed","half-configured"))
+        expect(provider.query[:ensure]).to eq(:absent)
+      end
+
+      it "considers the package held if its state is 'hold'" do
+        dpkg_query_execution_returns(bash_installed_output.gsub("install","hold"))
+        expect(provider.query[:ensure]).to eq(:held)
+      end
+
+      context "parsing tests" do
+        let(:resource_name) { 'name' }
+        let(:package_hash) do
+          {
+            :desired => 'desired',
+            :error => 'ok',
+            :status => 'status',
+            :name => resource_name,
+            :ensure => 'ensure',
+            :provider => :dpkg,
+          }
+        end
+
+        let(:package_not_found_hash) do
+          {:ensure => :purged, :status => 'missing', :name => resource_name, :error => 'ok'}
+        end
+
+        let(:output) {'an unexpected dpkg msg with an exit code of 0'}
+
+        def parser_test(dpkg_output_string, gold_hash, number_of_debug_logs = 0)
+          dpkg_query_execution_returns(dpkg_output_string)
+          expect(Puppet).not_to receive(:warning)
+          expect(Puppet).to receive(:debug).exactly(number_of_debug_logs).times
+
+          expect(provider.query).to eq(gold_hash)
+        end
+
+        it "parses properly even if optional ensure field is missing" do
+          no_ensure = 'desired ok status name '
+          parser_test(no_ensure, package_hash.merge(:ensure => ''))
+        end
+
+        it "provides debug logging of unparsable lines with allow_virtual enabled" do
+          allow(resource).to receive(:allow_virtual?).and_return(true)
+          dpkg_query_execution_with_multiple_args_returns(output, args_with_provides, query_args)
+          expect(Puppet).not_to receive(:warning)
+          expect(Puppet).to receive(:debug).exactly(1).times
+          expect(provider.query).to eq(package_not_found_hash.merge(:ensure => :absent))
+        end
+
+        it "provides debug logging of unparsable lines" do
+          parser_test('an unexpected dpkg msg with an exit code of 0', package_not_found_hash.merge(:ensure => :absent), 1)
+        end
+
+        it "does not log if execution returns with non-zero exit code with allow_virtual enabled" do
+          allow(resource).to receive(:allow_virtual?).and_return(true)
+          expect(Puppet::Util::Execution).to receive(:execute).with(args_with_provides, execute_options).and_raise(Puppet::ExecutionFailure.new("failed"))
+          expect(Puppet).not_to receive(:debug)
+          expect(provider.query).to eq(package_not_found_hash)
+        end
+
+        it "does not log if execution returns with non-zero exit code" do
+          expect(Puppet::Util::Execution).to receive(:execute).with(query_args, execute_options).and_raise(Puppet::ExecutionFailure.new("failed"))
+          expect(Puppet).not_to receive(:debug)
+
+          expect(provider.query).to eq(package_not_found_hash)
+        end
       end
     end
   end
@@ -218,22 +362,32 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
 
     before do
       allow(tempfile).to receive(:write)
-      allow(Tempfile).to receive(:open).and_yield(tempfile)
+      allow(Tempfile).to receive(:new).and_return(tempfile)
     end
 
-    it "installs first if holding" do
+    it "installs first if package is not present and ensure holding" do
       allow(provider).to receive(:execute)
+      allow(provider).to receive(:package_not_installed?).and_return(true)
       expect(provider).to receive(:install).once
       provider.hold
     end
 
+    it "skips install new package if package is allready installed" do
+      allow(provider).to receive(:execute)
+      allow(provider).to receive(:package_not_installed?).and_return(false)
+      expect(provider).not_to receive(:install)
+      provider.hold
+    end
+
     it "executes dpkg --set-selections when holding" do
+      allow(provider).to receive(:package_not_installed?).and_return(false)
       allow(provider).to receive(:install)
       expect(provider).to receive(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => tempfile.path}).once
       provider.hold
     end
 
     it "executes dpkg --set-selections when unholding" do
+      allow(provider).to receive(:package_not_installed?).and_return(false)
       allow(provider).to receive(:install)
       expect(provider).to receive(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => tempfile.path}).once
       provider.hold
@@ -247,8 +401,8 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
 
   context "when determining latest available version" do
     it "returns the version found by dpkg-deb" do
-      expect(resource).to receive(:[]).with(:source).and_return("myfile")
-      expect(provider).to receive(:dpkg_deb).with(any_args, "myfile").and_return("package\t1.0")
+      expect(resource).to receive(:[]).with(:source).and_return("python")
+      expect(provider).to receive(:dpkg_deb).with('--show', "python").and_return("package\t1.0")
       expect(provider.latest).to eq("1.0")
     end
 
@@ -274,5 +428,28 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
   it "uses 'dpkg --purge' to purge" do
     expect(provider).to receive(:dpkg).with("--purge", resource_name)
     provider.purge
+  end
+
+  context "package_not_installed?" do
+    context "allow_virtual false" do
+        before do
+          allow(resource).to receive(:allow_virtual?).and_return(false)
+        end
+
+      it "returns true if package is not found" do
+        expect(provider).to receive(:dpkgquery).with("-W", "--showformat", "'${Status} ${Package} ${Version}\\n'", resource_name).and_raise(Puppet::ExecutionFailure.new("eh"))
+        expect(provider.package_not_installed?).to eq(true)
+      end
+
+      it "returns true if package is not installed" do
+        expect(provider).to receive(:dpkgquery).with("-W", "--showformat", "'${Status} ${Package} ${Version}\\n'", resource_name).and_return("unknown ok not-installed #{resource_name}")
+        expect(provider.package_not_installed?).to eq(true)
+      end
+
+      it "returns false if package is installed" do
+        expect(provider).to receive(:dpkgquery).with("-W", "--showformat", "'${Status} ${Package} ${Version}\\n'", resource_name).and_return("install ok installed resource_name 1.2.3")
+        expect(provider.package_not_installed?).to eq(false)
+      end
+    end
   end
 end

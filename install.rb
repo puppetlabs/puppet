@@ -62,24 +62,6 @@ def do_configs(configs, target, strip = 'conf/')
     ocf = File.join(InstallOptions.config_dir, cf.gsub(/#{strip}/, ''))
     FileUtils.install(cf, ocf, {:mode => 0644, :preserve => true, :verbose => true})
   end
-
-  if $operatingsystem == 'windows'
-    src_dll = 'ext/windows/eventlog/puppetres.dll'
-    dst_dll = File.join(InstallOptions.bin_dir, 'puppetres.dll')
-    FileUtils.install(src_dll, dst_dll, {:mode => 0644, :preserve => true, :verbose => true})
-
-    require 'win32/registry'
-    include Win32::Registry::Constants
-
-    begin
-      Win32::Registry::HKEY_LOCAL_MACHINE.create('SYSTEM\CurrentControlSet\services\eventlog\Application\Puppet', KEY_ALL_ACCESS | 0x0100) do |reg|
-        reg.write_s('EventMessageFile', dst_dll.tr('/', '\\'))
-        reg.write_i('TypesSupported', 0x7)
-      end
-    rescue Win32::Registry::Error => e
-      warn "Failed to create puppet eventlog registry key: #{e}"
-    end
-  end
 end
 
 def do_bins(bins, target, strip = 's?bin/')
@@ -140,12 +122,12 @@ def check_prereqs
         facter_version = Facter.version.to_f
         if facter_version < MIN_FACTER_VERSION
           puts "Facter version: #{facter_version}; minimum required: #{MIN_FACTER_VERSION}; cannot install"
-          exit -1
+          exit(-1)
         end
       end
     rescue LoadError
       puts "Could not load #{pre}; cannot install"
-      exit -1
+      exit(-1)
     end
   }
 end
@@ -266,7 +248,7 @@ def prepare_installation
       require 'win32/dir'
     rescue LoadError => e
       puts "Cannot run on Microsoft Windows without the win32-process, win32-dir & win32-service gems: #{e}"
-      exit -1
+      exit(-1)
     end
   end
 
@@ -455,13 +437,13 @@ def install_binfile(from, op_file, target)
   if $operatingsystem == "windows" && InstallOptions.batch_files
     installed_wrapper = false
 
-    unless File.extname(from).match(/\.(cmd|bat)/)
-      if File.exists?("#{from}.bat")
+    unless File.extname(from) =~ /\.(cmd|bat)/
+      if File.exist?("#{from}.bat")
         FileUtils.install("#{from}.bat", File.join(target, "#{op_file}.bat"), :mode => 0755, :preserve => true, :verbose => true)
         installed_wrapper = true
       end
 
-      if File.exists?("#{from}.cmd")
+      if File.exist?("#{from}.cmd")
         FileUtils.install("#{from}.cmd", File.join(target, "#{op_file}.cmd"), :mode => 0755, :preserve => true, :verbose => true)
         installed_wrapper = true
       end

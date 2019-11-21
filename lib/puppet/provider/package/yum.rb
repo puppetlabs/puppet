@@ -8,7 +8,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   This provider supports the `install_options` attribute, which allows command-line flags to be passed to yum.
   These options should be specified as an array where each element is either a string or a hash."
 
-  has_feature :install_options, :versionable, :virtual_packages
+  has_feature :install_options, :versionable, :virtual_packages, :install_only
 
   commands :cmd => "yum", :rpm => "rpm"
 
@@ -22,6 +22,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
   end
 
+defaultfor :operatingsystem => :amazon
 defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
 
   def self.prefetch(packages)
@@ -91,7 +92,7 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
     updates = Hash.new { |h, k| h[k] = [] }
     body.split.each_slice(3) do |tuple|
       break if tuple[0] =~ /^(Obsoleting|Security:|Update)/
-      break unless tuple[1].match(/^(?:(\d+):)?(\S+)-(\S+)$/)
+      break unless tuple[1] =~ /^(?:(\d+):)?(\S+)-(\S+)$/
       hash = update_to_hash(*tuple[0..1])
       # Create entries for both the package name without a version and a
       # version since yum considers those as mostly interchangeable.
@@ -106,7 +107,7 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
   end
 
   def self.update_to_hash(pkgname, pkgversion)
-    
+
     # The pkgname string has two parts: name, and architecture. Architecture
     # is the portion of the string following the last "." character. All
     # characters preceding the final dot are the package name. Parse out
@@ -202,7 +203,10 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
       end
       current_package = self.query
       if current_package
-        if rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(current_package[:ensure])) < 0
+        if @resource[:install_only]
+          self.debug "Updating package #{@resource[:name]} from version #{current_package[:ensure]} to #{should} as install_only packages are never downgraded"
+          operation = update_command
+        elsif rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(current_package[:ensure])) < 0
           self.debug "Downgrading package #{@resource[:name]} from version #{current_package[:ensure]} to #{should}"
           operation = :downgrade
         elsif rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(current_package[:ensure])) > 0
@@ -227,10 +231,11 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
       is = self.query
       raise Puppet::Error, _("Could not find package %{name}") % { name: self.name } unless is
 
+      version = is[:ensure]
       # FIXME: Should we raise an exception even if should == :latest
       # and yum updated us to a version other than @param_hash[:ensure] ?
-      vercmp_result = rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(is[:ensure]))
-      raise Puppet::Error, _("Failed to update to version %{should}, got version %{version} instead") % { should: should, version: is[:ensure] } if vercmp_result != 0
+      raise Puppet::Error, _("Failed to update to version %{should}, got version %{version} instead") % { should: should, version: version } unless
+        insync?(version)
     end
   end
 

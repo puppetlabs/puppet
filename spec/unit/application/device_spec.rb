@@ -370,7 +370,17 @@ describe Puppet::Application::Device do
         allow(configurer).to receive(:run)
         allow(Puppet::Configurer).to receive(:new).and_return(configurer)
 
+        allow(Puppet::FileSystem).to receive(:exist?)
+        allow(Puppet::FileSystem).to receive(:symlink)
+        allow(Puppet::FileSystem).to receive(:dir_mkpath).and_return(true)
+        allow(Puppet::FileSystem).to receive(:dir_exist?).and_return(true)
+
         allow(plugin_handler).to receive(:download_plugins)
+      end
+
+      it "sets ssldir relative to the global confdir" do
+        expect(Puppet).to receive(:[]=).with(:ssldir, make_absolute("/dummy/devices/device1/ssl"))
+        expect { device.main }.to exit_with 1
       end
 
       it "sets vardir to the device vardir" do
@@ -390,6 +400,22 @@ describe Puppet::Application::Device do
       end
 
       context 'with --target=device1' do
+        it "symlinks the ssl directory if it doesn't exist" do
+          allow(device.options).to receive(:[]).with(:target).and_return('device1')
+          allow(Puppet::FileSystem).to receive(:exist?).and_return(false)
+
+          expect(Puppet::FileSystem).to receive(:symlink).with(Puppet[:ssldir], File.join(Puppet[:confdir], 'ssl')).and_return(true)
+          expect { device.main }.to exit_with 1
+        end
+
+        it "creates the device confdir under the global confdir" do
+          allow(device.options).to receive(:[]).with(:target).and_return('device1')
+          allow(Puppet::FileSystem).to receive(:dir_exist?).and_return(false)
+
+          expect(Puppet::FileSystem).to receive(:dir_mkpath).with(Puppet[:ssldir]).and_return(true)
+          expect { device.main }.to exit_with 1
+        end
+
         it "manages the specified target" do
           allow(device.options).to receive(:[]).with(:target).and_return('device1')
 
@@ -438,7 +464,7 @@ describe Puppet::Application::Device do
           allow(device.options).to receive(:[]).with(:to_yaml).and_return(true)
           allow(device.command_line).to receive(:args).and_return(['user'])
           expect(Puppet::Resource.indirection).to receive(:search).with('user/', {}).and_return(resources)
-          expect(device).to receive(:puts).with("user:\n  title:\n")
+          expect(device).to receive(:puts).with("---\nuser:\n  title: {}\n")
           expect { device.main }.to exit_with 0
         end
       end

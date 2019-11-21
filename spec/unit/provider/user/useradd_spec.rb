@@ -44,6 +44,27 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       allow(provider).to receive(:exists?).and_return(false)
     end
 
+    it "should not redact the command from debug logs if there is no password" do
+      described_class.has_feature :manages_passwords
+      resource[:ensure] = :present
+      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: false))
+      provider.create
+    end
+
+    it "should redact the command from debug logs if there is a password" do
+      described_class.has_feature :manages_passwords
+      resource2 = Puppet::Type.type(:user).new(
+        :name       => 'myuser',
+        :password   => 'a pass word',
+        :managehome => :false,
+        :system     => :false,
+        :provider   => provider,
+      )
+      resource2[:ensure] = :present
+      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: true))
+      provider.create
+    end
+
     it "should add -g when no gid is specified and group already exists" do
       allow(Puppet::Util).to receive(:gid).and_return(true)
       resource[:ensure] = :present
@@ -165,6 +186,27 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
   end
 
+  describe 'when modifying the password' do
+    before do
+      described_class.has_feature :libuser
+      described_class.has_feature :manages_passwords
+      #Setting any resource value here initializes needed variables and methods in the resource and provider
+      #Setting a password value here initializes the existence and management of the password parameter itself
+      #Otherwise, this value would not need to be initialized for the test
+      resource[:password] = ''
+    end
+
+    it "should not call execute with sensitive if non-sensitive data is changed" do
+      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: false))
+      provider.home = 'foo/bar'
+    end
+
+    it "should call execute with sensitive if sensitive data is changed" do
+      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: true))
+      provider.password = 'bird bird bird'
+    end
+  end
+
   describe '#modify' do
     describe "on systems with the libuser and forcelocal=false" do
       before do
@@ -272,6 +314,52 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       resource[:expiry] = :absent
       expect(provider).to receive(:execute).with(['/usr/sbin/usermod', '-e', '', 'myuser'], hash_including(custom_environment: {}))
       provider.expiry = :absent
+    end
+  end
+
+  describe "#comment" do
+    before { described_class.has_feature :libuser }
+
+    let(:content) { "myuser:x:x:x:local comment:x:x" }
+
+    it "should return the local comment string when forcelocal is true" do
+      resource[:forcelocal] = true
+      allow(File).to receive(:open).with('/etc/passwd').and_yield(content)
+      expect(provider.comment).to eq('local comment')
+    end
+
+    it "should fall back to nameservice comment string when forcelocal is false" do
+      resource[:forcelocal] = false
+      allow(provider).to receive(:get).with(:comment).and_return('remote comment')
+      expect(provider).not_to receive(:localcomment)
+      expect(provider.comment).to eq('remote comment')
+    end
+  end
+
+  describe "#finduser" do
+    before { allow(File).to receive(:open).with('/etc/passwd').and_yield(content) }
+
+    let(:content) { "sample_account:sample_password:sample_uid:sample_gid:sample_gecos:sample_directory:sample_shell" }
+    let(:output) do
+      {
+        account: 'sample_account',
+        password: 'sample_password',
+        uid: 'sample_uid',
+        gid: 'sample_gid',
+        gecos: 'sample_gecos',
+        directory: 'sample_directory',
+        shell: 'sample_shell',
+      }
+    end
+
+    [:account, :password, :uid, :gid, :gecos, :directory, :shell].each do |key|
+      it "finds an user by #{key} when asked" do
+        expect(provider.finduser(key, "sample_#{key}")).to eq(output)
+      end
+    end
+
+    it "returns false when specified key/value pair is not found" do
+      expect(provider.finduser(:account, 'invalid_account')).to eq(false)
     end
   end
 

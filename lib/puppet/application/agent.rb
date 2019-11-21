@@ -347,6 +347,8 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
       # Setup signal traps immediately after daemonization so we clean up the daemon
       daemon.set_signal_traps
 
+      log_config if Puppet[:daemonize]
+
       wait_for_certificates
 
       if Puppet[:onetime]
@@ -357,12 +359,33 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
     end
   end
 
+  def log_config
+    #skip also config reading and parsing if debug is not enabled
+    return unless Puppet::Util::Log.sendlevel?(:debug)
+
+    Puppet.settings.stringify_settings(:agent, :all).each_pair do |k,v|
+      next if k.include?("password") || v.to_s.empty?
+      Puppet.debug("Using setting: #{k}=#{v}")
+    end
+  end
+
   def fingerprint
-    sm = Puppet::SSL::StateMachine.new(onetime: true)
-    ssl_context = sm.ensure_client_certificate
-    puts Puppet::SSL::Digest.new(options[:digest].to_s, ssl_context.client_cert.to_der).to_s
-  rescue
-    $stderr.puts _("Fingerprint asked but no certificate nor certificate request have yet been issued")
+    Puppet::Util::Log.newdestination(:console)
+    cert_provider = Puppet::X509::CertProvider.new
+    client_cert = cert_provider.load_client_cert(Puppet[:certname])
+    if client_cert
+      puts Puppet::SSL::Digest.new(options[:digest].to_s, client_cert.to_der).to_s
+    else
+      csr = cert_provider.load_request(Puppet[:certname])
+      if csr
+        puts Puppet::SSL::Digest.new(options[:digest].to_s, csr.to_der).to_s
+      else
+        $stderr.puts _("Fingerprint asked but neither the certificate, nor the certificate request have been issued")
+        exit(1)
+      end
+    end
+  rescue => e
+    Puppet.log_exception(e, _("Failed to generate fingerprint: %{message}") % {message: e.message})
     exit(1)
   end
 

@@ -30,7 +30,7 @@ module SubLookup
       raise yield('Syntax error') unless segments.size * 2 == count + 1
       segments.map! do |segment|
         segment.strip!
-        if segment.start_with?('"') || segment.start_with?("'")
+        if segment.start_with?('"', "'")
           segment[1..-2]
         elsif segment =~ /^(:?[+-]?[0-9]+)$/
           segment.to_i

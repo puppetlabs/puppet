@@ -174,6 +174,19 @@ describe 'the new function' do
           )).to have_resource("Notify[Integer, #{result}]")
         end
       end
+
+      { '0x0G'  => :error,
+        '08'    => :error,
+        '10F'   => :error,
+        '0B2'   => :error,
+      }.each do |str, result|
+        it "errors when given a non Integer compliant string '#{str}'" do
+          expect{compile_to_catalog(<<-"MANIFEST"
+            $x = Integer.new("#{str}")
+          MANIFEST
+        )}.to raise_error(Puppet::Error, /invalid value|cannot be converted to Integer/)
+        end
+      end
     end
 
     context "when radix is explicitly set to 'default' it" do
@@ -307,6 +320,8 @@ describe 'the new function' do
       { "10"     => 10,
         "010"    => 10,
         "00010"  => 10,
+        "08"     => 8,
+        "0008"   => 8,
       }.each do |str, result|
         it "produces #{result} from the string '#{str}'" do
           expect(compile_to_catalog(<<-"MANIFEST"

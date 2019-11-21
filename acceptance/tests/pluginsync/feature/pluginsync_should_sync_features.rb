@@ -131,7 +131,7 @@ test_name "the pluginsync functionality should sync feature and function definit
         end
 
         step 'run the agent and verify that it loaded the feature' do
-          on(agent, puppet("agent -t --libdir='#{agent_lib_dir}' --server #{master} --rich_data --environment '#{tmp_environment}'"),
+          on(agent, puppet("agent -t --libdir='#{agent_lib_dir}' --rich_data --environment '#{tmp_environment}'"),
              :acceptable_exit_codes => [2]) do |result|
             assert_match(/The value of the #{module_name} feature is: true/, result.stdout,
                          "Expected agent stdout to include confirmation that the feature was 'true'")
@@ -151,8 +151,7 @@ test_name "the pluginsync functionality should sync feature and function definit
         end
 
         step 'run the agent again with a cached catalog' do
-          on(agent, puppet("agent -t --libdir='#{agent_lib_dir}' --use_cached_catalog --rich_data --server #{master} --environment '#{tmp_environment}'"),
-             :acceptable_exit_codes => [2]) do |result|
+          on(agent, puppet("agent -t --libdir='#{agent_lib_dir}' --use_cached_catalog --rich_data --environment '#{tmp_environment}'"), :acceptable_exit_codes => [2]) do |result|
             assert_match(/The value of the #{module_name} feature is: true/, result.stdout,
                          "Expected agent stdout to include confirmation that the feature was 'true'")
             assert_match(/Three is 3. bogus_function reporting hostname is #{facter_hostname}/, result.stdout,

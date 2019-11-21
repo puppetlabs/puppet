@@ -22,9 +22,8 @@ END
   $ctx = New-Object System.DirectoryServices.AccountManagement.PrincipalContext([System.DirectoryServices.AccountManagement.ContextType]::Machine, $env:COMPUTERNAME)
   $ctx.ValidateCredentials("#{username}", "#{password}")
         PS1
-        execute_powershell_script_on(host, script) do |result|
-          assert_match(/True/, result.stdout.strip, msg)
-        end
+        result = execute_powershell_script_on(host, script) 
+        assert_match(/True/, result.stdout.strip, msg)
       end
 
       def deny_administrator_access_to(host, filepath)

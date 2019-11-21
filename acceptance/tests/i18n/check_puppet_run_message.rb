@@ -5,6 +5,8 @@ test_name 'C100559: puppet agent run output with a supported language should be 
   confine :except, :platform => /^solaris/ # translation not supported
   confine :except, :platform => /^aix/     # QENG-5283 needed for this to work
 
+  skip_test "Localization files are unavailable"
+
   tag 'audit:medium',
       'audit:acceptance'
 
@@ -20,7 +22,7 @@ test_name 'C100559: puppet agent run output with a supported language should be 
     end
 
     step "Run Puppet apply with language #{language} and check the output" do
-      on(agent, puppet("agent -t --server #{master}", 'ENV' => {'LANGUAGE' => language})) do |apply_result|
+      on(agent, puppet("agent -t", 'ENV' => {'LANGUAGE' => language})) do |apply_result|
         # Info: Applying configuration version '1505773208'
         assert_match(/設定バージョン'[^']*'を適用しています。/, apply_result.stdout, "agent run does not contain 'Applying configuration version' translation")
         # Notice: Applied catalog in 0.03 seconds

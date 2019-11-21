@@ -35,7 +35,7 @@ module Puppet
   def self.default_basemodulepath
     if Puppet::Util::Platform.windows?
       path = ['$codedir/modules']
-      installdir = Facter.value(:env_windows_installdir)
+      installdir = ENV["FACTER_env_windows_installdir"]
       if installdir
         path << "#{installdir}/puppet/modules"
       end
@@ -47,7 +47,7 @@ module Puppet
 
   def self.default_vendormoduledir
     if Puppet::Util::Platform.windows?
-      installdir = Facter.value(:env_windows_installdir)
+      installdir = ENV["FACTER_env_windows_installdir"]
       if installdir
         "#{installdir}\\puppet\\vendor_modules"
       else
@@ -153,6 +153,19 @@ module Puppet
               ' ' + _("Valid values are %{values}.") % { values: valid.inspect}
         end
       end
+    },
+    :merge_dependency_warnings => {
+      :default => false,
+      :type    => :boolean,
+      :desc    => "Whether to merge class-level dependency failure warnings.
+
+        When a class has a failed dependency, every resource in the class
+        generates a notice level message about the dependency failure,
+        and a warning level message about skipping the resource.
+
+        If true, all messages caused by a class dependency failure are merged
+        into one message associated with the class.
+        ",
     },
     :strict => {
       :default    => :warning,
@@ -546,9 +559,10 @@ module Puppet
     },
     :http_proxy_host => {
       :default    => "none",
-      :desc       => "The HTTP proxy host to use for outgoing connections.  Note: You
+      :desc       => "The HTTP proxy host to use for outgoing connections. The proxy will be bypassed if
+      the server's hostname matches the NO_PROXY environment variable or `no_proxy` setting. Note: You
       may need to use a FQDN for the server hostname when using a proxy. Environment variable
-      http_proxy or HTTP_PROXY will override this value",
+      http_proxy or HTTP_PROXY will override this value. ",
     },
     :http_proxy_port => {
       :default    => 3128,
@@ -571,6 +585,10 @@ module Puppet
         Note that passwords must be valid when used as part of a URL. If a password
         contains any characters with special meanings in URLs (as specified by RFC 3986
         section 2.2), they must be URL-encoded. (For example, `#` would become `%23`.)",
+    },
+    :no_proxy => {
+      :default    => "localhost, 127.0.0.1",
+      :desc       => "List of host or domain names that should not go through `http_proxy_host`. Environment variable no_proxy or NO_PROXY will override this value. Names can be specified as an FQDN `host.example.com`, wildcard `*.example.com`, dotted domain `.example.com`, or suffix `example.com`.",
     },
     :http_keepalive_timeout => {
       :default    => "4s",
@@ -1473,6 +1491,14 @@ EOT
         apply. You can see man pages by running `puppet <SUBCOMMAND> --help`,
         or read them online at https://puppet.com/docs/puppet/latest/man/."
     },
+    :deviceconfdir => {
+      :default  => "$confdir/devices",
+      :type     => :directory,
+      :mode     => "0750",
+      :owner    => "service",
+      :group    => "service",
+      :desc     => "The root directory of devices' $confdir.",
+    },
     :server => {
       :default => "puppet",
       :desc => "The puppet master server to which the puppet agent should connect.",
@@ -1647,6 +1673,11 @@ EOT
       :default  => true,
       :type     => :boolean,
       :desc     => "Whether to send reports after every transaction.",
+    },
+    :resubmit_facts => {
+      :default  => false,
+      :type     => :boolean,
+      :desc     => "Whether to send updated facts after every transaction.",
     },
     :lastrunfile =>  {
       :default  => "$statedir/last_run_summary.yaml",

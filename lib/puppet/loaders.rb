@@ -9,7 +9,6 @@ module Puppet
       require 'puppet/pops/loader/gem_support'
       require 'puppet/pops/loader/module_loaders'
       require 'puppet/pops/loader/dependency_loader'
-      require 'puppet/pops/loader/null_loader'
       require 'puppet/pops/loader/static_loader'
       require 'puppet/pops/loader/runtime3_type_loader'
       require 'puppet/pops/loader/ruby_function_instantiator'
