@@ -127,10 +127,10 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   # This function is called only on start & restart unit options.
   # Reference: (PUP-3483) Systemd provider doesn't scan for changed units
   def daemon_reload?
-    cmd = [command(:systemctl), 'show', '--', @resource[:name], '--property=NeedDaemonReload']
+    cmd = [command(:systemctl), 'show', '--property=NeedDaemonReload', '--', @resource[:name]]
     daemon_reload = execute(cmd, :failonfail => false).strip.split('=').last
     if daemon_reload == 'yes'
-      daemon_reload_cmd = [command(:systemctl), '--', 'daemon-reload']
+      daemon_reload_cmd = [command(:systemctl), 'daemon-reload']
       execute(daemon_reload_cmd, :failonfail => false)
     end
   end
