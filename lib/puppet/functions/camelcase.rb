@@ -23,8 +23,8 @@
 #
 # @example Camelcase of strings in an Array
 # ```puppet
-# ['abc_def', 'bcd_xyz'].capitalize()
-# capitalize(['abc_def', 'bcd_xyz'])
+# ['abc_def', 'bcd_xyz'].camelcase()
+# camelcase(['abc_def', 'bcd_xyz'])
 # ```
 # Would both result in `['AbcDef', 'BcdXyz']`
 #
