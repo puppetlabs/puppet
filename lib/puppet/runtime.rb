@@ -1,4 +1,5 @@
 require 'puppet/http'
+require 'singleton'
 
 class Puppet::Runtime
   include Singleton
