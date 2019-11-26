@@ -23,7 +23,7 @@ HTTP API
 Installation
 ------------
 
-The best way to run Puppet is with [Puppet Enterprise (PE)](https://puppet.com/puppet/puppet-enterprise),
+The best way to run Puppet is with [Puppet Enterprise (PE)](https://puppet.com/products/puppet-enterprise/),
 which also includes orchestration features, a web console, and professional support.
 The PE documentation is [available here.](https://puppet.com/docs/pe/latest)
 
