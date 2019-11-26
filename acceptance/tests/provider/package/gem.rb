@@ -1,5 +1,5 @@
 test_name "gem provider should install and uninstall" do
-  confine :to, :template => /centos-7-x86_64|windows-2012r2-64/
+  confine :to, :template => /centos-7-x86_64|redhat-7-x86_64/
   tag 'audit:low'
 
   require 'puppet/acceptance/common_utils'
@@ -7,17 +7,6 @@ test_name "gem provider should install and uninstall" do
   extend Puppet::Acceptance::ManifestUtils
 
   package = 'colorize'
-
-  # https://github.com/puppetlabs/puppet-agent/blob/master/resources/files/puppet-agent.sh
-  puppet_agent_sh_path = '/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin:/opt/puppetlabs/bin'
-
-  wins_ruby_version = '2.4.6-1-x64'
-  wins_ruby_installer_url = "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-#{wins_ruby_version}/rubyinstaller-#{wins_ruby_version}.exe"
-  wins_ruby_installer_exe = "rubyinstaller-#{wins_ruby_version}-x64.exe"
-  wins_enable_tls12  = "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12"
-  wins_download_file = "(New-Object System.Net.WebClient).DownloadFile(\"#{wins_ruby_installer_url}\", \"#{wins_ruby_installer_exe}\")"
-  wins_download_ruby = "#{wins_enable_tls12} ; #{wins_download_file}"
-  wins_install_ruby  = "#{wins_ruby_installer_exe} /dir=\"c:/wins_ruby\" /tasks=modpath,noassocfiles,noridkinstall" # /silent or /verysilent
 
   agents.each do |agent|
     # On a Linux host with only the 'agent' role, the puppet command fails when another Ruby is installed earlier in the PATH:
@@ -28,68 +17,74 @@ test_name "gem provider should install and uninstall" do
     # To install the version of bundler this project requires, run `gem install bundler -v '2.0.2'`
     #
     # Magically, the puppet command succeeds on a Linux host with both the 'master' and 'agent' roles.
-    next unless agent['roles'].include?('master') || agent['template'].include?('windows')
+    if agent['roles'].include?('master')
+      original_path = agent.get_env_var('PATH')
 
-    beaker_path = agent.get_env_var('PATH')
+      # https://github.com/puppetlabs/puppet-agent/blob/master/resources/files/puppet-agent.sh
+      puppet_agent_sh_path = '/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin:/opt/puppetlabs/bin'
 
-    step "Setup: Install Ruby, and reset PATH on Linux" do
-      if agent['platform'].include?('windows')
-        on(agent, powershell(wins_download_ruby), :catch_failures => true)
-        on(agent, powershell(wins_install_ruby), :catch_failures => true)
-      else
-        agent.add_env_var('PATH', puppet_agent_sh_path)
+      system_gem_command = '/usr/bin/gem'
+
+      teardown do
+        step "Teardown: Uninstall System Ruby, and reset PATH" do
+          package_absent(agent, 'ruby')
+          agent.add_env_var('PATH', original_path)
+        end
+      end
+      
+      step "Setup: Install System Ruby, and set PATH to place System Ruby ahead of Puppet Ruby" do
         package_present(agent, 'ruby')
+        agent.add_env_var('PATH', puppet_agent_sh_path)
       end
-    end
-
-    step "Install a gem package" do
-      package_manifest = resource_manifest('package', package, { ensure: 'present', provider: 'gem' } )
-      apply_manifest_on(agent, package_manifest, :catch_failures => true) do
-        list = on(agent, 'gem list').stdout
-        assert_match(/#{package} \(/, list)
+    
+      step "Install a gem package in System Ruby" do
+        package_manifest = resource_manifest('package', package, { ensure: 'present', provider: 'gem' } )
+        apply_manifest_on(agent, package_manifest, :catch_failures => true) do
+          list = on(agent, "#{system_gem_command} list").stdout
+          assert_match(/#{package} \(/, list)
+        end
+        on(agent, "#{system_gem_command} uninstall #{package}")
       end
-      on(agent, "gem uninstall #{package}")
-    end
 
-    step "Uninstall a gem package" do
-      on(agent, "gem install #{package}")
-      package_manifest = resource_manifest('package', package, { ensure: 'absent', provider: 'gem' } )
-      apply_manifest_on(agent, package_manifest, :catch_failures => true) do
-        list = on(agent, 'gem list').stdout
-        assert_no_match(/#{package} \(/, list)
+      step "Uninstall a gem package in System Ruby" do
+        on(agent, "/usr/bin/gem install #{package}")
+        package_manifest = resource_manifest('package', package, { ensure: 'absent', provider: 'gem' } )
+        apply_manifest_on(agent, package_manifest, :catch_failures => true) do
+          list = on(agent, "#{system_gem_command} list").stdout
+          assert_no_match(/#{package} \(/, list)
+        end
+        on(agent, "#{system_gem_command} uninstall #{package}")
       end
-    end
-
-    # Puppet's Ruby is a convenient Ruby that should not be first in the PATH.
-    # Another could be: https://www.softwarecollections.org/en/scls/rhscl/rh-ruby23/
-
-    puppet_gem_command = "#{agent['privatebindir']}#{File::SEPARATOR}gem"
-
-    step "Install a gem package with a target command" do
-      package_manifest = resource_manifest('package', package, { ensure: 'present', provider: 'gem', command: puppet_gem_command } )
-      apply_manifest_on(agent, package_manifest, :catch_failures => true) do
-        list = on(agent, "#{puppet_gem_command} list").stdout
-        assert_match(/#{package} \(/, list)
-      end
-      on(agent, "#{puppet_gem_command} uninstall #{package}")
-    end
-
-    step "Uninstall a gem package with a target command" do
-      on(agent, "#{puppet_gem_command} install #{package}")
-      package_manifest = resource_manifest('package', package, { ensure: 'absent', provider: 'gem', command: puppet_gem_command } )
-      apply_manifest_on(agent, package_manifest, :catch_failures => true) do
-        list = on(agent, "#{puppet_gem_command} list").stdout
-        assert_no_match(/#{package} \(/, list)
-      end
-      on(agent, "#{puppet_gem_command} uninstall #{package}")
-    end
-
-    step "Teardown: Remove Ruby, and reset PATH on Linux" do
-      if agent['platform'].include?('windows')
-        package_absent(agent, "Ruby #{wins_ruby_version}")
-      else
+      
+      step "Uninstall System Ruby, and reset PATH" do
         package_absent(agent, 'ruby')
-        agent.add_env_var('PATH', beaker_path)
+        agent.add_env_var('PATH', original_path)
+      end
+    end
+
+    # Puppet's Ruby makes a fine target. Unfortunately, it's first in the PATH on Windows: PUP-6134.
+    # Also, privatebindir isn't a directory on Windows, it's a PATH:
+    # https://github.com/puppetlabs/beaker-puppet/blob/master/lib/beaker-puppet/install_utils/aio_defaults.rb
+    unless agent['platform'].include?('windows')
+      puppet_gem_command = "#{agent['privatebindir']}/gem"
+
+      step "Install a gem package with a target command" do
+        package_manifest = resource_manifest('package', package, { ensure: 'present', provider: 'gem', command: puppet_gem_command } )
+        apply_manifest_on(agent, package_manifest, :catch_failures => true) do
+          list = on(agent, "#{puppet_gem_command} list").stdout
+          assert_match(/#{package} \(/, list)
+        end
+        on(agent, "#{puppet_gem_command} uninstall #{package}")
+      end
+
+      step "Uninstall a gem package with a target command" do
+        on(agent, "#{puppet_gem_command} install #{package}")
+        package_manifest = resource_manifest('package', package, { ensure: 'absent', provider: 'gem', command: puppet_gem_command } )
+        apply_manifest_on(agent, package_manifest, :catch_failures => true) do
+          list = on(agent, "#{puppet_gem_command} list").stdout
+          assert_no_match(/#{package} \(/, list)
+        end
+        on(agent, "#{puppet_gem_command} uninstall #{package}")
       end
     end
   end
