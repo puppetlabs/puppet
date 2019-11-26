@@ -55,7 +55,7 @@ test_script:
       ruby -v
       gem --version
       bundle --version
-      bundle exec rspec spec/integration/http/client_spec.rb
+      bundle exec rspec spec/integration/http/client_spec.rb:79
       $exitCode = $LASTEXITCODE
       Write-Output "Spec run exited with $exitCode"
       $host.SetShouldExit($exitCode)

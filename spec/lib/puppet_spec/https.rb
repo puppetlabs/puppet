@@ -61,7 +61,7 @@ class PuppetSpec::HTTPSServer
               end
             rescue => e
               # uncomment this line if something goes wrong
-              # puts "SERVER #{e.message}"
+              puts "SERVER #{e.message}"
               errors << e
             end
           end

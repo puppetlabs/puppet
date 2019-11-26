@@ -77,7 +77,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
         # ECONNRESET, which we rescue as Puppet::HTTP::HTTPError.
         expect {
           client.get(URI("https://127.0.0.1:#{port}"), ssl_context: root_context)
-        }.to raise_error(Puppet::HTTP::HTTPError, %r{Failed to connect to https://127.0.0.1|An existing connection was forcibly closed by the remote host})
+        }.to raise_error(Puppet::HTTP::ConnectionError, %r{Failed to connect to https://127.0.0.1})
       end
     end
 

@@ -20,7 +20,9 @@ class Puppet::HTTP::Client
     site = Puppet::Network::HTTP::Site.from_uri(uri)
     verifier = Puppet::SSL::Verifier.new(site.host, ctx)
 
+    $stderr.puts "Connecting to #{site}"
     @pool.with_connection(site, verifier) do |http|
+      $stderr.puts "Connected to #{site}"
       if block_given?
         handle_post_connect(uri, http, &block)
       end
@@ -28,6 +30,7 @@ class Puppet::HTTP::Client
   rescue Puppet::HTTP::HTTPError
     raise
   rescue => e
+    $stderr.puts "Never connected #{e.class} #{e.message}"
     raise Puppet::HTTP::ConnectionError.new(_("Failed to connect to %{uri}: %{message}") % {uri: uri, message: e.message}, e)
   end
 
@@ -117,6 +120,7 @@ class Puppet::HTTP::Client
   end
 
   def handle_post_connect(uri, http, &block)
+    $stderr.puts "IN POST CONNECT"
     start = Time.now
     yield http
   rescue Puppet::HTTP::HTTPError
@@ -126,6 +130,7 @@ class Puppet::HTTP::Client
   rescue Timeout::Error => e
     raise Puppet::HTTP::HTTPError.new(_("Request to %{uri} timed out after %{elapsed} seconds") % {uri: uri, elapsed: elapsed(start)}, e)
   rescue => e
+    $stderr.puts "EXCEPTION #{e.class} #{e.message}"
     raise Puppet::HTTP::HTTPError.new(_("Request to %{uri} failed after %{elapsed} seconds: %{message}") % {uri: uri, elapsed: elapsed(start), message: e.message}, e)
   end
 

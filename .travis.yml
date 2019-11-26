@@ -5,7 +5,7 @@ before_install:
   - gem update --system && gem install bundler --no-document
   - ruby -ropenssl -e 'puts OpenSSL::OPENSSL_VERSION; puts OpenSSL::OPENSSL_LIBRARY_VERSION'
 script:
-  - "bundle exec rspec spec/integration/http/client_spec.rb"
+  - "bundle exec rspec spec/integration/http/client_spec.rb:79"
 notifications:
   email: false
 
