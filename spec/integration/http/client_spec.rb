@@ -58,6 +58,17 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
                          %r{certificate verify failed.* .self signed certificate in certificate chain for CN=Test CA.})
       end
     end
+
+    it "prints TLS protocol and ciphersuite in debug" do
+      Puppet[:log_level] = 'debug'
+      server.start_server do |port|
+        client.get(URI("https://127.0.0.1:#{port}"), ssl_context: root_context)
+        # TLS version string can be TLSv1 or TLSv1.[1-3], but not TLSv1.0
+        expect(@logs).to include(
+          an_object_having_attributes(level: :debug, message: /Using TLSv1(\.[1-3])? with cipher .*/),
+        )
+      end
+    end
   end
 
   context "with client certs" do
