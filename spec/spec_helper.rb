@@ -159,10 +159,14 @@ RSpec.configure do |config|
     Puppet::Test::TestHelper.before_each_test()
   end
 
+  # Facter 2 uses two versions of the GCE API, so match using regex
+  PUPPET_FACTER_2_GCE_URL = %r{^http://metadata/computeMetadata/v1(beta1)?}.freeze
+  PUPPET_FACTER_3_GCE_URL = "http://metadata.google.internal/computeMetadata/v1/?recursive=true&alt=json".freeze
+
   config.around :each do |example|
     # Ignore requests from Facter GCE fact in Travis
-    stub_request(:get, "http://metadata/computeMetadata/v1beta1/?alt=json&recursive=true") # facter 2
-    stub_request(:get, "http://metadata.google.internal/computeMetadata/v1/?recursive=true&alt=json") # facter 3
+    stub_request(:get, PUPPET_FACTER_2_GCE_URL)
+    stub_request(:get, PUPPET_FACTER_3_GCE_URL)
 
     # Enable VCR if the example is tagged with `:vcr` metadata.
     if example.metadata[:vcr]
