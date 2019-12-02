@@ -22,6 +22,47 @@ describe Puppet::HTTP::Resolver do
     end
   end
 
+  context 'when resolving using server_list' do
+    let(:server_list) { [["ca.example.com", "8141"], ["apple.example.com"]] }
+    let(:default_port) { '8142' }
+    let(:subject) { Puppet::HTTP::Resolver::ServerList.new(client, server_list: server_list, default_port: default_port) }
+
+    it 'yields a service based on the current server_list setting' do
+      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 200)
+
+      subject.resolve(session, :ca) do |service|
+        expect(service).to be_an_instance_of(Puppet::HTTP::Service::Ca)
+        expect(service.url.to_s).to eq("https://ca.example.com:8141/puppet-ca/v1")
+      end
+    end
+
+    it 'yields a service based on the current server_list setting if the server returns any success codes' do
+      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 202)
+
+      subject.resolve(session, :ca) do |service|
+        expect(service).to be_an_instance_of(Puppet::HTTP::Service::Ca)
+        expect(service.url.to_s).to eq("https://ca.example.com:8141/puppet-ca/v1")
+      end
+    end
+
+    it 'falls fails if no servers in server_list are accessible' do
+      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 503)
+      stub_request(:get, "https://apple.example.com:8142/status/v1/simple/master").to_return(status: 503)
+
+      expect { subject.resolve(session, :ca) }.to raise_error(Puppet::Error, /^Could not select a functional puppet master from server_list:/)
+    end
+
+    it 'cycles through server_list until a valid server is found' do
+      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 503)
+      stub_request(:get, "https://apple.example.com:8142/status/v1/simple/master").to_return(status: 200)
+
+      subject.resolve(session, :ca) do |service|
+        expect(service).to be_an_instance_of(Puppet::HTTP::Service::Ca)
+        expect(service.url.to_s).to eq("https://apple.example.com:8142/puppet-ca/v1")
+      end
+    end
+  end
+
   context 'when resolving using SRV' do
     let(:dns) { double('dns') }
     let(:subject) { Puppet::HTTP::Resolver::SRV.new(domain: 'example.com', dns: dns) }
