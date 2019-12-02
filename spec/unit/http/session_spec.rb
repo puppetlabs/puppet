@@ -10,7 +10,7 @@ describe Puppet::HTTP::Session do
     double('good', url: uri, connect: nil)
   }
   let(:bad_service) {
-    service = double('good', url: uri)
+    service = double('bad', url: uri)
     allow(service).to receive(:connect).and_raise(Puppet::HTTP::ConnectionError, 'whoops')
     service
   }
