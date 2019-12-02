@@ -83,6 +83,8 @@ module Pal
       end
     end
 
+    previous_tasks_value = Puppet[:tasks]
+    previous_code_value = Puppet[:code]
     Puppet[:tasks] = true
     # After the assertions, if code_string is non nil - it has the highest precedence
     Puppet[:code] = code_string unless code_string.nil?
@@ -90,6 +92,9 @@ module Pal
     # If manifest_file is nil, the #main method will use the env configured manifest
     # to do things in the block while a Script Compiler is in effect
     main(manifest_file, facts, variables, :script, &block)
+  ensure
+    Puppet[:tasks] = previous_tasks_value
+    Puppet[:code] = previous_code_value
   end
 
   # Evaluates a Puppet Language script string.
