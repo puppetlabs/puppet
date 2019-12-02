@@ -147,10 +147,10 @@ class Puppet::HTTP::Client
     resolvers = []
 
     if Puppet[:use_srv_records]
-      resolvers << Puppet::HTTP::Resolver::SRV.new(domain: Puppet[:srv_domain])
+      resolvers << Puppet::HTTP::Resolver::SRV.new(self, domain: Puppet[:srv_domain])
     end
 
-    resolvers << Puppet::HTTP::Resolver::Settings.new
+    resolvers << Puppet::HTTP::Resolver::Settings.new(self)
     resolvers.freeze
   end
 end

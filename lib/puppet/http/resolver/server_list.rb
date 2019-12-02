@@ -5,7 +5,7 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
     @default_port = default_port
   end
 
-  def resolve(session, name, ssl_context: nil, &block)
+  def resolve(session, name, ssl_context: nil)
     @server_list.each do |server|
       host = server[0]
       port = server[1] || @default_port
