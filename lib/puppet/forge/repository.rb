@@ -52,12 +52,11 @@ class Puppet::Forge
         io.write(response.body) if io.respond_to?(:write)
         response
       rescue => e
-        if e.cause.is_a?(OpenSSL::SSL::SSLError)
-          if e.cause.message =~ /certificate verify failed/
-            raise SSLVerifyError.new(:uri => @uri.to_s, :original => e.cause)
-          else
-            raise e.cause
-          end
+        case e.cause
+        when Puppet::SSL::CertVerifyError
+          raise SSLVerifyError.new(:uri => @uri.to_s, :original => e.cause)
+        when Puppet::SSL::SSLError
+          raise e.cause
         else
           raise CommunicationError.new(:uri => @uri.to_s, :original => e)
         end

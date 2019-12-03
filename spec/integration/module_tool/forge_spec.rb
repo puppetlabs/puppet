@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'puppet/forge'
 require 'puppet_spec/https'
 
-describe Puppet::Forge do
+describe Puppet::Forge, unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
   before :all do
@@ -54,8 +54,6 @@ describe Puppet::Forge do
   end
 
   it 'returns a valid exception when there is an SSL verification problem' do
-    pending "Forge is catching the wrong exception"
-
     server.start_server do |port|
       forge = described_class.new("https://#{wrong_hostname}:#{port}")
       expect {
