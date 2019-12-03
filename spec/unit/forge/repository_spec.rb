@@ -38,7 +38,7 @@ describe Puppet::Forge::Repository do
     it "returns the response object from the request" do
       stub_request(:get, uri)
 
-      expect(repository.make_http_request("/the_path")).to be_a_kind_of(Net::HTTPResponse)
+      expect(repository.make_http_request("/the_path")).to be_a_kind_of(Puppet::HTTP::Response)
     end
 
     it "requires path to have a leading slash" do
@@ -67,7 +67,7 @@ describe Puppet::Forge::Repository do
       ssl_repository = Puppet::Forge::Repository.new('https://fake.com', agent)
       expect {
         ssl_repository.make_http_request("/the_path")
-      }.to raise_error Puppet::Forge::Errors::SSLVerifyError, 'Unable to verify the SSL certificate at https://fake.com'
+      }.to raise_error Puppet::Forge::Errors::SSLVerifyError, %r{^Unable to verify the SSL certificate at https://fake.com}
     end
 
     it 'return a valid exception when there is a communication problem' do
@@ -76,7 +76,7 @@ describe Puppet::Forge::Repository do
       expect {
         repository.make_http_request("/the_path")
       }.to raise_error(Puppet::Forge::Errors::CommunicationError,
-                       'Unable to connect to the server at http://fake.com. Detail: getaddrinfo: Name or service not known.')
+                       %r{Unable to connect to the server at http://fake.com. Detail: Request to http://fake.com/the_path failed after .* seconds: getaddrinfo: Name or service not known.})
     end
 
     it "sets the user agent for the request" do

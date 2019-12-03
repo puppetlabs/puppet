@@ -65,7 +65,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       # make_http_request URI encodes parameters
       response = make_http_request(uri)
 
-      if response.code == '200'
+      if response.code == 200
         result = Puppet::Util::Json.load(response.body)
         uri = decode_uri(result['pagination']['next'])
         matches.concat result['results']
@@ -102,7 +102,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       # make_http_request URI encodes parameters
       response = make_http_request(uri)
 
-      if response.code == '200'
+      if response.code == 200
         response = Puppet::Util::Json.load(response.body)
       else
         raise ResponseError.new(:uri => URI.parse(@host).merge(uri), :response => response)
@@ -207,7 +207,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     def download(uri, destination)
       response = @source.make_http_request(uri, destination)
       destination.flush and destination.close
-      unless response.code == '200'
+      unless response.code == 200
         raise Puppet::Forge::Errors::ResponseError.new(:uri => uri, :response => response)
       end
     end

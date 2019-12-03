@@ -15,24 +15,6 @@ class Puppet::Forge
 
     attr_reader :uri, :cache
 
-    # List of Net::HTTP exceptions to catch
-    NET_HTTP_EXCEPTIONS = [
-      EOFError,
-      Errno::ECONNABORTED,
-      Errno::ECONNREFUSED,
-      Errno::ECONNRESET,
-      Errno::EINVAL,
-      Errno::ETIMEDOUT,
-      Net::HTTPBadResponse,
-      Net::HTTPHeaderSyntaxError,
-      Net::ProtocolError,
-      SocketError,
-    ]
-
-    if Puppet.features.zlib?
-      NET_HTTP_EXCEPTIONS << Zlib::GzipFile::Error
-    end
-
     # Instantiate a new repository instance rooted at the +url+.
     # The library will report +for_agent+ in the User-Agent to the repository.
     def initialize(host, for_agent)
@@ -40,14 +22,46 @@ class Puppet::Forge
       @agent = for_agent
       @cache = Cache.new(self)
       @uri   = URI.parse(host)
+
+      ssl_provider = Puppet::SSL::SSLProvider.new
+      @ssl_context = ssl_provider.create_system_context(cacerts: [])
     end
 
     # Return a Net::HTTPResponse read for this +path+.
     def make_http_request(path, io = nil)
       raise ArgumentError, "Path must start with forward slash" unless path.start_with?('/')
-      request = get_request_object(@uri.path.chomp('/')+path)
-      Puppet.debug "HTTP GET #{@host}#{request.path}"
-      return read_response(request, io)
+      begin
+        str = @uri.to_s
+        str.chomp!('/')
+        str += Puppet::Util.uri_encode(path)
+        uri = URI(str)
+
+        headers = { "User-Agent" => user_agent }
+        user = nil
+        password = nil
+
+        if forge_authorization
+          headers["Authorization"] = forge_authorization
+        elsif @uri.user && @uri.password
+          user = @uri.user
+          password = @uri.password
+        end
+
+        http = Puppet.runtime['http']
+        response = http.get(uri, headers: headers, user: user, password: password, ssl_context: @ssl_context)
+        io.write(response.body) if io.respond_to?(:write)
+        response
+      rescue => e
+        if e.cause.is_a?(OpenSSL::SSL::SSLError)
+          if e.cause.message =~ /certificate verify failed/
+            raise SSLVerifyError.new(:uri => @uri.to_s, :original => e.cause)
+          else
+            raise e.cause
+          end
+        else
+          raise CommunicationError.new(:uri => @uri.to_s, :original => e)
+        end
+      end
     end
 
     def forge_authorization
@@ -55,71 +69,6 @@ class Puppet::Forge
         Puppet[:forge_authorization]
       elsif Puppet.features.pe_license?
         PELicense.load_license_key.authorization_token
-      end
-    end
-
-    # responsible for properly encoding a URI
-    def get_request_object(path)
-      headers = {
-        "User-Agent" => user_agent,
-      }
-
-      if Puppet.features.zlib?
-        headers = headers.merge({
-          "Accept-Encoding" => Puppet::Network::HTTP::Compression::ACCEPT_ENCODING
-        })
-      end
-
-      if forge_authorization
-        headers = headers.merge({"Authorization" => forge_authorization})
-      end
-
-      request = Net::HTTP::Get.new(Puppet::Util.uri_encode(path), headers)
-
-      unless @uri.user.nil? || @uri.password.nil? || forge_authorization
-        request.basic_auth(@uri.user, @uri.password)
-      end
-
-      return request
-    end
-
-    # Return a Net::HTTPResponse read from this HTTPRequest +request+.
-    #
-    # @param request [Net::HTTPRequest] request to make
-    # @return [Net::HTTPResponse] response from request
-    # @raise [Puppet::Forge::Errors::CommunicationError] if there is a network
-    #   related error
-    # @raise [Puppet::Forge::Errors::SSLVerifyError] if there is a problem
-    #  verifying the remote SSL certificate
-    def read_response(request, io = nil)
-      http_object = Puppet::Util::HttpProxy.get_http_object(uri)
-
-      http_object.start do |http|
-        response = http.request(request)
-
-        if Puppet.features.zlib?
-          if response && response.key?("content-encoding")
-            case response["content-encoding"]
-            when "gzip"
-              response.body = Zlib::GzipReader.new(StringIO.new(response.read_body), :encoding => "ASCII-8BIT").read
-              response.delete("content-encoding")
-            when "deflate"
-              response.body = Zlib::Inflate.inflate(response.read_body)
-              response.delete("content-encoding")
-            end
-          end
-        end
-
-        io.write(response.body) if io.respond_to? :write
-        response
-      end
-    rescue *NET_HTTP_EXCEPTIONS => e
-      raise CommunicationError.new(:uri => @uri.to_s, :original => e)
-    rescue OpenSSL::SSL::SSLError => e
-      if e.message =~ /certificate verify failed/
-        raise SSLVerifyError.new(:uri => @uri.to_s, :original => e)
-      else
-        raise e
       end
     end
 
