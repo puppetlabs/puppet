@@ -61,15 +61,6 @@ describe Puppet::Forge::Repository do
       repository.make_http_request("/the_path")
     end
 
-    it 'return a valid exception when there is an SSL verification problem' do
-      allow_any_instance_of(Net::HTTP).to receive(:start).and_raise(OpenSSL::SSL::SSLError.new("certificate verify failed"))
-
-      ssl_repository = Puppet::Forge::Repository.new('https://fake.com', agent)
-      expect {
-        ssl_repository.make_http_request("/the_path")
-      }.to raise_error Puppet::Forge::Errors::SSLVerifyError, %r{^Unable to verify the SSL certificate at https://fake.com}
-    end
-
     it 'return a valid exception when there is a communication problem' do
       stub_request(:get, uri).to_raise(SocketError.new('getaddrinfo: Name or service not known'))
 
