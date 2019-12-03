@@ -42,7 +42,11 @@ module Puppet
           send resource[:loglevel], "[diff redacted]"
         else
           write_temporarily(param) do |path|
-            send resource[:loglevel], "\n" + diff(resource[:path], path)
+            diff_output = diff(resource[:path], path)
+            if diff_output.encoding == Encoding::BINARY || !diff_output.valid_encoding?
+              diff_output = "Binary files #{resource[:path]} and #{path} differ"
+            end
+            send resource[:loglevel], "\n" + diff_output
           end
         end
       end
