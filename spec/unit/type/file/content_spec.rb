@@ -200,21 +200,21 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
             end
 
             it "prints the diff" do
-              expect(content).to receive(:diff).and_return("my diff").once
-              expect(content).to receive(:debug).with("\nmy diff").once
+              expect(content).to receive(:diff).and_return("my diff")
+              expect(content).to receive(:debug).with("\nmy diff")
               expect(content).not_to be_safe_insync("other content")
             end
 
             it "prints binary file notice if diff is not valid encoding" do
-              expect(content).to receive(:diff).and_return("\xc7\xd1\xfc\x84").once
-              expect(content).to receive(:debug).with(/\nBinary files #{filename} and .* differ/).once
+              expect(content).to receive(:diff).and_return("\xc7\xd1\xfc\x84")
+              expect(content).to receive(:debug).with(/\nBinary files #{filename} and .* differ/)
               expect(content).not_to be_safe_insync("other content")
             end
 
             it "redacts the diff when the property is sensitive" do
               content.sensitive = true
               expect(content).not_to receive(:diff)
-              expect(content).to receive(:debug).with("[diff redacted]").once
+              expect(content).to receive(:debug).with("[diff redacted]")
               expect(content).not_to be_safe_insync("other content")
             end
           end
