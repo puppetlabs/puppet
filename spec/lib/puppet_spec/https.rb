@@ -14,17 +14,19 @@ class PuppetSpec::HTTPSServer
     @config = WEBrick::Config::HTTP.dup
   end
 
-  def handle_request(ctx, ssl)
+  def handle_request(ctx, ssl, response_proc)
     req = WEBrick::HTTPRequest.new(@config)
     req.parse(ssl)
 
     res = WEBrick::HTTPResponse.new(@config)
     res.status = 200
     res.body = 'OK'
+    response_proc.call(res) if response_proc
+
     res.send_response(ssl)
   end
 
-  def start_server(ctx_proc: nil, &block)
+  def start_server(ctx_proc: nil, response_proc: nil, &block)
     errors = []
 
     IO.pipe {|stop_pipe_r, stop_pipe_w|
@@ -54,7 +56,7 @@ class PuppetSpec::HTTPSServer
 
                 ssl = ssls.accept
                 begin
-                  handle_request(ctx, ssl)
+                  handle_request(ctx, ssl, response_proc)
                 ensure
                   ssl.close
                 end
