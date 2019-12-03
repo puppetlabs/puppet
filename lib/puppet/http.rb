@@ -20,6 +20,7 @@ module Puppet
     require 'puppet/http/service/ca'
     require 'puppet/http/session'
     require 'puppet/http/resolver'
+    require 'puppet/http/resolver/server_list'
     require 'puppet/http/resolver/settings'
     require 'puppet/http/resolver/srv'
     require 'puppet/http/client'
