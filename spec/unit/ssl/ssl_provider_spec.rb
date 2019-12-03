@@ -73,6 +73,67 @@ describe Puppet::SSL::SSLProvider do
         sslctx.verify_peer = false
       }.to raise_error(/can't modify frozen/)
     end
+
+    it 'verifies peer' do
+      sslctx = subject.create_root_context(config)
+      expect(sslctx.verify_peer).to eq(true)
+    end
+  end
+
+  context 'when creating a system ssl context' do
+    it 'accepts empty list of CA certs' do
+      sslctx = subject.create_system_context(cacerts: [])
+      expect(sslctx.cacerts).to eq([])
+    end
+
+    it 'accepts valid root certs' do
+      certs = [cert_fixture('ca.pem')]
+      sslctx = subject.create_system_context(cacerts: certs)
+      expect(sslctx.cacerts).to eq(certs)
+    end
+
+    it 'accepts valid intermediate certs' do
+      certs = [cert_fixture('ca.pem'), cert_fixture('intermediate.pem')]
+      sslctx = subject.create_system_context(cacerts: certs)
+      expect(sslctx.cacerts).to eq(certs)
+    end
+
+    it 'accepts expired CA certs' do
+      expired = [cert_fixture('ca.pem'), cert_fixture('intermediate.pem')]
+      expired.each { |x509| x509.not_after = Time.at(0) }
+
+      sslctx = subject.create_system_context(cacerts: expired)
+      expect(sslctx.cacerts).to eq(expired)
+    end
+
+    it 'raises if the frozen context is modified' do
+      sslctx = subject.create_system_context(cacerts: [])
+      expect {
+        sslctx.verify_peer = false
+      }.to raise_error(/can't modify frozen/)
+    end
+
+    it 'trusts system ca store' do
+      expect_any_instance_of(OpenSSL::X509::Store).to receive(:set_default_paths)
+
+      subject.create_system_context(cacerts: [])
+    end
+
+    it 'verifies peer' do
+      sslctx = subject.create_system_context(cacerts: [])
+      expect(sslctx.verify_peer).to eq(true)
+    end
+
+    it 'disable revocation' do
+      sslctx = subject.create_system_context(cacerts: [])
+      expect(sslctx.revocation).to eq(false)
+    end
+
+    it 'sets client cert and private key to nil' do
+      sslctx = subject.create_system_context(cacerts: [])
+      expect(sslctx.client_cert).to be_nil
+      expect(sslctx.private_key).to be_nil
+    end
   end
 
   context 'when creating an ssl context with crls' do
@@ -98,6 +159,11 @@ describe Puppet::SSL::SSLProvider do
 
       sslctx = subject.create_root_context(config.merge(crls: expired))
       expect(sslctx.crls).to eq(expired)
+    end
+
+    it 'verifies peer' do
+      sslctx = subject.create_root_context(config)
+      expect(sslctx.verify_peer).to eq(true)
     end
   end
 
@@ -344,6 +410,11 @@ describe Puppet::SSL::SSLProvider do
       expect {
         sslctx.verify_peer = false
       }.to raise_error(/can't modify frozen/)
+    end
+
+    it 'verifies peer' do
+      sslctx = subject.create_context(config)
+      expect(sslctx.verify_peer).to eq(true)
     end
   end
 
