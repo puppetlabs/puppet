@@ -3,8 +3,11 @@ require 'spec_helper'
 require 'puppet/forge'
 require 'net/http'
 require 'puppet/module_tool'
+require 'puppet_spec/files'
 
 describe Puppet::Forge::ModuleRelease do
+  include PuppetSpec::Files
+
   let(:agent) { "Test/1.0" }
   let(:repository) { Puppet::Forge::Repository.new('http://fake.com', agent) }
   let(:ssl_repository) { Puppet::Forge::Repository.new('https://fake.com', agent) }
@@ -27,6 +30,8 @@ describe Puppet::Forge::ModuleRelease do
 
   let(:mock_dir) { '/tmp' }
 
+  let(:destination) { tmpfile('forge_module_release') }
+
   shared_examples 'a module release' do
     def mock_digest_file_with_md5(md5)
       allow(Digest::MD5).to receive(:file).and_return(double(:hexdigest => md5))
@@ -40,16 +45,24 @@ describe Puppet::Forge::ModuleRelease do
     end
 
     describe '#download' do
-      it 'should call make_http_request with correct params' do
-        # valid URI comes from file_uri in JSON blob above
-        expect(ssl_repository).to receive(:make_http_request).with("/#{api_version}/files/#{module_full_name_versioned}.tar.gz", mock_file).and_return(double(:body => '{}', :code => '200'))
+      it 'should download a file' do
+        stub_request(:get, "https://fake.com/#{api_version}/files/#{module_full_name_versioned}.tar.gz").to_return(status: 200, body: '{}')
 
-        release.send(:download, "/#{api_version}/files/#{module_full_name_versioned}.tar.gz", mock_file)
+        File.open(destination, 'wb') do |fh|
+          release.send(:download, "/#{api_version}/files/#{module_full_name_versioned}.tar.gz", fh)
+        end
+
+        expect(File.read(destination)).to eq("{}")
       end
 
       it 'should raise a response error when it receives an error from forge' do
-        allow(ssl_repository).to receive(:make_http_request).and_return(double(:body => '{"errors": ["error"]}', :code => '500', :message => 'server error'))
-        expect { release.send(:download, "/some/path", mock_file)}.to raise_error Puppet::Forge::Errors::ResponseError
+        stub_request(:get, "https://fake.com/some/path").to_return(
+          status: [500, 'server error'],
+          body: '{"error":"invalid module"}'
+        )
+        expect {
+          release.send(:download, "/some/path", StringIO.new)
+        }.to raise_error Puppet::Forge::Errors::ResponseError
       end
     end
 
