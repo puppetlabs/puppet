@@ -30,14 +30,14 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
 
   def findgroup(key, value)
     group_file = "/etc/group"
-    group_keys = ['group_name', 'password', 'gid', 'user_list']
+    group_keys = [:group_name, :password, :gid, :user_list]
     index = group_keys.index(key)
     File.open(group_file) do |f|
       f.each_line do |line|
          group = line.split(":")
          if group[index] == value
              f.close
-             return group
+             return Hash[group_keys.zip(group)]
          end
       end
     end
@@ -45,8 +45,8 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
   end
 
   def localgid
-    group = findgroup('group_name', resource[:name])
-    return group[2] if group
+    group = findgroup(:group_name, resource[:name])
+    return group[:gid] if group
     false
   end
 
@@ -56,7 +56,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     # to ensure consistent behaviour of the useradd provider when
     # using both useradd and luseradd
     if not @resource.allowdupe? and @resource.forcelocal?
-       if @resource.should(:gid) and findgroup('gid', @resource.should(:gid).to_s)
+       if @resource.should(:gid) and findgroup(:gid, @resource.should(:gid).to_s)
            raise(Puppet::Error, _("GID %{resource} already exists, use allowdupe to force group creation") % { resource: @resource.should(:gid).to_s })
        end
     elsif @resource.allowdupe? and not @resource.forcelocal?
