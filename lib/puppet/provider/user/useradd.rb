@@ -64,12 +64,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     passwd_file = "/etc/passwd"
     passwd_keys = [:account, :password, :uid, :gid, :gecos, :directory, :shell]
     index = passwd_keys.index(key)
-    File.open(passwd_file) do |f|
-      f.each_line do |line|
-        user = line.split(":")
-        if user[index] == value
-          return Hash[passwd_keys.zip(user)]
-        end
+    @passwd_content ||= File.read(passwd_file)
+    @passwd_content.each_line do |line|
+      user = line.split(":")
+      if user[index] == value
+        return Hash[passwd_keys.zip(user)]
       end
     end
     false

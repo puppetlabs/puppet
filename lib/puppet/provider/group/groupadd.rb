@@ -32,13 +32,11 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     group_file = "/etc/group"
     group_keys = [:group_name, :password, :gid, :user_list]
     index = group_keys.index(key)
-    File.open(group_file) do |f|
-      f.each_line do |line|
-         group = line.split(":")
-         if group[index] == value
-             f.close
-             return Hash[group_keys.zip(group)]
-         end
+    @group_content ||= File.read(group_file)
+    @group_content.each_line do |line|
+      group = line.split(":")
+      if group[index] == value
+        return Hash[group_keys.zip(group)]
       end
     end
     false
