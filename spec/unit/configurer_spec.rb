@@ -3,6 +3,8 @@ require 'puppet/configurer'
 
 describe Puppet::Configurer do
   before do
+    Puppet::Node::Facts.indirection.terminus_class = :memory
+
     allow(Puppet.settings).to receive(:use).and_return(true)
     @agent = Puppet::Configurer.new
     allow(@agent).to receive(:init_storage)
@@ -11,8 +13,8 @@ describe Puppet::Configurer do
     Puppet[:report] = true
   end
 
-  it "should include the Fact Handler module" do
-    expect(Puppet::Configurer.ancestors).to be_include(Puppet::Configurer::FactHandler)
+  after :all do
+    Puppet::Node::Facts.indirection.reset_terminus_class
   end
 
   describe "when executing a pre-run hook" do
@@ -65,7 +67,6 @@ describe Puppet::Configurer do
     before do
       allow(Puppet.settings).to receive(:use).and_return(true)
       allow(@agent).to receive(:download_plugins)
-      Puppet::Node::Facts.indirection.terminus_class = :memory
       @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
       Puppet::Node::Facts.indirection.save(@facts)
 
@@ -80,7 +81,6 @@ describe Puppet::Configurer do
     end
 
     after :all do
-      Puppet::Node::Facts.indirection.reset_terminus_class
       Puppet::Resource::Catalog.indirection.reset_terminus_class
     end
 
