@@ -4,8 +4,6 @@ require 'puppet/configurer'
 describe Puppet::Configurer do
   before do
     Puppet::Node::Facts.indirection.terminus_class = :memory
-
-    allow(Puppet.settings).to receive(:use).and_return(true)
     @agent = Puppet::Configurer.new
     allow(@agent).to receive(:init_storage)
     allow(Puppet::Util::Storage).to receive(:store)
@@ -65,7 +63,6 @@ describe Puppet::Configurer do
 
   describe "when executing a catalog run" do
     before do
-      allow(Puppet.settings).to receive(:use).and_return(true)
       allow(@agent).to receive(:download_plugins)
       @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
       Puppet::Node::Facts.indirection.save(@facts)
@@ -485,7 +482,6 @@ describe Puppet::Configurer do
     include PuppetSpec::Files
 
     before do
-      allow(Puppet.settings).to receive(:use).and_return(true)
       @configurer = Puppet::Configurer.new
       Puppet[:lastrunfile] = tmpfile('last_run_file')
 
@@ -551,7 +547,6 @@ describe Puppet::Configurer do
     include PuppetSpec::Files
 
     before do
-      allow(Puppet.settings).to receive(:use).and_return(true)
       @configurer = Puppet::Configurer.new
 
       @report = double('report', :raw_summary => {})
@@ -650,7 +645,6 @@ describe Puppet::Configurer do
 
   describe "when retrieving a catalog" do
     before do
-      allow(Puppet.settings).to receive(:use).and_return(true)
       allow(@agent).to receive(:facts_for_uploading).and_return({})
       allow(@agent).to receive(:download_plugins)
 
@@ -927,8 +921,6 @@ describe Puppet::Configurer do
 
   describe "when converting the catalog" do
     before do
-      allow(Puppet.settings).to receive(:use).and_return(true)
-
       allow(catalog).to receive(:to_ral).and_return(ral_catalog)
     end
 
