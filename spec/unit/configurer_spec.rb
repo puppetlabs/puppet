@@ -5,8 +5,6 @@ describe Puppet::Configurer do
   before do
     Puppet::Node::Facts.indirection.terminus_class = :memory
     @agent = Puppet::Configurer.new
-    allow(@agent).to receive(:init_storage)
-    allow(Puppet::Util::Storage).to receive(:store)
     Puppet[:server] = "puppetmaster"
     Puppet[:report] = true
   end
@@ -79,11 +77,6 @@ describe Puppet::Configurer do
 
     after :all do
       Puppet::Resource::Catalog.indirection.reset_terminus_class
-    end
-
-    it "should initialize storage" do
-      expect(Puppet::Util::Storage).to receive(:load)
-      @agent.run
     end
 
     it "downloads plugins when told" do
@@ -197,7 +190,6 @@ describe Puppet::Configurer do
 
     it "should create report with passed transaction_uuid and job_id" do
       @agent = Puppet::Configurer.new("test_tuuid", "test_jid")
-      allow(@agent).to receive(:init_storage)
 
       report = Puppet::Transaction::Report.new(nil, "test", "aaaa")
       expect(Puppet::Transaction::Report).to receive(:new).with(anything, anything, 'test_tuuid', 'test_jid').and_return(report)
@@ -438,7 +430,6 @@ describe Puppet::Configurer do
       # Regenerate the agent to pick up the new setting
       Puppet[:supported_checksum_types] = ['sha256']
       @agent = Puppet::Configurer.new
-      allow(@agent).to receive(:init_storage)
       allow(@agent).to receive(:download_plugins)
       allow(@agent).to receive(:send_report)
       allow(@agent).to receive(:save_last_run_summary)
