@@ -33,12 +33,24 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       end
     end
 
+    it "raises connection error if we can't connect" do
+      Puppet[:http_connect_timeout] = '0s'
+
+      # get available port, but don't bind to it
+      tcps = TCPServer.new("127.0.0.1", 0)
+      port = tcps.connect_address.ip_port
+
+      expect {
+        client.get(URI("https://127.0.0.1:#{port}"), ssl_context: root_context)
+      }.to raise_error(Puppet::HTTP::ConnectionError, %r{^Request to https://127.0.0.1:#{port} timed out connect operation after .* seconds})
+    end
+
     it "raises if the server's cert doesn't match the hostname we connected to" do
       server.start_server do |port|
         expect {
           client.get(URI("https://#{wrong_hostname}:#{port}"), ssl_context: root_context)
         }.to raise_error { |err|
-          expect(err).to be_instance_of(Puppet::HTTP::ConnectionError)
+          expect(err).to be_instance_of(Puppet::SSL::CertMismatchError)
           expect(err.message).to match(/Server hostname '#{wrong_hostname}' did not match server certificate; expected one of (.+)/)
 
           md = err.message.match(/expected one of (.+)/)
@@ -54,7 +66,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       server.start_server do |port|
         expect {
           client.get(URI("https://127.0.0.1:#{port}"), ssl_context: alt_context)
-        }.to raise_error(Puppet::HTTP::ConnectionError,
+        }.to raise_error(Puppet::SSL::CertVerifyError,
                          %r{certificate verify failed.* .self signed certificate in certificate chain for CN=Test CA.})
       end
     end
@@ -113,7 +125,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       server.start_server do |port|
         expect {
           client.get(URI("https://127.0.0.1:#{port}"), ssl_context: system_context)
-        }.to raise_error(Puppet::HTTP::ConnectionError,
+        }.to raise_error(Puppet::SSL::CertVerifyError,
                          %r{certificate verify failed.* .self signed certificate in certificate chain for CN=Test CA.})
       end
     end

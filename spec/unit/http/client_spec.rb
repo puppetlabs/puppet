@@ -35,7 +35,15 @@ describe Puppet::HTTP::Client do
 
       expect {
         client.connect(uri)
-      }.to raise_error(Puppet::HTTP::ConnectionError, %r{Failed to connect to https://www.example.com:})
+      }.to raise_error(Puppet::HTTP::ConnectionError, %r{^Request to https://www.example.com failed after .* seconds: (Connection refused|No connection could be made because the target machine actively refused it)})
+    end
+
+    it 'raises ConnectionError if the connect times out' do
+      allow_any_instance_of(Net::HTTP).to receive(:start).and_raise(Net::OpenTimeout)
+
+      expect {
+        client.connect(uri)
+      }.to raise_error(Puppet::HTTP::ConnectionError, %r{^Request to https://www.example.com timed out connect operation after .* seconds})
     end
   end
 
@@ -53,15 +61,15 @@ describe Puppet::HTTP::Client do
     end
 
     it 'raises HTTPError if connection is interrupted while reading' do
-      expect_http_error(EOFError, %r{Request to https://www.example.com interrupted after .* seconds})
+      expect_http_error(EOFError, %r{^Request to https://www.example.com interrupted after .* seconds})
     end
 
     it 'raises HTTPError if connection times out' do
-      expect_http_error(Net::ReadTimeout, %r{Request to https://www.example.com timed out after .* seconds})
+      expect_http_error(Net::ReadTimeout, %r{^Request to https://www.example.com timed out read operation after .* seconds})
     end
 
     it 'raises HTTPError if connection fails' do
-      expect_http_error(ArgumentError, %r{Request to https://www.example.com failed after .* seconds})
+      expect_http_error(ArgumentError, %r{^Request to https://www.example.com failed after .* seconds})
     end
   end
 

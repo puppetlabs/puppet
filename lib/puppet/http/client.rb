@@ -16,19 +16,31 @@ class Puppet::HTTP::Client
   end
 
   def connect(uri, ssl_context: nil, &block)
+    start = Time.now
     ctx = ssl_context ? ssl_context : default_ssl_context
     site = Puppet::Network::HTTP::Site.from_uri(uri)
     verifier = Puppet::SSL::Verifier.new(site.host, ctx)
+    connected = false
 
     @pool.with_connection(site, verifier) do |http|
+      connected = true
       if block_given?
-        handle_post_connect(uri, http, &block)
+        yield http
       end
     end
+  rescue Net::OpenTimeout => e
+    raise_error(_("Request to %{uri} timed out connect operation after %{elapsed} seconds") % {uri: uri, elapsed: elapsed(start)}, e, connected)
+  rescue Net::ReadTimeout => e
+    raise_error(_("Request to %{uri} timed out read operation after %{elapsed} seconds") % {uri: uri, elapsed: elapsed(start)}, e, connected)
+  rescue EOFError => e
+    raise_error(_("Request to %{uri} interrupted after %{elapsed} seconds") % {uri: uri, elapsed: elapsed(start)}, e, connected)
+  rescue Puppet::SSL::SSLError
+    raise
   rescue Puppet::HTTP::HTTPError
     raise
   rescue => e
-    raise Puppet::HTTP::ConnectionError.new(_("Failed to connect to %{uri}: %{message}") % {uri: uri, message: e.message}, e)
+    raise_error(_("Request to %{uri} failed after %{elapsed} seconds: %{message}") %
+                {uri: uri, elapsed: elapsed(start), message: e.message}, e, connected)
   end
 
   def get(url, headers: {}, params: {}, ssl_context: nil, user: nil, password: nil, &block)
@@ -116,21 +128,16 @@ class Puppet::HTTP::Client
     end.join('&')
   end
 
-  def handle_post_connect(uri, http, &block)
-    start = Time.now
-    yield http
-  rescue Puppet::HTTP::HTTPError
-    raise
-  rescue EOFError => e
-    raise Puppet::HTTP::HTTPError.new(_("Request to %{uri} interrupted after %{elapsed} seconds") % {uri: uri, elapsed: elapsed(start)}, e)
-  rescue Timeout::Error => e
-    raise Puppet::HTTP::HTTPError.new(_("Request to %{uri} timed out after %{elapsed} seconds") % {uri: uri, elapsed: elapsed(start)}, e)
-  rescue => e
-    raise Puppet::HTTP::HTTPError.new(_("Request to %{uri} failed after %{elapsed} seconds: %{message}") % {uri: uri, elapsed: elapsed(start), message: e.message}, e)
-  end
-
   def elapsed(start)
     (Time.now - start).to_f.round(3)
+  end
+
+  def raise_error(message, cause, connected)
+    if connected
+      raise Puppet::HTTP::HTTPError.new(message, cause)
+    else
+      raise Puppet::HTTP::ConnectionError.new(message, cause)
+    end
   end
 
   def default_ssl_context

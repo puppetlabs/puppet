@@ -51,15 +51,10 @@ class Puppet::Forge
         response = http.get(uri, headers: headers, user: user, password: password, ssl_context: @ssl_context)
         io.write(response.body) if io.respond_to?(:write)
         response
+      rescue Puppet::SSL::CertVerifyError => e
+        raise SSLVerifyError.new(:uri => @uri.to_s, :original => e.cause)
       rescue => e
-        case e.cause
-        when Puppet::SSL::CertVerifyError
-          raise SSLVerifyError.new(:uri => @uri.to_s, :original => e.cause)
-        when Puppet::SSL::SSLError
-          raise e.cause
-        else
-          raise CommunicationError.new(:uri => @uri.to_s, :original => e)
-        end
+        raise CommunicationError.new(:uri => @uri.to_s, :original => e)
       end
     end
 
