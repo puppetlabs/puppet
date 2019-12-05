@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'puppet/configurer'
+require 'webmock/rspec'
 
 describe Puppet::Configurer do
   before do
@@ -905,22 +906,19 @@ describe Puppet::Configurer do
   describe "when attempting failover" do
     it "should not failover if server_list is not set" do
       Puppet.settings[:server_list] = []
-      expect(configurer).not_to receive(:find_functional_server)
       configurer.run
     end
 
     it "should not failover during an apply run" do
       Puppet.settings[:server_list] = ["myserver:123"]
-      expect(configurer).not_to receive(:find_functional_server)
       catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote(Puppet[:environment].to_sym))
-      configurer.run :catalog => catalog
+      configurer.run(catalog: catalog)
     end
 
     it "should select a server when it receives 200 OK response" do
       Puppet.settings[:server_list] = ["myserver:123"]
-      response = Net::HTTPOK.new(nil, 200, 'OK')
-      allow(Puppet::Network::HttpPool).to receive(:http_ssl_instance).with('myserver', '123').and_return(double('request', get: response))
-      allow(configurer).to receive(:run_internal)
+
+      stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: 200)
 
       options = {}
       configurer.run(options)
@@ -929,56 +927,49 @@ describe Puppet::Configurer do
 
     it "should select a server when it receives 403 Forbidden" do
       Puppet.settings[:server_list] = ["myserver:123"]
-      response = Net::HTTPForbidden.new(nil, 403, 'Forbidden')
-      allow(Puppet::Network::HttpPool).to receive(:http_ssl_instance).with('myserver', '123').and_return(double('request', get: response))
-      allow(configurer).to receive(:run_internal)
+
+      stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: 403)
 
       options = {}
       configurer.run(options)
       expect(options[:report].master_used).to eq('myserver:123')
     end
 
-    it "queries the simple status for the 'master' service" do
-      Puppet.settings[:server_list] = ["myserver:123"]
-      response = Net::HTTPOK.new(nil, 200, 'OK')
-      http = double('request')
-      expect(http).to receive(:get).with('/status/v1/simple/master').and_return(response)
-      allow(Puppet::Network::HttpPool).to receive(:http_ssl_instance).with('myserver', '123').and_return(http)
-      allow(configurer).to receive(:run_internal)
-
-      configurer.run
-    end
-
     it "should report when a server is unavailable" do
       Puppet.settings[:server_list] = ["myserver:123"]
-      response = Net::HTTPInternalServerError.new(nil, 500, 'Internal Server Error')
-      allow(Puppet::Network::HttpPool).to receive(:http_ssl_instance).with('myserver', '123').and_return(double('request', get: response))
-      allow(configurer).to receive(:run_internal)
 
+      stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: [500, "Internal Server Error"])
+
+      allow(Puppet).to receive(:debug)
       expect(Puppet).to receive(:debug).with("Puppet server myserver:123 is unavailable: 500 Internal Server Error")
-      expect { configurer.run }.to raise_error(Puppet::Error, /Could not select a functional puppet master from server_list:/)
+      expect {
+        configurer.run
+      }.to raise_error(Puppet::Error, /Could not select a functional puppet master from server_list:/)
     end
 
     it "should error when no servers in 'server_list' are reachable" do
       Puppet.settings[:server_list] = "myserver:123,someotherservername"
-      pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
-      allow(Puppet::Network::HTTP::Pool).to receive(:new).and_return(pool)
-      allow(Puppet).to receive(:override).with({:http_pool => pool}).and_yield
-      allow(Puppet).to receive(:override).with({:server => "myserver", :serverport => '123'}).and_yield
-      allow(Puppet).to receive(:override).with({:server => "someotherservername", :serverport => 8140}).and_yield
-      error = Net::HTTPError.new(400, 'dummy server communication error')
-      allow(Puppet::Node.indirection).to receive(:find).and_raise(error)
-      expect{ configurer.run }.to raise_error(Puppet::Error, /Could not select a functional puppet master from server_list: 'myserver:123,someotherservername'/)
+
+      stub_request(:get, 'https://myserver/status/v1/simple/master').to_return(status: 400)
+      stub_request(:get, 'https://someotherservername/status/v1/simple/master').to_return(status: 400)
+
+      expect{
+        configurer.run
+      }.to raise_error(Puppet::Error, /Could not select a functional puppet master from server_list: 'myserver:123,someotherservername'/)
     end
 
-    it "should not make multiple node requets when the server is found" do
-      response = Net::HTTPOK.new(nil, 200, 'OK')
-      allow(Puppet::Network::HttpPool).to receive(:http_ssl_instance).with('myserver', '123').and_return(double('request', get: response))
-      
+    it "should not make multiple node requests when the server is found" do
       Puppet.settings[:server_list] = ["myserver:123"]
-      expect(Puppet::Node.indirection).to receive(:find).and_return("mynode").once
-      expect(configurer).to receive(:prepare_and_retrieve_catalog).and_return(nil)
+      Puppet::Node.indirection.terminus_class = :rest
+      Puppet::Resource::Catalog.indirection.terminus_class = :rest
+
+      stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: 200)
+      stub_request(:get, %r{https://myserver:123/puppet/v3/catalog}).to_return(status: 200)
+      node_request = stub_request(:get, %r{https://myserver:123/puppet/v3/node/}).to_return(status: 200)
+
       configurer.run
+
+      expect(node_request).to have_been_requested.once
     end
   end
 end
