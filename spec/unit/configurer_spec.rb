@@ -4,6 +4,8 @@ require 'puppet/configurer'
 describe Puppet::Configurer do
   before do
     Puppet::Node::Facts.indirection.terminus_class = :memory
+    Puppet::Node::Facts.indirection.save(facts)
+
     Puppet[:server] = "puppetmaster"
     Puppet[:report] = true
 
@@ -18,6 +20,7 @@ describe Puppet::Configurer do
   let(:report) { Puppet::Transaction::Report.new }
   let(:catalog) { Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote(Puppet[:environment].to_sym)) }
   let(:resource) { Puppet::Resource.new(:notice, 'a') }
+  let(:facts) { Puppet::Node::Facts.new(Puppet[:node_name_value]) }
 
   describe "when executing a pre-run hook" do
     it "should do nothing if the hook is set to an empty string" do
@@ -68,8 +71,6 @@ describe Puppet::Configurer do
   describe "when executing a catalog run" do
     before do
       allow(configurer).to receive(:download_plugins)
-      @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
-      Puppet::Node::Facts.indirection.save(@facts)
 
       Puppet::Resource::Catalog.indirection.terminus_class = :rest
       allow(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(catalog)
@@ -117,7 +118,8 @@ describe Puppet::Configurer do
 
     it "should respect node_name_fact when setting the host on a report" do
       Puppet[:node_name_fact] = 'my_name_fact'
-      @facts.values = {'my_name_fact' => 'node_name_from_fact'}
+      facts.values = {'my_name_fact' => 'node_name_from_fact'}
+      Puppet::Node::Facts.indirection.save(facts)
 
       configurer.run(:report => report)
       expect(report.host).to eq('node_name_from_fact')
@@ -389,10 +391,14 @@ describe Puppet::Configurer do
 
     describe "when not using a REST terminus for catalogs" do
       it "should not pass any facts when retrieving the catalog" do
+        # This is weird, we collect facts when constructing the node,
+        # but we don't send them in the indirector request. Then the compiler
+        # looks up the node, and collects its facts, which we could have sent
+        # in the first place. This seems like a bug.
         Puppet::Resource::Catalog.indirection.terminus_class = :compiler
-        expect(configurer).not_to receive(:facts_for_uploading)
+
         expect(Puppet::Resource::Catalog.indirection).to receive(:find) do |name, options|
-          options[:facts].nil?
+          expect(options[:facts]).to be_nil
         end.and_return(catalog)
 
         configurer.run
@@ -400,10 +406,20 @@ describe Puppet::Configurer do
     end
 
     describe "when using a REST terminus for catalogs" do
-      it "should pass the prepared facts and the facts format as arguments when retrieving the catalog" do
+      it "should pass the url encoded facts and facts format as arguments when retrieving the catalog" do
         Puppet::Resource::Catalog.indirection.terminus_class = :rest
-        expect(configurer).to receive(:facts_for_uploading).and_return(:facts => "myfacts", :facts_format => :foo)
-        expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(facts: "myfacts", facts_format: :foo)).and_return(catalog)
+
+        facts.values = { 'foo' => 'bar' }
+        Puppet::Node::Facts.indirection.save(facts)
+
+        expect(
+          Puppet::Resource::Catalog.indirection
+        ).to receive(:find) do |_, options|
+          expect(options[:facts_format]).to eq("application/json")
+
+          unescaped = JSON.parse(CGI.unescape(options[:facts]))
+          expect(unescaped).to include("values" => {"foo" => "bar"})
+        end.and_return(catalog)
 
         configurer.run
       end
@@ -578,9 +594,7 @@ describe Puppet::Configurer do
 
   describe "when retrieving a catalog" do
     before do
-      allow(configurer).to receive(:facts_for_uploading).and_return({})
       allow(configurer).to receive(:download_plugins)
-
 
       # this is the default when using a Configurer instance
       allow(Puppet::Resource::Catalog.indirection).to receive(:terminus_class).and_return(:rest)
