@@ -6,6 +6,8 @@ describe Puppet::Configurer do
     Puppet::Node::Facts.indirection.terminus_class = :memory
     Puppet[:server] = "puppetmaster"
     Puppet[:report] = true
+
+    catalog.add_resource(resource)
   end
 
   after :all do
@@ -14,6 +16,8 @@ describe Puppet::Configurer do
 
   let(:configurer) { Puppet::Configurer.new }
   let(:report) { Puppet::Transaction::Report.new }
+  let(:catalog) { Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote(Puppet[:environment].to_sym)) }
+  let(:resource) { Puppet::Resource.new(:notice, 'a') }
 
   describe "when executing a pre-run hook" do
     it "should do nothing if the hook is set to an empty string" do
@@ -67,10 +71,8 @@ describe Puppet::Configurer do
       @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
       Puppet::Node::Facts.indirection.save(@facts)
 
-      @catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote(Puppet[:environment].to_sym))
-      allow(@catalog).to receive(:to_ral).and_return(@catalog)
       Puppet::Resource::Catalog.indirection.terminus_class = :rest
-      allow(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(@catalog)
+      allow(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(catalog)
       allow(configurer).to receive(:send_report)
       allow(configurer).to receive(:save_last_run_summary)
 
@@ -102,7 +104,7 @@ describe Puppet::Configurer do
 
       expect(Puppet::Node.indirection).to receive(:find).and_raise(error)
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(:ignore_cache => true)).and_raise(error)
-      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(:ignore_terminus => true)).and_return(@catalog)
+      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(:ignore_terminus => true)).and_return(catalog)
 
       expect(configurer.run).to eq(0)
     end
@@ -121,29 +123,17 @@ describe Puppet::Configurer do
       expect(report.host).to eq('node_name_from_fact')
     end
 
-    it "should pass the new report to the catalog" do
-      allow(Puppet::Transaction::Report).to receive(:new).and_return(report)
-      expect(@catalog).to receive(:apply).with(hash_including(report: report))
+    it "creates a new report when applying the catalog" do
+      options = {}
+      configurer.run(options)
 
-      configurer.run
+      expect(options[:report].metrics['time']['catalog_application']).to be_an_instance_of(Float)
     end
 
-    it "should use the provided report if it was passed one" do
-      expect(@catalog).to receive(:apply).with(hash_including(report: report))
-
+    it "uses the provided report when applying the catalog" do
       configurer.run(:report => report)
-    end
 
-    it "should set the report as a log destination" do
-      expect(report).to receive(:<<).with(instance_of(Puppet::Util::Log)).at_least(:once)
-
-      configurer.run(:report => report)
-    end
-
-    it "should retrieve the catalog" do
-      expect(configurer).to receive(:retrieve_catalog)
-
-      configurer.run
+      expect(report.metrics['time']['catalog_application']).to be_an_instance_of(Float)
     end
 
     it "should log a failure and do nothing if no catalog can be retrieved" do
@@ -154,33 +144,16 @@ describe Puppet::Configurer do
       configurer.run
     end
 
-    it "should apply the catalog with all options to :run" do
-      expect(configurer).to receive(:retrieve_catalog).and_return(@catalog)
+    it "passes arbitrary options when applying the catalog" do
+      expect(catalog).to receive(:apply).with(hash_including(one: true))
 
-      expect(@catalog).to receive(:apply).with(hash_including(one: true))
-      configurer.run :one => true
-    end
-
-    it "should accept a catalog and use it instead of retrieving a different one" do
-      expect(configurer).not_to receive(:retrieve_catalog)
-
-      expect(@catalog).to receive(:apply)
-      configurer.run :one => true, :catalog => @catalog
+      configurer.run(catalog: catalog, one: true)
     end
 
     it "should benchmark how long it takes to apply the catalog" do
-      expect(configurer).to receive(:benchmark).with(:notice, instance_of(String))
+      configurer.run(report: report)
 
-      expect(configurer).to receive(:retrieve_catalog).and_return(@catalog)
-
-      expect(@catalog).not_to receive(:apply) # because we're not yielding
-      configurer.run
-    end
-
-    it "should execute post-run hooks after the run" do
-      expect(configurer).to receive(:execute_postrun_command)
-
-      configurer.run
+      expect(report.logs).to include(an_object_having_attributes(level: :notice, message: /Applied catalog in .* seconds/))
     end
 
     it "should create report with passed transaction_uuid and job_id" do
@@ -246,8 +219,8 @@ describe Puppet::Configurer do
     end
 
     it "should return nil if catalog application fails" do
-      expect(@catalog).to receive(:apply).and_raise(Puppet::Error, 'One or more resource dependency cycles detected in graph')
-      expect(configurer.run(catalog: @catalog, report: report)).to be_nil
+      expect_any_instance_of(Puppet::Resource::Catalog).to receive(:apply).and_raise(Puppet::Error, 'One or more resource dependency cycles detected in graph')
+      expect(configurer.run(catalog: catalog, report: report)).to be_nil
     end
 
     it "should send the transaction report even if the pre-run command fails" do
@@ -313,7 +286,7 @@ describe Puppet::Configurer do
       Puppet.settings[:prerun_command] = "/my/command"
       expect(Puppet::Util::Execution).to receive(:execute).with(["/my/command"]).and_raise(Puppet::ExecutionFailure, "Failed")
 
-      expect(@catalog).not_to receive(:apply)
+      expect_any_instance_of(Puppet::Resource::Catalog).not_to receive(:apply)
       expect(configurer).to receive(:send_report)
 
       expect(configurer.run).to be_nil
@@ -325,14 +298,13 @@ describe Puppet::Configurer do
       Puppet.settings[:postrun_command] = "/my/command"
       expect(Puppet::Util::Execution).to receive(:execute).with(["/my/command"]).and_raise(Puppet::ExecutionFailure, "Failed")
 
-      expect(@catalog).to receive(:apply)
+      expect_any_instance_of(Puppet::Resource::Catalog).to receive(:apply)
       expect(configurer).to receive(:send_report)
 
       expect(configurer.run).to be_nil
     end
 
     it 'includes total time metrics in the report after successfully applying the catalog' do
-      allow(@catalog).to receive(:apply).with(:report => report)
       configurer.run(report: report)
 
       expect(report.metrics['time']).to be
@@ -364,23 +336,18 @@ describe Puppet::Configurer do
       configurer.run
     end
 
-    it "should change the environment setting if the server specifies a new environment in the catalog" do
-      allow(@catalog).to receive(:environment).and_return("second_env")
+    it "changes the configurer's environment if the server specifies a new environment in the catalog" do
+      allow_any_instance_of(Puppet::Resource::Catalog).to receive(:environment).and_return("second_env")
 
       configurer.run
 
       expect(configurer.environment).to eq("second_env")
     end
 
-    it "should fix the report if the server specifies a new environment in the catalog" do
-      report = Puppet::Transaction::Report.new(nil, "test", "aaaa")
-      expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
-      expect(configurer).to receive(:send_report).with(report)
+    it "changes the report's environment if the server specifies a new environment in the catalog" do
+      allow_any_instance_of(Puppet::Resource::Catalog).to receive(:environment).and_return("second_env")
 
-      allow(@catalog).to receive(:environment).and_return("second_env")
-      allow(configurer).to receive(:retrieve_catalog).and_return(@catalog)
-
-      configurer.run
+      configurer.run(report: report)
 
       expect(report.environment).to eq("second_env")
     end
@@ -426,7 +393,7 @@ describe Puppet::Configurer do
         expect(configurer).not_to receive(:facts_for_uploading)
         expect(Puppet::Resource::Catalog.indirection).to receive(:find) do |name, options|
           options[:facts].nil?
-        end.and_return(@catalog)
+        end.and_return(catalog)
 
         configurer.run
       end
@@ -436,7 +403,7 @@ describe Puppet::Configurer do
       it "should pass the prepared facts and the facts format as arguments when retrieving the catalog" do
         Puppet::Resource::Catalog.indirection.terminus_class = :rest
         expect(configurer).to receive(:facts_for_uploading).and_return(:facts => "myfacts", :facts_format => :foo)
-        expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(facts: "myfacts", facts_format: :foo)).and_return(@catalog)
+        expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(facts: "myfacts", facts_format: :foo)).and_return(catalog)
 
         configurer.run
       end
@@ -614,8 +581,6 @@ describe Puppet::Configurer do
       allow(configurer).to receive(:facts_for_uploading).and_return({})
       allow(configurer).to receive(:download_plugins)
 
-      # retrieve a catalog in the current environment, so we don't try to converge unexpectedly
-      @catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote(Puppet[:environment].to_sym))
 
       # this is the default when using a Configurer instance
       allow(Puppet::Resource::Catalog.indirection).to receive(:terminus_class).and_return(:rest)
@@ -627,14 +592,14 @@ describe Puppet::Configurer do
       end
 
       it "should first look in the cache for a catalog" do
-        expects_cached_catalog_only(@catalog)
+        expects_cached_catalog_only(catalog)
 
-        expect(configurer.retrieve_catalog({})).to eq(@catalog)
+        expect(configurer.retrieve_catalog({})).to eq(catalog)
       end
 
       it "should not make a node request or pluginsync when a cached catalog is successfully retrieved" do
         expect(Puppet::Node.indirection).not_to receive(:find)
-        expects_cached_catalog_only(@catalog)
+        expects_cached_catalog_only(catalog)
         expect(configurer).not_to receive(:download_plugins)
 
         configurer.run
@@ -642,14 +607,14 @@ describe Puppet::Configurer do
 
       it "should make a node request and pluginsync when a cached catalog cannot be retrieved" do
         expect(Puppet::Node.indirection).to receive(:find).and_return(nil)
-        expects_fallback_to_new_catalog(@catalog)
+        expects_fallback_to_new_catalog(catalog)
         expect(configurer).to receive(:download_plugins)
 
         configurer.run
       end
 
       it "should set its cached_catalog_status to 'explicitly_requested'" do
-        expects_cached_catalog_only(@catalog)
+        expects_cached_catalog_only(catalog)
 
         configurer.retrieve_catalog({})
         expect(configurer.instance_variable_get(:@cached_catalog_status)).to eq('explicitly_requested')
@@ -664,13 +629,13 @@ describe Puppet::Configurer do
       end
 
       it "should compile a new catalog if none is found in the cache" do
-        expects_fallback_to_new_catalog(@catalog)
+        expects_fallback_to_new_catalog(catalog)
 
-        expect(configurer.retrieve_catalog({})).to eq(@catalog)
+        expect(configurer.retrieve_catalog({})).to eq(catalog)
       end
 
       it "should set its cached_catalog_status to 'not_used' if no catalog is found in the cache" do
-        expects_fallback_to_new_catalog(@catalog)
+        expects_fallback_to_new_catalog(catalog)
 
         configurer.retrieve_catalog({})
         expect(configurer.instance_variable_get(:@cached_catalog_status)).to eq('not_used')
@@ -694,9 +659,8 @@ describe Puppet::Configurer do
 
     describe "and strict environment mode is set" do
       before do
-        allow(@catalog).to receive(:to_ral).and_return(@catalog)
-        allow(@catalog).to receive(:write_class_file)
-        allow(@catalog).to receive(:write_resource_file)
+        allow(catalog).to receive(:write_class_file)
+        allow(catalog).to receive(:write_resource_file)
         allow(configurer).to receive(:send_report)
         allow(configurer).to receive(:save_last_run_summary)
         Puppet.settings[:strict_environment_mode] = true
@@ -710,7 +674,7 @@ describe Puppet::Configurer do
 
       it "should return nil when the catalog's environment doesn't match the agent specified environment" do
         configurer.instance_variable_set(:@environment, 'second_env')
-        expects_new_catalog_only(@catalog)
+        expects_new_catalog_only(catalog)
 
         expect(Puppet).to receive(:err).with("Not using catalog because its environment 'production' does not match agent specified environment 'second_env' and strict_environment_mode is set")
         expect(configurer.run).to be_nil
@@ -718,7 +682,7 @@ describe Puppet::Configurer do
 
       it "should not return nil when the catalog's environment matches the agent specified environment" do
         configurer.instance_variable_set(:@environment, 'production')
-        expects_new_catalog_only(@catalog)
+        expects_new_catalog_only(catalog)
 
         expect(configurer.run).to eq(0)
       end
@@ -730,7 +694,7 @@ describe Puppet::Configurer do
 
         it "should return nil when the cached catalog's environment doesn't match the agent specified environment" do
           configurer.instance_variable_set(:@environment, 'second_env')
-          expects_cached_catalog_only(@catalog)
+          expects_cached_catalog_only(catalog)
 
           expect(Puppet).to receive(:err).with("Not using catalog because its environment 'production' does not match agent specified environment 'second_env' and strict_environment_mode is set")
           expect(configurer.run).to be_nil
@@ -739,7 +703,7 @@ describe Puppet::Configurer do
         it "should proceed with the cached catalog if its environment matchs the local environment" do
           Puppet.settings[:use_cached_catalog] = true
           configurer.instance_variable_set(:@environment, 'production')
-          expects_cached_catalog_only(@catalog)
+          expects_cached_catalog_only(catalog)
 
           expect(configurer.run).to eq(0)
         end
@@ -747,13 +711,13 @@ describe Puppet::Configurer do
     end
 
     it "should use the Catalog class to get its catalog" do
-      expect(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(@catalog)
+      expect(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(catalog)
 
       configurer.retrieve_catalog({})
     end
 
     it "should set its cached_catalog_status to 'not_used' when downloading a new catalog" do
-      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_return(@catalog)
+      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_return(catalog)
 
       configurer.retrieve_catalog({})
       expect(configurer.instance_variable_get(:@cached_catalog_status)).to eq('not_used')
@@ -762,47 +726,47 @@ describe Puppet::Configurer do
     it "should use its node_name_value to retrieve the catalog" do
       allow(Facter).to receive(:value).and_return("eh")
       Puppet.settings[:node_name_value] = "myhost.domain.com"
-      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with("myhost.domain.com", anything).and_return(@catalog)
+      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with("myhost.domain.com", anything).and_return(catalog)
 
       configurer.retrieve_catalog({})
     end
 
     it "should default to returning a catalog retrieved directly from the server, skipping the cache" do
-      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_return(@catalog)
+      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_return(catalog)
 
-      expect(configurer.retrieve_catalog({})).to eq(@catalog)
+      expect(configurer.retrieve_catalog({})).to eq(catalog)
     end
 
     it "should log and return the cached catalog when no catalog can be retrieved from the server" do
-      expects_fallback_to_cached_catalog(@catalog)
+      expects_fallback_to_cached_catalog(catalog)
 
       expect(Puppet).to receive(:info).with("Using cached catalog from environment 'production'")
-      expect(configurer.retrieve_catalog({})).to eq(@catalog)
+      expect(configurer.retrieve_catalog({})).to eq(catalog)
     end
 
     it "should set its cached_catalog_status to 'on_failure' when no catalog can be retrieved from the server" do
-      expects_fallback_to_cached_catalog(@catalog)
+      expects_fallback_to_cached_catalog(catalog)
 
       configurer.retrieve_catalog({})
       expect(configurer.instance_variable_get(:@cached_catalog_status)).to eq('on_failure')
     end
 
     it "should not look in the cache for a catalog if one is returned from the server" do
-      expects_new_catalog_only(@catalog)
+      expects_new_catalog_only(catalog)
 
-      expect(configurer.retrieve_catalog({})).to eq(@catalog)
+      expect(configurer.retrieve_catalog({})).to eq(catalog)
     end
 
     it "should return the cached catalog when retrieving the remote catalog throws an exception" do
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_raise("eh")
-      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_terminus: true)).and_return(@catalog)
+      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_terminus: true)).and_return(catalog)
 
-      expect(configurer.retrieve_catalog({})).to eq(@catalog)
+      expect(configurer.retrieve_catalog({})).to eq(catalog)
     end
 
     it "should set its cached_catalog_status to 'on_failure' when retrieving the remote catalog throws an exception" do
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_raise("eh")
-      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_terminus: true)).and_return(@catalog)
+      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_terminus: true)).and_return(catalog)
 
       configurer.retrieve_catalog({})
       expect(configurer.instance_variable_get(:@cached_catalog_status)).to eq('on_failure')
@@ -872,58 +836,64 @@ describe Puppet::Configurer do
 
     it "should not update the cached catalog in noop mode" do
       Puppet[:noop] = true
-      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true, ignore_cache_save: true)).and_return(@catalog)
+      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true, ignore_cache_save: true)).and_return(catalog)
 
       configurer.retrieve_catalog({})
     end
 
     it "should update the cached catalog when not in noop mode" do
       Puppet[:noop] = false
-      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true, ignore_cache_save: false)).and_return(@catalog)
+      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true, ignore_cache_save: false)).and_return(catalog)
 
       configurer.retrieve_catalog({})
     end
   end
 
   describe "when converting the catalog" do
-    before do
-      allow(catalog).to receive(:to_ral).and_return(ral_catalog)
+    it "converts Puppet::Resource into Puppet::Type::Notify" do
+      expect(configurer).to receive(:apply_catalog) do |ral, _|
+        expect(ral.resources).to contain(an_instance_of(Puppet::Type::Notify))
+      end
+
+      configurer.run(catalog: catalog)
     end
 
-    let (:catalog) { Puppet::Resource::Catalog.new('tester', Puppet::Node::Environment.remote(Puppet[:environment].to_sym)) }
-    let (:ral_catalog) { Puppet::Resource::Catalog.new('tester', Puppet::Node::Environment.remote(Puppet[:environment].to_sym)) }
+    it "adds default schedules" do
+      expect(configurer).to receive(:apply_catalog) do |ral, _|
+        expect(ral.resources.map(&:to_ref)).to contain(%w{Schedule[puppet] Schedule[hourly] Schedule[daily] Schedule[weekly] Schedule[monthly] Schedule[never]})
+      end
 
-    it "should convert the catalog to a RAL-formed catalog" do
-      expect(configurer.convert_catalog(catalog, 10)).to equal(ral_catalog)
+      configurer.run
     end
 
-    it "should finalize the catalog" do
-      expect(ral_catalog).to receive(:finalize)
+    it "records the retrieval duration to the catalog" do
+      expect(configurer).to receive(:apply_catalog) do |ral, _|
+        expect(ral.retrieval_duration).to be_an_instance_of(Float)
+      end
 
-      configurer.convert_catalog(catalog, 10)
+      configurer.run
     end
 
-    it "should record the passed retrieval time with the RAL catalog" do
-      expect(ral_catalog).to receive(:retrieval_duration=).with(10)
+    it "writes the class file containing applied settings classes" do
+      expect(File).to_not be_exist(Puppet[:classfile])
 
-      configurer.convert_catalog(catalog, 10)
+      configurer.run
+
+      expect(File.read(Puppet[:classfile]).chomp).to eq('settings')
     end
 
-    it "should write the RAL catalog's class file" do
-      expect(ral_catalog).to receive(:write_class_file)
+    it "writes an empty resource file since no resources are 'managed'" do
+      expect(File).to_not be_exist(Puppet[:resourcefile])
 
-      configurer.convert_catalog(catalog, 10)
+      configurer.run
+
+      expect(File.read(Puppet[:resourcefile]).chomp).to eq("")
     end
 
-    it "should write the RAL catalog's resource file" do
-      expect(ral_catalog).to receive(:write_resource_file)
+    it "adds the conversion time to the report" do
+      configurer.run(report: report)
 
-      configurer.convert_catalog(catalog, 10)
-    end
-
-    it "should set catalog conversion time on the report" do
-      expect(report).to receive(:add_times).with(:convert_catalog, kind_of(Numeric))
-      configurer.convert_catalog(catalog, 10, {:report => report})
+      expect(report.metrics['time']['convert_catalog']).to be_an_instance_of(Float)
     end
   end
 
