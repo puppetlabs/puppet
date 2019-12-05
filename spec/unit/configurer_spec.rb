@@ -355,13 +355,13 @@ describe Puppet::Configurer do
     end
 
     it "sends the transaction uuid in a catalog request" do
-      configurer.instance_variable_set(:@transaction_uuid, 'aaa')
+      configurer = Puppet::Configurer.new('aaa')
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(transaction_uuid: 'aaa'))
       configurer.run
     end
 
     it "sends the transaction uuid in a catalog request" do
-      configurer.instance_variable_set(:@job_id, 'aaa')
+      configurer = Puppet::Configurer.new('b', 'aaa')
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(job_id: 'aaa'))
       configurer.run
     end
@@ -423,14 +423,6 @@ describe Puppet::Configurer do
 
         configurer.run
       end
-    end
-  end
-
-  describe "when initialized with a transaction_uuid" do
-    it "stores it" do
-      expect(SecureRandom).not_to receive(:uuid)
-      configurer = Puppet::Configurer.new('foo')
-      expect(configurer.instance_variable_get(:@transaction_uuid) == 'foo')
     end
   end
 
@@ -608,7 +600,7 @@ describe Puppet::Configurer do
       it "should first look in the cache for a catalog" do
         expects_cached_catalog_only(catalog)
 
-        expect(configurer.retrieve_catalog({})).to eq(catalog)
+        configurer.run
       end
 
       it "should not make a node request or pluginsync when a cached catalog is successfully retrieved" do
@@ -630,29 +622,29 @@ describe Puppet::Configurer do
       it "should set its cached_catalog_status to 'explicitly_requested'" do
         expects_cached_catalog_only(catalog)
 
-        configurer.retrieve_catalog({})
-        expect(configurer.instance_variable_get(:@cached_catalog_status)).to eq('explicitly_requested')
+        options = {}
+        configurer.run(options)
+
+        expect(options[:report].cached_catalog_status).to eq('explicitly_requested')
       end
 
       it "should set its cached_catalog_status to 'explicitly requested' if the cached catalog is from a different environment" do
         cached_catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote('second_env'))
         expects_cached_catalog_only(cached_catalog)
 
-        configurer.retrieve_catalog({})
-        expect(configurer.instance_variable_get(:@cached_catalog_status)).to eq('explicitly_requested')
+        options = {}
+        configurer.run(options)
+
+        expect(options[:report].cached_catalog_status).to eq('explicitly_requested')
       end
 
       it "should compile a new catalog if none is found in the cache" do
         expects_fallback_to_new_catalog(catalog)
 
-        expect(configurer.retrieve_catalog({})).to eq(catalog)
-      end
+        options = {}
+        configurer.run(options)
 
-      it "should set its cached_catalog_status to 'not_used' if no catalog is found in the cache" do
-        expects_fallback_to_new_catalog(catalog)
-
-        configurer.retrieve_catalog({})
-        expect(configurer.instance_variable_get(:@cached_catalog_status)).to eq('not_used')
+        expect(options[:report].cached_catalog_status).to eq('not_used')
       end
 
       it "should not attempt to retrieve a cached catalog again if the first attempt failed" do
@@ -666,17 +658,15 @@ describe Puppet::Configurer do
         cached_catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote('second_env'))
         expects_cached_catalog_only(cached_catalog)
 
+        allow(Puppet).to receive(:info)
         expect(Puppet).to receive(:info).with("Using cached catalog from environment 'second_env'")
-        expect(configurer.retrieve_catalog({})).to eq(cached_catalog)
+
+        configurer.run
       end
     end
 
     describe "and strict environment mode is set" do
       before do
-        allow(catalog).to receive(:write_class_file)
-        allow(catalog).to receive(:write_resource_file)
-        allow(configurer).to receive(:send_report)
-        allow(configurer).to receive(:save_last_run_summary)
         Puppet.settings[:strict_environment_mode] = true
       end
 
@@ -687,15 +677,18 @@ describe Puppet::Configurer do
       end
 
       it "should return nil when the catalog's environment doesn't match the agent specified environment" do
-        configurer.instance_variable_set(:@environment, 'second_env')
+        Puppet[:environment] = 'second_env'
+        configurer = Puppet::Configurer.new
+
+        catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote("production"))
         expects_new_catalog_only(catalog)
 
         expect(Puppet).to receive(:err).with("Not using catalog because its environment 'production' does not match agent specified environment 'second_env' and strict_environment_mode is set")
         expect(configurer.run).to be_nil
       end
 
-      it "should not return nil when the catalog's environment matches the agent specified environment" do
-        configurer.instance_variable_set(:@environment, 'production')
+      it "should return 0 when the catalog's environment matches the agent specified environment" do
+        configurer = Puppet::Configurer.new
         expects_new_catalog_only(catalog)
 
         expect(configurer.run).to eq(0)
@@ -707,7 +700,10 @@ describe Puppet::Configurer do
         end
 
         it "should return nil when the cached catalog's environment doesn't match the agent specified environment" do
-          configurer.instance_variable_set(:@environment, 'second_env')
+          Puppet[:environment] = 'second_env'
+          configurer = Puppet::Configurer.new
+
+          catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote("production"))
           expects_cached_catalog_only(catalog)
 
           expect(Puppet).to receive(:err).with("Not using catalog because its environment 'production' does not match agent specified environment 'second_env' and strict_environment_mode is set")
@@ -716,7 +712,6 @@ describe Puppet::Configurer do
 
         it "should proceed with the cached catalog if its environment matchs the local environment" do
           Puppet.settings[:use_cached_catalog] = true
-          configurer.instance_variable_set(:@environment, 'production')
           expects_cached_catalog_only(catalog)
 
           expect(configurer.run).to eq(0)
@@ -724,66 +719,63 @@ describe Puppet::Configurer do
       end
     end
 
-    it "should use the Catalog class to get its catalog" do
-      expect(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(catalog)
-
-      configurer.retrieve_catalog({})
-    end
-
     it "should set its cached_catalog_status to 'not_used' when downloading a new catalog" do
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_return(catalog)
 
-      configurer.retrieve_catalog({})
-      expect(configurer.instance_variable_get(:@cached_catalog_status)).to eq('not_used')
+      options = {}
+      configurer.run(options)
+
+      expect(options[:report].cached_catalog_status).to eq('not_used')
     end
 
     it "should use its node_name_value to retrieve the catalog" do
-      allow(Facter).to receive(:value).and_return("eh")
+      myhost_facts = Puppet::Node::Facts.new("myhost.domain.com")
+      Puppet::Node::Facts.indirection.save(myhost_facts)
+
       Puppet.settings[:node_name_value] = "myhost.domain.com"
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with("myhost.domain.com", anything).and_return(catalog)
 
-      configurer.retrieve_catalog({})
+      configurer.run
     end
 
-    it "should default to returning a catalog retrieved directly from the server, skipping the cache" do
-      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_return(catalog)
-
-      expect(configurer.retrieve_catalog({})).to eq(catalog)
-    end
-
-    it "should log and return the cached catalog when no catalog can be retrieved from the server" do
+    it "should log when no catalog can be retrieved from the server" do
       expects_fallback_to_cached_catalog(catalog)
 
+      allow(Puppet).to receive(:info)
       expect(Puppet).to receive(:info).with("Using cached catalog from environment 'production'")
-      expect(configurer.retrieve_catalog({})).to eq(catalog)
+      configurer.run
     end
 
     it "should set its cached_catalog_status to 'on_failure' when no catalog can be retrieved from the server" do
       expects_fallback_to_cached_catalog(catalog)
 
-      configurer.retrieve_catalog({})
-      expect(configurer.instance_variable_get(:@cached_catalog_status)).to eq('on_failure')
+      options = {}
+      configurer.run(options)
+
+      expect(options[:report].cached_catalog_status).to eq('on_failure')
     end
 
     it "should not look in the cache for a catalog if one is returned from the server" do
       expects_new_catalog_only(catalog)
 
-      expect(configurer.retrieve_catalog({})).to eq(catalog)
+      configurer.run
     end
 
     it "should return the cached catalog when retrieving the remote catalog throws an exception" do
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_raise("eh")
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_terminus: true)).and_return(catalog)
 
-      expect(configurer.retrieve_catalog({})).to eq(catalog)
+      configurer.run
     end
 
     it "should set its cached_catalog_status to 'on_failure' when retrieving the remote catalog throws an exception" do
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_raise("eh")
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_terminus: true)).and_return(catalog)
 
-      configurer.retrieve_catalog({})
-      expect(configurer.instance_variable_get(:@cached_catalog_status)).to eq('on_failure')
+      options = {}
+      configurer.run(options)
+
+      expect(options[:report].cached_catalog_status).to eq('on_failure')
     end
 
     it "should log and return nil if no catalog can be retrieved from the server and :usecacheonfailure is disabled" do
@@ -792,74 +784,65 @@ describe Puppet::Configurer do
 
       expect(Puppet).to receive(:warning).with('Not using cache on failed catalog')
 
-      expect(configurer.retrieve_catalog({})).to be_nil
+      expect(configurer.run).to be_nil
     end
 
     it "should set its cached_catalog_status to 'not_used' if no catalog can be retrieved from the server and :usecacheonfailure is disabled or fails to retrieve a catalog" do
       Puppet[:usecacheonfailure] = false
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_return(nil)
 
-      configurer.retrieve_catalog({})
-      expect(configurer.instance_variable_get(:@cached_catalog_status)).to eq('not_used')
+      options = {}
+      configurer.run(options)
+
+      expect(options[:report].cached_catalog_status).to eq('not_used')
     end
 
     it "should return nil if no cached catalog is available and no catalog can be retrieved from the server" do
       expects_neither_new_or_cached_catalog
 
-      expect(configurer.retrieve_catalog({})).to be_nil
+      expect(configurer.run).to be_nil
     end
 
     it "should return nil if its cached catalog environment doesn't match server-specified environment" do
       cached_catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote('second_env'))
-      configurer.instance_variable_set(:@node_environment, 'production')
 
       expects_fallback_to_cached_catalog(cached_catalog)
 
+      allow(Puppet).to receive(:err)
       expect(Puppet).to receive(:err).with("Not using cached catalog because its environment 'second_env' does not match 'production'")
-      expect(configurer.retrieve_catalog({})).to be_nil
+      expect(configurer.run).to be_nil
     end
 
     it "should set its cached_catalog_status to 'not_used' if the cached catalog environment doesn't match server-specified environment" do
       cached_catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote('second_env'))
-      configurer.instance_variable_set(:@node_environment, 'production')
 
       expects_fallback_to_cached_catalog(cached_catalog)
 
-      configurer.retrieve_catalog({})
-      expect(configurer.instance_variable_get(:@cached_catalog_status)).to eq('not_used')
-    end
-
-    it "should return its cached catalog if the environment matches the server-specified environment" do
-      cached_catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote(Puppet[:environment]))
-      configurer.instance_variable_set(:@node_environment, cached_catalog.environment)
-
-      expects_fallback_to_cached_catalog(cached_catalog)
-
-      expect(configurer.retrieve_catalog({})).to eq(cached_catalog)
+      options = {}
+      configurer.run(options)
+      expect(options[:report].cached_catalog_status).to eq('not_used')
     end
 
     it "should set its cached_catalog_status to 'on_failure' if the cached catalog environment matches server-specified environment" do
-      cached_catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote(Puppet[:environment]))
-      configurer.instance_variable_set(:@node_environment, cached_catalog.environment)
+      expects_fallback_to_cached_catalog(catalog)
 
-      expects_fallback_to_cached_catalog(cached_catalog)
-
-      configurer.retrieve_catalog({})
-      expect(configurer.instance_variable_get(:@cached_catalog_status)).to eq('on_failure')
+      options = {}
+      configurer.run(options)
+      expect(options[:report].cached_catalog_status).to eq('on_failure')
     end
 
     it "should not update the cached catalog in noop mode" do
       Puppet[:noop] = true
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true, ignore_cache_save: true)).and_return(catalog)
 
-      configurer.retrieve_catalog({})
+      configurer.run
     end
 
     it "should update the cached catalog when not in noop mode" do
       Puppet[:noop] = false
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true, ignore_cache_save: false)).and_return(catalog)
 
-      configurer.retrieve_catalog({})
+      configurer.run
     end
   end
 
