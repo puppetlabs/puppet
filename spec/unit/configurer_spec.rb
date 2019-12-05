@@ -17,7 +17,7 @@ describe Puppet::Configurer do
   describe "when executing a pre-run hook" do
     it "should do nothing if the hook is set to an empty string" do
       Puppet.settings[:prerun_command] = ""
-      expect(Puppet::Util).not_to receive(:exec)
+      expect(Puppet::Util::Execution).not_to receive(:execute)
 
       configurer.execute_prerun_command
     end
@@ -40,7 +40,7 @@ describe Puppet::Configurer do
   describe "when executing a post-run hook" do
     it "should do nothing if the hook is set to an empty string" do
       Puppet.settings[:postrun_command] = ""
-      expect(Puppet::Util).not_to receive(:exec)
+      expect(Puppet::Util::Execution).not_to receive(:execute)
 
       configurer.execute_postrun_command
     end
