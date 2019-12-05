@@ -13,6 +13,7 @@ describe Puppet::Configurer do
   end
 
   let(:configurer) { Puppet::Configurer.new }
+  let(:report) { Puppet::Transaction::Report.new }
 
   describe "when executing a pre-run hook" do
     it "should do nothing if the hook is set to an empty string" do
@@ -107,7 +108,6 @@ describe Puppet::Configurer do
     end
 
     it "should initialize a transaction report if one is not provided" do
-      report = Puppet::Transaction::Report.new
       expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
 
       configurer.run
@@ -117,14 +117,11 @@ describe Puppet::Configurer do
       Puppet[:node_name_fact] = 'my_name_fact'
       @facts.values = {'my_name_fact' => 'node_name_from_fact'}
 
-      report = Puppet::Transaction::Report.new
-
       configurer.run(:report => report)
       expect(report.host).to eq('node_name_from_fact')
     end
 
     it "should pass the new report to the catalog" do
-      report = Puppet::Transaction::Report.new
       allow(Puppet::Transaction::Report).to receive(:new).and_return(report)
       expect(@catalog).to receive(:apply).with(hash_including(report: report))
 
@@ -132,15 +129,12 @@ describe Puppet::Configurer do
     end
 
     it "should use the provided report if it was passed one" do
-      report = Puppet::Transaction::Report.new
       expect(@catalog).to receive(:apply).with(hash_including(report: report))
 
       configurer.run(:report => report)
     end
 
     it "should set the report as a log destination" do
-      report = Puppet::Transaction::Report.new
-
       expect(report).to receive(:<<).with(instance_of(Puppet::Util::Log)).at_least(:once)
 
       configurer.run(:report => report)
@@ -237,7 +231,6 @@ describe Puppet::Configurer do
     end
 
     it "should remove the report as a log destination when the run is finished" do
-      report = Puppet::Transaction::Report.new
       expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
 
       configurer.run
@@ -246,7 +239,6 @@ describe Puppet::Configurer do
     end
 
     it "should return the report exit_status as the result of the run" do
-      report = Puppet::Transaction::Report.new
       expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
       expect(report).to receive(:exit_status).and_return(1234)
 
@@ -255,12 +247,10 @@ describe Puppet::Configurer do
 
     it "should return nil if catalog application fails" do
       expect(@catalog).to receive(:apply).and_raise(Puppet::Error, 'One or more resource dependency cycles detected in graph')
-      report = Puppet::Transaction::Report.new
       expect(configurer.run(catalog: @catalog, report: report)).to be_nil
     end
 
     it "should send the transaction report even if the pre-run command fails" do
-      report = Puppet::Transaction::Report.new
       expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
 
       Puppet.settings[:prerun_command] = "/my/command"
@@ -271,7 +261,6 @@ describe Puppet::Configurer do
     end
 
     it "should include the pre-run command failure in the report" do
-      report = Puppet::Transaction::Report.new
       expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
 
       Puppet.settings[:prerun_command] = "/my/command"
@@ -282,7 +271,6 @@ describe Puppet::Configurer do
     end
 
     it "should send the transaction report even if the post-run command fails" do
-      report = Puppet::Transaction::Report.new
       expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
 
       Puppet.settings[:postrun_command] = "/my/command"
@@ -293,7 +281,6 @@ describe Puppet::Configurer do
     end
 
     it "should include the post-run command failure in the report" do
-      report = Puppet::Transaction::Report.new
       expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
 
       Puppet.settings[:postrun_command] = "/my/command"
@@ -314,7 +301,6 @@ describe Puppet::Configurer do
     end
 
     it "should finalize the report" do
-      report = Puppet::Transaction::Report.new
       expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
 
       expect(report).to receive(:finalize_report)
@@ -322,7 +308,6 @@ describe Puppet::Configurer do
     end
 
     it "should not apply the catalog if the pre-run command fails" do
-      report = Puppet::Transaction::Report.new
       expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
 
       Puppet.settings[:prerun_command] = "/my/command"
@@ -335,7 +320,6 @@ describe Puppet::Configurer do
     end
 
     it "should apply the catalog, send the report, and return nil if the post-run command fails" do
-      report = Puppet::Transaction::Report.new
       expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
 
       Puppet.settings[:postrun_command] = "/my/command"
@@ -348,7 +332,6 @@ describe Puppet::Configurer do
     end
 
     it 'includes total time metrics in the report after successfully applying the catalog' do
-      report = Puppet::Transaction::Report.new
       allow(@catalog).to receive(:apply).with(:report => report)
       configurer.run(report: report)
 
@@ -360,7 +343,6 @@ describe Puppet::Configurer do
       Puppet.settings[:prerun_command] = "/my/command"
       expect(Puppet::Util::Execution).to receive(:execute).with(["/my/command"]).and_raise(Puppet::ExecutionFailure, "Failed")
 
-      report = Puppet::Transaction::Report.new
       configurer.run(report: report)
 
       expect(report.metrics['time']).to be
@@ -368,7 +350,6 @@ describe Puppet::Configurer do
     end
 
     it 'includes total time metrics in the report even if catalog retrieval fails' do
-      report = Puppet::Transaction::Report.new
       allow(configurer).to receive(:prepare_and_retrieve_catalog_from_cache).and_raise
       configurer.run(:report => report)
 
@@ -475,53 +456,51 @@ describe Puppet::Configurer do
 
     before do
       Puppet[:lastrunfile] = tmpfile('last_run_file')
-
-      @report = Puppet::Transaction::Report.new
       Puppet[:reports] = "none"
     end
 
     it "should print a report summary if configured to do so" do
       Puppet.settings[:summarize] = true
 
-      expect(@report).to receive(:summary).and_return("stuff")
+      expect(report).to receive(:summary).and_return("stuff")
 
       expect(configurer).to receive(:puts).with("stuff")
-      configurer.send_report(@report)
+      configurer.send_report(report)
     end
 
     it "should not print a report summary if not configured to do so" do
       Puppet.settings[:summarize] = false
 
       expect(configurer).not_to receive(:puts)
-      configurer.send_report(@report)
+      configurer.send_report(report)
     end
 
     it "should save the report if reporting is enabled" do
       Puppet.settings[:report] = true
 
-      expect(Puppet::Transaction::Report.indirection).to receive(:save).with(@report, nil, instance_of(Hash))
-      configurer.send_report(@report)
+      expect(Puppet::Transaction::Report.indirection).to receive(:save).with(report, nil, instance_of(Hash))
+      configurer.send_report(report)
     end
 
     it "should not save the report if reporting is disabled" do
       Puppet.settings[:report] = false
 
-      expect(Puppet::Transaction::Report.indirection).not_to receive(:save).with(@report, nil, instance_of(Hash))
-      configurer.send_report(@report)
+      expect(Puppet::Transaction::Report.indirection).not_to receive(:save).with(report, nil, instance_of(Hash))
+      configurer.send_report(report)
     end
 
     it "should save the last run summary if reporting is enabled" do
       Puppet.settings[:report] = true
 
-      expect(configurer).to receive(:save_last_run_summary).with(@report)
-      configurer.send_report(@report)
+      expect(configurer).to receive(:save_last_run_summary).with(report)
+      configurer.send_report(report)
     end
 
     it "should save the last run summary if reporting is disabled" do
       Puppet.settings[:report] = false
 
-      expect(configurer).to receive(:save_last_run_summary).with(@report)
-      configurer.send_report(@report)
+      expect(configurer).to receive(:save_last_run_summary).with(report)
+      configurer.send_report(report)
     end
 
     it "should log but not fail if saving the report fails" do
@@ -530,7 +509,7 @@ describe Puppet::Configurer do
       expect(Puppet::Transaction::Report.indirection).to receive(:save).and_raise("whatever")
 
       expect(Puppet).to receive(:err)
-      expect { configurer.send_report(@report) }.not_to raise_error
+      expect { configurer.send_report(report) }.not_to raise_error
     end
   end
 
@@ -538,19 +517,17 @@ describe Puppet::Configurer do
     include PuppetSpec::Files
 
     before do
-      @report = double('report', :raw_summary => {})
-
       Puppet[:lastrunfile] = tmpfile('last_run_file')
     end
 
     it "should write the last run file" do
-      configurer.save_last_run_summary(@report)
+      configurer.save_last_run_summary(report)
       expect(Puppet::FileSystem.exist?(Puppet[:lastrunfile])).to be_truthy
     end
 
     it "should write the raw summary as yaml" do
-      expect(@report).to receive(:raw_summary).and_return("summary")
-      configurer.save_last_run_summary(@report)
+      expect(report).to receive(:raw_summary).and_return("summary")
+      configurer.save_last_run_summary(report)
       expect(File.read(Puppet[:lastrunfile])).to eq(YAML.dump("summary"))
     end
 
@@ -566,12 +543,12 @@ describe Puppet::Configurer do
       expect(Puppet::Util).to receive(:replace_file).and_yield(fh)
 
       expect(Puppet).to receive(:err)
-      expect { configurer.save_last_run_summary(@report) }.to_not raise_error
+      expect { configurer.save_last_run_summary(report) }.to_not raise_error
     end
 
     it "should create the last run file with the correct mode" do
       expect(Puppet.settings.setting(:lastrunfile)).to receive(:mode).and_return('664')
-      configurer.save_last_run_summary(@report)
+      configurer.save_last_run_summary(report)
 
       if Puppet::Util::Platform.windows?
         require 'puppet/util/windows/security'
@@ -585,7 +562,7 @@ describe Puppet::Configurer do
     it "should report invalid last run file permissions" do
       expect(Puppet.settings.setting(:lastrunfile)).to receive(:mode).and_return('892')
       expect(Puppet).to receive(:err).with(/Could not save last run local report.*892 is invalid/)
-      configurer.save_last_run_summary(@report)
+      configurer.save_last_run_summary(report)
     end
   end
 
@@ -945,8 +922,6 @@ describe Puppet::Configurer do
     end
 
     it "should set catalog conversion time on the report" do
-      report = Puppet::Transaction::Report.new
-
       expect(report).to receive(:add_times).with(:convert_catalog, kind_of(Numeric))
       configurer.convert_catalog(catalog, 10, {:report => report})
     end
