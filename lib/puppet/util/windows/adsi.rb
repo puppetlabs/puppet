@@ -1,6 +1,23 @@
 module Puppet::Util::Windows::ADSI
   require 'ffi'
 
+  # https://docs.microsoft.com/en-us/windows/win32/api/dsrole/ne-dsrole-dsrole_machine_role
+  STANDALONE_WORKSTATION = 0
+  MEMBER_WORKSTATION = 1
+  STANDALONE_SERVER = 2
+  MEMBER_SERVER = 3
+  BACKUP_DOMAIN_CONTROLLER = 4
+  PRIMARY_DOMAIN_CONTROLLER = 5
+
+  DOMAIN_ROLES = {
+    STANDALONE_WORKSTATION => :STANDALONE_WORKSTATION,
+    MEMBER_WORKSTATION => :MEMBER_WORKSTATION,
+    STANDALONE_SERVER => :STANDALONE_SERVER,
+    MEMBER_SERVER => :MEMBER_SERVER,
+    BACKUP_DOMAIN_CONTROLLER => :BACKUP_DOMAIN_CONTROLLER,
+    PRIMARY_DOMAIN_CONTROLLER => :PRIMARY_DOMAIN_CONTROLLER,
+  }
+
   class << self
     extend FFI::Library
 
@@ -94,6 +111,14 @@ module Puppet::Util::Windows::ADSI
       wmi_connection.execquery(query)
     end
 
+    def domain_role
+      unless @domain_role
+        query_result = Puppet::Util::Windows::ADSI.execquery('select DomainRole from Win32_ComputerSystem').to_enum.first
+        @domain_role = DOMAIN_ROLES[query_result.DomainRole] if query_result
+      end
+      @domain_role
+    end
+
     ffi_convention :stdcall
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724295(v=vs.85).aspx
@@ -126,24 +151,24 @@ module Puppet::Util::Windows::ADSI
           Puppet::Util::Windows::SID.name_to_principal('SYSTEM').domain.upcase
         ]
       end
-  
+
       def uri(name, host = '.')
         host = '.' if (localized_domains << Socket.gethostname.upcase).include?(host.upcase)
         Puppet::Util::Windows::ADSI.uri(name, @object_class, host)
       end
-  
+
       def parse_name(name)
         if name =~ /\//
           raise Puppet::Error.new( _("Value must be in DOMAIN\\%{object_class} style syntax") % { object_class: @object_class } )
         end
-  
+
         matches = name.scan(/((.*)\\)?(.*)/)
         domain = matches[0][1] || '.'
         account = matches[0][2]
-  
+
         return account, domain
       end
-  
+
       # returns Puppet::Util::Windows::SID::Principal[]
       # may contain objects that represent unresolvable SIDs
       def get_sids(adsi_child_collection)
@@ -151,19 +176,19 @@ module Puppet::Util::Windows::ADSI
         adsi_child_collection.each do |m|
           sids << Puppet::Util::Windows::SID.ads_to_principal(m)
         end
-  
+
         sids
       end
-  
+
       def name_sid_hash(names)
         return {} if names.nil? || names.empty?
-  
+
         sids = names.map do |name|
           sid = Puppet::Util::Windows::SID.name_to_principal(name)
           raise Puppet::Error.new( _("Could not resolve name: %{name}") % { name: name } ) if !sid
           [sid.sid, sid]
         end
-  
+
         Hash[ sids ]
       end
 
@@ -176,8 +201,12 @@ module Puppet::Util::Windows::ADSI
         well_known = false
         if (sid = Puppet::Util::Windows::SID.name_to_principal(name_or_sid))
           # Examples of SidType include SidTypeUser, SidTypeGroup
-          return true if sid.account_type == "SidType#{@object_class.capitalize}".to_sym
-  
+          if sid.account_type == "SidType#{@object_class.capitalize}".to_sym
+            # Check if we're getting back a local user when domain-joined
+            return true unless [:MEMBER_WORKSTATION, :MEMBER_SERVER].include?(Puppet::Util::Windows::ADSI.domain_role)
+            return sid.domain == Puppet::Util::Windows::ADSI.computer_name
+          end
+
           # 'well known group' is special as it can be a group like Everyone OR a user like SYSTEM
           # so try to resolve it
           # https://msdn.microsoft.com/en-us/library/cc234477.aspx
@@ -388,23 +417,23 @@ module Puppet::Util::Windows::ADSI
       ADS_UF_SCRIPT:                                 0x0001,
       ADS_UF_ACCOUNTDISABLE:                         0x0002,
       ADS_UF_HOMEDIR_REQUIRED:                       0x0008,
-      ADS_UF_LOCKOUT:                                0x0010,                          
-      ADS_UF_PASSWD_NOTREQD:                         0x0020,                   
-      ADS_UF_PASSWD_CANT_CHANGE:                     0x0040,               
-      ADS_UF_ENCRYPTED_TEXT_PASSWORD_ALLOWED:        0x0080,       
-      ADS_UF_TEMP_DUPLICATE_ACCOUNT:                 0x0100,           
-      ADS_UF_NORMAL_ACCOUNT:                         0x0200,                   
-      ADS_UF_INTERDOMAIN_TRUST_ACCOUNT:              0x0800,        
-      ADS_UF_WORKSTATION_TRUST_ACCOUNT:              0x1000,        
-      ADS_UF_SERVER_TRUST_ACCOUNT:                   0x2000,             
-      ADS_UF_DONT_EXPIRE_PASSWD:                     0x10000,            
-      ADS_UF_MNS_LOGON_ACCOUNT:                      0x20000,               
-      ADS_UF_SMARTCARD_REQUIRED:                     0x40000,              
-      ADS_UF_TRUSTED_FOR_DELEGATION:                 0x80000,          
-      ADS_UF_NOT_DELEGATED:                          0x100000,                  
-      ADS_UF_USE_DES_KEY_ONLY:                       0x200000,               
-      ADS_UF_DONT_REQUIRE_PREAUTH:                   0x400000,               
-      ADS_UF_PASSWORD_EXPIRED:                       0x800000,               
+      ADS_UF_LOCKOUT:                                0x0010,
+      ADS_UF_PASSWD_NOTREQD:                         0x0020,
+      ADS_UF_PASSWD_CANT_CHANGE:                     0x0040,
+      ADS_UF_ENCRYPTED_TEXT_PASSWORD_ALLOWED:        0x0080,
+      ADS_UF_TEMP_DUPLICATE_ACCOUNT:                 0x0100,
+      ADS_UF_NORMAL_ACCOUNT:                         0x0200,
+      ADS_UF_INTERDOMAIN_TRUST_ACCOUNT:              0x0800,
+      ADS_UF_WORKSTATION_TRUST_ACCOUNT:              0x1000,
+      ADS_UF_SERVER_TRUST_ACCOUNT:                   0x2000,
+      ADS_UF_DONT_EXPIRE_PASSWD:                     0x10000,
+      ADS_UF_MNS_LOGON_ACCOUNT:                      0x20000,
+      ADS_UF_SMARTCARD_REQUIRED:                     0x40000,
+      ADS_UF_TRUSTED_FOR_DELEGATION:                 0x80000,
+      ADS_UF_NOT_DELEGATED:                          0x100000,
+      ADS_UF_USE_DES_KEY_ONLY:                       0x200000,
+      ADS_UF_DONT_REQUIRE_PREAUTH:                   0x400000,
+      ADS_UF_PASSWORD_EXPIRED:                       0x800000,
       ADS_UF_TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION: 0x1000000
     }
 
