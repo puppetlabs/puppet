@@ -12,10 +12,6 @@ describe Puppet::Configurer do
     catalog.add_resource(resource)
   end
 
-  after :all do
-    Puppet::Node::Facts.indirection.reset_terminus_class
-  end
-
   let(:configurer) { Puppet::Configurer.new }
   let(:report) { Puppet::Transaction::Report.new }
   let(:catalog) { Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote(Puppet[:environment].to_sym)) }
@@ -70,18 +66,8 @@ describe Puppet::Configurer do
 
   describe "when executing a catalog run" do
     before do
-      allow(configurer).to receive(:download_plugins)
-
       Puppet::Resource::Catalog.indirection.terminus_class = :rest
       allow(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(catalog)
-      allow(configurer).to receive(:send_report)
-      allow(configurer).to receive(:save_last_run_summary)
-
-      allow(Puppet::Util::Log).to receive(:close_all)
-    end
-
-    after :all do
-      Puppet::Resource::Catalog.indirection.reset_terminus_class
     end
 
     it "downloads plugins when told" do
@@ -381,9 +367,6 @@ describe Puppet::Configurer do
       Puppet[:supported_checksum_types] = ['sha256']
       # Regenerate the agent to pick up the new setting
       configurer = Puppet::Configurer.new
-      allow(configurer).to receive(:download_plugins)
-      allow(configurer).to receive(:send_report)
-      allow(configurer).to receive(:save_last_run_summary)
 
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(checksum_type: 'sha256'))
       configurer.run
@@ -586,9 +569,6 @@ describe Puppet::Configurer do
 
   describe "when retrieving a catalog" do
     before do
-      allow(configurer).to receive(:download_plugins)
-
-      # this is the default when using a Configurer instance
       allow(Puppet::Resource::Catalog.indirection).to receive(:terminus_class).and_return(:rest)
     end
 
