@@ -15,7 +15,7 @@ describe Puppet::HTTP::Session do
     service
   }
 
-  class DummyResolver
+  class DummyResolver < Puppet::HTTP::Resolver
     attr_reader :count
 
     def initialize(service)
@@ -26,15 +26,6 @@ describe Puppet::HTTP::Session do
     def resolve(session, name, ssl_context: nil)
       @count += 1
       return @service if check_connection?(session, @service, ssl_context: ssl_context)
-    end
-
-    def check_connection?(session, service, ssl_context: nil)
-      service.connect(ssl_context: ssl_context)
-      return true
-    rescue Puppet::HTTP::ConnectionError => e
-      session.add_exception(e)
-      Puppet.debug("Connection to #{service.url} failed, trying next route: #{e.message}")
-      return false
     end
   end
 
@@ -81,6 +72,66 @@ describe Puppet::HTTP::Session do
         session = described_class.new(client, [])
         session.route_to(:westbound)
       }.to raise_error(ArgumentError, "Unknown service westbound")
+    end
+  end
+
+  context 'when resolving using multiple resolvers' do
+    let(:session) { client.create_session }
+
+    it "prefers SRV records" do
+      Puppet[:use_srv_records] = true
+      Puppet[:server_list] = 'foo.example.com,bar.example.com,baz.example.com'
+      Puppet[:ca_server] = 'caserver.example.com'
+
+      allow_any_instance_of(Puppet::Network::Resolver).to receive(:each_srv_record).and_yield('mars.example.srv', 8140)
+      service = session.route_to(:ca)
+
+      expect(service.url).to eq(URI("https://mars.example.srv:8140/puppet-ca/v1"))
+    end
+
+    it "next prefers :ca_server when explicitly set" do
+      Puppet[:use_srv_records] = true
+      Puppet[:server_list] = 'foo.example.com,bar.example.com,baz.example.com'
+      Puppet[:ca_server] = 'caserver.example.com'
+
+      service = session.route_to(:ca)
+
+      expect(service.url).to eq(URI("https://caserver.example.com:8140/puppet-ca/v1"))
+    end
+
+    it "next prefers the first successful connection from server_list" do
+      Puppet[:use_srv_records] = true
+      Puppet[:server_list] = 'foo.example.com,bar.example.com,baz.example.com'
+
+      allow_any_instance_of(Puppet::Network::Resolver).to receive(:each_srv_record)
+      stub_request(:get, "https://foo.example.com:8140/status/v1/simple/master").to_return(status: 500)
+      stub_request(:get, "https://bar.example.com:8140/status/v1/simple/master").to_return(status: 200)
+
+      service = session.route_to(:ca)
+
+      expect(service.url).to eq(URI("https://bar.example.com:8140/puppet-ca/v1"))
+    end
+
+    it "fails if server_list doesn't return anything valid" do
+      Puppet[:server_list] = 'foo.example.com,bar.example.com'
+
+      allow_any_instance_of(Puppet::Network::Resolver).to receive(:each_srv_record)
+      stub_request(:get, "https://foo.example.com:8140/status/v1/simple/master").to_return(status: 500)
+      stub_request(:get, "https://bar.example.com:8140/status/v1/simple/master").to_return(status: 500)
+
+      expect {
+        session.route_to(:ca)
+      }.to raise_error(Puppet::Error, "Could not select a functional puppet master from server_list: 'foo.example.com,bar.example.com'")
+    end
+
+
+    it "raises when there are no more routes" do
+      allow_any_instance_of(Net::HTTP).to receive(:start).and_raise(Errno::EHOSTUNREACH)
+      session = client.create_session
+
+      expect {
+        session.route_to(:ca)
+      }.to raise_error(Puppet::HTTP::RouteError, 'No more routes to ca')
     end
   end
 end
