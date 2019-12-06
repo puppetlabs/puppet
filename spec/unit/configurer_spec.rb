@@ -11,6 +11,8 @@ describe Puppet::Configurer do
     Puppet[:report] = true
 
     catalog.add_resource(resource)
+
+    allow(Puppet::SSL::Host).to receive(:localhost).and_return(double('host'))
   end
 
   let(:configurer) { Puppet::Configurer.new }
@@ -814,16 +816,45 @@ describe Puppet::Configurer do
 
     it "should not update the cached catalog in noop mode" do
       Puppet[:noop] = true
-      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true, ignore_cache_save: true)).and_return(catalog)
 
+      stub_request(:get, %r{/puppet/v3/catalog}).to_return(:status => 200, :body => catalog.render(:json), :headers => {'Content-Type' => 'application/json'})
+
+      Puppet::Resource::Catalog.indirection.cache_class = :json
+      path = Puppet::Resource::Catalog.indirection.cache.path(catalog.name)
+
+      expect(File).to_not be_exist(path)
       configurer.run
+      expect(File).to_not be_exist(path)
     end
 
     it "should update the cached catalog when not in noop mode" do
       Puppet[:noop] = false
-      expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true, ignore_cache_save: false)).and_return(catalog)
 
+      stub_request(:get, %r{/puppet/v3/catalog}).to_return(:status => 200, :body => catalog.render(:json), :headers => {'Content-Type' => 'application/json'})
+
+      Puppet::Resource::Catalog.indirection.cache_class = :json
+      cache_path = Puppet::Resource::Catalog.indirection.cache.path(Puppet[:node_name_value])
+
+      expect(File).to_not be_exist(cache_path)
       configurer.run
+      expect(File).to be_exist(cache_path)
+    end
+
+    it "successfully applies the catalog without a cache" do
+      stub_request(:get, %r{/puppet/v3/catalog}).to_return(:status => 200, :body => catalog.render(:json), :headers => {'Content-Type' => 'application/json'})
+
+      Puppet::Resource::Catalog.indirection.cache_class = nil
+
+      expect(configurer.run).to eq(0)
+    end
+
+    it "should not update the cached catalog when running puppet apply" do
+      Puppet::Resource::Catalog.indirection.cache_class = :json
+      path = Puppet::Resource::Catalog.indirection.cache.path(catalog.name)
+
+      expect(File).to_not be_exist(path)
+      configurer.run(catalog: catalog)
+      expect(File).to_not be_exist(path)
     end
   end
 
