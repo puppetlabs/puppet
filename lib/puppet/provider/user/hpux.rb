@@ -29,7 +29,7 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
 
   def modifycmd(param,value)
      cmd = super(param, value)
-     cmd << "-F"
+     cmd.insert(1,"-F")
      if trusted then
        # Append an additional command to reset the password age to 0
        # until a workaround with expiry module can be found for trusted
