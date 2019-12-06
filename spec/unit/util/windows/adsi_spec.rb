@@ -41,6 +41,19 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
     end
   end
 
+  describe ".domain_role" do
+    DOMAIN_ROLES = Puppet::Util::Platform.windows? ? Puppet::Util::Windows::ADSI::DOMAIN_ROLES : {}
+
+    DOMAIN_ROLES.each do |id, role|
+      it "should be able to return #{role} as the domain role of the computer" do
+        Puppet::Util::Windows::ADSI.instance_variable_set(:@domain_role, nil)
+        domain_role = [double('WMI', :DomainRole => id)]
+        allow(Puppet::Util::Windows::ADSI).to receive(:execquery).with('select DomainRole from Win32_ComputerSystem').and_return(domain_role)
+        expect(Puppet::Util::Windows::ADSI.domain_role).to eq(role)
+      end
+    end
+  end
+
   describe ".sid_uri" do
     it "should raise an error when the input is not a SID Principal" do
       [Object.new, {}, 1, :symbol, '', nil].each do |input|
@@ -53,6 +66,25 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
     it "should return a SID uri for a well-known SID (SYSTEM)" do
       sid = Puppet::Util::Windows::SID::Principal.lookup_account_name('SYSTEM')
       expect(Puppet::Util::Windows::ADSI.sid_uri(sid)).to eq('WinNT://S-1-5-18')
+    end
+  end
+
+  shared_examples 'a local only resource query' do |klass, account_type|
+    before(:each) do
+      allow(Puppet::Util::Windows::ADSI).to receive(:domain_role).and_return(:MEMBER_SERVER)
+    end
+
+    it "should be able to check for a local resource" do
+      local_domain = 'testcomputername'
+      principal = double('Principal', :account => resource_name, :domain => local_domain, :account_type => account_type)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with(resource_name).and_return(principal)
+      expect(klass.exists?(resource_name)).to eq(true)
+    end
+
+    it "should return false if no local resource exists" do
+      principal = double('Principal', :account => resource_name, :domain => 'AD_DOMAIN', :account_type => account_type)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with(resource_name).and_return(principal)
+      expect(klass.exists?(resource_name)).to eq(false)
     end
   end
 
@@ -101,6 +133,12 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
 
       expect(user).to be_a(Puppet::Util::Windows::ADSI::User)
       expect(user.native_object).to eq(adsi_user)
+    end
+
+    context "when domain-joined" do
+      it_should_behave_like 'a local only resource query', Puppet::Util::Windows::ADSI::User, :SidTypeUser do
+        let(:resource_name) { username }
+      end
     end
 
     it "should be able to check the existence of a user" do
@@ -541,6 +579,12 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
 
     it "should generate the correct URI for a NT AUTHORITY group" do
       expect(Puppet::Util::Windows::ADSI::Group.uri(groupname, ntauthority_localized)).to eq("WinNT://./#{groupname},group")
+    end
+
+    context "when domain-joined" do
+      it_should_behave_like 'a local only resource query', Puppet::Util::Windows::ADSI::Group, :SidTypeGroup do
+        let(:resource_name) { groupname }
+      end
     end
 
     it "should be able to create a group" do
