@@ -858,6 +858,34 @@ describe Puppet::Configurer do
     end
   end
 
+  describe "when converging the environment" do
+    let(:apple) { Puppet::Resource::Catalog.new(Puppet[:node_name_value], Puppet::Node::Environment.remote('apple')) }
+    let(:banana) { Puppet::Resource::Catalog.new(Puppet[:node_name_value], Puppet::Node::Environment.remote('banana')) }
+
+    before :each do
+      apple.add_resource(resource)
+      banana.add_resource(resource)
+    end
+
+    it "converges after multiple attempts" do
+      expect(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(apple, banana, banana)
+
+      allow(Puppet).to receive(:notice)
+      expect(Puppet).to receive(:notice).with("Local environment: 'production' doesn't match server specified environment 'apple', restarting agent run with environment 'apple'")
+      expect(Puppet).to receive(:notice).with("Local environment: 'apple' doesn't match server specified environment 'banana', restarting agent run with environment 'banana'")
+
+      configurer.run
+    end
+
+    it "raises if it can't converge after 4 tries after the initial catalog request" do
+      expect(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(apple, banana, apple, banana, apple)
+
+      expect(Puppet).to receive(:err).with("Failed to apply catalog: Catalog environment didn't stabilize after 4 fetches, aborting run")
+
+      configurer.run
+    end
+  end
+
   describe "when converting the catalog" do
     it "converts Puppet::Resource into Puppet::Type::Notify" do
       expect(configurer).to receive(:apply_catalog) do |ral, _|
