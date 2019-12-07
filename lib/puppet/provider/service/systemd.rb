@@ -25,7 +25,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   notdefaultfor :operatingsystem => :LinuxMint, :operatingsystemmajrelease => ["10", "11", "12", "13", "14", "15", "16", "17"] # These are using upstart
   defaultfor :operatingsystem => :ubuntu
   notdefaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["10.04", "12.04", "14.04", "14.10"] # These are using upstart
-  defaultfor :operatingsystem => :cumuluslinux, :operatingsystemmajrelease => ["3"]
+  defaultfor :operatingsystem => :cumuluslinux, :operatingsystemmajrelease => ["3", "4"]
 
   def self.instances
     i = []
