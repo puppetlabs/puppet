@@ -144,9 +144,10 @@ class Puppet::Configurer
     facts_hash
   end
 
-  def prepare_and_retrieve_catalog(options, query_options)
+  def prepare_and_retrieve_catalog(cached_catalog, options, query_options)
     # set report host name now that we have the fact
     options[:report].host = Puppet[:node_name_value]
+
     query_options[:transaction_uuid] = @transaction_uuid
     query_options[:job_id] = @job_id
     query_options[:static_catalog] = @static_catalog
@@ -156,15 +157,16 @@ class Puppet::Configurer
     query_options[:checksum_type] = @checksum_type.join('.')
 
     # apply passes in ral catalog
-    catalog = options.delete(:catalog)
-    return catalog if catalog
-
-    # retrieve_catalog returns json catalog
-    catalog = retrieve_catalog(query_options)
-    return convert_catalog(catalog, @duration, options) if catalog
-
-    Puppet.err _("Could not retrieve catalog; skipping run")
-    nil
+    if options[:catalog]
+      options[:catalog]
+    elsif cached_catalog
+      cached_catalog
+    else
+      # retrieve_catalog returns resource catalog
+      catalog = retrieve_catalog(query_options)
+      Puppet.err _("Could not retrieve catalog; skipping run") unless catalog
+      convert_catalog(catalog, @duration, options) if catalog
+    end
   end
 
   def prepare_and_retrieve_catalog_from_cache(options = {})
@@ -251,13 +253,12 @@ class Puppet::Configurer
       Puppet::GettextConfig.reset_text_domain('agent')
       Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
 
-      if catalog = prepare_and_retrieve_catalog_from_cache(options)
-        options[:catalog] = catalog
+      if cached_catalog = prepare_and_retrieve_catalog_from_cache(options)
         @cached_catalog_status = 'explicitly_requested'
 
-        if @environment != catalog.environment && !Puppet[:strict_environment_mode]
-          Puppet.notice _("Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'.") % { local_env: @environment, catalog_env: catalog.environment }
-          @environment = catalog.environment
+        if @environment != cached_catalog.environment && !Puppet[:strict_environment_mode]
+          Puppet.notice _("Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'.") % { local_env: @environment, catalog_env: cached_catalog.environment }
+          @environment = cached_catalog.environment
         end
 
         report.environment = @environment
@@ -278,7 +279,7 @@ class Puppet::Configurer
       configured_environment = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
 
       # We only need to find out the environment to run in if we don't already have a catalog
-      unless (options[:catalog] || Puppet[:strict_environment_mode])
+      unless (cached_catalog || options[:catalog] || Puppet[:strict_environment_mode])
         begin
           node = nil
           node_retr_time = thinmark do
@@ -329,7 +330,7 @@ class Puppet::Configurer
       query_options = get_facts(options) unless query_options
       query_options[:configured_environment] = configured_environment
 
-      unless catalog = prepare_and_retrieve_catalog(options, query_options)
+      unless catalog = prepare_and_retrieve_catalog(cached_catalog, options, query_options)
         return nil
       end
 
@@ -354,11 +355,14 @@ class Puppet::Configurer
         query_options = get_facts(options)
         query_options[:configured_environment] = configured_environment
 
-        return nil unless catalog = prepare_and_retrieve_catalog(options, query_options)
+        # if we get here, ignore the cached catalog
+        return nil unless catalog = prepare_and_retrieve_catalog(nil, options, query_options)
         tries += 1
       end
 
       execute_prerun_command or return nil
+
+      catalog ||= options[:catalog]
 
       options[:report].code_id = catalog.code_id
       options[:report].catalog_uuid = catalog.catalog_uuid
