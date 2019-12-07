@@ -157,25 +157,19 @@ class Puppet::Configurer
     query_options[:checksum_type] = @checksum_type.join('.')
 
     # apply passes in ral catalog
-    if options[:catalog]
-      options[:catalog]
-    elsif cached_catalog
-      cached_catalog
-    else
+    catalog = cached_catalog || options[:catalog]
+    unless catalog
       # retrieve_catalog returns resource catalog
       catalog = retrieve_catalog(query_options)
       Puppet.err _("Could not retrieve catalog; skipping run") unless catalog
-      convert_catalog(catalog, @duration, options) if catalog
     end
+    catalog
   end
 
   def prepare_and_retrieve_catalog_from_cache(options = {})
     result = retrieve_catalog_from_cache({:transaction_uuid => @transaction_uuid, :static_catalog => @static_catalog})
-    if result
-      Puppet.info _("Using cached catalog from environment '%{catalog_env}'") % { catalog_env: result.environment }
-      return convert_catalog(result, @duration, options)
-    end
-    nil
+    Puppet.info _("Using cached catalog from environment '%{catalog_env}'") % { catalog_env: result.environment } if result
+    result
   end
 
   # Apply supplied catalog and return associated application report
@@ -360,14 +354,31 @@ class Puppet::Configurer
         tries += 1
       end
 
+      # now that environment has converged, convert resource catalog into ral catalog
+      # unless we were given a RAL catalog
+      if options[:catalog]
+        ral_catalog = options[:catalog]
+      else
+        # REMIND @duration is the time spent loading the last catalog, and doesn't
+        # account for things like we failed to download and fell back to the cache
+        ral_catalog = convert_catalog(catalog, @duration, options)
+
+        # If not noop, commit the cached resource catalog (not ral catalog). Ideally
+        # we'd just copy the downloaded response body, instead of serializing the
+        # in-memory catalog, but that's hard due to the indirector.
+        indirection = Puppet::Resource::Catalog.indirection
+        if !Puppet[:noop] && indirection.cache?
+          request = indirection.request(:save, nil, catalog, environment: Puppet::Node::Environment.remote(catalog.environment))
+          indirection.cache.save(request)
+        end
+      end
+
       execute_prerun_command or return nil
 
-      catalog ||= options[:catalog]
-
-      options[:report].code_id = catalog.code_id
-      options[:report].catalog_uuid = catalog.catalog_uuid
+      options[:report].code_id = ral_catalog.code_id
+      options[:report].catalog_uuid = ral_catalog.catalog_uuid
       options[:report].cached_catalog_status = @cached_catalog_status
-      apply_catalog(catalog, options)
+      apply_catalog(ral_catalog, options)
       true
     rescue => detail
       Puppet.log_exception(detail, _("Failed to apply catalog: %{detail}") % { detail: detail })
@@ -502,8 +513,8 @@ class Puppet::Configurer
         Puppet[:node_name_value],
         query_options.merge(
           :ignore_cache      => true,
-          # We never want to update the cached Catalog if we're running in noop mode.
-          :ignore_cache_save => Puppet[:noop],
+          # don't update cache until after environment converges
+          :ignore_cache_save => true,
           :environment       => Puppet::Node::Environment.remote(@environment),
           :fail_on_404       => true
         )
