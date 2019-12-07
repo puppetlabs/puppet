@@ -6,12 +6,12 @@
 # The first argument to this function should be a `<MODULE NAME>/<TEMPLATE FILE>`
 # reference, which loads `<TEMPLATE FILE>` from `<MODULE NAME>`'s `templates`
 # directory. In most cases, the last argument is optional; if used, it should be a
-# [hash](/puppet/latest/reference/lang_data_hash.html) that contains parameters to
+# [hash](https://puppet.com/docs/puppet/latest/lang_data_hash.html) that contains parameters to
 # pass to the template.
 #
-# - See the [template](/puppet/latest/reference/lang_template.html) documentation
-# for general template usage information.
-# - See the [EPP syntax](/puppet/latest/reference/lang_template_epp.html)
+# - See the [template](https://puppet.com/docs/puppet/latest/lang_template.html)
+# documentation for general template usage information.
+# - See the [EPP syntax](https://puppet.com/docs/puppet/latest/lang_template_epp.html)
 # documentation for examples of EPP.
 #
 # For example, to call the apache module's `templates/vhost/_docroot.epp`
