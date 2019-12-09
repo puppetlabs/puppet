@@ -56,14 +56,14 @@ describe Puppet::Type.type(:user).provider(:hpuxuseradd), :unless => Puppet.feat
     it "should add modprpw to modifycmd if Trusted System" do
       allow(resource).to receive(:allowdupe?).and_return(true)
       expect(provider).to receive(:exec_getprpw).with('root','-m uid').and_return('uid=0')
-      expect(provider).to receive(:execute).with(['/usr/sam/lbin/usermod.sam', '-u', 1000, '-o', 'testuser', '-F', ';', '/usr/lbin/modprpw', '-v', '-l', 'testuser'], hash_including(custom_environment: {}))
+      expect(provider).to receive(:execute).with(['/usr/sam/lbin/usermod.sam', '-F', '-u', 1000, '-o', 'testuser', ';', '/usr/lbin/modprpw', '-v', '-l', 'testuser'], hash_including(custom_environment: {}))
       provider.uid = 1000
     end
 
     it "should not add modprpw if not Trusted System" do
       allow(resource).to receive(:allowdupe?).and_return(true)
       expect(provider).to receive(:exec_getprpw).with('root','-m uid').and_return('System is not trusted')
-      expect(provider).to receive(:execute).with(['/usr/sam/lbin/usermod.sam', '-u', 1000, '-o', 'testuser', '-F'], hash_including(custom_environment: {}))
+      expect(provider).to receive(:execute).with(['/usr/sam/lbin/usermod.sam', '-F', '-u', 1000, '-o', 'testuser'], hash_including(custom_environment: {}))
       provider.uid = 1000
     end
   end
