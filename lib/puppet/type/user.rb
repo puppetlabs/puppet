@@ -614,7 +614,8 @@ module Puppet
     end
 
     newparam(:ia_load_module, :required_features => :manages_aix_lam) do
-      desc "The name of the I&A module to use to manage this user."
+      desc "The name of the I&A module to use to manage this user.
+        This should be set to `files` if managing local users."
     end
 
     newproperty(:attributes, :parent => Puppet::Property::KeyValue, :required_features => :manages_aix_lam) do
@@ -665,7 +666,8 @@ module Puppet
             :required_features => :libuser,
             :parent => Puppet::Parameter::Boolean) do
       desc "Forces the management of local accounts when accounts are also
-            being managed by some other NSS"
+            being managed by some other NSS. For AIX, refer to the
+            `ia_load_module` parameter."
       defaultto false
     end
 
