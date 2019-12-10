@@ -1,3 +1,5 @@
+require 'puppet/concurrent/thread_local_singleton'
+
 # This class provides parsing of Type Specification from a string into the Type
 # Model that is produced by the TypeFactory.
 #
@@ -8,9 +10,7 @@
 module Puppet::Pops
 module Types
 class TypeParser
-  def self.singleton
-    @singleton ||= TypeParser.new
-  end
+  extend Puppet::Concurrent::ThreadLocalSingleton
 
   # @api public
   def initialize

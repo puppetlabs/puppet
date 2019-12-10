@@ -1,6 +1,7 @@
 require 'puppet/util'
 require 'monitor'
 require 'puppet/parser/parser_factory'
+require 'puppet/concurrent/lock'
 
 # Just define it, so this class has fewer load dependencies.
 class Puppet::Node
@@ -70,6 +71,7 @@ class Puppet::Node::Environment
   #
   # @param name [Symbol] The environment name
   def initialize(name, modulepath, manifest, config_version)
+    @lock = Puppet::Concurrent::Lock.new
     @name = name.intern
     @modulepath = self.class.expand_dirs(self.class.extralibs() + modulepath)
     @manifest = manifest == NO_MANIFEST ? manifest : Puppet::FileSystem.expand_path(manifest)
@@ -232,11 +234,13 @@ class Puppet::Node::Environment
   # @api public
   # @return [Puppet::Resource::TypeCollection] The current global TypeCollection
   def known_resource_types
-    if @known_resource_types.nil?
-      @known_resource_types = Puppet::Resource::TypeCollection.new(self)
-      @known_resource_types.import_ast(perform_initial_import(), '')
+    @lock.synchronize do
+      if @known_resource_types.nil?
+        @known_resource_types = Puppet::Resource::TypeCollection.new(self)
+        @known_resource_types.import_ast(perform_initial_import(), '')
+      end
+      @known_resource_types
     end
-    @known_resource_types
   end
 
   # Yields each modules' plugin directory if the plugin directory (modulename/lib)
@@ -429,9 +433,11 @@ class Puppet::Node::Environment
   # Checks if a reparse is required (cache of files is stale).
   #
   def check_for_reparse
-    if (Puppet[:code] != @parsed_code || @known_resource_types.parse_failed?)
-      @parsed_code = nil
-      @known_resource_types = nil
+    @lock.synchronize do
+      if (Puppet[:code] != @parsed_code || @known_resource_types.parse_failed?)
+        @parsed_code = nil
+        @known_resource_types = nil
+      end
     end
   end
 

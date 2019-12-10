@@ -1,18 +1,17 @@
+require 'puppet/concurrent/thread_local_singleton'
+
 module Puppet::Pops
 module Parser
 
 # Does not support "import" and parsing ruby files
 #
 class EvaluatingParser
+  extend Puppet::Concurrent::ThreadLocalSingleton
 
   attr_reader :parser
 
   def initialize()
     @parser = Parser.new()
-  end
-
-  def self.singleton
-    @instance ||= new
   end
 
   def parse_string(s, file_source = nil)
