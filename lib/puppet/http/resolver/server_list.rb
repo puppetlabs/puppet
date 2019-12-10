@@ -1,21 +1,25 @@
 class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
-  def initialize(client, server_list:, default_port:)
+  def initialize(client, server_list_setting:, default_port:, services: )
     @client = client
-    @server_list = server_list
+    @server_list_setting = server_list_setting
     @default_port = default_port
+    @services = services
   end
 
   def resolve(session, name, ssl_context: nil)
-    @server_list.each do |server|
-      host = server[0]
-      port = server[1] || @default_port
-      uri = URI("https://#{host}:#{port}/status/v1/simple/master")
-      if get_success?(uri, session, ssl_context: ssl_context)
-        return Puppet::HTTP::Service.create_service(@client, name, host, port)
+    if @services.include?(name)
+      @server_list_setting.value.each do |server|
+        host = server[0]
+        port = server[1] || @default_port
+        uri = URI("https://#{host}:#{port}/status/v1/simple/master")
+        if get_success?(uri, session, ssl_context: ssl_context)
+          return Puppet::HTTP::Service.create_service(@client, name, host, port)
+        end
       end
+      raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: @server_list_setting.print(@server_list_setting.value) }
+    else
+      return nil
     end
-
-    raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet.settings.value(:server_list, Puppet[:environment].to_sym, true) }
   end
 
   def get_success?(uri, session, ssl_context: nil)
