@@ -1486,7 +1486,7 @@ class Type
           }
 
       Tags are useful for things like applying a subset of a host's configuration
-      with [the `tags` setting](/puppet/latest/configuration.html#tags)
+      with [the `tags` setting](https://puppet.com/docs/puppet/latest/configuration.html#tags)
       (e.g. `puppet agent --test --tags bootstrap`)."
 
     munge do |tags|
