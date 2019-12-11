@@ -286,12 +286,16 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
   # @param key [String] The key to look for in all contained hashes
   # @return [Array<String>] All hash values with the given key.
   def scan_options(options, key)
-    return [] if options.nil?
-    options.inject([]) do |repos, opt|
-      if opt.is_a? Hash and opt[key]
-        repos << opt[key]
+    return [] unless options.is_a?(Enumerable)
+    values = options.map do | repo |
+      value = if repo.is_a?(String)
+        next unless repo.include?('=')
+        Hash[*repo.strip.split('=')] # make it a hash
+      else
+        repo
       end
-      repos
+      value[key]
     end
+    values.compact.uniq
   end
 end
