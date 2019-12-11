@@ -829,6 +829,7 @@ describe Puppet::Configurer do
 
     it "should update the cached catalog when not in noop mode" do
       Puppet[:noop] = false
+      Puppet[:log_level] = 'info'
 
       stub_request(:get, %r{/puppet/v3/catalog}).to_return(:status => 200, :body => catalog.render(:json), :headers => {'Content-Type' => 'application/json'})
 
@@ -838,6 +839,8 @@ describe Puppet::Configurer do
       expect(File).to_not be_exist(cache_path)
       configurer.run
       expect(File).to be_exist(cache_path)
+
+      expect(@logs).to include(an_object_having_attributes(level: :info, message: "Caching catalog for #{Puppet[:node_name_value]}"))
     end
 
     it "successfully applies the catalog without a cache" do

@@ -369,6 +369,7 @@ class Puppet::Configurer
         indirection = Puppet::Resource::Catalog.indirection
         if !Puppet[:noop] && indirection.cache?
           request = indirection.request(:save, nil, catalog, environment: Puppet::Node::Environment.remote(catalog.environment))
+          Puppet.info("Caching catalog for #{request.key}")
           indirection.cache.save(request)
         end
       end
