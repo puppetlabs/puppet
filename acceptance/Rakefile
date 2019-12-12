@@ -17,6 +17,75 @@ EOS
       ENV['TESTS'] = get_test_sample.join(",")
       Rake::Task["ci:test:aio"].invoke
     end
+
+    desc <<-EOS
+Run tests on docker quickly and easily. The docker container is set up to mount
+your puppet directory in the container. This means you can edit code or test
+files and rerun tests without reconfiguring your test environment.
+
+Defaults to running all tests unless TESTS is set. TESTS is a comma seperated
+list of test files to run.
+
+  $ bundle exec rake ci:test:docker TESTS='path/to/test.rb,path/to/another/test.rb'
+
+By default, tests are run on a centos 7 host. To change the host, set HOSTS to
+a valid host string according to beaker-hostgenerator requirements.
+
+All tests marked with a server tag will be skipped.
+
+This task skips all cleanup. Please be sure to run `bundle exec beaker destroy`
+to clean up docker containers used for testing.
+EOS
+    task :docker do
+      begin
+        ENV['HOSTS'] ||= 'centos7-64a'
+        ENV['SHA'] ||= `git rev-parse HEAD`.chomp
+        ENV['OPTIONS'] ||= '--preserve-hosts=always'
+        ENV['OPTIONS'] += ' --test-tag-exclude=server'
+        Rake::Task["ci:gen_hosts"].invoke('docker')
+        hosts_file_content = YAML.load_file ENV['HOSTS']
+        hosts_file_content['HOSTS'].each do |host|
+          host[1]['mount_folders'] = {
+            'puppet' => {
+              'host_path' => "#{File.dirname(__dir__)}" ,
+              'container_path' => '/build/puppet'
+            }
+          }
+          host[1]['tag'] = 'acceptance_test_host'
+        end
+        File.open(ENV['HOSTS'], "w") { |f| f.write(YAML.dump(hosts_file_content)) }
+        Rake::Task["ci:test:git"].invoke
+
+      ensure
+        puts <<-EOF
+
+
+************************
+You can modify puppet code or tests and rerun tests without modifying your test
+environment.
+
+To rerun a test or set of tests, pass a comma seperated list of tests to:
+
+  $ bundle exec beaker exec path/to/test.rb
+
+  or
+
+  $ bundle exec beaker exec path/to/test.rb,path/to/another/test.rb
+
+************************
+This task skips all clean up so you can rerun tests. Don't forget to clean up
+after yourself!
+
+To clean up the docker containers used to run tests, run:
+
+  $ bundle exec beaker destroy
+
+************************
+
+
+        EOF
+      end
+    end
   end
 
   namespace :sync do
