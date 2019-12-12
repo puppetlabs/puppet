@@ -74,12 +74,12 @@ module Puppet::Forge::Errors
     # @option options [String] :uri The URI that failed
     # @option options [String] :input The user's input (e.g. module name)
     # @option options [String] :message Error from the API response (optional)
-    # @option options [Net::HTTPResponse] :response The original HTTP response
+    # @option options [Puppet::HTTP::Response] :response The original HTTP response
     def initialize(options)
       @uri     = options[:uri]
       @message = options[:message]
       response = options[:response]
-      @response = "#{response.code} #{response.message.strip}"
+      @response = "#{response.code} #{response.reason.strip}"
 
       begin
         body = Puppet::Util::Json.load(response.body)

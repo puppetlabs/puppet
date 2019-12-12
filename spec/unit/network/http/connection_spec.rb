@@ -1,6 +1,5 @@
 require 'spec_helper'
 require 'puppet/network/http/connection'
-require 'puppet_spec/validators'
 require 'puppet/test_ca'
 
 describe Puppet::Network::HTTP::Connection do

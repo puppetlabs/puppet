@@ -41,7 +41,7 @@ Could not connect to http://fake.com:1111
 
   describe 'ResponseError' do
     subject { Puppet::Forge::Errors::ResponseError }
-    let(:response) { double(:body => '{}', :code => '404', :message => "not found") }
+    let(:response) { double(:body => '{}', :code => '404', :reason => "not found") }
 
     context 'without message' do
       let(:exception) { subject.new(:uri => 'http://fake.com:1111', :response => response, :input => 'user/module') }
