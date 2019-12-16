@@ -299,10 +299,10 @@ module Runtime3Support
     # 'ruby -wc' thinks that _func is unused, because the only reference to it
     # is inside of the Kernel.eval string below. By prefixing it with the
     # underscore, we let Ruby know to not worry about whether it's unused or not.
-    if loader && _func = loader.load(:function, name)
+    if loader && func = loader.load(:function, name)
       Puppet::Util::Profiler.profile(name, [:functions, name]) do
-        # Add stack frame when calling. See Puppet::Pops::PuppetStack
-        return Kernel.eval('_func.call(scope, *args, &block)'.freeze, Kernel.binding, file || '', line)
+        # Add stack frame when calling.
+        return Puppet::Pops::PuppetStack.stack(file || '', line, func, :call, [scope, *args], &block)
       end
     end
     # Call via 3x API if function exists there without having been autoloaded
