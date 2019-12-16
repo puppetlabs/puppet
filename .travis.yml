@@ -5,7 +5,7 @@ before_install:
   - if [[ $TRAVIS_RUBY_VERSION =~ ^(1.9|2.0|2.1|2.2) ]]; then
       gem update --system 2.7.8 && gem install bundler -v '< 2' --no-document;
     else
-      gem update --system && gem install bundler --no-document;
+      yes | gem update --system;
     fi
 script:
   - "bundle exec rake $CHECK"
