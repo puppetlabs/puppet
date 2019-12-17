@@ -646,6 +646,35 @@ describe Puppet::Configurer do
 
         configurer.run
       end
+
+      it "applies the catalog passed as options when the catalog cache terminus is not set" do
+        stub_request(:get, %r{/puppet/v3/file_metadatas?/plugins}).to_return(:status => 404)
+        stub_request(:get, %r{/puppet/v3/file_metadatas?/pluginfacts}).to_return(:status => 404)
+
+        catalog.add_resource(Puppet::Resource.new('notify', 'from apply'))
+        configurer.run(catalog: catalog.to_ral)
+
+        # make sure cache class is not set to avoid surprises later
+        expect(Puppet::Resource::Catalog.indirection).to_not be_cache
+        expect(@logs).to include(an_object_having_attributes(level: :notice, message: /defined 'message' as 'from apply'/))
+      end
+
+      it "applies the cached catalog when the catalog cache terminus is set, ignoring the catalog passed as options" do
+        Puppet::Resource::Catalog.indirection.cache_class = :json
+
+        cached_catalog = Puppet::Resource::Catalog.new(Puppet[:node_name_value], Puppet[:environment])
+        cached_catalog.add_resource(Puppet::Resource.new('notify', 'from cache'))
+
+        # update cached catalog
+        Puppet.settings.use(:main, :agent)
+        path = Puppet::Resource::Catalog.indirection.cache.path(cached_catalog.name)
+        FileUtils.mkdir(File.dirname(path))
+        File.write(path, cached_catalog.render(:json))
+
+        configurer.run(catalog: catalog.to_ral)
+
+        expect(@logs).to include(an_object_having_attributes(level: :notice, message: /defined 'message' as 'from cache'/))
+      end
     end
 
     describe "and strict environment mode is set" do
@@ -671,7 +700,6 @@ describe Puppet::Configurer do
       end
 
       it "should return 0 when the catalog's environment matches the agent specified environment" do
-        configurer = Puppet::Configurer.new
         expects_new_catalog_only(catalog)
 
         expect(configurer.run).to eq(0)
@@ -694,7 +722,6 @@ describe Puppet::Configurer do
         end
 
         it "should proceed with the cached catalog if its environment matchs the local environment" do
-          Puppet.settings[:use_cached_catalog] = true
           expects_cached_catalog_only(catalog)
 
           expect(configurer.run).to eq(0)

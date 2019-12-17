@@ -356,7 +356,7 @@ class Puppet::Configurer
 
       # now that environment has converged, convert resource catalog into ral catalog
       # unless we were given a RAL catalog
-      if options[:catalog]
+      if !cached_catalog && options[:catalog]
         ral_catalog = options[:catalog]
       else
         # REMIND @duration is the time spent loading the last catalog, and doesn't
