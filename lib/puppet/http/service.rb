@@ -33,6 +33,12 @@ class Puppet::HTTP::Service
 
   protected
 
+  def add_puppet_headers(headers)
+    modified_headers = headers.dup
+    modified_headers['X-Puppet-Profiling'] = 'true' if Puppet[:profile]
+    modified_headers
+  end
+
   def build_url(api, server, port)
     URI::HTTPS.build(host: server,
                      port: port,

@@ -12,6 +12,28 @@ describe Puppet::HTTP::Service::Ca do
     Puppet[:ca_port] = 443
   end
 
+  context 'when making requests' do
+    let(:uri) {"https://www.example.com:443/puppet-ca/v1/certificate/ca"}
+
+    it 'includes default HTTP headers' do
+      stub_request(:get, uri).with do |request|
+        expect(request.headers).to include({'X-Puppet-Version' => /./, 'User-Agent' => /./})
+        expect(request.headers).to_not include('X-Puppet-Profiling')
+      end
+
+      subject.get_certificate('ca')
+    end
+
+
+    it 'includes the X-Puppet-Profiling header when Puppet[:profile] is true' do
+      stub_request(:get, uri).with(headers: {'X-Puppet-Version' => /./, 'User-Agent' => /./, 'X-Puppet-Profiling' => 'true'})
+
+      Puppet[:profile] = true
+
+      subject.get_certificate('ca')
+    end
+  end
+
   context 'when routing to the CA service' do
     let(:cert) { cert_fixture('ca.pem') }
     let(:pem) { cert.to_pem }
