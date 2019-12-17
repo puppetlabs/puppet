@@ -61,6 +61,20 @@ class Puppet::HTTP::Client
     end
   end
 
+  def head(url, headers: {}, params: {}, ssl_context: nil, user: nil, password: nil)
+    query = encode_params(params)
+    unless query.empty?
+      url = url.dup
+      url.query = query
+    end
+
+    request = Net::HTTP::Head.new(url, @default_headers.merge(headers))
+
+    execute_streaming(request, ssl_context: ssl_context, user: user, password: password) do |response|
+      response.read_body
+    end
+  end
+
   def put(url, headers: {}, params: {}, content_type:, body:, ssl_context: nil, user: nil, password: nil)
     query = encode_params(params)
     unless query.empty?
@@ -72,6 +86,41 @@ class Puppet::HTTP::Client
     request.body = body
     request['Content-Length'] = body.bytesize
     request['Content-Type'] = content_type
+
+    execute_streaming(request, ssl_context: ssl_context, user: user, password: password) do |response|
+      response.read_body
+    end
+  end
+
+  def post(url, headers: {}, params: {}, content_type:, body:, ssl_context: nil, user: nil, password: nil, &block)
+    query = encode_params(params)
+    unless query.empty?
+      url = url.dup
+      url.query = query
+    end
+
+    request = Net::HTTP::Post.new(url, @default_headers.merge(headers))
+    request.body = body
+    request['Content-Length'] = body.bytesize
+    request['Content-Type'] = content_type
+
+    execute_streaming(request, ssl_context: ssl_context, user: user, password: password) do |response|
+      if block_given?
+        yield response
+      else
+        response.read_body
+      end
+    end
+  end
+
+  def delete(url, headers: {}, params: {}, ssl_context: nil, user: nil, password: nil)
+    query = encode_params(params)
+    unless query.empty?
+      url = url.dup
+      url.query = query
+    end
+
+    request = Net::HTTP::Delete.new(url, @default_headers.merge(headers))
 
     execute_streaming(request, ssl_context: ssl_context, user: user, password: password) do |response|
       response.read_body
