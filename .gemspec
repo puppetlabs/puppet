@@ -28,7 +28,6 @@ Gem::Specification.new do |s|
   s.homepage = "https://puppetlabs.com"
   s.rdoc_options = ["--title", "Puppet - Configuration Management", "--main", "README", "--line-numbers"]
   s.require_paths = ["lib"]
-  s.rubyforge_project = "puppet"
   s.summary = "Puppet, an automated configuration management tool"
   s.specification_version = 3
   s.add_runtime_dependency(%q<facter>, [">= 2.4.0", "< 4"])
