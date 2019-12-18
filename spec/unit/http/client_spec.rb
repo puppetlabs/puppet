@@ -131,6 +131,41 @@ describe Puppet::HTTP::Client do
     end
   end
 
+  context "for HEAD requests" do
+    it "includes default HTTP headers" do
+      stub_request(:head, uri).with(headers: {'X-Puppet-Version' => /./, 'User-Agent' => /./})
+
+      client.head(uri)
+    end
+
+    it "stringifies keys and encodes values in the query" do
+      stub_request(:head, uri).with(query: "foo=bar%3Dbaz")
+
+      client.head(uri, params: {:foo => "bar=baz"})
+    end
+
+    it "merges custom headers with default ones" do
+      stub_request(:head, uri).with(headers: { 'X-Foo' => 'Bar', 'X-Puppet-Version' => /./, 'User-Agent' => /./ })
+
+      client.head(uri, headers: {'X-Foo' => 'Bar'})
+    end
+
+    it "returns the response" do
+      stub_request(:head, uri)
+
+      response = client.head(uri)
+      expect(response).to be_an_instance_of(Puppet::HTTP::Response)
+      expect(response).to be_success
+      expect(response.code).to eq(200)
+    end
+
+    it "returns the entire response body" do
+      stub_request(:head, uri).to_return(body: "abc")
+
+      expect(client.head(uri).body).to eq("abc")
+    end
+  end
+
   context "for PUT requests" do
     it "includes default HTTP headers" do
       stub_request(:put, uri).with(headers: {'X-Puppet-Version' => /./, 'User-Agent' => /./})
@@ -163,6 +198,89 @@ describe Puppet::HTTP::Client do
       stub_request(:put, uri).with(headers: {"Content-Length" => "5", "Content-Type" => "text/plain"})
 
       client.put(uri, content_type: 'text/plain', body: "hello")
+    end
+  end
+
+  context "for POST requests" do
+    it "includes default HTTP headers" do
+      stub_request(:post, uri).with(headers: {'X-Puppet-Version' => /./, 'User-Agent' => /./})
+
+      client.post(uri, content_type: 'text/plain', body: "")
+    end
+
+    it "stringifies keys and encodes values in the query" do
+      stub_request(:post, "https://www.example.com").with(query: "foo=bar%3Dbaz")
+
+      client.post(uri, params: {:foo => "bar=baz"}, content_type: 'text/plain', body: "")
+    end
+
+    it "includes custom headers" do
+      stub_request(:post, "https://www.example.com").with(headers: { 'X-Foo' => 'Bar' })
+
+      client.post(uri, headers: {'X-Foo' => 'Bar'}, content_type: 'text/plain', body: "")
+    end
+
+    it "returns the response" do
+      stub_request(:post, uri)
+
+      response = client.post(uri, content_type: 'text/plain', body: "")
+      expect(response).to be_an_instance_of(Puppet::HTTP::Response)
+      expect(response).to be_success
+      expect(response.code).to eq(200)
+    end
+
+    it "sets content-length and content-type for the body" do
+      stub_request(:post, uri).with(headers: {"Content-Length" => "5", "Content-Type" => "text/plain"})
+
+      client.post(uri, content_type: 'text/plain', body: "hello")
+    end
+
+    it "streams the response body when a block is given" do
+      stub_request(:post, uri).to_return(body: "abc")
+
+      io = StringIO.new
+      client.post(uri, content_type: 'text/plain', body: "") do |response|
+        response.read_body do |data|
+          io.write(data)
+        end
+      end
+
+      expect(io.string).to eq("abc")
+    end
+  end
+
+  context "for DELETE requests" do
+    it "includes default HTTP headers" do
+      stub_request(:delete, uri).with(headers: {'X-Puppet-Version' => /./, 'User-Agent' => /./})
+
+      client.delete(uri)
+    end
+
+    it "merges custom headers with default ones" do
+      stub_request(:delete, uri).with(headers: { 'X-Foo' => 'Bar', 'X-Puppet-Version' => /./, 'User-Agent' => /./ })
+
+      client.delete(uri, headers: {'X-Foo' => 'Bar'})
+    end
+
+    it "stringifies keys and encodes values in the query" do
+      stub_request(:delete, "https://www.example.com").with(query: "foo=bar%3Dbaz")
+
+      client.delete(uri, params: {:foo => "bar=baz"})
+    end
+
+    it "returns the response" do
+      stub_request(:delete, uri)
+
+      response = client.delete(uri)
+      expect(response).to be_an_instance_of(Puppet::HTTP::Response)
+      expect(response).to be_success
+      expect(response.code).to eq(200)
+    end
+
+    it "returns the entire response body" do
+      stub_request(:delete, uri).to_return(body: "abc")
+
+      expect(client.delete(uri).body).to eq("abc")
     end
   end
 
