@@ -181,4 +181,15 @@ describe "Defaults" do
       end
     end
   end
+
+  describe "facterng", :if => Puppet::Util::Platform.windows? do
+    it "defaults to false" do
+      expect(Puppet[:facterng]).to be_falsey
+    end
+
+    it "raises an exception if facter-ng could not be loaded" do
+      allow(Puppet).to receive(:require).with('facter-ng').and_return(false)
+      expect{ Puppet.settings[:facterng] = true }.to raise_exception ArgumentError, 'facter-ng could not be loaded'
+    end
+  end
 end
