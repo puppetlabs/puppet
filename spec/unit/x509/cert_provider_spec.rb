@@ -251,11 +251,11 @@ describe Puppet::X509::CertProvider do
         }.to raise_error(RuntimeError, 'Certname "signed/../key" must not contain unprintable or non-ASCII characters')
       end
 
-      it 'returns nil if `hostprivkey` is overridden' do
+      it 'prefers `hostprivkey` if set' do
         Puppet[:certname] = 'foo'
         Puppet[:hostprivkey] = File.join(fixture_dir, "signed-key.pem")
 
-        expect(provider.load_private_key('foo')).to be_nil
+        expect(provider.load_private_key('foo')).to be_a(OpenSSL::PKey::RSA)
       end
 
       it 'raises if the private key is unreadable' do
@@ -345,11 +345,11 @@ describe Puppet::X509::CertProvider do
         }.to raise_error(RuntimeError, 'Certname "tom/../key" must not contain unprintable or non-ASCII characters')
       end
 
-      it 'returns nil if `hostcert` is overridden' do
+      it 'prefers `hostcert` if set' do
         Puppet[:certname] = 'foo'
         Puppet[:hostcert] = File.join(fixture_dir, "signed.pem")
 
-        expect(provider.load_client_cert('foo')).to be_nil
+        expect(provider.load_client_cert('foo')).to be_a(OpenSSL::X509::Certificate)
       end
 
       it 'raises if the certificate is unreadable' do
@@ -446,6 +446,16 @@ describe Puppet::X509::CertProvider do
           provider.save_private_key(name, private_key)
         }.to raise_error(Puppet::Error, "Failed to save private key for '#{name}'")
       end
+
+      it 'prefers `hostprivkey` if set' do
+        overridden_path = tmpfile('hostprivkey')
+        Puppet[:hostprivkey] = overridden_path
+
+        provider.save_private_key(name, private_key)
+
+        expect(File).to_not exist(path)
+        expect(File).to exist(overridden_path)
+      end
     end
 
     context 'certs' do
@@ -484,6 +494,16 @@ describe Puppet::X509::CertProvider do
         expect {
           provider.save_client_cert(name, client_cert)
         }.to raise_error(Puppet::Error, "Failed to save client certificate for '#{name}'")
+      end
+
+      it 'prefers `hostcert` if set' do
+        overridden_path = tmpfile('hostcert')
+        Puppet[:hostcert] = overridden_path
+
+        provider.save_client_cert(name, client_cert)
+
+        expect(File).to_not exist(path)
+        expect(File).to exist(overridden_path)
       end
     end
 

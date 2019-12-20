@@ -16,12 +16,16 @@ class Puppet::X509::CertProvider
                  crlpath: Puppet[:hostcrl],
                  privatekeydir: Puppet[:privatekeydir],
                  certdir: Puppet[:certdir],
-                 requestdir: Puppet[:requestdir])
+                 requestdir: Puppet[:requestdir],
+                 hostprivkey: Puppet.settings.set_by_config?(:hostprivkey) ? Puppet[:hostprivkey] : nil,
+                 hostcert: Puppet.settings.set_by_config?(:hostcert) ? Puppet[:hostcert] : nil)
     @capath = capath
     @crlpath = crlpath
     @privatekeydir = privatekeydir
     @certdir = certdir
     @requestdir = requestdir
+    @hostprivkey = hostprivkey
+    @hostcert = hostcert
   end
 
   # Save `certs` to the configured `capath`.
@@ -146,7 +150,7 @@ class Puppet::X509::CertProvider
           else
             key.to_pem
           end
-    path = to_path(@privatekeydir, name)
+    path = @hostprivkey || to_path(@privatekeydir, name)
     save_pem(pem, path, **permissions_for_setting(:hostprivkey))
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to save private key for '%{name}'") % {name: name}, e)
@@ -165,7 +169,7 @@ class Puppet::X509::CertProvider
   # @raise [Puppet::Error] if the private key cannot be loaded
   # @api private
   def load_private_key(name, required: false, password: nil)
-    path = to_path(@privatekeydir, name)
+    path = @hostprivkey || to_path(@privatekeydir, name)
     pem = load_pem(path)
     if !pem && required
       raise Puppet::Error, _("The private key is missing from '%{path}'") % { path: path }
@@ -225,7 +229,7 @@ class Puppet::X509::CertProvider
   # @raise [Puppet::Error] if the client cert cannot be saved
   # @api private
   def save_client_cert(name, cert)
-    path = to_path(@certdir, name)
+    path = @hostcert || to_path(@certdir, name)
     save_pem(cert.to_pem, path, **permissions_for_setting(:hostcert))
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to save client certificate for '%{name}'") % {name: name}, e)
@@ -240,7 +244,7 @@ class Puppet::X509::CertProvider
   # @raise [Puppet::Error] if the client cert cannot be loaded
   # @api private
   def load_client_cert(name, required: false)
-    path = to_path(@certdir, name)
+    path = @hostcert || to_path(@certdir, name)
     pem = load_pem(path)
     if !pem && required
       raise Puppet::Error, _("The client certificate is missing from '%{path}'") % { path: path }
