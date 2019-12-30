@@ -1,12 +1,14 @@
 class Puppet::HTTP::Service
   attr_reader :url
 
-  SERVICE_NAMES = [:ca].freeze
+  SERVICE_NAMES = [:ca, :report].freeze
 
   def self.create_service(client, name, server = nil, port = nil)
     case name
     when :ca
       Puppet::HTTP::Service::Ca.new(client, server, port)
+    when :report
+      Puppet::HTTP::Service::Report.new(client, server, port)
     else
       raise ArgumentError, "Unknown service #{name}"
     end
