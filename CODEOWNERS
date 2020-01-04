@@ -1,15 +1,16 @@
 # default to platform-core
 * @puppetlabs/platform-core
+* @puppetlabs/puppetserver-maintainers
 
-# platform-os
-/lib/puppet/type/group @puppetlabs/platform-os
-/lib/puppet/type/package @puppetlabs/platform-os
-/lib/puppet/type/service @puppetlabs/platform-os
-/lib/puppet/type/user @puppetlabs/platform-os
-/lib/puppet/provider/group @puppetlabs/platform-os
-/lib/puppet/provider/package @puppetlabs/platform-os
-/lib/puppet/provider/service @puppetlabs/platform-os
-/lib/puppet/provider/user @puppetlabs/platform-os
+# Night's Watch
+/lib/puppet/type/group @puppetlabs/night-s-watch
+/lib/puppet/type/package @puppetlabs/night-s-watch
+/lib/puppet/type/service @puppetlabs/night-s-watch
+/lib/puppet/type/user @puppetlabs/night-s-watch
+/lib/puppet/provider/group @puppetlabs/night-s-watch
+/lib/puppet/provider/package @puppetlabs/night-s-watch
+/lib/puppet/provider/service @puppetlabs/night-s-watch
+/lib/puppet/provider/user @puppetlabs/night-s-watch
 
 # language
 /lib/puppet/datatypes @puppetlabs/language
