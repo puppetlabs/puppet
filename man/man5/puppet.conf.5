@@ -1519,6 +1519,14 @@ The public key directory\.
 .
 .IP "" 0
 .
+.SS "puppet_trace"
+Whether to print the Puppet stack trace on some errors\. This is a noop if \fBtrace\fR is also set\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: false
+.
+.IP "" 0
+.
 .SS "puppetdlog"
 The fallback log file\. This is only used when the \fB\-\-logdest\fR option is not specified AND Puppet is running on an operating system where both the POSIX syslog service and the Windows Event Log are unavailable\. (Currently, no supported operating systems match that description\.)
 .
@@ -1936,7 +1944,7 @@ Turns on experimental support for tasks and plans in the puppet language\. This 
 .IP "" 0
 .
 .SS "trace"
-Whether to print stack traces on some errors
+Whether to print stack traces on some errors\. Will print internal Ruby stack trace interleaved with Puppet function frames\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: false
