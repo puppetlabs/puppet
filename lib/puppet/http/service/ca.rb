@@ -21,11 +21,11 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
 
   def get_certificate_revocation_list(if_modified_since: nil, ssl_context: nil)
     request_headers = if if_modified_since
-                        h = HEADERS.dup
+                        h = add_puppet_headers(HEADERS).dup
                         h['If-Modified-Since'] = if_modified_since.httpdate
                         h
                       else
-                        HEADERS
+                        add_puppet_headers(HEADERS)
                       end
 
     response = @client.get(
@@ -42,7 +42,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   def put_certificate_request(name, csr, ssl_context: nil)
     response = @client.put(
       with_base_url("/certificate_request/#{name}"),
-      headers: HEADERS,
+      headers: add_puppet_headers(HEADERS),
       content_type: 'text/plain',
       body: csr.to_pem,
       ssl_context: ssl_context
