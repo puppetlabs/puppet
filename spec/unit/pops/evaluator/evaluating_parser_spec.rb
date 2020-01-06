@@ -442,21 +442,26 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       }.each do |source, coerced_val|
           it "should warn about numeric coercion in '#{source}' when strict = warning" do
             Puppet[:strict] = :warning
+            expect(Puppet::Pops::Evaluator::Runtime3Support::EvaluationError).not_to receive(:new)
             collect_notices(source)
             expect(warnings).to include(/The string '#{coerced_val}' was automatically coerced to the numerical value #{coerced_val}/)
           end
 
           it "should not warn about numeric coercion in '#{source}' if strict = off" do
             Puppet[:strict] = :off
+            expect(Puppet::Pops::Evaluator::Runtime3Support::EvaluationError).not_to receive(:new)
             collect_notices(source)
             expect(warnings).to_not include(/The string '#{coerced_val}' was automatically coerced to the numerical value #{coerced_val}/)
           end
 
         it "should error when finding numeric coercion in '#{source}' if strict = error" do
           Puppet[:strict] = :error
-          expect { parser.evaluate_string(scope, source, __FILE__) }.to raise_error(
-            /The string '#{coerced_val}' was automatically coerced to the numerical value #{coerced_val}/
-            )
+          expect {
+            parser.evaluate_string(scope, source, __FILE__)
+          }.to raise_error {|error|
+            expect(error.message).to match(/The string '#{coerced_val}' was automatically coerced to the numerical value #{coerced_val}/)
+            expect(error.backtrace.first).to match(/runtime3_support\.rb.+optionally_fail/)
+          }
         end
       end
 
