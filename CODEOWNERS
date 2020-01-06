@@ -1,5 +1,5 @@
 # default to platform-core
-* @puppetlabs/platform-core
+* @puppetlabs/platform-core @puppetlabs/puppetserver-maintainers
 
 # Night's Watch
 /lib/puppet/type/group @puppetlabs/night-s-watch
