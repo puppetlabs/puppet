@@ -85,7 +85,10 @@ describe Puppet::HTTP::Client do
 
   context "for GET requests" do
     it "includes default HTTP headers" do
-      stub_request(:get, uri).with(headers: {'X-Puppet-Version' => /./, 'User-Agent' => /./})
+      stub_request(:get, uri).with do |request|
+        expect(request.headers).to include({'X-Puppet-Version' => /./, 'User-Agent' => /./})
+        expect(request.headers).to_not include('X-Puppet-Profiling')
+      end
 
       client.get(uri)
     end
@@ -168,7 +171,10 @@ describe Puppet::HTTP::Client do
 
   context "for PUT requests" do
     it "includes default HTTP headers" do
-      stub_request(:put, uri).with(headers: {'X-Puppet-Version' => /./, 'User-Agent' => /./})
+      stub_request(:put, uri).with do |request|
+        expect(request.headers).to include({'X-Puppet-Version' => /./, 'User-Agent' => /./})
+        expect(request.headers).to_not include('X-Puppet-Profiling')
+      end
 
       client.put(uri, content_type: 'text/plain', body: "")
     end

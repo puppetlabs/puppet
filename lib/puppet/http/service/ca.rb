@@ -10,7 +10,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   def get_certificate(name, ssl_context: nil)
     response = @client.get(
       with_base_url("/certificate/#{name}"),
-      headers: HEADERS,
+      headers: add_puppet_headers(HEADERS),
       ssl_context: ssl_context
     )
 
