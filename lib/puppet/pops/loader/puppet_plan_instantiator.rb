@@ -19,8 +19,17 @@ class PuppetPlanInstantiator
 
     # parse and validate
     result = parser.parse_string(pp_code_string, source_ref)
-    # Only one function is allowed (and no other definitions)
-    case result.definitions.size
+
+    # The parser attaches all definitions, including those nested in apply
+    # blocks, to the Program object. Node definitions in apply blocks are
+    # perfectly legal and don't count as the file containing multiple
+    # definitions for this purpose. By this point, we've already validated that
+    # there are no node definitions *outside* apply blocks, so we simply ignore
+    # them here.
+    definitions = result.definitions.reject { |definition| definition.is_a?(Puppet::Pops::Model::NodeDefinition) }
+
+    # Only one plan is allowed (and no other definitions)
+    case definitions.size
     when 0
       raise ArgumentError, _("The code loaded from %{source_ref} does not define the plan '%{plan_name}' - it is empty.") % { source_ref: source_ref, plan_name: typed_name.name }
     when 1
@@ -28,7 +37,7 @@ class PuppetPlanInstantiator
     else
       raise ArgumentError, _("The code loaded from %{source_ref} must contain only the plan '%{plan_name}' - it has additional definitions.") % { source_ref: source_ref, plan_name: typed_name.name }
     end
-    the_plan_definition = result.definitions[0]
+    the_plan_definition = definitions[0]
 
     unless the_plan_definition.is_a?(Model::PlanDefinition)
       raise ArgumentError, _("The code loaded from %{source_ref} does not define the plan '%{plan_name}' - no plan found.") % { source_ref: source_ref, plan_name: typed_name.name }

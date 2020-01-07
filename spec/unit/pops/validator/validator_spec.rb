@@ -486,10 +486,15 @@ describe "validating 4x" do
         expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
       end
 
-      it 'produces an error for node expressions' do
+      it 'allows node expressions' do
         acceptor = validate(parse('apply("foo.example.com") { node default {} }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'produces an error for node expressions nested in a block' do
+        acceptor = validate(parse('apply("foo.example.com") { if true { node default {} } }'))
         expect(acceptor.error_count).to eql(1)
-        expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::NOT_TOP_LEVEL)
       end
 
       it 'produces an error for resource definitions' do

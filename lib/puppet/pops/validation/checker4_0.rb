@@ -93,7 +93,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     o = container(idx)
     idx -= 1
     case o
-    when NilClass, Model::HostClassDefinition, Model::Program
+    when NilClass, Model::ApplyExpression, Model::HostClassDefinition, Model::Program
       # ok, stop scanning parents
     when Model::BlockExpression
       c = container(idx)
