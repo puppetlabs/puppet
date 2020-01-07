@@ -28,7 +28,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     begin
       execpipe(listcmd) do |process|
         # our regex for matching pkg_info output
-        regex = /^(.*)-(\d[^-]*)[-]?(\w*)(.*)$/
+        regex = /^(.*)-(\d[^-]*)[-]?([\w-]*)(.*)$/
         fields = [:name, :ensure, :flavor ]
         hash = {}
 
