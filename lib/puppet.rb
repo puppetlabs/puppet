@@ -205,6 +205,8 @@ module Puppet
       end
     end
 
+    using_hash = settings.respond_to?(:get_parsed_setting_for_context) ? false : true
+
     {
       :environments => Puppet::Environments::Cached.new(Puppet::Environments::Combined.new(*loaders)),
       :http_pool => proc {
@@ -228,10 +230,10 @@ module Puppet
       :ssl_host => proc { Puppet::SSL::Host.localhost },
       :plugins => proc { Puppet::Plugins::Configuration.load_plugins },
       :rich_data => false,
-      :strict => settings[:strict],
-      :strict_variables => settings[:strict_variables],
-      :tasks => settings[:tasks],
-      :code => settings[:code],
+      :strict => using_hash ? settings[:strict] : settings.get_parsed_setting_for_context(:strict),
+      :strict_variables => using_hash ? settings[:strict_variables] : settings.get_parsed_setting_for_context(:strict_variables),
+      :tasks => using_hash ? settings[:tasks] : settings.get_parsed_setting_for_context(:tasks),
+      :code => using_hash ? settings[:code] : settings.get_parsed_setting_for_context(:code),
     }
   end
 

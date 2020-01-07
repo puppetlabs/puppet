@@ -541,6 +541,54 @@ describe Puppet::Settings do
     end
   end
 
+  describe "when accessing values moved to the context" do
+    before do
+      @settings = Puppet::Settings.new
+      @settings.define_settings :section,
+        :strict => { :type    => :symbolic_enum,
+                     :default => :warning,
+                     :desc    => "setting",
+                     :values  => [:off, :warning, :error],
+                     :hook    => proc {|val| munge(val); val.to_sym} }
+    end
+
+    it "updates context when set" do
+      @settings[:strict] = :off
+
+      expect(Puppet.lookup(:strict)).to equal :off
+    end
+
+    it "munges values before setting the context" do
+      @settings[:strict] = "off"
+
+      expect(Puppet.lookup(:strict)).to equal :off
+    end
+
+    it "still validates input values" do
+      expect {
+        @settings[:strict] = :fubar
+      }.to raise_error(Puppet::Settings::ValidationError)
+    end
+
+    it "warns callers to use the context when looking up a value" do
+      @settings[:strict]
+      expect(@logs.length).to equal 1
+      expect(@logs[0].message).to match(/Use the context/)
+    end
+
+    it "warns callers to use the context when setting a value" do
+      @settings[:strict] = :off
+      expect(@logs.length).to equal 1
+      expect(@logs[0].message).to match(/Use the context/)
+    end
+
+    it "allows accessing settings w/o deprecation warnings for bootstrapping" do
+      setting = @settings.get_parsed_setting_for_context(:strict)
+      expect(setting).to equal :warning
+      expect(@logs).to be_empty
+    end
+  end
+
   describe "when returning values" do
     before do
       @settings = Puppet::Settings.new

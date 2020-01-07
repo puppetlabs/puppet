@@ -149,6 +149,7 @@ class Puppet::Settings
 
     @hooks_to_call_on_application_initialization = []
     @deprecated_setting_names = []
+    @mutable_settings_in_context = %i{tasks strict strict_variables code}
     @deprecated_settings_that_have_been_configured = []
 
     @translate = Puppet::Settings::ValueTranslator.new
@@ -162,20 +163,43 @@ class Puppet::Settings
   def [](param)
     if @deprecated_setting_names.include?(param)
       issue_deprecation_warning(setting(param), "Accessing '#{param}' as a setting is deprecated.")
+    elsif @mutable_settings_in_context.include?(param)
+      Puppet.deprecation_warning("Accessing '#{param}' as a setting is deprecated. Use the context, eg: Puppet.lookup(:#{param})")
+      return Puppet.lookup(param)
     end
     value(param)
   end
 
   # Set a config value.  This doesn't set the defaults, it sets the value itself.
+  # Note: even for those setttings moved to the context we first set the value
+  #   in the settings object, so the appropriate hooks may be called.
   # @param param [Symbol] the name of the setting
-  # @param value [Object] the new value of the setting
+  # @param new_value [Object] the new value of the setting
   # @api private
-  def []=(param, value)
+  def []=(param, new_value)
     if @deprecated_setting_names.include?(param)
       issue_deprecation_warning(setting(param), "Modifying '#{param}' as a setting is deprecated.")
     end
-    @value_sets[:memory].set(param, value)
+
+    @value_sets[:memory].set(param, new_value)
+
+    if @mutable_settings_in_context.include?(param)
+      Puppet.deprecation_warning("Modifying '#{param}' as a setting is deprecated. Use the context, eg: Puppet.override(:#{param} => '#{new_value}') do ...your code... end")
+      Puppet.push_context(param => value(param))
+    end
+
     unsafe_flush_cache
+  end
+
+  # Retrieve the value of parsed settings that have been moved to the context
+  # without issuing deprecation warnings. This is only for use by the base_context
+  # when Puppet is bootstrapping itself.
+  # @param param [Symbol] the setting to lookup
+  # @api private
+  def get_parsed_setting_for_context(param)
+    if @mutable_settings_in_context.include?(param)
+      value(param)
+    end
   end
 
   # Create a new default value for the given setting. The default overrides are
