@@ -7,14 +7,11 @@ test_name "C98094 - a resource changed via Puppet manifest will not be reported 
   require 'puppet/acceptance/agent_fqdn_utils'
   extend Puppet::Acceptance::AgentFqdnUtils
 
-  test_file_name     = File.basename(__FILE__, '.*')
-  tmp_environment    = mk_tmp_environment_with_teardown(master, test_file_name)
-  tmp_file           = {}
-
   tag 'audit:medium',
       'audit:integration',
       'audit:refactor',    # Uses a server currently, but is testing agent report
-      'broken:images'
+      'broken:images',
+      'server'
 
   test_file_name = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, test_file_name)

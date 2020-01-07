@@ -6,6 +6,7 @@ tag 'audit:medium',
     'audit:acceptance',
     'audit:refactor',  # Master is not needed for this test. Refactor
                        # to use puppet apply with a local environment.
+    'server'
 
   # The following two lines are required for the puppetserver service to
   # start correctly. These should be removed when PUP-7102 is resolved.

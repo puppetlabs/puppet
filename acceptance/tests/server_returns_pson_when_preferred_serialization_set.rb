@@ -1,5 +1,4 @@
 test_name "C100532: Server returns expected format when --preferred_serialization_format is set" do
-  skip_test 'requires a master' if master.nil?
 
   tag 'risk:medium',
       'audit:medium',

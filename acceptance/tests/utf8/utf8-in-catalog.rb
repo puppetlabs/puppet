@@ -2,7 +2,8 @@ test_name 'utf-8 characters in cached catalog' do
 
   tag 'audit:high', # utf-8 is high impact in general
       'audit:integration', # not package dependent but may want to vary platform by LOCALE/encoding
-      'audit:refactor' # use mk_temp_environment_with_teardown
+      'audit:refactor', # use mk_temp_environment_with_teardown
+      'server'
 
   utf8chars     = "\u20ac\u2030\u3118\u4e07\u7af9\u00dc\u00d6"
   file_content  = "This is the file content. file #{utf8chars}"

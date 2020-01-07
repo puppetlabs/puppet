@@ -5,16 +5,16 @@ extend Puppet::Acceptance::TempFileUtils
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils
 
-disable_pe_enterprise_mcollective_agent_classes
-
-initialize_temp_dirs
-
 test_name "certificate extensions available as trusted data" do
   confine :except, :platform => /^cisco_/ # See PUP-5827
 
   tag 'audit:high',        # ca/cert core functionality
       'audit:integration',
       'server'             # Ruby implimentation is deprecated
+
+  disable_pe_enterprise_mcollective_agent_classes
+
+  initialize_temp_dirs
 
   agent_certnames = []
 
