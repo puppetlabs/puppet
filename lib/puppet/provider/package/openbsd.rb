@@ -20,6 +20,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   has_feature :install_options
   has_feature :uninstall_options
   has_feature :upgradeable
+  has_feature :supports_flavors
 
   def self.instances
     packages = []
@@ -238,5 +239,16 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
   def purge
     pkgdelete "-c", "-q", @resource[:name]
+  end
+
+  def flavor
+    @property_hash[:flavor]
+  end
+
+  def flavor=(value)
+    if flavor != @resource.should(:flavor)
+      uninstall
+      install
+    end
   end
 end

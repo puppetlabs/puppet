@@ -62,6 +62,7 @@ module Puppet
       passed to the installer command."
     feature :uninstall_options, "The provider accepts options to be
       passed to the uninstaller command."
+    feature :supports_flavors, "The provider accepts flavors, which are specific variants of packages."
     feature :package_settings, "The provider accepts package_settings to be
       ensured for the given package. The meaning and format of these settings is
       provider-specific.",
@@ -401,6 +402,11 @@ module Puppet
       end
     end
 
+    newproperty(:flavor, :required_features => :supports_flavors) do
+      desc "OpenBSD and DNF modules support 'flavors', which are
+        further specifications for which type of package you want."
+    end
+
     newparam(:source) do
       desc "Where to find the package file. This is only used by providers that don't
         automatically download packages from a central repository. (For example:
@@ -478,11 +484,6 @@ module Puppet
         Normally apt will bail if you try this."
 
       newvalues(:true, :false)
-    end
-
-    newparam(:flavor) do
-      desc "OpenBSD and DNF modules support 'flavors', which are
-        further specifications for which type of package you want."
     end
 
     newparam(:install_only, :boolean => false, :parent => Puppet::Parameter::Boolean, :required_features => :install_only) do
