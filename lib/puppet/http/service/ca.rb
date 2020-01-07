@@ -20,17 +20,12 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   end
 
   def get_certificate_revocation_list(if_modified_since: nil, ssl_context: nil)
-    request_headers = if if_modified_since
-                        h = add_puppet_headers(HEADERS).dup
-                        h['If-Modified-Since'] = if_modified_since.httpdate
-                        h
-                      else
-                        add_puppet_headers(HEADERS)
-                      end
+    headers = add_puppet_headers(HEADERS)
+    headers['If-Modified-Since'] = if_modified_since.httpdate if if_modified_since
 
     response = @client.get(
       with_base_url("/certificate_revocation_list/ca"),
-      headers: request_headers,
+      headers: headers,
       ssl_context: ssl_context
     )
 
