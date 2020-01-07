@@ -19,7 +19,7 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
 
     response = @client.put(
       with_base_url("/report/#{name}"),
-      headers: { 'ACCEPT' => mime_types.join(', ') },
+      headers: add_puppet_headers('ACCEPT' => mime_types.join(', ')),
       params: { :environment => environment },
       content_type: formatter.mime,
       body: formatter.render(report),
@@ -31,8 +31,8 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
     server_version = response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION]
     if server_version && SemanticPuppet::Version.parse(server_version).major < MAJOR_VERSION_JSON_DEFAULT &&
         Puppet[:preferred_serialization_format] != 'pson'
-      #TRANSLATORS "pson", "preffered_serialization_format", and "puppetserver" should not be translated
-      raise Puppet::Error.new(_("To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson") % { server_version: server_version })
+      #TRANSLATORS "pson", "preferred_serialization_format", and "puppetserver" should not be translated
+      raise Puppet::HTTP::ProtocolError.new(_("To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson") % { server_version: server_version })
     end
 
     raise Puppet::HTTP::ResponseError.new(response)
