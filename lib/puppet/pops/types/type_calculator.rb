@@ -1,3 +1,5 @@
+require 'puppet/concurrent/thread_local_singleton'
+
 module Puppet::Pops
 module Types
 # The TypeCalculator can answer questions about puppet types.
@@ -99,6 +101,7 @@ module Types
 # @api public
 #
 class TypeCalculator
+  extend Puppet::Concurrent::ThreadLocalSingleton
 
   # @api public
   def self.assignable?(t1, t2)
@@ -135,18 +138,11 @@ class TypeCalculator
     singleton.iterable(t)
   end
 
-  # @return [TypeCalculator] the singleton instance
-  #
-  # @api private
-  def self.singleton
-    @tc_instance ||= new
-  end
-
   # @api public
   #
   def initialize
-    @@infer_visitor ||= Visitor.new(nil, 'infer',0,0)
-    @@extract_visitor ||= Visitor.new(nil, 'extract',0,0)
+    @infer_visitor = Visitor.new(nil, 'infer',0,0)
+    @extract_visitor = Visitor.new(nil, 'extract',0,0)
   end
 
   # Answers 'can an instance of type t2 be assigned to a variable of type t'.
@@ -250,7 +246,7 @@ class TypeCalculator
     elsif o.is_a?(Evaluator::PuppetProc)
       infer_PuppetProc(o)
     else
-      @@infer_visitor.visit_this_0(self, o)
+      @infer_visitor.visit_this_0(self, o)
     end
   end
 

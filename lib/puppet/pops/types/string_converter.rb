@@ -1,3 +1,5 @@
+require 'puppet/concurrent/thread_local_singleton'
+
 module Puppet::Pops
 module Types
 
@@ -238,22 +240,17 @@ class StringConverter
     end
   end
 
+  extend Puppet::Concurrent::ThreadLocalSingleton
+
   # @api public
   def self.convert(value, string_formats = :default)
     singleton.convert(value, string_formats)
   end
 
-  # @return [TypeConverter] the singleton instance
-  #
-  # @api public
-  def self.singleton
-    @tconv_instance ||= new
-  end
-
   # @api private
   #
   def initialize
-    @@string_visitor   ||= Visitor.new(self, "string", 3, 3)
+    @string_visitor = Visitor.new(self, "string", 3, 3)
   end
 
   DEFAULT_INDENTATION = Indentation.new(0, true, false).freeze
@@ -523,7 +520,7 @@ class StringConverter
 #  end
 
   def _convert(val_type, value, format_map, indentation)
-    @@string_visitor.visit_this_3(self, val_type, value, format_map, indentation)
+    @string_visitor.visit_this_3(self, val_type, value, format_map, indentation)
   end
   private :_convert
 

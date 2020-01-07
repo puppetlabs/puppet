@@ -1,3 +1,5 @@
+require 'puppet/concurrent/thread_local_singleton'
+
 module Puppet::Pops
 module Types
 # String
@@ -7,6 +9,8 @@ module Types
 # @api public
 #
 class TypeFormatter
+  extend Puppet::Concurrent::ThreadLocalSingleton
+
   # Produces a String representation of the given type.
   # @param t [PAnyType] the type to produce a string form
   # @return [String] the type in string form
@@ -14,14 +18,11 @@ class TypeFormatter
   # @api public
   #
   def self.string(t)
-    @singleton.string(t)
+    singleton.string(t)
   end
 
-  # @return [TypeCalculator] the singleton instance
-  #
-  # @api private
-  def self.singleton
-    @singleton
+  def initialize
+    @string_visitor = Visitor.new(nil, 'string',0,0)
   end
 
   def expanded
@@ -105,13 +106,13 @@ class TypeFormatter
       @ruby = false
       begin
         @bld << @ref_ctor << '('
-        @@string_visitor.visit_this_0(self, TypeFormatter.new.string(t))
+        @string_visitor.visit_this_0(self, TypeFormatter.new.string(t))
         @bld << ')'
       ensure
         @ruby = true
       end
     else
-      @@string_visitor.visit_this_0(self, t)
+      @string_visitor.visit_this_0(self, t)
     end
   end
 
@@ -794,9 +795,6 @@ class TypeFormatter
   def chomp_list
     @bld.chomp!(COMMA_SEP)
   end
-
-  @singleton = new
-  @@string_visitor = Visitor.new(nil, 'string',0,0)
 end
 end
 end
