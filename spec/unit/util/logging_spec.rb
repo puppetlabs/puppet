@@ -13,6 +13,39 @@ class LoggingTester
   include Puppet::Util::Logging
 end
 
+class PuppetStackCreator
+  def raise_error(exception_class)
+    case exception_class
+    when Puppet::ParseErrorWithIssue
+      raise exception_class.new('Oops', '/tmp/test.pp', 30, 15, nil, :SYNTAX_ERROR)
+    when Puppet::ParseError
+      raise exception_class.new('Oops', '/tmp/test.pp', 30, 15)
+    else
+      raise exception_class.new('Oops')
+    end
+  end
+
+  def call_raiser(exception_class)
+    Puppet::Pops::PuppetStack.stack('/tmp/test2.pp', 20, self, :raise_error, [exception_class])
+  end
+
+  def two_frames_and_a_raise(exception_class)
+    Puppet::Pops::PuppetStack.stack('/tmp/test3.pp', 15, self, :call_raiser, [exception_class])
+  end
+
+  def outer_rescue(exception_class)
+    begin
+      two_frames_and_a_raise(exception_class)
+    rescue Puppet::Error => e
+      Puppet.log_exception(e)
+    end
+  end
+
+  def run(exception_class)
+    Puppet::Pops::PuppetStack.stack('/tmp/test4.pp', 10, self, :outer_rescue, [exception_class])
+  end
+end
+
 describe Puppet::Util::Logging do
   before do
     @logger = LoggingTester.new
@@ -339,6 +372,173 @@ original
 .*1\.rb:4:in `a'
 .*2\.rb:2:in `b'
 .*3\.rb:1/)
+    end
+
+    describe "when trace is disabled" do
+      it 'excludes backtrace for RuntimeError in log message' do
+        begin
+          raise RuntimeError, 'Oops'
+        rescue RuntimeError => e
+          Puppet.log_exception(e)
+        end
+
+        expect(@logs.size).to eq(1)
+        log = @logs[0]
+        expect(log.message).to_not match('/logging_spec.rb')
+        expect(log.backtrace).to be_nil
+      end
+
+      it "backtrace member is unset when logging ParseErrorWithIssue" do
+        begin
+          raise Puppet::ParseErrorWithIssue.new('Oops', '/tmp/test.pp', 30, 15, nil, :SYNTAX_ERROR)
+        rescue RuntimeError => e
+          Puppet.log_exception(e)
+        end
+
+        expect(@logs.size).to eq(1)
+        log = @logs[0]
+        expect(log.message).to_not match('/logging_spec.rb')
+        expect(log.backtrace).to be_nil
+      end
+    end
+
+    describe "when trace is enabled" do
+      it 'includes backtrace for RuntimeError in log message when enabled globally' do
+        Puppet[:trace] = true
+        begin
+          raise RuntimeError, 'Oops'
+        rescue RuntimeError => e
+          Puppet.log_exception(e, :default)
+        end
+        Puppet[:trace] = false
+
+        expect(@logs.size).to eq(1)
+        log = @logs[0]
+        expect(log.message).to match('/logging_spec.rb')
+        expect(log.backtrace).to be_nil
+      end
+
+      it 'includes backtrace for RuntimeError in log message when enabled via option' do
+        begin
+          raise RuntimeError, 'Oops'
+        rescue RuntimeError => e
+          Puppet.log_exception(e, :default, :trace => true)
+        end
+
+        expect(@logs.size).to eq(1)
+        log = @logs[0]
+        expect(log.message).to match('/logging_spec.rb')
+        expect(log.backtrace).to be_nil
+      end
+
+
+      it "backtrace member is set when logging ParseErrorWithIssue" do
+        begin
+          raise Puppet::ParseErrorWithIssue.new('Oops', '/tmp/test.pp', 30, 15, nil, :SYNTAX_ERROR)
+        rescue RuntimeError => e
+          Puppet.log_exception(e, :default, :trace => true)
+        end
+
+        expect(@logs.size).to eq(1)
+        log = @logs[0]
+        expect(log.message).to_not match('/logging_spec.rb')
+        expect(log.backtrace).to be_a(Array)
+        expect(log.backtrace[0]).to match('/logging_spec.rb')
+      end
+      it "backtrace has interleaved PuppetStack when logging ParseErrorWithIssue" do
+        Puppet[:trace] = true
+        PuppetStackCreator.new.run(Puppet::ParseErrorWithIssue)
+        Puppet[:trace] = false
+
+        expect(@logs.size).to eq(1)
+        log = @logs[0]
+        expect(log.message).to_not match('/logging_spec.rb')
+        expect(log.backtrace[0]).to match('/logging_spec.rb')
+
+        expect(log.backtrace[1]).to match('/tmp/test2.pp:20')
+        puppetstack = log.backtrace.select { |l| l =~ /tmp\/test\d\.pp/ }
+
+        expect(puppetstack.length).to equal 3
+      end
+
+      it "message has interleaved PuppetStack when logging ParseError" do
+        Puppet[:trace] = true
+        PuppetStackCreator.new.run(Puppet::ParseError)
+        Puppet[:trace] = false
+
+        expect(@logs.size).to eq(1)
+        log = @logs[0]
+
+        log_lines = log.message.split("\n")
+        expect(log_lines[1]).to match('/logging_spec.rb')
+        expect(log_lines[2]).to match('/tmp/test2.pp:20')
+        puppetstack = log_lines.select { |l| l =~ /tmp\/test\d\.pp/ }
+
+        expect(puppetstack.length).to equal 3
+      end
+    end
+
+    describe "when trace is disabled but puppet_trace is enabled" do
+      it "includes only PuppetStack as backtrace member with ParseErrorWithIssue" do
+        Puppet[:trace] = false
+        Puppet[:puppet_trace] = true
+        PuppetStackCreator.new.run(Puppet::ParseErrorWithIssue)
+        Puppet[:trace] = false
+        Puppet[:puppet_trace] = false
+
+        expect(@logs.size).to eq(1)
+        log = @logs[0]
+
+        expect(log.backtrace[0]).to match('/tmp/test2.pp:20')
+        expect(log.backtrace.length).to equal 3
+      end
+
+      it "includes only PuppetStack in message with ParseError" do
+        Puppet[:trace] = false
+        Puppet[:puppet_trace] = true
+        PuppetStackCreator.new.run(Puppet::ParseError)
+        Puppet[:trace] = false
+        Puppet[:puppet_trace] = false
+
+        expect(@logs.size).to eq(1)
+        log = @logs[0]
+
+        log_lines = log.message.split("\n")
+        expect(log_lines[1]).to match('/tmp/test2.pp:20')
+        puppetstack = log_lines.select { |l| l =~ /tmp\/test\d\.pp/ }
+
+        expect(puppetstack.length).to equal 3
+      end
+    end
+
+    it 'includes position details for ParseError in log message' do
+      begin
+        raise Puppet::ParseError.new('Oops', '/tmp/test.pp', 30, 15)
+      rescue RuntimeError => e
+        Puppet.log_exception(e)
+      end
+
+      expect(@logs.size).to eq(1)
+      log = @logs[0]
+      expect(log.message).to match(/ \(file: \/tmp\/test\.pp, line: 30, column: 15\)/)
+      expect(log.message).to be(log.to_s)
+    end
+
+    it 'excludes position details for ParseErrorWithIssue from log message' do
+      begin
+        raise Puppet::ParseErrorWithIssue.new('Oops', '/tmp/test.pp', 30, 15, nil, :SYNTAX_ERROR)
+      rescue RuntimeError => e
+        Puppet.log_exception(e)
+      end
+
+      expect(@logs.size).to eq(1)
+      log = @logs[0]
+      expect(log.message).to_not match(/ \(file: \/tmp\/test\.pp, line: 30, column: 15\)/)
+      expect(log.to_s).to match(/ \(file: \/tmp\/test\.pp, line: 30, column: 15\)/)
+      expect(log.issue_code).to eq(:SYNTAX_ERROR)
+      expect(log.file).to eq('/tmp/test.pp')
+      expect(log.line).to eq(30)
+      expect(log.pos).to eq(15)
     end
   end
 
