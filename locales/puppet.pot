@@ -1,16 +1,16 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) 2019 Puppet, Inc.
+# Copyright (C) 2020 Puppet, Inc.
 # This file is distributed under the same license as the Puppet automation framework package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.11.0-118-g4d4fcc7\n"
+"Project-Id-Version: Puppet automation framework 6.11.1-197-g539749b170\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-12-12 04:19+0000\n"
-"PO-Revision-Date: 2019-12-12 04:19+0000\n"
+"POT-Creation-Date: 2020-01-07 15:20+0000\n"
+"PO-Revision-Date: 2020-01-07 15:20+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -547,94 +547,94 @@ msgstr ""
 msgid "Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:94 ../lib/puppet/configurer.rb:179
+#: ../lib/puppet/configurer.rb:94 ../lib/puppet/configurer.rb:177
 msgid "Using cached catalog from environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:172
+#: ../lib/puppet/configurer.rb:170
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:192
+#: ../lib/puppet/configurer.rb:186
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:232 ../lib/puppet/http/resolver/server_list.rb:19
+#: ../lib/puppet/configurer.rb:226 ../lib/puppet/http/resolver/server_list.rb:19
 msgid "Could not select a functional puppet master from server_list: '%{server_list}'"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:235
+#: ../lib/puppet/configurer.rb:229
 msgid "Selected puppet server from the `server_list` setting: %{server}:%{port}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:268
+#: ../lib/puppet/configurer.rb:261
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:313
+#: ../lib/puppet/configurer.rb:306
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:318
+#: ../lib/puppet/configurer.rb:311
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:322
+#: ../lib/puppet/configurer.rb:315
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:351
+#: ../lib/puppet/configurer.rb:344
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:362
+#: ../lib/puppet/configurer.rb:355
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:364
+#: ../lib/puppet/configurer.rb:357
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:384
+#: ../lib/puppet/configurer.rb:398
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:417 ../lib/puppet/http/resolver/server_list.rb:29
+#: ../lib/puppet/configurer.rb:431 ../lib/puppet/http/resolver/server_list.rb:29
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:421 ../lib/puppet/http/resolver/server_list.rb:35
+#: ../lib/puppet/configurer.rb:435 ../lib/puppet/http/resolver/server_list.rb:35
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:433 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:447 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:442
+#: ../lib/puppet/configurer.rb:456
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:462
+#: ../lib/puppet/configurer.rb:476
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:473
+#: ../lib/puppet/configurer.rb:487
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:488
+#: ../lib/puppet/configurer.rb:502
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:506
+#: ../lib/puppet/configurer.rb:520
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:526
+#: ../lib/puppet/configurer.rb:540
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -698,38 +698,38 @@ msgstr ""
 msgid "a data type can only have one implementation"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:152
+#: ../lib/puppet/defaults.rb:171
 msgid "Cannot disable unrecognized warning types %{invalid}."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:153
+#: ../lib/puppet/defaults.rb:172
 msgid "Valid values are %{values}."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:507
+#: ../lib/puppet/defaults.rb:526
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:509
+#: ../lib/puppet/defaults.rb:528
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:699
+#: ../lib/puppet/defaults.rb:718
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:780
+#: ../lib/puppet/defaults.rb:799
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:961
+#: ../lib/puppet/defaults.rb:980
 msgid "Setting 'ssl_client_ca_auth' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1040 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1059 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
@@ -2238,7 +2238,7 @@ msgstr ""
 msgid "Request to %{uri} failed after %{elapsed} seconds: %{message}"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:108
+#: ../lib/puppet/http/client.rb:157
 msgid "Sleeping for %{interval} seconds before retrying the request"
 msgstr ""
 
@@ -2260,6 +2260,11 @@ msgstr ""
 
 #: ../lib/puppet/http/retry_after_handler.rb:44
 msgid "Failed to parse Retry-After header '%{retry_after}' as an integer or RFC 2822 date"
+msgstr ""
+
+#. TRANSLATORS "pson", "preffered_serialization_format", and "puppetserver" should not be translated
+#: ../lib/puppet/http/service/report.rb:35
+msgid "To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson"
 msgstr ""
 
 #: ../lib/puppet/indirector.rb:25
@@ -7725,7 +7730,7 @@ msgstr ""
 msgid "%{name} has not declared what class it wraps"
 msgstr ""
 
-#: ../lib/puppet/ssl/base.rb:32 ../lib/puppet/x509/cert_provider.rb:338
+#: ../lib/puppet/ssl/base.rb:32 ../lib/puppet/x509/cert_provider.rb:342
 msgid "Certname %{name} must not contain unprintable or non-ASCII characters"
 msgstr ""
 
@@ -8813,31 +8818,31 @@ msgstr ""
 msgid "Profile names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:702
+#: ../lib/puppet/type/user.rb:703
 msgid "Ssh_authorized_key type is not available. Cannot purge SSH keys."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:740
+#: ../lib/puppet/type/user.rb:741
 msgid "Each entry for purge_ssh_keys must be a string, not a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:743
+#: ../lib/puppet/type/user.rb:744
 msgid "Paths to keyfiles must be absolute, not %{entry}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:747
+#: ../lib/puppet/type/user.rb:748
 msgid "purge_ssh_keys must be true, false, or an array of file names, not %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:759
+#: ../lib/puppet/type/user.rb:760
 msgid "purge_ssh_keys can only be true for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:766
+#: ../lib/puppet/type/user.rb:767
 msgid "purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:781
+#: ../lib/puppet/type/user.rb:782
 msgid "Class name must be provided."
 msgstr ""
 
@@ -10134,72 +10139,72 @@ msgstr ""
 msgid "Puppet::Util::Yaml.load_file is deprecated. Use safe_load_file instead."
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:35
+#: ../lib/puppet/x509/cert_provider.rb:39
 msgid "Failed to save CA certificates to '%{capath}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:48
+#: ../lib/puppet/x509/cert_provider.rb:52
 msgid "The CA certificates are missing from '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:52
+#: ../lib/puppet/x509/cert_provider.rb:56
 msgid "Failed to load CA certificates from '%{capath}'"
 msgstr ""
 
 #. TRANSLATORS 'PEM' is an acronym and shouldn't be translated
-#: ../lib/puppet/x509/cert_provider.rb:63
+#: ../lib/puppet/x509/cert_provider.rb:67
 msgid "Failed to parse CA certificates as PEM"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:78
+#: ../lib/puppet/x509/cert_provider.rb:82
 msgid "Failed to save CRLs to '%{crlpath}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:91
+#: ../lib/puppet/x509/cert_provider.rb:95
 msgid "The CRL is missing from '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:95
+#: ../lib/puppet/x509/cert_provider.rb:99
 msgid "Failed to load CRLs from '%{crlpath}'"
 msgstr ""
 
 #. TRANSLATORS 'PEM' is an acronym and shouldn't be translated
-#: ../lib/puppet/x509/cert_provider.rb:106
+#: ../lib/puppet/x509/cert_provider.rb:110
 msgid "Failed to parse CRLs as PEM"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:152
+#: ../lib/puppet/x509/cert_provider.rb:156
 msgid "Failed to save private key for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:171
+#: ../lib/puppet/x509/cert_provider.rb:175
 msgid "The private key is missing from '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:175
+#: ../lib/puppet/x509/cert_provider.rb:179
 msgid "Failed to load private key for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:231
+#: ../lib/puppet/x509/cert_provider.rb:235
 msgid "Failed to save client certificate for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:246
+#: ../lib/puppet/x509/cert_provider.rb:250
 msgid "The client certificate is missing from '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:250
+#: ../lib/puppet/x509/cert_provider.rb:254
 msgid "Failed to load client certificate for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:296
+#: ../lib/puppet/x509/cert_provider.rb:300
 msgid "Failed to save certificate request for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:311
+#: ../lib/puppet/x509/cert_provider.rb:315
 msgid "Failed to load certificate request for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:322
+#: ../lib/puppet/x509/cert_provider.rb:326
 msgid "Failed to delete certificate request for '%{name}'"
 msgstr ""
