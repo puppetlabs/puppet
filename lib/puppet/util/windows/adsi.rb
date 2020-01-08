@@ -204,7 +204,8 @@ module Puppet::Util::Windows::ADSI
           if sid.account_type == "SidType#{@object_class.capitalize}".to_sym
             # Check if we're getting back a local user when domain-joined
             return true unless [:MEMBER_WORKSTATION, :MEMBER_SERVER].include?(Puppet::Util::Windows::ADSI.domain_role)
-            return sid.domain == Puppet::Util::Windows::ADSI.computer_name
+            # The resource domain and the computer name are not always case-matching
+            return sid.domain.casecmp(Puppet::Util::Windows::ADSI.computer_name) == 0
           end
 
           # 'well known group' is special as it can be a group like Everyone OR a user like SYSTEM

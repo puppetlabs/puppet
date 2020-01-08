@@ -81,6 +81,13 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       expect(klass.exists?(resource_name)).to eq(true)
     end
 
+    it "should be case insensitive when comparing the domain with the computer name" do
+      local_domain = 'TESTCOMPUTERNAME'
+      principal = double('Principal', :account => resource_name, :domain => local_domain, :account_type => account_type)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with(resource_name).and_return(principal)
+      expect(klass.exists?(resource_name)).to eq(true)
+    end
+
     it "should return false if no local resource exists" do
       principal = double('Principal', :account => resource_name, :domain => 'AD_DOMAIN', :account_type => account_type)
       allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with(resource_name).and_return(principal)
