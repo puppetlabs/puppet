@@ -14,6 +14,27 @@ describe Puppet::HTTP::Service::Report do
     Puppet[:report_port] = 443
   end
 
+  context 'when making requests' do
+    let(:uri) {"https://www.example.com:443/puppet/v3/report/report?environment=testing"}
+
+    it 'includes default HTTP headers' do
+      stub_request(:put, uri).with do |request|
+        expect(request.headers).to include({'X-Puppet-Version' => /./, 'User-Agent' => /./})
+        expect(request.headers).to_not include('X-Puppet-Profiling')
+      end
+
+      subject.put_report('report', report, environment: environment)
+    end
+
+    it 'includes the X-Puppet-Profiling header when Puppet[:profile] is true' do
+      stub_request(:put, uri).with(headers: {'X-Puppet-Version' => /./, 'User-Agent' => /./, 'X-Puppet-Profiling' => 'true'})
+
+      Puppet[:profile] = true
+
+      subject.put_report('report', report, environment: environment)
+    end
+  end
+
   context 'when routing to the report service' do
     it 'defaults the server and port based on settings' do
       Puppet[:report_server] = 'report.example.com'
@@ -71,7 +92,7 @@ describe Puppet::HTTP::Service::Report do
       expect {
         subject.put_report('infinity', report, environment: environment)
       }.to raise_error do |err|
-        expect(err).to be_an_instance_of(Puppet::Error)
+        expect(err).to be_an_instance_of(Puppet::HTTP::ProtocolError)
         expect(err.message).to eq('To submit reports to a server running puppetserver 4.2.3, set preferred_serialization_format to pson')
       end
     end
