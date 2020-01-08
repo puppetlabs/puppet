@@ -238,11 +238,18 @@ module Puppet
     :trace => {
         :default  => false,
         :type     => :boolean,
-        :desc     => "Whether to print stack traces on some errors",
+        :desc     => "Whether to print stack traces on some errors. Will print
+          internal Ruby stack trace interleaved with Puppet function frames.",
         :hook     => proc do |value|
           # Enable or disable Facter's trace option too
           Facter.trace(value) if Facter.respond_to? :trace
         end
+    },
+    :puppet_trace => {
+        :default  => false,
+        :type     => :boolean,
+        :desc     => "Whether to print the Puppet stack trace on some errors.
+          This is a noop if `trace` is also set.",
     },
     :profile => {
         :default  => false,

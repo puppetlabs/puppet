@@ -2,7 +2,7 @@ language: ruby
 sudo: false
 bundler_args: --jobs 4 --retry 2 --without packaging documentation
 before_install:
-  - gem update --system --force
+  gem update --system --force
 script:
   - "bundle exec rake $CHECK"
 notifications:

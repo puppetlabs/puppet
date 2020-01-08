@@ -526,21 +526,44 @@ module Util
 
   module_function :thinmark
 
+  PUPPET_STACK_INSERTION_FRAME = /.*puppet_stack\.rb.*in.*`stack'/
+
   # utility method to get the current call stack and format it to a human-readable string (which some IDEs/editors
   # will recognize as links to the line numbers in the trace)
-  def self.pretty_backtrace(backtrace = caller(1))
-    backtrace.collect do |line|
-      _, path, rest = /^(.*):(\d+.*)$/.match(line).to_a
-      # If the path doesn't exist - like in one test, and like could happen in
-      # the world - we should just tolerate it and carry on. --daniel 2012-09-05
-      # Also, if we don't match, just include the whole line.
-      if path
-        path = Pathname(path).realpath rescue path
-        "#{path}:#{rest}"
+  def self.pretty_backtrace(backtrace = caller(1), puppetstack = [])
+    format_backtrace_array(backtrace, puppetstack).join("\n")
+  end
+
+  # arguments may be a Ruby stack, with an optional Puppet stack argument,
+  # or just a Puppet stack.
+  # stacks may be an Array of Strings "/foo.rb:0 in `blah'" or
+  # an Array of Arrays that represent a frame: ["/foo.pp", 0]
+  def self.format_backtrace_array(primary_stack, puppetstack = [])
+    primary_stack.flat_map do |frame|
+      frame = format_puppetstack_frame(frame) if frame.is_a?(Array)
+      primary_frame = resolve_stackframe(frame)
+
+      if primary_frame =~ PUPPET_STACK_INSERTION_FRAME && !puppetstack.empty?
+        [resolve_stackframe(format_puppetstack_frame(puppetstack.shift)),
+         primary_frame]
       else
-        line
+        primary_frame
       end
-    end.join("\n")
+    end
+  end
+
+  def self.resolve_stackframe(frame)
+    _, path, rest = /^(.*):(\d+.*)$/.match(frame).to_a
+    if path
+      path = Pathname(path).realpath rescue path
+      "#{path}:#{rest}"
+    else
+      frame
+    end
+  end
+
+  def self.format_puppetstack_frame(file_and_lineno)
+    file_and_lineno.join(':')
   end
 
   # Replace a file, securely.  This takes a block, and passes it the file
