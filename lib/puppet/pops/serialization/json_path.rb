@@ -1,3 +1,5 @@
+require 'puppet/concurrent/thread_local_singleton'
+
 module Puppet::Pops
 module Serialization
 module JsonPath
@@ -31,9 +33,7 @@ module JsonPath
   #
   # @api private
   class Resolver
-    def self.singleton
-      @singleton ||= self.new
-    end
+    extend Puppet::Concurrent::ThreadLocalSingleton
 
     def initialize
       @parser = Parser::Parser.new

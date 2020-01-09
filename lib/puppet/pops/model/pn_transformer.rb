@@ -1,22 +1,18 @@
+require 'puppet/concurrent/thread_local_singleton'
+
 module Puppet::Pops
 module Model
 
 
 class PNTransformer
-  def self.visitor
-    @visitor ||= Visitor.new(nil, 'transform', 0, 0)
-  end
-
-  def self.singleton
-    @singleton ||= new(visitor)
-  end
+  extend Puppet::Concurrent::ThreadLocalSingleton
 
   def self.transform(ast)
     singleton.transform(ast)
   end
 
-  def initialize(visitor)
-    @visitor = visitor
+  def initialize
+    @visitor = Visitor.new(nil, 'transform', 0, 0)
   end
 
   def transform(ast)
