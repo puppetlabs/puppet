@@ -221,6 +221,20 @@ describe Puppet::Settings do
       @settings.define_settings :main, :bool => { :type => :boolean, :default => true, :desc => "desc" }
     end
 
+    it "the cache can be updated with content to be shared with new threads" do
+      # In this test, reading settings populates the cache, so we populate it first
+      # before snapshotting the state of the cache
+      @settings[:myval]
+      @settings.unsafe_snapshot_cache
+      other_request = Thread.new do
+        expect(@settings.instance_variable_get(:@cache).value["none"]).to include(:myval)
+        @settings[:bool]
+      end
+      other_request.join
+      expect(@settings.instance_variable_get(:@cache).value["none"]).not_to include(:bool)
+      expect(@settings.instance_variable_get(:@cache).value["none"]).to include(:myval)
+    end
+
     it "should provide a method for setting values from other objects" do
       @settings[:myval] = "something else"
       expect(@settings[:myval]).to eq("something else")
