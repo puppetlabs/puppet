@@ -1,13 +1,15 @@
 class Puppet::HTTP::Service
   attr_reader :url
 
-  SERVICE_NAMES = [:ca, :report].freeze
+  SERVICE_NAMES = [:ca, :puppet, :report].freeze
   EXCLUDED_FORMATS = [:yaml, :b64_zlib_yaml, :dot].freeze
 
   def self.create_service(client, name, server = nil, port = nil)
     case name
     when :ca
       Puppet::HTTP::Service::Ca.new(client, server, port)
+    when :puppet
+      ::Puppet::HTTP::Service::Compiler.new(client, server, port)
     when :report
       Puppet::HTTP::Service::Report.new(client, server, port)
     else
