@@ -1,3 +1,5 @@
+require 'puppet/thread_local'
+
 require_relative 'explainer'
 
 module Puppet::Pops
@@ -7,7 +9,11 @@ class Invocation
   attr_reader :scope, :override_values, :default_values, :explainer, :module_name, :top_key, :adapter_class
 
   def self.current
-    @current
+    (@current ||= Puppet::ThreadLocal.new(nil)).value
+  end
+
+  def self.current=(new_value)
+    @current.value = new_value
   end
 
   # Creates a new instance with same settings as this instance but with a new given scope
@@ -37,6 +43,7 @@ class Invocation
     @default_values = default_values
 
     parent_invocation = self.class.current
+
     if parent_invocation && (adapter_class.nil? || adapter_class == parent_invocation.adapter_class)
       # Inherit from parent invocation (track recursion)
       @name_stack = parent_invocation.name_stack
@@ -71,10 +78,10 @@ class Invocation
       yield
     else
       begin
-        self.class.instance_variable_set(:@current, self)
+        self.class.current = self
         yield
       ensure
-        self.class.instance_variable_set(:@current, save_current)
+        self.class.current = save_current
       end
     end
   end
