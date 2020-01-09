@@ -68,4 +68,21 @@ class Puppet::HTTP::Service
 
     formatter
   end
+
+  def serialize(formatter, object)
+    begin
+      formatter.render(object)
+    rescue => err
+      raise Puppet::HTTP::SerializationError.new("Failed to serialize #{object.class} to #{formatter.name}: #{err.message}", err)
+    end
+  end
+
+  def deserialize(response, model)
+    formatter = formatter_for_response(response)
+    begin
+      formatter.intern(model, response.body.to_s)
+    rescue => err
+      raise Puppet::HTTP::SerializationError.new("Failed to deserialize #{model} from #{formatter.name}: #{err.message}", err)
+    end
+  end
 end

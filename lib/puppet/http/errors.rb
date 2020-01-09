@@ -7,6 +7,8 @@ module Puppet::HTTP
 
   class ProtocolError < HTTPError; end
 
+  class SerializationError < HTTPError; end
+
   class ResponseError < HTTPError
     attr_reader :response
 

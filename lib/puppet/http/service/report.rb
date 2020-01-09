@@ -18,7 +18,7 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
       headers: headers,
       params: { environment: environment },
       content_type: formatter.mime,
-      body: formatter.render(report),
+      body: serialize(formatter, report),
       ssl_context: ssl_context
     )
 
