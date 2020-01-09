@@ -72,7 +72,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     if @resource.forcelocal?
       cmd = [command(:localadd)]
       @custom_environment = Puppet::Util::Libuser.getenv
-      Puppet.deprecation_warning _("`forcelocal` is deprecated and will be removed in a future release. This property has been replaced by the `libuser` provider.")
+      Puppet.warn_once('deprecations', 'forcelocal', _("`forcelocal` is deprecated and will be removed in a future release. This property has been replaced by the `libuser` provider."))
     else
       cmd = [command(:add)]
     end
@@ -93,7 +93,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     if @resource.forcelocal?
       cmd = [command(:localmodify)]
       @custom_environment = Puppet::Util::Libuser.getenv
-      Puppet.deprecation_warning _("`forcelocal` is deprecated and will be removed in a future release. This property has been replaced by the `libuser` provider.")
+      Puppet.warn_once('deprecations', 'forcelocal', _("`forcelocal` is deprecated and will be removed in a future release. This property has been replaced by the `libuser` provider."))
     else
       cmd = [command(:modify)]
     end
@@ -109,7 +109,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
   def deletecmd
     if @resource.forcelocal?
       @custom_environment = Puppet::Util::Libuser.getenv
-      Puppet.deprecation_warning _("`forcelocal` is deprecated and will be removed in a future release. This property has been replaced by the `libuser` provider.")
+      Puppet.warn_once('deprecations', 'forcelocal', _("`forcelocal` is deprecated and will be removed in a future release. This property has been replaced by the `libuser` provider."))
       [command(:localdelete), @resource[:name]]
     else
       [command(:delete), @resource[:name]]
