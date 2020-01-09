@@ -1,6 +1,5 @@
 class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
   API = '/puppet/v3'.freeze
-  EXCLUDED_FORMATS = [:yaml, :b64_zlib_yaml, :dot]
 
   # puppet major version where JSON is enabled by default
   MAJOR_VERSION_JSON_DEFAULT = 5
@@ -12,15 +11,12 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
 
   def put_report(name, report, environment:, ssl_context: nil)
     formatter = Puppet::Network::FormatHandler.format_for(Puppet[:preferred_serialization_format])
-
-    model = Puppet::Transaction::Report
-    network_formats = model.supported_formats - EXCLUDED_FORMATS
-    mime_types = network_formats.map { |f| model.get_format(f).mime }
+    headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Transaction::Report).join(', '))
 
     response = @client.put(
       with_base_url("/report/#{name}"),
-      headers: add_puppet_headers('ACCEPT' => mime_types.join(', ')),
-      params: { :environment => environment },
+      headers: headers,
+      params: { environment: environment },
       content_type: formatter.mime,
       body: formatter.render(report),
       ssl_context: ssl_context
