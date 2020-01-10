@@ -28,6 +28,9 @@ matrix:
         - "_JAVA_OPTIONS='-Xmx1024m -Xms512m'"
         - "CHECK=parallel:spec\\[2\\]"
 
+    - rvm: 2.7
+      env: "CHECK=parallel:spec\\[2\\]"
+
     - rvm: 2.5
       env: "CHECK=rubocop"
 
