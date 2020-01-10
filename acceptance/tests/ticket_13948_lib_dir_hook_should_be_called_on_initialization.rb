@@ -4,13 +4,13 @@ require 'puppet/acceptance/temp_file_utils'
 
 extend Puppet::Acceptance::TempFileUtils
 
-initialize_temp_dirs()
-all_tests_passed = false
-
 tag 'audit:medium',      # tests basic custom module/pluginsync handling?
     'audit:refactor',    # Use block style `test_namme`
     'audit:integration',
     'server'
+
+initialize_temp_dirs()
+all_tests_passed = false
 
 ###############################################################################
 # BEGIN TEST LOGIC

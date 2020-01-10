@@ -3,14 +3,14 @@ extend Puppet::Acceptance::CAUtils
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils
 
-disable_pe_enterprise_mcollective_agent_classes
-
 test_name "autosign command and csr attributes behavior (#7243,#7244)" do
   confine :except, :platform => /^cisco_/ # See PUP-5827
 
   tag 'audit:high',        # cert/ca core behavior
       'audit:integration',
       'server'             # Ruby implementation is deprecated
+
+  disable_pe_enterprise_mcollective_agent_classes
 
   def assert_key_generated(name)
     assert_match(/Creating a new SSL key for #{name}/, stdout, "Expected agent to create a new SSL key for autosigning")

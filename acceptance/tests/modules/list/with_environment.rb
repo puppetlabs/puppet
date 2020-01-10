@@ -2,6 +2,8 @@ test_name 'puppet module list (with environment)'
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+tag 'server'
+
 tmpdir = master.tmpdir('module-list-with-environment')
 
 step 'Setup'
