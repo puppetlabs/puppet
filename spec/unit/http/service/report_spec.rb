@@ -6,7 +6,7 @@ describe Puppet::HTTP::Service::Report do
   let(:ssl_context) { Puppet::SSL::SSLContext.new }
   let(:client) { Puppet::HTTP::Client.new(ssl_context: ssl_context) }
   let(:subject) { client.create_session.route_to(:report) }
-  let(:environment) { Puppet::Node::Environment.create(:testing, []) }
+  let(:environment) { 'testing' }
   let(:report) { Puppet::Transaction::Report.new }
 
   before :each do

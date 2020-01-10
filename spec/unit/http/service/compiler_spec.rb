@@ -7,7 +7,7 @@ describe Puppet::HTTP::Service::Compiler do
   let(:ssl_context) { Puppet::SSL::SSLContext.new }
   let(:client) { Puppet::HTTP::Client.new(ssl_context: ssl_context) }
   let(:subject) { client.create_session.route_to(:puppet) }
-  let(:environment) { Puppet::Node::Environment.create(:testing, []) }
+  let(:environment) { 'testing' }
   let(:certname) { 'ziggy' }
   let(:node) { Puppet::Node.new(certname) }
   let(:facts) { Puppet::Node::Facts.new(certname) }

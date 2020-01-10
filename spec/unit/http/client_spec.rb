@@ -99,6 +99,12 @@ describe Puppet::HTTP::Client do
       client.get(uri, params: {:foo => "bar=baz"})
     end
 
+    it "fails if a user passes in an invalid param type" do
+      environment = Puppet::Node::Environment.create(:testing, [])
+
+      expect{client.get(uri, params: {environment: environment})}.to raise_error(Puppet::HTTP::SerializationError, /HTTP REST queries cannot handle values of type/)
+    end
+
     it "merges custom headers with default ones" do
       stub_request(:get, uri).with(headers: { 'X-Foo' => 'Bar', 'X-Puppet-Version' => /./, 'User-Agent' => /./ })
 

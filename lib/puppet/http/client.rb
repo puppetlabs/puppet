@@ -171,7 +171,37 @@ class Puppet::HTTP::Client
     end
   end
 
+  def expand_into_parameters(data)
+    data.inject([]) do |params, key_value|
+      key, value = key_value
+
+      expanded_value = case value
+                       when Array
+                         value.collect { |val| [key, val] }
+                       else
+                         [key_value]
+                       end
+
+      params.concat(expand_primitive_types_into_parameters(expanded_value))
+    end
+  end
+
+  def expand_primitive_types_into_parameters(data)
+    data.inject([]) do |params, key_value|
+      key, value = key_value
+      case value
+      when nil
+        params
+      when true, false, String, Symbol, Integer, Float
+        params << [key, value]
+      else
+        raise Puppet::HTTP::SerializationError, _("HTTP REST queries cannot handle values of type '%{klass}'") % { klass: value.class }
+      end
+    end
+  end
+
   def encode_params(params)
+    params = expand_into_parameters(params)
     params.map do |key, value|
       "#{key}=#{Puppet::Util.uri_query_encode(value.to_s)}"
     end.join('&')
