@@ -1,12 +1,15 @@
 class Puppet::HTTP::Service
   attr_reader :url
 
-  SERVICE_NAMES = [:ca, :report].freeze
+  SERVICE_NAMES = [:ca, :puppet, :report].freeze
+  EXCLUDED_FORMATS = [:yaml, :b64_zlib_yaml, :dot].freeze
 
   def self.create_service(client, name, server = nil, port = nil)
     case name
     when :ca
       Puppet::HTTP::Service::Ca.new(client, server, port)
+    when :puppet
+      ::Puppet::HTTP::Service::Compiler.new(client, server, port)
     when :report
       Puppet::HTTP::Service::Report.new(client, server, port)
     else
@@ -46,5 +49,42 @@ class Puppet::HTTP::Service
                      port: port,
                      path: api
                     ).freeze
+  end
+
+  def get_mime_types(model)
+    unless @mime_types
+      network_formats = model.supported_formats - EXCLUDED_FORMATS
+      @mime_types = network_formats.map { |f| model.get_format(f).mime }
+    end
+    @mime_types
+  end
+
+  def formatter_for_response(response)
+    header = response['Content-Type']
+    raise Puppet::HTTP::ProtocolError.new(_("No content type in http response; cannot parse")) unless header
+
+    header.gsub!(/\s*;.*$/,'') # strip any charset
+
+    formatter = Puppet::Network::FormatHandler.mime(header)
+    raise Puppet::HTTP::ProtocolError.new("Content-Type is unsupported") if EXCLUDED_FORMATS.include?(formatter.name)
+
+    formatter
+  end
+
+  def serialize(formatter, object)
+    begin
+      formatter.render(object)
+    rescue => err
+      raise Puppet::HTTP::SerializationError.new("Failed to serialize #{object.class} to #{formatter.name}: #{err.message}", err)
+    end
+  end
+
+  def deserialize(response, model)
+    formatter = formatter_for_response(response)
+    begin
+      formatter.intern(model, response.body.to_s)
+    rescue => err
+      raise Puppet::HTTP::SerializationError.new("Failed to deserialize #{model} from #{formatter.name}: #{err.message}", err)
+    end
   end
 end
