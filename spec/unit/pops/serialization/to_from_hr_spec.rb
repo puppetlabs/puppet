@@ -296,9 +296,14 @@ module Serialization
           expect(val2).to be_a(Types::PObjectTypeExtension)
           expect(val2).to eql(val)
         end
+
+        it 'with POjbectTypeExtension type being converted' do
+          val = { 'ObjectExtension' => type.create(34) }
+          expect(to_converter.convert(val))
+            .to eq({"ObjectExtension"=>{"__ptype"=>"MyType", "x"=>34}})
+        end
       end
     end
-
 
     it 'Array of rich data' do
       # Sensitive omitted because it doesn't respond to ==

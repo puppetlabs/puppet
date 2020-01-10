@@ -153,6 +153,16 @@ class PObjectTypeExtension < PAnyType
     @base_type.simple_name
   end
 
+  # @api private
+  def implementation_class(create = true)
+    @base_type.implementation_class(create)
+  end
+
+  # @api private
+  def parameter_info(impl_class)
+    @base_type.parameter_info(impl_class)
+  end
+
   protected
 
   # Checks that the given `param_values` hash contains all keys present in the `parameters` of
