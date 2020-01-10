@@ -12,6 +12,7 @@ matrix:
 
 # Ruby versions under test
 platform:
+  - Ruby27-x64
   - Ruby26-x64
   - Ruby25-x64
   - Ruby24-x64
