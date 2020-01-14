@@ -17,6 +17,12 @@ test_name "gem provider should install and uninstall" do
     # To install the version of bundler this project requires, run `gem install bundler -v '2.0.2'`
     #
     # Magically, the puppet command succeeds on a Linux host with both the 'master' and 'agent' roles.
+    #
+    # Puppet's Ruby makes a fine target. Unfortunately, it's first in the PATH on Windows: PUP-6134.
+    # Also, privatebindir isn't a directory on Windows, it's a PATH:
+    # https://github.com/puppetlabs/beaker-puppet/blob/master/lib/beaker-puppet/install_utils/aio_defaults.rb
+    #
+    # These tests depend upon testing being confined to /centos-7-x86_64|redhat-7-x86_64/.
     if agent['roles'].include?('master')
       original_path = agent.get_env_var('PATH')
 
@@ -62,30 +68,25 @@ test_name "gem provider should install and uninstall" do
       end
     end
 
-    # Puppet's Ruby makes a fine target. Unfortunately, it's first in the PATH on Windows: PUP-6134.
-    # Also, privatebindir isn't a directory on Windows, it's a PATH:
-    # https://github.com/puppetlabs/beaker-puppet/blob/master/lib/beaker-puppet/install_utils/aio_defaults.rb
-    unless agent['platform'].include?('windows')
-      puppet_gem_command = "#{agent['privatebindir']}/gem"
+    puppet_gem_command = "#{agent['privatebindir']}/gem"
 
-      step "Install a gem package with a target command" do
-        package_manifest = resource_manifest('package', package, { ensure: 'present', provider: 'gem', command: puppet_gem_command } )
-        apply_manifest_on(agent, package_manifest, :catch_failures => true) do
-          list = on(agent, "#{puppet_gem_command} list").stdout
-          assert_match(/#{package} \(/, list)
-        end
-        on(agent, "#{puppet_gem_command} uninstall #{package}")
+    step "Install a gem package with a target command" do
+      package_manifest = resource_manifest('package', package, { ensure: 'present', provider: 'gem', command: puppet_gem_command } )
+      apply_manifest_on(agent, package_manifest, :catch_failures => true) do
+        list = on(agent, "#{puppet_gem_command} list").stdout
+        assert_match(/#{package} \(/, list)
       end
+      on(agent, "#{puppet_gem_command} uninstall #{package}")
+    end
 
-      step "Uninstall a gem package with a target command" do
-        on(agent, "#{puppet_gem_command} install #{package}")
-        package_manifest = resource_manifest('package', package, { ensure: 'absent', provider: 'gem', command: puppet_gem_command } )
-        apply_manifest_on(agent, package_manifest, :catch_failures => true) do
-          list = on(agent, "#{puppet_gem_command} list").stdout
-          assert_no_match(/#{package} \(/, list)
-        end
-        on(agent, "#{puppet_gem_command} uninstall #{package}")
+    step "Uninstall a gem package with a target command" do
+      on(agent, "#{puppet_gem_command} install #{package}")
+      package_manifest = resource_manifest('package', package, { ensure: 'absent', provider: 'gem', command: puppet_gem_command } )
+      apply_manifest_on(agent, package_manifest, :catch_failures => true) do
+        list = on(agent, "#{puppet_gem_command} list").stdout
+        assert_no_match(/#{package} \(/, list)
       end
+      on(agent, "#{puppet_gem_command} uninstall #{package}")
     end
   end
 end
