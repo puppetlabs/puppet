@@ -138,6 +138,13 @@ describe Puppet::SSL::Certificate do
         expect(cert.custom_extensions).to include('oid' => '1.3.6.1.4.1.34380.1.2.1', 'value' => 'x509 :(')
       end
 
+      it "returns extensions under the ppAuthCertExt" do
+        exts = {'pp_auth_role' => 'taketwo'}
+        cert = build_cert(:extension_requests => exts)
+        sign_wrapped_cert(cert)
+        expect(cert.custom_extensions).to include('oid' => 'pp_auth_role', 'value' => 'taketwo')
+      end
+
       it "doesn't return standard extensions" do
         cert = build_cert(:dns_alt_names => 'foo')
         expect(cert.custom_extensions).to be_empty
