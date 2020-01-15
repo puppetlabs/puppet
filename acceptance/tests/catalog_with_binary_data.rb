@@ -1,6 +1,4 @@
 test_name "C100300: Catalog containing binary data is applied correctly" do
-  skip_test 'requires a master for serving module content' if master.nil?
-
   require 'puppet/acceptance/common_utils'
   require 'puppet/acceptance/environment_utils'
   extend Puppet::Acceptance::EnvironmentUtils
@@ -8,7 +6,8 @@ test_name "C100300: Catalog containing binary data is applied correctly" do
   require 'puppet/acceptance/agent_fqdn_utils'
   extend Puppet::Acceptance::AgentFqdnUtils
 
-  tag 'risk:medium'
+  tag 'risk:medium',
+      'server'
 
   test_num        = 'c100300'
   tmp_environment = mk_tmp_environment_with_teardown(master, File.basename(__FILE__, '.*'))
