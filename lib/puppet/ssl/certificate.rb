@@ -56,7 +56,8 @@ DOC
   def custom_extensions
     custom_exts = content.extensions.select do |ext|
       Puppet::SSL::Oids.subtree_of?('ppRegCertExt', ext.oid) or
-        Puppet::SSL::Oids.subtree_of?('ppPrivCertExt', ext.oid)
+        Puppet::SSL::Oids.subtree_of?('ppPrivCertExt', ext.oid) or
+        Puppet::SSL::Oids.subtree_of?('ppAuthCertExt', ext.oid)
     end
 
     custom_exts.map do |ext|

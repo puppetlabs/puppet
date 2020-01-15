@@ -854,13 +854,17 @@ This is useful for embedding a pre-shared key for autosigning policy executables
 ("challenge password") OID.
 
 Extension requests will be permanently embedded in the final certificate.
-Extension OIDs must be in the "ppRegCertExt" (`1.3.6.1.4.1.34380.1.1`) or
-"ppPrivCertExt" (`1.3.6.1.4.1.34380.1.2`) OID arcs. The ppRegCertExt arc is
+Extension OIDs must be in the "ppRegCertExt" (`1.3.6.1.4.1.34380.1.1`),
+"ppPrivCertExt" (`1.3.6.1.4.1.34380.1.2`), or
+"ppAuthCertExt" (`1.3.6.1.4.1.34380.1.3`) OID arcs. The ppRegCertExt arc is
 reserved for four of the most common pieces of data to embed: `pp_uuid` (`.1`),
 `pp_instance_id` (`.2`), `pp_image_name` (`.3`), and `pp_preshared_key` (`.4`)
 --- in the YAML file, these can be referred to by their short descriptive names
 instead of their full OID. The ppPrivCertExt arc is unregulated, and can be used
-for site-specific extensions.
+for site-specific extensions. The ppAuthCert arc is reserved for two pieces of
+data to embed: `pp_authorization` (`.1`) and `pp_auth_role` (`.13`). As with
+ppRegCertExt, in the YAML file, these can be referred to by their short
+descriptive name instead of their full OID.
 EOT
     },
     :certdir => {

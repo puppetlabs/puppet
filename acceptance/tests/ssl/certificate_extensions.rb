@@ -1,6 +1,5 @@
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
-initialize_temp_dirs
 
 test_name "certificate extensions available as trusted data" do
   confine :except, :platform => /^cisco_/ # See PUP-5827
@@ -10,6 +9,8 @@ test_name "certificate extensions available as trusted data" do
   tag 'audit:high',        # ca/cert core functionality
       'audit:integration',
       'server'             # Ruby implementation is deprecated
+
+  initialize_temp_dirs
 
   agent_certnames = []
   hostname = master.execute('facter hostname')

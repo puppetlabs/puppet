@@ -4,7 +4,8 @@ extend Puppet::Acceptance::ModuleUtils
 
 tag 'audit:medium',
     'audit:acceptance',
-    'audit:refactor'   # Master is not required for this test. Replace with agents.each
+    'audit:refactor',   # Master is not required for this test. Replace with agents.each
+    'server'
 
 tmpdir = master.tmpdir('module-list-with-environment')
 

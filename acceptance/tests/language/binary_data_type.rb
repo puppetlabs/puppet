@@ -3,10 +3,11 @@ test_name 'C98346: Binary data type' do
   extend Puppet::Acceptance::PuppetTypeTestTools
 
   tag 'audit:high',
-      'audit:integration' # Tests that binary data is retains integrity
-      # between server and agent transport/application.
-      # The weak link here is final ruby translation and
-      # should not be OS sensitive.
+      'audit:integration', # Tests that binary data is retains integrity
+                           # between server and agent transport/application.
+                           # The weak link here is final ruby translation and
+                           # should not be OS sensitive.
+      'server'
 
   app_type               = File.basename(__FILE__, '.*')
   tmp_environment        = mk_tmp_environment_with_teardown(master, app_type)

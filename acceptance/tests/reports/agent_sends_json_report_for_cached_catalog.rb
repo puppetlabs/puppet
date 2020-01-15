@@ -1,5 +1,4 @@
 test_name "C100533: Agent sends json report for cached catalog" do
-  skip_test 'requires a master' if master.nil?
 
   tag 'risk:medium',
       'audit:medium',
