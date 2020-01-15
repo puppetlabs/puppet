@@ -25,7 +25,7 @@ describe Puppet::HTTP::Service::FileServer do
         expect(request.headers).to_not include('X-Puppet-Profiling')
       end
 
-      subject.get_file_content(mount_point: ':mount', path: ':path', environment: environment)
+      subject.get_file_content(mount_point: ':mount', path: ':path', environment: environment) { |data| }
     end
 
     it 'includes the X-Puppet-Profiling header when Puppet[:profile] is true' do
@@ -33,7 +33,7 @@ describe Puppet::HTTP::Service::FileServer do
 
       Puppet[:profile] = true
 
-      subject.get_file_content(mount_point: ':mount', path: ':path', environment: environment)
+      subject.get_file_content(mount_point: ':mount', path: ':path', environment: environment) { |data| }
     end
   end
 
@@ -44,7 +44,7 @@ describe Puppet::HTTP::Service::FileServer do
 
       stub_request(:get, "https://file.example.com:8141/puppet/v3/file_content/mount/path?environment=testing")
 
-      subject.get_file_content(mount_point: 'mount', path: 'path', environment: environment)
+      subject.get_file_content(mount_point: 'mount', path: 'path', environment: environment) { |data| }
     end
   end
 
@@ -174,19 +174,21 @@ describe Puppet::HTTP::Service::FileServer do
   context 'getting file content' do
     let(:uri) {"https://www.example.com:443/puppet/v3/file_content/infinity/eternal?environment=testing"}
 
-    it 'submits a request for the file content' do
+    it 'yields file content' do
       stub_request(:get, uri).with do |request|
         expect(request.headers).to include({'Accept' => 'application/octet-stream'})
-      end.to_return(status: 200, body: '')
+      end.to_return(status: 200, body: "and beyond")
 
-      subject.get_file_content(mount_point: 'infinity', path: 'eternal', environment: environment)
+      expect { |b|
+        subject.get_file_content(mount_point: 'infinity', path: 'eternal', environment: environment, &b)
+      }.to yield_with_args("and beyond")
     end
 
     it 'raises response error if unsuccessful' do
       stub_request(:get, uri).to_return(status: [400, 'Bad Request'])
 
       expect {
-        subject.get_file_content(mount_point: 'infinity', path: 'eternal', environment: environment)
+        subject.get_file_content(mount_point: 'infinity', path: 'eternal', environment: environment) { |data| }
       }.to raise_error do |err|
         expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
         expect(err.message).to eq('Bad Request')

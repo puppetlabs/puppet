@@ -62,14 +62,15 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
         environment: environment
       },
       ssl_context: ssl_context
-    )
-
-    #response.body.force_encoding(Encoding::BINARY)
-    if block_given?
-      yield response.body if response.success?
-    else
-      return response.body if response.success?
+    ) do |res|
+      if res.success?
+        res.read_body do |data|
+          yield data
+        end
+      end
     end
+
+    return nil if response.success?
 
     raise Puppet::HTTP::ResponseError.new(response)
   end
