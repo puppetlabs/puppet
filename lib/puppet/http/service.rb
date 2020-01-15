@@ -1,13 +1,15 @@
 class Puppet::HTTP::Service
   attr_reader :url
 
-  SERVICE_NAMES = [:ca, :puppet, :report].freeze
+  SERVICE_NAMES = [:ca, :fileserver, :puppet, :report].freeze
   EXCLUDED_FORMATS = [:yaml, :b64_zlib_yaml, :dot].freeze
 
   def self.create_service(client, name, server = nil, port = nil)
     case name
     when :ca
       Puppet::HTTP::Service::Ca.new(client, server, port)
+    when :fileserver
+      Puppet::HTTP::Service::FileServer.new(client, server, port)
     when :puppet
       ::Puppet::HTTP::Service::Compiler.new(client, server, port)
     when :report
@@ -79,12 +81,29 @@ class Puppet::HTTP::Service
     end
   end
 
+  def serialize_multiple(formatter, object)
+    begin
+      formatter.render_multiple(object)
+    rescue => err
+      raise Puppet::HTTP::SerializationError.new("Failed to serialize multiple #{object.class} to #{formatter.name}: #{err.message}", err)
+    end
+  end
+
   def deserialize(response, model)
     formatter = formatter_for_response(response)
     begin
       formatter.intern(model, response.body.to_s)
     rescue => err
       raise Puppet::HTTP::SerializationError.new("Failed to deserialize #{model} from #{formatter.name}: #{err.message}", err)
+    end
+  end
+
+  def deserialize_multiple(response, model)
+    formatter = formatter_for_response(response)
+    begin
+      formatter.intern_multiple(model, response.body.to_s)
+    rescue => err
+      raise Puppet::HTTP::SerializationError.new("Failed to deserialize multiple #{model} from #{formatter.name}: #{err.message}", err)
     end
   end
 end
