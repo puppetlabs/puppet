@@ -54,6 +54,56 @@ describe Puppet::Type.type(:package).provider(:yum) do
         provider.install
       end
     end
+
+    describe 'with install_options' do 
+      it 'can parse disable-repo with array of strings' do
+          resource[:install_options] = ['--disable-repo=dev*', '--disable-repo=prod*']
+          expect(provider).to receive(:execute) do | arr|
+            expect(arr[-3]).to eq(["--disable-repo=dev*", "--disable-repo=prod*"])
+          end
+          provider.install
+      end
+
+      it 'can parse disable-repo with array of hashes' do
+        resource[:install_options] = [{'--disable-repo' => 'dev*'}, {'--disable-repo' => 'prod*'}]
+        expect(provider).to receive(:execute) do | arr|
+          expect(arr[-3]).to eq(["--disable-repo=dev*", "--disable-repo=prod*"])
+        end
+        provider.install
+      end
+
+      it 'can parse enable-repo with array of strings' do
+          resource[:install_options] = ['--enable-repo=dev*', '--enable-repo=prod*']
+          expect(provider).to receive(:execute) do | arr|
+            expect(arr[-3]).to eq(["--enable-repo=dev*", "--enable-repo=prod*"])
+          end
+          provider.install
+      end
+
+      it 'can parse enable-repo with array of hashes' do
+        resource[:install_options] = [{'--enable-repo' => 'dev*'}, {'--disable-repo' => 'prod*'}]
+        expect(provider).to receive(:execute) do | arr|
+          expect(arr[-3]).to eq(["--enable-repo=dev*", "--disable-repo=prod*"])
+        end
+        provider.install
+      end
+
+      it 'can parse enable-repo with single hash' do
+        resource[:install_options] = [{'--enable-repo' => 'dev*','--disable-repo' => 'prod*'}]
+        expect(provider).to receive(:execute) do | arr|
+          expect(arr[-3]).to eq(["--disable-repo=prod*", "--enable-repo=dev*"])
+        end
+        provider.install
+      end
+
+      it 'can parse enable-repo with empty array' do
+        resource[:install_options] = []
+        expect(provider).to receive(:execute) do | arr|
+          expect(arr[-3]).to eq([])
+        end
+        provider.install
+      end
+    end
   end
 
   context "parsing the output of check-update" do
