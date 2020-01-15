@@ -43,6 +43,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
         links: links,
         checksum_type: checksum_type,
         source_permissions: source_permissions,
+        environment: environment,
       },
       ssl_context: ssl_context
     )
@@ -52,11 +53,14 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     raise Puppet::HTTP::ResponseError.new(response)
   end
 
-  def get_file_content(mount_point:, path:, ssl_context: nil, &block)
+  def get_file_content(mount_point:, path:, environment:, ssl_context: nil, &block)
     headers = add_puppet_headers({'Accept' => 'application/octet-stream' })
     response = @client.get(
       with_base_url("/file_content/#{mount_point}/#{path}"),
       headers: headers,
+      params: {
+        environment: environment
+      },
       ssl_context: ssl_context
     )
 
