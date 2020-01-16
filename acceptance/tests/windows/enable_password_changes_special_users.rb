@@ -1,4 +1,8 @@
 test_name 'Puppet should change passwords for disabled, expired, or locked out Windows user accounts' do
+
+  tag 'audit:medium',
+      'audit:acceptance'
+
   require 'date'
   require 'puppet/acceptance/windows_utils'
 

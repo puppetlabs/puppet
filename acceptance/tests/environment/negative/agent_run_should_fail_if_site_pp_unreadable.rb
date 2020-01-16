@@ -1,4 +1,10 @@
 test_name "C98160 - Agent run should fail if an environment's site.pp is unreadable" do
+
+  tag 'audit:medium',
+      'audit:integration',
+      'audit:refactor', # use mk_temp_environment_with_teardown
+      'server'
+
   skip_test 'requires a master for managing the environment' if hosts_with_role(hosts, 'master').length == 0
 
   testdir = ''
