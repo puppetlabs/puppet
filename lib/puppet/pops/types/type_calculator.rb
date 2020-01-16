@@ -127,8 +127,8 @@ class TypeCalculator
   # @api private
   def self.infer_callable_methods_t(o)
     # If being a value that cannot have Pcore based methods callable from Puppet Language
-    if (o.is_a?(String) || 
-      o.is_a?(Numeric) || 
+    if (o.is_a?(String) ||
+      o.is_a?(Numeric) ||
       o.is_a?(TrueClass) ||
       o.is_a?(FalseClass) ||
       o.is_a?(Regexp) ||

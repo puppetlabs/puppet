@@ -20,7 +20,7 @@ class AccessOperator
     @semantic = access_expression
   end
 
-  def access (o, scope, *keys)
+  def access(o, scope, *keys)
     @@access_visitor.visit_this_2(self, o, scope, keys)
   end
 
