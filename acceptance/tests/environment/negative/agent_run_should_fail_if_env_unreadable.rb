@@ -1,4 +1,10 @@
 test_name "C97899 - Agent run should fail if environment is unreadable" do
+
+  tag 'audit:medium',
+      'audit:integration',
+      'audit:refactor', # use mk_temp_environment_with_teardown
+      'server'
+
   skip_test 'requires a puppetserver master for managing the environment' if hosts_with_role(hosts, 'master').length == 0 or not @options[:is_puppetserver]
   jruby_version = on(master, 'puppetserver ruby --version').stdout
   skip_test 'This is only valid on JRuby 1.7' unless jruby_version =~ /^jruby 1\.7/

@@ -1,8 +1,13 @@
 test_name 'puppet module list (with environment)'
+
+tag 'server',
+    'audit:medium',
+    'audit:acceptance',
+    'audit:refactor'   # Master is not required for this test. Replace with agents.each
+                       # Wrap steps in blocks in accordance with Beaker style guide
+
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
-
-tag 'server'
 
 tmpdir = master.tmpdir('module-list-with-environment')
 
