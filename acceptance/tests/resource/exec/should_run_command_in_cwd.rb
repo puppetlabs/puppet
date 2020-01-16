@@ -47,9 +47,6 @@ test_name "The Exec resource should run commands in the specified cwd" do
   end
 
   agents.each do |agent|
-    # skip the agent on the master, as we don't need to run the tests on the master too
-    next if agent == master
-
     testdir = agent.tmpdir("mock_testdir")
     if agent.platform =~ /windows/
       path = 'C:\Windows\System32'
