@@ -17,7 +17,7 @@ describe Puppet::HTTP::Service::FileServer do
   end
 
   context 'when making requests' do
-    let(:uri) {"https://www.example.com:443/puppet/v3/file_content/:mount/:path"}
+    let(:uri) {"https://www.example.com:443/puppet/v3/file_content/:mount/:path?environment=testing"}
 
     it 'includes default HTTP headers' do
       stub_request(:get, uri).with do |request|
@@ -25,7 +25,7 @@ describe Puppet::HTTP::Service::FileServer do
         expect(request.headers).to_not include('X-Puppet-Profiling')
       end
 
-      subject.get_file_content(mount_point: ':mount', path: ':path')
+      subject.get_file_content(mount_point: ':mount', path: ':path', environment: environment) { |data| }
     end
 
     it 'includes the X-Puppet-Profiling header when Puppet[:profile] is true' do
@@ -33,7 +33,7 @@ describe Puppet::HTTP::Service::FileServer do
 
       Puppet[:profile] = true
 
-      subject.get_file_content(mount_point: ':mount', path: ':path')
+      subject.get_file_content(mount_point: ':mount', path: ':path', environment: environment) { |data| }
     end
   end
 
@@ -42,13 +42,13 @@ describe Puppet::HTTP::Service::FileServer do
       Puppet[:server] = 'file.example.com'
       Puppet[:masterport] = 8141
 
-      stub_request(:get, "https://file.example.com:8141/puppet/v3/file_content/mount/path")
+      stub_request(:get, "https://file.example.com:8141/puppet/v3/file_content/mount/path?environment=testing")
 
-      subject.get_file_content(mount_point: 'mount', path: 'path')
+      subject.get_file_content(mount_point: 'mount', path: 'path', environment: environment) { |data| }
     end
   end
 
-  context 'retriving file metadata' do
+  context 'retrieving file metadata' do
     let(:path) { tmpfile('get_file_metadata') }
     let(:url) { "https://www.example.com/puppet/v3/file_metadata/infinity/#{path}?checksum_type=md5&environment=testing&links=manage&source_permissions=ignore" }
     let(:filemetadata) { Puppet::FileServing::Metadata.new(path) }
@@ -103,9 +103,9 @@ describe Puppet::HTTP::Service::FileServer do
     end
   end
 
-  context 'retriving multiple file metadatas' do
+  context 'retrieving multiple file metadatas' do
     let(:path) { tmpfile('get_file_metadatas') }
-    let(:url) { "https://www.example.com/puppet/v3/file_metadatas/infinity/#{path}?checksum_type=md5&links=manage&recurse=false&source_permissions=ignore" }
+    let(:url) { "https://www.example.com/puppet/v3/file_metadatas/infinity/#{path}?checksum_type=md5&links=manage&recurse=false&source_permissions=ignore&environment=testing" }
     let(:filemetadatas) { [Puppet::FileServing::Metadata.new(path)] }
     let(:formatter) { Puppet::Network::FormatHandler.format(:json) }
 
@@ -121,7 +121,7 @@ describe Puppet::HTTP::Service::FileServer do
     end
 
     it 'automatically converts an array of parameters to the stringified query' do
-      url = "https://www.example.com/puppet/v3/file_metadatas/infinity/#{path}?checksum_type=md5&ignore=CVS&ignore=.git&ignore=.hg&links=manage&recurse=false&source_permissions=ignore"
+      url = "https://www.example.com/puppet/v3/file_metadatas/infinity/#{path}?checksum_type=md5&environment=testing&ignore=CVS&ignore=.git&ignore=.hg&links=manage&recurse=false&source_permissions=ignore"
       stub_request(:get, url).with(
         headers: {'Accept'=>'application/json, application/x-msgpack, text/pson',}
       ).to_return(
@@ -172,21 +172,23 @@ describe Puppet::HTTP::Service::FileServer do
   end
 
   context 'getting file content' do
-    let(:uri) {"https://www.example.com:443/puppet/v3/file_content/infinity/eternal"}
+    let(:uri) {"https://www.example.com:443/puppet/v3/file_content/infinity/eternal?environment=testing"}
 
-    it 'submits a request for the file content' do
+    it 'yields file content' do
       stub_request(:get, uri).with do |request|
         expect(request.headers).to include({'Accept' => 'application/octet-stream'})
-      end.to_return(status: 200, body: '')
+      end.to_return(status: 200, body: "and beyond")
 
-      subject.get_file_content(mount_point: 'infinity', path: 'eternal')
+      expect { |b|
+        subject.get_file_content(mount_point: 'infinity', path: 'eternal', environment: environment, &b)
+      }.to yield_with_args("and beyond")
     end
 
     it 'raises response error if unsuccessful' do
       stub_request(:get, uri).to_return(status: [400, 'Bad Request'])
 
       expect {
-        subject.get_file_content(mount_point: 'infinity', path: 'eternal')
+        subject.get_file_content(mount_point: 'infinity', path: 'eternal', environment: environment) { |data| }
       }.to raise_error do |err|
         expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
         expect(err.message).to eq('Bad Request')
