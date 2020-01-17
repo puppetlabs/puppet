@@ -68,7 +68,7 @@ CONF
       subject.upload
 
       expect(@logs).to be_any {|log| log.level == :notice &&
-                               log.message =~ /Uploading facts for '.*' to: 'puppet\.server\.test'/}
+                               log.message =~ /Uploading facts for '.*' to 'puppet\.server\.test'/}
     end
   end
 end
