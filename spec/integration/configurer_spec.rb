@@ -104,7 +104,7 @@ describe Puppet::Configurer do
 
         it 'logs errors that occur during fact submission' do
           stub_request(:put, "https://puppet:8140/puppet/v3/facts/configurer.test?environment=production").to_return(status: 502)
-          expect(Puppet).to receive(:log_exception).with(Net::HTTPError,
+          expect(Puppet).to receive(:log_exception).with(Puppet::HTTP::ResponseError,
                                                          /^Failed to submit facts/)
 
           @configurer.run(catalog: @catalog)
