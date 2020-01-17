@@ -22,7 +22,7 @@ module Puppet
     feature :system_groups,
       "The provider allows you to create system groups with lower GIDs."
 
-    feature :libuser,
+    feature :manages_local_users_and_groups,
       "Allows local groups to be managed on systems that also use some other
        remote Name Switch Service (NSS) method of managing accounts."
 
@@ -214,7 +214,7 @@ module Puppet
     end
 
     newparam(:forcelocal, :boolean => true,
-             :required_features => :libuser,
+             :required_features => :manages_local_users_and_groups,
              :parent => Puppet::Parameter::Boolean) do
       desc "Forces the management of local accounts when accounts are also
             being managed by some other Name Switch Service (NSS). For AIX, refer to the `ia_load_module` parameter.

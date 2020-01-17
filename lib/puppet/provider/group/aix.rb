@@ -18,6 +18,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
   # Provider features
   has_features :manages_aix_lam
   has_features :manages_members
+  has_features :manages_local_users_and_groups
 
   class << self
     # Used by the AIX user provider. Returns a hash of:

@@ -51,7 +51,7 @@ module Puppet
     feature :manages_aix_lam,
       "The provider can manage AIX Loadable Authentication Module (LAM) system."
 
-    feature :libuser,
+    feature :manages_local_users_and_groups,
       "Allows local users to be managed on systems that also use some other
        remote Name Service Switch (NSS) method of managing accounts."
 
@@ -688,7 +688,7 @@ module Puppet
     end
 
     newparam(:forcelocal, :boolean => true,
-            :required_features => :libuser,
+            :required_features => :manages_local_users_and_groups,
             :parent => Puppet::Parameter::Boolean) do
       desc "Forces the management of local accounts when accounts are also
             being managed by some other Name Service Switch (NSS). For AIX, refer to the `ia_load_module` parameter.

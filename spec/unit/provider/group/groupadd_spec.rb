@@ -44,7 +44,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
 
     describe "on systems with the libuser and forcelocal=true" do
       before do
-        described_class.has_feature(:libuser)
+        described_class.has_feature(:manages_local_users_and_groups)
         resource[:forcelocal] = :true
       end
  
@@ -74,7 +74,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
 
     describe "on systems with the libuser and forcelocal=false" do
       before do
-        described_class.has_feature(:libuser)
+        described_class.has_feature(:manages_local_users_and_groups)
         resource[:forcelocal] = :false
       end
 
@@ -92,7 +92,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
 
     describe "on systems with the libuser and forcelocal=true" do
       before do
-        described_class.has_feature(:libuser)
+        described_class.has_feature(:manages_local_users_and_groups)
         resource[:forcelocal] = :true
       end
 
@@ -131,7 +131,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
 
     describe "on systems with the libuser and forcelocal=false" do
       before do
-        described_class.has_feature(:libuser)
+        described_class.has_feature(:manages_local_users_and_groups)
         resource[:forcelocal] = :false
       end
 
@@ -143,7 +143,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
 
     describe "on systems with the libuser and forcelocal=true" do
       before do
-        described_class.has_feature(:libuser)
+        described_class.has_feature(:manages_local_users_and_groups)
         resource[:forcelocal] = :true
       end
 
