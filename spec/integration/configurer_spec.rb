@@ -70,18 +70,26 @@ describe Puppet::Configurer do
       end
 
       context 'when resubmit_facts is set to true' do
-        let(:test_facts) { Puppet::Node::Facts.new('configurer.test') }
-        let(:fact_rest_terminus) { Puppet::Node::Facts.indirection.terminus(:rest) }
+        let(:test_facts) { Puppet::Node::Facts.new('configurer.test', {test_fact: 'test value'}) }
 
         before(:each) do
           Puppet[:resubmit_facts] = true
 
           allow(@configurer).to receive(:find_facts).and_return(test_facts)
-          allow(fact_rest_terminus).to receive(:save)
         end
 
-        it 'sends fact data using the rest terminus' do
-          expect(fact_rest_terminus).to receive(:save)
+        it 'uploads facts as application/json' do
+          stub_request(:put, "https://puppet:8140/puppet/v3/facts/configurer.test?environment=production").
+            with(
+              body: hash_including(
+                {
+                  "name" => "configurer.test",
+                  "values" => {"test_fact" => 'test value',},
+                }),
+              headers: {
+                'Accept'=>'application/json, application/x-msgpack, text/pson',
+                'Content-Type'=>'application/json',
+              })
 
           @configurer.run(catalog: @catalog)
         end
@@ -95,8 +103,8 @@ describe Puppet::Configurer do
         end
 
         it 'logs errors that occur during fact submission' do
-          allow(fact_rest_terminus).to receive(:save).and_raise('error sending facts')
-          expect(Puppet).to receive(:log_exception).with(instance_of(RuntimeError),
+          stub_request(:put, "https://puppet:8140/puppet/v3/facts/configurer.test?environment=production").to_return(status: 502)
+          expect(Puppet).to receive(:log_exception).with(Net::HTTPError,
                                                          /^Failed to submit facts/)
 
           @configurer.run(catalog: @catalog)
@@ -104,6 +112,17 @@ describe Puppet::Configurer do
 
         it 'records time spent resubmitting facts' do
           report = Puppet::Transaction::Report.new
+
+          stub_request(:put, "https://puppet:8140/puppet/v3/facts/configurer.test?environment=production").
+            with(
+              body: hash_including({
+                "name" => "configurer.test",
+                "values" => {"test_fact": "test value"},
+              }),
+              headers: {
+                'Accept'=>'application/json, application/x-msgpack, text/pson',
+                'Content-Type'=>'application/json',
+              }).to_return(status: 200)
 
           @configurer.run(catalog: @catalog, report: report)
 
