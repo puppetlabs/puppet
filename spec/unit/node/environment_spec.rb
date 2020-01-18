@@ -311,32 +311,32 @@ describe Puppet::Node::Environment do
             )
 
             expect(env.module_requirements).to eq({
-              'puppetlabs/alpha' => [],
-              'puppetlabs/foo' => [
+              'puppetlabs-alpha' => [],
+              'puppetlabs-foo' => [
                 {
-                  "name"    => "puppetlabs/bar",
+                  "name"    => "puppetlabs-bar",
                   "version" => "9.9.9",
                   "version_requirement" => "<= 2.0.0"
                 }
               ],
-              'puppetlabs/bar' => [
+              'puppetlabs-bar' => [
                 {
-                  "name"    => "puppetlabs/alpha",
+                  "name"    => "puppetlabs-alpha",
                   "version" => "9.9.9",
                   "version_requirement" => "~3.0.0"
                 },
                 {
-                  "name"    => "puppetlabs/baz",
+                  "name"    => "puppetlabs-baz",
                   "version" => "9.9.9",
                   "version_requirement" => "3.0.0"
                 },
                 {
-                  "name"    => "puppetlabs/foo",
+                  "name"    => "puppetlabs-foo",
                   "version" => "9.9.9",
                   "version_requirement" => ">= 1.0.0"
                 }
               ],
-              'puppetlabs/baz' => []
+              'puppetlabs-baz' => []
             })
           end
         end
@@ -348,7 +348,7 @@ describe Puppet::Node::Environment do
               first_modulepath,
               module_options
             )
-            expect(env.module_by_forge_name('puppetlabs/baz')).to eq(mod)
+            expect(env.module_by_forge_name('puppetlabs-baz')).to eq(mod)
           end
 
           it "does not find modules with same name by the wrong author" do
@@ -358,11 +358,11 @@ describe Puppet::Node::Environment do
               :metadata => {:author => 'sneakylabs'},
               :environment => env
             )
-            expect(env.module_by_forge_name('puppetlabs/baz')).to eq(nil)
+            expect(env.module_by_forge_name('puppetlabs-baz')).to eq(nil)
           end
 
           it "returns nil when the module can't be found" do
-            expect(env.module_by_forge_name('ima/nothere')).to be_nil
+            expect(env.module_by_forge_name('ima-nothere')).to be_nil
           end
         end
 

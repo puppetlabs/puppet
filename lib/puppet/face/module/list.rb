@@ -239,7 +239,7 @@ Puppet::Face.define(:module, '1.0.0') do
   #
   def list_build_node(mod, parent, params)
     str = ''
-    str << (mod.forge_name ? mod.forge_name.tr('/', '-') : mod.name)
+    str << (mod.forge_name ? mod.forge_name : mod.name)
     str << ' (' + colorize(:cyan, mod.version ? "v#{mod.version}" : '???') + ')'
 
     unless File.dirname(mod.path) == params[:path]

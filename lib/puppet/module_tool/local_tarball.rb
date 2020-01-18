@@ -46,7 +46,7 @@ module Puppet::ModuleTool
       def initialize(source, mod)
         @mod = mod
         @metadata = mod.metadata
-        name = mod.forge_name.tr('/', '-')
+        name = mod.forge_name
         version = SemanticPuppet::Version.parse(mod.version)
         release = "#{name}@#{version}"
 

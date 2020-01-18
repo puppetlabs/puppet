@@ -51,7 +51,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
     before { preinstall('pmtacceptance-apache', '0.0.4') }
 
     it "should uninstall the module" do
-      expect(subject[:affected_modules].first.forge_name).to eq("pmtacceptance/stdlib")
+      expect(subject[:affected_modules].first.forge_name).to eq("pmtacceptance-stdlib")
     end
 
     it "should only uninstall the requested module" do
@@ -159,7 +159,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
 
         it "should ignore local changes" do
           expect(subject[:affected_modules].length).to eq(1)
-          expect(subject[:affected_modules].first.forge_name).to eq("pmtacceptance/stdlib")
+          expect(subject[:affected_modules].first.forge_name).to eq("pmtacceptance-stdlib")
         end
 
         it 'uninstalls in FIPS mode' do
@@ -173,7 +173,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
 
         it "should ignore broken dependencies" do
           expect(subject[:affected_modules].length).to eq(1)
-          expect(subject[:affected_modules].first.forge_name).to eq("pmtacceptance/stdlib")
+          expect(subject[:affected_modules].first.forge_name).to eq("pmtacceptance-stdlib")
         end
       end
     end

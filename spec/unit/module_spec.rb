@@ -162,7 +162,7 @@ describe Puppet::Module do
         :environment => env
       )
 
-      expect(env).to receive(:module_by_forge_name).with('foo/child').and_return(child)
+      expect(env).to receive(:module_by_forge_name).with('foo-child').and_return(child)
 
       expect(parent.unmet_dependencies).to eq([])
     end
@@ -180,13 +180,13 @@ describe Puppet::Module do
         :environment => env
       )
 
-      expect(env).to receive(:module_by_forge_name).with('baz/foobar').and_return(nil)
+      expect(env).to receive(:module_by_forge_name).with('baz-foobar').and_return(nil)
 
       expect(mod.unmet_dependencies).to eq([{
         :reason => :missing,
-        :name   => "baz/foobar",
+        :name   => "baz-foobar",
         :version_constraint => ">= 2.2.0",
-        :parent => { :name => 'puppetlabs/needy', :version => 'v9.9.9' },
+        :parent => { :name => 'puppetlabs-needy', :version => 'v9.9.9' },
         :mod_details => { :installed_version => nil }
       }])
     end
@@ -204,13 +204,13 @@ describe Puppet::Module do
         :environment => env
       )
 
-      expect(env).to receive(:module_by_forge_name).with('baz/foobar=bar').and_return(nil)
+      expect(env).to receive(:module_by_forge_name).with('baz-foobar=bar').and_return(nil)
 
       expect(mod.unmet_dependencies).to eq([{
         :reason => :missing,
-        :name   => "baz/foobar=bar",
+        :name   => "baz-foobar=bar",
         :version_constraint => ">= 2.2.0",
-        :parent => { :name => 'puppetlabs/needy', :version => 'v9.9.9' },
+        :parent => { :name => 'puppetlabs-needy', :version => 'v9.9.9' },
         :mod_details => { :installed_version => nil }
       }])
     end
@@ -255,17 +255,17 @@ describe Puppet::Module do
 
       expect(mod.unmet_dependencies).to eq([{
         :reason => :version_mismatch,
-        :name   => "baz/foobar",
+        :name   => "baz-foobar",
         :version_constraint => ">= 2.2.0",
-        :parent => { :version => "v9.9.9", :name => "puppetlabs/test_gte_req" },
+        :parent => { :version => "v9.9.9", :name => "puppetlabs-test_gte_req" },
         :mod_details => { :installed_version => "2.0.0" }
       }])
 
       expect(mod2.unmet_dependencies).to eq([{
         :reason => :version_mismatch,
-        :name   => "baz/foobar",
+        :name   => "baz-foobar",
         :version_constraint => "v1.0.0",
-        :parent => { :version => "v9.9.9", :name => "puppetlabs/test_specific_req" },
+        :parent => { :version => "v9.9.9", :name => "puppetlabs-test_specific_req" },
         :mod_details => { :installed_version => "2.0.0" }
       }])
 
@@ -322,9 +322,9 @@ describe Puppet::Module do
 
       expect(mod.unmet_dependencies).to eq([{
         :reason => :non_semantic_version,
-        :parent => { :version => "v9.9.9", :name => "puppetlabs/foobar" },
+        :parent => { :version => "v9.9.9", :name => "puppetlabs-foobar" },
         :mod_details => { :installed_version => "5.1" },
-        :name => "baz/foobar",
+        :name => "baz-foobar",
         :version_constraint => ">= 0.0.0"
       }])
     end
@@ -388,8 +388,8 @@ describe Puppet::Module do
       expect(mod.unmet_dependencies).to eq([{
         :reason => :missing,
         :mod_details => { :installed_version => nil },
-        :parent => { :version => "v9.9.9", :name => "puppetlabs/#{name}" },
-        :name => "baz/notsatisfied",
+        :parent => { :version => "v9.9.9", :name => "puppetlabs-#{name}" },
+        :name => "baz-notsatisfied",
         :version_constraint => ">= 2.2.0"
       }])
     end
@@ -952,12 +952,12 @@ describe Puppet::Module do
     )
     expect(dependable.required_by).to match_array([
       {
-        "name"    => "beggar/needy",
+        "name"    => "beggar-needy",
         "version" => "9.9.9",
         "version_requirement" => ">= 2.2.0"
       },
       {
-        "name"    => "spoiled/wantit",
+        "name"    => "spoiled-wantit",
         "version" => "9.9.9",
         "version_requirement" => "< 5.0.0"
       }

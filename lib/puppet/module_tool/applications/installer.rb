@@ -140,7 +140,7 @@ module Puppet::ModuleTool
             releases.each do |rel|
               installed_module = installed_modules_source.by_name[rel.name.split('-').last]
               if installed_module
-                next if installed_module.has_metadata? && installed_module.forge_name.tr('/', '-') == rel.name
+                next if installed_module.has_metadata? && installed_module.forge_name == rel.name
 
                 if rel.name != name
                   dependency = {
@@ -306,7 +306,7 @@ module Puppet::ModuleTool
           @environment.modules_by_path[options[:target_dir]].each do |mod|
             if mod.has_metadata?
               metadata = {
-                :name    => mod.forge_name.tr('/', '-'),
+                :name    => mod.forge_name,
                 :version => mod.version
               }
               next if release[:module] == metadata[:name]

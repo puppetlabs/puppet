@@ -8,7 +8,7 @@ module Puppet::ModuleTool::Shared
     @installed  = Hash.new { |h,k| h[k] = [] }
 
     @environment.modules_by_path.values.flatten.each do |mod|
-      mod_name = (mod.forge_name || mod.name).tr('/', '-')
+      mod_name = (mod.forge_name || mod.name)
       @installed[mod_name] << mod
       d = @local["#{mod_name}@#{mod.version}"]
       (mod.dependencies || []).each do |hash|

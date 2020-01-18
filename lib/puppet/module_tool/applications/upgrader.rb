@@ -40,7 +40,7 @@ module Puppet::ModuleTool
         begin
           all_modules = @environment.modules_by_path.values.flatten
           matching_modules = all_modules.select do |x|
-            x.forge_name && x.forge_name.tr('/', '-') == name
+            x.forge_name && x.forge_name == name
           end
 
           if matching_modules.empty?
@@ -146,7 +146,7 @@ module Puppet::ModuleTool
           releases.each do |rel|
             mod = installed_modules_source.by_name[rel.name.split('-').last]
             if mod
-              next if mod.has_metadata? && mod.forge_name.tr('/', '-') == rel.name
+              next if mod.has_metadata? && mod.forge_name == rel.name
 
               if rel.name != name
                 dependency = {

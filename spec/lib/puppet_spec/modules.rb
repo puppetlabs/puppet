@@ -14,7 +14,7 @@ module PuppetSpec::Modules
         metadata[:license] ||= 'to kill'
         metadata[:dependencies] ||= []
 
-        metadata[:name] = "#{metadata[:author]}/#{name}"
+        metadata[:name] = "#{metadata[:author]}-#{name}"
 
         File.open(File.join(module_dir, 'metadata.json'), 'w') do |f|
           f.write(metadata.to_json)

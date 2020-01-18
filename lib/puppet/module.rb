@@ -237,7 +237,7 @@ class Puppet::Module
     @metadata = data = read_metadata
     return if data.empty?
 
-    @forge_name = data['name'].tr('-', '/') if data['name']
+    @forge_name = data['name'].tr('/', '-') if data['name']
 
     [:source, :author, :version, :license, :dependencies].each do |attr|
       value = data[attr.to_s]
@@ -249,7 +249,7 @@ class Puppet::Module
         end
         value.each do |dep|
           name = dep['name']
-          dep['name'] = name.tr('-', '/') unless name.nil?
+          dep['name'] = name.tr('/', '-') unless name.nil?
           dep['version_requirement'] ||= '>= 0.0.0'
         end
       end
@@ -346,7 +346,7 @@ class Puppet::Module
   def dependencies_as_modules
     dependent_modules = []
     dependencies and dependencies.each do |dep|
-      _, dep_name = dep["name"].split('/')
+      _, dep_name = dep["name"].split('-')
       found_module = environment.module(dep_name)
       dependent_modules << found_module if found_module
     end

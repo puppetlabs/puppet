@@ -57,7 +57,7 @@ module Puppet::ModuleTool
       def initialize(source, mod)
         @mod = mod
         @metadata = mod.metadata
-        name = mod.forge_name.tr('/', '-')
+        name = mod.forge_name
         begin
           version = SemanticPuppet::Version.parse(mod.version)
         rescue SemanticPuppet::Version::ValidationFailure
