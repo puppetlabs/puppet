@@ -1,4 +1,8 @@
 test_name "PUP-8735: UTF-8 characters are preserved after recursively copying directories" do
+
+  tag 'audit:high', # utf-8 is high impact in general
+      'audit:integration' # not package dependent but may want to vary platform by LOCALE/encoding
+
   # Translation is not supported on these platforms:
   confine :except, :platform => /^eos-/
   confine :except, :platform => /^cisco/
