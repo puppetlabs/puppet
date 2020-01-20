@@ -101,7 +101,7 @@ class Puppet::Transaction::ResourceHarness
   # We persist the last known values for the properties of a resource after resource
   # application.
   # @param [Puppet::Type] resource resource whose values we are to persist.
-  # @param [ResourceApplicationContent] context the application context to operate on.
+  # @param [ResourceApplicationContext] context the application context to operate on.
   def persist_system_values(resource, context)
     param_to_event = {}
     context.status.events.each do |ev|
