@@ -1,3 +1,5 @@
+# coding: utf-8
+
 require 'spec_helper'
 require 'puppet/util/plist'
 require 'puppet_spec/files'
@@ -52,6 +54,19 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
     </dict>
     </plist>'
   end
+  let(:ascii_xml_plist) do
+    '<?xml version="1.0" encoding="UTF-8"?>
+     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+     <plist version="1.0">
+     <dict>
+       <key>RecordName</key>
+         <array>
+           <string>Timișoara</string>
+           <string>Tōkyō</string>
+         </array>
+     </dict>
+     </plist>'.force_encoding(Encoding::US_ASCII)
+  end
   let(:non_plist_data) do
     "Take my love, take my land
      Take me where I cannot stand
@@ -62,6 +77,7 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
     "\xCF\xFA\xED\xFE\a\u0000\u0000\u0001\u0003\u0000\u0000\x80\u0002\u0000\u0000\u0000\u0012\u0000\u0000\u0000\b"
   end
   let(:valid_xml_plist_hash) { {"LastUsedPrinters"=>[{"Network"=>"10.85.132.1", "PrinterID"=>"baskerville_corp_puppetlabs_net"}, {"Network"=>"10.14.96.1", "PrinterID"=>"Statler"}]} }
+  let(:ascii_xml_plist_hash) { {"RecordName"=>["Timișoara", "Tōkyō"]} }
   let(:plist_path) { file_containing('sample.plist', valid_xml_plist) }
   let(:binary_plist_magic_number) { 'bplist00' }
   let(:bad_xml_doctype) { '<!DOCTYPE plist PUBLIC -//Apple Computer' }
@@ -130,6 +146,10 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
   describe "#parse_plist" do
     it "returns a valid hash when a valid XML plist is provided" do
       expect(subject.parse_plist(valid_xml_plist)).to eq(valid_xml_plist_hash)
+    end
+
+    it "returns a valid hash when an ASCII XML plist is provided" do
+      expect(subject.parse_plist(ascii_xml_plist)).to eq(ascii_xml_plist_hash)
     end
 
     it "raises a debug message and replaces a bad XML plist doctype should one be encountered" do
