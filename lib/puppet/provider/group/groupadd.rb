@@ -28,20 +28,6 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     get(:gid)
   end
 
-  def findgroup(key, value)
-    group_file = "/etc/group"
-    group_keys = [:group_name, :password, :gid, :user_list]
-    index = group_keys.index(key)
-    @group_content ||= File.read(group_file)
-    @group_content.each_line do |line|
-      group = line.split(":")
-      if group[index] == value
-        return Hash[group_keys.zip(group)]
-      end
-    end
-    false
-  end
-
   def localgid
     group = findgroup(:group_name, resource[:name])
     return group[:gid] if group
@@ -105,5 +91,21 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     else
       [command(:delete), @resource[:name]]
     end
+  end
+
+  private
+
+  def findgroup(key, value)
+    group_file = "/etc/group"
+    group_keys = [:group_name, :password, :gid, :user_list]
+    index = group_keys.index(key)
+    @group_content ||= File.read(group_file)
+    @group_content.each_line do |line|
+      group = line.split(":")
+      if group[index] == value
+        return Hash[group_keys.zip(group)]
+      end
+    end
+    false
   end
 end

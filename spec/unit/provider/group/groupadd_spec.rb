@@ -139,17 +139,17 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
 
     [:group_name, :password, :gid, :user_list].each do |key|
       it "finds a group by #{key} when asked" do
-        expect(provider.findgroup(key, "sample_#{key}")).to eq(output)
+        expect(provider.send(:findgroup, key, "sample_#{key}")).to eq(output)
       end
     end
 
     it "returns false when specified key/value pair is not found" do
-      expect(provider.findgroup(:group_name, 'invalid_group_name')).to eq(false)
+      expect(provider.send(:findgroup, :group_name, 'invalid_group_name')).to eq(false)
     end
 
     it "reads the group file only once per resource" do
       expect(File).to receive(:read).with('/etc/group').once
-      5.times { provider.findgroup(:group_name, 'sample_group_name') }
+      5.times { provider.send(:findgroup, :group_name, 'sample_group_name') }
     end
   end
 
