@@ -27,6 +27,16 @@ gem_runtime_dependencies:
   puppet-resource_api: '~>1.5'
   concurrent-ruby: '~> 1.0'
   deep_merge: '~> 1.0'
+gem_development_dependencies:
+  json-schema: '~> 2.0'
+  rake: '~> 12.2'
+  rspec: '~> 3.1'
+  rspec-its: '~> 1.1'
+  vcr: '~> 5.0'
+  webmock: '~> 3.0'
+  yard:
+  rubocop: '~> 0.49'
+  rubocop-i18n: '~> 1.2.0'
 gem_rdoc_options:
   - --title
   - "Puppet - Configuration Management"
