@@ -140,7 +140,7 @@ describe Puppet::Module do
       Puppet.settings[:modulepath] = @modpath
     end
 
-    it "should resolve module dependencies using forge names" do
+    it "should resolve module dependencies using forge names with slashes" do
       parent = PuppetSpec::Modules.create(
         'parent',
         @modpath,
@@ -166,6 +166,34 @@ describe Puppet::Module do
 
       expect(parent.unmet_dependencies).to eq([])
     end
+
+    it "should resolve module dependencies using hyphenated forge names" do
+      parent = PuppetSpec::Modules.create(
+        'parent',
+        @modpath,
+        :metadata => {
+          :author => 'foo',
+          :dependencies => [{
+            "name" => "foo-child"
+          }]
+        },
+        :environment => env
+      )
+      child = PuppetSpec::Modules.create(
+        'child',
+        @modpath,
+        :metadata => {
+          :author => 'foo',
+          :dependencies => []
+        },
+        :environment => env
+      )
+
+      expect(env).to receive(:module_by_forge_name).with('foo-child').and_return(child)
+
+      expect(parent.unmet_dependencies).to eq([])
+    end
+
 
     it "should list modules that are missing" do
       mod = PuppetSpec::Modules.create(
