@@ -468,21 +468,17 @@ class Puppet::Configurer
     ::Facter.clear
     facts = find_facts
 
-    saved_fact_terminus = Puppet::Node::Facts.indirection.terminus_class
-    begin
-      Puppet::Node::Facts.indirection.terminus_class = :rest
+    client = Puppet.runtime['http']
+    session = client.create_session
+    puppet = session.route_to(:puppet)
 
-      server = Puppet::Node::Facts::Rest.server
-      Puppet.info(_("Uploading facts for %{node} to %{server}") % {
-                    node: facts.name,
-                    server: server})
+    Puppet.info(_("Uploading facts for %{node} to %{server}") % {
+                  node: facts.name,
+                  server: puppet.url.hostname})
 
-      Puppet::Node::Facts.indirection.save(facts, nil, :environment => Puppet::Node::Environment.remote(@environment))
+    puppet.put_facts(facts.name, facts: facts, environment: Puppet.lookup(:current_environment).name.to_s)
 
-      return true
-    ensure
-      Puppet::Node::Facts.indirection.terminus_class = saved_fact_terminus
-    end
+    return true
   rescue => detail
     Puppet.log_exception(detail, _("Failed to submit facts: %{detail}") %
                                  { detail: detail })
