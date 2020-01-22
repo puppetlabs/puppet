@@ -17,6 +17,6 @@ task :require_racc do
   begin
     require 'racc'
   rescue LoadError
-    abort("Run `bundle install --with development` to install the `racc` gem.")
+    abort("Run `bundle install --with profiling` to install the `racc` gem.")
   end
 end

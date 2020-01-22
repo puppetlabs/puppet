@@ -105,7 +105,7 @@ namespace :benchmark do
         begin
           require 'memory_profiler'
         rescue LoadError
-          abort("Run `bundle install --with development` to install the 'memory_profiler' gem.")
+          abort("Run `bundle install --with profiling` to install the 'memory_profiler' gem.")
         end
 
         report = MemoryProfiler.report do

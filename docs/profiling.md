@@ -43,7 +43,7 @@ To run a scenario you do:
 ## Profiling Benchmarks
 
 You can also run `heap_dump`, `memory_profile` or `profile` tasks for each
-scenario. You'll first need to run `bundle install --with development` to
+scenario. You'll first need to run `bundle install --with profiling` to
 install the prerequisite gems.
 
 The `heap_dump` task generates a heap dump with object allocation

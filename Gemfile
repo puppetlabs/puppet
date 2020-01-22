@@ -48,7 +48,7 @@ group(:test) do
   gem 'rubocop-i18n', '~> 1.2.0', require: false, platforms: [:ruby]
 end
 
-group(:development, optional: true) do
+group(:profiling, optional: true) do
   gem 'memory_profiler', require: false, platforms: [:mri]
   gem 'pry', require: false, platforms: [:ruby]
   gem "racc", "1.4.9", require: false, platforms: [:ruby]
