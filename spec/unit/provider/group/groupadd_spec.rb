@@ -47,7 +47,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
         described_class.has_feature(:libuser)
         resource[:forcelocal] = :true
       end
- 
+
       it "should use lgroupadd instead of groupadd" do
         expect(provider).to receive(:execute).with(including('/usr/sbin/lgroupadd'), hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
         provider.create
@@ -121,6 +121,35 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       resource[:allowdupe] = :true
       expect(provider).to receive(:execute).with(['/usr/sbin/groupmod', '-g', 150, '-o', 'mygroup'], hash_including({:failonfail => true, :combine => true, :custom_environment => {}}))
       provider.gid = 150
+    end
+  end
+
+  describe "#findgroup" do
+    before { allow(File).to receive(:read).with('/etc/group').and_return(content) }
+
+    let(:content) { "sample_group_name:sample_password:sample_gid:sample_user_list" }
+    let(:output) do
+      {
+        group_name: 'sample_group_name',
+        password: 'sample_password',
+        gid: 'sample_gid',
+        user_list: 'sample_user_list',
+      }
+    end
+
+    [:group_name, :password, :gid, :user_list].each do |key|
+      it "finds a group by #{key} when asked" do
+        expect(provider.send(:findgroup, key, "sample_#{key}")).to eq(output)
+      end
+    end
+
+    it "returns false when specified key/value pair is not found" do
+      expect(provider.send(:findgroup, :group_name, 'invalid_group_name')).to eq(false)
+    end
+
+    it "reads the group file only once per resource" do
+      expect(File).to receive(:read).with('/etc/group').once
+      5.times { provider.send(:findgroup, :group_name, 'sample_group_name') }
     end
   end
 
