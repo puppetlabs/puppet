@@ -40,6 +40,16 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency(%q<concurrent-ruby>, "~> 1.0")
   s.add_runtime_dependency(%q<deep_merge>, "~> 1.0")
 
+  s.add_development_dependency("json-schema", "~> 2.0")
+  s.add_development_dependency("rake", "~> 12.2")
+  s.add_development_dependency("rspec", "~> 3.1")
+  s.add_development_dependency("rspec-its", "~> 1.1")
+  s.add_development_dependency("vcr", "~> 5.0")
+  s.add_development_dependency("webmock", "~> 3.0")
+  s.add_development_dependency("yard")
+  s.add_development_dependency("rubocop", "~> 0.49")
+  s.add_development_dependency("rubocop-i18n", "~> 1.2.0")
+
   # loads platform specific gems like ffi, win32 platform gems
   # as additional runtime dependencies
   gem_deps_path = File.join(File.dirname(__FILE__), 'ext', 'project_data.yaml')

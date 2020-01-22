@@ -35,19 +35,6 @@ group(:features) do
   gem 'puppetserver-ca', '~> 1.1', require: false
 end
 
-group(:test) do
-  gem "json-schema", "~> 2.0", require: false
-  gem "rake", *location_for(ENV['RAKE_LOCATION'] || '~> 12.2')
-  gem "rspec", "~> 3.1", require: false
-  gem "rspec-its", "~> 1.1", require: false
-  gem 'vcr', '~> 5.0', require: false
-  gem 'webmock', '~> 3.0', require: false
-  gem 'yard', require: false
-
-  gem 'rubocop', '~> 0.49', require: false, platforms: [:ruby]
-  gem 'rubocop-i18n', '~> 1.2.0', require: false, platforms: [:ruby]
-end
-
 group(:profiling, optional: true) do
   gem 'memory_profiler', require: false, platforms: [:mri]
   gem 'pry', require: false, platforms: [:ruby]
