@@ -30,15 +30,15 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.summary = "Puppet, an automated configuration management tool"
   s.specification_version = 3
-  s.add_runtime_dependency(%q<facter>, [">= 2.4.0", "< 4"])
-  s.add_runtime_dependency(%q<hiera>, [">= 3.2.1", "< 4"])
-  s.add_runtime_dependency(%q<semantic_puppet>, "~> 1.0")
-  s.add_runtime_dependency(%q<fast_gettext>, "~> 1.1")
-  s.add_runtime_dependency(%q<locale>, "~> 2.1")
-  s.add_runtime_dependency(%q<multi_json>, "~> 1.13")
-  s.add_runtime_dependency(%q<httpclient>, "~> 2.8")
-  s.add_runtime_dependency(%q<concurrent-ruby>, "~> 1.0")
-  s.add_runtime_dependency(%q<deep_merge>, "~> 1.0")
+  s.add_runtime_dependency("facter", [">= 2.4.0", "< 4"])
+  s.add_runtime_dependency("hiera", [">= 3.2.1", "< 4"])
+  s.add_runtime_dependency("semantic_puppet", "~> 1.0")
+  s.add_runtime_dependency("fast_gettext", "~> 1.1")
+  s.add_runtime_dependency("locale", "~> 2.1")
+  s.add_runtime_dependency("multi_json", "~> 1.13")
+  s.add_runtime_dependency("httpclient", "~> 2.8")
+  s.add_runtime_dependency("concurrent-ruby", "~> 1.0")
+  s.add_runtime_dependency("deep_merge", "~> 1.0")
 
   s.add_development_dependency("json-schema", "~> 2.0")
   s.add_development_dependency("rake", "~> 12.2")
