@@ -61,6 +61,59 @@ describe Puppet::Application::Describe do
     }.to output(/Meta Parameters.*#{Regexp.escape('**notify**')}/m).to_stdout
   end
 
+  it "outputs no documentation if the summary is missing" do
+    Puppet::Type.newtype(:describe_test) {}
+
+    describe.command_line.args << '--list'
+    expect {
+      describe.run
+    }.to output(/#{Regexp.escape("describe_test   - .. no documentation ..")}/).to_stdout
+  end
+
+  it "outputs the first short sentence ending in a dot" do
+    Puppet::Type.newtype(:describe_test) do
+      @doc = "ends in a dot."
+    end
+
+    describe.command_line.args << '--list'
+    expect {
+      describe.run
+    }.to output(/#{Regexp.escape("describe_test   - ends in a dot\n")}/).to_stdout
+  end
+
+  it "outputs the first short sentence missing a dot" do
+    Puppet::Type.newtype(:describe_test) do
+      @doc = "missing a dot"
+    end
+
+    describe.command_line.args << '--list'
+    expect {
+      describe.run
+    }.to output(/describe_test   - missing a dot\n/).to_stdout
+  end
+
+  it "truncates long summaries ending in a dot" do
+    Puppet::Type.newtype(:describe_test) do
+      @doc = "This sentence is more than 45 characters and ends in a dot."
+    end
+
+    describe.command_line.args << '--list'
+    expect {
+      describe.run
+    }.to output(/#{Regexp.escape("describe_test   - This sentence is more than 45 characters and  ...")}/).to_stdout
+  end
+
+  it "truncates long summaries missing a dot" do
+    Puppet::Type.newtype(:describe_test) do
+      @doc = "This sentence is more than 45 characters and is missing a dot"
+    end
+
+    describe.command_line.args << '--list'
+    expect {
+      describe.run
+    }.to output(/#{Regexp.escape("describe_test   - This sentence is more than 45 characters and  ...")}/).to_stdout
+  end
+
   it "formats text with long non-space runs without garbling" do
     f = Formatter.new(76)
 
