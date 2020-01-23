@@ -241,6 +241,14 @@ The resolver selects a route based on the puppet settings for that service:
 For example, `route_to(:report)` would use `Puppet[:report_server]` and
 `Puppet[:report_port]`.
 
+#### Example: CA Service Routing
+
+There are some variations in how the different services are routed. Here is a
+visual of how the CA service is routed. We have to preserve some [interesting behavior](https://github.com/puppetlabs/puppet/blob/master/lib/puppet/http/client.rb#L243-L249)
+with this service, but otherwise the flow is similar to that of other serivces.
+
+![httpcaroute](./httpcaroute.png)
+
 ### Generic HTTP(S) Requests
 
 Puppet agents support downloading file content from 3rd party file servers,
