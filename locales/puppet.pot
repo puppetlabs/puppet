@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.11.1-197-g539749b170\n"
+"Project-Id-Version: Puppet automation framework 6.12.0-58-g60454b719d\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-01-07 15:20+0000\n"
-"PO-Revision-Date: 2020-01-07 15:20+0000\n"
+"POT-Creation-Date: 2020-01-23 01:04+0000\n"
+"PO-Revision-Date: 2020-01-23 01:04+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -618,23 +618,23 @@ msgstr ""
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:476
+#: ../lib/puppet/configurer.rb:475
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:487
+#: ../lib/puppet/configurer.rb:483
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:502
+#: ../lib/puppet/configurer.rb:498
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:520
+#: ../lib/puppet/configurer.rb:516
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:540
+#: ../lib/puppet/configurer.rb:536
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -707,37 +707,37 @@ msgid "Valid values are %{values}."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:526
+#: ../lib/puppet/defaults.rb:533
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:528
+#: ../lib/puppet/defaults.rb:535
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:718
+#: ../lib/puppet/defaults.rb:725
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:799
+#: ../lib/puppet/defaults.rb:806
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:980
+#: ../lib/puppet/defaults.rb:991
 msgid "Setting 'ssl_client_ca_auth' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1059 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1070 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
-#: ../lib/puppet/error.rb:69
+#: ../lib/puppet/error.rb:77
 msgid "Could not parse for environment %{environment}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/error.rb:70 ../lib/puppet/parser/compiler.rb:40
+#: ../lib/puppet/error.rb:78 ../lib/puppet/parser/compiler.rb:40
 msgid "%{message} on node %{node}"
 msgstr ""
 
@@ -1025,8 +1025,8 @@ msgstr ""
 msgid "Upload local facts to the puppet master."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:80
-msgid "Uploading facts for '%{node}' to: '%{server}'"
+#: ../lib/puppet/face/facts.rb:82
+msgid "Uploading facts for '%{node}' to '%{server}'"
 msgstr ""
 
 #: ../lib/puppet/face/generate.rb:9
@@ -1778,7 +1778,7 @@ msgstr ""
 msgid "Timeout waiting for exclusive lock on %{path}"
 msgstr ""
 
-#: ../lib/puppet/file_system/jruby.rb:18 ../lib/puppet/file_system/windows.rb:126 ../lib/puppet/util.rb:658
+#: ../lib/puppet/file_system/jruby.rb:18 ../lib/puppet/file_system/windows.rb:126 ../lib/puppet/util.rb:681
 msgid "Is a directory: %{directory}"
 msgstr ""
 
@@ -2242,11 +2242,15 @@ msgstr ""
 msgid "Sleeping for %{interval} seconds before retrying the request"
 msgstr ""
 
-#: ../lib/puppet/http/errors.rb:21
+#: ../lib/puppet/http/client.rb:198 ../lib/puppet/indirector/request.rb:142
+msgid "HTTP REST queries cannot handle values of type '%{klass}'"
+msgstr ""
+
+#: ../lib/puppet/http/errors.rb:23
 msgid "Too many HTTP redirections for %{addr}"
 msgstr ""
 
-#: ../lib/puppet/http/errors.rb:27
+#: ../lib/puppet/http/errors.rb:29
 msgid "Too many HTTP retries for %{addr}"
 msgstr ""
 
@@ -2262,8 +2266,12 @@ msgstr ""
 msgid "Failed to parse Retry-After header '%{retry_after}' as an integer or RFC 2822 date"
 msgstr ""
 
-#. TRANSLATORS "pson", "preffered_serialization_format", and "puppetserver" should not be translated
-#: ../lib/puppet/http/service/report.rb:35
+#: ../lib/puppet/http/service.rb:66 ../lib/puppet/indirector/rest.rb:276
+msgid "No content type in http response; cannot parse"
+msgstr ""
+
+#. TRANSLATORS "pson", "preferred_serialization_format", and "puppetserver" should not be translated
+#: ../lib/puppet/http/service/report.rb:31
 msgid "To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson"
 msgstr ""
 
@@ -2747,10 +2755,6 @@ msgstr ""
 msgid "Could not find indirection '%{indirection}'"
 msgstr ""
 
-#: ../lib/puppet/indirector/request.rb:142
-msgid "HTTP REST queries cannot handle values of type '%{klass}'"
-msgstr ""
-
 #: ../lib/puppet/indirector/request.rb:202
 msgid "Error connecting to %{srv_server}:%{srv_port}: %{message}"
 msgstr ""
@@ -2797,10 +2801,6 @@ msgstr ""
 
 #: ../lib/puppet/indirector/rest.rb:265 ../lib/puppet/rest/response.rb:31
 msgid "Error %{code} on SERVER: %{returned_message}"
-msgstr ""
-
-#: ../lib/puppet/indirector/rest.rb:276
-msgid "No content type in http response; cannot parse"
 msgstr ""
 
 #: ../lib/puppet/indirector/ssl_file.rb:34
@@ -5724,23 +5724,23 @@ msgstr ""
 msgid "The code loaded from %{source} contains additional logic - can only contain the function %{name}"
 msgstr ""
 
-#: ../lib/puppet/pops/loader/puppet_plan_instantiator.rb:25
+#: ../lib/puppet/pops/loader/puppet_plan_instantiator.rb:34
 msgid "The code loaded from %{source_ref} does not define the plan '%{plan_name}' - it is empty."
 msgstr ""
 
-#: ../lib/puppet/pops/loader/puppet_plan_instantiator.rb:29
+#: ../lib/puppet/pops/loader/puppet_plan_instantiator.rb:38
 msgid "The code loaded from %{source_ref} must contain only the plan '%{plan_name}' - it has additional definitions."
 msgstr ""
 
-#: ../lib/puppet/pops/loader/puppet_plan_instantiator.rb:34
+#: ../lib/puppet/pops/loader/puppet_plan_instantiator.rb:43
 msgid "The code loaded from %{source_ref} does not define the plan '%{plan_name}' - no plan found."
 msgstr ""
 
-#: ../lib/puppet/pops/loader/puppet_plan_instantiator.rb:39
+#: ../lib/puppet/pops/loader/puppet_plan_instantiator.rb:48
 msgid "The code loaded from %{source_ref} produced plan with the wrong name, expected %{expected}, actual %{actual}"
 msgstr ""
 
-#: ../lib/puppet/pops/loader/puppet_plan_instantiator.rb:42
+#: ../lib/puppet/pops/loader/puppet_plan_instantiator.rb:51
 msgid "The code loaded from %{source} contains additional logic - can only contain the plan %{plan_name}"
 msgstr ""
 
@@ -5884,7 +5884,7 @@ msgstr ""
 msgid "%{config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/invocation.rb:84
+#: ../lib/puppet/pops/lookup/invocation.rb:91
 msgid "Recursive lookup detected in [%{name_stack}]"
 msgstr ""
 
@@ -6294,7 +6294,7 @@ msgstr ""
 msgid "Options 'include_containers' and 'include_values' cannot both be false"
 msgstr ""
 
-#: ../lib/puppet/pops/types/type_calculator.rb:167
+#: ../lib/puppet/pops/types/type_calculator.rb:163
 msgid "TypeCalculator.enumerable is deprecated. Use iterable"
 msgstr ""
 
@@ -8905,11 +8905,11 @@ msgstr ""
 msgid "path may not be nil"
 msgstr ""
 
-#: ../lib/puppet/util.rb:573
+#: ../lib/puppet/util.rb:596
 msgid "replace_file requires a block"
 msgstr ""
 
-#: ../lib/puppet/util.rb:577
+#: ../lib/puppet/util.rb:600
 msgid "replace_file default_mode: %{default_mode} is invalid"
 msgstr ""
 
@@ -9480,20 +9480,20 @@ msgstr ""
 msgid "Unable to set ownership to %{user}:%{group} for log file: %{path}"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:83 ../lib/puppet/util/logging.rb:106
+#: ../lib/puppet/util/logging.rb:81 ../lib/puppet/util/logging.rb:105
 msgid "Wrapped exception:"
 msgstr ""
 
 #. TRANSLATORS the literals ":file", ":line", and ":key" should not be translated
-#: ../lib/puppet/util/logging.rb:150
+#: ../lib/puppet/util/logging.rb:162
 msgid "Need either :file and :line, or :key"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:180
+#: ../lib/puppet/util/logging.rb:192
 msgid "(file & line not available)"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:282
+#: ../lib/puppet/util/logging.rb:294
 msgid "(location: %{location})"
 msgstr ""
 
@@ -9729,35 +9729,35 @@ msgstr ""
 msgid "Could not resolve name: %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:229
+#: ../lib/puppet/util/windows/adsi.rb:230
 msgid "Subclass must implement class-level method 'list_all'!"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:282
+#: ../lib/puppet/util/windows/adsi.rb:283
 msgid "Puppet is not able to create/delete domain %{object_class} objects with the %{object_class} resource."
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:286
+#: ../lib/puppet/util/windows/adsi.rb:287
 msgid "%{object_class} update failed: %{error}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:312
+#: ../lib/puppet/util/windows/adsi.rb:313
 msgid "Cannot create user if group '%{name}' exists."
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:452
+#: ../lib/puppet/util/windows/adsi.rb:453
 msgid "Unrecognized ADS UserFlags: %{unrecognized_flags}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:496
+#: ../lib/puppet/util/windows/adsi.rb:497
 msgid "Failed to get user name"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:533
+#: ../lib/puppet/util/windows/adsi.rb:534
 msgid "Cannot delete user profile for '%{sid}' prior to Vista SP1"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:551
+#: ../lib/puppet/util/windows/adsi.rb:552
 msgid "Cannot create group if user '%{name}' exists."
 msgstr ""
 
