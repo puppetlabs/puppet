@@ -12,9 +12,9 @@ describe Puppet::Application::Resource do
   end
 
   describe "in preinit" do
-    it "should init extra_params to empty array" do
+    it "should include provider parameter by default" do
       @resource_app.preinit
-      expect(@resource_app.extra_params).to eq([])
+      expect(@resource_app.extra_params).to eq([:provider])
     end
   end
 

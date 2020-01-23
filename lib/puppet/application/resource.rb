@@ -5,7 +5,7 @@ class Puppet::Application::Resource < Puppet::Application
   attr_accessor :host, :extra_params
 
   def preinit
-    @extra_params = []
+    @extra_params = [:provider]
   end
 
   option("--debug","-d")
