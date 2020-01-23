@@ -168,8 +168,8 @@ module Puppet
         valid   = %w[deprecations undefined_variables undefined_resources]
         invalid = values - (values & valid)
         if not invalid.empty?
-          raise ArgumentError, _("Cannot disable unrecognized warning types %{invalid}.") % { invalid: invalid.inspect } +
-              ' ' + _("Valid values are %{values}.") % { values: valid.inspect}
+          raise ArgumentError, _("Cannot disable unrecognized warning types '%{invalid}'.") % { invalid: invalid.join(',') } +
+              ' ' + _("Valid values are '%{values}'.") % { values: valid.join(', ') }
         end
       end
     },
