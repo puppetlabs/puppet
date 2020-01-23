@@ -20,14 +20,14 @@ class AccessOperator
     @semantic = access_expression
   end
 
-  def access (o, scope, *keys)
+  def access(o, scope, *keys)
     @@access_visitor.visit_this_2(self, o, scope, keys)
   end
 
   protected
 
   def access_Object(o, scope, keys)
-    type = Puppet::Pops::Types::TypeCalculator.infer(o)
+    type = Puppet::Pops::Types::TypeCalculator.infer_callable_methods_t(o)
     if type.is_a?(Puppet::Pops::Types::TypeWithMembers)
       access_func = type['[]']
       return access_func.invoke(o, scope, keys) unless access_func.nil?
