@@ -1,5 +1,4 @@
 require 'yaml'
-require 'sync'
 require 'singleton'
 require 'puppet/util/yaml'
 
