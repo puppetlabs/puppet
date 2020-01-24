@@ -1,5 +1,4 @@
 # The client for interacting with the puppetmaster config server.
-require 'sync'
 require 'timeout'
 require 'puppet/network/http_pool'
 require 'puppet/util'
