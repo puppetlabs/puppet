@@ -2,6 +2,9 @@ test_name "should allow password, salt, and iteration attributes in OSX"
 
 confine :to, :platform => /osx/
 
+# TODO PUP-10246: fix user password management on macOS >= 10.15
+confine :except, :platform => /osx-10.1[5-9]/
+
 tag 'audit:medium',
     'audit:refactor',  # Use block style `test_run`
     'audit:acceptance' # Could be done as integration tests, but would

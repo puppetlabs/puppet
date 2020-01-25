@@ -959,7 +959,7 @@ class EvaluatorImpl
     name = name.value # the string function name
 
     obj = receiver[0]
-    receiver_type = Types::TypeCalculator.infer(obj)
+    receiver_type = Types::TypeCalculator.infer_callable_methods_t(obj)
     if receiver_type.is_a?(Types::TypeWithMembers)
       member = receiver_type[name]
       unless member.nil?

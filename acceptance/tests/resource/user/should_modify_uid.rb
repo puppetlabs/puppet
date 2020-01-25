@@ -1,6 +1,6 @@
 test_name "should modify the uid of an user OS X < 10.14" do
   confine :to, :platform => /osx/
-  confine :except, :platform => /osx-10.14/
+  confine :except, :platform => /osx-10.1[4-9]/
 
   tag 'audit:medium',
       'audit:acceptance' # Could be done as integration tests, but would
