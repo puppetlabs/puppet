@@ -859,9 +859,10 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCACerts)
       end
 
-      it 'waits indefinitely by default' do
+      it 'waits almost indefinitely by default' do
         machine = described_class.new
-        expect(machine.wait_deadline).to eq(Float::INFINITY)
+        # wait_deadline should be increased by INT_MAX seconds (+- 2 seconds)
+        expect(machine.wait_deadline).to be_within(2).of(Time.now.to_i + (2**31 - 1))
       end
 
       it 'exits with 1 if maxwaitforcert is exceeded' do

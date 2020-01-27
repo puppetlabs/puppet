@@ -1820,7 +1820,7 @@ EOT
       #{AS_DURATION}",
     },
     :maxwaitforcert => {
-      :default  => "unlimited",
+      :default  => "2147483647",
       :type     => :ttl,
       :desc     => "The maximum amount of time the Puppet agent should wait for its
       certificate request to be signed. A value of `unlimited` will cause puppet agent

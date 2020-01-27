@@ -16,6 +16,9 @@ class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
   # A regex describing valid formats with groups for capturing the value and units
   FORMAT = /^(\d+)(y|d|h|m|s)?$/
 
+  # Value representing 'unlimited' (MAX_INT)(2147483647)
+  UNLIMITED_VALUE = 2**31 - 1
+
   def type
     :ttl
   end
@@ -27,7 +30,7 @@ class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
 
   def print(value)
     val = munge(value)
-    val == Float::INFINITY ? 'unlimited' : val
+    val == UNLIMITED_VALUE ? 'unlimited' : val
   end
 
   # Convert the value to Numeric, parsing numeric string with units if necessary.
@@ -40,7 +43,7 @@ class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
       value
 
     when value == 'unlimited'
-      Float::INFINITY
+     UNLIMITED_VALUE
 
     when (value.is_a?(String) and value =~ FORMAT)
       $1.to_i * UNITMAP[$2 || 's']
