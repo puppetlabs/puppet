@@ -161,6 +161,28 @@ describe Puppet::Type.type(:package).provider(:dnfmodule) do
         provider.install
       end
     end
+
+    context "with an installed flavor" do
+      before do
+        provider.instance_variable_get('@property_hash')[:flavor] = 'minimal'
+      end
+
+      it "should remove existing packages and reset the module stream before installing another flavor" do
+        resource[:flavor] = 'common'
+        expect(provider).to receive(:execute).thrice.with(array_including(/remove|reset|install/))
+        provider.flavor = resource[:flavor]
+      end
+
+      it "should not do anything if the flavor doesn't change" do
+        resource[:flavor] = 'minimal'
+        expect(provider).not_to receive(:execute)
+        provider.flavor = resource[:flavor]
+      end
+
+      it "should return the existing flavor" do
+        expect(provider.flavor).to eq('minimal')
+      end
+    end
   end
 
   context "parsing the output of module list --installed" do

@@ -395,4 +395,21 @@ describe Puppet::Type.type(:package).provider(:openbsd) do
       end
     end
   end
+
+  context "#flavor" do
+    before do
+      provider.instance_variable_get('@property_hash')[:flavor] = 'no_x11-python'
+    end
+
+    it 'should return the existing flavor' do
+      expect(provider.flavor).to eq('no_x11-python')
+    end
+
+    it 'should remove and install the new flavor if different' do
+      provider.resource[:flavor] = 'no_x11-ruby'
+      expect(provider).to receive(:uninstall).ordered
+      expect(provider).to receive(:install).ordered
+      provider.flavor = provider.resource[:flavor]
+    end
+  end
 end
