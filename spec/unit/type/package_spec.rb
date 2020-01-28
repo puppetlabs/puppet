@@ -30,6 +30,10 @@ describe Puppet::Type.type(:package) do
     expect(Puppet::Type.type(:package).provider_feature(:versionable)).not_to be_nil
   end
 
+  it "should have a :supports_flavors feature" do
+    expect(Puppet::Type.type(:package).provider_feature(:supports_flavors)).not_to be_nil
+  end
+
   it "should have a :package_settings feature that requires :package_settings_insync?, :package_settings and :package_settings=" do
     expect(Puppet::Type.type(:package).provider_feature(:package_settings).methods).to eq([:package_settings_insync?, :package_settings, :package_settings=])
   end
@@ -52,6 +56,10 @@ describe Puppet::Type.type(:package) do
 
     it "should have a package_settings property" do
       expect(Puppet::Type.type(:package).attrtype(:package_settings)).to eq(:property)
+    end
+
+    it "should have a flavor property" do
+      expect(Puppet::Type.type(:package).attrtype(:flavor)).to eq(:property)
     end
   end
 

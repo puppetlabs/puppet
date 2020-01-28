@@ -12,7 +12,7 @@ require 'puppet/provider/package'
 
 Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
 
-  has_feature :installable, :uninstallable, :versionable
+  has_feature :installable, :uninstallable, :versionable, :supports_flavors
   #has_feature :upgradeable
   # it's not (yet) feasible to make this upgradeable since module streams don't
   # always have matching version types (i.e. idm has streams DL1 and client,
@@ -83,5 +83,12 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
     execute([command(:dnf), 'module', 'remove', '-d', '0', '-e', self.class.error_level, '-y', @resource[:name]])
     reset  # reset module to the default stream
   end
-end
 
+  def flavor
+    @property_hash[:flavor]
+  end
+
+  def flavor=(value)
+    install if flavor != @resource.should(:flavor)
+  end
+end
