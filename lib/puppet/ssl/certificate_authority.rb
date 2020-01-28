@@ -441,11 +441,11 @@ class Puppet::SSL::CertificateAuthority
   # Certificate Revocation List and flags
   #
   # @return [OpenSSL::X509::Store]
-  def create_x509_store
-    store = OpenSSL::X509::Store.new()
+  def create_x509_store(purpose = OpenSSL::X509::PURPOSE_ANY)
+    store = OpenSSL::X509::Store.new
     store.add_file(Puppet[:cacert])
     store.add_crl(crl.content) if self.crl
-    store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
+    store.purpose = purpose
     if Puppet.lookup(:certificate_revocation)
       store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL | OpenSSL::X509::V_FLAG_CRL_CHECK
     end
@@ -486,17 +486,18 @@ class Puppet::SSL::CertificateAuthority
   # certificate with that name.
   #
   # @param name [String] certificate name to verify
+  # @param purpose [Integer] bitwise combination of X509::PURPOSE_*
   #
   # @raise [ArgumentError] if the certificate name cannot be found
   #   (i.e. doesn't exist or is unsigned)
   # @raise [CertificateVerficationError] if the certificate has been revoked
   #
   # @return [Boolean] true if signed, there are no cases where false is returned
-  def verify(name)
+  def verify(name, purpose = OpenSSL::X509::PURPOSE_ANY)
     unless cert = Puppet::SSL::Certificate.indirection.find(name)
       raise ArgumentError, _("Could not find a certificate for %{name}") % { name: name }
     end
-    store = create_x509_store
+    store = create_x509_store(purpose)
 
     raise CertificateVerificationError.new(store.error), store.error_string unless store.verify(cert.content)
   end
