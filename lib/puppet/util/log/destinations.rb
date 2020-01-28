@@ -47,7 +47,7 @@ Puppet::Util::Log.newdesttype :file do
   require 'fileutils'
 
   def self.match?(obj)
-    Puppet::Util.absolute_path?(obj)
+    obj.is_a?(String) && Puppet::Util.absolute_path?(obj)
   end
 
   def close
