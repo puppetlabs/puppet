@@ -9,19 +9,9 @@ describe Puppet::Resource::Catalog::Compiler do
   let(:node_name) { "foo" }
   let(:node) { Puppet::Node.new(node_name)}
 
-  before do
-    allow(Facter).to receive(:to_hash).and_return({})
-  end
-
   describe "when initializing" do
     before do
-      expect(Puppet).to receive(:version).and_return(1)
-      expect(Facter).to receive(:value).with('fqdn').and_return("my.server.com")
-      expect(Facter).to receive(:value).with('ipaddress').and_return("my.ip.address")
-    end
-
-    it "should gather data about itself" do
-      Puppet::Resource::Catalog::Compiler.new
+      allow(Puppet).to receive(:version).and_return(1)
     end
 
     it "should cache the server metadata and reuse it" do
@@ -38,8 +28,6 @@ describe Puppet::Resource::Catalog::Compiler do
 
   describe "when finding catalogs" do
     before do
-      allow(Facter).to receive(:value).and_return("whatever")
-
       allow(node).to receive(:merge)
       allow(Puppet::Node.indirection).to receive(:find).and_return(node)
       @request = Puppet::Indirector::Request.new(:catalog, :find, node_name, nil, :node => node_name)
@@ -246,10 +234,10 @@ describe Puppet::Resource::Catalog::Compiler do
 
   describe "when handling a request with facts" do
     before do
-      Puppet::Node::Facts.indirection.terminus_class = :memory
       allow(Facter).to receive(:value).and_return("something")
 
-      @facts = Puppet::Node::Facts.new('hostname', "fact" => "value", "architecture" => "i386")
+      facts = Puppet::Node::Facts.new('hostname', "fact" => "value", "architecture" => "i386")
+      Puppet::Node::Facts.indirection.save(facts)
     end
 
     def a_legacy_request_that_contains(facts, format = :pson)
@@ -267,6 +255,8 @@ describe Puppet::Resource::Catalog::Compiler do
     end
 
     context "when extracting facts from the request" do
+      let(:facts) { Puppet::Node::Facts.new("hostname") }
+
       it "should do nothing if no facts are provided" do
         request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
         request.options[:facts] = nil
@@ -276,21 +266,21 @@ describe Puppet::Resource::Catalog::Compiler do
 
       it "should deserialize the facts without changing the timestamp" do
         time = Time.now
-        @facts.timestamp = time
-        request = a_request_that_contains(@facts)
+        facts.timestamp = time
+        request = a_request_that_contains(facts)
         facts = compiler.extract_facts_from_request(request)
         expect(facts.timestamp).to eq(time)
       end
 
       it "accepts PSON facts from older agents" do
-        request = a_legacy_request_that_contains(@facts)
+        request = a_legacy_request_that_contains(facts)
 
         facts = compiler.extract_facts_from_request(request)
-        expect(facts).to eq(@facts)
+        expect(facts).to eq(facts)
       end
 
       it "rejects YAML facts" do
-        request = a_legacy_request_that_contains(@facts, :yaml)
+        request = a_legacy_request_that_contains(facts, :yaml)
 
         expect {
           compiler.extract_facts_from_request(request)
@@ -298,7 +288,7 @@ describe Puppet::Resource::Catalog::Compiler do
       end
 
       it "rejects unknown fact formats" do
-        request = a_request_that_contains(@facts)
+        request = a_request_that_contains(facts)
         request.options[:facts_format] = 'unknown-format'
 
         expect {
@@ -308,15 +298,17 @@ describe Puppet::Resource::Catalog::Compiler do
     end
 
     context "when saving facts from the request" do
+      let(:facts) { Puppet::Node::Facts.new("hostname") }
+
       it "should save facts if they were issued by the request" do
-        request = a_request_that_contains(@facts)
+        request = a_request_that_contains(facts)
 
         options = {
           :environment => request.environment,
           :transaction_uuid => request.options[:transaction_uuid],
         }
 
-        expect(Puppet::Node::Facts.indirection).to receive(:save).with(@facts, nil, options)
+        expect(Puppet::Node::Facts.indirection).to receive(:save).with(facts, nil, options)
         compiler.find(request)
       end
 
@@ -328,7 +320,7 @@ describe Puppet::Resource::Catalog::Compiler do
           :transaction_uuid => request.options[:transaction_uuid],
         }
 
-        expect(Puppet::Node::Facts.indirection).not_to receive(:save).with(@facts, nil, options)
+        expect(Puppet::Node::Facts.indirection).not_to receive(:save).with(facts, nil, options)
         compiler.find(request)
       end
     end
@@ -336,7 +328,6 @@ describe Puppet::Resource::Catalog::Compiler do
 
   describe "when finding nodes" do
     it "should look node information up via the Node class with the provided key" do
-      allow(Facter).to receive(:value).and_return("whatever")
       request = Puppet::Indirector::Request.new(:catalog, :find, node_name, nil)
       allow(compiler).to receive(:compile)
 
@@ -416,7 +407,6 @@ describe Puppet::Resource::Catalog::Compiler do
 
   describe "when filtering resources" do
     before :each do
-      allow(Facter).to receive(:value)
       @catalog = double('catalog')
       allow(@catalog).to receive(:respond_to?).with(:filter).and_return(true)
     end

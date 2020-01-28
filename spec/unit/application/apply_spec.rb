@@ -14,14 +14,6 @@ describe Puppet::Application::Apply do
     Puppet[:reports] = "none"
   end
 
-  after :each do
-    Puppet::Node::Facts.indirection.reset_terminus_class
-    Puppet::Node::Facts.indirection.cache_class = nil
-
-    Puppet::Node.indirection.reset_terminus_class
-    Puppet::Node.indirection.cache_class = nil
-  end
-
   [:debug,:loadclasses,:test,:verbose,:use_nodes,:detailed_exitcodes,:catalog, :write_catalog_summary].each do |option|
     it "should declare handle_#{option} method" do
       expect(@apply).to respond_to("handle_#{option}".to_sym)
@@ -182,13 +174,11 @@ describe Puppet::Application::Apply do
         Puppet[:prerun_command] = ''
         Puppet[:postrun_command] = ''
 
-        Puppet::Node::Facts.indirection.terminus_class = :memory
-        Puppet::Node::Facts.indirection.cache_class = :memory
         Puppet::Node.indirection.terminus_class = :memory
         Puppet::Node.indirection.cache_class = :memory
 
-        @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
-        Puppet::Node::Facts.indirection.save(@facts)
+        facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
+        Puppet::Node::Facts.indirection.save(facts)
 
         @node = Puppet::Node.new(Puppet[:node_name_value])
         Puppet::Node.indirection.save(@node)
