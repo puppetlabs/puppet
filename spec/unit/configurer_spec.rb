@@ -4,9 +4,6 @@ require 'webmock/rspec'
 
 describe Puppet::Configurer do
   before do
-    Puppet::Node::Facts.indirection.terminus_class = :memory
-    Puppet::Node::Facts.indirection.save(facts)
-
     Puppet[:server] = "puppetmaster"
     Puppet[:report] = true
 

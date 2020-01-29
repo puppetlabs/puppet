@@ -7,6 +7,10 @@ describe Puppet::Node::Facts::Facter do
   include PuppetSpec::Files
   include PuppetSpec::Compiler
 
+  before :each do
+    Puppet::Node::Facts.indirection.terminus_class = :facter
+  end
+
   it "preserves case in fact values" do
     Facter.add(:downcase_test) do
       setcode do

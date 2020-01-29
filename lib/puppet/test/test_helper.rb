@@ -146,6 +146,10 @@ module Puppet::Test
 
       Puppet::SSL::Host.reset
 
+      Puppet::Node::Facts.indirection.terminus_class = :memory
+      facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
+      Puppet::Node::Facts.indirection.save(facts)
+
       Puppet.clear_deprecation_warnings
     end
 
