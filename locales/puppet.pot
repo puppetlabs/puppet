@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.12.0-63-g1645abb99a\n"
+"Project-Id-Version: Puppet automation framework 6.12.0-93-gf97d04ea01\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-01-24 01:34+0000\n"
-"PO-Revision-Date: 2020-01-24 01:34+0000\n"
+"POT-Creation-Date: 2020-01-29 14:04+0000\n"
+"PO-Revision-Date: 2020-01-29 14:04+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -523,118 +523,118 @@ msgstr ""
 msgid "Removed %{label} %{path}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:23
+#: ../lib/puppet/configurer.rb:22
 msgid "Puppet configuration client"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:46
+#: ../lib/puppet/configurer.rb:45
 msgid "Removing corrupt state file %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:51
+#: ../lib/puppet/configurer.rb:50
 msgid "Cannot remove %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:74
+#: ../lib/puppet/configurer.rb:73
 msgid "Using cached catalog from environment '%{environment}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:80
+#: ../lib/puppet/configurer.rb:79
 msgid "Not using cache on failed catalog"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:89
+#: ../lib/puppet/configurer.rb:88
 msgid "Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:94 ../lib/puppet/configurer.rb:177
+#: ../lib/puppet/configurer.rb:93 ../lib/puppet/configurer.rb:176
 msgid "Using cached catalog from environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:170
+#: ../lib/puppet/configurer.rb:169
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:186
+#: ../lib/puppet/configurer.rb:185
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:226 ../lib/puppet/http/resolver/server_list.rb:19
+#: ../lib/puppet/configurer.rb:225 ../lib/puppet/http/resolver/server_list.rb:19
 msgid "Could not select a functional puppet master from server_list: '%{server_list}'"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:229
+#: ../lib/puppet/configurer.rb:228
 msgid "Selected puppet server from the `server_list` setting: %{server}:%{port}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:261
+#: ../lib/puppet/configurer.rb:260
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:306
+#: ../lib/puppet/configurer.rb:305
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:311
+#: ../lib/puppet/configurer.rb:310
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:315
+#: ../lib/puppet/configurer.rb:314
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:344
+#: ../lib/puppet/configurer.rb:343
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:355
+#: ../lib/puppet/configurer.rb:354
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:357
+#: ../lib/puppet/configurer.rb:356
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:398
+#: ../lib/puppet/configurer.rb:397
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:431 ../lib/puppet/http/resolver/server_list.rb:29
+#: ../lib/puppet/configurer.rb:430 ../lib/puppet/http/resolver/server_list.rb:29
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:435 ../lib/puppet/http/resolver/server_list.rb:35
+#: ../lib/puppet/configurer.rb:434 ../lib/puppet/http/resolver/server_list.rb:35
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:447 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:446 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:456
+#: ../lib/puppet/configurer.rb:455
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:475
+#: ../lib/puppet/configurer.rb:474
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:483
+#: ../lib/puppet/configurer.rb:482
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:498
+#: ../lib/puppet/configurer.rb:497
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:516
+#: ../lib/puppet/configurer.rb:515
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:536
+#: ../lib/puppet/configurer.rb:535
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -1778,7 +1778,7 @@ msgstr ""
 msgid "Timeout waiting for exclusive lock on %{path}"
 msgstr ""
 
-#: ../lib/puppet/file_system/jruby.rb:18 ../lib/puppet/file_system/windows.rb:126 ../lib/puppet/util.rb:681
+#: ../lib/puppet/file_system/jruby.rb:18 ../lib/puppet/file_system/windows.rb:127 ../lib/puppet/util.rb:681
 msgid "Is a directory: %{directory}"
 msgstr ""
 
@@ -1822,11 +1822,11 @@ msgstr ""
 msgid "%{dest} already exists and the :force option was not specified"
 msgstr ""
 
-#: ../lib/puppet/file_system/windows.rb:205
+#: ../lib/puppet/file_system/windows.rb:202
 msgid "This version of Windows does not support symlinks.  Windows Vista / 2008 or higher is required."
 msgstr ""
 
-#: ../lib/puppet/file_system/windows.rb:210
+#: ../lib/puppet/file_system/windows.rb:207
 msgid "The current user does not have the necessary permission to manage symlinks."
 msgstr ""
 
@@ -6294,7 +6294,7 @@ msgstr ""
 msgid "Options 'include_containers' and 'include_values' cannot both be false"
 msgstr ""
 
-#: ../lib/puppet/pops/types/type_calculator.rb:163
+#: ../lib/puppet/pops/types/type_calculator.rb:187
 msgid "TypeCalculator.enumerable is deprecated. Use iterable"
 msgstr ""
 
@@ -6489,27 +6489,31 @@ msgstr ""
 msgid "Invalid value %{value}: %{property} must be an Integer!"
 msgstr ""
 
-#: ../lib/puppet/provider/aix_object.rb:374
+#: ../lib/puppet/provider/aix_object.rb:333
+msgid "Cannot have both 'forcelocal' and 'ia_load_module' at the same time!"
+msgstr ""
+
+#: ../lib/puppet/provider/aix_object.rb:376
 msgid "Could not set %{property} on %{resource}[%{name}]: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/aix_object.rb:400
+#: ../lib/puppet/provider/aix_object.rb:402
 msgid "attributes is setting the %{properties} properties via. the %{attributes} attributes, respectively! Please specify these property values in the resource declaration instead."
 msgstr ""
 
-#: ../lib/puppet/provider/aix_object.rb:402 ../lib/puppet/provider/aix_object.rb:411
+#: ../lib/puppet/provider/aix_object.rb:404 ../lib/puppet/provider/aix_object.rb:413
 msgid "Could not set attributes on %{resource}[%{name}]: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/aix_object.rb:423
+#: ../lib/puppet/provider/aix_object.rb:425
 msgid "aix.object_info(): Could not find %{resource}[%{name}]"
 msgstr ""
 
-#: ../lib/puppet/provider/aix_object.rb:469 ../lib/puppet/provider/nameservice.rb:182 ../lib/puppet/provider/nameservice/directoryservice.rb:425
+#: ../lib/puppet/provider/aix_object.rb:471 ../lib/puppet/provider/nameservice.rb:182 ../lib/puppet/provider/nameservice/directoryservice.rb:425
 msgid "Could not create %{resource} %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/aix_object.rb:481 ../lib/puppet/provider/nameservice.rb:196
+#: ../lib/puppet/provider/aix_object.rb:483 ../lib/puppet/provider/nameservice.rb:196
 msgid "Could not delete %{resource} %{name}: %{detail}"
 msgstr ""
 
@@ -6574,15 +6578,15 @@ msgstr ""
 msgid "%{resource_name}: %{mode_part_type} set to SYSTEM. SYSTEM permissions cannot be set below FullControl ('7')"
 msgstr ""
 
-#: ../lib/puppet/provider/group/aix.rb:47
+#: ../lib/puppet/provider/group/aix.rb:48
 msgid "No AIX group exists with a group name or gid of %{group}!"
 msgstr ""
 
-#: ../lib/puppet/provider/group/groupadd.rb:13 ../lib/puppet/provider/group/pw.rb:14
+#: ../lib/puppet/provider/group/groupadd.rb:11 ../lib/puppet/provider/group/pw.rb:14
 msgid "GID must be an integer"
 msgstr ""
 
-#: ../lib/puppet/provider/group/groupadd.rb:60
+#: ../lib/puppet/provider/group/groupadd.rb:42
 msgid "GID %{resource} already exists, use allowdupe to force group creation"
 msgstr ""
 
@@ -6843,19 +6847,19 @@ msgid ""
 "'%{line}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/openbsd.rb:50 ../lib/puppet/provider/package/opkg.rb:26
+#: ../lib/puppet/provider/package/openbsd.rb:51 ../lib/puppet/provider/package/opkg.rb:26
 msgid "Failed to match line %{line}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/openbsd.rb:141
+#: ../lib/puppet/provider/package/openbsd.rb:142
 msgid "No valid installpath found in /etc/pkg.conf and no source was set"
 msgstr ""
 
-#: ../lib/puppet/provider/package/openbsd.rb:145
+#: ../lib/puppet/provider/package/openbsd.rb:146
 msgid "You must specify a package source or configure an installpath in /etc/pkg.conf"
 msgstr ""
 
-#: ../lib/puppet/provider/package/openbsd.rb:218
+#: ../lib/puppet/provider/package/openbsd.rb:219
 msgid "%{version} is not available for this package"
 msgstr ""
 
@@ -7163,15 +7167,15 @@ msgid "Unknown service state '%{current_state}' for service '%{resource_name}'"
 msgstr ""
 
 #. TRANSLATORS 'AIX' is the name of an operating system and should not be translated
-#: ../lib/puppet/provider/user/aix.rb:68
+#: ../lib/puppet/provider/user/aix.rb:69
 msgid "Could not convert AIX expires date '%{expires}' on %{class_name}[%{resource_name}]"
 msgstr ""
 
-#: ../lib/puppet/provider/user/aix.rb:82
+#: ../lib/puppet/provider/user/aix.rb:83
 msgid "Invalid value %{groups}: Groups must be comma separated!"
 msgstr ""
 
-#: ../lib/puppet/provider/user/aix.rb:150
+#: ../lib/puppet/provider/user/aix.rb:151
 msgid "Could not reset the groups property back to %{cur_groups} after setting the primary group on %{resource}[%{name}]. This means that the previous primary group of %{old_pgrp} and the new primary group of %{new_pgrp} have been added to %{cur_groups}. You will need to manually reset the groups property if this is undesirable behavior. Detail: %{detail}"
 msgstr ""
 
@@ -8653,15 +8657,15 @@ msgstr ""
 msgid "Invalid GID %{gid}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:118 ../lib/puppet/type/package.rb:132
+#: ../lib/puppet/type/package.rb:119 ../lib/puppet/type/package.rb:133
 msgid "Could not update: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:167
+#: ../lib/puppet/type/package.rb:168
 msgid "Could not get latest version: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:267
+#: ../lib/puppet/type/package.rb:268
 msgid "Name must be a String not %{klass}"
 msgstr ""
 
@@ -9525,7 +9529,7 @@ msgstr ""
 msgid "Details: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/plist.rb:145
+#: ../lib/puppet/util/plist.rb:151
 msgid "Unable to write the file %{file_path}. %{error}"
 msgstr ""
 
@@ -9633,23 +9637,23 @@ msgstr ""
 msgid "Sleeping for %{time} seconds (splay is enabled)"
 msgstr ""
 
-#: ../lib/puppet/util/storage.rb:53
+#: ../lib/puppet/util/storage.rb:52
 msgid "Checksumfile %{filename} is not a file, ignoring"
 msgstr ""
 
-#: ../lib/puppet/util/storage.rb:60
+#: ../lib/puppet/util/storage.rb:59
 msgid "Checksumfile %{filename} is corrupt (%{detail}); replacing"
 msgstr ""
 
-#: ../lib/puppet/util/storage.rb:65
+#: ../lib/puppet/util/storage.rb:64
 msgid "Could not rename corrupt %{filename}; remove manually"
 msgstr ""
 
-#: ../lib/puppet/util/storage.rb:71
+#: ../lib/puppet/util/storage.rb:70
 msgid "State got corrupted"
 msgstr ""
 
-#: ../lib/puppet/util/storage.rb:83
+#: ../lib/puppet/util/storage.rb:82
 msgid "Creating state file %{file}"
 msgstr ""
 
