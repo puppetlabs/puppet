@@ -23,6 +23,19 @@ class Puppet::FileSystem::MemoryImpl
     path.executable?
   end
 
+  def symlink?(path)
+    path.symlink?
+  end
+
+  def readlink(path)
+    path = path.path
+    link = find(path)
+    return Puppet::FileSystem::MemoryFile.a_missing_file(path) unless link
+    source = link.source_path
+    return Puppet::FileSystem::MemoryFile.a_missing_file(link) unless source
+    find(source) || Puppet::FileSystem::MemoryFile.a_missing_file(source)
+  end
+
   def children(path)
     path.children
   end

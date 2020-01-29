@@ -1,3 +1,4 @@
+require 'puppet/environments'
 require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/indirector/code'
@@ -173,6 +174,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # Initially restricted to files sourced from codedir via puppet:/// uri.
   def inline_metadata(catalog, checksum_type)
     environment_path = Pathname.new File.join(Puppet[:environmentpath], catalog.environment, "")
+    environment_path = Puppet::Environments::Directories.real_path(environment_path)
     list_of_resources = catalog.resources.find_all { |res| res.type == "File" }
 
     # TODO: get property/parameter defaults if entries are nil in the resource

@@ -23,6 +23,10 @@ class Puppet::FileSystem::MemoryFile
         :children => children)
   end
 
+  def self.a_symlink(target_path, source_path)
+    new(target_path, :exist? => true, :symlink? => true, :source_path => source_path)
+  end
+
   def initialize(path, properties)
     @path = path
     @properties = properties
@@ -34,6 +38,8 @@ class Puppet::FileSystem::MemoryFile
   def directory?; @properties[:directory?]; end
   def exist?; @properties[:exist?]; end
   def executable?; @properties[:executable?]; end
+  def symlink?; @properties[:symlink?]; end
+  def source_path; @properties[:source_path]; end
 
   def each_line(&block)
     handle.each_line(&block)

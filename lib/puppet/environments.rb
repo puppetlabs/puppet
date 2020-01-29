@@ -186,6 +186,13 @@ module Puppet::Environments
       end
     end
 
+    def self.real_path(dir)
+      if Puppet::FileSystem.symlink?(dir) && Puppet[:versioned_environment_dirs]
+        dir = Puppet::FileSystem.expand_path(Puppet::FileSystem.readlink(dir))
+      end
+      return dir
+    end
+
     # @!macro loader_search_paths
     def search_paths
       ["file://#{@environment_dir}"]
@@ -193,27 +200,26 @@ module Puppet::Environments
 
     # @!macro loader_list
     def list
-      valid_directories.collect do |envdir|
-        name = Puppet::FileSystem.basename_string(envdir).intern
-
+      valid_environment_names.collect do |name|
         create_environment(name)
       end
     end
 
     # @!macro loader_get
     def get(name)
-      if valid_directory?(File.join(@environment_dir, name.to_s))
+      if validated_directory(File.join(@environment_dir, name.to_s))
         create_environment(name)
       end
     end
 
     # @!macro loader_get_conf
     def get_conf(name)
-      envdir = File.join(@environment_dir, name.to_s)
-      if valid_directory?(envdir)
-        return Puppet::Settings::EnvironmentConf.load_from(envdir, @global_module_path)
+      envdir = validated_directory(File.join(@environment_dir, name.to_s))
+      if envdir
+        Puppet::Settings::EnvironmentConf.load_from(envdir, @global_module_path)
+      else
+        nil
       end
-      nil
     end
 
     private
@@ -230,19 +236,21 @@ module Puppet::Environments
       env
     end
 
-    def valid_directory?(envdir)
-      name = Puppet::FileSystem.basename_string(envdir)
-      Puppet::FileSystem.directory?(envdir) &&
-         Puppet::Node::Environment.valid_name?(name)
+    def validated_directory(envdir)
+      env_name = Puppet::FileSystem.basename_string(envdir)
+      envdir = Puppet::Environments::Directories.real_path(envdir)
+      if Puppet::FileSystem.directory?(envdir) && Puppet::Node::Environment.valid_name?(env_name)
+        envdir
+      else
+        nil
+      end
     end
 
-    def valid_directories
+    def valid_environment_names
       if Puppet::FileSystem.directory?(@environment_dir)
-        Puppet::FileSystem.children(@environment_dir).select do |child|
-          valid_directory?(child)
-        end
-      else
-        []
+        Puppet::FileSystem.children(@environment_dir).map do |child|
+          Puppet::FileSystem.basename_string(child).intern if validated_directory(child)
+        end.compact
       end
     end
   end
