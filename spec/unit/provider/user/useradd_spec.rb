@@ -124,7 +124,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
     describe "on systems with the libuser and forcelocal=true" do
       before do
-         described_class.has_feature :libuser
+         described_class.has_feature :manages_local_users_and_groups
          resource[:forcelocal] = true
       end
 
@@ -188,7 +188,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
   describe 'when modifying the password' do
     before do
-      described_class.has_feature :libuser
+      described_class.has_feature :manages_local_users_and_groups
       described_class.has_feature :manages_passwords
       #Setting any resource value here initializes needed variables and methods in the resource and provider
       #Setting a password value here initializes the existence and management of the password parameter itself
@@ -210,7 +210,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   describe '#modify' do
     describe "on systems with the libuser and forcelocal=false" do
       before do
-         described_class.has_feature :libuser
+         described_class.has_feature :manages_local_users_and_groups
          resource[:forcelocal] = false
       end
 
@@ -318,7 +318,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   end
 
   describe "#comment" do
-    before { described_class.has_feature :libuser }
+    before { described_class.has_feature :manages_local_users_and_groups }
 
     let(:content) { "myuser:x:x:x:local comment:x:x" }
 
@@ -701,7 +701,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
     describe "on systems with the libuser and forcelocal=false" do
       before do
-         described_class.has_feature :libuser
+         described_class.has_feature :manages_local_users_and_groups
          resource[:forcelocal] = false
       end
 
@@ -713,7 +713,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
     describe "on systems with the libuser and forcelocal=true" do
       before do
-         described_class.has_feature :libuser
+         described_class.has_feature :manages_local_users_and_groups
          resource[:forcelocal] = true
       end
 

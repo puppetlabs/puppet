@@ -330,8 +330,10 @@ class Puppet::Provider::AixObject < Puppet::Provider
   end
 
   def ia_module_args
-    return [] unless @resource[:ia_load_module]
-    ["-R", @resource[:ia_load_module].to_s]
+    raise ArgumentError, _("Cannot have both 'forcelocal' and 'ia_load_module' at the same time!") if @resource[:ia_load_module] && @resource[:forcelocal]
+    return ["-R", @resource[:ia_load_module].to_s] if @resource[:ia_load_module]
+    return ["-R", "files"] if @resource[:forcelocal]
+    []
   end
 
   def lscmd

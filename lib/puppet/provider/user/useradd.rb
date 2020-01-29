@@ -43,7 +43,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     }
 
   optional_commands :localadd => "luseradd", :localdelete => "luserdel", :localmodify => "lusermod", :localpassword => "lchage"
-  has_feature :libuser if Puppet.features.libuser?
+  has_feature :manages_local_users_and_groups if Puppet.features.libuser?
 
   def exists?
     return !!localuid if @resource.forcelocal?

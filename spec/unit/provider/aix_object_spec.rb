@@ -418,14 +418,28 @@ bin:2
   end
 
   describe '#ia_module_args' do
-    it 'returns no arguments if the ia_load_module parameter is not specified' do
+    it 'returns no arguments if ia_load_module parameter or forcelocal parameter are not specified' do
       allow(provider.resource).to receive(:[]).with(:ia_load_module).and_return(nil)
+      allow(provider.resource).to receive(:[]).with(:forcelocal).and_return(nil)
       expect(provider.ia_module_args).to eql([])
     end
 
-    it 'returns the ia_load_module as a CLI argument' do
+    it 'returns the ia_load_module as a CLI argument when ia_load_module is specified' do
       allow(provider.resource).to receive(:[]).with(:ia_load_module).and_return('module')
+      allow(provider.resource).to receive(:[]).with(:forcelocal).and_return(nil)
       expect(provider.ia_module_args).to eql(['-R', 'module'])
+    end
+
+    it 'returns "files" as a CLI argument when forcelocal is specified' do
+      allow(provider.resource).to receive(:[]).with(:ia_load_module).and_return(nil)
+      allow(provider.resource).to receive(:[]).with(:forcelocal).and_return(true)
+      expect(provider.ia_module_args).to eql(['-R', 'files'])
+    end
+
+    it 'raises argument error when both ia_load_module and forcelocal parameters are set' do
+      allow(provider.resource).to receive(:[]).with(:ia_load_module).and_return('files')
+      allow(provider.resource).to receive(:[]).with(:forcelocal).and_return(true)
+      expect { provider.ia_module_args }.to raise_error(ArgumentError, "Cannot have both 'forcelocal' and 'ia_load_module' at the same time!")
     end
   end
 

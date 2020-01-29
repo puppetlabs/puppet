@@ -2,9 +2,7 @@ require 'puppet/provider/nameservice/objectadd'
 require 'puppet/util/libuser'
 
 Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameService::ObjectAdd do
-  desc "Group management via `groupadd` and its ilk. The default for most platforms.
-
-  "
+  desc "Group management via `groupadd` and its ilk. The default for most platforms."
 
   commands :add => "groupadd", :delete => "groupdel", :modify => "groupmod"
 
@@ -16,7 +14,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
 
   optional_commands :localadd => "lgroupadd", :localdelete => "lgroupdel", :localmodify => "lgroupmod"
 
-  has_feature :libuser if Puppet.features.libuser?
+  has_feature :manages_local_users_and_groups if Puppet.features.libuser?
 
   def exists?
     return !!localgid if @resource.forcelocal?
