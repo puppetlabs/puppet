@@ -10,11 +10,11 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     super(client, url)
   end
 
-  def get_file_metadata(mount_point:, path:, environment:, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore, ssl_context: nil)
-    headers = add_puppet_headers({ 'ACCEPT' => get_mime_types(Puppet::FileServing::Metadata).join(', ') })
+  def get_file_metadata(path:, environment:, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore, ssl_context: nil)
+    headers = add_puppet_headers({ 'Accept' => get_mime_types(Puppet::FileServing::Metadata).join(', ') })
 
     response = @client.get(
-      with_base_url("/file_metadata/#{mount_point}/#{path}"),
+      with_base_url("/file_metadata/#{path}"),
       headers: headers,
       params: {
         links: links,
@@ -30,11 +30,11 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     raise Puppet::HTTP::ResponseError.new(response)
   end
 
-  def get_file_metadatas(mount_point:, path: nil, environment:, recurse: :false, recurselimit: nil, ignore: nil, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore, ssl_context: nil)
-    headers = add_puppet_headers({ 'ACCEPT' => get_mime_types(Puppet::FileServing::Metadata).join(', ') })
+  def get_file_metadatas(path: nil, environment:, recurse: :false, recurselimit: nil, ignore: nil, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore, ssl_context: nil)
+    headers = add_puppet_headers({ 'Accept' => get_mime_types(Puppet::FileServing::Metadata).join(', ') })
 
     response = @client.get(
-      with_base_url("/file_metadatas/#{mount_point}/#{path}"),
+      with_base_url("/file_metadatas/#{path}"),
       headers: headers,
       params: {
         recurse: recurse,
@@ -53,10 +53,10 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     raise Puppet::HTTP::ResponseError.new(response)
   end
 
-  def get_file_content(mount_point:, path:, environment:, ssl_context: nil, &block)
+  def get_file_content(path:, environment:, ssl_context: nil, &block)
     headers = add_puppet_headers({'Accept' => 'application/octet-stream' })
     response = @client.get(
-      with_base_url("/file_content/#{mount_point}/#{path}"),
+      with_base_url("/file_content/#{path}"),
       headers: headers,
       params: {
         environment: environment
