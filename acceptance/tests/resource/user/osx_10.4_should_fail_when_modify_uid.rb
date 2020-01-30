@@ -1,5 +1,5 @@
-test_name "should not modify the uid of an user on OS X 10.14" do
-  confine :to, :platform => /osx-10.14/
+test_name "should not modify the uid of an user on OS X >= 10.14" do
+  confine :to, :platform => /osx-10.1[4-9]/
 
   tag 'audit:medium',
       'audit:acceptance' # Could be done as integration tests, but would
@@ -23,14 +23,14 @@ test_name "should not modify the uid of an user on OS X 10.14" do
     end
 
     step "verify the error message is correct" do
-      expected_error = /OS X version 10\.14 does not allow changing uid using puppet/
+      expected_error = /OS X version 10\.1[4-9] does not allow changing uid using puppet/
       user_manifest = resource_manifest('user', user, ensure: 'present', uid: rand(999999))
 
       apply_manifest_on(agent, user_manifest) do |result|
         assert_match(
           expected_error,
           result.stderr,
-          "Puppet fails to report an error when changing uid on OS X 10.4"
+          "Puppet fails to report an error when changing uid on OS X >= 10.14"
         )
       end
     end
