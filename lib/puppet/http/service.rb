@@ -30,7 +30,7 @@ class Puppet::HTTP::Service
 
   def with_base_url(path)
     u = @url.dup
-    u.path += path
+    u.path += Puppet::Util.uri_encode(path)
     u
   end
 

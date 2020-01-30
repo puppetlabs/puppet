@@ -72,6 +72,13 @@ describe Puppet::HTTP::Service::Report do
       subject.put_report('infinity', report, environment: environment)
     end
 
+    it 'percent encodes the uri before submitting the report' do
+      stub_request(:put, "https://www.example.com/puppet/v3/report/node%20name?environment=testing")
+        .to_return(status: 200, body: "", headers: {})
+
+      subject.put_report('node name', report, environment: environment)
+    end
+
     it 'raises response error if unsuccessful' do
       stub_request(:put, url).to_return(status: [400, 'Bad Request'], headers: {'X-Puppet-Version' => '6.1.8' })
 

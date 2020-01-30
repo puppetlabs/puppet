@@ -17,6 +17,10 @@ describe Puppet::HTTP::Service do
     service.with_base_url('/puppet/v3')
   end
 
+  it "percent encodes paths before appending them to the path" do
+    expect(service.with_base_url('/path/with/a space')).to eq(URI.parse("https://www.example.com/path/with/a%20space"))
+  end
+
   it "connects to the base URL with a nil ssl context" do
     expect(client).to receive(:connect).with(url, ssl_context: nil)
 
