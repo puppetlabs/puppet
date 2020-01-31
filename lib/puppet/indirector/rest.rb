@@ -52,6 +52,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     Puppet::Util::Connection.determine_port(port_setting, server_setting)
   end
 
+  def use_http_client?
+    Puppet.runtime['http'].instance_of?(Puppet::HTTP::Client)
+  end
+
   # Provide appropriate headers.
   def headers
     # yaml is not allowed on the network
