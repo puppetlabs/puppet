@@ -136,10 +136,12 @@ module Puppet::Test
         {
           trusted_information:
             Puppet::Context::TrustedInformation.new('local', 'testing', {}, { "trusted_testhelper" => true }),
-          ssl_context: Puppet::SSL::SSLContext.new(cacerts: []).freeze
+          ssl_context: Puppet::SSL::SSLContext.new(cacerts: []).freeze,
+          http_session: proc { Puppet.runtime["http"].create_session }
         },
         "Context for specs")
 
+      Puppet.runtime.clear
       Puppet::Parser::Functions.reset
       Puppet::Application.clear!
       Puppet::Util::Profiler.clear

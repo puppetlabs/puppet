@@ -5,7 +5,9 @@ class Puppet::Runtime
   include Singleton
 
   def initialize
-    @runtime_services = {}
+    @runtime_services = {
+      'http' => proc { Puppet::HTTP::Client.new }
+    }
   end
   private :initialize
 
@@ -22,5 +24,10 @@ class Puppet::Runtime
 
   def []=(name, impl)
     @runtime_services[name] = impl
+  end
+
+  # for testing
+  def clear
+    initialize
   end
 end
