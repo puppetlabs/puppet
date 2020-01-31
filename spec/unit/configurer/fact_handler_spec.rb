@@ -22,10 +22,6 @@ describe Puppet::Configurer::FactHandler do
 
   let(:facthandler) { FactHandlerTester.new('production') }
 
-  before :each do
-    Puppet::Node::Facts.indirection.terminus_class = :memory
-  end
-
   describe "when finding facts" do
     it "should use the node name value to retrieve the facts" do
       foo_facts = Puppet::Node::Facts.new('foo')

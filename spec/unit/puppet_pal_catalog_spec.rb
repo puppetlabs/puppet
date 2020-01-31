@@ -722,6 +722,9 @@ describe 'Puppet Pal' do
 
       context 'facts are supported such that' do
         it 'they are obtained if they are not given' do
+          facts = Puppet::Node::Facts.new(Puppet[:certname], 'puppetversion' => Puppet.version)
+          Puppet::Node::Facts.indirection.save(facts)
+
           testing_env_dir # creates the structure
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath ) do |ctx|
             ctx.with_catalog_compiler {|c| c.evaluate_string("$facts =~ Hash and $facts[puppetversion] == '#{Puppet.version}'") }
