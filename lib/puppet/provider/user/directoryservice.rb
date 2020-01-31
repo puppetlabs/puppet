@@ -434,8 +434,8 @@ Puppet::Type.type(:user).provide :directoryservice do
   ['home', 'uid', 'gid', 'comment', 'shell'].each do |setter_method|
     define_method("#{setter_method}=") do |value|
       if @property_hash[setter_method.intern]
-        if self.class.get_os_version == '10.14' && %w(home uid).include?(setter_method)
-          raise Puppet::Error, "OS X version 10\.14 does not allow changing #{setter_method} using puppet"
+        if self.class.get_os_version.split('.').last.to_i >= 14 && %w(home uid).include?(setter_method)
+          raise Puppet::Error, "OS X version #{self.class.get_os_version} does not allow changing #{setter_method} using puppet"
         end
         begin
           dscl '.', '-change', "/Users/#{resource.name}", self.class.ns_to_ds_attribute_map[setter_method.intern], @property_hash[setter_method.intern], value
