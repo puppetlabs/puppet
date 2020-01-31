@@ -142,7 +142,7 @@ class Puppet::HTTP::Client
         apply_auth(request, user, password)
 
         http.request(request) do |nethttp|
-          response = Puppet::HTTP::Response.new(nethttp)
+          response = Puppet::HTTP::Response.new(nethttp, request.uri)
           begin
             Puppet.debug("HTTP #{request.method.upcase} #{request.uri} returned #{response.code} #{response.reason}")
 

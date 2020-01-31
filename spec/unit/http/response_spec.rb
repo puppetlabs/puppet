@@ -5,6 +5,13 @@ describe Puppet::HTTP::Response do
   let(:uri) { URI.parse('https://www.example.com') }
   let(:client) { Puppet::HTTP::Client.new }
 
+  it "returns the request URL" do
+    stub_request(:get, uri)
+
+    response = client.get(uri)
+    expect(response.url).to eq(uri)
+  end
+
   it "returns the HTTP code" do
     stub_request(:get, uri)
 

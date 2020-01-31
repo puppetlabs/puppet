@@ -1,6 +1,9 @@
 class Puppet::HTTP::Response
-  def initialize(nethttp)
+  attr_reader :nethttp, :url
+
+  def initialize(nethttp, url)
     @nethttp = nethttp
+    @url = url
   end
 
   def code
