@@ -263,6 +263,13 @@ module Puppet
         major releases of Puppet. Should be used with caution, as in development
         features are experimental and can have unexpected effects."
     },
+    :versioned_environment_dirs => {
+      :default => false,
+      :type => :boolean,
+      :desc => "Whether or not to look for versioned environment directories,
+      symlinked from `$environmentpath/<environment>`. This is an experimental
+      feature and should be used with caution."
+    },
     :static_catalogs => {
       :default    => true,
       :type       => :boolean,
