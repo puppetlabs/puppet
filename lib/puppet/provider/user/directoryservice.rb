@@ -387,7 +387,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') > 0)
       assert_full_pbkdf2_password
 
-      sleep 2
+      sleep 3
       flush_dscl_cache
       users_plist = get_users_plist(@resource.name)
       shadow_hash_data = get_shadow_hash_data(users_plist)
@@ -404,7 +404,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') > 0)
       assert_full_pbkdf2_password
 
-      sleep 2
+      sleep 3
       flush_dscl_cache
       users_plist = get_users_plist(@resource.name)
       shadow_hash_data = get_shadow_hash_data(users_plist)
@@ -435,8 +435,8 @@ Puppet::Type.type(:user).provide :directoryservice do
   ['home', 'uid', 'gid', 'comment', 'shell'].each do |setter_method|
     define_method("#{setter_method}=") do |value|
       if @property_hash[setter_method.intern]
-        if self.class.get_os_version == '10.14' && %w(home uid).include?(setter_method)
-          raise Puppet::Error, "OS X version 10\.14 does not allow changing #{setter_method} using puppet"
+        if self.class.get_os_version.split('.').last.to_i >= 14 && %w(home uid).include?(setter_method)
+          raise Puppet::Error, "OS X version #{self.class.get_os_version} does not allow changing #{setter_method} using puppet"
         end
         begin
           dscl '.', '-change', "/Users/#{resource.name}", self.class.ns_to_ds_attribute_map[setter_method.intern], @property_hash[setter_method.intern], value
@@ -572,7 +572,32 @@ Puppet::Type.type(:user).provide :directoryservice do
     else
       users_plist['ShadowHashData'] = [binary_plist]
     end
-    write_users_plist_to_disk(users_plist)
+    if Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.15') < 0
+      write_users_plist_to_disk(users_plist)
+    else
+      write_and_import_shadow_hash_data(users_plist['ShadowHashData'].first)
+    end
+  end
+
+  # This method writes the ShadowHashData plist in a temporary file,
+  # then imports it using dsimport. macOS versions 10.15 and newer do
+  # not support directly managing binary plists, so we have to use an
+  # intermediary.
+  # dsimport is an archaic utilitary with hard-to-find documentation
+  #
+  # See http://web.archive.org/web/20090106120111/http://support.apple.com/kb/TA21305?viewlocale=en_US
+  # for information regarding the dsimport syntax
+  def write_and_import_shadow_hash_data(data_plist)
+    Tempfile.create("dsimport_#{@resource.name}", :encoding => Encoding::ASCII) do |dsimport_file|
+      dsimport_file.write <<-DSIMPORT
+0x0A 0x5C 0x3A 0x2C dsRecTypeStandard:Users 2 dsAttrTypeStandard:RecordName base64:dsAttrTypeNative:ShadowHashData
+#{@resource.name}:#{Base64.strict_encode64(data_plist)}
+      DSIMPORT
+      dsimport_file.flush
+      # Delete the user's existing ShadowHashData, since dsimport appends, not replaces
+      dscl('.', 'delete', "/Users/#{@resource.name}", 'ShadowHashData')
+      dsimport(dsimport_file.path, '/Local/Default', 'M')
+    end
   end
 
   # This method accepts an argument of a hex password hash, and base64

@@ -196,6 +196,17 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     }
   end
 
+  let (:dsimport_preamble) do
+    '0x0A 0x5C 0x3A 0x2C dsRecTypeStandard:Users 2 dsAttrTypeStandard:RecordName base64:dsAttrTypeNative:ShadowHashData'
+  end
+
+  let (:dsimport_contents) do
+    <<-DSIMPORT
+#{dsimport_preamble}
+#{username}:#{Base64.strict_encode64(sha512_embedded_bplist)}
+    DSIMPORT
+  end
+
   # The below represents output of 'dscl -plist . readall /Users' converted to
   # a native Ruby hash if only one user were installed on the system.
   # This lets us check the behavior of all the methods necessary to return a
@@ -960,6 +971,24 @@ end
     end
   end
 
+  describe '#set_shadow_hash_data' do
+    let(:users_plist) { {'ShadowHashData' => ['string_data'] } }
+
+    it 'should flush the plist data to disk on OS X < 10.15' do
+      allow(provider.class).to receive(:get_os_version).and_return('10.12')
+
+      expect(provider).to receive(:write_users_plist_to_disk)
+      provider.set_shadow_hash_data(users_plist, pbkdf2_embedded_plist)
+    end
+
+    it 'should flush the plist data a temporary file on OS X >= 10.15' do
+      allow(provider.class).to receive(:get_os_version).and_return('10.15')
+
+      expect(provider).to receive(:write_and_import_shadow_hash_data)
+      provider.set_shadow_hash_data(users_plist, pbkdf2_embedded_plist)
+    end
+  end
+
   describe '#set_salted_pbkdf2' do
     let(:users_plist) { {'ShadowHashData' => ['string_data'] } }
     let(:entropy_shadow_hash_data) do
@@ -1008,6 +1037,18 @@ end
     it 'should save the passed plist to disk and convert it to a binary plist' do
       expect(Puppet::Util::Plist).to receive(:write_plist_file).with(user_plist_xml, "#{users_plist_dir}/nonexistent_user.plist", :binary)
       provider.write_users_plist_to_disk(user_plist_xml)
+    end
+  end
+
+  describe '#write_and_import_shadow_hash_data' do
+    it 'should save the passed plist to a temporary file and import it' do
+      tmpfile = double('tempfile', :path => "/tmp/dsimport_#{username}", :flush => nil)
+      allow(Tempfile).to receive(:create).and_yield(tmpfile)
+      allow(provider).to receive(:dscl).with('.', 'delete', user_path, 'ShadowHashData')
+
+      expect(tmpfile).to receive(:write).with(dsimport_contents)
+      expect(provider).to receive(:dsimport).with(tmpfile.path, '/Local/Default', 'M')
+      provider.write_and_import_shadow_hash_data(sha512_embedded_bplist)
     end
   end
 
