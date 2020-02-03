@@ -16,6 +16,8 @@ class Puppet::HTTP::Response
   end
 
   def read_body(&block)
+    raise ArgumentError, "A block is required" unless block_given?
+
     @nethttp.read_body(&block)
   end
 
