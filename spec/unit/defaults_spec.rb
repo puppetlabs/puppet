@@ -182,7 +182,7 @@ describe "Defaults" do
     end
   end
 
-  describe "facterng", :if => Puppet::Util::Platform.windows? do
+  describe "facterng" do
     it "defaults to false" do
       expect(Puppet[:facterng]).to be_falsey
     end
