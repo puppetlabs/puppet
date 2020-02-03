@@ -60,6 +60,14 @@ module Puppet
     @@settings
   end
 
+  # The puppetserver project has its own settings class that is thread-aware; this
+  # method is here to allow the puppetserver to define its own custom settings class
+  # for multithreaded puppet. It is not intended for use outside of the puppetserver
+  # implmentation.
+  def self.replace_settings_object(new_settings)
+    @@settings = new_settings
+  end
+
   # Get the value for a setting
   #
   # @param [Symbol] param the setting to retrieve

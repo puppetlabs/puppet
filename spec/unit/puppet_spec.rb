@@ -69,4 +69,18 @@ describe Puppet do
       expect(SemanticPuppet::Version).to be_valid(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
     end
   end
+
+  context "Settings" do
+    before(:each) do
+      @old_settings = Puppet.settings
+    end
+    after(:each) do
+      Puppet.replace_settings_object(@old_settings)
+    end
+    it "should allow for settings to be redefined with a custom object" do
+      new_settings = double()
+      Puppet.replace_settings_object(new_settings)
+      expect(Puppet.settings).to eq(new_settings)
+    end
+  end
 end
