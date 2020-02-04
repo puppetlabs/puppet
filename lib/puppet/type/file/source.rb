@@ -2,10 +2,7 @@ require 'puppet/file_serving/content'
 require 'puppet/file_serving/metadata'
 require 'puppet/file_serving/terminus_helper'
 
-require 'puppet/util/http_proxy'
-require 'puppet/network/http'
-require 'puppet/network/http/api/indirected_routes'
-require 'puppet/network/http/compression'
+require 'puppet/http'
 
 module Puppet
   # Copy files from a local or remote source.  This state *only* does any work
@@ -14,11 +11,6 @@ module Puppet
   # this state, during retrieval, modifies the appropriate other states
   # so that things get taken care of appropriately.
   Puppet::Type.type(:file).newparam(:source) do
-    include Puppet::Network::HTTP::Compression.module
-
-    BINARY_MIME_TYPES = [
-      Puppet::Network::FormatHandler.format_for('binary').mime
-    ].join(', ').freeze
 
     attr_accessor :source, :local
     desc <<-'EOT'
@@ -291,45 +283,58 @@ module Puppet
       end
     end
 
-    def get_from_puppet_source(source_uri, content_uri, &block)
-      options = { :environment => resource.catalog.environment_instance }
-      if content_uri
-        options[:code_id] = resource.catalog.code_id
-        request = Puppet::Indirector::Request.new(:static_file_content, :find, content_uri, nil, options)
+    def get_from_content_uri_source(content_uri, &block)
+      environment = Puppet.lookup(:current_environment).to_s
+
+      url = URI.parse(Puppet::Util.uri_encode(content_uri))
+      session = Puppet.lookup(:http_session)
+      api = session.route_to(:fileserver, url: url)
+
+      api.get_static_file_content(
+        path: url.path,
+        environment: environment,
+        code_id: resource.catalog.code_id,
+        &block
+      )
+    end
+
+    def get_from_source_uri_source(url, &block)
+      environment = Puppet.lookup(:current_environment).to_s
+
+      session = Puppet.lookup(:http_session)
+      api = session.route_to(:fileserver, url: url)
+
+      api.get_file_content(
+        path: url.path,
+        environment: environment,
+        &block
+      )
+    end
+
+    def get_from_http_source(url, &block)
+      client = Puppet.runtime['http']
+      client.get(url) do |response|
+        raise Puppet::HTTP::ResponseError.new(response) unless response.success?
+
+        response.read_body(&block)
+      end
+    end
+
+    def chunk_file_from_source(&block)
+      if uri.scheme =~ /^https?/
+        get_from_http_source(uri, &block)
+      elsif metadata.content_uri
+        get_from_content_uri_source(metadata.content_uri, &block)
       else
-        request = Puppet::Indirector::Request.new(:file_content, :find, source_uri, nil, options)
+        get_from_source_uri_source(uri, &block)
       end
-
-      request.do_request(:fileserver) do |req|
-        ssl_context = Puppet.lookup(:ssl_context)
-        connection = Puppet::Network::HttpPool.connection(req.server, req.port, ssl_context: ssl_context)
-        connection.request_get(Puppet::Network::HTTP::API::IndirectedRoutes.request_to_uri(req), add_accept_encoding({"Accept" => BINARY_MIME_TYPES}), &block)
-      end
+    rescue Puppet::HTTP::ResponseError => e
+      handle_response_error(e.response)
     end
 
-    def get_from_http_source(source_uri, &block)
-      Puppet::Util::HttpProxy.request_with_redirects(URI(source_uri), :get, &block)
-    end
-
-    def get_from_source(&block)
-      source_uri = metadata.source
-      if source_uri =~ /^https?:/
-        get_from_http_source(source_uri, &block)
-      else
-        get_from_puppet_source(source_uri, metadata.content_uri, &block)
-      end
-    end
-
-    def chunk_file_from_source
-      get_from_source do |response|
-        case response.code
-        when /^2/;  uncompress(response) { |uncompressor| response.read_body { |chunk| yield uncompressor.uncompress(chunk) } }
-        else
-          # Raise the http error if we didn't get a 'success' of some kind.
-          message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
-          raise Net::HTTPError.new(message, response)
-        end
-      end
+    def handle_response_error(response)
+      message = "Error #{response.code} on SERVER: #{response.body.empty? ? response.reason : response.body}"
+      raise Net::HTTPError.new(message, response.nethttp)
     end
   end
 
