@@ -158,6 +158,7 @@ describe Puppet::Network::HTTP::Connection do
 
       pool = Puppet.lookup(:http_pool)
       expect(pool).to receive(:with_connection).with(site, anything).and_yield(http)
+      allow(http).to receive(:finish)
 
       result = subject.get('/foo')
 
@@ -167,6 +168,7 @@ describe Puppet::Network::HTTP::Connection do
     it "should return a 503 response if Retry-After is not convertible to an Integer or RFC 2822 Date" do
       httpunavailable['Retry-After'] = 'foo'
       allow(http).to receive(:request).and_return(httpunavailable)
+      allow(http).to receive(:finish)
 
       pool = Puppet.lookup(:http_pool)
       expect(pool).to receive(:with_connection).with(site, anything).and_yield(http)
@@ -176,9 +178,21 @@ describe Puppet::Network::HTTP::Connection do
       expect(result.code).to eq(503)
     end
 
+    it "should close the connection before sleeping" do
+      allow(http).to receive(:request).and_return(httpunavailable, httpok)
+
+      pool = Puppet.lookup(:http_pool)
+      expect(pool).to receive(:with_connection).with(site, anything).and_yield(http)
+
+      expect(http).to receive(:finish)
+
+      subject.get('/foo')
+    end
+
     it "should sleep and retry if Retry-After is an Integer" do
       httpunavailable['Retry-After'] = '42'
       allow(http).to receive(:request).and_return(httpunavailable, httpok)
+      allow(http).to receive(:finish)
 
       pool = Puppet.lookup(:http_pool)
       expect(pool).to receive(:with_connection).with(site, anything).twice.and_yield(http)
@@ -193,6 +207,7 @@ describe Puppet::Network::HTTP::Connection do
     it "should sleep and retry if Retry-After is an RFC 2822 Date" do
       httpunavailable['Retry-After'] = 'Wed, 13 Apr 2005 15:18:05 GMT'
       allow(http).to receive(:request).and_return(httpunavailable, httpok)
+      allow(http).to receive(:finish)
 
       now = DateTime.new(2005, 4, 13, 8, 17, 5, '-07:00')
       allow(DateTime).to receive(:now).and_return(now)
@@ -210,6 +225,7 @@ describe Puppet::Network::HTTP::Connection do
     it "should sleep for no more than the Puppet runinterval" do
       httpunavailable['Retry-After'] = '60'
       allow(http).to receive(:request).and_return(httpunavailable, httpok)
+      allow(http).to receive(:finish)
       Puppet[:runinterval] = 30
 
       pool = Puppet.lookup(:http_pool)

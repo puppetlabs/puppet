@@ -198,6 +198,7 @@ module Puppet::Network::HTTP
               current_request[header] = value
             end
           when 429, 503
+            connection.finish
             response = handle_retry_after(current_response)
           else
             response = current_response

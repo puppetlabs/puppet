@@ -60,6 +60,8 @@ describe Puppet::Network::HTTP::Pool do
 
     it 'returns the connection to the pool' do
       conn = create_connection(site)
+      expect(conn).to receive(:started?).and_return(true)
+
       pool = create_pool
       pool.release(site, conn)
 
@@ -137,6 +139,7 @@ describe Puppet::Network::HTTP::Pool do
       it 'releases HTTP connections' do
         conn = create_connection(site)
         expect(conn).to receive(:use_ssl?).and_return(false)
+        expect(conn).to receive(:started?).and_return(true)
 
         pool = create_pool_with_connections(site, conn)
         expect(pool).to receive(:release).with(site, conn)
@@ -148,6 +151,7 @@ describe Puppet::Network::HTTP::Pool do
         conn = create_connection(site)
         expect(conn).to receive(:use_ssl?).and_return(true)
         expect(conn).to receive(:verify_mode).and_return(OpenSSL::SSL::VERIFY_PEER)
+        expect(conn).to receive(:started?).and_return(true)
 
         pool = create_pool_with_connections(site, conn)
         expect(pool).to receive(:release).with(site, conn)
@@ -165,6 +169,19 @@ describe Puppet::Network::HTTP::Pool do
         expect(pool).not_to receive(:release).with(site, conn)
 
         pool.with_connection(site, verify) {|c| }
+      end
+
+      it "doesn't add a closed  connection back to the pool" do
+        http = Net::HTTP.new(site.addr)
+        http.use_ssl = true
+        http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        http.start
+
+        pool = create_pool_with_connections(site, http)
+
+        pool.with_connection(site, verify) {|c| c.finish}
+
+        expect(pool.pool[site]).to be_empty
       end
     end
   end
@@ -228,7 +245,6 @@ describe Puppet::Network::HTTP::Pool do
 
     it 'finishes expired connections' do
       conn = create_connection(site)
-      expect(conn).to receive(:finish)
 
       pool = create_pool_with_expired_connections(site, conn)
       expect(pool.factory).to receive(:create_connection).and_return(double('conn', :start => nil))
@@ -241,6 +257,7 @@ describe Puppet::Network::HTTP::Pool do
       expect(Puppet).to receive(:log_exception).with(be_a(IOError), "Failed to close connection for #{site}: read timeout")
 
       conn = create_connection(site)
+      expect(conn).to receive(:started?).and_return(true)
       expect(conn).to receive(:finish).and_raise(IOError, 'read timeout')
 
       pool = create_pool_with_expired_connections(site, conn)
@@ -289,10 +306,21 @@ describe Puppet::Network::HTTP::Pool do
 
     it 'closes all cached connections' do
       conn = create_connection(site)
-      expect(conn).to receive(:finish)
 
       pool = create_pool_with_connections(site, conn)
       pool.close
+    end
+
+    it 'allows a connection to be closed multiple times safely' do
+      http = Net::HTTP.new(site.addr)
+      http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      http.start
+
+      pool = create_pool
+
+      expect(pool.close_connection(site, http)).to eq(true)
+      expect(pool.close_connection(site, http)).to eq(false)
     end
   end
 end
