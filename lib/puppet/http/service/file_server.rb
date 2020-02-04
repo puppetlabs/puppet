@@ -78,6 +78,29 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     return nil
   end
 
+  def get_static_file_content(path:, environment:, code_id:, ssl_context: nil, &block)
+    validate_path(path)
+
+    headers = add_puppet_headers({'Accept' => 'application/octet-stream' })
+    response = @client.get(
+      with_base_url("/static_file_content#{path}"),
+      headers: headers,
+      params: {
+        environment: environment.to_s,
+        code_id: code_id,
+      },
+      ssl_context: ssl_context
+    ) do |res|
+      if res.success?
+        res.read_body(&block)
+      end
+    end
+
+    handle_response_errors(response)
+
+    return nil
+  end
+
   private
 
   def validate_path(path)
