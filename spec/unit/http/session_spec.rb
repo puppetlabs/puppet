@@ -73,6 +73,23 @@ describe Puppet::HTTP::Session do
         session.route_to(:westbound)
       }.to raise_error(ArgumentError, "Unknown service westbound")
     end
+
+    it 'routes to the service when given a puppet URL with an explicit host' do
+      session = described_class.new(client, [])
+      url = URI('puppet://example.com:8140/:modules/:module/path/to/file')
+      service = session.route_to(:fileserver, url: url)
+
+      expect(service.url.to_s).to eq("https://example.com:8140/puppet/v3")
+    end
+
+    it 'resolves the route when given a generic puppet:/// URL' do
+      resolvers = [DummyResolver.new(good_service)]
+      session = described_class.new(client, resolvers)
+      url = URI('puppet:///:modules/:module/path/to/file')
+      service = session.route_to(:fileserver, url: url)
+
+      expect(service.url).to eq(good_service.url)
+    end
   end
 
   context 'when resolving using multiple resolvers' do
