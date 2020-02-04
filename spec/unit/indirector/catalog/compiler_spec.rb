@@ -459,6 +459,35 @@ describe Puppet::Resource::Catalog::Compiler do
     end
   end
 
+  describe "after finding nodes when checking for a PE version" do
+    include PuppetSpec::Compiler
+
+    let(:pe_version_file) { '/opt/puppetlabs/server/pe_version' }
+    let(:request) { Puppet::Indirector::Request.new(:catalog, :find, node_name, nil) }
+
+    before :each do
+      Puppet[:code] = 'notify { "PE Version: $pe_serverversion": }'
+    end
+
+    it "should not add 'pe_serverversion' when FOSS" do
+      allow(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(node)
+      catalog = compiler.find(request)
+
+      expect(catalog.resource('notify', 'PE Version: 2019.2.0')).to be_nil
+    end
+
+    it "should add 'pe_serverversion' when PE" do
+      allow(File).to receive(:readable?).with(pe_version_file).and_return(true)
+      allow(File).to receive(:zero?).with(pe_version_file).and_return(false)
+      allow(File).to receive(:read).with(pe_version_file).and_return('2019.2.0')
+
+      allow(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(node)
+      catalog = compiler.find(request)
+
+      expect(catalog.resource('notify', 'PE Version: 2019.2.0')).to be
+    end
+  end
+
   describe "when filtering resources" do
     before :each do
       @catalog = double('catalog')
