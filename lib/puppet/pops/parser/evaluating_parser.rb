@@ -15,7 +15,6 @@ class EvaluatingParser
   end
 
   def parse_string(s, file_source = nil)
-    @file_source = file_source
     clear()
     # Handling of syntax error can be much improved (in general), now it bails out of the parser
     # and does not have as rich information (when parsing a string), need to update it with the file source
@@ -24,20 +23,19 @@ class EvaluatingParser
     # Also a possible improvement (if the YAML parser returns positions) is to provide correct output of position.
     #
     begin
-      assert_and_report(parser.parse_string(s, file_source)).model
+      assert_and_report(parser.parse_string(s, file_source), file_source).model
     rescue Puppet::ParseErrorWithIssue => e
       raise e
     rescue Puppet::ParseError => e
       # TODO: This is not quite right, why does not the exception have the correct file?
-      e.file = @file_source unless e.file.is_a?(String) && !e.file.empty?
+      e.file = file_source unless e.file.is_a?(String) && !e.file.empty?
       raise e
     end
   end
 
   def parse_file(file)
-    @file_source = file
     clear()
-    assert_and_report(parser.parse_file(file)).model
+    assert_and_report(parser.parse_file(file), file).model
   end
 
   def evaluate_string(scope, s, file_source = nil)
@@ -96,10 +94,10 @@ class EvaluatingParser
     Validation::ValidatorFactory_4_0.new().validator(acceptor)
   end
 
-  def assert_and_report(parse_result)
+  def assert_and_report(parse_result, file_source)
     return nil unless parse_result
     if parse_result['source_ref'].nil? || parse_result['source_ref'] == ''
-      parse_result['source_ref'] = @file_source
+      parse_result['source_ref'] = file_source
     end
     validation_result = validate(parse_result.model)
 

@@ -13,12 +13,6 @@ class Puppet::Parser::AST::PopsBridge
   # expression.
   #
   class Expression < Puppet::Parser::AST::Leaf
-
-    def initialize args
-      super
-      @@evaluator ||= Puppet::Pops::Parser::EvaluatingParser.new()
-    end
-
     def to_s
       Puppet::Pops::Model::ModelTreeDumper.new.dump(@value)
     end
@@ -29,8 +23,9 @@ class Puppet::Parser::AST::PopsBridge
     end
 
     def evaluate(scope)
-      object = @@evaluator.evaluate(scope, @value)
-      @@evaluator.convert_to_3x(object, scope)
+      evaluator = Puppet::Pops::Parser::EvaluatingParser.singleton
+      object = evaluator.evaluate(scope, @value)
+      evaluator.convert_to_3x(object, scope)
     end
 
     # Adapts to 3x where top level constructs needs to have each to iterate over children. Short circuit this
@@ -87,7 +82,6 @@ class Puppet::Parser::AST::PopsBridge
       @program_model = program_model
       @context = context
       @ast_transformer ||= Puppet::Pops::Model::AstTransformer.new(@context[:file])
-      @@evaluator ||= Puppet::Pops::Parser::EvaluatingParser.new()
     end
 
     # This is the 3x API, the 3x AST searches through all code to find the instructions that can be instantiated.
@@ -122,7 +116,7 @@ class Puppet::Parser::AST::PopsBridge
     end
 
     def evaluate(scope)
-      @@evaluator.evaluate(scope, program_model)
+      Puppet::Pops::Parser::EvaluatingParser.singleton.evaluate(scope, program_model)
     end
 
     # Adapts to 3x where top level constructs needs to have each to iterate over children. Short circuit this
@@ -178,8 +172,9 @@ class Puppet::Parser::AST::PopsBridge
       #
       scope = obtain_scope
       if scope
+        evaluator = Puppet::Pops::Parser::EvaluatingParser.singleton
         typed_parameters.each do |p|
-          result[p.name] =  @@evaluator.evaluate(scope, p.type_expr)
+          result[p.name] = evaluator.evaluate(scope, p.type_expr)
         end
       end
       result
