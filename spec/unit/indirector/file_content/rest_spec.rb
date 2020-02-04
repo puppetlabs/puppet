@@ -40,7 +40,7 @@ describe Puppet::Indirector::FileContent::Rest do
 
     expect {
       described_class.indirection.find(key, fail_on_404: true)
-    }.to raise_error(Puppet::Error, %r{Find /puppet/v3/file_content/:mount/path/to/file\?environment=\*root\*&fail_on_404=true resulted in 404 with the message: {}})
+    }.to raise_error(Puppet::Error, %r{Find /puppet/v3/file_content/:mount/path/to/file resulted in 404 with the message: {}})
   end
 
   it "raises an error on HTTP 500" do
