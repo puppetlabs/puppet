@@ -240,4 +240,37 @@ describe Puppet::HTTP::Service::FileServer do
       }.to raise_error(ArgumentError, 'Path must start with a slash')
     end
   end
+
+  context 'getting static file content' do
+    let(:code_id) { "0fc72115-adc6-4b1a-aa50-8f31b3ece440" }
+    let(:uri) { "https://www.example.com:443/puppet/v3/static_file_content/:mount/:path?environment=testing&code_id=#{code_id}"}
+
+    it 'yields file content' do
+      stub_request(:get, uri).with do |request|
+        expect(request.headers).to include({'Accept' => 'application/octet-stream'})
+      end.to_return(status: 200, body: "and beyond")
+
+      expect { |b|
+        subject.get_static_file_content(path: '/:mount/:path', environment: environment, code_id: code_id, &b)
+      }.to yield_with_args("and beyond")
+    end
+
+    it 'raises response error if unsuccessful' do
+      stub_request(:get, uri).to_return(status: [400, 'Bad Request'])
+
+      expect {
+        subject.get_static_file_content(path: '/:mount/:path', environment: environment, code_id: code_id) { |data| }
+      }.to raise_error do |err|
+        expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
+        expect(err.message).to eq('Bad Request')
+        expect(err.response.code).to eq(400)
+      end
+    end
+
+    it 'raises response error if path is relative' do
+      expect {
+        subject.get_static_file_content(path: 'relative_path', environment: environment, code_id: code_id) { |data| }
+      }.to raise_error(ArgumentError, 'Path must start with a slash')
+    end
+  end
 end
