@@ -64,9 +64,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
       ssl_context: ssl_context
     ) do |res|
       if res.success?
-        res.read_body do |data|
-          yield data
-        end
+        res.read_body(&block)
       end
     end
 
