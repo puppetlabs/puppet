@@ -25,7 +25,7 @@ describe Puppet::HTTP::Service::FileServer do
         expect(request.headers).to_not include('X-Puppet-Profiling')
       end
 
-      subject.get_file_content(path: ':mount/:path', environment: environment) { |data| }
+      subject.get_file_content(path: '/:mount/:path', environment: environment) { |data| }
     end
 
     it 'includes the X-Puppet-Profiling header when Puppet[:profile] is true' do
@@ -33,7 +33,7 @@ describe Puppet::HTTP::Service::FileServer do
 
       Puppet[:profile] = true
 
-      subject.get_file_content(path: ':mount/:path', environment: environment) { |data| }
+      subject.get_file_content(path: '/:mount/:path', environment: environment) { |data| }
     end
   end
 
@@ -44,7 +44,7 @@ describe Puppet::HTTP::Service::FileServer do
 
       stub_request(:get, "https://file.example.com:8141/puppet/v3/file_content/:mount/:path?environment=testing")
 
-      subject.get_file_content(path: ':mount/:path', environment: environment) { |data| }
+      subject.get_file_content(path: '/:mount/:path', environment: environment) { |data| }
     end
   end
 
@@ -52,7 +52,7 @@ describe Puppet::HTTP::Service::FileServer do
     let(:path) { tmpfile('get_file_metadata') }
     let(:url) { "https://www.example.com/puppet/v3/file_metadata/:mount/#{path}?checksum_type=md5&environment=testing&links=manage&source_permissions=ignore" }
     let(:filemetadata) { Puppet::FileServing::Metadata.new(path) }
-    let(:request_path) { ":mount/#{path}"}
+    let(:request_path) { "/:mount/#{path}"}
 
     it 'submits a request for file metadata to the server' do
       stub_request(:get, url).with(
@@ -102,6 +102,12 @@ describe Puppet::HTTP::Service::FileServer do
         subject.get_file_metadata(path: request_path, environment: environment)
       }.to raise_error(Puppet::HTTP::SerializationError, /Failed to deserialize Puppet::FileServing::Metadata from json/)
     end
+
+    it 'raises response error if path is relative' do
+      expect {
+        subject.get_file_metadata(path: 'relative_path', environment: environment)
+      }.to raise_error(ArgumentError, 'Path must start with a slash')
+    end
   end
 
   context 'retrieving multiple file metadatas' do
@@ -109,7 +115,7 @@ describe Puppet::HTTP::Service::FileServer do
     let(:url) { "https://www.example.com/puppet/v3/file_metadatas/:mount/#{path}?checksum_type=md5&links=manage&recurse=false&source_permissions=ignore&environment=testing" }
     let(:filemetadatas) { [Puppet::FileServing::Metadata.new(path)] }
     let(:formatter) { Puppet::Network::FormatHandler.format(:json) }
-    let(:request_path) { ":mount/#{path}"}
+    let(:request_path) { "/:mount/#{path}"}
 
     it 'submits a request for file metadata to the server' do
       stub_request(:get, url).with(
@@ -171,6 +177,12 @@ describe Puppet::HTTP::Service::FileServer do
         subject.get_file_metadatas(path: request_path, environment: environment)
       }.to raise_error(Puppet::HTTP::SerializationError, /Failed to deserialize multiple Puppet::FileServing::Metadata from json/)
     end
+
+    it 'raises response error if path is relative' do
+      expect {
+        subject.get_file_metadatas(path: 'relative_path', environment: environment)
+      }.to raise_error(ArgumentError, 'Path must start with a slash')
+    end
   end
 
   context 'getting file content' do
@@ -182,7 +194,7 @@ describe Puppet::HTTP::Service::FileServer do
       end.to_return(status: 200, body: "and beyond")
 
       expect { |b|
-        subject.get_file_content(path: ':mount/:path', environment: environment, &b)
+        subject.get_file_content(path: '/:mount/:path', environment: environment, &b)
       }.to yield_with_args("and beyond")
     end
 
@@ -190,12 +202,18 @@ describe Puppet::HTTP::Service::FileServer do
       stub_request(:get, uri).to_return(status: [400, 'Bad Request'])
 
       expect {
-        subject.get_file_content(path: ':mount/:path', environment: environment) { |data| }
+        subject.get_file_content(path: '/:mount/:path', environment: environment) { |data| }
       }.to raise_error do |err|
         expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
         expect(err.message).to eq('Bad Request')
         expect(err.response.code).to eq(400)
       end
+    end
+
+    it 'raises response error if path is relative' do
+      expect {
+        subject.get_file_content(path: 'relative_path', environment: environment) { |data| }
+      }.to raise_error(ArgumentError, 'Path must start with a slash')
     end
   end
 end
