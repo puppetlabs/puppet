@@ -90,7 +90,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
 
       {
         'pkg://omnios/SUNWcs@0.5.11,5.11-0.151006:20130506T161045Z    i--' => {:name => 'SUNWcs', :ensure => '0.5.11,5.11-0.151006:20130506T161045Z', :status => 'installed', :provider => :pkg, :publisher => 'omnios'},
-        'pkg://omnios/incorporation/jeos/illumos-gate@11,5.11-0.151006:20130506T183443Z if-' => {:name => 'incorporation/jeos/illumos-gate', :ensure => 'held', :status => 'installed', :provider => :pkg, :publisher => 'omnios'},
+        'pkg://omnios/incorporation/jeos/illumos-gate@11,5.11-0.151006:20130506T183443Z if-' => {:name => 'incorporation/jeos/illumos-gate', :ensure => "11,5.11-0.151006:20130506T183443Z", :mark => :hold, :status => 'installed', :provider => :pkg, :publisher => 'omnios'},
         'pkg://solaris/SUNWcs@0.5.11,5.11-0.151.0.1:20101105T001108Z      installed  -----' => {:name => 'SUNWcs', :ensure => '0.5.11,5.11-0.151.0.1:20101105T001108Z', :status => 'installed', :provider => :pkg, :publisher => 'solaris'},
        }.each do |k, v|
         it "[#{k}] should correctly parse" do
@@ -251,6 +251,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
 
           it "should accept all licenses" do
             expect(provider).to receive(:query).with(no_args).and_return({:ensure => :absent})
+            expect(provider).to receive(:properties).and_return({:mark => :hold})
             expect(Puppet::Util::Execution).to receive(:execute)
               .with(['/bin/pkg', 'install', *hash[:flags], 'dummy'], {:failonfail => false, :combine => true})
               .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
@@ -265,6 +266,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
             # Should install also check if the version installed is the same version we are asked to install? or should we rely on puppet for that?
             resource[:ensure] = '0.0.7,5.11-0.151006:20131230T130000Z'
             allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+            expect(provider).to receive(:properties).and_return({:mark => :hold})
             expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
             expect(Puppet::Util::Execution).to receive(:execute)
               .with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true})
@@ -277,6 +279,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
 
           it "should install specific version(2)" do
             resource[:ensure] = '0.0.8'
+            expect(provider).to receive(:properties).and_return({:mark => :hold})
             expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
             expect(Puppet::Util::Execution).to receive(:execute)
               .with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true})
@@ -290,6 +293,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
 
           it "should downgrade to specific version" do
             resource[:ensure] = '0.0.7'
+            expect(provider).to receive(:properties).and_return({:mark => :hold})
             expect(provider).to receive(:query).with(no_args).and_return({:ensure => '0.0.8,5.11-0.151106:20131230T130000Z'})
             allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
             expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
@@ -301,6 +305,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
 
           it "should install any if version is not specified" do
             resource[:ensure] = :present
+            expect(provider).to receive(:properties).and_return({:mark => :hold})
             expect(provider).to receive(:query).with(no_args).and_return({:ensure => :absent})
             expect(Puppet::Util::Execution).to receive(:execute)
               .with(['/bin/pkg', 'install', *hash[:flags], 'dummy'], {:failonfail => false, :combine => true})
@@ -312,6 +317,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
 
           it "should install if no version was previously installed, and a specific version was requested" do
             resource[:ensure] = '0.0.7'
+            expect(provider).to receive(:properties).and_return({:mark => :hold})
             expect(provider).to receive(:query).with(no_args).and_return({:ensure => :absent})
             expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
             expect(Puppet::Util::Execution).to receive(:execute)
@@ -325,6 +331,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
             resource[:ensure] = '1.0-0.151006'
             is = :absent
             expect(provider).to receive(:query).with(no_args).and_return({:ensure => is})
+            expect(provider).to receive(:properties).and_return({:mark => :hold})
             expect(described_class).to receive(:pkg)
               .with(:list, '-Hvfa', 'dummy@1.0-0.151006')
               .and_return(Puppet::Util::Execution::ProcessOutput.new(File.read(my_fixture('dummy_implicit_version')), 0))
@@ -340,6 +347,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
             resource[:ensure] = '1.0-0.151006'
             is = '1.0,5.11-0.151006:20140219T191204Z'
             expect(provider).to receive(:query).with(no_args).and_return({:ensure => is})
+            expect(provider).to receive(:properties).and_return({:mark => :hold})
             expect(described_class).to receive(:pkg).with(:list, '-Hvfa', 'dummy@1.0-0.151006').and_return(File.read(my_fixture('dummy_implicit_version')))
             expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'update', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
             expect(provider).to receive(:unhold).with(no_args)
@@ -398,12 +406,16 @@ describe Puppet::Type.type(:package).provider(:pkg) do
       it "should support current pkg version" do
         expect(described_class).to receive(:pkg).with(:version).and_return('630e1ffc7a19')
         expect(described_class).to receive(:pkg).with([:uninstall, resource[:name]])
+        expect(provider).to receive(:properties).and_return({:hold => false})
+
         provider.uninstall
       end
 
       it "should support original pkg commands" do
         expect(described_class).to receive(:pkg).with(:version).and_return('052adf36c3f4')
         expect(described_class).to receive(:pkg).with([:uninstall, '-r', resource[:name]])
+        expect(provider).to receive(:properties).and_return({:hold => false})
+
         provider.uninstall
       end
     end

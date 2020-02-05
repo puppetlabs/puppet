@@ -44,7 +44,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   # Note: self:: is required here to keep these constants in the context of what will
   # eventually become this Puppet::Type::Package::ProviderDpkg class.
   self::DPKG_QUERY_FORMAT_STRING = %Q{'${Status} ${Package} ${Version}\\n'}
-  self::FIELDS_REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
+  self::FIELDS_REGEX = %r{^'?(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
   self::FIELDS= [:desired, :error, :status, :name, :ensure]
 
   # @param line [String] one line of dpkg-query output
@@ -67,7 +67,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       elsif ['config-files', 'half-installed', 'unpacked', 'half-configured'].include?(hash[:status])
         hash[:ensure] = :absent
       end
-      hash[:ensure] = :held if hash[:desired] == 'hold'
+      hash[:mark] = :hold if hash[:desired] == 'hold'
     else
       Puppet.debug("Failed to match dpkg-query line #{line.inspect}")
     end
@@ -83,8 +83,6 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     end
     args = []
 
-    # We always unhold when installing to remove any prior hold.
-    self.unhold
 
     if @resource[:configfiles] == :keep
       args << '--force-confold'
@@ -93,7 +91,12 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     end
     args << '-i' << file
 
-    dpkg(*args)
+    self.unhold if self.properties[:mark] == :hold
+    begin
+      dpkg(*args)
+    ensure
+      self.hold if @resource[:mark] == :hold
+    end
   end
 
   def update
@@ -144,10 +147,14 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     dpkg "--purge", @resource[:name]
   end
 
-  def hold
+  def deprecated_hold
     if package_not_installed?
       self.install
     end
+    hold
+  end
+
+  def hold
     Tempfile.open('puppet_dpkg_set_selection') do |tmpfile|
       tmpfile.write("#{@resource[:name]} hold\n")
       tmpfile.flush
