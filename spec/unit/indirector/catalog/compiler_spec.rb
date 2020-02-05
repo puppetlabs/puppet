@@ -479,6 +479,7 @@ describe Puppet::Resource::Catalog::Compiler do
     it "should add 'pe_serverversion' when PE" do
       allow(File).to receive(:readable?).with(pe_version_file).and_return(true)
       allow(File).to receive(:zero?).with(pe_version_file).and_return(false)
+      allow(File).to receive(:read).and_call_original
       allow(File).to receive(:read).with(pe_version_file).and_return('2019.2.0')
 
       allow(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(node)
