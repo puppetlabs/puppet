@@ -1,16 +1,16 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) 2019 Puppet, Inc.
+# Copyright (C) 2020 Puppet, Inc.
 # This file is distributed under the same license as the Puppet automation framework package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.17-100-g3e6abbc\n"
+"Project-Id-Version: Puppet automation framework 5.5.18-49-g561d1a4850\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-11-13 23:16+0000\n"
-"PO-Revision-Date: 2019-11-13 23:16+0000\n"
+"POT-Creation-Date: 2020-02-05 09:17+0000\n"
+"PO-Revision-Date: 2020-02-05 09:17+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -520,93 +520,93 @@ msgstr ""
 msgid "Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:96 ../lib/puppet/configurer.rb:173
+#: ../lib/puppet/configurer.rb:96 ../lib/puppet/configurer.rb:171
 msgid "Using cached catalog from environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:166
+#: ../lib/puppet/configurer.rb:164
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:184
+#: ../lib/puppet/configurer.rb:180
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:224
+#: ../lib/puppet/configurer.rb:220
 msgid "Could not select a functional puppet master from server_list: '%{server_list}'"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:227
+#: ../lib/puppet/configurer.rb:223
 msgid "Selected puppet server from the `server_list` setting: %{server}:%{port}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:259
+#: ../lib/puppet/configurer.rb:254
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:304
+#: ../lib/puppet/configurer.rb:299
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:309
+#: ../lib/puppet/configurer.rb:304
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:313
+#: ../lib/puppet/configurer.rb:308
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:337
+#: ../lib/puppet/configurer.rb:332
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:348
+#: ../lib/puppet/configurer.rb:343
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:350
+#: ../lib/puppet/configurer.rb:345
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:369
+#: ../lib/puppet/configurer.rb:385
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:401
+#: ../lib/puppet/configurer.rb:417
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:405
+#: ../lib/puppet/configurer.rb:421
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:417 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:433 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:426
+#: ../lib/puppet/configurer.rb:442
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:446
+#: ../lib/puppet/configurer.rb:462
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:457
+#: ../lib/puppet/configurer.rb:473
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:472
+#: ../lib/puppet/configurer.rb:488
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:490
+#: ../lib/puppet/configurer.rb:506
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:510
+#: ../lib/puppet/configurer.rb:526
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -679,54 +679,54 @@ msgid "Valid values are %{values}."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:473
+#: ../lib/puppet/defaults.rb:480
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:475
+#: ../lib/puppet/defaults.rb:482
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:634
+#: ../lib/puppet/defaults.rb:641
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:736
+#: ../lib/puppet/defaults.rb:743
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:977 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:988 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1048
+#: ../lib/puppet/defaults.rb:1059
 msgid "The 'caprivatedir' setting is deprecated and will be removed in Puppet 6."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1075
+#: ../lib/puppet/defaults.rb:1086
 msgid "The 'capass' setting is deprecated and will be removed in Puppet 6."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1315
+#: ../lib/puppet/defaults.rb:1326
 msgid "The 'ca' setting is deprecated and will be removed in Puppet 6."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1820 ../lib/puppet/settings.rb:1212
+#: ../lib/puppet/defaults.rb:1831 ../lib/puppet/settings.rb:1212
 msgid "Setting %{name} is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1871
+#: ../lib/puppet/defaults.rb:1882
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/error.rb:69
+#: ../lib/puppet/error.rb:77
 msgid "Could not parse for environment %{environment}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/error.rb:70 ../lib/puppet/parser/compiler.rb:41
+#: ../lib/puppet/error.rb:78 ../lib/puppet/parser/compiler.rb:41
 msgid "%{message} on node %{node}"
 msgstr ""
 
@@ -2514,7 +2514,7 @@ msgstr ""
 msgid "Could not find node '%{name}'; cannot compile"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:403
+#: ../lib/puppet/indirector/catalog/compiler.rb:413
 msgid "Could not retrieve fact %{fact}"
 msgstr ""
 
@@ -4132,27 +4132,27 @@ msgstr ""
 msgid "Received a %{status_code} response from %{server_hostname}. Sleeping for %{retry_sleep} seconds before retrying the request."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:318
+#: ../lib/puppet/network/http/connection.rb:317
 msgid "request %{uri} interrupted after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:320
+#: ../lib/puppet/network/http/connection.rb:319
 msgid "request %{uri} timed out after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:322
+#: ../lib/puppet/network/http/connection.rb:321
 msgid "request %{uri} failed: %{msg}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:348 ../lib/puppet/ssl/validator/default_validator.rb:101
+#: ../lib/puppet/network/http/connection.rb:346 ../lib/puppet/ssl/validator/default_validator.rb:101
 msgid "expected one of %{certnames}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:350 ../lib/puppet/ssl/validator/default_validator.rb:103
+#: ../lib/puppet/network/http/connection.rb:348 ../lib/puppet/ssl/validator/default_validator.rb:103
 msgid "expected %{certname}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:353 ../lib/puppet/ssl/validator/default_validator.rb:106
+#: ../lib/puppet/network/http/connection.rb:351 ../lib/puppet/ssl/validator/default_validator.rb:106
 msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
 msgstr ""
 
@@ -6400,7 +6400,7 @@ msgstr ""
 msgid "Options 'include_containers' and 'include_values' cannot both be false"
 msgstr ""
 
-#: ../lib/puppet/pops/types/type_calculator.rb:167
+#: ../lib/puppet/pops/types/type_calculator.rb:191
 msgid "TypeCalculator.enumerable is deprecated. Use iterable"
 msgstr ""
 
@@ -6768,7 +6768,7 @@ msgstr ""
 msgid "GID must be an integer"
 msgstr ""
 
-#: ../lib/puppet/provider/group/groupadd.rb:60
+#: ../lib/puppet/provider/group/groupadd.rb:44
 msgid "GID %{resource} already exists, use allowdupe to force group creation"
 msgstr ""
 
@@ -6990,15 +6990,15 @@ msgstr ""
 msgid "/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure."
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:83 ../lib/puppet/provider/package/fink.rb:50
+#: ../lib/puppet/provider/package/apt.rb:88 ../lib/puppet/provider/package/fink.rb:55
 msgid "Could not find latest version"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:93 ../lib/puppet/provider/package/fink.rb:60
+#: ../lib/puppet/provider/package/apt.rb:98 ../lib/puppet/provider/package/fink.rb:65
 msgid "Preseeding %{response} to debconf-set-selections"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:97 ../lib/puppet/provider/package/fink.rb:64
+#: ../lib/puppet/provider/package/apt.rb:102 ../lib/puppet/provider/package/fink.rb:69
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
@@ -7038,7 +7038,7 @@ msgstr ""
 msgid "You cannot install dpkg packages without a source"
 msgstr ""
 
-#: ../lib/puppet/provider/package/dpkg.rb:107
+#: ../lib/puppet/provider/package/dpkg.rb:110
 msgid "source doesn't contain named package, but %{name}"
 msgstr ""
 
@@ -7124,19 +7124,19 @@ msgid ""
 "'%{line}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/openbsd.rb:49 ../lib/puppet/provider/package/opkg.rb:25
+#: ../lib/puppet/provider/package/openbsd.rb:50 ../lib/puppet/provider/package/opkg.rb:25
 msgid "Failed to match line %{line}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/openbsd.rb:136
+#: ../lib/puppet/provider/package/openbsd.rb:137
 msgid "No valid installpath found in /etc/pkg.conf and no source was set"
 msgstr ""
 
-#: ../lib/puppet/provider/package/openbsd.rb:140
+#: ../lib/puppet/provider/package/openbsd.rb:141
 msgid "You must specify a package source or configure an installpath in /etc/pkg.conf"
 msgstr ""
 
-#: ../lib/puppet/provider/package/openbsd.rb:212
+#: ../lib/puppet/provider/package/openbsd.rb:213
 msgid "%{version} is not available for this package"
 msgstr ""
 
@@ -7192,27 +7192,27 @@ msgstr ""
 msgid "Unknown line format %{resource_name}: %{parse_line}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:116
+#: ../lib/puppet/provider/package/pkg.rb:120
 msgid "Unable to unfreeze %{package}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:151
+#: ../lib/puppet/provider/package/pkg.rb:155
 msgid "Implicit version %{should} has %{n} possible matches"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:161
+#: ../lib/puppet/provider/package/pkg.rb:165
 msgid "Selecting version '%{version}' for implicit '%{should}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:166
+#: ../lib/puppet/provider/package/pkg.rb:170
 msgid "No version of %{name} matching %{should} is installable, even though the package is currently installed"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:185
+#: ../lib/puppet/provider/package/pkg.rb:189
 msgid "pkg warning: %{warnings}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:221 ../lib/puppet/provider/package/pkg.rb:241
+#: ../lib/puppet/provider/package/pkg.rb:228 ../lib/puppet/provider/package/pkg.rb:254
 msgid "Unable to update %{package}"
 msgstr ""
 
@@ -7341,11 +7341,11 @@ msgstr ""
 msgid "Failed to update to version %{should}, got version %{version} instead"
 msgstr ""
 
-#: ../lib/puppet/provider/package_targetable.rb:55
+#: ../lib/puppet/provider/package_targetable.rb:56
 msgid "Provider %{name} package command is not functional on this host"
 msgstr ""
 
-#: ../lib/puppet/provider/package_targetable.rb:58
+#: ../lib/puppet/provider/package_targetable.rb:59
 msgid "Provider %{name} package command '%{cmd}' does not exist on this host"
 msgstr ""
 
@@ -8107,11 +8107,11 @@ msgstr ""
 msgid "Puppet::SSL::CertificateAuthority#certificate_is_alive? is deprecated. Please use Puppet::SSL::CertificateAuthority#verify or the certificate status API to query certificate information. See https://puppet.com/docs/puppet/latest/http_api/http_certificate_status.html"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_authority.rb:497
+#: ../lib/puppet/ssl/certificate_authority.rb:498
 msgid "Could not find a certificate for %{name}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_authority.rb:506
+#: ../lib/puppet/ssl/certificate_authority.rb:507
 msgid "Could not find a certificate or csr for %{name}"
 msgstr ""
 
@@ -8942,6 +8942,14 @@ msgstr ""
 msgid "Name must be a String not %{klass}"
 msgstr ""
 
+#: ../lib/puppet/type/package.rb:635
+msgid "Invalid hold value %{value}. %{doc}"
+msgstr ""
+
+#: ../lib/puppet/type/package.rb:665
+msgid "You cannot use \"mark\" property while \"ensure\" is one of [\"absent\", \"purged\", \"held\"]"
+msgstr ""
+
 #: ../lib/puppet/type/resources.rb:15
 msgid "Could not find resource type '%{name}'"
 msgstr ""
@@ -9135,27 +9143,27 @@ msgstr ""
 msgid "Profile names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:703
+#: ../lib/puppet/type/user.rb:705
 msgid "Each entry for purge_ssh_keys must be a string, not a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:706
+#: ../lib/puppet/type/user.rb:708
 msgid "Paths to keyfiles must be absolute, not %{entry}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:710
+#: ../lib/puppet/type/user.rb:712
 msgid "purge_ssh_keys must be true, false, or an array of file names, not %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:722
+#: ../lib/puppet/type/user.rb:724
 msgid "purge_ssh_keys can only be true for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:729
+#: ../lib/puppet/type/user.rb:731
 msgid "purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:743
+#: ../lib/puppet/type/user.rb:745
 msgid "Class name must be provided."
 msgstr ""
 
@@ -9266,11 +9274,11 @@ msgstr ""
 msgid "path may not be nil"
 msgstr ""
 
-#: ../lib/puppet/util.rb:568
+#: ../lib/puppet/util.rb:591
 msgid "replace_file requires a block"
 msgstr ""
 
-#: ../lib/puppet/util.rb:572
+#: ../lib/puppet/util.rb:595
 msgid "replace_file default_mode: %{default_mode} is invalid"
 msgstr ""
 
@@ -9798,20 +9806,20 @@ msgstr ""
 msgid "Unable to set ownership to %{user}:%{group} for log file: %{path}"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:82 ../lib/puppet/util/logging.rb:105
+#: ../lib/puppet/util/logging.rb:80 ../lib/puppet/util/logging.rb:104
 msgid "Wrapped exception:"
 msgstr ""
 
 #. TRANSLATORS the literals ":file", ":line", and ":key" should not be translated
-#: ../lib/puppet/util/logging.rb:149
+#: ../lib/puppet/util/logging.rb:161
 msgid "Need either :file and :line, or :key"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:179
+#: ../lib/puppet/util/logging.rb:191
 msgid "(file & line not available)"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:281
+#: ../lib/puppet/util/logging.rb:293
 msgid "(location: %{location})"
 msgstr ""
 
@@ -9909,7 +9917,7 @@ msgstr ""
 msgid "Details: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/plist.rb:145
+#: ../lib/puppet/util/plist.rb:151
 msgid "Unable to write the file %{file_path}. %{error}"
 msgstr ""
 
@@ -10093,55 +10101,55 @@ msgstr ""
 msgid "Invalid tag '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:19
+#: ../lib/puppet/util/windows/adsi.rb:36
 msgid "ADSI connection error: %{e}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:42
+#: ../lib/puppet/util/windows/adsi.rb:59
 msgid "Failed to get computer name"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:80
+#: ../lib/puppet/util/windows/adsi.rb:97
 msgid "Must use a valid SID::Principal"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:137
+#: ../lib/puppet/util/windows/adsi.rb:162
 msgid "Value must be in DOMAIN\\%{object_class} style syntax"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:163
+#: ../lib/puppet/util/windows/adsi.rb:188
 msgid "Could not resolve name: %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:200
+#: ../lib/puppet/util/windows/adsi.rb:230
 msgid "Subclass must implement class-level method 'list_all'!"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:254
+#: ../lib/puppet/util/windows/adsi.rb:284
 msgid "Puppet is not able to create/delete domain %{object_class} objects with the %{object_class} resource."
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:258
+#: ../lib/puppet/util/windows/adsi.rb:288
 msgid "%{object_class} update failed: %{error}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:284
+#: ../lib/puppet/util/windows/adsi.rb:314
 msgid "Cannot create user if group '%{name}' exists."
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:425
+#: ../lib/puppet/util/windows/adsi.rb:455
 msgid "Unrecognized ADS UserFlags: %{unrecognized_flags}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:469
+#: ../lib/puppet/util/windows/adsi.rb:499
 msgid "Failed to get user name"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:506
+#: ../lib/puppet/util/windows/adsi.rb:536
 msgid "Cannot delete user profile for '%{sid}' prior to Vista SP1"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:524
+#: ../lib/puppet/util/windows/adsi.rb:554
 msgid "Cannot create group if user '%{name}' exists."
 msgstr ""
 
