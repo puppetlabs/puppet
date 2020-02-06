@@ -12,6 +12,7 @@ describe Puppet::HTTP::Service::Compiler do
   let(:node) { Puppet::Node.new(certname) }
   let(:facts) { Puppet::Node::Facts.new(certname) }
   let(:catalog) { Puppet::Resource::Catalog.new(certname) }
+  let(:status) { Puppet::Status.new }
   let(:formatter) { Puppet::Network::FormatHandler.format(:json) }
 
   before :each do
@@ -317,6 +318,59 @@ describe Puppet::HTTP::Service::Compiler do
       expect {
         subject.put_facts(certname, environment: 'production', facts: invalid_facts)
       }.to raise_error(Puppet::HTTP::SerializationError, /Failed to serialize Puppet::Node::Facts to json: "\\xE2" from ASCII-8BIT to UTF-8/)
+    end
+  end
+
+  context 'when getting status' do
+    let(:uri) { %r{/puppet/v3/status/ziggy} }
+    let(:status_response) { { body: formatter.render(status), headers: {'Content-Type' => formatter.mime } } }
+
+    it 'always sends production' do
+      stub_request(:get, uri)
+          .with(query: hash_including("environment" => "production"))
+          .to_return(**status_response)
+
+      subject.get_status(certname)
+    end
+
+    it 'returns a deserialized status' do
+      stub_request(:get, uri)
+        .to_return(**status_response)
+
+      s = subject.get_status(certname)
+      expect(s).to be_a(Puppet::Status)
+      expect(s.status).to eq("is_alive" => true)
+    end
+
+    it 'raises a response error if unsuccessful' do
+      stub_request(:get, uri)
+        .to_return(status: [500, "Server Error"])
+
+      expect {
+        subject.get_status(certname)
+      }.to raise_error do |err|
+        expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
+        expect(err.message).to eq('Server Error')
+        expect(err.response.code).to eq(500)
+      end
+    end
+
+    it 'raises a protocol error if the content-type header is missing' do
+      stub_request(:get, uri)
+        .to_return(body: "content-type is missing")
+
+      expect {
+        subject.get_status(certname)
+      }.to raise_error(Puppet::HTTP::ProtocolError, /No content type in http response; cannot parse/)
+    end
+
+    it 'raises a serialization error if the content is invalid' do
+      stub_request(:get, uri)
+        .to_return(body: "this isn't valid JSON", headers: {'Content-Type' => 'application/json'})
+
+      expect {
+        subject.get_status(certname)
+      }.to raise_error(Puppet::HTTP::SerializationError, /Failed to deserialize Puppet::Status from json/)
     end
   end
 end

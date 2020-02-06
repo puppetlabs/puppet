@@ -89,4 +89,21 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
 
     raise Puppet::HTTP::ResponseError.new(response)
   end
+
+  def get_status(name)
+    headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Status).join(', '))
+
+    response = @client.get(
+      with_base_url("/status/#{name}"),
+      headers: headers,
+      params: {
+        # environment is required, but meaningless, default to production
+        environment: 'production'
+      },
+    )
+
+    return deserialize(response, Puppet::Status) if response.success?
+
+    raise Puppet::HTTP::ResponseError.new(response)
+  end
 end
