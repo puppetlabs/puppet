@@ -23,7 +23,7 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
     @session.process_response(response)
 
     if response.success?
-      response.body.to_s
+      response
     elsif !@session.supports?(:report, 'json') && Puppet[:preferred_serialization_format] != 'pson'
       #TRANSLATORS "pson", "preferred_serialization_format", and "puppetserver" should not be translated
       raise Puppet::HTTP::ProtocolError.new(_("To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson") % { server_version: response[Puppet::HTTP::HEADER_PUPPET_VERSION]})

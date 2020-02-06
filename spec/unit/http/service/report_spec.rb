@@ -80,6 +80,14 @@ describe Puppet::HTTP::Service::Report do
       subject.put_report('node name', report, environment: environment)
     end
 
+    it 'returns the response whose body contains the list of report processors' do
+      body = "[\"store\":\"http\"]"
+      stub_request(:put, url)
+        .to_return(status: 200, body: body, headers: {'Content-Type' => 'application/json'})
+
+      expect(subject.put_report('infinity', report, environment: environment).body).to eq(body)
+    end
+
     it 'raises response error if unsuccessful' do
       stub_request(:put, url).to_return(status: [400, 'Bad Request'], headers: {'X-Puppet-Version' => '6.1.8' })
 
