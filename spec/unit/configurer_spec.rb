@@ -10,11 +10,12 @@ describe Puppet::Configurer do
     catalog.add_resource(resource)
   end
 
+  let(:node_name) { Puppet[:node_name_value] }
   let(:configurer) { Puppet::Configurer.new }
   let(:report) { Puppet::Transaction::Report.new }
-  let(:catalog) { Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote(Puppet[:environment].to_sym)) }
+  let(:catalog) { Puppet::Resource::Catalog.new(node_name, Puppet::Node::Environment.remote(Puppet[:environment].to_sym)) }
   let(:resource) { Puppet::Resource.new(:notice, 'a') }
-  let(:facts) { Puppet::Node::Facts.new(Puppet[:node_name_value]) }
+  let(:facts) { Puppet::Node::Facts.new(node_name) }
 
   describe "when executing a pre-run hook" do
     it "should do nothing if the hook is set to an empty string" do
@@ -101,6 +102,7 @@ describe Puppet::Configurer do
     end
 
     it "should respect node_name_fact when setting the host on a report" do
+      Puppet[:node_name_value] = nil
       Puppet[:node_name_fact] = 'my_name_fact'
       facts.values = {'my_name_fact' => 'node_name_from_fact'}
       Puppet::Node::Facts.indirection.save(facts)
@@ -316,7 +318,7 @@ describe Puppet::Configurer do
     end
 
     it "should refetch the catalog if the server specifies a new environment in the catalog" do
-      catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote('second_env'))
+      catalog = Puppet::Resource::Catalog.new(node_name, Puppet::Node::Environment.remote('second_env'))
       expect(configurer).to receive(:retrieve_catalog).and_return(catalog).twice
 
       configurer.run
@@ -611,7 +613,7 @@ describe Puppet::Configurer do
       end
 
       it "should set its cached_catalog_status to 'explicitly requested' if the cached catalog is from a different environment" do
-        cached_catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote('second_env'))
+        cached_catalog = Puppet::Resource::Catalog.new(node_name, Puppet::Node::Environment.remote('second_env'))
         expects_cached_catalog_only(cached_catalog)
 
         options = {}
@@ -644,7 +646,7 @@ describe Puppet::Configurer do
       end
 
       it "should return the cached catalog when the environment doesn't match" do
-        cached_catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote('second_env'))
+        cached_catalog = Puppet::Resource::Catalog.new(node_name, Puppet::Node::Environment.remote('second_env'))
         expects_cached_catalog_only(cached_catalog)
 
         allow(Puppet).to receive(:info)
@@ -702,7 +704,7 @@ describe Puppet::Configurer do
         Puppet[:environment] = 'second_env'
         configurer = Puppet::Configurer.new
 
-        catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote("production"))
+        catalog = Puppet::Resource::Catalog.new(node_name, Puppet::Node::Environment.remote("production"))
         expects_new_catalog_only(catalog)
 
         expect(Puppet).to receive(:err).with("Not using catalog because its environment 'production' does not match agent specified environment 'second_env' and strict_environment_mode is set")
@@ -724,7 +726,7 @@ describe Puppet::Configurer do
           Puppet[:environment] = 'second_env'
           configurer = Puppet::Configurer.new
 
-          catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote("production"))
+          catalog = Puppet::Resource::Catalog.new(node_name, Puppet::Node::Environment.remote("production"))
           expects_cached_catalog_only(catalog)
 
           expect(Puppet).to receive(:err).with("Not using catalog because its environment 'production' does not match agent specified environment 'second_env' and strict_environment_mode is set")
@@ -824,7 +826,7 @@ describe Puppet::Configurer do
     end
 
     it "should return nil if its cached catalog environment doesn't match server-specified environment" do
-      cached_catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote('second_env'))
+      cached_catalog = Puppet::Resource::Catalog.new(node_name, Puppet::Node::Environment.remote('second_env'))
 
       expects_fallback_to_cached_catalog(cached_catalog)
 
@@ -834,7 +836,7 @@ describe Puppet::Configurer do
     end
 
     it "should set its cached_catalog_status to 'not_used' if the cached catalog environment doesn't match server-specified environment" do
-      cached_catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote('second_env'))
+      cached_catalog = Puppet::Resource::Catalog.new(node_name, Puppet::Node::Environment.remote('second_env'))
 
       expects_fallback_to_cached_catalog(cached_catalog)
 
@@ -996,7 +998,7 @@ describe Puppet::Configurer do
 
     it "should not failover during an apply run" do
       Puppet.settings[:server_list] = ["myserver:123"]
-      catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote(Puppet[:environment].to_sym))
+      catalog = Puppet::Resource::Catalog.new(node_name, Puppet::Node::Environment.remote(Puppet[:environment].to_sym))
       configurer.run(catalog: catalog)
     end
 

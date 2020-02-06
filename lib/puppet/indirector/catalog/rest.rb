@@ -26,7 +26,7 @@ class Puppet::Resource::Catalog::Rest < Puppet::Indirector::REST
 
     session = Puppet.lookup(:http_session)
     api = session.route_to(:puppet)
-    catalog = api.post_catalog(
+    api.post_catalog(
       request.key,
       facts: facts,
       environment: request.environment.to_s,
@@ -36,9 +36,6 @@ class Puppet::Resource::Catalog::Rest < Puppet::Indirector::REST
       static_catalog: request.options[:static_catalog],
       checksum_type: checksum_type
     )
-    # current tests rely on crazy behavior introduced in 089ac3e37dd
-    catalog.name = request.key
-    catalog
   rescue Puppet::HTTP::ResponseError => e
     if e.response.code == 404
       return nil unless request.options[:fail_on_404]
