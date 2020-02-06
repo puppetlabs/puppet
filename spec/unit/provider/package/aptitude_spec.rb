@@ -33,6 +33,7 @@ describe Puppet::Type.type(:package).provider(:aptitude) do
     expect(pkg.provider).to receive(:aptitude).
       with('-y', '-o', 'DPkg::Options::=--force-confold', :install, 'faff').
       and_return(0)
+    expect(pkg.provider).to receive(:properties).and_return({:mark => :none})
 
     pkg.provider.install
   end

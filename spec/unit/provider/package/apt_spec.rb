@@ -32,12 +32,14 @@ describe Puppet::Type.type(:package).provider(:apt) do
 
   it "should use 'apt-get remove' to uninstall" do
     expect(provider).to receive(:aptget).with("-y", "-q", :remove, name)
+    expect(provider).to receive(:properties).and_return({:mark => :none})
     provider.uninstall
   end
 
   it "should use 'apt-get purge' and 'dpkg purge' to purge" do
     expect(provider).to receive(:aptget).with("-y", "-q", :remove, "--purge", name)
     expect(provider).to receive(:dpkg).with("--purge", name)
+    expect(provider).to receive(:properties).and_return({:mark => :none})
     provider.purge
   end
 
@@ -88,14 +90,14 @@ Version table:
     it "should preseed if a responsefile is provided" do
       resource[:responsefile] = "/my/file"
       expect(provider).to receive(:run_preseed)
-
+      expect(provider).to receive(:properties).and_return({:mark => :none})
       allow(provider).to receive(:aptget)
       provider.install
     end
 
     it "should check for a cdrom" do
       expect(provider).to receive(:checkforcdrom)
-
+      expect(provider).to receive(:properties).and_return({:mark => :none})
       allow(provider).to receive(:aptget)
       provider.install
     end
@@ -106,6 +108,7 @@ Version table:
         expect(command[-1]).to eq(name)
         expect(command[-2]).to eq(:install)
       end
+      expect(provider).to receive(:properties).and_return({:mark => :none})
 
       provider.install
     end
@@ -115,6 +118,7 @@ Version table:
       expect(provider).to receive(:aptget) do |*command|
         expect(command[-1]).to eq("#{name}=1.0")
       end
+      expect(provider).to receive(:properties).and_return({:mark => :none})
 
       provider.install
     end
@@ -124,6 +128,7 @@ Version table:
       expect(provider).to receive(:aptget) do |*command|
         expect(command).to include("--force-yes")
       end
+      expect(provider).to receive(:properties).and_return({:mark => :none})
 
       provider.install
     end
@@ -132,6 +137,7 @@ Version table:
       expect(provider).to receive(:aptget) do |*command|
         expect(command).to include("-q")
       end
+      expect(provider).to receive(:properties).and_return({:mark => :none})
 
       provider.install
     end
@@ -140,6 +146,7 @@ Version table:
       expect(provider).to receive(:aptget) do |*command|
         expect(command).to include("-y")
       end
+      expect(provider).to receive(:properties).and_return({:mark => :none})
 
       provider.install
     end
@@ -149,6 +156,7 @@ Version table:
       expect(provider).to receive(:aptget) do |*command|
         expect(command).to include("DPkg::Options::=--force-confold")
       end
+      expect(provider).to receive(:properties).and_return({:mark => :none})
 
       provider.install
     end
@@ -158,6 +166,7 @@ Version table:
       expect(provider).to receive(:aptget) do |*command|
         expect(command).to include("DPkg::Options::=--force-confnew")
       end
+      expect(provider).to receive(:properties).and_return({:mark => :none})
 
       provider.install
     end
@@ -165,6 +174,7 @@ Version table:
     it 'should support string install options' do
       resource[:install_options] = ['--foo', '--bar']
       expect(provider).to receive(:aptget).with('-q', '-y', '-o', 'DPkg::Options::=--force-confold', '--foo', '--bar', :install, name)
+      expect(provider).to receive(:properties).and_return({:mark => :none})
 
       provider.install
     end
@@ -172,6 +182,7 @@ Version table:
     it 'should support hash install options' do
       resource[:install_options] = ['--foo', { '--bar' => 'baz', '--baz' => 'foo' }]
       expect(provider).to receive(:aptget).with('-q', '-y', '-o', 'DPkg::Options::=--force-confold', '--foo', '--bar=baz', '--baz=foo', :install, name)
+      expect(provider).to receive(:properties).and_return({:mark => :none})
 
       provider.install
     end
