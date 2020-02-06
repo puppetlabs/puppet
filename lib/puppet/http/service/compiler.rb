@@ -102,6 +102,8 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       },
     )
 
+    @session.process_response(response)
+
     return deserialize(response, Puppet::Status) if response.success?
 
     raise Puppet::HTTP::ResponseError.new(response)
