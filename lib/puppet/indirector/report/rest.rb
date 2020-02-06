@@ -7,6 +7,25 @@ class Puppet::Transaction::Report::Rest < Puppet::Indirector::REST
   use_port_setting(:report_port)
   use_srv_service(:report)
 
+  def save(request)
+    return super unless use_http_client?
+
+    session = Puppet.lookup(:http_session)
+    api = session.route_to(:report)
+    response = api.put_report(
+      request.key,
+      request.instance,
+      environment: request.environment.to_s
+    )
+    content_type, body = parse_response(response)
+    deserialize_save(content_type, body)
+  rescue Puppet::HTTP::ResponseError => e
+    return nil if e.response.code == 404
+
+    raise convert_to_http_error(e.response.nethttp)
+  end
+
+  # This is called by the superclass when not using our httpclient.
   def handle_response(request, response)
     if !response.is_a?(Net::HTTPSuccess)
       server_version = response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION]

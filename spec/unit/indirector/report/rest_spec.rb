@@ -37,6 +37,13 @@ describe Puppet::Transaction::Report::Rest do
       expect(described_class.indirection.save(instance)).to eq(["store", "http"])
     end
 
+    it "parses charset from response content-type" do
+      stub_request(:put, %r{/puppet/v3/report})
+        .to_return(status: 200, body: JSON.dump(["store"]), headers: { 'Content-Type' => 'application/json;charset=utf-8' })
+
+      expect(described_class.indirection.save(instance)).to eq(["store"])
+    end
+
     describe "when handling the response" do
       describe "when the server major version is less than 5" do
         it "raises if the save fails and we're not using pson" do
@@ -49,7 +56,7 @@ describe Puppet::Transaction::Report::Rest do
 
           expect {
             described_class.indirection.save(instance)
-          }.to raise_error(Puppet::Error, /Server version 4.10.1 does not accept reports in 'json'/)
+          }.to raise_error(Puppet::Error, /To submit reports to a server running puppetserver 4.10.1, set preferred_serialization_format to pson/)
         end
 
         it "raises with HTTP 500 if the save fails and we're already using pson" do

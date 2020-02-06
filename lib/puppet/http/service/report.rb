@@ -26,7 +26,7 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
 
     @session.process_response(response)
 
-    return response.body.to_s if response.success?
+    return response if response.success?
 
     server_version = response[Puppet::HTTP::HEADER_PUPPET_VERSION]
     if server_version && SemanticPuppet::Version.parse(server_version).major < MAJOR_VERSION_JSON_DEFAULT &&
