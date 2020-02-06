@@ -6,8 +6,15 @@ class Puppet::HTTP::Session
     @resolution_exceptions = []
   end
 
-  def route_to(name, ssl_context: nil)
+  def route_to(name, url: nil, ssl_context: nil)
     raise ArgumentError, "Unknown service #{name}" unless Puppet::HTTP::Service.valid_name?(name)
+
+    # short circuit if explicit URL host & port given
+    if url && url.host != nil && !url.host.empty?
+      service = Puppet::HTTP::Service.create_service(@client, name, url.host, url.port)
+      service.connect(ssl_context: ssl_context)
+      return service
+    end
 
     cached = @resolved_services[name]
     return cached if cached
