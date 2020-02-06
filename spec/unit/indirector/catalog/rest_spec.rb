@@ -21,7 +21,7 @@ describe Puppet::Resource::Catalog::Rest do
   it 'finds a catalog' do
     catalog = Puppet::Resource::Catalog.new(certname)
 
-    stub_request(:get, uri).to_return(**catalog_response(catalog))
+    stub_request(:post, uri).to_return(**catalog_response(catalog))
 
     expect(described_class.indirection.find(certname)).to be_a(Puppet::Resource::Catalog)
   end
@@ -30,27 +30,27 @@ describe Puppet::Resource::Catalog::Rest do
     env = Puppet::Node::Environment.remote('outerspace')
     catalog = Puppet::Resource::Catalog.new(certname, env)
 
-    stub_request(:get, uri).to_return(**catalog_response(catalog))
+    stub_request(:post, uri).to_return(**catalog_response(catalog))
 
     expect(described_class.indirection.find(certname).environment_instance).to eq(env)
   end
 
   it 'returns nil if the node does not exist' do
-    stub_request(:get, uri).to_return(status: 404, headers: { 'Content-Type' => 'application/json' }, body: "{}")
+    stub_request(:post, uri).to_return(status: 404, headers: { 'Content-Type' => 'application/json' }, body: "{}")
 
     expect(described_class.indirection.find(certname)).to be_nil
   end
 
   it 'raises if fail_on_404 is specified' do
-    stub_request(:get, uri).to_return(status: 404, headers: { 'Content-Type' => 'application/json' }, body: "{}")
+    stub_request(:post, uri).to_return(status: 404, headers: { 'Content-Type' => 'application/json' }, body: "{}")
 
     expect{
       described_class.indirection.find(certname, fail_on_404: true)
-    }.to raise_error(Puppet::Error, %r{Find /puppet/v3/catalog/ziggy\?environment=\*root\*&fail_on_404=true resulted in 404 with the message: {}})
+    }.to raise_error(Puppet::Error, %r{Find /puppet/v3/catalog/ziggy resulted in 404 with the message: {}})
   end
 
   it 'raises Net::HTTPError on 500' do
-    stub_request(:get, uri).to_return(status: 500)
+    stub_request(:post, uri).to_return(status: 500)
 
     expect{
       described_class.indirection.find(certname)

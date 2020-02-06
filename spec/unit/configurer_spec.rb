@@ -854,7 +854,7 @@ describe Puppet::Configurer do
     it "should not update the cached catalog in noop mode" do
       Puppet[:noop] = true
 
-      stub_request(:get, %r{/puppet/v3/catalog}).to_return(:status => 200, :body => catalog.render(:json), :headers => {'Content-Type' => 'application/json'})
+      stub_request(:post, %r{/puppet/v3/catalog}).to_return(:status => 200, :body => catalog.render(:json), :headers => {'Content-Type' => 'application/json'})
 
       Puppet::Resource::Catalog.indirection.cache_class = :json
       path = Puppet::Resource::Catalog.indirection.cache.path(catalog.name)
@@ -868,7 +868,7 @@ describe Puppet::Configurer do
       Puppet[:noop] = false
       Puppet[:log_level] = 'info'
 
-      stub_request(:get, %r{/puppet/v3/catalog}).to_return(:status => 200, :body => catalog.render(:json), :headers => {'Content-Type' => 'application/json'})
+      stub_request(:post, %r{/puppet/v3/catalog}).to_return(:status => 200, :body => catalog.render(:json), :headers => {'Content-Type' => 'application/json'})
 
       Puppet::Resource::Catalog.indirection.cache_class = :json
       cache_path = Puppet::Resource::Catalog.indirection.cache.path(Puppet[:node_name_value])
@@ -881,7 +881,7 @@ describe Puppet::Configurer do
     end
 
     it "successfully applies the catalog without a cache" do
-      stub_request(:get, %r{/puppet/v3/catalog}).to_return(:status => 200, :body => catalog.render(:json), :headers => {'Content-Type' => 'application/json'})
+      stub_request(:post, %r{/puppet/v3/catalog}).to_return(:status => 200, :body => catalog.render(:json), :headers => {'Content-Type' => 'application/json'})
 
       Puppet::Resource::Catalog.indirection.cache_class = nil
 
@@ -1041,7 +1041,7 @@ describe Puppet::Configurer do
       Puppet::Resource::Catalog.indirection.terminus_class = :rest
 
       stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: 200)
-      stub_request(:get, %r{https://myserver:123/puppet/v3/catalog}).to_return(status: 200)
+      stub_request(:post, %r{https://myserver:123/puppet/v3/catalog}).to_return(status: 200)
       node_request = stub_request(:get, %r{https://myserver:123/puppet/v3/node/}).to_return(status: 200)
 
       configurer.run
