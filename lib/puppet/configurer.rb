@@ -64,7 +64,7 @@ class Puppet::Configurer
   end
 
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
-  def retrieve_catalog(query_options)
+  def retrieve_catalog(facts, query_options)
     query_options ||= {}
     result = retrieve_catalog_from_cache(query_options) if Puppet[:use_cached_catalog]
     if result
@@ -72,7 +72,7 @@ class Puppet::Configurer
 
       Puppet.info _("Using cached catalog from environment '%{environment}'") % { environment: result.environment }
     else
-      result = retrieve_new_catalog(query_options)
+      result = retrieve_new_catalog(facts, query_options)
 
       if !result
         if !Puppet[:usecacheonfailure]
@@ -99,12 +99,11 @@ class Puppet::Configurer
   end
 
   # Convert a plain resource catalog into our full host catalog.
-  def convert_catalog(result, duration, options = {})
+  def convert_catalog(result, duration, facts, options = {})
     catalog = nil
 
     catalog_conversion_time = thinmark do
       # Will mutate the result and replace all Deferred values with resolved values
-      facts = options[:convert_with_facts]
       if facts
         Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(facts, result)
       end
@@ -133,6 +132,7 @@ class Puppet::Configurer
     end
 
     facts_hash = {}
+    facts = nil
     if Puppet::Resource::Catalog.indirection.terminus_class == :rest
       # This is a bit complicated.  We need the serialized and escaped facts,
       # and we need to know which format they're encoded in.  Thus, we
@@ -141,15 +141,14 @@ class Puppet::Configurer
       # facts_for_uploading may set Puppet[:node_name_value] as a side effect
       facter_time = thinmark do
         facts = find_facts
-        options[:convert_with_facts] =  facts
         facts_hash = encode_facts(facts) # encode for uploading # was: facts_for_uploading
       end
       options[:report].add_times(:fact_generation, facter_time) if options[:report]
     end
-    facts_hash
+    [facts_hash, facts]
   end
 
-  def prepare_and_retrieve_catalog(cached_catalog, options, query_options)
+  def prepare_and_retrieve_catalog(cached_catalog, facts, options, query_options)
     # set report host name now that we have the fact
     options[:report].host = Puppet[:node_name_value]
 
@@ -165,7 +164,7 @@ class Puppet::Configurer
     catalog = cached_catalog || options[:catalog]
     unless catalog
       # retrieve_catalog returns resource catalog
-      catalog = retrieve_catalog(query_options)
+      catalog = retrieve_catalog(facts, query_options)
       Puppet.err _("Could not retrieve catalog; skipping run") unless catalog
     end
     catalog
@@ -273,7 +272,7 @@ class Puppet::Configurer
 
     begin
       unless Puppet[:node_name_fact].empty?
-        query_options = get_facts(options)
+        query_options, facts = get_facts(options)
       end
 
       configured_environment = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
@@ -306,6 +305,7 @@ class Puppet::Configurer
               @environment = node.environment.to_s
               report.environment = @environment
               query_options = nil
+              facts = nil
             else
               Puppet.info _("Using configured environment '%{env}'") % { env: @environment }
             end
@@ -330,11 +330,11 @@ class Puppet::Configurer
         :loaders => Puppet::Pops::Loaders.new(local_node_environment, true)
       }, "Local node environment for configurer transaction")
 
-      query_options = get_facts(options) unless query_options
+      query_options, facts = get_facts(options) unless query_options
       query_options[:configured_environment] = configured_environment
       options[:convert_for_node] = node
 
-      catalog = prepare_and_retrieve_catalog(cached_catalog, options, query_options)
+      catalog = prepare_and_retrieve_catalog(cached_catalog, facts, options, query_options)
       unless catalog
         return nil
       end
@@ -357,11 +357,11 @@ class Puppet::Configurer
         @environment = catalog.environment
         report.environment = @environment
 
-        query_options = get_facts(options)
+        query_options, facts = get_facts(options)
         query_options[:configured_environment] = configured_environment
 
         # if we get here, ignore the cached catalog
-        catalog = prepare_and_retrieve_catalog(nil, options, query_options)
+        catalog = prepare_and_retrieve_catalog(nil, facts, options, query_options)
         return nil unless catalog
         tries += 1
       end
@@ -373,7 +373,7 @@ class Puppet::Configurer
       else
         # REMIND @duration is the time spent loading the last catalog, and doesn't
         # account for things like we failed to download and fell back to the cache
-        ral_catalog = convert_catalog(catalog, @duration, options)
+        ral_catalog = convert_catalog(catalog, @duration, facts, options)
 
         # If not noop, commit the cached resource catalog (not ral catalog). Ideally
         # we'd just copy the downloaded response body, instead of serializing the
@@ -516,7 +516,7 @@ class Puppet::Configurer
     return nil
   end
 
-  def retrieve_new_catalog(query_options)
+  def retrieve_new_catalog(facts, query_options)
     result = nil
     @duration = thinmark do
       result = Puppet::Resource::Catalog.indirection.find(
