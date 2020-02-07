@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.12.0-93-gf97d04ea01\n"
+"Project-Id-Version: Puppet automation framework 6.12.0-140-gec3639ae66\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-01-29 14:04+0000\n"
-"PO-Revision-Date: 2020-01-29 14:04+0000\n"
+"POT-Creation-Date: 2020-02-07 12:49+0000\n"
+"PO-Revision-Date: 2020-02-07 12:49+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -707,29 +707,29 @@ msgid "Valid values are '%{values}'."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:533
+#: ../lib/puppet/defaults.rb:540
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:535
+#: ../lib/puppet/defaults.rb:542
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:725
+#: ../lib/puppet/defaults.rb:732
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:806
+#: ../lib/puppet/defaults.rb:813
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:991
+#: ../lib/puppet/defaults.rb:998
 msgid "Setting 'ssl_client_ca_auth' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1070 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1077 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
@@ -2404,11 +2404,11 @@ msgstr ""
 msgid "Could not find node '%{name}'; cannot compile"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:416
+#: ../lib/puppet/indirector/catalog/compiler.rb:426
 msgid "Could not retrieve fact servername"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:425
+#: ../lib/puppet/indirector/catalog/compiler.rb:435
 msgid "Could not retrieve either serverip or serverip6 fact"
 msgstr ""
 
@@ -4226,7 +4226,7 @@ msgstr ""
 msgid "Node inheritance is removed in Puppet 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation"
 msgstr ""
 
-#: ../lib/puppet/parser/ast/pops_bridge.rb:195
+#: ../lib/puppet/parser/ast/pops_bridge.rb:190
 msgid "Instantiating Resource with type checked parameters - scope is missing, skipping type checking."
 msgstr ""
 
@@ -6709,15 +6709,15 @@ msgstr ""
 msgid "/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure."
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:88 ../lib/puppet/provider/package/fink.rb:50
+#: ../lib/puppet/provider/package/apt.rb:93 ../lib/puppet/provider/package/fink.rb:55
 msgid "Could not find latest version"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:99 ../lib/puppet/provider/package/fink.rb:61
+#: ../lib/puppet/provider/package/apt.rb:104 ../lib/puppet/provider/package/fink.rb:66
 msgid "Preseeding %{response} to debconf-set-selections"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:103 ../lib/puppet/provider/package/fink.rb:65
+#: ../lib/puppet/provider/package/apt.rb:108 ../lib/puppet/provider/package/fink.rb:70
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
@@ -6757,11 +6757,11 @@ msgstr ""
 msgid "You cannot install dpkg packages without a source"
 msgstr ""
 
-#: ../lib/puppet/provider/package/dpkg.rb:115
+#: ../lib/puppet/provider/package/dpkg.rb:118
 msgid "Could not update: You cannot install dpkg packages without a source"
 msgstr ""
 
-#: ../lib/puppet/provider/package/dpkg.rb:119
+#: ../lib/puppet/provider/package/dpkg.rb:122
 msgid "source doesn't contain named package, but %{name}"
 msgstr ""
 
@@ -6915,27 +6915,27 @@ msgstr ""
 msgid "Unknown line format %{resource_name}: %{parse_line}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:123
+#: ../lib/puppet/provider/package/pkg.rb:127
 msgid "Unable to unfreeze %{package}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:158
+#: ../lib/puppet/provider/package/pkg.rb:162
 msgid "Implicit version %{should} has %{n} possible matches"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:170
+#: ../lib/puppet/provider/package/pkg.rb:174
 msgid "Selecting version '%{version}' for implicit '%{should}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:175
+#: ../lib/puppet/provider/package/pkg.rb:179
 msgid "No version of %{name} matching %{should} is installable, even though the package is currently installed"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:194
+#: ../lib/puppet/provider/package/pkg.rb:198
 msgid "pkg warning: %{warnings}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:235 ../lib/puppet/provider/package/pkg.rb:255
+#: ../lib/puppet/provider/package/pkg.rb:242 ../lib/puppet/provider/package/pkg.rb:268
 msgid "Unable to update %{package}"
 msgstr ""
 
@@ -8657,16 +8657,24 @@ msgstr ""
 msgid "Invalid GID %{gid}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:119 ../lib/puppet/type/package.rb:133
+#: ../lib/puppet/type/package.rb:118 ../lib/puppet/type/package.rb:132
 msgid "Could not update: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:168
+#: ../lib/puppet/type/package.rb:167
 msgid "Could not get latest version: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:268
+#: ../lib/puppet/type/package.rb:267
 msgid "Name must be a String not %{klass}"
+msgstr ""
+
+#: ../lib/puppet/type/package.rb:649
+msgid "Invalid hold value %{value}. %{doc}"
+msgstr ""
+
+#: ../lib/puppet/type/package.rb:679
+msgid "You cannot use \"mark\" property while \"ensure\" is one of [\"absent\", \"purged\", \"held\"]"
 msgstr ""
 
 #: ../lib/puppet/type/resources.rb:15
