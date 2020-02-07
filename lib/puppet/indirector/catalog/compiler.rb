@@ -393,6 +393,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
   # Initialize our server fact hash; we add these to each client, and they
   # won't change while we're running, so it's safe to cache the values.
+  #
+  # See also set_server_facts in Puppet::Server::Compiler in puppetserver.
   def set_server_facts
     @server_facts = {}
 
