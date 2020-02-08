@@ -19,11 +19,9 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       },
     )
 
-    @session.process_response(response)
+    process_response(response)
 
-    return deserialize(response, Puppet::Node) if response.success?
-
-    raise Puppet::HTTP::ResponseError.new(response)
+    return deserialize(response, Puppet::Node)
   end
 
   def get_catalog(name, facts:, environment:, configured_environment: nil, transaction_uuid: nil, job_uuid: nil, static_catalog: true, checksum_type: Puppet[:supported_checksum_types])
@@ -63,11 +61,9 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       body: body,
     )
 
-    @session.process_response(response)
+    process_response(response)
 
-    return deserialize(response, Puppet::Resource::Catalog) if response.success?
-
-    raise Puppet::HTTP::ResponseError.new(response)
+    return deserialize(response, Puppet::Resource::Catalog)
   end
 
   def put_facts(name, environment:, facts:)
@@ -83,11 +79,9 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       body: serialize(formatter, facts),
     )
 
-    @session.process_response(response)
+    process_response(response)
 
-    return true if response.success?
-
-    raise Puppet::HTTP::ResponseError.new(response)
+    true
   end
 
   def get_status(name)
@@ -102,10 +96,8 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       },
     )
 
-    @session.process_response(response)
+    process_response(response)
 
-    return deserialize(response, Puppet::Status) if response.success?
-
-    raise Puppet::HTTP::ResponseError.new(response)
+    return deserialize(response, Puppet::Status)
   end
 end

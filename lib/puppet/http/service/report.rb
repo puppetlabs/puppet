@@ -19,7 +19,7 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
       ssl_context: ssl_context
     )
 
-    @session.process_response(response)
+    process_response(response)
 
     if response.success?
       response
@@ -29,5 +29,11 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
     else
       raise Puppet::HTTP::ResponseError.new(response)
     end
+  end
+
+  protected
+
+  def process_response(response)
+    @session.process_response(response)
   end
 end
