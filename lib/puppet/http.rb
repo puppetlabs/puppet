@@ -13,6 +13,7 @@ module Puppet
 
   module HTTP
     ACCEPT_ENCODING = "gzip;q=1.0,deflate;q=0.6,identity;q=0.3".freeze
+    HEADER_PUPPET_VERSION = "X-Puppet-Version".freeze
 
     require 'puppet/http/errors'
     require 'puppet/http/response'

@@ -1,9 +1,12 @@
+require 'semantic_puppet'
+
 class Puppet::HTTP::Session
   def initialize(client, resolvers)
     @client = client
     @resolvers = resolvers
     @resolved_services = {}
     @resolution_exceptions = []
+    @server_versions = {}
   end
 
   def route_to(name, url: nil, ssl_context: nil)
@@ -37,5 +40,18 @@ class Puppet::HTTP::Session
 
   def add_exception(exception)
     @resolution_exceptions << exception
+  end
+
+  def process_response(response)
+    version = response[Puppet::HTTP::HEADER_PUPPET_VERSION]
+    if version
+      site = Puppet::Network::HTTP::Site.from_uri(response.url)
+      @server_versions[site] = SemanticPuppet::Version.parse(version)
+    end
+  end
+
+  def server_version(url)
+    site = Puppet::Network::HTTP::Site.from_uri(url)
+    @server_versions[site] || SemanticPuppet::Version.parse("4.0.0")
   end
 end

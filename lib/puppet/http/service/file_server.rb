@@ -26,6 +26,8 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
       ssl_context: ssl_context
     )
 
+    @session.process_response(response)
+
     return deserialize(response, Puppet::FileServing::Metadata) if response.success?
 
     raise Puppet::HTTP::ResponseError.new(response)
@@ -51,6 +53,8 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
       ssl_context: ssl_context
     )
 
+    @session.process_response(response)
+
     return deserialize_multiple(response, Puppet::FileServing::Metadata) if response.success?
 
     raise Puppet::HTTP::ResponseError.new(response)
@@ -72,6 +76,8 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
         res.read_body(&block)
       end
     end
+
+    @session.process_response(response)
 
     return nil if response.success?
 
