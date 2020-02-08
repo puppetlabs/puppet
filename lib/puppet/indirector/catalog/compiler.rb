@@ -401,9 +401,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     # Add our server Puppet Enterprise version, if available.
     pe_version_file = '/opt/puppetlabs/server/pe_version'
     if File.readable?(pe_version_file) and !File.zero?(pe_version_file)
-      pe_version_data = File.read(pe_version_file).chomp
-      pe_serverversion = pe_version_data.match(/(\d+\.\d+\.\d+)/)
-      @server_facts['pe_serverversion'] = pe_serverversion[1] if pe_serverversion
+      @server_facts['pe_serverversion'] = File.read(pe_version_file).chomp
     end
 
     # Add our server version to the fact list
