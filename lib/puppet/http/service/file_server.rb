@@ -26,11 +26,9 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
       ssl_context: ssl_context
     )
 
-    @session.process_response(response)
+    process_response(response)
 
-    return deserialize(response, Puppet::FileServing::Metadata) if response.success?
-
-    raise Puppet::HTTP::ResponseError.new(response)
+    return deserialize(response, Puppet::FileServing::Metadata)
   end
 
   def get_file_metadatas(path: nil, environment:, recurse: :false, recurselimit: nil, ignore: nil, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore, ssl_context: nil)
@@ -53,11 +51,9 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
       ssl_context: ssl_context
     )
 
-    @session.process_response(response)
+    process_response(response)
 
-    return deserialize_multiple(response, Puppet::FileServing::Metadata) if response.success?
-
-    raise Puppet::HTTP::ResponseError.new(response)
+    return deserialize_multiple(response, Puppet::FileServing::Metadata)
   end
 
   def get_file_content(path:, environment:, ssl_context: nil, &block)
@@ -77,12 +73,11 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
       end
     end
 
-    @session.process_response(response)
+    process_response(response)
 
-    return nil if response.success?
-
-    raise Puppet::HTTP::ResponseError.new(response)
+    return nil
   end
+
   private
 
   def validate_path(path)

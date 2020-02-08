@@ -24,17 +24,23 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
       ssl_context: ssl_context
     )
 
-    @session.process_response(response)
+    process_response(response)
 
-    return response if response.success?
+    response
+  end
 
-    server_version = response[Puppet::HTTP::HEADER_PUPPET_VERSION]
-    if server_version && SemanticPuppet::Version.parse(server_version).major < MAJOR_VERSION_JSON_DEFAULT &&
-       Puppet[:preferred_serialization_format] != 'pson'
-      #TRANSLATORS "pson", "preferred_serialization_format", and "puppetserver" should not be translated
-      raise Puppet::HTTP::ProtocolError.new(_("To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson") % { server_version: server_version })
+  protected
+
+  def process_response(response)
+    unless response.success?
+      server_version = response[Puppet::HTTP::HEADER_PUPPET_VERSION]
+      if server_version && SemanticPuppet::Version.parse(server_version).major < MAJOR_VERSION_JSON_DEFAULT &&
+         Puppet[:preferred_serialization_format] != 'pson'
+        #TRANSLATORS "pson", "preferred_serialization_format", and "puppetserver" should not be translated
+        raise Puppet::HTTP::ProtocolError.new(_("To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson") % { server_version: server_version })
+      end
     end
 
-    raise Puppet::HTTP::ResponseError.new(response)
+    super(response)
   end
 end
