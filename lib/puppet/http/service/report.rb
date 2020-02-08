@@ -4,9 +4,9 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
   # puppet major version where JSON is enabled by default
   MAJOR_VERSION_JSON_DEFAULT = 5
 
-  def initialize(client, server, port)
+  def initialize(client, session, server, port)
     url = build_url(API, server || Puppet[:report_server], port || Puppet[:report_port])
-    super(client, url)
+    super(client, session, url)
   end
 
   def put_report(name, report, environment:, ssl_context: nil)

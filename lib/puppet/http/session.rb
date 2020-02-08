@@ -11,7 +11,7 @@ class Puppet::HTTP::Session
 
     # short circuit if explicit URL host & port given
     if url && url.host != nil && !url.host.empty?
-      service = Puppet::HTTP::Service.create_service(@client, name, url.host, url.port)
+      service = Puppet::HTTP::Service.create_service(@client, self, name, url.host, url.port)
       service.connect(ssl_context: ssl_context)
       return service
     end

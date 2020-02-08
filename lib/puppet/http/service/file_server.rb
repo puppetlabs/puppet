@@ -4,9 +4,9 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   API = '/puppet/v3'.freeze
   PATH_REGEX = /^\//
 
-  def initialize(client, server, port)
+  def initialize(client, session, server, port)
     url = build_url(API, server || Puppet[:server], port || Puppet[:masterport])
-    super(client, url)
+    super(client, session, url)
   end
 
   def get_file_metadata(path:, environment:, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore, ssl_context: nil)
