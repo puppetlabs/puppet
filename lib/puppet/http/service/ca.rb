@@ -2,9 +2,9 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   HEADERS = { 'Accept' => 'text/plain' }.freeze
   API = '/puppet-ca/v1'.freeze
 
-  def initialize(client, server, port)
+  def initialize(client, session, server, port)
     url = build_url(API, server || Puppet[:ca_server], port || Puppet[:ca_port])
-    super(client, url)
+    super(client, session, url)
   end
 
   def get_certificate(name, ssl_context: nil)

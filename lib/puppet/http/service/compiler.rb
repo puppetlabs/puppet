@@ -1,9 +1,9 @@
 class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   API = '/puppet/v3'.freeze
 
-  def initialize(client, server, port)
+  def initialize(client, session, server, port)
     url = build_url(API, server || Puppet[:server], port || Puppet[:masterport])
-    super(client, url)
+    super(client, session, url)
   end
 
   def get_node(name, environment:, configured_environment: nil, transaction_uuid: nil)

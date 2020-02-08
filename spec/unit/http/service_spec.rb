@@ -5,15 +5,16 @@ require 'puppet/http'
 describe Puppet::HTTP::Service do
   let(:ssl_context) { Puppet::SSL::SSLContext.new }
   let(:client) { Puppet::HTTP::Client.new(ssl_context: ssl_context) }
+  let(:session) { Puppet::HTTP::Session.new(client, []) }
   let(:url) { URI.parse('https://www.example.com') }
-  let(:service) { described_class.new(client, url) }
+  let(:service) { described_class.new(client, session, url) }
 
   it "returns a URI containing the base URL and path" do
     expect(service.with_base_url('/puppet/v3')).to eq(URI.parse("https://www.example.com/puppet/v3"))
   end
 
   it "doesn't modify frozen the base URL" do
-    service = described_class.new(client, url.freeze)
+    service = described_class.new(client, session, url.freeze)
     service.with_base_url('/puppet/v3')
   end
 
@@ -36,7 +37,7 @@ describe Puppet::HTTP::Service do
 
   it 'raises for unknown service names' do
     expect {
-      described_class.create_service(client, :westbound)
+      described_class.create_service(client, session, :westbound)
     }.to raise_error(ArgumentError, "Unknown service westbound")
   end
 
