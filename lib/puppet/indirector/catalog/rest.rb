@@ -7,17 +7,6 @@ class Puppet::Resource::Catalog::Rest < Puppet::Indirector::REST
   def find(request)
     return super unless use_http_client?
 
-    # URL encoded facts and facts_format are passed as indirector
-    # request options, so we have to reverse that (unescape, then parse),
-    # and pass a facts object to the http client.
-    format = request.options[:facts_format]
-    if format
-      formatter = Puppet::Network::FormatHandler.format_for(format)
-      facts = formatter.intern(Puppet::Node::Facts, CGI.unescape(request.options[:facts]))
-    else
-      facts = Puppet::Node::Facts.new(request.key, environment: request.environment.to_s)
-    end
-
     checksum_type = if request.options[:checksum_type]
                       request.options[:checksum_type].split('.')
                     else
@@ -28,7 +17,7 @@ class Puppet::Resource::Catalog::Rest < Puppet::Indirector::REST
     api = session.route_to(:puppet)
     api.get_catalog(
       request.key,
-      facts: facts,
+      facts: request.options[:facts_for_catalog],
       environment: request.environment.to_s,
       configured_environment: request.options[:configured_environment],
       transaction_uuid: request.options[:transaction_uuid],
