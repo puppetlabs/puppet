@@ -107,4 +107,10 @@ class Puppet::HTTP::Service
       raise Puppet::HTTP::SerializationError.new("Failed to deserialize multiple #{model} from #{formatter.name}: #{err.message}", err)
     end
   end
+
+  def handle_response_errors(response)
+    @session.process_response(response)
+
+    raise Puppet::HTTP::ResponseError.new(response) unless response.success?
+  end
 end
