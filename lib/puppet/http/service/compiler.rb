@@ -19,6 +19,8 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       },
     )
 
+    @session.process_response(response)
+
     return deserialize(response, Puppet::Node) if response.success?
 
     raise Puppet::HTTP::ResponseError.new(response)
@@ -61,6 +63,8 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       body: body,
     )
 
+    @session.process_response(response)
+
     return deserialize(response, Puppet::Resource::Catalog) if response.success?
 
     raise Puppet::HTTP::ResponseError.new(response)
@@ -78,6 +82,8 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       content_type: formatter.mime,
       body: serialize(formatter, facts),
     )
+
+    @session.process_response(response)
 
     return true if response.success?
 

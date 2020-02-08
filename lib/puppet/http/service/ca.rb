@@ -14,6 +14,8 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
       ssl_context: ssl_context
     )
 
+    @session.process_response(response)
+
     return response.body.to_s if response.success?
 
     raise Puppet::HTTP::ResponseError.new(response)
@@ -29,6 +31,8 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
       ssl_context: ssl_context
     )
 
+    @session.process_response(response)
+
     return response.body.to_s if response.success?
 
     raise Puppet::HTTP::ResponseError.new(response)
@@ -42,6 +46,8 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
       body: csr.to_pem,
       ssl_context: ssl_context
     )
+
+    @session.process_response(response)
 
     return response.body.to_s if response.success?
 
