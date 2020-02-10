@@ -1,7 +1,7 @@
 Puppet
 ======
 
-[![Travis Status](https://travis-ci.org/puppetlabs/puppet.svg?branch=master)](https://travis-ci.org/puppetlabs/puppet)
+[![Travis Status](https://travis-ci.com/puppetlabs/puppet.svg?branch=master)](https://travis-ci.com/puppetlabs/puppet)
 [![Appveyor Status](https://ci.appveyor.com/api/projects/status/cvhpypd4504sevqq/branch/master?svg=true)](https://ci.appveyor.com/project/puppetlabs/puppet/branch/master)
 [![Gem Version](https://badge.fury.io/rb/puppet.svg)](https://badge.fury.io/rb/puppet)
 [![Inline docs](https://inch-ci.org/github/puppetlabs/puppet.svg)](https://inch-ci.org/github/puppetlabs/puppet)
