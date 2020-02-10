@@ -11,6 +11,7 @@ class Puppet::Indirector::FileContent::Rest < Puppet::Indirector::REST
     return super unless use_http_client?
 
     content = StringIO.new
+    content.binmode
 
     url = URI.parse(Puppet::Util.uri_encode(request.uri))
     session = Puppet.lookup(:http_session)
