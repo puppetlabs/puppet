@@ -88,7 +88,8 @@ describe Puppet::Node::Facts, "when indirecting" do
       @facts.sanitize
       fact_value = @facts.values['test']
       expect(fact_value).to eq(an_alien.to_s)
-      expect(fact_value.encoding).to eq(Encoding::UTF_8)
+      # JRuby 9.2.8 reports US-ASCII which is a subset of UTF-8
+      expect(fact_value.encoding).to eq(Encoding::UTF_8).or eq(Encoding::US_ASCII)
     end
 
   end
