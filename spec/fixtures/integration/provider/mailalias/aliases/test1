@@ -26,6 +26,7 @@ decode:     root
 # Other tests
 anothertest: "|/path/to/rt-mailgate --queue 'another test' --action correspond --url http://my.com/"
 test: "|/path/to/rt-mailgate --queue 'test' --action correspond --url http://my.com/"
+test_with_commas_inside_command: "|/path/to/rt-mailgate --queue 'test' --action correspond --url http://my.com/ --project proj1,proj2"
 
 # Included file
 incfile: :include: /tmp/somefile
