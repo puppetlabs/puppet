@@ -12,7 +12,7 @@ Puppet::Type.type(:mailalias).provide(
   record_line :aliases, :fields => %w{name recipient}, :separator => /\s*:\s*/, :block_eval => :instance do
     def post_parse(record)
       if record[:recipient]
-	record[:recipient] = record[:recipient].split(/\s*,\s*/).collect { |d| d.gsub(/^['"]|['"]$/, '') }
+        record[:recipient] = record[:recipient].split(/\s*,\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/).collect { |d| d.gsub(/^['"]|['"]$/, '') }
       end
       record
     end
