@@ -15,11 +15,11 @@ describe Puppet::Indirector::FileContent::Rest do
     {body: "some content", headers: { 'Content-Type' => 'application/octet-stream' } }
   end
 
-  it "returns content as utf-8 string" do
+  it "returns content as a binary string" do
     stub_request(:get, uri).to_return(status: 200, **file_content_response)
 
     file_content = described_class.indirection.find(key)
-    expect(file_content.content.encoding).to eq(Encoding::UTF_8)
+    expect(file_content.content.encoding).to eq(Encoding::BINARY)
     expect(file_content.content).to eq('some content')
   end
 
