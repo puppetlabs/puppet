@@ -33,7 +33,7 @@ class Puppet::Network::HTTP::Pool
       reuse = false
       raise detail
     ensure
-      if reuse
+      if reuse && http.started?
         release(site, http)
       else
         close_connection(site, http)
@@ -56,13 +56,17 @@ class Puppet::Network::HTTP::Pool
   end
 
   # Safely close a persistent connection.
+  # Don't try to close a connection that's already closed.
   #
   # @api private
   def close_connection(site, http)
+    return false unless http.started?
     Puppet.debug("Closing connection for #{site}")
     http.finish
+    true
   rescue => detail
     Puppet.log_exception(detail, _("Failed to close connection for %{site}: %{detail}") % { site: site, detail: detail })
+    nil
   end
 
   # Borrow and take ownership of a persistent connection. If a new
