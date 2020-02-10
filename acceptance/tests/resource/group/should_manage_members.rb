@@ -1,7 +1,7 @@
 test_name "should correctly manage the members property for the Group resource" do
   # These are the only platforms whose group providers manage the members
   # property
-  confine :to, :platform => /windows|osx|aix/
+  confine :to, :platform => /windows|osx|aix|^el-|fedora/
 
   tag 'audit:medium',
       'audit:acceptance' # Could be done as integration tests, but would
@@ -119,7 +119,7 @@ RUBY
 
     step "Verify that Puppet errors when one of the members does not exist" do
       manifest = group_manifest(group, members: ['nonexistent_member'])
-      apply_manifest_on(agent, manifest) do |result|
+      apply_manifest_on(agent, manifest, :acceptable_exit_codes => [0, 1]) do |result|
         assert_match(/Error:.*#{group}/, result.stderr, "Puppet fails to report an error when one of the members in the members property does not exist")
       end
     end

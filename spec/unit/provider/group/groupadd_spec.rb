@@ -14,10 +14,11 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
 
   let(:resource) { Puppet::Type.type(:group).new(:name => 'mygroup', :provider => provider) }
   let(:provider) { described_class.new(:name => 'mygroup') }
+  let(:members) { ['user2', 'user1', 'user3'] }
 
   describe "#create" do
     before do
-       allow(provider).to receive(:exists?).and_return(false)
+      allow(provider).to receive(:exists?).and_return(false)
     end
 
     it "should add -o when allowdupe is enabled and the group is being created" do
@@ -42,77 +43,127 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       end
     end
 
-    describe "on systems with the libuser and forcelocal=true" do
-      before do
-        described_class.has_feature(:manages_local_users_and_groups)
-        resource[:forcelocal] = :true
+    describe "on systems with libuser" do
+      describe "with forcelocal=true" do
+        before do
+          described_class.has_feature(:manages_local_users_and_groups)
+          resource[:forcelocal] = :true
+        end
+
+        it "should use lgroupadd instead of groupadd" do
+          expect(provider).to receive(:execute).with(including('/usr/sbin/lgroupadd'), hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
+          provider.create
+        end
+
+        it "should NOT pass -o to lgroupadd" do
+          resource[:allowdupe] = :true
+          expect(provider).to receive(:execute).with(excluding('-o'), hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
+          provider.create
+        end
+
+        it "should raise an exception for duplicate GID if allowdupe is not set and duplicate GIDs exist" do
+          resource[:gid] = 505
+          allow(provider).to receive(:findgroup).and_return(true)
+          expect { provider.create }.to raise_error(Puppet::Error, "GID 505 already exists, use allowdupe to force group creation")
+        end
       end
 
-      it "should use lgroupadd instead of groupadd" do
-        expect(provider).to receive(:execute).with(including('/usr/sbin/lgroupadd'), hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
-        provider.create
-      end
+      describe "with a list of members" do
+        before do
+          members.each { |m| allow(Etc).to receive(:getpwnam).with(m).and_return(true) }
 
-      it "should NOT pass -o to lgroupadd" do
-        resource[:allowdupe] = :true
-        expect(provider).to receive(:execute).with(excluding('-o'), hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
-        provider.create
-      end
+          described_class.has_feature(:manages_members)
+          resource[:forcelocal] = false
+          resource[:members] = members
+        end
 
-      it "should raise an exception for duplicate GID if allowdupe is not set and duplicate GIDs exist" do
-        resource[:gid] = 505
-        allow(provider).to receive(:findgroup).and_return(true)
-        expect { provider.create }.to raise_error(Puppet::Error, "GID 505 already exists, use allowdupe to force group creation")
-     end
+        it "should use lgroupmod to add the members" do
+          allow(provider).to receive(:execute).with(['/usr/sbin/groupadd', 'mygroup'], hash_including({:failonfail => true, :combine => true, :custom_environment => {}})).and_return(true)
+          expect(provider).to receive(:execute).with(['/usr/sbin/lgroupmod', '-M', members.join(','), 'mygroup'], hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
+          provider.create
+        end
+      end
     end
   end
 
   describe "#modify" do
     before do
-       allow(provider).to receive(:exists?).and_return(true)
+      allow(provider).to receive(:exists?).and_return(true)
     end
 
-    describe "on systems with the libuser and forcelocal=false" do
-      before do
-        described_class.has_feature(:manages_local_users_and_groups)
-        resource[:forcelocal] = :false
+    describe "on systems with libuser" do
+      describe "with forcelocal=false" do
+        before do
+          described_class.has_feature(:manages_local_users_and_groups)
+          resource[:forcelocal] = :false
+        end
+
+        it "should use groupmod" do
+          expect(provider).to receive(:execute).with(['/usr/sbin/groupmod', '-g', 150, 'mygroup'], hash_including({:failonfail => true, :combine => true, :custom_environment => {}}))
+          provider.gid = 150
+        end
+
+        it "should pass -o to groupmod" do
+          resource[:allowdupe] = :true
+          expect(provider).to receive(:execute).with(['/usr/sbin/groupmod', '-g', 150, '-o', 'mygroup'], hash_including({:failonfail => true, :combine => true, :custom_environment => {}}))
+          provider.gid = 150
+        end
       end
 
-      it "should use groupmod" do
-        expect(provider).to receive(:execute).with(['/usr/sbin/groupmod', '-g', 150, 'mygroup'], hash_including({:failonfail => true, :combine => true, :custom_environment => {}}))
-        provider.gid = 150
+      describe "with forcelocal=true" do
+        before do
+          described_class.has_feature(:manages_local_users_and_groups)
+          resource[:forcelocal] = :true
+        end
+
+        it "should use lgroupmod instead of groupmod" do
+          expect(provider).to receive(:execute).with(['/usr/sbin/lgroupmod', '-g', 150, 'mygroup'], hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
+          provider.gid = 150
+        end
+
+        it "should NOT pass -o to lgroupmod" do
+          resource[:allowdupe] = :true
+          expect(provider).to receive(:execute).with(['/usr/sbin/lgroupmod', '-g', 150, 'mygroup'], hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
+          provider.gid = 150
+        end
+
+        it "should raise an exception for duplicate GID if allowdupe is not set and duplicate GIDs exist" do
+          resource[:gid] = 150
+          resource[:allowdupe] = :false
+          allow(provider).to receive(:findgroup).and_return(true)
+          expect { provider.gid = 150 }.to raise_error(Puppet::Error, "GID 150 already exists, use allowdupe to force group creation")
+        end
       end
 
-      it "should pass -o to groupmod" do
-        resource[:allowdupe] = :true
-        expect(provider).to receive(:execute).with(['/usr/sbin/groupmod', '-g', 150, '-o', 'mygroup'], hash_including({:failonfail => true, :combine => true, :custom_environment => {}}))
-        provider.gid = 150
-      end
-    end
+      describe "with members=something" do
+        before do
+          described_class.has_feature(:manages_members)
+          allow(Etc).to receive(:getpwnam).and_return(true)
+          resource[:members] = members
+        end
 
-    describe "on systems with the libuser and forcelocal=true" do
-      before do
-        described_class.has_feature(:manages_local_users_and_groups)
-        resource[:forcelocal] = :true
-      end
+        describe "with auth_membership on" do
+          before { resource[:auth_membership] = true }
 
-      it "should use lgroupmod instead of groupmod" do
-        expect(provider).to receive(:execute).with(['/usr/sbin/lgroupmod', '-g', 150, 'mygroup'], hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
-        provider.gid = 150
-      end
+          it "should purge existing users before adding" do
+            allow(provider).to receive(:members).and_return(members)
+            expect(provider).to receive(:localmodify).with('-m', members.join(','), 'mygroup')
+            provider.modifycmd(:members, ['user1'])
+          end
+        end
 
-      it "should NOT pass -o to lgroupmod" do
-        resource[:allowdupe] = :true
-        expect(provider).to receive(:execute).with(['/usr/sbin/lgroupmod', '-g', 150, 'mygroup'], hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
-        provider.gid = 150
-      end
+        describe "with auth_membership off" do
+          before { resource[:auth_membership] = false }
 
-      it "should raise an exception for duplicate GID if allowdupe is not set and duplicate GIDs exist" do
-        resource[:gid] = 150
-        resource[:allowdupe] = :false
-        allow(provider).to receive(:findgroup).and_return(true)
-        expect { provider.gid = 150 }.to raise_error(Puppet::Error, "GID 150 already exists, use allowdupe to force group creation")
-     end
+          it "should add to the existing users" do
+            new_members = ['user1', 'user2', 'user3', 'user4']
+            allow(provider).to receive(:members).and_return(members)
+            expect(provider).not_to receive(:localmodify).with('-m', members.join(','), 'mygroup')
+            expect(provider).to receive(:execute).with(['/usr/sbin/lgroupmod', '-M', new_members.join(','), 'mygroup'], kind_of(Hash))
+            provider.members = new_members
+          end
+        end
+      end
     end
   end
 
@@ -179,6 +230,37 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       it "should use lgroupdel instead of groupdel" do
         expect(provider).to receive(:execute).with(['/usr/sbin/lgroupdel', 'mygroup'], hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
         provider.delete
+      end
+    end
+  end
+
+  describe "group type :members property helpers" do
+    describe "#member_valid?" do
+      it "should return true if a member exists" do
+        passwd = Struct::Passwd.new('existinguser', nil, 1100)
+        allow(Etc).to receive(:getpwnam).with('existinguser').and_return(passwd)
+        expect(provider.member_valid?('existinguser')).to eq(true)
+      end
+    end 
+    
+    describe "#members_to_s" do
+      it "should return an empty string on non-array input" do
+        [Object.new, {}, 1, :symbol, ''].each do |input|
+          expect(provider.members_to_s(input)).to be_empty
+        end
+      end
+
+      it "should return an empty string on empty or nil users" do
+        expect(provider.members_to_s([])).to be_empty
+        expect(provider.members_to_s(nil)).to be_empty
+      end
+
+      it "should return a user string for a single user" do
+        expect(provider.members_to_s(['user1'])).to eq('user1')
+      end
+
+      it "should return a user string for multiple users" do
+        expect(provider.members_to_s(['user1', 'user2'])).to eq('user1,user2')
       end
     end
   end
