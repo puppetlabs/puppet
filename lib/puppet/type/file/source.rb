@@ -129,18 +129,6 @@ module Puppet
       metadata && metadata.checksum
     end
 
-    # Look up (if necessary) and return local content.
-    def content
-      return @content if @content
-      raise Puppet::DevError, _("No source for content was stored with the metadata") unless metadata.source
-
-      tmp = Puppet::FileServing::Content.indirection.find(metadata.source, :environment => resource.catalog.environment_instance, :links => resource[:links])
-      unless tmp
-        self.fail "Could not find any content at %s" % metadata.source
-      end
-      @content = tmp.content
-    end
-
     # Copy the values from the source to the resource.  Yay.
     def copy_source_values
       devfail "Somehow got asked to copy source values without any metadata" unless metadata
@@ -274,8 +262,8 @@ module Puppet
     end
 
     def each_chunk_from
-      if Puppet[:default_file_terminus] == :file_server
-        yield content
+      if Puppet[:default_file_terminus] == :file_server && scheme == 'puppet' && (uri.host.nil? || uri.host.empty?)
+        chunk_file_from_disk(metadata.path) { |chunk| yield chunk }
       elsif local?
         chunk_file_from_disk(full_path) { |chunk| yield chunk }
       else
