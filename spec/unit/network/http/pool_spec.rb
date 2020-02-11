@@ -245,6 +245,8 @@ describe Puppet::Network::HTTP::Pool do
 
     it 'finishes expired connections' do
       conn = create_connection(site)
+      expect(conn).to receive(:started?).and_return(true)
+      expect(conn).to receive(:finish)
 
       pool = create_pool_with_expired_connections(site, conn)
       expect(pool.factory).to receive(:create_connection).and_return(double('conn', :start => nil))
@@ -306,6 +308,8 @@ describe Puppet::Network::HTTP::Pool do
 
     it 'closes all cached connections' do
       conn = create_connection(site)
+      expect(conn).to receive(:started?).and_return(true)
+      expect(conn).to receive(:finish)
 
       pool = create_pool_with_connections(site, conn)
       pool.close
