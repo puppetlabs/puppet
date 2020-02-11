@@ -145,19 +145,23 @@ module Puppet
   #
   # @api public
   # @param args [Array<String>] the command line arguments to use for initialization
+  # @param require_config [Boolean] controls loading of Puppet configuration files
+  # @param global_settings [Boolean] controls push to global context after settings object initialization
   # @return [void]
-  def self.initialize_settings(args = [], require_config = true)
-    do_initialize_settings_for_run_mode(:user, args, require_config)
+  def self.initialize_settings(args = [], require_config = true, push_settings_globally = true)
+    do_initialize_settings_for_run_mode(:user, args, require_config, push_settings_globally)
   end
 
   # private helper method to provide the implementation details of initializing for a run mode,
   #  but allowing us to control where the deprecation warning is issued
-  def self.do_initialize_settings_for_run_mode(run_mode, args, require_config = true)
+  def self.do_initialize_settings_for_run_mode(run_mode, args, require_config = true, push_settings_globally = true)
     Puppet.settings.initialize_global_settings(args, require_config)
     run_mode = Puppet::Util::RunMode[run_mode]
     Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
-    push_context_global(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
-    Puppet::Parser::Functions.reset
+    if push_settings_globally
+      push_context_global(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
+      Puppet::Parser::Functions.reset
+    end
   end
   private_class_method :do_initialize_settings_for_run_mode
 
