@@ -43,6 +43,19 @@ class Puppet::Util::Pidlock
     @lockfile.file_path
   end
 
+  private
+
+  def ps_argument_for_current_kernel
+    case Facter.value(:kernel)
+      when "Linux"
+        "-eq"
+      when "AIX"
+        "-T"
+      else
+        "-p"
+    end
+  end
+
   def clear_if_stale
     return @lockfile.unlock if lock_pid.nil?
 
@@ -58,11 +71,20 @@ class Puppet::Util::Pidlock
     end
 
     # Ensure the process associated with this pid is our process. If
-    # not, we can unlock the lockfile. For now this is only done on
-    # POSIX and Windows platforms (PUP-9247).
+    # not, we can unlock the lockfile. CLI arguments used for identifying
+    # on POSIX depend on the os and sometimes even version.
     if Puppet.features.posix?
-      procname = Puppet::Util::Execution.execute(["ps", "-p", lock_pid, "-o", "comm="]).strip
-      args     = Puppet::Util::Execution.execute(["ps", "-p", lock_pid, "-o", "args="]).strip
+      ps_argument = ps_argument_for_current_kernel
+
+      # Check, obtain and use the right ps argument
+      begin
+        procname = Puppet::Util::Execution.execute(["ps", ps_argument, lock_pid, "-o", "comm="]).strip
+      rescue Puppet::ExecutionFailure
+        ps_argument = "-p"
+        procname = Puppet::Util::Execution.execute(["ps", ps_argument, lock_pid, "-o", "comm="]).strip
+      end
+
+      args = Puppet::Util::Execution.execute(["ps", ps_argument, lock_pid, "-o", "args="]).strip
       @lockfile.unlock unless procname =~ /ruby/ && args =~ /puppet/ || procname =~ /puppet(-.*)?$/
     elsif Puppet.features.microsoft_windows?
       # On Windows, we're checking if the filesystem path name of the running
@@ -71,6 +93,4 @@ class Puppet::Util::Pidlock
       @lockfile.unlock unless exe_path =~ /\\bin\\ruby.exe$/
     end
   end
-  private :clear_if_stale
-
 end
