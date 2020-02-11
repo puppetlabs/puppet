@@ -71,12 +71,15 @@ module Puppet
         :type    => :boolean,
         :desc    => 'Whether to enable a pre-Facter 4.0 release of Facter (distributed as
           the "facter-ng" gem). This is not necessary if Facter 3.x or later is installed.
-          This setting is still experimental and has been only included on Windows builds',
+          This setting is still experimental.',
         :hook    => proc do |value|
-                      if value && Puppet::Util::Platform.windows?
+                      if value
                         begin
+                          ORIGINAL_FACTER = Object.const_get(:Facter)
+                          Object.send(:remove_const, :Facter)
                           require 'facter-ng'
                         rescue LoadError
+                          Object.const_set(:Facter, ORIGINAL_FACTER)
                           raise ArgumentError, 'facter-ng could not be loaded'
                         end
                       end
