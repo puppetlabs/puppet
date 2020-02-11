@@ -283,6 +283,59 @@ describe Puppet::HTTP::Service::Compiler do
     end
   end
 
+  context 'when getting facts' do
+    let(:uri) { %r{/puppet/v3/facts/ziggy} }
+    let(:facts_response) { { body: formatter.render(facts), headers: {'Content-Type' => formatter.mime } } }
+
+    it 'includes environment' do
+      stub_request(:get, uri)
+          .with(query: hash_including("environment" => "outerspace"))
+          .to_return(**facts_response)
+
+      subject.get_facts(certname, environment: 'outerspace')
+    end
+
+    it 'returns a deserialized facts object' do
+      stub_request(:get, uri)
+        .to_return(**facts_response)
+
+      n = subject.get_facts(certname, environment: 'production')
+      expect(n).to be_a(Puppet::Node::Facts)
+      expect(n.name).to eq(certname)
+    end
+
+    it 'raises a response error if unsuccessful' do
+      stub_request(:get, uri)
+        .to_return(status: [500, "Server Error"])
+
+      expect {
+        subject.get_facts(certname, environment: 'production')
+      }.to raise_error do |err|
+        expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
+        expect(err.message).to eq('Server Error')
+        expect(err.response.code).to eq(500)
+      end
+    end
+
+    it 'raises a protocol error if the content-type header is missing' do
+      stub_request(:get, uri)
+        .to_return(body: "content-type is missing")
+
+      expect {
+        subject.get_facts(certname, environment: 'production')
+      }.to raise_error(Puppet::HTTP::ProtocolError, /No content type in http response; cannot parse/)
+    end
+
+    it 'raises a serialization error if the content is invalid' do
+      stub_request(:get, uri)
+        .to_return(body: "this isn't valid JSON", headers: {'Content-Type' => 'application/json'})
+
+      expect {
+        subject.get_facts(certname, environment: 'production')
+      }.to raise_error(Puppet::HTTP::SerializationError, /Failed to deserialize Puppet::Node::Facts from json/)
+    end
+  end
+
   context 'when putting facts' do
     let(:uri) { %r{/puppet/v3/facts/ziggy} }
 

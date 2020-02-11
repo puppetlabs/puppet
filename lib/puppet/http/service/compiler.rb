@@ -70,6 +70,22 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
     raise Puppet::HTTP::ResponseError.new(response)
   end
 
+  def get_facts(name, environment:)
+    headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Node::Facts).join(', '))
+
+    response = @client.get(
+      with_base_url("/facts/#{name}"),
+      headers: headers,
+      params: { environment: environment }
+    )
+
+    @session.process_response(response)
+
+    return deserialize(response, Puppet::Node::Facts) if response.success?
+
+    raise Puppet::HTTP::ResponseError.new(response)
+  end
+
   def put_facts(name, environment:, facts:)
     formatter = Puppet::Network::FormatHandler.format_for(Puppet[:preferred_serialization_format])
 
