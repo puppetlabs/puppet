@@ -1239,6 +1239,8 @@ Generated on #{Time.now}.
     configured_environment = self[:environment]
     if configured_environment == "production" && envdir && Puppet::FileSystem.exist?(envdir)
       configured_environment_path = File.join(envdir, configured_environment)
+      # If configured_environment_path is a symlink, assume the source path is being managed
+      # elsewhere, so don't do any of this configuration
       if !Puppet::FileSystem.symlink?(configured_environment_path)
         parameters = { :ensure => 'directory' }
         unless Puppet::FileSystem.exist?(configured_environment_path)

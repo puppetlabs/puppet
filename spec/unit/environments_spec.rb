@@ -13,20 +13,28 @@ describe Puppet::Environments do
   before(:each) do
     Puppet.settings.initialize_global_settings
     Puppet[:environment_timeout] = "unlimited"
+    Puppet[:versioned_environment_dirs] = true
   end
 
   let(:directory_tree) do
-    FS::MemoryFile.a_directory(File.expand_path("envdir"), [
-      FS::MemoryFile.a_regular_file_containing("ignored_file", ''),
-      FS::MemoryFile.a_directory("an_environment", [
-        FS::MemoryFile.a_missing_file("environment.conf"),
+    FS::MemoryFile.a_directory(File.expand_path("top_level_dir"), [
+      FS::MemoryFile.a_directory("envdir", [
+        FS::MemoryFile.a_regular_file_containing("ignored_file", ''),
+        FS::MemoryFile.a_directory("an_environment", [
+          FS::MemoryFile.a_missing_file("environment.conf"),
+          FS::MemoryFile.a_directory("modules"),
+          FS::MemoryFile.a_directory("manifests"),
+        ]),
+        FS::MemoryFile.a_directory("another_environment", [
+          FS::MemoryFile.a_missing_file("environment.conf"),
+        ]),
+        FS::MemoryFile.a_missing_file("doesnotexist"),
+        FS::MemoryFile.a_symlink("symlinked_environment", File.expand_path(File.join("top_level_dir", "versioned_env")))]),
+      FS::MemoryFile.a_directory("versioned_env", [
+        FS::MemoryFile.a_regular_file_containing("environment.conf", ''),
         FS::MemoryFile.a_directory("modules"),
         FS::MemoryFile.a_directory("manifests"),
       ]),
-      FS::MemoryFile.a_directory("another_environment", [
-        FS::MemoryFile.a_missing_file("environment.conf"),
-      ]),
-      FS::MemoryFile.a_missing_file("doesnotexist"),
     ])
   end
 
@@ -38,22 +46,27 @@ describe Puppet::Environments do
       global_path_2 = FS::MemoryFile.a_directory(global_path_2_location)
 
       loader_from(:filesystem => [directory_tree, global_path_1, global_path_2],
-                  :directory => directory_tree,
+                  :directory => directory_tree.children.first,
                   :modulepath => [global_path_1_location, global_path_2_location]) do |loader|
         expect(loader.list).to include_in_any_order(
           environment(:an_environment).
-            with_manifest("#{FS.path_string(directory_tree)}/an_environment/manifests").
-            with_modulepath(["#{FS.path_string(directory_tree)}/an_environment/modules",
+            with_manifest("#{FS.path_string(directory_tree)}/envdir/an_environment/manifests").
+            with_modulepath(["#{FS.path_string(directory_tree)}/envdir/an_environment/modules",
                              global_path_1_location,
                              global_path_2_location]),
-          environment(:another_environment))
+          environment(:another_environment),
+          environment(:symlinked_environment).
+            with_manifest("#{FS.path_string(directory_tree)}/versioned_env/manifests").
+            with_modulepath(["#{FS.path_string(directory_tree)}/versioned_env/modules",
+                             global_path_1_location,
+                             global_path_2_location]))
       end
     end
 
     it "has search_paths" do
       loader_from(:filesystem => [directory_tree],
-                  :directory => directory_tree) do |loader|
-        expect(loader.search_paths).to eq(["file://#{directory_tree}"])
+                  :directory => directory_tree.children.first) do |loader|
+        expect(loader.search_paths).to eq(["file://#{directory_tree.children.first}"])
       end
     end
 
@@ -79,14 +92,29 @@ describe Puppet::Environments do
 
     it "gets a particular environment" do
       loader_from(:filesystem => [directory_tree],
-                  :directory => directory_tree) do |loader|
+                  :directory => directory_tree.children.first) do |loader|
         expect(loader.get("an_environment")).to environment(:an_environment)
+      end
+    end
+
+    it "gets a symlinked environment" do
+      loader_from(:filesystem => [directory_tree],
+                  :directory => directory_tree.children.first) do |loader|
+        expect(loader.get("symlinked_environment")).to environment(:symlinked_environment)
+      end
+    end
+
+    it "ignores symlinked environments when `:versioned_environment_dirs` is false" do
+      Puppet[:versioned_environment_dirs] = false
+      loader_from(:filesystem => [directory_tree],
+                  :directory => directory_tree.children.first) do |loader|
+        expect(loader.get("symlinked_environment")).to be_nil
       end
     end
 
     it "raises error when environment not found" do
       loader_from(:filesystem => [directory_tree],
-                  :directory => directory_tree) do |loader|
+                  :directory => directory_tree.children.first) do |loader|
         expect do
           loader.get!("doesnotexist")
         end.to raise_error(Puppet::Environments::EnvironmentNotFound)
@@ -95,7 +123,7 @@ describe Puppet::Environments do
 
     it "returns nil if an environment can't be found" do
       loader_from(:filesystem => [directory_tree],
-                  :directory => directory_tree) do |loader|
+                  :directory => directory_tree.children.first) do |loader|
         expect(loader.get("doesnotexist")).to be_nil
       end
     end
@@ -404,7 +432,7 @@ config_version=$vardir/random/scripts
       context "custom cache expiration service" do
         it "consults the custom service to expire the cache" do
           loader_from(:filesystem => [directory_tree],
-                      :directory => directory_tree) do |loader|
+                      :directory => directory_tree.children.first) do |loader|
             service = ReplayExpirationService.new([true])
             using_expiration_service(service) do
 
@@ -541,22 +569,23 @@ config_version=$vardir/random/scripts
 
   describe "cached loaders" do
     it "lists environments" do
-      loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+      loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
         expect(Puppet::Environments::Cached.new(loader).list).to include_in_any_order(
           environment(:an_environment),
-          environment(:another_environment))
+          environment(:another_environment),
+          environment(:symlinked_environment))
       end
     end
 
     it "has search_paths" do
-      loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
-        expect(Puppet::Environments::Cached.new(loader).search_paths).to eq(["file://#{directory_tree}"])
+      loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+        expect(Puppet::Environments::Cached.new(loader).search_paths).to eq(["file://#{directory_tree.children.first}"])
       end
     end
 
     context "#get" do
       it "gets an environment" do
-        loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+        loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
           expect(Puppet::Environments::Cached.new(loader).get(:an_environment)).to environment(:an_environment)
         end
       end
@@ -574,7 +603,7 @@ config_version=$vardir/random/scripts
       end
 
       it "returns nil if env not found" do
-        loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+        loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
           expect(Puppet::Environments::Cached.new(loader).get(:doesnotexist)).to be_nil
         end
       end
@@ -582,7 +611,7 @@ config_version=$vardir/random/scripts
 
     context "#get!" do
       it "gets an environment" do
-        loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+        loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
           expect(Puppet::Environments::Cached.new(loader).get!(:an_environment)).to environment(:an_environment)
         end
       end
@@ -600,7 +629,7 @@ config_version=$vardir/random/scripts
       end
 
       it "raises error if environment is not found" do
-        loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+        loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
           expect do
             Puppet::Environments::Cached.new(loader).get!(:doesnotexist)
           end.to raise_error(Puppet::Environments::EnvironmentNotFound)
@@ -609,9 +638,9 @@ config_version=$vardir/random/scripts
     end
 
     it "gets an environment.conf" do
-      loader_from(:filesystem => [directory_tree], :directory => directory_tree) do |loader|
+      loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
         expect(Puppet::Environments::Cached.new(loader).get_conf(:an_environment)).to match_environment_conf(:an_environment).
-          with_env_path(directory_tree).
+          with_env_path(directory_tree.children.first).
           with_global_module_path([])
       end
     end
