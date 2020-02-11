@@ -40,7 +40,7 @@ describe Puppet::Node::Facts::Rest do
 
       expect{
         described_class.indirection.find(certname, fail_on_404: true)
-      }.to raise_error(Puppet::Error, %r{Find /puppet/v3/facts/ziggy\?environment=\*root\*&fail_on_404=true resulted in 404 with the message: {}})
+      }.to raise_error(Puppet::Error, %r{Find /puppet/v3/facts/ziggy resulted in 404 with the message: {}})
     end
 
     it 'raises Net::HTTPError on 500' do
