@@ -135,7 +135,7 @@ describe Puppet::Network::HTTP::Connection do
   end
 
   context "when response indicates an overloaded server" do
-    let(:http) { double('http') }
+    let(:http) { double('http', :started? => true) }
     let(:site) { Puppet::Network::HTTP::Site.new('http', 'my_server', 8140) }
     let(:verify) { Puppet::SSL::Validator.no_validator }
     let(:httpunavailable) { Net::HTTPServiceUnavailable.new('1.1', 503, 'Service Unavailable') }
