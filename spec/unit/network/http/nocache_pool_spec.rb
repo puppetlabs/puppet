@@ -8,7 +8,7 @@ describe Puppet::Network::HTTP::NoCachePool do
   let(:verifier) { double('verifier', :setup_connection => nil) }
 
   it 'yields a started connection' do
-    http  = double('http', start: nil, finish: nil)
+    http  = double('http', start: nil, finish: nil, started?: true)
 
     factory = Puppet::Network::HTTP::Factory.new
     allow(factory).to receive(:create_connection).and_return(http)
@@ -20,8 +20,8 @@ describe Puppet::Network::HTTP::NoCachePool do
   end
 
   it 'yields a new connection each time' do
-    http1  = double('http1', start: nil, finish: nil)
-    http2  = double('http2', start: nil, finish: nil)
+    http1  = double('http1', start: nil, finish: nil, started?: true)
+    http2  = double('http2', start: nil, finish: nil, started?: true)
 
     factory = Puppet::Network::HTTP::Factory.new
     allow(factory).to receive(:create_connection).and_return(http1, http2)

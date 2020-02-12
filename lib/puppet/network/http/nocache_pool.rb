@@ -15,6 +15,7 @@ class Puppet::Network::HTTP::NoCachePool < Puppet::Network::HTTP::BasePool
     begin
       yield http
     ensure
+      return unless http.started?
       Puppet.debug("Closing connection for #{site}")
       http.finish
     end

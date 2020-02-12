@@ -22,6 +22,7 @@ require 'puppet/external/pson/common'
 require 'puppet/external/pson/version'
 require 'puppet/external/pson/pure'
 require 'puppet/gettext/config'
+require 'puppet/defaults'
 
 
 #------------------------------------------------------------
@@ -95,6 +96,7 @@ module Puppet
 
   # Store a new default value.
   def self.define_settings(section, hash)
+    Puppet.deprecation_warning('The method Puppet.define_settings is deprecated and will be removed in a future release')
     @@settings.define_settings(section, hash)
   end
 
@@ -129,8 +131,9 @@ module Puppet
     Puppet::Util::RunMode[@@settings.preferred_run_mode]
   end
 
-  # Load all of the settings.
-  require 'puppet/defaults'
+  # Modify the settings with defaults defined in `initialize_default_settings` method in puppet/defaults.rb. This can
+  # be used in the initialization of new Puppet::Settings objects in the puppetserver project.
+  Puppet.initialize_default_settings!(settings)
 
   # Now that settings are loaded we have the code loaded to be able to issue
   # deprecation warnings. Warn if we're on a deprecated ruby version.
