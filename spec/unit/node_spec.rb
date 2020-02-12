@@ -414,7 +414,9 @@ end
 
 describe Puppet::Node, "when generating the list of names to search through" do
   before do
-    @node = Puppet::Node.new("foo.domain.com", :parameters => {"hostname" => "yay", "domain" => "domain.com"})
+    Puppet[:strict_hostname_checking] = false
+    @node = Puppet::Node.new("foo.domain.com",
+                             :parameters => {"hostname" => "yay", "domain" => "domain.com"})
   end
 
   it "returns an array of names" do
@@ -445,7 +447,6 @@ describe Puppet::Node, "when generating the list of names to search through" do
 
   describe "and :node_name is set to 'cert'" do
     before do
-      Puppet[:strict_hostname_checking] = false
       Puppet[:node_name] = "cert"
     end
 
@@ -454,8 +455,11 @@ describe Puppet::Node, "when generating the list of names to search through" do
     end
 
     describe "and strict hostname checking is enabled" do
-      it "only uses the passed-in key" do
+      before do
         Puppet[:strict_hostname_checking] = true
+      end
+
+      it "only uses the passed-in key" do
         expect(@node.names).to eq(["foo.domain.com"])
       end
     end
@@ -463,7 +467,6 @@ describe Puppet::Node, "when generating the list of names to search through" do
 
   describe "and :node_name is set to 'facter'" do
     before do
-      Puppet[:strict_hostname_checking] = false
       Puppet[:node_name] = "facter"
     end
 
