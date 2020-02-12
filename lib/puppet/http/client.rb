@@ -154,6 +154,10 @@ class Puppet::HTTP::Client
               interval = @retry_after_handler.retry_after_interval(request, response, retries)
               retries += 1
               if interval
+                if http.started?
+                  Puppet.debug("Closing connection for #{Puppet::Network::HTTP::Site.from_uri(request.uri)}")
+                  http.finish
+                end
                 Puppet.warning(_("Sleeping for %{interval} seconds before retrying the request") % { interval: interval })
                 ::Kernel.sleep(interval)
                 next

@@ -539,6 +539,32 @@ describe Puppet::HTTP::Client do
       }.to raise_error(Puppet::HTTP::ProtocolError, /Failed to parse Retry-After header 'foo' as an integer or RFC 2822 date/)
     end
 
+    it "should close the connection before sleeping" do
+      retry_after('42')
+
+      site = Puppet::Network::HTTP::Site.from_uri(uri)
+
+      http1 = Net::HTTP.new(site.host, site.port)
+      http1.use_ssl = true
+      allow(http1).to receive(:started?).and_return(true)
+
+      http2 = Net::HTTP.new(site.host, site.port)
+      http2.use_ssl = true
+      allow(http2).to receive(:started?).and_return(true)
+
+
+      pool = Puppet::Network::HTTP::Pool.new()
+      client = Puppet::HTTP::Client.new(pool: pool)
+
+      # The "with_connection" method is required to yield started connections
+      allow(pool).to receive(:with_connection).and_yield(http1).and_yield(http2)
+
+      expect(http1).to receive(:finish).ordered
+      expect(::Kernel).to receive(:sleep).with(42).ordered
+
+      client.get(uri)
+    end
+
     it "should sleep and retry if Retry-After is an Integer" do
       retry_after('42')
 
