@@ -65,29 +65,30 @@ module Puppet
 
   AS_DURATION = %q{This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).}
 
-  define_settings(:main,
-    :facterng => {
+  # @api public
+  # @param args [Puppet::Settings] the settings object to define default settings for
+  # @return void
+  def self.initialize_default_settings!(settings)
+    settings.define_settings(:main,
+      :facterng => {
         :default => false,
         :type    => :boolean,
         :desc    => 'Whether to enable a pre-Facter 4.0 release of Facter (distributed as
           the "facter-ng" gem). This is not necessary if Facter 3.x or later is installed.
           This setting is still experimental.',
         :hook    => proc do |value|
-                      if value
-                        begin
-                          ORIGINAL_FACTER = Object.const_get(:Facter)
-                          Object.send(:remove_const, :Facter)
-                          require 'facter-ng'
-                        rescue LoadError
-                          Object.const_set(:Facter, ORIGINAL_FACTER)
-                          raise ArgumentError, 'facter-ng could not be loaded'
-                        end
-                      end
-                    end
-    }
-  )
-
-  define_settings(:main,
+          if value
+            begin
+              original_facter = Object.const_get(:Facter)
+              Object.send(:remove_const, :Facter)
+              require 'facter-ng'
+            rescue LoadError
+              Object.const_set(:Facter, original_facter)
+              raise ArgumentError, 'facter-ng could not be loaded'
+            end
+          end
+        end
+    },
     :confdir  => {
         :default  => nil,
         :type     => :directory,
@@ -124,7 +125,7 @@ module Puppet
     }
   )
 
-  define_settings(:main,
+  settings.define_settings(:main,
     :logdir => {
         :default  => nil,
         :type     => :directory,
@@ -228,7 +229,7 @@ module Puppet
     }
   )
 
-  define_settings(:main,
+  settings.define_settings(:main,
     :priority => {
       :default => nil,
       :type    => :priority,
@@ -551,12 +552,12 @@ module Puppet
     :hiera_config => {
       :default => lambda do
         config = nil
-        codedir = Puppet.settings[:codedir]
+        codedir = settings[:codedir]
         if codedir.is_a?(String)
           config = File.expand_path(File.join(codedir, 'hiera.yaml'))
           config = nil unless Puppet::FileSystem.exist?(config)
         end
-        config = File.expand_path(File.join(Puppet.settings[:confdir], 'hiera.yaml')) if config.nil?
+        config = File.expand_path(File.join(settings[:confdir], 'hiera.yaml')) if config.nil?
         config
       end,
       :desc    => "The hiera configuration file. Puppet only reads this file on startup, so you must restart the puppet master every time you edit it.",
@@ -620,7 +621,7 @@ module Puppet
     :http_proxy_password =>{
       :default    => "none",
       :hook       => proc do |value|
-        if Puppet.settings[:http_proxy_password] =~ /[@!# \/]/
+        if settings[:http_proxy_password] =~ /[@!# \/]/
           raise "Passwords set in the http_proxy_password setting must be valid as part of a URL, and any reserved characters must be URL-encoded. We received: #{value}"
         end
       end,
@@ -764,7 +765,7 @@ API to expire the cache as needed
     }
   )
 
-  Puppet.define_settings(:module_tool,
+  settings.define_settings(:module_tool,
     :module_repository  => {
       :default  => 'https://forgeapi.puppet.com',
       :desc     => "The module repository",
@@ -783,7 +784,7 @@ API to expire the cache as needed
     }
   )
 
-    Puppet.define_settings(
+    settings.define_settings(
     :main,
 
     # We have to downcase the fqdn, because the current ssl stuff (as opposed to in master) doesn't have good facilities for
@@ -1094,7 +1095,7 @@ EOT
     }
   )
 
-    define_settings(
+    settings.define_settings(
     :ca,
     :ca_name => {
       :default => "Puppet CA: $certname",
@@ -1212,7 +1213,7 @@ EOT
 
   # Define the config default.
 
-    define_settings(:application,
+    settings.define_settings(:application,
       :config_file_name => {
           :type     => :string,
           :default  => Puppet::Settings.default_config_file_name,
@@ -1237,7 +1238,7 @@ EOT
       },
   )
 
-  define_settings(:environment,
+  settings.define_settings(:environment,
     :manifest => {
       :default    => nil,
       :type       => :file_or_directory,
@@ -1280,7 +1281,7 @@ EOT
     }
   )
 
-  define_settings(:master,
+  settings.define_settings(:master,
     :user => {
       :default    => "puppet",
       :desc       => "The user Puppet Server will run as. Used to ensure
@@ -1337,13 +1338,23 @@ EOT
       overridden by more specific settings (see `ca_port`, `report_port`).",
     },
     :node_name => {
-      :default    => "cert",
+      :default    => 'cert',
+      :type       => :enum,
+      :values     => ['cert', 'facter'],
+      :deprecated => :completely,
+      :hook       => proc { |val|
+        if val != 'cert'
+          Puppet.deprecation_warning("The node_name setting is deprecated and will be removed in a future release.")
+        end
+      },
       :desc       => "How the puppet master determines the client's identity
       and sets the 'hostname', 'fqdn' and 'domain' facts for use in the manifest,
       in particular for determining which 'node' statement applies to the client.
       Possible values are 'cert' (use the subject's CN in the client's
       certificate) and 'facter' (use the hostname that the client
-      reported in its facts)",
+      reported in its facts).
+
+      This setting is deprecated, please use explicit fact matching for classification.",
     },
     :bucketdir => {
       :default => "$vardir/bucket",
@@ -1466,14 +1477,23 @@ EOT
       :desc       => "Where the fileserver configuration is stored.",
     },
     :strict_hostname_checking => {
-      :default    => false,
+      :default    => true,
+      :type       => :boolean,
       :desc       => "Whether to only search for the complete
-            hostname as it is in the certificate when searching for node information
-            in the catalogs.",
+        hostname as it is in the certificate when searching for node information
+        in the catalogs or to match dot delimited segments of the cert's certname
+        and the hostname, fqdn, and/or domain facts.
+
+        This setting is deprecated and will be removed in a future release.",
+      :hook => proc { |val|
+        if val != true
+          Puppet.deprecation_warning("Setting strict_hostname_checking to false is deprecated and will be removed in a future release. Please use regular expressions in your node declarations or explicit fact matching for classification (though be warned that fact based classification may be considered insecure).")
+        end
+      }
     }
   )
 
-  define_settings(:device,
+  settings.define_settings(:device,
     :devicedir =>  {
         :default  => "$vardir/devices",
         :type     => :directory,
@@ -1488,7 +1508,7 @@ EOT
     }
   )
 
-  define_settings(:agent,
+  settings.define_settings(:agent,
     :node_name_value => {
       :default => "$certname",
       :desc => "The explicit value used for the node name for all requests the agent
@@ -1841,7 +1861,7 @@ EOT
 
   # Plugin information.
 
-  define_settings(
+  settings.define_settings(
     :main,
     :plugindest => {
       :type       => :directory,
@@ -1884,7 +1904,7 @@ EOT
 
   # Central fact information.
 
-    define_settings(
+    settings.define_settings(
     :main,
     :factpath => {
       :type     => :path,
@@ -1901,7 +1921,7 @@ EOT
     }
   )
 
-  define_settings(
+  settings.define_settings(
     :transaction,
     :tags => {
       :default    => "",
@@ -1929,7 +1949,7 @@ EOT
     }
   )
 
-    define_settings(
+    settings.define_settings(
     :main,
     :external_nodes => {
         :default  => "none",
@@ -1954,7 +1974,7 @@ EOT
     }
     )
 
-        define_settings(
+        settings.define_settings(
         :ldap,
     :ldapssl => {
       :default  => false,
@@ -2023,7 +2043,7 @@ EOT
     }
   )
 
-  define_settings(:master,
+  settings.define_settings(:master,
     :storeconfigs => {
       :default  => false,
       :type     => :boolean,
@@ -2041,7 +2061,7 @@ EOT
         require 'puppet/node/facts'
         if value
           Puppet::Resource::Catalog.indirection.set_global_setting(:cache_class, :store_configs)
-          Puppet.settings.override_default(:catalog_cache_terminus, :store_configs)
+          settings.override_default(:catalog_cache_terminus, :store_configs)
           Puppet::Node::Facts.indirection.set_global_setting(:cache_class, :store_configs)
           Puppet::Resource.indirection.set_global_setting(:terminus_class, :store_configs)
         end
@@ -2056,7 +2076,7 @@ EOT
     }
   )
 
-  define_settings(:parser,
+  settings.define_settings(:parser,
    :max_errors => {
      :default => 10,
      :desc => <<-'EOT'
@@ -2108,7 +2128,7 @@ EOT
     EOT
     }
   )
-  define_settings(:puppetdoc,
+  settings.define_settings(:puppetdoc,
     :document_all => {
         :default  => false,
         :type     => :boolean,
@@ -2117,7 +2137,7 @@ EOT
     }
   )
 
-  define_settings(
+  settings.define_settings(
     :main,
     :rich_data => {
       :default  => true,
@@ -2134,5 +2154,5 @@ EOT
       EOT
     }
   )
-
+  end
 end

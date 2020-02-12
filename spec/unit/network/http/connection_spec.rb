@@ -159,10 +159,31 @@ describe Puppet::Network::HTTP::Connection do
     end
 
     it "should return a 503 response if Retry-After is not convertible to an Integer or RFC 2822 Date" do
-      stub_request(:get, url).to_return(status: [503, 'Service Unavailable'], headers: {'Retry-After' => 'foo'})
+      retry_after('foo')
 
       result = subject.get('/foo')
       expect(result.code).to eq("503")
+    end
+
+    it "should close the connection before sleeping" do
+      retry_after('42')
+
+      http1 = Net::HTTP.new(host, port)
+      http1.use_ssl = true
+      allow(http1).to receive(:started?).and_return(true)
+
+      http2 = Net::HTTP.new(host, port)
+      http2.use_ssl = true
+      allow(http1).to receive(:started?).and_return(true)
+
+      # The "with_connection" method is required to yield started connections
+      pool = Puppet.lookup(:http_pool)
+      allow(pool).to receive(:with_connection).and_yield(http1).and_yield(http2)
+
+      expect(http1).to receive(:finish).ordered
+      expect(::Kernel).to receive(:sleep).with(42).ordered
+
+      subject.get('/foo')
     end
 
     it "should sleep and retry if Retry-After is an Integer" do
@@ -188,6 +209,7 @@ describe Puppet::Network::HTTP::Connection do
 
     it "should sleep for no more than the Puppet runinterval" do
       retry_after('60')
+
       Puppet[:runinterval] = 30
 
       expect(::Kernel).to receive(:sleep).with(30)
