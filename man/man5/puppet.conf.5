@@ -1223,7 +1223,10 @@ How to store cached nodes\. Valid values are (none), \'json\', \'msgpack\', or \
 
 .
 .SS "node_name"
-How the puppet master determines the client\'s identity and sets the \'hostname\', \'fqdn\' and \'domain\' facts for use in the manifest, in particular for determining which \'node\' statement applies to the client\. Possible values are \'cert\' (use the subject\'s CN in the client\'s certificate) and \'facter\' (use the hostname that the client reported in its facts)
+How the puppet master determines the client\'s identity and sets the \'hostname\', \'fqdn\' and \'domain\' facts for use in the manifest, in particular for determining which \'node\' statement applies to the client\. Possible values are \'cert\' (use the subject\'s CN in the client\'s certificate) and \'facter\' (use the hostname that the client reported in its facts)\.
+.
+.P
+This setting is deprecated, please use explicit fact matching for classification\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: cert
@@ -1799,10 +1802,13 @@ Whether the agent specified environment should be considered authoritative, caus
 .IP "" 0
 .
 .SS "strict_hostname_checking"
-Whether to only search for the complete hostname as it is in the certificate when searching for node information in the catalogs\.
+Whether to only search for the complete hostname as it is in the certificate when searching for node information in the catalogs or to match dot delimited segments of the cert\'s certname and the hostname, fqdn, and/or domain facts\.
+.
+.P
+This setting is deprecated and will be removed in a future release\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: true
 .
 .IP "" 0
 .
