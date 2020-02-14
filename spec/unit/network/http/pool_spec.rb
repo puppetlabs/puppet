@@ -298,6 +298,14 @@ describe Puppet::Network::HTTP::Pool do
 
       pool.borrow(site, verifier)
     end
+
+    it 'deletes the session when the last connection is borrowed' do
+      conn = create_connection(site)
+      pool = create_pool_with_connections(site, conn)
+      pool.borrow(site, verifier)
+
+      expect(pool.pool[site]).to be_nil
+    end
   end
 
   context 'when releasing a connection' do

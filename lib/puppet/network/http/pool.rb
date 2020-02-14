@@ -78,6 +78,8 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
     index = @pool[site].index { |session| verifier.reusable?(session.verifier) }
     session = index ? @pool[site].delete_at(index) : nil
     if session
+      @pool.delete(site) if @pool[site].empty?
+
       Puppet.debug("Using cached connection for #{site}")
       session.connection
     else
