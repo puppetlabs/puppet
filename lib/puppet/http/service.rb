@@ -4,16 +4,16 @@ class Puppet::HTTP::Service
   SERVICE_NAMES = [:ca, :fileserver, :puppet, :report].freeze
   EXCLUDED_FORMATS = [:yaml, :b64_zlib_yaml, :dot].freeze
 
-  def self.create_service(client, name, server = nil, port = nil)
+  def self.create_service(client, session, name, server = nil, port = nil)
     case name
     when :ca
-      Puppet::HTTP::Service::Ca.new(client, server, port)
+      Puppet::HTTP::Service::Ca.new(client, session, server, port)
     when :fileserver
-      Puppet::HTTP::Service::FileServer.new(client, server, port)
+      Puppet::HTTP::Service::FileServer.new(client, session, server, port)
     when :puppet
-      ::Puppet::HTTP::Service::Compiler.new(client, server, port)
+      ::Puppet::HTTP::Service::Compiler.new(client, session, server, port)
     when :report
-      Puppet::HTTP::Service::Report.new(client, server, port)
+      Puppet::HTTP::Service::Report.new(client, session, server, port)
     else
       raise ArgumentError, "Unknown service #{name}"
     end
@@ -23,8 +23,9 @@ class Puppet::HTTP::Service
     SERVICE_NAMES.include?(name)
   end
 
-  def initialize(client, url)
+  def initialize(client, session, url)
     @client = client
+    @session = session
     @url = url
   end
 

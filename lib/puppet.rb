@@ -237,6 +237,7 @@ module Puppet
         end
       },
       :ssl_host => proc { Puppet::SSL::Host.localhost },
+      :http_session => proc { Puppet.runtime["http"].create_session },
       :plugins => proc { Puppet::Plugins::Configuration.load_plugins },
       :rich_data => false
     }
@@ -322,7 +323,6 @@ module Puppet
 
   require 'puppet/runtime'
   @runtime = Puppet::Runtime.instance
-  @runtime['http'] = proc { Puppet::HTTP::Client.new }
 end
 
 # This feels weird to me; I would really like for us to get to a state where there is never a "require" statement

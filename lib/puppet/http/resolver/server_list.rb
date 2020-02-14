@@ -13,7 +13,7 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
         port = server[1] || @default_port
         uri = URI("https://#{host}:#{port}/status/v1/simple/master")
         if get_success?(uri, session, ssl_context: ssl_context)
-          return Puppet::HTTP::Service.create_service(@client, name, host, port)
+          return Puppet::HTTP::Service.create_service(@client, session, name, host, port)
         end
       end
       raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: @server_list_setting.print(@server_list_setting.value) }

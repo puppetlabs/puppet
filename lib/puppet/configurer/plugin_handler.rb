@@ -29,8 +29,19 @@ class Puppet::Configurer::PluginHandler
     result += plugin_fact_downloader.evaluate
     result += plugin_downloader.evaluate
 
+    # until file metadata/content are using the rest client, we need to check
+    # both :server_agent_version and the session to see if the server supports
+    # the "locales" mount
     server_agent_version = Puppet.lookup(:server_agent_version) { "0.0" }
-    if Gem::Version.new(server_agent_version) >= SUPPORTED_LOCALES_MOUNT_AGENT_VERSION
+    locales = Gem::Version.new(server_agent_version) >= SUPPORTED_LOCALES_MOUNT_AGENT_VERSION
+    unless locales
+      session = Puppet.lookup(:http_session)
+      compiler = session.route_to(:puppet)
+      server_version = session.server_version(compiler.url)
+      locales = server_version && Gem::Version.new(server_version) >= SUPPORTED_LOCALES_MOUNT_AGENT_VERSION
+    end
+
+    if locales
       locales_downloader = Puppet::Configurer::Downloader.new(
         "locales",
         Puppet[:localedest],

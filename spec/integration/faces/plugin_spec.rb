@@ -53,7 +53,9 @@ describe "Puppet plugin face" do
     app = init_cli_args_and_apply_app
     expect do
       expect {
-        app.run
+        Puppet.override(server_agent_version: '6.13.0') do
+          app.run
+        end
       }.to exit_with(0)
     end.to have_printed(/No plugins downloaded/)
   end

@@ -5,6 +5,7 @@ require 'puppet/http'
 describe Puppet::HTTP::Service::Ca do
   let(:ssl_context) { Puppet::SSL::SSLContext.new }
   let(:client) { Puppet::HTTP::Client.new(ssl_context: ssl_context) }
+  let(:session) { Puppet::HTTP::Session.new(client, []) }
   let(:subject) { client.create_session.route_to(:ca) }
 
   before :each do

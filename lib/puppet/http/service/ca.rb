@@ -2,9 +2,9 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   HEADERS = { 'Accept' => 'text/plain' }.freeze
   API = '/puppet-ca/v1'.freeze
 
-  def initialize(client, server, port)
+  def initialize(client, session, server, port)
     url = build_url(API, server || Puppet[:ca_server], port || Puppet[:ca_port])
-    super(client, url)
+    super(client, session, url)
   end
 
   def get_certificate(name, ssl_context: nil)
@@ -13,6 +13,8 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
       headers: add_puppet_headers(HEADERS),
       ssl_context: ssl_context
     )
+
+    @session.process_response(response)
 
     return response.body.to_s if response.success?
 
@@ -29,6 +31,8 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
       ssl_context: ssl_context
     )
 
+    @session.process_response(response)
+
     return response.body.to_s if response.success?
 
     raise Puppet::HTTP::ResponseError.new(response)
@@ -42,6 +46,8 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
       body: csr.to_pem,
       ssl_context: ssl_context
     )
+
+    @session.process_response(response)
 
     return response.body.to_s if response.success?
 

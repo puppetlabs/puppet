@@ -1,9 +1,9 @@
 class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   API = '/puppet/v3'.freeze
 
-  def initialize(client, server, port)
+  def initialize(client, session, server, port)
     url = build_url(API, server || Puppet[:server], port || Puppet[:masterport])
-    super(client, url)
+    super(client, session, url)
   end
 
   def get_node(name, environment:, configured_environment: nil, transaction_uuid: nil)
@@ -18,6 +18,8 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
         transaction_uuid: transaction_uuid,
       },
     )
+
+    @session.process_response(response)
 
     return deserialize(response, Puppet::Node) if response.success?
 
@@ -61,6 +63,8 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       body: body,
     )
 
+    @session.process_response(response)
+
     return deserialize(response, Puppet::Resource::Catalog) if response.success?
 
     raise Puppet::HTTP::ResponseError.new(response)
@@ -78,6 +82,8 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       content_type: formatter.mime,
       body: serialize(formatter, facts),
     )
+
+    @session.process_response(response)
 
     return true if response.success?
 

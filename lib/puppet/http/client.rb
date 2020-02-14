@@ -56,7 +56,7 @@ class Puppet::HTTP::Client
       if block_given?
         yield response
       else
-        response.read_body
+        response.body
       end
     end
   end
@@ -71,7 +71,7 @@ class Puppet::HTTP::Client
     request = Net::HTTP::Head.new(url, @default_headers.merge(headers))
 
     execute_streaming(request, ssl_context: ssl_context, user: user, password: password) do |response|
-      response.read_body
+      response.body
     end
   end
 
@@ -88,7 +88,7 @@ class Puppet::HTTP::Client
     request['Content-Type'] = content_type
 
     execute_streaming(request, ssl_context: ssl_context, user: user, password: password) do |response|
-      response.read_body
+      response.body
     end
   end
 
@@ -108,7 +108,7 @@ class Puppet::HTTP::Client
       if block_given?
         yield response
       else
-        response.read_body
+        response.body
       end
     end
   end
@@ -123,7 +123,7 @@ class Puppet::HTTP::Client
     request = Net::HTTP::Delete.new(url, @default_headers.merge(headers))
 
     execute_streaming(request, ssl_context: ssl_context, user: user, password: password) do |response|
-      response.read_body
+      response.body
     end
   end
 
@@ -142,7 +142,7 @@ class Puppet::HTTP::Client
         apply_auth(request, user, password)
 
         http.request(request) do |nethttp|
-          response = Puppet::HTTP::Response.new(nethttp)
+          response = Puppet::HTTP::Response.new(nethttp, request.uri)
           begin
             Puppet.debug("HTTP #{request.method.upcase} #{request.uri} returned #{response.code} #{response.reason}")
 
