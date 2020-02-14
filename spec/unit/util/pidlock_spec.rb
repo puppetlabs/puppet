@@ -9,27 +9,39 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
   before(:each) do
     @lockfile = tmpfile("lock")
     @lock = Puppet::Util::Pidlock.new(@lockfile)
-    @ps_argument_for_current_kernel = @lock.send(:ps_argument_for_current_kernel)
+    allow(Facter).to receive(:value).with(:kernel).and_return('Linux')
   end
 
   describe "#ps pid argument on posix", unless: Puppet::Util::Platform.windows? do
-    before(:each) do
+    it "should fallback to '-p' when ps execution fails with '-eq' on Linux" do
       @lock.lock
-    end
-
-    it "should allow ps execution" do
-      expect { Puppet::Util::Execution.execute(['ps', @ps_argument_for_current_kernel, @lock.lock_pid, '-o', 'comm=']) }.not_to raise_error
-      expect { Puppet::Util::Execution.execute(['ps', @ps_argument_for_current_kernel, @lock.lock_pid, '-o', 'args=']) }.not_to raise_error
-      expect(@lock).to be_locked
-    end
-
-    it "should fallback to -p when default argument fails ps execution" do
-      allow(@lock).to receive(:ps_argument_for_current_kernel).and_return("-eq")
-      allow(Puppet::Util::Execution).to receive(:execute).with(['ps', "-eq", @lock.lock_pid, '-o', 'comm=']).and_raise(Puppet::ExecutionFailure, 'Execution of command returned 1: error')
+      allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-eq', @lock.lock_pid, '-o', 'comm=']).and_raise(Puppet::ExecutionFailure, 'Execution of command returned 1: error')
 
       expect(Puppet::Util::Execution).to receive(:execute).with(['ps', "-p", @lock.lock_pid, '-o', 'comm=']).and_return('puppet')
       expect(Puppet::Util::Execution).to receive(:execute).with(['ps', "-p", @lock.lock_pid, '-o', 'args=']).and_return('puppet')
       expect(@lock).to be_locked
+    end
+
+    shared_examples_for 'a valid ps argument was provided' do |desired_kernel, ps_argument|
+      it "should be '#{ps_argument}' when current kernel is #{desired_kernel}" do
+        @lock.lock
+        allow(Facter).to receive(:value).with(:kernel).and_return(desired_kernel)
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', ps_argument, @lock.lock_pid, '-o', 'comm=']).and_return('ruby')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', ps_argument, @lock.lock_pid, '-o', 'args=']).and_return('puppet')
+        expect(@lock).to be_locked
+      end
+    end
+
+    context "when current kernel is Linux" do
+      it_should_behave_like 'a valid ps argument was provided', "Linux", "-eq"
+    end
+
+    context "when current kernel is AIX" do
+      it_should_behave_like 'a valid ps argument was provided', "AIX", "-T"
+    end
+
+    context "when current kernel is Darwin" do
+      it_should_behave_like 'a valid ps argument was provided', "Darwin", "-p"
     end
   end
 
@@ -47,8 +59,8 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
       if Puppet::Util::Platform.windows?
         allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(@lock.lock_pid).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
       else
-        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', @ps_argument_for_current_kernel, @lock.lock_pid, '-o', 'comm=']).and_return('puppet')
-        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', @ps_argument_for_current_kernel, @lock.lock_pid, '-o', 'args=']).and_return('puppet')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-eq', @lock.lock_pid, '-o', 'comm=']).and_return('puppet')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-eq', @lock.lock_pid, '-o', 'args=']).and_return('puppet')
       end
       expect(@lock).to be_locked
     end
@@ -58,8 +70,8 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
       if Puppet::Util::Platform.windows?
         allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(@lock.lock_pid).and_return('C:\tools\ruby25\bin\ruby.exe')
       else
-        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', @ps_argument_for_current_kernel, @lock.lock_pid, '-o', 'comm=']).and_return('ruby')
-        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', @ps_argument_for_current_kernel, @lock.lock_pid, '-o', 'args=']).and_return('ruby /root/puppet/.bundle/ruby/2.3.0/bin/puppet agent --no-daemonize -v')
+        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', '-eq', @lock.lock_pid, '-o', 'comm=']).and_return('ruby')
+        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', '-eq', @lock.lock_pid, '-o', 'args=']).and_return('ruby /root/puppet/.bundle/ruby/2.3.0/bin/puppet agent --no-daemonize -v')
       end
       expect(@lock).to be_locked
     end
@@ -142,8 +154,8 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
       if Puppet::Util::Platform.windows?
         allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(@lock.lock_pid).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
       else
-        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', @ps_argument_for_current_kernel, @lock.lock_pid, '-o', 'comm=']).and_return('puppet')
-        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', @ps_argument_for_current_kernel, @lock.lock_pid, '-o', 'args=']).and_return('puppet')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-eq', @lock.lock_pid, '-o', 'comm=']).and_return('puppet')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-eq', @lock.lock_pid, '-o', 'args=']).and_return('puppet')
       end
       expect(@lock).to be_locked
     end
@@ -153,8 +165,8 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
       if Puppet::Util::Platform.windows?
         allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(@lock.lock_pid).and_return('C:\tools\ruby25\bin\ruby.exe')
       else
-        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', @ps_argument_for_current_kernel, @lock.lock_pid, '-o', 'comm=']).and_return('ruby')
-        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', @ps_argument_for_current_kernel, @lock.lock_pid, '-o', 'args=']).and_return('ruby /root/puppet/.bundle/ruby/2.3.0/bin/puppet agent --no-daemonize -v')
+        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', '-eq', @lock.lock_pid, '-o', 'comm=']).and_return('ruby')
+        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', '-eq', @lock.lock_pid, '-o', 'args=']).and_return('ruby /root/puppet/.bundle/ruby/2.3.0/bin/puppet agent --no-daemonize -v')
       end
       expect(@lock).to be_locked
     end
@@ -204,8 +216,8 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
         if Puppet::Util::Platform.windows?
           allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(6789).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
         else
-          allow(Puppet::Util::Execution).to receive(:execute).with(['ps', @ps_argument_for_current_kernel, 6789, '-o', 'comm=']).and_return('puppet')
-          allow(Puppet::Util::Execution).to receive(:execute).with(['ps', @ps_argument_for_current_kernel, 6789, '-o', 'args=']).and_return('puppet')
+          allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-eq', 6789, '-o', 'comm=']).and_return('puppet')
+          allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-eq', 6789, '-o', 'args=']).and_return('puppet')
         end
         @lock.lock
         expect(Puppet::FileSystem.exist?(@lockfile)).to be_truthy
@@ -234,8 +246,8 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
       if Puppet::Util::Platform.windows?
         allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(1234).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
       else
-        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', @ps_argument_for_current_kernel, 1234, '-o', 'comm=']).and_return('puppet')
-        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', @ps_argument_for_current_kernel, 1234, '-o', 'args=']).and_return('puppet')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-eq', 1234, '-o', 'comm=']).and_return('puppet')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-eq', 1234, '-o', 'args=']).and_return('puppet')
       end
       # lock the file
       @lock.lock
