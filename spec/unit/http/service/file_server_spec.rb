@@ -27,14 +27,6 @@ describe Puppet::HTTP::Service::FileServer do
 
       subject.get_file_content(path: '/:mount/:path', environment: environment) { |data| }
     end
-
-    it 'includes the X-Puppet-Profiling header when Puppet[:profile] is true' do
-      stub_request(:get, uri).with(headers: {'X-Puppet-Version' => /./, 'User-Agent' => /./, 'X-Puppet-Profiling' => 'true'})
-
-      Puppet[:profile] = true
-
-      subject.get_file_content(path: '/:mount/:path', environment: environment) { |data| }
-    end
   end
 
   context 'when routing to the file service' do
@@ -53,6 +45,16 @@ describe Puppet::HTTP::Service::FileServer do
     let(:url) { "https://www.example.com/puppet/v3/file_metadata/:mount/#{path}?checksum_type=md5&environment=testing&links=manage&source_permissions=ignore" }
     let(:filemetadata) { Puppet::FileServing::Metadata.new(path) }
     let(:request_path) { "/:mount/#{path}"}
+
+    it 'includes puppet headers set via the :http_extra_headers and :profile settings' do
+      stub_request(:get, url).with(headers: {'Example-Header' => 'real-thing', 'another' => 'thing', 'X-Puppet-Profiling' => 'true'}).
+        to_return(status: 200, body: filemetadata.render, headers: { 'Content-Type' => 'application/json' })
+
+      Puppet[:http_extra_headers] = 'Example-Header:real-thing,another:thing'
+      Puppet[:profile] = true
+
+      subject.get_file_metadata(path: request_path, environment: environment)
+    end
 
     it 'submits a request for file metadata to the server' do
       stub_request(:get, url).with(
@@ -116,6 +118,16 @@ describe Puppet::HTTP::Service::FileServer do
     let(:filemetadatas) { [Puppet::FileServing::Metadata.new(path)] }
     let(:formatter) { Puppet::Network::FormatHandler.format(:json) }
     let(:request_path) { "/:mount/#{path}"}
+
+    it 'includes puppet headers set via the :http_extra_headers and :profile settings' do
+      stub_request(:get, url).with(headers: {'Example-Header' => 'real-thing', 'another' => 'thing', 'X-Puppet-Profiling' => 'true'}).
+        to_return(status: 200, body: formatter.render_multiple(filemetadatas), headers: { 'Content-Type' => 'application/json' })
+
+      Puppet[:http_extra_headers] = 'Example-Header:real-thing,another:thing'
+      Puppet[:profile] = true
+
+      subject.get_file_metadatas(path: request_path, environment: environment)
+    end
 
     it 'submits a request for file metadata to the server' do
       stub_request(:get, url).with(
@@ -187,6 +199,18 @@ describe Puppet::HTTP::Service::FileServer do
 
   context 'getting file content' do
     let(:uri) {"https://www.example.com:443/puppet/v3/file_content/:mount/:path?environment=testing"}
+
+    it 'includes puppet headers set via the :http_extra_headers and :profile settings' do
+      stub_request(:get, uri).with(headers: {'Example-Header' => 'real-thing', 'another' => 'thing', 'X-Puppet-Profiling' => 'true'}).
+        to_return(status: 200, body: "and beyond")
+
+      Puppet[:http_extra_headers] = 'Example-Header:real-thing,another:thing'
+      Puppet[:profile] = true
+
+      expect { |b|
+        subject.get_file_content(path: '/:mount/:path', environment: environment, &b)
+      }.to yield_with_args("and beyond")
+    end
 
     it 'yields file content' do
       stub_request(:get, uri).with do |request|

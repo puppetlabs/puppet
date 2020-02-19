@@ -30,6 +30,7 @@ class Puppet::Settings
   require 'puppet/settings/value_translator'
   require 'puppet/settings/environment_conf'
   require 'puppet/settings/server_list_setting'
+  require 'puppet/settings/http_extra_headers_setting'
   require 'puppet/settings/certificate_revocation_setting'
 
   # local reference for convenience
@@ -727,6 +728,7 @@ class Puppet::Settings
       :priority   => PrioritySetting,
       :autosign   => AutosignSetting,
       :server_list => ServerListSetting,
+      :http_extra_headers => HttpExtraHeadersSetting,
       :certificate_revocation => CertificateRevocationSetting
   }
 

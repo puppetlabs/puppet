@@ -43,7 +43,22 @@ class Puppet::HTTP::Service
 
   def add_puppet_headers(headers)
     modified_headers = headers.dup
+
+    # Add 'X-Puppet-Profiling' to enable performance profiling if turned on
     modified_headers['X-Puppet-Profiling'] = 'true' if Puppet[:profile]
+
+    # Add additional user-defined headers if they are defined
+    Puppet[:http_extra_headers].each do |name, value|
+      if modified_headers.keys.find { |key| key.casecmp(name) == 0 }
+        Puppet.warning(_('Ignoring extra header "%{name}" as it was previously set.') % { name: name })
+      else
+        if value.nil? || value.empty?
+          Puppet.warning(_('Ignoring extra header "%{name}" as it has no value.') % { name: name })
+        else
+          modified_headers[name] = value
+        end
+      end
+    end
     modified_headers
   end
 

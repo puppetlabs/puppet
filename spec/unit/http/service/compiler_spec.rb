@@ -32,15 +32,6 @@ describe Puppet::HTTP::Service::Compiler do
 
       subject.get_catalog(certname, environment: environment, facts: facts)
     end
-
-    it 'includes the X-Puppet-Profiling header in requests when Puppet[:profile] is true' do
-      stub_request(:post, uri).with(headers: {'X-Puppet-Version' => /./, 'User-Agent' => /./, 'X-Puppet-Profiling' => 'true'})
-        .to_return(body: formatter.render(catalog), headers: {'Content-Type' => formatter.mime })
-
-      Puppet[:profile] = true
-
-      subject.get_catalog(certname, environment: environment, facts: facts)
-    end
   end
 
   context 'when routing to the compiler service' do
@@ -58,6 +49,16 @@ describe Puppet::HTTP::Service::Compiler do
   context 'when posting for a catalog' do
     let(:uri) { %r{/puppet/v3/catalog/ziggy} }
     let(:catalog_response) { { body: formatter.render(catalog), headers: {'Content-Type' => formatter.mime } } }
+
+    it 'includes puppet headers set via the :http_extra_headers and :profile settings' do
+      stub_request(:post, uri).with(headers: {'Example-Header' => 'real-thing', 'another' => 'thing', 'X-Puppet-Profiling' => 'true'}).
+        to_return(body: formatter.render(catalog), headers: {'Content-Type' => formatter.mime })
+
+      Puppet[:http_extra_headers] = 'Example-Header:real-thing,another:thing'
+      Puppet[:profile] = true
+
+      subject.get_catalog(certname, environment: environment, facts: facts)
+    end
 
     it 'submits facts as application/json by default' do
       stub_request(:post, uri)
@@ -204,6 +205,16 @@ describe Puppet::HTTP::Service::Compiler do
     let(:uri) { %r{/puppet/v3/node/ziggy} }
     let(:node_response) { { body: formatter.render(node), headers: {'Content-Type' => formatter.mime } } }
 
+    it 'includes custom headers set via the :http_extra_headers and :profile settings' do
+      stub_request(:get, uri).with(headers: {'Example-Header' => 'real-thing', 'another' => 'thing', 'X-Puppet-Profiling' => 'true'}).
+        to_return(**node_response)
+
+      Puppet[:http_extra_headers] = 'Example-Header:real-thing,another:thing'
+      Puppet[:profile] = true
+
+      subject.get_node(certname, environment: 'production')
+    end
+
     it 'includes environment' do
       stub_request(:get, uri)
           .with(query: hash_including("environment" => "outerspace"))
@@ -273,6 +284,15 @@ describe Puppet::HTTP::Service::Compiler do
 
   context 'when putting facts' do
     let(:uri) { %r{/puppet/v3/facts/ziggy} }
+
+    it 'includes custom headers set the :http_extra_headers and :profile settings' do
+      stub_request(:put, uri).with(headers: {'Example-Header' => 'real-thing', 'another' => 'thing', 'X-Puppet-Profiling' => 'true'})
+
+      Puppet[:http_extra_headers] = 'Example-Header:real-thing,another:thing'
+      Puppet[:profile] = true
+
+      subject.put_facts(certname, environment: environment, facts: facts)
+    end
 
     it 'serializes facts in the body' do
       facts = Puppet::Node::Facts.new(certname, { 'domain' => 'zork'})
