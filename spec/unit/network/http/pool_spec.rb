@@ -174,7 +174,7 @@ describe Puppet::Network::HTTP::Pool do
         pool.with_connection(site, verifier) {|c| }
       end
 
-      it "doesn't add a closed  connection back to the pool" do
+      it "doesn't add a closed connection back to the pool" do
         http = Net::HTTP.new(site.addr)
         http.use_ssl = true
         http.verify_mode = OpenSSL::SSL::VERIFY_PEER
@@ -184,7 +184,7 @@ describe Puppet::Network::HTTP::Pool do
 
         pool.with_connection(site, verifier) {|c| c.finish}
 
-        expect(pool.pool[site]).to be_empty
+        expect(pool.pool[site]).to be_nil
       end
     end
   end
