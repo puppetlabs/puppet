@@ -277,14 +277,14 @@ module Puppet
       if Puppet[:default_file_terminus] == :file_server
         yield content
       elsif local?
-        chunk_file_from_disk { |chunk| yield chunk }
+        chunk_file_from_disk(full_path) { |chunk| yield chunk }
       else
         chunk_file_from_source { |chunk| yield chunk }
       end
     end
 
-    def chunk_file_from_disk
-      File.open(full_path, "rb") do |src|
+    def chunk_file_from_disk(local_path)
+      File.open(local_path, "rb") do |src|
         while chunk = src.read(8192) #rubocop:disable Lint/AssignmentInCondition
           yield chunk
         end
