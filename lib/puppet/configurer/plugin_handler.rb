@@ -36,9 +36,7 @@ class Puppet::Configurer::PluginHandler
     locales = Gem::Version.new(server_agent_version) >= SUPPORTED_LOCALES_MOUNT_AGENT_VERSION
     unless locales
       session = Puppet.lookup(:http_session)
-      compiler = session.route_to(:puppet)
-      server_version = session.server_version(compiler.url)
-      locales = server_version && Gem::Version.new(server_version) >= SUPPORTED_LOCALES_MOUNT_AGENT_VERSION
+      locales = session.supports?(:puppet, 'locales')
     end
 
     if locales

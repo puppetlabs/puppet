@@ -1,6 +1,10 @@
-require 'semantic_puppet'
-
 class Puppet::HTTP::Session
+  # capabilities for a site
+  CAP_LOCALES = 'locales'.freeze
+
+  # puppet version where locales mount was added
+  SUPPORTED_LOCALES_MOUNT_AGENT_VERSION = Gem::Version.new("5.3.4")
+
   def initialize(client, resolvers)
     @client = client
     @resolvers = resolvers
@@ -46,12 +50,24 @@ class Puppet::HTTP::Session
     version = response[Puppet::HTTP::HEADER_PUPPET_VERSION]
     if version
       site = Puppet::Network::HTTP::Site.from_uri(response.url)
-      @server_versions[site] = SemanticPuppet::Version.parse(version)
+      @server_versions[site] = version
     end
   end
 
-  def server_version(url)
-    site = Puppet::Network::HTTP::Site.from_uri(url)
-    @server_versions[site] || SemanticPuppet::Version.parse("4.0.0")
+  def supports?(name, capability)
+    raise ArgumentError, "Unknown service #{name}" unless Puppet::HTTP::Service.valid_name?(name)
+
+    service = @resolved_services[name]
+    return false unless service
+
+    site = Puppet::Network::HTTP::Site.from_uri(service.url)
+    server_version = @server_versions[site]
+
+    case capability
+    when CAP_LOCALES
+      !server_version.nil? && Gem::Version.new(server_version) >= SUPPORTED_LOCALES_MOUNT_AGENT_VERSION
+    else
+      false
+    end
   end
 end

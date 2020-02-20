@@ -93,4 +93,22 @@ describe Puppet::Configurer::PluginHandler do
       expect(times_called).to eq(2)
     end
   end
+
+  context "nil server agent version" do
+    it "returns downloaded plugin, fact, but not locale filenames" do
+      times_called = 0
+      allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) do
+        times_called += 1
+
+        if times_called == 1
+          %w[/a]
+        else
+          %w[/b]
+        end
+      end
+
+      expect(pluginhandler.download_plugins(environment)).to match_array(%w[/a /b])
+      expect(times_called).to eq(2)
+    end
+  end
 end
