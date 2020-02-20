@@ -10,9 +10,10 @@ describe Puppet::Face[:plugin, :current] do
   end
 
   context "download" do
-    before :each do
-      #Server_agent version needs to be at 5.3.4 in order to mount locales
-      Puppet.push_context({:server_agent_version => "5.3.4"})
+    around do |example|
+      Puppet.override(server_agent_version: "5.3.4") do
+        example.run
+      end
     end
 
     it "downloads plugins, external facts, and locales" do
@@ -61,9 +62,10 @@ describe Puppet::Face[:plugin, :current] do
   end
 
   context "download when server_agent_version is 5.3.3" do
-    before :each do
-      #Server_agent version needs to be at 5.3.4 in order to mount locales
-      Puppet.push_context({:server_agent_version => "5.3.3"})
+    around do |example|
+      Puppet.override(server_agent_version: "5.3.3") do
+        example.run
+      end
     end
 
     it "downloads plugins, and external facts, but not locales" do
@@ -87,10 +89,10 @@ describe Puppet::Face[:plugin, :current] do
   end
 
   context "download when server_agent_version is blank" do
-    before :each do
-      #Server_agent version needs to be at 5.3.4 in order to mount locales
-      #A blank version will default to 0.0
-      Puppet.push_context({:server_agent_version => ""})
+    around do |example|
+      Puppet.override(server_agent_version: "") do
+        example.run
+      end
     end
 
     it "downloads plugins, and external facts, but not locales" do

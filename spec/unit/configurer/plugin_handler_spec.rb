@@ -6,13 +6,17 @@ describe Puppet::Configurer::PluginHandler do
   let(:pluginhandler) { Puppet::Configurer::PluginHandler.new() }
   let(:environment)   { Puppet::Node::Environment.create(:myenv, []) }
 
+  before :each do
+    # PluginHandler#load_plugin has an extra-strong rescue clause
+    # this mock is to make sure that we don't silently ignore errors
+    expect(Puppet).not_to receive(:err)
+  end
+
   context "server agent version is 5.3.4" do
-    before :each do
-      # PluginHandler#load_plugin has an extra-strong rescue clause
-      # this mock is to make sure that we don't silently ignore errors
-      expect(Puppet).not_to receive(:err)
-      # Server_agent version needs to be at 5.3.4 in order to mount locales
-      Puppet.push_context({:server_agent_version => "5.3.4"})
+    around do |example|
+      Puppet.override(server_agent_version: "5.3.4") do
+        example.run
+      end
     end
 
     it "downloads plugins, facts, and locales" do
@@ -43,12 +47,10 @@ describe Puppet::Configurer::PluginHandler do
   end
 
   context "server agent version is 5.3.3" do
-    before :each do
-      # PluginHandler#load_plugin has an extra-strong rescue clause
-      # this mock is to make sure that we don't silently ignore errors
-      expect(Puppet).not_to receive(:err)
-      # Server_agent version needs to be at 5.3.4 in order to mount locales
-      Puppet.push_context({:server_agent_version => "5.3.3"})
+    around do |example|
+      Puppet.override(server_agent_version: "5.3.3") do
+        example.run
+      end
     end
 
     it "returns downloaded plugin, fact, but not locale filenames" do
@@ -69,13 +71,10 @@ describe Puppet::Configurer::PluginHandler do
   end
 
   context "blank server agent version" do
-    before :each do
-      # PluginHandler#load_plugin has an extra-strong rescue clause
-      # this mock is to make sure that we don't silently ignore errors
-      expect(Puppet).not_to receive(:err)
-      # Server_agent version needs to be at 5.3.4 in order to mount locales
-      # A blank version will default to 0.0
-      Puppet.push_context({:server_agent_version => ""})
+    around do |example|
+      Puppet.override(server_agent_version: "") do
+        example.run
+      end
     end
 
     it "returns downloaded plugin, fact, but not locale filenames" do
