@@ -1,9 +1,13 @@
 class Puppet::HTTP::Session
   # capabilities for a site
   CAP_LOCALES = 'locales'.freeze
+  CAP_JSON = 'json'.freeze
 
   # puppet version where locales mount was added
   SUPPORTED_LOCALES_MOUNT_AGENT_VERSION = Gem::Version.new("5.3.4")
+
+  # puppet version where JSON was enabled by default
+  SUPPORTED_JSON_DEFAULT = Gem::Version.new("5.0.0")
 
   def initialize(client, resolvers)
     @client = client
@@ -66,6 +70,8 @@ class Puppet::HTTP::Session
     case capability
     when CAP_LOCALES
       !server_version.nil? && Gem::Version.new(server_version) >= SUPPORTED_LOCALES_MOUNT_AGENT_VERSION
+    when CAP_JSON
+      server_version.nil? || Gem::Version.new(server_version) >= SUPPORTED_JSON_DEFAULT
     else
       false
     end
