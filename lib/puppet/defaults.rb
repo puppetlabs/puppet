@@ -1167,7 +1167,7 @@ EOT
         the request.
 
         For info on autosign configuration files, see
-        [the guide to Puppet's config files](https://puppet.com/docs/puppet/latest/config_about_settings.html).",
+        [the guide to Puppet's config files](https://puppet.com/docs/puppet/latest/config_file_autosign.html).",
     },
     :allow_duplicate_certs => {
       :default    => false,
