@@ -69,6 +69,14 @@ running as a user with valid Puppet certificates. Alternatively, you can
 use your local file bucket by specifying '--local', or by specifying
 '--bucket' with a local path.
 
+> **Note**: Enabling and using the backup option, and by extension the 
+  filebucket resource, requires appropriate planning and management to ensure 
+  that sufficient disk space is available for the file backups. Generally, you 
+  can implement this using one of the following two options:
+  - Use a `find` command and `crontab` entry to retain only the last X days 
+  of file backups.
+  - Restrict the directory to a maximum size after which the oldest items are removed.
+
 
 OPTIONS
 -------
