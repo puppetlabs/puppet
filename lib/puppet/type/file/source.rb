@@ -261,13 +261,13 @@ module Puppet
       end
     end
 
-    def each_chunk_from
+    def each_chunk_from(&block)
       if Puppet[:default_file_terminus] == :file_server && scheme == 'puppet' && (uri.host.nil? || uri.host.empty?)
-        chunk_file_from_disk(metadata.path) { |chunk| yield chunk }
+        chunk_file_from_disk(metadata.path, &block)
       elsif local?
-        chunk_file_from_disk(full_path) { |chunk| yield chunk }
+        chunk_file_from_disk(full_path, &block)
       else
-        chunk_file_from_source { |chunk| yield chunk }
+        chunk_file_from_source(&block)
       end
     end
 
