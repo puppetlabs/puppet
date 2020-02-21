@@ -1,10 +1,5 @@
-require 'semantic_puppet'
-
 class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
   API = '/puppet/v3'.freeze
-
-  # puppet major version where JSON is enabled by default
-  MAJOR_VERSION_JSON_DEFAULT = 5
 
   def initialize(client, session, server, port)
     url = build_url(API, server || Puppet[:report_server], port || Puppet[:report_port])
@@ -26,15 +21,13 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
 
     @session.process_response(response)
 
-    return response.body.to_s if response.success?
-
-    server_version = response[Puppet::HTTP::HEADER_PUPPET_VERSION]
-    if server_version && SemanticPuppet::Version.parse(server_version).major < MAJOR_VERSION_JSON_DEFAULT &&
-       Puppet[:preferred_serialization_format] != 'pson'
+    if response.success?
+      response.body.to_s
+    elsif !@session.supports?(:report, 'json') && Puppet[:preferred_serialization_format] != 'pson'
       #TRANSLATORS "pson", "preferred_serialization_format", and "puppetserver" should not be translated
-      raise Puppet::HTTP::ProtocolError.new(_("To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson") % { server_version: server_version })
+      raise Puppet::HTTP::ProtocolError.new(_("To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson") % { server_version: response[Puppet::HTTP::HEADER_PUPPET_VERSION]})
+    else
+      raise Puppet::HTTP::ResponseError.new(response)
     end
-
-    raise Puppet::HTTP::ResponseError.new(response)
   end
 end

@@ -165,4 +165,88 @@ describe Puppet::HTTP::Session do
       }.to raise_error(Puppet::HTTP::RouteError, 'No more routes to ca')
     end
   end
+
+  context 'when retrieving capabilities' do
+    let(:session) do
+      resolver = DummyResolver.new(good_service)
+      described_class.new(client, [resolver])
+    end
+
+    it 'raises for unknown service names' do
+      expect {
+        session = described_class.new(client, [])
+        session.supports?(:westbound, 'a capability')
+      }.to raise_error(ArgumentError, "Unknown service westbound")
+    end
+
+    context 'locales' do
+      it 'does not support locales if the cached service has not been resolved' do
+        session = described_class.new(client, [])
+
+        expect(session).to_not be_supports(:puppet, 'locales')
+      end
+
+      it "supports locales if the cached service's version is 5.3.4 or greater" do
+        response = Puppet::HTTP::Response.new({'X-Puppet-Version' => '5.3.4'}, uri)
+
+        session.route_to(:puppet)
+        session.process_response(response)
+
+        expect(session).to be_supports(:puppet, 'locales')
+      end
+
+      it "does not support locales if the cached service's version is 5.3.3" do
+        response = Puppet::HTTP::Response.new({'X-Puppet-Version' => '5.3.3'}, uri)
+
+        session.route_to(:puppet)
+        session.process_response(response)
+
+        expect(session).to_not be_supports(:puppet, 'locales')
+      end
+
+      it "does not support locales if the cached service's version is missing" do
+        response = Puppet::HTTP::Response.new({}, uri)
+
+        session.route_to(:puppet)
+        session.process_response(response)
+
+        expect(session).to_not be_supports(:puppet, 'locales')
+      end
+    end
+
+    context 'json' do
+      it 'does not support json if the cached service has not been resolved' do
+        session = described_class.new(client, [])
+
+        expect(session).to_not be_supports(:puppet, 'json')
+      end
+
+      it "supports json if the cached service's version is 5 or greater" do
+        response = Puppet::HTTP::Response.new({'X-Puppet-Version' => '5.5.12'}, uri)
+
+        session.route_to(:puppet)
+        session.process_response(response)
+
+        expect(session).to be_supports(:puppet, 'json')
+      end
+
+      it "does not support json if the cached service's version is less than 5.0" do
+        response = Puppet::HTTP::Response.new({'X-Puppet-Version' => '4.10.1'}, uri)
+
+        session.route_to(:puppet)
+        session.process_response(response)
+
+        expect(session).to_not be_supports(:puppet, 'json')
+      end
+
+      it "supports json if the cached service's version is missing" do
+        response = Puppet::HTTP::Response.new({}, uri)
+
+        session.route_to(:puppet)
+        session.process_response(response)
+
+        expect(session).to be_supports(:puppet, 'json')
+      end
+    end
+  end
 end
