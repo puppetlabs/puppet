@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.12.0-140-gec3639ae66\n"
+"Project-Id-Version: Puppet automation framework 6.13.0-33-g42fff230e3\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-02-07 12:49+0000\n"
-"PO-Revision-Date: 2020-02-07 12:49+0000\n"
+"POT-Creation-Date: 2020-02-22 04:35+0000\n"
+"PO-Revision-Date: 2020-02-22 04:35+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -48,21 +48,21 @@ msgstr ""
 msgid "Config file %{hiera_config} not found, using Hiera defaults"
 msgstr ""
 
-#: ../lib/puppet.rb:130
+#: ../lib/puppet.rb:141
 msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html for a list of supported ruby versions."
 msgstr ""
 
-#: ../lib/puppet.rb:188
+#: ../lib/puppet.rb:203
 msgid "The environmentpath setting cannot be empty or nil."
 msgstr ""
 
 #. TRANSLATORS: `message` is an already translated string of why SSL failed to initialize
-#: ../lib/puppet.rb:218
+#: ../lib/puppet.rb:233
 msgid "Failed to initialize SSL: %{message}"
 msgstr ""
 
 #. TRANSLATORS: `puppet agent -t` is a command and should not be translated
-#: ../lib/puppet.rb:220
+#: ../lib/puppet.rb:235
 msgid "Run `puppet agent -t`"
 msgstr ""
 
@@ -182,19 +182,19 @@ msgstr ""
 msgid "The puppet agent daemon"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:399
+#: ../lib/puppet/application/agent.rb:397
 msgid "Fingerprint asked but neither the certificate, nor the certificate request have been issued"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:404
+#: ../lib/puppet/application/agent.rb:402
 msgid "Failed to generate fingerprint: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:427
+#: ../lib/puppet/application/agent.rb:425
 msgid "Starting Puppet client version %{version}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:443
+#: ../lib/puppet/application/agent.rb:441
 msgid "The puppet agent command does not take parameters"
 msgstr ""
 
@@ -698,38 +698,38 @@ msgstr ""
 msgid "a data type can only have one implementation"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:171
+#: ../lib/puppet/defaults.rb:175
 msgid "Cannot disable unrecognized warning types '%{invalid}'."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:172
+#: ../lib/puppet/defaults.rb:176
 msgid "Valid values are '%{values}'."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:540
+#: ../lib/puppet/defaults.rb:544
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:542
+#: ../lib/puppet/defaults.rb:546
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:732
+#: ../lib/puppet/defaults.rb:736
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:813
+#: ../lib/puppet/defaults.rb:817
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:998
+#: ../lib/puppet/defaults.rb:1002
 msgid "Setting 'ssl_client_ca_auth' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1077 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1081 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
@@ -1782,7 +1782,7 @@ msgstr ""
 msgid "Is a directory: %{directory}"
 msgstr ""
 
-#: ../lib/puppet/file_system/memory_impl.rb:68
+#: ../lib/puppet/file_system/memory_impl.rb:81
 msgid "Unable to find registered object for %{path}"
 msgstr ""
 
@@ -2238,11 +2238,11 @@ msgstr ""
 msgid "Request to %{uri} failed after %{elapsed} seconds: %{message}"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:157
+#: ../lib/puppet/http/client.rb:161
 msgid "Sleeping for %{interval} seconds before retrying the request"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:198 ../lib/puppet/indirector/request.rb:142
+#: ../lib/puppet/http/client.rb:202 ../lib/puppet/indirector/request.rb:142
 msgid "HTTP REST queries cannot handle values of type '%{klass}'"
 msgstr ""
 
@@ -2266,12 +2266,12 @@ msgstr ""
 msgid "Failed to parse Retry-After header '%{retry_after}' as an integer or RFC 2822 date"
 msgstr ""
 
-#: ../lib/puppet/http/service.rb:66 ../lib/puppet/indirector/rest.rb:276
+#: ../lib/puppet/http/service.rb:67 ../lib/puppet/indirector/rest.rb:276
 msgid "No content type in http response; cannot parse"
 msgstr ""
 
 #. TRANSLATORS "pson", "preferred_serialization_format", and "puppetserver" should not be translated
-#: ../lib/puppet/http/service/report.rb:31
+#: ../lib/puppet/http/service/report.rb:28
 msgid "To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson"
 msgstr ""
 
@@ -2283,124 +2283,124 @@ msgstr ""
 msgid "Already handling indirection for %{current}; cannot also handle %{next}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:25
+#: ../lib/puppet/indirector/catalog/compiler.rb:26
 msgid "Facts but no fact format provided for %{request}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:28
+#: ../lib/puppet/indirector/catalog/compiler.rb:29
 msgid "Found facts"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:33
+#: ../lib/puppet/indirector/catalog/compiler.rb:34
 msgid "Catalog for %{request} was requested with fact definition for the wrong node (%{fact_name})."
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:70
+#: ../lib/puppet/indirector/catalog/compiler.rb:71
 msgid "Setup server facts for compiling"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:94
+#: ../lib/puppet/indirector/catalog/compiler.rb:95
 msgid "Unsupported facts format"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:135
+#: ../lib/puppet/indirector/catalog/compiler.rb:136
 msgid "Not inlining absent resource"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:138
+#: ../lib/puppet/indirector/catalog/compiler.rb:139
 msgid "Not inlining resource without sources"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:141
+#: ../lib/puppet/indirector/catalog/compiler.rb:142
 msgid "Not inlining unsupported source scheme"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:163
+#: ../lib/puppet/indirector/catalog/compiler.rb:164
 msgid "Not inlining file outside environment"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:169
+#: ../lib/puppet/indirector/catalog/compiler.rb:170
 msgid "Inlining file metadata"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:257
+#: ../lib/puppet/indirector/catalog/compiler.rb:259
 msgid "Could not get metadata for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:278
+#: ../lib/puppet/indirector/catalog/compiler.rb:280
 msgid "Unable to find a common checksum type between agent '%{agent_type}' and master '%{master_type}'."
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:285
+#: ../lib/puppet/indirector/catalog/compiler.rb:287
 msgid "Compiled static catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:286
+#: ../lib/puppet/indirector/catalog/compiler.rb:288
 msgid "Compiled static catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:288
+#: ../lib/puppet/indirector/catalog/compiler.rb:290
 msgid "Compiled static catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:289
+#: ../lib/puppet/indirector/catalog/compiler.rb:291
 msgid "Compiled static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:294
+#: ../lib/puppet/indirector/catalog/compiler.rb:296
 msgid "Compiled catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:295
+#: ../lib/puppet/indirector/catalog/compiler.rb:297
 msgid "Compiled catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:297
+#: ../lib/puppet/indirector/catalog/compiler.rb:299
 msgid "Compiled catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:298
+#: ../lib/puppet/indirector/catalog/compiler.rb:300
 msgid "Compiled catalog for %{node}"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:320
+#: ../lib/puppet/indirector/catalog/compiler.rb:322
 msgid "Inlined resource metadata into static catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:322
+#: ../lib/puppet/indirector/catalog/compiler.rb:324
 msgid "Inlined resource metadata into static catalog for %{node} in environment %{environment}"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:325
+#: ../lib/puppet/indirector/catalog/compiler.rb:327
 msgid "Inlined resource metadata into static catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:327
+#: ../lib/puppet/indirector/catalog/compiler.rb:329
 msgid "Inlined resource metadata into static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:344
+#: ../lib/puppet/indirector/catalog/compiler.rb:346
 msgid "Found node information"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:352
+#: ../lib/puppet/indirector/catalog/compiler.rb:354
 msgid "Failed when searching for node %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:372
+#: ../lib/puppet/indirector/catalog/compiler.rb:374
 msgid "Invalid option use_node for a remote request"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:391
+#: ../lib/puppet/indirector/catalog/compiler.rb:393
 msgid "Could not find node '%{name}'; cannot compile"
 msgstr ""
 
@@ -3930,33 +3930,33 @@ msgstr ""
 msgid "Expected an instance of Puppet::SSL::Verifier but was passed a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:225
+#: ../lib/puppet/network/http/connection.rb:229
 msgid "Too many HTTP redirections for %{host}:%{port}"
 msgstr ""
 
 #. TRANSLATORS: Used in the phrase:
 #. "Received a response from the remote server."
-#: ../lib/puppet/network/http/connection.rb:255
+#: ../lib/puppet/network/http/connection.rb:259
 msgid "the remote server"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:259
+#: ../lib/puppet/network/http/connection.rb:263
 msgid "Received a %{status_code} response from %{server_hostname}, but the Retry-After header value of \"%{retry_after}\" could not be converted to an integer or RFC 2822 date."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:270
+#: ../lib/puppet/network/http/connection.rb:274
 msgid "Received a %{status_code} response from %{server_hostname}. Sleeping for %{retry_sleep} seconds before retrying the request."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:331
+#: ../lib/puppet/network/http/connection.rb:335
 msgid "request %{uri} interrupted after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:333
+#: ../lib/puppet/network/http/connection.rb:337
 msgid "request %{uri} timed out after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:335
+#: ../lib/puppet/network/http/connection.rb:339
 msgid "request %{uri} failed: %{msg}"
 msgstr ""
 
@@ -4004,7 +4004,7 @@ msgstr ""
 msgid "Could not resolve %{ip}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/network/http/pool.rb:65
+#: ../lib/puppet/network/http/pool.rb:68
 msgid "Failed to close connection for %{site}: %{detail}"
 msgstr ""
 
@@ -6586,7 +6586,7 @@ msgstr ""
 msgid "GID must be an integer"
 msgstr ""
 
-#: ../lib/puppet/provider/group/groupadd.rb:42
+#: ../lib/puppet/provider/group/groupadd.rb:44
 msgid "GID %{resource} already exists, use allowdupe to force group creation"
 msgstr ""
 
@@ -7575,24 +7575,24 @@ msgstr ""
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1399
+#: ../lib/puppet/settings.rb:1401
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1423
+#: ../lib/puppet/settings.rb:1425
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1433
+#: ../lib/puppet/settings.rb:1435
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1434
+#: ../lib/puppet/settings.rb:1436
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1465
+#: ../lib/puppet/settings.rb:1467
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
@@ -8628,12 +8628,8 @@ msgstr ""
 msgid "Not managing symlink mode"
 msgstr ""
 
-#: ../lib/puppet/type/file/source.rb:135
-msgid "No source for content was stored with the metadata"
-msgstr ""
-
 #. TRANSLATORS "source_permissions" is a parameter name and should not be translated
-#: ../lib/puppet/type/file/source.rb:362
+#: ../lib/puppet/type/file/source.rb:350
 msgid "The `source_permissions` parameter is deprecated. Explicitly set `owner`, `group`, and `mode`."
 msgstr ""
 
