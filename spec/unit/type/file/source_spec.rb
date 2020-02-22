@@ -533,20 +533,54 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
   describe "when writing" do
     describe "as puppet apply" do
       let(:source_content) { "source file content\r\n"*10 }
+      let(:modulepath) { File.join(Puppet[:environmentpath], 'testing', 'modules') }
+      let(:env) { Puppet::Node::Environment.create(:testing, [modulepath]) }
+      let(:catalog) { Puppet::Resource::Catalog.new(:test, env) }
+
       before do
         Puppet[:default_file_terminus] = "file_server"
-        resource[:source] = file_containing('apply', source_content)
       end
 
       it "should copy content from the source to the file" do
+        resource = Puppet::Type.type(:file).new(path: filename, catalog: catalog, source: file_containing('apply', source_content))
         source = resource.parameter(:source)
         resource.write(source)
 
         expect(Puppet::FileSystem.binread(filename)).to eq(source_content)
       end
 
+      it 'should use the in-process fileserver if source starts with puppet:///' do
+        path = File.join(modulepath, 'mymodule', 'files', 'path')
+        Puppet::FileSystem.dir_mkpath(path)
+        File.open(path, 'wb') { |f| f.write(source_content) }
+        resource = Puppet::Type.type(:file).new(path: filename, catalog: catalog, source: 'puppet:///modules/mymodule/path')
+
+        source = resource.parameter(:source)
+        resource.write(source)
+
+        expect(Puppet::FileSystem.binread(filename)).to eq(source_content)
+      end
+
+      it 'follows symlinks when retrieving content from the in-process fileserver' do
+        # create a 'link' that points to 'target' in the 'mymodule' module
+        link = File.join(modulepath, 'mymodule', 'files', 'link')
+        target = File.join(modulepath, 'mymodule', 'files', 'target')
+        Puppet::FileSystem.dir_mkpath(target)
+        File.open(target, 'wb') { |f| f.write(source_content) }
+        Puppet::FileSystem.symlink(target, link)
+        resource = Puppet::Type.type(:file).new(path: filename, catalog: catalog, source: 'puppet:///modules/mymodule/link')
+
+        source = resource.parameter(:source)
+        resource.write(source)
+
+        # 'filename' should be a file containing the contents of the followed link
+        expect(Puppet::FileSystem.binread(filename)).to eq(source_content)
+      end
+
       with_digest_algorithms do
         it "should return the checksum computed" do
+          resource = Puppet::Type.type(:file).new(path: filename, catalog: catalog, source: file_containing('apply', source_content))
+
           File.open(filename, 'wb') do |file|
             source = resource.parameter(:source)
             resource[:checksum] = digest_algorithm
