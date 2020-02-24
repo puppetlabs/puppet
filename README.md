@@ -47,9 +47,9 @@ See [LICENSE](https://github.com/puppetlabs/puppet/blob/master/LICENSE) file. Pu
 
 ## Support
 
-Please log tickets and issues at our [JIRA tracker](https://tickets.puppetlabs.com).  A [mailing
+Please log tickets and issues at our [JIRA tracker](https://tickets.puppetlabs.com). A [mailing
 list](https://groups.google.com/forum/?fromgroups#!forum/puppet-users) is
-available for asking questions and getting help from others.
+available for asking questions and getting help from others, or if you prefer chat, we also have a [Puppet Community slack.](https://puppetcommunity.slack.com/)
 
 We use semantic version numbers for our releases and recommend that users stay
 as up-to-date as possible by upgrading to patch releases and minor releases as
