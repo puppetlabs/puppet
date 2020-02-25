@@ -75,7 +75,10 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   # @api private
   def borrow(site, verifier)
     @pool[site] = active_sessions(site)
-    index = @pool[site].index { |session| verifier.reusable?(session.verifier) }
+    index = @pool[site].index do |session|
+      (verifier.nil? && session.verifier.nil?) ||
+        (!verifier.nil? && verifier.reusable?(session.verifier))
+    end
     session = index ? @pool[site].delete_at(index) : nil
     if session
       @pool.delete(site) if @pool[site].empty?

@@ -282,13 +282,21 @@ describe Puppet::Network::HTTP::Pool do
       expect(pool.borrow(site, new_verifier)).to equal(old_conn)
     end
 
+    it 'returns a cached connection if both connections are http' do
+      http_site = Puppet::Network::HTTP::Site.new('http', 'www.example.com', 80)
+      old_conn = create_http_connection(http_site)
+      pool = create_pool_with_http_connections(http_site, old_conn)
+
+      # 'equal' tests that it's the same object
+      expect(pool.borrow(http_site, nil)).to equal(old_conn)
+    end
+
     it 'returns started connections' do
       conn = create_connection(site)
       expect(conn).to receive(:start)
 
       pool = create_pool
       expect(pool.factory).to receive(:create_connection).with(site).and_return(conn)
-      expect(pool).to receive(:setsockopts)
 
       expect(pool.borrow(site, verifier)).to eq(conn)
     end
