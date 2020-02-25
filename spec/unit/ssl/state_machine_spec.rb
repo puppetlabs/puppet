@@ -877,6 +877,16 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
           }.to exit_with(1)
         }.to output(/Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate \(.*\). Exiting now because the maxwaitforcert timeout has been exceeded./).to_stdout
       end
+
+      it 'closes the pool before sleeping' do
+        machine = described_class.new(waitforcert: 15)
+
+        state = Puppet::SSL::StateMachine::Wait.new(machine)
+        expect(Puppet.runtime['http'].pool).to receive(:close).and_call_original
+        expect(Kernel).to receive(:sleep).with(15).ordered
+
+        state.next_state
+      end
     end
   end
 end

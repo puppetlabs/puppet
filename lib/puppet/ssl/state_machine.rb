@@ -278,6 +278,10 @@ class Puppet::SSL::StateMachine
       else
         Puppet.info(_("Will try again in %{time} seconds.") % {time: time})
 
+        # close persistent connections and session state before sleeping
+        Puppet.runtime['http'].close
+        @machine.session = nil
+
         Kernel.sleep(time)
 
         # our ssl directory may have been cleaned while we were
