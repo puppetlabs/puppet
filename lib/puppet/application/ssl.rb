@@ -28,7 +28,7 @@ OPTIONS
 -------
 
 * --help:
-  Print this help messsge.
+  Print this help message.
 
 * --verbose:
   Print extra information.
