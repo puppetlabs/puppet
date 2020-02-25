@@ -20,14 +20,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
 
   def exists?
     self.debug "Checking for module #{@resource[:name]}"
-    execpipe("#{command(:semodule)} --list") do |out|
-      out.each_line do |line|
-        if line =~ /^#{@resource[:name]}\b/
-          return :true
-        end
-      end
-    end
-    nil
+    return selmodules_loaded.has_key?(@resource[:name])
   end
 
   def syncversion
@@ -35,7 +28,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
 
     loadver = selmodversion_loaded
 
-    if(loadver) then
+    if (loadver) then
       filever = selmodversion_file
       if (filever == loadver)
         return :true
@@ -44,7 +37,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
     :false
   end
 
-  def syncversion= (dosync)
+  def syncversion=(dosync)
       execoutput("#{command(:semodule)} --upgrade #{selmod_name_to_filename}")
   rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not upgrade policy module: #{detail}", detail.backtrace
@@ -52,7 +45,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
 
   # Helper functions
 
-  def execoutput (cmd)
+  def execoutput(cmd)
     output = ''
     begin
       execpipe(cmd) do |out|
@@ -72,7 +65,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
     end
   end
 
-  def selmod_readnext (handle)
+  def selmod_readnext(handle)
     len = handle.read(4).unpack('V')[0]
     handle.read(len)
   end
@@ -118,23 +111,47 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
   end
 
   def selmodversion_loaded
-    selmod_output = []
-    selmodule_cmd = "#{command(:semodule)} --list"
-    begin
-      execpipe(selmodule_cmd) do |output|
-        output.each_line do |line|
-          line.chomp!
-          selmod_output << line
-          bits = line.split
-          if bits[0] == @resource[:name]
-            self.debug "load version #{bits[1]}"
-            return bits[1]
+    selmodules_loaded[@resource[:name]]
+  end
+
+  def selmodules_loaded
+    self.class.selmodules_loaded
+  end
+
+  # Extend Class
+
+  class << self
+    attr_accessor :loaded_modules
+  end
+
+  # Prefetch loaded selinux modules.
+  def self.prefetch(resources)
+    selmodules_loaded
+  end
+
+  def self.selmodules_loaded
+    if self.loaded_modules.nil?
+      self.debug "Fetching loaded selinux modules"
+      modules = {}
+      selmodule_cmd = "#{command(:semodule)} --list"
+      output = []
+      begin
+        execpipe(selmodule_cmd) do |pipe|
+          pipe.each_line do |line|
+            line.chomp!
+            output << line
+            name, version = line.split
+            modules[name] = version
           end
         end
+        self.loaded_modules = modules
+      rescue Puppet::ExecutionFailure
+        raise Puppet::Error,
+              _('Could not list policy modules: "%{selmodule_command}" failed with "%{selmod_output}"') %
+                { selmodule_command: selmodule_cmd, selmod_output: output.join(' ') },
+              $ERROR_INFO.backtrace
       end
-    rescue Puppet::ExecutionFailure
-      raise Puppet::ExecutionFailure, _("Could not list policy modules: \"%{selmodule_command}\" failed with \"%{selmod_output}\"") % { selmodule_command: selmodule_cmd, selmod_output: selmod_output.join(' ') }
     end
-    nil
+    self.loaded_modules
   end
 end
