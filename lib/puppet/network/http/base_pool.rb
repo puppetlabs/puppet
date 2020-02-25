@@ -4,7 +4,7 @@
 class Puppet::Network::HTTP::BasePool
   def start(site, verifier, http)
     Puppet.debug("Starting connection for #{site}")
-    if verifier
+    if site.use_ssl?
       verifier.setup_connection(http)
       begin
         http.start

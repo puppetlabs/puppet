@@ -37,6 +37,14 @@ describe Puppet::Network::HTTP::Pool do
     pool
   end
 
+  def create_pool_with_http_connections(site, *connections)
+    pool = Puppet::Network::HTTP::Pool.new
+    connections.each do |conn|
+      pool.release(site, nil, conn)
+    end
+    pool
+  end
+
   def create_pool_with_expired_connections(site, *connections)
     # setting keepalive timeout to -1 ensures any newly added
     # connections have already expired
@@ -49,6 +57,10 @@ describe Puppet::Network::HTTP::Pool do
 
   def create_connection(site)
     double(site.addr, :started? => false, :start => nil, :finish => nil, :use_ssl? => true, :verify_mode => OpenSSL::SSL::VERIFY_PEER)
+  end
+
+  def create_http_connection(site)
+    double(site.addr, :started? => false, :start => nil, :finish => nil, :use_ssl? => false)
   end
 
   context 'when yielding a connection' do
@@ -219,6 +231,30 @@ describe Puppet::Network::HTTP::Pool do
       expect(pool.borrow(site, verifier)).to eq(conn)
     end
 
+    it 'returns a new HTTP connection if the cached connection is HTTPS' do
+      https_site = Puppet::Network::HTTP::Site.new('https', 'www.example.com', 443)
+      old_conn = create_connection(https_site)
+      pool = create_pool_with_connections(https_site, old_conn)
+
+      http_site = Puppet::Network::HTTP::Site.new('http', 'www.example.com', 443)
+      new_conn = create_http_connection(http_site)
+      allow(pool.factory).to receive(:create_connection).with(http_site).and_return(new_conn)
+
+      expect(pool.borrow(http_site, nil)).to eq(new_conn)
+    end
+
+    it 'returns a new HTTPS connection if the cached connection is HTTP' do
+      http_site = Puppet::Network::HTTP::Site.new('http', 'www.example.com', 443)
+      old_conn = create_http_connection(http_site)
+      pool = create_pool_with_http_connections(http_site, old_conn)
+
+      https_site = Puppet::Network::HTTP::Site.new('https', 'www.example.com', 443)
+      new_conn = create_connection(https_site)
+      allow(pool.factory).to receive(:create_connection).with(https_site).and_return(new_conn)
+
+      expect(pool.borrow(https_site, verifier)).to eq(new_conn)
+    end
+
     it 'returns a new connection if the ssl contexts are different' do
       old_conn = create_connection(site)
       pool = create_pool_with_connections(site, old_conn)
@@ -279,8 +315,8 @@ describe Puppet::Network::HTTP::Pool do
       expect(conn).to receive(:finish)
 
       pool = create_pool_with_expired_connections(site, conn)
-      expect(pool.factory).to receive(:create_connection).and_return(double('conn', :start => nil))
       expect(pool).to receive(:setsockopts)
+      expect(pool.factory).to receive(:create_connection).and_return(double('conn', :start => nil, :use_ssl? => true))
 
       pool.borrow(site, verifier)
     end
@@ -293,8 +329,8 @@ describe Puppet::Network::HTTP::Pool do
       expect(conn).to receive(:finish).and_raise(IOError, 'read timeout')
 
       pool = create_pool_with_expired_connections(site, conn)
-      expect(pool.factory).to receive(:create_connection).and_return(double('open_conn', :start => nil))
       expect(pool).to receive(:setsockopts)
+      expect(pool.factory).to receive(:create_connection).and_return(double('open_conn', :start => nil, :use_ssl? => true))
 
       pool.borrow(site, verifier)
     end
