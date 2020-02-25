@@ -1,3 +1,5 @@
+require 'puppet/concurrent/synchronized'
+
 module Puppet
   module Pops
     require 'puppet/pops/loaders'
@@ -22,6 +24,10 @@ module Puppet
       require 'puppet/pops/loader/predefined_loader'
       require 'puppet/pops/loader/generic_plan_instantiator'
       require 'puppet/pops/loader/puppet_plan_instantiator'
+
+      # The implementation of synchronized applies it to all subclasses so we
+      # want to add it to be base class after any subclasses are created
+      Loader.include Puppet::Concurrent::Synchronized
     end
   end
 
