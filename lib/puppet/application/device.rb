@@ -194,7 +194,7 @@ you can specify '--server <servername>' as an argument.
 
 * --resource:
   Displays a resource state as Puppet code, roughly equivalent to
-  `puppet resource`.  Can be filterd by title. Requires --target be specified.
+  `puppet resource`.  Can be filtered by title. Requires --target be specified.
 
 * --target:
   Target a specific device/certificate in the device.conf. Doing so will perform a
