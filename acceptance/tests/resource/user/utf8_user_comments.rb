@@ -9,7 +9,7 @@
 # Where applicable, we should be able to do this in different locales
 test_name 'PUP-6777 Manage users with UTF-8 comments' do
 
-  tag 'audit:high',
+  tag 'audit:medium',
       'audit:acceptance' # Could be done as integration tests, but would
                          # require changing the system running the test
                          # in ways that might require special permissions
