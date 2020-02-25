@@ -1,7 +1,6 @@
 require 'spec_helper'
-require 'puppet/type/file/ensure'
 
-describe Puppet::Type::File::Ensure do
+describe Puppet::Type.type(:file).attrclass(:ensure) do
   include PuppetSpec::Files
 
   let(:path) { tmpfile('file_ensure') }

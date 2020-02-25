@@ -3,8 +3,6 @@ require 'matchers/include_in_order'
 require 'puppet_spec/compiler'
 
 require 'puppet/transaction'
-require 'puppet/type/exec'
-require 'puppet/type/notify'
 require 'fileutils'
 
 describe Puppet::Transaction do

@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'puppet/type/user'
 require 'puppet/indirector/resource/ral'
 
 describe "Puppet::Resource::Ral" do
@@ -18,7 +17,7 @@ describe "Puppet::Resource::Ral" do
       wrong_instance = double("wrong user", :name => "bob")
       my_instance    = double("my user",    :name => "root", :to_resource => my_resource)
 
-      expect(Puppet::Type::User).to receive(:instances).and_return([ wrong_instance, my_instance, wrong_instance ])
+      expect(Puppet::Type.type(:user)).to receive(:instances).and_return([ wrong_instance, my_instance, wrong_instance ])
       expect(Puppet::Resource::Ral.new.find(@request)).to eq(my_resource)
     end
 
@@ -32,8 +31,8 @@ describe "Puppet::Resource::Ral" do
       root = double("Root User")
       root_resource = double("Root Resource")
 
-      expect(Puppet::Type::User).to receive(:instances).and_return([ wrong_instance, wrong_instance ])
-      expect(Puppet::Type::User).to receive(:new).with(hash_including(name: "root")).and_return(root)
+      expect(Puppet::Type.type(:user)).to receive(:instances).and_return([ wrong_instance, wrong_instance ])
+      expect(Puppet::Type.type(:user)).to receive(:new).with(hash_including(name: "root")).and_return(root)
       expect(root).to receive(:to_resource).and_return(root_resource)
 
       result = Puppet::Resource::Ral.new.find(@request)
@@ -51,7 +50,7 @@ describe "Puppet::Resource::Ral" do
       my_resource = double("my user resource", :title => "my user resource")
       my_instance = double("my user", :name => "root", :to_resource => my_resource)
 
-      expect(Puppet::Type::User).to receive(:instances).and_return([ my_instance ])
+      expect(Puppet::Type.type(:user)).to receive(:instances).and_return([ my_instance ])
       expect(Puppet::Resource::Ral.new.search(@request)).to eq([my_resource])
     end
 
@@ -69,7 +68,7 @@ describe "Puppet::Resource::Ral" do
 
       @request = double('request', :key => "user/root", :options => {})
 
-      expect(Puppet::Type::User).to receive(:instances).and_return([ my_instance, wrong_instance ])
+      expect(Puppet::Type.type(:user)).to receive(:instances).and_return([ my_instance, wrong_instance ])
       expect(Puppet::Resource::Ral.new.search(@request)).to eq([my_resource])
     end
 
@@ -87,7 +86,7 @@ describe "Puppet::Resource::Ral" do
 
       @request = double('request', :key => "user/", :options => {:name => "bob"})
 
-      expect(Puppet::Type::User).to receive(:instances).and_return([ my_instance, wrong_instance ])
+      expect(Puppet::Type.type(:user)).to receive(:instances).and_return([ my_instance, wrong_instance ])
       expect(Puppet::Resource::Ral.new.search(@request)).to eq([my_resource])
     end
 
@@ -105,7 +104,7 @@ describe "Puppet::Resource::Ral" do
 
       @request = double('request', :key => "user/", :options => {})
 
-      expect(Puppet::Type::User).to receive(:instances).and_return([ b_instance, a_instance ])
+      expect(Puppet::Type.type(:user)).to receive(:instances).and_return([ b_instance, a_instance ])
       expect(Puppet::Resource::Ral.new.search(@request)).to eq([a_resource, b_resource])
     end
   end
