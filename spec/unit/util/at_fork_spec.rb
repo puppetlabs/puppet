@@ -5,6 +5,7 @@ describe 'Puppet::Util::AtFork' do
 
   before :each do
     Puppet::Util.class_exec do
+      remove_const(:AtFork) if defined?(Puppet::Util::AtFork)
       const_set(:AtFork, Module.new)
     end
   end
