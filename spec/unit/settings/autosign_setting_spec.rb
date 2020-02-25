@@ -2,7 +2,6 @@ require 'spec_helper'
 
 require 'puppet/settings'
 require 'puppet/settings/autosign_setting'
-require 'puppet/type/file'
 
 describe Puppet::Settings::AutosignSetting do
   let(:settings) do
@@ -75,6 +74,7 @@ describe Puppet::Settings::AutosignSetting do
     it "converts the file path to a file resource", :if => !Puppet::Util::Platform.windows? do
       path = File.expand_path('/path/to/autosign.conf')
       allow(settings).to receive(:value).with('autosign', nil, false).and_return(path)
+      allow(Puppet::FileSystem).to receive(:exist?).and_call_original
       allow(Puppet::FileSystem).to receive(:exist?).with(path).and_return(true)
       expect(Puppet.features).to receive(:root?).and_return(true)
 
