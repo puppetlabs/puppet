@@ -1,6 +1,5 @@
 # The client for interacting with the puppetmaster config server.
 require 'timeout'
-require 'puppet/network/http_pool'
 require 'puppet/util'
 require 'securerandom'
 #require 'puppet/parser/script_compiler'
@@ -196,7 +195,7 @@ class Puppet::Configurer
   # This just passes any options on to the catalog,
   # which accepts :tags and :ignoreschedules.
   def run(options = {})
-    pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
+    pool = Puppet.runtime['http'].pool
     # We create the report pre-populated with default settings for
     # environment and transaction_uuid very early, this is to ensure
     # they are sent regardless of any catalog compilation failures or

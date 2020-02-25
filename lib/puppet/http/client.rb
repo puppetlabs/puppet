@@ -1,4 +1,6 @@
 class Puppet::HTTP::Client
+  attr_reader :pool
+
   def initialize(pool: Puppet::Network::HTTP::Pool.new, ssl_context: nil, redirect_limit: 10, retry_limit: 100)
     @pool = pool
     @default_headers = {
