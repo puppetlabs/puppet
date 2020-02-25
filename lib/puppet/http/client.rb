@@ -52,11 +52,7 @@ class Puppet::HTTP::Client
   end
 
   def get(url, headers: {}, params: {}, options: {}, &block)
-    query = encode_params(params)
-    unless query.empty?
-      url = url.dup
-      url.query = query
-    end
+    url = encode_query(url, params)
 
     request = Net::HTTP::Get.new(url, @default_headers.merge(headers))
 
@@ -70,11 +66,7 @@ class Puppet::HTTP::Client
   end
 
   def head(url, headers: {}, params: {}, options: {})
-    query = encode_params(params)
-    unless query.empty?
-      url = url.dup
-      url.query = query
-    end
+    url = encode_query(url, params)
 
     request = Net::HTTP::Head.new(url, @default_headers.merge(headers))
 
@@ -85,12 +77,7 @@ class Puppet::HTTP::Client
 
   def put(url, headers: {}, params: {}, options: {})
     body = options.fetch(:body) { |_| raise ArgumentError, "'put' requires a 'body' option" }
-
-    query = encode_params(params)
-    unless query.empty?
-      url = url.dup
-      url.query = query
-    end
+    url = encode_query(url, params)
 
     request = Net::HTTP::Put.new(url, @default_headers.merge(headers))
     request.body = body
@@ -105,12 +92,7 @@ class Puppet::HTTP::Client
 
   def post(url, headers: {}, params: {}, options: {}, &block)
     body = options.fetch(:body) { |_| raise ArgumentError, "'post' requires a 'body' option" }
-
-    query = encode_params(params)
-    unless query.empty?
-      url = url.dup
-      url.query = query
-    end
+    url = encode_query(url, params)
 
     request = Net::HTTP::Post.new(url, @default_headers.merge(headers))
     request.body = body
@@ -128,11 +110,7 @@ class Puppet::HTTP::Client
   end
 
   def delete(url, headers: {}, params: {}, options: {})
-    query = encode_params(params)
-    unless query.empty?
-      url = url.dup
-      url.query = query
-    end
+    url = encode_query(url, params)
 
     request = Net::HTTP::Delete.new(url, @default_headers.merge(headers))
 
@@ -143,6 +121,16 @@ class Puppet::HTTP::Client
 
   def close
     @pool.close
+  end
+
+  protected
+
+  def encode_query(url, params)
+    return url if params.empty?
+
+    url = url.dup
+    url.query = encode_params(params)
+    url
   end
 
   private

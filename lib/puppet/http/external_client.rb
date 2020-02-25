@@ -18,11 +18,7 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
   # (see Puppet::HTTP::Client#get)
   # @api private
   def get(url, headers: {}, params: {}, options: {}, &block)
-    query = encode_params(params)
-    unless query.empty?
-      url = url.dup
-      url.query = query
-    end
+    url = encode_query(url, params)
 
     options[:use_ssl] = url.scheme == 'https'
     if options[:user] && options[:password]
@@ -47,12 +43,7 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
   # @api private
   def post(url, headers: {}, params: {}, options: {}, &block)
     body = options.fetch(:body) { |_| raise ArgumentError, "'post' requires a 'body' option" }
-
-    query = encode_params(params)
-    unless query.empty?
-      url = url.dup
-      url.query = query
-    end
+    url = encode_query(url, params)
 
     options[:use_ssl] = url.scheme == 'https'
     if options[:user] && options[:password]
