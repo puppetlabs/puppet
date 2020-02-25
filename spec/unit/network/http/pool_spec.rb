@@ -206,7 +206,6 @@ describe Puppet::Network::HTTP::Pool do
       conn = create_connection(site)
       pool = create_pool
       expect(pool.factory).to receive(:create_connection).with(site).and_return(conn)
-      expect(pool).to receive(:setsockopts)
 
       expect(pool.borrow(site, verifier)).to eq(conn)
     end
@@ -226,7 +225,6 @@ describe Puppet::Network::HTTP::Pool do
 
       conn = create_connection(site)
       expect(pool.factory).to receive(:create_connection).with(site).and_return(conn)
-      expect(pool).to receive(:setsockopts)
 
       expect(pool.borrow(site, verifier)).to eq(conn)
     end
@@ -258,7 +256,6 @@ describe Puppet::Network::HTTP::Pool do
     it 'returns a new connection if the ssl contexts are different' do
       old_conn = create_connection(site)
       pool = create_pool_with_connections(site, old_conn)
-      allow(pool).to receive(:setsockopts)
 
       new_conn = create_connection(site)
       allow(pool.factory).to receive(:create_connection).with(site).and_return(new_conn)
@@ -273,7 +270,6 @@ describe Puppet::Network::HTTP::Pool do
     it 'returns a cached connection if the ssl contexts are the same' do
       old_conn = create_connection(site)
       pool = create_pool_with_connections(site, old_conn)
-      allow(pool).to receive(:setsockopts)
 
       expect(pool.factory).not_to receive(:create_connection)
 
@@ -323,7 +319,6 @@ describe Puppet::Network::HTTP::Pool do
       expect(conn).to receive(:finish)
 
       pool = create_pool_with_expired_connections(site, conn)
-      expect(pool).to receive(:setsockopts)
       expect(pool.factory).to receive(:create_connection).and_return(double('conn', :start => nil, :use_ssl? => true))
 
       pool.borrow(site, verifier)
@@ -337,7 +332,6 @@ describe Puppet::Network::HTTP::Pool do
       expect(conn).to receive(:finish).and_raise(IOError, 'read timeout')
 
       pool = create_pool_with_expired_connections(site, conn)
-      expect(pool).to receive(:setsockopts)
       expect(pool.factory).to receive(:create_connection).and_return(double('open_conn', :start => nil, :use_ssl? => true))
 
       pool.borrow(site, verifier)
