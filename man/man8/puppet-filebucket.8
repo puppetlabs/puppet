@@ -36,6 +36,21 @@ This is a stand\-alone filebucket client for sending files to a local or central
 .P
 Note that \'filebucket\' defaults to using a network\-based filebucket available on the server named \'puppet\'\. To use this, you\'ll have to be running as a user with valid Puppet certificates\. Alternatively, you can use your local file bucket by specifying \'\-\-local\', or by specifying \'\-\-bucket\' with a local path\.
 .
+.IP "" 4
+.
+.nf
+
+  find /opt/puppetlabs/server/data/puppetserver/bucket \-type f \-mtime +45 \-atime +45 \-print0 | xargs \-0 rm
+.
+.fi
+.
+.IP "" 0
+.
+.IP "\(bu" 4
+Restrict the directory to a maximum size after which the oldest items are removed\.
+.
+.IP "" 0
+.
 .SH "OPTIONS"
 Note that any setting that\'s valid in the configuration file is also a valid long argument\. For example, \'ssldir\' is a valid setting, so you can specify \'\-\-ssldir \fIdirectory\fR\' as an argument\.
 .
