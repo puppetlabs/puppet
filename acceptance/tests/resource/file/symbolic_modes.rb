@@ -102,10 +102,10 @@ test_name 'file resource: symbolic modes' do
       files       = @file_list.collect {|x| "'#{x.path}'" }
       directories = @directory_list.collect {|x| "'#{x.path}'" }
 
-      @testcase.on(@agent, "touch #{files.join(' ')}")
-      @testcase.on(@agent, "mkdir -p #{directories.join(' ')}")
-      @testcase.on(@agent, "chown symuser:symgroup #{files.join(' ')} #{directories.join(' ')}")
       cmd_list = []
+      cmd_list << "touch #{files.join(' ')}"
+      cmd_list << "mkdir -p #{directories.join(' ')}"
+      cmd_list << "chown symuser:symgroup #{files.join(' ')} #{directories.join(' ')}"
       (@file_list + @directory_list).each do |file|
         cmd_list << "chmod #{file.start_mode.to_s(8)} '#{file.path}'"
       end
