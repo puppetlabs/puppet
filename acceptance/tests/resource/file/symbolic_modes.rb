@@ -183,14 +183,14 @@ test_name 'file resource: symbolic modes' do
   agents.each do |agent|
     is_solaris = agent['platform'].include?('solaris')
 
-    on(agent, puppet('resource user symuser ensure=present'))
-    on(agent, puppet('resource group symgroup ensure=present'))
+    manifest = "user { 'symuser': ensure => 'present'} group { 'symgroup': ensure => 'present' }"
+    apply_manifest_on(agent, manifest)
     base_dir_create = agent.tmpdir('symbolic-modes-create_test')
     base_dir_modify = agent.tmpdir('symbolic-modes-modify_test')
 
     teardown do
-      on(agent, puppet('resource user symuser ensure=absent'))
-      on(agent, puppet('resource group symgroup ensure=absent'))
+      manifest = "user { 'symuser': ensure => 'absent'} group { 'symgroup': ensure => 'absent' }"
+      apply_manifest_on(agent, manifest)
       on(agent, "rm -rf '#{base_dir_create}' '#{base_dir_modify}'")
     end
 
