@@ -857,6 +857,14 @@ Whether to write HTTP request and responses to stderr\. This should never be use
 .
 .IP "" 0
 .
+.SS "http_extra_headers"
+The list of extra headers that will be sent with http requests to the master\. The header definition consists of a name and a value separated by a colon\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: []
+.
+.IP "" 0
+.
 .SS "http_keepalive_timeout"
 The maximum amount of time a persistent HTTP connection can remain idle in the connection pool, before it is closed\. This timeout should be shorter than the keepalive timeout used on the HTTP server, e\.g\. Apache KeepAliveTimeout directive\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
