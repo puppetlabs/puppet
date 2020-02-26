@@ -146,11 +146,13 @@ module Puppet
       def stat(host, path)
         require File.join(File.dirname(__FILE__),'common_utils.rb')
         ruby = Puppet::Acceptance::CommandUtils.ruby_command(host)
-        owner = on(host, "#{ruby} -e 'require \"etc\"; puts (Etc.getpwuid(File.stat(\"#{path}\").uid).name)'").stdout.chomp
-        group = on(host, "#{ruby} -e 'require \"etc\"; puts (Etc.getgrgid(File.stat(\"#{path}\").gid).name)'").stdout.chomp
-        mode  = on(host, "#{ruby} -e 'puts (File.stat(\"#{path}\").mode & 07777)'").stdout.chomp.to_i
-
-        [owner, group, mode]
+        serialized_stat = on(host, "#{ruby} -e 'require \"etc\"; \
+                                                require \"yaml\"; \
+                                                owner = (Etc.getpwuid(File.stat(\"#{path}\").uid).name); \
+                                                group = (Etc.getgrgid(File.stat(\"#{path}\").gid).name); \
+                                                mode = (File.stat(\"#{path}\").mode & 07777); \
+                                                puts YAML::dump([owner,group,mode])'").stdout.chomp
+        YAML::load(serialized_stat)
       end
 
       def initialize_temp_dirs()
