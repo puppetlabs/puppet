@@ -25,14 +25,6 @@ describe Puppet::HTTP::Service::Report do
 
       subject.put_report('report', report, environment: environment)
     end
-
-    it 'includes the X-Puppet-Profiling header when Puppet[:profile] is true' do
-      stub_request(:put, uri).with(headers: {'X-Puppet-Version' => /./, 'User-Agent' => /./, 'X-Puppet-Profiling' => 'true'})
-
-      Puppet[:profile] = true
-
-      subject.put_report('report', report, environment: environment)
-    end
   end
 
   context 'when routing to the report service' do
@@ -59,6 +51,15 @@ describe Puppet::HTTP::Service::Report do
 
   context 'when submitting a report' do
     let(:url) { "https://www.example.com/puppet/v3/report/infinity?environment=testing" }
+
+    it 'includes puppet headers set via the :http_extra_headers and :profile settings' do
+      stub_request(:put, url).with(headers: {'Example-Header' => 'real-thing', 'another' => 'thing', 'X-Puppet-Profiling' => 'true'})
+
+      Puppet[:http_extra_headers] = 'Example-Header:real-thing,another:thing'
+      Puppet[:profile] = true
+
+      subject.put_report('infinity', report, environment: environment)
+    end
 
     it 'submits a report to the "report" endpoint' do
       stub_request(:put, url)

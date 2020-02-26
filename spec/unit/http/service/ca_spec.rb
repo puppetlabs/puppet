@@ -24,15 +24,6 @@ describe Puppet::HTTP::Service::Ca do
 
       subject.get_certificate('ca')
     end
-
-
-    it 'includes the X-Puppet-Profiling header when Puppet[:profile] is true' do
-      stub_request(:get, uri).with(headers: {'X-Puppet-Version' => /./, 'User-Agent' => /./, 'X-Puppet-Profiling' => 'true'})
-
-      Puppet[:profile] = true
-
-      subject.get_certificate('ca')
-    end
   end
 
   context 'when routing to the CA service' do
@@ -65,6 +56,15 @@ describe Puppet::HTTP::Service::Ca do
     let(:pem) { cert.to_pem }
     let(:url) { "https://www.example.com/puppet-ca/v1/certificate/ca" }
 
+    it 'includes headers set via the :http_extra_headers and :profile settings' do
+      stub_request(:get, url).with(headers: {'Example-Header' => 'real-thing', 'another' => 'thing', 'X-Puppet-Profiling' => 'true'})
+
+      Puppet[:http_extra_headers] = 'Example-Header:real-thing,another:thing'
+      Puppet[:profile] = true
+
+      subject.get_certificate('ca')
+    end
+
     it 'gets a certificate from the "certificate" endpoint' do
       stub_request(:get, url).to_return(body: pem)
 
@@ -94,6 +94,15 @@ describe Puppet::HTTP::Service::Ca do
     let(:crl) { crl_fixture('crl.pem') }
     let(:pem) { crl.to_pem }
     let(:url) { "https://www.example.com/puppet-ca/v1/certificate_revocation_list/ca" }
+
+    it 'includes headers set via the :http_extra_headers and :profile settings' do
+      stub_request(:get, url).with(headers: {'Example-Header' => 'real-thing', 'another' => 'thing', 'X-Puppet-Profiling' => 'true'})
+
+      Puppet[:http_extra_headers] = 'Example-Header:real-thing,another:thing'
+      Puppet[:profile] = true
+
+      subject.get_certificate_revocation_list
+    end
 
     it 'gets a CRL from "certificate_revocation_list" endpoint' do
       stub_request(:get, url).to_return(body: pem)
@@ -136,6 +145,15 @@ describe Puppet::HTTP::Service::Ca do
     let(:request) { request_fixture('request.pem') }
     let(:pem) { request.to_pem }
     let(:url) { "https://www.example.com/puppet-ca/v1/certificate_request/infinity" }
+
+    it 'includes headers set via the :http_extra_headers and :profile settings' do
+      stub_request(:put, url).with(headers: {'Example-Header' => 'real-thing', 'another' => 'thing', 'X-Puppet-Profiling' => 'true'})
+
+      Puppet[:http_extra_headers] = 'Example-Header:real-thing,another:thing'
+      Puppet[:profile] = true
+
+      subject.put_certificate_request('infinity', request)
+    end
 
     it 'submits a CSR to the "certificate_request" endpoint' do
       stub_request(:put, url).with(body: pem, headers: { 'Content-Type' => 'text/plain' })

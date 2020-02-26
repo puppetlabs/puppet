@@ -9,6 +9,58 @@ describe Puppet::HTTP::Service do
   let(:url) { URI.parse('https://www.example.com') }
   let(:service) { described_class.new(client, session, url) }
 
+  class TestService < Puppet::HTTP::Service
+    def get_test(ssl_context)
+       @client.get(
+        url,
+        headers: add_puppet_headers({'Default-Header' => 'default-value'}),
+        ssl_context: ssl_context
+      )
+    end
+  end
+
+  context 'when modifying headers for an http request' do
+    let(:service) { TestService.new(client, session, url) }
+
+    it 'adds custom user-specified headers' do
+      stub_request(:get, "https://www.example.com/").
+         with( headers: { 'Default-Header'=>'default-value', 'Header2'=>'newvalue' })
+
+      Puppet[:http_extra_headers] = 'header2:newvalue'
+
+      service.get_test(ssl_context)
+    end
+
+    it 'adds X-Puppet-Profiling header if set' do
+      stub_request(:get, "https://www.example.com/").
+         with( headers: { 'Default-Header'=>'default-value', 'X-Puppet-Profiling'=>'true' })
+
+      Puppet[:profile] = true
+
+      service.get_test(ssl_context)
+    end
+
+    it 'ignores a custom header does not have a value' do
+      stub_request(:get, "https://www.example.com/").with do |request|
+        expect(request.headers).to include({'Default-Header' => 'default-value'})
+        expect(request.headers).to_not include('header-with-no-value')
+      end
+
+      Puppet[:http_extra_headers] = 'header-with-no-value:'
+
+      service.get_test(ssl_context)
+    end
+
+    it 'ignores a custom header that already exists (case insensitive) in the header hash' do
+      stub_request(:get, "https://www.example.com/").
+         with( headers: { 'Default-Header'=>'default-value' })
+
+      Puppet[:http_extra_headers] = 'default-header:wrongvalue'
+
+      service.get_test(ssl_context)
+    end
+  end
+
   it "returns a URI containing the base URL and path" do
     expect(service.with_base_url('/puppet/v3')).to eq(URI.parse("https://www.example.com/puppet/v3"))
   end
