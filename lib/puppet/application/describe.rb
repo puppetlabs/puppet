@@ -67,13 +67,15 @@ class TypeDoc
     @types.keys.sort_by(&:to_s).each do |name|
       type = @types[name]
       s = type.doc.gsub(/\s+/, " ")
-      n = s.index(". ")
-      if n.nil?
+      if s.empty?
         s = ".. no documentation .."
-      elsif n > 45
-        s = s[0, 45] + " ..."
       else
-        s = s[0, n]
+        n = s.index(".") || s.length
+        if n > 45
+          s = s[0, 45] + " ..."
+        else
+          s = s[0, n]
+        end
       end
       printf "%-15s - %s\n", name, s
     end
