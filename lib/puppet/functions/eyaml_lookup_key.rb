@@ -39,7 +39,7 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
       context.cache(nil, raw_data)
     end
     context.not_found unless raw_data.include?(key)
-    context.cache(key, decrypt_value(raw_data[key], context, options))
+    context.cache(key, decrypt_value(raw_data[key], context, options, key))
   end
 
   def load_data_hash(options, context)
@@ -62,22 +62,22 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
     end
   end
 
-  def decrypt_value(value, context, options)
+  def decrypt_value(value, context, options, key)
     case value
     when String
-      decrypt(value, context, options)
+      decrypt(value, context, options, key)
     when Hash
       result = {}
-      value.each_pair { |k, v| result[context.interpolate(k)] = decrypt_value(v, context, options) }
+      value.each_pair { |k, v| result[context.interpolate(k)] = decrypt_value(v, context, options, key) }
       result
     when Array
-      value.map { |v| decrypt_value(v, context, options) }
+      value.map { |v| decrypt_value(v, context, options, key) }
     else
       value
     end
   end
 
-  def decrypt(data, context, options)
+  def decrypt(data, context, options, key)
     if encrypted?(data)
       # Options must be set prior to each call to #parse since they end up as static variables in
       # the Options class. They cannot be set once before #decrypt_value is called, since each #decrypt
@@ -85,8 +85,13 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
       # config.
       #
       Hiera::Backend::Eyaml::Options.set(options)
-      tokens = Hiera::Backend::Eyaml::Parser::ParserFactory.hiera_backend_parser.parse(data)
-      data = tokens.map(&:to_plain_text).join.chomp
+      begin
+        tokens = Hiera::Backend::Eyaml::Parser::ParserFactory.hiera_backend_parser.parse(data)
+        data = tokens.map(&:to_plain_text).join.chomp
+      rescue StandardError => ex
+        raise Puppet::DataBinding::LookupError,
+          _("hiera-eyaml backend error decrypting %{data} when looking up %{key} in %{path}. Error was %{message}") % { data: data, key: key, path: options['path'], message: ex.message }
+      end
     end
     context.interpolate(data)
   end
