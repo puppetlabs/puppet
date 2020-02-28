@@ -9,7 +9,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     super(client, session, url)
   end
 
-  def get_file_metadata(path:, environment:, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore, ssl_context: nil)
+  def get_file_metadata(path:, environment:, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore)
     validate_path(path)
 
     headers = add_puppet_headers('Accept' => get_mime_types(Puppet::FileServing::Metadata).join(', '))
@@ -22,8 +22,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
         checksum_type: checksum_type,
         source_permissions: source_permissions,
         environment: environment
-      },
-      ssl_context: ssl_context
+      }
     )
 
     process_response(response)
@@ -31,7 +30,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     deserialize(response, Puppet::FileServing::Metadata)
   end
 
-  def get_file_metadatas(path: nil, environment:, recurse: :false, recurselimit: nil, ignore: nil, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore, ssl_context: nil)
+  def get_file_metadatas(path: nil, environment:, recurse: :false, recurselimit: nil, ignore: nil, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore)
     validate_path(path)
 
     headers = add_puppet_headers('Accept' => get_mime_types(Puppet::FileServing::Metadata).join(', '))
@@ -47,8 +46,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
         checksum_type: checksum_type,
         source_permissions: source_permissions,
         environment: environment,
-      },
-      ssl_context: ssl_context
+      }
     )
 
     process_response(response)
@@ -56,7 +54,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     deserialize_multiple(response, Puppet::FileServing::Metadata)
   end
 
-  def get_file_content(path:, environment:, ssl_context: nil, &block)
+  def get_file_content(path:, environment:, &block)
     validate_path(path)
 
     headers = add_puppet_headers('Accept' => 'application/octet-stream')
@@ -65,8 +63,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
       headers: headers,
       params: {
         environment: environment
-      },
-      ssl_context: ssl_context
+      }
     ) do |res|
       if res.success?
         res.read_body(&block)
@@ -78,7 +75,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     nil
   end
 
-  def get_static_file_content(path:, environment:, code_id:, ssl_context: nil, &block)
+  def get_static_file_content(path:, environment:, code_id:, &block)
     validate_path(path)
 
     headers = add_puppet_headers('Accept' => 'application/octet-stream')
@@ -88,8 +85,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
       params: {
         environment: environment,
         code_id: code_id,
-      },
-      ssl_context: ssl_context
+      }
     ) do |res|
       if res.success?
         res.read_body(&block)

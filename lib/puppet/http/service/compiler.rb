@@ -16,7 +16,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
         environment: environment,
         configured_environment: configured_environment || environment,
         transaction_uuid: transaction_uuid,
-      },
+      }
     )
 
     process_response(response)
