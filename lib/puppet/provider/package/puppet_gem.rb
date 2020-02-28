@@ -14,4 +14,10 @@ Puppet::Type.type(:package).provide :puppet_gem, :parent => :gem do
   else
     commands :gemcmd => "/opt/puppetlabs/puppet/bin/gem"
   end
+
+  def uninstall
+    super
+    Puppet.debug("Invalidating rubygems cache after uninstalling gem '#{resource[:name]}'")
+    Puppet::Util::Autoload.gem_source.clear_paths
+  end
 end

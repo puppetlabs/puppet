@@ -67,6 +67,14 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
       expect(described_class).to receive(:execute_gem_command).with(provider_gem_cmd, %w{uninstall --executables --all myresource --force --bindir=/usr/bin}).and_return('')
       provider.uninstall
     end
+
+    it 'should invalidate the rubygems cache' do
+      gem_source = double('gem_source')
+      allow(Puppet::Util::Autoload).to receive(:gem_source).and_return(gem_source)
+      expect(described_class).to receive(:execute_gem_command).with(provider_gem_cmd, %w{uninstall --executables --all myresource}).and_return('')
+      expect(gem_source).to receive(:clear_paths)
+      provider.uninstall
+    end
   end
 
   context 'calculated specificity' do
