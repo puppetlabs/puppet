@@ -617,53 +617,64 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
     describe 'from remote source' do
       let(:source_content) { "source file content\n"*10 }
-      let(:source) { resource.newattr(:source) }
-      let(:response) { double('response', :[] => nil, :body => nil, :message => nil) }
-      let(:conn) { double('connection') }
+      let(:source) {
+        attr = resource.newattr(:source)
+        attr.metadata = metadata
+        attr
+      }
+      let(:metadata) {
+        Puppet::FileServing::Metadata.new(
+          '/modules/:module/foo',
+          {
+            'type' => 'file',
+            'source' => 'puppet:///modules/:module/foo'
+          }
+        )
+      }
 
       before do
         resource[:backup] = false
-
-        expectation = receive(:read_body)
-        source_content.lines.each { |line| expectation = expectation.and_yield(line) }
-        allow(response).to expectation
-        allow(conn).to receive(:request_get).and_yield(response)
       end
 
       it 'should use an explicit fileserver if source starts with puppet://' do
-        allow(response).to receive(:code).and_return('200')
-        allow(source).to receive(:metadata).and_return(double('metadata', :source => 'puppet://somehostname/test/foo', :ftype => 'file', :content_uri => nil))
-        expect(Puppet::Network::HttpPool).to receive(:connection).with('somehostname', 8140, anything).and_return(conn)
+        metadata.source = "puppet://somehostname:8140/modules/:module/foo"
+
+        stub_request(:get, %r{https://somehostname:8140/puppet/v3/file_content/modules/:module/foo})
+          .to_return(status: 200, body: metadata.to_json, headers: { 'Content-Type' => 'application/json' })
 
         resource.write(source)
       end
 
       it 'should use the default fileserver if source starts with puppet:///' do
-        allow(response).to receive(:code).and_return('200')
-        allow(source).to receive(:metadata).and_return(double('metadata', :source => 'puppet:///test/foo', :ftype => 'file', :content_uri => nil))
-        expect(Puppet::Network::HttpPool).to receive(:connection).with(Puppet[:server], 8140, anything).and_return(conn)
+        stub_request(:get, %r{https://#{Puppet[:server]}:8140/puppet/v3/file_content/modules/:module/foo})
+          .to_return(status: 200, body: metadata.to_json, headers: { 'Content-Type' => 'application/json' })
 
         resource.write(source)
       end
 
       it 'should percent encode reserved characters' do
-        allow(response).to receive(:code).and_return('200')
-        allow(Puppet::Network::HttpPool).to receive(:connection).and_return(conn)
-        allow(source).to receive(:metadata).and_return(double('metadata', :source => 'puppet:///test/foo bar', :ftype => 'file', :content_uri => nil))
+        metadata.source = 'puppet:///modules/:module/foo bar'
 
-        expect(conn).to receive(:request_get).with("#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/v3/file_content/test/foo%20bar?environment=myenv&", anything).and_yield(response)
+        stub_request(:get, %r{/puppet/v3/file_content/modules/:module/foo%20bar})
+          .to_return(status: 200, body: metadata.to_json, headers: { 'Content-Type' => 'application/json' })
 
         resource.write(source)
       end
 
       it 'should request binary content' do
-        allow(response).to receive(:code).and_return('200')
-        allow(Puppet::Network::HttpPool).to receive(:connection).and_return(conn)
-        allow(source).to receive(:metadata).and_return(double('metadata', :source => 'puppet:///test/foo bar', :ftype => 'file', :content_uri => nil))
+        stub_request(:get, %r{/puppet/v3/file_content/modules/:module/foo}) do |request|
+          expect(request.headers).to include({'Accept' => 'application/octet-stream'})
+        end.to_return(status: 200, body: '', headers: { 'Content-Type' => 'application/octet-stream' })
 
-        expect(conn).to receive(:request_get) do |_, options|
-          expect(options).to include('Accept' => 'application/octet-stream')
-        end.and_yield(response)
+        resource.write(source)
+      end
+
+      it "should request file content from the catalog's environment" do
+        Puppet[:environment] = 'doesntexist'
+
+        stub_request(:get, %r{/puppet/v3/file_content})
+          .with(query: hash_including("environment" => "myenv"))
+          .to_return(status: 200, body: '', headers: { 'Content-Type' => 'application/octet-stream' })
 
         resource.write(source)
       end
@@ -673,26 +684,23 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
           File.open(filename, 'w') {|f| f.write "initial file content"}
         end
 
-        before(:each) do
-          allow(Puppet::Network::HttpPool).to receive(:connection).and_return(conn)
-          allow(source).to receive(:metadata).and_return(double('metadata', :source => 'puppet:///test/foo', :ftype => 'file', :content_uri => nil))
-        end
-
         it 'should not write anything if source is not found' do
-          allow(response).to receive(:code).and_return('404')
+          stub_request(:get, %r{/puppet/v3/file_content/modules/:module/foo}).to_return(status: 404)
 
-          expect { resource.write(source) }.to raise_error(Net::HTTPError, /404/)
+          expect { resource.write(source) }.to raise_error(Net::HTTPError, /Error 404 on SERVER:/)
           expect(File.read(filename)).to eq('initial file content')
         end
 
         it 'should raise an HTTP error in case of server error' do
-          allow(response).to receive(:code).and_return('500')
+          stub_request(:get, %r{/puppet/v3/file_content/modules/:module/foo}).to_return(status: 500)
 
-          expect { resource.write(source) }.to raise_error(Net::HTTPError, /500/)
+          expect { resource.write(source) }.to raise_error(Net::HTTPError, /Error 500 on SERVER/)
         end
 
         context 'and the request was successful' do
-          before(:each) { allow(response).to receive(:code).and_return('200') }
+          before do
+            stub_request(:get, %r{/puppet/v3/file_content/modules/:module/foo}).to_return(status: 200, body: source_content)
+          end
 
           it 'should write the contents to the file' do
             resource.write(source)

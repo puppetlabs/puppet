@@ -3,8 +3,21 @@ require 'spec_helper'
 require 'puppet/indirector/report/rest'
 
 describe Puppet::Transaction::Report::Rest do
-  it "should be a subclass of Puppet::Indirector::REST" do
-    expect(Puppet::Transaction::Report::Rest.superclass).to equal(Puppet::Indirector::REST)
+  let(:certname) { 'ziggy' }
+  let(:uri) { %r{/puppet/v3/report/ziggy} }
+  let(:formatter) { Puppet::Network::FormatHandler.format(:json) }
+  let(:report) do
+    report = Puppet::Transaction::Report.new
+    report.host = certname
+    report
+  end
+
+  before(:each) do
+    described_class.indirection.terminus_class = :rest
+  end
+
+  def report_response
+    { body: formatter.render(["store", "http"]), headers: {'Content-Type' => formatter.mime } }
   end
 
   it "should use the :report_server setting in preference to :server" do
@@ -22,71 +35,58 @@ describe Puppet::Transaction::Report::Rest do
     expect(Puppet::Transaction::Report::Rest.srv_service).to eq(:report)
   end
 
-  let(:model) { Puppet::Transaction::Report }
-  let(:terminus_class) { Puppet::Transaction::Report::Rest }
-  let(:terminus) { model.indirection.terminus(:rest) }
-  let(:indirection) { model.indirection }
+  it "saves a report " do
+    stub_request(:put, uri)
+      .to_return(status: 200, **report_response)
 
-  before(:each) do
-    Puppet::Transaction::Report.indirection.terminus_class = :rest
+    described_class.indirection.save(report)
   end
 
-  def mock_response(code, body, content_type='text/plain', encoding=nil)
-    obj = double('http 200 ok', :code => code.to_s, :body => body)
-    allow(obj).to receive(:[]).with('content-type').and_return(content_type)
-    allow(obj).to receive(:[]).with('content-encoding').and_return(encoding)
-    allow(obj).to receive(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).and_return(Puppet.version)
-    obj
+  it "serializes the environment" do
+    stub_request(:put, uri)
+      .with(query: hash_including('environment' => 'outerspace'))
+      .to_return(**report_response)
+
+    described_class.indirection.save(report, nil, environment: Puppet::Node::Environment.remote('outerspace'))
   end
 
-  def save_request(key, instance, options={})
-    Puppet::Indirector::Request.new(:report, :find, key, instance, options)
+  it "deserializes the response as an array of report processor names" do
+    stub_request(:put, %r{/puppet/v3/report})
+      .to_return(status: 200, **report_response)
+
+    expect(described_class.indirection.save(report)).to eq(["store", "http"])
   end
 
-  describe "#save" do
-    let(:response) { mock_response(200, 'body') }
-    let(:connection) { double('mock http connection', :put => response, :verify_callback= => nil) }
-    let(:instance) { model.new('the thing', 'some contents') }
-    let(:request) { save_request(instance.name, instance) }
-    let(:body) { ["store", "http"].to_pson }
+  it "returns nil if the node does not exist" do
+    stub_request(:put, uri)
+      .to_return(status: 404, headers: { 'Content-Type' => 'application/json' }, body: "{}")
 
-    before :each do
-      allow(terminus).to receive(:network).and_return(connection)
+    expect(described_class.indirection.save(report)).to be_nil
+  end
+
+  describe "when the server major version is less than 5" do
+    it "raises if the save fails and we're not using pson" do
+      Puppet[:preferred_serialization_format] = "json"
+
+      stub_request(:put, uri)
+        .to_return(status: 500,
+                   headers: { 'Content-Type' => 'text/pson', Puppet::Network::HTTP::HEADER_PUPPET_VERSION => '4.10.1' })
+
+      expect {
+        described_class.indirection.save(report)
+      }.to raise_error(Puppet::Error, /Server version 4.10.1 does not accept reports in 'json'/)
     end
 
-    it "deserializes the response as an array of report processor names" do
-      response = mock_response('200', body, 'text/pson')
-      expect(connection).to receive(:put).and_return(response)
+    it "raises with HTTP 500 if the save fails and we're already using pson" do
+      Puppet[:preferred_serialization_format] = "pson"
 
-      expect(terminus.save(request)).to eq(["store", "http"])
-    end
+      stub_request(:put, uri)
+        .to_return(status: 500,
+                   headers: { 'Content-Type' => 'text/pson', Puppet::Network::HTTP::HEADER_PUPPET_VERSION => '4.10.1' })
 
-    describe "when handling the response" do
-      describe "when the server major version is less than 5" do
-        it "raises if the save fails and we're not using pson" do
-          Puppet[:preferred_serialization_format] = "json"
-
-          response = mock_response('500', '{}', 'text/pson')
-          allow(response).to receive(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).and_return("4.10.1")
-          expect(connection).to receive(:put).and_return(response)
-
-          expect {
-            terminus.save(request)
-          }.to raise_error(Puppet::Error, /Server version 4.10.1 does not accept reports in 'json'/)
-        end
-
-        it "raises with HTTP 500 if the save fails and we're already using pson" do
-          Puppet[:preferred_serialization_format] = "pson"
-
-          response = mock_response('500', '{}', 'text/pson')
-          allow(response).to receive(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).and_return("4.10.1")
-          expect(connection).to receive(:put).and_return(response)
-
-          expect {
-            terminus.save(request)
-          }.to raise_error(Net::HTTPError, /Error 500 on SERVER/)
-        end
-      end
+      expect {
+        described_class.indirection.save(report)
+      }.to raise_error(Net::HTTPError, /Error 500 on SERVER/)
     end
   end
 end
