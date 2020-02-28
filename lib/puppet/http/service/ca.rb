@@ -14,11 +14,9 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
       ssl_context: ssl_context
     )
 
-    @session.process_response(response)
+    process_response(response)
 
-    return response.body.to_s if response.success?
-
-    raise Puppet::HTTP::ResponseError.new(response)
+    response.body.to_s
   end
 
   def get_certificate_revocation_list(if_modified_since: nil, ssl_context: nil)
@@ -31,11 +29,9 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
       ssl_context: ssl_context
     )
 
-    @session.process_response(response)
+    process_response(response)
 
-    return response.body.to_s if response.success?
-
-    raise Puppet::HTTP::ResponseError.new(response)
+    response.body.to_s
   end
 
   def put_certificate_request(name, csr, ssl_context: nil)
@@ -47,10 +43,8 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
       ssl_context: ssl_context
     )
 
-    @session.process_response(response)
+    process_response(response)
 
-    return response.body.to_s if response.success?
-
-    raise Puppet::HTTP::ResponseError.new(response)
+    response.body.to_s
   end
 end

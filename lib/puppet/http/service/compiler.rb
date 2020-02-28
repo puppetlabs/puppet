@@ -19,14 +19,12 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       },
     )
 
-    @session.process_response(response)
+    process_response(response)
 
-    return deserialize(response, Puppet::Node) if response.success?
-
-    raise Puppet::HTTP::ResponseError.new(response)
+    deserialize(response, Puppet::Node)
   end
 
-  def get_catalog(name, facts:, environment:, configured_environment: nil, transaction_uuid: nil, job_uuid: nil, static_catalog: true, checksum_type: Puppet[:supported_checksum_types])
+  def post_catalog(name, facts:, environment:, configured_environment: nil, transaction_uuid: nil, job_uuid: nil, static_catalog: true, checksum_type: Puppet[:supported_checksum_types])
     if Puppet[:preferred_serialization_format] == "pson"
       formatter = Puppet::Network::FormatHandler.format_for(:pson)
       # must use 'pson' instead of 'text/pson'
@@ -63,11 +61,23 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       body: body,
     )
 
-    @session.process_response(response)
+    process_response(response)
 
-    return deserialize(response, Puppet::Resource::Catalog) if response.success?
+    deserialize(response, Puppet::Resource::Catalog)
+  end
 
-    raise Puppet::HTTP::ResponseError.new(response)
+  def get_facts(name, environment:)
+    headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Node::Facts).join(', '))
+
+    response = @client.get(
+      with_base_url("/facts/#{name}"),
+      headers: headers,
+      params: { environment: environment }
+    )
+
+    process_response(response)
+
+    deserialize(response, Puppet::Node::Facts)
   end
 
   def put_facts(name, environment:, facts:)
@@ -83,10 +93,25 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       body: serialize(formatter, facts),
     )
 
-    @session.process_response(response)
+    process_response(response)
 
-    return true if response.success?
+    true
+  end
 
-    raise Puppet::HTTP::ResponseError.new(response)
+  def get_status(name)
+    headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Status).join(', '))
+
+    response = @client.get(
+      with_base_url("/status/#{name}"),
+      headers: headers,
+      params: {
+        # environment is required, but meaningless, default to production
+        environment: 'production'
+      },
+    )
+
+    process_response(response)
+
+    deserialize(response, Puppet::Status)
   end
 end

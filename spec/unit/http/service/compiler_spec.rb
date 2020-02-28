@@ -12,6 +12,7 @@ describe Puppet::HTTP::Service::Compiler do
   let(:node) { Puppet::Node.new(certname) }
   let(:facts) { Puppet::Node::Facts.new(certname) }
   let(:catalog) { Puppet::Resource::Catalog.new(certname) }
+  let(:status) { Puppet::Status.new }
   let(:formatter) { Puppet::Network::FormatHandler.format(:json) }
 
   before :each do
@@ -30,7 +31,7 @@ describe Puppet::HTTP::Service::Compiler do
         expect(request.headers).to_not include('X-Puppet-Profiling')
       end.to_return(body: formatter.render(catalog), headers: {'Content-Type' => formatter.mime })
 
-      subject.get_catalog(certname, environment: environment, facts: facts)
+      subject.post_catalog(certname, environment: environment, facts: facts)
     end
   end
 
@@ -42,7 +43,7 @@ describe Puppet::HTTP::Service::Compiler do
       stub_request(:post, "https://compiler2.example.com:8141/puppet/v3/catalog/ziggy?environment=testing")
         .to_return(body: formatter.render(catalog), headers: {'Content-Type' => formatter.mime })
 
-      subject.get_catalog(certname, environment: environment, facts: facts)
+      subject.post_catalog(certname, environment: environment, facts: facts)
     end
   end
 
@@ -57,7 +58,7 @@ describe Puppet::HTTP::Service::Compiler do
       Puppet[:http_extra_headers] = 'Example-Header:real-thing,another:thing'
       Puppet[:profile] = true
 
-      subject.get_catalog(certname, environment: environment, facts: facts)
+      subject.post_catalog(certname, environment: environment, facts: facts)
     end
 
     it 'submits facts as application/json by default' do
@@ -65,7 +66,7 @@ describe Puppet::HTTP::Service::Compiler do
         .with(body: hash_including("facts_format" => /application\/json/))
         .to_return(**catalog_response)
 
-      subject.get_catalog(certname, environment: environment, facts: facts)
+      subject.post_catalog(certname, environment: environment, facts: facts)
     end
 
     it 'submits facts as pson if set as the preferred format' do
@@ -75,7 +76,7 @@ describe Puppet::HTTP::Service::Compiler do
         .with(body: hash_including("facts_format" => /pson/))
         .to_return(**catalog_response)
 
-      subject.get_catalog(certname, environment: environment, facts: facts)
+      subject.post_catalog(certname, environment: environment, facts: facts)
     end
 
     it 'includes environment as a query parameter AND in the POST body' do
@@ -84,7 +85,7 @@ describe Puppet::HTTP::Service::Compiler do
               body: hash_including("environment" => 'outerspace'))
         .to_return(**catalog_response)
 
-      subject.get_catalog(certname, environment: 'outerspace', facts: facts)
+      subject.post_catalog(certname, environment: 'outerspace', facts: facts)
     end
 
     it 'includes configured_environment' do
@@ -92,7 +93,7 @@ describe Puppet::HTTP::Service::Compiler do
         .with(body: hash_including("configured_environment" => 'agent_specified'))
         .to_return(**catalog_response)
 
-      subject.get_catalog(certname, environment: 'production', facts: facts, configured_environment: 'agent_specified')
+      subject.post_catalog(certname, environment: 'production', facts: facts, configured_environment: 'agent_specified')
     end
 
     it 'includes transaction_uuid' do
@@ -102,7 +103,7 @@ describe Puppet::HTTP::Service::Compiler do
         .with(body: hash_including("transaction_uuid" => uuid))
         .to_return(**catalog_response)
 
-      subject.get_catalog(certname, environment: 'production', facts: facts, transaction_uuid: uuid)
+      subject.post_catalog(certname, environment: 'production', facts: facts, transaction_uuid: uuid)
     end
 
     it 'includes job_uuid' do
@@ -112,7 +113,7 @@ describe Puppet::HTTP::Service::Compiler do
         .with(body: hash_including("job_uuid" => uuid))
         .to_return(**catalog_response)
 
-      subject.get_catalog(certname, environment: 'production', facts: facts, job_uuid: uuid)
+      subject.post_catalog(certname, environment: 'production', facts: facts, job_uuid: uuid)
     end
 
     it 'includes static_catalog' do
@@ -120,7 +121,7 @@ describe Puppet::HTTP::Service::Compiler do
         .with(body: hash_including("static_catalog" => "false"))
         .to_return(**catalog_response)
 
-      subject.get_catalog(certname, environment: 'production', facts: facts, static_catalog: false)
+      subject.post_catalog(certname, environment: 'production', facts: facts, static_catalog: false)
     end
 
     it 'includes dot-separated list of checksum_types' do
@@ -128,14 +129,14 @@ describe Puppet::HTTP::Service::Compiler do
         .with(body: hash_including("checksum_type" => "sha256.sha384"))
         .to_return(**catalog_response)
 
-      subject.get_catalog(certname, environment: 'production', facts: facts, checksum_type: %w[sha256 sha384])
+      subject.post_catalog(certname, environment: 'production', facts: facts, checksum_type: %w[sha256 sha384])
     end
 
     it 'returns a deserialized catalog' do
       stub_request(:post, uri)
         .to_return(**catalog_response)
 
-      cat = subject.get_catalog(certname, environment: 'production', facts: facts)
+      cat = subject.post_catalog(certname, environment: 'production', facts: facts)
       expect(cat).to be_a(Puppet::Resource::Catalog)
       expect(cat.name).to eq(certname)
     end
@@ -145,7 +146,7 @@ describe Puppet::HTTP::Service::Compiler do
         .to_return(status: [500, "Server Error"])
 
       expect {
-        subject.get_catalog(certname, environment: 'production', facts: facts)
+        subject.post_catalog(certname, environment: 'production', facts: facts)
       }.to raise_error do |err|
         expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
         expect(err.message).to eq('Server Error')
@@ -158,7 +159,7 @@ describe Puppet::HTTP::Service::Compiler do
         .to_return(body: "content-type is missing")
 
       expect {
-        subject.get_catalog(certname, environment: 'production', facts: facts)
+        subject.post_catalog(certname, environment: 'production', facts: facts)
       }.to raise_error(Puppet::HTTP::ProtocolError, /No content type in http response; cannot parse/)
     end
 
@@ -167,7 +168,7 @@ describe Puppet::HTTP::Service::Compiler do
         .to_return(body: "this isn't valid JSON", headers: {'Content-Type' => 'application/json'})
 
       expect {
-        subject.get_catalog(certname, environment: 'production', facts: facts)
+        subject.post_catalog(certname, environment: 'production', facts: facts)
       }.to raise_error(Puppet::HTTP::SerializationError, /Failed to deserialize Puppet::Resource::Catalog from json/)
     end
 
@@ -195,7 +196,7 @@ describe Puppet::HTTP::Service::Compiler do
             .with(body: hash_including("facts" => /#{test_fact[:encoded]}/))
             .to_return(**catalog_response)
 
-          subject.get_catalog(certname, environment: environment, facts: facts)
+          subject.post_catalog(certname, environment: environment, facts: facts)
         end
       end
     end
@@ -282,6 +283,59 @@ describe Puppet::HTTP::Service::Compiler do
     end
   end
 
+  context 'when getting facts' do
+    let(:uri) { %r{/puppet/v3/facts/ziggy} }
+    let(:facts_response) { { body: formatter.render(facts), headers: {'Content-Type' => formatter.mime } } }
+
+    it 'includes environment' do
+      stub_request(:get, uri)
+          .with(query: hash_including("environment" => "outerspace"))
+          .to_return(**facts_response)
+
+      subject.get_facts(certname, environment: 'outerspace')
+    end
+
+    it 'returns a deserialized facts object' do
+      stub_request(:get, uri)
+        .to_return(**facts_response)
+
+      n = subject.get_facts(certname, environment: 'production')
+      expect(n).to be_a(Puppet::Node::Facts)
+      expect(n.name).to eq(certname)
+    end
+
+    it 'raises a response error if unsuccessful' do
+      stub_request(:get, uri)
+        .to_return(status: [500, "Server Error"])
+
+      expect {
+        subject.get_facts(certname, environment: 'production')
+      }.to raise_error do |err|
+        expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
+        expect(err.message).to eq('Server Error')
+        expect(err.response.code).to eq(500)
+      end
+    end
+
+    it 'raises a protocol error if the content-type header is missing' do
+      stub_request(:get, uri)
+        .to_return(body: "content-type is missing")
+
+      expect {
+        subject.get_facts(certname, environment: 'production')
+      }.to raise_error(Puppet::HTTP::ProtocolError, /No content type in http response; cannot parse/)
+    end
+
+    it 'raises a serialization error if the content is invalid' do
+      stub_request(:get, uri)
+        .to_return(body: "this isn't valid JSON", headers: {'Content-Type' => 'application/json'})
+
+      expect {
+        subject.get_facts(certname, environment: 'production')
+      }.to raise_error(Puppet::HTTP::SerializationError, /Failed to deserialize Puppet::Node::Facts from json/)
+    end
+  end
+
   context 'when putting facts' do
     let(:uri) { %r{/puppet/v3/facts/ziggy} }
 
@@ -337,6 +391,59 @@ describe Puppet::HTTP::Service::Compiler do
       expect {
         subject.put_facts(certname, environment: 'production', facts: invalid_facts)
       }.to raise_error(Puppet::HTTP::SerializationError, /Failed to serialize Puppet::Node::Facts to json: "\\xE2" from ASCII-8BIT to UTF-8/)
+    end
+  end
+
+  context 'when getting status' do
+    let(:uri) { %r{/puppet/v3/status/ziggy} }
+    let(:status_response) { { body: formatter.render(status), headers: {'Content-Type' => formatter.mime } } }
+
+    it 'always sends production' do
+      stub_request(:get, uri)
+          .with(query: hash_including("environment" => "production"))
+          .to_return(**status_response)
+
+      subject.get_status(certname)
+    end
+
+    it 'returns a deserialized status' do
+      stub_request(:get, uri)
+        .to_return(**status_response)
+
+      s = subject.get_status(certname)
+      expect(s).to be_a(Puppet::Status)
+      expect(s.status).to eq("is_alive" => true)
+    end
+
+    it 'raises a response error if unsuccessful' do
+      stub_request(:get, uri)
+        .to_return(status: [500, "Server Error"])
+
+      expect {
+        subject.get_status(certname)
+      }.to raise_error do |err|
+        expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
+        expect(err.message).to eq('Server Error')
+        expect(err.response.code).to eq(500)
+      end
+    end
+
+    it 'raises a protocol error if the content-type header is missing' do
+      stub_request(:get, uri)
+        .to_return(body: "content-type is missing")
+
+      expect {
+        subject.get_status(certname)
+      }.to raise_error(Puppet::HTTP::ProtocolError, /No content type in http response; cannot parse/)
+    end
+
+    it 'raises a serialization error if the content is invalid' do
+      stub_request(:get, uri)
+        .to_return(body: "this isn't valid JSON", headers: {'Content-Type' => 'application/json'})
+
+      expect {
+        subject.get_status(certname)
+      }.to raise_error(Puppet::HTTP::SerializationError, /Failed to deserialize Puppet::Status from json/)
     end
   end
 end

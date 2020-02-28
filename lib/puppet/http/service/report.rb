@@ -19,6 +19,7 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
       ssl_context: ssl_context
     )
 
+    # override parent's process_response handling
     @session.process_response(response)
 
     if response.success?
