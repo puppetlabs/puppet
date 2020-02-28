@@ -24,7 +24,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
     deserialize(response, Puppet::Node)
   end
 
-  def get_catalog(name, facts:, environment:, configured_environment: nil, transaction_uuid: nil, job_uuid: nil, static_catalog: true, checksum_type: Puppet[:supported_checksum_types])
+  def post_catalog(name, facts:, environment:, configured_environment: nil, transaction_uuid: nil, job_uuid: nil, static_catalog: true, checksum_type: Puppet[:supported_checksum_types])
     if Puppet[:preferred_serialization_format] == "pson"
       formatter = Puppet::Network::FormatHandler.format_for(:pson)
       # must use 'pson' instead of 'text/pson'
