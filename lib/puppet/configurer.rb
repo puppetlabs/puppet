@@ -208,13 +208,9 @@ class Puppet::Configurer
     completed = nil
     begin
       Puppet.override(:http_pool => pool) do
-
         # Skip failover logic if the server_list setting is empty
-        if Puppet.settings[:server_list].nil? || Puppet.settings[:server_list].empty?
-          do_failover = false
-        else
-          do_failover = true
-        end
+        do_failover = Puppet.settings[:server_list] && !Puppet.settings[:server_list].empty?
+
         # When we are passed a catalog, that means we're in apply
         # mode. We shouldn't try to do any failover in that case.
         if options[:catalog].nil? && do_failover
@@ -222,8 +218,6 @@ class Puppet::Configurer
           if server.nil?
             raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet.settings.value(:server_list, Puppet[:environment].to_sym, true) }
           else
-            #TRANSLATORS 'server_list' is the name of a setting and should not be translated
-            Puppet.debug _("Selected puppet server from the `server_list` setting: %{server}:%{port}") % { server: server, port: port }
             report.master_used = "#{server}:#{port}"
           end
           Puppet.override(server: server, serverport: port) do
@@ -417,21 +411,16 @@ class Puppet::Configurer
   private :run_internal
 
   def find_functional_server
-    Puppet.settings[:server_list].each do |server|
-      host = server[0]
-      port = server[1] || Puppet[:masterport]
-      begin
-        ssl_context = Puppet.lookup(:ssl_context)
-        http = Puppet::Network::HttpPool.connection(host, port.to_i, ssl_context: ssl_context)
-        response = http.get('/status/v1/simple/master')
-        return [host, port] if response.is_a?(Net::HTTPOK)
-
-        Puppet.debug(_("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
-                     { host: host, port: port, code: response.code, reason: response.message })
-      rescue => detail
-        #TRANSLATORS 'server_list' is the name of a setting and should not be translated
-        Puppet.debug _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail}
-      end
+    begin
+      session = Puppet.lookup(:http_session)
+      service = session.route_to(:puppet)
+      return [service.url.host, service.url.port]
+    rescue Puppet::HTTP::ResponseError => e
+      Puppet.debug(_("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
+                   { host: e.response.url.host, port: e.response.url.port, code: e.response.code, reason: e.response.reason })
+    rescue => detail
+      #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+      Puppet.debug _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail}
     end
     [nil, nil]
   end
