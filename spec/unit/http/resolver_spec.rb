@@ -43,7 +43,18 @@ describe Puppet::HTTP::Resolver do
       expect(service.url.to_s).to eq("https://ca.example.com:8141/puppet-ca/v1")
     end
 
-    it 'falls fails if no servers in server_list are accessible' do
+    it 'logs unsuccessful HTTP 500 responses' do
+      Puppet[:log_level] = "debug"
+
+      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: [500, 'Internal Server Error'])
+      stub_request(:get, "https://apple.example.com:8142/status/v1/simple/master").to_return(status: 200)
+
+      subject.resolve(session, :ca)
+
+      expect(@logs.map(&:message)).to include(/Puppet server ca.example.com:8141 is unavailable: 500 Internal Server Error/)
+    end
+
+    it 'fails if no servers in server_list are accessible' do
       stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 503)
       stub_request(:get, "https://apple.example.com:8142/status/v1/simple/master").to_return(status: 503)
 
