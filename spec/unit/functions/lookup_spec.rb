@@ -3082,6 +3082,19 @@ describe "The lookup function" do
 
       let(:env_data) { data_files }
 
+      context 'with unencryptable eyaml' do
+        let(:data_files) do
+          {
+            'common.eyaml' => <<-YAML.unindent
+              key_with_invalid_eyaml: ENC[PKCS7,INVALID]
+              YAML
+          }
+        end
+
+        it 'fails and reports error with ENC value, key being looked up and filename' do
+          expect { lookup('key_with_invalid_eyaml') }.to raise_error(Puppet::DataBinding::LookupError, /hiera-eyaml backend error decrypting ENC\[PKCS7,INVALID\] when looking up key_with_invalid_eyaml in .*common\.eyaml\. Error was/)
+        end
+      end
       context 'and a module using eyaml with different options' do
 
         let(:private_module_key) do
