@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.13.0-42-g15b59fb85e\n"
+"Project-Id-Version: Puppet automation framework 6.13.0-76-gb1dd42b2b0\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-02-26 00:19+0000\n"
-"PO-Revision-Date: 2020-02-26 00:19+0000\n"
+"POT-Creation-Date: 2020-03-02 19:49+0000\n"
+"PO-Revision-Date: 2020-03-02 19:49+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -240,7 +240,7 @@ msgstr ""
 msgid "Manage certificates and requests (Disabled)"
 msgstr ""
 
-#: ../lib/puppet/application/describe.rb:175
+#: ../lib/puppet/application/describe.rb:177
 msgid "Display help about resource types"
 msgstr ""
 
@@ -354,38 +354,38 @@ msgstr ""
 msgid "Store and retrieve files in a filebucket"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:208
+#: ../lib/puppet/application/filebucket.rb:221
 msgid "You must specify a file to back up"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:212
+#: ../lib/puppet/application/filebucket.rb:225
 msgid "%{file}: no such file"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:216
+#: ../lib/puppet/application/filebucket.rb:229
 msgid "%{file}: cannot read file"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:238 ../lib/puppet/application/filebucket.rb:261
+#: ../lib/puppet/application/filebucket.rb:251 ../lib/puppet/application/filebucket.rb:274
 msgid "Need exactly two arguments: filebucket diff <file_a> <file_b>"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:258
+#: ../lib/puppet/application/filebucket.rb:271
 msgid "Comparing %{checksum_a} %{checksum_b} %{file_a} %{file_b}"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:272
+#: ../lib/puppet/application/filebucket.rb:285
 msgid "Cancelling"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/application/filebucket.rb:293
+#: ../lib/puppet/application/filebucket.rb:306
 msgid "Selected server from first entry of the `server_list` setting: %{server}:%{port}"
 msgstr ""
 
 #. TRANSLATORS 'server' is the name of a setting and should not be translated
 #. TRANSLATORS 'server' is the name of a setting and should not be translated
-#: ../lib/puppet/application/filebucket.rb:300 ../lib/puppet/indirector/request.rb:218
+#: ../lib/puppet/application/filebucket.rb:313 ../lib/puppet/indirector/request.rb:218
 msgid "Selected server from the `server` setting: %{server}"
 msgstr ""
 
@@ -523,118 +523,118 @@ msgstr ""
 msgid "Removed %{label} %{path}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:22
+#: ../lib/puppet/configurer.rb:21
 msgid "Puppet configuration client"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:45
+#: ../lib/puppet/configurer.rb:44
 msgid "Removing corrupt state file %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:50
+#: ../lib/puppet/configurer.rb:49
 msgid "Cannot remove %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:73
+#: ../lib/puppet/configurer.rb:72
 msgid "Using cached catalog from environment '%{environment}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:79
+#: ../lib/puppet/configurer.rb:78
 msgid "Not using cache on failed catalog"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:88
+#: ../lib/puppet/configurer.rb:87
 msgid "Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:93 ../lib/puppet/configurer.rb:176
+#: ../lib/puppet/configurer.rb:92 ../lib/puppet/configurer.rb:175
 msgid "Using cached catalog from environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:169
+#: ../lib/puppet/configurer.rb:168
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:185
+#: ../lib/puppet/configurer.rb:184
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:225 ../lib/puppet/http/resolver/server_list.rb:19
+#: ../lib/puppet/configurer.rb:224 ../lib/puppet/http/resolver/server_list.rb:19
 msgid "Could not select a functional puppet master from server_list: '%{server_list}'"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:228
+#: ../lib/puppet/configurer.rb:227
 msgid "Selected puppet server from the `server_list` setting: %{server}:%{port}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:260
+#: ../lib/puppet/configurer.rb:259
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:305
+#: ../lib/puppet/configurer.rb:304
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:310
+#: ../lib/puppet/configurer.rb:309
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:314
+#: ../lib/puppet/configurer.rb:313
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:343
+#: ../lib/puppet/configurer.rb:342
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:354
+#: ../lib/puppet/configurer.rb:353
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:356
+#: ../lib/puppet/configurer.rb:355
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:397
+#: ../lib/puppet/configurer.rb:396
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:430 ../lib/puppet/http/resolver/server_list.rb:29
+#: ../lib/puppet/configurer.rb:429 ../lib/puppet/http/resolver/server_list.rb:29
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:434 ../lib/puppet/http/resolver/server_list.rb:35
+#: ../lib/puppet/configurer.rb:433 ../lib/puppet/http/resolver/server_list.rb:35
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:446 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:445 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:455
+#: ../lib/puppet/configurer.rb:454
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:474
+#: ../lib/puppet/configurer.rb:473
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:482
+#: ../lib/puppet/configurer.rb:481
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:497
+#: ../lib/puppet/configurer.rb:496
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:515
+#: ../lib/puppet/configurer.rb:514
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:535
+#: ../lib/puppet/configurer.rb:534
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -2075,6 +2075,10 @@ msgstr ""
 msgid "Unable to parse %{message}"
 msgstr ""
 
+#: ../lib/puppet/functions/eyaml_lookup_key.rb:93
+msgid "hiera-eyaml backend error decrypting %{data} when looking up %{key} in %{path}. Error was %{message}"
+msgstr ""
+
 #: ../lib/puppet/functions/floor.rb:27
 msgid "The floor() function's auto conversion of String to Float is deprecated - change to convert input before calling"
 msgstr ""
@@ -2222,27 +2226,27 @@ msgstr ""
 msgid "Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:32
+#: ../lib/puppet/http/client.rb:34
 msgid "Request to %{uri} timed out connect operation after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:34
+#: ../lib/puppet/http/client.rb:36
 msgid "Request to %{uri} timed out read operation after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:36
+#: ../lib/puppet/http/client.rb:38
 msgid "Request to %{uri} interrupted after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:42
+#: ../lib/puppet/http/client.rb:44
 msgid "Request to %{uri} failed after %{elapsed} seconds: %{message}"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:161
+#: ../lib/puppet/http/client.rb:163
 msgid "Sleeping for %{interval} seconds before retrying the request"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:202 ../lib/puppet/indirector/request.rb:142
+#: ../lib/puppet/http/client.rb:204 ../lib/puppet/indirector/request.rb:142
 msgid "HTTP REST queries cannot handle values of type '%{klass}'"
 msgstr ""
 
@@ -2279,7 +2283,7 @@ msgid "No content type in http response; cannot parse"
 msgstr ""
 
 #. TRANSLATORS "pson", "preferred_serialization_format", and "puppetserver" should not be translated
-#: ../lib/puppet/http/service/report.rb:28
+#: ../lib/puppet/http/service/report.rb:29
 msgid "To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson"
 msgstr ""
 
@@ -8114,15 +8118,15 @@ msgstr ""
 msgid "Will try again in %{time} seconds."
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:379
+#: ../lib/puppet/ssl/state_machine.rb:383
 msgid "Verified client certificate '%{subject}' fingerprint %{digest}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:381
+#: ../lib/puppet/ssl/state_machine.rb:385
 msgid "Verified CA certificate '%{subject}' fingerprint %{digest}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:421
+#: ../lib/puppet/ssl/state_machine.rb:425
 msgid "Another puppet instance is already running; exiting"
 msgstr ""
 
@@ -8520,86 +8524,86 @@ msgstr ""
 msgid "File paths must be fully qualified, not '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:129
+#: ../lib/puppet/type/file.rb:142
 msgid "Invalid backup type %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:173 ../lib/puppet/type/tidy.rb:48
+#: ../lib/puppet/type/file.rb:186 ../lib/puppet/type/tidy.rb:48
 msgid "Invalid recurse value %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:205
+#: ../lib/puppet/type/file.rb:218
 msgid "Invalid recurselimit value %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:401
+#: ../lib/puppet/type/file.rb:414
 msgid "You cannot specify more than one of %{creators}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:403
+#: ../lib/puppet/type/file.rb:416
 msgid "You cannot specify a remote recursion without a source"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:405
+#: ../lib/puppet/type/file.rb:418
 msgid "You cannot specify source when using checksum 'none'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:408
+#: ../lib/puppet/type/file.rb:421
 msgid "You cannot specify content when using checksum '%{checksum_type}'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:411
+#: ../lib/puppet/type/file.rb:424
 msgid "Possible error: recurselimit is set but not recurse, no recursion will happen"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:419
+#: ../lib/puppet/type/file.rb:432
 msgid "Checksum value '%{value}' is not a valid checksum type %{checksum}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:422
+#: ../lib/puppet/type/file.rb:435
 msgid "Checksum value is ignored unless content or source are specified"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:460
+#: ../lib/puppet/type/file.rb:473
 msgid "Can not find filebucket for backups without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:465
+#: ../lib/puppet/type/file.rb:478
 msgid "Could not find filebucket %{backup} specified in backup"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:763
+#: ../lib/puppet/type/file.rb:776
 msgid "Could not back up file of type %{current_type}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:778
+#: ../lib/puppet/type/file.rb:791
 msgid "Could not remove files of type %{current_type}"
 msgstr ""
 
 #. TRANSLATORS "source_permissions => ignore" should not be translated
-#: ../lib/puppet/type/file.rb:789
+#: ../lib/puppet/type/file.rb:802
 msgid "Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore."
 msgstr ""
 
 #. TRANSLATORS "stat" is a program name and should not be translated
-#: ../lib/puppet/type/file.rb:870 ../lib/puppet/type/tidy.rb:352
+#: ../lib/puppet/type/file.rb:883 ../lib/puppet/type/tidy.rb:352
 msgid "Could not stat; permission denied"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:873
+#: ../lib/puppet/type/file.rb:886
 msgid "Could not stat; invalid pathname"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:1001
+#: ../lib/puppet/type/file.rb:1014
 msgid "Not removing directory; use 'force' to override"
 msgstr ""
 
 #. TRANSLATORS refers to a file which could not be backed up
-#: ../lib/puppet/type/file.rb:1026
+#: ../lib/puppet/type/file.rb:1039
 msgid "Could not back up; will not remove"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:1040
+#: ../lib/puppet/type/file.rb:1053
 msgid "File written to disk did not match checksum; discarding changes (%{content_checksum} vs %{newsum})"
 msgstr ""
 
