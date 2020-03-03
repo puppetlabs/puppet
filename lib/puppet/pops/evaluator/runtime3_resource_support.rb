@@ -62,7 +62,9 @@ module Runtime3ResourceSupport
 
         # Turn the resource into a PTypeType (a reference to a resource type)
         # weed out nil's
-        resource_to_ptype(resource)
+        Puppet::Util::Profiler.profile("Convert resource to PType", %w{resource ptype}) do
+          resource_to_ptype(resource)
+        end
     end
   end
 

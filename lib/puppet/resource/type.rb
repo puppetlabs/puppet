@@ -256,13 +256,15 @@ class Puppet::Resource::Type
   end
 
   def instantiate_resource(scope, resource)
-    # Make sure our parent class has been evaluated, if we have one.
-    if parent && !scope.catalog.resource(resource.type, parent)
-      parent_type(scope).ensure_in_catalog(scope)
-    end
+    Puppet::Util::Profiler.profile("Instantiate Resource", %w{resource init}) do
+      # Make sure our parent class has been evaluated, if we have one.
+      if parent && !scope.catalog.resource(resource.type, parent)
+        parent_type(scope).ensure_in_catalog(scope)
+      end
 
-    if ['Class', 'Node'].include? resource.type
-      scope.catalog.merge_tags_from(resource)
+      if ['Class', 'Node'].include? resource.type
+        scope.catalog.merge_tags_from(resource)
+      end
     end
   end
 

@@ -23,7 +23,9 @@ module DataProvider
   # @param merge [MergeStrategy,String,Hash{String=>Object},nil] Merge strategy or hash with strategy and options
   #
   def key_lookup(key, lookup_invocation, merge)
-    lookup_invocation.check(key.to_s) { unchecked_key_lookup(key, lookup_invocation, merge) }
+    Puppet::Util::Profiler.profile("top level key lookup for #{key}", %w{lookup key top}) do
+      lookup_invocation.check(key.to_s) { unchecked_key_lookup(key, lookup_invocation, merge) }
+    end
   end
 
   # Performs a lookup using a module default hierarchy with an endless recursion check. All providers except
@@ -38,7 +40,9 @@ module DataProvider
   end
 
   def lookup(key, lookup_invocation, merge)
-    lookup_invocation.check(key.to_s) { unchecked_key_lookup(key, lookup_invocation, merge) }
+    Puppet::Util::Profiler.profile("top level lookup for #{key}", %w{lookup top}) do
+      lookup_invocation.check(key.to_s) { unchecked_key_lookup(key, lookup_invocation, merge) }
+    end
   end
 
   # Performs a lookup with the assumption that a recursive check has been made.

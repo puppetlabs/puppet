@@ -184,6 +184,7 @@ class Lexer2
   attr_reader :locator
 
   def initialize()
+    Puppet::Util::Profiler.profile("Initializing new Lexer2", %w{lexer initialize}) do
     @selector = {
       '.' =>  lambda { emit(TOKEN_DOT, @scanner.pos) },
       ',' => lambda {  emit(TOKEN_COMMA, @scanner.pos) },
@@ -576,6 +577,7 @@ class Lexer2
     end
     @selector.each { |k,v| k.freeze }
     @selector.freeze
+    end
   end
 
   # Determine if last char of value is escaped by a backslash
@@ -688,6 +690,7 @@ class Lexer2
   # value in general for error messages, and for some expressions (which the lexer does not know about).
   #
   def scan
+    Puppet::Util::Profiler.profile("Lexer2 scan", %w{lexer scan}) do
     # PERFORMANCE note: it is faster to access local variables than instance variables.
     # This makes a small but notable difference since instance member access is avoided for
     # every token in the lexed content.
@@ -711,6 +714,7 @@ class Lexer2
 
     # Signals end of input
     yield [false, false]
+    end
   end
 
   # This lexes one token at the current position of the scanner.

@@ -78,7 +78,9 @@ class EvaluatorImpl
   #
   def evaluate(target, scope)
     begin
-      @@eval_visitor.visit_this_1(self, target, scope)
+      Puppet::Util::Profiler.profile("Evaluator evaluate #{target.class.to_s}", %w{evaluator evaluate}) do
+        @@eval_visitor.visit_this_1(self, target, scope)
+      end
 
     rescue SemanticError => e
       # A raised issue may not know the semantic target, use errors call stack, but fill in the
@@ -137,7 +139,9 @@ class EvaluatorImpl
   # @api private
   #
   def assign(target, value, o, scope)
-    @@assign_visitor.visit_this_3(self, target, value, o, scope)
+    Puppet::Util::Profiler.profile("Evaluator assign #{target.class.to_s}", %w{evaluator assign}) do
+      @@assign_visitor.visit_this_3(self, target, value, o, scope)
+    end
   end
 
   # Computes a value that can be used as the LHS in an assignment.
@@ -147,7 +151,9 @@ class EvaluatorImpl
   # @api private
   #
   def lvalue(o, scope)
-    @@lvalue_visitor.visit_this_1(self, o, scope)
+    Puppet::Util::Profiler.profile("Evaluator lvalue #{o.class.to_s}", %w{evaluator lvalue}) do
+      @@lvalue_visitor.visit_this_1(self, o, scope)
+    end
   end
 
   # Produces a String representation of the given object _o_ as used in interpolation.
@@ -157,7 +163,9 @@ class EvaluatorImpl
   # @api public
   #
   def string(o, scope)
-    @@string_visitor.visit_this_1(self, o, scope)
+    Puppet::Util::Profiler.profile("Evaluator string #{o.class.to_s}", %w{evaluator string}) do
+      @@string_visitor.visit_this_1(self, o, scope)
+    end
   end
 
   # Evaluate a BlockExpression in a new scope with variables bound to the

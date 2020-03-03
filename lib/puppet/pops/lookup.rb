@@ -73,9 +73,11 @@ module Lookup
 
   # @api private
   def self.search_and_merge(name, lookup_invocation, merge, apl = true)
-    answer = lookup_invocation.lookup_adapter.lookup(name, lookup_invocation, merge)
-    lookup_invocation.emit_debug_info("Automatic Parameter Lookup of '#{name}'") if apl && Puppet[:debug]
-    answer
+    Puppet::Util::Profiler.profile("Lookup search_and_merge", %w{lookup searchmerge}) do
+      answer = lookup_invocation.lookup_adapter.lookup(name, lookup_invocation, merge)
+      lookup_invocation.emit_debug_info("Automatic Parameter Lookup of '#{name}'") if apl && Puppet[:debug]
+      answer
+    end
   end
 
   def self.assert_type(subject, type, value)

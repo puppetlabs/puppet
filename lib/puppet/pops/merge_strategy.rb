@@ -119,6 +119,7 @@ module Puppet::Pops
     # @throws :no_such_key if the lookup was unsuccessful
     #
     def lookup(lookup_variants, lookup_invocation)
+      Puppet::Util::Profiler.profile("looking up", %w{merge_strategy lookup}) do
       case lookup_variants.size
       when 0
         throw :no_such_key
@@ -142,6 +143,7 @@ module Puppet::Pops
           throw :no_such_key if result == NOT_FOUND
           lookup_invocation.report_result(result)
         end
+      end
       end
     end
 

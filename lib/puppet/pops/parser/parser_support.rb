@@ -241,11 +241,14 @@ class Parser
   # @api private
   #
   def _parse()
-    begin
-      @yydebug = false
-      main = yyparse(@lexer,:scan)
+    Puppet::Util::Profiler.profile("Inner parse", %w{puppet parser parse}) do
+      begin
+        @yydebug = false
+        main = yyparse(@lexer,:scan)
+      end
+
+      main
     end
-    return main
   ensure
     @lexer.clear
     @namestack = []
