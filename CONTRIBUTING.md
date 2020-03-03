@@ -28,7 +28,7 @@ the [puppet-dev mailing list](https://groups.google.com/forum/#!forum/puppet-dev
 ## Getting Started
 
 * Make sure you have a [Jira account](https://tickets.puppetlabs.com).
-* Make sure you have a [GitHub account](https://github.com/signup/free).
+* Make sure you have a [GitHub account](https://github.com/join).
 * Submit a Jira ticket for your issue if one does not already exist.
   * Clearly describe the issue including steps to reproduce when it is a bug.
   * Make sure you fill in the earliest version that you know has the issue.
@@ -89,7 +89,7 @@ user-facing strings are marked in new PRs before merging.
 
 For [changes of a trivial nature](https://puppet.com/community/trivial-patch-exemption-policy), it is not always necessary to create a new
 ticket in Jira. In this case, it is appropriate to start the first line of a
-commit with one of  `(docs)`, `(maint)`, or `(packaging)` instead of a ticket
+commit with one of `(docs)`, `(maint)`, or `(packaging)` instead of a ticket
 number.
 
 If a Jira ticket exists for the documentation commit, you can include it
@@ -117,15 +117,10 @@ respectively.
 * Sign the [Contributor License Agreement](https://cla.puppet.com).
 * Push your changes to a topic branch in your fork of the repository.
 * Submit a pull request to the repository in the puppetlabs organization.
-* Update your Jira ticket to mark that you have submitted code and are ready
+* Update the related Jira ticket to mark that you have submitted code and are ready
   for it to be reviewed (Status: Ready for Merge).
-  * Include a link to the pull request in the ticket.
-* The core team looks at Pull Requests on a regular basis in a weekly triage
-  meeting that we hold in a public Google Hangout. The hangout is announced in
-  the weekly status updates that are sent to the puppet-dev list. Notes are
-  posted to the [Puppet Community community-triage
-  repo](https://github.com/puppet-community/community-triage/tree/master/core/notes)
-  and include a link to a YouTube recording of the hangout.
+* The core team looks at pull requests on a regular basis in a weekly triage
+  meeting.
 * After feedback has been given we expect responses within two weeks. After two
   weeks we may close the pull request if it isn't showing any activity.
 
@@ -159,9 +154,8 @@ ensure the issue has been resolved.
 
 * [Puppet community guidelines](https://puppet.com/community/community-guidelines)
 * [Bug tracker (Jira)](https://tickets.puppetlabs.com)
-* [Contributor License Agreement](http://links.puppet.com/cla)
+* [Contributor License Agreement](https://cla.puppet.com/)
 * [General GitHub documentation](https://help.github.com/)
 * [GitHub pull request documentation](https://help.github.com/articles/creating-a-pull-request/)
-* #puppet-dev IRC channel on freenode.org ([Archive](https://botbot.me/freenode/puppet-dev/))
 * [puppet-dev mailing list](https://groups.google.com/forum/#!forum/puppet-dev)
-* [Community PR Triage notes](https://github.com/puppet-community/community-triage/tree/master/core/notes)
+* [Puppet community slack](https://slack.puppet.com)
