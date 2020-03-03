@@ -21,7 +21,11 @@ class Puppet::HTTP::Client
     start = Time.now
     ctx = ssl_context ? ssl_context : default_ssl_context
     site = Puppet::Network::HTTP::Site.from_uri(uri)
-    verifier = Puppet::SSL::Verifier.new(site.host, ctx)
+    verifier = if site.use_ssl?
+                 Puppet::SSL::Verifier.new(site.host, ctx)
+               else
+                 nil
+               end
     connected = false
 
     @pool.with_connection(site, verifier) do |http|
