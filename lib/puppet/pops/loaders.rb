@@ -19,12 +19,14 @@ class Loaders
   attr_reader :environment
 
   def self.new(environment, for_agent = false)
-    obj = environment.loaders
-    if obj.nil?
-      obj = self.allocate
-      obj.send(:initialize, environment, for_agent)
+    environment.lock.synchronize do
+      obj = environment.loaders
+      if obj.nil?
+        obj = self.allocate
+        obj.send(:initialize, environment, for_agent)
+      end
+      obj
     end
-    obj
   end
 
   def initialize(environment, for_agent)
