@@ -74,6 +74,14 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     cmd
   end
 
+  def validate_members(members)
+    members.each do |member|
+      member.split(',').each do |user|
+        Etc.getpwnam(user.strip)
+      end
+    end
+  end
+
   def modifycmd(param, value)
     if @resource.forcelocal? || @resource[:members]
       cmd = [command(:localmodify)]
@@ -83,6 +91,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     end
 
     if param == :members
+      validate_members(value)
       value = members_to_s(value)
       purge_members if @resource[:auth_membership] && !members.empty?
     end
@@ -116,10 +125,6 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
 
   def purge_members
     localmodify('-m', members_to_s(members), @resource.name)
-  end
-
-  def member_valid?(user)
-    !!Etc.getpwnam(user)
   end
 
   private

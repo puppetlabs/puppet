@@ -163,6 +163,28 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
             provider.members = new_members
           end
         end
+
+        it "should validate members" do
+          expect(Etc).to receive(:getpwnam).with('user3').and_return(true)
+          provider.modifycmd(:members, ['user3'])
+        end
+
+        it "should validate members list " do
+          expect(Etc).to receive(:getpwnam).with('user3').and_return(true)
+          expect(Etc).to receive(:getpwnam).with('user4').and_return(true)
+          provider.modifycmd(:members, ['user3', 'user4'])
+        end
+
+        it "should validate members list separated by commas" do
+          expect(Etc).to receive(:getpwnam).with('user3').and_return(true)
+          expect(Etc).to receive(:getpwnam).with('user4').and_return(true)
+          provider.modifycmd(:members, ['user3, user4'])
+        end
+
+        it "should raise is validation fails" do
+          expect(Etc).to receive(:getpwnam).with('user3').and_throw(ArgumentError)
+          expect { provider.modifycmd(:members, ['user3']) }.to raise_error(ArgumentError)
+        end
       end
     end
   end
@@ -235,14 +257,6 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
   end
 
   describe "group type :members property helpers" do
-    describe "#member_valid?" do
-      it "should return true if a member exists" do
-        passwd = Struct::Passwd.new('existinguser', nil, 1100)
-        allow(Etc).to receive(:getpwnam).with('existinguser').and_return(passwd)
-        expect(provider.member_valid?('existinguser')).to eq(true)
-      end
-    end 
-    
     describe "#members_to_s" do
       it "should return an empty string on non-array input" do
         [Object.new, {}, 1, :symbol, ''].each do |input|
