@@ -27,7 +27,7 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
     return true if response.success?
 
     Puppet.debug(_("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
-                 { host: host, port: port, code: response.code, reason: response.message })
+                 { host: uri.host, port: uri.port, code: response.code, reason: response.reason })
     return false
   rescue => detail
     session.add_exception(detail)
