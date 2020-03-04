@@ -47,6 +47,8 @@ module Puppet
       The `http` source uses the server `Content-MD5` header as a checksum to
       determine if the remote file has changed. If the server response does not
       include that header, Puppet defaults to using the `Last-Modified` header.
+      Puppet will update the local file if the header is newer than the modified
+      time (mtime) of the local file.
 
       Multiple `source` values can be specified as an array, and Puppet will
       use the first source that exists. This can be used to serve different
