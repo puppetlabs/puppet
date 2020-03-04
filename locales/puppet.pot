@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.13.0-76-gb1dd42b2b0\n"
+"Project-Id-Version: Puppet automation framework 6.13.0-112-g38edbcd2f7\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-03-02 19:49+0000\n"
-"PO-Revision-Date: 2020-03-02 19:49+0000\n"
+"POT-Creation-Date: 2020-03-04 18:34+0000\n"
+"PO-Revision-Date: 2020-03-04 18:34+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -547,94 +547,89 @@ msgstr ""
 msgid "Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:92 ../lib/puppet/configurer.rb:175
+#: ../lib/puppet/configurer.rb:92 ../lib/puppet/configurer.rb:174
 msgid "Using cached catalog from environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:168
+#: ../lib/puppet/configurer.rb:167
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:184
+#: ../lib/puppet/configurer.rb:183
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:224 ../lib/puppet/http/resolver/server_list.rb:19
+#: ../lib/puppet/configurer.rb:219 ../lib/puppet/http/resolver/server_list.rb:19
 msgid "Could not select a functional puppet master from server_list: '%{server_list}'"
 msgstr ""
 
-#. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:227
-msgid "Selected puppet server from the `server_list` setting: %{server}:%{port}"
-msgstr ""
-
-#: ../lib/puppet/configurer.rb:259
+#: ../lib/puppet/configurer.rb:252
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:304
+#: ../lib/puppet/configurer.rb:297
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:309
+#: ../lib/puppet/configurer.rb:303
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:313
+#: ../lib/puppet/configurer.rb:307
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:342
+#: ../lib/puppet/configurer.rb:336
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:353
+#: ../lib/puppet/configurer.rb:347
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:355
+#: ../lib/puppet/configurer.rb:349
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:396
+#: ../lib/puppet/configurer.rb:390
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:429 ../lib/puppet/http/resolver/server_list.rb:29
+#: ../lib/puppet/configurer.rb:419 ../lib/puppet/http/resolver/server_list.rb:29
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:433 ../lib/puppet/http/resolver/server_list.rb:35
+#: ../lib/puppet/configurer.rb:423 ../lib/puppet/http/resolver/server_list.rb:35
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:445 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:434 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:454
+#: ../lib/puppet/configurer.rb:443
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:473
+#: ../lib/puppet/configurer.rb:462
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:481
+#: ../lib/puppet/configurer.rb:470
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:496
+#: ../lib/puppet/configurer.rb:485
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:514
+#: ../lib/puppet/configurer.rb:503
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:534
+#: ../lib/puppet/configurer.rb:524
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -2226,27 +2221,27 @@ msgstr ""
 msgid "Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:34
+#: ../lib/puppet/http/client.rb:39
 msgid "Request to %{uri} timed out connect operation after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:36
+#: ../lib/puppet/http/client.rb:41
 msgid "Request to %{uri} timed out read operation after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:38
+#: ../lib/puppet/http/client.rb:43
 msgid "Request to %{uri} interrupted after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:44
+#: ../lib/puppet/http/client.rb:49
 msgid "Request to %{uri} failed after %{elapsed} seconds: %{message}"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:163
+#: ../lib/puppet/http/client.rb:171
 msgid "Sleeping for %{interval} seconds before retrying the request"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:204 ../lib/puppet/indirector/request.rb:142
+#: ../lib/puppet/http/client.rb:214 ../lib/puppet/indirector/request.rb:142
 msgid "HTTP REST queries cannot handle values of type '%{klass}'"
 msgstr ""
 
@@ -2278,12 +2273,12 @@ msgstr ""
 msgid "Ignoring extra header \"%{name}\" as it has no value."
 msgstr ""
 
-#: ../lib/puppet/http/service.rb:82 ../lib/puppet/indirector/rest.rb:276
+#: ../lib/puppet/http/service.rb:82 ../lib/puppet/indirector/rest.rb:282
 msgid "No content type in http response; cannot parse"
 msgstr ""
 
 #. TRANSLATORS "pson", "preferred_serialization_format", and "puppetserver" should not be translated
-#: ../lib/puppet/http/service/report.rb:29
+#: ../lib/puppet/http/service/report.rb:28
 msgid "To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson"
 msgstr ""
 
@@ -2432,6 +2427,10 @@ msgstr ""
 msgid "Unable to serialize catalog to json, retrying with pson"
 msgstr ""
 
+#: ../lib/puppet/indirector/catalog/rest.rb:33 ../lib/puppet/indirector/facts/rest.rb:21 ../lib/puppet/indirector/file_content/rest.rb:33 ../lib/puppet/indirector/file_metadata/rest.rb:29 ../lib/puppet/indirector/node/rest.rb:24 ../lib/puppet/indirector/rest.rb:144 ../lib/puppet/indirector/status/rest.rb:20
+msgid "Find %{uri} resulted in 404 with the message: %{body}"
+msgstr ""
+
 #: ../lib/puppet/indirector/exec.rb:11
 msgid "Exec commands must be an array"
 msgstr ""
@@ -2532,7 +2531,7 @@ msgstr ""
 msgid "You cannot save facts to the code store; it is only used for getting facts from a remote device"
 msgstr ""
 
-#: ../lib/puppet/indirector/facts/rest.rb:8 ../lib/puppet/indirector/rest.rb:186
+#: ../lib/puppet/indirector/facts/rest.rb:29 ../lib/puppet/indirector/rest.rb:192
 msgid "PUT does not accept options"
 msgstr ""
 
@@ -2759,7 +2758,7 @@ msgstr ""
 msgid "No report named '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/indirector/report/rest.rb:17
+#: ../lib/puppet/indirector/report/rest.rb:36
 msgid "Server version %{version} does not accept reports in '%{format}', use `preferred_serialization_format=pson`"
 msgstr ""
 
@@ -2798,20 +2797,16 @@ msgstr ""
 msgid "Resource instance does not match request key"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:138
-msgid "Find %{uri} resulted in 404 with the message: %{body}"
-msgstr ""
-
-#: ../lib/puppet/indirector/rest.rb:171
+#: ../lib/puppet/indirector/rest.rb:177
 msgid "DELETE does not accept options"
 msgstr ""
 
 #. TRANSLATORS "PSON" should not be translated
-#: ../lib/puppet/indirector/rest.rb:223
+#: ../lib/puppet/indirector/rest.rb:229
 msgid "Downgrading to PSON for future requests"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:265 ../lib/puppet/rest/response.rb:31
+#: ../lib/puppet/indirector/rest.rb:271 ../lib/puppet/rest/response.rb:31
 msgid "Error %{code} on SERVER: %{returned_message}"
 msgstr ""
 
@@ -8645,7 +8640,7 @@ msgid "Not managing symlink mode"
 msgstr ""
 
 #. TRANSLATORS "source_permissions" is a parameter name and should not be translated
-#: ../lib/puppet/type/file/source.rb:350
+#: ../lib/puppet/type/file/source.rb:351
 msgid "The `source_permissions` parameter is deprecated. Explicitly set `owner`, `group`, and `mode`."
 msgstr ""
 
