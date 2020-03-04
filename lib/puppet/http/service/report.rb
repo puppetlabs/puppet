@@ -6,7 +6,7 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
     super(client, session, url)
   end
 
-  def put_report(name, report, environment:, ssl_context: nil)
+  def put_report(name, report, environment:)
     formatter = Puppet::Network::FormatHandler.format_for(Puppet[:preferred_serialization_format])
     headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Transaction::Report).join(', '))
 
@@ -15,8 +15,7 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
       headers: headers,
       params: { environment: environment },
       content_type: formatter.mime,
-      body: serialize(formatter, report),
-      ssl_context: ssl_context
+      body: serialize(formatter, report)
     )
 
     # override parent's process_response handling

@@ -4,7 +4,10 @@ require 'puppet/http'
 
 describe Puppet::HTTP::Client do
   let(:uri) { URI.parse('https://www.example.com') }
-  let(:client) { described_class.new }
+  let(:pool) { Puppet::Network::HTTP::Pool.new }
+  let(:puppet_context) { Puppet::SSL::SSLContext.new }
+  let(:system_context) { Puppet::SSL::SSLContext.new }
+  let(:client) { described_class.new(pool: pool, ssl_context: puppet_context, system_ssl_context: system_context) }
   let(:credentials) { ['user', 'pass'] }
 
   it 'creates unique sessions' do
@@ -44,6 +47,38 @@ describe Puppet::HTTP::Client do
       expect {
         client.connect(uri)
       }.to raise_error(Puppet::HTTP::ConnectionError, %r{^Request to https://www.example.com timed out connect operation after .* seconds})
+    end
+
+    it 'connects using the default ssl context' do
+      expect(pool).to receive(:with_connection) do |_, verifier|
+        expect(verifier.ssl_context).to equal(puppet_context)
+      end
+
+      client.connect(uri)
+    end
+
+    it 'connects using a specified ssl context' do
+      other_context = Puppet::SSL::SSLContext.new
+
+      expect(pool).to receive(:with_connection) do |_, verifier|
+        expect(verifier.ssl_context).to equal(other_context)
+      end
+
+      client.connect(uri, ssl_context: other_context)
+    end
+
+    it 'connects using the system store' do
+      expect(pool).to receive(:with_connection) do |_, verifier|
+        expect(verifier.ssl_context).to equal(system_context)
+      end
+
+      client.connect(uri, include_system_store: true)
+    end
+
+    it 'raises an HTTPError if both are specified' do
+      expect {
+        client.connect(uri, ssl_context: puppet_context, include_system_store: true)
+      }.to raise_error(Puppet::HTTP::HTTPError, /The ssl_context and include_system_store parameters are mutually exclusive/)
     end
   end
 
@@ -138,6 +173,28 @@ describe Puppet::HTTP::Client do
 
       expect(io.string).to eq("abc")
     end
+
+    context 'when connecting' do
+      it 'uses a specified ssl context' do
+        stub_request(:get, uri).to_return(body: "abc")
+
+        other_context = Puppet::SSL::SSLContext.new
+
+        client.get(uri, ssl_context: other_context)
+      end
+
+      it 'uses the system store' do
+        stub_request(:get, uri).to_return(body: "abc")
+
+        client.get(uri, include_system_store: true)
+      end
+
+      it 'raises an HTTPError if both are specified' do
+        expect {
+          client.get(uri, ssl_context: puppet_context, include_system_store: true)
+        }.to raise_error(Puppet::HTTP::HTTPError, /The ssl_context and include_system_store parameters are mutually exclusive/)
+      end
+    end
   end
 
   context "for HEAD requests" do
@@ -172,6 +229,28 @@ describe Puppet::HTTP::Client do
       stub_request(:head, uri).to_return(body: "abc")
 
       expect(client.head(uri).body).to eq("abc")
+    end
+
+    context 'when connecting' do
+      it 'uses a specified ssl context' do
+        stub_request(:head, uri)
+
+        other_context = Puppet::SSL::SSLContext.new
+
+        client.head(uri, ssl_context: other_context)
+      end
+
+      it 'uses the system store' do
+        stub_request(:head, uri)
+
+        client.head(uri, include_system_store: true)
+      end
+
+      it 'raises an HTTPError if both are specified' do
+        expect {
+          client.head(uri, ssl_context: puppet_context, include_system_store: true)
+        }.to raise_error(Puppet::HTTP::HTTPError, /The ssl_context and include_system_store parameters are mutually exclusive/)
+      end
     end
   end
 
@@ -210,6 +289,28 @@ describe Puppet::HTTP::Client do
       stub_request(:put, uri).with(headers: {"Content-Length" => "5", "Content-Type" => "text/plain"})
 
       client.put(uri, content_type: 'text/plain', body: "hello")
+    end
+
+    context 'when connecting' do
+      it 'uses a specified ssl context' do
+        stub_request(:put, uri)
+
+        other_context = Puppet::SSL::SSLContext.new
+
+        client.put(uri, content_type: 'text/plain', body: "", ssl_context: other_context)
+      end
+
+      it 'uses the system store' do
+        stub_request(:put, uri)
+
+        client.put(uri, content_type: 'text/plain', body: "", include_system_store: true)
+      end
+
+      it 'raises an HTTPError if both are specified' do
+        expect {
+          client.put(uri, content_type: 'text/plain', body: "", ssl_context: puppet_context, include_system_store: true)
+        }.to raise_error(Puppet::HTTP::HTTPError, /The ssl_context and include_system_store parameters are mutually exclusive/)
+      end
     end
   end
 
@@ -259,6 +360,28 @@ describe Puppet::HTTP::Client do
 
       expect(io.string).to eq("abc")
     end
+
+    context 'when connecting' do
+      it 'uses a specified ssl context' do
+        stub_request(:post, uri)
+
+        other_context = Puppet::SSL::SSLContext.new
+
+        client.post(uri, content_type: 'text/plain', body: "", ssl_context: other_context)
+      end
+
+      it 'uses the system store' do
+        stub_request(:post, uri)
+
+        client.post(uri, content_type: 'text/plain', body: "", include_system_store: true)
+      end
+
+      it 'raises an HTTPError if both are specified' do
+        expect {
+          client.post(uri, content_type: 'text/plain', body: "", ssl_context: puppet_context, include_system_store: true)
+        }.to raise_error(Puppet::HTTP::HTTPError, /The ssl_context and include_system_store parameters are mutually exclusive/)
+      end
+    end
   end
 
   context "for DELETE requests" do
@@ -293,6 +416,28 @@ describe Puppet::HTTP::Client do
       stub_request(:delete, uri).to_return(body: "abc")
 
       expect(client.delete(uri).body).to eq("abc")
+    end
+
+    context 'when connecting' do
+      it 'uses a specified ssl context' do
+        stub_request(:delete, uri)
+
+        other_context = Puppet::SSL::SSLContext.new
+
+        client.delete(uri, ssl_context: other_context)
+      end
+
+      it 'uses the system store' do
+        stub_request(:delete, uri)
+
+        client.delete(uri, include_system_store: true)
+      end
+
+      it 'raises an HTTPError if both are specified' do
+        expect {
+          client.delete(uri, ssl_context: puppet_context, include_system_store: true)
+        }.to raise_error(Puppet::HTTP::HTTPError, /The ssl_context and include_system_store parameters are mutually exclusive/)
+      end
     end
   end
 
