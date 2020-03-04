@@ -2,6 +2,7 @@ require 'pathname'
 require 'puppet/util/rubygems'
 require 'puppet/util/warnings'
 require 'puppet/pops/adaptable'
+require 'puppet/concurrent/synchronized'
 
 # An adapter that ties the module_directories cache to the environment where the modules are parsed. This
 # adapter ensures that the life-cycle of this cache doesn't exceed  the life-cycle of the environment.
@@ -13,6 +14,8 @@ end
 
 # Autoload paths, either based on names or all at once.
 class Puppet::Util::Autoload
+  include Puppet::Concurrent::Synchronized
+
   @loaded = {}
 
   class << self

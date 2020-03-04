@@ -1,5 +1,6 @@
 require 'puppet/util/autoload'
 require 'puppet/util'
+require 'puppet/concurrent/lock'
 
 # A module that can easily autoload things for us.  Uses an instance
 # of Puppet::Util::Autoload
@@ -18,6 +19,7 @@ module Puppet::Util::InstanceLoader
     type = type.intern
     @instances[type] = {}
     @autoloaders[type] = Puppet::Util::Autoload.new(self, path)
+    @instance_loader_lock = Puppet::Concurrent::Lock.new
 
     # Now define our new simple methods
     unless respond_to?(type)
@@ -44,19 +46,21 @@ module Puppet::Util::InstanceLoader
 
   # Retrieve an already-loaded instance, or attempt to load our instance.
   def loaded_instance(type, name)
-    name = name.intern
-    instances = instance_hash(type)
-    return nil unless instances
-    unless instances.include? name
-      if instance_loader(type).load(name, Puppet.lookup(:current_environment))
-        unless instances.include? name
-          Puppet.warning(_("Loaded %{type} file for %{name} but %{type} was not defined") % { type: type, name: name })
+    @instance_loader_lock.synchronize do
+      name = name.intern
+      instances = instance_hash(type)
+      return nil unless instances
+      unless instances.include? name
+        if instance_loader(type).load(name, Puppet.lookup(:current_environment))
+          unless instances.include? name
+            Puppet.warning(_("Loaded %{type} file for %{name} but %{type} was not defined") % { type: type, name: name })
+            return nil
+          end
+        else
           return nil
         end
-      else
-        return nil
       end
+      instances[name]
     end
-    instances[name]
   end
 end
