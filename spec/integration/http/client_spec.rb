@@ -141,4 +141,15 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       end
     end
   end
+
+  context 'persistent connections' do
+    it "detects when the server has closed the connection and reconnects" do
+      server.start_server do |port|
+        uri = URI("https://127.0.0.1:#{port}")
+
+        expect(client.get(uri, ssl_context: root_context)).to be_success
+        expect(client.get(uri, ssl_context: root_context)).to be_success
+      end
+    end
+  end
 end

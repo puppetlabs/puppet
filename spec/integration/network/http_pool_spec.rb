@@ -98,8 +98,16 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
                            %r{certificate verify failed.* .self signed certificate in certificate chain for CN=Test CA.})
         end
       end
-    end
 
+      it "detects when the server has closed the connection and reconnects" do
+        server.start_server do |port|
+          http = connection(hostname, port)
+
+          expect(http.request_get('/')).to be_a(Net::HTTPSuccess)
+          expect(http.request_get('/')).to be_a(Net::HTTPSuccess)
+        end
+      end
+    end
 
     context "when using single use HTTPS connections" do
       include_examples 'HTTPS client'

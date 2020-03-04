@@ -142,11 +142,14 @@ class Puppet::HTTP::Client
   def execute_streaming(request, ssl_context:, user: nil, password: nil, &block)
     redirects = 0
     retries = 0
+    response = nil
+    done = false
 
-    loop do
+    while !done do
       connect(request.uri, ssl_context: ssl_context) do |http|
         apply_auth(request, user, password)
 
+        # don't call return within the `request` block
         http.request(request) do |nethttp|
           response = Puppet::HTTP::Response.new(nethttp, request.uri)
           begin
@@ -175,10 +178,12 @@ class Puppet::HTTP::Client
             response.drain
           end
 
-          return response
+          done = true
         end
       end
     end
+
+    response
   end
 
   def expand_into_parameters(data)
