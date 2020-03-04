@@ -70,68 +70,68 @@ module Manager
   # @dsl type
   # @api public
   def newtype(name, options = {}, &block)
-    # Handle backward compatibility
-    unless options.is_a?(Hash)
-      #TRANSLATORS 'Puppet::Type.newtype' should not be translated
-      Puppet.warning(_("Puppet::Type.newtype(%{name}) now expects a hash as the second argument, not %{argument}") %
-                         { name: name, argument: options.inspect})
-    end
-
-    # First make sure we don't have a method sitting around
-    name = name.intern
-    newmethod = "new#{name}"
-
-    # Used for method manipulation.
-    selfobj = singleton_class
-
-    @types ||= {}
-
-    if @types.include?(name)
-      if self.respond_to?(newmethod)
-        # Remove the old newmethod
-        selfobj.send(:remove_method,newmethod)
+    @manager_lock.synchronize do
+      # Handle backward compatibility
+      unless options.is_a?(Hash)
+        #TRANSLATORS 'Puppet::Type.newtype' should not be translated
+        Puppet.warning(_("Puppet::Type.newtype(%{name}) now expects a hash as the second argument, not %{argument}") %
+                       { name: name, argument: options.inspect})
       end
-    end
 
-    # Then create the class.
+      # First make sure we don't have a method sitting around
+      name = name.intern
+      newmethod = "new#{name}"
 
-    klass = genclass(
-      name,
-      :parent => Puppet::Type,
-      :overwrite => true,
-      :hash => @types,
-      :attributes => options,
-      &block
-    )
+      # Used for method manipulation.
+      selfobj = singleton_class
 
-    # Now define a "new<type>" method for convenience.
-    if self.respond_to? newmethod
-      # Refuse to overwrite existing methods like 'newparam' or 'newtype'.
-      #TRANSLATORS 'new%{method}' will become a method name, do not translate this string
-      Puppet.warning(_("'new%{method}' method already exists; skipping") % { method: name.to_s })
-    else
-      selfobj.send(:define_method, newmethod) do |*args|
-        klass.new(*args)
+      if @types.include?(name)
+        if self.respond_to?(newmethod)
+          # Remove the old newmethod
+          selfobj.send(:remove_method,newmethod)
+        end
       end
+
+      # Then create the class.
+
+      klass = genclass(
+        name,
+        :parent => Puppet::Type,
+        :overwrite => true,
+        :hash => @types,
+        :attributes => options,
+        &block
+      )
+
+      # Now define a "new<type>" method for convenience.
+      if self.respond_to? newmethod
+        # Refuse to overwrite existing methods like 'newparam' or 'newtype'.
+        #TRANSLATORS 'new%{method}' will become a method name, do not translate this string
+        Puppet.warning(_("'new%{method}' method already exists; skipping") % { method: name.to_s })
+      else
+        selfobj.send(:define_method, newmethod) do |*args|
+          klass.new(*args)
+        end
+      end
+
+      # If they've got all the necessary methods defined and they haven't
+      # already added the property, then do so now.
+      klass.ensurable if klass.ensurable? and ! klass.validproperty?(:ensure)
+
+      # Now set up autoload any providers that might exist for this type.
+
+      klass.providerloader = Puppet::Util::Autoload.new(klass, "puppet/provider/#{klass.name}")
+
+      # We have to load everything so that we can figure out the default provider.
+      klass.providerloader.loadall(Puppet.lookup(:current_environment))
+      klass.providify unless klass.providers.empty?
+
+      loc = block_given? ? block.source_location : nil
+      uri = loc.nil? ? nil : URI("#{Puppet::Util.path_to_uri(loc[0])}?line=#{loc[1]}")
+      Puppet::Pops::Loaders.register_runtime3_type(name, uri)
+
+      klass
     end
-
-    # If they've got all the necessary methods defined and they haven't
-    # already added the property, then do so now.
-    klass.ensurable if klass.ensurable? and ! klass.validproperty?(:ensure)
-
-    # Now set up autoload any providers that might exist for this type.
-
-    klass.providerloader = Puppet::Util::Autoload.new(klass, "puppet/provider/#{klass.name}")
-
-    # We have to load everything so that we can figure out the default provider.
-    klass.providerloader.loadall(Puppet.lookup(:current_environment))
-    klass.providify unless klass.providers.empty?
-
-    loc = block_given? ? block.source_location : nil
-    uri = loc.nil? ? nil : URI("#{Puppet::Util.path_to_uri(loc[0])}?line=#{loc[1]}")
-    Puppet::Pops::Loaders.register_runtime3_type(name, uri)
-
-    klass
   end
 
   # Removes an existing type.
@@ -151,47 +151,47 @@ module Manager
   # @return [Puppet::Type, nil] the type or nil if the type was not defined and could not be loaded
   #
   def type(name)
-    # Avoid loading if name obviously is not a type name
-    if name.to_s.include?(':')
-      return nil
-    end
+    @manager_lock.synchronize do
+      # Avoid loading if name obviously is not a type name
+      if name.to_s.include?(':')
+        return nil
+      end
 
-    @types ||= {}
-
-    # We are overwhelmingly symbols here, which usually match, so it is worth
-    # having this special-case to return quickly.  Like, 25K symbols vs. 300
-    # strings in this method. --daniel 2012-07-17
-    return @types[name] if @types.include? name
-
-    # Try mangling the name, if it is a string.
-    if name.is_a? String
-      name = name.downcase.intern
+      # We are overwhelmingly symbols here, which usually match, so it is worth
+      # having this special-case to return quickly.  Like, 25K symbols vs. 300
+      # strings in this method. --daniel 2012-07-17
       return @types[name] if @types.include? name
-    end
-    # Try loading the type.
-    if typeloader.load(name, Puppet.lookup(:current_environment))
-      #TRANSLATORS 'puppet/type/%{name}' should not be translated
-      Puppet.warning(_("Loaded puppet/type/%{name} but no class was created") % { name: name }) unless @types.include? name
-    elsif !Puppet[:always_retry_plugins]
-      # PUP-5482 - Only look for a type once if plugin retry is disabled
-      @types[name] = nil
-    end
 
-    # ...and I guess that is that, eh.
-    return @types[name]
+      # Try mangling the name, if it is a string.
+      if name.is_a? String
+        name = name.downcase.intern
+        return @types[name] if @types.include? name
+      end
+      # Try loading the type.
+      if typeloader.load(name, Puppet.lookup(:current_environment))
+        #TRANSLATORS 'puppet/type/%{name}' should not be translated
+        Puppet.warning(_("Loaded puppet/type/%{name} but no class was created") % { name: name }) unless @types.include? name
+      elsif !Puppet[:always_retry_plugins]
+        # PUP-5482 - Only look for a type once if plugin retry is disabled
+        @types[name] = nil
+      end
+
+      # ...and I guess that is that, eh.
+      return @types[name]
+    end
   end
 
   # Creates a loader for Puppet types.
   # Defaults to an instance of {Puppet::Util::Autoload} if no other auto loader has been set.
   # @return [Puppet::Util::Autoload] the loader to use.
   # @api private
-def typeloader
-  unless defined?(@typeloader)
-    @typeloader = Puppet::Util::Autoload.new(self, "puppet/type")
-  end
+  def typeloader
+    unless defined?(@typeloader)
+      @typeloader = Puppet::Util::Autoload.new(self, "puppet/type")
+    end
 
-  @typeloader
-end
+    @typeloader
+  end
 end
 end
 
