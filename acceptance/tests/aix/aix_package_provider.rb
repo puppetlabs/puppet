@@ -26,8 +26,8 @@ end
 step "download packages to use for test"
 
 on hosts, "mkdir -p #{dir}"
-on hosts, "curl neptune.puppetlabs.lan/misc/sudo.#{version1}.aix51.lam.bff > #{dir}/sudo.#{version1}.aix51.lam.bff"
-on hosts, "curl neptune.puppetlabs.lan/misc/sudo.#{version2}.aix51.lam.bff > #{dir}/sudo.#{version2}.aix51.lam.bff"
+on hosts, "curl -L neptune.puppetlabs.lan/misc/sudo.#{version1}.aix51.lam.bff > #{dir}/sudo.#{version1}.aix51.lam.bff"
+on hosts, "curl -L neptune.puppetlabs.lan/misc/sudo.#{version2}.aix51.lam.bff > #{dir}/sudo.#{version2}.aix51.lam.bff"
 
 step "setup manifests for testing"
 
