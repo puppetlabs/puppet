@@ -48,7 +48,7 @@ class Puppet::Forge
         end
 
         http = Puppet.runtime['http']
-        response = http.get(uri, headers: headers, user: user, password: password, ssl_context: @ssl_context)
+        response = http.get(uri, headers: headers, options: {user: user, password: password, ssl_context: @ssl_context})
         io.write(response.body) if io.respond_to?(:write)
         response
       rescue Puppet::SSL::CertVerifyError => e

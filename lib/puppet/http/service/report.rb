@@ -14,8 +14,10 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
       with_base_url("/report/#{name}"),
       headers: headers,
       params: { environment: environment },
-      content_type: formatter.mime,
-      body: serialize(formatter, report)
+      options: {
+        content_type: formatter.mime,
+        body: serialize(formatter, report)
+      }
     )
 
     # override parent's process_response handling

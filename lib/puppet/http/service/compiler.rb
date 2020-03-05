@@ -57,8 +57,10 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       headers: headers,
       # for legacy reasons we always send environment as a query parameter too
       params: { environment: environment },
-      content_type: 'application/x-www-form-urlencoded',
-      body: body,
+      options: {
+        content_type: 'application/x-www-form-urlencoded',
+        body: body
+      }
     )
 
     process_response(response)
@@ -89,8 +91,10 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       with_base_url("/facts/#{name}"),
       headers: headers,
       params: { environment: environment },
-      content_type: formatter.mime,
-      body: serialize(formatter, facts),
+      options: {
+        content_type: formatter.mime,
+         body: serialize(formatter, facts)
+      }
     )
 
     process_response(response)

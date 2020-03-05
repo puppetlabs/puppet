@@ -28,7 +28,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
   context "when verifying an HTTPS server" do
     it "connects over SSL" do
       server.start_server do |port|
-        res = client.get(URI("https://127.0.0.1:#{port}"), ssl_context: root_context)
+        res = client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: root_context})
         expect(res).to be_success
       end
     end
@@ -41,14 +41,14 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       port = tcps.connect_address.ip_port
 
       expect {
-        client.get(URI("https://127.0.0.1:#{port}"), ssl_context: root_context)
+        client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: root_context})
       }.to raise_error(Puppet::HTTP::ConnectionError, %r{^Request to https://127.0.0.1:#{port} timed out connect operation after .* seconds})
     end
 
     it "raises if the server's cert doesn't match the hostname we connected to" do
       server.start_server do |port|
         expect {
-          client.get(URI("https://#{wrong_hostname}:#{port}"), ssl_context: root_context)
+          client.get(URI("https://#{wrong_hostname}:#{port}"), options: {ssl_context: root_context})
         }.to raise_error { |err|
           expect(err).to be_instance_of(Puppet::SSL::CertMismatchError)
           expect(err.message).to match(/Server hostname '#{wrong_hostname}' did not match server certificate; expected one of (.+)/)
@@ -65,7 +65,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
 
       server.start_server do |port|
         expect {
-          client.get(URI("https://127.0.0.1:#{port}"), ssl_context: alt_context)
+          client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: alt_context})
         }.to raise_error(Puppet::SSL::CertVerifyError,
                          %r{certificate verify failed.* .self signed certificate in certificate chain for CN=Test CA.})
       end
@@ -74,7 +74,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
     it "prints TLS protocol and ciphersuite in debug" do
       Puppet[:log_level] = 'debug'
       server.start_server do |port|
-        client.get(URI("https://127.0.0.1:#{port}"), ssl_context: root_context)
+        client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: root_context})
         # TLS version string can be TLSv1 or TLSv1.[1-3], but not TLSv1.0
         expect(@logs).to include(
           an_object_having_attributes(level: :debug, message: /Using TLSv1(\.[1-3])? with cipher .*/),
@@ -98,7 +98,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       )
 
       server.start_server(ctx_proc: ctx_proc) do |port|
-        res = client.get(URI("https://127.0.0.1:#{port}"), ssl_context: client_context)
+        res = client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: client_context})
         expect(res).to be_success
       end
     end
@@ -109,7 +109,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       system_context = ssl_provider.create_system_context(cacerts: [server.ca_cert])
 
       server.start_server do |port|
-        res = client.get(URI("https://127.0.0.1:#{port}"), ssl_context: system_context)
+        res = client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: system_context})
         expect(res).to be_success
       end
     end
@@ -124,7 +124,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       Puppet::Util.withenv("SSL_CERT_FILE" => ssl_file) do
         system_context = ssl_provider.create_system_context(cacerts: [])
         server.start_server do |port|
-          res = client.get(URI("https://127.0.0.1:#{port}"), ssl_context: system_context)
+          res = client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: system_context})
           expect(res).to be_success
         end
       end
@@ -135,7 +135,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
 
       server.start_server do |port|
         expect {
-          client.get(URI("https://127.0.0.1:#{port}"), ssl_context: system_context)
+          client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: system_context})
         }.to raise_error(Puppet::SSL::CertVerifyError,
                          %r{certificate verify failed.* .self signed certificate in certificate chain for CN=Test CA.})
       end
@@ -147,8 +147,8 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       server.start_server do |port|
         uri = URI("https://127.0.0.1:#{port}")
 
-        expect(client.get(uri, ssl_context: root_context)).to be_success
-        expect(client.get(uri, ssl_context: root_context)).to be_success
+        expect(client.get(uri, options: {ssl_context: root_context})).to be_success
+        expect(client.get(uri, options: {ssl_context: root_context})).to be_success
       end
     end
   end

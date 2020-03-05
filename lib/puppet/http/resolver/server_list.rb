@@ -23,7 +23,7 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
   end
 
   def get_success?(uri, session, ssl_context: nil)
-    response = @client.get(uri, ssl_context: ssl_context)
+    response = @client.get(uri, options: {ssl_context: ssl_context})
     return true if response.success?
 
     Puppet.debug(_("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
