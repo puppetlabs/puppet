@@ -271,14 +271,16 @@ class Puppet::HTTP::Client
 
     server_list_setting = Puppet.settings.setting(:server_list)
     if server_list_setting.value && !server_list_setting.value.empty?
-      services = [:puppet]
+      # use server list to resolve all services
+      services = Puppet::HTTP::Service::SERVICE_NAMES.dup
 
-      # If we have not explicitly set :ca_server either on the command line or
-      # in puppet.conf, we want to be able to try the servers defined by
-      # :server_list when resolving the :ca service. Otherwise, :server_list
-      # should only be used with the :puppet service.
-      if !Puppet.settings.set_by_config?(:ca_server)
-        services << :ca
+      # except if it's been explicitly set
+      if Puppet.settings.set_by_config?(:ca_server)
+        services.delete(:ca)
+      end
+
+      if Puppet.settings.set_by_config?(:report_server)
+        services.delete(:report)
       end
 
       resolvers << Puppet::HTTP::Resolver::ServerList.new(self, server_list_setting: server_list_setting, default_port: Puppet[:masterport], services: services)

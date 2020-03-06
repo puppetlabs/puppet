@@ -271,7 +271,7 @@ module Puppet
       end
     end
 
-    def get_from_content_uri_source(content_uri, &block)
+    def get_from_content_uri_source(url, &block)
       session = Puppet.lookup(:http_session)
       api = session.route_to(:fileserver, url: url)
 

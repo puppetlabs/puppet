@@ -1,6 +1,9 @@
 require 'spec_helper'
 require 'webmock/rspec'
 require 'puppet/http'
+require 'puppet/file_serving'
+require 'puppet/file_serving/content'
+require 'puppet/file_serving/metadata'
 
 describe Puppet::HTTP::Service do
   let(:ssl_context) { Puppet::SSL::SSLContext.new }
@@ -16,6 +19,10 @@ describe Puppet::HTTP::Service do
         headers: add_puppet_headers({'Default-Header' => 'default-value'}),
         ssl_context: ssl_context
       )
+    end
+
+    def mime_types(model)
+      get_mime_types(model)
     end
   end
 
@@ -105,5 +112,34 @@ describe Puppet::HTTP::Service do
 
   it "returns false for unknown service names" do
     expect(described_class.valid_name?(:westbound)).to eq(false)
+  end
+
+  it 'returns different mime types for different models' do
+    mimes = if Puppet.features.msgpack?
+              %w[application/json application/x-msgpack text/pson]
+            else
+              %w[application/json text/pson]
+            end
+
+    service = TestService.new(client, session, url)
+    [
+      Puppet::Node,
+      Puppet::Node::Facts,
+      Puppet::Transaction::Report,
+      Puppet::FileServing::Metadata,
+      Puppet::Status
+    ].each do |model|
+      expect(service.mime_types(model)).to eq(mimes)
+    end
+
+    # These are special
+    expect(service.mime_types(Puppet::FileServing::Content)).to eq(%w[application/octet-stream])
+
+    catalog_mimes = if Puppet.features.msgpack?
+                      %w[application/vnd.puppet.rich+json application/json application/vnd.puppet.rich+msgpack application/x-msgpack text/pson]
+                    else
+                      %w[application/vnd.puppet.rich+json application/json application/vnd.puppet.rich+msgpack text/pson]
+                    end
+    expect(service.mime_types(Puppet::Resource::Catalog)).to eq(catalog_mimes)
   end
 end
