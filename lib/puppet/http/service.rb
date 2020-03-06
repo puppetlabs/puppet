@@ -70,11 +70,8 @@ class Puppet::HTTP::Service
   end
 
   def get_mime_types(model)
-    unless @mime_types
-      network_formats = model.supported_formats - EXCLUDED_FORMATS
-      @mime_types = network_formats.map { |f| model.get_format(f).mime }
-    end
-    @mime_types
+    network_formats = model.supported_formats - EXCLUDED_FORMATS
+    network_formats.map { |f| model.get_format(f).mime }
   end
 
   def formatter_for_response(response)
