@@ -679,6 +679,15 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
         resource.write(source)
       end
 
+      it 'should request static file content' do
+        metadata.content_uri = "puppet://#{Puppet[:server]}:8140/path/to/file"
+
+        stub_request(:get, %r{/puppet/v3/static_file_content/path/to/file})
+          .to_return(status: 200, body: '', headers: { 'Content-Type' => 'application/octet-stream' })
+
+        resource.write(source)
+      end
+
       describe 'when handling file_content responses' do
         before do
           File.open(filename, 'w') {|f| f.write "initial file content"}
