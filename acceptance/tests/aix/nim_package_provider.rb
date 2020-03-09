@@ -1,8 +1,12 @@
 test_name "NIM package provider should work correctly"
 
-confine :to, :platform => "aix"
-
-# NOTE: This test is duplicated in the pe_acceptance_tests repo
+# nim test is slow, confine to only aix 7.2 and recent puppet versions
+confine :to, :platform => "aix" do |aix|
+  version = on(aix, 'puppet --version').stdout
+  version &&
+    Gem::Version.new(version) > Gem::Version.new('6.4.0') &&
+    on(aix, 'facter operatingsystemrelease').stdout == '7.2'
+end
 
 teardown do
     test_apply('cdrecord', 'absent', '')
