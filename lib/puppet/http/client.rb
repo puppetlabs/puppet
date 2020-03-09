@@ -11,11 +11,10 @@ class Puppet::HTTP::Client
     @default_system_ssl_context = system_ssl_context
     @redirector = Puppet::HTTP::Redirector.new(redirect_limit)
     @retry_after_handler = Puppet::HTTP::RetryAfterHandler.new(retry_limit, Puppet[:runinterval])
-    @resolvers = build_resolvers
   end
 
   def create_session
-    Puppet::HTTP::Session.new(self, @resolvers)
+    Puppet::HTTP::Session.new(self, build_resolvers)
   end
 
   def connect(uri, ssl_context: nil, include_system_store: false, &block)

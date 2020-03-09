@@ -70,6 +70,23 @@ describe Puppet::HTTP::Resolver do
       expect(service).to be_an_instance_of(Puppet::HTTP::Service::Ca)
       expect(service.url.to_s).to eq("https://apple.example.com:8142/puppet-ca/v1")
     end
+
+    it 'resolves once per session' do
+      failed = stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 503)
+      passed = stub_request(:get, "https://apple.example.com:8142/status/v1/simple/master").to_return(status: 200)
+
+      service = subject.resolve(session, :puppet)
+      expect(service.url.to_s).to eq("https://apple.example.com:8142/puppet/v3")
+
+      service = subject.resolve(session, :fileserver)
+      expect(service.url.to_s).to eq("https://apple.example.com:8142/puppet/v3")
+
+      service = subject.resolve(session, :report)
+      expect(service.url.to_s).to eq("https://apple.example.com:8142/puppet/v3")
+
+      expect(failed).to have_been_requested
+      expect(passed).to have_been_requested
+    end
   end
 
   context 'when resolving using SRV' do

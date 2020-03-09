@@ -166,9 +166,12 @@ describe Puppet::HTTP::Session do
 
     Puppet::HTTP::Service::SERVICE_NAMES.each do |name|
       it "resolves #{name} using server_list" do
-        stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 200)
+        Puppet[:server_list] = 'apple.example.com'
+        req = stub_request(:get, "https://apple.example.com:8140/status/v1/simple/master").to_return(status: 200)
 
         session.route_to(name)
+
+        expect(req).to have_been_requested
       end
     end
 
@@ -182,6 +185,27 @@ describe Puppet::HTTP::Session do
       Puppet[:report_server] = 'cherry.example.com'
 
       expect(session.route_to(:report).url.to_s).to eq("https://cherry.example.com:8140/puppet/v3")
+    end
+
+    it 'resolves once for all services in a session' do
+      Puppet[:server_list] = 'apple.example.com'
+      req = stub_request(:get, "https://apple.example.com:8140/status/v1/simple/master").to_return(status: 200)
+
+      Puppet::HTTP::Service::SERVICE_NAMES.each do |name|
+        session.route_to(name)
+      end
+
+      expect(req).to have_been_requested
+    end
+
+    it 'resolves server_list for each new session' do
+      Puppet[:server_list] = 'apple.example.com'
+      req = stub_request(:get, "https://apple.example.com:8140/status/v1/simple/master").to_return(status: 200)
+
+      client.create_session.route_to(:puppet)
+      client.create_session.route_to(:puppet)
+
+      expect(req).to have_been_requested.twice
     end
   end
 
