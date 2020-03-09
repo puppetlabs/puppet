@@ -1,7 +1,11 @@
+require 'puppet/util/package/version/range'
+require 'puppet/util/package/version/debian'
+
 Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # Provide sorting functionality
   include Puppet::Util::Package
-
+  DebianVersion = Puppet::Util::Package::Version::Debian
+  VersionRange  = Puppet::Util::Package::Version::Range
   desc "Package management via `apt-get`.
 
     This provider supports the `install_options` attribute, which allows command-line flags to be passed to apt-get.
@@ -44,11 +48,44 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     end
   end
 
+  def best_version(should_range)
+    available_versions = SortedSet.new
+
+    output = aptcache :madison, @resource[:name]
+    output.each_line do |line|
+      is = line.split('|')[1].strip
+      begin
+        is_version = DebianVersion.parse(is)
+        available_versions << is_version
+      rescue DebianVersion::ValidationFailure
+        Puppet.warning("Cannot parse #{is} as a debian version")
+      end
+    end
+
+    included_available_version = available_versions.select do |version|
+      should_range.include?(version)
+    end
+
+    return included_available_version[-1] unless included_available_version.empty?
+
+    Puppet.warning("No available version for package #{@resource[:name]} is included in range #{should_range}")
+    should_range
+  end
+
   # Install a package using 'apt-get'.  This function needs to support
   # installing a specific version.
   def install
     self.run_preseed if @resource[:responsefile]
     should = @resource[:ensure]
+
+    if should.is_a?(String)
+      begin
+        should_range = VersionRange.parse(should, DebianVersion)
+        should = best_version(should_range)
+      rescue VersionRange::ValidationFailure, DebianVersion::ValidationFailure
+        Puppet.debug("Cannot parse #{should} as a debian version range, falling through")
+      end
+    end
 
     checkforcdrom
     cmd = %w{-q -y}
@@ -129,5 +166,33 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
   def install_options
     join_options(@resource[:install_options])
+  end
+
+  def insync?(is)
+    # this is called after the generic version matching logic (insync? for the
+    # type), so we only get here if should != is
+
+    return false unless is && is != :absent
+
+    #if 'should' is a range and 'is' a debian version we should check if 'should' includes 'is'
+    should = @resource[:ensure]
+
+    return false unless is.is_a?(String) && should.is_a?(String)
+
+    begin
+      should_range = VersionRange.parse(should, DebianVersion)
+    rescue VersionRange::ValidationFailure, DebianVersion::ValidationFailure
+      #this debug message mai increase log, to be assessed is necessary
+      Puppet.debug("Cannot parse #{should} as a debian version range")
+      return false
+    end
+
+    begin
+      is_version = DebianVersion.parse(is)
+    rescue DebianVersion::ValidationFailure
+      Puppet.debug("Cannot parse #{is} as a debian version")
+      return false
+    end
+    should_range.include?(is_version)
   end
 end
