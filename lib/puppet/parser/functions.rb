@@ -1,6 +1,7 @@
 require 'puppet/util/autoload'
 require 'puppet/parser/scope'
 require 'puppet/pops/adaptable'
+require 'puppet/concurrent/lock'
 
 # A module for managing parser functions.  Each specified function
 # is added to a central module that then gets included into the Scope
@@ -78,28 +79,32 @@ module Puppet::Parser::Functions
     attr_accessor :module
   end
 
+  @environment_module_lock = Puppet::Concurrent::Lock.new
+
   # Get the module that functions are mixed into corresponding to an
   # environment
   #
   # @api private
   def self.environment_module(env)
-    AnonymousModuleAdapter.adapt(env) do |a|
-      a.module ||= Module.new do
-        @metadata = {}
+    @environment_module_lock.synchronize do
+      AnonymousModuleAdapter.adapt(env) do |a|
+        a.module ||= Module.new do
+          @metadata = {}
 
-        def self.all_function_info
-          @metadata
-        end
+          def self.all_function_info
+            @metadata
+          end
 
-        def self.get_function_info(name)
-          @metadata[name]
-        end
+          def self.get_function_info(name)
+            @metadata[name]
+          end
 
-        def self.add_function_info(name, info)
-          @metadata[name] = info
+          def self.add_function_info(name, info)
+            @metadata[name] = info
+          end
         end
-      end
-    end.module
+      end.module
+    end
   end
 
   # Create a new Puppet DSL function.

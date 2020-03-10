@@ -10,6 +10,7 @@ require 'puppet/metatype/manager'
 require 'puppet/util/errors'
 require 'puppet/util/logging'
 require 'puppet/util/tagging'
+require 'puppet/concurrent/lock'
 
 # see the bottom of the file for the rest of the inclusions
 
@@ -83,6 +84,11 @@ class Type
 
   # Comparing type instances.
   include Comparable
+
+  # These variables are used in Metatype::Manager for managing types
+  @types = {}
+  @manager_lock = Puppet::Concurrent::Lock.new
+  extend Puppet::MetaType::Manager
 
   # Compares this type against the given _other_ (type) and returns -1, 0, or +1 depending on the order.
   # @param other [Object] the object to compare against (produces nil, if not kind of Type}
@@ -2284,7 +2290,6 @@ end
     #
     attr_accessor :self_refresh
     include Enumerable, Puppet::Util::ClassGen
-    include Puppet::MetaType::Manager
 
     include Puppet::Util
     include Puppet::Util::Logging

@@ -162,6 +162,10 @@ class Puppet::Node::Environment
   # @api private
   attr_accessor :loaders
 
+  # Lock for compilation that needs exclusive access to the environment
+  # @api private
+  attr_reader :lock
+
   # Checks to make sure that this environment did not have a manifest set in
   # its original environment.conf if Puppet is configured with
   # +disable_per_environment_manifest+ set true.  If it did, the environment's

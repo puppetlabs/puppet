@@ -777,13 +777,7 @@ class Puppet::Parser::Compiler
   SETTINGS = 'settings'.freeze
 
   def create_settings_scope
-    resource_types = environment.known_resource_types
-    settings_type = resource_types.hostclass(SETTINGS)
-    if settings_type.nil?
-      settings_type = Puppet::Resource::Type.new(:hostclass, SETTINGS)
-      resource_types.add(settings_type)
-    end
-
+    settings_type = create_settings_type
     settings_resource = Puppet::Parser::Resource.new('class', SETTINGS, :scope => @topscope)
 
     @catalog.add_resource(settings_resource)
@@ -792,6 +786,19 @@ class Puppet::Parser::Compiler
 
     scope = @topscope.class_scope(settings_type)
     scope.merge_settings(environment.name)
+  end
+
+  def create_settings_type
+    environment.lock.synchronize do
+      resource_types = environment.known_resource_types
+      settings_type = resource_types.hostclass(SETTINGS)
+      if settings_type.nil?
+        settings_type = Puppet::Resource::Type.new(:hostclass, SETTINGS)
+        resource_types.add(settings_type)
+      end
+
+      settings_type
+    end
   end
 
   # Return an array of all of the unevaluated resources.  These will be definitions,
