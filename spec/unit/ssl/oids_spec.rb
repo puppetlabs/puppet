@@ -33,6 +33,7 @@ describe Puppet::SSL::Oids do
       'pp_cloudplatform'    => '1.3.6.1.4.1.34380.1.1.23',
       'pp_apptier'          => '1.3.6.1.4.1.34380.1.1.24',
       'pp_hostname'         => '1.3.6.1.4.1.34380.1.1.25',
+      'pp_owner'            => '1.3.6.1.4.1.34380.1.1.26',
       'ppPrivCertExt'       => '1.3.6.1.4.1.34380.1.2',
       'ppAuthCertExt'       => '1.3.6.1.4.1.34380.1.3',
       'pp_authorization'    => '1.3.6.1.4.1.34380.1.3.1',

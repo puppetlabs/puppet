@@ -61,6 +61,7 @@ module Puppet::SSL::Oids
     ["1.3.6.1.4.1.34380.1.1.23", 'pp_cloudplatform', 'Puppet Node Cloud Platform Name'],
     ["1.3.6.1.4.1.34380.1.1.24", 'pp_apptier', 'Puppet Node Application Tier'],
     ["1.3.6.1.4.1.34380.1.1.25", 'pp_hostname', 'Puppet Node Hostname'],
+    ["1.3.6.1.4.1.34380.1.1.26", 'pp_owner', 'Puppet Node Owner'],
 
     ["1.3.6.1.4.1.34380.1.2", 'ppPrivCertExt', 'Puppet Private Certificate Extension'],
 
