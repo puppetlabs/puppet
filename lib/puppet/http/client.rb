@@ -18,8 +18,11 @@ class Puppet::HTTP::Client
     Puppet::HTTP::Session.new(self, @resolvers)
   end
 
-  def connect(uri, ssl_context: nil, include_system_store: false, &block)
+  def connect(uri, options: {}, &block)
     start = Time.now
+
+    ssl_context = options.fetch(:ssl_context, nil)
+    include_system_store = options.fetch(:include_system_store, false)
     ctx = resolve_ssl_context(ssl_context, include_system_store)
     site = Puppet::Network::HTTP::Site.from_uri(uri)
     verifier = if site.use_ssl?
@@ -50,7 +53,7 @@ class Puppet::HTTP::Client
                 {uri: uri, elapsed: elapsed(start), message: e.message}, e, connected)
   end
 
-  def get(url, headers: {}, params: {}, user: nil, password: nil, ssl_context: nil, include_system_store: false, &block)
+  def get(url, headers: {}, params: {}, options: {}, &block)
     query = encode_params(params)
     unless query.empty?
       url = url.dup
@@ -59,7 +62,7 @@ class Puppet::HTTP::Client
 
     request = Net::HTTP::Get.new(url, @default_headers.merge(headers))
 
-    execute_streaming(request, user: user, password: password, ssl_context: ssl_context, include_system_store: include_system_store) do |response|
+    execute_streaming(request, options: options) do |response|
       if block_given?
         yield response
       else
@@ -68,7 +71,7 @@ class Puppet::HTTP::Client
     end
   end
 
-  def head(url, headers: {}, params: {}, user: nil, password: nil, ssl_context: nil, include_system_store: false)
+  def head(url, headers: {}, params: {}, options: {})
     query = encode_params(params)
     unless query.empty?
       url = url.dup
@@ -77,12 +80,12 @@ class Puppet::HTTP::Client
 
     request = Net::HTTP::Head.new(url, @default_headers.merge(headers))
 
-    execute_streaming(request, user: user, password: password, ssl_context: ssl_context, include_system_store: include_system_store) do |response|
+    execute_streaming(request, options: options) do |response|
       response.body
     end
   end
 
-  def put(url, headers: {}, params: {}, content_type:, body:, user: nil, password: nil, ssl_context: nil, include_system_store: false)
+  def put(url, headers: {}, params: {}, options: {})
     query = encode_params(params)
     unless query.empty?
       url = url.dup
@@ -90,16 +93,20 @@ class Puppet::HTTP::Client
     end
 
     request = Net::HTTP::Put.new(url, @default_headers.merge(headers))
+
+    body = options.fetch(:body) { |_| raise ArgumentError, "'put' requires a 'body' option" }
+    content_type = options.fetch(:content_type) { |_| raise ArgumentError, "'put' requires a 'content_type' option" }
+
     request.body = body
     request['Content-Length'] = body.bytesize
     request['Content-Type'] = content_type
 
-    execute_streaming(request, user: user, password: password, ssl_context: ssl_context, include_system_store: include_system_store) do |response|
+    execute_streaming(request, options: options) do |response|
       response.body
     end
   end
 
-  def post(url, headers: {}, params: {}, content_type:, body:, user: nil, password: nil, ssl_context: nil, include_system_store: false, &block)
+  def post(url, headers: {}, params: {}, options: {}, &block)
     query = encode_params(params)
     unless query.empty?
       url = url.dup
@@ -107,11 +114,15 @@ class Puppet::HTTP::Client
     end
 
     request = Net::HTTP::Post.new(url, @default_headers.merge(headers))
+
+    body = options.fetch(:body) { |_| raise ArgumentError, "'post' requires a 'body' option" }
+    content_type = options.fetch(:content_type) { |_| raise ArgumentError, "'post' requires a 'content_type' option" }
+
     request.body = body
     request['Content-Length'] = body.bytesize
     request['Content-Type'] = content_type
 
-    execute_streaming(request, user: user, password: password, ssl_context: ssl_context, include_system_store: include_system_store) do |response|
+    execute_streaming(request, options: options) do |response|
       if block_given?
         yield response
       else
@@ -120,7 +131,7 @@ class Puppet::HTTP::Client
     end
   end
 
-  def delete(url, headers: {}, params: {}, user: nil, password: nil, ssl_context: nil, include_system_store: false)
+  def delete(url, headers: {}, params: {}, options: {})
     query = encode_params(params)
     unless query.empty?
       url = url.dup
@@ -129,7 +140,7 @@ class Puppet::HTTP::Client
 
     request = Net::HTTP::Delete.new(url, @default_headers.merge(headers))
 
-    execute_streaming(request, user: user, password: password, ssl_context: ssl_context, include_system_store: include_system_store) do |response|
+    execute_streaming(request, options: options) do |response|
       response.body
     end
   end
@@ -140,14 +151,17 @@ class Puppet::HTTP::Client
 
   private
 
-  def execute_streaming(request, user: nil, password: nil, ssl_context:, include_system_store:, &block)
+  def execute_streaming(request, options: {}, &block)
+    user = options.fetch(:user, nil)
+    password = options.fetch(:password, nil)
+
     redirects = 0
     retries = 0
     response = nil
     done = false
 
     while !done do
-      connect(request.uri, ssl_context: ssl_context, include_system_store: include_system_store) do |http|
+      connect(request.uri, options: options) do |http|
         apply_auth(request, user, password)
 
         # don't call return within the `request` block

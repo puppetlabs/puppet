@@ -11,7 +11,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
     response = @client.get(
       with_base_url("/certificate/#{name}"),
       headers: add_puppet_headers(HEADERS),
-      ssl_context: ssl_context
+      options: {ssl_context: ssl_context}
     )
 
     process_response(response)
@@ -26,7 +26,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
     response = @client.get(
       with_base_url("/certificate_revocation_list/ca"),
       headers: headers,
-      ssl_context: ssl_context
+      options: {ssl_context: ssl_context}
     )
 
     process_response(response)
@@ -38,9 +38,11 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
     response = @client.put(
       with_base_url("/certificate_request/#{name}"),
       headers: add_puppet_headers(HEADERS),
-      content_type: 'text/plain',
-      body: csr.to_pem,
-      ssl_context: ssl_context
+      options: {
+        content_type: 'text/plain',
+        body: csr.to_pem,
+        ssl_context: ssl_context
+      }
     )
 
     process_response(response)

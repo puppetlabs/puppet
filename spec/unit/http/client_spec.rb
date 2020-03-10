@@ -64,7 +64,7 @@ describe Puppet::HTTP::Client do
         expect(verifier.ssl_context).to equal(other_context)
       end
 
-      client.connect(uri, ssl_context: other_context)
+      client.connect(uri, options: {ssl_context: other_context})
     end
 
     it 'connects using the system store' do
@@ -72,12 +72,12 @@ describe Puppet::HTTP::Client do
         expect(verifier.ssl_context).to equal(system_context)
       end
 
-      client.connect(uri, include_system_store: true)
+      client.connect(uri, options: {include_system_store: true})
     end
 
     it 'raises an HTTPError if both are specified' do
       expect {
-        client.connect(uri, ssl_context: puppet_context, include_system_store: true)
+        client.connect(uri, options: {ssl_context: puppet_context, include_system_store: true})
       }.to raise_error(Puppet::HTTP::HTTPError, /The ssl_context and include_system_store parameters are mutually exclusive/)
     end
   end
@@ -180,18 +180,18 @@ describe Puppet::HTTP::Client do
 
         other_context = Puppet::SSL::SSLContext.new
 
-        client.get(uri, ssl_context: other_context)
+        client.get(uri, options: {ssl_context: other_context})
       end
 
       it 'uses the system store' do
         stub_request(:get, uri).to_return(body: "abc")
 
-        client.get(uri, include_system_store: true)
+        client.get(uri, options: {include_system_store: true})
       end
 
       it 'raises an HTTPError if both are specified' do
         expect {
-          client.get(uri, ssl_context: puppet_context, include_system_store: true)
+          client.get(uri, options: {ssl_context: puppet_context, include_system_store: true})
         }.to raise_error(Puppet::HTTP::HTTPError, /The ssl_context and include_system_store parameters are mutually exclusive/)
       end
     end
@@ -237,18 +237,18 @@ describe Puppet::HTTP::Client do
 
         other_context = Puppet::SSL::SSLContext.new
 
-        client.head(uri, ssl_context: other_context)
+        client.head(uri, options: {ssl_context: other_context})
       end
 
       it 'uses the system store' do
         stub_request(:head, uri)
 
-        client.head(uri, include_system_store: true)
+        client.head(uri, options: {include_system_store: true})
       end
 
       it 'raises an HTTPError if both are specified' do
         expect {
-          client.head(uri, ssl_context: puppet_context, include_system_store: true)
+          client.head(uri, options: {ssl_context: puppet_context, include_system_store: true})
         }.to raise_error(Puppet::HTTP::HTTPError, /The ssl_context and include_system_store parameters are mutually exclusive/)
       end
     end
@@ -261,25 +261,25 @@ describe Puppet::HTTP::Client do
         expect(request.headers).to_not include('X-Puppet-Profiling')
       end
 
-      client.put(uri, content_type: 'text/plain', body: "")
+      client.put(uri, options: {content_type: 'text/plain', body: ""})
     end
 
     it "stringifies keys and encodes values in the query" do
       stub_request(:put, "https://www.example.com").with(query: "foo=bar%3Dbaz")
 
-      client.put(uri, params: {:foo => "bar=baz"}, content_type: 'text/plain', body: "")
+      client.put(uri, params: {:foo => "bar=baz"}, options: {content_type: 'text/plain', body: ""})
     end
 
     it "includes custom headers" do
       stub_request(:put, "https://www.example.com").with(headers: { 'X-Foo' => 'Bar' })
 
-      client.put(uri, headers: {'X-Foo' => 'Bar'}, content_type: 'text/plain', body: "")
+      client.put(uri, headers: {'X-Foo' => 'Bar'}, options: {content_type: 'text/plain', body: ""})
     end
 
     it "returns the response" do
       stub_request(:put, uri)
 
-      response = client.put(uri, content_type: 'text/plain', body: "")
+      response = client.put(uri, options: {content_type: 'text/plain', body: ""})
       expect(response).to be_an_instance_of(Puppet::HTTP::Response)
       expect(response).to be_success
       expect(response.code).to eq(200)
@@ -288,8 +288,20 @@ describe Puppet::HTTP::Client do
     it "sets content-length and content-type for the body" do
       stub_request(:put, uri).with(headers: {"Content-Length" => "5", "Content-Type" => "text/plain"})
 
-      client.put(uri, content_type: 'text/plain', body: "hello")
+      client.put(uri, options: {content_type: 'text/plain', body: "hello"})
     end
+
+     it 'raises an ArgumentError if `body` is missing from the options hash' do
+       expect {
+         client.put(uri, options: {content_type: 'text/plain'})
+       }.to raise_error(ArgumentError, /'put' requires a 'body' option/)
+     end
+
+     it 'raises an ArgumentError if `content_type` is missing from the options hash' do
+       expect {
+         client.put(uri, options: {body: ''})
+       }.to raise_error(ArgumentError, /'put' requires a 'content_type' option/)
+     end
 
     context 'when connecting' do
       it 'uses a specified ssl context' do
@@ -297,18 +309,18 @@ describe Puppet::HTTP::Client do
 
         other_context = Puppet::SSL::SSLContext.new
 
-        client.put(uri, content_type: 'text/plain', body: "", ssl_context: other_context)
+        client.put(uri, options: {content_type: 'text/plain', body: "", ssl_context: other_context})
       end
 
       it 'uses the system store' do
         stub_request(:put, uri)
 
-        client.put(uri, content_type: 'text/plain', body: "", include_system_store: true)
+        client.put(uri, options: {content_type: 'text/plain', body: "", include_system_store: true})
       end
 
       it 'raises an HTTPError if both are specified' do
         expect {
-          client.put(uri, content_type: 'text/plain', body: "", ssl_context: puppet_context, include_system_store: true)
+          client.put(uri, options: {content_type: 'text/plain', body: "", ssl_context: puppet_context, include_system_store: true})
         }.to raise_error(Puppet::HTTP::HTTPError, /The ssl_context and include_system_store parameters are mutually exclusive/)
       end
     end
@@ -318,25 +330,25 @@ describe Puppet::HTTP::Client do
     it "includes default HTTP headers" do
       stub_request(:post, uri).with(headers: {'X-Puppet-Version' => /./, 'User-Agent' => /./})
 
-      client.post(uri, content_type: 'text/plain', body: "")
+      client.post(uri, options: {content_type: 'text/plain', body: ""})
     end
 
     it "stringifies keys and encodes values in the query" do
       stub_request(:post, "https://www.example.com").with(query: "foo=bar%3Dbaz")
 
-      client.post(uri, params: {:foo => "bar=baz"}, content_type: 'text/plain', body: "")
+      client.post(uri, params: {:foo => "bar=baz"}, options: {content_type: 'text/plain', body: ""})
     end
 
     it "includes custom headers" do
       stub_request(:post, "https://www.example.com").with(headers: { 'X-Foo' => 'Bar' })
 
-      client.post(uri, headers: {'X-Foo' => 'Bar'}, content_type: 'text/plain', body: "")
+      client.post(uri, headers: {'X-Foo' => 'Bar'}, options: {content_type: 'text/plain', body: ""})
     end
 
     it "returns the response" do
       stub_request(:post, uri)
 
-      response = client.post(uri, content_type: 'text/plain', body: "")
+      response = client.post(uri, options: {content_type: 'text/plain', body: ""})
       expect(response).to be_an_instance_of(Puppet::HTTP::Response)
       expect(response).to be_success
       expect(response.code).to eq(200)
@@ -345,14 +357,14 @@ describe Puppet::HTTP::Client do
     it "sets content-length and content-type for the body" do
       stub_request(:post, uri).with(headers: {"Content-Length" => "5", "Content-Type" => "text/plain"})
 
-      client.post(uri, content_type: 'text/plain', body: "hello")
+      client.post(uri, options: {content_type: 'text/plain', body: "hello"})
     end
 
     it "streams the response body when a block is given" do
       stub_request(:post, uri).to_return(body: "abc")
 
       io = StringIO.new
-      client.post(uri, content_type: 'text/plain', body: "") do |response|
+      client.post(uri, options: {content_type: 'text/plain', body: ""}) do |response|
         response.read_body do |data|
           io.write(data)
         end
@@ -361,24 +373,37 @@ describe Puppet::HTTP::Client do
       expect(io.string).to eq("abc")
     end
 
+
+    it 'raises an ArgumentError if `body` is missing from the options hash' do
+      expect {
+        client.post(uri, options: {content_type: 'text/plain'})
+      }.to raise_error(ArgumentError, /'post' requires a 'body' option/)
+    end
+
+    it 'raises an ArgumentError if `content_type` is missing from the options hash' do
+      expect {
+        client.post(uri, options: {body: ''})
+      }.to raise_error(ArgumentError, /'post' requires a 'content_type' option/)
+    end
+
     context 'when connecting' do
       it 'uses a specified ssl context' do
         stub_request(:post, uri)
 
         other_context = Puppet::SSL::SSLContext.new
 
-        client.post(uri, content_type: 'text/plain', body: "", ssl_context: other_context)
+        client.post(uri, options: {content_type: 'text/plain', body: "", ssl_context: other_context})
       end
 
       it 'uses the system store' do
         stub_request(:post, uri)
 
-        client.post(uri, content_type: 'text/plain', body: "", include_system_store: true)
+        client.post(uri, options: {content_type: 'text/plain', body: "", include_system_store: true})
       end
 
       it 'raises an HTTPError if both are specified' do
         expect {
-          client.post(uri, content_type: 'text/plain', body: "", ssl_context: puppet_context, include_system_store: true)
+          client.post(uri, options: {content_type: 'text/plain', body: "", ssl_context: puppet_context, include_system_store: true})
         }.to raise_error(Puppet::HTTP::HTTPError, /The ssl_context and include_system_store parameters are mutually exclusive/)
       end
     end
@@ -424,18 +449,18 @@ describe Puppet::HTTP::Client do
 
         other_context = Puppet::SSL::SSLContext.new
 
-        client.delete(uri, ssl_context: other_context)
+        client.delete(uri, options: {ssl_context: other_context})
       end
 
       it 'uses the system store' do
         stub_request(:delete, uri)
 
-        client.delete(uri, include_system_store: true)
+        client.delete(uri, options: {include_system_store: true})
       end
 
       it 'raises an HTTPError if both are specified' do
         expect {
-          client.delete(uri, ssl_context: puppet_context, include_system_store: true)
+          client.delete(uri, options: {ssl_context: puppet_context, include_system_store: true})
         }.to raise_error(Puppet::HTTP::HTTPError, /The ssl_context and include_system_store parameters are mutually exclusive/)
       end
     end
@@ -445,19 +470,19 @@ describe Puppet::HTTP::Client do
     it "submits credentials for GET requests" do
       stub_request(:get, uri).with(basic_auth: credentials)
 
-      client.get(uri, user: 'user', password: 'pass')
+      client.get(uri, options: {user: 'user', password: 'pass'})
     end
 
     it "submits credentials for PUT requests" do
       stub_request(:put, uri).with(basic_auth: credentials)
 
-      client.put(uri, content_type: 'text/plain', body: "hello", user: 'user', password: 'pass')
+      client.put(uri, options: {content_type: 'text/plain', body: "hello", user: 'user', password: 'pass'})
     end
 
     it "returns response containing access denied" do
       stub_request(:get, uri).with(basic_auth: credentials).to_return(status: [403, "Ye Shall Not Pass"])
 
-      response = client.get(uri, user: 'user', password: 'pass')
+      response = client.get(uri, options: {user: 'user', password: 'pass'})
       expect(response.code).to eq(403)
       expect(response.reason).to eq("Ye Shall Not Pass")
       expect(response).to_not be_success
@@ -468,7 +493,7 @@ describe Puppet::HTTP::Client do
         expect(req.headers).to_not include('Authorization')
       end
 
-      client.get(uri, user: nil, password: 'pass')
+      client.get(uri, options: {user: nil, password: 'pass'})
     end
 
     it 'omits basic auth if password is nil' do
@@ -476,7 +501,7 @@ describe Puppet::HTTP::Client do
         expect(req.headers).to_not include('Authorization')
       end
 
-      client.get(uri, user: 'user', password: nil)
+      client.get(uri, options: {user: 'user', password: nil})
     end
   end
 
@@ -502,7 +527,7 @@ describe Puppet::HTTP::Client do
       stub_request(:put, start_url).to_return(redirect_to(url: bar_url))
       stub_request(:put, bar_url).to_return(status: 200)
 
-      response = client.put(start_url, body: "", content_type: 'text/plain')
+      response = client.put(start_url, options: {body: "", content_type: 'text/plain'})
       expect(response).to be_success
     end
 
@@ -528,7 +553,7 @@ describe Puppet::HTTP::Client do
       stub_request(:get, start_url).with(basic_auth: credentials).to_return(redirect_to(url: bar_url))
       stub_request(:get, bar_url).with(basic_auth: credentials).to_return(status: 200)
 
-      client.get(start_url, user: 'user', password: 'pass')
+      client.get(start_url, options: {user: 'user', password: 'pass'})
     end
 
     it "redirects given a relative location" do
@@ -555,7 +580,7 @@ describe Puppet::HTTP::Client do
       stub_request(:put, start_url).with(body: data).to_return(redirect_to(url: bar_url))
       stub_request(:put, bar_url).with(body: data).to_return(status: 200)
 
-      response = client.put(start_url, body: data, content_type: 'text/plain')
+      response = client.put(start_url, options: {body: data, content_type: 'text/plain'})
       expect(response).to be_success
     end
 

@@ -17,7 +17,7 @@ describe Puppet::HTTP::Service do
        @client.get(
         url,
         headers: add_puppet_headers({'Default-Header' => 'default-value'}),
-        ssl_context: ssl_context
+        options: {ssl_context: ssl_context}
       )
     end
 
@@ -82,14 +82,14 @@ describe Puppet::HTTP::Service do
   end
 
   it "connects to the base URL with a nil ssl context" do
-    expect(client).to receive(:connect).with(url, ssl_context: nil)
+    expect(client).to receive(:connect).with(url, options: {ssl_context: nil})
 
     service.connect
   end
 
   it "accepts an optional ssl_context" do
     other_ctx = Puppet::SSL::SSLContext.new
-    expect(client).to receive(:connect).with(url, ssl_context: other_ctx)
+    expect(client).to receive(:connect).with(url, options: {ssl_context: other_ctx})
 
     service.connect(ssl_context: other_ctx)
   end

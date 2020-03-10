@@ -36,7 +36,7 @@ class Puppet::HTTP::Service
   end
 
   def connect(ssl_context: nil)
-    @client.connect(@url, ssl_context: ssl_context)
+    @client.connect(@url, options: {ssl_context: ssl_context})
   end
 
   protected
