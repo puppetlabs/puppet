@@ -24,14 +24,6 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
   let(:server) { PuppetSpec::HTTPSServer.new }
 
   context "when calling deprecated HttpPool methods" do
-    let(:ssl_host) {
-      # use server's cert/key as the client cert/key
-      host = Puppet::SSL::Host.new
-      host.key = Puppet::SSL::Key.from_instance(server.server_key, host.name)
-      host.certificate = Puppet::SSL::Certificate.from_instance(server.server_cert, host.name)
-      host
-    }
-
     before(:each) do
       ssldir = tmpdir('http_pool')
       Puppet[:ssldir] = ssldir
@@ -41,16 +33,6 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
       File.write(Puppet[:hostcrl], server.ca_crl.to_pem)
       File.write(Puppet[:hostcert], server.server_cert.to_pem)
       File.write(Puppet[:hostprivkey], server.server_key.to_pem)
-    end
-
-    # Can't use `around(:each)` because it will cause ssl_host to be
-    # created outside of any rspec example, and $confdir won't be set
-    before(:each) do
-      Puppet.push_context(ssl_host: ssl_host)
-    end
-
-    after (:each) do
-      Puppet.pop_context
     end
 
     def connection(host, port)
