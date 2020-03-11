@@ -9,6 +9,7 @@ if not defined? ::Bundler
   end
 end
 
+require 'pry' # FIXME JJM - Remove this
 require 'puppet'
 require 'puppet/util'
 require "puppet/util/rubygems"

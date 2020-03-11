@@ -180,6 +180,7 @@ class Puppet::Configurer
   def apply_catalog(catalog, options)
     report = options[:report]
     report.configuration_version = catalog.version
+    binding.pry
 
     benchmark(:notice, _("Applied catalog in %{seconds} seconds")) do
       apply_catalog_time = thinmark do
