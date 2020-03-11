@@ -236,7 +236,7 @@ module Puppet
           raise e
         end
       },
-      :ssl_host => proc { Puppet::SSL::Host.localhost },
+      :ssl_host => proc { Puppet::SSL::Host.localhost(true) },
       :http_session => proc { Puppet.runtime["http"].create_session },
       :plugins => proc { Puppet::Plugins::Configuration.load_plugins },
       :rich_data => false
