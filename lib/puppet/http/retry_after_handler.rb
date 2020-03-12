@@ -1,12 +1,37 @@
 require 'date'
 require 'time'
 
+#
+# @api private
+#
+# Parse information relating to responses containing a Retry-After headers
+#
 class Puppet::HTTP::RetryAfterHandler
+  #
+  # @api private
+  #
+  # Create a handler to allow the system to sleep between HTTP requests
+  #
+  # @param [Integer] retry_limit number of retries allowed
+  # @param [Integer] max_sleep maximum sleep time allowed
+  #
   def initialize(retry_limit, max_sleep)
     @retry_limit = retry_limit
     @max_sleep = max_sleep
   end
 
+  #
+  # @api private
+  #
+  # Does the response from the server tell us to wait until we attempt the next
+  # retry?
+  #
+  # @param [Net::HTTP] request
+  # @param [Puppet::HTTP::Response] response
+  #
+  # @return [Boolean] Return true if the response code is 429 or 503, return
+  #   false otherwise
+  #
   def retry_after?(request, response)
     case response.code
     when 429, 503
@@ -16,6 +41,20 @@ class Puppet::HTTP::RetryAfterHandler
     end
   end
 
+  #
+  # @api private
+  #
+  # The amount of time to wait before attempting a retry
+  #
+  # @param [Net::HTTP] request
+  # @param [Puppet::HTTP::Response] response
+  # @param [Integer] retries number of retries attempted so far
+  #
+  # @return [Integer] the amount of time to wait
+  #
+  # @raise [Puppet::HTTP::TooManyRetryAfters] raise if we have hit our retry
+  #   limit
+  #
   def retry_after_interval(request, response, retries)
     raise Puppet::HTTP::TooManyRetryAfters.new(request.uri) if retries >= @retry_limit
 

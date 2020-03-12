@@ -1,6 +1,33 @@
+#
+# @api private
+#
+# The client contains a pool of persistent HTTP connections and creates HTTP
+# sessions.
+#
 class Puppet::HTTP::Client
+
+  # @api private
+  # @return [Puppet::Network::HTTP::Pool] the pool instance associated with
+  #   this client
   attr_reader :pool
 
+  #
+  # @api private
+  #
+  # Create a new http client instance. The client contains a pool of persistent
+  # HTTP connections and creates HTTP sessions.
+  #
+  # @param [Puppet::Network::HTTP::Pool] pool pool of persistent Net::HTTP
+  #   connections
+  # @param [Puppet::SSL::SSLContext] ssl_context ssl context to be used for
+  #   connections
+  # @param [Puppet::SSL::SSLContext] system_ssl_context the system ssl context
+  #   used if :include_system_store is set to true
+  # @param [Integer] redirect_limit number of HTTP redirections to allow in a
+  #   given request
+  # @param [Integer] retry_limit number of HTTP reties allowed in a given
+  #   request
+  #
   def initialize(pool: Puppet::Network::HTTP::Pool.new, ssl_context: nil, system_ssl_context: nil, redirect_limit: 10, retry_limit: 100)
     @pool = pool
     @default_headers = {
@@ -13,10 +40,33 @@ class Puppet::HTTP::Client
     @retry_after_handler = Puppet::HTTP::RetryAfterHandler.new(retry_limit, Puppet[:runinterval])
   end
 
+  #
+  # @api private
+  #
+  # Create a new HTTP session. A session is the object through which services
+  # may be connected to and accessed.
+  #
+  # @return [Puppet::HTTP::Session] the newly created HTTP session
+  #
   def create_session
     Puppet::HTTP::Session.new(self, build_resolvers)
   end
 
+  #
+  # @api private
+  #
+  # Open a connection to the given URI
+  #
+  # @param [URI] uri the connection destination
+  # @param [Hash] options
+  # @option options [Puppet::SSL::SSLContext] :ssl_context (nil) ssl context to
+  #   be used for connections
+  # @option options [Boolean] :include_system_store (false) if we should include
+  #   the system store for connection
+  #
+  # @yield [Net::HTTP] If a block is given, yields an active http connection
+  #   from the pool
+  #
   def connect(uri, options: {}, &block)
     start = Time.now
 
@@ -52,6 +102,24 @@ class Puppet::HTTP::Client
                 {uri: uri, elapsed: elapsed(start), message: e.message}, e, connected)
   end
 
+  #
+  # @api private
+  #
+  # Submits a GET HTTP request to the given url
+  #
+  # @param [URI] url the location to submit the http request
+  # @param [Hash] headers merged with the default headers defined by the client
+  # @param [Hash] params encoded and set as the url query
+  # @param [Hash] options passed through to the request execution
+  # @option options [Puppet::SSL::SSLContext] :ssl_context (nil) ssl context to
+  #   be used for connections
+  # @option options [Boolean] :include_system_store (false) if we should include
+  #   the system store for connection
+  #
+  # @yield [Puppet::HTTP::Response] if a block is given yields the response
+  #
+  # @return [String] if a block is not given, returns the response body
+  #
   def get(url, headers: {}, params: {}, options: {}, &block)
     query = encode_params(params)
     unless query.empty?
@@ -70,6 +138,22 @@ class Puppet::HTTP::Client
     end
   end
 
+  #
+  # @api private
+  #
+  # Submits a HEAD HTTP request to the given url
+  #
+  # @param [URI] url the location to submit the http request
+  # @param [Hash] headers merged with the default headers defined by the client
+  # @param [Hash] params encoded and set as the url query
+  # @param [Hash] options passed through to the request execution
+  # @option options [Puppet::SSL::SSLContext] :ssl_context (nil) ssl context to
+  #   be used for connections
+  # @option options [Boolean] :include_system_store (false) if we should include
+  #   the system store for connection
+  #
+  # @return [String] the body of the request response
+  #
   def head(url, headers: {}, params: {}, options: {})
     query = encode_params(params)
     unless query.empty?
@@ -84,6 +168,24 @@ class Puppet::HTTP::Client
     end
   end
 
+  #
+  # @api private
+  #
+  # Submits a PUT HTTP request to the given url
+  #
+  # @param [URI] url the location to submit the http request
+  # @param [Hash] headers merged with the default headers defined by the client
+  # @param [Hash] params encoded and set as the url query
+  # @param [Hash] options passed through to the request execution
+  # @option options [String] :body the body of the PUT request
+  # @option options [String] :content_type the type of the body content
+  # @option options [Puppet::SSL::SSLContext] :ssl_context (nil) ssl context to
+  #   be used for connections
+  # @option options [Boolean] :include_system_store (false) if we should include
+  #   the system store for connection
+  #
+  # @return [String] the body of the request response
+  #
   def put(url, headers: {}, params: {}, options: {})
     query = encode_params(params)
     unless query.empty?
@@ -105,6 +207,24 @@ class Puppet::HTTP::Client
     end
   end
 
+  #
+  # @api private
+  #
+  # Submits a POST HTTP request to the given url
+  #
+  # @param [URI] url the location to submit the http request
+  # @param [Hash] headers merged with the default headers defined by the client
+  # @param [Hash] params encoded and set as the url query
+  # @param [Hash] options passed through to the request execution
+  # @option options [String] :body the body of the PUT request
+  # @option options [String] :content_type the type of the body content
+  # @option options [Puppet::SSL::SSLContext] :ssl_context (nil) ssl context to
+  #   be used for connections
+  # @option options [Boolean] :include_system_store (false) if we should include
+  #   the system store for connection
+  #
+  # @return [String] the body of the request response
+  #
   def post(url, headers: {}, params: {}, options: {}, &block)
     query = encode_params(params)
     unless query.empty?
@@ -130,6 +250,22 @@ class Puppet::HTTP::Client
     end
   end
 
+  #
+  # @api private
+  #
+  # Submits a DELETE HTTP request to the given url
+  #
+  # @param [URI] url the location to submit the http request
+  # @param [Hash] headers merged with the default headers defined by the client
+  # @param [Hash] params encoded and set as the url query
+  # @param [Hash] options options hash passed through to the request execution
+  # @option options [Puppet::SSL::SSLContext] :ssl_context (nil) ssl context to
+  #   be used for connections
+  # @option options [Boolean] :include_system_store (false) if we should include
+  #   the system store for connection
+  #
+  # @return [String] the body of the request response
+  #
   def delete(url, headers: {}, params: {}, options: {})
     query = encode_params(params)
     unless query.empty?
@@ -144,6 +280,11 @@ class Puppet::HTTP::Client
     end
   end
 
+  #
+  # @api private
+  #
+  # Close persistent connections in the pool
+  #
   def close
     @pool.close
   end

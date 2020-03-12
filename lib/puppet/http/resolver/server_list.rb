@@ -1,4 +1,22 @@
+#
+# @api private
+#
+# Use the server_list setting to resolve a service. This resolver is only used
+# if server_list is set either on the command line or in the configuration file.
+#
 class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
+  #
+  # @api private
+  #
+  # @param [Puppet::HTTP::Client] client
+  # @param [Array<String>] server_list_setting array of servers set via the
+  #   configuration or the command line
+  # @param [Integer] default_port if a port is not set for a server in
+  #   server_list, use this port
+  # @param [Array<Symbol>] services array of services that server_list can be
+  #   used to resolve. If a service is not included in this array, this resolver
+  #   will return nil.
+  #
   def initialize(client, server_list_setting:, default_port:, services: )
     @client = client
     @server_list_setting = server_list_setting
@@ -7,6 +25,23 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
     @resolved_url = nil
   end
 
+  #
+  # @api private
+  #
+  # Walk the server_list to find a server and port that will connect successfully.
+  #
+  # @param [Puppet::HTTP::Session] session <description>
+  # @param [Symbol] name the name of the service being resolved
+  # @param [Puppet::SSL::SSLContext] ssl_context
+  #
+  # @return [nil] return nil if the service to be resolved does not support
+  #   server_list
+  # @return [Puppet::HTTP::Service] a validated service to use for future HTTP
+  #   requests
+  #
+  # @raise [Puppet::Error] raise if none of the servers defined in server_list
+  #   are available
+  #
   def resolve(session, name, ssl_context: nil)
     # If we're configured to use an explicit service host, e.g. report_server
     # then don't use server_list to resolve the `:report` service.
@@ -31,6 +66,18 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
     raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: @server_list_setting.print(@server_list_setting.value) }
   end
 
+  #
+  # @api private
+  #
+  # Check if a server and port is available
+  #
+  # @param [URI] uri A URI created from the server and port to test
+  # @param [Puppet::HTTP::Session] session
+  # @param [Puppet::SSL::SSLContext] ssl_context
+  #
+  # @return [Boolean] true if a successful response is returned by the server,
+  #   false otherwise
+  #
   def get_success?(uri, session, ssl_context: nil)
     response = @client.get(uri, options: {ssl_context: ssl_context})
     return true if response.success?
