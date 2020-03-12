@@ -257,7 +257,7 @@ module Puppet
 
     def each_chunk_from(&block)
       if Puppet[:default_file_terminus] == :file_server && scheme == 'puppet' && (uri.host.nil? || uri.host.empty?)
-        chunk_file_from_disk(metadata.path, &block)
+        chunk_file_from_disk(metadata.full_path, &block)
       elsif local?
         chunk_file_from_disk(full_path, &block)
       else

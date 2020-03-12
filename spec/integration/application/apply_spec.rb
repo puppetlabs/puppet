@@ -534,4 +534,47 @@ class amod::bad_type {
       end
     end
   end
+
+  context 'puppet file sources' do
+    let(:env_name) { 'dev' }
+    let(:env_dir) { File.join(Puppet[:environmentpath], env_name) }
+    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(env_dir, 'modules')]) }
+    let(:node) { Puppet::Node.new(Puppet[:certname], environment: environment) }
+    let(:apply) { Puppet::Application[:apply] }
+
+    before :each do
+      Puppet[:environment] = env_name
+      Puppet::FileSystem.mkpath(env_dir)
+    end
+
+    it "recursively copies a directory from a module" do
+      dir = File.join(env.full_modulepath, 'amod', 'files', 'dir1', 'dir2')
+      Puppet::FileSystem.mkpath(dir)
+      File.write(File.join(dir, 'file'), 'content from the module')
+
+      base_dir = tmpdir('apply_spec_base')
+      manifest = file_containing("manifest.pp", <<-MANIFEST)
+        file { "#{base_dir}/dir1":
+          ensure  => file,
+          source  => "puppet:///modules/amod/dir1",
+          recurse => true,
+        }
+      MANIFEST
+
+      expect {
+        apply.command_line.args << manifest
+         apply.run
+      }.to exit_with(0)
+       .and output(a_string_matching(
+         /dir1\]\/ensure: created/
+      ).and matching(
+         /dir1\/dir2\]\/ensure: created/
+      ).and matching(
+         /dir1\/dir2\/file\]\/ensure: defined content as '{md5}51f37efb13c3a1e486106f90db6490a5'/
+      )).to_stdout
+
+      dest_file = File.join(base_dir, 'dir1', 'dir2', 'file')
+      expect(File.read(dest_file)).to eq("content from the module")
+    end
+  end
 end
