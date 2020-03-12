@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.13.0-112-g38edbcd2f7\n"
+"Project-Id-Version: Puppet automation framework 6.14.0-25-gd9682f20c2\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-03-04 18:34+0000\n"
-"PO-Revision-Date: 2020-03-04 18:34+0000\n"
+"POT-Creation-Date: 2020-03-12 12:19+0000\n"
+"PO-Revision-Date: 2020-03-12 12:19+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -559,7 +559,7 @@ msgstr ""
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:219 ../lib/puppet/http/resolver/server_list.rb:19
+#: ../lib/puppet/configurer.rb:219 ../lib/puppet/http/resolver/server_list.rb:29
 msgid "Could not select a functional puppet master from server_list: '%{server_list}'"
 msgstr ""
 
@@ -595,13 +595,13 @@ msgstr ""
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:419 ../lib/puppet/http/resolver/server_list.rb:29
+#: ../lib/puppet/configurer.rb:419 ../lib/puppet/http/resolver/server_list.rb:36
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:423 ../lib/puppet/http/resolver/server_list.rb:35
+#: ../lib/puppet/configurer.rb:423 ../lib/puppet/http/resolver/server_list.rb:42
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
@@ -2221,27 +2221,27 @@ msgstr ""
 msgid "Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:39
+#: ../lib/puppet/http/client.rb:41
 msgid "Request to %{uri} timed out connect operation after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:41
+#: ../lib/puppet/http/client.rb:43
 msgid "Request to %{uri} timed out read operation after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:43
+#: ../lib/puppet/http/client.rb:45
 msgid "Request to %{uri} interrupted after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:49
+#: ../lib/puppet/http/client.rb:51
 msgid "Request to %{uri} failed after %{elapsed} seconds: %{message}"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:171
+#: ../lib/puppet/http/client.rb:184
 msgid "Sleeping for %{interval} seconds before retrying the request"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:214 ../lib/puppet/indirector/request.rb:142
+#: ../lib/puppet/http/client.rb:227 ../lib/puppet/indirector/request.rb:142
 msgid "HTTP REST queries cannot handle values of type '%{klass}'"
 msgstr ""
 
@@ -2273,12 +2273,12 @@ msgstr ""
 msgid "Ignoring extra header \"%{name}\" as it has no value."
 msgstr ""
 
-#: ../lib/puppet/http/service.rb:82 ../lib/puppet/indirector/rest.rb:282
+#: ../lib/puppet/http/service.rb:79 ../lib/puppet/indirector/rest.rb:282
 msgid "No content type in http response; cannot parse"
 msgstr ""
 
 #. TRANSLATORS "pson", "preferred_serialization_format", and "puppetserver" should not be translated
-#: ../lib/puppet/http/service/report.rb:28
+#: ../lib/puppet/http/service/report.rb:30
 msgid "To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson"
 msgstr ""
 
@@ -2762,6 +2762,14 @@ msgstr ""
 msgid "Server version %{version} does not accept reports in '%{format}', use `preferred_serialization_format=pson`"
 msgstr ""
 
+#: ../lib/puppet/indirector/report/yaml.rb:19
+msgid "replace_file mode: %{mode} is invalid"
+msgstr ""
+
+#: ../lib/puppet/indirector/report/yaml.rb:31 ../lib/puppet/indirector/yaml.rb:32
+msgid "Could not save %{indirection} %{request}: %{detail}"
+msgstr ""
+
 #: ../lib/puppet/indirector/request.rb:103
 msgid "Could not find indirection '%{indirection}'"
 msgstr ""
@@ -2876,10 +2884,6 @@ msgstr ""
 
 #: ../lib/puppet/indirector/yaml.rb:20
 msgid "You can only save objects that respond to :name"
-msgstr ""
-
-#: ../lib/puppet/indirector/yaml.rb:32
-msgid "Could not save %{indirection} %{request}: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/info_service/class_information_service.rb:18
@@ -3150,17 +3154,17 @@ msgid "Option %{option} conflicts with existing option %{conflict} on %{action}"
 msgstr ""
 
 #. TRANSLATORS 'Puppet::Type.newtype' should not be translated
-#: ../lib/puppet/metatype/manager.rb:76
+#: ../lib/puppet/metatype/manager.rb:77
 msgid "Puppet::Type.newtype(%{name}) now expects a hash as the second argument, not %{argument}"
 msgstr ""
 
 #. TRANSLATORS 'new%{method}' will become a method name, do not translate this string
-#: ../lib/puppet/metatype/manager.rb:111
+#: ../lib/puppet/metatype/manager.rb:110
 msgid "'new%{method}' method already exists; skipping"
 msgstr ""
 
 #. TRANSLATORS 'puppet/type/%{name}' should not be translated
-#: ../lib/puppet/metatype/manager.rb:174
+#: ../lib/puppet/metatype/manager.rb:173
 msgid "Loaded puppet/type/%{name} but no class was created"
 msgstr ""
 
@@ -4085,11 +4089,11 @@ msgstr ""
 msgid "Trusted node data modified for node %{name}"
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:208
+#: ../lib/puppet/node/environment.rb:212
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:551 ../lib/puppet/pops/loaders.rb:298
+#: ../lib/puppet/node/environment.rb:555 ../lib/puppet/pops/loaders.rb:300
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -4461,43 +4465,43 @@ msgstr ""
 msgid "Evaluated application %{resource}"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:42
+#: ../lib/puppet/parser/functions.rb:43
 msgid "The method 'Puppet::Parser::Functions.autoloader#loadall' is deprecated in favor of using 'Scope#call_function'."
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:50
+#: ../lib/puppet/parser/functions.rb:51
 msgid "The method 'Puppet::Parser::Functions.autoloader#load(\"%{name}\")' is deprecated in favor of using 'Scope#call_function'."
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:58
+#: ../lib/puppet/parser/functions.rb:59
 msgid "The method 'Puppet::Parser::Functions.autoloader#loaded?(\"%{name}\")' is deprecated in favor of using 'Scope#call_function'."
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:181
+#: ../lib/puppet/parser/functions.rb:186
 msgid "Overwriting previous definition for function %{name}"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:187
+#: ../lib/puppet/parser/functions.rb:192
 msgid "Invalid statement type %{type}"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:199
+#: ../lib/puppet/parser/functions.rb:204
 msgid "Called %{name}"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:202
+#: ../lib/puppet/parser/functions.rb:207
 msgid "%{name}(): Wrong number of arguments given (%{arg_count} for %{arity})"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:204
+#: ../lib/puppet/parser/functions.rb:209
 msgid "%{name}(): Wrong number of arguments given (%{arg_count} for minimum %{min_arg_count})"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:210
+#: ../lib/puppet/parser/functions.rb:215
 msgid "custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:309
+#: ../lib/puppet/parser/functions.rb:314
 msgid "%{name}() can only be called using the 4.x function API. See Scope#call_function"
 msgstr ""
 
@@ -5836,23 +5840,23 @@ msgstr ""
 msgid "The code loaded from %{source_ref} contains additional logic - can only contain the type '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:32
+#: ../lib/puppet/pops/loaders.rb:34
 msgid "Attempt to redefine already initialized loaders for environment"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:174
+#: ../lib/puppet/pops/loaders.rb:176
 msgid "Internal Error: Puppet Context ':loaders' missing"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:188
+#: ../lib/puppet/pops/loaders.rb:190
 msgid "Unable to find loader named '%{loader_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:209
+#: ../lib/puppet/pops/loaders.rb:211
 msgid "Internal Error: did not find public loader for module: '%{module_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:255
+#: ../lib/puppet/pops/loaders.rb:257
 msgid "Internal Error: Attempt to redefine loader named '%{name}'"
 msgstr ""
 
@@ -6059,7 +6063,7 @@ msgstr ""
 msgid "digit expected"
 msgstr ""
 
-#: ../lib/puppet/pops/resource/resource_type_impl.rb:167 ../lib/puppet/type.rb:434
+#: ../lib/puppet/pops/resource/resource_type_impl.rb:167 ../lib/puppet/type.rb:440
 msgid "you must specify title patterns when there are two or more key attributes"
 msgstr ""
 
@@ -7469,55 +7473,55 @@ msgstr ""
 msgid "%{param} is a metaparameter; please choose another parameter name in the %{name} definition"
 msgstr ""
 
-#: ../lib/puppet/resource/type_collection.rb:70
+#: ../lib/puppet/resource/type_collection.rb:72
 msgid "Class '%{klass}' is already defined%{error}; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/resource/type_collection.rb:71
+#: ../lib/puppet/resource/type_collection.rb:73
 msgid "Definition '%{klass}' is already defined%{error}; cannot be redefined as a class"
 msgstr ""
 
-#: ../lib/puppet/resource/type_collection.rb:72
+#: ../lib/puppet/resource/type_collection.rb:74
 msgid "Application '%{klass}' is already defined%{error}; cannot be redefined as a class"
 msgstr ""
 
-#: ../lib/puppet/resource/type_collection.rb:103
+#: ../lib/puppet/resource/type_collection.rb:105
 msgid "Node '%{name}' is already defined%{error}; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/resource/type_collection.rb:111
+#: ../lib/puppet/resource/type_collection.rb:113
 msgid "Site is already defined%{error}; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/resource/type_collection.rb:148
+#: ../lib/puppet/resource/type_collection.rb:150
 msgid "'%{name}' is already defined%{error} as a class; cannot redefine as a definition"
 msgstr ""
 
-#: ../lib/puppet/resource/type_collection.rb:149
+#: ../lib/puppet/resource/type_collection.rb:151
 msgid "Definition '%{name}' is already defined%{error}; cannot be redefined"
 msgstr ""
 
-#: ../lib/puppet/resource/type_collection.rb:150 ../lib/puppet/resource/type_collection.rb:166
+#: ../lib/puppet/resource/type_collection.rb:152 ../lib/puppet/resource/type_collection.rb:168
 msgid "'%{name}' is already defined%{error} as an application; cannot be redefined"
 msgstr ""
 
-#: ../lib/puppet/resource/type_collection.rb:155
+#: ../lib/puppet/resource/type_collection.rb:157
 msgid "'%{name}' is already defined%{error} as a class; cannot redefine as a mapping"
 msgstr ""
 
-#: ../lib/puppet/resource/type_collection.rb:164
+#: ../lib/puppet/resource/type_collection.rb:166
 msgid "'%{name}' is already defined%{error} as a class; cannot redefine as an application"
 msgstr ""
 
-#: ../lib/puppet/resource/type_collection.rb:165
+#: ../lib/puppet/resource/type_collection.rb:167
 msgid "'%{name}' is already defined%{error} as a definition; cannot redefine as an application"
 msgstr ""
 
-#: ../lib/puppet/resource/type_collection.rb:218
+#: ../lib/puppet/resource/type_collection.rb:220
 msgid "Execution of config_version command `%{cmd}` failed: %{message}"
 msgstr ""
 
-#: ../lib/puppet/resource/type_collection.rb:238
+#: ../lib/puppet/resource/type_collection.rb:241
 msgid "Not attempting to load %{type} %{fqname} as this object was missing during a prior compilation"
 msgstr ""
 
@@ -8372,77 +8376,77 @@ msgstr ""
 msgid "audit change: newly-recorded value %s"
 msgstr ""
 
-#: ../lib/puppet/type.rb:509
+#: ../lib/puppet/type.rb:515
 msgid "Options must be a hash, not %{type}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:512
+#: ../lib/puppet/type.rb:518
 msgid "Class %{class_name} already has a property named %{property}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:599
+#: ../lib/puppet/type.rb:605
 msgid "Class %{class_name} has not defined parameters"
 msgstr ""
 
-#: ../lib/puppet/type.rb:686
+#: ../lib/puppet/type.rb:692
 msgid "Parameter %{name} failed on %{ref}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:709
+#: ../lib/puppet/type.rb:715
 msgid "Undefined attribute '%{attribute}' in %{name}"
 msgstr ""
 
 #. TRANSLATORS 'is' is a variable name and should not be translated
 #. TRANSLATORS 'is' is a variable name and should not be translated
-#: ../lib/puppet/type.rb:1052 ../lib/puppet/type.rb:1063
+#: ../lib/puppet/type.rb:1058 ../lib/puppet/type.rb:1069
 msgid "The 'is' value is not in the 'is' array for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1194
+#: ../lib/puppet/type.rb:1200
 msgid "%{name} has no providers and has not overridden 'instances'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1456
+#: ../lib/puppet/type.rb:1462
 msgid "Cannot add aliases without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1536
+#: ../lib/puppet/type.rb:1542
 msgid "Could not find %{description} %{ref} for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1811
+#: ../lib/puppet/type.rb:1817
 msgid "Found multiple default providers for %{name}: %{provider_list}; using %{selected_provider}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1898
+#: ../lib/puppet/type.rb:1904
 msgid "Could not find parent provider %{parent} of %{name}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1972
+#: ../lib/puppet/type.rb:1978
 msgid "Invalid %{resource} provider '%{provider_class}'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2057
+#: ../lib/puppet/type.rb:2063
 msgid "Could not find %{name} provider of %{provider}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2175
+#: ../lib/puppet/type.rb:2181
 msgid "You cannot add relationships without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2479
+#: ../lib/puppet/type.rb:2484
 msgid "Unable to mark '%{name}' as sensitive: %{name} is a parameter and not a property, and cannot be automatically redacted."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2482
+#: ../lib/puppet/type.rb:2487
 msgid "Unable to mark '%{name}' as sensitive: the property itself was not assigned a value."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2484
+#: ../lib/puppet/type.rb:2489
 msgid "Unable to mark '%{name}' as sensitive: the property itself is not defined on %{type}."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2542
+#: ../lib/puppet/type.rb:2547
 msgid "Could not set %{attribute} on %{class_name}: %{detail}"
 msgstr ""
 
@@ -8640,7 +8644,7 @@ msgid "Not managing symlink mode"
 msgstr ""
 
 #. TRANSLATORS "source_permissions" is a parameter name and should not be translated
-#: ../lib/puppet/type/file/source.rb:351
+#: ../lib/puppet/type/file/source.rb:353
 msgid "The `source_permissions` parameter is deprecated. Explicitly set `owner`, `group`, and `mode`."
 msgstr ""
 
@@ -8960,11 +8964,11 @@ msgstr ""
 msgid "Failed to abandon a child process contract"
 msgstr ""
 
-#: ../lib/puppet/util/autoload.rb:71
+#: ../lib/puppet/util/autoload.rb:74
 msgid "Could not autoload %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/autoload.rb:196
+#: ../lib/puppet/util/autoload.rb:199
 msgid "Autoload paths cannot be fully qualified"
 msgstr ""
 
@@ -9388,7 +9392,7 @@ msgstr ""
 msgid "Section %{name} is already defined, cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/util/instance_loader.rb:53
+#: ../lib/puppet/util/instance_loader.rb:56
 msgid "Loaded %{type} file for %{name} but %{type} was not defined"
 msgstr ""
 
