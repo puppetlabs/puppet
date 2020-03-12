@@ -6,11 +6,11 @@ class PuppetSpec::HTTPSServer
 
   attr_reader :ca_cert, :ca_crl, :server_cert, :server_key
 
-  def initialize
-    @ca_cert = cert_fixture('ca.pem')
-    @ca_crl = crl_fixture('crl.pem')
-    @server_key = key_fixture('127.0.0.1-key.pem')
-    @server_cert = cert_fixture('127.0.0.1.pem')
+  def initialize(ca_cert: nil, ca_crl: nil, server_key: nil, server_cert: nil)
+    @ca_cert = ca_cert || cert_fixture('ca.pem')
+    @ca_crl = ca_crl || crl_fixture('crl.pem')
+    @server_key = server_key || key_fixture('127.0.0.1-key.pem')
+    @server_cert = server_cert || cert_fixture('127.0.0.1.pem')
     @config = WEBrick::Config::HTTP.dup
   end
 

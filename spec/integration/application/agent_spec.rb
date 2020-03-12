@@ -2,6 +2,7 @@ require 'spec_helper'
 require 'puppet_spec/files'
 require 'puppet_spec/puppetserver'
 require 'puppet_spec/compiler'
+require 'puppet_spec/https'
 
 describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
@@ -239,6 +240,111 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
 
         # verify puppet restored binary content
         expect(File.binread(path)).to eq(binary_content)
+      end
+    end
+  end
+
+  context 'https file sources' do
+    let(:path) { tmpfile('https_file_source') }
+    let(:response_body) { "from https server" }
+    let(:digest) { Digest::SHA1.hexdigest(response_body) }
+
+    it 'rejects HTTPS servers whose root cert is not in the system CA store' do
+      unknown_ca_cert = cert_fixture('unknown-ca.pem')
+      https = PuppetSpec::HTTPSServer.new(
+        ca_cert: unknown_ca_cert,
+        server_cert: cert_fixture('unknown-127.0.0.1.pem'),
+        server_key: key_fixture('unknown-127.0.0.1-key.pem')
+      )
+
+      # create a temp cacert bundle
+      ssl_file = tmpfile('systemstore')
+      # add CA cert that is neither the puppet CA nor unknown CA
+      File.write(ssl_file, cert_fixture('netlock-arany-utf8.pem').to_pem)
+
+      https.start_server do |https_port|
+        catalog_handler = -> (req, res) {
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { "#{path}":
+              ensure => file,
+              backup => false,
+              checksum => sha1,
+              checksum_value => '#{digest}',
+              source => "https://127.0.0.1:#{https_port}/path/to/file"
+            }
+          MANIFEST
+
+          res.body = formatter.render(catalog)
+          res['Content-Type'] = formatter.mime
+        }
+
+        server.start_server(mounts: {catalog: catalog_handler}) do |puppetserver_port|
+          Puppet[:masterport] = puppetserver_port
+
+          # override path to system cacert bundle, this must be done before
+          # the SSLContext is created and the call to X509::Store.set_default_paths
+          Puppet::Util.withenv("SSL_CERT_FILE" => ssl_file) do
+            expect {
+              agent.command_line.args << '--test'
+              agent.run
+            }.to exit_with(4)
+             .and output(/Notice: Applied catalog/).to_stdout
+             .and output(%r{Error: Could not retrieve file metadata for https://127.0.0.1:#{https_port}/path/to/file: .* certificate verify failed}).to_stderr
+          end
+
+          expect(File).to_not be_exist(path)
+        end
+      end
+    end
+
+    it 'accepts HTTPS servers whose cert is in the system CA store' do
+      unknown_ca_cert = cert_fixture('unknown-ca.pem')
+      https = PuppetSpec::HTTPSServer.new(
+        ca_cert: unknown_ca_cert,
+        server_cert: cert_fixture('unknown-127.0.0.1.pem'),
+        server_key: key_fixture('unknown-127.0.0.1-key.pem')
+      )
+
+      # create a temp cacert bundle
+      ssl_file = tmpfile('systemstore')
+      File.write(ssl_file, unknown_ca_cert.to_pem)
+
+      response_proc = -> res {
+        res.status = 200
+        res.body = response_body
+      }
+
+      https.start_server(response_proc: response_proc) do |https_port|
+        catalog_handler = -> (req, res) {
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { "#{path}":
+              ensure => file,
+              backup => false,
+              checksum => sha1,
+              checksum_value => '#{digest}',
+              source => "https://127.0.0.1:#{https_port}/path/to/file"
+            }
+          MANIFEST
+
+          res.body = formatter.render(catalog)
+          res['Content-Type'] = formatter.mime
+        }
+
+        server.start_server(mounts: {catalog: catalog_handler}) do |puppetserver_port|
+          Puppet[:masterport] = puppetserver_port
+
+          # override path to system cacert bundle, this must be done before
+          # the SSLContext is created and the call to X509::Store.set_default_paths
+          Puppet::Util.withenv("SSL_CERT_FILE" => ssl_file) do
+            expect {
+                agent.command_line.args << '--test'
+                agent.run
+            }.to exit_with(2)
+             .and output(%r{https_file_source.*/ensure: created}).to_stdout
+          end
+
+          expect(File.binread(path)).to eq("from https server")
+        end
       end
     end
   end
