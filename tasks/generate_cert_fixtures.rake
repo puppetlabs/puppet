@@ -49,6 +49,10 @@ task(:gen_cert_fixtures) do
   #
   # bad-basic-constraints.pem        /CN=Test CA (bad isCA constraint)
   #
+  # unknown-ca.pemm                  /CN=Unknown CA
+  #                                   |
+  # unknown-127.0.0.1.pem             +- /CN=127.0.0.1
+  #
   # Keys
   # ====
   #
@@ -61,10 +65,20 @@ task(:gen_cert_fixtures) do
   # `request.pem` contains a valid CSR for /CN=pending, while `tampered_csr.pem`
   # is the same as `request.pem`, but it's public key has been replaced.
   #
-  ca = Puppet::TestCa.new
   dir = File.join(RAKE_ROOT, 'spec/fixtures/ssl')
 
+  # Create self-signed CA & key
+  unknown_ca = Puppet::TestCa.new('Unknown CA')
+  save(dir, 'unknown-ca.pem', unknown_ca.ca_cert)
+  save(dir, 'unknown-ca-key.pem', unknown_ca.key)
+
+  # Create an SSL cert for 127.0.0.1
+  signed = unknown_ca.create_cert('127.0.0.1', unknown_ca.ca_cert, unknown_ca.key, subject_alt_names: 'DNS:127.0.0.1,DNS:127.0.0.2')
+  save(dir, 'unknown-127.0.0.1.pem', signed[:cert])
+  save(dir, 'unknown-127.0.0.1-key.pem', signed[:private_key])
+
   # Create Test CA & CRL
+  ca = Puppet::TestCa.new
   save(dir, 'ca.pem', ca.ca_cert)
   save(dir, 'crl.pem', ca.ca_crl)
 
