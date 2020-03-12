@@ -76,12 +76,15 @@ describe Puppet::HTTP::Resolver do
       passed = stub_request(:get, "https://apple.example.com:8142/status/v1/simple/master").to_return(status: 200)
 
       service = subject.resolve(session, :puppet)
+      expect(service).to be_a(Puppet::HTTP::Service::Compiler)
       expect(service.url.to_s).to eq("https://apple.example.com:8142/puppet/v3")
 
       service = subject.resolve(session, :fileserver)
+      expect(service).to be_a(Puppet::HTTP::Service::FileServer)
       expect(service.url.to_s).to eq("https://apple.example.com:8142/puppet/v3")
 
       service = subject.resolve(session, :report)
+      expect(service).to be_a(Puppet::HTTP::Service::Report)
       expect(service.url.to_s).to eq("https://apple.example.com:8142/puppet/v3")
 
       expect(failed).to have_been_requested
