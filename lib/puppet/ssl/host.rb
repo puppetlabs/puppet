@@ -22,9 +22,9 @@ class Puppet::SSL::Host
 
   attr_writer :key, :certificate, :certificate_request, :crl_usage
 
-  def self.localhost
+  def self.localhost(suppress_warning = false)
     return @localhost if @localhost
-    @localhost = new
+    @localhost = new(nil, false, suppress_warning)
     @localhost.generate unless @localhost.certificate
     @localhost.key
     @localhost
@@ -225,14 +225,14 @@ ERROR_STRING
   end
   private :validate_csr_with_key
 
-  def initialize(name = nil, device = false)
+  def initialize(name = nil, device = false, suppress_warning = false)
     @name = (name || Puppet[:certname]).downcase
     @device = device
     Puppet::SSL::Base.validate_certname(@name)
     @key = @certificate = @certificate_request = nil
     @crl_usage = Puppet.settings[:certificate_revocation]
     @crl_path = Puppet.settings[:hostcrl]
-    Puppet.deprecation_warning(_("Puppet::SSL::Host is deprecated and will be removed in a future release of Puppet."));
+    Puppet.deprecation_warning(_("Puppet::SSL::Host is deprecated and will be removed in a future release of Puppet.")) unless suppress_warning
   end
 
   # Extract the public key from the private key.

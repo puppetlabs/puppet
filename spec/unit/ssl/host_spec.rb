@@ -51,8 +51,10 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       allow_any_instance_of(Puppet::SSL::Host).to receive(:generate)
     end
 
-    it "should have a method for producing an instance to manage the local host's keys" do
-      expect(Puppet::SSL::Host).to respond_to(:localhost)
+    it "is deprecated" do
+      Puppet::SSL::Host.localhost
+
+      expect(@logs).to include(an_object_having_attributes(message: /Puppet::SSL::Host is deprecated/))
     end
 
     it "should allow to reset localhost" do
