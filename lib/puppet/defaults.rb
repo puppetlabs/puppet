@@ -1798,7 +1798,14 @@ EOT
     :resubmit_facts => {
       :default  => false,
       :type     => :boolean,
-      :desc     => "Whether to send updated facts after every transaction.",
+      :desc     => "Whether to send updated facts after every transaction. By default
+        puppet only submits facts at the beginning of the transaction before applying a
+        catalog. Since puppet can modify the state of the system, the value of the facts
+        may change after puppet finishes. Therefore, any facts stored in puppetdb may not
+        be consistent until the agent next runs, typically in 30 minutes. If this feature
+        is enabled, puppet will resubmit facts after applying its catalog, ensuring facts
+        for the node stored in puppetdb are current. However, this will double the fact
+        submission load on puppetdb, so it is disabled by default.",
     },
     :lastrunfile =>  {
       :default  => "$statedir/last_run_summary.yaml",
