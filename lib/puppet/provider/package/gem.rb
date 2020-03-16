@@ -15,7 +15,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
     These options should be specified as an array where each element is either a 
     string or a hash."
 
-  has_feature :versionable, :install_options, :uninstall_options, :targetable
+  has_feature :versionable, :install_options, :uninstall_options, :targetable, :version_ranges
 
   # Override the specificity method to return 1 if gem is not set as default provider
   def self.specificity
