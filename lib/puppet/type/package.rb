@@ -51,6 +51,7 @@ module Puppet
         package database for installed version(s), and can select
         which out of a set of available versions of a package to
         install if asked."
+    feature :version_ranges, "The provider can ensure version ranges."
     feature :holdable, "The provider is capable of placing packages on hold
         such that they are not automatically upgraded as a result of
         other package dependencies unless explicit action is taken by
@@ -80,10 +81,12 @@ module Puppet
         specifying `purged` as the ensure value. This defaults to `installed`.
 
         Version numbers must match the full version to install, including
-        release if the provider uses a release moniker. Ranges or semver
-        patterns are not accepted except for the `gem` package provider. For
+        release if the provider uses a release moniker. For
         example, to install the bash package from the rpm
         `bash-4.1.2-29.el6.x86_64.rpm`, use the string `'4.1.2-29.el6'`.
+
+        On supported providers, version ranges can also be ensured. For example,
+        inequalities: `<2.0.0`, or intersections: `>1.0.0 <2.0.0`.
       EOT
 
       attr_accessor :latest
