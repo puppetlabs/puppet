@@ -68,6 +68,11 @@ module Puppet::Util::Windows
       # Apparently, we accept a symbol..
       name = name.to_s.strip if name
 
+      #remove ' (unresolvable)' from name to be correctly parsed as SID
+      if name.include?(' (unresolvable)')
+        name.sub!(' (unresolvable)', '')
+      end
+
       # if name is a SID string, convert it to raw bytes for use with lookup_account_sid
       raw_sid_bytes = nil
       begin
@@ -79,7 +84,8 @@ module Puppet::Util::Windows
 
       raw_sid_bytes ? Principal.lookup_account_sid(raw_sid_bytes) : Principal.lookup_account_name(name)
     rescue
-      nil
+      #if we received a SID and we were unable to resolve it, pass it back as unresolved SID
+      raw_sid_bytes ? unresolved_principal(name, raw_sid_bytes) : nil
     end
     module_function :name_to_principal
     class << self; alias name_to_sid_object name_to_principal; end
