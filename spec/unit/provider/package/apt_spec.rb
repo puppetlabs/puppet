@@ -123,6 +123,36 @@ Version table:
       provider.install
     end
 
+    it "should select latest available version if range is specified" do
+      resource[:ensure] = '>72.0'
+      expect(provider).to receive(:aptget) do |*command|
+        expect(command[-1]).to eq("#{name}=72.0.1+build1-0ubuntu0.19.04.1")
+      end
+      expect(provider).to receive(:aptcache).with(:madison, name).and_return(<<-HERE)
+   #{name} | 72.0.1+build1-0ubuntu0.19.04.1 | http://ro.archive.ubuntu.com/ubuntu disco-updates/main amd64 Packages
+   #{name} | 72.0.1+build1-0ubuntu0.19.04.1 | http://security.ubuntu.com/ubuntu disco-security/main amd64 Packages
+   #{name} | 66.0.3+build1-0ubuntu1 | http://ro.archive.ubuntu.com/ubuntu disco/main amd64 Packages
+    HERE
+      expect(provider).to receive(:properties).and_return({:mark => :none})
+
+      provider.install
+    end
+
+    it "should pass through ensure is no version can be selected" do
+      resource[:ensure] = '>74.0'
+      expect(provider).to receive(:aptget) do |*command|
+        expect(command[-1]).to eq("#{name}=>74.0")
+      end
+      expect(provider).to receive(:aptcache).with(:madison, name).and_return(<<-HERE)
+   #{name} | 72.0.1+build1-0ubuntu0.19.04.1 | http://ro.archive.ubuntu.com/ubuntu disco-updates/main amd64 Packages
+   #{name} | 72.0.1+build1-0ubuntu0.19.04.1 | http://security.ubuntu.com/ubuntu disco-security/main amd64 Packages
+   #{name} | 66.0.3+build1-0ubuntu1 | http://ro.archive.ubuntu.com/ubuntu disco/main amd64 Packages
+    HERE
+      expect(provider).to receive(:properties).and_return({:mark => :none})
+
+      provider.install
+    end
+
     it "should use --force-yes if a package version is specified" do
       resource[:ensure] = '1.0'
       expect(provider).to receive(:aptget) do |*command|
