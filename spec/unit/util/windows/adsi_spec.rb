@@ -466,8 +466,8 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
           expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with([0]).and_return(sids[0])
           expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with([1]).and_return(sids[1])
 
-          expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user2').and_return(sids[1])
-          expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('DOMAIN2\user3').and_return(sids[2])
+          expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user2', false).and_return(sids[1])
+          expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('DOMAIN2\user3', false).and_return(sids[2])
 
           expect(Puppet::Util::Windows::ADSI).to receive(:sid_uri).with(sids[0]).and_return("WinNT://DOMAIN/user1,user")
           expect(Puppet::Util::Windows::ADSI).to receive(:sid_uri).with(sids[2]).and_return("WinNT://DOMAIN2/user3,user")
@@ -493,8 +493,8 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
           expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with([0]).and_return(sids[0])
           expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with([1]).and_return(sids[1])
 
-          expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user2').and_return(sids[1])
-          expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('DOMAIN2\user3').and_return(sids[2])
+          expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user2', any_args).and_return(sids[1])
+          expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('DOMAIN2\user3', any_args).and_return(sids[2])
 
           expect(Puppet::Util::Windows::ADSI).to receive(:sid_uri).with(sids[2]).and_return("WinNT://DOMAIN2/user3,user")
 
