@@ -1,6 +1,6 @@
-test_name "rpm ensure held package should preserve version if package is already installed" do
+test_name "rpm should install packages with multiple versions" do
   confine :to, :platform => /redhat|centos|el|fedora/
-  tag 'audit:low'
+  tag 'audit:high'
 
   require 'puppet/acceptance/common_utils'
   extend Puppet::Acceptance::PackageUtils

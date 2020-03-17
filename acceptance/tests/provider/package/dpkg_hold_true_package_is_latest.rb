@@ -1,6 +1,6 @@
 test_name "dpkg ensure held package is latest installed" do
   confine :to, :platform => /debian-8-amd64/
-  tag 'audit:low'
+  tag 'audit:high'
 
   require 'puppet/acceptance/common_utils'
   extend Puppet::Acceptance::PackageUtils
