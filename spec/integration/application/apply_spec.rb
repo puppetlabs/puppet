@@ -330,18 +330,24 @@ end
       Puppet[:environmentpath] = envdir
     end
 
-    def init_cli_args_and_apply_app(args, execute)
-      Puppet.initialize_settings(args)
-      apply.command_line.args = args
-      apply.options[:code] = execute
-      apply
-    end
+    context "given a modulepath" do
+      let(:args) { ['-e', execute] }
 
-    context "given the --modulepath option" do
-      let(:args) { ['-e', execute, '--modulepath', modulepath] }
+      before :each do
+        Puppet[:modulepath] = modulepath
 
-      it "looks in --modulepath even when the default directory environment exists" do
-        apply = init_cli_args_and_apply_app(args, execute)
+        apply.command_line.args = args
+      end
+
+      it "looks in modulepath even when the default directory environment exists" do
+        expect {
+          apply.run
+        }.to exit_with(0)
+         .and output(/amod class included/).to_stdout
+      end
+
+      it "looks in modulepath even when given a specific directory --environment" do
+        apply.command_line.args = args.append('--environment').append('production')
 
         expect {
           apply.run
@@ -349,19 +355,8 @@ end
          .and output(/amod class included/).to_stdout
       end
 
-      it "looks in --modulepath even when given a specific directory --environment" do
-        args << '--environment' << 'production'
-        apply = init_cli_args_and_apply_app(args, execute)
-
-        expect {
-          apply.run
-        }.to exit_with(0)
-         .and output(/amod class included/).to_stdout
-      end
-
-      it "looks in --modulepath when given multiple paths in --modulepath" do
-        args = ['-e', execute, '--modulepath', [tmpdir('notmodulepath'), modulepath].join(File::PATH_SEPARATOR)]
-        apply = init_cli_args_and_apply_app(args, execute)
+      it "looks in modulepath when given multiple paths in modulepath" do
+        Puppet[:modulepath] = [tmpdir('notmodulepath'), modulepath].join(File::PATH_SEPARATOR)
 
         expect {
           apply.run
