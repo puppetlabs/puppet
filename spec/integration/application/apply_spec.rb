@@ -102,7 +102,9 @@ end
 
         Puppet[:environmentpath] = envdir
         expect_any_instance_of(Puppet::Pops::Loader::Runtime3TypeLoader).not_to receive(:find)
-        expect { apply.run }.to have_printed(/the Puppet::Type says hello.*applytest was here/m)
+        expect {
+          apply.run
+        }.to output(/the Puppet::Type says hello.*applytest was here/m).to_stdout
       end
 
       # Test just to verify that the Pcore Resource Type and not the Ruby one is produced when the catalog is produced
@@ -114,7 +116,9 @@ end
 
         expect(compiler.loaders.runtime3_type_loader.instance_variable_get(:@resource_3x_loader)).to receive(:set_entry).once.with(tn, rt, instance_of(String))
           .and_return(Puppet::Pops::Loader::Loader::NamedEntry.new(tn, rt, nil))
-        expect { compiler.compile }.not_to have_printed(/the Puppet::Type says hello/)
+        expect {
+          compiler.compile
+        }.not_to output(/the Puppet::Type says hello/).to_stdout
       end
 
       it "does not fail when pcore type is loaded twice" do
@@ -283,15 +287,10 @@ end
   context "handles errors" do
     it "logs compile errors once" do
       apply.options[:code] = '08'
-
-      msg = 'valid octal'
-      callback = Proc.new do |actual|
-        expect(actual.scan(Regexp.new(msg))).to eq([msg])
-      end
-
-      expect do
+      expect {
         apply.run
-      end.to have_printed(callback).and_exit_with(1)
+      }.to exit_with(1)
+       .and output(/Not a valid octal number/).to_stderr
     end
 
     it "logs compile post processing errors once" do
@@ -302,14 +301,11 @@ end
         checksum => mtime
       }"
 
-      msg = 'You cannot specify content when using checksum'
-      callback = Proc.new do |actual|
-        expect(actual.scan(Regexp.new(msg))).to eq([msg])
-      end
-
-      expect do
+      expect {
         apply.run
-      end.to have_printed(callback).and_exit_with(1)
+      }.to exit_with(1)
+       .and output(/Compiled catalog/).to_stdout
+       .and output(/You cannot specify content when using checksum/).to_stderr
     end
   end
 
@@ -347,27 +343,30 @@ end
       it "looks in --modulepath even when the default directory environment exists" do
         apply = init_cli_args_and_apply_app(args, execute)
 
-        expect do
-          expect { apply.run }.to exit_with(0)
-        end.to have_printed('amod class included')
+        expect {
+          apply.run
+        }.to exit_with(0)
+         .and output(/amod class included/).to_stdout
       end
 
       it "looks in --modulepath even when given a specific directory --environment" do
         args << '--environment' << 'production'
         apply = init_cli_args_and_apply_app(args, execute)
 
-        expect do
-          expect { apply.run }.to exit_with(0)
-        end.to have_printed('amod class included')
+        expect {
+          apply.run
+        }.to exit_with(0)
+         .and output(/amod class included/).to_stdout
       end
 
       it "looks in --modulepath when given multiple paths in --modulepath" do
         args = ['-e', execute, '--modulepath', [tmpdir('notmodulepath'), modulepath].join(File::PATH_SEPARATOR)]
         apply = init_cli_args_and_apply_app(args, execute)
 
-        expect do
-          expect { apply.run }.to exit_with(0)
-        end.to have_printed('amod class included')
+        expect {
+          apply.run
+        }.to exit_with(0)
+         .and output(/amod class included/).to_stdout
       end
     end
 
