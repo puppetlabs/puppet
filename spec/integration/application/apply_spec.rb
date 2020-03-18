@@ -370,14 +370,7 @@ end
       end
     end
 
-    # When executing an ENC script, output cannot be captured using
-    # expect { }.to have_printed(...)
-    # External node script execution will fail, likely due to the tampering
-    # with the basic file descriptors.
-    # Workaround: Define a log destination and merely inspect logs.
     context "with an ENC", :unless => RUBY_PLATFORM == 'java' do
-      let(:logdest) { tmpfile('logdest') }
-      let(:args) { ['-e', execute, '--logdest', logdest ] }
       let(:enc) do
         script_containing('enc_script',
           :windows => '@echo environment: spec',
@@ -390,17 +383,23 @@ end
       end
 
       it "should use the environment that the ENC mandates" do
-        apply = init_cli_args_and_apply_app(args, execute)
-        expect { apply.run }.to exit_with(0)
-        expect(@logs.map(&:to_s)).to include('amod class included')
+        apply.command_line.args = ['-e', execute]
+
+        expect {
+          apply.run
+       }.to exit_with(0)
+        .and output(a_string_matching(/amod class included/)
+        .and matching(/Compiled catalog for .* in environment spec/)).to_stdout
       end
 
       it "should prefer the ENC environment over the configured one and emit a warning" do
-        apply = init_cli_args_and_apply_app(args + [ '--environment', 'production' ], execute)
-        expect { apply.run }.to exit_with(0)
-        logs = @logs.map(&:to_s)
-        expect(logs).to include('amod class included')
-        expect(logs).to include(match(/doesn't match server specified environment/))
+        apply.command_line.args = ['-e', execute, '--environment', 'production']
+
+        expect {
+          apply.run
+        }.to exit_with(0)
+         .and output(a_string_matching('amod class included')
+         .and matching(/doesn't match server specified environment/)).to_stdout
       end
     end
   end
