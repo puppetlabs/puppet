@@ -20,9 +20,7 @@ describe "apply" do
       resource = Puppet::Resource.new(:file, file_to_create, :parameters => {:content => "my stuff"})
       catalog.add_resource resource
 
-      manifest = file_containing("manifest", catalog.to_json)
-
-      apply.options[:catalog] = manifest
+      apply.command_line.args = ['--catalog', file_containing("manifest", catalog.to_json)]
       expect {
         apply.run
       }.to output(/ensure: defined content as/).to_stdout
@@ -98,7 +96,7 @@ end
 
       it 'does not load the pcore type' do
         catalog = compile_to_catalog('applytest { "applytest was here":}', node)
-        apply.options[:catalog] = file_containing('manifest', catalog.to_json)
+        apply.command_line.args = ['--catalog', file_containing('manifest', catalog.to_json)]
 
         Puppet[:environmentpath] = envdir
         expect_any_instance_of(Puppet::Pops::Loader::Runtime3TypeLoader).not_to receive(:find)
@@ -232,7 +230,8 @@ end
 
       Puppet[:environment] = env_name
       apply = Puppet::Application[:apply]
-      apply.options[:catalog] = file_containing('manifest', catalog.to_json)
+      apply.command_line.args = ['--catalog', file_containing('manifest', catalog.to_json)]
+
       expect {
         apply.run
       }.to output(%r{Notify\[The Street 23\]/message: defined 'message' as 'The Street 23'}).to_stdout
@@ -286,7 +285,7 @@ end
 
   context "handles errors" do
     it "logs compile errors once" do
-      apply.options[:code] = '08'
+      apply.command_line.args = ['-e', '08']
       expect {
         apply.run
       }.to exit_with(1)
@@ -295,11 +294,11 @@ end
 
     it "logs compile post processing errors once" do
       path = File.expand_path('/tmp/content_file_test.Q634Dlmtime')
-      apply.options[:code] = "file { '#{path}':
+      apply.command_line.args = ['-e', "file { '#{path}':
         content => 'This is the test file content',
         ensure => present,
         checksum => mtime
-      }"
+      }"]
 
       expect {
         apply.run
@@ -465,7 +464,7 @@ class amod::bad_type {
     context 'and the file is not serialized with rich_data' do
       it 'will notify a string that is the result of Regexp#inspect (from Runtime3xConverter)' do
         catalog = compile_to_catalog(execute, node)
-        apply.options[:catalog] = file_containing('manifest', catalog.to_json)
+        apply.command_line.args = ['--catalog', file_containing('manifest', catalog.to_json)]
         expect(apply).to receive(:apply_catalog) do |cat|
           expect(cat.resource(:notify, 'rx')['message']).to be_a(String)
           expect(cat.resource(:notify, 'bin')['message']).to be_a(String)
@@ -480,7 +479,7 @@ class amod::bad_type {
 
       it 'will notify a string that is the result of to_s on uknown data types' do
         json = compile_to_catalog('include amod::bad_type', node).to_json
-        apply.options[:catalog] = file_containing('manifest', json)
+        apply.command_line.args = ['--catalog', file_containing('manifest', json)]
         expect(apply).to receive(:apply_catalog) do |catalog|
           expect(catalog.resource(:notify, 'bogus')['message']).to be_a(String)
         end
@@ -505,7 +504,7 @@ class amod::bad_type {
         serialized_catalog = Puppet.override(rich_data: true) do
           catalog.to_json
         end
-        apply.options[:catalog] = file_containing('manifest', serialized_catalog)
+        apply.command_line.args = ['--catalog', file_containing('manifest', serialized_catalog)]
         expect(apply).to receive(:apply_catalog) do |cat|
           expect(cat.resource(:notify, 'rx')['message']).to be_a(Regexp)
           # The resource return in this expect is a String, but since it was a Binary type that
