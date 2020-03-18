@@ -17,9 +17,12 @@ module Puppet::Util::Package::Version
     # * Inequalities
     #   * ex. `">1.0.0"`, `"<3.2.0"`, `">=4.0.0"`
     # * Range Intersections (min is always first)
-    #   * ex. `">1.0.0 <=2.3.0"`
+    #   * ex. `">1.0.0, <=2.3.0"`
     #
-    RANGE_SPLIT = /\s+/
+    # Number and location of spaces does not affect the parsing.
+    # * ex. `"> 1.0.0", ">1.0.0 , <= 2.3.0", " >=  4.0.0" etc.`
+    #
+    RANGE_SPLIT = ','
     FULL_REGEX = /\A((?:[<>=])+)(.+)\Z/
 
     # @param range_string [String] the version range string to parse
@@ -28,7 +31,7 @@ module Puppet::Util::Package::Version
     # @api public
     def self.parse(range_string, version_class)
       raise ValidationFailure, "Unable to parse '#{range_string}' as a string" unless range_string.is_a?(String)
-      simples = range_string.split(RANGE_SPLIT).map do |simple|
+      simples = range_string.tr(' ','').split(RANGE_SPLIT).map do |simple|
         match, operator, version = *simple.match(FULL_REGEX)
         raise ValidationFailure, "Unable to parse '#{simple}' as a version range identifier" unless match
         case operator

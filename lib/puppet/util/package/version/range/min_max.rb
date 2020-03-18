@@ -8,7 +8,7 @@ module Puppet::Util::Package::Version
         @max = max
       end
       def to_s
-        "#{@min} #{@max}"
+        "#{@min}, #{@max}"
       end
       def include?(version)
         @min.include?(version) && @max.include?(version)
