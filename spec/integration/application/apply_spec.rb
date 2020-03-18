@@ -5,6 +5,8 @@ require 'puppet_spec/compiler'
 describe "apply" do
   include PuppetSpec::Files
 
+  let(:apply) { Puppet::Application[:apply] }
+
   before :each do
     Puppet[:reports] = "none"
     # Let exceptions be raised instead of exiting
@@ -20,10 +22,10 @@ describe "apply" do
 
       manifest = file_containing("manifest", catalog.to_json)
 
-      puppet = Puppet::Application[:apply]
-      puppet.options[:catalog] = manifest
-
-      puppet.apply
+      apply.options[:catalog] = manifest
+      expect {
+        apply.run
+      }.to output(/ensure: defined content as/).to_stdout
 
       expect(Puppet::FileSystem.exist?(file_to_create)).to be_truthy
       expect(File.read(file_to_create)).to eq("my stuff")
@@ -84,6 +86,7 @@ end
       let(:environments) { Puppet::Environments::Directories.new(envdir, []) }
       let(:env) { Puppet::Node::Environment.create(:'spec', [File.join(envdir, 'spec', 'modules')]) }
       let(:node) { Puppet::Node.new('test', :environment => env) }
+
       around(:each) do |example|
         Puppet::Type.rmtype(:applytest)
         Puppet[:environment] = env_name
@@ -95,7 +98,6 @@ end
 
       it 'does not load the pcore type' do
         catalog = compile_to_catalog('applytest { "applytest was here":}', node)
-        apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', catalog.to_json)
 
         Puppet[:environmentpath] = envdir
@@ -227,34 +229,34 @@ end
       Puppet[:environment] = env_name
       apply = Puppet::Application[:apply]
       apply.options[:catalog] = file_containing('manifest', catalog.to_json)
-      expect { apply.run_command; exit(0) }.to exit_with(0)
-      expect(@logs.map(&:to_s)).to include('The Street 23')
+      expect {
+        apply.run
+      }.to output(%r{Notify\[The Street 23\]/message: defined 'message' as 'The Street 23'}).to_stdout
     end
   end
 
-  it "applies a given file even when a directory environment is specified" do
+  it "raises if the environment directory does not exist" do
     manifest = file_containing("manifest.pp", "notice('it was applied')")
+    apply.command_line.args = [manifest]
 
     special = Puppet::Node::Environment.create(:special, [])
     Puppet.override(:current_environment => special) do
       Puppet[:environment] = 'special'
-      puppet = Puppet::Application[:apply]
-      allow(puppet).to receive(:command_line).and_return(double('command_line', :args => [manifest]))
-      expect { puppet.run_command }.to exit_with(0)
+      expect {
+        apply.run
+      }.to raise_error(Puppet::Environments::EnvironmentNotFound,
+                       /Could not find a directory environment named 'special' anywhere in the path/)
     end
-
-    expect(@logs.map(&:to_s)).to include('it was applied')
   end
 
   it "adds environment to the $server_facts variable" do
     manifest = file_containing("manifest.pp", "notice(\"$server_facts\")")
+    apply.command_line.args = [manifest]
 
-    puppet = Puppet::Application[:apply]
-    allow(puppet).to receive(:command_line).and_return(double('command_line', :args => [manifest]))
-
-    expect { puppet.run_command }.to exit_with(0)
-
-    expect(@logs.map(&:to_s)).to include(/{environment =>.*/)
+    expect {
+      apply.run
+    }.to exit_with(0)
+     .and output(/{environment => production}/).to_stdout
   end
 
   it "applies a given file even when an ENC is configured", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
@@ -270,18 +272,16 @@ end
       Puppet[:environment] = 'special'
       Puppet[:node_terminus] = 'exec'
       Puppet[:external_nodes] = enc
-      puppet = Puppet::Application[:apply]
-      allow(puppet).to receive(:command_line).and_return(double('command_line', :args => [manifest]))
-      expect { puppet.run_command }.to exit_with(0)
+      apply.command_line.args = [manifest]
+      expect {
+        apply.run
+      }.to exit_with(0)
+       .and output(/Notice: Scope\(Class\[main\]\): specific manifest applied/).to_stdout
     end
-
-    expect(@logs.map(&:to_s)).to include('specific manifest applied')
   end
 
   context "handles errors" do
     it "logs compile errors once" do
-      Puppet.initialize_settings([])
-      apply = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => []))
       apply.options[:code] = '08'
 
       msg = 'valid octal'
@@ -295,8 +295,6 @@ end
     end
 
     it "logs compile post processing errors once" do
-      Puppet.initialize_settings([])
-      apply = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => []))
       path = File.expand_path('/tmp/content_file_test.Q634Dlmtime')
       apply.options[:code] = "file { '#{path}':
         content => 'This is the test file content',
@@ -338,9 +336,9 @@ end
 
     def init_cli_args_and_apply_app(args, execute)
       Puppet.initialize_settings(args)
-      puppet = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => args))
-      puppet.options[:code] = execute
-      return puppet
+      apply.command_line.args = args
+      apply.options[:code] = execute
+      apply
     end
 
     context "given the --modulepath option" do
@@ -474,7 +472,6 @@ class amod::bad_type {
     context 'and the file is not serialized with rich_data' do
       it 'will notify a string that is the result of Regexp#inspect (from Runtime3xConverter)' do
         catalog = compile_to_catalog(execute, node)
-        apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', catalog.to_json)
         expect(apply).to receive(:apply_catalog) do |cat|
           expect(cat.resource(:notify, 'rx')['message']).to be_a(String)
@@ -490,7 +487,6 @@ class amod::bad_type {
 
       it 'will notify a string that is the result of to_s on uknown data types' do
         json = compile_to_catalog('include amod::bad_type', node).to_json
-        apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', json)
         expect(apply).to receive(:apply_catalog) do |catalog|
           expect(catalog.resource(:notify, 'bogus')['message']).to be_a(String)
@@ -513,7 +509,6 @@ class amod::bad_type {
     context 'and the file is serialized with rich_data' do
       it 'will notify a regexp using Regexp#to_s' do
         catalog = compile_to_catalog(execute, node)
-        apply = Puppet::Application[:apply]
         serialized_catalog = Puppet.override(rich_data: true) do
           catalog.to_json
         end
@@ -540,7 +535,6 @@ class amod::bad_type {
     let(:env_dir) { File.join(Puppet[:environmentpath], env_name) }
     let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(env_dir, 'modules')]) }
     let(:node) { Puppet::Node.new(Puppet[:certname], environment: environment) }
-    let(:apply) { Puppet::Application[:apply] }
 
     before :each do
       Puppet[:environment] = env_name
