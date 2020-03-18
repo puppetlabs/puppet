@@ -47,11 +47,10 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       server.start_server do |port|
         Puppet[:masterport] = port
         expect {
-          expect {
-            agent.command_line.args << '--test'
-            agent.run
-          }.to exit_with(0)
-        }.to output(%r{HTTP GET https://127.0.0.1:#{port}/status/v1/simple/master returned 200 OK}).to_stdout
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(0)
+         .and output(%r{HTTP GET https://127.0.0.1:#{port}/status/v1/simple/master returned 200 OK}).to_stdout
       end
     end
 
@@ -61,11 +60,10 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       server.start_server do |port|
         Puppet[:masterport] = port
         expect {
-          expect {
-            agent.command_line.args << '--test'
-            agent.run
-          }.to exit_with(0)
-        }.to output(%r{Unable to connect to server from server_list setting: Request to https://puppet.example.com:#{port}/status/v1/simple/master failed}).to_stdout
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(0)
+         .and output(%r{Unable to connect to server from server_list setting: Request to https://puppet.example.com:#{port}/status/v1/simple/master failed}).to_stdout
 
         report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
         expect(report.master_used).to eq("127.0.0.1:#{port}")
@@ -76,13 +74,11 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       Puppet[:server_list] = "puppet.example.com"
 
       expect {
-        expect {
-          expect {
-            agent.command_line.args << '--test'
-            agent.run
-          }.to exit_with(1)
-        }.to output(%r{Unable to connect to server from server_list setting: Could not select a functional puppet master from server_list: 'puppet.example.com'}).to_stdout
-      }.to output(/Error: Could not run Puppet configuration client: Could not select a functional puppet master from server_list: 'puppet.example.com'/).to_stderr
+        agent.command_line.args << '--test'
+        agent.run
+      }.to exit_with(1)
+       .and output(%r{Unable to connect to server from server_list setting: Could not select a functional puppet master from server_list: 'puppet.example.com'}).to_stdout
+       .and output(/Error: Could not run Puppet configuration client: Could not select a functional puppet master from server_list: 'puppet.example.com'/).to_stderr
 
       # I'd expect puppet to update the last run report even if the server_list was
       # exhausted, but it doesn't work that way currently, see PUP-6708
@@ -93,11 +89,10 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       server.start_server do |port|
         Puppet[:masterport] = port
         expect {
-          expect {
-            agent.command_line.args << '--test'
-            agent.run
-          }.to exit_with(0)
-        }.to output(%r{Resolved service 'puppet' to https://127.0.0.1:#{port}/puppet/v3}).to_stdout
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(0)
+         .and output(%r{Resolved service 'puppet' to https://127.0.0.1:#{port}/puppet/v3}).to_stdout
       end
 
       report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
@@ -121,11 +116,10 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       server.start_server(mounts: {catalog: catalog_handler}) do |port|
         Puppet[:masterport] = port
         expect {
-          expect {
-            agent.command_line.args << '--test'
-            agent.run
-          }.to exit_with(2)
-        }.to output(%r{Notice: /Stage\[main\]/Main/Notify\[deferred\]/message: defined 'message' as '1:2:3'}).to_stdout
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(2)
+         .and output(%r{Notice: /Stage\[main\]/Main/Notify\[deferred\]/message: defined 'message' as '1:2:3'}).to_stdout
       end
     end
 
@@ -144,11 +138,10 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       server.start_server(mounts: {catalog: catalog_handler}) do |port|
         Puppet[:masterport] = port
         expect {
-          expect {
-            agent.command_line.args << '--test'
-            agent.run
-          }.to exit_with(2)
-        }.to output(a_string_matching(
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(2)
+         .and output(a_string_matching(
           /Notice: Sensitive \[value redacted\]/
         ).and matching(
           /Notify\[sensitive\]\/message: changed \[redacted\] to \[redacted\]/
@@ -232,11 +225,10 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       server.start_server(mounts: mounts) do |port|
         Puppet[:masterport] = port
         expect {
-          expect {
-            agent.command_line.args << '--test'
-            agent.run
-          }.to exit_with(2)
-        }.to output(/content changed '{md5}d41d8cd98f00b204e9800998ecf8427e' to '{md5}4cf49285ae567157ebfba72bd04ccf32'/).to_stdout
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(2)
+         .and output(/content changed '{md5}d41d8cd98f00b204e9800998ecf8427e' to '{md5}4cf49285ae567157ebfba72bd04ccf32'/).to_stdout
 
         # verify puppet restored binary content
         expect(File.binread(path)).to eq(binary_content)
