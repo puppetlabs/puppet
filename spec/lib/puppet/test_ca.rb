@@ -21,9 +21,9 @@ module Puppet
       id
     end
 
-    def initialize
+    def initialize(name = 'Test CA')
       @digest = OpenSSL::Digest::SHA256.new
-      info = create_cacert('Test CA')
+      info = create_cacert(name)
       @key = info[:private_key]
       @ca_cert = info[:cert]
       @ca_crl = create_crl(@ca_cert, @key)
