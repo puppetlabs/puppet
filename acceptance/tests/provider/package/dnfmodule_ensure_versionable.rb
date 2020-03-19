@@ -1,6 +1,6 @@
 test_name "dnfmodule is versionable" do
   confine :to, :platform => /el-8-x86_64/  # only el/centos 8 have the appstream repo
-  tag 'audit:low'
+  tag 'audit:high'
 
   require 'puppet/acceptance/common_utils'
   extend Puppet::Acceptance::PackageUtils

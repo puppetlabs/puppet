@@ -1,6 +1,6 @@
-test_name "dpkg ensure held package should preserve version if package is allready installed" do
+test_name "dpkg ensure held package should preserve version if package is already installed" do
   confine :to, :platform => /debian-8-amd64/
-  tag 'audit:low'
+  tag 'audit:high'
 
   require 'puppet/acceptance/common_utils'
   extend Puppet::Acceptance::PackageUtils
