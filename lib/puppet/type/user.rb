@@ -493,25 +493,6 @@ module Puppet
       provider.exists?
     end
 
-    def retrieve
-      absent = false
-      properties.inject({}) { |prophash, property|
-        current_value = :absent
-
-        if absent
-          prophash[property] = :absent
-        else
-          current_value = property.retrieve
-          prophash[property] = current_value
-        end
-
-        if property.name == :ensure and current_value == :absent
-          absent = true
-        end
-        prophash
-      }
-    end
-
     newproperty(:roles, :parent => Puppet::Property::List, :required_features => :manages_solaris_rbac) do
       desc "The roles the user has.  Multiple roles should be
         specified as an array."

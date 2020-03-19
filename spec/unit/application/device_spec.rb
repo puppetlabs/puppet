@@ -459,7 +459,7 @@ describe Puppet::Application::Device do
           resource = Puppet::Type.type(:user).new(:name => "jim").to_resource
           allow(device.command_line).to receive(:args).and_return(['user', 'jim'])
           expect(Puppet::Resource.indirection).to receive(:find).with('user/jim').and_return(resource)
-          expect(device).to receive(:puts).with("user { 'jim':\n}")
+          expect(device).to receive(:puts).with("user { 'jim':\n  ensure => 'absent',\n}")
           expect { device.main }.to exit_with 0
         end
 
@@ -470,7 +470,7 @@ describe Puppet::Application::Device do
           allow(device.options).to receive(:[]).with(:to_yaml).and_return(true)
           allow(device.command_line).to receive(:args).and_return(['user'])
           expect(Puppet::Resource.indirection).to receive(:search).with('user/', {}).and_return(resources)
-          expect(device).to receive(:puts).with("---\nuser:\n  title: {}\n")
+          expect(device).to receive(:puts).with("---\nuser:\n  title:\n    ensure: absent\n")
           expect { device.main }.to exit_with 0
         end
       end
