@@ -232,6 +232,36 @@ module Pal
       )
   end
 
+  def self.in_bolt_project(proj_name,
+      project_path: nil,
+      modulepath:    [],
+      settings_hash: {},
+      facts:         nil,
+      variables:     {},
+      &block
+    )
+    # Parameter validation
+    assert_non_empty_string(proj_name, _("temporary project name"))
+    assert_optionally_empty_array(modulepath, 'modulepath')
+    unless block_given?
+      raise ArgumentError, _("A block must be given to 'in_bolt_project'")
+    end
+
+    project = if project_path
+                # Load the modulepath including the current Bolt project
+                Puppet::Node::BoltProject.create(proj_name, project_path, modulepath)
+              else
+                # Load just the modulepath
+                Puppet::Node::Environment.create(proj_name, modulepath)
+              end
+
+    in_environment_context(
+      # Only load the project 'environment'
+      Puppet::Environments::Static.new(project),
+      project, facts, variables, &block
+    )
+  end
+
   # Defines the context in which to perform puppet operations (evaluation, etc)
   # The code to evaluate in this context is given in a block.
   #

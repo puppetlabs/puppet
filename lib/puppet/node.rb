@@ -4,6 +4,7 @@ require 'puppet/indirector'
 class Puppet::Node
   require 'puppet/node/facts'
   require 'puppet/node/environment'
+  require 'puppet/node/bolt_project'
 
   # Set up indirection, so that nodes can be looked for in
   # the node sources.
