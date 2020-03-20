@@ -75,6 +75,14 @@ describe Puppet::HTTP::Client do
       client.connect(uri, options: {include_system_store: true})
     end
 
+    it 'does not create a verifier for HTTP connections' do
+      expect(pool).to receive(:with_connection) do |_, verifier|
+        expect(verifier).to be_nil
+      end
+
+      client.connect(URI.parse('http://www.example.com'))
+    end
+
     it 'raises an HTTPError if both are specified' do
       expect {
         client.connect(uri, options: {ssl_context: puppet_context, include_system_store: true})

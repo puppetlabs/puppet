@@ -19,17 +19,16 @@ class Puppet::HTTP::Client
 
   def connect(uri, options: {}, &block)
     start = Time.now
-
-    ssl_context = options.fetch(:ssl_context, nil)
-    include_system_store = options.fetch(:include_system_store, false)
-    ctx = resolve_ssl_context(ssl_context, include_system_store)
-    site = Puppet::Network::HTTP::Site.from_uri(uri)
-    verifier = if site.use_ssl?
-                 Puppet::SSL::Verifier.new(site.host, ctx)
-               else
-                 nil
-               end
+    verifier = nil
     connected = false
+
+    site = Puppet::Network::HTTP::Site.from_uri(uri)
+    if site.use_ssl?
+      ssl_context = options.fetch(:ssl_context, nil)
+      include_system_store = options.fetch(:include_system_store, false)
+      ctx = resolve_ssl_context(ssl_context, include_system_store)
+      verifier = Puppet::SSL::Verifier.new(site.host, ctx)
+    end
 
     @pool.with_connection(site, verifier) do |http|
       connected = true
