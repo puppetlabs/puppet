@@ -8,14 +8,16 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
 
   def put_report(name, report, environment:)
     formatter = Puppet::Network::FormatHandler.format_for(Puppet[:preferred_serialization_format])
-    headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Transaction::Report).join(', '))
+    headers = add_puppet_headers(
+      'Accept' => get_mime_types(Puppet::Transaction::Report).join(', '),
+      'Content-Type' => formatter.mime
+    )
 
     response = @client.put(
       with_base_url("/report/#{name}"),
       headers: headers,
       params: { environment: environment },
       options: {
-        content_type: formatter.mime,
         body: serialize(formatter, report)
       }
     )

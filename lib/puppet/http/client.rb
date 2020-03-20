@@ -85,6 +85,8 @@ class Puppet::HTTP::Client
   end
 
   def put(url, headers: {}, params: {}, options: {})
+    body = options.fetch(:body) { |_| raise ArgumentError, "'put' requires a 'body' option" }
+
     query = encode_params(params)
     unless query.empty?
       url = url.dup
@@ -92,13 +94,10 @@ class Puppet::HTTP::Client
     end
 
     request = Net::HTTP::Put.new(url, @default_headers.merge(headers))
-
-    body = options.fetch(:body) { |_| raise ArgumentError, "'put' requires a 'body' option" }
-    content_type = options.fetch(:content_type) { |_| raise ArgumentError, "'put' requires a 'content_type' option" }
-
     request.body = body
     request['Content-Length'] = body.bytesize
-    request['Content-Type'] = content_type
+
+    raise ArgumentError, "'put' requires a 'content-type' header" unless request['Content-Type']
 
     execute_streaming(request, options: options) do |response|
       response.body
@@ -106,6 +105,8 @@ class Puppet::HTTP::Client
   end
 
   def post(url, headers: {}, params: {}, options: {}, &block)
+    body = options.fetch(:body) { |_| raise ArgumentError, "'post' requires a 'body' option" }
+
     query = encode_params(params)
     unless query.empty?
       url = url.dup
@@ -113,13 +114,10 @@ class Puppet::HTTP::Client
     end
 
     request = Net::HTTP::Post.new(url, @default_headers.merge(headers))
-
-    body = options.fetch(:body) { |_| raise ArgumentError, "'post' requires a 'body' option" }
-    content_type = options.fetch(:content_type) { |_| raise ArgumentError, "'post' requires a 'content_type' option" }
-
     request.body = body
     request['Content-Length'] = body.bytesize
-    request['Content-Type'] = content_type
+
+    raise ArgumentError, "'post' requires a 'content-type' header" unless request['Content-Type']
 
     execute_streaming(request, options: options) do |response|
       if block_given?

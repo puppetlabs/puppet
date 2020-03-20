@@ -46,6 +46,8 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
   # (see Puppet::HTTP::Client#post)
   # @api private
   def post(url, headers: {}, params: {}, options: {}, &block)
+    body = options.fetch(:body) { |_| raise ArgumentError, "'post' requires a 'body' option" }
+
     query = encode_params(params)
     unless query.empty?
       url = url.dup
@@ -57,8 +59,6 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
       options[:basic_auth] = { user: options[:user], password: options[:password] }
     end
 
-    body = options.fetch(:body) { |_| raise ArgumentError, "'post' requires a 'body' option" }
-    headers['Content-Type'] = options[:content_type]
     headers['Content-Length'] = body ? body.bytesize.to_s : "0"
 
     client = @http_client_class.new(url.host, url.port, options)

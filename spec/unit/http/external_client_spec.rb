@@ -106,13 +106,13 @@ describe Puppet::HTTP::ExternalClient do
     it "stringifies keys and encodes values in the query" do
       stub_request(:post, "https://www.example.com").with(query: "foo=bar%3Dbaz")
 
-      client.post(uri, params: {:foo => "bar=baz"}, options: {content_type: 'text/plain', body: ""})
+      client.post(uri, params: {:foo => "bar=baz"}, headers: {'Content-Type' => 'text/plain'}, options: {body: ""})
     end
 
     it "returns the response" do
       stub_request(:post, uri)
 
-      response = client.post(uri, options: {content_type: 'text/plain', body: ""})
+      response = client.post(uri, headers: {'Content-Type' => 'text/plain'}, options: {body: ""})
       expect(response).to be_an_instance_of(Puppet::HTTP::Response)
       expect(response).to be_success
       expect(response.code).to eq(200)
@@ -121,14 +121,14 @@ describe Puppet::HTTP::ExternalClient do
     it "sets content-length and content-type for the body" do
       stub_request(:post, uri).with(headers: {"Content-Length" => "5", "Content-Type" => "text/plain"})
 
-      client.post(uri, options: {content_type: 'text/plain', body: "hello"})
+      client.post(uri, headers: {'Content-Type' => 'text/plain'}, options: {body: "hello"})
     end
 
     it "streams the response body when a block is given" do
       stub_request(:post, uri).to_return(body: "abc")
 
       io = StringIO.new
-      client.post(uri, options: {content_type: 'text/plain', body: ""}) do |response|
+      client.post(uri, headers: {'Content-Type' => 'text/plain'}, options: {body: ""}) do |response|
         response.read_body do |data|
           io.write(data)
         end
@@ -143,13 +143,13 @@ describe Puppet::HTTP::ExternalClient do
 
         other_context = Puppet::SSL::SSLContext.new
 
-        client.post(uri, options: {content_type: 'text/plain', body: "", ssl_context: other_context})
+        client.post(uri, headers: {'Content-Type' => 'text/plain'}, options: {body: "", ssl_context: other_context})
       end
 
       it 'accepts include_system_store' do
         stub_request(:post, uri)
 
-        client.post(uri, options: {content_type: 'text/plain', body: "", include_system_store: true})
+        client.post(uri, headers: {'Content-Type' => 'text/plain'}, options: {body: "", include_system_store: true})
       end
     end
   end

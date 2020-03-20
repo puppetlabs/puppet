@@ -50,7 +50,10 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       "#{key}=#{Puppet::Util.uri_query_encode(value.to_s)}"
     end.join("&")
 
-    headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Resource::Catalog).join(', '))
+    headers = add_puppet_headers(
+      'Accept' => get_mime_types(Puppet::Resource::Catalog).join(', '),
+      'Content-Type' => 'application/x-www-form-urlencoded'
+    )
 
     response = @client.post(
       with_base_url("/catalog/#{name}"),
@@ -58,7 +61,6 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       # for legacy reasons we always send environment as a query parameter too
       params: { environment: environment },
       options: {
-        content_type: 'application/x-www-form-urlencoded',
         body: body
       }
     )
@@ -85,15 +87,17 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   def put_facts(name, environment:, facts:)
     formatter = Puppet::Network::FormatHandler.format_for(Puppet[:preferred_serialization_format])
 
-    headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Node::Facts).join(', '))
+    headers = add_puppet_headers(
+      'Accept' => get_mime_types(Puppet::Node::Facts).join(', '),
+      'Content-Type' => formatter.mime
+    )
 
     response = @client.put(
       with_base_url("/facts/#{name}"),
       headers: headers,
       params: { environment: environment },
       options: {
-        content_type: formatter.mime,
-         body: serialize(formatter, facts)
+        body: serialize(formatter, facts)
       }
     )
 

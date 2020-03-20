@@ -35,11 +35,13 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   end
 
   def put_certificate_request(name, csr, ssl_context: nil)
+    headers = add_puppet_headers(HEADERS)
+    headers['Content-Type'] = 'text/plain'
+
     response = @client.put(
       with_base_url("/certificate_request/#{name}"),
-      headers: add_puppet_headers(HEADERS),
+      headers: headers,
       options: {
-        content_type: 'text/plain',
         body: csr.to_pem,
         ssl_context: ssl_context
       }
