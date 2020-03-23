@@ -16,15 +16,16 @@ describe Puppet::Reports.report(:http) do
 
       expect {
         subject.process
-      }.to raise_error(Errno::ECONNREFUSED, /Connection refused/)
+      }.to raise_error(Puppet::HTTP::HTTPError, /Request to #{url} failed after .* seconds: .*Connection refused/)
     end
 
     it "configures the connection for ssl when using https" do
       stub_request(:post, url)
 
-      expect(Puppet::Network::HttpPool).to receive(:connection).with(
-        anything, anything, hash_including(ssl_context: instance_of(Puppet::SSL::SSLContext))
-      ).and_call_original
+      expect_any_instance_of(Net::HTTP).to receive(:start) do |http|
+        expect(http).to be_use_ssl
+        expect(http.verify_mode).to eq(OpenSSL::SSL::VERIFY_PEER)
+      end
 
       subject.process
     end
@@ -33,9 +34,9 @@ describe Puppet::Reports.report(:http) do
       Puppet[:reporturl] = 'http://puppet.example.com:8080/the/path'
       stub_request(:post, Puppet[:reporturl])
 
-      expect(Puppet::Network::HttpPool).to receive(:connection).with(
-        anything, anything, use_ssl: false, ssl_context: nil
-      ).and_call_original
+      expect_any_instance_of(Net::HTTP).to receive(:start) do |http|
+        expect(http).to_not be_use_ssl
+      end
 
       subject.process
     end
@@ -63,7 +64,7 @@ describe Puppet::Reports.report(:http) do
     it "passes metric_id options" do
       stub_request(:post, url)
 
-      expect_any_instance_of(Puppet::Network::HTTP::Connection).to receive(:post).with(anything, anything, anything, hash_including(metric_id: [:puppet, :report, :http])).and_call_original
+      expect(Puppet.runtime['http']).to receive(:post).with(anything, hash_including(options: hash_including(metric_id: [:puppet, :report, :http]))).and_call_original
 
       subject.process
     end
