@@ -81,7 +81,7 @@ class Puppet::HTTP::Client
 
     request = Net::HTTP::Put.new(url, @default_headers.merge(headers))
     request.body = body
-    request['Content-Length'] = body.bytesize
+    request.content_length = body.bytesize
 
     raise ArgumentError, "'put' requires a 'content-type' header" unless request['Content-Type']
 
@@ -96,7 +96,7 @@ class Puppet::HTTP::Client
 
     request = Net::HTTP::Post.new(url, @default_headers.merge(headers))
     request.body = body
-    request['Content-Length'] = body.bytesize
+    request.content_length = body.bytesize
 
     raise ArgumentError, "'post' requires a 'content-type' header" unless request['Content-Type']
 

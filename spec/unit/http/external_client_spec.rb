@@ -118,8 +118,8 @@ describe Puppet::HTTP::ExternalClient do
       expect(response.code).to eq(200)
     end
 
-    it "sets content-length and content-type for the body" do
-      stub_request(:post, uri).with(headers: {"Content-Length" => "5", "Content-Type" => "text/plain"})
+    it "sets content-type for the body" do
+      stub_request(:post, uri).with(headers: {"Content-Type" => "text/plain"})
 
       client.post(uri, headers: {'Content-Type' => 'text/plain'}, options: {body: "hello"})
     end

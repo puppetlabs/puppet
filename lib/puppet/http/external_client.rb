@@ -50,8 +50,6 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
       options[:basic_auth] = { user: options[:user], password: options[:password] }
     end
 
-    headers['Content-Length'] = body ? body.bytesize.to_s : "0"
-
     client = @http_client_class.new(url.host, url.port, options)
     response = Puppet::HTTP::Response.new(client.post(url.request_uri, body, headers, options), url)
 
