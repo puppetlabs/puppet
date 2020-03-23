@@ -309,7 +309,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       ssl_file = tmpfile('systemstore')
       File.write(ssl_file, unknown_ca_cert.to_pem)
 
-      response_proc = -> res {
+      response_proc = -> (req, res) {
         res.status = 200
         res.body = response_body
       }

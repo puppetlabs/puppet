@@ -41,7 +41,7 @@ describe Puppet::Forge, unless: Puppet::Util::Platform.jruby? do
     # override path to system cacert bundle, this must be done before
     # the SSLContext is created and the call to X509::Store.set_default_paths
     Puppet::Util.withenv("SSL_CERT_FILE" => ssl_file) do
-      response_proc = -> res {
+      response_proc = -> (req, res) {
         res.status = 200
         res.body = release_response
       }
