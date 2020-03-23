@@ -3,25 +3,7 @@ require 'puppet/face'
 require 'puppet_spec/puppetserver'
 
 describe "puppet plugin" do
-  before :all do
-    WebMock.disable!
-  end
-
-  after :all do
-    WebMock.enable!
-  end
-
-  before :each do
-    # make sure we don't take too long
-    Puppet[:http_connect_timeout] = '5s'
-    Puppet[:server] = '127.0.0.1'
-    Puppet[:certname] = '127.0.0.1'
-
-    Puppet[:localcacert] = File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'ca.pem')
-    Puppet[:hostcrl] = File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'crl.pem')
-    Puppet[:hostprivkey] = File.join(PuppetSpec::FIXTURE_DIR, 'ssl', '127.0.0.1-key.pem')
-    Puppet[:hostcert] = File.join(PuppetSpec::FIXTURE_DIR, 'ssl', '127.0.0.1.pem')
-  end
+  include_context "https client"
 
   let(:server) { PuppetSpec::Puppetserver.new }
   let(:plugin) { Puppet::Application[:plugin] }

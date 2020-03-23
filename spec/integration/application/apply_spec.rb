@@ -580,29 +580,10 @@ class amod::bad_type {
   end
 
   context 'http report processor' do
-    before :all do
-      WebMock.disable!
-    end
-
-    after :all do
-      WebMock.enable!
-    end
+    include_context 'https client'
 
     before :each do
       Puppet[:reports] = 'http'
-
-      # make sure we don't take too long
-      Puppet[:http_connect_timeout] = '5s'
-      Puppet[:server] = '127.0.0.1'
-      Puppet[:certname] = '127.0.0.1'
-
-      Puppet[:localcacert] = File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'ca.pem')
-      Puppet[:hostcrl] = File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'crl.pem')
-      Puppet[:hostprivkey] = File.join(PuppetSpec::FIXTURE_DIR, 'ssl', '127.0.0.1-key.pem')
-      Puppet[:hostcert] = File.join(PuppetSpec::FIXTURE_DIR, 'ssl', '127.0.0.1.pem')
-
-      facts = Puppet::Node::Facts.new(Puppet[:certname])
-      Puppet::Node::Facts.indirection.save(facts)
     end
 
     let(:apply) { Puppet::Application[:apply] }
