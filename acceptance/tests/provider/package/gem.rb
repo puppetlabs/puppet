@@ -1,6 +1,6 @@
 test_name "gem provider should install and uninstall" do
   confine :to, :template => /centos-7-x86_64|redhat-7-x86_64/
-  tag 'audit:low'
+  tag 'audit:high'
 
   require 'puppet/acceptance/common_utils'
   extend Puppet::Acceptance::PackageUtils
@@ -24,7 +24,7 @@ test_name "gem provider should install and uninstall" do
     #
     # These tests depend upon testing being confined to /centos-7-x86_64|redhat-7-x86_64/.
     if agent['roles'].include?('master')
-      original_path = agent.get_env_var('PATH')
+      original_path = agent.get_env_var('PATH').split('=').last
 
       # https://github.com/puppetlabs/puppet-agent/blob/master/resources/files/puppet-agent.sh
       puppet_agent_sh_path = '/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin:/opt/puppetlabs/bin'
@@ -34,6 +34,7 @@ test_name "gem provider should install and uninstall" do
       teardown do
         step "Teardown: Uninstall System Ruby, and reset PATH" do
           package_absent(agent, 'ruby')
+          agent.clear_env_var('PATH')
           agent.add_env_var('PATH', original_path)
         end
       end
@@ -77,6 +78,27 @@ test_name "gem provider should install and uninstall" do
         assert_match(/#{package} \(/, list)
       end
       on(agent, "#{puppet_gem_command} uninstall #{package}")
+    end
+
+    step "Install a gem package in a certain min max range" do
+      package_manifest1 = resource_manifest('package', package, { ensure: '>0.5 <0.7', provider: 'gem' } )
+      package_manifest2 = resource_manifest('package', package, { ensure: '>0.7 <0.8.1',  provider: 'gem' } )
+
+      # Install package (with version between 0.5 and 0.7)
+      apply_manifest_on(agent, package_manifest1, :expect_changes => true) do
+        list = on(agent, "#{puppet_gem_command} list").stdout
+        assert_match(/#{package} \((0.6.0)\)/, list)
+      end
+
+      # Reapply same manifest and expect no changes
+      apply_manifest_on(agent, package_manifest1, :catch_changes => true)
+
+      # Install besides existing package (with version between 0.7 and 0.8.1) and expect changes
+      apply_manifest_on(agent, package_manifest2, :expect_changes => true) do
+        list = on(agent, "#{puppet_gem_command} list").stdout
+        assert_match(/#{package} \((0.8.0, 0.6.0)\)/, list)
+      end
+      on(agent, "#{puppet_gem_command} uninstall #{package} --all")
     end
 
     step "Uninstall a gem package with a target command" do
