@@ -2,6 +2,7 @@
 require 'puppet'
 require 'puppet/ssl/openssl_loader'
 
+# @api private
 module Puppet::SSL # :nodoc:
   CA_NAME = "ca".freeze
   require 'puppet/ssl/host'

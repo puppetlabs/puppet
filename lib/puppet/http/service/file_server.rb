@@ -1,14 +1,57 @@
 require 'puppet/file_serving/metadata'
 
+#
+# @api private
+#
+# The FileServer service is used to retrieve file metadata and content
+#
 class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
+  # @api private
+  # @return [String] Default API for the FileServer service
   API = '/puppet/v3'.freeze
+
+  # @api private
+  # @return [RegEx] RegEx used to determine if a path contains a leading slash
   PATH_REGEX = /^\//
 
+  #
+  # @api private
+  #
+  # @param [Puppet::HTTP::Client] client
+  # @param [Puppet::HTTP::Session] session
+  # @param [String] server (Puppet[:ca_server]) If an explicit server is given,
+  #   create a service using that server. If server is nil, the default value
+  #   is used to create the service.
+  # @param [Integer] port (Puppet[:ca_port]) If an explicit port is given, create
+  #   a service using that port. If port is nil, the default value is used to
+  #   create the service.
+  #
   def initialize(client, session, server, port)
     url = build_url(API, server || Puppet[:server], port || Puppet[:masterport])
     super(client, session, url)
   end
 
+  #
+  # @api private
+  #
+  # Submit a GET request to the server to retrieve the metadata for a specified
+  # file
+  #
+  # @param [String] path path to the file to retrieve data from
+  # @param [String] environment the name of the environment we are operating in
+  # @param [Symbol] links Can be one of either `:follow` or `:manage`, defines
+  #   how links are handled.
+  # @param [String] checksum_type The digest algorithm used to verify the file.
+  #   Currently if fips is enabled, this defaults to `sha256`. Otherwise, it
+  #   defaults to `md5`.
+  # @param [Symbol] source_permissions Can be one of `:use`, `:use_when_creating`,
+  #   or `:ignore`. This parameter tells the server if it should include the
+  #   file permissions in the response. If set to `:ignore`, the server will
+  #   return default permissions.
+  #
+  # @return [Puppet::FileServing::Metadata] The deserialized metadata for the
+  #   file returned from the server
+  #
   def get_file_metadata(path:, environment:, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore)
     validate_path(path)
 
@@ -30,6 +73,37 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     deserialize(response, Puppet::FileServing::Metadata)
   end
 
+  #
+  # @api private
+  #
+  # Submit a GET request to the server to retrieve the metadata for multiple files
+  #
+  # @param [String] path path to the file(s) to retrieve data from
+  # @param [String] environment the name of the environment we are operating in
+  # @param [Symbol] recurse  Can be `:true`, `:false`, or `:remote`. Defines if
+  #   we recursively return the contents of the directory. Used in conjunction
+  #   with `:recurselimit`. See the reference documentation for the file type
+  #   for more details.
+  # @param [Integer] recurselimit When `recurse` is set, `recurselimit` defines
+  #   how far Puppet should descend into subdirectories. `0` is effectively the
+  #   same as `recurse => false`, `1` will return files and directories directly
+  #   inside the defined directory, `2` will return the direct content of the
+  #   directory as well as the contents of the _first_ level of subdirectories.
+  #   The pattern continues for each incremental value. See the reference
+  #   documentation for the file type for more details.
+  # @param [Array<String>] ignore An optional array of files to ignore, ie `['CVS', '.git', '.hg']`
+  # @param [Symbol] links Can be one of either `:follow` or `:manage`, defines
+  #   how links are handled.
+  # @param [String] checksum_type The digest algorithm used to verify the file.
+  #   Currently if fips is enabled, this defaults to `sha256`. Otherwise, it's `md5`.
+  # @param [Symbol] source_permissions Can be one of `:use`, `:use_when_creating`,
+  #   or `:ignore`. This parameter tells the server if it should include the
+  #   file permissions in the report. If set to `:ignore`, the server will return
+  #   default permissions.
+  #
+  # @return [Array<Puppet::FileServing::Metadata>]  An array of the deserialized
+  #   metadata for each file returned from the server
+  #
   def get_file_metadatas(path: nil, environment:, recurse: :false, recurselimit: nil, ignore: nil, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore)
     validate_path(path)
 
@@ -54,6 +128,18 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     deserialize_multiple(response, Puppet::FileServing::Metadata)
   end
 
+  #
+  # @api private
+  #
+  # Submit a GET request to the server to retrieve content of a file
+  #
+  # @param [String] path path to the file to retrieve data from
+  # @param [String] environment the name of the environment we are operating in
+  #
+  # @yield [Sting] Yields the body of the response returned from the server
+  #
+  # @return [nil]
+  #
   def get_file_content(path:, environment:, &block)
     validate_path(path)
 
@@ -75,6 +161,19 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     nil
   end
 
+  #
+  # @api private
+  #
+  # Submit a GET request to
+  #
+  # @param [String] path path to the file to retrieve data from
+  # @param [String] environment the name of the environment we are operating in
+  # @param [String] code_id Defines the version of the resource to return
+  #
+  # @yield [String] Yields the body of the response returned
+  #
+  # @return [nil]
+  #
   def get_static_file_content(path:, environment:, code_id:, &block)
     validate_path(path)
 

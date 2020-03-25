@@ -1,10 +1,34 @@
+#
+# @api private
+#
+# Resolve a service using SRV
+#
 class Puppet::HTTP::Resolver::SRV < Puppet::HTTP::Resolver
+  #
+  # @api private
+  #
+  # @param [Puppet::HTTP::Client] client
+  # @param [String] domain srv domain
+  # @param [Resolv::DNS] dns
+  #
   def initialize(client, domain:, dns: Resolv::DNS.new)
     @client = client
     @srv_domain = domain
     @delegate = Puppet::Network::Resolver.new(dns)
   end
 
+  #
+  # @api private
+  #
+  # Walk the available srv records and return the first that successfully connects
+  #
+  # @param [Puppet::HTTP::Session] session
+  # @param [Symbol] name the service being resolved
+  # @param [Puppet::SSL::SSLContext] ssl_context
+  #
+  # @return [Puppet::HTTP::Service] if an available service is found, return
+  #   it. Return nil otherwise.
+  #
   def resolve(session, name, ssl_context: nil)
     # Here we pass our HTTP service name as the DNS SRV service name
     # This is fine for :ca, but note that :puppet and :file are handled
