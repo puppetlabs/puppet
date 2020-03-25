@@ -56,19 +56,15 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
       is = line.split('|')[1].strip
       begin
         is_version = DebianVersion.parse(is)
-        available_versions << is_version
+        available_versions << is_version if should_range.include?(is_version)
       rescue DebianVersion::ValidationFailure
-        Puppet.warning("Cannot parse #{is} as a debian version")
+        Puppet.debug("Cannot parse #{is} as a debian version")
       end
     end
 
-    included_available_version = available_versions.select do |version|
-      should_range.include?(version)
-    end
+    return available_versions.to_a.last unless available_versions.empty?
 
-    return included_available_version[-1] unless included_available_version.empty?
-
-    Puppet.warning("No available version for package #{@resource[:name]} is included in range #{should_range}")
+    Puppet.debug("No available version for package #{@resource[:name]} is included in range #{should_range}")
     should_range
   end
 
@@ -182,7 +178,6 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     begin
       should_range = VersionRange.parse(should, DebianVersion)
     rescue VersionRange::ValidationFailure, DebianVersion::ValidationFailure
-      #this debug message mai increase log, to be assessed is necessary
       Puppet.debug("Cannot parse #{should} as a debian version range")
       return false
     end

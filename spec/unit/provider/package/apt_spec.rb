@@ -124,7 +124,7 @@ Version table:
     end
 
     it "should select latest available version if range is specified" do
-      resource[:ensure] = '>72.0'
+      resource[:ensure] = '>60.0'
       expect(provider).to receive(:aptget) do |*command|
         expect(command[-1]).to eq("#{name}=72.0.1+build1-0ubuntu0.19.04.1")
       end
