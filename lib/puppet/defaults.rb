@@ -1795,6 +1795,16 @@ EOT
       :type     => :boolean,
       :desc     => "Whether to send reports after every transaction.",
     },
+    :report_include_system_store => {
+      :default  => false,
+      :type     => :boolean,
+      :desc     => "Whether the 'http' report processor should include the system
+        certificate store when submitting reports to HTTPS URLs. If false, then
+        the 'http' processor will only trust HTTPS report servers whose certificates
+        are issued by the puppet CA or one of its intermediate CAs. If true, the
+        processor will additionally trust CA certificates in the system's
+        certificate store."
+    },
     :resubmit_facts => {
       :default  => false,
       :type     => :boolean,
