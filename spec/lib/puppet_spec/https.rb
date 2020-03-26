@@ -18,10 +18,13 @@ class PuppetSpec::HTTPSServer
     req = WEBrick::HTTPRequest.new(@config)
     req.parse(ssl)
 
+    # always drain request body
+    req.body
+
     res = WEBrick::HTTPResponse.new(@config)
     res.status = 200
     res.body = 'OK'
-    response_proc.call(res) if response_proc
+    response_proc.call(req, res) if response_proc
 
     res.send_response(ssl)
   end
@@ -52,7 +55,7 @@ class PuppetSpec::HTTPSServer
 
               loop do
                 readable, = IO.select([ssls, stop_pipe_r])
-                break if readable.include? stop_pipe_r
+                break if readable.include?(stop_pipe_r)
 
                 ssl = ssls.accept
                 begin

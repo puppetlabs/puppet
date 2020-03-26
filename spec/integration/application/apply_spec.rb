@@ -1,6 +1,7 @@
 require 'spec_helper'
 require 'puppet_spec/files'
 require 'puppet_spec/compiler'
+require 'puppet_spec/https'
 
 describe "apply" do
   include PuppetSpec::Files
@@ -575,6 +576,38 @@ class amod::bad_type {
 
       dest_file = File.join(base_dir, 'dir1', 'dir2', 'file')
       expect(File.read(dest_file)).to eq("content from the module")
+    end
+  end
+
+  context 'http report processor' do
+    include_context 'https client'
+
+    before :each do
+      Puppet[:reports] = 'http'
+    end
+
+    let(:apply) { Puppet::Application[:apply] }
+
+    it 'submits a report via reporturl' do
+      report = nil
+
+      response_proc = -> (req, res) {
+        report = Puppet::Transaction::Report.convert_from(:yaml, req.body)
+      }
+
+      https = PuppetSpec::HTTPSServer.new
+      https.start_server(response_proc: response_proc) do |https_port|
+        Puppet[:reporturl] = "https://127.0.0.1:#{https_port}/reports/upload"
+
+        expect {
+          apply.command_line.args = ['-e', 'notify { "hi": }']
+          apply.run
+        }.to exit_with(0)
+         .and output(/Applied catalog/).to_stdout
+
+        expect(report).to be_a(Puppet::Transaction::Report)
+        expect(report.resource_statuses['Notify[hi]']).to be_a(Puppet::Resource::Status)
+      end
     end
   end
 end

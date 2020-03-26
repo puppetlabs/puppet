@@ -20,19 +20,21 @@ Puppet::Reports.register_report(:http) do
     # (Puppet::Network::HTTP) but is used by Puppet Server's http client
     # (Puppet::Server::HttpClient) to track metrics on the request made to the
     # `reporturl` to store a report.
-    options = { :metric_id => [:puppet, :report, :http] }
+    options = {
+      :metric_id => [:puppet, :report, :http],
+      :body => self.to_yaml,
+    }
+
     if url.user && url.password
-      options[:basic_auth] = {
-        :user => url.user,
-        :password => url.password
-      }
+      options[:user] = url.user
+      options[:password] = url.password
     end
-    use_ssl = url.scheme == 'https'
-    ssl_context = use_ssl ? Puppet.lookup(:ssl_context) : nil
-    conn = Puppet::Network::HttpPool.connection(url.host, url.port, use_ssl: use_ssl, ssl_context: ssl_context)
-    response = conn.post(url.path, self.to_yaml, headers, options)
-    unless response.kind_of?(Net::HTTPSuccess)
-      Puppet.err _("Unable to submit report to %{url} [%{code}] %{message}") % { url: Puppet[:reporturl].to_s, code: response.code, message: response.msg }
+
+    client = Puppet.runtime['http']
+    client.post(url, headers: headers, options: options) do |response|
+      unless response.success?
+        Puppet.err _("Unable to submit report to %{url} [%{code}] %{message}") % { url: Puppet[:reporturl].to_s, code: response.code, message: response.reason }
+      end
     end
   end
 end

@@ -4,21 +4,8 @@ require 'puppet_spec/https'
 
 describe Puppet::Forge, unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
+  include_context "https client"
 
-  before :all do
-    WebMock.disable!
-  end
-
-  after :all do
-    WebMock.enable!
-  end
-
-  before :each do
-    # make sure we don't take too long
-    Puppet[:http_connect_timeout] = '5s'
-  end
-
-  let(:hostname) { '127.0.0.1' }
   let(:wrong_hostname) { 'localhost' }
   let(:server) { PuppetSpec::HTTPSServer.new }
   let(:ssl_provider) { Puppet::SSL::SSLProvider.new }
@@ -41,7 +28,7 @@ describe Puppet::Forge, unless: Puppet::Util::Platform.jruby? do
     # override path to system cacert bundle, this must be done before
     # the SSLContext is created and the call to X509::Store.set_default_paths
     Puppet::Util.withenv("SSL_CERT_FILE" => ssl_file) do
-      response_proc = -> res {
+      response_proc = -> (req, res) {
         res.status = 200
         res.body = release_response
       }
