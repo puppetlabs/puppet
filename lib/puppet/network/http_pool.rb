@@ -19,6 +19,7 @@ module Puppet::Network::HttpPool
   end
   def self.http_client_class=(klass)
     @http_client_class = klass
+    Puppet.runtime['http'] = Puppet::HTTP::ExternalClient.new(klass)
   end
 
   # Retrieve a connection for the given host and port.

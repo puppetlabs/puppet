@@ -69,17 +69,16 @@ class Puppet::HTTP::Client
   #
   def connect(uri, options: {}, &block)
     start = Time.now
-
-    ssl_context = options.fetch(:ssl_context, nil)
-    include_system_store = options.fetch(:include_system_store, false)
-    ctx = resolve_ssl_context(ssl_context, include_system_store)
-    site = Puppet::Network::HTTP::Site.from_uri(uri)
-    verifier = if site.use_ssl?
-                 Puppet::SSL::Verifier.new(site.host, ctx)
-               else
-                 nil
-               end
+    verifier = nil
     connected = false
+
+    site = Puppet::Network::HTTP::Site.from_uri(uri)
+    if site.use_ssl?
+      ssl_context = options.fetch(:ssl_context, nil)
+      include_system_store = options.fetch(:include_system_store, false)
+      ctx = resolve_ssl_context(ssl_context, include_system_store)
+      verifier = Puppet::SSL::Verifier.new(site.host, ctx)
+    end
 
     @pool.with_connection(site, verifier) do |http|
       connected = true
@@ -121,11 +120,7 @@ class Puppet::HTTP::Client
   # @return [String] if a block is not given, returns the response body
   #
   def get(url, headers: {}, params: {}, options: {}, &block)
-    query = encode_params(params)
-    unless query.empty?
-      url = url.dup
-      url.query = query
-    end
+    url = encode_query(url, params)
 
     request = Net::HTTP::Get.new(url, @default_headers.merge(headers))
 
@@ -155,11 +150,7 @@ class Puppet::HTTP::Client
   # @return [String] the body of the request response
   #
   def head(url, headers: {}, params: {}, options: {})
-    query = encode_params(params)
-    unless query.empty?
-      url = url.dup
-      url.query = query
-    end
+    url = encode_query(url, params)
 
     request = Net::HTTP::Head.new(url, @default_headers.merge(headers))
 
@@ -187,20 +178,14 @@ class Puppet::HTTP::Client
   # @return [String] the body of the request response
   #
   def put(url, headers: {}, params: {}, options: {})
-    query = encode_params(params)
-    unless query.empty?
-      url = url.dup
-      url.query = query
-    end
+    body = options.fetch(:body) { |_| raise ArgumentError, "'put' requires a 'body' option" }
+    url = encode_query(url, params)
 
     request = Net::HTTP::Put.new(url, @default_headers.merge(headers))
-
-    body = options.fetch(:body) { |_| raise ArgumentError, "'put' requires a 'body' option" }
-    content_type = options.fetch(:content_type) { |_| raise ArgumentError, "'put' requires a 'content_type' option" }
-
     request.body = body
-    request['Content-Length'] = body.bytesize
-    request['Content-Type'] = content_type
+    request.content_length = body.bytesize
+
+    raise ArgumentError, "'put' requires a 'content-type' header" unless request['Content-Type']
 
     execute_streaming(request, options: options) do |response|
       response.body
@@ -226,20 +211,14 @@ class Puppet::HTTP::Client
   # @return [String] the body of the request response
   #
   def post(url, headers: {}, params: {}, options: {}, &block)
-    query = encode_params(params)
-    unless query.empty?
-      url = url.dup
-      url.query = query
-    end
+    body = options.fetch(:body) { |_| raise ArgumentError, "'post' requires a 'body' option" }
+    url = encode_query(url, params)
 
     request = Net::HTTP::Post.new(url, @default_headers.merge(headers))
-
-    body = options.fetch(:body) { |_| raise ArgumentError, "'post' requires a 'body' option" }
-    content_type = options.fetch(:content_type) { |_| raise ArgumentError, "'post' requires a 'content_type' option" }
-
     request.body = body
-    request['Content-Length'] = body.bytesize
-    request['Content-Type'] = content_type
+    request.content_length = body.bytesize
+
+    raise ArgumentError, "'post' requires a 'content-type' header" unless request['Content-Type']
 
     execute_streaming(request, options: options) do |response|
       if block_given?
@@ -267,11 +246,7 @@ class Puppet::HTTP::Client
   # @return [String] the body of the request response
   #
   def delete(url, headers: {}, params: {}, options: {})
-    query = encode_params(params)
-    unless query.empty?
-      url = url.dup
-      url.query = query
-    end
+    url = encode_query(url, params)
 
     request = Net::HTTP::Delete.new(url, @default_headers.merge(headers))
 
@@ -287,6 +262,16 @@ class Puppet::HTTP::Client
   #
   def close
     @pool.close
+  end
+
+  protected
+
+  def encode_query(url, params)
+    return url if params.empty?
+
+    url = url.dup
+    url.query = encode_params(params)
+    url
   end
 
   private

@@ -31,5 +31,6 @@ module Puppet
     require 'puppet/http/client'
     require 'puppet/http/redirector'
     require 'puppet/http/retry_after_handler'
+    require 'puppet/http/external_client'
   end
 end
