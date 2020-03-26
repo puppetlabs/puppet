@@ -970,6 +970,16 @@ describe "Puppet::FileSystem" do
           mode = Puppet::FileSystem.stat(dest).mode
           expect(mode & 07777).to eq(0400)
         end
+
+        it 'preserves file ownership' do
+          allow(Puppet::FileSystem).to receive(:lstat)
+            .with(Puppet::FileSystem.pathname(dest))
+            .and_return(double(uid: 1, gid: 2))
+
+          expect(FileUtils).to receive(:chown).with(1, 2, /#{dest}/)
+
+          Puppet::FileSystem.replace_file(dest, 0644) { |f| f.write(content) }
+        end
       end
 
       context 'on windows', if: Puppet::Util::Platform.windows? do

@@ -156,12 +156,14 @@ class Puppet::FileSystem::FileImpl
   end
 
   def replace_file(path, mode = nil)
-    mode ||= begin
-               stat = Puppet::FileSystem.lstat(path)
-               stat.mode & 07777
-             rescue Errno::ENOENT
-               0640
-             end
+    begin
+      stat = Puppet::FileSystem.lstat(path)
+      gid = stat.gid
+      uid = stat.uid
+      mode ||= stat.mode & 07777
+    rescue Errno::ENOENT
+      mode ||= 0640
+    end
 
     tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(path), Puppet::FileSystem.dir_string(path))
     begin
@@ -173,8 +175,10 @@ class Puppet::FileSystem::FileImpl
         tempfile.close
       end
 
-      chmod(mode, tempfile.path)
-      File.rename(tempfile.path, Puppet::FileSystem.path_string(path))
+      tempfile_path = tempfile.path
+      FileUtils.chown(uid, gid, tempfile_path) if uid && gid
+      chmod(mode, tempfile_path)
+      File.rename(tempfile_path, Puppet::FileSystem.path_string(path))
     ensure
       tempfile.close!
     end
