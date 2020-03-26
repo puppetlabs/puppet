@@ -80,7 +80,7 @@ class Puppet::FileSystem::FileImpl
   end
 
   def read(path, opts = {})
-    path.read(opts)
+    path.read(**opts)
   end
 
   def read_preserve_line_endings(path)
