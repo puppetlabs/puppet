@@ -26,7 +26,7 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
   def discover(type, error_collector = nil, name_authority = Puppet::Pops::Pcore::RUNTIME_NAME_AUTHORITY, &block)
     result = []
     @dependency_loaders.each { |loader| result.concat(loader.discover(type, error_collector, name_authority, &block)) }
-    result.concat(super)
+    result.concat(super).uniq!
     result
   end
 

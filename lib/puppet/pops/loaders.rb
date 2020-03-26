@@ -253,7 +253,8 @@ class Loaders
 
   def add_loader_by_name(loader)
     name = loader.loader_name
-    if @loaders_by_name.include?(name)
+    # If a Bolt project is defined
+    if @loaders_by_name.include?(name) && @project&.name != name
       raise Puppet::ParseError, _("Internal Error: Attempt to redefine loader named '%{name}'") % { name: name }
     end
     @loaders_by_name[name] = loader
@@ -383,7 +384,12 @@ class Loaders
     env_path = env_conf.nil? || !env_conf.is_a?(Puppet::Settings::EnvironmentConf) ? nil : env_conf.path_to_env
 
     if Puppet[:tasks]
-      loader = Loader::ModuleLoaders.environment_loader_from(parent_loader, self, env_path)
+      @project = Puppet.lookup(:bolt_project) { nil }
+      loader = if @project.nil?
+                 Loader::ModuleLoaders.environment_loader_from(parent_loader, self, env_path)
+               else
+                 Loader::ModuleLoaders.module_loader_from(parent_loader, self, @project.name, @project.path)
+               end
     else
       # Create the 3.x resource type loader
       static_loader.runtime_3_init

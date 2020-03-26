@@ -123,6 +123,28 @@ describe 'loaders' do
     expect(loaders.private_environment_loader().to_s).to eql("(DependencyLoader 'environment private' [])")
   end
 
+  context 'with bolt_project set' do
+    let(:project) { Struct.new("Project", :name, :path).new('moduleb', File.join(module_without_metadata, 'moduleb')) }
+
+    before :all do
+      Puppet[:tasks] = true
+    end
+
+    after :all do
+      Puppet[:tasks] = false
+    end
+
+    it 'creates a bolt project loader if bolt_project keyword is set' do
+      Puppet.override(bolt_project: project) do
+        loaders = Puppet::Pops::Loaders.new(empty_test_env)
+        expect(loaders.public_environment_loader).to be_a(Puppet::Pops::Loader::ModuleLoaders::FileBased)
+        expect(loaders.public_environment_loader.to_s).to eql("(ModuleLoader::FileBased 'moduleb' 'moduleb')")
+        expect(loaders.private_environment_loader()).to be_a(Puppet::Pops::Loader::DependencyLoader)
+        expect(loaders.private_environment_loader().to_s).to eql("(DependencyLoader 'environment private' [])")
+      end
+    end
+  end
+
   context 'when loading from a module' do
     it 'loads a ruby function using a qualified or unqualified name' do
       loaders = Puppet::Pops::Loaders.new(environment_for(module_with_metadata))
