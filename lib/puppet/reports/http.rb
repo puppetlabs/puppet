@@ -23,6 +23,7 @@ Puppet::Reports.register_report(:http) do
     options = {
       :metric_id => [:puppet, :report, :http],
       :body => self.to_yaml,
+      :include_system_store => Puppet[:report_include_system_store],
     }
 
     if url.user && url.password

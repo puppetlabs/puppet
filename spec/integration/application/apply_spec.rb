@@ -3,7 +3,7 @@ require 'puppet_spec/files'
 require 'puppet_spec/compiler'
 require 'puppet_spec/https'
 
-describe "apply" do
+describe "apply", unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
   before :each do
@@ -258,7 +258,7 @@ end
     expect(@logs.map(&:to_s)).to include(/{environment =>.*/)
   end
 
-  it "applies a given file even when an ENC is configured", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
+  it "applies a given file even when an ENC is configured", :unless => Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
     manifest = file_containing("manifest.pp", "notice('specific manifest applied')")
     enc = script_containing('enc_script',
       :windows => '@echo classes: []' + "\n" + '@echo environment: special',
@@ -379,7 +379,7 @@ end
     # External node script execution will fail, likely due to the tampering
     # with the basic file descriptors.
     # Workaround: Define a log destination and merely inspect logs.
-    context "with an ENC", :unless => RUBY_PLATFORM == 'java' do
+    context "with an ENC" do
       let(:logdest) { tmpfile('logdest') }
       let(:args) { ['-e', execute, '--logdest', logdest ] }
       let(:enc) do
@@ -587,6 +587,14 @@ class amod::bad_type {
     end
 
     let(:apply) { Puppet::Application[:apply] }
+    let(:unknown_server) do
+      unknown_ca_cert = cert_fixture('unknown-ca.pem')
+      PuppetSpec::HTTPSServer.new(
+        ca_cert: unknown_ca_cert,
+        server_cert: cert_fixture('unknown-127.0.0.1.pem'),
+        server_key: key_fixture('unknown-127.0.0.1-key.pem')
+      )
+    end
 
     it 'submits a report via reporturl' do
       report = nil
@@ -604,6 +612,51 @@ class amod::bad_type {
           apply.run
         }.to exit_with(0)
          .and output(/Applied catalog/).to_stdout
+
+        expect(report).to be_a(Puppet::Transaction::Report)
+        expect(report.resource_statuses['Notify[hi]']).to be_a(Puppet::Resource::Status)
+      end
+    end
+
+    it 'rejects an HTTPS report server whose root cert is not the puppet CA' do
+      unknown_server.start_server do |https_port|
+        Puppet[:reporturl] = "https://127.0.0.1:#{https_port}/reports/upload"
+
+        # processing the report happens after the transaction is finished,
+        # so we expect exit code 0, with a later failure on stderr
+        expect {
+          apply.command_line.args = ['-e', 'notify { "hi": }']
+          apply.run
+        }.to exit_with(0)
+         .and output(/Applied catalog/).to_stdout
+         .and output(/Report processor failed: certificate verify failed \[self signed certificate in certificate chain for CN=Unknown CA\]/).to_stderr
+      end
+    end
+
+    it 'accepts an HTTPS report servers whose cert is in the system CA store' do
+      Puppet[:report_include_system_store] = true
+      report = nil
+
+      response_proc = -> (req, res) {
+        report = Puppet::Transaction::Report.convert_from(:yaml, req.body)
+      }
+
+      # create a temp cacert bundle
+      ssl_file = tmpfile('systemstore')
+      File.write(ssl_file, unknown_server.ca_cert.to_pem)
+
+      unknown_server.start_server(response_proc: response_proc) do |https_port|
+        Puppet[:reporturl] = "https://127.0.0.1:#{https_port}/reports/upload"
+
+        # override path to system cacert bundle, this must be done before
+        # the SSLContext is created and the call to X509::Store.set_default_paths
+        Puppet::Util.withenv("SSL_CERT_FILE" => ssl_file) do
+          expect {
+            apply.command_line.args = ['-e', 'notify { "hi": }']
+            apply.run
+          }.to exit_with(0)
+           .and output(/Applied catalog/).to_stdout
+        end
 
         expect(report).to be_a(Puppet::Transaction::Report)
         expect(report.resource_statuses['Notify[hi]']).to be_a(Puppet::Resource::Status)
