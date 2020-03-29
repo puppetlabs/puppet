@@ -26,14 +26,14 @@ describe Puppet::Type.type(:package).provider(:pacman) do
     end
 
     it "should call pacman to install the right package quietly when yaourt is not installed" do
-      args = ['--noconfirm', '--needed', '--noprogressbar', '-Sy', resource[:name]]
+      args = ['--noconfirm', '--needed', '--noprogressbar', '-S', resource[:name]]
       expect(provider).to receive(:pacman).at_least(:once).with(*args).and_return('')
       provider.install
     end
 
     it "should call yaourt to install the right package quietly when yaourt is installed" do
       allow(described_class).to receive(:yaourt?).and_return(true)
-      args = ['--noconfirm', '--needed', '--noprogressbar', '-Sy', resource[:name]]
+      args = ['--noconfirm', '--needed', '--noprogressbar', '-S', resource[:name]]
       expect(provider).to receive(:yaourt).at_least(:once).with(*args).and_return('')
       provider.install
     end
@@ -68,14 +68,14 @@ describe Puppet::Type.type(:package).provider(:pacman) do
       end
 
       it "should call pacman to install the right package quietly when yaourt is not installed" do
-        args = ['--noconfirm', '--needed', '--noprogressbar', '-x', '--arg=value', '-Sy', resource[:name]]
+        args = ['--noconfirm', '--needed', '--noprogressbar', '-x', '--arg=value', '-S', resource[:name]]
         expect(provider).to receive(:pacman).at_least(:once).with(*args).and_return('')
         provider.install
       end
 
       it "should call yaourt to install the right package quietly when yaourt is installed" do
         expect(described_class).to receive(:yaourt?).and_return(true)
-        args = ['--noconfirm', '--needed', '--noprogressbar', '-x', '--arg=value', '-Sy', resource[:name]]
+        args = ['--noconfirm', '--needed', '--noprogressbar', '-x', '--arg=value', '-S', resource[:name]]
         expect(provider).to receive(:yaourt).at_least(:once).with(*args).and_return('')
         provider.install
       end
@@ -94,7 +94,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
             resource[:source] = source
 
             expect(executor).to receive(:execute).
-              with(include("-Sy") & include("--noprogressbar"), no_extra_options).
+              with(include("-S") & include("--noprogressbar"), no_extra_options).
               ordered.
               and_return("")
 
@@ -117,7 +117,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
 
         it "should install from the path segment of the URL" do
           expect(executor).to receive(:execute).
-            with(include("-Sy") & include("--noprogressbar") & include("--noconfirm"),
+            with(include("-S") & include("--noprogressbar") & include("--noconfirm"),
                  no_extra_options).
             ordered.
             and_return("")
@@ -348,21 +348,7 @@ EOF
   end
 
   describe "when determining the latest version" do
-    it "should refresh package list" do
-      expect(executor).to receive(:execute).
-        ordered.
-        with(['/usr/bin/pacman', '-Sy'], no_extra_options)
-
-      expect(executor).to receive(:execute).
-        ordered.
-        and_return("")
-
-      provider.latest
-    end
-
     it "should get query pacman for the latest version" do
-      expect(executor).to receive(:execute).ordered
-
       expect(executor).to receive(:execute).
         ordered.
         with(['/usr/bin/pacman', '-Sp', '--print-format', '%v', resource[:name]], no_extra_options).
@@ -379,7 +365,6 @@ EOF
 
     it "should return a virtual group version when resource is a package group" do
       allow(described_class).to receive(:group?).and_return(true)
-      expect(executor).to receive(:execute).with(['/usr/bin/pacman', '-Sy'], no_extra_options).ordered
       expect(executor).to receive(:execute).with(['/usr/bin/pacman', '-Sp', '--print-format', '%n %v', resource[:name]], no_extra_options).ordered.
         and_return(<<EOF)
 package2 1.0.1

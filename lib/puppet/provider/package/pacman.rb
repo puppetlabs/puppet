@@ -132,9 +132,6 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   # We rescue the main check from Pacman with a check on the AUR using yaourt, if installed
   def latest
-    # Synchronize the database
-    pacman "-Sy"
-
     resource_name = @resource[:name]
 
     # If target is a group, construct the group version
@@ -243,7 +240,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     else
       fail _("Source %{source} is not supported by pacman") % { source: source }
     end
-    pacman "--noconfirm", "--noprogressbar", "-Sy"
+    pacman "--noconfirm", "--noprogressbar", "-S"
     pacman "--noconfirm", "--noprogressbar", "-U", source
   end
 
@@ -255,7 +252,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
     cmd = %w{--noconfirm --needed --noprogressbar}
     cmd += install_options if @resource[:install_options]
-    cmd << "-Sy" << resource_name
+    cmd << "-S" << resource_name
 
     if self.class.yaourt?
       yaourt(*cmd)
