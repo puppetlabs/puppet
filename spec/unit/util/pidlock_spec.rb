@@ -205,6 +205,49 @@ describe Puppet::Util::Pidlock do
     end
   end
 
+  describe "with no access to open the process on Windows", :if => Puppet.features.microsoft_windows? do
+    before(:each) do
+      allow(Process).to receive(:pid).and_return(6789)
+      @lock.lock
+      allow(Process).to receive(:pid).and_return(1234)
+      exception = Puppet::Util::Windows::Error.new('Access Denied', 5) # ERROR_ACCESS_DENIED
+      allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(6789).and_raise(exception)
+      allow(Process).to receive(:kill).with(0, 6789)
+      allow(Process).to receive(:kill).with(0, 1234)
+    end
+
+    it "should be locked" do
+      expect(@lock).to be_locked
+    end
+
+    describe "#lock" do
+      it "should not be possible" do
+        expect(@lock.lock).to be_falsey
+      end
+
+      it "should not overwrite the lock" do
+        @lock.lock
+        expect(@lock).not_to be_mine
+      end
+    end
+
+    describe "#unlock" do
+      it "should not be possible" do
+        expect(@lock.unlock).to be_falsey
+      end
+
+      it "should not remove the lock file" do
+        @lock.unlock
+        expect(Puppet::FileSystem.exist?(@lockfile)).to be_truthy
+      end
+
+      it "should still not be our lock" do
+        @lock.unlock
+        expect(@lock).not_to be_mine
+      end
+    end
+  end
+
   describe "with another process lock" do
     before(:each) do
       # fake our pid to be 1234

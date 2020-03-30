@@ -97,6 +97,7 @@ module Puppet::Util::Windows::Security
   FILE = Puppet::Util::Windows::File
 
   SE_BACKUP_NAME              = 'SeBackupPrivilege'
+  SE_DEBUG_NAME               = 'SeDebugPrivilege'
   SE_RESTORE_NAME             = 'SeRestorePrivilege'
 
   DELETE                      = 0x00010000
