@@ -81,7 +81,10 @@ module Puppet
             begin
               original_facter = Object.const_get(:Facter)
               Object.send(:remove_const, :Facter)
-              require 'facter-ng'
+
+              Kernel.require 'facter-ng'
+              # It is required to re-setup logger for facter-ng
+              Puppet::Util::Logging.setup_facter_logging!
             rescue LoadError
               Object.const_set(:Facter, original_facter)
               raise ArgumentError, 'facter-ng could not be loaded'
