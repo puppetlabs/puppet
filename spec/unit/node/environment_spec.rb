@@ -422,6 +422,22 @@ describe Puppet::Node::Environment do
 
             env.modules
           end
+
+          it "includes the Bolt project in modules if it's defined" do
+            path = tmpdir('project')
+            PuppetSpec::Modules.generate_files('bolt_project', path)
+            project = Struct.new("Project", :name, :path).new('bolt_project', path)
+
+            Puppet.override(bolt_project: project) do
+              %w{foo bar}.each do |mod_name|
+                PuppetSpec::Modules.generate_files(mod_name, first_modulepath)
+              end
+              %w{bee baz}.each do |mod_name|
+                PuppetSpec::Modules.generate_files(mod_name, second_modulepath)
+              end
+              expect(env.modules.collect{|mod| mod.name}.sort).to eq(%w{bolt_project foo bar bee baz}.sort)
+            end
+          end
         end
       end
     end
