@@ -34,14 +34,22 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
 
   def self.instances
     packages = []
-    cmd = "#{command(:dnf)} module list --installed -d 0 -e #{error_level}"
+    cmd = "#{command(:dnf)} module list --enabled -d 0 -e #{error_level}"
     execute(cmd).each_line do |line|
-      next unless line =~ /\[i\][, ]/  # get rid of non-package lines (including last Hint line)
-      line.gsub!(/\[[de]\]/, '')  # we don't care about default/enabled flags
+      # select only lines with actual packages since DNF clutters the output
+      next unless line =~ /\[[ei]\][, ]/
+      line.gsub!(/\[d\]/, '')  # we don't care about the default flag
+
+      flavor = if line.include?('[i]')
+                 line.split('[i]').first.split.last
+               else
+                 :absent
+               end
+
       packages << new(
         name: line.split[0],
         ensure: line.split[1],
-        flavor: line.split('[i]').first.split.last,  # this is nasty
+        flavor: flavor,
         provider: name
       )
     end
@@ -55,33 +63,52 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
     pkg ? pkg.properties : nil
   end
 
-  def reset
-    execute([command(:dnf), 'module', 'reset', '-d', '0', '-e', self.class.error_level, '-y', @resource[:name]])
-  end
-
   # to install specific streams and profiles:
   # $ dnf module install module-name:stream/profile
   # $ dnf module install perl:5.24/minimal
   # if unspecified, they will be defaulted (see [d] param in dnf module list output)
   def install
-    args = @resource[:name]
     # ensure we start fresh (remove existing stream)
     uninstall unless [:absent, :purged].include?(@property_hash[:ensure])
+
+    args = @resource[:name].dup
     case @resource[:ensure]
     when true, false, Symbol
       # pass
     else
       args << ":#{@resource[:ensure]}"
     end
-    if @resource[:flavor]
-      args << "/#{@resource[:flavor]}"
+    args << "/#{@resource[:flavor]}" if @resource[:flavor]
+
+    if @resource[:enable_only] == true
+      enable(args)
+    else
+      begin
+        execute([command(:dnf), 'module', 'install', '-d', '0', '-e', self.class.error_level, '-y', args])
+      rescue Puppet::ExecutionFailure => e
+        # module has no default profile and no profile was requested, so just enable the stream
+        # DNF versions prior to 4.2.8 do not need this workaround
+        # see https://bugzilla.redhat.com/show_bug.cgi?id=1669527
+        if @resource[:flavor] == nil && e.message =~ /^missing groups or modules: #{Regexp.quote(@resource[:name])}$/
+          enable(args)
+        else
+          raise
+        end
+      end
     end
-    execute([command(:dnf), 'module', 'install', '-d', '0', '-e', self.class.error_level, '-y', args])
+  end
+
+  def enable(args = @resource[:name])
+    execute([command(:dnf), 'module', 'enable', '-d', '0', '-e', self.class.error_level, '-y', args])
   end
 
   def uninstall
     execute([command(:dnf), 'module', 'remove', '-d', '0', '-e', self.class.error_level, '-y', @resource[:name]])
     reset  # reset module to the default stream
+  end
+
+  def reset
+    execute([command(:dnf), 'module', 'reset', '-d', '0', '-e', self.class.error_level, '-y', @resource[:name]])
   end
 
   def flavor
