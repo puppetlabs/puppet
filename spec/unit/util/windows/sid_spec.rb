@@ -201,9 +201,9 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
       principal = subject.ads_to_principal(unresolvable_user)
 
       expect(principal).to be_an_instance_of(Puppet::Util::Windows::SID::Principal)
-      expect(principal.account).to eq('S-1-1-1 (unresolvable)')
+      expect(principal.account).to eq('S-1-1-1')
       expect(principal.domain).to eq(nil)
-      expect(principal.domain_account).to eq('S-1-1-1 (unresolvable)')
+      expect(principal.domain_account).to eq('S-1-1-1')
       expect(principal.sid).to eq('S-1-1-1')
       expect(principal.sid_bytes).to eq(valid_octet_invalid_user)
       expect(principal.account_type).to eq(:SidTypeUnknown)

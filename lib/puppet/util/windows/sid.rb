@@ -64,7 +64,7 @@ module Puppet::Util::Windows
     # 'BUILTIN\Administrators', or 'S-1-5-32-544', and will return the
     # SID object. Returns nil if the account doesn't exist.
     # This method returns a SID::Principal with the account, domain, SID, etc
-    def name_to_principal(name)
+    def name_to_principal(name, allow_unresolved = false)
       # Apparently, we accept a symbol..
       name = name.to_s.strip if name
 
@@ -79,7 +79,7 @@ module Puppet::Util::Windows
 
       raw_sid_bytes ? Principal.lookup_account_sid(raw_sid_bytes) : Principal.lookup_account_name(name)
     rescue
-      nil
+      (allow_unresolved && raw_sid_bytes) ? unresolved_principal(name, raw_sid_bytes) : nil
     end
     module_function :name_to_principal
     class << self; alias name_to_sid_object name_to_principal; end
@@ -236,7 +236,7 @@ module Puppet::Util::Windows
     # @api private
     def self.unresolved_principal(name, sid_bytes)
       Principal.new(
-        name + " (unresolvable)", # account
+        name, # account
         sid_bytes, # sid_bytes
         name, # sid string
         nil, #domain

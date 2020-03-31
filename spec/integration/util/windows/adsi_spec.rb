@@ -160,7 +160,7 @@ describe Puppet::Util::Windows::ADSI::Group,
 
       # unresolvable SID
       expect(admins.members[1].sid).to eq('S-1-5-21-3661721861-956923663-2119435483-1112')
-      expect(admins.members[1].account).to eq('S-1-5-21-3661721861-956923663-2119435483-1112 (unresolvable)')
+      expect(admins.members[1].account).to eq('S-1-5-21-3661721861-956923663-2119435483-1112')
       expect(admins.members[1].account_type).to eq(:SidTypeUnknown)
     end
 

@@ -78,9 +78,9 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
     let(:group3) { double(:account => 'group3', :domain => '.', :sid => 'group3sid') }
 
     before :each do
-      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('group1').and_return(group1)
-      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('group2').and_return(group2)
-      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('group3').and_return(group3)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('group1', any_args).and_return(group1)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('group2', any_args).and_return(group2)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('group3', any_args).and_return(group3)
     end
 
     it "should return true for same lists of members" do

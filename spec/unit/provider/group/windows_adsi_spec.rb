@@ -33,13 +33,18 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
     let(:user1) { double(:account => 'user1', :domain => '.', :sid => 'user1sid') }
     let(:user2) { double(:account => 'user2', :domain => '.', :sid => 'user2sid') }
     let(:user3) { double(:account => 'user3', :domain => '.', :sid => 'user3sid') }
+    let(:user_without_domain) { double(:account => 'user_without_domain', :domain => nil, :sid => 'user_without_domain_sid') }
+
     let(:invalid_user) { SecureRandom.uuid }
+    let(:invalid_user_principal) { double(:account => "#{invalid_user}", :domain => nil, :sid => "#{invalid_user}") }
 
     before :each do
-      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user1').and_return(user1)
-      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user2').and_return(user2)
-      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user3').and_return(user3)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user1', any_args).and_return(user1)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user2', any_args).and_return(user2)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user3', any_args).and_return(user3)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user_without_domain', any_args).and_return(user_without_domain)
       allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with(invalid_user).and_return(nil)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with(invalid_user, true).and_return(invalid_user_principal)
     end
 
     describe "#members_insync?" do
@@ -199,7 +204,15 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
           ]
           expect(provider.members_insync?(current, ['user2','user1'])).to be_truthy
         end
+
+      it "should return true even if a current user is unresolvable if should is included" do
+        current = [
+            "#{invalid_user}",
+            'user2',
+          ]
+          expect(provider.members_insync?(current, ['user2'])).to be_truthy
       end
+     end
     end
 
     describe "#members_to_s" do
@@ -222,8 +235,8 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         expect(provider.members_to_s(['user1', 'user2'])).to eq('.\user1,.\user2')
       end
 
-      it "should return the username when it cannot be resolved to a SID (for the sake of resource_harness error messages)" do
-        expect(provider.members_to_s([invalid_user])).to eq("#{invalid_user}")
+      it "should return a user string without domain if domain is not set" do
+        expect(provider.members_to_s(['user_without_domain'])).to eq('user_without_domain')
       end
 
       it "should return the username when it cannot be resolved to a SID (for the sake of resource_harness error messages)" do
@@ -237,10 +250,14 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
     let(:user2) { double(:account => 'user2', :domain => '.', :sid => 'user2sid') }
     let(:user3) { double(:account => 'user3', :domain => '.', :sid => 'user3sid') }
 
+    let(:invalid_user) { SecureRandom.uuid }
+    let(:invalid_user_principal) { double(:account => "#{invalid_user}", :domain => nil, :sid => "#{invalid_user}") }
+
     before :each do
-      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user1').and_return(user1)
-      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user2').and_return(user2)
-      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user3').and_return(user3)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user1', any_args).and_return(user1)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user2', any_args).and_return(user2)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user3', any_args).and_return(user3)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with(invalid_user, true).and_return(invalid_user_principal)
 
       resource[:auth_membership] = true
     end
@@ -261,6 +278,22 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
       expect(provider.members).to match_array(expected_members)
     end
 
+    it "should be able to handle unresolvable SID in list of members" do
+      allow(provider.group).to receive(:members).and_return([
+        'user1',
+        "#{invalid_user}",
+        'user3',
+      ])
+
+      expected_member_sids = [user1.sid, invalid_user_principal.sid, user3.sid]
+      expected_members = ['user1', "#{invalid_user}", 'user3']
+      allow(provider).to receive(:members_to_s)
+        .with(expected_member_sids)
+        .and_return(expected_members.join(','))
+
+      expect(provider.members).to match_array(expected_members)
+    end
+
     it "should be able to set group members" do
       allow(provider.group).to receive(:members).and_return(['user1', 'user2'])
 
@@ -272,8 +305,8 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
       allow(provider.group).to receive(:member_sids).and_return(member_sids[0..1])
 
-      expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user2').and_return(member_sids[1])
-      expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user3').and_return(member_sids[2])
+      expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user2', any_args).and_return(member_sids[1])
+      expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user3', any_args).and_return(member_sids[2])
 
       expect(provider.group).to receive(:remove_member_sids).with(member_sids[0])
       expect(provider.group).to receive(:add_member_sids).with(member_sids[2])

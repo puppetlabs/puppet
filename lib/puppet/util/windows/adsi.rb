@@ -180,11 +180,11 @@ module Puppet::Util::Windows::ADSI
         sids
       end
 
-      def name_sid_hash(names)
+      def name_sid_hash(names, allow_unresolved = false)
         return {} if names.nil? || names.empty?
 
         sids = names.map do |name|
-          sid = Puppet::Util::Windows::SID.name_to_principal(name)
+          sid = Puppet::Util::Windows::SID.name_to_principal(name, allow_unresolved)
           raise Puppet::Error.new( _("Could not resolve name: %{name}") % { name: name } ) if !sid
           [sid.sid, sid]
         end
