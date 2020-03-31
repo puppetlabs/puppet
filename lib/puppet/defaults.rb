@@ -82,7 +82,7 @@ module Puppet
               original_facter = Object.const_get(:Facter)
               Object.send(:remove_const, :Facter)
 
-              Kernel.require 'facter-ng'
+              require 'facter-ng'
               # It is required to re-setup logger for facter-ng
               Puppet::Util::Logging.setup_facter_logging!
             rescue LoadError
@@ -1640,7 +1640,7 @@ EOT
       :default => [],
       :type => :http_extra_headers,
       :desc => "The list of extra headers that will be sent with http requests to the master.
-      The header definition consists of a name and a value separated by a colon." 
+      The header definition consists of a name and a value separated by a colon."
     },
     :ignoreschedules => {
       :default    => false,
