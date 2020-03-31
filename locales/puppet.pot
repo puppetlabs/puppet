@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.18-49-g561d1a4850\n"
+"Project-Id-Version: Puppet automation framework 5.5.19-20-gf27ab77527\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-02-05 09:17+0000\n"
-"PO-Revision-Date: 2020-02-05 09:17+0000\n"
+"POT-Creation-Date: 2020-03-31 08:17+0000\n"
+"PO-Revision-Date: 2020-03-31 08:17+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -48,15 +48,15 @@ msgstr ""
 msgid "Config file %{hiera_config} not found, using Hiera defaults"
 msgstr ""
 
-#: ../lib/puppet.rb:130
+#: ../lib/puppet.rb:133
 msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html for a list of supported ruby versions."
 msgstr ""
 
-#: ../lib/puppet.rb:177
+#: ../lib/puppet.rb:180
 msgid "Creating %{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead."
 msgstr ""
 
-#: ../lib/puppet.rb:196
+#: ../lib/puppet.rb:199
 msgid "The environmentpath setting cannot be empty or nil."
 msgstr ""
 
@@ -355,38 +355,38 @@ msgstr ""
 msgid "Store and retrieve files in a filebucket"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:208
+#: ../lib/puppet/application/filebucket.rb:221
 msgid "You must specify a file to back up"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:212
+#: ../lib/puppet/application/filebucket.rb:225
 msgid "%{file}: no such file"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:216
+#: ../lib/puppet/application/filebucket.rb:229
 msgid "%{file}: cannot read file"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:238 ../lib/puppet/application/filebucket.rb:261
+#: ../lib/puppet/application/filebucket.rb:251 ../lib/puppet/application/filebucket.rb:274
 msgid "Need exactly two arguments: filebucket diff <file_a> <file_b>"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:258
+#: ../lib/puppet/application/filebucket.rb:271
 msgid "Comparing %{checksum_a} %{checksum_b} %{file_a} %{file_b}"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:272
+#: ../lib/puppet/application/filebucket.rb:285
 msgid "Cancelling"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/application/filebucket.rb:293
+#: ../lib/puppet/application/filebucket.rb:306
 msgid "Selected server from first entry of the `server_list` setting: %{server}:%{port}"
 msgstr ""
 
 #. TRANSLATORS 'server' is the name of a setting and should not be translated
 #. TRANSLATORS 'server' is the name of a setting and should not be translated
-#: ../lib/puppet/application/filebucket.rb:300 ../lib/puppet/indirector/request.rb:209
+#: ../lib/puppet/application/filebucket.rb:313 ../lib/puppet/indirector/request.rb:209
 msgid "Selected server from the `server` setting: %{server}"
 msgstr ""
 
@@ -670,55 +670,55 @@ msgstr ""
 msgid "a data type can only have one implementation"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:126
+#: ../lib/puppet/defaults.rb:130
 msgid "Cannot disable unrecognized warning types %{invalid}."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:127
+#: ../lib/puppet/defaults.rb:131
 msgid "Valid values are %{values}."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:480
+#: ../lib/puppet/defaults.rb:484
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:482
+#: ../lib/puppet/defaults.rb:486
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:641
+#: ../lib/puppet/defaults.rb:645
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:743
+#: ../lib/puppet/defaults.rb:747
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:988 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:992 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1059
+#: ../lib/puppet/defaults.rb:1063
 msgid "The 'caprivatedir' setting is deprecated and will be removed in Puppet 6."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1086
+#: ../lib/puppet/defaults.rb:1090
 msgid "The 'capass' setting is deprecated and will be removed in Puppet 6."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1326
+#: ../lib/puppet/defaults.rb:1340
 msgid "The 'ca' setting is deprecated and will be removed in Puppet 6."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1831 ../lib/puppet/settings.rb:1212
+#: ../lib/puppet/defaults.rb:1854 ../lib/puppet/settings.rb:1212
 msgid "Setting %{name} is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1882
+#: ../lib/puppet/defaults.rb:1905
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -2514,7 +2514,7 @@ msgstr ""
 msgid "Could not find node '%{name}'; cannot compile"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:413
+#: ../lib/puppet/indirector/catalog/compiler.rb:411
 msgid "Could not retrieve fact %{fact}"
 msgstr ""
 
@@ -4114,45 +4114,45 @@ msgstr ""
 msgid "Unrecognized option(s): %{opts}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:210
+#: ../lib/puppet/network/http/connection.rb:214
 msgid "Too many HTTP redirections for %{host}:%{port}"
 msgstr ""
 
 #. TRANSLATORS: Used in the phrase:
 #. "Received a response from the remote server."
-#: ../lib/puppet/network/http/connection.rb:241
+#: ../lib/puppet/network/http/connection.rb:245
 msgid "the remote server"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:245
+#: ../lib/puppet/network/http/connection.rb:249
 msgid "Received a %{status_code} response from %{server_hostname}, but the Retry-After header value of \"%{retry_after}\" could not be converted to an integer or RFC 2822 date."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:256
+#: ../lib/puppet/network/http/connection.rb:260
 msgid "Received a %{status_code} response from %{server_hostname}. Sleeping for %{retry_sleep} seconds before retrying the request."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:317
+#: ../lib/puppet/network/http/connection.rb:321
 msgid "request %{uri} interrupted after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:319
+#: ../lib/puppet/network/http/connection.rb:323
 msgid "request %{uri} timed out after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:321
+#: ../lib/puppet/network/http/connection.rb:325
 msgid "request %{uri} failed: %{msg}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:346 ../lib/puppet/ssl/validator/default_validator.rb:101
+#: ../lib/puppet/network/http/connection.rb:350 ../lib/puppet/ssl/validator/default_validator.rb:101
 msgid "expected one of %{certnames}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:348 ../lib/puppet/ssl/validator/default_validator.rb:103
+#: ../lib/puppet/network/http/connection.rb:352 ../lib/puppet/ssl/validator/default_validator.rb:103
 msgid "expected %{certname}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:351 ../lib/puppet/ssl/validator/default_validator.rb:106
+#: ../lib/puppet/network/http/connection.rb:355 ../lib/puppet/ssl/validator/default_validator.rb:106
 msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
 msgstr ""
 
@@ -4200,7 +4200,7 @@ msgstr ""
 msgid "Could not resolve %{ip}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/network/http/pool.rb:65
+#: ../lib/puppet/network/http/pool.rb:68
 msgid "Failed to close connection for %{site}: %{detail}"
 msgstr ""
 
@@ -7373,7 +7373,7 @@ msgstr ""
 msgid "Somehow got told to prefetch with no resource set"
 msgstr ""
 
-#: ../lib/puppet/provider/selmodule/semodule.rb:136
+#: ../lib/puppet/provider/selmodule/semodule.rb:150
 msgid "Could not list policy modules: \"%{selmodule_command}\" failed with \"%{selmod_output}\""
 msgstr ""
 
@@ -8701,82 +8701,82 @@ msgstr ""
 msgid "File paths must be fully qualified, not '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:124
+#: ../lib/puppet/type/file.rb:137
 msgid "Invalid backup type %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:168 ../lib/puppet/type/tidy.rb:48
+#: ../lib/puppet/type/file.rb:181 ../lib/puppet/type/tidy.rb:48
 msgid "Invalid recurse value %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:200
+#: ../lib/puppet/type/file.rb:213
 msgid "Invalid recurselimit value %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:370
+#: ../lib/puppet/type/file.rb:383
 msgid "You cannot specify more than one of %{creators}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:372
+#: ../lib/puppet/type/file.rb:385
 msgid "You cannot specify a remote recursion without a source"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:374
+#: ../lib/puppet/type/file.rb:387
 msgid "You cannot specify source when using checksum 'none'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:377
+#: ../lib/puppet/type/file.rb:390
 msgid "You cannot specify content when using checksum '%{checksum_type}'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:380
+#: ../lib/puppet/type/file.rb:393
 msgid "Possible error: recurselimit is set but not recurse, no recursion will happen"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:388
+#: ../lib/puppet/type/file.rb:401
 msgid "Checksum value '%{value}' is not a valid checksum type %{checksum}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:391
+#: ../lib/puppet/type/file.rb:404
 msgid "Checksum value is ignored unless content or source are specified"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:429
+#: ../lib/puppet/type/file.rb:442
 msgid "Can not find filebucket for backups without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:433
+#: ../lib/puppet/type/file.rb:446
 msgid "Could not find filebucket %{backup} specified in backup"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:728
+#: ../lib/puppet/type/file.rb:741
 msgid "Could not back up file of type %{current_type}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:743
+#: ../lib/puppet/type/file.rb:756
 msgid "Could not remove files of type %{current_type}"
 msgstr ""
 
 #. TRANSLATORS "source_permissions => ignore" should not be translated
-#: ../lib/puppet/type/file.rb:754
+#: ../lib/puppet/type/file.rb:767
 msgid "Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore."
 msgstr ""
 
 #. TRANSLATORS "stat" is a program name and should not be translated
-#: ../lib/puppet/type/file.rb:835 ../lib/puppet/type/k5login.rb:97 ../lib/puppet/type/tidy.rb:345
+#: ../lib/puppet/type/file.rb:848 ../lib/puppet/type/k5login.rb:97 ../lib/puppet/type/tidy.rb:345
 msgid "Could not stat; permission denied"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:960
+#: ../lib/puppet/type/file.rb:973
 msgid "Not removing directory; use 'force' to override"
 msgstr ""
 
 #. TRANSLATORS refers to a file which could not be backed up
-#: ../lib/puppet/type/file.rb:985
+#: ../lib/puppet/type/file.rb:998
 msgid "Could not back up; will not remove"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:999
+#: ../lib/puppet/type/file.rb:1012
 msgid "File written to disk did not match checksum; discarding changes (%{content_checksum} vs %{newsum})"
 msgstr ""
 
@@ -8942,11 +8942,15 @@ msgstr ""
 msgid "Name must be a String not %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:635
+#: ../lib/puppet/type/package.rb:503
+msgid "Cannot have both `enable_only => true` and `flavor`"
+msgstr ""
+
+#: ../lib/puppet/type/package.rb:655
 msgid "Invalid hold value %{value}. %{doc}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:665
+#: ../lib/puppet/type/package.rb:685
 msgid "You cannot use \"mark\" property while \"ensure\" is one of [\"absent\", \"purged\", \"held\"]"
 msgstr ""
 
