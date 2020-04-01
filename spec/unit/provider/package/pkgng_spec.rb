@@ -110,6 +110,30 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
       end
       resource.provider.install
     end
+
+    it "should call pkg with the specified install options string" do
+      resource = Puppet::Type.type(:package).new(
+        :name            => 'curl',
+        :provider        => :pkgng,
+        :install_options => ['--foo', '--bar']
+      )
+      expect(resource.provider).to receive(:pkg) do |arg|
+        expect(arg).to include('--foo', '--bar')
+      end
+      resource.provider.install
+    end
+
+    it "should call pkg with the specified install options hash" do
+      resource = Puppet::Type.type(:package).new(
+        :name            => 'curl',
+        :provider        => :pkgng,
+        :install_options => ['--foo', { '--bar' => 'baz', '--baz' => 'foo' }]
+      )
+      expect(resource.provider).to receive(:pkg) do |arg|
+        expect(arg).to include('--foo', '--bar=baz', '--baz=foo')
+      end
+      resource.provider.install
+    end
   end
 
   context "#prefetch" do
