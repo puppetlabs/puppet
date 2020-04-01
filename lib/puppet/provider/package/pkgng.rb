@@ -23,7 +23,11 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
 
   def self.get_latest_version(origin, version_list)
     if latest_version = version_list.lines.find { |l| l =~ /^#{origin} / }
-      latest_version = latest_version.split(' ').last.split(')').first
+      _name, compare, status = latest_version.chomp.split(' ', 3)
+      if ['!', '?'].include?(compare)
+        return nil
+      end
+      latest_version = status.split(' ').last.split(')').first
       return latest_version
     end
     nil

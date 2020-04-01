@@ -193,6 +193,18 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
       bash_comp_latest_version = described_class.get_latest_version('shells/bash-completion', version_list)
       expect(bash_comp_latest_version).to eq('2.1_3')
     end
+
+    it "should return nil when the package is orphaned" do
+      version_list = File.read(my_fixture('pkg.version'))
+      orphan_latest_version = described_class.get_latest_version('sysutils/orphan', version_list)
+      expect(orphan_latest_version).to be_nil
+    end
+
+    it "should return nil when the package is broken" do
+      version_list = File.read(my_fixture('pkg.version'))
+      broken_latest_version = described_class.get_latest_version('sysutils/broken', version_list)
+      expect(broken_latest_version).to be_nil
+    end
   end
 
   describe "confine" do
