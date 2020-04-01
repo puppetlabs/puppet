@@ -1,3 +1,5 @@
+require 'puppet/util/package/version/gem'
+require 'puppet/util/package/version/range'
 require 'puppet/provider/package_targetable'
 require 'uri'
 
@@ -125,15 +127,33 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
 
   def insync?(is)
     return false unless is && is != :absent
+    is = [is] unless is.is_a? Array
+    should = @resource[:ensure]
 
+    unless should =~ Regexp.union(/,/, Gem::Requirement::PATTERN)
+      begin
+        should_range = Puppet::Util::Package::Version::Range.parse(should, Puppet::Util::Package::Version::Gem)
+      rescue Puppet::Util::Package::Version::Range::ValidationFailure, Puppet::Util::Package::Version::Gem::ValidationFailure
+        Puppet.debug("Cannot parse #{should} as a ruby gem version range")
+        return false
+      end
+
+      return is.any? do |version|
+        begin
+          should_range.include?(Puppet::Util::Package::Version::Gem.parse(version))
+        rescue Puppet::Util::Package::Version::Gem::ValidationFailure
+          Puppet.debug("Cannot parse #{version} as a ruby gem version")
+          false
+        end
+      end
+    end
+    
     begin
-      dependency = Gem::Dependency.new('', resource[:ensure])
+      dependency = Gem::Dependency.new('', should)
     rescue ArgumentError
       # Bad requirements will cause an error during gem command invocation, so just return not in sync
       return false
     end
-
-    is = [is] unless is.is_a? Array
 
     # Check if any version matches the dependency
     is.any? { |version| dependency.match?('', version) }
@@ -148,12 +168,22 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
     command = resource_or_provider_command
     command_options = ["install"]
     command_options += install_options if resource[:install_options]
+    should = resource[:ensure]
+
+    unless should =~ Regexp.union(/,/, Gem::Requirement::PATTERN)
+      begin
+        should_range = Puppet::Util::Package::Version::Range.parse(should, Puppet::Util::Package::Version::Gem)
+        should = should_range.to_gem_version
+        useversion = true
+      rescue Puppet::Util::Package::Version::Range::ValidationFailure, Puppet::Util::Package::Version::Gem::ValidationFailure
+        Puppet.debug("Cannot parse #{should} as a ruby gem version range. Falling through.")
+      end
+    end
 
     if Puppet::Util::Platform.windows?
-      version = resource[:ensure]
-      command_options << "-v" << %Q["#{version}"] if (! resource[:ensure].is_a? Symbol) and useversion
+      command_options << "-v" << %Q["#{should}"] if useversion && !should.is_a?(Symbol)
     else
-      command_options << "-v" << resource[:ensure] if (! resource[:ensure].is_a? Symbol) and useversion
+      command_options << "-v" << should if useversion && !should.is_a?(Symbol)
     end
 
     if Puppet::Util::Package.versioncmp(rubygem_version(command), '2.0.0') == -1
