@@ -188,7 +188,7 @@ describe "Defaults" do
     end
 
     it "raises an exception if facter-ng could not be loaded" do
-      allow(Kernel).to receive(:require).with('facter-ng').and_raise(LoadError)
+      allow_any_instance_of(Puppet::Settings::BooleanSetting).to receive(:require).with('facter-ng').and_raise(LoadError)
 
       expect{ Puppet.settings[:facterng] = true }.to raise_exception ArgumentError, 'facter-ng could not be loaded'
     end
@@ -200,7 +200,7 @@ describe "Defaults" do
         Object.send(:remove_const, :Facter)
         Object.const_set(:Facter, Module.new)
 
-        allow(Kernel).to receive(:require).with('facter-ng').and_return(true)
+        allow_any_instance_of(Puppet::Settings::BooleanSetting).to receive(:require).with('facter-ng').and_return(true)
         allow(Facter).to receive(:respond_to?).and_return(false)
       end
 
