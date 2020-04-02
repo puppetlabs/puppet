@@ -247,11 +247,10 @@ module Puppet::Environments
     end
 
     def valid_environment_names
-      if Puppet::FileSystem.directory?(@environment_dir)
-        Puppet::FileSystem.children(@environment_dir).map do |child|
-          Puppet::FileSystem.basename_string(child).intern if validated_directory(child)
-        end.compact
-      end
+      return [] unless Puppet::FileSystem.directory?(@environment_dir)
+      Puppet::FileSystem.children(@environment_dir).map do |child|
+        Puppet::FileSystem.basename_string(child).intern if validated_directory(child)
+      end.compact
     end
   end
 

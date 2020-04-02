@@ -35,6 +35,7 @@ describe Puppet::Environments do
         FS::MemoryFile.a_directory("modules"),
         FS::MemoryFile.a_directory("manifests"),
       ]),
+      FS::MemoryFile.a_missing_file("missing")
     ])
   end
 
@@ -87,6 +88,13 @@ describe Puppet::Environments do
       loader_from(:filesystem => [envdir],
                   :directory => envdir) do |loader|
         expect(loader.list).to include_in_any_order(environment(:env1), environment(:env2))
+      end
+    end
+
+    it "proceeds with non-existant env dir" do
+      loader_from(:filesystem => [directory_tree],
+                  :directory => directory_tree.children.last) do |loader|
+        expect(loader.list).to eq([])
       end
     end
 
