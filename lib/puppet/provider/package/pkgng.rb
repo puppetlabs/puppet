@@ -11,6 +11,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
 
   has_feature :versionable
   has_feature :upgradeable
+  has_feature :install_options
 
   def self.get_query
     pkg(['query', '-a', '%n %v %o'])
@@ -31,7 +32,11 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
   def self.get_latest_version(origin)
     latest_version = cached_version_list.lines.find { |l| l =~ /^#{origin} / }
     if latest_version
-      latest_version = latest_version.split(' ').last.split(')').first
+      _name, compare, status = latest_version.chomp.split(' ', 3)
+      if ['!', '?'].include?(compare)
+        return nil
+      end
+      latest_version = status.split(' ').last.split(')').first
       return latest_version
     end
     nil
@@ -110,13 +115,16 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
     end
 
     if not source # install using default repo logic
-      args = ['install', '-qy', installname]
+      args = ['install', '-qy']
     elsif source.scheme == 'urn' # install from repo named in URN
       tag = repo_tag_from_urn(source.to_s)
-      args = ['install', '-qy', '-r', tag, installname]
+      args = ['install', '-qy', '-r', tag]
     else # add package located at URL
-      args = ['add', '-q', source.to_s]
+      args = ['add', '-q']
+      installname = source.to_s
     end
+    args += install_options if @resource[:install_options]
+    args << installname
 
     pkg(args)
   end
@@ -156,6 +164,10 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
 
   def origin
     @property_hash[:origin]
+  end
+
+  def install_options
+    join_options(@resource[:install_options])
   end
 
 end

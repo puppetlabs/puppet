@@ -24,7 +24,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
     # since the default array_matching comparison is not commutative
 
     # dupes automatically weeded out when hashes built
-    current_members = Puppet::Util::Windows::ADSI::Group.name_sid_hash(current)
+    current_members = Puppet::Util::Windows::ADSI::Group.name_sid_hash(current, true)
     specified_members = Puppet::Util::Windows::ADSI::Group.name_sid_hash(should)
 
     current_sids = current_members.keys.to_a
@@ -52,7 +52,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
         account = sid.account
       end
       resource.debug("#{sid.domain}\\#{account} (#{sid.sid})")
-      "#{sid.domain}\\#{account}"
+      sid.domain ? "#{sid.domain}\\#{account}" : account
     end
     return users.join(',')
   end
@@ -66,7 +66,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def members
-    @members ||= Puppet::Util::Windows::ADSI::Group.name_sid_hash(group.members)
+    @members ||= Puppet::Util::Windows::ADSI::Group.name_sid_hash(group.members, true)
 
     # @members.keys returns an array of SIDs. We need to convert those SIDs into
     # names so that `puppet resource` prints the right output.

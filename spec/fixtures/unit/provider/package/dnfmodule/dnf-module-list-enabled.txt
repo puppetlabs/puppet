@@ -1,10 +1,12 @@
 localmirror-appstream
 Name         Stream       Profiles                                  Summary                                                            
+389-ds       1.4 [e]                                                389 Directory Server (base)                                           
 gimp         2.8 [d][e]   common [d], devel [i]                     gimp module                                                        
 mariadb      10.3 [d][e]  client [i], server [d], galera            MariaDB Module                                                     
 nodejs       10 [d][e]    common [d], development, minimal [i], s2i Javascript runtime                                                 
 perl         5.26 [d][e]  common [d], minimal [i]                   Practical Extraction and Report Language                           
 postgresql   10 [d][e]    client, server [d] [i]                    PostgreSQL server and client module                                
+ruby         2.5 [d][e]   common [d]                                An interpreter of object-oriented scripting language                  
 rust-toolset rhel8 [d][e] common [d] [i]                            Rust                                                               
 subversion   1.10 [d][e]  common [d], server [i]                    Apache Subversion                                                  
 

@@ -110,6 +110,30 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
       end
       resource.provider.install
     end
+
+    it "should call pkg with the specified install options string" do
+      resource = Puppet::Type.type(:package).new(
+        :name            => 'curl',
+        :provider        => :pkgng,
+        :install_options => ['--foo', '--bar']
+      )
+      expect(resource.provider).to receive(:pkg) do |arg|
+        expect(arg).to include('--foo', '--bar')
+      end
+      resource.provider.install
+    end
+
+    it "should call pkg with the specified install options hash" do
+      resource = Puppet::Type.type(:package).new(
+        :name            => 'curl',
+        :provider        => :pkgng,
+        :install_options => ['--foo', { '--bar' => 'baz', '--baz' => 'foo' }]
+      )
+      expect(resource.provider).to receive(:pkg) do |arg|
+        expect(arg).to include('--foo', '--bar=baz', '--baz=foo')
+      end
+      resource.provider.install
+    end
   end
 
   context "#prefetch" do
@@ -176,6 +200,20 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
       bash_comp_latest_version = described_class.get_latest_version('shells/bash-completion')
 
       expect(bash_comp_latest_version).to eq('2.1_3')
+    end
+
+    it "should return nil when the package is orphaned" do
+      version_list = File.read(my_fixture('pkg.version'))
+      allow(described_class).to receive(:get_version_list).and_return(version_list)
+      orphan_latest_version = described_class.get_latest_version('sysutils/orphan')
+      expect(orphan_latest_version).to be_nil
+    end
+
+    it "should return nil when the package is broken" do
+      version_list = File.read(my_fixture('pkg.version'))
+      allow(described_class).to receive(:get_version_list).and_return(version_list)
+      broken_latest_version = described_class.get_latest_version('sysutils/broken')
+      expect(broken_latest_version).to be_nil
     end
   end
 

@@ -492,6 +492,26 @@ module Puppet
       newvalues(:true, :false)
     end
 
+    newparam(:enable_only, :boolean => false, :parent => Puppet::Parameter::Boolean) do
+      desc <<-EOT
+        Tells `dnf module` to only enable a specific module, instead
+        of installing its default profile.
+
+        Modules with no default profile will be enabled automatically
+        without the use of this parameter.
+
+        Conflicts with the `flavor` property, which selects a profile
+        to install.
+      EOT
+      defaultto false
+
+      validate do |value|
+        if [true, :true, "true"].include?(value) && @resource[:flavor]
+          raise ArgumentError, _('Cannot have both `enable_only => true` and `flavor`')
+        end
+      end
+    end
+
     newparam(:install_only, :boolean => false, :parent => Puppet::Parameter::Boolean, :required_features => :install_only) do
       desc <<-EOT
         It should be set for packages that should only ever be installed,

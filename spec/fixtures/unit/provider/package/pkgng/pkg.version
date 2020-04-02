@@ -1,3 +1,5 @@
 shells/bash-completion             <   needs updating (index has 2.1_3)
 ftp/curl                           <   needs updating (index has 7.33.0_2)
 shells/zsh                         <   needs updating (index has 5.0.4)
+sysutils/orphan                    ?   orphaned: sysutils/orphan
+sysutils/broken                    !   Comparison failed
