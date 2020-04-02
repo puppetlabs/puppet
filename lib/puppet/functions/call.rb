@@ -51,7 +51,7 @@
 #
 # Would notice the value of `$facts['processors']['count']` at the time when the `call` is made.
 #
-# * Deferred values supported since Puppet 5.6.0
+# * Deferred values supported since Puppet 6.0
 #
 # @since 5.0.0
 #
