@@ -18,7 +18,7 @@ describe Puppet::Type.type(:package).provider(:dnfmodule) do
     {:failonfail => true, :combine => true, :custom_environment => {}}
   end
 
-  let(:packages) { File.read(my_fixture("dnf-module-list-installed.txt")) }
+  let(:packages) { File.read(my_fixture("dnf-module-list-enabled.txt")) }
   let(:dnf_path) { '/usr/bin/dnf' }
 
   before(:each) { allow(Puppet::Util).to receive(:which).with('/usr/bin/dnf').and_return(dnf_path) }
@@ -123,6 +123,23 @@ describe Puppet::Type.type(:package).provider(:dnfmodule) do
         provider.install
       end
 
+      it "should just enable the module if it has no default profile" do
+        dnf_exception = Puppet::ExecutionFailure.new("Error: Problems in request:\nmissing groups or modules: #{resource[:name]}")
+        allow(provider).to receive(:execute).with(array_including('install')).and_raise(dnf_exception)
+        resource[:ensure] = :present
+        expect(provider).to receive(:execute).with(array_including('install')).ordered
+        expect(provider).to receive(:execute).with(array_including('enable')).ordered
+        provider.install
+      end
+
+      it "should just enable the module if enable_only = true" do
+        resource[:ensure] = :present
+        resource[:enable_only] = true
+        expect(provider).to receive(:execute).with(array_including('enable'))
+        expect(provider).not_to receive(:execute).with(array_including('install'))
+        provider.install
+      end
+
       it "should install the default stream and flavor" do
         resource[:ensure] = :present
         expect(provider).to receive(:execute).with(array_including('baz'))
@@ -185,24 +202,26 @@ describe Puppet::Type.type(:package).provider(:dnfmodule) do
     end
   end
 
-  context "parsing the output of module list --installed" do
+  context "parsing the output of module list --enabled" do
     before { allow(described_class).to receive(:command).with(:dnf).and_return(dnf_path) }
 
-    it "returns an array of installed modules" do
+    it "returns an array of enabled modules" do
       allow(Puppet::Util::Execution).to receive(:execute)
-        .with("/usr/bin/dnf module list --installed -d 0 -e 1")
+        .with("/usr/bin/dnf module list --enabled -d 0 -e 1")
         .and_return(packages)
 
-      installed_packages = described_class.instances.map { |package| package.properties }
-      expected_packages = [{name: "gimp", ensure: "2.8", flavor: "devel", :provider => :dnfmodule},
-                           {name: "mariadb", ensure: "10.3", flavor: "client", :provider => :dnfmodule},
-                           {name: "nodejs", ensure: "10", flavor: "minimal", :provider => :dnfmodule},
-                           {name: "perl", ensure: "5.26", flavor: "minimal", :provider => :dnfmodule},
-                           {name: "postgresql", ensure: "10", flavor: "server", :provider => :dnfmodule},
-                           {name: "rust-toolset", ensure: "rhel8", flavor: "common", :provider => :dnfmodule},
-                           {name: "subversion", ensure: "1.10", flavor: "server", :provider => :dnfmodule}]
+      enabled_packages = described_class.instances.map { |package| package.properties }
+      expected_packages = [{name: "389-ds", ensure: "1.4", flavor: :absent, provider: :dnfmodule},
+                           {name: "gimp", ensure: "2.8", flavor: "devel", provider: :dnfmodule},
+                           {name: "mariadb", ensure: "10.3", flavor: "client", provider: :dnfmodule},
+                           {name: "nodejs", ensure: "10", flavor: "minimal", provider: :dnfmodule},
+                           {name: "perl", ensure: "5.26", flavor: "minimal", provider: :dnfmodule},
+                           {name: "postgresql", ensure: "10", flavor: "server", provider: :dnfmodule},
+                           {name: "ruby", ensure: "2.5", flavor: :absent, provider: :dnfmodule},
+                           {name: "rust-toolset", ensure: "rhel8", flavor: "common", provider: :dnfmodule},
+                           {name: "subversion", ensure: "1.10", flavor: "server", provider: :dnfmodule}]
 
-      expect(installed_packages).to eql(expected_packages)
+      expect(enabled_packages).to eql(expected_packages)
     end
   end
 end
