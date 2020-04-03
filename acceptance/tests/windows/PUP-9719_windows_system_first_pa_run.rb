@@ -31,7 +31,11 @@ test_name 'PUP-9719 Windows First Agent run as SYSTEM sets cache file permission
                     else
                       '%m/%d/%Y'
                     end
-      on agent, "schtasks /create /tn PuppetSystemRun /RL HIGHEST /RU SYSTEM /F /SC ONCE /SD #{(Date.today + 1).strftime(date_format)} /ST 23:59 /TR 'cmd /c puppet agent -t'"
+      on agent, %Q(
+        schtasks /create /tn PuppetSystemRun /RL HIGHEST /RU SYSTEM /F /SC ONCE /SD \
+        #{(Date.today + 1).strftime(date_format)} /ST 23:59 /TR \
+        'cmd /c \"%ProgramFiles%\\Puppet Labs\\Puppet\\bin\\puppet.bat\" agent -t'
+      )
       on agent, 'schtasks /run /tn PuppetSystemRun'
     end
 
