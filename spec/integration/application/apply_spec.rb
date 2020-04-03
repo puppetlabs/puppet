@@ -347,27 +347,30 @@ end
       it "looks in --modulepath even when the default directory environment exists" do
         apply = init_cli_args_and_apply_app(args, execute)
 
-        expect do
-          expect { apply.run }.to exit_with(0)
-        end.to have_printed('amod class included')
+        expect {
+          apply.run
+        }.to exit_with(0)
+         .and have_printed('amod class included')
       end
 
       it "looks in --modulepath even when given a specific directory --environment" do
         args << '--environment' << 'production'
         apply = init_cli_args_and_apply_app(args, execute)
 
-        expect do
-          expect { apply.run }.to exit_with(0)
-        end.to have_printed('amod class included')
+        expect {
+          apply.run
+        }.to exit_with(0)
+         .and have_printed('amod class included')
       end
 
       it "looks in --modulepath when given multiple paths in --modulepath" do
         args = ['-e', execute, '--modulepath', [tmpdir('notmodulepath'), modulepath].join(File::PATH_SEPARATOR)]
         apply = init_cli_args_and_apply_app(args, execute)
 
-        expect do
-          expect { apply.run }.to exit_with(0)
-        end.to have_printed('amod class included')
+        expect {
+          apply.run
+        }.to exit_with(0)
+         .and have_printed('amod class included')
       end
     end
 

@@ -12,10 +12,9 @@ describe Puppet::Application::Facts do
     allow(subject.command_line).to receive(:args).and_return(%w{find whatever --render-as yaml})
 
     expect {
-      expect {
-        subject.run
-      }.to exit_with(0)
-    }.to have_printed(/object:Puppet::Node::Facts/)
+      subject.run
+    }.to exit_with(0)
+     .and have_printed(/object:Puppet::Node::Facts/)
 
     expect(@logs).to be_empty
   end

@@ -43,9 +43,10 @@ describe Puppet::Node::Facts::Facter do
       Puppet.initialize_settings(['--modulepath', factdir])
       apply = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => ['--modulepath', factdir, '-e', 'notify { $custom: }']))
 
-      expect do
-        expect { apply.run }.to exit_with(0)
-      end.to have_printed(Puppet.version)
+      expect {
+        apply.run
+      }.to exit_with(0)
+       .and have_printed(Puppet.version)
     end
 
     it "should resolve external facts" do
@@ -58,9 +59,10 @@ describe Puppet::Node::Facts::Facter do
       Puppet.initialize_settings(['--pluginfactdest', factdir])
       apply = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => ['--pluginfactdest', factdir, '-e', 'notify { $foo: }']))
 
-      expect do
-        expect { apply.run }.to exit_with(0)
-      end.to have_printed('bar')
+      expect {
+        apply.run
+      }.to exit_with(0)
+       .and have_printed('bar')
     end
   end
 

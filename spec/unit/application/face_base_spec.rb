@@ -423,16 +423,18 @@ EOT
     it "should work if asked to render json" do
       allow(app.command_line).to receive(:args).and_return(%w{count_args a b c --render-as json})
       expect {
-        expect { app.run }.to exit_with(0)
-      }.to have_printed(/3/)
+        app.run
+      }.to exit_with(0)
+       .and have_printed(/3/)
     end
 
     it "should invoke when_rendering hook 's' when asked to render-as 's'" do
       allow(app.command_line).to receive(:args).and_return(%w{with_s_rendering_hook --render-as s})
       app.action = app.face.get_action(:with_s_rendering_hook)
       expect {
-        expect { app.run }.to exit_with(0)
-      }.to have_printed(/you invoked the 's' rendering hook/)
+        app.run
+      }.to exit_with(0)
+       .and have_printed(/you invoked the 's' rendering hook/)
     end
   end
 

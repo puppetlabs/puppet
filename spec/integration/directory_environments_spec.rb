@@ -13,17 +13,19 @@ describe "directory environments" do
 
     it "config prints the environments modulepath" do
       Puppet.settings.initialize_global_settings(args)
-      expect do
-        expect { puppet.run }.to exit_with(0)
-      end.to have_printed('/direnv/modules')
+      expect {
+        puppet.run
+      }.to exit_with(0)
+       .and have_printed('/direnv/modules')
     end
 
     it "config prints the cli --modulepath despite environment" do
       args << '--modulepath' << '/completely/different'
       Puppet.settings.initialize_global_settings(args)
-      expect do
-        expect { puppet.run }.to exit_with(0)
-      end.to have_printed('/completely/different')
+      expect {
+        puppet.run
+      }.to exit_with(0)
+       .and have_printed('/completely/different')
     end
 
     it 'given an 8.3 style path on Windows, will config print an expanded path',
@@ -37,9 +39,10 @@ describe "directory environments" do
       expect(Puppet[:environmentpath]).to match(/~/)
 
       Puppet.settings.initialize_global_settings(args)
-      expect do
-        expect { puppet.run }.to exit_with(0)
-      end.to have_printed(expanded)
+      expect {
+        puppet.run
+      }.to exit_with(0)
+       .and have_printed(expanded)
     end
   end
 
@@ -55,9 +58,10 @@ describe "directory environments" do
 
     it "config prints a directory environment modulepath" do
       Puppet.settings.initialize_global_settings(args)
-      expect do
-        expect { puppet.run }.to exit_with(0)
-      end.to have_printed('otherdirenv/modules')
+      expect {
+        puppet.run
+      }.to exit_with(0)
+       .and have_printed('otherdirenv/modules')
     end
   end
 end
