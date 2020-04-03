@@ -2,11 +2,7 @@ require 'spec_helper'
 
 describe "directory environments" do
   let(:args) { ['--configprint', 'modulepath', '--environment', 'direnv'] }
-  let(:puppet) do
-    app = Puppet::Application[:apply]
-    allow(app).to receive(:command_line).and_return(double('command_line', :args => []))
-    app
-  end
+  let(:puppet) { Puppet::Application[:apply] }
 
   context "with a single directory environmentpath" do
     before(:each) do
