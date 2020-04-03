@@ -235,6 +235,24 @@ describe Puppet::Agent do
           }
         }.to exit_with(777)
       end
+
+      it "should return `1` exit code if the block returns `nil`" do
+        expect(Kernel).to receive(:fork).and_yield
+        expect {
+          @agent.run_in_fork {
+            nil
+          }
+        }.to exit_with(1)
+      end
+
+      it "should return `1` exit code if the block returns `false`" do
+        expect(Kernel).to receive(:fork).and_yield
+        expect {
+          @agent.run_in_fork {
+            false
+          }
+        }.to exit_with(1)
+      end
     end
 
     describe "on Windows", :if => Puppet.features.microsoft_windows? do
