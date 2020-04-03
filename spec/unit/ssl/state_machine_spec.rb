@@ -888,5 +888,22 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         state.next_state
       end
     end
+
+    context 'in state NeedLock' do
+      let(:ssl_context) { Puppet::SSL::SSLContext.new(cacerts: []) }
+      let(:lockfile) { Puppet::Util::Pidlock.new(Puppet[:ssl_lockfile]) }
+      let(:machine) { described_class.new(lockfile: lockfile) }
+      let(:state) { Puppet::SSL::StateMachine::NeedLock.new(machine) }
+
+      it 'acquires the lock and transitions to NeedCACerts' do
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCACerts)
+        expect(lockfile).to be_locked
+      end
+
+      it 'transitions to LockFailure if it fails to acquire the lock' do
+        expect(lockfile).to receive(:lock).and_return(false)
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::LockFailure)
+      end
+    end
   end
 end
