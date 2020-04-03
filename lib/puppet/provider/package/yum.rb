@@ -1,4 +1,11 @@
+require 'puppet/util/package/version/range'
+require 'puppet/util/package/version/rpm'
+require 'puppet/util/rpm_compare'
+
 Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
+  # provides Rpm parsing and comparison
+  include Puppet::Util::RpmCompare
+
   desc "Support via `yum`.
 
   Using this provider's `uninstallable` feature will not remove dependent packages. To
@@ -9,6 +16,9 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   These options should be specified as an array where each element is either a string or a hash."
 
   has_feature :install_options, :versionable, :virtual_packages, :install_only
+
+  RPM_VERSION       = Puppet::Util::Package::Version::Rpm
+  RPM_VERSION_RANGE = Puppet::Util::Package::Version::Range
 
   commands :cmd => "yum", :rpm => "rpm"
 
@@ -24,6 +34,31 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
 defaultfor :operatingsystem => :amazon
 defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
+
+  def insync?(is)
+    return false if [:purged, :absent].include?(is)
+    return false if is.include?(self.class::MULTIVERSION_SEPARATOR) && !@resource[:install_only]
+    return true if super
+
+    should = @resource[:ensure]
+    if should.is_a?(String)
+      begin
+        should_version = RPM_VERSION_RANGE.parse(should, RPM_VERSION)
+      rescue RPM_VERSION_RANGE::ValidationFailure, RPM_VERSION::ValidationFailure
+        Puppet.debug("Cannot parse #{should} as a RPM version range")
+        return false
+      end
+   
+      is.split(self.class::MULTIVERSION_SEPARATOR).any? do |version|
+        begin
+          is_version = RPM_VERSION.parse(version)
+          should_version.include?(is_version)
+        rescue RPM_VERSION::ValidationFailure
+          Puppet.debug("Cannot parse #{is} as a RPM version")
+        end
+      end
+    end
+  end
 
   def self.prefetch(packages)
     raise Puppet::Error, _("The yum provider can only be used as root") if Process.euid != 0
@@ -151,6 +186,35 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
     'update'
   end
 
+  def best_version(should)
+    if should.is_a?(String)
+      begin
+        should_range = RPM_VERSION_RANGE.parse(should, RPM_VERSION)
+      rescue RPM_VERSION_RANGE::ValidationFailure, RPM_VERSION::ValidationFailure
+        Puppet.debug("Cannot parse #{should} as a RPM version range")
+        return should
+      end
+      sorted_versions = SortedSet.new
+      available_versions(@resource[:name]).each do |version|
+        begin
+          rpm_version = RPM_VERSION.parse(version)
+          sorted_versions << rpm_version if should_range.include?(rpm_version)
+        rescue RPM_VERSION::ValidationFailure
+          Puppet.debug("Cannot parse #{version} as a RPM version")
+        end
+      end
+      return sorted_versions.entries.last if sorted_versions.any?
+
+      Puppet.debug("No available version for package #{@resource[:name]} is included in range #{should_range}")
+      should
+    end
+  end
+
+  def available_versions(package_name)
+    output = execute("yum list #{package_name} --showduplicates | sed -e '1,/Available Packages/ d' | awk '{print $2}'")
+    output.split("\n")
+  end
+
   def install
     wanted = @resource[:name]
     error_level = self.class.error_level
@@ -195,10 +259,10 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
         self.debug "Installing directly from #{wanted}"
       else
         # No explicit source was specified, so add the package version
-        wanted += "-#{should}"
-        if wanted.scan(ARCH_REGEX)
+        wanted += "-#{best_version(should)}"
+        if wanted.scan(self.class::ARCH_REGEX)
           self.debug "Detected Arch argument in package! - Moving arch to end of version string"
-          wanted.gsub!(/(.+)(#{ARCH_REGEX})(.+)/,'\1\3\2')
+          wanted.gsub!(/(.+)(#{self.class::ARCH_REGEX})(.+)/,'\1\3\2')
         end
       end
       current_package = self.query

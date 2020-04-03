@@ -3,6 +3,17 @@ require 'spec_helper'
 describe Puppet::Type.type(:package).provider(:yum) do
   include PuppetSpec::Fixtures
 
+  let(:resource_name) { 'myresource' }
+  let(:resource) do
+    Puppet::Type.type(:package).new(
+      :name     => resource_name,
+      :ensure   => :installed,
+      :provider => 'yum'
+    )
+  end
+
+  let(:provider) { Puppet::Type.type(:package).provider(:yum).new(resource) }
+
   it_behaves_like 'RHEL package provider', described_class, 'yum'
 
   it "should have lower specificity" do
@@ -233,6 +244,32 @@ describe Puppet::Type.type(:package).provider(:yum) do
 
       it "ignores all mentions of plugin output" do
         expect(output).not_to include("Random plugin")
+      end
+    end
+  end
+
+  describe 'insync?' do
+    context 'for semantic versions' do
+      let(:is) { '1:1.2.3.4-5.el4' }
+
+      it 'returns true if current version matches the greater or equal semantic version in ensure' do
+        resource[:ensure] = '<=1:1.2.3.4-5.el4'
+        expect(provider).to be_insync(is)
+      end
+
+      it 'returns true if current version matches the lesser semantic version in ensure' do
+        resource[:ensure] = '>1:1.0.0'
+        expect(provider).to be_insync(is)
+      end
+
+      it 'returns true if current version matches two semantic conditions' do
+        resource[:ensure] = '>1:1.1.3.4-5.el4 <1:1.3.3.6-5.el4'
+        expect(provider).to be_insync(is)
+      end
+
+      it 'returns false if current version does not match matches two semantic conditions' do
+        resource[:ensure] = '<1:1.1.3.4-5.el4 <1:1.3.3.6-5.el4'
+        expect(provider).not_to be_insync(is)
       end
     end
   end
