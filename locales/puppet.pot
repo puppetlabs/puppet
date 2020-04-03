@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.14.0-115-gac5370ad23\n"
+"Project-Id-Version: Puppet automation framework 6.14.0-120-gf2709eb5b2\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-04-02 12:19+0000\n"
-"PO-Revision-Date: 2020-04-02 12:19+0000\n"
+"POT-Creation-Date: 2020-04-03 07:04+0000\n"
+"PO-Revision-Date: 2020-04-03 07:04+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -6700,7 +6700,7 @@ msgstr ""
 msgid "Could not list installed Packages: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:141 ../lib/puppet/provider/package/yum.rb:252
+#: ../lib/puppet/provider/package/aix.rb:141 ../lib/puppet/provider/package/yum.rb:316
 msgid "Tried to get latest on a missing package"
 msgstr ""
 
@@ -6732,7 +6732,7 @@ msgstr ""
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:94 ../lib/puppet/provider/package/portupgrade.rb:152 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:232 ../lib/puppet/provider/package/zypper.rb:109
+#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:94 ../lib/puppet/provider/package/portupgrade.rb:152 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:296 ../lib/puppet/provider/package/zypper.rb:109
 msgid "Could not find package %{name}"
 msgstr ""
 
@@ -7006,11 +7006,11 @@ msgstr ""
 msgid "portversion.latest() - fatal error with portversion: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/rpm.rb:89
+#: ../lib/puppet/provider/package/rpm.rb:68
 msgid "Failed to list packages"
 msgstr ""
 
-#: ../lib/puppet/provider/package/rpm.rb:128 ../lib/puppet/provider/package/rpm.rb:141
+#: ../lib/puppet/provider/package/rpm.rb:107 ../lib/puppet/provider/package/rpm.rb:120
 msgid "RPMs must specify a package source"
 msgstr ""
 
@@ -7055,23 +7055,23 @@ msgstr ""
 msgid "Don't know how to install '%{source}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:29
+#: ../lib/puppet/provider/package/yum.rb:64
 msgid "The yum provider can only be used as root"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:83
+#: ../lib/puppet/provider/package/yum.rb:118
 msgid "Could not check for updates, '%{cmd} check-update' exited with %{status}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:117
+#: ../lib/puppet/provider/package/yum.rb:152
 msgid "Failed to parse package name and architecture from '%{pkgname}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:226
+#: ../lib/puppet/provider/package/yum.rb:290
 msgid "Could not find package %{wanted}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:237
+#: ../lib/puppet/provider/package/yum.rb:301
 msgid "Failed to update to version %{should}, got version %{version} instead"
 msgstr ""
 
@@ -9542,6 +9542,10 @@ msgstr ""
 
 #: ../lib/puppet/util/network_device/config.rb:94
 msgid "%{value} is an invalid url"
+msgstr ""
+
+#: ../lib/puppet/util/package/version/rpm.rb:47
+msgid "Cannot compare, as %{other} is not a Rpm Version"
 msgstr ""
 
 #: ../lib/puppet/util/plist.rb:48
