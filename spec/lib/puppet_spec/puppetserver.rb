@@ -47,9 +47,13 @@ class PuppetSpec::Puppetserver
   class FilebucketServlet < WEBrick::HTTPServlet::AbstractServlet
     def do_GET request, response
     end
+
     def do_PUT request, response
+      upload = File.join(@config.config[:TempDir], 'filebucket')
+      File.open(upload, 'wb') { |f| f.write(request.body) }
       response['Content-Type'] = 'application/octet-stream'
     end
+
     def do_HEAD request, response
       response.status = 404
     end
@@ -115,5 +119,9 @@ class PuppetSpec::Puppetserver
                 default_servlet
               end
     @https.mount(path, handler)
+  end
+
+  def upload_directory
+    @https.config[:TempDir]
   end
 end
