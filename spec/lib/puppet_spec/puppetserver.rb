@@ -44,6 +44,17 @@ class PuppetSpec::Puppetserver
     end
   end
 
+  class FilebucketServlet < WEBrick::HTTPServlet::AbstractServlet
+    def do_GET request, response
+    end
+    def do_PUT request, response
+      response['Content-Type'] = 'application/octet-stream'
+    end
+    def do_HEAD request, response
+      response.status = 404
+    end
+  end
+
   def initialize
     @ca_cert = cert_fixture('ca.pem')
     @ca_crl = crl_fixture('crl.pem')
@@ -94,6 +105,7 @@ class PuppetSpec::Puppetserver
     register_mount('/puppet/v3/file_metadatas', mounts[:file_metadatas], FileMetadatasServlet)
     register_mount('/puppet/v3/static_file_content', mounts[:static_file_content], StaticFileContentServlet)
     register_mount('/puppet/v3/report', mounts[:report], ReportServlet)
+    register_mount('/puppet/v3/file_bucket_file', mounts[:filebucket], FilebucketServlet)
   end
 
   def register_mount(path, user_proc, default_servlet)
