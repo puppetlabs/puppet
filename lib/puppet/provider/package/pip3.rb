@@ -1,8 +1,6 @@
 # Puppet package provider for Python's `pip3` package management frontend.
 # <http://pip.pypa.io/>
 
-require 'puppet/provider/package/pip'
-
 Puppet::Type.type(:package).provide :pip3,
   :parent => :pip do
 
