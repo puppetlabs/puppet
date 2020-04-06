@@ -4,6 +4,8 @@
 # Resolver base class. Each resolver represents a different strategy for
 # resolving a service name into a list of candidate servers and ports.
 #
+# @abstract Subclass and override {#resolve} to create a new resolver.
+#
 class Puppet::HTTP::Resolver
   #
   # @api private
@@ -26,10 +28,12 @@ class Puppet::HTTP::Resolver
   # @param [Symbol] name the service to resolve
   # @param [Puppet::SSL::SSLContext] ssl_context (nil) optional ssl context to
   #   use when creating a connection
+  # @param [Proc] error_handler (nil) optional callback for each error
+  #   encountered while resolving a route.
   #
   # @raise [NotImplementedError] this base class is not implemented
   #
-  def resolve(session, name, ssl_context: nil)
+  def resolve(session, name, ssl_context: nil, error_handler: nil)
     raise NotImplementedError
   end
 
@@ -41,14 +45,16 @@ class Puppet::HTTP::Resolver
   # @param [Puppet::HTTP::Session] session
   # @param [Puppet::HTTP::Service] service
   # @param [Puppet::SSL::SSLContext] ssl_context
+  # @param [Proc] error_handler (nil) optional callback for each error
+  #   encountered while resolving a route.
   #
   # @return [Boolean] Returns true if a connection is successful, false otherwise
   #
-  def check_connection?(session, service, ssl_context: nil)
+  def check_connection?(session, service, ssl_context: nil, error_handler: nil)
     service.connect(ssl_context: ssl_context)
     return true
   rescue Puppet::HTTP::ConnectionError => e
-    session.add_exception(e)
+    error_handler.call(e) if error_handler
     Puppet.debug("Connection to #{service.url} failed, trying next route: #{e.message}")
     return false
   end
