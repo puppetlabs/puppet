@@ -26,6 +26,11 @@ class Puppet::Network::HTTP::BasePool
     socket = buffered_io.io
     return unless socket
 
-    Puppet.debug("Using #{socket.ssl_version} with cipher #{socket.cipher.first}")
+    cipher = if Puppet::Util::Platform.jruby?
+               socket.cipher
+             else
+               socket.cipher.first
+             end
+    Puppet.debug("Using #{socket.ssl_version} with cipher #{cipher}")
   end
 end
