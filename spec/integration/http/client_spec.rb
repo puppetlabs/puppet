@@ -130,11 +130,19 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
 
   context 'persistent connections' do
     it "detects when the server has closed the connection and reconnects" do
+      Puppet[:http_debug] = true
+
       https_server.start_server do |port|
         uri = URI("https://127.0.0.1:#{port}")
+        kwargs = {headers: {'Content-Type' => 'text/plain'}, options: {ssl_context: root_context, body: ''}}
 
-        expect(client.get(uri, options: {ssl_context: root_context})).to be_success
-        expect(client.get(uri, options: {ssl_context: root_context})).to be_success
+        expect {
+          expect(client.post(uri, **kwargs)).to be_success
+          # the server closes its connection after each request, so posting
+          # again will force ruby to detect that the remote side closed the
+          # connection, and reconnect
+          expect(client.post(uri, **kwargs)).to be_success
+        }.to output(/Conn close because of EOF/).to_stderr
       end
     end
   end
