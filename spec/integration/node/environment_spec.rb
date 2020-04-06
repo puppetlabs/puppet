@@ -76,6 +76,21 @@ describe Puppet::Node::Environment do
     expect(mods[0].path).to eq(File.join(base, "dir1", "mod"))
   end
 
+  it "should not yield a module with the same name as a defined Bolt project" do
+    project_path = File.join(tmpfile('project'), 'bolt_project')
+    FileUtils.mkdir_p(project_path)
+    project = Struct.new("Project", :name, :path).new('project', project_path)
+
+    Puppet.override(bolt_project: project) do
+      base = tmpfile("base")
+      FileUtils.mkdir_p([File.join(base, 'project'), File.join(base, 'other')])
+      environment = Puppet::Node::Environment.create(:env, [base])
+      mods = environment.modules
+      expect(mods.length).to eq(2)
+      expect(mods.map(&:path)).to eq([project_path, File.join(base, 'other')])
+    end
+  end
+
   shared_examples_for "the environment's initial import" do |settings|
     it "a manifest referring to a directory invokes parsing of all its files in sorted order" do
       settings.each do |name, value|

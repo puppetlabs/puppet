@@ -297,7 +297,13 @@ class Puppet::Node::Environment
   def modules
     if @modules.nil?
       module_references = []
-      seen_modules = {}
+      project = Puppet.lookup(:bolt_project) { nil }
+      seen_modules = if project
+                       module_references << project.to_h
+                       { project.name => true }
+                     else
+                       {}
+                     end
       modulepath.each do |path|
         Dir.entries(path).each do |name|
           next unless Puppet::Module.is_module_directory?(name, path)
