@@ -3,7 +3,7 @@ require 'puppet/face'
 require 'puppet_spec/puppetserver'
 require 'puppet_spec/files'
 
-describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
+describe "puppet filebucket" do
   include PuppetSpec::Files
   include_context "https client"
 
@@ -26,9 +26,9 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
         filebucket.command_line.args << backup_file
         filebucket.run
       }.to output(a_string_matching(
-        %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/#{md5}\/#{File.realpath(backup_file)}\?environment\=production returned 404 Not Found}
+        %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/#{md5}\/#{File.realpath(backup_file)} returned 404 Not Found}
       ).and matching(
-        %r{Debug: HTTP PUT https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/#{md5}\/#{File.realpath(backup_file)}\?environment\=production returned 200 OK}
+        %r{Debug: HTTP PUT https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/#{md5}\/#{File.realpath(backup_file)} returned 200 OK}
       ).and matching(
         %r{#{backup_file}: #{md5}}
       )).to_stdout
@@ -50,7 +50,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
         filebucket.command_line.args << backup_file
         filebucket.run
       }.to output(a_string_matching(
-        %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/#{md5}\/#{File.realpath(backup_file)}\?environment\=production returned 200 OK}
+        %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/#{md5}\/#{File.realpath(backup_file)} returned 200 OK}
       ).and matching(
         %r{#{backup_file}: #{md5}}
       )).to_stdout
@@ -70,7 +70,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
         filebucket.command_line.args << 'fac251367c9e083c6b1f0f3181'
         filebucket.run
       }.to output(a_string_matching(
-        %r{Debug: HTTP GET https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/fac251367c9e083c6b1f0f3181\?environment\=production returned 200 OK}
+        %r{Debug: HTTP GET https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/fac251367c9e083c6b1f0f3181 returned 200 OK}
       ).and matching(
         %r{something to store}
        )).to_stdout
