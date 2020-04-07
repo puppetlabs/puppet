@@ -708,35 +708,6 @@ describe 'Puppet Pal' do
         end
       end
 
-      context 'facts are supported such that' do
-        it 'they are obtained if they are not given' do
-          facts = Puppet::Node::Facts.new(Puppet[:certname], 'puppetversion' => Puppet.version)
-          Puppet::Node::Facts.indirection.save(facts)
-
-          testing_env_dir # creates the structure
-          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath ) do |ctx|
-            ctx.with_script_compiler {|c| c.evaluate_string("$facts =~ Hash and $facts[puppetversion] == '#{Puppet.version}'") }
-          end
-          expect(result).to eq(true)
-        end
-
-        it 'can be given as a hash when creating the environment' do
-          testing_env_dir # creates the structure
-          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: { 'myfact' => 42 }) do |ctx|
-            ctx.with_script_compiler {|c| c.evaluate_string("$facts =~ Hash and $facts[myfact] == 42") }
-          end
-          expect(result).to eq(true)
-        end
-
-        it 'can be overridden with a hash when creating a script compiler' do
-          testing_env_dir # creates the structure
-          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: { 'myfact' => 42 }) do |ctx|
-            ctx.with_script_compiler(facts: { 'myfact' => 43 }) {|c| c.evaluate_string("$facts =~ Hash and $facts[myfact] == 43") }
-          end
-          expect(result).to eq(true)
-        end
-      end
-
       context 'supports tasks such that' do
         it '"task_signature" returns the signatures of a generic task' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|

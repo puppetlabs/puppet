@@ -422,37 +422,9 @@ module Pal
     # TRANSLATORS, the string "For puppet PAL" is not user facing
     Puppet.override({:current_environment => apply_environment}, "For puppet PAL") do
       begin
-        # support the following features when evaluating puppet code
-        # * $facts with facts from host running the script
-        # * $settings with 'settings::*' namespace populated, and '$settings::all_local' hash
-        # * $trusted as setup when using puppet apply
-        # * an environment
-        #
-
-        # fixup trusted information
         node.sanitize()
-
         compiler = create_internal_compiler(internal_compiler_class, node)
-        # compiler = Puppet::Parser::ScriptCompiler.new(node.environment, node.name)
-        topscope = compiler.topscope
-
-        # When scripting the trusted data are always local, but set them anyway
-        # When compiling for a catalog, the catalog compiler does this
-        unless internal_compiler_class == :catalog
-          topscope.set_trusted(node.trusted_data)
-
-          # Server facts are always about the local node's version etc.
-          topscope.set_server_facts(node.server_facts)
-
-          # Set $facts for the node running the script
-          facts_hash = node.facts.nil? ? {} : node.facts.values
-          topscope.set_facts(facts_hash)
-
-          # create the $settings:: variables
-          topscope.merge_settings(node.environment.name, false)
-        end
-
-        add_variables(topscope, pal_variables)
+        add_variables(compiler.topscope, pal_variables)
 
         case internal_compiler_class
         when :script
