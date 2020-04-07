@@ -102,7 +102,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
       if source =~ /\.dmg$/i
         # If you fix this to use open-uri again, you must update the docs above. -NF
         File.open(cached_source) do |dmg|
-          xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", dmg.path
+          xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-mountrandom", "/tmp", dmg.path
           hdiutil_info = Puppet::Util::Plist.parse_plist(xml_str)
           raise Puppet::Error.new(_("No disk entities returned by mount at %{path}") % { path: dmg.path }) unless hdiutil_info.has_key?("system-entities")
           mounts = hdiutil_info["system-entities"].collect { |entity|

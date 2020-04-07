@@ -45,7 +45,7 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
     it "should call hdiutil to mount and eject the disk image" do
       allow(Dir).to receive(:entries).and_return([])
       expect(provider.class).to receive(:hdiutil).with("eject", fake_mountpoint).and_return(0)
-      expect(provider.class).to receive(:hdiutil).with("mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", '/tmp/foo').and_return('a plist')
+      expect(provider.class).to receive(:hdiutil).with("mount", "-plist", "-nobrowse", "-readonly", "-mountrandom", "/tmp", '/tmp/foo').and_return('a plist')
       expect(Puppet::Util::Plist).to receive(:parse_plist).with('a plist').and_return(fake_hdiutil_plist)
       provider.install
     end
