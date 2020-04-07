@@ -67,8 +67,12 @@ class Puppet::Util::Pidlock
     elsif Puppet.features.microsoft_windows?
       # On Windows, we're checking if the filesystem path name of the running
       # process is our vendored ruby:
-      exe_path = Puppet::Util::Windows::Process::get_process_image_name_by_pid(lock_pid)
-      @lockfile.unlock unless exe_path =~ /\\bin\\ruby.exe$/
+      begin
+        exe_path = Puppet::Util::Windows::Process::get_process_image_name_by_pid(lock_pid)
+        @lockfile.unlock unless exe_path =~ /\\bin\\ruby.exe$/
+      rescue Puppet::Util::Windows::Error => e
+        Puppet.debug("Failed to read pidfile #{file_path}: #{e.message}")
+      end
     end
   end
   private :clear_if_stale
