@@ -122,6 +122,10 @@ describe Puppet::Application::Agent do
       end
     end
 
+    it "should log the agent start time" do
+      expect(@puppetd.options[:start_time]).to be_a(Time)
+    end
+
     it "should set waitforcert to 0 with --onetime and if --waitforcert wasn't given" do
       allow(@agent).to receive(:run).and_return(2)
       Puppet[:onetime] = true
@@ -505,7 +509,7 @@ describe Puppet::Application::Agent do
 
       it "should run the agent with the supplied job_id" do
         @puppetd.options[:job_id] = 'special id'
-        expect(@agent).to receive(:run).with(:job_id => 'special id').and_return(:report)
+        expect(@agent).to receive(:run).with(hash_including(:job_id => 'special id')).and_return(:report)
 
         expect { execute_agent }.to exit_with 0
       end

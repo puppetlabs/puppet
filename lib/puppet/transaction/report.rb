@@ -217,13 +217,13 @@ class Puppet::Transaction::Report
   end
 
   # @api private
-  def initialize(configuration_version=nil, environment=nil, transaction_uuid=nil, job_id=nil)
+  def initialize(configuration_version=nil, environment=nil, transaction_uuid=nil, job_id=nil, start_time=Time.now)
     @metrics = {}
     @logs = []
     @resource_statuses = {}
     @external_times ||= {}
     @host = Puppet[:node_name_value]
-    @time = Time.now
+    @time = start_time
     @report_format = 10
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
