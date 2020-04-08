@@ -136,7 +136,7 @@ describe Puppet::Application::Filebucket do
         Puppet[:server] = 'horacio'
         Puppet[:server_list] = "foo,bar"
 
-        expect{@filebucket.setup}.to raise_error(SystemExit)
+        expect{@filebucket.setup}.to exit_with(1)
       end
 
       it "should fall back to server if server_list is empty" do

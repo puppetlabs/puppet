@@ -48,7 +48,7 @@ describe Puppet::FileBucketFile::Rest do
     {bucket_path: 'path', diff_with: '4aabe1257043bd0', list_all: 'true', fromdate: '20200404', todate: '20200404'}.each do |param, val|
       it "includes #{param} as a parameter in the request if #{param} is set" do
         stub_request(:get, uri).with(query: hash_including(param => val)).to_return(status: 200, headers: {'Content-Type' => 'application/octet-stream'})
-        
+
         options = { param => val }
         described_class.indirection.find(source_path, **options)
       end
@@ -69,13 +69,13 @@ describe Puppet::FileBucketFile::Rest do
 
   describe '#save' do
     it 'includes the environment as a request parameter' do
-      stub_request(:put, uri).with(query: hash_including(environment: 'outerspace')).to_return(status: 200, headers: {'Content-Type' => 'application/octet-stream'})
+      stub_request(:put, uri).with(query: hash_including(environment: 'outerspace'))
 
       described_class.indirection.save(file_bucket_file, dest_path, environment: Puppet::Node::Environment.remote('outerspace'))
     end
 
     it 'sends the contents of the file as the request body' do
-      stub_request(:put, uri).with(body: file_bucket_file.contents).to_return(status: 200, headers: {'Content-Type' => 'application/octet-stream'})
+      stub_request(:put, uri).with(body: file_bucket_file.contents)
 
       described_class.indirection.save(file_bucket_file, dest_path)
     end
@@ -84,12 +84,6 @@ describe Puppet::FileBucketFile::Rest do
       stub_request(:put, uri).to_return(status: [503, 'server unavailable'])
 
       expect{described_class.indirection.save(file_bucket_file, dest_path)}.to raise_error(Net::HTTPError, "Error 503 on SERVER: server unavailable")
-    end
-
-    it 'raises if Content-Type is not included in the response' do
-      stub_request(:put, uri).to_return(status: 200, headers: {})
-
-      expect{described_class.indirection.save(file_bucket_file, dest_path)}.to raise_error(RuntimeError, "No content type in http response; cannot parse")
     end
   end
 end

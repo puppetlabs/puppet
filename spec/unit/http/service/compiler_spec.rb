@@ -446,4 +446,136 @@ describe Puppet::HTTP::Service::Compiler do
       }.to raise_error(Puppet::HTTP::SerializationError, /Failed to deserialize Puppet::Status from json/)
     end
   end
+
+  context 'filebucket' do
+    let(:filebucket_file) { Puppet::FileBucket::File.new('file to store') }
+    let(:formatter) { Puppet::Network::FormatHandler.format(:binary) }
+    let(:path) { "md5/4aabe1257043bd03ce4c3319c155bc55" }
+    let(:uri) { %r{/puppet/v3/file_bucket_file/#{path}} }
+
+    context 'when getting a file' do
+      let(:status_response) { { body: formatter.render(filebucket_file), headers: {'Content-Type' => 'application/octet-stream' }}}
+
+      it 'includes default HTTP headers' do
+        stub_request(:get, uri).with do |request|
+          expect(request.headers).to include({
+            'X-Puppet-Version' => /./,
+            'User-Agent' => /./,
+            'Accept' => 'application/octet-stream'
+            })
+          expect(request.headers).to_not include('X-Puppet-Profiling')
+        end.to_return(**status_response)
+
+        subject.get_filebucket_file(path, environment: 'production')
+      end
+
+      it 'always the environment as a parameter' do
+        stub_request(:get, uri).with(query: hash_including('environment' => 'production')).to_return(**status_response)
+
+        subject.get_filebucket_file(path, environment: 'production')
+      end
+
+      {bucket_path: 'path', diff_with: '4aabe1257043bd0', list_all: 'true', fromdate: '20200404', todate: '20200404'}.each do |param, val|
+        it "includes #{param} as a parameter in the request if #{param} is set" do
+          stub_request(:get, uri).with(query: hash_including(param => val)).to_return(**status_response)
+
+          options = { param => val }
+          subject.get_filebucket_file(path, environment: 'production', **options)
+        end
+      end
+
+      it "doesn't include :diff_with as a query param if :bucket_path is nil" do
+        stub_request(:get, uri).with do |request|
+          expect(request.uri.query).not_to match(/diff_with/)
+        end.to_return(**status_response)
+
+        subject.get_filebucket_file(path, environment: 'production', diff_with: nil)
+      end
+
+      it 'returns a deserialized response' do
+        stub_request(:get, uri)
+        .to_return(**status_response)
+
+        s = subject.get_filebucket_file(path, environment: 'production')
+        expect(s).to be_a(Puppet::FileBucket::File)
+        expect(s.contents).to eq('file to store')
+      end
+    end
+
+    context 'when putting a file' do
+      let(:status_response) { { status: 200, body: '' } }
+
+      it 'includes default HTTP headers' do
+        stub_request(:put, uri).with do |request|
+          expect(request.headers).to include({
+            'X-Puppet-Version' => /./,
+            'User-Agent' => /./,
+            'Accept' => 'application/octet-stream',
+            'Content-Type' => 'application/octet-stream'
+            })
+          expect(request.headers).to_not include('X-Puppet-Profiling')
+        end.to_return(**status_response)
+
+        subject.put_filebucket_file(path, body: filebucket_file.contents, environment: 'production')
+      end
+
+      it 'always the environment as a parameter' do
+        stub_request(:put, uri).with(query: hash_including('environment' => 'production')).to_return(**status_response)
+
+        subject.put_filebucket_file(path, body: filebucket_file.contents, environment: 'production')
+      end
+
+      it 'sends the file contents as the request body' do
+        stub_request(:put, uri).with(body: filebucket_file.contents).to_return(**status_response)
+
+        subject.put_filebucket_file(path, body: filebucket_file.contents, environment: 'production')
+      end
+
+      it 'returns a stringified response' do
+        stub_request(:put, uri)
+        .to_return(**status_response)
+
+        s = subject.put_filebucket_file(path, body: filebucket_file.contents, environment: 'production')
+        expect(s).to be_a(String)
+        expect(s).to eq('')
+      end
+    end
+
+    context 'when heading a file' do
+      let(:status_response) {{ status: 200 }}
+
+      it 'includes default HTTP headers' do
+        stub_request(:head, uri).with do |request|
+          expect(request.headers).to include({
+            'X-Puppet-Version' => /./,
+            'User-Agent' => /./,
+            'Accept' => 'application/octet-stream',
+            })
+          expect(request.headers).to_not include('X-Puppet-Profiling')
+        end.to_return(**status_response)
+
+        subject.head_filebucket_file(path, environment: 'production')
+      end
+
+      it 'always the environment as a parameter' do
+        stub_request(:head, uri).with(query: hash_including('environment' => 'production')).to_return(**status_response)
+
+        subject.head_filebucket_file(path, environment: 'production')
+      end
+
+      it "includes :bucket_path as a parameter in the request if :bucket_path is set" do
+        stub_request(:head, uri).with(query: hash_including(:bucket_path => 'some/path')).to_return(**status_response)
+
+        subject.head_filebucket_file(path, environment: 'production', bucket_path: 'some/path')
+      end
+
+      it "doesn't include :bucket_path as a query param if :bucket_path is nil" do
+        stub_request(:head, uri).with do |request|
+          expect(request.uri.query).not_to match(/bucket_path/)
+        end.to_return(**status_response)
+
+        subject.head_filebucket_file(path, environment: 'production', bucket_path: nil)
+      end
+    end
+  end
 end

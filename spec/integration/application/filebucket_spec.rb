@@ -77,7 +77,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
     end
   end
 
-  context 'diff', unless: Puppet::Util::Platform.windows? do
+  context 'diff', unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
     context 'using a remote bucket' do
       it 'outputs a diff between a local and remote file' do
         File.binwrite(backup_file, "bar\nbaz")
@@ -105,7 +105,14 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
       it 'outputs a diff between two remote files' do
         get_handler = -> (req, res) {
           res['Content-Type'] = 'application/octet-stream'
-          res.body = "--- /opt/puppetlabs/server/data/puppetserver/bucket/d/3/b/0/7/3/8/4/d3b07384d113edec49eaa6238ad5ff00/contents\t2020-04-06 21:25:24.892367570 +0000\n+++ /opt/puppetlabs/server/data/puppetserver/bucket/9/9/b/9/9/9/2/0/99b999207e287afffc86c053e5693247/contents\t2020-04-06 21:26:13.603398063 +0000\n@@ -1 +1,2 @@\n-foo\n+bar\n+baz\n"
+          res.body = <<~END
+          --- /opt/puppetlabs/server/data/puppetserver/bucket/d/3/b/0/7/3/8/4/d3b07384d113edec49eaa6238ad5ff00/contents\t2020-04-06 21:25:24.892367570 +0000
+          +++ /opt/puppetlabs/server/data/puppetserver/bucket/9/9/b/9/9/9/2/0/99b999207e287afffc86c053e5693247/contents\t2020-04-06 21:26:13.603398063 +0000
+          @@ -1 +1,2 @@
+          -foo
+          +bar
+          +baz
+          END
         }
 
         server.start_server(mounts: {filebucket: get_handler}) do |port|
