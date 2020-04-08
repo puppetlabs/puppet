@@ -122,21 +122,22 @@ module Puppet::Util::Windows::Process
   def get_process_image_name_by_pid(pid)
     image_name = ""
 
-     open_process(PROCESS_QUERY_INFORMATION, false, pid) do |phandle|
-
-       FFI::MemoryPointer.new(:dword, 1) do |exe_name_length_ptr|
-        # UTF is 2 bytes/char:
-        max_chars = MAX_PATH_LENGTH + 1
-        exe_name_length_ptr.write_dword(max_chars)
-        FFI::MemoryPointer.new(:wchar, max_chars) do |exe_name_ptr|
-          use_win32_path_format = 0
-          result = QueryFullProcessImageNameW(phandle, use_win32_path_format, exe_name_ptr, exe_name_length_ptr)
-          if result == FFI::WIN32_FALSE
-            raise Puppet::Util::Windows::Error.new(
-              "QueryFullProcessImageNameW(phandle, #{use_win32_path_format}, " +
-              "exe_name_ptr, #{max_chars}")
+    Puppet::Util::Windows::Security.with_privilege(Puppet::Util::Windows::Security::SE_DEBUG_NAME) do
+      open_process(PROCESS_QUERY_INFORMATION, false, pid) do |phandle|
+        FFI::MemoryPointer.new(:dword, 1) do |exe_name_length_ptr|
+          # UTF is 2 bytes/char:
+          max_chars = MAX_PATH_LENGTH + 1
+          exe_name_length_ptr.write_dword(max_chars)
+          FFI::MemoryPointer.new(:wchar, max_chars) do |exe_name_ptr|
+            use_win32_path_format = 0
+            result = QueryFullProcessImageNameW(phandle, use_win32_path_format, exe_name_ptr, exe_name_length_ptr)
+            if result == FFI::WIN32_FALSE
+              raise Puppet::Util::Windows::Error.new(
+                      "QueryFullProcessImageNameW(phandle, #{use_win32_path_format}, " +
+                      "exe_name_ptr, #{max_chars}")
+            end
+            image_name = exe_name_ptr.read_wide_string(exe_name_length_ptr.read_dword)
           end
-          image_name = exe_name_ptr.read_wide_string(exe_name_length_ptr.read_dword)
         end
       end
     end
