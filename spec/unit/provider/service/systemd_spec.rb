@@ -152,6 +152,8 @@ describe Puppet::Type.type(:service).provider(:systemd) do
         avahi-daemon.service
         blk-availability.service
         apparmor.service
+        umountnfs.service
+        urandom.service
       })
     end
 
