@@ -211,4 +211,109 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
 
     deserialize(response, Puppet::Status)
   end
+
+  #
+  # @api private
+  #
+  # Submit a GET request to retrieve a file stored with filebucket
+  #
+  # @param [String] path The request path, formatted by Puppet::FileBucket::Dipper
+  # @param [String] environment Name of the environment we are operating in.
+  #   This should not impact filebucket at all, but is included to be consistent
+  #   with legacy code.
+  # @param [String] bucket_path
+  # @param [String] diff_with a checksum to diff against if we are comparing
+  #   files that are both stored in the bucket
+  # @param [String] list_all
+  # @param [String] fromdate
+  # @param [String] todate
+  #
+  # @return [Puppet::FileBucket::File] The deserialized file returned from the
+  #   server.
+  #
+  def get_filebucket_file(path, environment:, bucket_path: nil, diff_with: nil, list_all: nil, fromdate: nil, todate: nil)
+    headers = add_puppet_headers('Accept' => 'application/octet-stream')
+
+    response = @client.get(
+      with_base_url("/file_bucket_file/#{path}"),
+      headers: headers,
+      params: {
+        environment: environment,
+        bucket_path: bucket_path,
+        diff_with: diff_with,
+        list_all: list_all,
+        fromdate: fromdate,
+        todate: todate
+      }
+    )
+
+    process_response(response)
+
+    deserialize(response, Puppet::FileBucket::File)
+  end
+
+  #
+  # @api private
+  #
+  # Submit a PUT request to store a file with filebucket
+  #
+  # @param [String] path The request path, formatted by Puppet::FileBucket::Dipper
+  # @param [String] body The contents of the file to be backed
+  # @param [String] environment Name of the environment we are operating in.
+  #   This should not impact filebucket at all, but is included to be consistent
+  #   with legacy code.
+  #
+  # @return [String] The stringified response body.
+  #
+  def put_filebucket_file(path, body:, environment:)
+    headers = add_puppet_headers({
+      'Accept' => 'application/octet-stream',
+      'Content-Type' => 'application/octet-stream'
+      })
+
+    response = @client.put(
+      with_base_url("/file_bucket_file/#{path}"),
+      headers: headers,
+      params: {
+        environment: environment
+      },
+      options: {
+        body: body
+      }
+    )
+
+    process_response(response)
+
+    response.body.to_s
+  end
+
+  #
+  # @api private
+  #
+  # Submit a HEAD request to check the status of a file stored with filebucket
+  #
+  # @param [String] path The request path, formatted by Puppet::FileBucket::Dipper
+  # @param [String] environment Name of the environment we are operating in.
+  #   This should not impact filebucket at all, but is included to be consistent
+  #   with legacy code.
+  # @param [String] bucket_path
+  #
+  # @return [String] The stringified response body. Should always be an empty string.
+  #
+  def head_filebucket_file(path, environment:, bucket_path: nil)
+    headers = add_puppet_headers('Accept' => 'application/octet-stream')
+
+    response = @client.head(
+      with_base_url("/file_bucket_file/#{path}"),
+      headers: headers,
+      params: {
+        environment: environment,
+        bucket_path: bucket_path
+      }
+    )
+
+    process_response(response)
+
+    response.body.to_s
+  end
 end

@@ -292,7 +292,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
       Puppet::Log.level = :info
     end
 
-      exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
+    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
     require 'puppet/file_bucket/dipper'
     begin
@@ -300,19 +300,10 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
         path = options[:bucket] || Puppet[:clientbucketdir]
         @client = Puppet::FileBucket::Dipper.new(:Path => path)
       else
-        if Puppet[:server_list] && !Puppet[:server_list].empty?
-          server = Puppet[:server_list].first
-          #TRANSLATORS 'server_list' is the name of a setting and should not be translated
-          Puppet.debug _("Selected server from first entry of the `server_list` setting: %{server}:%{port}") % {server: server[0], port: server[1]}
-          @client = Puppet::FileBucket::Dipper.new(
-            :Server => server[0],
-            :Port => server[1]
-          )
-        else
-          #TRANSLATORS 'server' is the name of a setting and should not be translated
-          Puppet.debug _("Selected server from the `server` setting: %{server}") % {server: Puppet[:server]}
-          @client = Puppet::FileBucket::Dipper.new(:Server => Puppet[:server])
-        end
+        session = Puppet.lookup(:http_session)
+        api = session.route_to(:puppet)
+
+        @client = Puppet::FileBucket::Dipper.new(Server: api.url.host, Port: api.url.port)
       end
     rescue => detail
       Puppet.log_exception(detail)
