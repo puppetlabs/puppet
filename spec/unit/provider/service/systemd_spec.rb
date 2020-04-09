@@ -188,6 +188,8 @@ describe 'Puppet::Type::Service::Provider::Systemd', unless: Puppet::Util::Platf
         avahi-daemon.service
         blk-availability.service
         apparmor.service
+        umountnfs.service
+        urandom.service
       })
     end
 
