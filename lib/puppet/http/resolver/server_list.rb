@@ -33,6 +33,8 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
   # @param [Puppet::HTTP::Session] session <description>
   # @param [Symbol] name the name of the service being resolved
   # @param [Puppet::SSL::SSLContext] ssl_context
+  # @param [Proc] error_handler (nil) optional callback for each error
+  #   encountered while resolving a route.
   #
   # @return [nil] return nil if the service to be resolved does not support
   #   server_list
@@ -42,7 +44,7 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
   # @raise [Puppet::Error] raise if none of the servers defined in server_list
   #   are available
   #
-  def resolve(session, name, ssl_context: nil)
+  def resolve(session, name, ssl_context: nil, error_handler: nil)
     # If we're configured to use an explicit service host, e.g. report_server
     # then don't use server_list to resolve the `:report` service.
     return nil unless @services.include?(name)
@@ -57,7 +59,7 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
       host = server[0]
       port = server[1] || @default_port
       uri = URI("https://#{host}:#{port}/status/v1/simple/master")
-      if get_success?(uri, session, ssl_context: ssl_context)
+      if get_success?(uri, session, ssl_context: ssl_context, error_handler: error_handler)
         @resolved_url = uri
         return Puppet::HTTP::Service.create_service(@client, session, name, host, port)
       end
@@ -74,11 +76,13 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
   # @param [URI] uri A URI created from the server and port to test
   # @param [Puppet::HTTP::Session] session
   # @param [Puppet::SSL::SSLContext] ssl_context
+  # @param [Proc] error_handler (nil) optional callback for each error
+  #   encountered while resolving a route.
   #
   # @return [Boolean] true if a successful response is returned by the server,
   #   false otherwise
   #
-  def get_success?(uri, session, ssl_context: nil)
+  def get_success?(uri, session, ssl_context: nil, error_handler: nil)
     response = @client.get(uri, options: {ssl_context: ssl_context})
     return true if response.success?
 
@@ -86,7 +90,7 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
                  { host: uri.host, port: uri.port, code: response.code, reason: response.reason })
     return false
   rescue => detail
-    session.add_exception(detail)
+    error_handler.call(detail) if error_handler
     #TRANSLATORS 'server_list' is the name of a setting and should not be translated
     Puppet.debug _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail}
     return false

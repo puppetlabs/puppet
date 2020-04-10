@@ -28,7 +28,6 @@ class Puppet::HTTP::Session
     @client = client
     @resolvers = resolvers
     @resolved_services = {}
-    @resolution_exceptions = []
     @server_versions = {}
   end
 
@@ -65,11 +64,12 @@ class Puppet::HTTP::Session
     cached = @resolved_services[name]
     return cached if cached
 
-    @resolution_exceptions = []
+    resolution_exceptions = []
+    error_handler = proc { |e| resolution_exceptions << e }
 
     @resolvers.each do |resolver|
       Puppet.debug("Resolving service '#{name}' using #{resolver.class}")
-      service = resolver.resolve(self, name, ssl_context: ssl_context)
+      service = resolver.resolve(self, name, ssl_context: ssl_context, error_handler: error_handler)
       if service
         @resolved_services[name] = service
         Puppet.debug("Resolved service '#{name}' to #{service.url}")
@@ -77,23 +77,8 @@ class Puppet::HTTP::Session
       end
     end
 
-    @resolution_exceptions.each { |e| Puppet.log_exception(e) }
+    resolution_exceptions.each { |e| Puppet.log_exception(e) }
     raise Puppet::HTTP::RouteError, "No more routes to #{name}"
-  end
-
-  #
-  # @api private
-  #
-  # Collect exceptions for this session. We need to be able to collect and
-  # report any exceptions that are raised for a given session, especially if
-  # those exceptions are rescued.
-  #
-  # @param [Puppet::HTTP::HTTPError] exception raised exception to log
-  #
-  # @return [Array<Puppet::HTTP::HTTPError>] an array of collected exceptions
-  #
-  def add_exception(exception)
-    @resolution_exceptions << exception
   end
 
   #
