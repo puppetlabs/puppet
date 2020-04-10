@@ -10,10 +10,14 @@ describe Puppet::HTTP::Session do
     double('good', url: uri, connect: nil)
   }
   let(:bad_service) {
-    service = double('bad', url: uri)
-    allow(service).to receive(:connect).and_raise(Puppet::HTTP::ConnectionError, 'whoops')
-    service
+    create_bad_service
   }
+
+  def create_bad_service(failure_message = 'whoops')
+    service = double('bad', url: uri)
+    allow(service).to receive(:connect).and_raise(Puppet::HTTP::ConnectionError, failure_message)
+    service
+  end
 
   class DummyResolver < Puppet::HTTP::Resolver
     attr_reader :count
@@ -31,13 +35,11 @@ describe Puppet::HTTP::Session do
 
   context 'when routing' do
     it 'returns the first resolved service' do
-      Puppet[:log_level] = :debug
       resolvers = [DummyResolver.new(bad_service), DummyResolver.new(good_service)]
       session = described_class.new(client, resolvers)
       resolved = session.route_to(:ca)
 
       expect(resolved).to eq(good_service)
-      expect(@logs).to include(an_object_having_attributes(level: :debug, message: "Connection to #{uri} failed, trying next route: whoops"))
     end
 
     it 'only resolves once per session' do
@@ -56,6 +58,29 @@ describe Puppet::HTTP::Session do
       expect {
         session.route_to(:ca)
       }.to raise_error(Puppet::HTTP::RouteError, 'No more routes to ca')
+    end
+
+    it 'logs all routing failures as errors when there are no more routes' do
+      resolvers = [DummyResolver.new(create_bad_service('whoops1')), DummyResolver.new(create_bad_service('whoops2'))]
+      session = described_class.new(client, resolvers)
+
+      expect {
+        session.route_to(:ca)
+      }.to raise_error(Puppet::HTTP::RouteError, 'No more routes to ca')
+
+      expect(@logs).to include(an_object_having_attributes(level: :err, message: "whoops1"),
+                               an_object_having_attributes(level: :err, message: "whoops2"))
+    end
+
+    it 'logs routing failures as debug until routing succeeds' do
+      Puppet[:log_level] = 'debug'
+
+      resolvers = [DummyResolver.new(bad_service), DummyResolver.new(good_service)]
+      session = described_class.new(client, resolvers)
+      session.route_to(:ca)
+
+      expect(@logs).to include(an_object_having_attributes(level: :debug, message: "Connection to #{uri} failed, trying next route: whoops"))
+      expect(@logs).to_not include(an_object_having_attributes(level: :err))
     end
 
     it 'accepts an ssl context to use when connecting' do
