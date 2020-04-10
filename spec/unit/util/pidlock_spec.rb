@@ -22,23 +22,6 @@ describe Puppet::Util::Pidlock do
 
     it "should become locked" do
       @lock.lock
-      if Puppet::Util::Platform.windows?
-        allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(@lock.lock_pid).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
-      else
-        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'comm=']).and_return('puppet')
-        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'args=']).and_return('puppet')
-      end
-      expect(@lock).to be_locked
-    end
-
-    it "should become locked if puppet is a gem" do
-      @lock.lock
-      unless Puppet::Util::Platform.windows?
-        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'comm=']).and_return('ruby')
-        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'args=']).and_return('ruby /root/puppet/.bundle/ruby/2.3.0/bin/puppet agent --no-daemonize -v')
-      else
-        allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(@lock.lock_pid).and_return('C:\tools\ruby25\bin\ruby.exe')
-      end
       expect(@lock).to be_locked
     end
 
@@ -117,23 +100,6 @@ describe Puppet::Util::Pidlock do
   describe "#locked?" do
     it "should return true if locked" do
       @lock.lock
-      if Puppet::Util::Platform.windows?
-        allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(@lock.lock_pid).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
-      else
-        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'comm=']).and_return('puppet')
-        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'args=']).and_return('puppet')
-      end
-      expect(@lock).to be_locked
-    end
-
-    it "should return true if locked when puppet as gem" do
-      @lock.lock
-      unless Puppet::Util::Platform.windows?
-        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'comm=']).and_return('ruby')
-        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'args=']).and_return('ruby /root/puppet/.bundle/ruby/2.3.0/bin/puppet agent --no-daemonize -v')
-      else
-        allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(@lock.lock_pid).and_return('C:\tools\ruby25\bin\ruby.exe')
-      end
       expect(@lock).to be_locked
     end
 
@@ -179,12 +145,6 @@ describe Puppet::Util::Pidlock do
       end
 
       it "should replace with new locks" do
-        if Puppet::Util::Platform.windows?
-          allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(6789).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
-        else
-          allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', 6789, '-o', 'comm=']).and_return('puppet')
-          allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', 6789, '-o', 'args=']).and_return('puppet')
-        end
         @lock.lock
         expect(Puppet::FileSystem.exist?(@lockfile)).to be_truthy
         expect(@lock.lock_pid).to eq(6789)
@@ -274,6 +234,30 @@ describe Puppet::Util::Pidlock do
 
     it "should not be mine" do
       expect(@lock).not_to be_mine
+    end
+
+    it "should be locked if the other process is a puppet gem" do
+      File.write(@lockfile, "1234")
+
+      if Puppet::Util::Platform.windows?
+        allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(1234).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
+      else
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', 1234, '-o', 'comm=']).and_return('ruby')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', 1234, '-o', 'args=']).and_return('ruby /root/puppet/.bundle/ruby/2.3.0/bin/puppet agent --no-daemonize -v')
+      end
+      expect(@lock).to be_locked
+    end
+
+    it "should not be mine if the other process is a puppet gem" do
+      File.write(@lockfile, "1234")
+
+      if Puppet::Util::Platform.windows?
+        allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(1234).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
+      else
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', 1234, '-o', 'comm=']).and_return('ruby')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', 1234, '-o', 'args=']).and_return('ruby /root/puppet/.bundle/ruby/2.3.0/bin/puppet agent --no-daemonize -v')
+      end
+      expect(@lock).to_not be_mine
     end
 
     describe "#lock" do
