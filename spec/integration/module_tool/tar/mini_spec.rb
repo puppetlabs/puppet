@@ -1,13 +1,11 @@
 require 'spec_helper'
 require 'puppet/module_tool'
-require 'puppet_spec/files'
 
-describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? && Puppet.features.zlib?) do
-  let(:minitar)    { described_class.new }
+describe Puppet::ModuleTool::Tar::Mini, if: Puppet.features.minitar? do
+  let(:minitar) { described_class.new }
 
   describe "Extracts tars with long and short pathnames" do
-    let (:sourcetar) { File.expand_path('../../../../fixtures/module.tar.gz', __FILE__) }
-
+    let (:sourcetar) { fixtures('module.tar.gz') }
     let (:longfilepath)  { "puppetlabs-dsc-1.0.0/lib/puppet_x/dsc_resources/xWebAdministration/DSCResources/MSFT_xWebAppPoolDefaults/MSFT_xWebAppPoolDefaults.schema.mof" }
     let (:shortfilepath) { "puppetlabs-dsc-1.0.0/README.md" }
 
