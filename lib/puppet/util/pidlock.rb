@@ -57,7 +57,9 @@ class Puppet::Util::Pidlock
   end
 
   def clear_if_stale
-    return @lockfile.unlock if lock_pid.nil?
+    pid = lock_pid
+    return @lockfile.unlock if pid == nil
+    return if Process.pid == pid
 
     errors = [Errno::ESRCH]
     # Win32::Process now throws SystemCallError. Since this could be
@@ -65,7 +67,7 @@ class Puppet::Util::Pidlock
     errors << SystemCallError if Puppet::Util::Platform.windows?
 
     begin
-      Process.kill(0, lock_pid)
+      Process.kill(0, pid)
     rescue *errors
       return @lockfile.unlock
     end
@@ -78,19 +80,19 @@ class Puppet::Util::Pidlock
 
       # Check, obtain and use the right ps argument
       begin
-        procname = Puppet::Util::Execution.execute(["ps", ps_argument, lock_pid, "-o", "comm="]).strip
+        procname = Puppet::Util::Execution.execute(["ps", ps_argument, pid, "-o", "comm="]).strip
       rescue Puppet::ExecutionFailure
         ps_argument = "-p"
-        procname = Puppet::Util::Execution.execute(["ps", ps_argument, lock_pid, "-o", "comm="]).strip
+        procname = Puppet::Util::Execution.execute(["ps", ps_argument, pid, "-o", "comm="]).strip
       end
 
-      args = Puppet::Util::Execution.execute(["ps", ps_argument, lock_pid, "-o", "args="]).strip
+      args = Puppet::Util::Execution.execute(["ps", ps_argument, pid, "-o", "args="]).strip
       @lockfile.unlock unless procname =~ /ruby/ && args =~ /puppet/ || procname =~ /puppet(-.*)?$/
     elsif Puppet.features.microsoft_windows?
       # On Windows, we're checking if the filesystem path name of the running
       # process is our vendored ruby:
       begin
-        exe_path = Puppet::Util::Windows::Process::get_process_image_name_by_pid(lock_pid)
+        exe_path = Puppet::Util::Windows::Process::get_process_image_name_by_pid(pid)
         @lockfile.unlock unless exe_path =~ /\\bin\\ruby.exe$/
       rescue Puppet::Util::Windows::Error => e
         Puppet.debug("Failed to read pidfile #{file_path}: #{e.message}")
