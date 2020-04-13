@@ -257,6 +257,26 @@ context Puppet::Type.type(:package).provider(:gem) do
           resource[:ensure] = '3.6.2'
           expect(provider).to_not be_insync(is)
         end
+
+        it 'returns true for >2, <4' do
+          resource[:ensure] = '>2, <4'
+          expect(provider).to be_insync(is)
+        end
+
+        it 'returns false for >=4, <5' do
+          resource[:ensure] = '>=4, <5'
+          expect(provider).to_not be_insync(is)
+        end
+
+        it 'returns true for >2 <4' do
+          resource[:ensure] = '>2 <4'
+          expect(provider).to be_insync(is)
+        end
+
+        it 'returns false for >=4 <5' do
+          resource[:ensure] = '>=4 <5'
+          expect(provider).to_not be_insync(is)
+        end
       end
 
       context 'for string version' do
@@ -284,6 +304,26 @@ context Puppet::Type.type(:package).provider(:gem) do
 
         it 'returns false for 3.6.1' do
           resource[:ensure] = '3.6.1'
+          expect(provider).to_not be_insync(is)
+        end
+
+        it 'returns true for >=1.3, <2' do
+          resource[:ensure] = '>=1.3, <2'
+          expect(provider).to be_insync(is)
+        end
+
+        it 'returns false for >1, <=1.3' do
+          resource[:ensure] = '>1, <=1.3'
+          expect(provider).to_not be_insync(is)
+        end
+
+        it 'returns true for >=1.3 <2' do
+          resource[:ensure] = '>=1.3 <2'
+          expect(provider).to be_insync(is)
+        end
+
+        it 'returns false for >1 <=1.3' do
+          resource[:ensure] = '>1 <=1.3'
           expect(provider).to_not be_insync(is)
         end
       end

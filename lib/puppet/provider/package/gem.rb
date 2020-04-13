@@ -152,7 +152,8 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
     end
     
     begin
-      dependency = Gem::Dependency.new('', should)
+      # Range intersections are not supported by Gem::Requirement, so just split by comma.
+      dependency = Gem::Dependency.new('', should.split(','))
     rescue ArgumentError
       # Bad requirements will cause an error during gem command invocation, so just return not in sync
       return false
