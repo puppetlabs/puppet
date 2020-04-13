@@ -44,7 +44,7 @@ module Puppet::Util::Package::Version
 
     def self.compare(version_a, version_b)
       version_a = parse(version_a) unless version_a.is_a?(self)
-      version_b = parse(version_b) unless version_a.is_a?(self)
+      version_b = parse(version_b) unless version_b.is_a?(self)
 
       version_a <=> version_b
     end
@@ -132,7 +132,7 @@ module Puppet::Util::Package::Version
       dev_key = dev || Float::INFINITY
 
       if !local
-        local_key = -Float::INFINITY
+        local_key = [[-Float::INFINITY, ""]]
       else
         local_key = local.map{|i| (i.is_a? Integer) ? [i, ""] : [-Float::INFINITY, i]}
       end
@@ -150,14 +150,12 @@ module Puppet::Util::Package::Version
         end
       elsif (this.is_a? Array) && !(other.is_a? Array)
         raise Puppet::Error, 'Cannot compare #{this} (Array) with #{other} (#{other.class}). Only ±Float::INFINITY accepted.' unless other.abs == Float::INFINITY
-        return this.first.to_f <=> other
+        return other == -Float::INFINITY ? 1 : -1
       elsif !(this.is_a? Array) && (other.is_a? Array)
         raise Puppet::Error, 'Cannot compare #{this} (#{this.class}) with #{other} (Array). Only ±Float::INFINITY accepted.' unless this.abs == Float::INFINITY
-        return this <=> other.first.to_f
-      else
-        return this <=> other
+        return this == -Float::INFINITY ? -1 : 1
       end
-      0
+      this <=> other
     end
 
     class ValidationFailure < ArgumentError
