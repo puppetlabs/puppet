@@ -10,6 +10,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
   it { is_expected.to be_versionable }
   it { is_expected.to be_install_options }
   it { is_expected.to be_targetable }
+  it { is_expected.to be_version_ranges }
 
   before do
     @resource = Puppet::Resource.new(:package, "fake_package")
@@ -150,6 +151,14 @@ describe Puppet::Type.type(:package).provider(:pip) do
     end
   end
 
+  context "when comparing versions" do
+    it "an abnormal version should still be compared (using default implementation) but a debug message should also be printed regarding it" do
+      expect(Puppet).to receive(:debug).with("Cannot compare 1.0 and abnormal-version.0.1. abnormal-version.0.1 is not a valid python package version. Please refer to https://www.python.org/dev/peps/pep-0440/. Falling through default comparison mechanism.")
+      expect(Puppet::Util::Package).to receive(:versioncmp).with('1.0', 'abnormal-version.0.1')
+      expect{ described_class.compare_pip_versions('1.0', 'abnormal-version.0.1') }.not_to raise_error
+    end
+  end
+
   context "latest" do
     context "with pip version < 1.5.4" do
       before :each do
@@ -206,6 +215,21 @@ describe Puppet::Type.type(:package).provider(:pip) do
         expect(@provider.latest).to eq(nil)
       end
 
+      it "should handle out-of-order version numbers for real_package" do
+        p = StringIO.new(
+          <<-EOS
+          Downloading/unpacking fake-package
+            Using version 2!2.3.4.alpha5.rev6.dev7+abc89 (newest of versions: 1.11, 13.0.3, 1.6, 1!1.2.rev33+123456, 1.9, 1.3.2, 14.0.1, 12.0.7, 13.0.3, 1.7.2, 1.8.4, 1.2+123abc456, 1.6.1, 0.9.2, 1.3, 1.8.3, 12.1.1, 1.1, 1.11.6, 1.2+123456, 1.4.8, 1.6.3, 1!1.0b2.post345.dev456, 1.10.1, 14.0.2, 1.11.3, 14.0.3, 1.4rc1, 1.0b2.post345.dev456, 0.8.4, 1.0, 1!1.0.post456, 12.0.5, 14.0.6, 1.11.5, 1.0rc2, 1.7.1.1, 1.11.4, 13.0.1, 13.1.2, 1.3.3, 0.8.2, 14.0.0, 12.0, 1.8, 1.3.4, 12.0, 1.2, 12.0.6, 0.9.1, 13.1.1, 2!2.3.4.alpha5.rev6.dev7+abc89, 14.0.5, 15.0.2, 15.0.0, 1.4.5, 1.4.3, 13.1.1, 1.11.2, 13.1.2, 1.2+abc123def, 1.3.1, 13.1.0, 12.0.2, 1.11.1, 12.0.1, 12.1.0, 0.9, 1.4.4, 1.2+abc123, 13.0.0, 1.4.9, 1.1.dev1, 12.1.0, 1.7.1, 1.4.2, 14.0.5, 0.8.1, 1.4.6, 0.8.3, 1.11.3, 1.5.1, 1.4.7, 13.0.2, 12.0.7, 1!13.0, 0!13.0, 1.9.1, 1.0.post456.dev34, 1.8.2, 14.0.1, 14.0.0, 1.2.rev33+123456, 14.0.4, 1.6.2, 15.0.1, 13.1.0, 0.8, 1.2+1234.abc, 1.7, 15.0.2, 12.0.5, 13.0.1, 1.8.1, 1.11.6, 15.0.1, 12.0.4, 1.2+123abc, 12.1.1, 13.0.2, 1.11.4, 1.10, 1.2.r32+123456, 14.0.4, 14.0.6, 1.4.1, 1.4, 1.5.2, 12.0.2, 12.0.1, 14.0.3, 14.0.2, 1.11.1, 1.7.1.2, 15.0.0, 12.0.4, 1.6.4, 1.11.2, 1.5, 0.1, 0.10, 0.10.1, 0.10.1.0.1, 1.0.dev456, 1.0a1, 1.0a2.dev456, 1.0a12.dev456, 1.0a12, 1.0b1.dev456, 1.0b2, 1.0b2.post345, 1.0b2-346, 1.0c1.dev456, 1.0c1, 1.0c3, 1.0, 1.0.post456, 1.2+abc, 1!1.0, 1!1.0.post456.dev34)
+            Downloading real-package-2!2.3.4.alpha5.rev6.dev7+abc89.tar.gz (544Kb): 544Kb downloaded
+          Saved ./foo/real-package-2!2.3.4.alpha5.rev6.dev7+abc89.tar.gz
+          Successfully downloaded real-package
+          EOS
+        )
+        expect(Puppet::Util::Execution).to receive(:execpipe).and_yield(p).once
+        @resource[:name] = "real_package"
+        expect(@provider.latest).to eq('2!2.3.4.alpha5.rev6.dev7+abc89')
+      end
+
       it "should use 'install_options' when specified" do
         expect(Puppet::Util::Execution).to receive(:execpipe).with(array_including([["--index=https://fake.example.com"]])).once
         @resource[:name] = "fake_package"
@@ -257,14 +281,13 @@ describe Puppet::Type.type(:package).provider(:pip) do
         p = StringIO.new(
           <<-EOS
           Collecting real-package==versionplease
-            Could not find a version that satisfies the requirement real-package==versionplease (from versions: 1.11, 13.0.3, 1.6, 1.9, 1.3.2, 14.0.1, 12.0.7, 13.0.3, 1.7.2, 1.8.4, 1.6.1, 0.9.2, 1.3, 1.8.3, 12.1.1, 1.1, 1.11.6, 1.4.8, 1.6.3, 1.10.1, 14.0.2, 1.11.3, 14.0.3, 1.4rc1, 0.8.4, 1.0, 12.0.5, 14.0.6, 1.11.5, 1.7.1.1, 1.11.4, 13.0.1, 13.1.2, 1.3.3, 0.8.2, 14.0.0, 12.0, 1.8, 1.3.4, 12.0, 1.2, 12.0.6, 0.9.1, 13.1.1, 14.0.5, 15.0.2, 15.0.0, 1.4.5, 1.4.3, 13.1.1, 1.11.2, 13.1.2, 1.3.1, 13.1.0, 12.0.2, 1.11.1, 12.0.1, 12.1.0, 0.9, 1.4.4, 13.0.0, 1.4.9, 12.1.0, 1.7.1, 1.4.2, 14.0.5, 0.8.1, 1.4.6, 0.8.3, 1.11.3, 1.5.1, 1.4.7, 13.0.2, 12.0.7, 13.0.0, 1.9.1, 1.8.2, 14.0.1, 14.0.0, 14.0.4, 1.6.2, 15.0.1, 13.1.0, 0.8, 1.7, 15.0.2, 12.0.5, 13.0.1, 1.8.1, 1.11.6, 15.0.1, 12.0.4, 12.1.1, 13.0.2, 1.11.4, 1.10, 14.0.4, 14.0.6, 1.4.1, 1.4, 1.5.2, 12.0.2, 12.0.1, 14.0.3, 14.0.2, 1.11.1, 1.7.1.2, 15.0.0, 12.0.4, 1.6.4, 1.11.2, 1.5)
+            Could not find a version that satisfies the requirement real-package==versionplease (from versions: 1.11, 13.0.3, 1.6, 1!1.2.rev33+123456, 1.9, 1.3.2, 14.0.1, 12.0.7, 13.0.3, 1.7.2, 1.8.4, 1.2+123abc456, 1.6.1, 0.9.2, 1.3, 1.8.3, 12.1.1, 1.1, 1.11.6, 1.2+123456, 1.4.8, 1.6.3, 1!1.0b2.post345.dev456, 1.10.1, 14.0.2, 1.11.3, 14.0.3, 1.4rc1, 1.0b2.post345.dev456, 0.8.4, 1.0, 1!1.0.post456, 12.0.5, 14.0.6, 1.11.5, 1.0rc2, 1.7.1.1, 1.11.4, 13.0.1, 13.1.2, 1.3.3, 0.8.2, 14.0.0, 12.0, 1.8, 1.3.4, 12.0, 1.2, 12.0.6, 0.9.1, 13.1.1, 2!2.3.4.alpha5.rev6.dev7+abc89, 14.0.5, 15.0.2, 15.0.0, 1.4.5, 1.4.3, 13.1.1, 1.11.2, 13.1.2, 1.2+abc123def, 1.3.1, 13.1.0, 12.0.2, 1.11.1, 12.0.1, 12.1.0, 0.9, 1.4.4, 1.2+abc123, 13.0.0, 1.4.9, 1.1.dev1, 12.1.0, 1.7.1, 1.4.2, 14.0.5, 0.8.1, 1.4.6, 0.8.3, 1.11.3, 1.5.1, 1.4.7, 13.0.2, 12.0.7, 1!13.0, 0!13.0, 1.9.1, 1.0.post456.dev34, 1.8.2, 14.0.1, 14.0.0, 1.2.rev33+123456, 14.0.4, 1.6.2, 15.0.1, 13.1.0, 0.8, 1.2+1234.abc, 1.7, 15.0.2, 12.0.5, 13.0.1, 1.8.1, 1.11.6, 15.0.1, 12.0.4, 1.2+123abc, 12.1.1, 13.0.2, 1.11.4, 1.10, 1.2.r32+123456, 14.0.4, 14.0.6, 1.4.1, 1.4, 1.5.2, 12.0.2, 12.0.1, 14.0.3, 14.0.2, 1.11.1, 1.7.1.2, 15.0.0, 12.0.4, 1.6.4, 1.11.2, 1.5, 0.1, 0.10, 0.10.1, 0.10.1.0.1, 1.0.dev456, 1.0a1, 1.0a2.dev456, 1.0a12.dev456, 1.0a12, 1.0b1.dev456, 1.0b2, 1.0b2.post345, 1.0b2-346, 1.0c1.dev456, 1.0c1, 1.0c3, 1.0, 1.0.post456, 1.2+abc, 1!1.0, 1!1.0.post456.dev34)
           No distributions matching the version for real-package==versionplease
           EOS
         )
         expect(Puppet::Util::Execution).to receive(:execpipe).with(["/fake/bin/pip", "install", "real_package==versionplease"]).and_yield(p).once
         @resource[:name] = "real_package"
-        latest = @provider.latest
-        expect(latest).to eq('15.0.2')
+        expect(@provider.latest).to eq('2!2.3.4.alpha5.rev6.dev7+abc89')
       end
 
       it "should use 'install_options' when specified" do
