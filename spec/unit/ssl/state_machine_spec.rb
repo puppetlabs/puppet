@@ -837,7 +837,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         }.to output(/Exiting now because the waitforcert setting is set to 0./).to_stdout
       end
 
-      it 'sleeps and transitions to NeedCACerts' do
+      it 'sleeps and transitions to NeedLock' do
         machine = described_class.new(waitforcert: 15)
 
         state = Puppet::SSL::StateMachine::Wait.new(machine)
@@ -845,10 +845,10 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
         expect(Puppet).to receive(:info).with(/Will try again in 15 seconds./)
 
-        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCACerts)
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedLock)
       end
 
-      it 'sleeps and transitions to NeedCACerts when maxwaitforcert is set' do
+      it 'sleeps and transitions to NeedLock when maxwaitforcert is set' do
         machine = described_class.new(waitforcert: 15, maxwaitforcert: 30)
 
         state = Puppet::SSL::StateMachine::Wait.new(machine)
@@ -856,7 +856,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
         expect(Puppet).to receive(:info).with(/Will try again in 15 seconds./)
 
-        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCACerts)
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedLock)
       end
 
       it 'waits indefinitely by default' do
@@ -885,6 +885,21 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         expect(Puppet.runtime['http'].pool).to receive(:close).and_call_original
         expect(Kernel).to receive(:sleep).with(15).ordered
 
+        state.next_state
+      end
+
+      it 'releases the lock while sleeping' do
+        lockfile = Puppet::Util::Pidlock.new(Puppet[:ssl_lockfile])
+        machine = described_class.new(lockfile: lockfile)
+        state = Puppet::SSL::StateMachine::Wait.new(machine)
+
+        # pidlock should be unlocked while sleeping
+        allow(Kernel).to receive(:sleep) do
+          expect(lockfile).to_not be_locked
+        end
+
+        # lock before running the state
+        lockfile.lock
         state.next_state
       end
     end

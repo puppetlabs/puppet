@@ -280,14 +280,11 @@ class Puppet::SSL::StateMachine
 
         # close persistent connections and session state before sleeping
         Puppet.runtime['http'].close
-        @machine.session = nil
-
-        Kernel.sleep(time)
-
-        # our ssl directory may have been cleaned while we were
-        # sleeping, start over from the top
         @machine.session = Puppet.runtime['http'].create_session
-        NeedCACerts.new(@machine)
+
+        @machine.unlock
+        Kernel.sleep(time)
+        NeedLock.new(@machine)
       end
     end
   end
@@ -414,6 +411,10 @@ class Puppet::SSL::StateMachine
 
   def lock
     @lockfile.lock
+  end
+
+  def unlock
+    @lockfile.unlock
   end
 
   private
