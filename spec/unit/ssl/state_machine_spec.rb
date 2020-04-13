@@ -197,7 +197,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
   end
 
   context 'when locking' do
-    let(:lockfile) { double('ssllockfile') }
+    let(:lockfile) { Puppet::Util::Pidlock.new(Puppet[:ssl_lockfile]) }
     let(:machine) { described_class.new(cert_provider: cert_provider, ssl_provider: ssl_provider, lockfile: lockfile) }
 
     # lockfile is deleted before `ensure_ca_certificates` returns, so
@@ -210,7 +210,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'locks the file prior to running the state machine and unlocks when done' do
-      expect(lockfile).to receive(:lock).and_return(true).ordered
+      expect(lockfile).to receive(:lock).and_call_original.ordered
       expect(cert_provider).to receive(:load_cacerts).and_return(cacerts).ordered
       expect(cert_provider).to receive(:load_crls).and_return(crls).ordered
       expect(lockfile).to receive(:unlock).ordered
