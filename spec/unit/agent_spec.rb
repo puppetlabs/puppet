@@ -185,31 +185,26 @@ describe Puppet::Agent do
 
         # So we don't actually try to hit the filesystem.
         allow(@agent).to receive(:lock).and_yield
-
-        allow(Kernel).to receive(:fork)
-        allow(Process).to receive(:waitpid2).and_return([123, double('process::status', :exitstatus => 0)])
-        allow(@agent).to receive(:exit)
       end
 
       it "should run the agent in a forked process" do
         client = AgentTestClient.new
         expect(AgentTestClient).to receive(:new).and_return(client)
 
-        expect(client).to receive(:run)
+        expect(client).to receive(:run).and_return(0)
 
         expect(Kernel).to receive(:fork).and_yield
-        @agent.run
+        expect { @agent.run }.to exit_with(0)
       end
 
       it "should exit child process if child exit" do
         client = AgentTestClient.new
         expect(AgentTestClient).to receive(:new).and_return(client)
 
-        expect(client).to receive(:run).and_raise(SystemExit)
+        expect(client).to receive(:run).and_raise(SystemExit.new(-1))
 
         expect(Kernel).to receive(:fork).and_yield
-        expect(@agent).to receive(:exit).with(-1)
-        @agent.run
+        expect { @agent.run }.to exit_with(-1)
       end
 
       it 'should exit with 1 if an exception is raised' do
@@ -219,31 +214,44 @@ describe Puppet::Agent do
         expect(client).to receive(:run).and_raise(StandardError)
 
         expect(Kernel).to receive(:fork).and_yield
-        expect(@agent).to receive(:exit).with(1)
-        @agent.run
+        expect { @agent.run }.to exit_with(1)
       end
 
-      it "should re-raise exit happening in the child" do
-        allow(Process).to receive(:waitpid2).and_return([123, double('process::status', :exitstatus => -1)])
-        expect { @agent.run }.to raise_error(SystemExit)
-      end
+      it 'should exit with 254 if NoMemoryError exception is raised' do
+        client = AgentTestClient.new
+        expect(AgentTestClient).to receive(:new).and_return(client)
 
-      it "should re-raise NoMoreMemory happening in the child" do
-        allow(Process).to receive(:waitpid2).and_return([123, double('process::status', :exitstatus => -2)])
-        expect { @agent.run }.to raise_error(NoMemoryError)
-      end
+        expect(client).to receive(:run).and_raise(NoMemoryError)
 
-      it "should return the child exit code" do
-        allow(Process).to receive(:waitpid2).and_return([123, double('process::status', :exitstatus => 777)])
-        expect(@agent.run).to eq(777)
+        expect(Kernel).to receive(:fork).and_yield
+        expect { @agent.run }.to exit_with(254)
       end
 
       it "should return the block exit code as the child exit code" do
         expect(Kernel).to receive(:fork).and_yield
-        expect(@agent).to receive(:exit).with(777)
-        @agent.run_in_fork {
-          777
-        }
+        expect {
+          @agent.run_in_fork {
+            777
+          }
+        }.to exit_with(777)
+      end
+
+      it "should return `1` exit code if the block returns `nil`" do
+        expect(Kernel).to receive(:fork).and_yield
+        expect {
+          @agent.run_in_fork {
+            nil
+          }
+        }.to exit_with(1)
+      end
+
+      it "should return `1` exit code if the block returns `false`" do
+        expect(Kernel).to receive(:fork).and_yield
+        expect {
+          @agent.run_in_fork {
+            false
+          }
+        }.to exit_with(1)
       end
     end
 
