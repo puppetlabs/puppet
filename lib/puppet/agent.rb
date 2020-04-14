@@ -95,11 +95,9 @@ class Puppet::Agent
         atForkHandler.child
         $0 = _("puppet agent: applying configuration")
         begin
-          exit(yield)
-        rescue SystemExit
-          exit(-1)
+          exit(yield || 1)
         rescue NoMemoryError
-          exit(-2)
+          exit(254)
         end
       end
     ensure
@@ -107,13 +105,7 @@ class Puppet::Agent
     end
 
     exit_code = Process.waitpid2(child_pid)
-    case exit_code[1].exitstatus
-    when -1
-      raise SystemExit
-    when -2
-      raise NoMemoryError
-    end
-    exit_code[1].exitstatus
+    exit(exit_code[1].exitstatus)
   end
 
   private
