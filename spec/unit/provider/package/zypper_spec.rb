@@ -226,4 +226,75 @@ describe Puppet::Type.type(:package).provider(:zypper) do
       @provider.uninstall
     end
   end
+
+  context 'when installing with VersionRange' do
+    let(:search_output) { File.read(my_fixture('zypper-search-uninstalled.out')) }
+
+    before(:each) do
+      allow(@resource).to receive(:[]).with(:name).and_return('vim')
+      allow(@resource).to receive(:allow_virtual?).and_return(false)
+      allow(@provider).to receive(:zypper_version).and_return('1.0.2')
+
+      expect(@provider).to receive(:zypper).with('search', '--match-exact', '--type', 'package', '--uninstalled-only', '-s', 'vim')
+                                           .and_return(search_output)
+    end
+
+    it 'does install the package if version is available' do
+      expect(@resource).to receive(:should).with(:ensure).and_return('>1.0')
+
+      expect(@provider).to receive(:zypper).with('--quiet', :install, '--auto-agree-with-licenses', '--no-confirm', 'vim-1.0.20040813-19.9')
+      expect(@provider).to receive(:query).and_return('vim 0 1.0.20040813 19.9 x86_64')
+
+      @provider.install
+    end
+
+    it 'does consider range as version if version in range is not available' do
+      allow(@resource).to receive(:should).with(:ensure).and_return('>2.0')
+
+      expect(@provider).to receive(:zypper).with('--quiet', :install, '--auto-agree-with-licenses', '--no-confirm', 'vim->2.0')
+                             .and_raise(Puppet::ExecutionFailure.new('My Error'))
+
+      expect { @provider.install }.to raise_error(Puppet::ExecutionFailure, 'My Error')
+    end
+  end
+
+  describe 'insync?' do
+    subject { @provider.insync?('1.19-2') }
+
+    context 'when versions are matching' do
+      before { allow(@resource).to receive(:[]).with(:ensure).and_return('1.19-2') }
+
+      it { is_expected.to be true }
+    end
+
+    context 'when version are not matching' do
+      before { allow(@resource).to receive(:[]).with(:ensure).and_return('1.19-3') }
+
+      it { is_expected.to be false }
+    end
+
+    context 'when version is in gt range' do
+      before { allow(@resource).to receive(:[]).with(:ensure).and_return('>1.19-0') }
+
+      it { is_expected.to be true }
+    end
+
+    context 'when version is not in gt range' do
+      before { allow(@resource).to receive(:[]).with(:ensure).and_return('>1.19-2') }
+
+      it { is_expected.to be false }
+    end
+
+    context 'when version is in min-max range' do
+      before { allow(@resource).to receive(:[]).with(:ensure).and_return('>1.19-0 <1.19-3') }
+
+      it { is_expected.to be true }
+    end
+
+    context 'when version is not in min-max range' do
+      before { allow(@resource).to receive(:[]).with(:ensure).and_return('>1.19-0 <1.19-2') }
+
+      it { is_expected.to be false }
+    end
+  end
 end
