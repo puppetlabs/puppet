@@ -61,7 +61,7 @@ class Puppet::Agent
             end
           rescue Puppet::LockError
             Puppet.notice _("Run of %{client_class} already in progress; skipping  (%{lockfile_path} exists)") % { client_class: client_class, lockfile_path: lockfile_path }
-            return 1
+            return
           rescue RunTimeoutError => detail
             Puppet.log_exception(detail, _("Execution of %{client_class} did not complete within %{runtimeout} seconds and was terminated.") %
               {client_class: client_class,
@@ -117,7 +117,7 @@ class Puppet::Agent
       @client = client_class.new(transaction_uuid, job_id)
     rescue StandardError => detail
       Puppet.log_exception(detail, _("Could not create instance of %{client_class}: %{detail}") % { client_class: client_class, detail: detail })
-      return 1
+      return
     end
     yield @client
   ensure
