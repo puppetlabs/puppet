@@ -228,13 +228,6 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       expect(File).to_not be_exist(Puppet[:ssl_lockfile])
     end
 
-    it 'raises an exception when locking fails' do
-      allow(lockfile).to receive(:lock).and_return(false)
-      expect {
-        machine.ensure_ca_certificates
-      }.to raise_error(Puppet::Error, /Another puppet instance is already running; exiting/)
-    end
-
     it 'acquires an empty lockfile' do
       Puppet::FileSystem.touch(Puppet[:ssl_lockfile])
 
@@ -261,6 +254,57 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
       machine = described_class.new(cert_provider: cert_provider, ssl_provider: ssl_provider)
       machine.ensure_ca_certificates
+    end
+
+    context 'and another puppet process is running' do
+      let(:now) { Time.now }
+      let(:future) { now + (5 * 60)} # 5 mins in the future
+
+      before :each do
+        allow(lockfile).to receive(:lock).and_return(false)
+      end
+
+      it 'raises a puppet exception' do
+        expect {
+          machine.ensure_ca_certificates
+        }.to raise_error(Puppet::Error, /Another puppet instance is already running and the waitforlock setting is set to 0; exiting/)
+      end
+
+      it 'sleeps and retries successfully' do
+        machine = described_class.new(lockfile: lockfile, cert_provider: cert_provider, waitforlock: 1, maxwaitforlock: 10)
+        allow(cert_provider).to receive(:load_cacerts).and_return(cacerts)
+        allow(cert_provider).to receive(:load_crls).and_return(crls)
+        allow(Time).to receive(:now).and_return(now, future)
+
+        expect(Kernel).to receive(:sleep).with(1)
+        expect(Puppet).to receive(:info).with("Another puppet instance is already running; waiting for it to finish")
+        expect(Puppet).to receive(:info).with("Will try again in 1 seconds.")
+
+        allow(lockfile).to receive(:lock).and_return(false, true)
+
+        expect(machine.ensure_ca_certificates).to be_an_instance_of(Puppet::SSL::SSLContext)
+      end
+
+      it 'sleeps and retries unsuccessfully until the deadline is exceeded' do
+        machine = described_class.new(lockfile: lockfile, waitforlock: 1, maxwaitforlock: 10)
+        allow(Time).to receive(:now).and_return(now, future)
+
+        expect(Kernel).to receive(:sleep).with(1)
+        expect(Puppet).to receive(:info).with("Another puppet instance is already running; waiting for it to finish")
+        expect(Puppet).to receive(:info).with("Will try again in 1 seconds.")
+
+        allow(lockfile).to receive(:lock).and_return(false)
+        expect {
+          machine.ensure_ca_certificates
+        }.to raise_error(Puppet::Error, /Another puppet instance is already running and the maxwaitforlock timeout has been exceeded; exiting/)
+      end
+
+      it 'defaults the waitlock deadline to 60 seconds' do
+        allow(Time).to receive(:now).and_return(now)
+
+        machine = described_class.new
+        expect(machine.waitlock_deadline).to eq(now.to_i + 60)
+      end
     end
   end
 

@@ -301,15 +301,31 @@ class Puppet::SSL::StateMachine
         # our ssl directory may have been cleaned while we were
         # sleeping, start over from the top
         NeedCACerts.new(@machine)
+      elsif @machine.waitforlock < 1
+        LockFailure.new(@machine, _("Another puppet instance is already running and the waitforlock setting is set to 0; exiting"))
+      elsif Time.now.to_i > @machine.waitlock_deadline
+        LockFailure.new(@machine, _("Another puppet instance is already running and the maxwaitforlock timeout has been exceeded; exiting"))
       else
-        LockFailure.new(@machine, nil)
+        Puppet.info _("Another puppet instance is already running; waiting for it to finish")
+        Puppet.info _("Will try again in %{time} seconds.") % {time: @machine.waitforlock}
+        Kernel.sleep @machine.waitforlock
+
+        # try again
+        self
       end
     end
   end
 
   # We failed to acquire the lock, so exit
   #
-  class LockFailure < SSLState; end
+  class LockFailure < SSLState
+    attr_reader :message
+
+    def initialize(machine, message)
+      super(machine, nil)
+      @message = message
+    end
+  end
 
   # We cannot make progress due to an error.
   #
@@ -333,7 +349,7 @@ class Puppet::SSL::StateMachine
   #
   class Done < SSLState; end
 
-  attr_reader :waitforcert, :wait_deadline, :cert_provider, :ssl_provider, :ca_fingerprint, :digest
+  attr_reader :waitforcert, :wait_deadline, :waitforlock, :waitlock_deadline, :cert_provider, :ssl_provider, :ca_fingerprint, :digest
   attr_accessor :session
 
   # Construct a state machine to manage the SSL initialization process. By
@@ -346,7 +362,12 @@ class Puppet::SSL::StateMachine
   # then then state machine will exit instead of wait.
   #
   # @param waitforcert [Integer] how many seconds to wait between attempts
-  # @param maxwiatforcert [Integer] maximum amount of second
+  # @param maxwaitforcert [Integer] maximum amount of seconds to wait for the
+  #   server to sign the certificate request
+  # @param waitforlock [Integer] how many seconds to wait between attempts for
+  #   acquiring the ssl lock
+  # @param maxwaitforlock [Integer] maximum amount of seconds to wait for an
+  #   already running process to release the ssl lock
   # @param onetime [Boolean] whether to run onetime
   # @param lockfile [Puppet::Util::Pidlock] lockfile to protect against
   #   concurrent modification by multiple processes
@@ -359,6 +380,8 @@ class Puppet::SSL::StateMachine
   #   downloaded CA bundle
   def initialize(waitforcert: Puppet[:waitforcert],
                  maxwaitforcert: Puppet[:maxwaitforcert],
+                 waitforlock: Puppet[:waitforlock],
+                 maxwaitforlock: Puppet[:maxwaitforlock],
                  onetime: Puppet[:onetime],
                  cert_provider: Puppet::X509::CertProvider.new,
                  ssl_provider: Puppet::SSL::SSLProvider.new,
@@ -367,6 +390,8 @@ class Puppet::SSL::StateMachine
                  ca_fingerprint: Puppet[:ca_fingerprint])
     @waitforcert = waitforcert
     @wait_deadline = Time.now.to_i + maxwaitforcert
+    @waitforlock = waitforlock
+    @waitlock_deadline = Time.now.to_i + maxwaitforlock
     @onetime = onetime
     @cert_provider = cert_provider
     @ssl_provider = ssl_provider
@@ -427,7 +452,7 @@ class Puppet::SSL::StateMachine
       when stop
         break
       when LockFailure
-        raise Puppet::Error, _('Another puppet instance is already running; exiting')
+        raise Puppet::Error, state.message
       when Error
         if @onetime
           Puppet.log_exception(state.error)
