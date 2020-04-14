@@ -13,7 +13,7 @@ require 'puppet'
 #   service.
 module Puppet::Util::AtFork
   @handler_class = loop do
-    if Facter.value(:operatingsystem) == 'Solaris'
+    if Puppet::Util::Platform.solaris?
       begin
         require 'puppet/util/at_fork/solaris'
         # using break to return a value from the loop block

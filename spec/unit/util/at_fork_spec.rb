@@ -19,7 +19,7 @@ describe 'Puppet::Util::AtFork' do
   describe '.get_handler' do
     context 'when on Solaris' do
       before :each do
-        expect(Facter).to receive(:value).with(:operatingsystem).and_return('Solaris')
+        expect(Puppet::Util::Platform).to receive(:solaris?).and_return(true)
       end
 
       after :each do
@@ -114,7 +114,7 @@ describe 'Puppet::Util::AtFork' do
 
     context 'when NOT on Solaris' do
       before :each do
-        expect(Facter).to receive(:value).with(:operatingsystem).and_return(nil)
+        expect(Puppet::Util::Platform).to receive(:solaris?).and_return(false)
       end
 
       def stub_noop_handler(namespace_only = false)
