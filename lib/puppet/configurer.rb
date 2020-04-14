@@ -199,7 +199,7 @@ class Puppet::Configurer
     # environment and transaction_uuid very early, this is to ensure
     # they are sent regardless of any catalog compilation failures or
     # exceptions.
-    options[:report] ||= Puppet::Transaction::Report.new(nil, @environment, @transaction_uuid, @job_id)
+    options[:report] ||= Puppet::Transaction::Report.new(nil, @environment, @transaction_uuid, @job_id, options[:start_time] || Time.now)
     report = options[:report]
     init_storage
 
@@ -235,8 +235,12 @@ class Puppet::Configurer
   end
 
   def run_internal(options)
-    start = Time.now
     report = options[:report]
+
+    if options[:start_time]
+      startup_time = Time.now - options[:start_time]
+      report.add_times(:startup_time, startup_time)
+    end
 
     # If a cached catalog is explicitly requested, attempt to retrieve it. Skip the node request,
     # don't pluginsync and switch to the catalog's environment if we successfully retrieve it.
@@ -402,7 +406,7 @@ class Puppet::Configurer
     end
 
     report.cached_catalog_status ||= @cached_catalog_status
-    report.add_times(:total, Time.now - start)
+    report.add_times(:total, Time.now - report.time)
     report.finalize_report
     Puppet::Util::Log.close(report)
     send_report(report)

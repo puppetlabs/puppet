@@ -39,6 +39,7 @@ class Puppet::Application::Agent < Puppet::Application
       :graph => true,
       :fingerprint => false,
       :sourceaddress => nil,
+      :start_time => Time.now,
     }.each do |opt,val|
       options[opt] = val
     end
@@ -405,7 +406,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
   def onetime(daemon)
     begin
-      exitstatus = daemon.agent.run(:job_id => options[:job_id])
+      exitstatus = daemon.agent.run({:job_id => options[:job_id], :start_time => options[:start_time]})
     rescue => detail
       Puppet.log_exception(detail)
     end

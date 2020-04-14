@@ -148,7 +148,7 @@ describe Puppet::Configurer do
       configurer = Puppet::Configurer.new("test_tuuid", "test_jid")
 
       report = Puppet::Transaction::Report.new(nil, "test", "aaaa")
-      expect(Puppet::Transaction::Report).to receive(:new).with(anything, anything, 'test_tuuid', 'test_jid').and_return(report)
+      expect(Puppet::Transaction::Report).to receive(:new).with(anything, anything, 'test_tuuid', 'test_jid', anything).and_return(report)
       expect(configurer).to receive(:send_report).with(report)
 
       configurer.run

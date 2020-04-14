@@ -14,6 +14,11 @@ module Puppet
       end
       module_function :windows?
 
+      def solaris?
+        RUBY_PLATFORM.include?('solaris')
+      end
+      module_function :solaris?
+
       def default_paths
         return [] if windows?
 

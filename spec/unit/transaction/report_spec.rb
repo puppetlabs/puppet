@@ -39,6 +39,10 @@ describe Puppet::Transaction::Report do
     expect(Puppet::Transaction::Report.new('cv', 'env', 'tid', 'some job id').job_id).to eq('some job id')
   end
 
+  it "should take a 'start_time' as an argument" do
+    expect(Puppet::Transaction::Report.new('cv', 'env', 'tid', 'some job id', 'my start time').time).to eq('my start time')
+  end
+
   it "should be able to set configuration_version" do
     report = Puppet::Transaction::Report.new
     report.configuration_version = "some version"
