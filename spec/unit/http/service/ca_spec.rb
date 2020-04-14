@@ -68,7 +68,15 @@ describe Puppet::HTTP::Service::Ca do
     it 'gets a certificate from the "certificate" endpoint' do
       stub_request(:get, url).to_return(body: pem)
 
-      expect(subject.get_certificate('ca')).to eq(pem)
+      _, body = subject.get_certificate('ca')
+      expect(body).to eq(pem)
+    end
+
+    it 'returns the request response' do
+      stub_request(:get, url).to_return(body: pem)
+
+      resp, _ = subject.get_certificate('ca')
+      expect(resp).to be_a(Puppet::HTTP::Response)
     end
 
     it 'accepts text/plain responses' do
@@ -107,7 +115,15 @@ describe Puppet::HTTP::Service::Ca do
     it 'gets a CRL from "certificate_revocation_list" endpoint' do
       stub_request(:get, url).to_return(body: pem)
 
-      expect(subject.get_certificate_revocation_list).to eq(pem)
+      _, body = subject.get_certificate_revocation_list
+      expect(body).to eq(pem)
+    end
+
+    it 'returns the request response' do
+      stub_request(:get, url).to_return(body: pem)
+
+      resp, _ = subject.get_certificate_revocation_list
+      expect(resp).to be_a(Puppet::HTTP::Response)
     end
 
     it 'accepts text/plain responses' do
@@ -159,6 +175,13 @@ describe Puppet::HTTP::Service::Ca do
       stub_request(:put, url).with(body: pem, headers: { 'Content-Type' => 'text/plain' })
 
       subject.put_certificate_request('infinity', request)
+    end
+
+    it 'returns the request response' do
+      stub_request(:put, url).with(body: pem, headers: { 'Content-Type' => 'text/plain' })
+
+      resp = subject.put_certificate_request('infinity', request)
+      expect(resp).to be_a(Puppet::HTTP::Response)
     end
 
     it 'raises response error if unsuccessful' do
