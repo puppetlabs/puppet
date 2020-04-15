@@ -63,8 +63,17 @@ describe Puppet::HTTP::Service::FileServer do
         status: 200, body: filemetadata.render, headers: { 'Content-Type' => 'application/json' }
       )
 
-      metadata = subject.get_file_metadata(path: request_path, environment: environment)
+      _, metadata = subject.get_file_metadata(path: request_path, environment: environment)
       expect(metadata.path).to eq(path)
+    end
+
+    it 'returns the request response' do
+      stub_request(:get, url).to_return(
+        status: 200, body: filemetadata.render, headers: { 'Content-Type' => 'application/json' }
+      )
+
+      resp, _ = subject.get_file_metadata(path: request_path, environment: environment)
+      expect(resp).to be_a(Puppet::HTTP::Response)
     end
 
     it 'raises a protocol error if the Content-Type header is missing from the response' do
@@ -136,8 +145,17 @@ describe Puppet::HTTP::Service::FileServer do
         status: 200, body: formatter.render_multiple(filemetadatas), headers: { 'Content-Type' => 'application/json' }
       )
 
-      metadatas = subject.get_file_metadatas(path: request_path, environment: environment)
+      _, metadatas = subject.get_file_metadatas(path: request_path, environment: environment)
       expect(metadatas.first.path).to eq(path)
+    end
+
+    it 'returns the request response' do
+      stub_request(:get, url).to_return(
+        status: 200, body: formatter.render_multiple(filemetadatas), headers: { 'Content-Type' => 'application/json' }
+      )
+
+      resp, _ = subject.get_file_metadatas(path: request_path, environment: environment)
+      expect(resp).to be_a(Puppet::HTTP::Response)
     end
 
     it 'automatically converts an array of parameters to the stringified query' do
@@ -148,7 +166,7 @@ describe Puppet::HTTP::Service::FileServer do
         status: 200, body: formatter.render_multiple(filemetadatas), headers: { 'Content-Type' => 'application/json' }
       )
 
-      metadatas = subject.get_file_metadatas(path: request_path, environment: environment, ignore: ['CVS', '.git', '.hg'])
+      _, metadatas = subject.get_file_metadatas(path: request_path, environment: environment, ignore: ['CVS', '.git', '.hg'])
       expect(metadatas.first.path).to eq(path)
     end
 
@@ -222,6 +240,13 @@ describe Puppet::HTTP::Service::FileServer do
       }.to yield_with_args("and beyond")
     end
 
+    it 'returns the request response' do
+      stub_request(:get, uri)
+
+      resp = subject.get_file_content(path: '/:mount/:path', environment: environment) { |b| b }
+      expect(resp).to be_a(Puppet::HTTP::Response)
+    end
+
     it 'raises response error if unsuccessful' do
       stub_request(:get, uri).to_return(status: [400, 'Bad Request'])
 
@@ -253,6 +278,13 @@ describe Puppet::HTTP::Service::FileServer do
       expect { |b|
         subject.get_static_file_content(path: '/:mount/:path', environment: environment, code_id: code_id, &b)
       }.to yield_with_args("and beyond")
+    end
+
+    it 'returns the request response' do
+      stub_request(:get, uri)
+
+      resp = subject.get_static_file_content(path: '/:mount/:path', environment: environment, code_id: code_id) { |b| b }
+      expect(resp).to be_a(Puppet::HTTP::Response)
     end
 
     it 'raises response error if unsuccessful' do

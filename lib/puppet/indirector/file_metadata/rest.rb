@@ -14,13 +14,14 @@ class Puppet::Indirector::FileMetadata::Rest < Puppet::Indirector::REST
     session = Puppet.lookup(:http_session)
     api = session.route_to(:fileserver, url: url)
 
-    api.get_file_metadata(
+    _, file_metadata = api.get_file_metadata(
       path: URI.unescape(url.path),
       environment: request.environment.to_s,
       links: request.options[:links],
       checksum_type: request.options[:checksum_type],
       source_permissions: request.options[:source_permissions]
     )
+    file_metadata
   rescue Puppet::HTTP::ResponseError => e
     if e.response.code == 404
       return nil unless request.options[:fail_on_404]
@@ -40,7 +41,7 @@ class Puppet::Indirector::FileMetadata::Rest < Puppet::Indirector::REST
     session = Puppet.lookup(:http_session)
     api = session.route_to(:fileserver, url: url)
 
-    api.get_file_metadatas(
+    _, file_metadatas = api.get_file_metadatas(
       path: URI.unescape(url.path),
       environment: request.environment.to_s,
       recurse: request.options[:recurse],
@@ -50,6 +51,7 @@ class Puppet::Indirector::FileMetadata::Rest < Puppet::Indirector::REST
       checksum_type: request.options[:checksum_type],
       source_permissions: request.options[:source_permissions],
     )
+    file_metadatas
   rescue Puppet::HTTP::ResponseError => e
     # since it's search, return empty array instead of nil
     return [] if e.response.code == 404

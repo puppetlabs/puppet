@@ -49,7 +49,8 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   #   file permissions in the response. If set to `:ignore`, the server will
   #   return default permissions.
   #
-  # @return [Puppet::FileServing::Metadata] The deserialized metadata for the
+  # @return [Array<Puppet::HTTP::Response, Puppet::FileServing::Metadata>] An
+  #   array with the request response and the deserialized metadata for the
   #   file returned from the server
   #
   def get_file_metadata(path:, environment:, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore)
@@ -70,7 +71,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
 
     process_response(response)
 
-    deserialize(response, Puppet::FileServing::Metadata)
+    [response, deserialize(response, Puppet::FileServing::Metadata)]
   end
 
   #
@@ -101,7 +102,8 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   #   file permissions in the report. If set to `:ignore`, the server will return
   #   default permissions.
   #
-  # @return [Array<Puppet::FileServing::Metadata>]  An array of the deserialized
+  # @return [Array<Puppet::HTTP::Response, Array<Puppet::FileServing::Metadata>>]
+  #   An array with the request response and an array of the deserialized
   #   metadata for each file returned from the server
   #
   def get_file_metadatas(path: nil, environment:, recurse: :false, recurselimit: nil, ignore: nil, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore)
@@ -125,7 +127,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
 
     process_response(response)
 
-    deserialize_multiple(response, Puppet::FileServing::Metadata)
+    [response, deserialize_multiple(response, Puppet::FileServing::Metadata)]
   end
 
   #
@@ -138,7 +140,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   #
   # @yield [Sting] Yields the body of the response returned from the server
   #
-  # @return [nil]
+  # @return [Puppet::HTTP::Response] The request response
   #
   def get_file_content(path:, environment:, &block)
     validate_path(path)
@@ -158,7 +160,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
 
     process_response(response)
 
-    nil
+    response
   end
 
   #
@@ -172,7 +174,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   #
   # @yield [String] Yields the body of the response returned
   #
-  # @return [nil]
+  # @return [Puppet::HTTP::Response] The request response
   #
   def get_static_file_content(path:, environment:, code_id:, &block)
     validate_path(path)
@@ -193,7 +195,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
 
     process_response(response)
 
-    nil
+    response
   end
 
   private
