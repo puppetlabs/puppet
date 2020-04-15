@@ -5,3 +5,12 @@ autovt@.service                             disabled
 avahi-daemon.service                        enabled
 blk-availability.service                    disabled
 brandbot.service                            static
+apparmor.service                            bad
+udev.service                                enabled-runtime
+ufw.service                                 linked
+umountfs.service                            linked-runtime
+umountnfs.service                           masked
+umountroot.service                          masked-runtime
+urandom.service                             indirect
+user@.service                               generated
+uuidd.service                               transient
