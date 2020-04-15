@@ -105,7 +105,7 @@ class Puppet::Agent
     end
 
     exit_code = Process.waitpid2(child_pid)
-    exit(exit_code[1].exitstatus)
+    exit_code[1].exitstatus
   end
 
   private
