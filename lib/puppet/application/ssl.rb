@@ -182,7 +182,7 @@ HELP
     route = create_route(ssl_context)
     Puppet.info _("Downloading certificate '%{name}' from %{url}") % { name: Puppet[:certname], url: route.url }
 
-    x509 = route.get_certificate(Puppet[:certname], ssl_context: ssl_context)
+    _, x509 = route.get_certificate(Puppet[:certname], ssl_context: ssl_context)
     cert = OpenSSL::X509::Certificate.new(x509)
     Puppet.notice _("Downloaded certificate '%{name}' with fingerprint %{fingerprint}") % { name: Puppet[:certname], fingerprint: fingerprint(cert) }
 
@@ -226,7 +226,7 @@ HELP
       begin
         ssl_context = @machine.ensure_ca_certificates
         route = create_route(ssl_context)
-        cert = route.get_certificate(certname, ssl_context: ssl_context)
+        _, cert = route.get_certificate(certname, ssl_context: ssl_context)
       rescue Puppet::HTTP::ResponseError => e
         if e.response.code.to_i != 404
           raise Puppet::Error.new(_("Failed to connect to the CA to determine if certificate %{certname} has been cleaned") % { certname: certname }, e)

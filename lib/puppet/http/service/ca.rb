@@ -37,7 +37,8 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   # @param [String] name name of the certificate to request
   # @param [Puppet::SSL::SSLContext] ssl_context
   #
-  # @return [String] The stringified body of the request response
+  # @return [Array<Puppet::HTTP::Response, String>] An array containing the
+  #   request response and the stringified body of the request response
   #
   def get_certificate(name, ssl_context: nil)
     response = @client.get(
@@ -48,7 +49,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
 
     process_response(response)
 
-    response.body.to_s
+    [response, response.body.to_s]
   end
 
   #
@@ -61,7 +62,8 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   #   been modified since the specified time.
   # @param [Puppet::SSL::SSLContext] ssl_context
   #
-  # @return [String] The stringified body of the request response
+  # @return [Array<Puppet::HTTP::Response, String>] An array containing the
+  #   request response and the stringified body of the request response
   #
   def get_certificate_revocation_list(if_modified_since: nil, ssl_context: nil)
     headers = add_puppet_headers(HEADERS)
@@ -75,7 +77,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
 
     process_response(response)
 
-    response.body.to_s
+    [response, response.body.to_s]
   end
 
   #
@@ -88,7 +90,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   #   server
   # @param [Puppet::SSL::SSLContext] ssl_context
   #
-  # @return [String] The stringified body of the request response
+  # @return [Puppet::HTTP::Response] The request response
   #
   def put_certificate_request(name, csr, ssl_context: nil)
     headers = add_puppet_headers(HEADERS)
@@ -105,6 +107,6 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
 
     process_response(response)
 
-    response.body.to_s
+    response
   end
 end

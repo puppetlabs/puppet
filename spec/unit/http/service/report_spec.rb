@@ -85,7 +85,9 @@ describe Puppet::HTTP::Service::Report do
       stub_request(:put, url)
         .to_return(status: 200, body: body, headers: {'Content-Type' => 'application/json'})
 
-      expect(subject.put_report('infinity', report, environment: environment).body).to eq(body)
+      resp = subject.put_report('infinity', report, environment: environment)
+      expect(resp.body).to eq(body)
+      expect(resp).to be_a(Puppet::HTTP::Response)
     end
 
     it 'raises response error if unsuccessful' do

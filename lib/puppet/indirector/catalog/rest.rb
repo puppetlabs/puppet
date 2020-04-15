@@ -15,7 +15,7 @@ class Puppet::Resource::Catalog::Rest < Puppet::Indirector::REST
 
     session = Puppet.lookup(:http_session)
     api = session.route_to(:puppet)
-    api.post_catalog(
+    _, catalog = api.post_catalog(
       request.key,
       facts: request.options[:facts_for_catalog],
       environment: request.environment.to_s,
@@ -25,6 +25,7 @@ class Puppet::Resource::Catalog::Rest < Puppet::Indirector::REST
       static_catalog: request.options[:static_catalog],
       checksum_type: checksum_type
     )
+    catalog
   rescue Puppet::HTTP::ResponseError => e
     if e.response.code == 404
       return nil unless request.options[:fail_on_404]

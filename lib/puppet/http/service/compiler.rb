@@ -38,7 +38,8 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   # @param [String] transaction_uuid An agent generated transaction uuid, used
   #   for connecting catalogs and reports.
   #
-  # @return [Puppet::Node] The deserialized requested node
+  # @return [Array<Puppet::HTTP::Response, Puppet::Node>] An array containing
+  #   the request response and the deserialized requested node
   #
   def get_node(name, environment:, configured_environment: nil, transaction_uuid: nil)
     headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Node).join(', '))
@@ -55,7 +56,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
 
     process_response(response)
 
-    deserialize(response, Puppet::Node)
+    [response, deserialize(response, Puppet::Node)]
   end
 
   #
@@ -80,7 +81,8 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   #   Currently defaults to `["md5", "sha256", "sha384", "sha512", "sha224"]`,
   #   or `["sha256", "sha384", "sha512", "sha224"]` if fips is enabled.
   #
-  # @return [Puppet::Resource::Catalog] The deserialized catalog returned by
+  # @return [Array<Puppet::HTTP::Response, Puppet::Resource::Catalog>] An array
+  #   containing the request response and the deserialized catalog returned by
   #   the server
   #
   def post_catalog(name, facts:, environment:, configured_environment: nil, transaction_uuid: nil, job_uuid: nil, static_catalog: true, checksum_type: Puppet[:supported_checksum_types])
@@ -126,7 +128,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
 
     process_response(response)
 
-    deserialize(response, Puppet::Resource::Catalog)
+    [response, deserialize(response, Puppet::Resource::Catalog)]
   end
 
   #
@@ -137,7 +139,9 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   # @param [String] name Name of the node to retrieve facts for
   # @param [String] environment Name of the environment we are operating in
   #
-  # @return [Puppet::Node::Facts] Deserialized facts for the specified node
+  # @return [Array<Puppet::HTTP::Response, Puppet::Node::Facts>] An array
+  #   containing the request response and the deserialized facts for the
+  #   specified node
   #
   def get_facts(name, environment:)
     headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Node::Facts).join(', '))
@@ -150,7 +154,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
 
     process_response(response)
 
-    deserialize(response, Puppet::Node::Facts)
+    [response, deserialize(response, Puppet::Node::Facts)]
   end
 
   #
@@ -162,7 +166,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   # @param [String] environment Name of the environment we are operating in
   # @param [Puppet::Node::Facts] facts Facts for the named node
   #
-  # @return [Boolean] Returns true unless an error is raised
+  # @return [Puppet::HTTP::Response] The request response
   #
   def put_facts(name, environment:, facts:)
     formatter = Puppet::Network::FormatHandler.format_for(Puppet[:preferred_serialization_format])
@@ -183,7 +187,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
 
     process_response(response)
 
-    true
+    response
   end
 
   #
@@ -193,7 +197,8 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   #
   # @param [String] name The name of the node that a status being requested for
   #
-  # @return [Puppet::Status] The deserialized status returned from the server
+  # @return [Array<Puppet::HTTP::Response, Puppet::Status>] An array containing
+  #   the request response and the deserialized status returned from the server
   #
   def get_status(name)
     headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Status).join(', '))
@@ -209,7 +214,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
 
     process_response(response)
 
-    deserialize(response, Puppet::Status)
+    [response, deserialize(response, Puppet::Status)]
   end
 
   #
@@ -228,8 +233,9 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   # @param [String] fromdate
   # @param [String] todate
   #
-  # @return [Puppet::FileBucket::File] The deserialized file returned from the
-  #   server.
+  # @return [Array<Puppet::HTTP::Response, Puppet::FileBucket::File>] An array
+  #   containing the request response and the deserialized file returned from
+  #   the server.
   #
   def get_filebucket_file(path, environment:, bucket_path: nil, diff_with: nil, list_all: nil, fromdate: nil, todate: nil)
     headers = add_puppet_headers('Accept' => 'application/octet-stream')
@@ -249,7 +255,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
 
     process_response(response)
 
-    deserialize(response, Puppet::FileBucket::File)
+    [response, deserialize(response, Puppet::FileBucket::File)]
   end
 
   #
@@ -263,7 +269,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   #   This should not impact filebucket at all, but is included to be consistent
   #   with legacy code.
   #
-  # @return [String] The stringified response body.
+  # @return [Puppet::HTTP::Response] The response request
   #
   def put_filebucket_file(path, body:, environment:)
     headers = add_puppet_headers({
@@ -284,7 +290,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
 
     process_response(response)
 
-    response.body.to_s
+    response
   end
 
   #
@@ -298,7 +304,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   #   with legacy code.
   # @param [String] bucket_path
   #
-  # @return [String] The stringified response body. Should always be an empty string.
+  # @return [Puppet::HTTP::Response] The request response
   #
   def head_filebucket_file(path, environment:, bucket_path: nil)
     headers = add_puppet_headers('Accept' => 'application/octet-stream')
@@ -314,6 +320,6 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
 
     process_response(response)
 
-    response.body.to_s
+    response
   end
 end
