@@ -11,7 +11,8 @@ class Puppet::Indirector::Status::Rest < Puppet::Indirector::REST
 
     session = Puppet.lookup(:http_session)
     api = session.route_to(:puppet)
-    api.get_status(request.key)
+    _, status = api.get_status(request.key)
+    status
   rescue Puppet::HTTP::ResponseError => e
     if e.response.code == 404
       return nil unless request.options[:fail_on_404]

@@ -136,9 +136,17 @@ describe Puppet::HTTP::Service::Compiler do
       stub_request(:post, uri)
         .to_return(**catalog_response)
 
-      cat = subject.post_catalog(certname, environment: 'production', facts: facts)
+      _, cat = subject.post_catalog(certname, environment: 'production', facts: facts)
       expect(cat).to be_a(Puppet::Resource::Catalog)
       expect(cat.name).to eq(certname)
+    end
+
+    it 'returns the request response' do
+      stub_request(:post, uri)
+        .to_return(**catalog_response)
+
+      resp, _ = subject.post_catalog(certname, environment: 'production', facts: facts)
+      expect(resp).to be_a(Puppet::HTTP::Response)
     end
 
     it 'raises a response error if unsuccessful' do
@@ -246,9 +254,17 @@ describe Puppet::HTTP::Service::Compiler do
       stub_request(:get, uri)
         .to_return(**node_response)
 
-      n = subject.get_node(certname, environment: 'production')
+      _, n = subject.get_node(certname, environment: 'production')
       expect(n).to be_a(Puppet::Node)
       expect(n.name).to eq(certname)
+    end
+
+    it 'returns the request response' do
+      stub_request(:get, uri)
+        .to_return(**node_response)
+
+      resp, _ = subject.get_node(certname, environment: 'production')
+      expect(resp).to be_a(Puppet::HTTP::Response)
     end
 
     it 'raises a response error if unsuccessful' do
@@ -299,9 +315,17 @@ describe Puppet::HTTP::Service::Compiler do
       stub_request(:get, uri)
         .to_return(**facts_response)
 
-      n = subject.get_facts(certname, environment: 'production')
+      _, n = subject.get_facts(certname, environment: 'production')
       expect(n).to be_a(Puppet::Node::Facts)
       expect(n.name).to eq(certname)
+    end
+
+    it 'returns the request response' do
+      stub_request(:get, uri)
+        .to_return(**facts_response)
+
+      resp, _ = subject.get_facts(certname, environment: 'production')
+      expect(resp).to be_a(Puppet::HTTP::Response)
     end
 
     it 'raises a response error if unsuccessful' do
@@ -365,12 +389,12 @@ describe Puppet::HTTP::Service::Compiler do
       subject.put_facts(certname, environment: 'outerspace', facts: facts)
     end
 
-    it 'returns true' do
+    it 'returns the request response' do
       # the REST API returns the filename, good grief
       stub_request(:put, uri)
         .to_return(status: 200, body: "/opt/puppetlabs/server/data/puppetserver/yaml/facts/#{certname}.yaml")
 
-      expect(subject.put_facts(certname, environment: environment, facts: facts)).to eq(true)
+      expect(subject.put_facts(certname, environment: environment, facts: facts)).to be_a(Puppet::HTTP::Response)
     end
 
     it 'raises a response error if unsuccessful' do
@@ -410,9 +434,17 @@ describe Puppet::HTTP::Service::Compiler do
       stub_request(:get, uri)
         .to_return(**status_response)
 
-      s = subject.get_status(certname)
+      _, s = subject.get_status(certname)
       expect(s).to be_a(Puppet::Status)
       expect(s.status).to eq("is_alive" => true)
+    end
+
+    it 'returns the request response' do
+      stub_request(:get, uri)
+        .to_return(**status_response)
+
+      resp, _ = subject.get_status(certname)
+      expect(resp).to be_a(Puppet::HTTP::Response)
     end
 
     it 'raises a response error if unsuccessful' do
@@ -496,9 +528,17 @@ describe Puppet::HTTP::Service::Compiler do
         stub_request(:get, uri)
         .to_return(**status_response)
 
-        s = subject.get_filebucket_file(path, environment: 'production')
+        _, s = subject.get_filebucket_file(path, environment: 'production')
         expect(s).to be_a(Puppet::FileBucket::File)
         expect(s.contents).to eq('file to store')
+      end
+
+      it 'returns the request response' do
+        stub_request(:get, uri)
+        .to_return(**status_response)
+
+        resp, _ = subject.get_filebucket_file(path, environment: 'production')
+        expect(resp).to be_a(Puppet::HTTP::Response)
       end
     end
 
@@ -531,13 +571,12 @@ describe Puppet::HTTP::Service::Compiler do
         subject.put_filebucket_file(path, body: filebucket_file.contents, environment: 'production')
       end
 
-      it 'returns a stringified response' do
+      it 'returns the request response' do
         stub_request(:put, uri)
         .to_return(**status_response)
 
         s = subject.put_filebucket_file(path, body: filebucket_file.contents, environment: 'production')
-        expect(s).to be_a(String)
-        expect(s).to eq('')
+        expect(s).to be_a(Puppet::HTTP::Response)
       end
     end
 
@@ -575,6 +614,13 @@ describe Puppet::HTTP::Service::Compiler do
         end.to_return(**status_response)
 
         subject.head_filebucket_file(path, environment: 'production', bucket_path: nil)
+      end
+
+      it "returns the request response" do
+        stub_request(:head, uri).with(query: hash_including(:bucket_path => 'some/path')).to_return(**status_response)
+
+        resp = subject.head_filebucket_file(path, environment: 'production', bucket_path: 'some/path')
+        expect(resp).to be_a(Puppet::HTTP::Response)
       end
     end
   end

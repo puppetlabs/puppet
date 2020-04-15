@@ -9,10 +9,11 @@ class Puppet::Node::Facts::Rest < Puppet::Indirector::REST
 
     session = Puppet.lookup(:http_session)
     api = session.route_to(:puppet)
-    api.get_facts(
+    _, facts = api.get_facts(
       request.key,
       environment: request.environment.to_s
     )
+    facts
   rescue Puppet::HTTP::ResponseError => e
     if e.response.code == 404
       return nil unless request.options[:fail_on_404]
