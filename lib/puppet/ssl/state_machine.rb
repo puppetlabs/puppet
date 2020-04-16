@@ -280,17 +280,36 @@ class Puppet::SSL::StateMachine
 
         # close persistent connections and session state before sleeping
         Puppet.runtime['http'].close
-        @machine.session = nil
-
-        Kernel.sleep(time)
-
-        # our ssl directory may have been cleaned while we were
-        # sleeping, start over from the top
         @machine.session = Puppet.runtime['http'].create_session
-        NeedCACerts.new(@machine)
+
+        @machine.unlock
+        Kernel.sleep(time)
+        NeedLock.new(@machine)
       end
     end
   end
+
+  # Acquire the ssl lock or return LockFailure causing us to exit.
+  #
+  class NeedLock < SSLState
+    def initialize(machine)
+      super(machine, nil)
+    end
+
+    def next_state
+      if @machine.lock
+        # our ssl directory may have been cleaned while we were
+        # sleeping, start over from the top
+        NeedCACerts.new(@machine)
+      else
+        LockFailure.new(@machine, nil)
+      end
+    end
+  end
+
+  # We failed to acquire the lock, so exit
+  #
+  class LockFailure < SSLState; end
 
   # We cannot make progress due to an error.
   #
@@ -362,7 +381,7 @@ class Puppet::SSL::StateMachine
   # @return [Puppet::SSL::SSLContext] initialized SSLContext
   # @raise [Puppet::Error] If we fail to generate an SSLContext
   def ensure_ca_certificates
-    final_state = run_machine(NeedCACerts.new(self), NeedKey)
+    final_state = run_machine(NeedLock.new(self), NeedKey)
     final_state.ssl_context
   end
 
@@ -371,7 +390,7 @@ class Puppet::SSL::StateMachine
   # @return [Puppet::SSL::SSLContext] initialized SSLContext
   # @raise [Puppet::Error] If we fail to generate an SSLContext
   def ensure_client_certificate
-    final_state = run_machine(NeedCACerts.new(self), Done)
+    final_state = run_machine(NeedLock.new(self), Done)
     ssl_context = final_state.ssl_context
 
     if Puppet::Util::Log.sendlevel?(:debug)
@@ -390,40 +409,38 @@ class Puppet::SSL::StateMachine
     ssl_context
   end
 
+  def lock
+    @lockfile.lock
+  end
+
+  def unlock
+    @lockfile.unlock
+  end
+
   private
 
   def run_machine(state, stop)
-    with_lock do
-      loop do
-        state = run_step(state)
+    loop do
+      state = run_step(state)
 
-        case state
-        when stop
-          break
-        when Error
-          if @onetime
-            Puppet.log_exception(state.error)
-            raise state.error
-          end
-        else
-          # fall through
+      case state
+      when stop
+        break
+      when LockFailure
+        raise Puppet::Error, _('Another puppet instance is already running; exiting')
+      when Error
+        if @onetime
+          Puppet.log_exception(state.error)
+          raise state.error
         end
+      else
+        # fall through
       end
     end
 
     state
-  end
-
-  def with_lock
-    if @lockfile.lock
-      begin
-        yield
-      ensure
-        @lockfile.unlock
-      end
-    else
-      raise Puppet::Error, _('Another puppet instance is already running; exiting')
-    end
+  ensure
+    @lockfile.unlock if @lockfile.locked?
   end
 
   def run_step(state)

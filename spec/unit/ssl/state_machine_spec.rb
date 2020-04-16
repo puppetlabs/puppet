@@ -197,7 +197,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
   end
 
   context 'when locking' do
-    let(:lockfile) { double('ssllockfile') }
+    let(:lockfile) { Puppet::Util::Pidlock.new(Puppet[:ssl_lockfile]) }
     let(:machine) { described_class.new(cert_provider: cert_provider, ssl_provider: ssl_provider, lockfile: lockfile) }
 
     # lockfile is deleted before `ensure_ca_certificates` returns, so
@@ -210,7 +210,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'locks the file prior to running the state machine and unlocks when done' do
-      expect(lockfile).to receive(:lock).and_return(true).ordered
+      expect(lockfile).to receive(:lock).and_call_original.ordered
       expect(cert_provider).to receive(:load_cacerts).and_return(cacerts).ordered
       expect(cert_provider).to receive(:load_crls).and_return(crls).ordered
       expect(lockfile).to receive(:unlock).ordered
@@ -837,7 +837,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         }.to output(/Exiting now because the waitforcert setting is set to 0./).to_stdout
       end
 
-      it 'sleeps and transitions to NeedCACerts' do
+      it 'sleeps and transitions to NeedLock' do
         machine = described_class.new(waitforcert: 15)
 
         state = Puppet::SSL::StateMachine::Wait.new(machine)
@@ -845,10 +845,10 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
         expect(Puppet).to receive(:info).with(/Will try again in 15 seconds./)
 
-        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCACerts)
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedLock)
       end
 
-      it 'sleeps and transitions to NeedCACerts when maxwaitforcert is set' do
+      it 'sleeps and transitions to NeedLock when maxwaitforcert is set' do
         machine = described_class.new(waitforcert: 15, maxwaitforcert: 30)
 
         state = Puppet::SSL::StateMachine::Wait.new(machine)
@@ -856,7 +856,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
         expect(Puppet).to receive(:info).with(/Will try again in 15 seconds./)
 
-        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCACerts)
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedLock)
       end
 
       it 'waits indefinitely by default' do
@@ -886,6 +886,38 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         expect(Kernel).to receive(:sleep).with(15).ordered
 
         state.next_state
+      end
+
+      it 'releases the lock while sleeping' do
+        lockfile = Puppet::Util::Pidlock.new(Puppet[:ssl_lockfile])
+        machine = described_class.new(lockfile: lockfile)
+        state = Puppet::SSL::StateMachine::Wait.new(machine)
+
+        # pidlock should be unlocked while sleeping
+        allow(Kernel).to receive(:sleep) do
+          expect(lockfile).to_not be_locked
+        end
+
+        # lock before running the state
+        lockfile.lock
+        state.next_state
+      end
+    end
+
+    context 'in state NeedLock' do
+      let(:ssl_context) { Puppet::SSL::SSLContext.new(cacerts: []) }
+      let(:lockfile) { Puppet::Util::Pidlock.new(Puppet[:ssl_lockfile]) }
+      let(:machine) { described_class.new(lockfile: lockfile) }
+      let(:state) { Puppet::SSL::StateMachine::NeedLock.new(machine) }
+
+      it 'acquires the lock and transitions to NeedCACerts' do
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCACerts)
+        expect(lockfile).to be_locked
+      end
+
+      it 'transitions to LockFailure if it fails to acquire the lock' do
+        expect(lockfile).to receive(:lock).and_return(false)
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::LockFailure)
       end
     end
   end
