@@ -1198,6 +1198,14 @@ The maximum amount of time the Puppet agent should wait for its certificate requ
 .
 .IP "" 0
 .
+.SS "maxwaitforlock"
+The maximum amount of time the Puppet agent should wait for already running puppet agent to finish before starting\. A value of \fBunlimited\fR will cause puppet agent cause puppet agent to wait indefinitely\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: 1m
+.
+.IP "" 0
+.
 .SS "merge_dependency_warnings"
 Whether to merge class\-level dependency failure warnings\.
 .
@@ -2036,6 +2044,14 @@ Puppet agent cannot apply configurations until its approved certificate is avail
 .
 .IP "\(bu" 4
 \fIDefault\fR: 2m
+.
+.IP "" 0
+.
+.SS "waitforlock"
+How frequently puppet agent should try to start when there is an already running instance of puppet agent\. You can turn off waiting for running puppet instances by specifying a time of 0, or a maximum amount of time to wait in the \fBmaxwaitforlock\fR setting, in which case puppet agent will exit if it cannot start\. Turned off by default\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: 0
 .
 .IP "" 0
 .
