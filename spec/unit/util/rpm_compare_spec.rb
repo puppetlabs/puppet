@@ -123,8 +123,8 @@ describe Puppet::Util::RpmCompare do
     end
 
     it 'treats no epoch as zero epoch' do
-      expect(RpmTest.rpm_compareEVR('1:1.2', '1.4')).to eq(-1)
-      expect(RpmTest.rpm_compareEVR('1.4', '1:1.2')).to eq(1)
+      expect(RpmTest.rpm_compareEVR('1:1.2', '1.4')).to eq(1)
+      expect(RpmTest.rpm_compareEVR('1.4', '1:1.2')).to eq(-1)
     end
   end
 
