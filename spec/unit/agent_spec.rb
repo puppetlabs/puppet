@@ -179,52 +179,6 @@ describe Puppet::Agent do
       expect(@agent.run).to eq(:result)
     end
 
-    describe "and a puppet agent is already running" do
-      before(:each) do
-        allow_any_instance_of(Object).to receive(:sleep)
-        lockfile = double('lockfile')
-        expect(@agent).to receive(:lockfile).and_return(lockfile).at_least(:once)
-        # so the lock method raises Puppet::LockError
-        allow(lockfile).to receive(:lock).and_return(false)
-      end
-
-      it "should notify that a run is already in progres" do
-        client = AgentTestClient.new
-        expect(AgentTestClient).to receive(:new).and_return(client)
-        expect(Puppet).to receive(:notice).with(/Run of .* already in progress; skipping .* exists/)
-        @agent.run
-      end
-
-      it "should inform that a run is already in progres and try to run every X seconds if waitforlock is used" do
-        # so the locked file exists
-        allow(File).to receive(:file?).and_return(true)
-        # so we don't have to wait again for the run to exit (default maxwaitforcert is 60)
-        # first 0 is to get the time, second 0 is to inform user, then 1000 so the time expires
-        allow(Time).to receive(:now).and_return(0, 0, 1000)
-        allow(Puppet).to receive(:info)
-        client = AgentTestClient.new
-        expect(AgentTestClient).to receive(:new).and_return(client)
-
-        Puppet[:waitforlock] = 1
-        Puppet[:maxwaitforlock] = 2
-        expect(Puppet).to receive(:info).with(/Another puppet instance is already running; --waitforlock flag used, waiting for running instance to finish./)
-        expect(Puppet).to receive(:info).with(/Will try again in #{Puppet[:waitforlock]} seconds./)
-        @agent.run
-      end
-
-      it "should notify that the run is exiting if waitforlock is used and maxwaitforlock is exceeded" do
-        # so we don't have to wait again for the run to exit (default maxwaitforcert is 60)
-        # first 0 is to get the time, then 1000 so that the time expires
-        allow(Time).to receive(:now).and_return(0, 1000)
-        client = AgentTestClient.new
-        expect(AgentTestClient).to receive(:new).and_return(client)
-
-        Puppet[:waitforlock] = 1
-        expect(Puppet).to receive(:notice).with(/Exiting now because the maxwaitforlock timeout has been exceeded./)
-        @agent.run
-      end
-    end
-
     describe "when should_fork is true", :if => Puppet.features.posix? && RUBY_PLATFORM != 'java' do
       before do
         @agent = Puppet::Agent.new(AgentTestClient, true)
