@@ -1882,6 +1882,24 @@ EOT
       certificate request to be signed. A value of `unlimited` will cause puppet agent
       to ask for a signed certificate indefinitely.
       #{AS_DURATION}",
+    },
+    :waitforlock => {
+      :default  => "0",
+      :type     => :duration,
+      :desc     => "How frequently puppet agent should try to start when there is an
+      already running instance of puppet agent. You can turn off waiting for running puppet
+      instances by specifying a time of 0, or a maximum amount of time to wait in the
+      `maxwaitforlock` setting, in which case puppet agent will exit if it cannot start.
+      Turned off by default.
+      #{AS_DURATION}",
+    },
+    :maxwaitforlock => {
+      :default  => "1m",
+      :type     => :ttl,
+      :desc     => "The maximum amount of time the Puppet agent should wait for
+      already running puppet agent to finish before starting. A value of `unlimited`
+      will cause puppet agent cause puppet agent to wait indefinitely.
+      #{AS_DURATION}",
     }
   )
 
