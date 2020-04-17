@@ -160,8 +160,10 @@ module Puppet::Util::RpmCompare
   #
   # "version_should" can be v, v-r, or e:v-r.
   # "version_is" will always be at least v-r, can be e:v-r
-  def rpm_compareEVR(should_hash, is_hash)
+  def rpm_compareEVR(should, is)
     # pass on to rpm labelCompare
+    should_hash = rpm_parse_evr(should)
+    is_hash = rpm_parse_evr(is)
 
     if !should_hash[:epoch].nil?
       rc = compare_values(should_hash[:epoch], is_hash[:epoch])
