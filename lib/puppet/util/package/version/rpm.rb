@@ -10,6 +10,8 @@ module Puppet::Util::Package::Version
 
     class ValidationFailure < ArgumentError; end
 
+    attr_reader :epoch, :version, :release, :arch
+
     def self.parse(ver)
       raise ValidationFailure unless ver.is_a?(String)
       version = rpm_parse_evr(ver)
@@ -24,15 +26,6 @@ module Puppet::Util::Package::Version
       version_found
     end
     alias inspect to_s
-
-    def initialize(epoch, version, release, arch)
-      @epoch   = epoch
-      @version = version
-      @release = release
-      @arch    = arch
-    end
-
-    attr_reader :epoch, :version, :release, :arch
 
     def eql?(other)
       other.is_a?(self.class) &&
@@ -49,5 +42,13 @@ module Puppet::Util::Package::Version
       rpm_compareEVR(self.to_s, other.to_s)
     end
 
+    private
+
+    def initialize(epoch, version, release, arch)
+      @epoch   = epoch
+      @version = version
+      @release = release
+      @arch    = arch
+    end
   end
 end
