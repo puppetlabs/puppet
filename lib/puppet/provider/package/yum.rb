@@ -264,7 +264,8 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
         self.debug "Installing directly from #{wanted}"
       else
         # No explicit source was specified, so add the package version
-        wanted += "-#{best_version(should)}"
+        should = best_version(should)
+        wanted += "-#{should}"
         if wanted.scan(self.class::ARCH_REGEX)
           self.debug "Detected Arch argument in package! - Moving arch to end of version string"
           wanted.gsub!(/(.+)(#{self.class::ARCH_REGEX})(.+)/,'\1\3\2')

@@ -366,6 +366,42 @@ describe Puppet::Type.type(:package).provider(:yum) do
       end
     end
 
+    context 'when upgrading' do
+      let(:ensure_value) { '>18.1, <19' }
+      let(:available_versions) { ['17.5.2', '18.0', 'a:23' '18.3', '18.3.2', '19.0', '3:18.4'] }
+
+      before do
+        allow(provider).to receive(:available_versions).and_return(available_versions)
+        allow(provider).to receive(:query).twice
+          .and_return({ ensure: '17.0' }, { ensure: '18.3.2' })
+      end
+
+      it 'adds update flag to install command' do
+        expect(provider).to receive(:execute).with(
+        ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', 'update', 'myresource-18.3.2']
+        )
+        provider.install
+      end
+    end
+
+    context 'when dowgrading' do
+      let(:ensure_value) { '>18.1, <19' }
+      let(:available_versions) { ['17.5.2', '18.0', 'a:23' '18.3', '18.3.2', '19.0', '3:18.4'] }
+
+      before do
+        allow(provider).to receive(:available_versions).and_return(available_versions)
+        allow(provider).to receive(:query).twice
+          .and_return({ ensure: '19.0' }, { ensure: '18.3.2' })
+      end
+
+      it 'adds downgrade flag to install command' do
+        expect(provider).to receive(:execute).with(
+        ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :downgrade, 'myresource-18.3.2']
+        )
+        provider.install
+      end
+    end
+
     context 'on failure' do
       let(:ensure_value) { '20' }
 
