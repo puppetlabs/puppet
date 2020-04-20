@@ -1,10 +1,39 @@
 require 'spec_helper'
 require 'puppet/network/http_pool'
 
+class Puppet::Network::HttpPool::FooClient
+  def initialize(host, port, options = {})
+    @host = host
+    @port = port
+  end
+  attr_reader :host, :port
+end
+
 describe Puppet::Network::HttpPool do
   before :each do
     Puppet::SSL::Key.indirection.terminus_class = :memory
     Puppet::SSL::CertificateRequest.indirection.terminus_class = :memory
+  end
+
+  describe "when registering an http client class" do
+    let(:http_impl) { Puppet::Network::HttpPool::FooClient }
+
+    around :each do |example|
+      orig_class = Puppet::Network::HttpPool.http_client_class
+      begin
+        example.run
+      ensure
+        Puppet::Network::HttpPool.http_client_class = orig_class
+      end
+    end
+
+    it "returns instances of the http client class" do
+      Puppet::Network::HttpPool.http_client_class = http_impl
+      http = Puppet::Network::HttpPool.http_instance("me", 54321)
+      expect(http).to be_an_instance_of(http_impl)
+      expect(http.host).to eq('me')
+      expect(http.port).to eq(54321)
+    end
   end
 
   describe "when managing http instances" do
@@ -13,27 +42,6 @@ describe Puppet::Network::HttpPool do
       expect(http).to be_an_instance_of Puppet::Network::HTTP::Connection
       expect(http.address).to eq('me')
       expect(http.port).to    eq(54321)
-    end
-
-    it "should support using an alternate http client implementation" do
-      begin
-        class FooClient
-          def initialize(host, port, options = {})
-            @host = host
-            @port = port
-          end
-          attr_reader :host, :port
-        end
-
-        orig_class = Puppet::Network::HttpPool.http_client_class
-        Puppet::Network::HttpPool.http_client_class = FooClient
-        http = Puppet::Network::HttpPool.http_instance("me", 54321)
-        expect(http).to be_an_instance_of FooClient
-        expect(http.host).to eq('me')
-        expect(http.port).to eq(54321)
-      ensure
-        Puppet::Network::HttpPool.http_client_class = orig_class
-      end
     end
 
     it "should enable ssl on the http instance by default" do
