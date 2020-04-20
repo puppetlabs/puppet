@@ -6,7 +6,14 @@ class Puppet::Runtime
 
   def initialize
     @runtime_services = {
-      'http' => proc { Puppet::HTTP::Client.new }
+      'http' => proc do
+        klass = Puppet::Network::HttpPool.http_client_class
+        if klass == Puppet::Network::HTTP::Connection
+          Puppet::HTTP::Client.new
+        else
+          Puppet::HTTP::ExternalClient.new(klass)
+        end
+      end
     }
   end
   private :initialize

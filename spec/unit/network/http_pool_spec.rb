@@ -34,6 +34,25 @@ describe Puppet::Network::HttpPool do
       expect(http.host).to eq('me')
       expect(http.port).to eq(54321)
     end
+
+    it "uses the default http client" do
+      expect(Puppet.runtime['http']).to be_an_instance_of(Puppet::HTTP::Client)
+    end
+
+    it "switches to the external client implementation" do
+      Puppet::Network::HttpPool.http_client_class = http_impl
+
+      expect(Puppet.runtime['http']).to be_an_instance_of(Puppet::HTTP::ExternalClient)
+    end
+
+    it "always uses an explicitly registered http implementation" do
+      Puppet::Network::HttpPool.http_client_class = http_impl
+
+      new_impl = double('new_http_impl')
+      Puppet.initialize_settings([], true, true, "http" => new_impl)
+
+      expect(Puppet.runtime['http']).to eq(new_impl)
+    end
   end
 
   describe "when managing http instances" do
