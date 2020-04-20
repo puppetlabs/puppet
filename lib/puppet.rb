@@ -157,7 +157,7 @@ module Puppet
 
   # private helper method to provide the implementation details of initializing for a run mode,
   #  but allowing us to control where the deprecation warning is issued
-  def self.do_initialize_settings_for_run_mode(run_mode, args, require_config = true, push_settings_globally = true)
+  def self.do_initialize_settings_for_run_mode(run_mode, args, require_config, push_settings_globally)
     Puppet.settings.initialize_global_settings(args, require_config)
     run_mode = Puppet::Util::RunMode[run_mode]
     Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
