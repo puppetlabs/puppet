@@ -337,7 +337,7 @@ describe Puppet::Type.type(:package).provider(:yum) do
         let(:ensure_value) { '>18.1, <19' }
         let(:available_versions) { ['3:17.5.2', '3:18.0', 'a:23' '18.3', '3:18.3.2', '3:19.0', '19.1'] }
 
-        it 'uses request version' do
+        it 'uses requested version' do
           expect(provider).to receive(:execute).with(
             ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource->18.1, <19"]
           )
@@ -345,7 +345,9 @@ describe Puppet::Type.type(:package).provider(:yum) do
         end
 
         it 'logs a debug message' do
-          allow(provider).to receive(:execute)
+          allow(provider).to receive(:execute).with(
+            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource->18.1, <19"]
+          )
 
           expect(Puppet).to receive(:debug).with(
             "No available version for package myresource is included in range >18.1, <19"
@@ -396,7 +398,7 @@ describe Puppet::Type.type(:package).provider(:yum) do
 
       it 'adds downgrade flag to install command' do
         expect(provider).to receive(:execute).with(
-        ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :downgrade, 'myresource-18.3.2']
+          ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :downgrade, 'myresource-18.3.2']
         )
         provider.install
       end
@@ -407,7 +409,9 @@ describe Puppet::Type.type(:package).provider(:yum) do
 
       context 'when execute command fails' do
         before do
-          allow(provider).to receive(:execute).and_return('No package myresource-20 available.')
+          allow(provider).to receive(:execute).with(
+            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource-20"]
+          ).and_return('No package myresource-20 available.')
         end
 
         it 'raises Puppet::Error' do
@@ -419,7 +423,9 @@ describe Puppet::Type.type(:package).provider(:yum) do
       context 'when package is not found' do
         before do
           allow(provider).to receive(:query)
-          allow(provider).to receive(:execute)
+          allow(provider).to receive(:execute).with(
+            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource-20"]
+          )
         end
 
         it 'raises Puppet::Error' do
@@ -430,7 +436,9 @@ describe Puppet::Type.type(:package).provider(:yum) do
 
       context 'when package is not installed' do
         before do
-          allow(provider).to receive(:execute)
+          allow(provider).to receive(:execute).with(
+            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource-20"]
+          )
           allow(provider).to receive(:insync?).and_return(false)
         end
 
