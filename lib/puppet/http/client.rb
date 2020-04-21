@@ -165,10 +165,10 @@ class Puppet::HTTP::Client
   # Submits a PUT HTTP request to the given url
   #
   # @param [URI] url the location to submit the http request
+  # @param [String] body the body of the PUT request
   # @param [Hash] headers merged with the default headers defined by the client
   # @param [Hash] params encoded and set as the url query
   # @param [Hash] options passed through to the request execution
-  # @option options [String] :body the body of the PUT request
   # @option options [String] :content_type the type of the body content
   # @option options [Puppet::SSL::SSLContext] :ssl_context (nil) ssl context to
   #   be used for connections
@@ -177,8 +177,8 @@ class Puppet::HTTP::Client
   #
   # @return [String] the body of the request response
   #
-  def put(url, headers: {}, params: {}, options: {})
-    body = options.fetch(:body) { |_| raise ArgumentError, "'put' requires a 'body' option" }
+  def put(url, body, headers: {}, params: {}, options: {})
+    raise ArgumentError, "'put' requires a string 'body' argument" unless body.is_a?(String)
     url = encode_query(url, params)
 
     request = Net::HTTP::Put.new(url, @default_headers.merge(headers))
@@ -198,10 +198,10 @@ class Puppet::HTTP::Client
   # Submits a POST HTTP request to the given url
   #
   # @param [URI] url the location to submit the http request
+  # @param [String] body the body of the POST request
   # @param [Hash] headers merged with the default headers defined by the client
   # @param [Hash] params encoded and set as the url query
   # @param [Hash] options passed through to the request execution
-  # @option options [String] :body the body of the PUT request
   # @option options [String] :content_type the type of the body content
   # @option options [Puppet::SSL::SSLContext] :ssl_context (nil) ssl context to
   #   be used for connections
@@ -210,8 +210,8 @@ class Puppet::HTTP::Client
   #
   # @return [String] the body of the request response
   #
-  def post(url, headers: {}, params: {}, options: {}, &block)
-    body = options.fetch(:body) { |_| raise ArgumentError, "'post' requires a 'body' option" }
+  def post(url, body, headers: {}, params: {}, options: {}, &block)
+    raise ArgumentError, "'post' requires a string 'body' argument" unless body.is_a?(String)
     url = encode_query(url, params)
 
     request = Net::HTTP::Post.new(url, @default_headers.merge(headers))

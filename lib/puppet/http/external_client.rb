@@ -41,8 +41,8 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
 
   # (see Puppet::HTTP::Client#post)
   # @api private
-  def post(url, headers: {}, params: {}, options: {}, &block)
-    body = options.fetch(:body) { |_| raise ArgumentError, "'post' requires a 'body' option" }
+  def post(url, body, headers: {}, params: {}, options: {}, &block)
+    raise ArgumentError.new("'post' requires a string 'body' argument") unless body.is_a?(String)
     url = encode_query(url, params)
 
     options[:use_ssl] = url.scheme == 'https'
@@ -58,7 +58,7 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
     else
       response
     end
-  rescue Puppet::HTTP::HTTPError
+  rescue Puppet::HTTP::HTTPError, ArgumentError
     raise
   rescue => e
     raise Puppet::HTTP::HTTPError.new(e.message, e)

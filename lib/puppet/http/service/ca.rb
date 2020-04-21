@@ -98,9 +98,9 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
 
     response = @client.put(
       with_base_url("/certificate_request/#{name}"),
+      csr.to_pem,
       headers: headers,
       options: {
-        body: csr.to_pem,
         ssl_context: ssl_context
       }
     )
