@@ -10,6 +10,8 @@ module Puppet::Util::Package::Version
 
     class ValidationFailure < ArgumentError; end
 
+    attr_reader :epoch, :version, :release, :arch
+
     def self.parse(ver)
       raise ValidationFailure unless ver.is_a?(String)
       version = rpm_parse_evr(ver)
@@ -25,15 +27,6 @@ module Puppet::Util::Package::Version
     end
     alias inspect to_s
 
-    def initialize(epoch, version, release, arch)
-      @epoch   = epoch
-      @version = version
-      @release = release
-      @arch    = arch
-    end
-
-    attr_reader :epoch, :version, :release, :arch
-
     def eql?(other)
       other.is_a?(self.class) &&
         @epoch.eql?(other.epoch) &&
@@ -46,12 +39,35 @@ module Puppet::Util::Package::Version
     def <=>(other)
       raise ArgumentError, _("Cannot compare, as %{other} is not a Rpm Version") % { other: other } unless other.is_a?(self.class)
 
-      cmp = @epoch <=> other.epoch
-      if cmp == 0
-        cmp = rpm_compareEVR(rpm_parse_evr(self.to_s), rpm_parse_evr(other.to_s))
-      end
-      cmp
+      rpm_compareEVR(self.to_s, other.to_s)
     end
 
+    private
+
+    # overwrite rpm_compareEVR to treat no epoch as zero epoch
+    # in order to compare version correctly
+    #
+    # returns 1 if a is newer than b,
+    #         0 if they are identical
+    #        -1 if a is older than b
+    def rpm_compareEVR(a, b)
+      a_hash = rpm_parse_evr(a)
+      b_hash = rpm_parse_evr(b)
+
+      a_hash[:epoch] ||= '0'
+      b_hash[:epoch] ||= '0'
+
+      rc = compare_values(a_hash[:epoch], b_hash[:epoch])
+      return rc unless rc == 0
+
+      super(a, b)
+    end
+
+    def initialize(epoch, version, release, arch)
+      @epoch   = epoch
+      @version = version
+      @release = release
+      @arch    = arch
+    end
   end
 end

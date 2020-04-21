@@ -38,7 +38,6 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
   def insync?(is)
     return false if [:purged, :absent].include?(is)
     return false if is.include?(self.class::MULTIVERSION_SEPARATOR) && !@resource[:install_only]
-    return true if super
 
     should = @resource[:ensure]
     if should.is_a?(String)
@@ -46,9 +45,9 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
         should_version = RPM_VERSION_RANGE.parse(should, RPM_VERSION)
       rescue RPM_VERSION_RANGE::ValidationFailure, RPM_VERSION::ValidationFailure
         Puppet.debug("Cannot parse #{should} as a RPM version range")
-        return false
+        return super
       end
-   
+
       is.split(self.class::MULTIVERSION_SEPARATOR).any? do |version|
         begin
           is_version = RPM_VERSION.parse(version)
@@ -203,7 +202,13 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
           Puppet.debug("Cannot parse #{version} as a RPM version")
         end
       end
-      return sorted_versions.entries.last if sorted_versions.any?
+
+      version = sorted_versions.entries.last
+
+      if version
+        version = version.to_s.sub(/^\d+:/, '')
+        return version
+      end
 
       Puppet.debug("No available version for package #{@resource[:name]} is included in range #{should_range}")
       should
@@ -259,7 +264,8 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
         self.debug "Installing directly from #{wanted}"
       else
         # No explicit source was specified, so add the package version
-        wanted += "-#{best_version(should)}"
+        should = best_version(should)
+        wanted += "-#{should}"
         if wanted.scan(self.class::ARCH_REGEX)
           self.debug "Detected Arch argument in package! - Moving arch to end of version string"
           wanted.gsub!(/(.+)(#{self.class::ARCH_REGEX})(.+)/,'\1\3\2')
@@ -270,10 +276,10 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
         if @resource[:install_only]
           self.debug "Updating package #{@resource[:name]} from version #{current_package[:ensure]} to #{should} as install_only packages are never downgraded"
           operation = update_command
-        elsif rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(current_package[:ensure])) < 0
+        elsif rpm_compareEVR(should, current_package[:ensure]) < 0
           self.debug "Downgrading package #{@resource[:name]} from version #{current_package[:ensure]} to #{should}"
           operation = :downgrade
-        elsif rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(current_package[:ensure])) > 0
+        elsif rpm_compareEVR(should, current_package[:ensure]) > 0
           self.debug "Upgrading package #{@resource[:name]} from version #{current_package[:ensure]} to #{should}"
           operation = update_command
         end

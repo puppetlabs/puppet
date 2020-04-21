@@ -107,7 +107,7 @@ describe Puppet::Type.type(:package).provider(:yum) do
       end
     end
 
-    describe 'with install_options' do 
+    describe 'with install_options' do
       it 'can parse disable-repo with array of strings' do
           resource[:install_options] = ['--disable-repo=dev*', '--disable-repo=prod*']
           expect(provider).to receive(:execute) do | arr|
@@ -249,7 +249,28 @@ describe Puppet::Type.type(:package).provider(:yum) do
   end
 
   describe 'insync?' do
-    context 'for semantic versions' do
+    context 'when version is not a valid RPM version' do
+      let(:is) { 'a:123' }
+
+      before do
+        resource[:ensure] = is
+      end
+
+      it 'logs a debug message' do
+        expect(Puppet).to receive(:debug).with("Cannot parse #{is} as a RPM version range")
+        provider.insync?(is)
+      end
+
+      context 'when requested version equals installed version' do
+        it { expect(provider).to be_insync(is) }
+      end
+
+      context 'when requested version is different than installed versions' do
+        it { expect(provider).not_to be_insync('999') }
+      end
+    end
+
+    context 'with valid semantic versions' do
       let(:is) { '1:1.2.3.4-5.el4' }
 
       it 'returns true if current version matches the greater or equal semantic version in ensure' do
@@ -270,6 +291,173 @@ describe Puppet::Type.type(:package).provider(:yum) do
       it 'returns false if current version does not match matches two semantic conditions' do
         resource[:ensure] = '<1:1.1.3.4-5.el4 <1:1.3.3.6-5.el4'
         expect(provider).not_to be_insync(is)
+      end
+    end
+  end
+
+  describe 'install' do
+    before do
+      resource[:ensure] = ensure_value
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('7')
+      allow(described_class).to receive(:command).with(:cmd).and_return('/usr/bin/yum')
+      allow(provider).to receive(:query).twice.and_return(nil, ensure: '18.3.2')
+      allow(provider).to receive(:insync?).with('18.3.2').and_return(true)
+    end
+
+    context 'with version range' do
+      before do
+        allow(provider).to receive(:available_versions).and_return(available_versions)
+      end
+
+      context 'without epoch' do
+        let(:ensure_value) { '>18.1 <19' }
+        let(:available_versions) { ['17.5.2', '18.0', 'a:23', '18.3', '18.3.2', '19.0', '3:18.4'] }
+
+        it 'selects best_version' do
+          expect(provider).to receive(:execute).with(
+            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, 'myresource-18.3.2']
+          )
+          provider.install
+        end
+
+        context 'when comparing with available packages that do not have epoch' do
+          let(:ensure_value) { '>18' }
+          let(:available_versions) { ['18.3.3', '3:18.3.2'] }
+
+          it 'treats no epoch as zero' do
+            expect(provider).to receive(:execute).with(
+              ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, 'myresource-18.3.2']
+              )
+            provider.install
+          end
+        end
+      end
+
+      context 'with epoch' do
+        let(:ensure_value) { '>18.1 <3:19' }
+        let(:available_versions) { ['3:17.5.2', '3:18.0', 'a:23', '18.3.3', '3:18.3.2', '3:19.0', '19.1'] }
+
+        it 'selects best_version and removes epoch' do
+          expect(provider).to receive(:execute).with(
+            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, 'myresource-18.3.2']
+          )
+          provider.install
+        end
+      end
+
+      context 'when no suitable version in range' do
+        let(:ensure_value) { '>18.1 <19' }
+        let(:available_versions) { ['3:17.5.2', '3:18.0', 'a:23' '18.3', '3:18.3.2', '3:19.0', '19.1'] }
+
+        it 'uses requested version' do
+          expect(provider).to receive(:execute).with(
+            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource->18.1 <19"]
+          )
+          provider.install
+        end
+
+        it 'logs a debug message' do
+          allow(provider).to receive(:execute).with(
+            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource->18.1 <19"]
+          )
+
+          expect(Puppet).to receive(:debug).with(
+            "No available version for package myresource is included in range >18.1 <19"
+          )
+          provider.install
+        end
+      end
+    end
+
+    context 'with fix version' do
+      let(:ensure_value) { '1:18.12' }
+
+      it 'passes the version to yum command' do
+        expect(provider).to receive(:execute).with(
+            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource-1:18.12"]
+          )
+          provider.install
+      end
+    end
+
+    context 'when upgrading' do
+      let(:ensure_value) { '>18.1 <19' }
+      let(:available_versions) { ['17.5.2', '18.0', 'a:23' '18.3', '18.3.2', '19.0', '3:18.4'] }
+
+      before do
+        allow(provider).to receive(:available_versions).and_return(available_versions)
+        allow(provider).to receive(:query).twice
+          .and_return({ ensure: '17.0' }, { ensure: '18.3.2' })
+      end
+
+      it 'adds update flag to install command' do
+        expect(provider).to receive(:execute).with(
+          ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', 'update', 'myresource-18.3.2']
+        )
+        provider.install
+      end
+    end
+
+    context 'when dowgrading' do
+      let(:ensure_value) { '>18.1 <19' }
+      let(:available_versions) { ['17.5.2', '18.0', 'a:23' '18.3', '18.3.2', '19.0', '3:18.4'] }
+
+      before do
+        allow(provider).to receive(:available_versions).and_return(available_versions)
+        allow(provider).to receive(:query).twice
+          .and_return({ ensure: '19.0' }, { ensure: '18.3.2' })
+      end
+
+      it 'adds downgrade flag to install command' do
+        expect(provider).to receive(:execute).with(
+          ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :downgrade, 'myresource-18.3.2']
+        )
+        provider.install
+      end
+    end
+
+    context 'on failure' do
+      let(:ensure_value) { '20' }
+
+      context 'when execute command fails' do
+        before do
+          allow(provider).to receive(:execute).with(
+            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource-20"]
+          ).and_return('No package myresource-20 available.')
+        end
+
+        it 'raises Puppet::Error' do
+          expect { provider.install }.to \
+            raise_error(Puppet::Error, 'Could not find package myresource-20')
+        end
+      end
+
+      context 'when package is not found' do
+        before do
+          allow(provider).to receive(:query)
+          allow(provider).to receive(:execute).with(
+            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource-20"]
+          )
+        end
+
+        it 'raises Puppet::Error' do
+          expect { provider.install }.to \
+            raise_error(Puppet::Error, 'Could not find package myresource')
+        end
+      end
+
+      context 'when package is not installed' do
+        before do
+          allow(provider).to receive(:execute).with(
+            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource-20"]
+          )
+          allow(provider).to receive(:insync?).and_return(false)
+        end
+
+        it 'raises Puppet::Error' do
+          expect { provider.install }.to \
+            raise_error(Puppet::Error, 'Failed to update to version 20, got version 18.3.2 instead')
+        end
       end
     end
   end
