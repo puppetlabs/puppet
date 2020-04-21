@@ -310,8 +310,8 @@ describe Puppet::Type.type(:package).provider(:yum) do
       end
 
       context 'without epoch' do
-        let(:ensure_value) { '>18.1, <19' }
-        let(:available_versions) { ['17.5.2', '18.0', 'a:23' '18.3', '18.3.2', '19.0', '3:18.4'] }
+        let(:ensure_value) { '>18.1 <19' }
+        let(:available_versions) { ['17.5.2', '18.0', 'a:23', '18.3', '18.3.2', '19.0', '3:18.4'] }
 
         it 'selects best_version' do
           expect(provider).to receive(:execute).with(
@@ -319,11 +319,23 @@ describe Puppet::Type.type(:package).provider(:yum) do
           )
           provider.install
         end
+
+        context 'when comparing with available packages that do not have epoch' do
+          let(:ensure_value) { '>18' }
+          let(:available_versions) { ['18.3.3', '3:18.3.2'] }
+
+          it 'treats no epoch as zero' do
+            expect(provider).to receive(:execute).with(
+              ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, 'myresource-18.3.2']
+              )
+            provider.install
+          end
+        end
       end
 
       context 'with epoch' do
-        let(:ensure_value) { '>18.1, <3:19' }
-        let(:available_versions) { ['3:17.5.2', '3:18.0', 'a:23' '18.3.3', '3:18.3.2', '3:19.0', '19.1'] }
+        let(:ensure_value) { '>18.1 <3:19' }
+        let(:available_versions) { ['3:17.5.2', '3:18.0', 'a:23', '18.3.3', '3:18.3.2', '3:19.0', '19.1'] }
 
         it 'selects best_version and removes epoch' do
           expect(provider).to receive(:execute).with(
@@ -334,23 +346,23 @@ describe Puppet::Type.type(:package).provider(:yum) do
       end
 
       context 'when no suitable version in range' do
-        let(:ensure_value) { '>18.1, <19' }
+        let(:ensure_value) { '>18.1 <19' }
         let(:available_versions) { ['3:17.5.2', '3:18.0', 'a:23' '18.3', '3:18.3.2', '3:19.0', '19.1'] }
 
         it 'uses requested version' do
           expect(provider).to receive(:execute).with(
-            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource->18.1, <19"]
+            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource->18.1 <19"]
           )
           provider.install
         end
 
         it 'logs a debug message' do
           allow(provider).to receive(:execute).with(
-            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource->18.1, <19"]
+            ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', :install, "myresource->18.1 <19"]
           )
 
           expect(Puppet).to receive(:debug).with(
-            "No available version for package myresource is included in range >18.1, <19"
+            "No available version for package myresource is included in range >18.1 <19"
           )
           provider.install
         end
@@ -369,7 +381,7 @@ describe Puppet::Type.type(:package).provider(:yum) do
     end
 
     context 'when upgrading' do
-      let(:ensure_value) { '>18.1, <19' }
+      let(:ensure_value) { '>18.1 <19' }
       let(:available_versions) { ['17.5.2', '18.0', 'a:23' '18.3', '18.3.2', '19.0', '3:18.4'] }
 
       before do
@@ -380,14 +392,14 @@ describe Puppet::Type.type(:package).provider(:yum) do
 
       it 'adds update flag to install command' do
         expect(provider).to receive(:execute).with(
-        ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', 'update', 'myresource-18.3.2']
+          ['/usr/bin/yum', '-d', '0', '-e', '0', '-y', 'update', 'myresource-18.3.2']
         )
         provider.install
       end
     end
 
     context 'when dowgrading' do
-      let(:ensure_value) { '>18.1, <19' }
+      let(:ensure_value) { '>18.1 <19' }
       let(:available_versions) { ['17.5.2', '18.0', 'a:23' '18.3', '18.3.2', '19.0', '3:18.4'] }
 
       before do

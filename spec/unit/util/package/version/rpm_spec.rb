@@ -107,5 +107,15 @@ describe Puppet::Util::Package::Version::Rpm do
         expect(first).to eq(second)
       end
     end
+
+    context 'when one has no epoch' do
+      it 'handles no epoch as zero' do
+        version1 = described_class.parse('1:1.2')
+        version2 = described_class.parse('1.4')
+
+        expect(version1).to be > version2
+        expect(version2).to be < version1
+      end
+    end
   end
 end

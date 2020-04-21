@@ -121,11 +121,6 @@ describe Puppet::Util::RpmCompare do
     it 'evaluates same-length numeric revisions numerically' do
       expect(RpmTest.rpm_compareEVR('2.2-405', '2.2-406')).to eq(-1)
     end
-
-    it 'treats no epoch as zero epoch' do
-      expect(RpmTest.rpm_compareEVR('1:1.2', '1.4')).to eq(1)
-      expect(RpmTest.rpm_compareEVR('1.4', '1:1.2')).to eq(-1)
-    end
   end
 
   describe '.rpm_parse_evr' do

@@ -169,11 +169,10 @@ module Puppet::Util::RpmCompare
     should_hash = rpm_parse_evr(should)
     is_hash = rpm_parse_evr(is)
 
-    should_hash[:epoch] ||= '0'
-    is_hash[:epoch] ||= '0'
-
-    rc = compare_values(should_hash[:epoch], is_hash[:epoch])
-    return rc unless rc == 0
+    if !should_hash[:epoch].nil?
+      rc = compare_values(should_hash[:epoch], is_hash[:epoch])
+      return rc unless rc == 0
+    end
 
     rc = compare_values(should_hash[:version], is_hash[:version])
     return rc unless rc == 0

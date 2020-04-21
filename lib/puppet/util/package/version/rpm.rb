@@ -44,6 +44,25 @@ module Puppet::Util::Package::Version
 
     private
 
+    # overwrite rpm_compareEVR to treat no epoch as zero epoch
+    # in order to compare version correctly
+    #
+    # returns 1 if a is newer than b,
+    #         0 if they are identical
+    #        -1 if a is older than b
+    def rpm_compareEVR(a, b)
+      a_hash = rpm_parse_evr(a)
+      b_hash = rpm_parse_evr(b)
+
+      a_hash[:epoch] ||= '0'
+      b_hash[:epoch] ||= '0'
+
+      rc = compare_values(a_hash[:epoch], b_hash[:epoch])
+      return rc unless rc == 0
+
+      super(a, b)
+    end
+
     def initialize(epoch, version, release, arch)
       @epoch   = epoch
       @version = version
