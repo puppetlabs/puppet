@@ -302,7 +302,7 @@ describe Puppet::HTTP::Client do
      it 'raises an ArgumentError if `body` is missing' do
        expect {
          client.put(uri, nil, headers: {'Content-Type' => 'text/plain'})
-       }.to raise_error(ArgumentError, /'put' requires a 'body' argument/)
+       }.to raise_error(ArgumentError, /'put' requires a string 'body' argument/)
      end
 
      it 'raises an ArgumentError if `content_type` is missing from the headers hash' do
@@ -384,7 +384,7 @@ describe Puppet::HTTP::Client do
     it 'raises an ArgumentError if `body` is missing' do
       expect {
         client.post(uri, nil, headers: {'Content-Type' => 'text/plain'})
-      }.to raise_error(ArgumentError, /'post' requires a 'body' argument/)
+      }.to raise_error(ArgumentError, /'post' requires a string 'body' argument/)
     end
 
     it 'raises an ArgumentError if `content_type` is missing from the headers hash' do

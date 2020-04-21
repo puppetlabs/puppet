@@ -140,7 +140,7 @@ describe Puppet::HTTP::ExternalClient do
     it 'raises an ArgumentError if `body` is missing' do
       expect {
         client.post(uri, nil, headers: {'Content-Type' => 'text/plain'})
-      }.to raise_error(ArgumentError, /'post' requires a 'body' argument/)
+      }.to raise_error(ArgumentError, /'post' requires a string 'body' argument/)
     end
 
     context 'when connecting' do

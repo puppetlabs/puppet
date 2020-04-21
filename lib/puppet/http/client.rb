@@ -178,7 +178,7 @@ class Puppet::HTTP::Client
   # @return [String] the body of the request response
   #
   def put(url, body, headers: {}, params: {}, options: {})
-    raise ArgumentError, "'put' requires a 'body' argument" unless body
+    raise ArgumentError, "'put' requires a string 'body' argument" unless body.is_a?(String)
     url = encode_query(url, params)
 
     request = Net::HTTP::Put.new(url, @default_headers.merge(headers))
@@ -211,7 +211,7 @@ class Puppet::HTTP::Client
   # @return [String] the body of the request response
   #
   def post(url, body, headers: {}, params: {}, options: {}, &block)
-    raise ArgumentError, "'post' requires a 'body' argument" unless body
+    raise ArgumentError, "'post' requires a string 'body' argument" unless body.is_a?(String)
     url = encode_query(url, params)
 
     request = Net::HTTP::Post.new(url, @default_headers.merge(headers))

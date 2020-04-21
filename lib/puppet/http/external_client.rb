@@ -42,7 +42,7 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
   # (see Puppet::HTTP::Client#post)
   # @api private
   def post(url, body, headers: {}, params: {}, options: {}, &block)
-    raise ArgumentError.new("'post' requires a 'body' argument") unless body
+    raise ArgumentError.new("'post' requires a string 'body' argument") unless body.is_a?(String)
     url = encode_query(url, params)
 
     options[:use_ssl] = url.scheme == 'https'
