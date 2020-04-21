@@ -328,25 +328,29 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
   end
 
   context 'multiple agents running' do
+    before(:each) do
+      File.delete(Puppet[:agent_catalog_run_lockfile]) if File.file?(Puppet[:agent_catalog_run_lockfile])
+    end
+
     it "exits if an agent is already running" do
       server.start_server do |port|
         path = Puppet[:agent_catalog_run_lockfile]
         Puppet[:masterport] = port
 
-        th = Thread.new {
-          %x{ruby -e "File.write('#{path}', Process.pid); sleep(2); 'puppet keyword needed here'"}
+        t1 = Thread.new {
+          %x{ruby -e "File.write('#{path}', Process.pid); sleep(3); 'puppet keyword needed here'"}
         }
 
-        until File.exists?(path) && File.size(path) > 0 do
-          sleep 0.1
-        end
+       sleep 0.5 # so that the file gets created
 
         expect {
-          agent.command_line.args << '--test'
-          agent.run
-        }.to exit_with(1).and output(/Run of Puppet configuration client already in progress; skipping/).to_stdout
-
-        th.kill # kill thread so we don't wait too much
+          expect {
+            agent.command_line.args << '--test'
+            agent.run
+          }.to exit_with(1)
+        }.to output(/Run of Puppet configuration client already in progress; skipping/).to_stdout
+        
+        t1.kill # kill thread so we don't wait too much
       end
     end
 
@@ -356,44 +360,21 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         Puppet[:masterport] = port
         Puppet[:waitforlock] = 1
 
-        th = Thread.new {
-          %x{ruby -e "File.write('#{path}', Process.pid); sleep(2); 'puppet keyword needed here'"}
-        }
+       t = Thread.new {
+          %x{ruby -e "File.write('#{path}', Process.pid); sleep(4); 'puppet keyword needed here'"}
+       }
 
-        until File.exists?(path) && File.size(path) > 0 do
-          sleep 0.1
-        end
+       sleep 0.5 # so that the file gets created
 
+        expect {
         expect {
           agent.command_line.args << '--test'
           agent.run
-        }.to exit_with(0).and output(/Info: Will try again in #{Puppet[:waitforlock]} seconds./).to_stdout
+        }.to exit_with(0)
+      }.to output(/Info: Will try again in #{Puppet[:waitforlock]} seconds./).to_stdout
 
-        th.kill # kill thread so we don't wait too much
-      end
-    end
-
-    it "exits if maxwaitforlock is exceeded" do
-      server.start_server do |port|
-        path = Puppet[:agent_catalog_run_lockfile]
-        Puppet[:masterport] = port
-        Puppet[:waitforlock] = 1
-        Puppet[:maxwaitforlock] = 0.5
-        
-        th = Thread.new {
-          %x{ruby -e "File.write('#{path}', Process.pid); sleep(2); 'puppet keyword needed here'"}
-        }
-
-        until File.exists?(path) && File.size(path) > 0 do
-          sleep 0.1
-        end
-
-        expect {
-          agent.command_line.args << '--test'
-          agent.run
-        }.to exit_with(1).and output(/Exiting now because the maxwaitforlock timeout has been exceeded./).to_stdout
-
-        th.kill # kill thread so we don't wait too much
+        t.kill # kill thread so we don't wait too much
+      File.delete(Puppet[:agent_catalog_run_lockfile]) if File.file?(Puppet[:agent_catalog_run_lockfile])
       end
     end
   end
