@@ -46,11 +46,9 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
 
     response = @client.put(
       with_base_url("/report/#{name}"),
+      serialize(formatter, report),
       headers: headers,
       params: { environment: environment },
-      options: {
-        body: serialize(formatter, report)
-      }
     )
 
     # override parent's process_response handling

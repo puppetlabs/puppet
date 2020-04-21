@@ -64,7 +64,7 @@ describe Puppet::Reports.report(:http) do
     it "passes metric_id options" do
       stub_request(:post, url)
 
-      expect(Puppet.runtime['http']).to receive(:post).with(anything, hash_including(options: hash_including(metric_id: [:puppet, :report, :http]))).and_call_original
+      expect(Puppet.runtime['http']).to receive(:post).with(anything, anything, hash_including(options: hash_including(metric_id: [:puppet, :report, :http]))).and_call_original
 
       subject.process
     end

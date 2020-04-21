@@ -118,12 +118,10 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
 
     response = @client.post(
       with_base_url("/catalog/#{name}"),
+      body,
       headers: headers,
       # for legacy reasons we always send environment as a query parameter too
       params: { environment: environment },
-      options: {
-        body: body
-      }
     )
 
     process_response(response)
@@ -178,11 +176,9 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
 
     response = @client.put(
       with_base_url("/facts/#{name}"),
+      serialize(formatter, facts),
       headers: headers,
       params: { environment: environment },
-      options: {
-        body: serialize(formatter, facts)
-      }
     )
 
     process_response(response)
@@ -279,12 +275,10 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
 
     response = @client.put(
       with_base_url("/file_bucket_file/#{path}"),
+      body,
       headers: headers,
       params: {
         environment: environment
-      },
-      options: {
-        body: body
       }
     )
 
