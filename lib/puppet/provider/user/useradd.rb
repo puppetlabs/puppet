@@ -21,7 +21,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   options :expiry, :method => :sp_expire,
     :munge => proc { |value|
       if value == :absent
-        ''
+        if Facter.value(:operatingsystem) && Facter.value(:operatingsystemmajrelease) == "11"
+          -1
+        else
+          ''
+        end
       else
         case Facter.value(:operatingsystem)
         when 'Solaris'
