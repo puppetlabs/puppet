@@ -417,10 +417,13 @@ describe Puppet::Util::Package::Version::Pip do
       "1.0.post456.dev34",
       "1.0.post456",
       "1.1.dev1",
+      "1.2",
       "1.2+123abc",
       "1.2+123abc456",
       "1.2+abc",
       "1.2+abc123",
+      "1.2+abc123-def2",
+      "1.2+abc123-def2-0",
       "1.2+abc123def",
       "1.2+1234.abc",
       "1.2+123456",
@@ -433,6 +436,13 @@ describe Puppet::Util::Package::Version::Pip do
       "1!1.2.rev33+123456",
       "2!2.3.4.alpha5.rev6.dev7+abc89"
     ]
+
+    it "should find versions list to be already sorted" do
+      sorted_versions = versions.sort do |x,y|
+        described_class.compare(x, y)
+      end
+      expect(versions).to eq(sorted_versions)
+    end
 
     versions.combination(2).to_a.each do |version_pair|
       lower_version = described_class.parse(version_pair.first)
@@ -448,10 +458,6 @@ describe Puppet::Util::Package::Version::Pip do
 
       it "#{lower_version} should be lower than #{greater_version}" do
         expect(lower_version < greater_version).to eq(true)
-      end
-
-      it "#{greater_version} should be greater than #{lower_version}" do
-        expect(greater_version > lower_version).to eq(true)
       end
     end
   end
