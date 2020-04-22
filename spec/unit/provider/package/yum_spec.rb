@@ -246,6 +246,15 @@ describe Puppet::Type.type(:package).provider(:yum) do
         expect(output).not_to include("Random plugin")
       end
     end
+
+    context "with subscription manager enabled " do
+      let(:check_update) { File.read(my_fixture("yum-check-update-subscription-manager.txt")) }
+      let(:output) { described_class.parse_updates(check_update) }
+
+      it "parses correctly formatted entries" do
+        expect(output['curl.x86_64']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'x86_64'}])
+      end
+    end
   end
 
   describe 'insync?' do
