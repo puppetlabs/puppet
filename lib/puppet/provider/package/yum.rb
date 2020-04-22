@@ -86,23 +86,24 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   end
 
   def self.parse_updates(str)
-    # Strip off all content before the first blank line
-    body = str.partition(/^\s*\n/m).last
+    # Strip off all content that contains Obsoleting, Security: or Update
+    body = str.partition(/^(Obsoleting|Security:|Update)/).first
 
     updates = Hash.new { |h, k| h[k] = [] }
-    body.split.each_slice(3) do |tuple|
-      break if tuple[0] =~ /^(Obsoleting|Security:|Update)/
-      break unless tuple[1] =~ /^(?:(\d+):)?(\S+)-(\S+)$/
-      hash = update_to_hash(*tuple[0..1])
-      # Create entries for both the package name without a version and a
-      # version since yum considers those as mostly interchangeable.
-      short_name = hash[:name]
-      long_name  = "#{hash[:name]}.#{hash[:arch]}"
 
-      updates[short_name] << hash
-      updates[long_name] << hash
+    body.split(/^\s*\n/).each do |line|
+      line.split.each_slice(3) do |tuple|
+        next unless tuple[0].include?('.') && tuple[1] =~ /^(?:(\d+):)?(\S+)-(\S+)$/
+
+        hash = update_to_hash(*tuple[0..1])
+        # Create entries for both the package name without a version and a
+        # version since yum considers those as mostly interchangeable.
+        short_name = hash[:name]
+        long_name  = "#{hash[:name]}.#{hash[:arch]}"
+        updates[short_name] << hash
+        updates[long_name] << hash
+      end
     end
-
     updates
   end
 
