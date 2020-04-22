@@ -234,20 +234,21 @@ describe Puppet::Type.type(:service), "when changing the host" do
     @service.property(:enable).sync
   end
 
-  it "should always consider the enable state of a static service to be in sync" do
+  it "should let superclass implementation resolve insyncness when provider does not respond to the 'enabled_insync?' method" do
     allow(@service.provider.class).to receive(:supports_parameter?).and_return(true)
-    expect(@service.provider).to receive(:cached_enabled?).and_return('static')
-    @service[:enable] = false
-    expect(Puppet).to receive(:debug).with("Unable to enable or disable static service yay")
+    @service[:enable] = true
+    allow(@service.provider).to receive(:respond_to?).with(:enabled_insync?).and_return(false)
+
     expect(@service.property(:enable).insync?(:true)).to eq(true)
   end
 
-  it "should determine insyncness normally when the service is not static" do
+  it "insyncness should be resolved by provider instead of superclass implementation when provider responds to the 'enabled_insync?' method" do
     allow(@service.provider.class).to receive(:supports_parameter?).and_return(true)
-    expect(@service.provider).to receive(:cached_enabled?).and_return('true')
     @service[:enable] = true
-    expect(Puppet).not_to receive(:debug)
-    expect(@service.property(:enable).insync?(:true)).to eq(true)
+    allow(@service.provider).to receive(:respond_to?).with(:enabled_insync?).and_return(true)
+    allow(@service.provider).to receive(:enabled_insync?).and_return(false)
+
+    expect(@service.property(:enable).insync?(:true)).to eq(false)
   end
 
   it "should sync the service's enable state when changing the state of :ensure if :enable is being managed" do
