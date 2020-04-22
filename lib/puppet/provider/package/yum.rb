@@ -25,6 +25,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   defaultfor :osfamily => :redhat
 
+  VERSION_REGEX = /^(?:(\d+):)?(\S+)-(\S+)$/
+
   def self.prefetch(packages)
     raise Puppet::Error, _("The yum provider can only be used as root") if Process.euid != 0
     super
@@ -93,7 +95,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     body.split(/^\s*\n/).each do |line|
       line.split.each_slice(3) do |tuple|
-        next unless tuple[0].include?('.') && tuple[1] =~ /^(?:(\d+):)?(\S+)-(\S+)$/
+        next unless tuple[0].include?('.') && tuple[1] =~ VERSION_REGEX
 
         hash = update_to_hash(*tuple[0..1])
         # Create entries for both the package name without a version and a
@@ -118,7 +120,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       raise _("Failed to parse package name and architecture from '%{pkgname}'") % { pkgname: pkgname }
     end
 
-    match = pkgversion.match(/^(?:(\d+):)?(\S+)-(\S+)$/)
+    match = pkgversion.match(VERSION_REGEX)
     epoch = match[1] || '0'
     version = match[2]
     release = match[3]
