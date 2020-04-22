@@ -4,10 +4,9 @@ require 'puppet/http'
 
 describe Puppet::HTTP::Client do
   let(:uri) { URI.parse('https://www.example.com') }
-  let(:pool) { Puppet::Network::HTTP::Pool.new }
   let(:puppet_context) { Puppet::SSL::SSLContext.new }
   let(:system_context) { Puppet::SSL::SSLContext.new }
-  let(:client) { described_class.new(pool: pool, ssl_context: puppet_context, system_ssl_context: system_context) }
+  let(:client) { described_class.new(ssl_context: puppet_context, system_ssl_context: system_context) }
   let(:credentials) { ['user', 'pass'] }
 
   it 'creates unique sessions' do
@@ -50,7 +49,7 @@ describe Puppet::HTTP::Client do
     end
 
     it 'connects using the default ssl context' do
-      expect(pool).to receive(:with_connection) do |_, verifier|
+      expect(client.pool).to receive(:with_connection) do |_, verifier|
         expect(verifier.ssl_context).to equal(puppet_context)
       end
 
@@ -60,7 +59,7 @@ describe Puppet::HTTP::Client do
     it 'connects using a specified ssl context' do
       other_context = Puppet::SSL::SSLContext.new
 
-      expect(pool).to receive(:with_connection) do |_, verifier|
+      expect(client.pool).to receive(:with_connection) do |_, verifier|
         expect(verifier.ssl_context).to equal(other_context)
       end
 
@@ -68,7 +67,7 @@ describe Puppet::HTTP::Client do
     end
 
     it 'connects using the system store' do
-      expect(pool).to receive(:with_connection) do |_, verifier|
+      expect(client.pool).to receive(:with_connection) do |_, verifier|
         expect(verifier.ssl_context).to equal(system_context)
       end
 
@@ -76,7 +75,7 @@ describe Puppet::HTTP::Client do
     end
 
     it 'does not create a verifier for HTTP connections' do
-      expect(pool).to receive(:with_connection) do |_, verifier|
+      expect(client.pool).to receive(:with_connection) do |_, verifier|
         expect(verifier).to be_nil
       end
 
@@ -118,10 +117,8 @@ describe Puppet::HTTP::Client do
 
   context "when closing" do
     it "closes all connections in the pool" do
-      pool = double('pool')
-      expect(pool).to receive(:close)
+      expect(client.pool).to receive(:close)
 
-      client = described_class.new(pool: pool)
       client.close
     end
   end
@@ -730,7 +727,7 @@ describe Puppet::HTTP::Client do
       allow(http2).to receive(:started?).and_return(true)
 
 
-      pool = Puppet::Network::HTTP::Pool.new()
+      pool = Puppet::Network::HTTP::Pool.new(15)
       client = Puppet::HTTP::Client.new(pool: pool)
 
       # The "with_connection" method is required to yield started connections

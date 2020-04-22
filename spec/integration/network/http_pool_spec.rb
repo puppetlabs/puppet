@@ -107,7 +107,7 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
 
     context "when using persistent HTTPS connections" do
       around :each do |example|
-        pool = Puppet::Network::HTTP::Pool.new
+        pool = Puppet::Network::HTTP::Pool.new(15)
         Puppet.override(:http_pool => pool) do
           example.run
         end
