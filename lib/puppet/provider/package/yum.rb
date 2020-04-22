@@ -25,6 +25,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   defaultfor :osfamily => :redhat
 
+  VERSION_REGEX = /^(?:(\d+):)?(\S+)-(\S+)$/
+
   def self.prefetch(packages)
     raise Puppet::Error, _("The yum provider can only be used as root") if Process.euid != 0
     super
@@ -86,23 +88,24 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   end
 
   def self.parse_updates(str)
-    # Strip off all content before the first blank line
-    body = str.partition(/^\s*\n/m).last
+    # Strip off all content that contains Obsoleting, Security: or Update
+    body = str.partition(/^(Obsoleting|Security:|Update)/).first
 
     updates = Hash.new { |h, k| h[k] = [] }
-    body.split.each_slice(3) do |tuple|
-      break if tuple[0] =~ /^(Obsoleting|Security:|Update)/
-      break unless tuple[1] =~ /^(?:(\d+):)?(\S+)-(\S+)$/
-      hash = update_to_hash(*tuple[0..1])
-      # Create entries for both the package name without a version and a
-      # version since yum considers those as mostly interchangeable.
-      short_name = hash[:name]
-      long_name  = "#{hash[:name]}.#{hash[:arch]}"
 
-      updates[short_name] << hash
-      updates[long_name] << hash
+    body.split(/^\s*\n/).each do |line|
+      line.split.each_slice(3) do |tuple|
+        next unless tuple[0].include?('.') && tuple[1] =~ VERSION_REGEX
+
+        hash = update_to_hash(*tuple[0..1])
+        # Create entries for both the package name without a version and a
+        # version since yum considers those as mostly interchangeable.
+        short_name = hash[:name]
+        long_name  = "#{hash[:name]}.#{hash[:arch]}"
+        updates[short_name] << hash
+        updates[long_name] << hash
+      end
     end
-
     updates
   end
 
@@ -117,7 +120,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       raise _("Failed to parse package name and architecture from '%{pkgname}'") % { pkgname: pkgname }
     end
 
-    match = pkgversion.match(/^(?:(\d+):)?(\S+)-(\S+)$/)
+    match = pkgversion.match(VERSION_REGEX)
     epoch = match[1] || '0'
     version = match[2]
     release = match[3]
