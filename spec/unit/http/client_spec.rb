@@ -775,4 +775,34 @@ describe Puppet::HTTP::Client do
       client.get(uri)
     end
   end
+
+  context "persistent connections" do
+    before :each do
+      stub_request(:get, uri)
+    end
+
+    it 'defaults keepalive to http_keepalive_timeout' do
+      expect(client.pool.keepalive_timeout).to eq(Puppet[:http_keepalive_timeout])
+    end
+
+    it 'reuses a cached connection' do
+      allow(Puppet).to receive(:debug)
+      expect(Puppet).to receive(:debug).with(/^Creating new connection/)
+      expect(Puppet).to receive(:debug).with(/^Using cached connection/)
+
+      client.get(uri)
+      client.get(uri)
+    end
+
+    it 'can be disabled' do
+      Puppet[:http_keepalive_timeout] = 0
+
+      allow(Puppet).to receive(:debug)
+      expect(Puppet).to receive(:debug).with(/^Creating new connection/).twice
+      expect(Puppet).to receive(:debug).with(/^Using cached connection/).never
+
+      client.get(uri)
+      client.get(uri)
+    end
+  end
 end
