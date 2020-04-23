@@ -154,6 +154,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
         apparmor.service
         umountnfs.service
         urandom.service
+        brandbot.service
       })
     end
 
