@@ -28,7 +28,7 @@ class Puppet::HTTP::Client
   # @param [Integer] retry_limit number of HTTP reties allowed in a given
   #   request
   #
-  def initialize(pool: Puppet::Network::HTTP::Pool.new, ssl_context: nil, system_ssl_context: nil, redirect_limit: 10, retry_limit: 100)
+  def initialize(pool: Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout]), ssl_context: nil, system_ssl_context: nil, redirect_limit: 10, retry_limit: 100)
     @pool = pool
     @default_headers = {
       'X-Puppet-Version' => Puppet.version,

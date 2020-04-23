@@ -9,11 +9,9 @@
 # @api private
 #
 class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
-  FIFTEEN_SECONDS = 15
+  attr_reader :factory, :keepalive_timeout
 
-  attr_reader :factory
-
-  def initialize(keepalive_timeout = FIFTEEN_SECONDS)
+  def initialize(keepalive_timeout)
     @pool = {}
     @factory = Puppet::Network::HTTP::Factory.new
     @keepalive_timeout = keepalive_timeout

@@ -26,11 +26,11 @@ describe Puppet::Network::HTTP::Pool do
   end
 
   def create_pool
-    Puppet::Network::HTTP::Pool.new
+    Puppet::Network::HTTP::Pool.new(15)
   end
 
   def create_pool_with_connections(site, *connections)
-    pool = Puppet::Network::HTTP::Pool.new
+    pool = Puppet::Network::HTTP::Pool.new(15)
     connections.each do |conn|
       pool.release(site, verifier, conn)
     end
@@ -38,7 +38,7 @@ describe Puppet::Network::HTTP::Pool do
   end
 
   def create_pool_with_http_connections(site, *connections)
-    pool = Puppet::Network::HTTP::Pool.new
+    pool = Puppet::Network::HTTP::Pool.new(15)
     connections.each do |conn|
       pool.release(site, nil, conn)
     end
