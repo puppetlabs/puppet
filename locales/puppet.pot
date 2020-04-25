@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.14.0-210-g48e54bcd2c\n"
+"Project-Id-Version: Puppet automation framework 6.14.0-239-gd3c32512f9\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-04-21 01:04+0000\n"
-"PO-Revision-Date: 2020-04-21 01:04+0000\n"
+"POT-Creation-Date: 2020-04-25 02:49+0000\n"
+"PO-Revision-Date: 2020-04-25 02:49+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2267,7 +2267,7 @@ msgid "No content type in http response; cannot parse"
 msgstr ""
 
 #. TRANSLATORS "pson", "preferred_serialization_format", and "puppetserver" should not be translated
-#: ../lib/puppet/http/service/report.rb:63
+#: ../lib/puppet/http/service/report.rb:61
 msgid "To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson"
 msgstr ""
 
@@ -4009,7 +4009,7 @@ msgstr ""
 msgid "Could not resolve %{ip}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/network/http/pool.rb:68
+#: ../lib/puppet/network/http/pool.rb:66
 msgid "Failed to close connection for %{site}: %{detail}"
 msgstr ""
 
@@ -6674,27 +6674,31 @@ msgstr ""
 msgid "Could not perform network device prefetch: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:37
+#: ../lib/puppet/provider/package/aix.rb:46
 msgid "The aix provider can only be used by root"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:79 ../lib/puppet/provider/package/nim.rb:53
+#: ../lib/puppet/provider/package/aix.rb:88 ../lib/puppet/provider/package/nim.rb:53
 msgid "Failed to uninstall package '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:86
+#: ../lib/puppet/provider/package/aix.rb:95
 msgid "A directory is required which will be used to find packages"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:98
+#: ../lib/puppet/provider/package/aix.rb:107
 msgid "aix package provider is unable to downgrade packages"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:118
+#: ../lib/puppet/provider/package/aix.rb:112
+msgid "Package '%{name}' is in a %{status} state and requires manual intervention"
+msgstr ""
+
+#: ../lib/puppet/provider/package/aix.rb:133
 msgid "Could not list installed Packages: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:141 ../lib/puppet/provider/package/yum.rb:316
+#: ../lib/puppet/provider/package/aix.rb:156 ../lib/puppet/provider/package/yum.rb:325
 msgid "Tried to get latest on a missing package"
 msgstr ""
 
@@ -6726,7 +6730,7 @@ msgstr ""
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:94 ../lib/puppet/provider/package/portupgrade.rb:152 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:296 ../lib/puppet/provider/package/zypper.rb:109
+#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:94 ../lib/puppet/provider/package/portupgrade.rb:152 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:305 ../lib/puppet/provider/package/zypper.rb:109
 msgid "Could not find package %{name}"
 msgstr ""
 
@@ -7049,23 +7053,23 @@ msgstr ""
 msgid "Don't know how to install '%{source}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:64
+#: ../lib/puppet/provider/package/yum.rb:65
 msgid "The yum provider can only be used as root"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:118
+#: ../lib/puppet/provider/package/yum.rb:119
 msgid "Could not check for updates, '%{cmd} check-update' exited with %{status}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:152
+#: ../lib/puppet/provider/package/yum.rb:154
 msgid "Failed to parse package name and architecture from '%{pkgname}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:290
+#: ../lib/puppet/provider/package/yum.rb:299
 msgid "Could not find package %{wanted}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:301
+#: ../lib/puppet/provider/package/yum.rb:310
 msgid "Failed to update to version %{should}, got version %{version} instead"
 msgstr ""
 
@@ -7252,7 +7256,7 @@ msgstr ""
 msgid "You must pass a callback for non-NONE events"
 msgstr ""
 
-#: ../lib/puppet/reports/http.rb:37
+#: ../lib/puppet/reports/http.rb:36
 msgid "Unable to submit report to %{url} [%{code}] %{message}"
 msgstr ""
 
@@ -9538,7 +9542,7 @@ msgstr ""
 msgid "%{value} is an invalid url"
 msgstr ""
 
-#: ../lib/puppet/util/package/version/rpm.rb:47
+#: ../lib/puppet/util/package/version/rpm.rb:40
 msgid "Cannot compare, as %{other} is not a Rpm Version"
 msgstr ""
 
