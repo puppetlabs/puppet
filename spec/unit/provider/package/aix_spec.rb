@@ -22,14 +22,24 @@ describe Puppet::Type.type(:package).provider(:aix) do
 
   context "when installing" do
     it "should install a package" do
+      allow(@provider).to receive(:query).and_return({:name => 'mypackage', :ensure => 'present', :status => :committed})
       expect(@provider).to receive(:installp).with('-acgwXY', '-d', 'mysource', 'mypackage')
       @provider.install
     end
 
     it "should install a specific package version" do
       allow(@resource).to receive(:should).with(:ensure).and_return("1.2.3.4")
+      allow(@provider).to receive(:query).and_return({:name => 'mypackage', :ensure => '1.2.3.4', :status => :committed})
       expect(@provider).to receive(:installp).with('-acgwXY', '-d', 'mysource', 'mypackage 1.2.3.4')
       @provider.install
+    end
+
+    [:broken, :inconsistent].each do |state|
+      it "should fail if the installation resulted in a '#{state}' state" do
+        allow(@provider).to receive(:query).and_return({:name => 'mypackage', :ensure => 'present', :status => state})
+        expect(@provider).to receive(:installp).with('-acgwXY', '-d', 'mysource', 'mypackage')
+        expect { @provider.install }.to raise_error(Puppet::Error, "Package 'mypackage' is in a #{state} state and requires manual intervention")
+      end
     end
 
     it "should fail if the specified version is superseded" do
@@ -125,5 +135,24 @@ END
     allow(Process).to receive(:euid).and_return(0)
     expect(described_class).to receive(:execute).and_return('mypackage:mypackage.rte:1.8.6.4::I:T:::::N:A Super Cool Package::::0::\n')
     described_class.prefetch({ 'mypackage' => latest, 'otherpackage' => absent })
+  end
+
+  context "when querying instances" do
+    before(:each) do
+      allow(described_class).to receive(:execute).and_return(<<-END.chomp)
+sysmgt.cim.providers:sysmgt.cim.providers.metrics:2.12.1.1: : :B: :Metrics Providers for AIX OS: : : : : : :1:0:/:
+sysmgt.cim.providers:sysmgt.cim.providers.osbase:2.12.1.1: : :C: :Base Providers for AIX OS: : : : : : :1:0:/:
+openssl.base:openssl.base:1.0.2.1800: : :?: :Open Secure Socket Layer: : : : : : :0:0:/:
+END
+    end
+
+    it "should treat installed packages in broken and inconsistent state as absent" do
+      installed_packages = described_class.instances.map { |package| package.properties }
+      expected_packages = [{:name => 'sysmgt.cim.providers.metrics', :ensure => :absent, :status => :broken, :provider => :aix},
+                           {:name => 'sysmgt.cim.providers.osbase', :ensure => '2.12.1.1', :status => :committed, :provider => :aix},
+                           {:name => 'openssl.base', :ensure => :absent, :status => :inconsistent, :provider => :aix}]
+
+      expect(installed_packages).to eql(expected_packages)
+    end
   end
 end

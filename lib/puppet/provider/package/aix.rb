@@ -29,6 +29,15 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
   attr_accessor   :latest_info
 
+  STATE_CODE = {
+    'A' => :applied,
+    'B' => :broken,
+    'C' => :committed,
+    'E' => :efix_locked,
+    'O' => :obsolete,
+    '?' => :inconsistent,
+  }.freeze
+
   def self.srclistcmd(source)
     [ command(:installp), "-L", "-d", source ]
   end
@@ -97,6 +106,11 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     if output =~ /^#{Regexp.escape(@resource[:name])}\s+.*\s+Already superseded by.*$/
       self.fail _("aix package provider is unable to downgrade packages")
     end
+
+    pkg_info = query
+    if pkg_info && [:broken, :inconsistent].include?(pkg_info[:status])
+      self.fail _("Package '%{name}' is in a %{status} state and requires manual intervention") % { name: @resource[:name], status: pkg_info[:status] }
+    end
   end
 
   def self.pkglist(hash = {})
@@ -108,8 +122,9 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     end
 
     begin
-      list = execute(cmd).scan(/^[^#][^:]*:([^:]*):([^:]*)/).collect { |n,e|
-        { :name => n, :ensure => e, :provider => self.name }
+      list = execute(cmd).scan(/^[^#][^:]*:([^:]*):([^:]*):[^:]*:[^:]*:([^:])/).collect { |n,e,s|
+        e = :absent if [:broken, :inconsistent].include?(STATE_CODE[s])
+        { :name => n, :ensure => e, :status => STATE_CODE[s], :provider => self.name }
       }
     rescue Puppet::ExecutionFailure => detail
       if hash[:pkgname]
