@@ -95,7 +95,7 @@ class Puppet::Daemon
 
   def restart
     Puppet::Application.restart!
-    reexec unless agent and agent.running?
+    reexec
   end
 
   def reopen_logs
