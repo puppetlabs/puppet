@@ -297,7 +297,7 @@ module Puppet
     end
 
     def get_from_http_source(url, &block)
-      client = Puppet.runtime['http']
+      client = Puppet.runtime[:http]
       client.get(url, options: {include_system_store: true}) do |response|
         raise Puppet::HTTP::ResponseError.new(response) unless response.success?
 

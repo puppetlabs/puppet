@@ -90,7 +90,7 @@ HELP
     @cert_provider = Puppet::X509::CertProvider.new
     @ssl_provider = Puppet::SSL::SSLProvider.new
     @machine = Puppet::SSL::StateMachine.new
-    @session = Puppet.runtime['http'].create_session
+    @session = Puppet.runtime[:http].create_session
   end
 
   def setup_logs

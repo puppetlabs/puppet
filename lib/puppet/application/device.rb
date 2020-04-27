@@ -259,7 +259,7 @@ Licensed under the Apache 2.0 License
         end
       end
       devices.collect do |devicename,device|
-        pool = Puppet.runtime['http'].pool
+        pool = Puppet.runtime[:http].pool
         Puppet.override(:http_pool => pool) do
           # TODO when we drop support for ruby < 2.5 we can remove the extra block here
           begin

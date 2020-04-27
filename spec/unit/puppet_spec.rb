@@ -88,14 +88,15 @@ describe Puppet do
     it 'does not register an implementation by default' do
       Puppet.initialize_settings
 
-      expect(Puppet.runtime['http']).to be_an_instance_of(Puppet::HTTP::Client)
+      expect(Puppet.runtime[:http]).to be_an_instance_of(Puppet::HTTP::Client)
     end
 
     it 'allows an implementation to be registered' do
       impl = double('http')
-      Puppet.initialize_settings([], true, true, { 'http' => impl })
+      Puppet.initialize_settings([], true, true, http: impl)
 
-      expect(Puppet.runtime['http']).to eq(impl)
+
+      expect(Puppet.runtime[:http]).to eq(impl)
     end
   end
 end

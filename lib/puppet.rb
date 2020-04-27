@@ -150,7 +150,7 @@ module Puppet
   # @param args [Array<String>] the command line arguments to use for initialization
   # @param require_config [Boolean] controls loading of Puppet configuration files
   # @param global_settings [Boolean] controls push to global context after settings object initialization
-  # @param runtime_implementations [Hash<String, Object>] runtime implementations to register
+  # @param runtime_implementations [Hash<Symbol, Object>] runtime implementations to register
   # @return [void]
   def self.initialize_settings(args = [], require_config = true, push_settings_globally = true, runtime_implementations = {})
     do_initialize_settings_for_run_mode(:user, args, require_config, push_settings_globally, runtime_implementations)
@@ -241,7 +241,7 @@ module Puppet
         end
       },
       :ssl_host => proc { Puppet::SSL::Host.localhost(true) },
-      :http_session => proc { Puppet.runtime["http"].create_session },
+      :http_session => proc { Puppet.runtime[:http].create_session },
       :plugins => proc { Puppet::Plugins::Configuration.load_plugins },
       :rich_data => false
     }
