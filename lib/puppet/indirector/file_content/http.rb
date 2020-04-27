@@ -10,6 +10,11 @@ class Puppet::Indirector::FileContent::Http < Puppet::Indirector::GenericHttp
 
   @http_method = :get
 
+  def initialize
+    Puppet.deprecation_warning(_("Puppet::Indirector::FileContent::Http is deprecated. Use Puppet::HTTP::Client instead."))
+    super
+  end
+
   def find(request)
     response = super
     model.from_binary(uncompress_body(response))
