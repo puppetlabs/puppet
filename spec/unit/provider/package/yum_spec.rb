@@ -55,7 +55,7 @@ describe Puppet::Type.type(:package).provider(:yum) do
       end
     end
 
-    describe 'with install_options' do 
+    describe 'with install_options' do
       it 'can parse disable-repo with array of strings' do
           resource[:install_options] = ['--disable-repo=dev*', '--disable-repo=prod*']
           expect(provider).to receive(:execute) do | arr|
@@ -192,6 +192,15 @@ describe Puppet::Type.type(:package).provider(:yum) do
 
       it "ignores all mentions of plugin output" do
         expect(output).not_to include("Random plugin")
+      end
+    end
+
+    context "with subscription manager enabled " do
+      let(:check_update) { File.read(my_fixture("yum-check-update-subscription-manager.txt")) }
+      let(:output) { described_class.parse_updates(check_update) }
+
+      it "parses correctly formatted entries" do
+        expect(output['curl.x86_64']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'x86_64'}])
       end
     end
   end

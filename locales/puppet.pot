@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.19-20-gf27ab77527\n"
+"Project-Id-Version: Puppet automation framework 5.5.19-48-g3415147ded\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-03-31 08:17+0000\n"
-"PO-Revision-Date: 2020-03-31 08:17+0000\n"
+"POT-Creation-Date: 2020-04-24 10:01+0000\n"
+"PO-Revision-Date: 2020-04-24 10:01+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -86,7 +86,7 @@ msgstr ""
 msgid "puppet agent: applying configuration"
 msgstr ""
 
-#: ../lib/puppet/agent.rb:127
+#: ../lib/puppet/agent.rb:119
 msgid "Could not create instance of %{client_class}: %{detail}"
 msgstr ""
 
@@ -6950,27 +6950,31 @@ msgstr ""
 msgid "Could not perform network device prefetch: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:37
+#: ../lib/puppet/provider/package/aix.rb:46
 msgid "The aix provider can only be used by root"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:79 ../lib/puppet/provider/package/nim.rb:53
+#: ../lib/puppet/provider/package/aix.rb:88 ../lib/puppet/provider/package/nim.rb:53
 msgid "Failed to uninstall package '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:85
+#: ../lib/puppet/provider/package/aix.rb:94
 msgid "A directory is required which will be used to find packages"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:97
+#: ../lib/puppet/provider/package/aix.rb:106
 msgid "aix package provider is unable to downgrade packages"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:116
+#: ../lib/puppet/provider/package/aix.rb:111
+msgid "Package '%{name}' is in a %{status} state and requires manual intervention"
+msgstr ""
+
+#: ../lib/puppet/provider/package/aix.rb:131
 msgid "Could not list installed Packages: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:139 ../lib/puppet/provider/package/yum.rb:252
+#: ../lib/puppet/provider/package/aix.rb:154 ../lib/puppet/provider/package/yum.rb:255
 msgid "Tried to get latest on a missing package"
 msgstr ""
 
@@ -7002,7 +7006,7 @@ msgstr ""
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:93 ../lib/puppet/provider/package/portupgrade.rb:151 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:232 ../lib/puppet/provider/package/zypper.rb:109
+#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:93 ../lib/puppet/provider/package/portupgrade.rb:151 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:235 ../lib/puppet/provider/package/zypper.rb:109
 msgid "Could not find package %{name}"
 msgstr ""
 
@@ -7321,23 +7325,23 @@ msgstr ""
 msgid "Don't know how to install '%{source}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:29
+#: ../lib/puppet/provider/package/yum.rb:31
 msgid "The yum provider can only be used as root"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:83
+#: ../lib/puppet/provider/package/yum.rb:85
 msgid "Could not check for updates, '%{cmd} check-update' exited with %{status}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:117
+#: ../lib/puppet/provider/package/yum.rb:120
 msgid "Failed to parse package name and architecture from '%{pkgname}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:226
+#: ../lib/puppet/provider/package/yum.rb:229
 msgid "Could not find package %{wanted}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:237
+#: ../lib/puppet/provider/package/yum.rb:240
 msgid "Failed to update to version %{should}, got version %{version} instead"
 msgstr ""
 
@@ -10233,23 +10237,23 @@ msgstr ""
 msgid "Failed to get child process exit code"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:287
+#: ../lib/puppet/util/windows/process.rb:288
 msgid "GetVersionEx failed"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:316
+#: ../lib/puppet/util/windows/process.rb:317
 msgid "Discarding environment variable %{string} which contains invalid bytes"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:332
+#: ../lib/puppet/util/windows/process.rb:333
 msgid "environment variable name must not be nil or empty"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:337
+#: ../lib/puppet/util/windows/process.rb:338
 msgid "Failed to remove environment variable: %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:342
+#: ../lib/puppet/util/windows/process.rb:343
 msgid "Failed to set environment variable: %{name}"
 msgstr ""
 
@@ -10301,77 +10305,77 @@ msgstr ""
 msgid "Failed to import root certificate: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:173
+#: ../lib/puppet/util/windows/security.rb:174
 msgid "Failed to get volume information"
 msgstr ""
 
 #. TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
-#: ../lib/puppet/util/windows/security.rb:339
+#: ../lib/puppet/util/windows/security.rb:340
 msgid "Setting control rights for %{path} owner SYSTEM to less than Full Control rights. Setting SYSTEM rights to less than Full Control may have unintented consequences for operations on this file"
 msgstr ""
 
 #. TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
-#: ../lib/puppet/util/windows/security.rb:342
+#: ../lib/puppet/util/windows/security.rb:343
 msgid "%{path} owner and group both set to user SYSTEM, but group is not managed directly: SYSTEM user rights will be set to FullControl by group"
 msgstr ""
 
 #. TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
-#: ../lib/puppet/util/windows/security.rb:345
+#: ../lib/puppet/util/windows/security.rb:346
 msgid "An attempt to set mode %{mode} on item %{path} would result in the owner, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control"
 msgstr ""
 
 #. TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
-#: ../lib/puppet/util/windows/security.rb:355
+#: ../lib/puppet/util/windows/security.rb:356
 msgid "Setting control rights for %{path} group SYSTEM to less than Full Control rights. Setting SYSTEM rights to less than Full Control may have unintented consequences for operations on this file"
 msgstr ""
 
 #. TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
-#: ../lib/puppet/util/windows/security.rb:358
+#: ../lib/puppet/util/windows/security.rb:359
 msgid "%{path} owner and group both set to user SYSTEM, but owner is not managed directly: SYSTEM user rights will be set to FullControl by owner"
 msgstr ""
 
 #. TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
-#: ../lib/puppet/util/windows/security.rb:361
+#: ../lib/puppet/util/windows/security.rb:362
 msgid "An attempt to set mode %{mode} on item %{path} would result in the group, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:432 ../lib/puppet/util/windows/security.rb:449 ../lib/puppet/util/windows/sid.rb:155 ../lib/puppet/util/windows/sid.rb:217 ../lib/puppet/util/windows/user.rb:43
+#: ../lib/puppet/util/windows/security.rb:433 ../lib/puppet/util/windows/security.rb:450 ../lib/puppet/util/windows/sid.rb:155 ../lib/puppet/util/windows/sid.rb:217 ../lib/puppet/util/windows/user.rb:43
 msgid "Invalid SID"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:436 ../lib/puppet/util/windows/security.rb:453
+#: ../lib/puppet/util/windows/security.rb:437 ../lib/puppet/util/windows/security.rb:454
 msgid "Failed to add access control entry"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:464 ../lib/puppet/util/windows/security.rb:646
+#: ../lib/puppet/util/windows/security.rb:465 ../lib/puppet/util/windows/security.rb:647
 msgid "Invalid DACL"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:487
+#: ../lib/puppet/util/windows/security.rb:488
 msgid "Unsupported access control entry type: 0x%{type}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:521
+#: ../lib/puppet/util/windows/security.rb:522
 msgid "Failed to open '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:568
+#: ../lib/puppet/util/windows/security.rb:569
 msgid "Failed to adjust process privileges"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:598
+#: ../lib/puppet/util/windows/security.rb:599
 msgid "Failed to get security information"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:609
+#: ../lib/puppet/util/windows/security.rb:610
 msgid "Failed to get security descriptor control"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:642
+#: ../lib/puppet/util/windows/security.rb:643
 msgid "Failed to initialize ACL"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:681
+#: ../lib/puppet/util/windows/security.rb:682
 msgid "Failed to set security information"
 msgstr ""
 

@@ -1,0 +1,9 @@
+Loaded plugins: product-id, search-disabled-repos, subscription-manager
+
+This system is not registered with an entitlement server. You can use subscription-manager to register on.
+
+curl.i686                               7.32.0-10.fc20           updates
+curl.x86_64                             7.32.0-10.fc20           updates
+gawk.i686                               4.1.0-3.fc20             updates
+dhclient.i686                           12:4.1.1-38.P1.fc20      updates
+java-1.8.0-openjdk.x86_64               1:1.8.0.131-2.b11.el7_3  updates

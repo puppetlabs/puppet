@@ -151,9 +151,19 @@ describe Puppet::Type.type(:service).provider(:systemd) do
         autovt@.service
         avahi-daemon.service
         blk-availability.service
+        apparmor.service
+        umountnfs.service
+        urandom.service
+        brandbot.service
       })
     end
-  end
+
+    it "should print a debug message when a service with the state `bad` is found" do
+      expect(described_class).to receive(:systemctl).with('list-unit-files', '--type', 'service', '--full', '--all', '--no-pager').and_return(File.read(my_fixture('list_unit_files_services')))
+      expect(Puppet).to receive(:debug).with("apparmor.service marked as bad by `systemctl`. It is recommended to be further checked.")
+      described_class.instances
+    end
+  end 
 
   describe "#start" do
     it "should use the supplied start command if specified" do
