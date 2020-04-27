@@ -111,6 +111,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def find(request)
+    Puppet.deprecation_warning(_("Puppet::Indirector::Rest#find is deprecated. Use Puppet::HTTP::Client instead."))
     uri, body = IndirectedRoutes.request_to_uri_and_body(request)
     uri_with_query_string = "#{uri}?#{body}"
 
@@ -149,6 +150,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def head(request)
+    Puppet.deprecation_warning(_("Puppet::Indirector::Rest#head is deprecated. Use Puppet::HTTP::Client instead."))
     response = do_request(request) do |req|
       http_head(req, IndirectedRoutes.request_to_uri(req), headers)
     end
@@ -161,6 +163,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def search(request)
+    Puppet.deprecation_warning(_("Puppet::Indirector::Rest#search is deprecated. Use Puppet::HTTP::Client instead."))
     response = do_request(request) do |req|
       http_get(req, IndirectedRoutes.request_to_uri(req), headers)
     end
@@ -174,6 +177,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def destroy(request)
+    Puppet.deprecation_warning(_("Puppet::Indirector::Rest#destroy is deprecated. Use Puppet::HTTP::Client instead."))
     raise ArgumentError, _("DELETE does not accept options") unless request.options.empty?
 
     response = do_request(request) do |req|
@@ -189,6 +193,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def save(request)
+    Puppet.deprecation_warning(_("Puppet::Indirector::Rest#save is deprecated. Use Puppet::HTTP::Client instead."))
     raise ArgumentError, _("PUT does not accept options") unless request.options.empty?
 
     response = do_request(request) do |req|
