@@ -190,6 +190,7 @@ describe 'Puppet::Type::Service::Provider::Systemd', unless: Puppet::Util::Platf
         apparmor.service
         umountnfs.service
         urandom.service
+        brandbot.service
       })
     end
 
@@ -198,7 +199,7 @@ describe 'Puppet::Type::Service::Provider::Systemd', unless: Puppet::Util::Platf
       expect(Puppet).to receive(:debug).with("apparmor.service marked as bad by `systemctl`. It is recommended to be further checked.")
       provider_class.instances
     end
-  end 
+  end
 
   describe "#start" do
     it "should use the supplied start command if specified" do
