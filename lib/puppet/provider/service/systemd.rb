@@ -35,6 +35,22 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     return []
   end
 
+  # Static services cannot be enabled or disabled manually. Indirect services 
+  # should not be enabled or disabled due to limitations in systemd (see 
+  # https://github.com/systemd/systemd/issues/6681).
+  def enabled_insync?(current)
+    case cached_enabled?
+    when 'static'
+      Puppet.debug("Unable to enable or disable static service #{@resource[:name]}")
+      return true
+    when 'indirect'
+      Puppet.debug("Service #{@resource[:name]} is in 'indirect' state and cannot be enabled/disabled")
+      return true
+    else
+      current == @resource[:enable]
+    end
+  end
+
   # This helper ensures that the enable state cache is always reset
   # after a systemctl enable operation. A particular service state is not guaranteed
   # after such an operation, so the cache must be emptied to prevent inconsistencies
