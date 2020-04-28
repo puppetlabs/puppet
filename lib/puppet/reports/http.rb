@@ -26,8 +26,10 @@ Puppet::Reports.register_report(:http) do
     }
 
     if url.user && url.password
-      options[:user] = url.user
-      options[:password] = url.password
+      options[:basic_auth] = {
+        user: url.user,
+        password: url.password
+      }
     end
 
     client = Puppet.runtime['http']

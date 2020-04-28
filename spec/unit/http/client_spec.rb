@@ -474,38 +474,38 @@ describe Puppet::HTTP::Client do
     it "submits credentials for GET requests" do
       stub_request(:get, uri).with(basic_auth: credentials)
 
-      client.get(uri, options: {user: 'user', password: 'pass'})
+      client.get(uri, options: {basic_auth: {user: 'user', password: 'pass'}})
     end
 
     it "submits credentials for PUT requests" do
       stub_request(:put, uri).with(basic_auth: credentials)
 
-      client.put(uri, "hello", headers: {'Content-Type' => 'text/plain'}, options: {user: 'user', password: 'pass'})
+      client.put(uri, "hello", headers: {'Content-Type' => 'text/plain'}, options: {basic_auth: {user: 'user', password: 'pass'}})
     end
 
     it "returns response containing access denied" do
       stub_request(:get, uri).with(basic_auth: credentials).to_return(status: [403, "Ye Shall Not Pass"])
 
-      response = client.get(uri, options: {user: 'user', password: 'pass'})
+      response = client.get(uri, options: {basic_auth: {user: 'user', password: 'pass'}})
       expect(response.code).to eq(403)
       expect(response.reason).to eq("Ye Shall Not Pass")
       expect(response).to_not be_success
     end
 
-    it 'omits basic auth if user is nil' do
+    it 'includes basic auth if user is nil' do
       stub_request(:get, uri).with do |req|
-        expect(req.headers).to_not include('Authorization')
+        expect(req.headers).to include('Authorization')
       end
 
-      client.get(uri, options: {user: nil, password: 'pass'})
+      client.get(uri, options: {basic_auth: {user: nil, password: 'pass'}})
     end
 
-    it 'omits basic auth if password is nil' do
+    it 'includes basic auth if password is nil' do
       stub_request(:get, uri).with do |req|
-        expect(req.headers).to_not include('Authorization')
+        expect(req.headers).to include('Authorization')
       end
 
-      client.get(uri, options: {user: 'user', password: nil})
+      client.get(uri, options: {basic_auth: {user: 'user', password: nil}})
     end
   end
 
@@ -557,7 +557,7 @@ describe Puppet::HTTP::Client do
       stub_request(:get, start_url).with(basic_auth: credentials).to_return(redirect_to(url: bar_url))
       stub_request(:get, bar_url).with(basic_auth: credentials).to_return(status: 200)
 
-      client.get(start_url, options: {user: 'user', password: 'pass'})
+      client.get(start_url, options: {basic_auth: {user: 'user', password: 'pass'}})
     end
 
     it "redirects given a relative location" do

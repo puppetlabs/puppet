@@ -277,8 +277,7 @@ class Puppet::HTTP::Client
   private
 
   def execute_streaming(request, options: {}, &block)
-    user = options.fetch(:user, nil)
-    password = options.fetch(:password, nil)
+    basic_auth = options.fetch(:basic_auth, nil)
 
     redirects = 0
     retries = 0
@@ -287,7 +286,7 @@ class Puppet::HTTP::Client
 
     while !done do
       connect(request.uri, options: options) do |http|
-        apply_auth(request, user, password)
+        apply_auth(request, basic_auth)
 
         # don't call return within the `request` block
         http.request(request) do |nethttp|
@@ -395,9 +394,9 @@ class Puppet::HTTP::Client
     @default_system_ssl_context = ssl.create_system_context(cacerts: cacerts)
   end
 
-  def apply_auth(request, user, password)
-    if user && password
-      request.basic_auth(user, password)
+  def apply_auth(request, basic_auth)
+    if basic_auth
+      request.basic_auth(basic_auth[:user], basic_auth[:password])
     end
   end
 
