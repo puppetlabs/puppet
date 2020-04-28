@@ -41,21 +41,11 @@ class Puppet::Context::TrustedInformation
     end
     @hostname = hostname.freeze
     @domain = domain.freeze
-    @external = external.eql?(UnevaluatedExternal) ? external : external.freeze
-  end
-
-  # Additional external facts loaded through `trusted_external_command`.
-  #
-  # @return [Hash]
-  def external
-    if @external.eql?(UnevaluatedExternal)
-      @external = retrieve_trusted_external(@certname).freeze
-    end
-    @external
+    @external = external.is_a?(Proc) ? external : external.freeze
   end
 
   def self.remote(authenticated, node_name, certificate)
-    external = UnevaluatedExternal
+    external = proc { retrieve_trusted_external(node_name) }
 
     if authenticated
       extensions = {}
@@ -75,35 +65,30 @@ class Puppet::Context::TrustedInformation
   def self.local(node)
     # Always trust local data by picking up the available parameters.
     client_cert = node ? node.parameters['clientcert'] : nil
+    external = proc { retrieve_trusted_external(client_cert) }
 
-    new('local', client_cert, {}, UnevaluatedExternal)
+    new('local', client_cert, {}, external)
   end
 
-  def to_h
-    {
-      'authenticated'.freeze => authenticated,
-      'certname'.freeze => certname,
-      'extensions'.freeze => extensions,
-      'hostname'.freeze => hostname,
-      'domain'.freeze => domain,
-      'external'.freeze => external,
-    }.freeze
+  # Additional external facts loaded through `trusted_external_command`.
+  #
+  # @return [Hash]
+  def external
+    if @external.is_a?(Proc)
+      @external = @external.call.freeze
+    end
+    @external
   end
 
-  private
-
-  # Utility class type to aid in lazy evaluation of Trusted External information
-  class UnevaluatedExternal; end
-  private_constant :UnevaluatedExternal
-
-  def retrieve_trusted_external(certname)
+  def self.retrieve_trusted_external(certname)
     deep_freeze(Puppet::TrustedExternal.retrieve(certname) || {})
   end
+  private_class_method :retrieve_trusted_external
 
   # Deeply freezes the given object. The object and its content must be of the types:
   # Array, Hash, Numeric, Boolean, Regexp, NilClass, or String. All other types raises an Error.
   # (i.e. if they are assignable to Puppet::Pops::Types::Data type).
-  def deep_freeze(object)
+  def self.deep_freeze(object)
     case object
     when Array
       object.each {|v| deep_freeze(v) }
@@ -119,5 +104,17 @@ class Puppet::Context::TrustedInformation
       raise Puppet::Error, _("Unsupported data type: '%{klass}'") % { klass: object.class }
     end
     object
+  end
+  private_class_method :deep_freeze
+
+  def to_h
+    {
+      'authenticated'.freeze => authenticated,
+      'certname'.freeze => certname,
+      'extensions'.freeze => extensions,
+      'hostname'.freeze => hostname,
+      'domain'.freeze => domain,
+      'external'.freeze => external,
+    }.freeze
   end
 end
