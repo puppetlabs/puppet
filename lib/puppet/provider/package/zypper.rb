@@ -50,6 +50,37 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
     execute(cmd, { :failonfail => false, :combine => true})
   end
 
+  def best_version(should)
+    if should.is_a?(String)
+      begin
+        should_range = Puppet::Util::Package::Version::Range.parse(should, Puppet::Util::Package::Version::Rpm)
+      rescue Puppet::Util::Package::Version::Range::ValidationFailure, Puppet::Util::Package::Version::Rpm::ValidationFailure
+        Puppet.debug("Cannot parse #{should} as a RPM version range")
+        return should
+      end
+
+      sorted_versions = SortedSet.new
+
+      output = zypper('search', '--match-exact', '--type', 'package', '--uninstalled-only', '-s', @resource[:name])
+      output.lines.each do |line|
+        pkg_ver = line.split(/\s*\|\s*/)
+        next unless pkg_ver[1] == @resource[:name]
+        begin
+          rpm_version = Puppet::Util::Package::Version::Rpm.parse(pkg_ver[3])
+
+          sorted_versions << rpm_version if should_range.include?(rpm_version)
+        rescue Puppet::Util::Package::Version::Rpm::ValidationFailure
+          Puppet.debug("Cannot parse #{pkg_ver[3]} as a RPM version")
+        end
+      end
+
+      return sorted_versions.entries.last if sorted_versions.any?
+
+      Puppet.debug("No available version for package #{@resource[:name]} is included in range #{should_range}")
+      should
+    end
+  end
+
   # Install a package using 'zypper'.
   def install
     should = @resource.should(:ensure)
@@ -62,6 +93,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
       should = nil
     else
       # Add the package version
+      should = best_version(should)
       wanted = "#{wanted}-#{should}"
     end
 
@@ -141,5 +173,26 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
       zypper(*options)
     end
 
+  end
+
+  def insync?(is)
+    return false if [:purged, :absent].include?(is)
+
+    should = @resource[:ensure]
+    if should.is_a?(String)
+      begin
+        should_version = Puppet::Util::Package::Version::Range.parse(should, Puppet::Util::Package::Version::Rpm)
+      rescue Puppet::Util::Package::Version::Range::ValidationFailure, Puppet::Util::Package::Version::Rpm::ValidationFailure
+        Puppet.debug("Cannot parse #{should} as a RPM version range")
+        return super
+      end
+
+      begin
+        is_version = Puppet::Util::Package::Version::Rpm.parse(is)
+        should_version.include?(is_version)
+      rescue Puppet::Util::Package::Version::Rpm::ValidationFailure
+        Puppet.debug("Cannot parse #{is} as a RPM version")
+      end
+    end
   end
 end

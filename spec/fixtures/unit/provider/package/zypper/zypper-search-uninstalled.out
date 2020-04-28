@@ -1,0 +1,13 @@
+Refreshing service 'spacewalk'.
+Problem retrieving the repository index file for service 'spacewalk':
+[|] This client is not registered to any spacewalk server.
+
+Skipping service 'spacewalk' because of the above error.
+Loading repository data...
+Reading installed packages...
+
+S | Name    | Type    | Version           | Arch   | Repository                                      
+--+---------+---------+-------------------+--------+-------------------------------------------------
+  | vim     | package | 1.0.20040813-19.9 | noarch | localmirror-os                                  
+  | vim     | package | 1.0.20040813-19.9 | noarch | localmirror-os                                  
+  | vim     | package | 1.0.20040813-19.9 | noarch | SUSE-Linux-Enterprise-Server-11-SP4 11.4.4-1.109
