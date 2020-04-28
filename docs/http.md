@@ -245,7 +245,7 @@ For example, `route_to(:report)` would use `Puppet[:report_server]` and
 
 There are some variations in how the different services are routed. Here is a
 visual of how the CA service is routed. We have to preserve some [interesting behavior](https://github.com/puppetlabs/puppet/blob/master/lib/puppet/http/client.rb#L243-L249)
-with this service, but otherwise the flow is similar to that of other serivces.
+with this service, but otherwise the flow is similar to that of other services.
 
 ![httpcaroute](./httpcaroute.png)
 
@@ -271,7 +271,7 @@ end
 Puppet ruby code running in puppetserver sometimes make outbound connections
 such as the [puppetdb
 terminus](https://github.com/puppetlabs/puppetdb/blob/6.5.0/puppet/lib/puppet/util/puppetdb/http.rb#L138),
-PE classifer terminus, and ['http' report
+PE classifier terminus, and ['http' report
 processor](https://github.com/puppetlabs/puppet/blob/6.7.0/lib/puppet/reports/http.rb#L32).
 Currently, puppetserver registers its own http client class, so that it can
 perform the HTTP request using Apache HttpClient.
