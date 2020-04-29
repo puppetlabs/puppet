@@ -37,18 +37,19 @@ class Puppet::Forge
         uri = URI(str)
 
         headers = { "User-Agent" => user_agent }
-        user = nil
-        password = nil
+        basic_auth = nil
 
         if forge_authorization
           headers["Authorization"] = forge_authorization
         elsif @uri.user && @uri.password
-          user = @uri.user
-          password = @uri.password
+          basic_auth = {
+            user: @uri.user,
+            password: @uri.password
+          }
         end
 
         http = Puppet.runtime['http']
-        response = http.get(uri, headers: headers, options: {user: user, password: password, ssl_context: @ssl_context})
+        response = http.get(uri, headers: headers, options: {basic_auth: basic_auth, ssl_context: @ssl_context})
         io.write(response.body) if io.respond_to?(:write)
         response
       rescue Puppet::SSL::CertVerifyError => e

@@ -21,9 +21,6 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
     url = encode_query(url, params)
 
     options[:use_ssl] = url.scheme == 'https'
-    if options[:user] && options[:password]
-      options[:basic_auth] = { user: options[:user], password: options[:password] }
-    end
 
     client = @http_client_class.new(url.host, url.port, options)
     response = Puppet::HTTP::Response.new(client.get(url.request_uri, headers, options), url)
@@ -46,9 +43,6 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
     url = encode_query(url, params)
 
     options[:use_ssl] = url.scheme == 'https'
-    if options[:user] && options[:password]
-      options[:basic_auth] = { user: options[:user], password: options[:password] }
-    end
 
     client = @http_client_class.new(url.host, url.port, options)
     response = Puppet::HTTP::Response.new(client.post(url.request_uri, body, headers, options), url)
