@@ -440,7 +440,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
 
   describe "#insync_enabled?" do
     let(:provider) do
-      described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => false))
+      provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => false))
     end
 
     before do
