@@ -156,6 +156,25 @@ module Puppet
     do_initialize_settings_for_run_mode(:user, args, require_config, push_settings_globally, runtime_implementations)
   end
 
+  def self.vendored_modules
+    dir = Puppet[:vendormoduledir]
+    if dir && File.directory?(dir)
+      Dir.entries(dir)
+        .reject { |f| f =~ /^\./ }
+        .map { |f| File.join(dir, f, "lib") }
+        .select { |d| FileTest.directory?(d) }
+    else
+      []
+    end
+  end
+  private_class_method :vendored_modules
+
+  def self.initialize_load_path
+    $LOAD_PATH.unshift(Puppet[:libdir])
+    $LOAD_PATH.concat(vendored_modules)
+  end
+  private_class_method :initialize_load_path
+
   # private helper method to provide the implementation details of initializing for a run mode,
   #  but allowing us to control where the deprecation warning is issued
   def self.do_initialize_settings_for_run_mode(run_mode, args, require_config, push_settings_globally, runtime_implementations)
@@ -163,6 +182,7 @@ module Puppet
     run_mode = Puppet::Util::RunMode[run_mode]
     Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
     if push_settings_globally
+      initialize_load_path
       push_context_global(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
       Puppet::Parser::Functions.reset
     end
