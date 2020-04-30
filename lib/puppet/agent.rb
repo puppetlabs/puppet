@@ -61,15 +61,15 @@ class Puppet::Agent
             end
           rescue Puppet::LockError
             Puppet.notice _("Run of %{client_class} already in progress; skipping  (%{lockfile_path} exists)") % { client_class: client_class, lockfile_path: lockfile_path }
-            return
+            nil
           rescue RunTimeoutError => detail
             Puppet.log_exception(detail, _("Execution of %{client_class} did not complete within %{runtimeout} seconds and was terminated.") %
               {client_class: client_class,
               runtimeout: Puppet[:runtimeout]})
-            return 1
+            nil
           rescue StandardError => detail
             Puppet.log_exception(detail, _("Could not run %{client_class}: %{detail}") % { client_class: client_class, detail: detail })
-            1
+            nil
           end
         end
       end
