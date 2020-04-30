@@ -15,6 +15,7 @@ end
 # Autoload paths, either based on names or all at once.
 class Puppet::Util::Autoload
   include Puppet::Concurrent::Synchronized
+  extend Puppet::Concurrent::Synchronized
 
   @loaded = {}
 
