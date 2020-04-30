@@ -1,12 +1,15 @@
 require 'puppet/http'
 require 'singleton'
 
+# Provides access to runtime implementations.
+#
+# @api private
 class Puppet::Runtime
   include Singleton
 
   def initialize
     @runtime_services = {
-      'http' => proc do
+      http: proc do
         klass = Puppet::Network::HttpPool.http_client_class
         if klass == Puppet::Network::HTTP::Connection
           Puppet::HTTP::Client.new
@@ -18,6 +21,11 @@ class Puppet::Runtime
   end
   private :initialize
 
+  # Get a runtime implementation.
+  #
+  # @param name [Symbol] the name of the implementation
+  # @return [Object] the runtime implementation
+  # @api private
   def [](name)
     service = @runtime_services[name]
     raise ArgumentError, "Unknown service #{name}" unless service
@@ -29,11 +37,18 @@ class Puppet::Runtime
     end
   end
 
+  # Register a runtime implementation.
+  #
+  # @param name [Symbol] the name of the implementation
+  # @param impl [Object] the runtime implementation
+  # @api private
   def []=(name, impl)
     @runtime_services[name] = impl
   end
 
-  # for testing
+  # Clears all implementations. This is used for testing.
+  #
+  # @api private
   def clear
     initialize
   end

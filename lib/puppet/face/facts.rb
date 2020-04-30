@@ -75,7 +75,7 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
         facts.name = Puppet[:node_name_value]
       end
 
-      client = Puppet.runtime['http']
+      client = Puppet.runtime[:http]
       session = client.create_session
       puppet = session.route_to(:puppet)
 

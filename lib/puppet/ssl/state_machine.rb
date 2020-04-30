@@ -279,8 +279,8 @@ class Puppet::SSL::StateMachine
         Puppet.info(_("Will try again in %{time} seconds.") % {time: time})
 
         # close persistent connections and session state before sleeping
-        Puppet.runtime['http'].close
-        @machine.session = Puppet.runtime['http'].create_session
+        Puppet.runtime[:http].close
+        @machine.session = Puppet.runtime[:http].create_session
 
         @machine.unlock
         Kernel.sleep(time)
@@ -373,7 +373,7 @@ class Puppet::SSL::StateMachine
     @lockfile = lockfile
     @digest = digest
     @ca_fingerprint = ca_fingerprint
-    @session = Puppet.runtime['http'].create_session
+    @session = Puppet.runtime[:http].create_session
   end
 
   # Run the state machine for CA certs and CRLs.

@@ -41,7 +41,7 @@ Puppet::Face.define(:plugin, '0.0.1') do
     when_invoked do |options|
       remote_environment_for_plugins = Puppet::Node::Environment.remote(Puppet[:environment])
 
-      pool = Puppet.runtime['http'].pool
+      pool = Puppet.runtime[:http].pool
       Puppet.override(:http_pool => pool) do
         begin
           handler = Puppet::Configurer::PluginHandler.new
