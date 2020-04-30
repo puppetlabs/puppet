@@ -438,6 +438,67 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
     end
   end
 
+  describe "#insync_enabled?" do
+    let(:provider) do
+      described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => false))
+    end
+
+    before do
+      allow(provider).to receive(:cached_enabled?).and_return(service_state)
+    end
+
+    context 'when service state is static' do
+      let(:service_state) { 'static' }
+
+      it 'is always enabled_insync even if current value is the same as expected' do
+        expect(provider).to be_enabled_insync(:false)
+      end
+
+      it 'is always enabled_insync even if current value is not the same as expected' do
+        expect(provider).to be_enabled_insync(:true)
+      end
+
+      it 'logs a debug messsage' do
+        expect(Puppet).to receive(:debug).with("Unable to enable or disable static service sshd.service")
+        provider.enabled_insync?(:true)
+      end
+    end
+
+    context 'when service state is indirect' do
+      let(:service_state) { 'indirect' }
+
+      it 'is always enabled_insync even if current value is the same as expected' do
+        expect(provider).to be_enabled_insync(:false)
+      end
+
+      it 'is always enabled_insync even if current value is not the same as expected' do
+        expect(provider).to be_enabled_insync(:true)
+      end
+
+      it 'logs a debug messsage' do
+        expect(Puppet).to receive(:debug).with("Service sshd.service is in 'indirect' state and cannot be enabled/disabled")
+        provider.enabled_insync?(:true)
+      end
+    end
+
+    context 'when service state is enabled' do
+      let(:service_state) { 'enabled' }
+
+      it 'is enabled_insync if current value is the same as expected' do
+        expect(provider).to be_enabled_insync(:false)
+      end
+
+      it 'is not enabled_insync if current value is not the same as expected' do
+        expect(provider).not_to be_enabled_insync(:true)
+      end
+
+      it 'logs no debug messsage' do
+        expect(Puppet).not_to receive(:debug)
+        provider.enabled_insync?(:true)
+      end
+    end
+  end
+
   describe "#get_start_link_count" do
     it "should strip the '.service' from the search if present in the resource name" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))

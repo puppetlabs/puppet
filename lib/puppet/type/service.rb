@@ -80,14 +80,8 @@ module Puppet
         provider.delayed_start
       end
 
-      # This only makes sense on systemd systems. Static services cannot be enabled
-      # or disabled manually.
       def insync?(current)
-        if provider.respond_to?(:cached_enabled?) && provider.cached_enabled? == 'static'
-          Puppet.debug("Unable to enable or disable static service #{@resource[:name]}")
-          return true
-        end
-
+        return provider.enabled_insync?(current) if provider.respond_to?(:enabled_insync?)
         super(current)
       end
 

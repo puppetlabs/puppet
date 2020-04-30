@@ -315,6 +315,14 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       expect(provider).to receive(:execute).with(['/usr/sbin/usermod', '-e', '', 'myuser'], hash_including(custom_environment: {}))
       provider.expiry = :absent
     end
+
+    it "should use -e with -1 when the expiry property is removed on SLES11" do
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('SLES')
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('11')
+      resource[:expiry] = :absent
+      expect(provider).to receive(:execute).with(['/usr/sbin/usermod', '-e', -1, 'myuser'], hash_including(custom_environment: {}))
+      provider.expiry = :absent
+    end
   end
 
   describe "#comment" do
