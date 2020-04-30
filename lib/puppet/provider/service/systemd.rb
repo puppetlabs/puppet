@@ -39,7 +39,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   # should not be enabled or disabled due to limitations in systemd (see 
   # https://github.com/systemd/systemd/issues/6681).
   def enabled_insync?(current)
-    case cached_enabled?
+    case cached_enabled?[:output]
     when 'static'
       Puppet.debug("Unable to enable or disable static service #{@resource[:name]}")
       return true
@@ -82,12 +82,13 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def cached_enabled?
     return @cached_enabled if @cached_enabled
     cmd = [command(:systemctl), 'is-enabled', '--', @resource[:name]]
-    @cached_enabled = execute(cmd, :failonfail => false).strip
+    result = execute(cmd, :failonfail => false)
+    @cached_enabled = { output: result.chomp, exitcode: result.exitstatus }
   end
 
   def enabled?
-    output = cached_enabled?
-    code = $CHILD_STATUS.exitstatus
+    output = cached_enabled?[:output]
+    code = cached_enabled?[:exitcode]
 
     # The masked state is equivalent to the disabled state in terms of
     # comparison so we only care to check if it is masked if we want to keep
