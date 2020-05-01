@@ -11,7 +11,7 @@ class Puppet::Indirector::FileMetadata::Http < Puppet::Indirector::GenericHttp
   def find(request)
     uri = URI(request.uri)
     client = Puppet.runtime[:http]
-    head = client.head(uri, headers: {'Connection' => 'close'}, options: {include_system_store: true})
+    head = client.head(uri, options: {include_system_store: true})
 
     if head.success?
       metadata = Puppet::FileServing::HttpMetadata.new(head)

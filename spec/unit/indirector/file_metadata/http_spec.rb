@@ -127,8 +127,12 @@ describe Puppet::Indirector::FileMetadata::Http do
       model.indirection.find(key)
     end
 
-    it "doesn't use persistent connections" do
-      stub_request(:head, key).with(headers: {'Connection' => 'close'})
+    it "tries to persist the connection" do
+      # HTTP/1.1 defaults to persistent connections, so check for
+      # the header's absence
+      stub_request(:head, key).with do |request|
+        expect(request.headers).to_not include('Connection')
+      end
 
       model.indirection.find(key)
     end
