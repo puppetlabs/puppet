@@ -24,6 +24,12 @@ class PuppetSpec::HTTPSServer
     res = WEBrick::HTTPResponse.new(@config)
     res.status = 200
     res.body = 'OK'
+    # The server explicitly closes the connection after handling it,
+    # so explicitly tell the client we're not going to keep it open.
+    # Without this, ruby will add `Connection: Keep-Alive`, which
+    # confuses the client when it tries to reuse the half-closed
+    # connection.
+    res['Connection'] = 'close'
     response_proc.call(req, res) if response_proc
 
     res.send_response(ssl)

@@ -132,7 +132,12 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
     it "detects when the server has closed the connection and reconnects" do
       Puppet[:http_debug] = true
 
-      https_server.start_server do |port|
+      # advertise that we support keep-alive, but we don't really
+      response_proc = -> (req, res) {
+        res['Connection'] = 'Keep-Alive'
+      }
+
+      https_server.start_server(response_proc: response_proc) do |port|
         uri = URI("https://127.0.0.1:#{port}")
         kwargs = {headers: {'Content-Type' => 'text/plain'}, options: {ssl_context: root_context}}
 
