@@ -882,7 +882,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         machine = described_class.new(waitforcert: 15)
 
         state = Puppet::SSL::StateMachine::Wait.new(machine)
-        expect(Puppet.runtime['http'].pool).to receive(:close).and_call_original
+        expect(Puppet.runtime[:http].pool).to receive(:close).and_call_original
         expect(Kernel).to receive(:sleep).with(15).ordered
 
         state.next_state

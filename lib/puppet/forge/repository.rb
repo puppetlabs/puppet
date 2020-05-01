@@ -48,7 +48,7 @@ class Puppet::Forge
           }
         end
 
-        http = Puppet.runtime['http']
+        http = Puppet.runtime[:http]
         response = http.get(uri, headers: headers, options: {basic_auth: basic_auth, ssl_context: @ssl_context})
         io.write(response.body) if io.respond_to?(:write)
         response

@@ -194,7 +194,7 @@ class Puppet::Configurer
   # This just passes any options on to the catalog,
   # which accepts :tags and :ignoreschedules.
   def run(options = {})
-    pool = Puppet.runtime['http'].pool
+    pool = Puppet.runtime[:http].pool
     # We create the report pre-populated with default settings for
     # environment and transaction_uuid very early, this is to ensure
     # they are sent regardless of any catalog compilation failures or
@@ -459,7 +459,7 @@ class Puppet::Configurer
     ::Facter.clear
     facts = find_facts
 
-    client = Puppet.runtime['http']
+    client = Puppet.runtime[:http]
     session = client.create_session
     puppet = session.route_to(:puppet)
 
