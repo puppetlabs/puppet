@@ -82,6 +82,9 @@ describe Puppet::Util::Windows::ADSI::Group,
     it 'should return a list of members resolvable with Puppet::Util::Windows::ADSI::Group.name_sid_hash' do
       temp_groupname = "g#{SecureRandom.uuid}"
       temp_username  = "u#{SecureRandom.uuid}"[0..12]
+      # From https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/password-must-meet-complexity-requirements
+      specials = "~!@#$%^&*_-+=`|\(){}[]:;\"'<>,.?/"
+      temp_password = "p#{SecureRandom.uuid[0..7]}-#{SecureRandom.uuid.upcase[0..7]}-#{specials[rand(specials.length)]}"
 
       # select a virtual account that requires an authority to be able to resolve to SID
       # the Dhcp service is chosen for no particular reason aside from it's a service available on all Windows versions
@@ -110,6 +113,8 @@ describe Puppet::Util::Windows::ADSI::Group,
       begin
         # :SidTypeUser as user on localhost, can be resolved with or without authority prefix
         user = Puppet::Util::Windows::ADSI::User.create(temp_username)
+        # appveyor sometimes requires a password
+        user.password = temp_password
         user.commit()
         users.push({ :sid => user.sid.sid, :name => Puppet::Util::Windows::ADSI.computer_name + '\\' + temp_username })
 
