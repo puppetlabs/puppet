@@ -127,6 +127,12 @@ describe Puppet::Indirector::FileMetadata::Http do
       model.indirection.find(key)
     end
 
+    it "doesn't use persistent connections" do
+      stub_request(:head, key).with(headers: {'Connection' => 'close'})
+
+      model.indirection.find(key)
+    end
+
     it "follows redirects" do
       new_url = "https://example.com/different/path"
       redirect = { status: 200, headers: { 'Location' => new_url }, body: ""}

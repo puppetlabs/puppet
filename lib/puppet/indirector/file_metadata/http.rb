@@ -8,12 +8,12 @@ class Puppet::Indirector::FileMetadata::Http < Puppet::Indirector::GenericHttp
 
   include Puppet::FileServing::TerminusHelper
 
-  @http_method = :head
-
   def find(request)
-    head = super
+    uri = URI(request.uri)
+    client = Puppet.runtime[:http]
+    head = client.head(uri, headers: {'Connection' => 'close'}, options: {include_system_store: true})
 
-    if head.is_a?(Net::HTTPSuccess)
+    if head.success?
       metadata = Puppet::FileServing::HttpMetadata.new(head)
       metadata.checksum_type = request.options[:checksum_type] if request.options[:checksum_type]
       metadata.collect
