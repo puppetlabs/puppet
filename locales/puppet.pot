@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.14.0-239-gd3c32512f9\n"
+"Project-Id-Version: Puppet automation framework 6.15.0-35-g536f808bf9\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-04-25 02:49+0000\n"
-"PO-Revision-Date: 2020-04-25 02:49+0000\n"
+"POT-Creation-Date: 2020-05-01 15:49+0000\n"
+"PO-Revision-Date: 2020-05-01 15:49+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -52,17 +52,17 @@ msgstr ""
 msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html for a list of supported ruby versions."
 msgstr ""
 
-#: ../lib/puppet.rb:203
+#: ../lib/puppet.rb:207
 msgid "The environmentpath setting cannot be empty or nil."
 msgstr ""
 
 #. TRANSLATORS: `message` is an already translated string of why SSL failed to initialize
-#: ../lib/puppet.rb:233
+#: ../lib/puppet.rb:237
 msgid "Failed to initialize SSL: %{message}"
 msgstr ""
 
 #. TRANSLATORS: `puppet agent -t` is a command and should not be translated
-#: ../lib/puppet.rb:235
+#: ../lib/puppet.rb:239
 msgid "Run `puppet agent -t`"
 msgstr ""
 
@@ -2226,11 +2226,11 @@ msgstr ""
 msgid "Request to %{uri} failed after %{elapsed} seconds: %{message}"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:310
+#: ../lib/puppet/http/client.rb:309
 msgid "Sleeping for %{interval} seconds before retrying the request"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:353 ../lib/puppet/indirector/request.rb:142
+#: ../lib/puppet/http/client.rb:352 ../lib/puppet/indirector/request.rb:142
 msgid "HTTP REST queries cannot handle values of type '%{klass}'"
 msgstr ""
 
@@ -2569,6 +2569,10 @@ msgstr ""
 
 #: ../lib/puppet/indirector/file_bucket_file/file.rb:206
 msgid "Invalid checksum %{checksum}"
+msgstr ""
+
+#: ../lib/puppet/indirector/file_content/http.rb:14
+msgid "Puppet::Indirector::FileContent::Http is deprecated. Use Puppet::HTTP::Client instead."
 msgstr ""
 
 #: ../lib/puppet/indirector/file_metadata/http.rb:25
@@ -4026,12 +4030,12 @@ msgid "Missing required Accept header"
 msgstr ""
 
 #. TRANSLATORS 'ssl_context' is an argument and should not be translated
-#: ../lib/puppet/network/http_pool.rb:81
+#: ../lib/puppet/network/http_pool.rb:80
 msgid "An ssl_context is required when connecting to 'https://%{host}:%{port}'"
 msgstr ""
 
 #. TRANSLATORS 'ssl_context' is an argument and should not be translated
-#: ../lib/puppet/network/http_pool.rb:89
+#: ../lib/puppet/network/http_pool.rb:88
 msgid "An ssl_context is unnecessary when connecting to 'http://%{host}:%{port}' and will be ignored"
 msgstr ""
 
@@ -6730,7 +6734,7 @@ msgstr ""
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:94 ../lib/puppet/provider/package/portupgrade.rb:152 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:305 ../lib/puppet/provider/package/zypper.rb:109
+#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:94 ../lib/puppet/provider/package/portupgrade.rb:152 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:305 ../lib/puppet/provider/package/zypper.rb:141
 msgid "Could not find package %{name}"
 msgstr ""
 
@@ -7256,7 +7260,7 @@ msgstr ""
 msgid "You must pass a callback for non-NONE events"
 msgstr ""
 
-#: ../lib/puppet/reports/http.rb:36
+#: ../lib/puppet/reports/http.rb:38
 msgid "Unable to submit report to %{url} [%{code}] %{message}"
 msgstr ""
 
@@ -8742,11 +8746,11 @@ msgstr ""
 msgid "%{value} is not a valid day of the week"
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:96
+#: ../lib/puppet/type/service.rb:90
 msgid "Setting enable to %{value} is only supported on Microsoft Windows."
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:253
+#: ../lib/puppet/type/service.rb:247
 msgid "\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer"
 msgstr ""
 
