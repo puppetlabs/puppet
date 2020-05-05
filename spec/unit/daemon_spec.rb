@@ -32,11 +32,15 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
   let(:pidfile) { double("PidFile", :lock => true, :unlock => true, :file_path => 'fake.pid') }
   let(:scheduler) { RecordingScheduler.new }
 
-  let(:daemon) { Puppet::Daemon.new(pidfile, scheduler) }
+  let(:daemon) { Puppet::Daemon.new(agent, pidfile, scheduler) }
 
   before(:each) do
     allow(Signal).to receive(:trap)
     allow(daemon).to receive(:close_streams).and_return(nil)
+  end
+
+  it "should fail when no agent is provided" do
+    expect { Puppet::Daemon.new(nil, pidfile, scheduler) }.to raise_error(Puppet::DevError)
   end
 
   it "should reopen the Log logs when told to reopen logs" do
@@ -72,64 +76,20 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
       allow(daemon).to receive(:set_signal_traps)
     end
 
-    it "should fail if it has neither agent nor server" do
-      expect { daemon.start }.to raise_error(Puppet::DevError)
-    end
-
     it "should create its pidfile" do
       expect(pidfile).to receive(:lock).and_return(true)
-
-      daemon.agent = agent
       daemon.start
     end
 
     it "should fail if it cannot lock" do
       expect(pidfile).to receive(:lock).and_return(false)
-      daemon.agent = agent
-
       expect { daemon.start }.to raise_error(RuntimeError, "Could not create PID file: #{pidfile.file_path}")
-    end
-
-    it "should start its server if one is configured" do
-      daemon.server = server
-
-      expect(server).to receive(:start)
-
-      daemon.start
     end
 
     it "disables the reparse of configs if the filetimeout is 0" do
       Puppet[:filetimeout] = 0
-      daemon.agent = agent
-
       daemon.start
-
       expect(scheduler.jobs[0]).not_to be_enabled
-    end
-
-    it "disables the agent run when there is no agent" do
-      Puppet[:filetimeout] = 0
-      daemon.server = server
-
-      daemon.start
-
-      expect(scheduler.jobs[1]).not_to be_enabled
-    end
-
-    it "waits for the server to shutdown when there is one" do
-      daemon.server = server
-
-      expect(server).to receive(:wait_for_shutdown)
-
-      daemon.start
-    end
-
-    it "waits for the server to shutdown when there is one" do
-      daemon.server = server
-
-      expect(server).to receive(:wait_for_shutdown)
-
-      daemon.start
     end
   end
 
@@ -146,14 +106,6 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
       without_warnings { Puppet::Application = Puppet::Application.superclass }
     end
 
-    it "should stop its server if one is configured" do
-      expect(server).to receive(:stop)
-
-      daemon.server = server
-
-      expect { daemon.stop }.to exit_with 0
-    end
-
     it 'should request a stop from Puppet::Application' do
       expect(Puppet::Application).to receive(:stop!)
       expect { daemon.stop }.to exit_with 0
@@ -161,7 +113,6 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
 
     it "should remove its pidfile" do
       expect(pidfile).to receive(:unlock)
-
       expect { daemon.stop }.to exit_with 0
     end
 
@@ -188,16 +139,12 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
       expect(agent).to receive(:run).with({:splay => false}).and_raise(Puppet::LockError, 'Failed to aquire lock')
       expect(Puppet).to receive(:notice).with('Not triggering already-running agent')
 
-      daemon.agent = agent
-
       daemon.reload
     end
 
     it "should run the agent if one is available and it is not running" do
       expect(agent).to receive(:run).with({:splay => false})
       expect(Puppet).not_to receive(:notice).with('Not triggering already-running agent')
-
-      daemon.agent = agent
 
       daemon.reload
     end
@@ -220,14 +167,11 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
 
     it "should reexec itself if no agent is available" do
       expect(daemon).to receive(:reexec)
-
       daemon.restart
     end
 
     it "should reexec itself if the agent is not running" do
-      daemon.agent = agent
       expect(daemon).to receive(:reexec)
-
       daemon.restart
     end
   end
@@ -246,14 +190,12 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
     it "should shut down without exiting" do
       daemon.argv = %w{foo}
       expect(daemon).to receive(:stop).with(:exit => false)
-
       daemon.reexec
     end
 
     it "should call 'exec' with the original executable and arguments" do
       daemon.argv = %w{foo}
       expect(daemon).to receive(:exec).with($0 + " foo")
-
       daemon.reexec
     end
   end
