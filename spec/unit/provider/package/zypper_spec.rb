@@ -176,6 +176,19 @@ describe Puppet::Type.type(:package).provider(:zypper) do
       @provider.install
     end
 
+    it "should install the package with --no-gpg-checks" do
+      allow(@resource).to receive(:[]).with(:name).and_return("php5")
+      allow(@resource).to receive(:[]).with(:install_options).and_return(['--no-gpg-checks', {'-p' => '/vagrant/files/localrepo/'}])
+      allow(@resource).to receive(:should).with(:ensure).and_return("5.4.10-4.5.6")
+      allow(@resource).to receive(:allow_virtual?).and_return(false)
+      allow(@provider).to receive(:zypper_version).and_return("1.2.8")
+
+      expect(@provider).to receive(:zypper).with('--quiet', '--no-gpg-checks', :install,
+        '--auto-agree-with-licenses', '--no-confirm', '-p=/vagrant/files/localrepo/', 'php5-5.4.10-4.5.6')
+      expect(@provider).to receive(:query).and_return("php5 0 5.4.10 4.5.6 x86_64")
+      @provider.install
+    end
+
     it "should install package with hash install options" do
       allow(@resource).to receive(:[]).with(:name).and_return('vim')
       allow(@resource).to receive(:[]).with(:install_options).and_return([{ '--a' => 'foo', '--b' => '"quoted bar"' }])
