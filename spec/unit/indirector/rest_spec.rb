@@ -45,6 +45,19 @@ shared_examples_for "a REST terminus method" do |terminus_method|
 
       expect(Puppet[:preferred_serialization_format]).to eq("pson")
     end
+
+    it "logs a deprecation warning" do
+      terminus.send(terminus_method, request)
+
+      expect(@logs).to include(an_object_having_attributes(level: :warning, message: /Puppet::Indirector::Rest##{terminus_method} is deprecated. Use Puppet::HTTP::Client instead./))
+    end
+
+    it "omits the warning when deprecations are disabled" do
+      Puppet[:disable_warnings] = 'deprecations'
+      terminus.send(terminus_method, request)
+
+      expect(@logs).to eq([])
+    end
   end
 
   HTTP_ERROR_CODES.each do |code|
