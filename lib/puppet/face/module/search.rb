@@ -5,6 +5,8 @@ Puppet::Face.define(:module, '1.0.0') do
   action(:search) do
     summary _("Search the Puppet Forge for a module.")
     description <<-EOT
+      This action has been deprecated. Please use the Puppet Forge to search for modules.
+
       Searches a repository for modules whose names, descriptions, or keywords
       match the provided search term.
     EOT
@@ -22,6 +24,7 @@ Puppet::Face.define(:module, '1.0.0') do
     arguments _("<search_term>")
 
     when_invoked do |term, options|
+      Puppet.deprecation_warning(_("This action has been deprecated. Please use the Puppet Forge to search for modules."))
       Puppet::ModuleTool.set_option_defaults options
       Puppet::ModuleTool::Applications::Searcher.new(term, Puppet::Forge.new(options[:module_repository] || Puppet[:module_repository]), options).run
     end
@@ -94,5 +97,7 @@ Puppet::Face.define(:module, '1.0.0') do
         highlight[format % [ name.sub('/', '-'), desc, "@#{author}", [keywords].flatten.join(' ') ]]
       end.join
     end
+
+    deprecate
   end
 end
