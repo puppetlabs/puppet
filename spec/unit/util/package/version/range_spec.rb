@@ -34,12 +34,33 @@ describe Puppet::Util::Package::Version::Range do
       expect { Puppet::Util::Package::Version::Range.parse('=a', IntegerVersion) }.to raise_error(Puppet::Util::Package::Version::Range::ValidationFailure)
     end
     it 'should raise if operator cannot be parsed' do
-      expect { Puppet::Util::Package::Version::Range.parse('~=a', IntegerVersion) }.to raise_error(Puppet::Util::Package::Version::Range::ValidationFailure)
+      expect { Puppet::Util::Package::Version::Range.parse('~=a', IntegerVersion) }.to raise_error(IntegerVersion::ValidationFailure)
     end
     it 'should raise if version cannot be parsed' do
       expect { Puppet::Util::Package::Version::Range.parse('>=a', IntegerVersion) }.to raise_error(IntegerVersion::ValidationFailure)
     end
   end
+
+  context 'when creating new version range with regular version' do
+    it 'it does not include greater version' do
+      vr = Puppet::Util::Package::Version::Range.parse('3', IntegerVersion)
+      v = IntegerVersion.parse('4')
+      expect(vr.include?(v)).to eql(false)
+    end
+
+    it 'it includes specified version' do
+      vr = Puppet::Util::Package::Version::Range.parse('3', IntegerVersion)
+      v = IntegerVersion.parse('3')
+      expect(vr.include?(v)).to eql(true)
+    end
+
+    it 'it does not include lower version' do
+      vr = Puppet::Util::Package::Version::Range.parse('3', IntegerVersion)
+      v = IntegerVersion.parse('2')
+      expect(vr.include?(v)).to eql(false)
+    end
+  end
+
   context 'when creating new version range with greater or equal operator' do
     it 'it includes greater version' do
       vr = Puppet::Util::Package::Version::Range.parse('>=3', IntegerVersion)

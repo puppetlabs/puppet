@@ -2,6 +2,7 @@ require 'puppet/util/package/version/range/lt'
 require 'puppet/util/package/version/range/lt_eq'
 require 'puppet/util/package/version/range/gt'
 require 'puppet/util/package/version/range/gt_eq'
+require 'puppet/util/package/version/range/eq'
 require 'puppet/util/package/version/range/min_max'
 
 module Puppet::Util::Package::Version
@@ -20,7 +21,7 @@ module Puppet::Util::Package::Version
     #   * ex. `">1.0.0 <=2.3.0"`
     #
     RANGE_SPLIT = /\s+/
-    FULL_REGEX = /\A((?:[<>=])+)(.+)\Z/
+    FULL_REGEX = /\A((?:[<>=])*)(.+)\Z/
 
     # @param range_string [String] the version range string to parse
     # @param version_class [Version] a version class implementing comparison operators and parse method
@@ -40,6 +41,8 @@ module Puppet::Util::Package::Version
           Lt.new(version_class::parse(version))
         when '<='
           LtEq.new(version_class::parse(version))
+        when ''
+          Eq.new(version_class::parse(version))
         else
           raise ValidationFailure, "Operator '#{operator}' is not implemented"
         end

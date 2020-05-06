@@ -259,7 +259,7 @@ describe Puppet::Type.type(:package).provider(:yum) do
 
   describe 'insync?' do
     context 'when version is not a valid RPM version' do
-      let(:is) { 'a:123' }
+      let(:is) { '>===a:123' }
 
       before do
         resource[:ensure] = is
@@ -269,18 +269,26 @@ describe Puppet::Type.type(:package).provider(:yum) do
         expect(Puppet).to receive(:debug).with("Cannot parse #{is} as a RPM version range")
         provider.insync?(is)
       end
-
-      context 'when requested version equals installed version' do
-        it { expect(provider).to be_insync(is) }
-      end
-
-      context 'when requested version is different than installed versions' do
-        it { expect(provider).not_to be_insync('999') }
-      end
     end
 
     context 'with valid semantic versions' do
       let(:is) { '1:1.2.3.4-5.el4' }
+
+      it 'returns true if the current version matches the given semantic version' do
+        resource[:ensure] = is
+        expect(provider).to be_insync(is)
+      end
+
+      it 'returns false if the current version does not match the given semantic version' do
+        resource[:ensure] = '999r'
+        expect(provider).not_to be_insync(is)
+      end
+
+      it 'no debug logs if the current version matches the given semantic version' do
+        resource[:ensure] = is
+        expect(Puppet).not_to receive(:debug)
+        provider.insync?(is)
+      end
 
       it 'returns true if current version matches the greater or equal semantic version in ensure' do
         resource[:ensure] = '<=1:1.2.3.4-5.el4'

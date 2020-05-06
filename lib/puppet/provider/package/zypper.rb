@@ -2,7 +2,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
   desc "Support for SuSE `zypper` package manager. Found in SLES10sp2+ and SLES11.
 
     This provider supports the `install_options` attribute, which allows command-line flags to be passed to zypper.
-    These options should be specified as an array where each element is either a 
+    These options should be specified as an array where each element is either a
     string or a hash."
 
   has_feature :versionable, :install_options, :virtual_packages
@@ -56,6 +56,10 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
         should_range = Puppet::Util::Package::Version::Range.parse(should, Puppet::Util::Package::Version::Rpm)
       rescue Puppet::Util::Package::Version::Range::ValidationFailure, Puppet::Util::Package::Version::Rpm::ValidationFailure
         Puppet.debug("Cannot parse #{should} as a RPM version range")
+        return should
+      end
+
+      if should_range.is_a?(Puppet::Util::Package::Version::Range::Eq)
         return should
       end
 

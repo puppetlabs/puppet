@@ -211,6 +211,64 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     should_range
   end
 
+  def get_install_command_options()
+    should = @resource[:ensure]
+    command_options = %w{install -q}
+    command_options += install_options if @resource[:install_options]
+
+    if @resource[:source]
+      if String === should
+        command_options << "#{@resource[:source]}@#{should}#egg=#{@resource[:name]}"
+      else
+        command_options << "#{@resource[:source]}#egg=#{@resource[:name]}"
+      end
+
+      return command_options
+    end
+
+    if should == :latest
+      command_options << "--upgrade" << @resource[:name]
+
+      return command_options
+    end
+
+    unless String === should
+      command_options << @resource[:name]
+
+      return command_options
+    end
+
+    begin
+      should_range = PIP_VERSION_RANGE.parse(should, PIP_VERSION)
+    rescue PIP_VERSION_RANGE::ValidationFailure, PIP_VERSION::ValidationFailure
+      Puppet.debug("Cannot parse #{should} as a pip version range, falling through.")
+      command_options << "#{@resource[:name]}==#{should}"
+
+      return command_options
+    end
+
+    if should_range.is_a?(PIP_VERSION_RANGE::Eq)
+      command_options << "#{@resource[:name]}==#{should}"
+
+      return command_options
+    end
+
+    should = best_version(should_range)
+
+    if should == should_range
+      # when no suitable version for the given range was found, let pip handle
+      if should.is_a?(PIP_VERSION_RANGE::MinMax)
+        command_options << "#{@resource[:name]} #{should.split.join(',')}"
+      else
+        command_options << "#{@resource[:name]} #{should}"
+      end
+    else
+      command_options << "#{@resource[:name]}==#{should}"
+    end
+
+    command_options
+  end
+
   # Install a package.  The ensure parameter may specify installed,
   # latest, a version number, or, in conjunction with the source
   # parameter, an SCM revision.  In that case, the source parameter
@@ -219,43 +277,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     command = resource_or_provider_command
     self.class.validate_command(command)
 
-    should = @resource[:ensure]
-    command_options = %w{install -q}
-    command_options +=  install_options if @resource[:install_options]
-    if @resource[:source]
-      if String === should
-        command_options << "#{@resource[:source]}@#{should}#egg=#{@resource[:name]}"
-      else
-        command_options << "#{@resource[:source]}#egg=#{@resource[:name]}"
-      end
-    else
-      case should
-      when :latest
-        command_options << "--upgrade" << @resource[:name]
-      when String
-        begin
-          should_range = PIP_VERSION_RANGE.parse(should, PIP_VERSION)
-          should = best_version(should_range)
-
-          unless should == should_range
-            command_options << "#{@resource[:name]}==#{should}"
-          else
-            # when no suitable version for the given range was found, let pip handle
-            if should.is_a?(PIP_VERSION_RANGE::MinMax)
-              command_options << "#{@resource[:name]} #{should.split.join(',')}"
-            else
-              command_options << "#{@resource[:name]} #{should}"
-            end
-          end
-        rescue PIP_VERSION_RANGE::ValidationFailure, PIP_VERSION::ValidationFailure
-          Puppet.debug("Cannot parse #{should} as a pip version range, falling through.")
-          command_options << "#{@resource[:name]}==#{should}"
-        end
-      else
-        command_options << @resource[:name]
-      end
-    end
-
+    command_options = get_install_command_options
     execute([command, command_options])
   end
 

@@ -77,7 +77,10 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     if should.is_a?(String)
       begin
         should_range = VersionRange.parse(should, DebianVersion)
-        should = best_version(should_range)
+
+        unless should_range.is_a?(VersionRange::Eq)
+          should = best_version(should_range)
+        end
       rescue VersionRange::ValidationFailure, DebianVersion::ValidationFailure
         Puppet.debug("Cannot parse #{should} as a debian version range, falling through")
       end

@@ -43,6 +43,10 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
     if should.is_a?(String)
       begin
         should_version = RPM_VERSION_RANGE.parse(should, RPM_VERSION)
+
+        if should_version.is_a?(RPM_VERSION_RANGE::Eq)
+          return super
+        end
       rescue RPM_VERSION_RANGE::ValidationFailure, RPM_VERSION::ValidationFailure
         Puppet.debug("Cannot parse #{should} as a RPM version range")
         return super
@@ -192,6 +196,9 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
     if should.is_a?(String)
       begin
         should_range = RPM_VERSION_RANGE.parse(should, RPM_VERSION)
+        if should_range.is_a?(RPM_VERSION_RANGE::Eq)
+          return should
+        end
       rescue RPM_VERSION_RANGE::ValidationFailure, RPM_VERSION::ValidationFailure
         Puppet.debug("Cannot parse #{should} as a RPM version range")
         return should
