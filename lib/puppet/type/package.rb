@@ -61,6 +61,9 @@ module Puppet
       passed to the installer command."
     feature :uninstall_options, "The provider accepts options to be
       passed to the uninstaller command."
+    feature :disableable, "The provider can disable packages. This feature is used by specifying `disabled` as the
+      desired value for the package.",
+      :methods => [:disable]
     feature :supports_flavors, "The provider accepts flavors, which are specific variants of packages."
     feature :package_settings, "The provider accepts package_settings to be
       ensured for the given package. The meaning and format of these settings is
@@ -102,6 +105,10 @@ module Puppet
 
       newvalue(:held, :event => :package_held, :required_features => :holdable) do
         provider.deprecated_hold
+      end
+
+      newvalue(:disabled, :required_features => :disableable) do
+        provider.disable
       end
 
       # Alias the 'present' value.
@@ -151,7 +158,7 @@ module Puppet
         @should.each { |should|
           case should
           when :present
-            return true unless [:absent, :purged, :held].include?(is)
+            return true unless [:absent, :purged, :held, :disabled].include?(is)
           when :latest
             # Short-circuit packages that are not present
             return false if is == :absent || is == :purged
@@ -404,6 +411,11 @@ module Puppet
     newproperty(:flavor, :required_features => :supports_flavors) do
       desc "OpenBSD and DNF modules support 'flavors', which are
         further specifications for which type of package you want."
+      validate do |value|
+        if [:disabled, "disabled"].include?(@resource[:ensure]) && value
+          raise ArgumentError, _('Cannot have both `ensure => disabled` and `flavor`')
+        end
+      end
     end
 
     newparam(:source) do
@@ -501,6 +513,9 @@ module Puppet
       validate do |value|
         if [true, :true, "true"].include?(value) && @resource[:flavor]
           raise ArgumentError, _('Cannot have both `enable_only => true` and `flavor`')
+        end
+        if [:disabled, "disabled"].include?(@resource[:ensure])
+          raise ArgumentError, _('Cannot have both `ensure => disabled` and `enable_only => true`')
         end
       end
     end
