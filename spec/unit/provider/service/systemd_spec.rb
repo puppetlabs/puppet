@@ -226,44 +226,46 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
   describe "#enabled?" do
     it "should return :true if the service is enabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).and_return("enabled\n")
-      allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).
+                            and_return(Puppet::Util::Execution::ProcessOutput.new("enabled\n", 0))
       expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :true if the service is static" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled','--', 'sshd.service'], :failonfail => false).and_return("static\n")
-      allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled','--', 'sshd.service'], :failonfail => false).
+                            and_return(Puppet::Util::Execution::ProcessOutput.new("static\n", 0))
       expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :false if the service is disabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).and_return("disabled\n")
-      allow($CHILD_STATUS).to receive(:exitstatus).and_return(1)
+      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).
+                            and_return(Puppet::Util::Execution::ProcessOutput.new("disabled\n", 1))
       expect(provider.enabled?).to eq(:false)
     end
 
     it "should return :false if the service is indirect" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).and_return("indirect\n")
-      allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).
+                            and_return(Puppet::Util::Execution::ProcessOutput.new("indirect\n", 0))
       expect(provider.enabled?).to eq(:false)
     end
 
-    it "should return :false if the service is masked and the resource is attempting to be disabled" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => false))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).and_return("masked\n")
-      allow($CHILD_STATUS).to receive(:exitstatus).and_return(1)
-      expect(provider.enabled?).to eq(:false)
-    end
+    context "when masked" do
+      it "should return :false if the resource is attempting to be disabled" do
+        provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => false))
+        expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).
+                              and_return(Puppet::Util::Execution::ProcessOutput.new("masked\n", 1))
+        expect(provider.enabled?).to eq(:false)
+      end
 
-    it "should return :mask if the service is masked and the resource is attempting to be masked" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => 'mask'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).and_return("masked\n")
-      allow($CHILD_STATUS).to receive(:exitstatus).and_return(1)
-      expect(provider.enabled?).to eq(:mask)
+      it "should return :mask if the resource is attempting to be masked" do
+        provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => 'mask'))
+        expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).
+                              and_return(Puppet::Util::Execution::ProcessOutput.new("masked\n", 1))
+        expect(provider.enabled?).to eq(:mask)
+      end
     end
   end
 
@@ -388,7 +390,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
     end
 
     before do
-      allow(provider).to receive(:cached_enabled?).and_return(service_state)
+      allow(provider).to receive(:cached_enabled?).and_return({ output: service_state, exitcode: 0 })
     end
 
     context 'when service state is static' do
