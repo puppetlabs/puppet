@@ -267,7 +267,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
               agent.run
             }.to exit_with(4)
              .and output(/Notice: Applied catalog/).to_stdout
-             .and output(%r{Error: Could not retrieve file metadata for https://127.0.0.1:#{https_port}/path/to/file: .* certificate verify failed}).to_stderr
+             .and output(%r{Error: Could not retrieve file metadata for https://127.0.0.1:#{https_port}/path/to/file: certificate verify failed}).to_stderr
           end
 
           expect(File).to_not be_exist(path)
