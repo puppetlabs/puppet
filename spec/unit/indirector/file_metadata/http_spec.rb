@@ -80,6 +80,16 @@ describe Puppet::Indirector::FileMetadata::Http do
       expect(result.checksum).to eq("{mtime}2020-01-01 08:00:00 UTC")
     end
 
+    it "leniently parses base64" do
+      # Content-MD5 header is missing '==' padding
+      stub_request(:head, key)
+        .to_return(status: 200, headers: DEFAULT_HEADERS.merge("Content-MD5" => "1B2M2Y8AsgTpgAmY7PhCfg"))
+
+      result = model.indirection.find(key)
+      expect(result.checksum_type).to eq(:md5)
+      expect(result.checksum).to eq("{md5}d41d8cd98f00b204e9800998ecf8427e")
+    end
+
     it "URL encodes special characters" do
       pending("HTTP terminus doesn't encode the URI before parsing")
 
