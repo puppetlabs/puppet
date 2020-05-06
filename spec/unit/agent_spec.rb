@@ -291,7 +291,7 @@ describe Puppet::Agent do
         expect(client).not_to receive(:handling)
         expect(Puppet).to receive(:log_exception).with(be_an_instance_of(Puppet::Agent::RunTimeoutError), anything)
 
-        expect(@agent.run).to eq(1)
+        expect(@agent.run).to eq(nil)
       end
     end
   end
