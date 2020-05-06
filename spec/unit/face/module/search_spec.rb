@@ -211,4 +211,21 @@ describe "puppet module search" do
       end
     end
   end
+
+  it "should include a deprecation warning" do
+    stub_request(:get, "https://forgeapi.puppet.com/v3/modules?query=puppetlabs-apache").to_return(status: 200, body: [answers: [], result: :success])
+
+    subject.search("puppetlabs-apache")
+
+    expect(@logs).to include(an_object_having_attributes(level: :warning, message: /This action has been deprecated. Please use the Puppet Forge to search for modules./))
+  end
+
+  it "omits the warning when deprecations are disabled" do
+    stub_request(:get, "https://forgeapi.puppet.com/v3/modules?query=puppetlabs-apache").to_return(status: 200, body: [answers: [], result: :success])
+
+    Puppet[:disable_warnings] = 'deprecations'
+    subject.search("puppetlabs-apache")
+
+    expect(@logs).not_to include(an_object_having_attributes(level: :warning))
+  end
 end
