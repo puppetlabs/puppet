@@ -15,6 +15,7 @@ end
 # Autoload paths, either based on names or all at once.
 class Puppet::Util::Autoload
   include Puppet::Concurrent::Synchronized
+  extend Puppet::Concurrent::Synchronized
 
   @loaded = {}
 
@@ -128,19 +129,6 @@ class Puppet::Util::Autoload
     end
 
     # @api private
-    def vendored_modules
-      dir = Puppet[:vendormoduledir]
-      if dir && File.directory?(dir)
-        Dir.entries(dir)
-          .reject { |f| f =~ /^\./ }
-          .collect { |f| File.join(dir, f, "lib") }
-          .find_all { |d| FileTest.directory?(d) }
-      else
-        []
-      end
-    end
-
-    # @api private
     def gem_directories
       gem_source.directories
     end
@@ -167,11 +155,6 @@ class Puppet::Util::Autoload
       # "app_defaults_initialized?" method on the main puppet Settings object.
       # --cprice 2012-03-16
       if Puppet.settings.app_defaults_initialized?
-        unless @initialized
-          $LOAD_PATH.unshift(Puppet[:libdir])
-          $LOAD_PATH.concat(vendored_modules)
-          @initialized = true
-        end
         gem_directories + module_directories(env) + $LOAD_PATH
       else
         gem_directories + $LOAD_PATH

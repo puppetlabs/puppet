@@ -99,4 +99,21 @@ describe Puppet do
       expect(Puppet.runtime[:http]).to eq(impl)
     end
   end
+
+  context "initializing $LOAD_PATH" do
+    it "should add libdir and module paths to the load path" do
+      libdir = tmpdir('libdir_test')
+      vendor_dir = tmpdir('vendor_modules')
+      module_libdir = File.join(vendor_dir, 'amodule_core', 'lib')
+      FileUtils.mkdir_p(module_libdir)
+
+      Puppet[:libdir] = libdir
+      Puppet[:vendormoduledir] = vendor_dir
+      Puppet.initialize_settings
+
+      expect($LOAD_PATH).to include(libdir)
+      expect($LOAD_PATH).to include(module_libdir)
+    end
+
+  end
 end

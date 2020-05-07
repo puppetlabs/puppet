@@ -23,10 +23,10 @@ describe Puppet::Util::Autoload do
 
     def with_libdir(libdir)
       begin
-        Puppet::Util::Autoload.instance_variable_set(:@initialized, false)
         old_loadpath = $LOAD_PATH.dup
         old_libdir = Puppet[:libdir]
         Puppet[:libdir] = libdir
+        $LOAD_PATH.unshift(libdir)
         yield
       ensure
         Puppet[:libdir] = old_libdir
@@ -83,6 +83,7 @@ describe Puppet::Util::Autoload do
 
       libdir = File.expand_path('/libdir1')
       Puppet[:vendormoduledir] = vendor_dir
+      Puppet.initialize_settings
 
       with_libdir(libdir) do
         expect(@autoload.class).to receive(:gem_directories).and_return(%w{/one /two})
