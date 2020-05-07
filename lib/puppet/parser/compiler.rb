@@ -348,6 +348,34 @@ class Puppet::Parser::Compiler
     end
   end
 
+
+  # If ast nodes are enabled, then see if we can find and evaluate one.
+  #
+  # @api private
+  def evaluate_ast_node
+    krt = environment.known_resource_types
+    return unless krt.nodes? #ast_nodes?
+
+    # Now see if we can find the node.
+    astnode = nil
+    @node.names.each do |name|
+      astnode = krt.node(name.to_s.downcase)
+      break if astnode
+    end
+
+    unless (astnode ||= krt.node("default"))
+      raise Puppet::ParseError, _("Could not find node statement with name 'default' or '%{names}'") % { names: node.names.join(", ") }
+    end
+
+    # Create a resource to model this node, and then add it to the list
+    # of resources.
+    resource = astnode.ensure_in_catalog(topscope)
+
+    resource.evaluate
+
+    @node_scope = topscope.class_scope(astnode)
+  end
+
   # Evaluates each specified class in turn. If there are any classes that
   # can't be found, an error is raised. This method really just creates resource objects
   # that point back to the classes, and then the resources are themselves
@@ -484,31 +512,6 @@ class Puppet::Parser::Compiler
       end
     end
     krt.capability_mappings.clear # No longer needed
-  end
-
-  # If ast nodes are enabled, then see if we can find and evaluate one.
-  def evaluate_ast_node
-    krt = environment.known_resource_types
-    return unless krt.nodes? #ast_nodes?
-
-    # Now see if we can find the node.
-    astnode = nil
-    @node.names.each do |name|
-      astnode = krt.node(name.to_s.downcase)
-      break if astnode
-    end
-
-    unless (astnode ||= krt.node("default"))
-      raise Puppet::ParseError, _("Could not find node statement with name 'default' or '%{names}'") % { names: node.names.join(", ") }
-    end
-
-    # Create a resource to model this node, and then add it to the list
-    # of resources.
-    resource = astnode.ensure_in_catalog(topscope)
-
-    resource.evaluate
-
-    @node_scope = topscope.class_scope(astnode)
   end
 
   # Evaluate our collections and return true if anything returned an object.

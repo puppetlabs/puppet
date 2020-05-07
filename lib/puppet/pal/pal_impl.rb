@@ -424,7 +424,6 @@ module Pal
       begin
         node.sanitize()
         compiler = create_internal_compiler(internal_compiler_class, node)
-        add_variables(compiler.topscope, pal_variables)
 
         case internal_compiler_class
         when :script
@@ -440,6 +439,10 @@ module Pal
         # TRANSLATORS: Do not translate, symbolic name
         Puppet.override(overrides, "PAL::with_#{internal_compiler_class}_compiler") do
           compiler.compile do | compiler_yield |
+            # In case the varaibles passed to the compiler are PCore types defined in modules, they
+            # need to be deserialized and added from within the this scope, so that loaders are
+            # available during deserizlization.
+            add_variables(compiler.topscope, Puppet::Pops::Serialization::FromDataConverter.convert(pal_variables))
             # wrap the internal compiler to prevent it from leaking in the PAL API
             if block_given?
               yield(pal_compiler)
