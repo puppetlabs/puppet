@@ -533,6 +533,19 @@ describe 'Puppet Pal' do
         end.to raise_error(Puppet::Error, /Could not find resource 'Bar\[nope\]'/)
       end
 
+      it 'an "evaluate" followed by "evaluate_ast_node" will correctly parse a node definition' do
+        Puppet[:node_name_value] = 'testing_node'
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+          ctx.with_catalog_compiler do |c|
+            c.evaluate(c.parse_string("node 'testing_node' { notify {'PASSED': } }"))
+            c.evaluate_ast_node
+            c.compile_additions
+            c.with_json_encoding() {|encoder| encoder.encode }
+          end
+        end
+        parsed = JSON.parse(result)
+        expect(parsed['resources']).to include(include('type' => 'Notify'))
+      end
     end
   end
 
@@ -768,6 +781,17 @@ describe 'Puppet Pal' do
         end
       end
 
+      context 'datatypes are supported such that' do
+        it 'datatypes defined as pcore in a module are deserialized' do
+          testing_env_dir
+          vars = {"bobs_age"=>{"__ptype"=>"Mytype", "name"=>"Bob", "year_of_birth"=>1984}}
+          result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts, variables: vars) do |ctx|
+            ctx.with_catalog_compiler {|c| c.evaluate_string("$bobs_age.age") }
+          end
+          expect(result).to eq(DateTime.now.year - 1984)
+        end
+      end
+
       context 'configured as an existing given environment directory such that' do
         it 'modules in it are available from its "modules" directory' do
           result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, facts: node_facts) do |ctx|
@@ -856,15 +880,6 @@ describe 'Puppet Pal' do
           ctx.with_catalog_compiler {|c| c.evaluate_string('a::afunc()') }
         end
         expect(result).to eq("a::afunc value")
-      end
-
-      it 'types defined as pcore are deserialized' do
-        testing_env_dir
-        vars = {"bobs_age"=>{"__ptype"=>"Mytype", "name"=>"Bob", "year_of_birth"=>1984}}
-        result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts, variables: vars) do |ctx|
-          ctx.with_catalog_compiler {|c| c.evaluate_string("$bobs_age.age") }
-        end
-        expect(result).to eq(DateTime.now.year - 1984)
       end
 
       context 'with a catalog compiler' do
