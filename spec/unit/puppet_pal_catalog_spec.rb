@@ -632,6 +632,25 @@ describe 'Puppet Pal' do
               end
               RUBY
           }
+        },
+        'datatypes' => {
+          'mytype.rb' => <<-RUBY.unindent,
+            Puppet::DataTypes.create_type('Mytype') do
+              interface <<-PUPPET
+                attributes => {
+                  name => { type => String },
+                  year_of_birth => { type => Integer },
+                  age => { type => Integer, kind => derived },
+                }
+                PUPPET
+
+              implementation do
+                def age
+                  DateTime.now.year - @year_of_birth
+                end
+              end
+            end
+            RUBY
         }
       }
     }
@@ -837,6 +856,15 @@ describe 'Puppet Pal' do
           ctx.with_catalog_compiler {|c| c.evaluate_string('a::afunc()') }
         end
         expect(result).to eq("a::afunc value")
+      end
+
+      it 'types defined as pcore are deserialized' do
+        testing_env_dir
+        vars = {"bobs_age"=>{"__ptype"=>"Mytype", "name"=>"Bob", "year_of_birth"=>1984}}
+        result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts, variables: vars) do |ctx|
+          ctx.with_catalog_compiler {|c| c.evaluate_string("$bobs_age.age") }
+        end
+        expect(result).to eq(DateTime.now.year - 1984)
       end
 
       context 'with a catalog compiler' do
