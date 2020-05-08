@@ -176,6 +176,10 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
       lock = tmpname + '.lock'
       mkdir(lock)
       yield
+    rescue Errno::ENOENT => e
+      ex = Errno::ENOENT.new("A directory component in #{lock} does not exist or is a dangling symbolic link")
+      ex.set_backtrace(e.backtrace)
+      raise ex
     ensure
       rmdir(lock) if Puppet::FileSystem.exist?(lock)
     end

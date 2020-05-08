@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe Puppet::FileSystem::Uniquefile do
+  include PuppetSpec::Files
+
   it "makes the name of the file available" do
     Puppet::FileSystem::Uniquefile.open_tmp('foo') do |file|
       expect(file.path).to match(/foo/)
@@ -71,6 +73,15 @@ describe Puppet::FileSystem::Uniquefile do
     expect(Puppet::FileSystem::Uniquefile).not_to receive(:rmdir)
 
     Puppet::FileSystem::Uniquefile.open_tmp('foo') { |tmp| }
+  end
+
+  it "reports when a parent directory does not exist" do
+    dir = tmpdir('uniquefile')
+    lock = File.join(dir, 'path', 'to', 'lock')
+
+    expect {
+      Puppet::FileSystem::Uniquefile.open_tmp(lock) { |tmp| }
+    }.to raise_error(Errno::ENOENT, %r{No such file or directory - A directory component in .* does not exist or is a dangling symbolic link})
   end
 
   context "Ruby 1.9.3 Tempfile tests" do
