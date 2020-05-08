@@ -224,7 +224,6 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should reexec itself if the agent is not running" do
-      expect(agent).to receive(:running?).and_return(false)
       daemon.agent = agent
       expect(daemon).to receive(:reexec)
 
