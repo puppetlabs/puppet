@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.19-48-g3415147ded\n"
+"Project-Id-Version: Puppet automation framework 5.5.20-26-g939ab7ee95\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-04-24 10:01+0000\n"
-"PO-Revision-Date: 2020-04-24 10:01+0000\n"
+"POT-Creation-Date: 2020-05-08 11:17+0000\n"
+"PO-Revision-Date: 2020-05-08 11:17+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -66,27 +66,35 @@ msgid ""
 "Use 'puppet agent --enable' to re-enable."
 msgstr ""
 
-#: ../lib/puppet/agent.rb:63
-msgid "Run of %{client_class} already in progress; skipping  (%{lockfile_path} exists)"
+#: ../lib/puppet/agent.rb:69
+msgid "Exiting now because the maximum wait for lock time has been exceeded."
 msgstr ""
 
-#: ../lib/puppet/agent.rb:66
-msgid "Execution of %{client_class} did not complete within %{runtimeout} seconds and was terminated."
+#: ../lib/puppet/agent.rb:72
+msgid "Another puppet instance is already running"
 msgstr ""
 
-#: ../lib/puppet/agent.rb:71
-msgid "Could not run %{client_class}: %{detail}"
+#: ../lib/puppet/agent.rb:73
+msgid "Waiting for it to finish. Will try again in %{time} seconds."
 msgstr ""
 
 #: ../lib/puppet/agent.rb:78
+msgid "Execution of %{client_class} did not complete within %{runtimeout} seconds and was terminated."
+msgstr ""
+
+#: ../lib/puppet/agent.rb:83
+msgid "Could not run %{client_class}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/agent.rb:90
 msgid "Shutdown/restart in progress (%{status}); skipping run"
 msgstr ""
 
-#: ../lib/puppet/agent.rb:96
+#: ../lib/puppet/agent.rb:108
 msgid "puppet agent: applying configuration"
 msgstr ""
 
-#: ../lib/puppet/agent.rb:119
+#: ../lib/puppet/agent.rb:131
 msgid "Could not create instance of %{client_class}: %{detail}"
 msgstr ""
 
@@ -7006,7 +7014,7 @@ msgstr ""
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:93 ../lib/puppet/provider/package/portupgrade.rb:151 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:235 ../lib/puppet/provider/package/zypper.rb:109
+#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:93 ../lib/puppet/provider/package/portupgrade.rb:151 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:235 ../lib/puppet/provider/package/zypper.rb:110
 msgid "Could not find package %{name}"
 msgstr ""
 
@@ -9026,7 +9034,7 @@ msgstr ""
 msgid "Invalid value %{value}. %{doc}"
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:94
+#: ../lib/puppet/type/service.rb:88
 msgid "Setting enable to %{value} is only supported on Microsoft Windows."
 msgstr ""
 
