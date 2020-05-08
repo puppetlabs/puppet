@@ -11,13 +11,8 @@
 /lib/puppet/provider/service @puppetlabs/night-s-watch
 /lib/puppet/provider/user @puppetlabs/night-s-watch
 
-# language
-/lib/puppet/datatypes @puppetlabs/language
-/lib/puppet/functions @puppetlabs/language
-/lib/puppet/pal @puppetlabs/language
-/lib/puppet/parser @puppetlabs/language
-/lib/puppet/pops @puppetlabs/language
-/lib/puppet/syntax_checkers @puppetlabs/language
+# PAL
+/lib/puppet/pal @puppetlabs/bolt
 
 # puppet device
 /lib/puppet/application/device.rb @puppetlabs/networking
