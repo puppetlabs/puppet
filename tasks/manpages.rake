@@ -13,7 +13,6 @@ task :gen_manpages do
   Puppet.initialize_settings()
 
   helpface = Puppet::Face[:help, '0.0.1']
-  manface  = Puppet::Face[:man, '0.0.1']
 
   sbins = Dir.glob(%w{sbin/*})
   bins  = Dir.glob(%w{bin/*})
@@ -21,7 +20,7 @@ task :gen_manpages do
   faces = Puppet::Face.faces.map(&:to_s)
   apps = non_face_applications + faces
 
-  ronn_args = '--manual="Puppet manual" --organization="Puppet, Inc." -r'
+  ronn_args = '--manual="Puppet manual" --organization="Puppet, Inc." --roff'
 
   # Locate ronn
   begin
@@ -58,21 +57,10 @@ task :gen_manpages do
     FileUtils.rm("./man/man8/#{b}.8.ronn")
   end
 
-  # Create regular non-face man pages
-  non_face_applications.each do |app|
-    %x{RUBYLIB=./lib:$RUBYLIB bin/puppet #{app} --help > ./man/man8/puppet-#{app}.8.ronn}
+  apps.each do |app|
+    %x{RUBYLIB=./lib:$RUBYLIB bin/puppet help #{app} --ronn > ./man/man8/puppet-#{app}.8.ronn}
     %x{#{ronn} #{ronn_args} ./man/man8/puppet-#{app}.8.ronn}
     FileUtils.rm("./man/man8/puppet-#{app}.8.ronn")
-  end
-
-  # Create face man pages
-  faces.each do |face|
-    File.open("./man/man8/puppet-#{face}.8.ronn", 'w') do |fh|
-      fh.write manface.man("#{face}")
-    end
-
-    %x{#{ronn} #{ronn_args} ./man/man8/puppet-#{face}.8.ronn}
-    FileUtils.rm("./man/man8/puppet-#{face}.8.ronn")
   end
 
   # Delete orphaned manpages if binary was deleted
