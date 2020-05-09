@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.15.0-54-g2e66f5dc0b\n"
+"Project-Id-Version: Puppet automation framework 6.15.0-83-gd74be0d122\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-05-06 03:49+0000\n"
-"PO-Revision-Date: 2020-05-06 03:49+0000\n"
+"POT-Creation-Date: 2020-05-09 23:05+0000\n"
+"PO-Revision-Date: 2020-05-09 23:05+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -52,17 +52,17 @@ msgstr ""
 msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html for a list of supported ruby versions."
 msgstr ""
 
-#: ../lib/puppet.rb:207
+#: ../lib/puppet.rb:227
 msgid "The environmentpath setting cannot be empty or nil."
 msgstr ""
 
 #. TRANSLATORS: `message` is an already translated string of why SSL failed to initialize
-#: ../lib/puppet.rb:237
+#: ../lib/puppet.rb:257
 msgid "Failed to initialize SSL: %{message}"
 msgstr ""
 
 #. TRANSLATORS: `puppet agent -t` is a command and should not be translated
-#: ../lib/puppet.rb:239
+#: ../lib/puppet.rb:259
 msgid "Run `puppet agent -t`"
 msgstr ""
 
@@ -72,27 +72,35 @@ msgid ""
 "Use 'puppet agent --enable' to re-enable."
 msgstr ""
 
-#: ../lib/puppet/agent.rb:63
-msgid "Run of %{client_class} already in progress; skipping  (%{lockfile_path} exists)"
+#: ../lib/puppet/agent.rb:69
+msgid "Exiting now because the maximum wait for lock time has been exceeded."
 msgstr ""
 
-#: ../lib/puppet/agent.rb:66
-msgid "Execution of %{client_class} did not complete within %{runtimeout} seconds and was terminated."
+#: ../lib/puppet/agent.rb:72
+msgid "Another puppet instance is already running"
 msgstr ""
 
-#: ../lib/puppet/agent.rb:71
-msgid "Could not run %{client_class}: %{detail}"
+#: ../lib/puppet/agent.rb:73
+msgid "Waiting for it to finish. Will try again in %{time} seconds."
 msgstr ""
 
 #: ../lib/puppet/agent.rb:78
+msgid "Execution of %{client_class} did not complete within %{runtimeout} seconds and was terminated."
+msgstr ""
+
+#: ../lib/puppet/agent.rb:83
+msgid "Could not run %{client_class}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/agent.rb:90
 msgid "Shutdown/restart in progress (%{status}); skipping run"
 msgstr ""
 
-#: ../lib/puppet/agent.rb:96
+#: ../lib/puppet/agent.rb:108
 msgid "puppet agent: applying configuration"
 msgstr ""
 
-#: ../lib/puppet/agent.rb:119
+#: ../lib/puppet/agent.rb:131
 msgid "Could not create instance of %{client_class}: %{detail}"
 msgstr ""
 
@@ -4186,15 +4194,15 @@ msgstr ""
 msgid "Given value for '%{varname}' has illegal type - got: %{type}"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:482
+#: ../lib/puppet/pal/pal_impl.rb:485
 msgid "Puppet Pal: %{what}"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:496
+#: ../lib/puppet/pal/pal_impl.rb:499
 msgid "Cannot use '%{a_term}' and '%{b_term}' at the same time"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:503
+#: ../lib/puppet/pal/pal_impl.rb:506
 msgid "A block must be given"
 msgstr ""
 
@@ -4370,52 +4378,52 @@ msgstr ""
 msgid "Application %{app} maps component %{res} to multiple nodes"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:357
-msgid "No source for scope passed to evaluate_classes"
-msgstr ""
-
-#: ../lib/puppet/parser/compiler.rb:373
-msgid "Could not find class %{name} for %{node}"
-msgstr ""
-
-#: ../lib/puppet/parser/compiler.rb:475
-msgid "Capability mapping error: %{kind} clause references nonexistent %{component_type} %{component_name}"
-msgstr ""
-
-#: ../lib/puppet/parser/compiler.rb:502
+#: ../lib/puppet/parser/compiler.rb:367
 msgid "Could not find node statement with name 'default' or '%{names}'"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:523
+#: ../lib/puppet/parser/compiler.rb:385
+msgid "No source for scope passed to evaluate_classes"
+msgstr ""
+
+#: ../lib/puppet/parser/compiler.rb:401
+msgid "Could not find class %{name} for %{node}"
+msgstr ""
+
+#: ../lib/puppet/parser/compiler.rb:503
+msgid "Capability mapping error: %{kind} clause references nonexistent %{component_type} %{component_name}"
+msgstr ""
+
+#: ../lib/puppet/parser/compiler.rb:526
 msgid "Evaluated collections"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:538
+#: ../lib/puppet/parser/compiler.rb:541
 msgid "Evaluated definitions"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:567
+#: ../lib/puppet/parser/compiler.rb:570
 msgid "Iterated (%{count}) on generators"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:578
+#: ../lib/puppet/parser/compiler.rb:581
 msgid "Somehow looped more than 1000 times while evaluating host catalog"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:610
+#: ../lib/puppet/parser/compiler.rb:613
 msgid "Could not find resource(s) %{resources} for overriding"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:621
+#: ../lib/puppet/parser/compiler.rb:624
 msgid "Failed to realize virtual resources %{resources}"
 msgstr ""
 
 #. TRANSLATORS "main" is a function name and should not be translated
-#: ../lib/puppet/parser/compiler.rb:654
+#: ../lib/puppet/parser/compiler.rb:657
 msgid "Couldn't find main"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler.rb:727
+#: ../lib/puppet/parser/compiler.rb:730
 msgid "For initializing compiler"
 msgstr ""
 
@@ -6758,7 +6766,7 @@ msgstr ""
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:94 ../lib/puppet/provider/package/portupgrade.rb:152 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:305 ../lib/puppet/provider/package/zypper.rb:141
+#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:94 ../lib/puppet/provider/package/portupgrade.rb:152 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:305 ../lib/puppet/provider/package/zypper.rb:142
 msgid "Could not find package %{name}"
 msgstr ""
 
@@ -8994,11 +9002,11 @@ msgstr ""
 msgid "Failed to abandon a child process contract"
 msgstr ""
 
-#: ../lib/puppet/util/autoload.rb:74
+#: ../lib/puppet/util/autoload.rb:75
 msgid "Could not autoload %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/autoload.rb:199
+#: ../lib/puppet/util/autoload.rb:182
 msgid "Autoload paths cannot be fully qualified"
 msgstr ""
 
