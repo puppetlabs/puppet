@@ -104,11 +104,11 @@ class Positioned < PopsObject
   end
 
   def line
-    @locator.line_for_offset(@offset)
+    @located_line ||= @locator.line_for_offset(@offset)
   end
 
   def pos
-    @locator.pos_on_line(@offset)
+    @located_pos ||= @locator.pos_on_line(@offset)
   end
 
   def initialize(locator, offset, length)
