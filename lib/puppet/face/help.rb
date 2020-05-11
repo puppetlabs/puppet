@@ -24,12 +24,19 @@ Puppet::Face.define(:help, '0.0.1') do
       summary _("The version of the subcommand for which to show help.")
     end
 
+    option "--ronn" do
+      summary _("Whether to render the help text in ronn format.")
+      default_to { false }
+    end
+
     default
     when_invoked do |*args|
       options = args.pop
 
-      if default_case?(args) || help_for_help?(args)
-        return erb('global.erb').result(binding)
+      unless options[:ronn]
+        if default_case?(args) || help_for_help?(args)
+          return erb('global.erb').result(binding)
+        end
       end
 
       if args.length > 2
@@ -54,9 +61,20 @@ Puppet::Face.define(:help, '0.0.1') do
         if actionname
           raise ArgumentError, _("The legacy subcommand '%{sub_command}' does not support supplying an action") % { sub_command: facename }
         end
+        # legacy apps already emit ronn output
         return render_application_help(facename)
       else
-        return render_face_help(facename, actionname, version)
+        if options[:ronn]
+          # Calling `puppet help <app> --ronn` normally calls this action with
+          # <app> as the first argument in the `args` array. However, if <app>
+          # happens to match the name of an action, like `puppet help help
+          # --ronn`, then face_base "eats" the argument and `args` will be
+          # empty. Rather than force users to type `puppet help help help
+          # --ronn`, default the facename to `:help`
+          render_face_man(facename || :help)
+        else
+          render_face_help(facename, actionname, version)
+        end
       end
     end
   end
@@ -67,6 +85,14 @@ Puppet::Face.define(:help, '0.0.1') do
 
   def help_for_help?(args)
     args.length == 1 && args.first == 'help'
+  end
+
+  def render_face_man(facename)
+    # set 'face' as it's used in the erb processing.
+    face = Puppet::Face[facename.to_sym, :current]
+    # avoid unused variable warning
+    _face = face
+    erb('man.erb').result(binding)
   end
 
   def render_application_help(applicationname)
