@@ -1,20 +1,11 @@
-# require 'fileutils'
-
 desc "Build Puppet manpages"
 task :gen_manpages do
   require 'puppet/face'
   require 'fileutils'
 
-  # TODO: this line is unfortunate.  In an ideal world, faces would serve
-  #  as a clear, well-defined entry-point into the code and could be
-  #  responsible for state management all on their own; this really should
-  #  not be necessary.  When we can, we should get rid of it.
-  #  --cprice 2012-05-16
-  Puppet.initialize_settings()
-
+  Puppet.initialize_settings
   helpface = Puppet::Face[:help, '0.0.1']
 
-  sbins = Dir.glob(%w{sbin/*})
   bins  = Dir.glob(%w{bin/*})
   non_face_applications = helpface.legacy_applications
   faces = Puppet::Face.faces.map(&:to_s)
@@ -34,14 +25,6 @@ task :gen_manpages do
     abort("Ronn does not appear to be installed")
   end
 
-#   def write_manpage(text, filename)
-#     IO.popen("#{ronn} #{ronn_args} -r > #{filename}") do |fh| fh.write text end
-#   end
-
-  # Create puppet.conf.5 man page
-#   IO.popen("#{ronn} #{ronn_args} > ./man/man5/puppet.conf.5", 'w') do |fh|
-#     fh.write %x{RUBYLIB=./lib:$RUBYLIB bin/puppetdoc --reference configuration}
-#   end
   %x{mkdir -p ./man/man5 ./man/man8}
   %x{RUBYLIB=./lib:$RUBYLIB bin/puppet doc --reference configuration > ./man/man5/puppetconf.5.ronn}
   %x{#{ronn} #{ronn_args} ./man/man5/puppetconf.5.ronn}
@@ -49,8 +32,7 @@ task :gen_manpages do
   FileUtils.rm("./man/man5/puppetconf.5.ronn")
 
   # Create LEGACY binary man pages (i.e. delete me for 2.8.0)
-  binary = bins + sbins
-  binary.each do |bin|
+  bins.each do |bin|
     b = bin.gsub( /^s?bin\//, "")
     %x{RUBYLIB=./lib:$RUBYLIB #{bin} --help > ./man/man8/#{b}.8.ronn}
     %x{#{ronn} #{ronn_args} ./man/man8/#{b}.8.ronn}
