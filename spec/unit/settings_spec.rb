@@ -954,7 +954,7 @@ describe Puppet::Settings do
       @settings.define_settings(:main,
         :logdir       => { :type => :directory, :default => nil, :desc => "logdir" },
         :confdir      => { :type => :directory, :default => nil, :desc => "confdir" },
-        :codedir      => { :type => :directory, :default => nil, :desc => "codedir" },
+        :codedir      => { :type => :symlink_or_directory, :default => nil, :desc => "codedir" },
         :vardir       => { :type => :directory, :default => nil, :desc => "vardir" })
 
       text = <<-EOD
@@ -979,7 +979,7 @@ describe Puppet::Settings do
       @settings.define_settings(:main,
         :logdir       => { :type => :directory, :default => nil, :desc => "logdir" },
         :confdir      => { :type => :directory, :default => nil, :desc => "confdir" },
-        :codedir      => { :type => :directory, :default => nil, :desc => "codedir" },
+        :codedir      => { :type => :symlink_or_directory, :default => nil, :desc => "codedir" },
         :vardir       => { :type => :directory, :default => nil, :desc => "vardir" })
 
       text = <<-EOD

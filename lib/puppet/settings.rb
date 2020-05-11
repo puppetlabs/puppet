@@ -19,6 +19,7 @@ class Puppet::Settings
   require 'puppet/settings/file_setting'
   require 'puppet/settings/directory_setting'
   require 'puppet/settings/file_or_directory_setting'
+  require 'puppet/settings/symlink_or_directory_setting'
   require 'puppet/settings/path_setting'
   require 'puppet/settings/boolean_setting'
   require 'puppet/settings/terminus_setting'
@@ -717,6 +718,7 @@ class Puppet::Settings
       :file       => FileSetting,
       :directory  => DirectorySetting,
       :file_or_directory => FileOrDirectorySetting,
+      :symlink_or_directory => SymlinkOrDirectorySetting,
       :path       => PathSetting,
       :boolean    => BooleanSetting,
       :terminus   => TerminusSetting,

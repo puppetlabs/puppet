@@ -103,7 +103,7 @@ module Puppet
     },
     :codedir  => {
         :default  => nil,
-        :type     => :directory,
+        :type     => :symlink_or_directory,
         :desc     => "The main Puppet code directory.  The default for this setting
           is calculated based on the user.  If the process is running as root or
           the user that Puppet is supposed to run as, it defaults to a system
