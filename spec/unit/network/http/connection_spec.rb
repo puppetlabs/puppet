@@ -54,7 +54,7 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "accepts a verifier" do
-        verifier = Puppet::SSL::Verifier.new('fqdn', double('ssl_context'))
+        verifier = Puppet::SSL::Verifier.new(host, double('ssl_context'))
         conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true, :verifier => verifier)
 
         expect(conn.verifier).to eq(verifier)
@@ -260,6 +260,13 @@ describe Puppet::Network::HTTP::Connection do
 
       subject.put(path, nil)
     end
+
+    it 'defaults content-type to application/x-www-form-urlencoded' do
+      pending("Net::HTTP sends a default content-type header, but it's not visible to webmock")
+      stub_request(:put, url).with(headers: {'Content-Type' => 'application/x-www-form-urlencoded'})
+
+      subject.put(path, '')
+    end
   end
 
   context "for POST requests" do
@@ -299,6 +306,13 @@ describe Puppet::Network::HTTP::Connection do
       stub_request(:post, url).with(body: '')
 
       subject.post(path, nil)
+    end
+
+    it 'defaults content-type to application/x-www-form-urlencoded' do
+      pending("Net::HTTP sends a default content-type header, but it's not visible to webmock")
+      stub_request(:post, url).with(headers: {'Content-Type' => 'application/x-www-form-urlencoded'})
+
+      subject.post(path, "")
     end
   end
 
@@ -383,6 +397,14 @@ describe Puppet::Network::HTTP::Connection do
 
       conn = create_connection(:redirect_limit => 3)
       expects_limit_exceeded(conn)
+    end
+
+    it 'raises an exception when the location header is missing' do
+      stub_request(:get, "http://me.example.com:8140/").to_return(status: 302)
+
+      expect {
+        create_connection.get('/')
+      }.to raise_error(URI::InvalidURIError, /bad URI/)
     end
   end
 
