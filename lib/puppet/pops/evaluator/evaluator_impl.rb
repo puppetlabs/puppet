@@ -50,7 +50,6 @@ class EvaluatorImpl
   # @api private
   def static_initialize
     @@eval_visitor     ||= Visitor.new(self, "eval", 1, 1)
-    @@assign_visitor   ||= Visitor.new(self, "assign", 3, 3)
     @@string_visitor   ||= Visitor.new(self, "string", 1, 1)
 
     @@type_calculator  ||= Types::TypeCalculator.singleton
@@ -136,7 +135,15 @@ class EvaluatorImpl
   # @api private
   #
   def assign(target, value, o, scope)
-    @@assign_visitor.visit_this_3(self, target, value, o, scope)
+    if target.is_a?(String)
+      assign_String(target, value, o, scope)
+    elsif target.is_a?(Array)
+      assign_Array(target, value, o, scope)
+    elsif target.is_a?(Numeric)
+      fail(Issues::ILLEGAL_NUMERIC_ASSIGNMENT, o.left_expr, {:varname => n.to_s})
+    else
+      fail(Issues::ILLEGAL_ASSIGNMENT, o)
+    end
   end
 
   # Computes a value that can be used as the LHS in an assignment.
@@ -214,16 +221,6 @@ class EvaluatorImpl
     end
     set_variable(name, value, o, scope)
     value
-  end
-
-  def assign_Numeric(n, value, o, scope)
-    fail(Issues::ILLEGAL_NUMERIC_ASSIGNMENT, o.left_expr, {:varname => n.to_s})
-  end
-
-  # Catches all illegal assignment (e.g. 1 = 2, {'a'=>1} = 2, etc)
-  #
-  def assign_Object(name, value, o, scope)
-    fail(Issues::ILLEGAL_ASSIGNMENT, o)
   end
 
   def assign_Array(lvalues, values, o, scope)
