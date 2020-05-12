@@ -50,7 +50,6 @@ class EvaluatorImpl
   # @api private
   def static_initialize
     @@eval_visitor     ||= Visitor.new(self, "eval", 1, 1)
-    @@lvalue_visitor   ||= Visitor.new(self, "lvalue", 1, 1)
     @@assign_visitor   ||= Visitor.new(self, "assign", 3, 3)
     @@string_visitor   ||= Visitor.new(self, "string", 1, 1)
 
@@ -147,7 +146,17 @@ class EvaluatorImpl
   # @api private
   #
   def lvalue(o, scope)
-    @@lvalue_visitor.visit_this_1(self, o, scope)
+    if o.is_a?(Model::VariableExpression)
+      if o.expr.instance_of?(Model::QualifiedName)
+        o.expr.value
+      else
+        evaluate(o.expr, scope)
+      end
+    elsif o.is_a?(Model::LiteralList)
+      o.values.map {|x| lvalue(x, scope) }
+    else
+      fail(Issues::ILLEGAL_ASSIGNMENT, o)
+    end
   end
 
   # Produces a String representation of the given object _o_ as used in interpolation.
@@ -188,22 +197,6 @@ class EvaluatorImpl
   end
 
   protected
-
-  def lvalue_VariableExpression(o, scope)
-    # evaluate the name
-    evaluate(o.expr, scope)
-  end
-
-  # Catches all illegal lvalues
-  #
-  def lvalue_Object(o, scope)
-    fail(Issues::ILLEGAL_ASSIGNMENT, o)
-  end
-
-  # An array is assignable if all entries are lvalues
-  def lvalue_LiteralList(o, scope)
-    o.values.map {|x| lvalue(x, scope) }
-  end
 
   # Assign value to named variable.
   # The '$' sign is never part of the name.
