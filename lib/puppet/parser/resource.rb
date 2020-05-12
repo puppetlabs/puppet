@@ -14,7 +14,6 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   attr_accessor :source, :scope, :collector_id
   attr_accessor :virtual, :override, :translated, :catalog, :evaluated
-  attr_accessor :file, :line
 
   attr_reader :exported, :parameters
 

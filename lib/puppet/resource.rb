@@ -11,7 +11,7 @@ class Puppet::Resource
   include Puppet::Util::PsychSupport
 
   include Enumerable
-  attr_accessor :file, :line, :catalog, :exported, :virtual, :strict
+  attr_accessor :catalog, :exported, :virtual, :strict, :ast_node
   attr_reader :type, :title, :parameters, :rich_data_enabled
 
   # @!attribute [rw] sensitive_parameters
@@ -66,10 +66,30 @@ class Puppet::Resource
       tag(*tags)
     end
 
+    if data[:ast_node]
+      self.ast_node = data[:ast_node]
+    end
+
     ATTRIBUTES.each do |a|
       value = data[a.to_s]
       send("#{a}=", value) unless value.nil?
     end
+  end
+
+  def file
+    @file ||= @ast_node && @ast_node.file
+  end
+
+  def file=(filepath)
+    @file = filepath
+  end
+
+  def line
+    @line ||= @ast_node && @ast_node.line
+  end
+
+  def line=(lineno)
+    @line = lineno
   end
 
   def inspect
@@ -224,8 +244,11 @@ class Puppet::Resource
     if type.is_a?(Puppet::Resource)
       # Copy constructor. Let's avoid munging, extracting, tagging, etc
       src = type
-      self.file = src.file
-      self.line = src.line
+      self.ast_node = src.ast_node
+      unless ast_node
+        self.file = src.file
+        self.line = src.line
+      end
       self.exported = src.exported
       self.virtual = src.virtual
       self.set_tags(src)
@@ -658,7 +681,7 @@ class Puppet::Resource
       type.title_patterns.each { |regexp, symbols_and_lambdas|
         if captures = regexp.match(title.to_s)
           symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda,capture|
-            symbol, proc = symbol_and_lambda
+            symbol, procedure = symbol_and_lambda
             # Many types pass "identity" as the proc; we might as well give
             # them a shortcut to delivering that without the extra cost.
             #
@@ -667,8 +690,8 @@ class Puppet::Resource
             #
             # This was worth about 8MB of memory allocation saved in my
             # testing, so is worth the complexity for the API.
-            if proc then
-              h[symbol] = proc.call(capture)
+            if procedure then
+              h[symbol] = procedure.call(capture)
             else
               h[symbol] = capture
             end

@@ -5,7 +5,7 @@ module Evaluator
 module Runtime3ResourceSupport
   CLASS_STRING = 'class'.freeze
 
-  def self.create_resources(file, line, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
+  def self.create_resources(file, line, scope, virtual, exported, type_name, resource_titles, evaluated_parameters, ast_node = nil)
 
     env = scope.environment
     #    loader = Adapters::LoaderAdapter.loader_for_model_object(o, scope)
@@ -31,22 +31,28 @@ module Runtime3ResourceSupport
       raise ArgumentError, _("Unknown resource type: '%{type}'") % { type: type_name }
     end
 
+    resource_attributes = {
+      :parameters => evaluated_parameters,
+      :exported => exported,
+      :virtual => virtual,
+      # WTF is this? Which source is this? The file? The name of the context ?
+      :source => scope.source,
+      :scope => scope,
+      :strict => true
+    }
+
+    if ast_node
+      resource_attributes[:ast_node] = ast_node
+    else
+      resource_attributes[:file] = file
+      resource_attributes[:line] = line
+    end
+
     # Build a resource for each title - use the resolved *type* as opposed to a reference
     # as this makes the created resource retain the type instance.
     #
     resource_titles.map do |resource_title|
-        resource = Puppet::Parser::Resource.new(
-          resolved_type, resource_title,
-          :parameters => evaluated_parameters,
-          :file => file,
-          :line => line,
-          :exported => exported,
-          :virtual => virtual,
-          # WTF is this? Which source is this? The file? The name of the context ?
-          :source => scope.source,
-          :scope => scope,
-          :strict => true
-        )
+        resource = Puppet::Parser::Resource.new(resolved_type, resource_title, resource_attributes)
 
         # If this resource type supports inheritance (e.g. 'class') the parent chain must be walked
         # This impl delegates to the resource type to figure out what is needed.

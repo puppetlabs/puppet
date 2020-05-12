@@ -318,11 +318,11 @@ module Runtime3Support
 
   # The o is used for source reference
   def create_resource_parameter(o, scope, name, value, operator)
-    file, line = extract_file_line(o)
     Puppet::Parser::Resource::Param.new(
       :name   => name,
       :value  => convert(value, scope, nil), # converted to 3x since 4x supports additional objects / types
-      :source => scope.source, :line => line, :file => file,
+      :source => scope.source,
+      :ast_node => o,
       :add    => operator == '+>'
     )
   end
@@ -332,13 +332,7 @@ module Runtime3Support
   end
 
   def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
-    # Not 100% accurate as this is the resource expression location and each title is processed separately
-    # The titles are however the result of evaluation and they have no location at this point (an array
-    # of positions for the source expressions are required for this to work).
-    # TODO: Revisit and possible improve the accuracy.
-    #
-    file, line = extract_file_line(o)
-    Runtime3ResourceSupport.create_resources(file, line, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
+    Runtime3ResourceSupport.create_resources(nil, nil, scope, virtual, exported, type_name, resource_titles, evaluated_parameters, o)
   end
 
   # Defines default parameters for a type with the given name.
@@ -362,12 +356,6 @@ module Runtime3Support
   # evaluated parameters are applied to all.
   #
   def create_resource_overrides(o, scope, evaluated_resources, evaluated_parameters)
-    # Not 100% accurate as this is the resource expression location and each title is processed separately
-    # The titles are however the result of evaluation and they have no location at this point (an array
-    # of positions for the source expressions are required for this to work.
-    # TODO: Revisit and possible improve the accuracy.
-    #
-    file, line = extract_file_line(o)
     # A *=> results in an array of arrays
     evaluated_parameters = evaluated_parameters.flatten
     evaluated_resources.each do |r|
@@ -378,8 +366,7 @@ module Runtime3Support
       resource = Puppet::Parser::Resource.new(
         t, r.title, {
           :parameters => evaluated_parameters,
-          :file => file,
-          :line => line,
+          :ast_node => o,
           # WTF is this? Which source is this? The file? The name of the context ?
           :source => scope.source,
           :scope => scope
