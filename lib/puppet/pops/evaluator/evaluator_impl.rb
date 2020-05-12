@@ -848,7 +848,11 @@ class EvaluatorImpl
       # Store evaluated parameters in a hash associated with the body, but do not yet create resource
       # since the entry containing :defaults may appear later
       body_to_params[body] = body.operations.reduce({}) do |param_memo, op|
-        params = evaluate(op, scope)
+        params = if op.instance_of?(Model::AttributeOperation)
+                   eval_AttributeOperation(op, scope)
+                 else
+                   evaluate(op, scope)
+                 end
         params = [params] unless params.is_a?(Array)
         params.each do |p|
           if param_memo.include? p.name
@@ -881,7 +885,18 @@ class EvaluatorImpl
 
   # Produces 3x parameter
   def eval_AttributeOperation(o, scope)
-    create_resource_parameter(o, scope, o.attribute_name, evaluate(o.value_expr, scope), o.operator)
+    value_expr = o.value_expr
+    value = if value_expr.instance_of?(Model::VariableExpression)
+              eval_VariableExpression(value_expr, scope)
+            elsif value_expr.instance_of?(Model::LiteralString)
+              value_expr.value
+            elsif value_expr.instance_of?(Model::ConcatenatedString)
+              eval_ConcatenatedString(value_expr, scope)
+            else
+              evaluate(value_expr, scope)
+            end
+
+    create_resource_parameter(o, scope, o.attribute_name, value, o.operator)
   end
 
   def eval_AttributesOperation(o, scope)
@@ -1057,7 +1072,11 @@ class EvaluatorImpl
     # Evaluator is not too fussy about what constitutes a name as long as the result
     # is a String and a valid variable name
     #
-    name = evaluate(o.expr, scope)
+    name = if o.expr.instance_of?(Model::QualifiedName)
+             o.expr.value
+           else
+             evaluate(o.expr, scope)
+           end
 
     # Should be caught by validation, but make this explicit here as well, or mysterious evaluation issues
     # may occur for some evaluation use cases.
@@ -1073,7 +1092,17 @@ class EvaluatorImpl
   # Evaluates double quoted strings that may contain interpolation
   #
   def eval_ConcatenatedString o, scope
-    o.segments.collect {|expr| string(evaluate(expr, scope), scope)}.join
+    o.segments.collect do |expr|
+      string(
+        if expr.instance_of?(Model::LiteralString)
+          expr.value
+        elsif expr.instance_of?(Model::TextExpression)
+          eval_TextExpression(expr, scope)
+        else
+          evaluate(expr, scope)
+        end,
+        scope)
+    end.join
   end
 
 
@@ -1091,7 +1120,13 @@ class EvaluatorImpl
     if o.expr.is_a?(Model::QualifiedName)
       string(get_variable_value(o.expr.value, o, scope), scope)
     else
-      string(evaluate(o.expr, scope), scope)
+      string(
+        if o.expr.instance_of?(Model::VariableExpression)
+          eval_VariableExpression(o.expr, scope)
+        else
+          evaluate(o.expr, scope)
+        end,
+        scope)
     end
   end
 
@@ -1245,7 +1280,13 @@ class EvaluatorImpl
       if x.is_a?(Model::UnfoldExpression)
         result.concat(evaluate(x, scope))
       else
-        result << evaluate(x, scope)
+        result << if x.instance_of?(Model::LiteralString)
+                    x.value
+                  elsif x.instance_of?(Model::VariableExpression)
+                    eval_VariableExpression(x, scope)
+                  else
+                    evaluate(x, scope)
+                  end
       end
     end
     result
