@@ -47,4 +47,27 @@ describe "puppet plugin" do
     end
   end
 
+  it "downloads from an environment that doesn't exist locally" do
+    requested_environment = nil
+
+    current_version_handler = -> (req, res) {
+      res['X-Puppet-Version'] = Puppet.version
+      res['Content-Type'] = 'application/json'
+      res.body = response_body
+      requested_environment = req.query['environment']
+    }
+
+    server.start_server(mounts: {file_metadatas: current_version_handler}) do |port|
+      Puppet[:environment] = 'doesnotexistontheagent'
+      Puppet[:masterport] = port
+      expect {
+        plugin.command_line.args << 'download'
+        plugin.run
+      }.to exit_with(0)
+       .and output(matching("Downloaded these plugins")).to_stdout
+
+      expect(requested_environment).to eq('doesnotexistontheagent')
+    end
+  end
+
 end
