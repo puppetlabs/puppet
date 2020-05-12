@@ -3,9 +3,10 @@ require 'puppet/network/http/connection'
 require 'puppet/test_ca'
 
 describe Puppet::Network::HTTP::Connection do
-  let (:host) { "me.example.com" }
-  let (:port) { 8140 }
-  let (:url) { "https://#{host}:#{port}/foo" }
+  let(:host) { "me.example.com" }
+  let(:port) { 8140 }
+  let(:path) { '/foo' }
+  let(:url) { "https://#{host}:#{port}#{path}" }
 
   subject { Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator) }
 
@@ -68,8 +69,8 @@ describe Puppet::Network::HTTP::Connection do
     end
   end
 
-  context "when handling requests" do
-    it 'yields the response when request_get is called' do
+  context "for streaming GET requests" do
+    it 'yields the response' do
       stub_request(:get, url)
 
       expect { |b|
@@ -77,6 +78,28 @@ describe Puppet::Network::HTTP::Connection do
       }.to yield_with_args(Net::HTTPResponse)
     end
 
+    it "stringifies keys and encodes values in the query" do
+      stub_request(:get, url).with(query: "foo=bar%3Dbaz")
+
+      subject.request_get("#{path}?foo=bar=baz") { |_| }
+    end
+
+    it "merges custom headers with default ones" do
+      stub_request(:get, url).with(headers: { 'X-Foo' => 'Bar', 'User-Agent' => /./ })
+
+      subject.request_get(path, {'X-Foo' => 'Bar'}) { |_| }
+    end
+
+    it "returns the response" do
+      stub_request(:get, url)
+
+      response = subject.request_get(path) { |_| }
+      expect(response).to be_an_instance_of(Net::HTTPOK)
+      expect(response.code).to eq("200")
+    end
+  end
+
+  context "for streaming head requests" do
     it 'yields the response when request_head is called' do
       stub_request(:head, url)
 
@@ -85,12 +108,231 @@ describe Puppet::Network::HTTP::Connection do
       }.to yield_with_args(Net::HTTPResponse)
     end
 
+    it "stringifies keys and encodes values in the query" do
+      stub_request(:head, url).with(query: "foo=bar%3Dbaz")
+
+      subject.request_head("#{path}?foo=bar=baz") { |_| }
+    end
+
+    it "merges custom headers with default ones" do
+      stub_request(:head, url).with(headers: { 'X-Foo' => 'Bar', 'User-Agent' => /./ })
+
+      subject.request_head(path, {'X-Foo' => 'Bar'}) { |_| }
+    end
+
+    it "returns the response" do
+      stub_request(:head, url)
+
+      response = subject.request_head(path) { |_| }
+      expect(response).to be_an_instance_of(Net::HTTPOK)
+      expect(response.code).to eq("200")
+    end
+  end
+
+  context "for streaming post requests" do
     it 'yields the response when request_post is called' do
       stub_request(:post, url)
 
       expect { |b|
         subject.request_post('/foo', "param: value", &b)
       }.to yield_with_args(Net::HTTPResponse)
+    end
+
+    it "stringifies keys and encodes values in the query" do
+      stub_request(:post, url).with(query: "foo=bar%3Dbaz")
+
+      subject.request_post("#{path}?foo=bar=baz", "") { |_| }
+    end
+
+    it "merges custom headers with default ones" do
+      stub_request(:post, url).with(headers: { 'X-Foo' => 'Bar', 'User-Agent' => /./ })
+
+      subject.request_post(path, "", {'X-Foo' => 'Bar'}) { |_| }
+    end
+
+    it "returns the response" do
+      stub_request(:post, url)
+
+      response = subject.request_post(path, "") { |_| }
+      expect(response).to be_an_instance_of(Net::HTTPOK)
+      expect(response.code).to eq("200")
+    end
+  end
+
+  context "for GET requests" do
+    it "includes default HTTP headers" do
+      stub_request(:get, url).with(headers: {'User-Agent' => /./})
+
+      subject.get(path)
+    end
+
+    it "stringifies keys and encodes values in the query" do
+      stub_request(:get, url).with(query: "foo=bar%3Dbaz")
+
+      subject.get("#{path}?foo=bar=baz")
+    end
+
+    it "merges custom headers with default ones" do
+      stub_request(:get, url).with(headers: { 'X-Foo' => 'Bar', 'User-Agent' => /./ })
+
+      subject.get(path, {'X-Foo' => 'Bar'})
+    end
+
+    it "returns the response" do
+      stub_request(:get, url)
+
+      response = subject.get(path)
+      expect(response).to be_an_instance_of(Net::HTTPOK)
+      expect(response.code).to eq("200")
+    end
+
+    it "returns the entire response body" do
+      stub_request(:get, url).to_return(body: "abc")
+
+      response = subject.get(path)
+      expect(response.body).to eq("abc")
+    end
+  end
+
+  context "for HEAD requests" do
+    it "includes default HTTP headers" do
+      stub_request(:head, url).with(headers: {'User-Agent' => /./})
+
+      subject.head(path)
+    end
+
+    it "stringifies keys and encodes values in the query" do
+      stub_request(:head, url).with(query: "foo=bar%3Dbaz")
+
+      subject.head("#{path}?foo=bar=baz")
+    end
+
+    it "merges custom headers with default ones" do
+      stub_request(:head, url).with(headers: { 'X-Foo' => 'Bar', 'User-Agent' => /./ })
+
+      subject.head(path, {'X-Foo' => 'Bar'})
+    end
+
+    it "returns the response" do
+      stub_request(:head, url)
+
+      response = subject.head(path)
+      expect(response).to be_an_instance_of(Net::HTTPOK)
+      expect(response.code).to eq("200")
+    end
+  end
+
+  context "for PUT requests" do
+    it "includes default HTTP headers" do
+      stub_request(:put, url).with(headers: {'User-Agent' => /./})
+
+      subject.put(path, "", {'Content-Type' => 'text/plain'})
+    end
+
+    it "stringifies keys and encodes values in the query" do
+      stub_request(:put, url).with(query: "foo=bar%3Dbaz")
+
+      subject.put("#{path}?foo=bar=baz", "")
+    end
+
+    it "includes custom headers" do
+      stub_request(:put, url).with(headers: { 'X-Foo' => 'Bar' })
+
+      subject.put(path, "", {'X-Foo' => 'Bar', 'Content-Type' => 'text/plain'})
+    end
+
+    it "returns the response" do
+      stub_request(:put, url)
+
+      response = subject.put(path, "", {'Content-Type' => 'text/plain'})
+      expect(response).to be_an_instance_of(Net::HTTPOK)
+      expect(response.code).to eq("200")
+    end
+
+    it "sets content-type for the body" do
+      stub_request(:put, url).with(headers: {"Content-Type" => "text/plain"})
+
+      subject.put(path, "hello", {'Content-Type' => 'text/plain'})
+    end
+
+    it 'sends an empty body' do
+      stub_request(:put, url).with(body: '')
+
+      subject.put(path, nil)
+    end
+  end
+
+  context "for POST requests" do
+    it "includes default HTTP headers" do
+      stub_request(:post, url).with(headers: {'User-Agent' => /./})
+
+      subject.post(path, "", {'Content-Type' => 'text/plain'})
+    end
+
+    it "stringifies keys and encodes values in the query" do
+      stub_request(:post, url).with(query: "foo=bar%3Dbaz")
+
+      subject.post("#{path}?foo=bar=baz", "", {'Content-Type' => 'text/plain'})
+    end
+
+    it "includes custom headers" do
+      stub_request(:post, url).with(headers: { 'X-Foo' => 'Bar' })
+
+      subject.post(path, "", {'X-Foo' => 'Bar', 'Content-Type' => 'text/plain'})
+    end
+
+    it "returns the response" do
+      stub_request(:post, url)
+
+      response = subject.post(path, "", {'Content-Type' => 'text/plain'})
+      expect(response).to be_an_instance_of(Net::HTTPOK)
+      expect(response.code).to eq("200")
+    end
+
+    it "sets content-type for the body" do
+      stub_request(:post, url).with(headers: {"Content-Type" => "text/plain"})
+
+      subject.post(path, "hello", {'Content-Type' => 'text/plain'})
+    end
+
+    it 'sends an empty body' do
+      stub_request(:post, url).with(body: '')
+
+      subject.post(path, nil)
+    end
+  end
+
+  context "for DELETE requests" do
+    it "includes default HTTP headers" do
+      stub_request(:delete, url).with(headers: {'User-Agent' => /./})
+
+      subject.delete(path)
+    end
+
+    it "merges custom headers with default ones" do
+      stub_request(:delete, url).with(headers: { 'X-Foo' => 'Bar', 'User-Agent' => /./ })
+
+      subject.delete(path, {'X-Foo' => 'Bar'})
+    end
+
+    it "stringifies keys and encodes values in the query" do
+      stub_request(:delete, url).with(query: "foo=bar%3Dbaz")
+
+      subject.delete("#{path}?foo=bar=baz")
+    end
+
+    it "returns the response" do
+      stub_request(:delete, url)
+
+      response = subject.delete(path)
+      expect(response).to be_an_instance_of(Net::HTTPOK)
+      expect(response.code).to eq("200")
+    end
+
+    it "returns the entire response body" do
+      stub_request(:delete, url).to_return(body: "abc")
+
+      expect(subject.delete(path).body).to eq("abc")
     end
   end
 
