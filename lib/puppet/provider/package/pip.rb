@@ -79,7 +79,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
       command_options << '--all'
     end
 
-    execpipe [command, command_options] do |process|
+    execpipe [quote(command), command_options] do |process|
       process.collect do |line|
         pkg = parse(line)
         next unless pkg
@@ -158,7 +158,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     command = resource_or_provider_command
     self.class.validate_command(command)
 
-    command_and_options = [command, 'install', "#{@resource[:name]}==versionplease"]
+    command_and_options = [self.class.quote(command), 'install', "#{@resource[:name]}==versionplease"]
     command_and_options << install_options if @resource[:install_options]
     execpipe command_and_options do |process|
       process.collect do |line|
@@ -179,7 +179,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     self.class.validate_command(command)
 
     Dir.mktmpdir("puppet_pip") do |dir|
-      command_and_options = [command, 'install', "#{@resource[:name]}", '-d', "#{dir}", '-v']
+      command_and_options = [self.class.quote(command), 'install', "#{@resource[:name]}", '-d', "#{dir}", '-v']
       command_and_options << install_options if @resource[:install_options]
       execpipe command_and_options do |process|
         process.collect do |line|
@@ -298,6 +298,8 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     should_range.include?(is_version)
   end
 
+  # Quoting is required if the path to the pip command contains spaces.
+  # Required for execpipe() but not execute(), as execute() already does this.
   def self.quote(path)
     if path.include?(" ")
       "\"#{path}\""
@@ -305,5 +307,4 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
       path
     end
   end
-  private_class_method :quote
 end
