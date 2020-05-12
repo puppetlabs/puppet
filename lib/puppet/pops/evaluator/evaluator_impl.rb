@@ -50,7 +50,6 @@ class EvaluatorImpl
   # @api private
   def static_initialize
     @@eval_visitor     ||= Visitor.new(self, "eval", 1, 1)
-    @@string_visitor   ||= Visitor.new(self, "string", 1, 1)
 
     @@type_calculator  ||= Types::TypeCalculator.singleton
 
@@ -173,8 +172,25 @@ class EvaluatorImpl
   # @api public
   #
   def string(o, scope)
-    @@string_visitor.visit_this_1(self, o, scope)
+    if o.instance_of?(String)
+      o
+    elsif o.instance_of?(Symbol)
+      if :undef == o  # optimized comparison 1.44 vs 1.95
+        EMPTY_STRING
+      else
+        o.to_s
+      end
+    elsif o.instance_of?(Regexp)
+      Types::PRegexpType.regexp_to_s_with_delimiters(o)
+    elsif o.instance_of?(Array)
+      "[#{o.map {|e| string(e, scope)}.join(COMMA_SEPARATOR)}]"
+    elsif o.instance_of?(Hash)
+      "{#{o.map {|k,v| "#{string(k, scope)} => #{string(v, scope)}"}.join(COMMA_SEPARATOR)}}"
+    else
+      o.to_s
+    end
   end
+
 
   # Evaluate a BlockExpression in a new scope with variables bound to the
   # given values.
@@ -1077,34 +1093,6 @@ class EvaluatorImpl
     else
       string(evaluate(o.expr, scope), scope)
     end
-  end
-
-  def string_Object(o, scope)
-    o.to_s
-  end
-
-  def string_Symbol(o, scope)
-    if :undef == o  # optimized comparison 1.44 vs 1.95
-      EMPTY_STRING
-    else
-      o.to_s
-    end
-  end
-
-  def string_Array(o, scope)
-    "[#{o.map {|e| string(e, scope)}.join(COMMA_SEPARATOR)}]"
-  end
-
-  def string_Hash(o, scope)
-    "{#{o.map {|k,v| "#{string(k, scope)} => #{string(v, scope)}"}.join(COMMA_SEPARATOR)}}"
-  end
-
-  def string_Regexp(o, scope)
-    Types::PRegexpType.regexp_to_s_with_delimiters(o)
-  end
-
-  def string_PAnyType(o, scope)
-    o.to_s
   end
 
   # Produces concatenation / merge of x and y.
