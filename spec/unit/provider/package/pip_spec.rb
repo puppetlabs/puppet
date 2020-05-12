@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 osfamilies = { 'windows' => ['pip.exe'], 'other' => ['pip', 'pip-python', 'pip2', 'pip-2'] }
+pip_path_with_spaces = 'C:\Program Files (x86)\Python\Scripts\pip.exe'
 
 describe Puppet::Type.type(:package).provider(:pip) do
 
@@ -102,6 +103,16 @@ describe Puppet::Type.type(:package).provider(:pip) do
         expect(described_class.instances).to eq([])
       end
     end
+
+    context "when pip path location contains spaces" do
+      it "should quote the command before doing execpipe" do
+        allow(described_class).to receive(:which).and_return(pip_path_with_spaces)
+        allow(described_class).to receive(:pip_version).with(pip_path_with_spaces).and_return('8.0.1')
+
+        expect(described_class).to receive(:execpipe).with(["\"#{pip_path_with_spaces}\"", ["freeze"]])
+        described_class.instances
+      end
+    end
   end
 
   context "query" do
@@ -160,15 +171,18 @@ describe Puppet::Type.type(:package).provider(:pip) do
   end
 
   context "latest" do
+    before do
+      allow(described_class).to receive(:pip_version).with(pip_path).and_return(pip_version)
+      allow(described_class).to receive(:which).with('pip').and_return(pip_path)
+      allow(described_class).to receive(:which).with('pip-python').and_return(pip_path)
+      allow(described_class).to receive(:which).with('pip.exe').and_return(pip_path)
+      allow(described_class).to receive(:provider_command).and_return(pip_path)
+      allow(described_class).to receive(:validate_command).with(pip_path)
+    end
+
     context "with pip version < 1.5.4" do
-      before :each do
-        allow(described_class).to receive(:pip_version).with("/fake/bin/pip").and_return('1.0.1')
-        allow(described_class).to receive(:which).with('pip').and_return("/fake/bin/pip")
-        allow(described_class).to receive(:which).with('pip-python').and_return("/fake/bin/pip")
-        allow(described_class).to receive(:which).with('pip.exe').and_return("/fake/bin/pip")
-        allow(described_class).to receive(:provider_command).and_return('/fake/bin/pip')
-        allow(described_class).to receive(:validate_command).with('/fake/bin/pip')
-      end
+      let(:pip_version) { '1.0.1' }
+      let(:pip_path) { '/fake/bin/pip' }
 
       it "should find a version number for new_pip_package" do
         p = StringIO.new(
@@ -236,19 +250,22 @@ describe Puppet::Type.type(:package).provider(:pip) do
         @resource[:install_options] = ['--index' => 'https://fake.example.com']
         expect(@provider.latest).to eq(nil)
       end
+
+      context "when pip path location contains spaces" do
+        let(:pip_path) { pip_path_with_spaces }
+
+        it "should quote the command before doing execpipe" do
+          expect(Puppet::Util::Execution).to receive(:execpipe).with(array_including("\"#{pip_path}\""))
+          @provider.latest
+        end
+      end
     end
 
     context "with pip version >= 1.5.4" do
       # For Pip 1.5.4 and above, you can get a version list from CLI - which allows for native pip behavior
       # with regards to custom repositories, proxies and the like
-      before :each do
-        allow(described_class).to receive(:pip_version).with("/fake/bin/pip").and_return('1.5.4')
-        allow(described_class).to receive(:which).with('pip').and_return("/fake/bin/pip")
-        allow(described_class).to receive(:which).with('pip-python').and_return("/fake/bin/pip")
-        allow(described_class).to receive(:which).with('pip.exe').and_return("/fake/bin/pip")
-        allow(described_class).to receive(:provider_command).and_return('/fake/bin/pip')
-        allow(described_class).to receive(:validate_command).with('/fake/bin/pip')
-      end
+      let(:pip_version) { '1.5.4' }
+      let(:pip_path) { '/fake/bin/pip' }
 
       it "should find a version number for real_package" do
         p = StringIO.new(
@@ -295,6 +312,15 @@ describe Puppet::Type.type(:package).provider(:pip) do
         @resource[:name] = "fake_package"
         @resource[:install_options] = ['--index' => 'https://fake.example.com']
         expect(@provider.latest).to eq(nil)
+      end
+
+      context "when pip path location contains spaces" do
+        let(:pip_path) { pip_path_with_spaces }
+
+        it "should quote the command before doing execpipe" do
+          expect(Puppet::Util::Execution).to receive(:execpipe).with(array_including("\"#{pip_path}\""))
+          @provider.latest
+        end
       end
     end
   end
