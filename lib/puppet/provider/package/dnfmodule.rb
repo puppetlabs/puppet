@@ -12,7 +12,7 @@ require 'puppet/provider/package'
 
 Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
 
-  has_feature :installable, :uninstallable, :versionable, :supports_flavors
+  has_feature :installable, :uninstallable, :versionable, :supports_flavors, :disableable
   #has_feature :upgradeable
   # it's not (yet) feasible to make this upgradeable since module streams don't
   # always have matching version types (i.e. idm has streams DL1 and client,
@@ -34,10 +34,10 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
 
   def self.instances
     packages = []
-    cmd = "#{command(:dnf)} module list --enabled -d 0 -e #{error_level}"
+    cmd = "#{command(:dnf)} module list -d 0 -e #{error_level}"
     execute(cmd).each_line do |line|
       # select only lines with actual packages since DNF clutters the output
-      next unless line =~ /\[[ei]\][, ]/
+      next unless line =~ /\[[eix]\][, ]/
       line.gsub!(/\[d\]/, '')  # we don't care about the default flag
 
       flavor = if line.include?('[i]')
@@ -48,7 +48,11 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
 
       packages << new(
         name: line.split[0],
-        ensure: line.split[1],
+        ensure: if line.include?('[x]')
+                  :disabled
+                else
+                  line.split[1]
+                end,
         flavor: flavor,
         provider: name
       )
@@ -98,6 +102,18 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
     end
   end
 
+  # should only get here when @resource[ensure] is :disabled
+  def insync?(is)
+    if resource[:ensure] == :disabled
+      # in sync only if package is already disabled
+      pkg = self.class.instances.find do |package|
+        @resource[:name] == package.name && package.properties[:ensure] == :disabled
+      end
+      return true if pkg
+    end
+    return false
+  end
+
   def enable(args = @resource[:name])
     execute([command(:dnf), 'module', 'enable', '-d', '0', '-e', self.class.error_level, '-y', args])
   end
@@ -105,6 +121,10 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
   def uninstall
     execute([command(:dnf), 'module', 'remove', '-d', '0', '-e', self.class.error_level, '-y', @resource[:name]])
     reset  # reset module to the default stream
+  end
+
+  def disable(args = @resource[:name])
+    execute([command(:dnf), 'module', 'disable', '-d', '0', '-e', self.class.error_level, '-y', args])
   end
 
   def reset
