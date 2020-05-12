@@ -208,6 +208,26 @@ module Puppet::Pops::Types
       @enumeration.send(name, *arguments, &block)
     end
 
+    def next
+      @enumeration.next
+    end
+
+    def map(*args, &block)
+      @enumeration.map(*args, &block)
+    end
+
+    def reduce(*args, &block)
+      @enumeration.reduce(*args, &block)
+    end
+
+    def all?(&block)
+      @enumeration.all?(&block)
+    end
+
+    def any?(&block)
+      @enumeration.any?(&block)
+    end
+
     def step(step, &block)
       raise ArgumentError if step <= 0
       r = self
