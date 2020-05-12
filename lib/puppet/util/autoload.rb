@@ -13,10 +13,8 @@ class Puppet::Util::ModuleDirectoriesAdapter < Puppet::Pops::Adaptable::Adapter
 
   def self.create_adapter(env)
     a = super(env)
-    a.directories = env.modulepath.collect do |dir|
-      Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f, "lib") }
-    end.flatten.find_all do |d|
-      FileTest.directory?(d)
+    a.directories = env.modulepath.flat_map do |dir|
+      Dir.glob(File.join(dir, '*', 'lib'))
     end
     a
   end
