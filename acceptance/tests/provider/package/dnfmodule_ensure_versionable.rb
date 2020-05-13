@@ -29,4 +29,13 @@ test_name "dnfmodule is versionable" do
       assert_match('postgres (PostgreSQL) 9.6', version.stdout, 'package version not correct')
     end
   end
+
+  step "Ensure we can disable a package" do
+    apply_manifest_on(agent, resource_manifest('package', package, ensure: :disabled, provider: 'dnfmodule'))
+    on(agent, "dnf module list | grep #{package}") do |output|
+      output.stdout.each_line do |line|
+        assert_match("\[x\]", line, 'package not disabled')
+      end
+    end
+  end
 end

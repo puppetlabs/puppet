@@ -18,7 +18,7 @@ describe Puppet::Type.type(:package).provider(:dnfmodule) do
     {:failonfail => true, :combine => true, :custom_environment => {}}
   end
 
-  let(:packages) { File.read(my_fixture("dnf-module-list-enabled.txt")) }
+  let(:packages) { File.read(my_fixture("dnf-module-list.txt")) }
   let(:dnf_path) { '/usr/bin/dnf' }
 
   before(:each) { allow(Puppet::Util).to receive(:which).with('/usr/bin/dnf').and_return(dnf_path) }
@@ -81,7 +81,7 @@ describe Puppet::Type.type(:package).provider(:dnfmodule) do
     end
   end
 
-  describe "when installing a module" do
+  describe "when ensuring a module" do
     let(:name) { 'baz' }
 
     let(:resource) do
@@ -200,14 +200,32 @@ describe Puppet::Type.type(:package).provider(:dnfmodule) do
         expect(provider.flavor).to eq('minimal')
       end
     end
+
+    context "when disabling a module" do
+
+      it "executed the disable command" do
+        resource[:ensure] = :disabled
+        expect(provider).to receive(:execute).with(array_including('disable'))
+        provider.disable
+      end
+
+      it "does not try to disable if package is already disabled" do
+        allow(described_class).to receive(:command).with(:dnf).and_return(dnf_path)
+        allow(Puppet::Util::Execution).to receive(:execute)
+          .with("/usr/bin/dnf module list -d 0 -e 1")
+          .and_return("baz 1.2 [d][x] common [d], complete  Package Description")
+        resource[:ensure] = :disabled
+        expect(provider).to be_insync(:disabled)
+      end
+    end
   end
 
-  context "parsing the output of module list --enabled" do
+  context "parsing the output of module list" do
     before { allow(described_class).to receive(:command).with(:dnf).and_return(dnf_path) }
 
     it "returns an array of enabled modules" do
       allow(Puppet::Util::Execution).to receive(:execute)
-        .with("/usr/bin/dnf module list --enabled -d 0 -e 1")
+        .with("/usr/bin/dnf module list -d 0 -e 1")
         .and_return(packages)
 
       enabled_packages = described_class.instances.map { |package| package.properties }
@@ -219,7 +237,9 @@ describe Puppet::Type.type(:package).provider(:dnfmodule) do
                            {name: "postgresql", ensure: "10", flavor: "server", provider: :dnfmodule},
                            {name: "ruby", ensure: "2.5", flavor: :absent, provider: :dnfmodule},
                            {name: "rust-toolset", ensure: "rhel8", flavor: "common", provider: :dnfmodule},
-                           {name: "subversion", ensure: "1.10", flavor: "server", provider: :dnfmodule}]
+                           {name: "subversion", ensure: "1.10", flavor: "server", provider: :dnfmodule},
+                           {name: "swig", ensure: :disabled, flavor: :absent, provider: :dnfmodule},
+                           {name: "virt", ensure: :disabled, flavor: :absent, provider: :dnfmodule}]
 
       expect(enabled_packages).to eql(expected_packages)
     end
