@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.15.0-99-g7ab7dbdcef\n"
+"Project-Id-Version: Puppet automation framework 6.15.0-102-g0cc9634d85\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-05-13 01:04+0000\n"
-"PO-Revision-Date: 2020-05-13 01:04+0000\n"
+"POT-Creation-Date: 2020-05-13 06:34+0000\n"
+"PO-Revision-Date: 2020-05-13 06:34+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -658,12 +658,12 @@ msgstr ""
 msgid "Unsupported data type: '%{klass}'"
 msgstr ""
 
-#: ../lib/puppet/daemon.rb:83
-msgid "Cannot reexec unless ARGV arguments are set"
+#: ../lib/puppet/daemon.rb:26
+msgid "Daemons must have an agent"
 msgstr ""
 
-#: ../lib/puppet/daemon.rb:144
-msgid "Daemons must have an agent, server, or both"
+#: ../lib/puppet/daemon.rb:81
+msgid "Cannot reexec unless ARGV arguments are set"
 msgstr ""
 
 #: ../lib/puppet/datatypes.rb:133
