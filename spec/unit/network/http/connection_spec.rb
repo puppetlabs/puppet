@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'puppet/network/http/connection'
+require 'puppet/network/http/connection_adapter'
 require 'puppet/test_ca'
 
 describe Puppet::Network::HTTP::Connection do
@@ -8,7 +9,7 @@ describe Puppet::Network::HTTP::Connection do
   let(:path) { '/foo' }
   let(:url) { "https://#{host}:#{port}#{path}" }
 
-  shared_examples_for "an HTTP connection" do |klass|
+  shared_examples_for "an HTTP connection" do |klass, legacy_api|
     subject { klass.new(host, port, :verify => Puppet::SSL::Validator.no_validator) }
 
     context "when providing HTTP connections" do
@@ -263,7 +264,8 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it 'defaults content-type to application/x-www-form-urlencoded' do
-        pending("Net::HTTP sends a default content-type header, but it's not visible to webmock")
+        skip("Net::HTTP sends a default content-type header, but it's not visible to webmock") if legacy_api
+
         stub_request(:put, url).with(headers: {'Content-Type' => 'application/x-www-form-urlencoded'})
 
         subject.put(path, '')
@@ -310,7 +312,8 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it 'defaults content-type to application/x-www-form-urlencoded' do
-        pending("Net::HTTP sends a default content-type header, but it's not visible to webmock")
+        skip("Net::HTTP sends a default content-type header, but it's not visible to webmock") if legacy_api
+
         stub_request(:post, url).with(headers: {'Content-Type' => 'application/x-www-form-urlencoded'})
 
         subject.post(path, "")
@@ -405,9 +408,15 @@ describe Puppet::Network::HTTP::Connection do
       it 'raises an exception when the location header is missing' do
         stub_request(:get, "http://me.example.com:8140/").to_return(status: 302)
 
-        expect {
-          create_connection.get('/')
-        }.to raise_error(URI::InvalidURIError, /bad URI/)
+        if legacy_api
+          expect {
+            create_connection.get('/')
+          }.to raise_error(URI::InvalidURIError, /bad URI/)
+        else
+          expect {
+            create_connection.get('/')
+          }.to raise_error(Puppet::HTTP::ProtocolError, /Location response header is missing/)
+        end
       end
     end
 
@@ -428,8 +437,14 @@ describe Puppet::Network::HTTP::Connection do
       it "should return a 503 response if Retry-After is not convertible to an Integer or RFC 2822 Date" do
         retry_after('foo')
 
-        result = subject.get('/foo')
-        expect(result.code).to eq("503")
+        if legacy_api
+          result = subject.get('/foo')
+          expect(result.code).to eq("503")
+        else
+          expect {
+            subject.get('/foo')
+          }.to raise_error(Puppet::HTTP::ProtocolError, /Failed to parse Retry-After header 'foo'/)
+        end
       end
 
       it "should close the connection before sleeping" do
@@ -444,7 +459,12 @@ describe Puppet::Network::HTTP::Connection do
         allow(http1).to receive(:started?).and_return(true)
 
         # The "with_connection" method is required to yield started connections
-        pool = Puppet.lookup(:http_pool)
+        pool = if legacy_api
+                 Puppet.lookup(:http_pool)
+               else
+                 Puppet.runtime[:http].pool
+               end
+
         allow(pool).to receive(:with_connection).and_yield(http1).and_yield(http2)
 
         expect(http1).to receive(:finish).ordered
@@ -540,15 +560,15 @@ describe Puppet::Network::HTTP::Connection do
         generic_error = Net::HTTPError.new('generic error', double("response"))
         stub_request(:get, url).to_raise(generic_error)
 
-        expect(Puppet).to receive(:log_exception).with(anything, /^.*failed: generic error$/)
+        expect(Puppet).to receive(:log_exception).with(anything, /^.*failed.*: generic error$/)
         expect { subject.get('/foo') }.to raise_error(generic_error)
       end
 
       it "logs and raises timeout errors" do
-        timeout_error = Timeout::Error.new
+        timeout_error = Net::OpenTimeout.new
         stub_request(:get, url).to_raise(timeout_error)
 
-        expect(Puppet).to receive(:log_exception).with(anything, /^.*timed out after .* seconds$/)
+        expect(Puppet).to receive(:log_exception).with(anything, /^.*timed out .*after .* seconds/)
         expect { subject.get('/foo') }.to raise_error(timeout_error)
       end
 
@@ -563,6 +583,10 @@ describe Puppet::Network::HTTP::Connection do
   end
 
   describe Puppet::Network::HTTP::Connection do
-    it_behaves_like "an HTTP connection", described_class
+    it_behaves_like "an HTTP connection", described_class, true
+  end
+
+  describe Puppet::Network::HTTP::ConnectionAdapter do
+    it_behaves_like "an HTTP connection", described_class, false
   end
 end
