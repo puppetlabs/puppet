@@ -489,9 +489,8 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def daemonize_process_when(should_daemonize)
-    daemon = Puppet::Daemon.new(Puppet::Util::Pidlock.new(Puppet[:pidfile]))
+    daemon = Puppet::Daemon.new(@agent, Puppet::Util::Pidlock.new(Puppet[:pidfile]))
     daemon.argv = @argv
-    daemon.agent = @agent
 
     daemon.daemonize if should_daemonize
 

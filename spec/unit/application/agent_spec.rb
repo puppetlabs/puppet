@@ -12,15 +12,15 @@ describe Puppet::Application::Agent do
   before :each do
     @puppetd = Puppet::Application[:agent]
 
-    @daemon = Puppet::Daemon.new(nil)
+    @agent = double('agent')
+    allow(Puppet::Agent).to receive(:new).and_return(@agent)
+
+    @daemon = Puppet::Daemon.new(@agent, nil)
     allow(@daemon).to receive(:daemonize)
     allow(@daemon).to receive(:start)
     allow(@daemon).to receive(:stop)
     allow(Puppet::Daemon).to receive(:new).and_return(@daemon)
     Puppet[:daemonize] = false
-
-    @agent = double('agent')
-    allow(Puppet::Agent).to receive(:new).and_return(@agent)
 
     @puppetd.preinit
     allow(Puppet::Util::Log).to receive(:newdestination)

@@ -1,19 +1,15 @@
 require 'puppet/application'
 require 'puppet/scheduler'
 
-# Run periodic actions and a network server in a daemonized process.
+# Run periodic actions in a daemonized process.
 #
-# A Daemon has 3 parts:
+# A Daemon has 2 parts:
 #   * config reparse
-#   * (optional) an agent that responds to #run
-#   * (optional) a server that response to #stop, #start, and #wait_for_shutdown
+#   * an agent that responds to #run
 #
-# The config reparse will occur periodically based on Settings. The server will
-# be started and is expected to manage its own run loop (and so not block the
-# start call). The server will, however, still be waited for by using the
-# #wait_for_shutdown method. The agent is run periodically and a time interval
-# based on Settings. The config reparse will update this time interval when
-# needed.
+# The config reparse will occur periodically based on Settings. The agent
+# is run periodically and a time interval based on Settings. The config
+# reparse will update this time interval when needed.
 #
 # The Daemon is also responsible for signal handling, starting, stopping,
 # running the agent on demand, and reloading the entire process. It ensures
@@ -23,12 +19,14 @@ require 'puppet/scheduler'
 class Puppet::Daemon
   SIGNAL_CHECK_INTERVAL = 5
 
-  attr_accessor :agent, :server, :argv
-  attr_reader :signals
+  attr_accessor :argv
+  attr_reader :signals, :agent
 
-  def initialize(pidfile, scheduler = Puppet::Scheduler::Scheduler.new())
+  def initialize(agent, pidfile, scheduler = Puppet::Scheduler::Scheduler.new())
+    raise Puppet::DevError, _("Daemons must have an agent") unless agent
     @scheduler = scheduler
     @pidfile = pidfile
+    @agent = agent
     @signals = []
   end
 
@@ -88,7 +86,6 @@ class Puppet::Daemon
   end
 
   def reload
-    return unless agent
     agent.run({:splay => false})
   rescue Puppet::LockError
     Puppet.notice "Not triggering already-running agent"
@@ -129,8 +126,6 @@ class Puppet::Daemon
   def stop(args = {:exit => true})
     Puppet::Application.stop!
 
-    server.stop if server
-
     remove_pidfile
 
     Puppet::Util::Log.close_all
@@ -140,16 +135,7 @@ class Puppet::Daemon
 
   def start
     create_pidfile
-
-    raise Puppet::DevError, _("Daemons must have an agent, server, or both") unless agent or server
-
-    # Start the listening server, if required.
-    server.start if server
-
-    # Finally, loop forever running events - or, at least, until we exit.
     run_event_loop
-
-    server.wait_for_shutdown if server
   end
 
   private
@@ -165,6 +151,7 @@ class Puppet::Daemon
     @pidfile.unlock
   end
 
+  # Loop forever running events - or, at least, until we exit.
   def run_event_loop
     agent_run = Puppet::Scheduler.create_job(Puppet[:runinterval], Puppet[:splay], Puppet[:splaylimit]) do
       # Splay for the daemon is handled in the scheduler
@@ -189,7 +176,7 @@ class Puppet::Daemon
     end
 
     reparse_run.disable if Puppet[:filetimeout] == 0
-    agent_run.disable unless agent
+    agent_run.disable
 
     @scheduler.run_loop([reparse_run, agent_run, signal_loop])
   end
