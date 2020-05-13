@@ -8,61 +8,62 @@ describe Puppet::Network::HTTP::Connection do
   let(:path) { '/foo' }
   let(:url) { "https://#{host}:#{port}#{path}" }
 
-  subject { Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator) }
+  shared_examples_for "an HTTP connection" do |klass|
+  subject { klass.new(host, port, :verify => Puppet::SSL::Validator.no_validator) }
 
   context "when providing HTTP connections" do
     context "when initializing http instances" do
       it "should return an http instance created with the passed host and port" do
-        conn = Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator)
+        conn = klass.new(host, port, :verify => Puppet::SSL::Validator.no_validator)
 
         expect(conn.address).to eq(host)
         expect(conn.port).to eq(port)
       end
 
       it "should enable ssl on the http instance by default" do
-        conn = Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator)
+        conn = klass.new(host, port, :verify => Puppet::SSL::Validator.no_validator)
 
         expect(conn).to be_use_ssl
       end
 
       it "can disable ssl using an option and ignore the verify" do
-        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false)
+        conn = klass.new(host, port, :use_ssl => false)
 
         expect(conn).to_not be_use_ssl
       end
 
       it "can enable ssl using an option" do
-        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true, :verify => Puppet::SSL::Validator.no_validator)
+        conn = klass.new(host, port, :use_ssl => true, :verify => Puppet::SSL::Validator.no_validator)
 
         expect(conn).to be_use_ssl
       end
 
       it "ignores the ':verify' option when ssl is disabled" do
-        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator)
+        conn = klass.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator)
 
         expect(conn.verifier).to be_nil
       end
 
       it "wraps the validator in an adapter" do
-        conn = Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator)
+        conn = klass.new(host, port, :verify => Puppet::SSL::Validator.no_validator)
 
         expect(conn.verifier).to be_a_kind_of(Puppet::SSL::VerifierAdapter)
       end
 
       it "should raise Puppet::Error when invalid options are specified" do
-        expect { Puppet::Network::HTTP::Connection.new(host, port, :invalid_option => nil) }.to raise_error(Puppet::Error, 'Unrecognized option(s): :invalid_option')
+        expect { klass.new(host, port, :invalid_option => nil) }.to raise_error(Puppet::Error, 'Unrecognized option(s): :invalid_option')
       end
 
       it "accepts a verifier" do
         verifier = Puppet::SSL::Verifier.new(host, double('ssl_context'))
-        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true, :verifier => verifier)
+        conn = klass.new(host, port, :use_ssl => true, :verifier => verifier)
 
         expect(conn.verifier).to eq(verifier)
       end
 
       it "raises if the wrong verifier class is specified" do
         expect {
-          Puppet::Network::HTTP::Connection.new(host, port, :verifier => Puppet::SSL::Validator.default_validator)
+          klass.new(host, port, :verifier => Puppet::SSL::Validator.default_validator)
         }.to raise_error(ArgumentError,
                          "Expected an instance of Puppet::SSL::Verifier but was passed a Puppet::SSL::Validator::DefaultValidator")
       end
@@ -351,10 +352,12 @@ describe Puppet::Network::HTTP::Connection do
   end
 
   context "when response is a redirect" do
+    subject { klass }
+
     def create_connection(options = {})
       options[:use_ssl] = false
       options[:verify] = Puppet::SSL::Validator.no_validator
-      Puppet::Network::HTTP::Connection.new(host, port, options)
+      subject.new(host, port, options)
     end
 
     def redirect_to(url)
@@ -556,5 +559,10 @@ describe Puppet::Network::HTTP::Connection do
       expect(Puppet).to receive(:log_exception).with(anything, /^.*interrupted after .* seconds$/)
       expect { subject.get('/foo') }.to raise_error(eof_error)
     end
+  end
+  end
+
+  describe Puppet::Network::HTTP::Connection do
+    it_behaves_like "an HTTP connection", described_class
   end
 end
