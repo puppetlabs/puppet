@@ -43,6 +43,7 @@ class Puppet::Agent
     end
 
     result = nil
+    wait_for_lock_deadline = nil
     block_run = Puppet::Application.controlled_run do
       splay client_options.fetch :splay, Puppet[:splay]
       result = run_in_fork(should_fork) do
@@ -60,8 +61,20 @@ class Puppet::Agent
               end
             end
           rescue Puppet::LockError
-            Puppet.notice _("Run of %{client_class} already in progress; skipping  (%{lockfile_path} exists)") % { client_class: client_class, lockfile_path: lockfile_path }
-            nil
+            wait_for_lock_deadline ||= Time.now.to_i + Puppet[:maxwaitforlock]
+
+            if Puppet[:waitforlock]  < 1
+              Puppet.notice _("Run of %{client_class} already in progress; skipping  (%{lockfile_path} exists)") % { client_class: client_class, lockfile_path: lockfile_path }
+              nil
+            elsif Time.now.to_i > wait_for_lock_deadline
+              Puppet.notice _("Exiting now because the maxwaitforlock timeout has been exceeded.")
+              nil
+            else
+              Puppet.info _("Another puppet instance is already running; --waitforlock flag used, waiting for running instance to finish.")
+              Puppet.info _("Will try again in %{time} seconds.") % {time: Puppet[:waitforlock]}
+              sleep Puppet[:waitforlock]
+              retry
+            end
           rescue RunTimeoutError => detail
             Puppet.log_exception(detail, _("Execution of %{client_class} did not complete within %{runtimeout} seconds and was terminated.") %
               {client_class: client_class,
