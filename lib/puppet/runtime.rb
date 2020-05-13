@@ -11,7 +11,8 @@ class Puppet::Runtime
     @runtime_services = {
       http: proc do
         klass = Puppet::Network::HttpPool.http_client_class
-        if klass == Puppet::Network::HTTP::Connection
+        if klass == Puppet::Network::HTTP::Connection ||
+           klass == Puppet::Network::HTTP::ConnectionAdapter
           Puppet::HTTP::Client.new
         else
           Puppet::HTTP::ExternalClient.new(klass)

@@ -55,7 +55,7 @@ describe Puppet::Network::HttpPool do
   describe "when managing http instances" do
     it "should return an http instance created with the passed host and port" do
       http = Puppet::Network::HttpPool.http_instance("me", 54321)
-      expect(http).to be_an_instance_of Puppet::Network::HTTP::Connection
+      expect(http).to be_a_kind_of Puppet::Network::HTTP::Connection
       expect(http.address).to eq('me')
       expect(http.port).to    eq(54321)
     end

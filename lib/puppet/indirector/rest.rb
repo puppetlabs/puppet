@@ -55,7 +55,8 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   # Should we use puppet's http client to make requests. Will return
   # false when running in puppetserver
   def use_http_client?
-    Puppet::Network::HttpPool.http_client_class == Puppet::Network::HTTP::Connection
+    Puppet::Network::HttpPool.http_client_class == Puppet::Network::HTTP::Connection ||
+      Puppet::Network::HttpPool.http_client_class == Puppet::Network::HTTP::ConnectionAdapter
   end
 
   # Provide appropriate headers.

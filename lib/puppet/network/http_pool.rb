@@ -1,4 +1,5 @@
 require 'puppet/network/http/connection'
+require 'puppet/network/http/connection_adapter'
 require 'puppet/util/platform'
 
 module Puppet::Network; end
@@ -12,7 +13,7 @@ module Puppet::Network; end
 #
 module Puppet::Network::HttpPool
 
-  @http_client_class = Puppet::Network::HTTP::Connection
+  @http_client_class = Puppet::Network::HTTP::ConnectionAdapter
 
   def self.http_client_class
     @http_client_class
