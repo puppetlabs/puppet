@@ -90,6 +90,23 @@ describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java'
 
       expect(trusted.external).to eq(external_data)
     end
+
+    it 'does not run the trusted external command when creating a trusted context' do
+      Puppet[:trusted_external_command] = '/usr/bin/generate_data.sh'
+
+      expect(Puppet::Util::Execution).to receive(:execute).never
+      Puppet::Context::TrustedInformation.remote(true, 'cert name', cert)
+    end
+
+    it 'only runs the trusted external command the first time it is invoked' do
+      Puppet[:trusted_external_command] = '/usr/bin/generate_data.sh'
+
+      expect(Puppet::Util::Execution).to receive(:execute).with(['/usr/bin/generate_data.sh', 'cert name'], anything).and_return(JSON.dump(external_data)).once
+
+      trusted = Puppet::Context::TrustedInformation.remote(true, 'cert name', cert)
+      trusted.external
+      trusted.external
+    end
   end
 
   context "when local" do
