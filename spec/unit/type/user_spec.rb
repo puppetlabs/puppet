@@ -1,4 +1,4 @@
-# encoding: UTF-8
+# encoding: utf-8
 require 'spec_helper'
 
 describe Puppet::Type.type(:user) do
@@ -484,28 +484,30 @@ describe Puppet::Type.type(:user) do
     end
 
     context "with no home directory specified" do
-      it "should not accept true" do
-        expect {
-          described_class.new(:name => "a", :purge_ssh_keys => true)
-        }.to raise_error(Puppet::Error, /purge_ssh_keys can only be true for users with a defined home directory/)
+      before(:each) do
+        allow(Dir).to receive(:home).with('a').and_return('/home/a')
       end
 
-      it "should not accept the ~ wildcard" do
-        expect {
-          described_class.new(:name => "a", :purge_ssh_keys => "~/keys")
-        }.to raise_error(Puppet::Error, /meta character ~ or %h only allowed for users with a defined home directory/)
+      it "should accept true" do
+        described_class.new(:name => "a", :purge_ssh_keys => true)
       end
 
-      it "should not accept the %h wildcard" do
-        expect {
-          described_class.new(:name => "a", :purge_ssh_keys => "%h/keys")
-        }.to raise_error(Puppet::Error, /meta character ~ or %h only allowed for users with a defined home directory/)
+      it "should accept the ~ wildcard" do
+        described_class.new(:name => "a", :purge_ssh_keys => "~/keys")
+      end
+
+      it "should accept the %h wildcard" do
+        described_class.new(:name => "a", :purge_ssh_keys => "%h/keys")
       end
     end
 
     context "with a valid parameter" do
       let(:paths) do
         [ "/dev/null", "/tmp/keyfile" ].map { |path| File.expand_path(path) }
+      end
+
+      before(:each) do
+        allow(Dir).to receive(:home).with('test').and_return('/home/test')
       end
 
       subject do
@@ -532,6 +534,10 @@ describe Puppet::Type.type(:user) do
         res = described_class.new(:name => "test_user_name", :purge_ssh_keys => purge_param)
         res.catalog = Puppet::Resource::Catalog.new
         res
+      end
+
+      before(:each) do
+        allow(Dir).to receive(:home).with('test_user_name').and_return('/home/test_user_name')
       end
 
       context "when purging is disabled" do
