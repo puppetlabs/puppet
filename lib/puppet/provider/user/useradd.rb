@@ -138,10 +138,17 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def check_manage_home
     cmd = []
-    if @resource.managehome? && (!@resource.forcelocal?)
-      cmd << "-m"
-    elsif (!@resource.managehome?) && Facter.value(:osfamily) == 'RedHat'
-      cmd << "-M"
+    if @resource.managehome?
+      # libuser does not implement the -m flag
+      cmd << "-m" unless @resource.forcelocal?
+    else
+      osfamily = Facter.value(:osfamily)
+      osversion = Facter.value(:operatingsystemmajrelease).to_i
+      # SLES 11 uses pwdutils instead of shadow, which does not have -M
+      # Solaris and OpenBSD use different useradd flavors
+      unless osfamily =~ /Solaris|OpenBSD/ || osfamily == 'Suse' && osversion <= 11
+        cmd << "-M"
+      end
     end
     cmd
   end
