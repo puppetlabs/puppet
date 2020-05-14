@@ -38,7 +38,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       end
     },
     :unmunge => proc { |value|
-      if value == -1
+      if value == -1 || !(value.is_a? Numeric)
         :absent
       else
         # Expiry is days after 1970-01-01
