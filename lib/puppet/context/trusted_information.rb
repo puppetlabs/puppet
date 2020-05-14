@@ -29,11 +29,6 @@ class Puppet::Context::TrustedInformation
   # @return [String]
   attr_reader :hostname
 
-  # Additional external facts loaded through `trusted_external_command`.
-  #
-  # @return [Hash]
-  attr_reader :external
-
   def initialize(authenticated, certname, extensions, external = {})
     @authenticated = authenticated.freeze
     @certname = certname.freeze
@@ -46,11 +41,11 @@ class Puppet::Context::TrustedInformation
     end
     @hostname = hostname.freeze
     @domain = domain.freeze
-    @external = external.freeze
+    @external = external.is_a?(Proc) ? external : external.freeze
   end
 
   def self.remote(authenticated, node_name, certificate)
-    external = retrieve_trusted_external(node_name)
+    external = proc { retrieve_trusted_external(node_name) }
 
     if authenticated
       extensions = {}
@@ -70,8 +65,19 @@ class Puppet::Context::TrustedInformation
   def self.local(node)
     # Always trust local data by picking up the available parameters.
     client_cert = node ? node.parameters['clientcert'] : nil
+    external = proc { retrieve_trusted_external(client_cert) }
 
-    new('local', client_cert, {}, retrieve_trusted_external(client_cert))
+    new('local', client_cert, {}, external)
+  end
+
+  # Additional external facts loaded through `trusted_external_command`.
+  #
+  # @return [Hash]
+  def external
+    if @external.is_a?(Proc)
+      @external = @external.call.freeze
+    end
+    @external
   end
 
   def self.retrieve_trusted_external(certname)
