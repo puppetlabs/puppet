@@ -23,8 +23,8 @@ class Puppet::HTTP::Client
   #   connections
   # @param [Puppet::SSL::SSLContext] system_ssl_context the system ssl context
   #   used if :include_system_store is set to true
-  # @param [Integer] redirect_limit number of HTTP redirections to allow in a
-  #   given request
+  # @param [Integer] redirect_limit default number of HTTP redirections to allow
+  #   in a given request. Can also be specified per-request.
   # @param [Integer] retry_limit number of HTTP reties allowed in a given
   #   request
   #
@@ -36,7 +36,7 @@ class Puppet::HTTP::Client
     }.freeze
     @default_ssl_context = ssl_context
     @default_system_ssl_context = system_ssl_context
-    @redirector = Puppet::HTTP::Redirector.new(redirect_limit)
+    @default_redirect_limit = redirect_limit
     @retry_after_handler = Puppet::HTTP::RetryAfterHandler.new(retry_limit, Puppet[:runinterval])
   end
 
@@ -114,6 +114,8 @@ class Puppet::HTTP::Client
   #   be used for connections
   # @option options [Boolean] :include_system_store (false) if we should include
   #   the system store for connection
+  # @param options [Integer] :redirect_limit number of HTTP redirections to allow
+  #   for this request.
   #
   # @yield [Puppet::HTTP::Response] if a block is given yields the response
   #
@@ -146,6 +148,8 @@ class Puppet::HTTP::Client
   #   be used for connections
   # @option options [Boolean] :include_system_store (false) if we should include
   #   the system store for connection
+  # @param options [Integer] :redirect_limit number of HTTP redirections to allow
+  #   for this request.
   #
   # @return [String] the body of the request response
   #
@@ -174,6 +178,8 @@ class Puppet::HTTP::Client
   #   be used for connections
   # @option options [Boolean] :include_system_store (false) if we should include
   #   the system store for connection
+  # @param options [Integer] :redirect_limit number of HTTP redirections to allow
+  #   for this request.
   #
   # @return [String] the body of the request response
   #
@@ -207,6 +213,8 @@ class Puppet::HTTP::Client
   #   be used for connections
   # @option options [Boolean] :include_system_store (false) if we should include
   #   the system store for connection
+  # @param options [Integer] :redirect_limit number of HTTP redirections to allow
+  #   for this request.
   #
   # @return [String] the body of the request response
   #
@@ -242,6 +250,8 @@ class Puppet::HTTP::Client
   #   be used for connections
   # @option options [Boolean] :include_system_store (false) if we should include
   #   the system store for connection
+  # @param options [Integer] :redirect_limit number of HTTP redirections to allow
+  #   for this request.
   #
   # @return [String] the body of the request response
   #
@@ -277,6 +287,8 @@ class Puppet::HTTP::Client
   private
 
   def execute_streaming(request, options: {}, &block)
+    redirector = Puppet::HTTP::Redirector.new(options.fetch(:redirect_limit, @default_redirect_limit))
+
     basic_auth = options.fetch(:basic_auth, nil)
 
     redirects = 0
@@ -294,8 +306,8 @@ class Puppet::HTTP::Client
           begin
             Puppet.debug("HTTP #{request.method.upcase} #{request.uri} returned #{response.code} #{response.reason}")
 
-            if @redirector.redirect?(request, response)
-              request = @redirector.redirect_to(request, response, redirects)
+            if redirector.redirect?(request, response)
+              request = redirector.redirect_to(request, response, redirects)
               redirects += 1
               next
             elsif @retry_after_handler.retry_after?(request, response)

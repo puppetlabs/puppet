@@ -10,10 +10,7 @@ class Puppet::Network::HttpPool::FooClient
 end
 
 describe Puppet::Network::HttpPool do
-  before :each do
-    Puppet::SSL::Key.indirection.terminus_class = :memory
-    Puppet::SSL::CertificateRequest.indirection.terminus_class = :memory
-  end
+  include PuppetSpec::Files
 
   describe "when registering an http client class" do
     let(:http_impl) { Puppet::Network::HttpPool::FooClient }
@@ -58,7 +55,7 @@ describe Puppet::Network::HttpPool do
   describe "when managing http instances" do
     it "should return an http instance created with the passed host and port" do
       http = Puppet::Network::HttpPool.http_instance("me", 54321)
-      expect(http).to be_an_instance_of Puppet::Network::HTTP::Connection
+      expect(http).to be_a_kind_of Puppet::Network::HTTP::Connection
       expect(http.address).to eq('me')
       expect(http.port).to    eq(54321)
     end
@@ -109,53 +106,35 @@ describe Puppet::Network::HttpPool do
     end
 
     describe 'peer verification' do
-      def setup_standard_ssl_configuration
-        ca_cert_file = File.expand_path('/path/to/ssl/certs/ca_cert.pem')
 
-        Puppet[:ssl_client_ca_auth] = ca_cert_file
-        allow(Puppet::FileSystem).to receive(:exist?).with(ca_cert_file).and_return(true)
-      end
+      before(:each) do
+        Puppet[:ssldir] = tmpdir('ssl')
+        Puppet.settings.use(:main)
 
-      def setup_standard_hostcert
-        host_cert_file = File.expand_path('/path/to/ssl/certs/host_cert.pem')
-        allow(Puppet::FileSystem).to receive(:exist?).with(host_cert_file).and_return(true)
-
-        Puppet[:hostcert] = host_cert_file
-      end
-
-      def setup_standard_ssl_host
-        cert = double('cert', :content => 'real_cert')
-        key  = double('key',  :content => 'real_key')
-        host = double('host', :certificate => cert, :key => key, :ssl_store => double('store'))
-
-        allow(Puppet::SSL::Host).to receive(:localhost).and_return(host)
-      end
-
-      before do
-        setup_standard_ssl_configuration
-        setup_standard_hostcert
-        setup_standard_ssl_host
+        Puppet[:certname] = 'signed'
+        File.write(Puppet[:localcacert], cert_fixture('ca.pem'))
+        File.write(Puppet[:hostcrl], crl_fixture('crl.pem'))
+        File.write(Puppet[:hostcert], cert_fixture('signed.pem'))
+        File.write(Puppet[:hostprivkey], key_fixture('signed-key.pem'))
       end
 
       it 'enables peer verification by default' do
-        response = Net::HTTPOK.new('1.1', 200, 'body')
-        conn = Puppet::Network::HttpPool.http_instance("me", 54321, true)
-        expect(conn).to receive(:execute_request) do |http, _|
-          expect(http.verify_mode).to eq(OpenSSL::SSL::VERIFY_PEER)
+        stub_request(:get, "https://me:54321")
 
-          response
+        conn = Puppet::Network::HttpPool.http_instance("me", 54321, true)
+        expect_any_instance_of(Net::HTTP).to receive(:start) do |http|
+          expect(http.verify_mode).to eq(OpenSSL::SSL::VERIFY_PEER)
         end
 
         conn.get('/')
       end
 
       it 'can disable peer verification' do
-        response = Net::HTTPOK.new('1.1', 200, 'body')
-        conn = Puppet::Network::HttpPool.http_instance("me", 54321, true, false)
-        expect(conn).to receive(:execute_request) do |http, _|
-          expect(http.verify_mode).to eq(OpenSSL::SSL::VERIFY_NONE)
+        stub_request(:get, "https://me:54321")
 
-          response
+        conn = Puppet::Network::HttpPool.http_instance("me", 54321, true, false)
+        expect_any_instance_of(Net::HTTP).to receive(:start) do |http|
+          expect(http.verify_mode).to eq(OpenSSL::SSL::VERIFY_NONE)
         end
 
         conn.get('/')

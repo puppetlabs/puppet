@@ -6,10 +6,18 @@
 #   loaded above.
 #
 class Puppet::SSL::VerifierAdapter
-  attr_reader :validator
+  attr_reader :validator, :ssl_context
 
   def initialize(validator)
     @validator = validator
+
+    if validator.is_a?(Puppet::SSL::Validator::NoValidator)
+      ssl = Puppet::SSL::SSLProvider.new
+      @ssl_context = ssl.create_insecure_context
+    else
+      # nil means use the default SSLContext
+      @ssl_context = nil
+    end
   end
 
   # Return true if `self` is reusable with `verifier` meaning they
