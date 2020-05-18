@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.15.0-119-gfc53506191\n"
+"Project-Id-Version: Puppet automation framework 6.15.0-137-gc7b8ab56cf\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-05-14 21:49+0000\n"
-"PO-Revision-Date: 2020-05-14 21:49+0000\n"
+"POT-Creation-Date: 2020-05-18 23:06+0000\n"
+"PO-Revision-Date: 2020-05-18 23:06+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2246,11 +2246,11 @@ msgstr ""
 msgid "Request to %{uri} failed after %{elapsed} seconds: %{message}"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:309
+#: ../lib/puppet/http/client.rb:321
 msgid "Sleeping for %{interval} seconds before retrying the request"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:352 ../lib/puppet/indirector/request.rb:142
+#: ../lib/puppet/http/client.rb:364 ../lib/puppet/indirector/request.rb:142
 msgid "HTTP REST queries cannot handle values of type '%{klass}'"
 msgstr ""
 
@@ -2282,7 +2282,7 @@ msgstr ""
 msgid "Ignoring extra header \"%{name}\" as it has no value."
 msgstr ""
 
-#: ../lib/puppet/http/service.rb:145 ../lib/puppet/indirector/rest.rb:287
+#: ../lib/puppet/http/service.rb:145 ../lib/puppet/indirector/rest.rb:288
 msgid "No content type in http response; cannot parse"
 msgstr ""
 
@@ -2436,7 +2436,7 @@ msgstr ""
 msgid "Unable to serialize catalog to json, retrying with pson"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/rest.rb:34 ../lib/puppet/indirector/facts/rest.rb:22 ../lib/puppet/indirector/file_content/rest.rb:33 ../lib/puppet/indirector/file_metadata/rest.rb:30 ../lib/puppet/indirector/node/rest.rb:25 ../lib/puppet/indirector/rest.rb:145 ../lib/puppet/indirector/status/rest.rb:21
+#: ../lib/puppet/indirector/catalog/rest.rb:34 ../lib/puppet/indirector/facts/rest.rb:22 ../lib/puppet/indirector/file_content/rest.rb:33 ../lib/puppet/indirector/file_metadata/rest.rb:30 ../lib/puppet/indirector/node/rest.rb:25 ../lib/puppet/indirector/rest.rb:146 ../lib/puppet/indirector/status/rest.rb:21
 msgid "Find %{uri} resulted in 404 with the message: %{body}"
 msgstr ""
 
@@ -2540,7 +2540,7 @@ msgstr ""
 msgid "You cannot save facts to the code store; it is only used for getting facts from a remote device"
 msgstr ""
 
-#: ../lib/puppet/indirector/facts/rest.rb:30 ../lib/puppet/indirector/rest.rb:197
+#: ../lib/puppet/indirector/facts/rest.rb:30 ../lib/puppet/indirector/rest.rb:198
 msgid "PUT does not accept options"
 msgstr ""
 
@@ -2823,36 +2823,36 @@ msgstr ""
 msgid "Resource instance does not match request key"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:114
+#: ../lib/puppet/indirector/rest.rb:115
 msgid "Puppet::Indirector::Rest#find is deprecated. Use Puppet::HTTP::Client instead."
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:153
+#: ../lib/puppet/indirector/rest.rb:154
 msgid "Puppet::Indirector::Rest#head is deprecated. Use Puppet::HTTP::Client instead."
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:166
+#: ../lib/puppet/indirector/rest.rb:167
 msgid "Puppet::Indirector::Rest#search is deprecated. Use Puppet::HTTP::Client instead."
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:180
+#: ../lib/puppet/indirector/rest.rb:181
 msgid "Puppet::Indirector::Rest#destroy is deprecated. Use Puppet::HTTP::Client instead."
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:181
+#: ../lib/puppet/indirector/rest.rb:182
 msgid "DELETE does not accept options"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:196
+#: ../lib/puppet/indirector/rest.rb:197
 msgid "Puppet::Indirector::Rest#save is deprecated. Use Puppet::HTTP::Client instead."
 msgstr ""
 
 #. TRANSLATORS "PSON" should not be translated
-#: ../lib/puppet/indirector/rest.rb:234
+#: ../lib/puppet/indirector/rest.rb:235
 msgid "Downgrading to PSON for future requests"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:276 ../lib/puppet/rest/response.rb:31
+#: ../lib/puppet/indirector/rest.rb:277 ../lib/puppet/rest/response.rb:31
 msgid "Error %{code} on SERVER: %{returned_message}"
 msgstr ""
 
@@ -3979,7 +3979,7 @@ msgstr ""
 msgid "Expected an instance of Puppet::SSL::Verifier but was passed a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:229
+#: ../lib/puppet/network/http/connection.rb:229 ../lib/puppet/network/http/connection_adapter.rb:155
 msgid "Too many HTTP redirections for %{host}:%{port}"
 msgstr ""
 
@@ -4070,12 +4070,12 @@ msgid "Missing required Accept header"
 msgstr ""
 
 #. TRANSLATORS 'ssl_context' is an argument and should not be translated
-#: ../lib/puppet/network/http_pool.rb:80
+#: ../lib/puppet/network/http_pool.rb:81
 msgid "An ssl_context is required when connecting to 'https://%{host}:%{port}'"
 msgstr ""
 
 #. TRANSLATORS 'ssl_context' is an argument and should not be translated
-#: ../lib/puppet/network/http_pool.rb:88
+#: ../lib/puppet/network/http_pool.rb:89
 msgid "An ssl_context is unnecessary when connecting to 'http://%{host}:%{port}' and will be ignored"
 msgstr ""
 
@@ -9555,10 +9555,6 @@ msgstr ""
 
 #: ../lib/puppet/util/log/destinations.rb:76
 msgid "Creating log directory %{dir}"
-msgstr ""
-
-#: ../lib/puppet/util/log/destinations.rb:102
-msgid "Unable to set ownership to %{user}:%{group} for log file: %{path}"
 msgstr ""
 
 #: ../lib/puppet/util/logging.rb:81 ../lib/puppet/util/logging.rb:105
