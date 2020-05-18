@@ -24,18 +24,20 @@ side," a new catalog terminus for example, then you'll be dealing with a
 resource catalog.  You can produce a resource catalog suitable for spec tests
 using something like this:
 
-    let(:catalog) do
-      catalog = Puppet::Resource::Catalog.new("node-name-val") # NOT certname!
-      rsrc = Puppet::Resource.new("file", "sshd_config",
-        :parameters => {
-          :ensure => 'file',
-          :source => 'puppet:///modules/filetest/sshd_config',
-        }
-      )
-      rsrc.file = 'site.pp'
-      rsrc.line = 21
-      catalog.add_resource(rsrc)
-    end
+```ruby
+let(:catalog) do
+  catalog = Puppet::Resource::Catalog.new("node-name-val") # NOT certname!
+  rsrc = Puppet::Resource.new("file", "sshd_config",
+    :parameters => {
+      :ensure => 'file',
+      :source => 'puppet:///modules/filetest/sshd_config',
+    }
+  )
+  rsrc.file = 'site.pp'
+  rsrc.line = 21
+  catalog.add_resource(rsrc)
+end
+```
 
 The resources in this catalog may be accessed using `catalog.resources`.
 Resource dependencies are not easily walked using a resource catalog however.
@@ -94,28 +96,30 @@ It may be sufficient to simply be aware of the settings catalog and the
 potential for race conditions it presents.  An effective way to be reasonably
 sure and track down the problem is to wrap the File.open method like so:
 
-    # We're wrapping ourselves around the File.open method.
-    # As described at: https://goo.gl/lDsv6
-    class File
-      WHITELIST = [ /pidlock.rb:39/ ]
+```ruby
+# We're wrapping ourselves around the File.open method.
+# As described at: https://goo.gl/lDsv6
+class File
+  WHITELIST = [ /pidlock.rb:39/ ]
 
-      class << self
-        alias xxx_orig_open open
-      end
+  class << self
+    alias xxx_orig_open open
+  end
 
-      def self.open(name, *rest, &block)
-        # Check the whitelist for any "good" File.open calls against the #
-        puppetdlock file
-        white_listed = caller(0).find do |line|
-          JJM_WHITELIST.find { |re| re.match(line) }
-        end
-
-        # If you drop into IRB here, take a look at your caller, it might be
-        # the ghost in the machine you're looking for.
-        binding.pry if name =~ /puppetdlock/ and not white_listed
-        xxx_orig_open(name, *rest, &block)
-      end
+  def self.open(name, *rest, &block)
+    # Check the whitelist for any "good" File.open calls against the #
+    puppetdlock file
+    white_listed = caller(0).find do |line|
+      JJM_WHITELIST.find { |re| re.match(line) }
     end
+
+    # If you drop into IRB here, take a look at your caller, it might be
+    # the ghost in the machine you're looking for.
+    binding.pry if name =~ /puppetdlock/ and not white_listed
+    xxx_orig_open(name, *rest, &block)
+  end
+end
+```
 
 The settings catalog is populated by the `Puppet::Util::Settings#to\_catalog`
 method.
