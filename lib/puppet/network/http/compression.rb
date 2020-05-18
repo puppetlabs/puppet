@@ -20,9 +20,11 @@ module Puppet::Network::HTTP::Compression
     def uncompress_body(response)
       case response['content-encoding']
       when 'gzip'
+        Puppet.deprecation_warning(_('Puppet::Network::HTTP::Compression::Active#uncompress_body is deprecated.'))
         # ZLib::GzipReader has an associated encoding, by default Encoding.default_external
         return Zlib::GzipReader.new(StringIO.new(response.body), :encoding => Encoding::BINARY).read
       when 'deflate'
+        Puppet.deprecation_warning(_('Puppet::Network::HTTP::Compression::Active#uncompress_body is deprecated.'))
         return Zlib::Inflate.new.inflate(response.body)
       when nil, 'identity'
         return response.body
@@ -32,6 +34,7 @@ module Puppet::Network::HTTP::Compression
     end
 
     def uncompress(response)
+      Puppet.deprecation_warning(_('Puppet::Network::HTTP::Compression::Active#uncompress is deprecated.'))
       raise Net::HTTPError.new("No block passed", response) unless block_given?
 
       case response['content-encoding']
@@ -71,6 +74,7 @@ module Puppet::Network::HTTP::Compression
       end
 
       def uncompress(chunk)
+        Puppet.deprecation_warning(_('Puppet::Network::HTTP::Compression::ZlibAdapter#uncompress is deprecated.'))
         out = @uncompressor.inflate(chunk)
         @first = false
         return out
@@ -97,6 +101,7 @@ module Puppet::Network::HTTP::Compression
 
   module None
     def uncompress_body(response)
+      Puppet.deprecation_warning(_('Puppet::Network::HTTP::Compression::None#uncompress_body is deprecated.'))
       response.body
     end
 
@@ -105,12 +110,14 @@ module Puppet::Network::HTTP::Compression
     end
 
     def uncompress(response)
+      Puppet.deprecation_warning(_('Puppet::Network::HTTP::Compression::None#uncompress is deprecated.'))
       yield IdentityAdapter.new
     end
   end
 
   class IdentityAdapter
     def uncompress(chunk)
+      Puppet.deprecation_warning(_('Puppet::Network::HTTP::Compression::IdentityAdapter#uncompress is deprecated.'))
       chunk
     end
 
