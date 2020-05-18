@@ -91,17 +91,8 @@ Puppet::Util::Log.newdesttype :file do
       end
     end
 
-    file = File.open(path,  File::WRONLY|File::CREAT|File::APPEND)
+    file = File.open(path, File::WRONLY|File::CREAT|File::APPEND)
     file.puts('[') if need_array_start
-
-    # Give ownership to the user and group puppet will run as
-    if Puppet.features.root? && !Puppet::Util::Platform.windows? && !file_exists
-      begin
-        FileUtils.chown(Puppet[:user], Puppet[:group], path)
-      rescue ArgumentError, Errno::EPERM
-        Puppet.err _("Unable to set ownership to %{user}:%{group} for log file: %{path}") % { user: Puppet[:user], group: Puppet[:group], path: path }
-      end
-    end
 
     @file = file
 
