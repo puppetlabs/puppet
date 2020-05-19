@@ -43,6 +43,7 @@ as an array in the form `[key, value]` and returns a hash containing the results
 $data = { "orange" => 0, "blueberry" => 1, "raspberry" => 2 }
 $filtered_data = $data.filter |$items| { $items[0] =~ /berry$/ }
 # $filtered_data = {blueberry => 1, raspberry => 2}
+~~~
 
 When the first argument is an array and the lambda has two parameters, Puppet passes the
 array's indexes (enumerated from 0) in the first parameter and its values in the second
