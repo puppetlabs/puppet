@@ -343,6 +343,8 @@ module Puppet::Network::HTTP
     end
 
     def with_connection(site, &block)
+      Puppet.deprecation_warning(_('Puppet::Network::HTTP::Connection is deprecated. Please use Puppet::Network::HTTP::ConnectionAdapter instead.'))
+
       response = nil
       @pool.with_connection(site, @verifier) do |conn|
         response = yield conn

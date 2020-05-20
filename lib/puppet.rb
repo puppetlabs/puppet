@@ -245,10 +245,7 @@ module Puppet
 
     {
       :environments => Puppet::Environments::Cached.new(Puppet::Environments::Combined.new(*loaders)),
-      :http_pool => proc {
-        require 'puppet/network/http'
-        Puppet::Network::HTTP::NoCachePool.new
-      },
+      :http_pool => proc { Puppet.runtime[:http].pool },
       :ssl_context => proc {
         begin
           cert = Puppet::X509::CertProvider.new

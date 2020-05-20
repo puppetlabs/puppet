@@ -4,6 +4,6 @@ require 'puppet/network/http'
 describe Puppet::Network::HTTP do
   it 'defines an http_pool context' do
     pool = Puppet.lookup(:http_pool)
-    expect(pool).to be_a(Puppet::Network::HTTP::NoCachePool)
+    expect(pool).to be_a(Puppet::Network::HTTP::Pool)
   end
 end
