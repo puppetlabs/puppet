@@ -141,12 +141,29 @@ class Puppet::Network::HTTP::ConnectionAdapter < Puppet::Network::HTTP::Connecti
   end
 
   def to_url(path)
-    normalized_path = if path[0] == '/'
-                        path[1..-1]
-                      else
-                        path
-                      end
-    URI("#{@site.addr}/#{Puppet::Util.uri_encode(normalized_path)}")
+    if path =~ /^https?:\/\//
+      # The old Connection class accepts a URL as the request path, and sends
+      # it in "absolute-form" in the request line, e.g. GET https://puppet:8140/.
+      # See https://httpwg.org/specs/rfc7230.html#absolute-form. It just so happens
+      # to work because HTTP 1.1 servers are required to accept absolute-form even
+      # though clients are only supposed to send them to proxies, so the proxy knows
+      # what upstream server to CONNECT to. This method creates a URL using the
+      # scheme/host/port that the connection was created with, and appends the path
+      # portion of the absolute-form. The resulting request will use "origin-form"
+      # as it should have done all along.
+      url = URI(path)
+      URI("#{@site.addr}/#{normalize_path(url.path)}")
+    else
+      URI("#{@site.addr}/#{Puppet::Util.uri_encode(normalize_path(path))}")
+    end
+  end
+
+  def normalize_path(path)
+    if path[0] == '/'
+      path[1..-1]
+    else
+      path
+    end
   end
 
   def with_error_handling(&block)
