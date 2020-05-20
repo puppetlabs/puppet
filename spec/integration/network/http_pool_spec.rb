@@ -116,6 +116,62 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
 
       include_examples 'HTTPS client'
     end
+
+    shared_examples_for "an HttpPool connection" do |klass, legacy_api|
+      before :each do
+        Puppet::Network::HttpPool.http_client_class = klass
+      end
+
+      it "connects using the scheme, host and port from the http instance" do
+        request_line = nil
+
+        response_proc = -> (req, res) {
+          request_line = req.request_line
+        }
+
+        server.start_server(response_proc: response_proc) do |port|
+          http = Puppet::Network::HttpPool.http_instance(hostname, port, true)
+          path  = "http://bogus.example.com:443/foo"
+          http.get(path)
+
+          if legacy_api
+            # The old API passed the bogus hostname which didn't match
+            # the host we connected to.
+            expect(request_line).to eq("GET http://bogus.example.com:443/foo HTTP/1.1\r\n")
+          else
+            expect(request_line).to eq("GET /foo HTTP/1.1\r\n")
+          end
+        end
+      end
+
+      it "requires the caller to URL encode the path" do
+        request_line = nil
+
+        response_proc = -> (req, res) {
+          request_line = req.request_line
+        }
+
+        server.start_server(response_proc: response_proc) do |port|
+          http = Puppet::Network::HttpPool.http_instance(hostname, port, true)
+          encoded_url = "https://#{hostname}:#{port}/foo%20bar"
+          http.get(encoded_url)
+
+          if legacy_api
+            expect(request_line).to eq("GET #{encoded_url} HTTP/1.1\r\n")
+          else
+            expect(request_line).to eq("GET /foo%20bar HTTP/1.1\r\n")
+          end
+        end
+      end
+    end
+
+    describe Puppet::Network::HTTP::Connection do
+      it_behaves_like "an HttpPool connection", described_class, true
+    end
+
+    describe Puppet::Network::HTTP::ConnectionAdapter do
+      it_behaves_like "an HttpPool connection", described_class, false
+    end
   end
 
   context "when calling HttpPool.connection method" do

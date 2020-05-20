@@ -99,6 +99,13 @@ describe Puppet::Network::HTTP::Connection do
         expect(response).to be_an_instance_of(Net::HTTPOK)
         expect(response.code).to eq("200")
       end
+
+      it "accepts a URL string as the path" do
+        stub_request(:get, url)
+
+        response = subject.request_get(url) { |_| }
+        expect(response).to be_an_instance_of(Net::HTTPOK)
+      end
     end
 
     context "for streaming head requests" do
@@ -129,6 +136,13 @@ describe Puppet::Network::HTTP::Connection do
         expect(response).to be_an_instance_of(Net::HTTPOK)
         expect(response.code).to eq("200")
       end
+
+      it "accepts a URL string as the path" do
+        stub_request(:head, url)
+
+        response = subject.request_head(url) { |_| }
+        expect(response).to be_an_instance_of(Net::HTTPOK)
+      end
     end
 
     context "for streaming post requests" do
@@ -158,6 +172,13 @@ describe Puppet::Network::HTTP::Connection do
         response = subject.request_post(path, "") { |_| }
         expect(response).to be_an_instance_of(Net::HTTPOK)
         expect(response.code).to eq("200")
+      end
+
+      it "accepts a URL string as the path" do
+        stub_request(:post, url)
+
+        response = subject.request_post(url, "") { |_| }
+        expect(response).to be_an_instance_of(Net::HTTPOK)
       end
     end
 
@@ -194,6 +215,13 @@ describe Puppet::Network::HTTP::Connection do
         response = subject.get(path)
         expect(response.body).to eq("abc")
       end
+
+      it "accepts a URL string as the path" do
+        stub_request(:get, url)
+
+        response = subject.get(url)
+        expect(response).to be_an_instance_of(Net::HTTPOK)
+      end
     end
 
     context "for HEAD requests" do
@@ -221,6 +249,13 @@ describe Puppet::Network::HTTP::Connection do
         response = subject.head(path)
         expect(response).to be_an_instance_of(Net::HTTPOK)
         expect(response.code).to eq("200")
+      end
+
+      it "accepts a URL string as the path" do
+        stub_request(:head, url)
+
+        response = subject.head(url)
+        expect(response).to be_an_instance_of(Net::HTTPOK)
       end
     end
 
@@ -270,6 +305,13 @@ describe Puppet::Network::HTTP::Connection do
 
         subject.put(path, '')
       end
+
+      it "accepts a URL string as the path" do
+        stub_request(:put, url)
+
+        response = subject.put(url, '')
+        expect(response).to be_an_instance_of(Net::HTTPOK)
+      end
     end
 
     context "for POST requests" do
@@ -318,6 +360,13 @@ describe Puppet::Network::HTTP::Connection do
 
         subject.post(path, "")
       end
+
+      it "accepts a URL string as the path" do
+        stub_request(:post, url)
+
+        response = subject.post(url, '')
+        expect(response).to be_an_instance_of(Net::HTTPOK)
+      end
     end
 
     context "for DELETE requests" do
@@ -351,6 +400,13 @@ describe Puppet::Network::HTTP::Connection do
         stub_request(:delete, url).to_return(body: "abc")
 
         expect(subject.delete(path).body).to eq("abc")
+      end
+
+      it "accepts a URL string as the path" do
+        stub_request(:delete, url)
+
+        response = subject.delete(url)
+        expect(response).to be_an_instance_of(Net::HTTPOK)
       end
     end
 
