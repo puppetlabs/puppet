@@ -477,6 +477,7 @@ describe Puppet::Resource::Catalog::Compiler do
     end
 
     it "should add 'pe_serverversion' when PE" do
+      allow(File).to receive(:readable?).and_call_original
       allow(File).to receive(:readable?).with(pe_version_file).and_return(true)
       allow(File).to receive(:zero?).with(pe_version_file).and_return(false)
       allow(File).to receive(:read).and_call_original
