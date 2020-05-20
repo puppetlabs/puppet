@@ -736,17 +736,11 @@ module Puppet
         value = test_sym if [:true, :false].include? test_sym
 
         return [] if value == :false
-        home = resource[:home]
-        if value == :true and not home
-          raise ArgumentError, _("purge_ssh_keys can only be true for users with a defined home directory")
-        end
+        home = resource[:home] || Dir.home(resource[:name])
 
         return [ "#{home}/.ssh/authorized_keys" ] if value == :true
         # value is an array - munge each value
         [ value ].flatten.map do |entry|
-          if entry =~ /^~|^%h/ and not home
-            raise ArgumentError, _("purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory") % { value: value, home_placeholder: '%h' }
-          end
           # make sure frozen value is duplicated by using a gsub, second mutating gsub! is then ok
           entry = entry.gsub(/^~\//, "#{home}/")
           entry.gsub!(/^%h\//, "#{home}/")
