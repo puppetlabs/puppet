@@ -176,7 +176,6 @@ class Puppet::Daemon
     end
 
     reparse_run.disable if Puppet[:filetimeout] == 0
-    agent_run.disable
 
     @scheduler.run_loop([reparse_run, agent_run, signal_loop])
   end
