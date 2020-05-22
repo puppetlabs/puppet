@@ -134,6 +134,32 @@ describe Puppet::SSL::SSLProvider do
       expect(sslctx.client_cert).to be_nil
       expect(sslctx.private_key).to be_nil
     end
+
+    it 'trusts additional system certs' do
+      path = tmpfile('system_cacerts')
+      File.write(path, cert_fixture('ca.pem').to_pem)
+
+      expect_any_instance_of(OpenSSL::X509::Store).to receive(:add_file).with(path)
+
+      subject.create_system_context(cacerts: [], path: path)
+    end
+
+    it 'ignores empty files' do
+      path = tmpfile('system_cacerts')
+      FileUtils.touch(path)
+
+      subject.create_system_context(cacerts: [], path: path)
+
+      expect(@logs).to eq([])
+    end
+
+    it 'prints an error if it is not a file' do
+      path = tmpdir('system_cacerts')
+
+      subject.create_system_context(cacerts: [], path: path)
+
+      expect(@logs).to include(an_object_having_attributes(level: :warning, message: /^The 'ssl_trust_store' setting does not refer to a file and will be ignored/))
+    end
   end
 
   context 'when creating an ssl context with crls' do
