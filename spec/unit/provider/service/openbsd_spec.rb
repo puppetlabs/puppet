@@ -12,6 +12,10 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
     allow(FileTest).to receive(:executable?).with('/usr/sbin/rcctl').and_return(true)
   end
 
+  before(:all) do
+    `exit 0`
+  end
+
   context "#instances" do
     it "should have an instances method" do
       expect(provider_class).to respond_to :instances

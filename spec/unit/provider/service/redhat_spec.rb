@@ -4,6 +4,10 @@ describe 'Puppet::Type::Service::Provider::Redhat',
          if: Puppet.features.posix? && !Puppet::Util::Platform.jruby?do
   let(:provider_class) { Puppet::Type.type(:service).provider(:redhat) }
 
+  before(:all) do
+    `exit 0`
+  end
+
   before :each do
     @class = Puppet::Type.type(:service).provider(:redhat)
     @resource = double('resource')
