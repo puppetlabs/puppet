@@ -28,6 +28,7 @@ describe 'Puppet::Type::Service::Provider::Openwrt',
     allow(FileTest).to receive(:executable?).with('/etc/rc.common').and_return(true)
 
     # All OpenWrt tests operate on the init script directly. It must exist.
+    allow(File).to receive(:directory?).and_call_original
     allow(File).to receive(:directory?).with('/etc/init.d').and_return(true)
 
     allow(Puppet::FileSystem).to receive(:exist?).with('/etc/init.d/myservice').and_return(true)

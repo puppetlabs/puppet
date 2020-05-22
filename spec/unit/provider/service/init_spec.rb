@@ -150,6 +150,7 @@ describe 'Puppet::Type::Service::Provider::Init', unless: Puppet::Util::Platform
 
   describe "if the init script is present" do
     before :each do
+      allow(File).to receive(:directory?).and_call_original
       allow(File).to receive(:directory?).with("/service/path").and_return(true)
       allow(File).to receive(:directory?).with("/alt/service/path").and_return(true)
       allow(Puppet::FileSystem).to receive(:exist?).with("/service/path/myservice").and_return(true)
