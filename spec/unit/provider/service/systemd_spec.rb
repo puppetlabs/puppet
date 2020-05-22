@@ -13,6 +13,10 @@ describe 'Puppet::Type::Service::Provider::Systemd', unless: Puppet::Util::Platf
     allow(provider_class).to receive(:which).with('systemctl').and_return('/bin/systemctl')
   end
 
+  before(:all) do
+    `(exit 0)`
+  end
+
   let :provider do
     provider_class.new(:name => 'sshd.service')
   end
