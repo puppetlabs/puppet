@@ -14,7 +14,7 @@ describe 'Puppet::Type::Service::Provider::Systemd', unless: Puppet::Util::Platf
   end
 
   before(:all) do
-    `(exit 0)`
+    `exit 0`
   end
 
   let :provider do

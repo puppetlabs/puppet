@@ -13,7 +13,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
   end
 
   before(:all) do
-    `(exit 0)`
+    `exit 0`
   end
 
   context "#instances" do

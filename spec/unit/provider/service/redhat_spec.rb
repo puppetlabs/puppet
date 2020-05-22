@@ -5,7 +5,7 @@ describe 'Puppet::Type::Service::Provider::Redhat',
   let(:provider_class) { Puppet::Type.type(:service).provider(:redhat) }
 
   before(:all) do
-    `(exit 0)`
+    `exit 0`
   end
 
   before :each do
