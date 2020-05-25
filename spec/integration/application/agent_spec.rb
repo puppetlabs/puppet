@@ -371,9 +371,10 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
     end
 
     it "exits if maxwaitforlock is exceeded" do
+      maxwaitforlock = 0.5
       path = Puppet[:agent_catalog_run_lockfile]
       Puppet[:waitforlock] = 1
-      Puppet[:maxwaitforlock] = 0.5
+      Puppet[:maxwaitforlock] = maxwaitforlock
 
       th = Thread.new {
         %x{ruby -e "$0 = 'puppet'; File.write('#{path}', Process.pid); sleep(2)"}
@@ -382,6 +383,9 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       until File.exists?(path) && File.size(path) > 0 do
         sleep 0.1
       end
+
+      # make sure maxwaitforlock is exceeded before running the agent
+      sleep maxwaitforlock
 
       expect {
         agent.command_line.args << '--test'
