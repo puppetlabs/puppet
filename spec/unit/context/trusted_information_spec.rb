@@ -41,8 +41,12 @@ describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java'
   }
 
   def allow_external_trusted_data(certname, data)
-    Puppet[:trusted_external_command] = '/usr/bin/generate_data.sh'
-    allow(Puppet::Util::Execution).to receive(:execute).with(['/usr/bin/generate_data.sh', certname], anything).and_return(JSON.dump(data))
+    command = 'generate_data.sh'
+    Puppet[:trusted_external_command] = command
+    # The expand_path bit is necessary b/c :trusted_external_command is a
+    # file_or_directory setting, and file_or_directory settings automatically
+    # expand the given path.
+    allow(Puppet::Util::Execution).to receive(:execute).with([File.expand_path(command), certname], anything).and_return(JSON.dump(data))
   end
 
   it "defaults external to an empty hash" do
@@ -99,9 +103,11 @@ describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java'
     end
 
     it 'only runs the trusted external command the first time it is invoked' do
-      Puppet[:trusted_external_command] = '/usr/bin/generate_data.sh'
+      command = 'generate_data.sh'
+      Puppet[:trusted_external_command] = command
 
-      expect(Puppet::Util::Execution).to receive(:execute).with(['/usr/bin/generate_data.sh', 'cert name'], anything).and_return(JSON.dump(external_data)).once
+      # See allow_external_trusted_data to understand why expand_path is necessary
+      expect(Puppet::Util::Execution).to receive(:execute).with([File.expand_path(command), 'cert name'], anything).and_return(JSON.dump(external_data)).once
 
       trusted = Puppet::Context::TrustedInformation.remote(true, 'cert name', cert)
       trusted.external
