@@ -98,8 +98,8 @@ module Puppet
           # Ruby 1.9.3 and earlier have a URI bug in URI
           # to_s returns an ASCII string despite UTF-8 fragments
           # since its escaped its safe to universally call encode
-          # URI.unescape always returns strings in the original encoding
-          URI.unescape(uri_string.encode(Encoding::UTF_8))
+          # Puppet::Util.uri_unescape always returns strings in the original encoding
+          Puppet::Util.uri_unescape(uri_string.encode(Encoding::UTF_8))
         else
           source
         end
@@ -278,7 +278,7 @@ module Puppet
       api = session.route_to(:fileserver, url: url)
 
       api.get_static_file_content(
-        path: URI.unescape(url.path),
+        path: Puppet::Util.uri_unescape(url.path),
         environment: resource.catalog.environment_instance.to_s,
         code_id: resource.catalog.code_id,
         &block
@@ -290,7 +290,7 @@ module Puppet
       api = session.route_to(:fileserver, url: url)
 
       api.get_file_content(
-        path: URI.unescape(url.path),
+        path: Puppet::Util.uri_unescape(url.path),
         environment: resource.catalog.environment_instance.to_s,
         &block
       )

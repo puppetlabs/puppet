@@ -15,7 +15,7 @@ class Puppet::Indirector::FileMetadata::Rest < Puppet::Indirector::REST
     api = session.route_to(:fileserver, url: url)
 
     _, file_metadata = api.get_file_metadata(
-      path: URI.unescape(url.path),
+      path: Puppet::Util.uri_unescape(url.path),
       environment: request.environment.to_s,
       links: request.options[:links],
       checksum_type: request.options[:checksum_type],
@@ -42,7 +42,7 @@ class Puppet::Indirector::FileMetadata::Rest < Puppet::Indirector::REST
     api = session.route_to(:fileserver, url: url)
 
     _, file_metadatas = api.get_file_metadatas(
-      path: URI.unescape(url.path),
+      path: Puppet::Util.uri_unescape(url.path),
       environment: request.environment.to_s,
       recurse: request.options[:recurse],
       recurselimit: request.options[:recurselimit],

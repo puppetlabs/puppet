@@ -22,8 +22,8 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
     @foobar = make_absolute("/foo/bar baz")
     @feebooz = make_absolute("/fee/booz baz")
 
-    @foobar_uri  = URI.unescape(Puppet::Util.path_to_uri(@foobar).to_s)
-    @feebooz_uri = URI.unescape(Puppet::Util.path_to_uri(@feebooz).to_s)
+    @foobar_uri  = Puppet::Util.uri_unescape(Puppet::Util.path_to_uri(@foobar).to_s)
+    @feebooz_uri = Puppet::Util.uri_unescape(Puppet::Util.path_to_uri(@feebooz).to_s)
   end
 
   it "should be a subclass of Parameter" do
@@ -82,7 +82,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
   describe "#munge" do
     it "should prefix file scheme to absolute paths" do
       resource[:source] = filename
-      expect(resource[:source]).to eq([URI.unescape(Puppet::Util.path_to_uri(filename).to_s)])
+      expect(resource[:source]).to eq([Puppet::Util.uri_unescape(Puppet::Util.path_to_uri(filename).to_s)])
     end
 
     %w[file puppet].each do |scheme|

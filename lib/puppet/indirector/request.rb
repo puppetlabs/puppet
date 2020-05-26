@@ -290,6 +290,6 @@ class Puppet::Indirector::Request
       @protocol = uri.scheme
     end
 
-    @key = URI.unescape(uri.path.sub(/^\//, ''))
+    @key = Puppet::Util.uri_unescape(uri.path.sub(/^\//, ''))
   end
 end

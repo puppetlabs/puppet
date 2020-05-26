@@ -94,7 +94,7 @@ describe Puppet::Indirector::Request do
 
       describe "and the URI is a 'file' URI" do
         before do
-          @request = Puppet::Indirector::Request.new(:ind, :method, "#{URI.unescape(Puppet::Util.path_to_uri(file).to_s)}", nil)
+          @request = Puppet::Indirector::Request.new(:ind, :method, "#{Puppet::Util.uri_unescape(Puppet::Util.path_to_uri(file).to_s)}", nil)
         end
 
         it "should set the request key to the unescaped full file path" do

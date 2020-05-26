@@ -791,7 +791,7 @@ describe Puppet::Type.type(:file) do
       let(:sources) do
         h = {}
         %w{/a /b /c /d}.each do |key|
-          h[key] = URI.unescape(Puppet::Util.path_to_uri(File.expand_path(key)).to_s)
+          h[key] = Puppet::Util.uri_unescape(Puppet::Util.path_to_uri(File.expand_path(key)).to_s)
         end
         h
       end
@@ -1462,7 +1462,7 @@ describe Puppet::Type.type(:file) do
       expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, anything).and_return(metadata)
 
       uri = file.parameters[:source].uri
-      expect(URI.unescape(uri.path)).to eq(filename)
+      expect(Puppet::Util.uri_unescape(uri.path)).to eq(filename)
       expect(uri.path.encoding).to eq(Encoding::UTF_8)
     end
 
@@ -1486,7 +1486,7 @@ describe Puppet::Type.type(:file) do
       expect_any_instance_of(Puppet::Indirector::FileMetadata::Rest).to receive(:find).with(request_key(filename[1..-1])).and_return(metadata)
 
       uri = file.parameters[:source].uri
-      expect(URI.unescape(uri.path)).to eq(filename)
+      expect(Puppet::Util.uri_unescape(uri.path)).to eq(filename)
       expect(uri.path.encoding).to eq(Encoding::UTF_8)
     end
   end

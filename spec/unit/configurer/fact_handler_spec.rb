@@ -104,7 +104,7 @@ describe Puppet::Configurer::FactHandler do
           expect(text).to include(test_fact[:encoded])
 
           # this is not sufficient to test whether these values are sent via HTTP GET or HTTP POST in actual catalog request
-          expect(JSON.parse(URI.unescape(to_upload[:facts]))['values']).to eq(test_fact[:hash])
+          expect(JSON.parse(Puppet::Util.uri_unescape(to_upload[:facts]))['values']).to eq(test_fact[:hash])
         end
       end
     end
@@ -129,7 +129,7 @@ describe Puppet::Configurer::FactHandler do
           expect(to_upload).to eq({:facts_format => 'application/json', :facts => text})
           expect(text).to include(test_fact[:encoded])
 
-          expect(JSON.parse(URI.unescape(to_upload[:facts]))['values']).to eq(test_fact[:hash])
+          expect(JSON.parse(Puppet::Util.uri_unescape(to_upload[:facts]))['values']).to eq(test_fact[:hash])
         end
       end
     end
@@ -138,9 +138,9 @@ describe Puppet::Configurer::FactHandler do
       facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
       Puppet::Node::Facts.indirection.save(facts)
 
-      # prefer URI.unescape but validate CGI also works
+      # prefer Puppet::Util.uri_unescape but validate CGI also works
       encoded_facts = facthandler.facts_for_uploading[:facts]
-      expect(URI.unescape(encoded_facts)).to validate_against('api/schemas/facts.json')
+      expect(Puppet::Util.uri_unescape(encoded_facts)).to validate_against('api/schemas/facts.json')
       expect(CGI.unescape(encoded_facts)).to validate_against('api/schemas/facts.json')
     end
   end

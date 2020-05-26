@@ -299,11 +299,11 @@ describe Puppet::Util do
       expect(uri.to_s.encoding).to eq(expected_encoding)
       expect(uri.path).to eq("/foo+foo%20bar")
       # either + or %20 is correct for an encoded space in query
-      # + is usually used for backward compatibility, but %20 is preferred for compat with Uri.unescape
+      # + is usually used for backward compatibility, but %20 is preferred for compat with Puppet::Util.uri_unescape
       expect(uri.query).to eq("foo%2Bfoo%20bar")
       # complete roundtrip
-      expect(URI.unescape(uri.to_s).sub(%r{^file:(//)?}, '')).to eq(path)
-      expect(URI.unescape(uri.to_s).encoding).to eq(expected_encoding)
+      expect(Puppet::Util.uri_unescape(uri.to_s).sub(%r{^file:(//)?}, '')).to eq(path)
+      expect(Puppet::Util.uri_unescape(uri.to_s).encoding).to eq(expected_encoding)
     end
 
     it "should perform UTF-8 URI escaping" do

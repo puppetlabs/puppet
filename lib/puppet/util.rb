@@ -356,7 +356,7 @@ module Util
 
     # CGI.unescape doesn't handle space rules properly in uri paths
     # URI.unescape does, but returns strings in their original encoding
-    path = URI.unescape(uri.path.encode(Encoding::UTF_8))
+    path = uri_unescape(uri.path.encode(Encoding::UTF_8))
 
     if Puppet::Util::Platform.windows? && uri.scheme == 'file'
       if uri.host && !uri.host.empty?
@@ -460,7 +460,18 @@ module Util
     # + should be left unencoded
     # URI::parse and URI::Generic.build don't like paths encoded with CGI.escape
     # URI.escape does not change / to %2F and : to %3A like CGI.escape
-    encoded += URI.escape(parts[:path]) unless parts[:path].nil?
+    #
+    # URI.escape is obsolete in Ruby 2.7. Ignore this error until we're able to
+    # switch to a different escape mechanism. If this is JRuby, we can't mask
+    # the error message, because this isn't thread safe. JRuby shouldn't be
+    # using Ruby 2.7 or raising the warning anyway.
+    orig_verbose = $VERBOSE
+    $VERBOSE = nil unless Puppet::Util::Platform.jruby?
+    begin
+      encoded += URI.escape(parts[:path]) unless parts[:path].nil?
+    ensure
+      $VERBOSE = orig_verbose unless Puppet::Util::Platform.jruby?
+    end
 
     # each query parameter
     if !parts[:query].nil?
@@ -478,6 +489,15 @@ module Util
     encoded
   end
   module_function :uri_encode
+
+  def uri_unescape(path)
+    orig_verbose = $VERBOSE
+    $VERBOSE = nil unless Puppet::Util::Platform.jruby?
+    return URI.unescape(path)
+  ensure
+    $VERBOSE = orig_verbose unless Puppet::Util::Platform.jruby?
+  end
+  module_function :uri_unescape
 
   def safe_posix_fork(stdin=$stdin, stdout=$stdout, stderr=$stderr, &block)
     child_pid = Kernel.fork do
