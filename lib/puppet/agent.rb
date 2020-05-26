@@ -61,12 +61,13 @@ class Puppet::Agent
               end
             end
           rescue Puppet::LockError
-            wait_for_lock_deadline ||= Time.now.to_i + Puppet[:maxwaitforlock]
+            now = Time.now.to_i
+            wait_for_lock_deadline ||= now + Puppet[:maxwaitforlock]
 
             if Puppet[:waitforlock]  < 1
               Puppet.notice _("Run of %{client_class} already in progress; skipping  (%{lockfile_path} exists)") % { client_class: client_class, lockfile_path: lockfile_path }
               nil
-            elsif Time.now.to_i > wait_for_lock_deadline
+            elsif now > wait_for_lock_deadline
               Puppet.notice _("Exiting now because the maxwaitforlock timeout has been exceeded.")
               nil
             else

@@ -373,7 +373,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
     it "exits if maxwaitforlock is exceeded" do
       path = Puppet[:agent_catalog_run_lockfile]
       Puppet[:waitforlock] = 1
-      Puppet[:maxwaitforlock] = 0.5
+      Puppet[:maxwaitforlock] = 0
 
       th = Thread.new {
         %x{ruby -e "$0 = 'puppet'; File.write('#{path}', Process.pid); sleep(2)"}
