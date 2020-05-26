@@ -1205,15 +1205,16 @@ class Type
       provider.instances.collect do |instance|
         # We always want to use the "first" provider instance we find, unless the resource
         # is already managed and has a different provider set
-        other = provider_instances[instance.name]
+        title = instance.respond_to?(:title) ? instance.title : instance.name
+        other = provider_instances[title]
         if other
           Puppet.debug "%s %s found in both %s and %s; skipping the %s version" %
-            [self.name.to_s.capitalize, instance.name, other.class.name, instance.class.name, instance.class.name]
+            [self.name.to_s.capitalize, title, other.class.name, instance.class.name, instance.class.name]
           next
         end
-        provider_instances[instance.name] = instance
+        provider_instances[title] = instance
 
-        result = new(:name => instance.name, :provider => instance)
+        result = new(:name => instance.name, :provider => instance, :title => title)
         properties.each { |name| result.newattr(name) }
         result
       end

@@ -1099,6 +1099,56 @@ describe Puppet::Type, :unless => Puppet::Util::Platform.windows? do
       expect { expect(type.instances).to eq([]) }.to_not raise_error
     end
 
+    context "with a composite namevar type" do
+      let :type do
+        Puppet::Type.newtype(:type_spec_fake_type) do
+          newparam(:name) do
+            isnamevar
+          end
+
+          newparam(:path) do
+            isnamevar
+          end
+
+          def self.title_patterns
+            [[%r{^(.*)@(.*)$}, [:name, :path]], [%r{^([^@]+)$}, [:name]]]
+          end
+
+          newproperty(:prop1) {}
+        end
+
+        Puppet::Type.type(:type_spec_fake_type)
+      end
+
+      before :each do
+        type.provide(:default) do
+          defaultfor :operatingsystem => Facter.value(:operatingsystem)
+          mk_resource_methods
+          class << self
+            attr_accessor :params
+          end
+
+          def title
+            "#{@property_hash[:name]}@#{@property_hash[:path]}"
+          end
+
+          def self.instance(name, path)
+            new(:name => name, :path => path, :ensure => :present)
+          end
+
+          def self.instances
+            @instances ||= params.collect { |param| instance(param.first.to_s, param.last.to_s) }
+          end
+
+          @params = [[:name_one, :path_one], [:name_two, :path_two]]
+        end
+      end
+
+      it "should return composite titles for the instances" do
+        expect(type.instances.map(&:title)).to eq(["name_one@path_one", "name_two@path_two"])
+      end
+    end
+
     context "with a default provider" do
       before :each do
         type.provide(:default) do
