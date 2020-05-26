@@ -1,7 +1,7 @@
 test_name "Windows Service Provider" do
   confine :to, :platform => 'windows'
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   require 'puppet/acceptance/windows_utils'
@@ -44,11 +44,15 @@ MANIFEST
     :stop_sleep => 40,
   }
 
+  teardown do
+    delete_service(agent, mock_service_long_start_stop[:name])
+  end
+
   agents.each do |agent|
-    delete_service(agent, mock_service_nofail[:name])
+    administrator_locale_name = agent['locale'] == 'fr' ? '.\Administrateur' : '.\Administrator'
+    local_service_locale_name = agent['locale'] == 'fr' ? 'AUTORITE NT\SERVICE LOCAL' : 'NT AUTHORITY\LOCAL SERVICE'
 
     run_nonexistent_service_tests(mock_service_nofail[:name])
-
     setup_service(agent, mock_service_nofail, 'MockService.cs')
 
     step 'Verify that enable = false disables the service' do
@@ -81,6 +85,57 @@ MANIFEST
       assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Running')
     end
 
+    step 'Verify that we can change logonaccount, for an already running service, using SID' do
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
+      on(agent, puppet("resource service #{mock_service_nofail[:name]} logonaccount=S-1-5-19")) do |result|
+        assert_match(/Service\[#{mock_service_nofail[:name]}\]\/logonaccount: logonaccount changed 'LocalSystem' to '#{Regexp.escape(local_service_locale_name)}'/, result.stdout)
+        assert_no_match(/Transitioning the #{mock_service_nofail[:name]} service from SERVICE_RUNNING to SERVICE_STOPPED/, result.stdout, 
+          "Expected no service restarts since ensure isn't being managed as 'running'.")
+        assert_no_match(/Successfully started the #{mock_service_nofail[:name]} service/, result.stdout)
+      end
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: local_service_locale_name)
+    end
+
+    step 'Verify that logonaccount noops if the logonaccount property is already synced' do
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], logonaccount: 'S-1-5-19'), catch_changes: true)
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: local_service_locale_name)
+    end
+
+    step 'Verify that setting logonaccount fails if input is invalid' do
+      apply_manifest_on(agent, service_manifest(mock_service_long_start_stop[:name], logonaccount: 'InvalidUser'), :acceptable_exit_codes => [1]) do |result|
+        assert_match(/"InvalidUser" is not a valid account/, result.stderr)
+      end
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: local_service_locale_name)
+    end
+
+    step 'Verify that setting logonpassword fails if input is invalid' do
+      apply_manifest_on(agent, service_manifest(mock_service_long_start_stop[:name], logonaccount: administrator_locale_name, logonpassword: 'wrongPass'), :acceptable_exit_codes => [1]) do |result|
+        assert_match(/The given password is invalid for user '#{Regexp.escape(administrator_locale_name)}'/, result.stderr)
+      end
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: local_service_locale_name)
+    end
+
+    step 'Verify that the service restarts if it is already running, logonaccount is different from last run and ensure is set to running' do
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: local_service_locale_name)
+      on(agent, puppet("resource service #{mock_service_nofail[:name]} logonaccount=LocalSystem ensure=running --debug")) do |result|
+        assert_match(/Service\[#{mock_service_nofail[:name]}\]\/logonaccount: logonaccount changed '#{Regexp.escape(local_service_locale_name)}' to 'LocalSystem'/, result.stdout)
+        assert_match(/Transitioning the #{mock_service_nofail[:name]} service from SERVICE_RUNNING to SERVICE_STOPPED/, result.stdout)
+        assert_match(/Successfully started the #{mock_service_nofail[:name]} service/, result.stdout)
+      end
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
+    end
+
+    step 'Verify that there are no restarts if logonaccount does not change, even though ensure is managed as running' do
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
+      on(agent, puppet("resource service #{mock_service_nofail[:name]} logonaccount=LocalSystem ensure=running --debug")) do |result|
+        assert_no_match(/Service\[#{mock_service_nofail[:name]}\]\/logonaccount: logonaccount changed/, result.stdout)
+        assert_no_match(/Service\[#{mock_service_nofail[:name]}\]\/ensure: ensure changed/, result.stdout)
+        assert_no_match(/Transitioning the #{mock_service_nofail[:name]} service from SERVICE_RUNNING to SERVICE_STOPPED/, result.stdout)
+        assert_no_match(/Successfully started the #{mock_service_nofail[:name]} service/, result.stdout)
+      end
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
+    end
+
     step 'Verify that we can stop the service' do
       apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], ensure: :stopped))
       assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Stopped')
@@ -91,15 +146,29 @@ MANIFEST
       assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Stopped')
     end
 
+    step 'Verify that we can change logonaccount for a stopped service' do
+      assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Stopped')
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], logonaccount: local_service_locale_name), expect_changes: true)
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: local_service_locale_name)
+      assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Stopped')
+    end
+
+    step 'Verify that logonaccount noops if the logonaccount property is already synced' do
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], logonaccount: local_service_locale_name), catch_changes: true)
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: local_service_locale_name)
+    end
+
     step 'Verify that we can query the service with the RAL' do
       on(agent, puppet("resource service #{mock_service_nofail[:name]}")) do |result|
-        assert_match( /enable => 'true'/, result.stdout, "Failed to query the service with the RAL on #{agent}")
+        assert_match( /enable\s+=>\s+'true'/, result.stdout, "Failed to query the service with the RAL on #{agent}")
       end
     end
 
-    step 'Disable the service to prepare for our subsequent tests' do
-      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], enable: false))
+    step 'Disable the service and change logonaccount to localsystem in preparation for our subsequent tests' do
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], enable: false, logonaccount: 'LocalSystem'))
       assert_service_properties_on(agent, mock_service_nofail[:name], StartMode: 'Disabled')
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
     end
 
     step 'Verify that starting a disabled service fails if the enable property is not managed' do
@@ -172,8 +241,5 @@ MANIFEST
         assert_match(/#{mock_service_long_start_stop[:name]}/, result.stderr, 'No progress made on service operation and dwWaitHint exceeded')
       end
     end
-
-    # delete the service so it doesn't interfere with subsequent tests
-    delete_service(agent, mock_service_long_start_stop[:name])
   end
 end

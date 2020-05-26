@@ -47,6 +47,8 @@ module Puppet
 
     feature :configurable_timeout, "The provider can specify a minumum timeout for syncing service properties"
 
+    feature :manages_logon_credentials, "The provider can specify the logon credentials used for a service"
+
     newproperty(:enable, :required_features => :enableable) do
       desc "Whether a service should be enabled to start at boot.
         This property behaves differently depending on the platform;
@@ -116,6 +118,12 @@ module Puppet
       end
 
       def sync
+        property = @resource.property(:logonaccount)
+        if property
+          val = property.retrieve
+          property.sync unless property.safe_insync?(val)
+        end
+
         event = super()
 
         property = @resource.property(:enable)
@@ -126,6 +134,47 @@ module Puppet
 
         event
       end
+    end
+
+    newproperty(:logonaccount, :required_features => :manages_logon_credentials) do
+      desc "Specify an account for service logon"
+
+      munge do |value|
+        return value unless Puppet::Util::Platform.windows?
+        return 'LocalSystem' if Puppet::Util::Windows::User::localsystem?(value)
+
+        value.sub!(/^\.\\/, "#{Puppet::Util::Windows::ADSI.computer_name}\\")
+        user_information = Puppet::Util::Windows::SID.name_to_principal(value)
+        raise Puppet::Error.new("\"#{value}\" is not a valid account") unless user_information && [:SidTypeUser, :SidTypeWellKnownGroup].include?(user_information.account_type)
+
+        if user_information.domain == Puppet::Util::Windows::ADSI.computer_name
+          ".\\#{user_information.account}"
+        else
+          user_information.domain_account
+        end
+      end
+    end
+
+    newparam(:logonpassword, :required_features => :manages_logon_credentials) do
+      desc "Specify a password for service logon. Default value is an empty string (when logonaccount is specified)."
+
+      validate do |value|
+        raise Puppet::Error.new(_"The 'logonaccount' parameter is mandatory when setting 'logonpassword'.") unless @resource[:logonaccount]
+        raise ArgumentError, _("Passwords cannot include ':'") if value.is_a?(String) and value.include?(":")
+        return unless Puppet::Util::Platform.windows?
+
+        is_a_predefined_local_account = Puppet::Util::Windows::User::default_system_account?(@resource[:logonaccount]) || @resource[:logonaccount] == 'LocalSystem'
+
+        account_info = @resource[:logonaccount].split("\\")
+        able_to_logon = Puppet::Util::Windows::User.password_is?(account_info[1], value, account_info[0]) unless is_a_predefined_local_account
+
+        raise Puppet::Error.new("The given password is invalid for user '#{@resource[:logonaccount]}'.") unless is_a_predefined_local_account || able_to_logon
+
+        provider.logonpassword=(value)
+      end
+
+      sensitive true
+      defaultto { @resource[:logonaccount] ? "" : nil }
     end
 
     newproperty(:flags, :required_features => :flaggable) do

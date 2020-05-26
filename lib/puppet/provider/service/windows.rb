@@ -14,29 +14,28 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
   defaultfor :operatingsystem => :windows
   confine    :operatingsystem => :windows
 
-  has_feature :refreshable
-  has_feature :configurable_timeout
+  has_feature :refreshable, :configurable_timeout, :manages_logon_credentials
 
   def enable
-    Puppet::Util::Windows::Service.set_startup_mode( @resource[:name], :SERVICE_AUTO_START )
+    Puppet::Util::Windows::Service.set_startup_configuration(@resource[:name], options: {startup_type: :SERVICE_AUTO_START})
   rescue => detail
     raise Puppet::Error.new(_("Cannot enable %{resource_name}, error was: %{detail}") % { resource_name: @resource[:name], detail: detail }, detail )
   end
 
   def disable
-    Puppet::Util::Windows::Service.set_startup_mode( @resource[:name], :SERVICE_DISABLED )
+    Puppet::Util::Windows::Service.set_startup_configuration(@resource[:name], options: {startup_type: :SERVICE_DISABLED})
   rescue => detail
     raise Puppet::Error.new(_("Cannot disable %{resource_name}, error was: %{detail}") % { resource_name: @resource[:name], detail: detail }, detail )
   end
 
   def manual_start
-    Puppet::Util::Windows::Service.set_startup_mode( @resource[:name], :SERVICE_DEMAND_START )
+    Puppet::Util::Windows::Service.set_startup_configuration(@resource[:name], options: {startup_type: :SERVICE_DEMAND_START})
   rescue => detail
     raise Puppet::Error.new(_("Cannot enable %{resource_name} for manual start, error was: %{detail}") % { resource_name: @resource[:name], detail: detail }, detail )
   end
 
   def delayed_start
-    Puppet::Util::Windows::Service.set_startup_mode( @resource[:name], :SERVICE_AUTO_START, true )
+    Puppet::Util::Windows::Service.set_startup_configuration(@resource[:name], options: {startup_type: :SERVICE_AUTO_START, delayed: true})
   rescue => detail
     raise Puppet::Error.new(_("Cannot enable %{resource_name} for delayed start, error was: %{detail}") % { resource_name: @resource[:name], detail: detail }, detail )
   end
@@ -124,5 +123,19 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
       services.push(new(:name => service_name))
     end
     services
+  end
+
+  def logonaccount
+    return unless Puppet::Util::Windows::Service.exists?(@resource[:name])
+    Puppet::Util::Windows::Service.logon_account(@resource[:name])
+  end
+
+  def logonaccount=(value)
+    Puppet::Util::Windows::Service.set_startup_configuration(@resource[:name], options: {logon_account: value, logon_password: @resource[:logonpassword]})
+    restart if @resource[:ensure] == :running && [:running, :paused].include?(status)
+  end
+
+  def logonpassword=(value)
+    Puppet::Util::Windows::Service.set_startup_configuration(@resource[:name], options: {logon_password: value})
   end
 end
