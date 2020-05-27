@@ -303,7 +303,7 @@ class Puppet::SSL::StateMachine
         NeedCACerts.new(@machine)
       elsif @machine.waitforlock < 1
         LockFailure.new(@machine, _("Another puppet instance is already running and the waitforlock setting is set to 0; exiting"))
-      elsif Time.now.to_i > @machine.waitlock_deadline
+      elsif Time.now.to_i >= @machine.waitlock_deadline
         LockFailure.new(@machine, _("Another puppet instance is already running and the maxwaitforlock timeout has been exceeded; exiting"))
       else
         Puppet.info _("Another puppet instance is already running; waiting for it to finish")
