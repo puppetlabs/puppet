@@ -57,10 +57,6 @@ class Puppet::Parser::AST::PopsBridge
   end
 
   class ExpressionSupportingReturn < Expression
-    def initialize args
-      super
-    end
-
     def evaluate(scope)
       return catch(:return) do
         return catch(:next) do
