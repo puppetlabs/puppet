@@ -11,28 +11,13 @@ notifications:
 matrix:
   include:
     - rvm: 2.3
-      env: "CHECK=parallel:spec\\[2\\]"
+      env: "CHECK=parallel:spec\\[1\\] TESTS=spec/integration/application/agent_spec.rb"
 
     - rvm: 2.4
-      env: "CHECK=parallel:spec\\[2\\]"
+      env: "CHECK=parallel:spec\\[1\\] TESTS=spec/integration/application/agent_spec.rb"
 
     - rvm: 2.5
-      env: "CHECK=parallel:spec\\[2\\]"
+      env: "CHECK=parallel:spec\\[1\\] TESTS=spec/integration/application/agent_spec.rb"
 
     - rvm: 2.6
-      env: "CHECK=parallel:spec\\[2\\]"
-
-    - rvm: jruby-9.2.8.0
-      jdk: openjdk8
-      env:
-        - "_JAVA_OPTIONS='-Xmx1024m -Xms512m'"
-        - "CHECK=parallel:spec\\[2\\]"
-
-    - rvm: 2.5
-      env: "CHECK=rubocop"
-
-    - rvm: 2.5
-      env: "CHECK=commits"
-
-    - rvm: 2.5
-      env: "CHECK=warnings"
+      env: "CHECK=parallel:spec\\[1\\] TESTS=spec/integration/application/agent_spec.rb"

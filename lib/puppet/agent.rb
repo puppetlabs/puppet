@@ -64,10 +64,16 @@ class Puppet::Agent
             now = Time.now.to_i
             wait_for_lock_deadline ||= now + Puppet[:maxwaitforlock]
 
-            if Puppet[:waitforlock]  < 1
+            Puppet.warning("waitforlock    #{Puppet[:waitforlock]}")
+            Puppet.warning("maxwaitforlock #{Puppet[:maxwaitforlock]}")
+            Puppet.warning("now            #{now}")
+            Puppet.warning("deadline       #{wait_for_lock_deadline}")
+            Puppet.warning("exceeded       #{now > wait_for_lock_deadline}")
+
+            if Puppet[:waitforlock] < 1
               Puppet.notice _("Run of %{client_class} already in progress; skipping  (%{lockfile_path} exists)") % { client_class: client_class, lockfile_path: lockfile_path }
               nil
-            elsif now > wait_for_lock_deadline
+            elsif now >= wait_for_lock_deadline
               Puppet.notice _("Exiting now because the maxwaitforlock timeout has been exceeded.")
               nil
             else

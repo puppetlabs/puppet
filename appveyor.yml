@@ -3,12 +3,7 @@ clone_depth: 10
 install:
 build: off
 matrix:
-  fast_finish: true
-  exclude:
-    - platform: Ruby25-x64
-      LOCALE: ja-JP
-    - platform: Ruby24-x64
-      LOCALE: ja-JP
+  fast_finish: false
 
 # Ruby versions under test
 platform:
@@ -16,32 +11,6 @@ platform:
   - Ruby25-x64
   - Ruby24-x64
   - Ruby23-x64
-
-# Note that locales are mainly code page changes and are not the FULL set of localization
-#  changes that happen when you install French/Germam/Japanese etc. Windows
-environment:
-  matrix:
-  - LOCALE: en-US
-  - LOCALE: ja-JP
-
-before_test:
-  # Semicolons are required below.  This renders as a single line powershell command in AppVeyor
-  - ps: >-
-      [string]$testLocale = [Environment]::GetEnvironmentVariable("LOCALE","Process");
-      $currentLocale = (Get-WinSystemLocale).Name;
-      if ($testLocale -ne '') {
-        if ($testLocale -ne $currentLocale) {
-          Write-Output "Setting Locale to $testLocale ...";
-          Set-WinSystemLocale ($testLocale);
-          Write-Output "Restarting worker in 5 seconds...";
-          Start-Sleep -Seconds 5
-          Restart-Computer -Force -Confirm:$false;
-        } else {
-          Write-Output "Locale is already set to $currentLocale";
-        };
-      } else {
-        Write-Output "LOCALE environment variable not set";
-      };
 
 test_script:
   # The sleep is needed to allow the Appveyor tracing to start correctly after a reboot (locale change)
@@ -61,7 +30,7 @@ test_script:
       ruby -v
       gem --version
       bundle --version
-      bundle exec rake parallel:spec[2]
+      bundle exec rake parallel:spec[1] TESTS=spec/integration/application/agent_spec.rb
       $exitCode = $LASTEXITCODE
       Write-Output "Spec run exited with $exitCode"
       $host.SetShouldExit($exitCode)
