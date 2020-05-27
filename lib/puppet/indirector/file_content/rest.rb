@@ -18,7 +18,7 @@ class Puppet::Indirector::FileContent::Rest < Puppet::Indirector::REST
     api = session.route_to(:fileserver, url: url)
 
     api.get_file_content(
-      path: URI.unescape(url.path),
+      path: Puppet::Util.uri_unescape(url.path),
       environment: request.environment.to_s,
     ) do |data|
       content << data

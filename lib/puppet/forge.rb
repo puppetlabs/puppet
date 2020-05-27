@@ -254,6 +254,6 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   def decode_uri(uri)
     return if uri.nil?
 
-    URI.decode(uri.tr('+', ' '))
+    Puppet::Util.uri_unescape(uri.tr('+', ' '))
   end
 end

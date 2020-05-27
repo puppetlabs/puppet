@@ -1160,7 +1160,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       source_prefix = Puppet::Util::Platform.windows? ? '/' : ''
 
       # the URI can be round-tripped through unescape
-      expect(URI.unescape(uri_path)).to eq(source_prefix + source)
+      expect(Puppet::Util.uri_unescape(uri_path)).to eq(source_prefix + source)
       # and is properly UTF-8
       expect(uri_path.encoding).to eq (Encoding::UTF_8)
 
