@@ -325,6 +325,56 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         end
       end
     end
+
+    it 'accepts HTTPS servers whose cert is in the external CA store' do
+      unknown_ca_cert = cert_fixture('unknown-ca.pem')
+      https = PuppetSpec::HTTPSServer.new(
+        ca_cert: unknown_ca_cert,
+        server_cert: cert_fixture('unknown-127.0.0.1.pem'),
+        server_key: key_fixture('unknown-127.0.0.1-key.pem')
+      )
+
+      # create a temp cacert bundle
+      ssl_file = tmpfile('systemstore')
+      File.write(ssl_file, unknown_ca_cert.to_pem)
+
+      response_proc = -> (req, res) {
+        res.status = 200
+        res.body = response_body
+      }
+
+      https.start_server(response_proc: response_proc) do |https_port|
+        catalog_handler = -> (req, res) {
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            file { "#{path}":
+              ensure => file,
+              backup => false,
+              checksum => sha1,
+              checksum_value => '#{digest}',
+              source => "https://127.0.0.1:#{https_port}/path/to/file"
+            }
+          MANIFEST
+
+          res.body = formatter.render(catalog)
+          res['Content-Type'] = formatter.mime
+        }
+
+        server.start_server(mounts: {catalog: catalog_handler}) do |puppetserver_port|
+          Puppet[:masterport] = puppetserver_port
+
+          # set path to external cacert bundle, this must be done before
+          # the SSLContext is created
+          Puppet[:ssl_trust_store] = ssl_file
+          expect {
+            agent.command_line.args << '--test'
+            agent.run
+          }.to exit_with(2)
+           .and output(%r{https_file_source.*/ensure: created}).to_stdout
+        end
+
+        expect(File.binread(path)).to eq("from https server")
+      end
+    end
   end
 
   context 'multiple agents running' do

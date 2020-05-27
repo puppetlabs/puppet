@@ -46,12 +46,31 @@ class Puppet::SSL::SSLProvider
   # perform revocation checking.
   #
   # @param cacerts [Array<OpenSSL::X509::Certificate>] Array of trusted CA certs
+  # @param path [String, nil] A file containing additional trusted CA certs.
   # @return [Puppet::SSL::SSLContext] A context to use to create connections
   # @raise (see #create_context)
   # @api private
-  def create_system_context(cacerts:)
+  def create_system_context(cacerts:, path: Puppet[:ssl_trust_store])
     store = create_x509_store(cacerts, [], false)
     store.set_default_paths
+
+    if path
+      stat = Puppet::FileSystem.stat(path)
+      if stat
+        if stat.ftype == 'file'
+          # don't add empty files as ruby/openssl will raise
+          if stat.size > 0
+            begin
+              store.add_file(path)
+            rescue => e
+              Puppet.err(_("Failed to add '%{path}' as a trusted CA file: %{detail}" % { path: path, detail: e.message }, e))
+            end
+          end
+        else
+          Puppet.warning(_("The 'ssl_trust_store' setting does not refer to a file and will be ignored: '%{path}'" % { path: path }))
+        end
+      end
+    end
 
     Puppet::SSL::SSLContext.new(store: store, cacerts: cacerts, crls: [], revocation: false).freeze
   end

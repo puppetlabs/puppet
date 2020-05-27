@@ -992,6 +992,15 @@ EOT
         and reject the CA certificate if the values do not match. This only applies
         during the first download of the CA certificate."
     },
+    :ssl_trust_store => {
+      :default => nil,
+      :type => :file,
+      :desc => "A file containing CA certificates in PEM format that puppet should trust
+        when making HTTPS requests. This **only** applies to https requests to non-puppet
+        infrastructure, such as retrieving file metadata and content from https file sources,
+        puppet module tool and the 'http' report processor. This setting is ignored when
+        making requests to puppet:// URLs such as catalog and report requests.",
+    },
     :ssl_client_ca_auth => {
       :type  => :file,
       :mode  => "0644",
