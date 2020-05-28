@@ -12,7 +12,7 @@ describe 'Puppet::Parser::AST::BlockExpression' do
   NO_SCOPE = nil
 
   def depth_probe
-    StackDepthAST.new({})
+    StackDepthAST.new
   end
 
   def sequence_probe(name)

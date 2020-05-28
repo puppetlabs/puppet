@@ -16,7 +16,7 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   end
 
   def initialize(node, options = {})
-    super
+    super(node, **options)
     @overridden_functions = {}
   end
 
