@@ -300,7 +300,7 @@ module Puppet::Util::FileParsing
   def record_line(name, options, &block)
     raise ArgumentError, _("Must include a list of fields") unless options.include?(:fields)
 
-    record = FileRecord.new(:record, options, &block)
+    record = FileRecord.new(:record, **options, &block)
     record.name = name.intern
 
     new_line_type(record)
@@ -315,7 +315,7 @@ module Puppet::Util::FileParsing
   def text_line(name, options, &block)
     raise ArgumentError, _("You must provide a :match regex for text lines") unless options.include?(:match)
 
-    record = FileRecord.new(:text, options, &block)
+    record = FileRecord.new(:text, **options, &block)
     record.name = name.intern
 
     new_line_type(record)
