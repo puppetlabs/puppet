@@ -1334,8 +1334,6 @@ describe 'The type calculator' do
 
     it 'should recognize mapped ruby types' do
       { Integer    => PIntegerType::DEFAULT,
-        Fixnum     => PIntegerType::DEFAULT,
-        Bignum     => PIntegerType::DEFAULT,
         Float      => PFloatType::DEFAULT,
         Numeric    => PNumericType::DEFAULT,
         NilClass   => PUndefType::DEFAULT,
@@ -2147,14 +2145,6 @@ describe 'The type calculator' do
   end
 
   context 'when converting a ruby class' do
-    it 'should yield \'PIntegerType\' for Fixnum' do
-      expect(calculator.type(Fixnum).class).to eq(PIntegerType)
-    end
-
-    it 'should yield \'PIntegerType\' for Bignum' do
-      expect(calculator.type(Bignum).class).to eq(PIntegerType)
-    end
-
     it 'should yield \'PIntegerType\' for Integer' do
       expect(calculator.type(Integer).class).to eq(PIntegerType)
     end
@@ -2275,7 +2265,7 @@ describe 'The type calculator' do
     it 'should infer PTypeType as the type of ruby classes' do
       class Foo
       end
-      [Object, Numeric, Integer, Fixnum, Bignum, Float, String, Regexp, Array, Hash, Foo].each do |c|
+      [Object, Numeric, Integer, Float, String, Regexp, Array, Hash, Foo].each do |c|
         expect(calculator.infer(c).is_a?(PTypeType)).to eq(true)
       end
     end
