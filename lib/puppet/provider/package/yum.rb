@@ -302,7 +302,7 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
     command = [command(:cmd)] + no_debug + ["-e", error_level, "-y", install_options, operation, wanted].compact
     output = execute(command)
 
-    if output =~ /^No package #{wanted} available\.$/
+    if output.to_s =~ /^No package #{wanted} available\.$/
       raise Puppet::Error, _("Could not find package %{wanted}") % { wanted: wanted }
     end
 
