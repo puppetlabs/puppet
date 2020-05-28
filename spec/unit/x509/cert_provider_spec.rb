@@ -5,7 +5,7 @@ describe Puppet::X509::CertProvider do
   include PuppetSpec::Files
 
   def create_provider(options)
-    described_class.new(options)
+    described_class.new(**options)
   end
 
   def expects_public_file(path)

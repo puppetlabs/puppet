@@ -15,7 +15,7 @@ class Puppet::Util::Reference
   end
 
   def self.newreference(name, options = {}, &block)
-    ref = self.new(name, options, &block)
+    ref = self.new(name, **options, &block)
     instance_hash(:reference)[name.intern] = ref
 
     ref

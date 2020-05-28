@@ -663,7 +663,7 @@ Version:
       :status => stringifier.convert('success'),
     }
 
-    event = Puppet::Transaction::Event.new(event_hash)
+    event = Puppet::Transaction::Event.new(**event_hash)
 
     status = Puppet::Resource::Status.new(Puppet::Type.type(:notify).new(:title => "a resource"))
     status.changed = true
