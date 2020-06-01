@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-AGENT" "8" "May 2020" "Puppet, Inc." "Puppet manual"
+.TH "PUPPET\-AGENT" "8" "June 2020" "Puppet, Inc." "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-agent\fR \- The puppet agent daemon
@@ -111,7 +111,7 @@ Print this help message
 .
 .TP
 \-\-job\-id
-Attach the specified job id to the catalog request and the report used for this agent run\. This option only works when \'\-\-onetime\' is used\.
+Attach the specified job id to the catalog request and the report used for this agent run\. This option only works when \'\-\-onetime\' is used\. When using Puppet Enterprise this flag should not be used as the orchestrator sets the job\-id for you and it must be unique\.
 .
 .TP
 \-\-logdest
