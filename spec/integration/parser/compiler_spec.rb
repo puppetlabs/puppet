@@ -841,6 +841,17 @@ describe Puppet::Parser::Compiler do
           MANIFEST
         end.to raise_error(/Foo\[bar\]:\s+parameter 'a' expects a value for key 'd'\s+parameter 'a' unrecognized key 'c'/m)
       end
+
+      it 'handles Sensitive type in resource array' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          define foo(Sensitive[String] $password) {
+            notify{ "${title}": message => "${password}" }
+          }
+          foo { ['testA', 'testB']: password =>Sensitive('some password') }
+        MANIFEST
+        expect(catalog).to have_resource("Notify[testA]").with_parameter(:message, 'Sensitive [value redacted]')
+        expect(catalog).to have_resource("Notify[testB]").with_parameter(:message, 'Sensitive [value redacted]')
+      end
     end
 
     context 'when using typed parameters in class' do

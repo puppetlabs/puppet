@@ -19,4 +19,10 @@ class Puppet::Parser::Resource::Param
   def to_s
     "#{self.name} => #{self.value}"
   end
+
+  def self.from_param(param, value)
+    new_param = param.dup
+    new_param.value = value
+    return new_param
+  end
 end
