@@ -56,7 +56,7 @@ describe "FFI::MemoryPointer", :if => Puppet.features.microsoft_windows? do
         # uchar here is synonymous with byte
         ptr.put_array_of_uchar(0, bad_string_bytes)
 
-        read_string = ptr.read_wide_string(bad_string.length, Encoding::UTF_8, :invalid => :replace)
+        read_string = ptr.read_wide_string(bad_string.length, Encoding::UTF_8, false, :invalid => :replace)
       end
 
       expect(read_string).to eq("hello invalid world\uFFFD")
