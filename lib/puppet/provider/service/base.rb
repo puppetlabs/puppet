@@ -9,7 +9,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
 
   "
 
-  commands :kill => "kill"
+  optional_commands :kill => "kill"
 
   # get the proper 'ps' invocation for the platform
   # ported from the facter 2.x implementation, since facter 3.x
