@@ -196,7 +196,9 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   def has_authz_peer_cert(peer_certs, authz_certs)
     peer_certs.any? do |peer_cert|
       authz_certs.any? do |authz_cert|
-        peer_cert.verify(authz_cert.public_key)
+        result = peer_cert.verify(authz_cert.public_key)
+        Puppet.debug("Validating #{peer_cert.subject} using #{authz_cert.subject} (result: #{result})")
+        result
       end
     end
   end
