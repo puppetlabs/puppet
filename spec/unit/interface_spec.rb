@@ -180,7 +180,7 @@ describe Puppet::Interface do
           display_global_options "modulepath"
         end
       end
-      face.display_global_options =~ ["environment"]
+      expect(face.display_global_options).to match(["environment"])
     end
 
     it "should not fail when a face d_g_o duplicates an action d_g_o" do
@@ -200,8 +200,8 @@ describe Puppet::Interface do
         action :foo do when_invoked {|_| true} ; display_global_options "environment" end
         action :bar do when_invoked {|_| true} ; display_global_options "environment" end
       end
-      face.get_action(:foo).display_global_options =~ ["environment"]
-      face.get_action(:bar).display_global_options =~ ["environment"]
+      expect(face.get_action(:foo).display_global_options).to match(["environment"])
+      expect(face.get_action(:bar).display_global_options).to match(["environment"])
     end
       
   end

@@ -283,7 +283,7 @@ describe Puppet::Resource do
     let(:scope)    { Puppet::Parser::Scope.new(compiler) }
 
     def ast_leaf(value)
-      Puppet::Parser::AST::Leaf.new({:value => value})
+      Puppet::Parser::AST::Leaf.new(value: value)
     end
 
     it "should fail when asked to set default values and it is not a parser resource" do
@@ -389,7 +389,7 @@ describe Puppet::Resource do
         context "when a value is provided" do
           let(:port_parameter) do
             Puppet::Parser::Resource::Param.new(
-              { :name => 'port', :value => '8080' }
+              name: 'port', value: '8080'
             )
           end
 
@@ -414,7 +414,7 @@ describe Puppet::Resource do
             expect_lookup('apache::port', returns: '443')
 
             rs = Puppet::Parser::Resource.new("class", "apache", :scope => scope,
-              :parameters => [Puppet::Parser::Resource::Param.new({ :name => 'port', :value => nil })])
+              :parameters => [Puppet::Parser::Resource::Param.new(name: 'port', value: nil)])
 
             rs.resource_type.set_resource_parameters(rs, scope)
             expect(rs[:port]).to eq('443')

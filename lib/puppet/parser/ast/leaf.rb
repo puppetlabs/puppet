@@ -17,17 +17,17 @@ class Puppet::Parser::AST::Leaf < Puppet::Parser::AST
     @value.to_s unless @value.nil?
   end
 
-  def initialize(value: nil, **options)
+  def initialize(value: nil, file: nil, line: nil, pos: nil)
     @value = value
-    super(**options)
+    super(file: file, line: line, pos: pos)
   end
 end
 
 # Host names, either fully qualified or just the short name, or even a regex
 #
 class Puppet::Parser::AST::HostName < Puppet::Parser::AST::Leaf
-  def initialize(hash)
-    super
+  def initialize(value: nil, file: nil, line: nil, pos: nil)
+    super(value: value, file: file, line: line, pos: pos)
 
     # Note that this is an AST::Regex, not a Regexp
     unless @value.is_a?(Regex)
@@ -51,7 +51,7 @@ end
 
 class Puppet::Parser::AST::Regex < Puppet::Parser::AST::Leaf
   def initialize(hash)
-    super
+    super(**hash)
     # transform value from hash options unless it is already a regular expression
     @value = Regexp.new(@value) unless @value.is_a?(Regexp)
   end

@@ -22,6 +22,9 @@ matrix:
     - rvm: 2.6
       env: "CHECK=parallel:spec\\[2\\]"
 
+    - rvm: 2.7
+      env: "CHECK=parallel:spec\\[2\\]"
+
     - rvm: jruby-9.2.8.0
       jdk: openjdk8
       env:

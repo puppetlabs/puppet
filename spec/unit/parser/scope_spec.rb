@@ -105,7 +105,7 @@ describe Puppet::Parser::Scope do
 
   it "should fail if something that isn't a compiler is supplied" do
     expect {
-      Puppet::Parser::Scope.new(:compiler => true)
+      Puppet::Parser::Scope.new(nil)
     }.to raise_error(Puppet::DevError, /you must pass a compiler instance/)
   end
 

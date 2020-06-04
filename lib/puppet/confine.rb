@@ -26,7 +26,7 @@ class Puppet::Confine
         require "puppet/confine/#{name}"
       rescue LoadError => detail
         unless detail.to_s =~ /No such file|cannot load such file/i
-          warn "Could not load confine test '#{name}': #{detail}"
+          Puppet.warning("Could not load confine test '#{name}': #{detail}")
         end
         # Could not find file
         if !Puppet[:always_retry_plugins]

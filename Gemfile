@@ -3,9 +3,9 @@ source ENV['GEM_SOURCE'] || "https://rubygems.org"
 gemspec
 
 def location_for(place, fake_version = nil)
-  if place =~ /^(git[:@][^#]*)#(.*)/
+  if place.is_a?(String) && place =~ /^(git[:@][^#]*)#(.*)/
     [fake_version, { git: $1, branch: $2, require: false }].compact
-  elsif place =~ /^file:\/\/(.*)/
+  elsif place.is_a?(String) && place =~ /^file:\/\/(.*)/
     ['>= 0', { path: File.expand_path($1), require: false }]
   else
     [place, { require: false }]
@@ -18,6 +18,8 @@ gem "facter-ng", *location_for(ENV['FACTER_NG_LOCATION']) if ENV.has_key?('FACTE
 gem "hiera", *location_for(ENV['HIERA_LOCATION']) if ENV.has_key?('HIERA_LOCATION')
 gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ["~> 1.0"])
 gem "puppet-resource_api", *location_for(ENV['RESOURCE_API_LOCATION'] || ["~> 1.5"])
+
+gem "scanf" if RUBY_VERSION.to_f >= 2.7
 
 group(:features) do
   gem 'diff-lcs', '~> 1.3', require: false

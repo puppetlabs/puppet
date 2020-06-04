@@ -124,11 +124,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
       opts = []
     end
     tmpdir, = *rest
-    if $SAFE > 0 and tmpdir.tainted?
-      tmpdir = '/tmp'
-    else
-      tmpdir ||= tmpdir()
-    end
+    tmpdir ||= tmpdir()
     n = nil
     begin
       path = File.expand_path(make_tmpname(basename, n), tmpdir)
@@ -154,18 +150,14 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
 
   def tmpdir
     tmp = '.'
-    if $SAFE > 0
-      @@systmpdir
-    else
-      for dir in [ Puppet::Util.get_env('TMPDIR'), Puppet::Util.get_env('TMP'), Puppet::Util.get_env('TEMP'), @@systmpdir, '/tmp']
-        stat = File.stat(dir) if dir
-        if stat && stat.directory? && stat.writable?
-          tmp = dir
-          break
-        end rescue nil
-      end
-      File.expand_path(tmp)
+    for dir in [ Puppet::Util.get_env('TMPDIR'), Puppet::Util.get_env('TMP'), Puppet::Util.get_env('TEMP'), @@systmpdir, '/tmp']
+      stat = File.stat(dir) if dir
+      if stat && stat.directory? && stat.writable?
+        tmp = dir
+        break
+      end rescue nil
     end
+    File.expand_path(tmp)
   end
 
 

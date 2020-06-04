@@ -62,7 +62,7 @@ module Puppet::Util::ProviderFeatures
     @features ||= {}
     raise Puppet::DevError, _("Feature %{name} is already defined") % { name: name } if @features.include?(name)
     begin
-      obj = ProviderFeature.new(name, docs, hash)
+      obj = ProviderFeature.new(name, docs, **hash)
       @features[obj.name] = obj
     rescue ArgumentError => detail
       error = ArgumentError.new(

@@ -749,7 +749,7 @@ class Type
   # @param options [Hash] options merged with a fixed set of options defined by this method, passed on to {Puppet::Transaction::Event}.
   # @return [Puppet::Transaction::Event] the created event
   def event(options = {})
-    Puppet::Transaction::Event.new({:resource => self, :file => file, :line => line, :tags => tags}.merge(options))
+    Puppet::Transaction::Event.new(**{:resource => self, :file => file, :line => line, :tags => tags}.merge(options))
   end
 
   # @return [Object, nil] Returns the 'should' (wanted state) value for a specified property, or nil if the

@@ -448,7 +448,7 @@ class Puppet::Parser::Compiler
   # using the top scope.
   def newscope(parent, options = {})
     parent ||= topscope
-    scope = Puppet::Parser::Scope.new(self, options)
+    scope = Puppet::Parser::Scope.new(self, **options)
     scope.parent = parent
     scope
   end

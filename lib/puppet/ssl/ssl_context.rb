@@ -22,9 +22,9 @@ module Puppet::SSL
     # This is an idiom to initialize a Struct from keyword
     # arguments. Ruby 2.5 introduced `keyword_init: true` for
     # that purpose, but we need to support older versions.
-    def initialize(**kwargs)
+    def initialize(kwargs = {})
       super({})
-      DEFAULTS.merge(kwargs).each { |k,v| self[k] = v }
+      DEFAULTS.merge(**kwargs).each { |k,v| self[k] = v }
     end
   end
 end
