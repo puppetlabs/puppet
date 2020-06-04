@@ -72,20 +72,24 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       provider.create
     end
 
-    it "should use -G to set groups" do
-      allow(Facter).to receive(:value).with(:osfamily).and_return('Not RedHat')
-      resource[:ensure] = :present
-      resource[:groups] = ['group1', 'group2']
-      expect(provider).to receive(:execute).with(['/usr/sbin/useradd', '-G', 'group1,group2', 'myuser'], kind_of(Hash))
-      provider.create
-    end
+    context "when setting groups" do
+      it "uses -G to set groups" do
+        allow(Facter).to receive(:value).with(:osfamily).and_return('Solaris')
+        allow(Facter).to receive(:value).with(:operatingsystemmajrelease)
+        resource[:ensure] = :present
+        resource[:groups] = ['group1', 'group2']
+        expect(provider).to receive(:execute).with(['/usr/sbin/useradd', '-G', 'group1,group2', 'myuser'], kind_of(Hash))
+        provider.create
+      end
 
-    it "should use -G to set groups without -M on RedHat" do
-      allow(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
-      resource[:ensure] = :present
-      resource[:groups] = ['group1', 'group2']
-      expect(provider).to receive(:execute).with(['/usr/sbin/useradd', '-G', 'group1,group2', '-M', 'myuser'], kind_of(Hash))
-      provider.create
+      it "uses -G to set groups with -M on supported systems" do
+        allow(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+        allow(Facter).to receive(:value).with(:operatingsystemmajrelease)
+        resource[:ensure] = :present
+        resource[:groups] = ['group1', 'group2']
+        expect(provider).to receive(:execute).with(['/usr/sbin/useradd', '-G', 'group1,group2', '-M', 'myuser'], kind_of(Hash))
+        provider.create
+      end
     end
 
     it "should add -o when allowdupe is enabled and the user is being created" do
@@ -429,15 +433,17 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       provider.delete
     end
 
-    it "should use -M flag if home is not managed and on Redhat" do
+    it "should use -M flag if home is not managed on a supported system" do
       allow(Facter).to receive(:value).with(:osfamily).and_return("RedHat")
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease)
       resource[:managehome] = :false
       expect(provider).to receive(:execute).with(include('-M'), kind_of(Hash))
       provider.create
     end
 
-    it "should not use -M flag if home is not managed and not on Redhat" do
-      allow(Facter).to receive(:value).with(:osfamily).and_return("not RedHat")
+    it "should not use -M flag if home is not managed on an unsupported system" do
+      allow(Facter).to receive(:value).with(:osfamily).and_return("Suse")
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("11")
       resource[:managehome] = :false
       expect(provider).to receive(:execute).with(excluding('-M'), kind_of(Hash))
       provider.create
