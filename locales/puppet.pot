@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.15.0-178-g299b808a40\n"
+"Project-Id-Version: Puppet automation framework 6.16.0-40-g732ae5f07d\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-05-27 21:05+0000\n"
-"PO-Revision-Date: 2020-05-27 21:05+0000\n"
+"POT-Creation-Date: 2020-06-09 02:49+0000\n"
+"PO-Revision-Date: 2020-06-09 02:49+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -194,19 +194,19 @@ msgstr ""
 msgid "The puppet agent daemon"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:398
+#: ../lib/puppet/application/agent.rb:400
 msgid "Fingerprint asked but neither the certificate, nor the certificate request have been issued"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:403
+#: ../lib/puppet/application/agent.rb:405
 msgid "Failed to generate fingerprint: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:426
+#: ../lib/puppet/application/agent.rb:428
 msgid "Starting Puppet client version %{version}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:442
+#: ../lib/puppet/application/agent.rb:444
 msgid "The puppet agent command does not take parameters"
 msgstr ""
 
@@ -713,19 +713,19 @@ msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:739
+#: ../lib/puppet/defaults.rb:748
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:820
+#: ../lib/puppet/defaults.rb:829
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1014
+#: ../lib/puppet/defaults.rb:1023
 msgid "Setting 'ssl_client_ca_auth' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1093 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1102 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
@@ -1782,7 +1782,7 @@ msgstr ""
 msgid "Timeout waiting for exclusive lock on %{path}"
 msgstr ""
 
-#: ../lib/puppet/file_system/jruby.rb:18 ../lib/puppet/file_system/windows.rb:127 ../lib/puppet/util.rb:701
+#: ../lib/puppet/file_system/jruby.rb:18 ../lib/puppet/file_system/windows.rb:127 ../lib/puppet/util.rb:706
 msgid "Is a directory: %{directory}"
 msgstr ""
 
@@ -1818,7 +1818,7 @@ msgstr ""
 msgid "unexpected prefix_suffix: %{value}"
 msgstr ""
 
-#: ../lib/puppet/file_system/uniquefile.rb:140
+#: ../lib/puppet/file_system/uniquefile.rb:136
 msgid "cannot generate temporary name using `%{basename}' under `%{tmpdir}'"
 msgstr ""
 
@@ -4307,7 +4307,7 @@ msgstr ""
 msgid "Node inheritance is removed in Puppet 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation"
 msgstr ""
 
-#: ../lib/puppet/parser/ast/pops_bridge.rb:190
+#: ../lib/puppet/parser/ast/pops_bridge.rb:186
 msgid "Instantiating Resource with type checked parameters - scope is missing, skipping type checking."
 msgstr ""
 
@@ -7389,11 +7389,11 @@ msgstr ""
 msgid "no parameter named '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:634
+#: ../lib/puppet/resource.rb:635
 msgid "No title provided and %{type} is not a valid resource reference"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:708
+#: ../lib/puppet/resource.rb:709
 msgid "No set of title patterns matched the title \"%{title}\"."
 msgstr ""
 
@@ -8462,6 +8462,18 @@ msgstr ""
 msgid "audit change: newly-recorded value %s"
 msgstr ""
 
+#: ../lib/puppet/trusted_external.rb:6
+msgid "Retrieving trusted external data from %{command}"
+msgstr ""
+
+#: ../lib/puppet/trusted_external.rb:20
+msgid "Skipping non-executable file %{file}"
+msgstr ""
+
+#: ../lib/puppet/trusted_external.rb:25
+msgid "There is more than one '%{basename}' script in %{dir}"
+msgstr ""
+
 #: ../lib/puppet/type.rb:515
 msgid "Options must be a hash, not %{type}"
 msgstr ""
@@ -9006,23 +9018,23 @@ msgstr ""
 msgid "Couldn't expand PATH containing a ~ character; ignoring PATH element '%{dir}'."
 msgstr ""
 
-#: ../lib/puppet/util.rb:313
+#: ../lib/puppet/util.rb:318
 msgid "unknown platform %{platform} in absolute_path"
 msgstr ""
 
-#: ../lib/puppet/util.rb:348
+#: ../lib/puppet/util.rb:353
 msgid "Failed to convert '%{path}' to URI: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:448
+#: ../lib/puppet/util.rb:453
 msgid "path may not be nil"
 msgstr ""
 
-#: ../lib/puppet/util.rb:616
+#: ../lib/puppet/util.rb:621
 msgid "replace_file requires a block"
 msgstr ""
 
-#: ../lib/puppet/util.rb:620
+#: ../lib/puppet/util.rb:625
 msgid "replace_file default_mode: %{default_mode} is invalid"
 msgstr ""
 
