@@ -39,7 +39,7 @@ gem_platform_dependencies:
       CFPropertyList: '~> 2.2'
   x86-mingw32:
     gem_runtime_dependencies:
-      ffi: ['> 1.9.24', '< 1.13']
+      ffi: ['> 1.9.24', '< 2']
       # win32-xxxx gems are pinned due to PUP-6445
       win32-dir: '= 0.4.9'
       win32-process: '= 0.7.5'
@@ -49,7 +49,7 @@ gem_platform_dependencies:
       minitar: '~> 0.9'
   x64-mingw32:
     gem_runtime_dependencies:
-      ffi: ['> 1.9.24', '< 1.13']
+      ffi: ['> 1.9.24', '< 2']
       # win32-xxxx gems are pinned due to PUP-6445
       win32-dir: '= 0.4.9'
       win32-process: '= 0.7.5'
