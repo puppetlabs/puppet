@@ -1960,7 +1960,7 @@ Transactional storage file for persisting data between transactions for the purp
 .IP "" 0
 .
 .SS "trusted_external_command"
-The external trusted facts script to use\. This setting\'s value can be set to the path to an executable command that can produce external trusted facts\. The command must:
+The external trusted facts script or directory to use\. This setting\'s value can be set to the path to an executable command that can produce external trusted facts or to a directory containing those executable commands\. The command(s) must:
 .
 .IP "\(bu" 4
 Take the name of a node as a command\-line argument\.
@@ -1971,10 +1971,14 @@ Return a JSON hash with the external trusted facts for this node\.
 .IP "\(bu" 4
 For unknown or invalid nodes, exit with a non\-zero exit code\.
 .
-.IP "\(bu" 4
-\fIDefault\fR:
-.
 .IP "" 0
+.
+.P
+If the setting points to an executable command, then the external trusted facts will be stored in the \'external\' key of the trusted facts hash\. Otherwise for each executable file in the directory, the external trusted facts will be stored in the \fB<basename>\fR key of the \fBtrusted[\'external\']\fR hash\. For example, if the files foo\.rb and bar\.sh are in the directory, then \fBtrusted[\'external\']\fR will be the hash \fB{ \'foo\' => <foo\.rb output>, \'bar\' => <bar\.sh output> }\fR\.
+.
+.TP
+\fIDefault\fR:
+
 .
 .SS "trusted_oid_mapping_file"
 File that provides mapping between custom SSL oids and user\-friendly names
