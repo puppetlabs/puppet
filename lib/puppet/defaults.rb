@@ -590,13 +590,22 @@ module Puppet
     },
     :trusted_external_command => {
       :default  => nil,
-      :desc     => "The external trusted facts script to use.
+      :type     => :file_or_directory,
+      :desc     => "The external trusted facts script or directory to use.
         This setting's value can be set to the path to an executable command that
-        can produce external trusted facts. The command must:
+        can produce external trusted facts or to a directory containing those
+        executable commands. The command(s) must:
 
         * Take the name of a node as a command-line argument.
         * Return a JSON hash with the external trusted facts for this node.
-        * For unknown or invalid nodes, exit with a non-zero exit code.",
+        * For unknown or invalid nodes, exit with a non-zero exit code.
+
+        If the setting points to an executable command, then the external trusted
+        facts will be stored in the 'external' key of the trusted facts hash. Otherwise
+        for each executable file in the directory, the external trusted facts will be
+        stored in the `<basename>` key of the `trusted['external']` hash. For example,
+        if the files foo.rb and bar.sh are in the directory, then `trusted['external']`
+        will be the hash `{ 'foo' => <foo.rb output>, 'bar' => <bar.sh output> }`.",
     },
     :default_file_terminus => {
       :type       => :terminus,
