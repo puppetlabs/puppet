@@ -915,7 +915,7 @@ module Issues
   end
 
   DEPRECATED_APP_ORCHESTRATION = issue :DEPRECATED_APP_ORCHESTRATION, :klass do
-    _("Use of the application-orchestration %{expr} is deprecated. See http://links.puppet.com/tbd-app-orchestration-deprecation" % { expr: label(klass) })
+    _("Use of the application-orchestration %{expr} is deprecated. See https://puppet.com/docs/puppet/5.5/deprecated_language.html" % { expr: label(klass) })
   end
 
 end
