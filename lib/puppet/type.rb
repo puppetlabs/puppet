@@ -1671,6 +1671,7 @@ class Type
     }
   end
 
+  # @deprecated application orchestration will be removed in puppet 7
   newmetaparam(:export, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :NONE}) do
           desc <<EOS
 Export a capability resource.
@@ -1696,6 +1697,7 @@ web { server:
 EOS
   end
 
+  # @deprecated application orchestration will be removed in puppet 7
   newmetaparam(:consume, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :NONE}) do
           desc <<EOS
 Consume a capability resource.
