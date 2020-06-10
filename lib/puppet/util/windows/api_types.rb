@@ -23,9 +23,11 @@ module Puppet::Util::Windows::APITypes
 
     def self.from_string_to_wide_string(str, &block)
       str = Puppet::Util::Windows::String.wide_string(str)
-      FFI::MemoryPointer.new(:byte, str.bytesize) do |ptr|
+      FFI::MemoryPointer.new(:byte, str.bytesize + 2) do |ptr|
         # uchar here is synonymous with byte
         ptr.put_array_of_uchar(0, str.bytes.to_a)
+        ptr.put(:uchar, str.bytesize, 0)
+        ptr.put(:uchar, str.bytesize + 1, 0)
 
         yield ptr
       end
