@@ -23,14 +23,7 @@ module Puppet::Util::Windows::APITypes
 
     def self.from_string_to_wide_string(str, &block)
       str = Puppet::Util::Windows::String.wide_string(str)
-      FFI::MemoryPointer.new(:byte, str.bytesize + 2) do |ptr|
-        # uchar here is synonymous with byte
-        ptr.put_array_of_uchar(0, str.bytes.to_a)
-        ptr.put(:uchar, str.bytesize, 0)
-        ptr.put(:uchar, str.bytesize + 1, 0)
-
-        yield ptr
-      end
+      FFI::MemoryPointer.from_wide_string(str) { |ptr| yield ptr }
 
       # ptr has already had free called, so nothing to return
       nil
@@ -126,6 +119,20 @@ module Puppet::Util::Windows::APITypes
 
     alias_method :write_dword, :write_uint32
     alias_method :write_word, :write_uint16
+  end
+
+  class FFI::MemoryPointer
+    # Return a MemoryPointer that points to wide string. This is analogous to the
+    # FFI::MemoryPointer.from_string method.
+    def self.from_wide_string(wstr)
+      ptr = FFI::MemoryPointer.new(:uchar, wstr.bytesize + 2)
+      ptr.put_array_of_uchar(0, wstr.bytes.to_a)
+      ptr.put_uint16(wstr.bytesize, 0)
+
+      yield ptr if block_given?
+
+      ptr
+    end
   end
 
   # FFI Types

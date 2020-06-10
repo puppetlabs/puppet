@@ -49,12 +49,7 @@ module Puppet::Util::Windows::SID
       begin
         if system_name
           system_name_wide = Puppet::Util::Windows::String.wide_string(system_name)
-          # uchar here is synonymous with byte
-          bytesize = system_name_wide.bytesize
-          system_name_ptr = FFI::MemoryPointer.new(:byte, bytesize + 2)
-          system_name_ptr.put_array_of_uchar(0, system_name_wide.bytes.to_a)
-          system_name_ptr.put(:byte, bytesize, 0)
-          system_name_ptr.put(:byte, bytesize + 1, 0)
+          system_name_ptr = FFI::MemoryPointer.from_wide_string(system_name_wide)
         end
 
         FFI::MemoryPointer.from_string_to_wide_string(account_name) do |account_name_ptr|
@@ -105,12 +100,7 @@ module Puppet::Util::Windows::SID
       begin
         if system_name
           system_name_wide = Puppet::Util::Windows::String.wide_string(system_name)
-          # uchar here is synonymous with byte
-          bytesize = system_name_wide.bytesize
-          system_name_ptr = FFI::MemoryPointer.new(:byte, bytesize + 2)
-          system_name_ptr.put_array_of_uchar(0, system_name_wide.bytes.to_a)
-          system_name_ptr.put(:byte, bytesize, 0)
-          system_name_ptr.put(:byte, bytesize + 1, 0)
+          system_name_ptr = FFI::MemoryPointer.from_wide_string(system_name_wide)
         end
 
         FFI::MemoryPointer.new(:byte, sid_bytes.length) do |sid_ptr|
