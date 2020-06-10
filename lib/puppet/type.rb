@@ -110,8 +110,10 @@ class Type
 
   # Allow declaring that a type is actually a capability
   class << self
+    # @deprecated application orchestration will be removed in puppet 7
     attr_accessor :is_capability
 
+    # @deprecated application orchestration will be removed in puppet 7
     def is_capability?
       c = is_capability
       c.nil? ? false : c
@@ -123,6 +125,8 @@ class Type
   # represent application instances, this implementation always returns
   # +false+. Having this method though makes code checking whether a
   # resource is an application instance simpler
+  #
+  # @deprecated application orchestration will be removed in puppet 7
   def self.application?
       false
   end
