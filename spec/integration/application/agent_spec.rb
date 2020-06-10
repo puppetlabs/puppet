@@ -81,6 +81,23 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
       expect(report.master_used).to be_nil
     end
+
+    it "server_list takes precedence over server" do
+      Puppet[:server] = 'notvalid.example.com'
+
+      server.start_server do |port|
+        Puppet[:server_list] = "127.0.0.1:#{port}"
+
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(0)
+         .and output(%r{Debug: Resolved service 'puppet' to https://127.0.0.1:#{port}/puppet/v3}).to_stdout
+
+        report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
+        expect(report.master_used).to eq("127.0.0.1:#{port}")
+      end
+    end
   end
 
   context 'rich data' do
