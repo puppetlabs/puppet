@@ -61,6 +61,42 @@ describe "FFI::MemoryPointer", :if => Puppet.features.microsoft_windows? do
 
       expect(read_string).to eq("hello invalid world\uFFFD")
     end
+
+    it "raises an IndexError if asked to read more characters than there are bytes allocated" do
+      expect {
+        FFI::MemoryPointer.new(:byte, 1) do |ptr|
+          ptr.read_wide_string(1) # 1 wchar = 2 bytes
+        end
+      }.to raise_error(IndexError, /out of bounds/)
+    end
+
+    it "raises an IndexError if asked to read a negative number of characters" do
+      expect {
+        FFI::MemoryPointer.new(:byte, 1) do |ptr|
+          ptr.read_wide_string(-1)
+        end
+      }.to raise_error(IndexError, /out of bounds/)
+    end
+
+    it "returns an empty string if asked to read 0 characters" do
+      FFI::MemoryPointer.new(:byte, 1) do |ptr|
+        expect(ptr.read_wide_string(0)).to eq("")
+      end
+    end
+
+    it "returns a substring if asked to read fewer characters than are in the byte array" do
+      FFI::MemoryPointer.new(:byte, 4) do |ptr|
+        ptr.write_array_of_uint8("AB".encode('UTF-16LE').bytes.to_a)
+        expect(ptr.read_wide_string(1)).to eq("A")
+      end
+    end
+
+    it "preserves wide null characters in the string" do
+      FFI::MemoryPointer.new(:byte, 6) do |ptr|
+        ptr.write_array_of_uint8("A".encode('UTF-16LE').bytes.to_a + [0, 0] + "B".encode('UTF-16LE').bytes.to_a)
+        expect(ptr.read_wide_string(3)).to eq("A\x00B")
+      end
+    end
   end
 
   context "read_arbitrary_wide_string_up_to" do
