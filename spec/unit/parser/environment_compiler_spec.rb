@@ -367,6 +367,13 @@ EOS
       }.to raise_error(/'Cap\[cap\]' is exported by both 'Prod\[one\]' and 'Prod\[two\]'/)
     end
 
+    it "issues deprecation warnings" do
+      expect {compile_collect_log(MANIFEST_WO_NODE)}.not_to raise_error
+      expect(warnings).to include(/Capability Mapping is deprecated/) # there are two of these
+      expect(warnings).to include(/Application is deprecated/)
+      expect(warnings).to include(/Site Definition is deprecated/)
+    end
+
     context "for producing node" do
       let(:compiled_node) { Puppet::Node.new('first', :environment => env) }
       let(:compiled_catalog) { compile_to_catalog(MANIFEST, compiled_node)}

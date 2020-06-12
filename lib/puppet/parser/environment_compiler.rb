@@ -1,5 +1,6 @@
 require 'puppet/parser/compiler'
 
+# @deprecated application orchestration will be removed in puppet 7
 class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   def self.compile(env, code_id=nil)
     begin
@@ -54,6 +55,8 @@ class Puppet::Parser::EnvironmentCompiler < Puppet::Parser::Compiler
   end
 
   def compile
+    Puppet.deprecation_warning("Application orchestration is deprecated. See https://puppet.com/docs/puppet/5.5/deprecated_language.html")
+
     add_function_overrides
     begin
       Puppet.override(@context_overrides, _("For compiling environment catalog %{env}") % { env: environment.name }) do

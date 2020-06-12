@@ -11,6 +11,7 @@ class Puppet::Resource::Type
   include Puppet::Util::Warnings
   include Puppet::Util::Errors
 
+  # @deprecated application orchestration will be removed in puppet 7 (capability_mapping, application, site)
   RESOURCE_KINDS = [:hostclass, :node, :definition, :capability_mapping, :application, :site]
 
   # Map the names used in our documentation to the names used internally
@@ -69,6 +70,8 @@ class Puppet::Resource::Type
 
   # Evaluate the resources produced by the given resource. These resources are
   # evaluated in a separate but identical scope from the rest of the resource.
+  #
+  # @deprecated application orchestration will be removed in puppet 7
   def evaluate_produces(resource, scope)
     # Only defined types and classes can produce capabilities
     return unless definition? || hostclass?
@@ -159,19 +162,23 @@ class Puppet::Resource::Type
     @module_name = options[:module_name]
   end
 
+  # @deprecated application orchestration will be removed in puppet 7
   def produces
     @produces || EMPTY_ARRAY
   end
 
+  # @deprecated application orchestration will be removed in puppet 7
   def consumes
     @consumes || EMPTY_ARRAY
   end
 
+  # @deprecated application orchestration will be removed in puppet 7
   def add_produces(blueprint)
     @produces ||= []
     @produces << blueprint
   end
 
+  # @deprecated application orchestration will be removed in puppet 7
   def add_consumes(blueprint)
     @consumes ||= []
     @consumes << blueprint
@@ -233,6 +240,7 @@ class Puppet::Resource::Type
     when :node
       :node
     when :site
+      # @deprecated application orchestration will be removed in puppet 7
       :site
     end
 

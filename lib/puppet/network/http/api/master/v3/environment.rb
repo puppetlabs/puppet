@@ -1,8 +1,11 @@
 require 'puppet/util/json'
 require 'puppet/parser/environment_compiler'
 
+# @deprecated application orchestration will be removed in puppet 7
 class Puppet::Network::HTTP::API::Master::V3::Environment
   def call(request, response)
+    Puppet.deprecation_warning("Application orchestration is deprecated. See https://puppet.com/docs/puppet/5.5/deprecated_language.html")
+
     env_name = request.routing_path.split('/').last
     env = Puppet.lookup(:environments).get(env_name)
     code_id = request.params[:code_id]

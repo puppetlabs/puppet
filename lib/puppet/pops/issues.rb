@@ -913,5 +913,10 @@ module Issues
   LOADER_FAILURE = issue :LOADER_FAILURE, :type do
     _('Failed to load: %{type_name}') % { type: type }
   end
+
+  DEPRECATED_APP_ORCHESTRATION = issue :DEPRECATED_APP_ORCHESTRATION, :klass do
+    _("Use of the application-orchestration %{expr} is deprecated. See https://puppet.com/docs/puppet/5.5/deprecated_language.html" % { expr: label(klass) })
+  end
+
 end
 end
