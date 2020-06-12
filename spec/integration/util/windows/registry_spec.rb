@@ -259,23 +259,23 @@ describe Puppet::Util::Windows::Registry do
         {
           name: 'REG_SZ',
           type: Win32::Registry::REG_SZ,
-          value: "reg sz\u0000 string",
-          expected_value: "reg sz  string"
+          value: "reg sz\u0000\u0000 string",
+          expected_value: "reg sz"
         },
         {
           name: 'REG_SZ_2',
           type: Win32::Registry::REG_SZ,
-          value: "reg sz\x00 string",
-          expected_value: "reg sz  string"
+          value: "reg sz 2\x00\x00 string",
+          expected_value: "reg sz 2"
         },
         {
           name: 'REG_EXPAND_SZ',
           type: Win32::Registry::REG_EXPAND_SZ,
-          value: "\0reg expand string",
-          expected_value: " reg expand string"
+          value: "\0\0\0reg expand string",
+          expected_value: ""
         }
       ].each do |pair|
-        it 'replaces null bytes with spaces' do
+        it 'reads up to the first wide null' do
           hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg|
             reg.write(value_name, pair[:type], pair[:value])
           end
