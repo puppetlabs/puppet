@@ -14,7 +14,7 @@
 # %[Flags][Width]Conversion
 # ```
 #
-# ### Flags that controls padding
+# #### Flags that controls padding
 #
 # | Flag  | Meaning
 # | ----  | ---------------
@@ -22,7 +22,7 @@
 # | _     | Use spaces for padding
 # | 0     | Use zeros for padding
 #
-# ### `Timestamp` specific flags
+# #### `Timestamp` specific flags
 #
 # | Flag  | Meaning
 # | ----  | ---------------
@@ -30,7 +30,7 @@
 # | ^     | Use uppercase
 # | :     | Use colons for %z
 #
-# ### Format directives applicable to `Timestamp` (names and padding can be altered using flags):
+# #### Format directives applicable to `Timestamp` (names and padding can be altered using flags):
 #
 # **Date (Year, Month, Day):**
 #
@@ -147,7 +147,7 @@
 # notice($timestamp.strftime('%F %T', 'current')) # outputs the timestamp using the timezone for the current process
 # ```
 #
-# ### Format directives applicable to `Timespan`:
+# #### Format directives applicable to `Timespan`:
 #
 # | Format | Meaning |
 # | ------ | ------- |

@@ -51,14 +51,14 @@
 # The following sections show the arguments and conversion rules
 # per data type built into the Puppet Type System.
 #
-# ### Conversion to Optional[T] and NotUndef[T]
+# #### Conversion to Optional[T] and NotUndef[T]
 #
 # Conversion to these data types is the same as a conversion to the type argument `T`.
 # In the case of `Optional[T]` it is accepted that the argument to convert may be `undef`.
 # It is however not acceptable to give other arguments (than `undef`) that cannot be
 # converted to `T`.
 #
-# ### Conversion to Integer
+# #### Conversion to Integer
 #
 # A new `Integer` can be created from `Integer`, `Float`, `Boolean`, and `String` values.
 # For conversion from `String` it is possible to specify the radix (base).
@@ -106,7 +106,7 @@
 # $a_number = Integer(-38, 10, true) # results in 38
 # ```
 #
-# ### Conversion to Float
+# #### Conversion to Float
 #
 # A new `Float` can be created from `Integer`, `Float`, `Boolean`, and `String` values.
 # For conversion from `String` both float and integer formats are supported.
@@ -124,7 +124,7 @@
 #   floating point in string format may start with a '0').
 # * When `abs` is set to `true`, the result will be an absolute floating point value.
 #
-# ### Conversion to Numeric
+# #### Conversion to Numeric
 #
 # A new `Integer` or `Float` can be created from `Integer`, `Float`, `Boolean` and
 # `String` values.
@@ -153,7 +153,7 @@
 # $a_number = Numeric(-42, true)   # results in 42
 # ```
 #
-# ### Conversion to Timespan
+# #### Conversion to Timespan
 #
 # A new `Timespan` can be created from `Integer`, `Float`, `String`, and `Hash` values. Several variants of the constructor are provided.
 #
@@ -270,7 +270,7 @@
 # $duration = Timespan('10:03.5', '%M:%S.%N') # 10 minutes, 3 seconds, and 5 nano-seconds
 # ```
 #
-# ### Conversion to Timestamp
+# #### Conversion to Timestamp
 #
 # A new `Timestamp` can be created from `Integer`, `Float`, `String`, and `Hash` values. Several variants of the constructor are provided.
 #
@@ -463,7 +463,7 @@
 #
 # ```
 #
-# ### Conversion to Type
+# #### Conversion to Type
 #
 # A new `Type` can be created from its `String` representation.
 #
@@ -473,7 +473,7 @@
 # $t = Type.new('Integer[10]')
 # ```
 #
-# ### Conversion to String
+# #### Conversion to String
 #
 # Conversion to `String` is the most comprehensive conversion as there are many
 # use cases where a string representation is wanted. The defaults for the many options
@@ -720,7 +720,7 @@
 # | 0        | Pad with 0 instead of space for widths larger than value.
 # | <[({\|   | Defines an enclosing pair <> [] () {} or \| \| when used with a container type.
 #
-# ### Conversion to Boolean
+# #### Conversion to Boolean
 #
 # Accepts a single value as argument:
 #
@@ -731,7 +731,7 @@
 #   * `false` if 'false', 'no', 'n' (case independent compare)
 # * Boolean is already boolean and is simply returned
 #
-# ### Conversion to Array and Tuple
+# #### Conversion to Array and Tuple
 #
 # When given a single value as argument:
 #
@@ -755,7 +755,7 @@
 # Conversion to a `Tuple` works exactly as conversion to an `Array`, only that the constructed array is
 # asserted against the given tuple type.
 #
-# ### Conversion to Hash and Struct
+# #### Conversion to Hash and Struct
 #
 # Accepts a single value as argument:
 #
@@ -794,7 +794,7 @@
 # Conversion to a `Struct` works exactly as conversion to a `Hash`, only that the constructed hash is
 # asserted against the given struct type.
 #
-# ### Conversion to a Regexp
+# #### Conversion to a Regexp
 #
 # A `String` can be converted into a `Regexp`
 #
@@ -807,7 +807,7 @@
 # }
 # ```
 #
-# ### Creating a SemVer
+# #### Creating a SemVer
 #
 # A SemVer object represents a single [Semantic Version](http://semver.org/).
 # It can be created from a String, individual values for its parts, or a hash specifying the value per part.
@@ -856,7 +856,7 @@
 # notice(SemVer('3.4.5') =~ $t) # true
 # ```
 #
-# ### Creating a SemVerRange
+# #### Creating a SemVerRange
 #
 # A `SemVerRange` object represents a range of `SemVer`. It can be created from
 # a `String`, or from two `SemVer` instances, where either end can be given as
@@ -892,7 +892,7 @@
 #
 # For examples of `SemVerRange` use see "Creating a SemVer"
 #
-# ### Creating a Binary
+# #### Creating a Binary
 #
 # A `Binary` object represents a sequence of bytes and it can be created from a String in Base64 format,
 # an Array containing byte values. A Binary can also be created from a Hash containing the value to convert to
@@ -948,7 +948,7 @@
 # * Since 4.5.0
 # * Binary type since 4.8.0
 #
-# ### Creating an instance of a `Type` using the `Init` type
+# #### Creating an instance of a `Type` using the `Init` type
 #
 # The type `Init[T]` describes a value that can be used when instantiating a type. When used as the first argument in a call to `new`, it
 # will dispatch the call to its contained type and optionally augment the parameter list with additional arguments.
