@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.20-41-g9bf6029365\n"
+"Project-Id-Version: Puppet automation framework 5.5.20-55-g4f5bd15e77\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-05-19 11:02+0000\n"
-"PO-Revision-Date: 2020-05-19 11:02+0000\n"
+"POT-Creation-Date: 2020-06-12 15:01+0000\n"
+"PO-Revision-Date: 2020-06-12 15:01+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -176,19 +176,19 @@ msgstr ""
 msgid "The puppet agent daemon"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:372
+#: ../lib/puppet/application/agent.rb:374
 msgid "Fingerprint asked but no certificate nor certificate request have yet been issued"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:377
+#: ../lib/puppet/application/agent.rb:379
 msgid "Could not get fingerprint for digest '%{digest}'"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:401
+#: ../lib/puppet/application/agent.rb:403
 msgid "Starting Puppet client version %{version}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:417
+#: ../lib/puppet/application/agent.rb:419
 msgid "The puppet agent command does not take parameters"
 msgstr ""
 
@@ -4090,19 +4090,19 @@ msgstr ""
 msgid "Not a valid indirection type"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/master/v3/environment.rb:11
+#: ../lib/puppet/network/http/api/master/v3/environment.rb:14
 msgid "%{env_name} is not a known environment"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/master/v3/environment.rb:40
+#: ../lib/puppet/network/http/api/master/v3/environment.rb:43
 msgid "Application %{application} assigns nodes to non-existent components: %{component_list}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/master/v3/environment.rb:46
+#: ../lib/puppet/network/http/api/master/v3/environment.rb:49
 msgid "Application %{application} has components without assigned nodes: %{component_list}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/master/v3/environment.rb:55
+#: ../lib/puppet/network/http/api/master/v3/environment.rb:58
 msgid "Application %{app} assigns multiple nodes to component %{comp}"
 msgstr ""
 
@@ -4398,7 +4398,7 @@ msgid "For more information, see https://puppet.com/docs/puppet/latest/environme
 msgstr ""
 
 #. TRANSLATORS "stage" is a keyword in Puppet and should not be translated
-#: ../lib/puppet/parser/compiler.rb:98 ../lib/puppet/parser/environment_compiler.rb:134
+#: ../lib/puppet/parser/compiler.rb:98 ../lib/puppet/parser/environment_compiler.rb:137
 msgid "Only classes can set 'stage'; normal resources like %{resource} cannot change run stage"
 msgstr ""
 
@@ -4533,11 +4533,11 @@ msgstr ""
 msgid "For initializing compiler"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler/catalog_validator/env_relationship_validator.rb:17
+#: ../lib/puppet/parser/compiler/catalog_validator/env_relationship_validator.rb:19
 msgid "Capability '%{cap}' referenced by '%{param}' is never exported"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler/catalog_validator/env_relationship_validator.rb:56
+#: ../lib/puppet/parser/compiler/catalog_validator/env_relationship_validator.rb:58
 msgid "'%{value}' is exported by both '%{hash}' and '%{resource}'"
 msgstr ""
 
@@ -4549,55 +4549,55 @@ msgstr ""
 msgid "Could not find resource '%{res}' in parameter '%{param}'"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler/catalog_validator/site_validator.rb:14
+#: ../lib/puppet/parser/compiler/catalog_validator/site_validator.rb:16
 msgid "Only application components can appear inside a site - %{res} is not allowed"
 msgstr ""
 
-#: ../lib/puppet/parser/environment_compiler.rb:12
+#: ../lib/puppet/parser/environment_compiler.rb:13
 msgid "%{detail} in environment %{env}"
 msgstr ""
 
-#: ../lib/puppet/parser/environment_compiler.rb:59
+#: ../lib/puppet/parser/environment_compiler.rb:62
 msgid "For compiling environment catalog %{env}"
 msgstr ""
 
-#: ../lib/puppet/parser/environment_compiler.rb:62
+#: ../lib/puppet/parser/environment_compiler.rb:65
 msgid "Env Compile: Created settings scope"
 msgstr ""
 
-#: ../lib/puppet/parser/environment_compiler.rb:64
+#: ../lib/puppet/parser/environment_compiler.rb:67
 msgid "Env Compile: Evaluated main"
 msgstr ""
 
-#: ../lib/puppet/parser/environment_compiler.rb:66
+#: ../lib/puppet/parser/environment_compiler.rb:69
 msgid "Env Compile: Evaluated site"
 msgstr ""
 
-#: ../lib/puppet/parser/environment_compiler.rb:68
+#: ../lib/puppet/parser/environment_compiler.rb:71
 msgid "Env Compile: Evaluated application instances"
 msgstr ""
 
-#: ../lib/puppet/parser/environment_compiler.rb:70
+#: ../lib/puppet/parser/environment_compiler.rb:73
 msgid "Env Compile: Prune"
 msgstr ""
 
-#: ../lib/puppet/parser/environment_compiler.rb:72
+#: ../lib/puppet/parser/environment_compiler.rb:75
 msgid "Env Compile: Validate Catalog pre-finish"
 msgstr ""
 
-#: ../lib/puppet/parser/environment_compiler.rb:76
+#: ../lib/puppet/parser/environment_compiler.rb:79
 msgid "Env Compile: Finished catalog"
 msgstr ""
 
-#: ../lib/puppet/parser/environment_compiler.rb:80
+#: ../lib/puppet/parser/environment_compiler.rb:83
 msgid "Env Compile: Validate Catalog final"
 msgstr ""
 
-#: ../lib/puppet/parser/environment_compiler.rb:156
+#: ../lib/puppet/parser/environment_compiler.rb:159
 msgid "Environment Compiler: Could not find a site definition to evaluate"
 msgstr ""
 
-#: ../lib/puppet/parser/environment_compiler.rb:162
+#: ../lib/puppet/parser/environment_compiler.rb:165
 msgid "Evaluated application %{resource}"
 msgstr ""
 
@@ -5793,6 +5793,10 @@ msgstr ""
 msgid "Failed to load: %{type_name}"
 msgstr ""
 
+#: ../lib/puppet/pops/issues.rb:918
+msgid "Use of the application-orchestration %{expr} is deprecated. See https://puppet.com/docs/puppet/5.5/deprecated_language.html"
+msgstr ""
+
 #: ../lib/puppet/pops/label_provider.rb:76
 msgid "<%{string}> does not appear to contain a word"
 msgstr ""
@@ -6162,7 +6166,7 @@ msgstr ""
 msgid "digit expected"
 msgstr ""
 
-#: ../lib/puppet/pops/resource/resource_type_impl.rb:167 ../lib/puppet/type.rb:428
+#: ../lib/puppet/pops/resource/resource_type_impl.rb:167 ../lib/puppet/type.rb:432
 msgid "you must specify title patterns when there are two or more key attributes"
 msgstr ""
 
@@ -7699,67 +7703,67 @@ msgstr ""
 msgid "Could not evaluate: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:78
+#: ../lib/puppet/resource/type.rb:81
 msgid "Invalid export in %{reference}: %{ex} is not a resource"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:79
+#: ../lib/puppet/resource/type.rb:82
 msgid "Invalid export in %{reference}: %{ex} is not a capability resource"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:83
+#: ../lib/puppet/resource/type.rb:86
 msgid "Resource type %{res_type} does not produce %{ex_type}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:143
+#: ../lib/puppet/resource/type.rb:146
 msgid "Invalid resource supertype '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:190
+#: ../lib/puppet/resource/type.rb:197
 msgid "%{name} is not a class; cannot add code to it"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:191
+#: ../lib/puppet/resource/type.rb:198
 msgid "%{name} is not a class; cannot add code from it"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:195
+#: ../lib/puppet/resource/type.rb:202
 msgid "Cannot have code outside of a class/node/define because 'freeze_main' is enabled"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:199
+#: ../lib/puppet/resource/type.rb:206
 msgid "Cannot merge classes with different parent classes (%{name} => %{parent} vs. %{other_name} => %{other_parent})"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:230
+#: ../lib/puppet/resource/type.rb:237
 msgid "Cannot create resources for defined resource types"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:284
+#: ../lib/puppet/resource/type.rb:292
 msgid "The method Puppet::Resource::Type.assign_parameter_values is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:300
+#: ../lib/puppet/resource/type.rb:308
 msgid "Could not find parent resource type '%{parent}' of type %{parent_type} in %{env}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:427
+#: ../lib/puppet/resource/type.rb:435
 msgid "Parameter '%{name}' is given a type, but is not a valid parameter."
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:430
+#: ../lib/puppet/resource/type.rb:438
 msgid "Parameter '%{name}' is given a type that is not a Puppet Type, got %{class_name}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:470
+#: ../lib/puppet/resource/type.rb:478
 msgid "Could not find scope for %{class_name}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:491
+#: ../lib/puppet/resource/type.rb:499
 msgid "%{param} is a metaparam; this value will inherit to all contained resources in the %{name} definition"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:493
+#: ../lib/puppet/resource/type.rb:501
 msgid "%{param} is a metaparameter; please choose another parameter name in the %{name} definition"
 msgstr ""
 
@@ -8543,77 +8547,77 @@ msgstr ""
 msgid "audit change: newly-recorded value %s"
 msgstr ""
 
-#: ../lib/puppet/type.rb:503
+#: ../lib/puppet/type.rb:507
 msgid "Options must be a hash, not %{type}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:506
+#: ../lib/puppet/type.rb:510
 msgid "Class %{class_name} already has a property named %{property}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:592
+#: ../lib/puppet/type.rb:596
 msgid "Class %{class_name} has not defined parameters"
 msgstr ""
 
-#: ../lib/puppet/type.rb:676
+#: ../lib/puppet/type.rb:680
 msgid "Parameter %{name} failed on %{ref}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:699
+#: ../lib/puppet/type.rb:703
 msgid "Undefined attribute '%{attribute}' in %{name}"
 msgstr ""
 
 #. TRANSLATORS 'is' is a variable name and should not be translated
 #. TRANSLATORS 'is' is a variable name and should not be translated
-#: ../lib/puppet/type.rb:1022 ../lib/puppet/type.rb:1033
+#: ../lib/puppet/type.rb:1026 ../lib/puppet/type.rb:1037
 msgid "The 'is' value is not in the 'is' array for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1159
+#: ../lib/puppet/type.rb:1163
 msgid "%{name} has no providers and has not overridden 'instances'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1418
+#: ../lib/puppet/type.rb:1422
 msgid "Cannot add aliases without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1497
+#: ../lib/puppet/type.rb:1501
 msgid "Could not find %{description} %{ref} for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1770
+#: ../lib/puppet/type.rb:1776
 msgid "Found multiple default providers for %{name}: %{provider_list}; using %{selected_provider}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1855
+#: ../lib/puppet/type.rb:1861
 msgid "Could not find parent provider %{parent} of %{name}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1929
+#: ../lib/puppet/type.rb:1935
 msgid "Invalid %{resource} provider '%{provider_class}'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2012
+#: ../lib/puppet/type.rb:2018
 msgid "Could not find %{name} provider of %{provider}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2129
+#: ../lib/puppet/type.rb:2135
 msgid "You cannot add relationships without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2436
+#: ../lib/puppet/type.rb:2442
 msgid "Unable to mark '%{name}' as sensitive: %{name} is a parameter and not a property, and cannot be automatically redacted."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2439
+#: ../lib/puppet/type.rb:2445
 msgid "Unable to mark '%{name}' as sensitive: the property itself was not assigned a value."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2441
+#: ../lib/puppet/type.rb:2447
 msgid "Unable to mark '%{name}' as sensitive: the property itself is not defined on %{type}."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2499
+#: ../lib/puppet/type.rb:2505
 msgid "Could not set %{attribute} on %{class_name}: %{detail}"
 msgstr ""
 
@@ -10157,11 +10161,11 @@ msgstr ""
 msgid "Cannot create group if user '%{name}' exists."
 msgstr ""
 
-#: ../lib/puppet/util/windows/api_types.rb:72
+#: ../lib/puppet/util/windows/api_types.rb:79
 msgid "Unable to read wide strings with %{null_terminator} terminal nulls"
 msgstr ""
 
-#: ../lib/puppet/util/windows/api_types.rb:203
+#: ../lib/puppet/util/windows/api_types.rb:210
 msgid "Bad GUID format."
 msgstr ""
 
