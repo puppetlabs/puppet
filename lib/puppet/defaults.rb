@@ -1498,7 +1498,7 @@ EOT
     :statefile => {
       :default => "$statedir/state.yaml",
       :type => :file,
-      :mode => "0660",
+      :mode => "0640",
       :desc => "Where puppet agent and puppet master store state associated
         with the running configuration.  In the case of puppet master,
         this file reflects the state discovered through interacting
@@ -1520,7 +1520,7 @@ EOT
     :transactionstorefile => {
       :default => "$statedir/transactionstore.yaml",
       :type => :file,
-      :mode => "0660",
+      :mode => "0640",
       :desc => "Transactional storage file for persisting data between
         transactions for the purposes of infering information (such as
         corrective_change) on new data received."
