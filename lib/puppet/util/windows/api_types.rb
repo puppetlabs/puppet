@@ -19,6 +19,7 @@ module Puppet::Util::Windows::APITypes
 
   class ::FFI::Pointer
     NULL_HANDLE = 0
+    WCHAR_NULL = "\0\0".encode('UTF-16LE').freeze
 
     def self.from_string_to_wide_string(str, &block)
       str = Puppet::Util::Windows::String.wide_string(str)
@@ -53,11 +54,17 @@ module Puppet::Util::Windows::APITypes
     alias_method :read_word,  :read_uint16
     alias_method :read_array_of_wchar, :read_array_of_uint16
 
-    def read_wide_string(char_length, dst_encoding = Encoding::UTF_8, encode_options = {})
+    def read_wide_string(char_length, dst_encoding = Encoding::UTF_8, strip = false, encode_options = {})
       # char_length is number of wide chars (typically excluding NULLs), *not* bytes
       str = get_bytes(0, char_length * 2).force_encoding('UTF-16LE')
+
+      if strip
+        i = str.index(WCHAR_NULL)
+        str = str[0, i] if i
+      end
+
       str.encode(dst_encoding, str.encoding, encode_options)
-    rescue Exception => e
+    rescue EncodingError => e
       Puppet.debug "Unable to convert value #{str.nil? ? 'nil' : str.dump} to encoding #{dst_encoding} due to #{e.inspect}"
       raise
     end
@@ -77,11 +84,11 @@ module Puppet::Util::Windows::APITypes
 
       # Look for a null terminating characters; if found, read up to that null (exclusive)
       (0...max_char_length - terminator_width).each do |i|
-        return read_wide_string(i, Encoding::UTF_8, encode_options) if send(reader_method, (i * 2)) == 0
+        return read_wide_string(i, Encoding::UTF_8, false, encode_options) if send(reader_method, (i * 2)) == 0
       end
 
       # String is longer than the max; read just to the max
-      read_wide_string(max_char_length, Encoding::UTF_8, encode_options)
+      read_wide_string(max_char_length, Encoding::UTF_8, false, encode_options)
     end
 
     def read_win32_local_pointer(&block)

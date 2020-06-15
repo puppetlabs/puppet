@@ -234,7 +234,7 @@ module Puppet::Util::Windows
         begin
           case type
             when Win32::Registry::REG_SZ, Win32::Registry::REG_EXPAND_SZ
-              result = [ type, sanitize(data_ptr.read_wide_string(string_length)) ]
+              result = [ type, data_ptr.read_wide_string(string_length, Encoding::UTF_8, true) ]
             when Win32::Registry::REG_MULTI_SZ
               result = [ type, data_ptr.read_wide_string(string_length).split(/\0/) ]
             when Win32::Registry::REG_BINARY
@@ -312,12 +312,6 @@ module Puppet::Util::Windows
       end
 
       result
-    end
-
-    def sanitize(value)
-      # Replace null bytes with a space
-      value.tr!("\x00", ' ')
-      value
     end
 
     ffi_convention :stdcall

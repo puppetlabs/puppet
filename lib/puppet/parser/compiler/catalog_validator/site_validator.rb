@@ -1,5 +1,7 @@
 class Puppet::Parser::Compiler
   # Validator that asserts that only application components can appear inside a site.
+  #
+  # @deprecated application orchestration will be removed in puppet 7
   class CatalogValidator::SiteValidator < CatalogValidator
     def self.validation_stage?(stage)
       PRE_FINISH.equal?(stage)
