@@ -248,6 +248,8 @@ class ResourceTypeImpl
   #######################
 
   # Applications are not supported
+  #
+  # @deprecated application orchestration will be removed in puppet 7
   def application?
     false
   end
