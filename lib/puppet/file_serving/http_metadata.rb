@@ -22,6 +22,21 @@ class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
       @checksums[:md5] = "{md5}#{checksum}"
     end
 
+    checksum = http_response['X-Checksum-Md5']
+    if checksum
+      @checksums[checksum_type] = "{md5}#{checksum}"
+    end
+
+    checksum = http_response['X-Checksum-Sha1']
+    if checksum
+      @checksums[checksum_type] = "{sha1}#{checksum}"
+    end
+
+    checksum = http_response['X-Checksum-Sha256']
+    if checksum
+      @checksums[checksum_type] = "{sha256}#{checksum}"
+    end
+
     last_modified = http_response['last-modified']
     if last_modified
       mtime = DateTime.httpdate(last_modified).to_time
@@ -39,7 +54,7 @@ class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
   def collect
     # Prefer the checksum_type from the indirector request options
     # but fall back to the alternative otherwise
-    [ @checksum_type, :md5, :sha256, :sha384, :sha512, :sha224, :mtime ].each do |type|
+    [ @checksum_type, :md5, :sha256, :sha384, :sha512, :sha224, :sha1, :mtime ].each do |type|
       @checksum_type = type
       @checksum = @checksums[type]
       break if @checksum
