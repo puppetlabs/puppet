@@ -9,19 +9,35 @@ class Puppet::Indirector::FileMetadata::Http < Puppet::Indirector::GenericHttp
   include Puppet::FileServing::TerminusHelper
 
   def find(request)
+    checksum_type = request.options[:checksum_type]
     uri = URI(request.uri)
     client = Puppet.runtime[:http]
     head = client.head(uri, options: {include_system_store: true})
 
-    if head.success?
-      metadata = Puppet::FileServing::HttpMetadata.new(head)
-      metadata.checksum_type = request.options[:checksum_type] if request.options[:checksum_type]
-      metadata.collect
-      metadata
+    return create_httpmetadata(head, checksum_type) if head.success?
+
+    case head.code
+    when 403
+      # AMZ presigned URL?
+      if head.each_header.find { |k,_| k =~ /^x-amz-/i }
+        get = client.get(uri, headers: {'Range' => 'bytes=0-0'}, options: {include_system_store: true})
+        return create_httpmetadata(get, checksum_type) if get.success?
+      end
     end
+
+    nil
   end
 
   def search(request)
     raise Puppet::Error, _("cannot lookup multiple files")
+  end
+
+  private
+
+  def create_httpmetadata(http_request, checksum_type)
+    metadata = Puppet::FileServing::HttpMetadata.new(http_request)
+    metadata.checksum_type = checksum_type if checksum_type
+    metadata.collect
+    metadata
   end
 end
