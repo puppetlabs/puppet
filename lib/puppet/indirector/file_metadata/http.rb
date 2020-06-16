@@ -20,9 +20,12 @@ class Puppet::Indirector::FileMetadata::Http < Puppet::Indirector::GenericHttp
     when 403
       # AMZ presigned URL?
       if head.each_header.find { |k,_| k =~ /^x-amz-/i }
-        get = client.get(uri, headers: {'Range' => 'bytes=0-0'}, options: {include_system_store: true})
+        get = partial_get(client, uri)
         return create_httpmetadata(get, checksum_type) if get.success?
       end
+    when 405
+      get = partial_get(client, uri)
+      return create_httpmetadata(get, checksum_type) if get.success?
     end
 
     nil
@@ -33,6 +36,10 @@ class Puppet::Indirector::FileMetadata::Http < Puppet::Indirector::GenericHttp
   end
 
   private
+
+  def partial_get(client, uri)
+    client.get(uri, headers: {'Range' => 'bytes=0-0'}, options: {include_system_store: true})
+  end
 
   def create_httpmetadata(http_request, checksum_type)
     metadata = Puppet::FileServing::HttpMetadata.new(http_request)
