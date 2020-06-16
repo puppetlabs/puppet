@@ -66,4 +66,10 @@ describe Puppet::HTTP::Response do
 
     expect(client.get(uri)['Content-Encoding']).to eq('gzip')
   end
+
+  it "enumerates headers" do
+    stub_request(:get, uri).to_return(status: 200, headers: { 'Content-Encoding' => 'gzip' })
+
+    expect(client.get(uri).each_header.to_a).to eq([['content-encoding', 'gzip']])
+  end
 end
