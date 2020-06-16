@@ -535,6 +535,36 @@ describe Puppet::HTTP::Client do
       expect(response).to be_success
     end
 
+    it "updates the Host header from the Location host and port" do
+      stub_request(:get, start_url).with(headers: { 'Host' => 'www.example.com:8140' })
+        .to_return(redirect_to(url: other_host))
+      stub_request(:get, other_host).with(headers: { 'Host' => 'other.example.com:8140' })
+        .to_return(status: 200)
+
+      response = client.get(start_url)
+      expect(response).to be_success
+    end
+
+    it "omits the default HTTPS port from the Host header" do
+      stub_request(:get, start_url).with(headers: { 'Host' => 'www.example.com:8140' })
+        .to_return(redirect_to(url: "https://other.example.com/qux"))
+      stub_request(:get, "https://other.example.com/qux").with(headers: { 'Host' => 'other.example.com' })
+        .to_return(status: 200)
+
+      response = client.get(start_url)
+      expect(response).to be_success
+    end
+
+    it "omits the default HTTP port from the Host header" do
+      stub_request(:get, start_url).with(headers: { 'Host' => 'www.example.com:8140' })
+        .to_return(redirect_to(url: "http://other.example.com/qux"))
+      stub_request(:get, "http://other.example.com/qux").with(headers: { 'Host' => 'other.example.com' })
+        .to_return(status: 200)
+
+      response = client.get(start_url)
+      expect(response).to be_success
+    end
+
     it "applies query parameters from the location header" do
       query = { 'redirected' => false }
 

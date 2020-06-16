@@ -60,6 +60,14 @@ class Puppet::HTTP::Redirector
       new_request[header] = value
     end
 
+    # mimic private Net::HTTP#addr_port
+    new_request['Host'] = if (location.scheme == 'https' && location.port == 443) ||
+                             (location.scheme == 'http' && location.port == 80)
+                            location.host
+                          else
+                            "#{location.host}:#{location.port}"
+                          end
+
     new_request
   end
 
