@@ -535,10 +535,11 @@ describe Puppet::HTTP::Client do
       expect(response).to be_success
     end
 
-    it "preserves query parameters" do
-      query = { 'debug' => true }
-      stub_request(:get, start_url).with(query: query).to_return(redirect_to(url: bar_url))
-      stub_request(:get, bar_url).with(query: query).to_return(status: 200)
+    it "applies query parameters from the location header" do
+      query = { 'redirected' => false }
+
+      stub_request(:get, start_url).with(query: query).to_return(redirect_to(url: "#{bar_url}?redirected=true"))
+      stub_request(:get, bar_url).with(query: {'redirected' => 'true'}).to_return(status: 200)
 
       response = client.get(start_url, params: query)
       expect(response).to be_success
@@ -569,13 +570,24 @@ describe Puppet::HTTP::Client do
       expect(response).to be_success
     end
 
-    it "preserves query parameters given a relative location" do
+    it "applies query parameters from the location header" do
       relative_url = "/people.html"
-      query = { 'debug' => true }
-      stub_request(:get, start_url).with(query: query).to_return(redirect_to(url: relative_url))
-      stub_request(:get, "https://www.example.com:8140/people.html").with(query: query).to_return(status: 200)
+      query = { 'redirected' => false }
+      stub_request(:get, start_url).with(query: query).to_return(redirect_to(url: "#{relative_url}?redirected=true"))
+      stub_request(:get, "https://www.example.com:8140/people.html").with(query: {'redirected' => 'true'}).to_return(status: 200)
 
       response = client.get(start_url, params: query)
+      expect(response).to be_success
+    end
+
+    it "removes dot segments from a relative location" do
+      # from https://tools.ietf.org/html/rfc3986#section-5.4.2
+      base_url = URI("http://a/b/c/d;p?q")
+      relative_url = "../../../../g"
+      stub_request(:get, base_url).to_return(redirect_to(url: relative_url))
+      stub_request(:get, "http://a/g").to_return(status: 200)
+
+      response = client.get(base_url)
       expect(response).to be_success
     end
 

@@ -52,13 +52,7 @@ class Puppet::HTTP::Redirector
     raise Puppet::HTTP::TooManyRedirects.new(request.uri) if redirects >= @redirect_limit
 
     location = parse_location(response)
-    if location.relative?
-      url = request.uri.dup
-      url.path = location.path
-    else
-      url = location.dup
-    end
-    url.query = request.uri.query
+    url = request.uri.merge(location)
 
     new_request = request.class.new(url)
     new_request.body = request.body
