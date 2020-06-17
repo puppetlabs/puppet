@@ -236,7 +236,7 @@ module Puppet::Util::Checksums
 
   # Return the :mtime timestamp of a file.
   def mtime_file(filename)
-    Puppet::FileSystem.stat(filename).send(:mtime)
+    Puppet::FileSystem.stat(filename).mtime
   end
 
   # by definition this doesn't exist
@@ -306,7 +306,7 @@ module Puppet::Util::Checksums
 
   # Return the :ctime of a file.
   def ctime_file(filename)
-    Puppet::FileSystem.stat(filename).send(:ctime)
+    Puppet::FileSystem.stat(filename).ctime
   end
 
   def ctime_stream(&block)
