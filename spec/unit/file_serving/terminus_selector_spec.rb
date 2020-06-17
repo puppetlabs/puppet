@@ -44,6 +44,12 @@ describe Puppet::FileServing::TerminusSelector do
       expect(subject.select(request)).to eq(:http)
     end
 
+    it "should return :http if the path starts with a double slash" do
+      request = create_request("https://www.example.com//index.html")
+
+      expect(subject.select(request)).to eq(:http)
+    end
+
     it "should fail when a protocol other than :puppet, :http(s) or :file is used" do
       request = create_request("ftp://ftp.example.com")
 
