@@ -507,6 +507,20 @@ describe Puppet::HTTP::Client do
 
       client.get(uri, options: {basic_auth: {user: 'user', password: nil}})
     end
+
+    it 'observes userinfo in the URL' do
+      stub_request(:get, uri).with(basic_auth: credentials)
+
+      client.get(URI("https://user:pass@www.example.com"))
+    end
+
+    it 'prefers explicit basic_auth credentials' do
+      uri = URI("https://ignored_user:ignored_pass@www.example.com")
+
+      stub_request(:get, "https://www.example.com").with(basic_auth: credentials)
+
+      client.get(uri, options: {basic_auth: {user: 'user', password: 'pass'}})
+    end
   end
 
   context "when redirecting" do

@@ -25,6 +25,8 @@ Puppet::Reports.register_report(:http) do
       :include_system_store => Puppet[:report_include_system_store],
     }
 
+    # Puppet's http client implementation accepts userinfo in the URL
+    # but puppetserver's does not. So pass credentials explicitly.
     if url.user && url.password
       options[:basic_auth] = {
         user: url.user,
