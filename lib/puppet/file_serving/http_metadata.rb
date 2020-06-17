@@ -15,6 +15,7 @@ class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
     # use a default mtime in case there is no usable HTTP header
     @checksums[:mtime] = "{mtime}#{Time.now}"
 
+    # RFC-1864, deprecated in HTTP/1.1 due to partial responses
     checksum = http_response['content-md5']
     if checksum
       # convert base64 digest to hex
@@ -22,19 +23,15 @@ class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
       @checksums[:md5] = "{md5}#{checksum}"
     end
 
-    checksum = http_response['X-Checksum-Md5']
-    if checksum
-      @checksums[checksum_type] = "{md5}#{checksum}"
-    end
-
-    checksum = http_response['X-Checksum-Sha1']
-    if checksum
-      @checksums[checksum_type] = "{sha1}#{checksum}"
-    end
-
-    checksum = http_response['X-Checksum-Sha256']
-    if checksum
-      @checksums[checksum_type] = "{sha256}#{checksum}"
+    {
+      md5: 'X-Checksum-Md5',
+      sha1: 'X-Checksum-Sha1',
+      sha256: 'X-Checksum-Sha256'
+    }.each_pair do |checksum_type, header|
+      checksum = http_response[header]
+      if checksum
+        @checksums[checksum_type] = "{#{checksum_type}}#{checksum}"
+      end
     end
 
     last_modified = http_response['last-modified']
