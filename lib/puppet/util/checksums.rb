@@ -7,11 +7,20 @@ require 'time'
 module Puppet::Util::Checksums
   module_function
 
+  KNOWN_CHECKSUMS = [
+    :sha256, :sha256lite,
+    :md5, :md5lite,
+    :sha1, :sha1lite,
+    :sha512,
+    :sha384,
+    :sha224,
+    :mtime, :ctime, :none
+  ].freeze
+
   # It's not a good idea to use some of these in some contexts: for example, I
   # wouldn't try bucketing a file using the :none checksum type.
   def known_checksum_types
-    [:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :sha512, :sha384, :sha224, 
-      :mtime, :ctime, :none]
+    KNOWN_CHECKSUMS
   end
 
   class FakeChecksum

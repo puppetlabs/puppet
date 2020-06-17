@@ -9,7 +9,7 @@ Puppet::Type.type(:file).newparam(:checksum) do
 
     The default checksum type is md5."
 
-  newvalues "md5", "md5lite", "sha224", "sha256", "sha256lite", "sha384", "sha512", "mtime", "ctime", "none"
+  newvalues(*Puppet::Util::Checksums.known_checksum_types)
 
   defaultto do
     Puppet[:digest_algorithm].to_sym
@@ -23,18 +23,18 @@ Puppet::Type.type(:file).newparam(:checksum) do
 
   def sum(content)
     content = content.is_a?(Puppet::Pops::Types::PBinaryType::Binary) ? content.binary_buffer : content
-    type = digest_algorithm()
+    type = digest_algorithm
     "{#{type}}" + send(type, content)
   end
 
   def sum_file(path)
-    type = digest_algorithm()
+    type = digest_algorithm
     method = type.to_s + "_file"
     "{#{type}}" + send(method, path).to_s
   end
 
   def sum_stream(&block)
-    type = digest_algorithm()
+    type = digest_algorithm
     method = type.to_s + "_stream"
     checksum = send(method, &block)
     "{#{type}}#{checksum}"
