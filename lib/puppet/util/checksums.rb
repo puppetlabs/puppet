@@ -23,6 +23,10 @@ module Puppet::Util::Checksums
     KNOWN_CHECKSUMS
   end
 
+  def valid_checksum?(type, value)
+    !!send("#{type}?", value)
+  end
+
   class FakeChecksum
     def <<(*args)
       self

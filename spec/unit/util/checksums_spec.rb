@@ -65,6 +65,24 @@ describe Puppet::Util::Checksums do
     expect(@summer.sumtype("asdfasdfa")).to be_nil
   end
 
+  it "has a list of known checksum types" do
+    expect(@summer.known_checksum_types).to match_array(content_sums + file_only)
+  end
+
+  it "returns true if the checksum is valid" do
+    expect(@summer).to be_valid_checksum('sha1', 'fcc1715b22278a9dae322b0a34935f10d1608b9f')
+  end
+
+  it "returns false if the checksum is known but invalid" do
+    expect(@summer).to_not be_valid_checksum('sha1', 'wronglength')
+  end
+
+  it "raises if the checksum type is unknown" do
+    expect {
+      @summer.valid_checksum?('rot13', 'doesntmatter')
+    }.to raise_error(NoMethodError, /undefined method/)
+  end
+
   {:md5 => Digest::MD5, :sha1 => Digest::SHA1, :sha256 => Digest::SHA256, :sha512 => Digest::SHA512, :sha384 => Digest::SHA384}.each do |sum, klass|
     describe("when using #{sum}") do
       it "should use #{klass} to calculate string checksums" do

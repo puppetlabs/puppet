@@ -428,7 +428,7 @@ Puppet::Type.newtype(:file) do
       @parameters[:content].value = @parameters[:checksum].sum(@parameters[:content].actual_content)
     end
 
-    if self[:checksum] && self[:checksum_value] && !send("#{self[:checksum]}?", self[:checksum_value])
+    if self[:checksum] && self[:checksum_value] && !valid_checksum?(self[:checksum], self[:checksum_value])
       self.fail _("Checksum value '%{value}' is not a valid checksum type %{checksum}") % { value: self[:checksum_value], checksum: self[:checksum] }
     end
 
