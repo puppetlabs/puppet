@@ -25,6 +25,8 @@ module Puppet::Util::Checksums
 
   def valid_checksum?(type, value)
     !!send("#{type}?", value)
+  rescue NoMethodError
+    false
   end
 
   class FakeChecksum

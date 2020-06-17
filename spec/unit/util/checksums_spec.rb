@@ -77,10 +77,8 @@ describe Puppet::Util::Checksums do
     expect(@summer).to_not be_valid_checksum('sha1', 'wronglength')
   end
 
-  it "raises if the checksum type is unknown" do
-    expect {
-      @summer.valid_checksum?('rot13', 'doesntmatter')
-    }.to raise_error(NoMethodError, /undefined method/)
+  it "returns false if the checksum type is unknown" do
+    expect(@summer).to_not be_valid_checksum('rot13', 'doesntmatter')
   end
 
   {:md5 => Digest::MD5, :sha1 => Digest::SHA1, :sha256 => Digest::SHA256, :sha512 => Digest::SHA512, :sha384 => Digest::SHA384}.each do |sum, klass|
