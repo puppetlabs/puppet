@@ -290,6 +290,11 @@ class Puppet::HTTP::Client
     redirector = Puppet::HTTP::Redirector.new(options.fetch(:redirect_limit, @default_redirect_limit))
 
     basic_auth = options.fetch(:basic_auth, nil)
+    unless basic_auth
+      if request.uri.user && request.uri.password
+        basic_auth = { user: request.uri.user, password: request.uri.password }
+      end
+    end
 
     redirects = 0
     retries = 0
