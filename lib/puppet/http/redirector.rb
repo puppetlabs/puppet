@@ -52,19 +52,21 @@ class Puppet::HTTP::Redirector
     raise Puppet::HTTP::TooManyRedirects.new(request.uri) if redirects >= @redirect_limit
 
     location = parse_location(response)
-    if location.relative?
-      url = request.uri.dup
-      url.path = location.path
-    else
-      url = location.dup
-    end
-    url.query = request.uri.query
+    url = request.uri.merge(location)
 
     new_request = request.class.new(url)
     new_request.body = request.body
     request.each do |header, value|
       new_request[header] = value
     end
+
+    # mimic private Net::HTTP#addr_port
+    new_request['Host'] = if (location.scheme == 'https' && location.port == 443) ||
+                             (location.scheme == 'http' && location.port == 80)
+                            location.host
+                          else
+                            "#{location.host}:#{location.port}"
+                          end
 
     new_request
   end

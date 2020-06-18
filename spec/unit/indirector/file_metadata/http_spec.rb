@@ -155,6 +155,35 @@ describe Puppet::Indirector::FileMetadata::Http do
 
       model.indirection.find(key)
     end
+
+    it "falls back to partial GET if HEAD is not allowed" do
+      stub_request(:head, key)
+        .to_return(status: 405)
+      stub_request(:get, key)
+        .to_return(status: 200, headers: {'Range' => 'bytes=0-0'})
+
+      model.indirection.find(key)
+    end
+
+    context "AWS" do
+      it "falls back to a partial GET" do
+        stub_request(:head, key)
+          .to_return(status: 403, headers: DEFAULT_HEADERS.merge({ "x-amz-request-id" => "EA308572DC91B4EA"}))
+        stub_request(:get, key)
+          .to_return(status: 200, headers: {'Range' => 'bytes=0-0'})
+
+        model.indirection.find(key)
+      end
+
+      it "returns nil if the GET fails" do
+        stub_request(:head, key)
+          .to_return(status: 403, headers: DEFAULT_HEADERS.merge({ "x-amz-request-id" => "EA308572DC91B4EA"}))
+        stub_request(:get, key)
+          .to_return(status: 403)
+
+        expect(model.indirection.find(key)).to be_nil
+      end
+    end
   end
 
   context "when searching" do

@@ -89,11 +89,30 @@ class Puppet::HTTP::Response
   end
 
   # @api private
+  #
+  # Get a header case-insensitively.
+  # @param [String] name The header name
+  # @return [String] The header value
+  #
   def [](name)
     @nethttp[name]
   end
 
   # @api private
+  #
+  # Yield each header name and value. Returns an enumerator if no block is given.
+  #
+  # @yieldparam [String] header name
+  # @yieldparam [String] header value
+  #
+  def each_header(&block)
+    @nethttp.each_header(&block)
+  end
+
+  # @api private
+  #
+  # Drain the response body.
+  #
   def drain
     body
     true
