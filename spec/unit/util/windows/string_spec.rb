@@ -4,15 +4,13 @@ require 'spec_helper'
 require 'puppet/util/windows'
 
 describe "Puppet::Util::Windows::String", :if => Puppet::Util::Platform.windows? do
-  UTF16_NULL = [0, 0]
-
   def wide_string(str)
     Puppet::Util::Windows::String.wide_string(str)
   end
 
   def converts_to_wide_string(string_value)
     expected = string_value.encode(Encoding::UTF_16LE)
-    expected_bytes = expected.bytes.to_a + UTF16_NULL
+    expected_bytes = expected.bytes.to_a
 
     expect(wide_string(string_value).bytes.to_a).to eq(expected_bytes)
   end
