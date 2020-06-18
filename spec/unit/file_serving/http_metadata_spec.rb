@@ -30,11 +30,6 @@ describe Puppet::FileServing::HttpMetadata do
     end
 
     context "with no Last-Modified or Content-MD5 header from the server" do
-      before do
-        allow(http_response).to receive(:[]).with('last-modified').and_return(nil)
-        allow(http_response).to receive(:[]).with('content-md5').and_return(nil)
-      end
-
       it "should use :mtime as the checksum type, based on current time" do
         # Stringifying Time.now does some rounding; do so here so we don't end up with a time
         # that's greater than the stringified version returned by collect.
@@ -51,13 +46,9 @@ describe Puppet::FileServing::HttpMetadata do
     context "with a Last-Modified header from the server" do
       let(:time) { Time.now.utc }
 
-      before do
-        allow(http_response).to receive(:[]).with('content-md5').and_return(nil)
-      end
-
       it "should use :mtime as the checksum type, based on Last-Modified" do
         # HTTP uses "GMT" not "UTC"
-        allow(http_response).to receive(:[]).with('last-modified').and_return(time.strftime("%a, %d %b %Y %T GMT"))
+        http_response.add_field('last-modified', time.strftime("%a, %d %b %Y %T GMT"))
         metadata = described_class.new(http_response)
         metadata.collect
         expect( metadata.checksum_type ).to eq :mtime
@@ -70,16 +61,48 @@ describe Puppet::FileServing::HttpMetadata do
       let(:base64) { Digest::MD5.new.base64digest input }
       let(:hex) { Digest::MD5.new.hexdigest input }
 
-      before do
-        allow(http_response).to receive(:[]).with('last-modified').and_return(nil)
-        allow(http_response).to receive(:[]).with('content-md5').and_return(base64)
-      end
-
       it "should use the md5 checksum" do
+        http_response.add_field('content-md5', base64)
         metadata = described_class.new(http_response)
         metadata.collect
         expect( metadata.checksum_type ).to eq :md5
         expect( metadata.checksum ).to eq "{md5}#{hex}"
+      end
+    end
+
+    context "with X-Checksum-Md5" do
+      let(:md5) { "c58989e9740a748de4f5054286faf99b" }
+
+      it "should use the md5 checksum" do
+        http_response.add_field('X-Checksum-Md5', md5)
+        metadata = described_class.new(http_response)
+        metadata.collect
+        expect( metadata.checksum_type ).to eq :md5
+        expect( metadata.checksum ).to eq "{md5}#{md5}"
+      end
+    end
+
+    context "with X-Checksum-Sha1" do
+      let(:sha1) { "01e4d15746f4274b84d740a93e04b9fd2882e3ea" }
+
+      it "should use the SHA1 checksum" do
+        http_response.add_field('X-Checksum-Sha1', sha1)
+        metadata = described_class.new(http_response)
+        metadata.collect
+        expect( metadata.checksum_type ).to eq :sha1
+        expect( metadata.checksum ).to eq "{sha1}#{sha1}"
+      end
+    end
+
+    context "with X-Checksum-Sha256" do
+      let(:sha256) { "a3eda98259c30e1e75039c2123670c18105e1c46efb672e42ca0e4cbe77b002a" }
+
+      it "should use the SHA256 checksum" do
+        http_response.add_field('X-Checksum-Sha256', sha256)
+        metadata = described_class.new(http_response)
+        metadata.collect
+        expect( metadata.checksum_type ).to eq :sha256
+        expect( metadata.checksum ).to eq "{sha256}#{sha256}"
       end
     end
   end

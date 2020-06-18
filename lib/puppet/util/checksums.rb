@@ -7,11 +7,26 @@ require 'time'
 module Puppet::Util::Checksums
   module_function
 
+  KNOWN_CHECKSUMS = [
+    :sha256, :sha256lite,
+    :md5, :md5lite,
+    :sha1, :sha1lite,
+    :sha512,
+    :sha384,
+    :sha224,
+    :mtime, :ctime, :none
+  ].freeze
+
   # It's not a good idea to use some of these in some contexts: for example, I
   # wouldn't try bucketing a file using the :none checksum type.
   def known_checksum_types
-    [:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :sha512, :sha384, :sha224, 
-      :mtime, :ctime, :none]
+    KNOWN_CHECKSUMS
+  end
+
+  def valid_checksum?(type, value)
+    !!send("#{type}?", value)
+  rescue NoMethodError
+    false
   end
 
   class FakeChecksum
@@ -223,7 +238,7 @@ module Puppet::Util::Checksums
 
   # Return the :mtime timestamp of a file.
   def mtime_file(filename)
-    Puppet::FileSystem.stat(filename).send(:mtime)
+    Puppet::FileSystem.stat(filename).mtime
   end
 
   # by definition this doesn't exist
@@ -293,7 +308,7 @@ module Puppet::Util::Checksums
 
   # Return the :ctime of a file.
   def ctime_file(filename)
-    Puppet::FileSystem.stat(filename).send(:ctime)
+    Puppet::FileSystem.stat(filename).ctime
   end
 
   def ctime_stream(&block)
