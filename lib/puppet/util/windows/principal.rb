@@ -41,6 +41,7 @@ module Puppet::Util::Windows::SID
     # = 8 + max sub identifiers (15) * 4
     MAXIMUM_SID_BYTE_LENGTH = 68
 
+    ERROR_INVALID_PARAMETER   = 87
     ERROR_INSUFFICIENT_BUFFER = 122
 
     def self.lookup_account_name(system_name = nil, account_name)
@@ -112,6 +113,11 @@ module Puppet::Util::Windows::SID
               FFI::MemoryPointer.new(:uint32, 1) do |name_use_enum_ptr|
 
                 sid_ptr.write_array_of_uchar(sid_bytes)
+
+                if Puppet::Util::Windows::SID.IsValidSid(sid_ptr) == FFI::WIN32_FALSE
+                  raise Puppet::Util::Windows::Error.new(_('Byte array for lookup_account_sid is invalid: %{sid_bytes}') % { sid_bytes: sid_bytes }, ERROR_INVALID_PARAMETER)
+                end
+
                 success = LookupAccountSidW(system_name_ptr, sid_ptr, FFI::Pointer::NULL, name_length_ptr,
                   FFI::Pointer::NULL, domain_length_ptr, name_use_enum_ptr)
                 last_error = FFI.errno
