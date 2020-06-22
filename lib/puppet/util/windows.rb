@@ -25,7 +25,6 @@ module Puppet::Util::Windows
     # locales table, here: https://msdn.microsoft.com/en-us/library/ms912047(v=winembedded.10).aspx
     require 'win32ole' ; WIN32OLE.codepage = WIN32OLE::CP_UTF8
     # gems
-    require 'win32/process'
     require 'win32/dir'
     require 'win32/service'
 
@@ -48,5 +47,6 @@ module Puppet::Util::Windows
     require 'puppet/util/windows/registry'
     require 'puppet/util/windows/eventlog'
     require 'puppet/util/windows/service'
+    require 'puppet/util/windows/monkey_patches/process'
   end
 end
