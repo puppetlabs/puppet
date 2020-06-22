@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.16.0-61-g41f9d98cde\n"
+"Project-Id-Version: Puppet automation framework 6.16.0-89-g626a84ac4e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-06-15 14:19+0000\n"
-"PO-Revision-Date: 2020-06-15 14:19+0000\n"
+"POT-Creation-Date: 2020-06-22 05:34+0000\n"
+"PO-Revision-Date: 2020-06-22 05:34+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -1762,7 +1762,7 @@ msgstr ""
 msgid "No task specified"
 msgstr ""
 
-#: ../lib/puppet/file_serving/terminus_selector.rb:29
+#: ../lib/puppet/file_serving/terminus_selector.rb:28
 msgid "URI protocol '%{protocol}' is not currently supported for file serving"
 msgstr ""
 
@@ -2262,11 +2262,11 @@ msgstr ""
 msgid "Too many HTTP retries for %{addr}"
 msgstr ""
 
-#: ../lib/puppet/http/redirector.rb:76
+#: ../lib/puppet/http/redirector.rb:78
 msgid "Location response header is missing"
 msgstr ""
 
-#: ../lib/puppet/http/redirector.rb:80
+#: ../lib/puppet/http/redirector.rb:82
 msgid "Location URI is invalid: %{detail}"
 msgstr ""
 
@@ -2595,7 +2595,7 @@ msgstr ""
 msgid "Puppet::Indirector::FileContent::Http is deprecated. Use Puppet::HTTP::Client instead."
 msgstr ""
 
-#: ../lib/puppet/indirector/file_metadata/http.rb:25
+#: ../lib/puppet/indirector/file_metadata/http.rb:35
 msgid "cannot lookup multiple files"
 msgstr ""
 
@@ -8508,47 +8508,47 @@ msgstr ""
 msgid "%{name} has no providers and has not overridden 'instances'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1466
+#: ../lib/puppet/type.rb:1467
 msgid "Cannot add aliases without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1546
+#: ../lib/puppet/type.rb:1547
 msgid "Could not find %{description} %{ref} for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1823
+#: ../lib/puppet/type.rb:1824
 msgid "Found multiple default providers for %{name}: %{provider_list}; using %{selected_provider}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1910
+#: ../lib/puppet/type.rb:1911
 msgid "Could not find parent provider %{parent} of %{name}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1984
+#: ../lib/puppet/type.rb:1985
 msgid "Invalid %{resource} provider '%{provider_class}'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2069
+#: ../lib/puppet/type.rb:2070
 msgid "Could not find %{name} provider of %{provider}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2187
+#: ../lib/puppet/type.rb:2188
 msgid "You cannot add relationships without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2490
+#: ../lib/puppet/type.rb:2491
 msgid "Unable to mark '%{name}' as sensitive: %{name} is a parameter and not a property, and cannot be automatically redacted."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2493
+#: ../lib/puppet/type.rb:2494
 msgid "Unable to mark '%{name}' as sensitive: the property itself was not assigned a value."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2495
+#: ../lib/puppet/type.rb:2496
 msgid "Unable to mark '%{name}' as sensitive: the property itself is not defined on %{type}."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2553
+#: ../lib/puppet/type.rb:2554
 msgid "Could not set %{attribute} on %{class_name}: %{detail}"
 msgstr ""
 
@@ -9949,16 +9949,20 @@ msgstr ""
 msgid "Failed to call GetLongPathName"
 msgstr ""
 
-#: ../lib/puppet/util/windows/principal.rb:68 ../lib/puppet/util/windows/principal.rb:75
+#: ../lib/puppet/util/windows/principal.rb:69 ../lib/puppet/util/windows/principal.rb:76
 msgid "Failed to call LookupAccountNameW with account: %{account_name}"
 msgstr ""
 
 #. TRANSLATORS `lookup_account_sid` is a variable name and should not be translated
-#: ../lib/puppet/util/windows/principal.rb:98
+#: ../lib/puppet/util/windows/principal.rb:99
 msgid "Byte array for lookup_account_sid must not be nil and must be at least 1 byte long"
 msgstr ""
 
-#: ../lib/puppet/util/windows/principal.rb:120 ../lib/puppet/util/windows/principal.rb:127
+#: ../lib/puppet/util/windows/principal.rb:118
+msgid "Byte array for lookup_account_sid is invalid: %{sid_bytes}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/principal.rb:126 ../lib/puppet/util/windows/principal.rb:133
 msgid "Failed to call LookupAccountSidW with bytes: %{sid_bytes}"
 msgstr ""
 
