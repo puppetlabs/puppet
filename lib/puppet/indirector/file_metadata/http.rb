@@ -17,13 +17,9 @@ class Puppet::Indirector::FileMetadata::Http < Puppet::Indirector::GenericHttp
     return create_httpmetadata(head, checksum_type) if head.success?
 
     case head.code
-    when 403
-      # AMZ presigned URL?
-      if head.each_header.find { |k,_| k =~ /^x-amz-/i }
-        get = partial_get(client, uri)
-        return create_httpmetadata(get, checksum_type) if get.success?
-      end
-    when 405
+    when 403, 405
+      # AMZ presigned URL and puppetserver may return 403
+      # instead of 405. Fallback to partial get
       get = partial_get(client, uri)
       return create_httpmetadata(get, checksum_type) if get.success?
     end
