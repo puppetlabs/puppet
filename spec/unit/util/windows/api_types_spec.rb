@@ -4,8 +4,10 @@ require 'spec_helper'
 
 describe "FFI::MemoryPointer", :if => Puppet.features.microsoft_windows? do
   # use 2 bad bytes at end so we have even number of bytes / characters
-  let (:bad_string) { "hello invalid world".encode(Encoding::UTF_16LE) + "\xDD\xDD".force_encoding(Encoding::UTF_16LE) }
-  let (:bad_string_bytes) { bad_string.bytes.to_a }
+  let(:bad_string) { "hello invalid world".encode(Encoding::UTF_16LE) + "\xDD\xDD".force_encoding(Encoding::UTF_16LE) }
+  let(:bad_string_bytes) { bad_string.bytes.to_a }
+  let(:a_wide_bytes) { "A".encode(Encoding::UTF_16LE).bytes.to_a }
+  let(:b_wide_bytes) { "B".encode(Encoding::UTF_16LE).bytes.to_a }
 
   context "read_wide_string" do
     let (:string) { "foo_bar" }
@@ -79,7 +81,7 @@ describe "FFI::MemoryPointer", :if => Puppet.features.microsoft_windows? do
 
     it "preserves wide null characters in the string" do
       FFI::MemoryPointer.new(:byte, 6) do |ptr|
-        ptr.write_array_of_uint8("A".encode('UTF-16LE').bytes.to_a + [0, 0] + "B".encode('UTF-16LE').bytes.to_a)
+        ptr.write_array_of_uint8(a_wide_bytes + [0, 0] + b_wide_bytes)
         expect(ptr.read_wide_string(3)).to eq("A\x00B")
       end
     end
@@ -99,6 +101,20 @@ describe "FFI::MemoryPointer", :if => Puppet.features.microsoft_windows? do
     it "should read a short double null terminated string" do
       FFI::MemoryPointer.from_string_to_wide_string(double_null_string) do |ptr|
         expect(ptr.read_arbitrary_wide_string_up_to(512, :double_null)).to eq(string)
+      end
+    end
+
+    it "should raises an IndexError if max_length is negative" do
+      FFI::MemoryPointer.from_string_to_wide_string(single_null_string) do |ptr|
+        expect {
+          ptr.read_arbitrary_wide_string_up_to(-1)
+        }.to raise_error(IndexError, /out of bounds/)
+      end
+    end
+
+    it "should return an empty string when the max_length is 0" do
+      FFI::MemoryPointer.from_string_to_wide_string(single_null_string) do |ptr|
+        expect(ptr.read_arbitrary_wide_string_up_to(0)).to eq("")
       end
     end
 
@@ -122,6 +138,30 @@ describe "FFI::MemoryPointer", :if => Puppet.features.microsoft_windows? do
 
         read_string = ptr.read_arbitrary_wide_string_up_to(ptr.size / 2, :single_null, :invalid => :replace)
         expect(read_string).to eq("hello invalid world\uFFFD")
+      end
+    end
+
+    it "should raise an IndexError if there isn't a null terminator" do
+      # This only works when using a memory pointer with a known number of cells
+      # and size per cell, but not arbitrary Pointers
+      FFI::MemoryPointer.new(:wchar, 1) do |ptr|
+        ptr.write_array_of_uint8(a_wide_bytes)
+
+        expect {
+          ptr.read_arbitrary_wide_string_up_to(42)
+        }.to raise_error(IndexError, /out of bounds/)
+      end
+    end
+
+    it "should raise an IndexError if there isn't a double null terminator" do
+      # This only works when using a memory pointer with a known number of cells
+      # and size per cell, but not arbitrary Pointers
+      FFI::MemoryPointer.new(:wchar, 1) do |ptr|
+        ptr.write_array_of_uint8(a_wide_bytes)
+
+        expect {
+          ptr.read_arbitrary_wide_string_up_to(42, :double_null)
+        }.to raise_error(IndexError, /out of bounds/)
       end
     end
   end
