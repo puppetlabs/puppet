@@ -110,13 +110,16 @@ module Puppet::Util::Windows
 
     private
 
-    def reg_enum_key(key, index, max_key_length = Win32::Registry::Constants::MAX_KEY_LENGTH)
+    # max number of wide characters including NULL terminator
+    MAX_KEY_CHAR_LENGTH = 255 + 1
+
+    def reg_enum_key(key, index, max_key_char_length = MAX_KEY_CHAR_LENGTH)
       subkey, filetime = nil, nil
 
       FFI::MemoryPointer.new(:dword) do |subkey_length_ptr|
         FFI::MemoryPointer.new(FFI::WIN32::FILETIME.size) do |filetime_ptr|
-          FFI::MemoryPointer.new(:wchar, max_key_length) do |subkey_ptr|
-            subkey_length_ptr.write_dword(max_key_length)
+          FFI::MemoryPointer.new(:wchar, max_key_char_length) do |subkey_ptr|
+            subkey_length_ptr.write_dword(max_key_char_length)
 
             # RegEnumKeyEx cannot be called twice to properly size the buffer
             result = RegEnumKeyExW(key.hkey, index,
@@ -141,7 +144,10 @@ module Puppet::Util::Windows
       [subkey, filetime]
     end
 
-    def reg_enum_value(key, index, max_value_length = Win32::Registry::Constants::MAX_VALUE_LENGTH)
+    # max number of wide characters including NULL terminator
+    MAX_VALUE_CHAR_LENGTH = 16383 + 1
+
+    def reg_enum_value(key, index, max_value_length = MAX_VALUE_CHAR_LENGTH)
       subkey, type, data = nil, nil, nil
 
       FFI::MemoryPointer.new(:dword) do |subkey_length_ptr|
