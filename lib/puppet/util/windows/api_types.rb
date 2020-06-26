@@ -70,20 +70,22 @@ module Puppet::Util::Windows::APITypes
     #   null_terminator = :double_null, then the terminating sequence is four bytes of zero.  This is UNIT32 = 0
     # @param encode_options [Hash] Accepts the same option hash that may be passed to String#encode in Ruby
     def read_arbitrary_wide_string_up_to(max_char_length = 512, null_terminator = :single_null, encode_options = {})
-      if null_terminator != :single_null && null_terminator != :double_null
-        raise _("Unable to read wide strings with %{null_terminator} terminal nulls") % { null_terminator: null_terminator }
-      end
+      idx = case null_terminator
+            when :single_null
+              # find index of wide null between 0 and max (exclusive)
+              (0...max_char_length).find do |i|
+                get_uint16(i * 2) == 0
+              end
+            when :double_null
+              # find index of double-wide null between 0 and max - 1 (exclusive)
+              (0...max_char_length - 1).find do |i|
+                get_uint32(i * 2) == 0
+              end
+            else
+              raise _("Unable to read wide strings with %{null_terminator} terminal nulls") % { null_terminator: null_terminator }
+            end
 
-      terminator_width = null_terminator == :single_null ? 1 : 2
-      reader_method = null_terminator == :single_null ? :get_uint16 : :get_uint32
-
-      # Look for a null terminating characters; if found, read up to that null (exclusive)
-      (0...max_char_length - terminator_width).each do |i|
-        return read_wide_string(i, Encoding::UTF_8, false, encode_options) if send(reader_method, (i * 2)) == 0
-      end
-
-      # String is longer than the max; read just to the max
-      read_wide_string(max_char_length, Encoding::UTF_8, false, encode_options)
+      read_wide_string(idx || max_char_length, Encoding::UTF_8, false, encode_options)
     end
 
     def read_win32_local_pointer(&block)

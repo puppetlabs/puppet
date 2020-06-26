@@ -104,6 +104,22 @@ describe "FFI::MemoryPointer", :if => Puppet.features.microsoft_windows? do
       end
     end
 
+    it "detects trailing single null wchar" do
+      FFI::MemoryPointer.from_string_to_wide_string(single_null_string) do |ptr|
+        expect(ptr).to receive(:read_wide_string).with(string.length, anything, anything, anything).and_call_original
+
+        expect(ptr.read_arbitrary_wide_string_up_to).to eq(string)
+      end
+    end
+
+    it "detects trailing double null wchar" do
+      FFI::MemoryPointer.from_string_to_wide_string(double_null_string) do |ptr|
+        expect(ptr).to receive(:read_wide_string).with(string.length, anything, anything, anything).and_call_original
+
+        expect(ptr.read_arbitrary_wide_string_up_to(512, :double_null)).to eq(string)
+      end
+    end
+
     it "should raises an IndexError if max_length is negative" do
       FFI::MemoryPointer.from_string_to_wide_string(single_null_string) do |ptr|
         expect {
