@@ -23,7 +23,7 @@ module Puppet::Util::Windows::APITypes
 
     def self.from_string_to_wide_string(str, &block)
       str = Puppet::Util::Windows::String.wide_string(str)
-      FFI::MemoryPointer.from_wide_string(str) { |ptr| yield ptr }
+      FFI::MemoryPointer.from_wide_string(str, &block)
 
       # ptr has already had free called, so nothing to return
       nil
@@ -89,15 +89,12 @@ module Puppet::Util::Windows::APITypes
     end
 
     def read_win32_local_pointer(&block)
-      ptr = nil
+      ptr = read_pointer
       begin
-        ptr = read_pointer
         yield ptr
       ensure
-        if ptr && ! ptr.null?
-          if FFI::WIN32::LocalFree(ptr.address) != FFI::Pointer::NULL_HANDLE
-            Puppet.debug "LocalFree memory leak"
-          end
+        if !ptr.null? && FFI::WIN32::LocalFree(ptr.address) != FFI::Pointer::NULL_HANDLE
+          Puppet.debug "LocalFree memory leak"
         end
       end
 
@@ -106,18 +103,16 @@ module Puppet::Util::Windows::APITypes
     end
 
     def read_com_memory_pointer(&block)
-      ptr = nil
+      ptr = read_pointer
       begin
-        ptr = read_pointer
         yield ptr
       ensure
-        FFI::WIN32::CoTaskMemFree(ptr) if ptr && ! ptr.null?
+        FFI::WIN32::CoTaskMemFree(ptr) unless ptr.null?
       end
 
       # ptr has already had CoTaskMemFree called, so nothing to return
       nil
     end
-
 
     alias_method :write_dword, :write_uint32
     alias_method :write_word, :write_uint16
