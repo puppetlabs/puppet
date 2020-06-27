@@ -68,7 +68,14 @@ module Puppet::Test
     #  any individual tests.
     # @return nil
     def self.before_all_tests()
-      # Make sure that all of the setup is also done for any before(:all) blocks
+      # The process environment is a shared, persistent resource.
+      # Can't use Puppet.features.microsoft_windows? as it may be mocked out in a test.  This can cause test recurring test failures
+      if (!!File::ALT_SEPARATOR)
+        mode = :windows
+      else
+        mode = :posix
+      end
+      $old_env = Puppet::Util.get_environment(mode)
     end
 
     # Call this method once, at the end of a test run, when no more tests
@@ -117,15 +124,6 @@ module Puppet::Test
             :@cache_class    => indirector.instance_variable_get(:@cache_class)
         }
       end
-
-      # The process environment is a shared, persistent resource.
-      # Can't use Puppet.features.microsoft_windows? as it may be mocked out in a test.  This can cause test recurring test failures
-      if (!!File::ALT_SEPARATOR)
-        mode = :windows
-      else
-        mode = :posix
-      end
-      $old_env = Puppet::Util.get_environment(mode)
 
       # So is the load_path
       $old_load_path = $LOAD_PATH.dup
