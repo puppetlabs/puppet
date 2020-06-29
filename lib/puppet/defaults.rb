@@ -1908,7 +1908,7 @@ EOT
       already ongoing puppet agent instance.
 
       This argument is by default disabled (value set to 0). In this case puppet agent will
-      immediatly exit if it cannot run at that moment. When a value other than 0 is set, this
+      immediately exit if it cannot run at that moment. When a value other than 0 is set, this
       can also be used in combination with the `maxwaitforlock` argument.
       #{AS_DURATION}",
     },
