@@ -180,5 +180,43 @@ describe "Puppet::Util::Windows::User", :if => Puppet::Util::Platform.windows? d
         expect { Puppet::Util::Windows::User.check_token_membership }.not_to raise_error
       end
     end
+
+    describe "default_system_account?" do
+      it "should succesfully identify 'SYSTEM' user as a default system account" do
+        allow(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('SYSTEM').and_return(Puppet::Util::Windows::SID::LocalSystem)
+        expect(Puppet::Util::Windows::User.default_system_account?('SYSTEM')).to eq(true)
+      end
+
+      it "should succesfully identify 'NETWORK SERVICE' user as a default system account" do
+        allow(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('NETWORK SERVICE').and_return(Puppet::Util::Windows::SID::NtNetwork)
+        expect(Puppet::Util::Windows::User.default_system_account?('NETWORK SERVICE')).to eq(true)
+      end
+
+      it "should succesfully identify 'LOCAL SERVICE' user as a default system account" do
+        allow(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('LOCAL SERVICE').and_return(Puppet::Util::Windows::SID::NtLocal)
+        expect(Puppet::Util::Windows::User.default_system_account?('LOCAL SERVICE')).to eq(true)
+      end
+
+      it "should not identify user with unknown sid as a default system account" do
+        allow(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('UnknownUser').and_return(Puppet::Util::Windows::SID::Null)
+        expect(Puppet::Util::Windows::User.default_system_account?('UnknownUser')).to eq(false)
+      end
+    end
+
+    describe "localsystem?" do
+      before do
+        allow(Puppet::Util::Windows::ADSI).to receive(:computer_name).and_return("myPC")
+      end
+
+      ['LocalSystem', '.\LocalSystem', 'myPC\LocalSystem', 'lOcALsysTem'].each do |input|
+        it "should succesfully identify #{input} as the 'LocalSystem' account" do
+          expect(Puppet::Util::Windows::User.localsystem?(input)).to eq(true)
+        end
+      end
+
+      it "should not identify any other user as the 'LocalSystem' account" do
+        expect(Puppet::Util::Windows::User.localsystem?('OtherUser')).to eq(false)
+      end
+    end
   end
 end

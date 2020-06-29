@@ -16,6 +16,22 @@ module Puppet::Util::Windows::User
   end
   module_function :admin?
 
+  # The name of the account in all locales is `LocalSystem`. `.\LocalSystem` or `ComputerName\LocalSystem' can also be used.
+  # This account is not recognized by the security subsystem, so you cannot specify its name in a call to the `LookupAccountName` function.
+  # https://docs.microsoft.com/en-us/windows/win32/services/localsystem-account
+  def localsystem?(name)
+    ["LocalSystem", ".\\LocalSystem", "#{Puppet::Util::Windows::ADSI.computer_name}\\LocalSystem"].any?{ |s| s.casecmp(name) == 0 }
+  end
+  module_function :localsystem?
+
+  # Check if a given user is one of the default system accounts
+  # These accounts do not have a password and all checks done through logon attempt will fail
+  # https://docs.microsoft.com/en-us/windows/security/identity-protection/access-control/local-accounts#default-local-system-accounts
+  def default_system_account?(name)
+    user_sid = Puppet::Util::Windows::SID.name_to_sid(name)
+    [Puppet::Util::Windows::SID::LocalSystem, Puppet::Util::Windows::SID::NtLocal, Puppet::Util::Windows::SID::NtNetwork].include?(user_sid)
+  end
+  module_function :default_system_account?
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/ee207397(v=vs.85).aspx
   SECURITY_MAX_SID_SIZE = 68
