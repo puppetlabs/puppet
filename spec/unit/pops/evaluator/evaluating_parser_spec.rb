@@ -1578,7 +1578,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       let(:applicator) { double('apply_executor') }
 
       it 'invokes an apply_executor' do
-        expect(applicator).to receive(:apply).with(['arg1', 'arg2'], nil, scope).and_return(:result)
+        expect(applicator).to receive(:apply).with(
+          ['arg1', 'arg2'],
+          instance_of(Puppet::Pops::Model::BlockExpression),
+          scope).and_return(:result)
         src = "apply('arg1', 'arg2') { }"
         Puppet.override(apply_executor: applicator) do
           expect(parser.evaluate_string(scope, src)).to eq(:result)
@@ -1591,6 +1594,17 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           instance_of(Puppet::Pops::Model::ResourceExpression),
           scope).and_return(:result)
         src = "apply(['arg1']) { notify { 'hello': } }"
+        Puppet.override(apply_executor: applicator) do
+          expect(parser.evaluate_string(scope, src)).to eq(:result)
+        end
+      end
+
+      it 'returns a BlockExpression with an empty apply block' do
+        expect(applicator).to receive(:apply).with(
+          [['arg1']],
+          instance_of(Puppet::Pops::Model::BlockExpression),
+          scope).and_return(:result)
+        src = "apply(['arg1']) { }"
         Puppet.override(apply_executor: applicator) do
           expect(parser.evaluate_string(scope, src)).to eq(:result)
         end
