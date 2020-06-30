@@ -218,7 +218,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     return formatter if formatter
 
     raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new(
-            _("No supported formats are acceptable (Accept: %{accepted_formats})") % { accepted_formats: formats },
+            _("No supported formats are acceptable (Accept: %{accepted_formats})") % { accepted_formats: formats.map(&:mime).join(', ') },
             Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT)
   end
 

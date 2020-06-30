@@ -344,7 +344,8 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
 
       expect {
         handler.call(request, response)
-      }.to raise_error(Puppet::Network::HTTP::Error::HTTPNotAcceptableError, /No supported formats are acceptable/)
+      }.to raise_error(Puppet::Network::HTTP::Error::HTTPNotAcceptableError,
+                       %r{No supported formats are acceptable \(Accept: application/json, text/pson\)})
     end
 
     it "should return [] when searching returns an empty array" do
