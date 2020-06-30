@@ -930,7 +930,7 @@ Puppet::Type.newtype(:file) do
           # that out.
         end
 
-        fail_if_checksum_is_wrong(file.path, content_checksum) if validate_checksum?
+        fail_if_checksum_is_wrong(file.path, content_checksum)
       end
     else
       umask = mode ? 000 : 022
@@ -1040,17 +1040,22 @@ Puppet::Type.newtype(:file) do
     end
   end
 
-  # Should we validate the checksum of the file we're writing?
-  def validate_checksum?
-    self[:checksum] !~ /time/
-  end
-
   # Make sure the file we wrote out is what we think it is.
+  # @param [String] path to the file
+  # @param [String] the checksum for the local file
+  #
+  # @api private
+  #
   def fail_if_checksum_is_wrong(path, content_checksum)
-    newsum = parameter(:checksum).sum_file(path)
-    return if [:absent, nil, content_checksum].include?(newsum)
+    return if SOURCE_ONLY_CHECKSUMS.include?(self[:checksum])
 
-    self.fail _("File written to disk did not match checksum; discarding changes (%{content_checksum} vs %{newsum})") % { content_checksum: content_checksum, newsum: newsum }
+    # if we're explicitly managing checksum and value, verify it matches
+    if self[:checksum] && self[:checksum_value]
+      desired_checksum = "{#{self[:checksum]}}#{self[:checksum_value]}"
+      if content_checksum != desired_checksum
+        self.fail _("File written to disk did not match desired checksum; discarding changes (%{content_checksum} vs %{desired_checksum})") % { content_checksum: content_checksum, desired_checksum: desired_checksum }
+      end
+    end
   end
 
   def write_temporary_file?

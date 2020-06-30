@@ -1488,8 +1488,6 @@ describe Puppet::Type.type(:file) do
         it 'fails if the checksum_value parameter and written file do not match' do
           skip if checksum_type =~ /^(ctime|mtime)/
 
-          pending("PUP-10368")
-
           File.write(source, FILE_CONTENT)
           file[:checksum_value] = INVALID_CHECKSUM_VALUES[checksum_type]
 
@@ -1600,8 +1598,6 @@ describe Puppet::Type.type(:file) do
         end
 
         it 'fails if the checksum_value parameter and written file do not match' do
-          pending("PUP-10368")
-
           file[:checksum_value] = INVALID_CHECKSUM_VALUES[checksum_type]
 
           expect {
