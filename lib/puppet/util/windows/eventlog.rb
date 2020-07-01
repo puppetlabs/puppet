@@ -140,12 +140,7 @@ class Puppet::Util::Windows::EventLog
   # @api private
   def from_string_to_wide_string(str, &block)
     str = wide_string(str)
-    FFI::MemoryPointer.new(:uchar, str.bytesize) do |ptr|
-      # uchar here is synonymous with byte
-      ptr.put_array_of_uchar(0, str.bytes.to_a)
-
-      yield ptr
-    end
+    FFI::MemoryPointer.from_wide_string(str) { |ptr| yield ptr }
 
     # ptr has already had free called, so nothing to return
     nil
