@@ -150,6 +150,28 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         )).to_stdout
       end
     end
+
+    it "applies binary data in a cached catalog" do
+      catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'some title':
+            message => Binary.new('aGk=')
+          }
+        MANIFEST
+
+      catalog_dir = File.join(Puppet[:client_datadir], 'catalog')
+      Puppet::FileSystem.mkpath(catalog_dir)
+      cached_catalog = "#{File.join(catalog_dir, Puppet[:certname])}.json"
+      File.write(cached_catalog, catalog.render(:rich_data_json))
+
+      expect {
+        Puppet[:report] = false
+        Puppet[:use_cached_catalog] = true
+        Puppet[:usecacheonfailure] = false
+        agent.command_line.args << '-t'
+        agent.run
+      }.to exit_with(2)
+       .and output(%r{defined 'message' as 'hi'}).to_stdout
+    end
   end
 
   context 'static catalogs' do
