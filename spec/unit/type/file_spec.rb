@@ -4,17 +4,17 @@ describe Puppet::Type.type(:file) do
   include PuppetSpec::Files
 
   # precomputed checksum values for FILE_CONTENT
-  FILE_CONTENT = ''.freeze
+  FILE_CONTENT = 'file content'.freeze
   CHECKSUM_VALUES = {
-    md5: 'd41d8cd98f00b204e9800998ecf8427e',
-    md5lite: 'd41d8cd98f00b204e9800998ecf8427e',
-    sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-    sha256lite: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-    sha1: 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
-    sha1lite: 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
-    sha224: 'd14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f',
-    sha384: '38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b',
-    sha512: 'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e',
+    md5: 'd10b4c3ff123b26dc068d43a8bef2d23',
+    md5lite: 'd10b4c3ff123b26dc068d43a8bef2d23',
+    sha256: 'e0ac3601005dfa1864f5392aabaf7d898b1b5bab854f1acb4491bcd806b76b0c',
+    sha256lite: 'e0ac3601005dfa1864f5392aabaf7d898b1b5bab854f1acb4491bcd806b76b0c',
+    sha1: '87758871f598e1a3b4679953589ae2f57a0bb43c',
+    sha1lite: '87758871f598e1a3b4679953589ae2f57a0bb43c',
+    sha224: '2aefaaa5f4d8f17f82f3e1bb407e190cede9aa1311fa4533ce505531',
+    sha384: '61c7783501ebd90233650357fefbe5a141b7618f907b8f043bbaa92c0f610c785a641ddd479fa81d650cd86e29aa6858',
+    sha512: '2fb1877301854ac92dd518018f97407a0a88bb696bfef0a51e9efbd39917353500009e15bd72c3f0e4bf690115870bfab926565d5ad97269d922dbbb41261221',
     mtime: 'Jan 26 13:59:49 2016',
     ctime: 'Jan 26 13:59:49 2016'
   }.freeze
@@ -1187,7 +1187,7 @@ describe Puppet::Type.type(:file) do
     describe "when resource mode is not supplied" do
       context "and content is supplied" do
         it "should default to 0644 mode" do
-          file = described_class.new(:path => path, :content => "file content")
+          file = described_class.new(:path => path, :content => FILE_CONTENT)
 
           file.write file.parameter(:content)
 
@@ -1490,7 +1490,7 @@ describe Puppet::Type.type(:file) do
 
           pending("PUP-10368")
 
-          Puppet::FileSystem.touch(source)
+          File.write(source, FILE_CONTENT)
           file[:checksum_value] = INVALID_CHECKSUM_VALUES[checksum_type]
 
           expect {
@@ -1501,7 +1501,7 @@ describe Puppet::Type.type(:file) do
         end
 
         it 'replaces a file from a source when the checksum matches' do
-          Puppet::FileSystem.touch(source)
+          File.write(source, FILE_CONTENT)
           file[:checksum_value] = CHECKSUM_VALUES[checksum_type]
 
           file.property(:checksum_value).sync
