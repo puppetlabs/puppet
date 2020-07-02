@@ -1498,6 +1498,20 @@ describe Puppet::Type.type(:file) do
           expect(Puppet::FileSystem).to_not be_exist(file[:path])
         end
 
+        it 'fails if the checksum_value parameter does not match, but the metadata does' do
+          skip if checksum_type =~ /^(ctime|mtime)/
+
+          File.write(source, FILE_CONTENT)
+          file[:checksum_value] = INVALID_CHECKSUM_VALUES[checksum_type]
+          allow(file.parameter(:source).metadata).to receive(:checksum).and_return(file[:checksum_value])
+
+          expect {
+            file.property(:checksum_value).sync
+          }.to raise_error(Puppet::Error, /File written to disk did not match desired checksum/)
+
+          expect(Puppet::FileSystem).to_not be_exist(file[:path])
+        end
+
         it 'replaces a file from a source when the checksum matches' do
           File.write(source, FILE_CONTENT)
           file[:checksum_value] = CHECKSUM_VALUES[checksum_type]

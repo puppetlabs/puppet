@@ -401,8 +401,12 @@ Puppet::Type.newtype(:file) do
     end
   end
 
-  CREATORS = [:content, :source, :target]
-  SOURCE_ONLY_CHECKSUMS = [:none, :ctime, :mtime]
+  # mutually exclusive ways to create files
+  CREATORS = [:content, :source, :target].freeze
+
+  # This is both "checksum types that can't be used with the content property"
+  # and "checksum types that are not digest based"
+  SOURCE_ONLY_CHECKSUMS = [:none, :ctime, :mtime].freeze
 
   validate do
     creator_count = 0
@@ -930,7 +934,7 @@ Puppet::Type.newtype(:file) do
           # that out.
         end
 
-        fail_if_checksum_is_wrong(file.path, content_checksum)
+        fail_if_checksum_is_wrong(property, file.path, content_checksum)
       end
     else
       umask = mode ? 000 : 022
@@ -1041,20 +1045,33 @@ Puppet::Type.newtype(:file) do
   end
 
   # Make sure the file we wrote out is what we think it is.
+  # @param [Puppet::Parameter] property the param or property that wrote the file, or nil
   # @param [String] path to the file
   # @param [String] the checksum for the local file
   #
   # @api private
   #
-  def fail_if_checksum_is_wrong(path, content_checksum)
+  def fail_if_checksum_is_wrong(property, path, content_checksum)
+    desired_checksum = desired_checksum(property, path)
+
+    if desired_checksum && content_checksum != desired_checksum
+      self.fail _("File written to disk did not match desired checksum; discarding changes (%{content_checksum} vs %{desired_checksum})") % { content_checksum: content_checksum, desired_checksum: desired_checksum }
+    end
+  end
+
+  # Return the desired checksum or nil
+  def desired_checksum(property, path)
     return if SOURCE_ONLY_CHECKSUMS.include?(self[:checksum])
 
-    # if we're explicitly managing checksum and value, verify it matches
     if self[:checksum] && self[:checksum_value]
-      desired_checksum = "{#{self[:checksum]}}#{self[:checksum_value]}"
-      if content_checksum != desired_checksum
-        self.fail _("File written to disk did not match desired checksum; discarding changes (%{content_checksum} vs %{desired_checksum})") % { content_checksum: content_checksum, desired_checksum: desired_checksum }
-      end
+      "{#{self[:checksum]}}#{self[:checksum_value]}"
+    elsif property && property.name == :source
+      meta = property.metadata
+      return unless meta
+
+      # due to HttpMetadata the checksum type may fallback to mtime, so recheck
+      return if SOURCE_ONLY_CHECKSUMS.include?(meta.checksum_type)
+      meta.checksum
     end
   end
 
