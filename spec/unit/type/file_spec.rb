@@ -1108,38 +1108,6 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "#write" do
-    describe "when validating the checksum" do
-      before { allow(file).to receive(:validate_checksum?).and_return(true) }
-
-      it "should fail if the checksum parameter and content checksums do not match" do
-        checksum = double('checksum_parameter',  :sum => 'checksum_b', :sum_file => 'checksum_b')
-        allow(file).to receive(:parameter).with(:checksum).and_return(checksum)
-        allow(file).to receive(:parameter).with(:source).and_return(nil)
-
-
-        property = double('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
-        allow(file).to receive(:property).with(:content).and_return(property)
-
-        expect { file.write property }.to raise_error(Puppet::Error) end
-    end
-
-    describe "when not validating the checksum" do
-      before do
-        allow(file).to receive(:validate_checksum?).and_return(false)
-      end
-
-      it "should not fail if the checksum property and content checksums do not match" do
-        checksum = double('checksum_parameter',  :sum => 'checksum_b')
-        allow(file).to receive(:parameter).with(:checksum).and_return(checksum)
-        allow(file).to receive(:parameter).with(:source).and_return(nil)
-
-        property = double('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
-        allow(file).to receive(:property).with(:content).and_return(property)
-
-        expect { file.write property }.to_not raise_error
-      end
-    end
-
     describe "when resource mode is supplied" do
       before do
         allow(file).to receive(:property_fix)
@@ -1211,35 +1179,6 @@ describe Puppet::Type.type(:file) do
           expect(File.stat(file[:path]).mode & 0777).to eq(0644)
         end
       end
-    end
-  end
-
-  describe "#fail_if_checksum_is_wrong" do
-    it "should fail if the checksum of the file doesn't match the expected one" do
-      expect do
-        allow(file.parameter(:checksum)).to receive(:sum_file).and_return('wrong!!')
-        file.instance_eval do
-          fail_if_checksum_is_wrong(self[:path], 'anything!')
-        end
-      end.to raise_error(Puppet::Error, /File written to disk did not match checksum/)
-    end
-
-    it "should not fail if the checksum is correct" do
-      expect do
-        allow(file.parameter(:checksum)).to receive(:sum_file).and_return('anything!')
-        file.instance_eval do
-          fail_if_checksum_is_wrong(self[:path], 'anything!')
-        end
-      end.not_to raise_error
-    end
-
-    it "should not fail if the checksum is absent" do
-      expect do
-        allow(file.parameter(:checksum)).to receive(:sum_file).and_return(nil)
-        file.instance_eval do
-          fail_if_checksum_is_wrong(self[:path], 'anything!')
-        end
-      end.not_to raise_error
     end
   end
 
