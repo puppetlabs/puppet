@@ -3,6 +3,18 @@ require 'spec_helper'
 describe Puppet::Type.type(:file) do
   include PuppetSpec::Files
 
+  INVALID_CHECKSUM_VALUES = {
+    md5: '00000000000000000000000000000000',
+    md5lite: '00000000000000000000000000000000',
+    sha256: '0000000000000000000000000000000000000000000000000000000000000000',
+    sha256lite: '0000000000000000000000000000000000000000000000000000000000000000',
+    sha1: '0000000000000000000000000000000000000000',
+    sha1lite: '0000000000000000000000000000000000000000',
+    sha224: '00000000000000000000000000000000000000000000000000000000',
+    sha384: '000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+    sha512: '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+  }.freeze
+
   let(:path) { tmpfile('file_testing') }
   let(:file) { described_class.new(:path => path, :catalog => catalog) }
   let(:provider) { file.provider }
@@ -1431,8 +1443,11 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when using source" do
+    let(:source) { tmpfile('file_source') }
+
     before do
-      file[:source] = File.expand_path('/one')
+      file[:source] = source
+
       # Contents of an empty file generate the below hash values
       # in case you need to add support for additional algorithms in future
       @checksum_values = {
@@ -1468,6 +1483,36 @@ describe Puppet::Type.type(:file) do
         it 'should validate a valid checksum_value' do
           file[:checksum_value] = @checksum_values[checksum_type]
           expect { file.validate }.to_not raise_error
+        end
+
+        it 'fails if the checksum_value parameter and written file do not match' do
+          skip if checksum_type =~ /^(ctime|mtime)/
+
+          pending("PUP-10368")
+
+          Puppet::FileSystem.touch(source)
+          file[:checksum_value] = INVALID_CHECKSUM_VALUES[checksum_type]
+
+          expect {
+            file.property(:checksum_value).sync
+          }.to raise_error(Puppet::Error, /File written to disk did not match desired checksum/)
+
+          expect(Puppet::FileSystem).to_not be_exist(file[:path])
+        end
+
+        it 'replaces a file from a source when the checksum matches' do
+          Puppet::FileSystem.touch(source)
+          file[:checksum_value] = @checksum_values[checksum_type]
+
+          file.property(:checksum_value).sync
+          checksum = file.parameter(:checksum).sum_file(file[:path])
+
+          if checksum_type =~ /^(ctime|mtime)/
+            # file on disk ctime/mtime will be later than expected time
+            expect(checksum).to match(/{#{checksum_type}}/)
+          else
+            expect(checksum).to eq("{#{checksum_type}}#{file[:checksum_value]}")
+          end
         end
       end
     end
@@ -1531,7 +1576,7 @@ describe Puppet::Type.type(:file) do
 
   describe "when using content" do
     before do
-      file[:content] = 'file contents'
+      file[:content] = ''
       @checksum_values = {
         :md5 => 'd41d8cd98f00b204e9800998ecf8427e',
         :md5lite => 'd41d8cd98f00b204e9800998ecf8427e',
@@ -1564,6 +1609,31 @@ describe Puppet::Type.type(:file) do
           file[:checksum_value] = @checksum_values[checksum_type]
           expect { file.validate }.to_not raise_error
         end
+
+        it 'fails if the checksum_value parameter and written file do not match' do
+          pending("PUP-10368")
+          file[:checksum_value] = INVALID_CHECKSUM_VALUES[checksum_type]
+
+          expect {
+            file.property(:content).sync
+          }.to raise_error(Puppet::Error, /File written to disk did not match desired checksum/)
+
+          expect(Puppet::FileSystem).to_not be_exist(file[:path])
+        end
+
+        it 'replaces a file from content when the checksum matches' do
+          file[:checksum_value] = @checksum_values[checksum_type]
+
+          file.property(:content).sync
+          checksum = file.parameter(:checksum).sum_file(file[:path])
+
+          if checksum_type =~ /^(ctime|mtime)/
+            # file on disk ctime/mtime will be later than expected time
+            expect(checksum).to match(/{#{checksum_type}}/)
+          else
+            expect(checksum).to eq("{#{checksum_type}}#{file[:checksum_value]}")
+          end
+        end
       end
     end
 
@@ -1595,6 +1665,13 @@ describe Puppet::Type.type(:file) do
     it 'should validate a valid checksum_value' do
       file[:checksum_value] = ''
       expect { file.validate }.to_not raise_error
+    end
+
+    it 'writes a file' do
+      file[:ensure] = :file
+      file.property(:ensure).sync
+
+      expect(file.parameter(:checksum).sum_file(file[:path])).to eq('{none}')
     end
   end
 
