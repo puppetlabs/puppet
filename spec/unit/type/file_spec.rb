@@ -3,6 +3,22 @@ require 'spec_helper'
 describe Puppet::Type.type(:file) do
   include PuppetSpec::Files
 
+  # precomputed checksum values for FILE_CONTENT
+  FILE_CONTENT = ''.freeze
+  CHECKSUM_VALUES = {
+    md5: 'd41d8cd98f00b204e9800998ecf8427e',
+    md5lite: 'd41d8cd98f00b204e9800998ecf8427e',
+    sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    sha256lite: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    sha1: 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
+    sha1lite: 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
+    sha224: 'd14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f',
+    sha384: '38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b',
+    sha512: 'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e',
+    mtime: 'Jan 26 13:59:49 2016',
+    ctime: 'Jan 26 13:59:49 2016'
+  }.freeze
+
   INVALID_CHECKSUM_VALUES = {
     md5: '00000000000000000000000000000000',
     md5lite: '00000000000000000000000000000000',
@@ -1447,22 +1463,6 @@ describe Puppet::Type.type(:file) do
 
     before do
       file[:source] = source
-
-      # Contents of an empty file generate the below hash values
-      # in case you need to add support for additional algorithms in future
-      @checksum_values = {
-        :md5 => 'd41d8cd98f00b204e9800998ecf8427e',
-        :md5lite => 'd41d8cd98f00b204e9800998ecf8427e',
-        :sha256 => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-        :sha256lite => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-        :sha1 => 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
-        :sha1lite => 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
-        :sha224 => 'd14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f',
-        :sha384 => '38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b',
-        :sha512 => 'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e',
-        :mtime => 'Jan 26 13:59:49 2016',
-        :ctime => 'Jan 26 13:59:49 2016'
-      }
     end
 
     Puppet::Type::File::ParameterChecksum.value_collection.values.reject {|v| v == :none}.each do |checksum_type|
@@ -1481,7 +1481,7 @@ describe Puppet::Type.type(:file) do
         end
 
         it 'should validate a valid checksum_value' do
-          file[:checksum_value] = @checksum_values[checksum_type]
+          file[:checksum_value] = CHECKSUM_VALUES[checksum_type]
           expect { file.validate }.to_not raise_error
         end
 
@@ -1502,7 +1502,7 @@ describe Puppet::Type.type(:file) do
 
         it 'replaces a file from a source when the checksum matches' do
           Puppet::FileSystem.touch(source)
-          file[:checksum_value] = @checksum_values[checksum_type]
+          file[:checksum_value] = CHECKSUM_VALUES[checksum_type]
 
           file.property(:checksum_value).sync
           checksum = file.parameter(:checksum).sum_file(file[:path])
@@ -1575,19 +1575,8 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when using content" do
-    before do
-      file[:content] = ''
-      @checksum_values = {
-        :md5 => 'd41d8cd98f00b204e9800998ecf8427e',
-        :md5lite => 'd41d8cd98f00b204e9800998ecf8427e',
-        :sha256 => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-        :sha256lite => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-        :sha1 => 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
-        :sha1lite => 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
-        :sha224 => 'd14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f',
-        :sha384 => '38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b',
-        :sha512 => 'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e',
-      }
+    before :each do
+      file[:content] = FILE_CONTENT
     end
 
     (Puppet::Type::File::ParameterChecksum.value_collection.values - SOURCE_ONLY_CHECKSUMS).each do |checksum_type|
@@ -1606,12 +1595,13 @@ describe Puppet::Type.type(:file) do
         end
 
         it 'should validate a valid checksum_value' do
-          file[:checksum_value] = @checksum_values[checksum_type]
+          file[:checksum_value] = CHECKSUM_VALUES[checksum_type]
           expect { file.validate }.to_not raise_error
         end
 
         it 'fails if the checksum_value parameter and written file do not match' do
           pending("PUP-10368")
+
           file[:checksum_value] = INVALID_CHECKSUM_VALUES[checksum_type]
 
           expect {
@@ -1622,7 +1612,7 @@ describe Puppet::Type.type(:file) do
         end
 
         it 'replaces a file from content when the checksum matches' do
-          file[:checksum_value] = @checksum_values[checksum_type]
+          file[:checksum_value] = CHECKSUM_VALUES[checksum_type]
 
           file.property(:content).sync
           checksum = file.parameter(:checksum).sum_file(file[:path])
