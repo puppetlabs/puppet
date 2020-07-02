@@ -130,8 +130,7 @@ describe "Puppet defaults" do
       Puppet::Util.withenv( {"PATH" => path }, :windows) do
         Puppet.settings[:path] = "none" # this causes it to ignore the setting
 
-        envhash = Puppet::Util::Windows::Process.get_environment_strings
-        expect(envhash['Path']).to eq(path)
+        expect(Puppet::Util.get_env('Path')).to eq(path)
       end
     end
   end
