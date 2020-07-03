@@ -88,6 +88,14 @@ describe 'Puppet::Type::Service::Provider::Windows',
       expect(provider.status).to eql(:stopped)
     end
 
+    it "should report service as stopped when status cannot be retrieved" do
+      allow(service_util).to receive(:exists?).with(resource[:name]).and_return(true)
+      allow(service_util).to receive(:service_state).with(name).and_raise(Puppet::Error.new('Service query failed: The specified path is invalid.'))
+
+      expect(Puppet).to receive(:warning).with("Status for service #{resource[:name]} could not be retrieved: Service query failed: The specified path is invalid.")
+      expect(provider.status).to eql(:stopped)
+    end
+
     [
       :SERVICE_PAUSED,
       :SERVICE_PAUSE_PENDING

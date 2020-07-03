@@ -109,7 +109,10 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
         raise Puppet::Error.new(_("Unknown service state '%{current_state}' for service '%{resource_name}'") % { current_state: current_state, resource_name: @resource[:name] })
     end
     debug("Service #{@resource[:name]} is #{current_state}")
-    return state
+    state
+  rescue => detail
+    Puppet.warning("Status for service #{@resource[:name]} could not be retrieved: #{detail}")
+    :stopped
   end
 
   def default_timeout
