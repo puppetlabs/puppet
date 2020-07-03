@@ -1072,6 +1072,9 @@ Puppet::Type.newtype(:file) do
       # due to HttpMetadata the checksum type may fallback to mtime, so recheck
       return if SOURCE_ONLY_CHECKSUMS.include?(meta.checksum_type)
       meta.checksum
+    elsif property && property.name == :content
+      str = property.actual_content
+      str ? parameter(:checksum).sum(str) : nil
     end
   end
 

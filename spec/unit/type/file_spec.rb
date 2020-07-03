@@ -1621,6 +1621,16 @@ describe Puppet::Type.type(:file) do
           expect(Puppet::FileSystem).to_not be_exist(file[:path])
         end
 
+        it 'fails if the calculated checksum for the content and written file do not match' do
+          allow(file.parameter(:checksum)).to receive(:sum).and_return(INVALID_CHECKSUM_VALUES[checksum_type])
+
+          expect {
+            file.property(:content).sync
+          }.to raise_error(Puppet::Error, /File written to disk did not match desired checksum/)
+
+          expect(Puppet::FileSystem).to_not be_exist(file[:path])
+        end
+
         it 'replaces a file from content when the checksum matches' do
           file[:checksum_value] = CHECKSUM_VALUES[checksum_type]
 
