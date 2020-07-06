@@ -365,8 +365,17 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
       daemon.set_signal_traps
 
       log_config if Puppet[:daemonize]
-      
-      Puppet.override(ssl_context: wait_for_certificates) do
+
+      # run ssl state machine, waiting if needed
+      ssl_context = wait_for_certificates
+
+      # Each application is responsible for pushing loaders onto the context.
+      # Use the current environment that has already been established, though
+      # it may change later during the configurer run.
+      env = Puppet.lookup(:current_environment)
+      Puppet.override(ssl_context: ssl_context,
+                      current_environment: env,
+                      loaders: Puppet::Pops::Loaders.new(env, true)) do
         if Puppet[:onetime]
           onetime(daemon)
         else

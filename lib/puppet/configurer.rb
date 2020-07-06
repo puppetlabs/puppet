@@ -303,6 +303,15 @@ class Puppet::Configurer
               report.environment = @environment
               query_options = nil
               facts = nil
+
+              new_env = Puppet::Node::Environment.remote(@environment)
+              Puppet.push_context(
+                {
+                  current_environment: new_env,
+                  loaders: Puppet::Pops::Loaders.new(new_env, true)
+                },
+                "Local node environment #{@environment} for configurer transaction"
+              )
             else
               Puppet.info _("Using configured environment '%{env}'") % { env: @environment }
             end
@@ -313,19 +322,18 @@ class Puppet::Configurer
         end
       end
 
-      current_environment = Puppet.lookup(:current_environment)
-      if current_environment.name == @environment.intern
-        local_node_environment = current_environment
-      else
-        local_node_environment = Puppet::Node::Environment.create(@environment,
-                                         current_environment.modulepath,
-                                         current_environment.manifest,
-                                         current_environment.config_version)
+      # This is to maintain compatibility with anyone using this class
+      # aside from agent, apply, device.
+      unless Puppet.lookup(:loaders) { nil }
+        new_env = Puppet::Node::Environment.remote(@environment)
+        Puppet.push_context(
+          {
+            current_environment: new_env,
+            loaders: Puppet::Pops::Loaders.new(new_env, true)
+          },
+          "Local node environment #{@environment} for configurer transaction"
+        )
       end
-      Puppet.push_context({
-        :current_environment => local_node_environment, 
-        :loaders => Puppet::Pops::Loaders.new(local_node_environment, true)
-      }, "Local node environment for configurer transaction")
 
       query_options, facts = get_facts(options) unless query_options
       query_options[:configured_environment] = configured_environment
