@@ -144,7 +144,7 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
         end
       end
 
-      it "requires the caller to URL encode the path" do
+      it "requires the caller to URL encode the path and query when using absolute form" do
         request_line = nil
 
         response_proc = -> (req, res) {
@@ -153,14 +153,31 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
 
         server.start_server(response_proc: response_proc) do |port|
           http = Puppet::Network::HttpPool.http_instance(hostname, port, true)
-          encoded_url = "https://#{hostname}:#{port}/foo%20bar?q=a"
+          params = { 'key' => 'a value' }
+          encoded_url = "https://#{hostname}:#{port}/foo%20bar?q=#{Puppet::Util.uri_query_encode(params.to_json)}"
           http.get(encoded_url)
 
           if legacy_api
             expect(request_line).to eq("GET #{encoded_url} HTTP/1.1\r\n")
           else
-            expect(request_line).to eq("GET /foo%20bar?q=a HTTP/1.1\r\n")
+            expect(request_line).to eq("GET /foo%20bar?q=%7B%22key%22%3A%22a%20value%22%7D HTTP/1.1\r\n")
           end
+        end
+      end
+
+      it "requires the caller to URL encode the path and query when using a path" do
+        request_line = nil
+
+        response_proc = -> (req, res) {
+          request_line = req.request_line
+        }
+
+        server.start_server(response_proc: response_proc) do |port|
+          http = Puppet::Network::HttpPool.http_instance(hostname, port, true)
+          params = { 'key' => 'a value' }
+          http.get("/foo%20bar?q=#{Puppet::Util.uri_query_encode(params.to_json)}")
+
+          expect(request_line).to eq("GET /foo%20bar?q=%7B%22key%22%3A%22a%20value%22%7D HTTP/1.1\r\n")
         end
       end
     end

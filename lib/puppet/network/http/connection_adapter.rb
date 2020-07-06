@@ -156,7 +156,7 @@ class Puppet::Network::HTTP::ConnectionAdapter < Puppet::Network::HTTP::Connecti
       url.query = abs_form.query if abs_form.query
       url
     else
-      URI("#{@site.addr}/#{Puppet::Util.uri_encode(normalize_path(path))}")
+      URI("#{@site.addr}/#{normalize_path(path)}")
     end
   end
 
