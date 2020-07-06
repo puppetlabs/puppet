@@ -122,7 +122,7 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
         Puppet::Network::HttpPool.http_client_class = klass
       end
 
-      it "connects using the scheme, host and port from the http instance" do
+      it "connects using the scheme, host and port from the http instance preserving the URL path and query" do
         request_line = nil
 
         response_proc = -> (req, res) {
@@ -131,15 +131,15 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
 
         server.start_server(response_proc: response_proc) do |port|
           http = Puppet::Network::HttpPool.http_instance(hostname, port, true)
-          path  = "http://bogus.example.com:443/foo"
+          path  = "http://bogus.example.com:443/foo?q=a"
           http.get(path)
 
           if legacy_api
-            # The old API passed the bogus hostname which didn't match
-            # the host we connected to.
-            expect(request_line).to eq("GET http://bogus.example.com:443/foo HTTP/1.1\r\n")
+            # The old API uses 'absolute-form' and passes the bogus hostname
+            # which isn't the host we connected to.
+            expect(request_line).to eq("GET http://bogus.example.com:443/foo?q=a HTTP/1.1\r\n")
           else
-            expect(request_line).to eq("GET /foo HTTP/1.1\r\n")
+            expect(request_line).to eq("GET /foo?q=a HTTP/1.1\r\n")
           end
         end
       end
@@ -153,13 +153,13 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
 
         server.start_server(response_proc: response_proc) do |port|
           http = Puppet::Network::HttpPool.http_instance(hostname, port, true)
-          encoded_url = "https://#{hostname}:#{port}/foo%20bar"
+          encoded_url = "https://#{hostname}:#{port}/foo%20bar?q=a"
           http.get(encoded_url)
 
           if legacy_api
             expect(request_line).to eq("GET #{encoded_url} HTTP/1.1\r\n")
           else
-            expect(request_line).to eq("GET /foo%20bar HTTP/1.1\r\n")
+            expect(request_line).to eq("GET /foo%20bar?q=a HTTP/1.1\r\n")
           end
         end
       end
