@@ -149,12 +149,14 @@ class Puppet::Network::HTTP::ConnectionAdapter < Puppet::Network::HTTP::Connecti
       # though clients are only supposed to send them to proxies, so the proxy knows
       # what upstream server to CONNECT to. This method creates a URL using the
       # scheme/host/port that the connection was created with, and appends the path
-      # portion of the absolute-form. The resulting request will use "origin-form"
+      # and query portions of the absolute-form. The resulting request will use "origin-form"
       # as it should have done all along.
-      url = URI(path)
-      URI("#{@site.addr}/#{normalize_path(url.path)}")
+      abs_form = URI(path)
+      url = URI("#{@site.addr}/#{normalize_path(abs_form.path)}")
+      url.query = abs_form.query if abs_form.query
+      url
     else
-      URI("#{@site.addr}/#{Puppet::Util.uri_encode(normalize_path(path))}")
+      URI("#{@site.addr}/#{normalize_path(path)}")
     end
   end
 

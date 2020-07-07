@@ -8,6 +8,8 @@ describe Puppet::Network::HTTP::Connection do
   let(:port) { 8140 }
   let(:path) { '/foo' }
   let(:url) { "https://#{host}:#{port}#{path}" }
+  let(:params) { { 'key' => 'a value' } }
+  let(:encoded_url_with_params) { "#{url}?%7B%22key%22:%22a%20value%22%7D" }
 
   shared_examples_for "an HTTP connection" do |klass, legacy_api|
     subject { klass.new(host, port, :verify => Puppet::SSL::Validator.no_validator) }
@@ -81,9 +83,9 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "stringifies keys and encodes values in the query" do
-        stub_request(:get, url).with(query: "foo=bar%3Dbaz")
+        stub_request(:get, encoded_url_with_params)
 
-        subject.request_get("#{path}?foo=bar=baz") { |_| }
+        subject.request_get("#{path}?#{params.to_json}") { |_| }
       end
 
       it "merges custom headers with default ones" do
@@ -101,9 +103,10 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "accepts a URL string as the path" do
-        stub_request(:get, url)
+        url_with_query = "#{url}?foo=bar"
+        stub_request(:get, url_with_query)
 
-        response = subject.request_get(url) { |_| }
+        response = subject.request_get(url_with_query) { |_| }
         expect(response).to be_an_instance_of(Net::HTTPOK)
       end
     end
@@ -118,9 +121,9 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "stringifies keys and encodes values in the query" do
-        stub_request(:head, url).with(query: "foo=bar%3Dbaz")
+        stub_request(:head, encoded_url_with_params)
 
-        subject.request_head("#{path}?foo=bar=baz") { |_| }
+        subject.request_head("#{path}?#{params.to_json}") { |_| }
       end
 
       it "merges custom headers with default ones" do
@@ -138,9 +141,10 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "accepts a URL string as the path" do
-        stub_request(:head, url)
+        url_with_query = "#{url}?foo=bar"
+        stub_request(:head, url_with_query)
 
-        response = subject.request_head(url) { |_| }
+        response = subject.request_head(url_with_query) { |_| }
         expect(response).to be_an_instance_of(Net::HTTPOK)
       end
     end
@@ -155,9 +159,9 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "stringifies keys and encodes values in the query" do
-        stub_request(:post, url).with(query: "foo=bar%3Dbaz")
+        stub_request(:post, encoded_url_with_params)
 
-        subject.request_post("#{path}?foo=bar=baz", "") { |_| }
+        subject.request_post("#{path}?#{params.to_json}", "") { |_| }
       end
 
       it "merges custom headers with default ones" do
@@ -175,9 +179,10 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "accepts a URL string as the path" do
-        stub_request(:post, url)
+        url_with_query = "#{url}?foo=bar"
+        stub_request(:post, url_with_query)
 
-        response = subject.request_post(url, "") { |_| }
+        response = subject.request_post(url_with_query, "") { |_| }
         expect(response).to be_an_instance_of(Net::HTTPOK)
       end
     end
@@ -190,9 +195,9 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "stringifies keys and encodes values in the query" do
-        stub_request(:get, url).with(query: "foo=bar%3Dbaz")
+        stub_request(:get, encoded_url_with_params)
 
-        subject.get("#{path}?foo=bar=baz")
+        subject.get("#{path}?#{params.to_json}")
       end
 
       it "merges custom headers with default ones" do
@@ -217,9 +222,10 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "accepts a URL string as the path" do
-        stub_request(:get, url)
+        url_with_query = "#{url}?foo=bar"
+        stub_request(:get, url_with_query)
 
-        response = subject.get(url)
+        response = subject.get(url_with_query)
         expect(response).to be_an_instance_of(Net::HTTPOK)
       end
     end
@@ -232,9 +238,9 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "stringifies keys and encodes values in the query" do
-        stub_request(:head, url).with(query: "foo=bar%3Dbaz")
+        stub_request(:head, encoded_url_with_params)
 
-        subject.head("#{path}?foo=bar=baz")
+        subject.head("#{path}?#{params.to_json}")
       end
 
       it "merges custom headers with default ones" do
@@ -252,9 +258,10 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "accepts a URL string as the path" do
-        stub_request(:head, url)
+        url_with_query = "#{url}?foo=bar"
+        stub_request(:head, url_with_query)
 
-        response = subject.head(url)
+        response = subject.head(url_with_query)
         expect(response).to be_an_instance_of(Net::HTTPOK)
       end
     end
@@ -267,9 +274,9 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "stringifies keys and encodes values in the query" do
-        stub_request(:put, url).with(query: "foo=bar%3Dbaz")
+        stub_request(:put, encoded_url_with_params)
 
-        subject.put("#{path}?foo=bar=baz", "")
+        subject.put("#{path}?#{params.to_json}", "")
       end
 
       it "includes custom headers" do
@@ -307,9 +314,10 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "accepts a URL string as the path" do
-        stub_request(:put, url)
+        url_with_query = "#{url}?foo=bar"
+        stub_request(:put, url_with_query)
 
-        response = subject.put(url, '')
+        response = subject.put(url_with_query, '')
         expect(response).to be_an_instance_of(Net::HTTPOK)
       end
     end
@@ -322,9 +330,9 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "stringifies keys and encodes values in the query" do
-        stub_request(:post, url).with(query: "foo=bar%3Dbaz")
+        stub_request(:post, encoded_url_with_params)
 
-        subject.post("#{path}?foo=bar=baz", "", {'Content-Type' => 'text/plain'})
+        subject.post("#{path}?#{params.to_json}", "", {'Content-Type' => 'text/plain'})
       end
 
       it "includes custom headers" do
@@ -362,9 +370,10 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "accepts a URL string as the path" do
-        stub_request(:post, url)
+        url_with_query = "#{url}?foo=bar"
+        stub_request(:post, url_with_query)
 
-        response = subject.post(url, '')
+        response = subject.post(url_with_query, '')
         expect(response).to be_an_instance_of(Net::HTTPOK)
       end
     end
@@ -383,9 +392,9 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "stringifies keys and encodes values in the query" do
-        stub_request(:delete, url).with(query: "foo=bar%3Dbaz")
+        stub_request(:delete, encoded_url_with_params)
 
-        subject.delete("#{path}?foo=bar=baz")
+        subject.delete("#{path}?#{params.to_json}")
       end
 
       it "returns the response" do
@@ -403,9 +412,10 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "accepts a URL string as the path" do
-        stub_request(:delete, url)
+        url_with_query = "#{url}?foo=bar"
+        stub_request(:delete, url_with_query)
 
-        response = subject.delete(url)
+        response = subject.delete(url_with_query)
         expect(response).to be_an_instance_of(Net::HTTPOK)
       end
     end
