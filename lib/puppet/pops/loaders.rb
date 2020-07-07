@@ -140,7 +140,7 @@ class Loaders
   # @param name [String,Symbol] the name of the entity being set
   # @param origin [URI] the origin or the source where the type is defined
   # @api private
-  def self.register_runtime3_type(name, origin)
+  def self.register_runtime3_type(name, origin, ignore_duplicate = false)
     loaders = Puppet.lookup(:loaders) { nil }
     return nil if loaders.nil?
 
@@ -150,6 +150,10 @@ class Loaders
     name = name.to_s
     caps_name = Types::TypeFormatter.singleton.capitalize_segments(name)
     typed_name = Loader::TypedName.new(:type, name)
+    if ignore_duplicate
+      te = rt3_loader.get_entry(typed_name)
+      return nil unless te.nil? || te.value.nil?
+    end
     rt3_loader.set_entry(typed_name, Types::PResourceType.new(caps_name), origin)
     nil
   end

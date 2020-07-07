@@ -128,7 +128,7 @@ module Manager
 
       loc = block_given? ? block.source_location : nil
       uri = loc.nil? ? nil : URI("#{Puppet::Util.path_to_uri(loc[0])}?line=#{loc[1]}")
-      Puppet::Pops::Loaders.register_runtime3_type(name, uri)
+      Puppet::Pops::Loaders.register_runtime3_type(name, uri, true)
 
       klass
     end
