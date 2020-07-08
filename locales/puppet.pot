@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.16.0-89-g626a84ac4e\n"
+"Project-Id-Version: Puppet automation framework 6.16.0-135-ged8dfaa0ea\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-06-22 05:34+0000\n"
-"PO-Revision-Date: 2020-06-22 05:34+0000\n"
+"POT-Creation-Date: 2020-07-08 10:31+0000\n"
+"PO-Revision-Date: 2020-07-08 10:31+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -194,19 +194,19 @@ msgstr ""
 msgid "The puppet agent daemon"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:400
+#: ../lib/puppet/application/agent.rb:409
 msgid "Fingerprint asked but neither the certificate, nor the certificate request have been issued"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:405
+#: ../lib/puppet/application/agent.rb:414
 msgid "Failed to generate fingerprint: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:428
+#: ../lib/puppet/application/agent.rb:437
 msgid "Starting Puppet client version %{version}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:444
+#: ../lib/puppet/application/agent.rb:453
 msgid "The puppet agent command does not take parameters"
 msgstr ""
 
@@ -572,65 +572,65 @@ msgstr ""
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:307
+#: ../lib/puppet/configurer.rb:316
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:311
+#: ../lib/puppet/configurer.rb:320
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:340
+#: ../lib/puppet/configurer.rb:348
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:351
+#: ../lib/puppet/configurer.rb:359
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:353
+#: ../lib/puppet/configurer.rb:361
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:394
+#: ../lib/puppet/configurer.rb:402
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:423 ../lib/puppet/http/resolver/server_list.rb:89
+#: ../lib/puppet/configurer.rb:431 ../lib/puppet/http/resolver/server_list.rb:89
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:427 ../lib/puppet/http/resolver/server_list.rb:95
+#: ../lib/puppet/configurer.rb:435 ../lib/puppet/http/resolver/server_list.rb:95
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:438 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:446 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:447
+#: ../lib/puppet/configurer.rb:455
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:466
+#: ../lib/puppet/configurer.rb:474
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:474
+#: ../lib/puppet/configurer.rb:482
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:489
+#: ../lib/puppet/configurer.rb:497
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:507
+#: ../lib/puppet/configurer.rb:515
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:528
+#: ../lib/puppet/configurer.rb:536
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -703,29 +703,29 @@ msgid "Valid values are '%{values}'."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:547
+#: ../lib/puppet/defaults.rb:546
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:549
+#: ../lib/puppet/defaults.rb:548
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:748
+#: ../lib/puppet/defaults.rb:747
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:829
+#: ../lib/puppet/defaults.rb:828
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1023
+#: ../lib/puppet/defaults.rb:1022
 msgid "Setting 'ssl_client_ca_auth' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1102 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1101 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
@@ -1782,7 +1782,7 @@ msgstr ""
 msgid "Timeout waiting for exclusive lock on %{path}"
 msgstr ""
 
-#: ../lib/puppet/file_system/jruby.rb:18 ../lib/puppet/file_system/windows.rb:127 ../lib/puppet/util.rb:706
+#: ../lib/puppet/file_system/jruby.rb:18 ../lib/puppet/file_system/windows.rb:127 ../lib/puppet/util.rb:705
 msgid "Is a directory: %{directory}"
 msgstr ""
 
@@ -2246,11 +2246,11 @@ msgstr ""
 msgid "Request to %{uri} failed after %{elapsed} seconds: %{message}"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:321
+#: ../lib/puppet/http/client.rb:326
 msgid "Sleeping for %{interval} seconds before retrying the request"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:364 ../lib/puppet/indirector/request.rb:142
+#: ../lib/puppet/http/client.rb:369 ../lib/puppet/indirector/request.rb:142
 msgid "HTTP REST queries cannot handle values of type '%{klass}'"
 msgstr ""
 
@@ -2595,7 +2595,7 @@ msgstr ""
 msgid "Puppet::Indirector::FileContent::Http is deprecated. Use Puppet::HTTP::Client instead."
 msgstr ""
 
-#: ../lib/puppet/indirector/file_metadata/http.rb:35
+#: ../lib/puppet/indirector/file_metadata/http.rb:31
 msgid "cannot lookup multiple files"
 msgstr ""
 
@@ -4003,7 +4003,7 @@ msgstr ""
 msgid "Expected an instance of Puppet::SSL::Verifier but was passed a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:229 ../lib/puppet/network/http/connection_adapter.rb:172
+#: ../lib/puppet/network/http/connection.rb:229 ../lib/puppet/network/http/connection_adapter.rb:174
 msgid "Too many HTTP redirections for %{host}:%{port}"
 msgstr ""
 
@@ -7336,7 +7336,7 @@ msgstr ""
 msgid "You must pass a callback for non-NONE events"
 msgstr ""
 
-#: ../lib/puppet/reports/http.rb:38
+#: ../lib/puppet/reports/http.rb:40
 msgid "Unable to submit report to %{url} [%{code}] %{message}"
 msgstr ""
 
@@ -8637,75 +8637,75 @@ msgstr ""
 msgid "Invalid recurselimit value %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:414
+#: ../lib/puppet/type/file.rb:418
 msgid "You cannot specify more than one of %{creators}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:416
+#: ../lib/puppet/type/file.rb:420
 msgid "You cannot specify a remote recursion without a source"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:418
+#: ../lib/puppet/type/file.rb:422
 msgid "You cannot specify source when using checksum 'none'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:421
+#: ../lib/puppet/type/file.rb:425
 msgid "You cannot specify content when using checksum '%{checksum_type}'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:424
+#: ../lib/puppet/type/file.rb:428
 msgid "Possible error: recurselimit is set but not recurse, no recursion will happen"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:432
+#: ../lib/puppet/type/file.rb:436
 msgid "Checksum value '%{value}' is not a valid checksum type %{checksum}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:435
+#: ../lib/puppet/type/file.rb:439
 msgid "Checksum value is ignored unless content or source are specified"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:473
+#: ../lib/puppet/type/file.rb:477
 msgid "Can not find filebucket for backups without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:478
+#: ../lib/puppet/type/file.rb:482
 msgid "Could not find filebucket %{backup} specified in backup"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:776
+#: ../lib/puppet/type/file.rb:780
 msgid "Could not back up file of type %{current_type}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:791
+#: ../lib/puppet/type/file.rb:795
 msgid "Could not remove files of type %{current_type}"
 msgstr ""
 
 #. TRANSLATORS "source_permissions => ignore" should not be translated
-#: ../lib/puppet/type/file.rb:802
+#: ../lib/puppet/type/file.rb:806
 msgid "Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore."
 msgstr ""
 
 #. TRANSLATORS "stat" is a program name and should not be translated
-#: ../lib/puppet/type/file.rb:883 ../lib/puppet/type/tidy.rb:352
+#: ../lib/puppet/type/file.rb:887 ../lib/puppet/type/tidy.rb:352
 msgid "Could not stat; permission denied"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:886
+#: ../lib/puppet/type/file.rb:890
 msgid "Could not stat; invalid pathname"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:1014
+#: ../lib/puppet/type/file.rb:1018
 msgid "Not removing directory; use 'force' to override"
 msgstr ""
 
 #. TRANSLATORS refers to a file which could not be backed up
-#: ../lib/puppet/type/file.rb:1039
+#: ../lib/puppet/type/file.rb:1043
 msgid "Could not back up; will not remove"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:1053
-msgid "File written to disk did not match checksum; discarding changes (%{content_checksum} vs %{newsum})"
+#: ../lib/puppet/type/file.rb:1058
+msgid "File written to disk did not match desired checksum; discarding changes (%{content_checksum} vs %{desired_checksum})"
 msgstr ""
 
 #: ../lib/puppet/type/file/checksum.rb:20
@@ -8975,70 +8975,70 @@ msgstr ""
 msgid "Class name must be provided."
 msgstr ""
 
-#: ../lib/puppet/util.rb:64
+#: ../lib/puppet/util.rb:63
 msgid "Unable to retrieve the environment for mode %{mode}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:81
+#: ../lib/puppet/util.rb:80
 msgid "Unable to clear the environment for mode %{mode}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:97
+#: ../lib/puppet/util.rb:96
 msgid "Unable to set the environment variable %{name} for mode %{mode}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:114
+#: ../lib/puppet/util.rb:113
 msgid "Unable to merge given values into the current environment for mode %{mode}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:156
+#: ../lib/puppet/util.rb:155
 msgid "could not change to group %{group}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:157
+#: ../lib/puppet/util.rb:156
 msgid "could not change to group %{group}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:170
+#: ../lib/puppet/util.rb:169
 msgid "Could not change to user %{user}: %{detail}"
 msgstr ""
 
 #. TRANSLATORS 'benchmark' is a method name and should not be translated
-#: ../lib/puppet/util.rb:224
+#: ../lib/puppet/util.rb:223
 msgid "Failed to provide level to benchmark"
 msgstr ""
 
-#: ../lib/puppet/util.rb:227
+#: ../lib/puppet/util.rb:226
 msgid "Benchmarked object does not respond to %{value}"
 msgstr ""
 
 #. TRANSLATORS PATH and HOME are environment variables and should not be translated
-#: ../lib/puppet/util.rb:267
+#: ../lib/puppet/util.rb:266
 msgid "PATH contains a ~ character, and HOME is not set; ignoring PATH element '%{dir}'."
 msgstr ""
 
 #. TRANSLATORS PATH is an environment variable and should not be translated
-#: ../lib/puppet/util.rb:271
+#: ../lib/puppet/util.rb:270
 msgid "Couldn't expand PATH containing a ~ character; ignoring PATH element '%{dir}'."
 msgstr ""
 
-#: ../lib/puppet/util.rb:318
+#: ../lib/puppet/util.rb:317
 msgid "unknown platform %{platform} in absolute_path"
 msgstr ""
 
-#: ../lib/puppet/util.rb:353
+#: ../lib/puppet/util.rb:352
 msgid "Failed to convert '%{path}' to URI: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:453
+#: ../lib/puppet/util.rb:452
 msgid "path may not be nil"
 msgstr ""
 
-#: ../lib/puppet/util.rb:621
+#: ../lib/puppet/util.rb:620
 msgid "replace_file requires a block"
 msgstr ""
 
-#: ../lib/puppet/util.rb:625
+#: ../lib/puppet/util.rb:624
 msgid "replace_file default_mode: %{default_mode} is invalid"
 msgstr ""
 
@@ -9890,11 +9890,11 @@ msgstr ""
 msgid "Cannot create group if user '%{name}' exists."
 msgstr ""
 
-#: ../lib/puppet/util/windows/api_types.rb:79
+#: ../lib/puppet/util/windows/api_types.rb:85
 msgid "Unable to read wide strings with %{null_terminator} terminal nulls"
 msgstr ""
 
-#: ../lib/puppet/util/windows/api_types.rb:210
+#: ../lib/puppet/util/windows/api_types.rb:216
 msgid "Bad GUID format."
 msgstr ""
 
@@ -9949,20 +9949,20 @@ msgstr ""
 msgid "Failed to call GetLongPathName"
 msgstr ""
 
-#: ../lib/puppet/util/windows/principal.rb:69 ../lib/puppet/util/windows/principal.rb:76
+#: ../lib/puppet/util/windows/principal.rb:67 ../lib/puppet/util/windows/principal.rb:74
 msgid "Failed to call LookupAccountNameW with account: %{account_name}"
 msgstr ""
 
 #. TRANSLATORS `lookup_account_sid` is a variable name and should not be translated
-#: ../lib/puppet/util/windows/principal.rb:99
+#: ../lib/puppet/util/windows/principal.rb:97
 msgid "Byte array for lookup_account_sid must not be nil and must be at least 1 byte long"
 msgstr ""
 
-#: ../lib/puppet/util/windows/principal.rb:118
+#: ../lib/puppet/util/windows/principal.rb:114
 msgid "Byte array for lookup_account_sid is invalid: %{sid_bytes}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/principal.rb:126 ../lib/puppet/util/windows/principal.rb:133
+#: ../lib/puppet/util/windows/principal.rb:122 ../lib/puppet/util/windows/principal.rb:129
 msgid "Failed to call LookupAccountSidW with bytes: %{sid_bytes}"
 msgstr ""
 
@@ -9998,39 +9998,39 @@ msgstr ""
 msgid "Failed to open registry key '%{key}\\%{path}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:130
+#: ../lib/puppet/util/windows/registry.rb:133
 msgid "Failed to enumerate %{key} registry keys at index %{index}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:161
+#: ../lib/puppet/util/windows/registry.rb:167
 msgid "Failed to enumerate %{key} registry values at index %{index}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:191
+#: ../lib/puppet/util/windows/registry.rb:197
 msgid "Failed to query registry %{key} for sizes"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:227
+#: ../lib/puppet/util/windows/registry.rb:233
 msgid "Type mismatch (expect %{rtype} but %{type} present)"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:249
+#: ../lib/puppet/util/windows/registry.rb:255
 msgid "Type %{type} is not supported."
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:254
+#: ../lib/puppet/util/windows/registry.rb:260
 msgid "A value in the registry key %{parent_key_name}%{key} is corrupt or invalid"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:276
+#: ../lib/puppet/util/windows/registry.rb:282
 msgid "Failed to read registry value %{value} at %{key}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:294
+#: ../lib/puppet/util/windows/registry.rb:300
 msgid "Failed to delete registry value %{name} at %{key}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:309
+#: ../lib/puppet/util/windows/registry.rb:315
 msgid "Failed to delete registry key %{name} at %{key}"
 msgstr ""
 
