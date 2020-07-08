@@ -125,18 +125,15 @@ describe "Puppet::Util::Windows::User", :if => Puppet::Util::Platform.windows? d
       end
 
       it 'should raise error given that logon returns false' do
-
         allow(Puppet::Util::Windows::User).to receive(:logon_user_by_logon_type).with(
-            user, passwd, fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, anything).and_return (0)
+            user, '.', passwd, fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, anything).and_return (0)
         allow(Puppet::Util::Windows::User).to receive(:logon_user_by_logon_type).with(
-            user, passwd, fLOGON32_LOGON_INTERACTIVE, fLOGON32_PROVIDER_DEFAULT, anything).and_return(0)
+            user, '.', passwd, fLOGON32_LOGON_INTERACTIVE, fLOGON32_PROVIDER_DEFAULT, anything).and_return(0)
 
         expect {Puppet::Util::Windows::User.logon_user(user, passwd) {}}
             .to raise_error(Puppet::Util::Windows::Error, /Failed to logon user/)
-
       end
     end
-
 
     describe "password_is?" do
       it "should return false given an incorrect username and password" do
@@ -178,6 +175,44 @@ describe "Puppet::Util::Windows::User", :if => Puppet::Util::Platform.windows? d
       it "should not raise an error" do
         # added just to call an FFI code path on all platforms
         expect { Puppet::Util::Windows::User.check_token_membership }.not_to raise_error
+      end
+    end
+
+    describe "default_system_account?" do
+      it "should succesfully identify 'SYSTEM' user as a default system account" do
+        allow(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('SYSTEM').and_return(Puppet::Util::Windows::SID::LocalSystem)
+        expect(Puppet::Util::Windows::User.default_system_account?('SYSTEM')).to eq(true)
+      end
+
+      it "should succesfully identify 'NETWORK SERVICE' user as a default system account" do
+        allow(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('NETWORK SERVICE').and_return(Puppet::Util::Windows::SID::NtNetwork)
+        expect(Puppet::Util::Windows::User.default_system_account?('NETWORK SERVICE')).to eq(true)
+      end
+
+      it "should succesfully identify 'LOCAL SERVICE' user as a default system account" do
+        allow(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('LOCAL SERVICE').and_return(Puppet::Util::Windows::SID::NtLocal)
+        expect(Puppet::Util::Windows::User.default_system_account?('LOCAL SERVICE')).to eq(true)
+      end
+
+      it "should not identify user with unknown sid as a default system account" do
+        allow(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('UnknownUser').and_return(Puppet::Util::Windows::SID::Null)
+        expect(Puppet::Util::Windows::User.default_system_account?('UnknownUser')).to eq(false)
+      end
+    end
+
+    describe "localsystem?" do
+      before do
+        allow(Puppet::Util::Windows::ADSI).to receive(:computer_name).and_return("myPC")
+      end
+
+      ['LocalSystem', '.\LocalSystem', 'myPC\LocalSystem', 'lOcALsysTem'].each do |input|
+        it "should succesfully identify #{input} as the 'LocalSystem' account" do
+          expect(Puppet::Util::Windows::User.localsystem?(input)).to eq(true)
+        end
+      end
+
+      it "should not identify any other user as the 'LocalSystem' account" do
+        expect(Puppet::Util::Windows::User.localsystem?('OtherUser')).to eq(false)
       end
     end
   end

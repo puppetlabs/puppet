@@ -58,7 +58,7 @@ describe 'Puppet::Type::Service::Provider::Windows',
       it "should enable if managing enable and enable is true" do
         resource[:enable] = :true
         expect(service_util).to receive(:start)
-        expect(service_util).to receive(:set_startup_mode).with(name, :SERVICE_AUTO_START)
+        expect(service_util).to receive(:set_startup_configuration).with(name, options: {startup_type: :SERVICE_AUTO_START})
 
         provider.start
       end
@@ -66,7 +66,7 @@ describe 'Puppet::Type::Service::Provider::Windows',
       it "should manual start if managing enable and enable is false" do
         resource[:enable] = :false
         expect(service_util).to receive(:start)
-        expect(service_util).to receive(:set_startup_mode).with(name, :SERVICE_DEMAND_START)
+        expect(service_util).to receive(:set_startup_configuration).with(name, options: {startup_type: :SERVICE_DEMAND_START})
 
         provider.start
       end
@@ -85,6 +85,14 @@ describe 'Puppet::Type::Service::Provider::Windows',
     it "should report a nonexistent service as stopped" do
       allow(service_util).to receive(:exists?).with(resource[:name]).and_return(false)
 
+      expect(provider.status).to eql(:stopped)
+    end
+
+    it "should report service as stopped when status cannot be retrieved" do
+      allow(service_util).to receive(:exists?).with(resource[:name]).and_return(true)
+      allow(service_util).to receive(:service_state).with(name).and_raise(Puppet::Error.new('Service query failed: The specified path is invalid.'))
+
+      expect(Puppet).to receive(:warning).with("Status for service #{resource[:name]} could not be retrieved: Service query failed: The specified path is invalid.")
       expect(provider.status).to eql(:stopped)
     end
 
@@ -178,12 +186,12 @@ describe 'Puppet::Type::Service::Provider::Windows',
 
   describe "#enable" do
     it "should set service start type to Service_Auto_Start when enabled" do
-      expect(service_util).to receive(:set_startup_mode).with(name, :SERVICE_AUTO_START)
+      expect(service_util).to receive(:set_startup_configuration).with(name, options: {startup_type: :SERVICE_AUTO_START})
       provider.enable
     end
 
-    it "raises an error if set_startup_mode fails" do
-      expect(service_util).to receive(:set_startup_mode).with(name, :SERVICE_AUTO_START).and_raise(Puppet::Error.new('foobar'))
+    it "raises an error if set_startup_configuration fails" do
+      expect(service_util).to receive(:set_startup_configuration).with(name, options: {startup_type: :SERVICE_AUTO_START}).and_raise(Puppet::Error.new('foobar'))
 
       expect {
         provider.enable
@@ -193,12 +201,12 @@ describe 'Puppet::Type::Service::Provider::Windows',
 
   describe "#disable" do
     it "should set service start type to Service_Disabled when disabled" do
-      expect(service_util).to receive(:set_startup_mode).with(name, :SERVICE_DISABLED)
+      expect(service_util).to receive(:set_startup_configuration).with(name, options: {startup_type: :SERVICE_DISABLED})
       provider.disable
     end
 
-    it "raises an error if set_startup_mode fails" do
-      expect(service_util).to receive(:set_startup_mode).with(name, :SERVICE_DISABLED).and_raise(Puppet::Error.new('foobar'))
+    it "raises an error if set_startup_configuration fails" do
+      expect(service_util).to receive(:set_startup_configuration).with(name, options: {startup_type: :SERVICE_DISABLED}).and_raise(Puppet::Error.new('foobar'))
 
       expect {
         provider.disable
@@ -208,12 +216,12 @@ describe 'Puppet::Type::Service::Provider::Windows',
 
   describe "#manual_start" do
     it "should set service start type to Service_Demand_Start (manual) when manual" do
-      expect(service_util).to receive(:set_startup_mode).with(name, :SERVICE_DEMAND_START)
+      expect(service_util).to receive(:set_startup_configuration).with(name, options: {startup_type: :SERVICE_DEMAND_START})
       provider.manual_start
     end
 
-    it "raises an error if set_startup_mode fails" do
-      expect(service_util).to receive(:set_startup_mode).with(name, :SERVICE_DEMAND_START).and_raise(Puppet::Error.new('foobar'))
+    it "raises an error if set_startup_configuration fails" do
+      expect(service_util).to receive(:set_startup_configuration).with(name, options: {startup_type: :SERVICE_DEMAND_START}).and_raise(Puppet::Error.new('foobar'))
 
       expect {
         provider.manual_start
@@ -223,12 +231,12 @@ describe 'Puppet::Type::Service::Provider::Windows',
 
   describe "#delayed_start" do
     it "should set service start type to Service_Config_Delayed_Auto_Start (delayed) when delayed" do
-      expect(service_util).to receive(:set_startup_mode).with(name, :SERVICE_AUTO_START, true)
+      expect(service_util).to receive(:set_startup_configuration).with(name, options: {startup_type: :SERVICE_AUTO_START, delayed: true})
       provider.delayed_start
     end
 
-    it "raises an error if set_startup_mode fails" do
-      expect(service_util).to receive(:set_startup_mode).with(name, :SERVICE_AUTO_START, true).and_raise(Puppet::Error.new('foobar'))
+    it "raises an error if set_startup_configuration fails" do
+      expect(service_util).to receive(:set_startup_configuration).with(name, options: {startup_type: :SERVICE_AUTO_START, delayed: true}).and_raise(Puppet::Error.new('foobar'))
 
       expect {
         provider.delayed_start

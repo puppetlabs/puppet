@@ -116,11 +116,12 @@ module Puppet
       # @param service [String] name of the service
       # @return None
       def run_nonexistent_service_tests(service)
-        step "Verify that a nonexistent service is considered stopped and disabled" do
+        step "Verify that a nonexistent service is considered stopped, disabled and no logonaccount is reported" do
           on(agent, puppet_resource('service', service)) do |result|
             { enable: false, ensure: :stopped }.each do |property, value|
               assert_match(/#{property}.*#{value}.*$/, result.stdout, "Puppet does not report #{property}=#{value} for a non-existent service")
             end
+            assert_no_match(/logonaccount\s+=>/, result.stdout, "Puppet reports logonaccount for a non-existent service")
           end
         end
       

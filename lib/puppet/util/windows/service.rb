@@ -440,43 +440,60 @@ module Puppet::Util::Windows
     end
     module_function :service_start_type
 
-    # Change the startup mode of a windows service
+    # Query the configuration of a service using QueryServiceConfigW
+    # to find its current logon account
+    #
+    # @return [String] logon_account account currently set for the service's logon
+    #  in the format "DOMAIN\Account" or ".\Account" if it's a local account
+    def logon_account(service_name)
+      open_service(service_name, SC_MANAGER_CONNECT, SERVICE_QUERY_CONFIG) do |service|
+        query_config(service) do |config|
+          return config[:lpServiceStartName].read_arbitrary_wide_string_up_to(Puppet::Util::Windows::ADSI::User::MAX_USERNAME_LENGTH)
+        end
+      end
+    end
+    module_function :logon_account
+
+    # Set the startup configuration of a windows service
     #
     # @param [String] service_name the name of the service to modify
-    # @param [Integer] startup_type a code corresponding to a start type for
-    #  windows service, see the "Service start type codes" section in the
-    #  Puppet::Util::Windows::Service file for the list of available codes
-    # @param [Bool] delayed whether the service should be started with a delay
-    def set_startup_mode(service_name, startup_type, delayed=false)
-      startup_code = SERVICE_START_TYPES.key(startup_type)
-      if startup_code.nil?
-        raise Puppet::Error.new(_("Unknown start type %{start_type}") % {startup_type: startup_type.to_s})
-      end
+    # @param [Hash] options the configuration to be applied. Expected option keys:
+    #   - [Integer] startup_type a code corresponding to a start type for
+    #       windows service, see the "Service start type codes" section in the
+    #       Puppet::Util::Windows::Service file for the list of available codes
+    #   - [String] logon_account the account to be used by the service for logon
+    #   - [String] logon_password the provided logon_account's password to be used by the service for logon
+    #   - [Bool] delayed whether the service should be started with a delay
+    def set_startup_configuration(service_name, options: {})
+      options[:startup_type] = SERVICE_START_TYPES.key(options[:startup_type]) || SERVICE_NO_CHANGE
+      options[:logon_account] = wide_string(options[:logon_account]) || FFI::Pointer::NULL
+      options[:logon_password] = wide_string(options[:logon_password]) || FFI::Pointer::NULL
+
       open_service(service_name, SC_MANAGER_CONNECT, SERVICE_CHANGE_CONFIG) do |service|
-        # Currently the only thing puppet's API can really manage
-        # in this list is dwStartType (the third param). Thus no
-        # generic function was written to make use of all the params
-        # since the API as-is couldn't use them anyway
         success = ChangeServiceConfigW(
           service,
-          SERVICE_NO_CHANGE,  # dwServiceType
-          startup_code,       # dwStartType
-          SERVICE_NO_CHANGE,  # dwErrorControl
-          FFI::Pointer::NULL, # lpBinaryPathName
-          FFI::Pointer::NULL, # lpLoadOrderGroup
-          FFI::Pointer::NULL, # lpdwTagId
-          FFI::Pointer::NULL, # lpDependencies
-          FFI::Pointer::NULL, # lpServiceStartName
-          FFI::Pointer::NULL, # lpPassword
-          FFI::Pointer::NULL  # lpDisplayName
+          SERVICE_NO_CHANGE,        # dwServiceType
+          options[:startup_type],   # dwStartType
+          SERVICE_NO_CHANGE,        # dwErrorControl
+          FFI::Pointer::NULL,       # lpBinaryPathName
+          FFI::Pointer::NULL,       # lpLoadOrderGroup
+          FFI::Pointer::NULL,       # lpdwTagId
+          FFI::Pointer::NULL,       # lpDependencies
+          options[:logon_account],  # lpServiceStartName
+          options[:logon_password], # lpPassword
+          FFI::Pointer::NULL        # lpDisplayName
         )
         if success == FFI::WIN32_FALSE
           raise Puppet::Util::Windows::Error.new(_("Failed to update service configuration"))
         end
       end
-      set_startup_mode_delayed(service_name, delayed)
+
+      if options[:startup_type]
+        options[:delayed] ||= false
+        set_startup_mode_delayed(service_name, options[:delayed])
+      end
     end
-    module_function :set_startup_mode
+    module_function :set_startup_configuration
 
     # enumerate over all services in all states and return them as a hash
     #

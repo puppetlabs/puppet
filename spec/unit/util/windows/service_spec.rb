@@ -599,27 +599,27 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
     end
   end
 
-  describe "#set_startup_mode" do
+  describe "#set_startup_configuration" do
     let(:status_checks) { sequence('status_checks') }
 
     context "when the service control manager cannot be opened" do
       let(:scm) { FFI::Pointer::NULL_HANDLE }
       it "raises a puppet error" do
-        expect{ subject.set_startup_mode(mock_service_name, :SERVICE_DEMAND_START) }.to raise_error(Puppet::Error)
+        expect{ subject.set_startup_configuration(mock_service_name, options: {startup_type: :SERVICE_DEMAND_START}) }.to raise_error(Puppet::Error)
       end
     end
 
     context "when the service cannot be opened" do
       let(:service) { FFI::Pointer::NULL_HANDLE }
       it "raises a puppet error" do
-        expect{ subject.set_startup_mode(mock_service_name, :SERVICE_DEMAND_START) }.to raise_error(Puppet::Error)
+        expect{ subject.set_startup_configuration(mock_service_name, options: {startup_type: :SERVICE_DEMAND_START}) }.to raise_error(Puppet::Error)
       end
     end
 
     context "when the service can be opened" do
       it "Raises an error on an unsuccessful change" do
         expect(subject).to receive(:ChangeServiceConfigW).and_return(FFI::WIN32_FALSE)
-        expect{ subject.set_startup_mode(mock_service_name, :SERVICE_DEMAND_START) }.to raise_error(Puppet::Error)
+        expect{ subject.set_startup_configuration(mock_service_name, options: {startup_type: :SERVICE_DEMAND_START}) }.to raise_error(Puppet::Error)
       end
     end
   end
