@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.16.0-135-ged8dfaa0ea\n"
+"Project-Id-Version: Puppet automation framework 6.16.0-141-g9bc4af5078\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-07-08 10:31+0000\n"
-"PO-Revision-Date: 2020-07-08 10:31+0000\n"
+"POT-Creation-Date: 2020-07-08 11:31+0000\n"
+"PO-Revision-Date: 2020-07-08 11:31+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -7223,35 +7223,35 @@ msgstr ""
 msgid "The %{service} service is incomplete so its status will be reported as :stopped. See `svcs -xv %{fmri}` for more details."
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:23
+#: ../lib/puppet/provider/service/windows.rb:22
 msgid "Cannot enable %{resource_name}, error was: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:29
+#: ../lib/puppet/provider/service/windows.rb:28
 msgid "Cannot disable %{resource_name}, error was: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:35
+#: ../lib/puppet/provider/service/windows.rb:34
 msgid "Cannot enable %{resource_name} for manual start, error was: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:41
+#: ../lib/puppet/provider/service/windows.rb:40
 msgid "Cannot enable %{resource_name} for delayed start, error was: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:61
+#: ../lib/puppet/provider/service/windows.rb:60
 msgid "Unknown start type: %{start_type}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:64
+#: ../lib/puppet/provider/service/windows.rb:63
 msgid "Cannot get start type %{resource_name}, error was: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:78
+#: ../lib/puppet/provider/service/windows.rb:77
 msgid "Will not start disabled service %{resource_name} without managing enable. Specify 'enable => false' to override."
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:110
+#: ../lib/puppet/provider/service/windows.rb:109
 msgid "Unknown service state '%{current_state}' for service '%{resource_name}'"
 msgstr ""
 
@@ -8854,11 +8854,19 @@ msgstr ""
 msgid "%{value} is not a valid day of the week"
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:94
+#: ../lib/puppet/type/service.rb:96
 msgid "Setting enable to %{value} is only supported on Microsoft Windows."
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:251
+#: ../lib/puppet/type/service.rb:162
+msgid "The 'logonaccount' parameter is mandatory when setting 'logonpassword'."
+msgstr ""
+
+#: ../lib/puppet/type/service.rb:163 ../lib/puppet/type/user.rb:256
+msgid "Passwords cannot include ':'"
+msgstr ""
+
+#: ../lib/puppet/type/service.rb:300
 msgid "\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer"
 msgstr ""
 
@@ -8895,10 +8903,6 @@ msgstr ""
 
 #: ../lib/puppet/type/user.rb:167
 msgid "Could not find group(s) %{groups}"
-msgstr ""
-
-#: ../lib/puppet/type/user.rb:256
-msgid "Passwords cannot include ':'"
 msgstr ""
 
 #: ../lib/puppet/type/user.rb:276
@@ -10072,7 +10076,7 @@ msgstr ""
 msgid "An attempt to set mode %{mode} on item %{path} would result in the group, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:433 ../lib/puppet/util/windows/security.rb:450 ../lib/puppet/util/windows/sid.rb:155 ../lib/puppet/util/windows/sid.rb:217 ../lib/puppet/util/windows/user.rb:43
+#: ../lib/puppet/util/windows/security.rb:433 ../lib/puppet/util/windows/security.rb:450 ../lib/puppet/util/windows/sid.rb:155 ../lib/puppet/util/windows/sid.rb:217 ../lib/puppet/util/windows/user.rb:59
 msgid "Invalid SID"
 msgstr ""
 
@@ -10148,87 +10152,83 @@ msgstr ""
 msgid "Unknown start type '%{start_type}' for '%{service_name}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:453
-msgid "Unknown start type %{start_type}"
-msgstr ""
-
-#: ../lib/puppet/util/windows/service.rb:474
+#: ../lib/puppet/util/windows/service.rb:487
 msgid "Failed to update service configuration"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:535
+#: ../lib/puppet/util/windows/service.rb:552
 msgid "Failed to fetch services"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:584
+#: ../lib/puppet/util/windows/service.rb:601
 msgid "Failed to open a handle to the service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:601
+#: ../lib/puppet/util/windows/service.rb:618
 msgid "Failed to open a handle to the service control manager"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:624
+#: ../lib/puppet/util/windows/service.rb:641
 msgid "The service is already in the %{final_state} state. No further work needs to be done."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:636
+#: ../lib/puppet/util/windows/service.rb:653
 msgid "The service must be in one of the %{valid_initial_states} states to perform this transition. It is currently in the %{current_state} state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:647
+#: ../lib/puppet/util/windows/service.rb:664
 msgid "There is already a pending transition to the %{final_state} state for the %{service_name} service."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:663
+#: ../lib/puppet/util/windows/service.rb:680
 msgid "The service is in the %{pending_state} state, which is an unsafe pending state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:668
+#: ../lib/puppet/util/windows/service.rb:685
 msgid "Transitioning the %{service_name} service from %{initial_state} to %{final_state}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:672
+#: ../lib/puppet/util/windows/service.rb:689
 msgid "Waiting for the transition to finish"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:677
+#: ../lib/puppet/util/windows/service.rb:694
 msgid "Failed to transition the %{service_name} service to the %{final_state} state. Detail: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:716 ../lib/puppet/util/windows/service.rb:752
+#: ../lib/puppet/util/windows/service.rb:733 ../lib/puppet/util/windows/service.rb:769
 msgid "Service query failed"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:795
+#: ../lib/puppet/util/windows/service.rb:812
 msgid "Service query for %{parameter_name} failed"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:818
+#: ../lib/puppet/util/windows/service.rb:835
 msgid "Failed to update service %{change} configuration"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:845
+#: ../lib/puppet/util/windows/service.rb:862
 msgid "Failed to send the %{control_signal} signal to the service. Its current state is %{current_state}. Reason for failure:"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:880
+#: ../lib/puppet/util/windows/service.rb:897
 msgid "The service transitioned to the %{pending_state} state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:894
+#: ../lib/puppet/util/windows/service.rb:911
 msgid "Timed out while waiting for the service to transition from %{initial_state} to %{final_state} OR from %{initial_state} to %{pending_state} to %{final_state}. The service's current state is %{current_state}."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:909
+#: ../lib/puppet/util/windows/service.rb:926
 msgid "Waiting for the pending transition to the %{final_state} state to finish."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:923
+#: ../lib/puppet/util/windows/service.rb:940
 msgid "Unexpected transition to the %{current_state} state while waiting for the pending transition from %{pending_state} to %{final_state} to finish."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:937
+#: ../lib/puppet/util/windows/service.rb:954
 msgid "Timed out while waiting for the pending transition from %{pending_state} to %{final_state} to finish. The current state is %{current_state}."
 msgstr ""
 
@@ -10248,23 +10248,23 @@ msgstr ""
 msgid "Failed to convert string SID: %{string_sid}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/user.rb:38
+#: ../lib/puppet/util/windows/user.rb:54
 msgid "Failed to create administrators SID"
 msgstr ""
 
-#: ../lib/puppet/util/windows/user.rb:48
+#: ../lib/puppet/util/windows/user.rb:64
 msgid "Failed to check membership"
 msgstr ""
 
-#: ../lib/puppet/util/windows/user.rb:88
+#: ../lib/puppet/util/windows/user.rb:104
 msgid "Failed to logon user %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/user.rb:120
+#: ../lib/puppet/util/windows/user.rb:135
 msgid "Failed to load user profile %{user}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/user.rb:126
+#: ../lib/puppet/util/windows/user.rb:141
 msgid "Failed to unload user profile %{user}"
 msgstr ""
 
