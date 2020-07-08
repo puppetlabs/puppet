@@ -94,6 +94,18 @@ describe 'loaders' do
     end
   end
 
+  def expect_loader_hierarchy(loaders, expected_loaders)
+    actual_loaders = []
+
+    loader = loaders.private_environment_loader
+    while loader
+      actual_loaders << [loader.loader_name, loader]
+      loader = loader.parent
+    end
+
+    expect(actual_loaders).to contain_exactly(*expected_loaders)
+  end
+
   it 'creates a puppet_system loader' do
     loaders = Puppet::Pops::Loaders.new(empty_test_env)
     expect(loaders.puppet_system_loader()).to be_a(Puppet::Pops::Loader::ModuleLoaders::FileBased)
@@ -121,6 +133,47 @@ describe 'loaders' do
     expect(loaders.public_environment_loader().to_s).to eql("(SimpleEnvironmentLoader 'environment')")
     expect(loaders.private_environment_loader()).to be_a(Puppet::Pops::Loader::DependencyLoader)
     expect(loaders.private_environment_loader().to_s).to eql("(DependencyLoader 'environment private' [])")
+  end
+
+  it 'creates a hierarchy of loaders' do
+    expect_loader_hierarchy(
+      Puppet::Pops::Loaders.new(empty_test_env),
+      [
+        [nil,                   Puppet::Pops::Loader::StaticLoader],
+        ['puppet_system',       Puppet::Pops::Loader::ModuleLoaders::LibRootedFileBased],
+        [empty_test_env.name,   Puppet::Pops::Loader::Runtime3TypeLoader],
+        ['environment',         Puppet::Pops::Loader::SimpleEnvironmentLoader],
+        ['environment private', Puppet::Pops::Loader::DependencyLoader],
+      ]
+    )
+  end
+
+  it 'excludes the Runtime3TypeLoader when tasks are enabled' do
+    Puppet[:tasks] = true
+
+    expect_loader_hierarchy(
+      Puppet::Pops::Loaders.new(empty_test_env),
+      [
+        [nil,                   Puppet::Pops::Loader::StaticLoader],
+        ['puppet_system',       Puppet::Pops::Loader::ModuleLoaders::LibRootedFileBased],
+        ['environment',         Puppet::Pops::Loader::ModuleLoaders::EmptyLoader],
+        ['environment private', Puppet::Pops::Loader::DependencyLoader],
+      ]
+    )
+  end
+
+  it 'includes the agent cache loader when for_agent is true' do
+    expect_loader_hierarchy(
+      Puppet::Pops::Loaders.new(empty_test_env, true),
+      [
+        [nil,                   Puppet::Pops::Loader::StaticLoader],
+        ['puppet_system',       Puppet::Pops::Loader::ModuleLoaders::LibRootedFileBased],
+        ['cached_puppet_lib',   Puppet::Pops::Loader::ModuleLoaders::LibRootedFileBased],
+        [empty_test_env.name,   Puppet::Pops::Loader::Runtime3TypeLoader],
+        ['environment',         Puppet::Pops::Loader::SimpleEnvironmentLoader],
+        ['environment private', Puppet::Pops::Loader::DependencyLoader],
+      ],
+    )
   end
 
   context 'when loading from a module' do
