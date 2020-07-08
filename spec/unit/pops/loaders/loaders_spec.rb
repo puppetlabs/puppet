@@ -92,6 +92,17 @@ describe 'loaders' do
     it 'errors with message about empty file for files that contain no logic' do
       expect{loader.load(:resource_type_pp, 'empty')}.to raise_error(ArgumentError, /it is empty/)
     end
+
+    it 'creates a pcore resource type loader' do
+      pcore_loader = env.loaders.runtime3_type_loader.resource_3x_loader
+      expect(pcore_loader.loader_name).to eq('pcore_resource_types')
+      expect(pcore_loader).to be_a(Puppet::Pops::Loader::ModuleLoaders::FileBased)
+    end
+
+    it 'does not create a pcore resource type loader for an empty environment' do
+      loaders = Puppet::Pops::Loaders.new(empty_test_env)
+      expect(loaders.runtime3_type_loader.resource_3x_loader).to be_nil
+    end
   end
 
   def expect_loader_hierarchy(loaders, expected_loaders)
