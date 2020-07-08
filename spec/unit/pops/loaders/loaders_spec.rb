@@ -99,6 +99,12 @@ describe 'loaders' do
       expect(pcore_loader).to be_a(Puppet::Pops::Loader::ModuleLoaders::FileBased)
     end
 
+    it 'does not create a pcore resource type loader if requested not to' do
+      env.loaders = nil # clear cached loaders
+      loaders = Puppet::Pops::Loaders.new(env, false, false)
+      expect(loaders.runtime3_type_loader.resource_3x_loader).to be_nil
+    end
+
     it 'does not create a pcore resource type loader for an empty environment' do
       loaders = Puppet::Pops::Loaders.new(empty_test_env)
       expect(loaders.runtime3_type_loader.resource_3x_loader).to be_nil

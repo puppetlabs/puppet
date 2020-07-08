@@ -18,18 +18,18 @@ class Loaders
   attr_reader :private_environment_loader
   attr_reader :environment
 
-  def self.new(environment, for_agent = false)
+  def self.new(environment, for_agent = false, load_from_pcore = true)
     environment.lock.synchronize do
       obj = environment.loaders
       if obj.nil?
         obj = self.allocate
-        obj.send(:initialize, environment, for_agent)
+        obj.send(:initialize, environment, for_agent, load_from_pcore)
       end
       obj
     end
   end
 
-  def initialize(environment, for_agent)
+  def initialize(environment, for_agent, load_from_pcore = true)
     # Protect against environment havoc
     raise ArgumentError.new(_("Attempt to redefine already initialized loaders for environment")) unless environment.loaders.nil?
     environment.loaders = self
@@ -51,12 +51,13 @@ class Loaders
     #    TODO: loaders need to work when also running in an agent doing catalog application. There is no
     #    concept of environment the same way as when running as a master (except when doing apply).
     #    The creation mechanisms should probably differ between the two.
-    @private_environment_loader = if for_agent
-      @puppet_cache_loader = create_puppet_cache_loader()
-      create_environment_loader(environment, @puppet_cache_loader)
-    else
-      create_environment_loader(environment, @puppet_system_loader)
-    end
+    @private_environment_loader =
+      if for_agent
+        @puppet_cache_loader = create_puppet_cache_loader
+        create_environment_loader(environment, @puppet_cache_loader, load_from_pcore)
+      else
+        create_environment_loader(environment, @puppet_system_loader, load_from_pcore)
+      end
 
     Pcore.init_env(@private_environment_loader)
 
@@ -362,7 +363,7 @@ class Loaders
     Loader::ModuleLoaders.cached_loader_from(puppet_system_loader, self)
   end
 
-  def create_environment_loader(environment, parent_loader)
+  def create_environment_loader(environment, parent_loader, load_from_pcore = true)
     # This defines where to start parsing/evaluating - the "initial import" (to use 3x terminology)
     # Is either a reference to a single .pp file, or a directory of manifests. If the environment becomes
     # a module and can hold functions, types etc. then these are available across all other modules without
@@ -388,7 +389,7 @@ class Loaders
       # Create the 3.x resource type loader
       static_loader.runtime_3_init
       # Create pcore resource type loader, if applicable
-      pcore_resource_type_loader = if env_path
+      pcore_resource_type_loader = if load_from_pcore && env_path
                                      Loader::ModuleLoaders.pcore_resource_type_loader_from(parent_loader, self, env_path)
                                    else
                                      nil
