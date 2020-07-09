@@ -36,7 +36,7 @@ describe "Puppet::Pops::IssueReporter" do
   def diagnostic(severity,  number, args)
     Puppet::Pops::Validation::Diagnostic.new(
       severity,
-      Puppet::Pops::Issues::Issue.new(number) { "#{severity}#{number}" },
+      Puppet::Pops::Issues::SimpleIssue.new(number, "#{severity}#{number}"),
       "#{severity}file",
       fake_positioned(number),
       args)
