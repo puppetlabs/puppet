@@ -190,7 +190,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
       text = Puppet::FileSystem.read(options[:catalog], :encoding => 'utf-8')
     end
     env = Puppet.lookup(:environments).get(Puppet[:environment])
-    Puppet.override(:current_environment => env, :loaders => Puppet::Pops::Loaders.new(env)) do
+    Puppet.override(:current_environment => env, :loaders => create_loaders(env)) do
       catalog = read_catalog(text)
       apply_catalog(catalog)
     end
@@ -204,7 +204,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
     apply_environment = get_configured_environment(node, manifest)
 
     # TRANSLATORS "puppet apply" is a program command and should not be translated
-    Puppet.override({:current_environment => apply_environment}, _("For puppet apply")) do
+    Puppet.override({:current_environment => apply_environment, :loaders => create_loaders(apply_environment)}, _("For puppet apply")) do
       configure_node_facts(node, facts)
 
       # Allow users to load the classes that puppet agent creates.
@@ -235,30 +235,23 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
           exit(1)
         end
 
-        # Loaders are required when resolving deferred values and at the end
-        # when apply_catalog is called - it is therefore used around all of the
-        # required steps as it is expensive to set up loaders twice (once for
-        # resolution and once for the apply).
-        #
-        exit_status = Puppet.override(:loaders => Puppet::Pops::Loaders.new(apply_environment)) do
+        # Resolve all deferred values and replace them / mutate the catalog
+        Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(node.facts, catalog)
 
-          # Resolve all deferred values and replace them / mutate the catalog
-          Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(node.facts, catalog)
+        # Translate it to a RAL catalog
+        catalog = catalog.to_ral
 
-          # Translate it to a RAL catalog
-          catalog = catalog.to_ral
+        catalog.finalize
 
-          catalog.finalize
+        catalog.retrieval_duration = Time.now - starttime
 
-          catalog.retrieval_duration = Time.now - starttime
-
-          if options[:write_catalog_summary]
-            catalog.write_class_file
-            catalog.write_resource_file
-          end
-
-          apply_catalog(catalog)
+        if options[:write_catalog_summary]
+          catalog.write_class_file
+          catalog.write_resource_file
         end
+
+        exit_status = apply_catalog(catalog)
+
         if not exit_status
           exit(1)
         elsif options[:detailed_exitcodes] then
@@ -312,6 +305,10 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   private
+
+  def create_loaders(env)
+    Puppet::Pops::Loaders.new(env)
+  end
 
   def read_catalog(text)
     facts = get_facts()
