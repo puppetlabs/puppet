@@ -52,13 +52,13 @@ describe Puppet::FileServing::Mount::Locales do
       expect(@mount.search("foo/bar", @request)).to eq(["/"])
     end
 
-    it "should return nil if no modules can be found that have locales and modulepath is invalid" do
+    it "should return the default search module path if no modules can be found that have locales and modulepath is invalid" do
       mod = double('module')
       allow(mod).to receive(:locales?).and_return(false)
 
       allow(@environment).to receive(:modules).and_return([])
       allow(@environment).to receive(:modulepath).and_return([])
-      expect(@mount.search("foo/bar", @request)).to be_nil
+      expect(@mount.search("foo/bar", @request)).to eq([Puppet[:codedir]])
     end
 
     it "should return the locale paths for each module that has locales" do
