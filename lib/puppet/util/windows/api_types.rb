@@ -196,6 +196,20 @@ module Puppet::Util::Windows::APITypes
   FFI.typedef :uchar, :byte
   FFI.typedef :uint16, :wchar
 
+  # Definitions for data types used in LSA structures and functions
+  # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/
+  # https://docs.microsoft.com/sr-latn-rs/windows/win32/secmgmt/management-data-types
+  FFI.typedef :pointer, :pwstr
+  FFI.typedef :pointer, :pulong
+  FFI.typedef :pointer, :lsa_handle
+  FFI.typedef :pointer, :plsa_handle
+  FFI.typedef :pointer, :psid
+  FFI.typedef :pointer, :pvoid
+  FFI.typedef :pointer, :plsa_unicode_string
+  FFI.typedef :pointer, :plsa_object_attributes
+  FFI.typedef :uint32,  :ntstatus
+  FFI.typedef :dword,   :access_mask
+
   module ::FFI::WIN32
     extend ::FFI::Library
 

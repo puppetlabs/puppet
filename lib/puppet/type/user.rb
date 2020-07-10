@@ -97,6 +97,18 @@ module Puppet
           return :absent
         end
       end
+
+      def sync
+        event = super
+
+        property = @resource.property(:roles)
+        if property
+          val = property.retrieve
+          property.sync unless property.safe_insync?(val)
+        end
+
+        event
+      end
     end
 
     newproperty(:home) do
@@ -520,7 +532,7 @@ module Puppet
       end
 
       reqs
-    end
+    end unless Puppet::Util::Platform.windows?
 
     newparam(:role_membership) do
       desc "Whether specified roles should be considered the **complete list**

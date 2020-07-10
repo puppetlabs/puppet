@@ -401,7 +401,7 @@ describe Puppet::Type.type(:user) do
   end
 
   describe "when user has roles" do
-    it "should autorequire roles" do
+    it "should autorequire roles on non-Windows", :unless => Puppet::Util::Platform.windows? do
       testuser = described_class.new(:name => "testuser", :roles => ['testrole'] )
       testrole = described_class.new(:name => "testrole")
 
@@ -412,6 +412,31 @@ describe Puppet::Type.type(:user) do
       rel = testuser.autorequire[0]
       expect(rel.source.ref).to eq(testrole.ref)
       expect(rel.target.ref).to eq(testuser.ref)
+    end
+
+    it "should not autorequire roles on Windows", :if => Puppet::Util::Platform.windows? do
+      testuser = described_class.new(:name => "testuser", :roles => ['testrole'] )
+      testrole = described_class.new(:name => "testrole")
+
+      Puppet::Resource::Catalog.new :testing do |conf|
+        [testuser, testrole].each { |resource| conf.add_resource resource }
+      end
+
+      expect(testuser.autorequire).to be_empty
+    end
+
+    it "should sync the user roles when changing the state of :ensure if :roles is being managed" do
+      user = Puppet::Type.type(:user).new(:name => "myUser", :ensure => :present)
+      user[:roles] = 'testRole'
+
+      allow(user.provider.class).to receive(:supports_parameter?).and_return(true)
+      expect(user.property(:roles)).to receive(:retrieve).and_return("other")
+      expect(user.property(:roles)).to receive(:insync?).and_return(false)
+      expect(user.property(:roles)).to receive(:sync)
+
+      allow(user.provider).to receive(:create)
+
+      user.property(:ensure).sync
     end
   end
 
