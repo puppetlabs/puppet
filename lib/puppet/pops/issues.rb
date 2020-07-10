@@ -175,27 +175,18 @@ module Issues
   # @api public
   # @todo configuration if this is error or warning
   #
-  #VAR_WITH_HYPHEN = issue :VAR_WITH_HYPHEN, :name do
-  #  _("A variable name may not contain a hyphen. The name '%{name}' is not legal") % { name: name }
-  #end
   VAR_WITH_HYPHEN = simple_issue(:VAR_WITH_HYPHEN, "A variable name may not contain a hyphen. The name '%{name}' is not legal")
 
   # A class, definition, or node may only appear at top level or inside other classes
   # @todo Is this really true for nodes? Can they be inside classes? Isn't that too late?
   # @api public
   #
-  #NOT_TOP_LEVEL = hard_issue :NOT_TOP_LEVEL do
-  #  _("Classes, definitions, and nodes may only appear at toplevel or inside other classes")
-  #end
   NOT_TOP_LEVEL = simple_hard_issue(:NOT_TOP_LEVEL, "Classes, definitions, and nodes may only appear at toplevel or inside other classes")
 
   NOT_ABSOLUTE_TOP_LEVEL = hard_issue :NOT_ABSOLUTE_TOP_LEVEL do
     _("%{value} may only appear at toplevel") % { value: label.a_an_uc(semantic) }
   end
 
-  #CROSS_SCOPE_ASSIGNMENT = hard_issue :CROSS_SCOPE_ASSIGNMENT, :name do
-  #  _("Illegal attempt to assign to '%{name}'. Cannot assign to variables in other namespaces") % { name: name }
-  #end
   CROSS_SCOPE_ASSIGNMENT = simple_hard_issue(
     :CROSS_SCOPE_ASSIGNMENT,
     "Illegal attempt to assign to '%{name}'. Cannot assign to variables in other namespaces"
@@ -216,33 +207,21 @@ module Issues
   end
 
   # Variables facts and trusted
-  #ILLEGAL_RESERVED_ASSIGNMENT = hard_issue :ILLEGAL_RESERVED_ASSIGNMENT, :name do
-  #  _("Attempt to assign to a reserved variable name: '$%{var}'") % { var: name }
-  #end
   ILLEGAL_RESERVED_ASSIGNMENT = simple_hard_issue(
     :ILLEGAL_RESERVED_ASSIGNMENT,
     "Attempt to assign to a reserved variable name: '$%{name}'"
   )
 
   # Assignment cannot be made to numeric match result variables
-  #ILLEGAL_NUMERIC_ASSIGNMENT = issue :ILLEGAL_NUMERIC_ASSIGNMENT, :varname do
-  #  _("Illegal attempt to assign to the numeric match result variable '$%{var}'. Numeric variables are not assignable") % { var: varname }
-  #end
   ILLEGAL_NUMERIC_ASSIGNMENT = simple_issue(
     :ILLEGAL_NUMERIC_ASSIGNMENT,
     "Illegal attempt to assign to the numeric match result variable '$%{varname}'. Numeric variables are not assignable"
   )
 
   # Assignment can only be made to certain types of left hand expressions such as variables.
-  #ILLEGAL_ASSIGNMENT_CONTEXT = hard_issue :ILLEGAL_ASSIGNMENT_CONTEXT do
-  #  _("Assignment not allowed here")
-  #end
   ILLEGAL_ASSIGNMENT_CONTEXT = simple_hard_issue(:ILLEGAL_ASSIGNMENT_CONTEXT, "Assignment not allowed here")
 
   # parameters cannot have numeric names, clashes with match result variables
-  #ILLEGAL_NUMERIC_PARAMETER = issue :ILLEGAL_NUMERIC_PARAMETER, :name do
-  #  _("The numeric parameter name '$%{name}' cannot be used (clashes with numeric match result variables)") % { name: name }
-  #end
   ILLEGAL_NUMERIC_PARAMETER = simple_issue(
     :ILLEGAL_NUMERIC_PARAMETER,
     "The numeric parameter name '$%{name}' cannot be used (clashes with numeric match result variables)"
@@ -252,9 +231,6 @@ module Issues
   # in an array or a hash. This is an optional validation that may be turned on to prevent accidental
   # mutation.
   #
-  #ILLEGAL_INDEXED_ASSIGNMENT = issue :ILLEGAL_INDEXED_ASSIGNMENT do
-  #  _("Illegal attempt to assign via [index/key]. Not an assignable reference")
-  #end
   ILLEGAL_INDEXED_ASSIGNMENT = simple_issue(
     :ILLEGAL_INDEXED_ASSIGNMENT,
     "Illegal attempt to assign via [index/key]. Not an assignable reference"
@@ -267,33 +243,21 @@ module Issues
     _("Illegal attempt to assign to %{value} via [index/key]. Not an assignable reference") % { value: label.a_an(semantic) }
   end
 
-  #ILLEGAL_MULTI_ASSIGNMENT_SIZE = hard_issue :ILLEGAL_MULTI_ASSIGNMENT_SIZE, :expected, :actual do
-  #  _("Mismatched number of assignable entries and values, expected %{expected}, got %{actual}") % { expected: expected, actual: actual }
-  #end
   ILLEGAL_MULTI_ASSIGNMENT_SIZE = simple_hard_issue(
     :ILLEGAL_MULTI_ASSIGNMENT_SIZE,
     "Mismatched number of assignable entries and values, expected %{expected}, got %{actual}"
   )
 
-  #MISSING_MULTI_ASSIGNMENT_KEY = hard_issue :MISSING_MULTI_ASSIGNMENT_KEY, :key do
-  #  _("No value for required key '%{key}' in assignment to variables from hash") % { key: key }
-  #end
   MISSING_MULTI_ASSIGNMENT_KEY = simple_hard_issue(
     :MISSING_MULTI_ASSIGNMENT_KEY,
     "No value for required key '%{key}' in assignment to variables from hash"
   )
 
-  #MISSING_MULTI_ASSIGNMENT_VARIABLE = hard_issue :MISSING_MULTI_ASSIGNMENT_VARIABLE, :name do
-  #  _("No value for required variable '$%{name}' in assignment to variables from class reference") % { name: name }
-  #end
   MISSING_MULTI_ASSIGNMENT_VARIABLE = simple_hard_issue(
     :MISSING_MULTI_ASSIGNMENT_VARIABLE,
     "No value for required variable '$%{name}' in assignment to variables from class reference"
   )
 
-  #APPENDS_DELETES_NO_LONGER_SUPPORTED = hard_issue :APPENDS_DELETES_NO_LONGER_SUPPORTED, :operator do
-  #  _("The operator '%{operator}' is no longer supported. See http://links.puppet.com/remove-plus-equals") % { operator: operator }
-  #end
   APPENDS_DELETES_NO_LONGER_SUPPORTED = simple_hard_issue(
     :APPENDS_DELETES_NO_LONGER_SUPPORTED,
     "The operator '%{operator}' is no longer supported. See http://links.puppet.com/remove-plus-equals"
@@ -301,9 +265,6 @@ module Issues
 
   # For unsupported operators (e.g. += and -= in puppet 4).
   #
-  #UNSUPPORTED_OPERATOR = hard_issue :UNSUPPORTED_OPERATOR, :operator do
-  #  _("The operator '%{operator}' is not supported.") % { operator: operator }
-  #end
   UNSUPPORTED_OPERATOR = simple_hard_issue(
     :UNSUPPORTED_OPERATOR,
     "The operator '%{operator}' is not supported."
@@ -330,9 +291,6 @@ module Issues
     _("Comparison of: %{left} %{operator} %{right}, is not possible. Caused by '%{detail}'.") % { left: label(left_value), operator: operator, right: label(right_value), detail: detail }
   end
 
-  #MATCH_NOT_REGEXP = hard_issue :MATCH_NOT_REGEXP, :detail do
-  #  _("Can not convert right match operand to a regular expression. Caused by '%{detail}'.") % { detail: detail }
-  #end
   MATCH_NOT_REGEXP = simple_hard_issue(
     :MATCH_NOT_REGEXP,
     "Can not convert right match operand to a regular expression. Caused by '%{detail}'."
@@ -355,9 +313,6 @@ module Issues
     _("Illegal +> operation on attribute %{attr}. This operator can not be used in %{expression}") % { attr: name, expression: label.a_an(parent) }
   end
 
-  #ILLEGAL_NAME = hard_issue :ILLEGAL_NAME, :name do
-  #  _("Illegal name. The given name '%{name}' does not conform to the naming rule /^((::)?[a-z_]\w*)(::[a-z]\\w*)*$/") % { name: name }
-  #end
   ILLEGAL_NAME = simple_hard_issue(
     :ILLEGAL_NAME,
     "Illegal name. The given name '%{name}' does not conform to the naming rule /^((::)?[a-z_]\w*)(::[a-z]\\w*)*$/"
@@ -371,25 +326,16 @@ module Issues
     _("Illegal type mapping. Expected a Tuple[Regexp,String] on the left side, got %{expression}") % { expression: label.a_an_uc(semantic) }
   end
 
-  #ILLEGAL_PARAM_NAME = hard_issue :ILLEGAL_PARAM_NAME, :name do
-  #  _("Illegal parameter name. The given name '%{name}' does not conform to the naming rule /^[a-z_]\\w*$/") % { name: name }
-  #end
   ILLEGAL_PARAM_NAME = simple_hard_issue(
     :ILLEGAL_PARAM_NAME,
     "Illegal parameter name. The given name '%{name}' does not conform to the naming rule /^[a-z_]\\w*$/"
   )
 
-  #ILLEGAL_VAR_NAME = hard_issue :ILLEGAL_VAR_NAME, :name do
-  #  _("Illegal variable name, The given name '%{name}' does not conform to the naming rule /^((::)?[a-z]\\w*)*((::)?[a-z_]\\w*)$/") % { name: name }
-  #end
   ILLEGAL_VAR_NAME = simple_hard_issue(
     :ILLEGAL_VAR_NAME,
     "Illegal variable name, The given name '%{name}' does not conform to the naming rule /^((::)?[a-z]\\w*)*((::)?[a-z_]\\w*)$/"
   )
 
-  #ILLEGAL_NUMERIC_VAR_NAME = hard_issue :ILLEGAL_NUMERIC_VAR_NAME, :name do
-  #  _("Illegal numeric variable name, The given name '%{name}' must be a decimal value if it starts with a digit 0-9") % { name: name }
-  #end
   ILLEGAL_NUMERIC_VAR_NAME = simple_hard_issue(
     :ILLEGAL_NUMERIC_VAR_NAME,
     "Illegal numeric variable name, The given name '%{name}' must be a decimal value if it starts with a digit 0-9"
@@ -397,9 +343,6 @@ module Issues
 
   # In case a model is constructed programmatically, it must create valid type references.
   #
-  #ILLEGAL_CLASSREF = hard_issue :ILLEGAL_CLASSREF, :name do
-  #  _("Illegal type reference. The given name '%{name}' does not conform to the naming rule") % { name: name }
-  #end
   ILLEGAL_CLASSREF = simple_hard_issue(
     :ILLEGAL_CLASSREF,
     "Illegal type reference. The given name '%{name}' does not conform to the naming rule"
@@ -409,9 +352,6 @@ module Issues
   # set to :ignore when just checking syntax.
   # @todo should be a :warning by default
   #
-  #RT_NO_STORECONFIGS = issue :RT_NO_STORECONFIGS do
-  #  _("You cannot collect exported resources without storeconfigs being set; the collection will be ignored")
-  #end
   RT_NO_STORECONFIGS = simple_issue(
     :RT_NO_STORECONFIGS,
     "You cannot collect exported resources without storeconfigs being set; the collection will be ignored"
@@ -428,9 +368,6 @@ module Issues
 
   # A hostname may only contain letters, digits, '_', '-', and '.'.
   #
-  #ILLEGAL_HOSTNAME_CHARS = hard_issue :ILLEGAL_HOSTNAME_CHARS, :hostname do
-  #  _("The hostname '%{hostname}' contains illegal characters (only letters, digits, '_', '-', and '.' are allowed)") % { hostname: hostname }
-  #end
   ILLEGAL_HOSTNAME_CHARS = simple_hard_issue(
     :ILLEGAL_HOSTNAME_CHARS,
     "The hostname '%{hostname}' contains illegal characters (only letters, digits, '_', '-', and '.' are allowed)"
@@ -438,9 +375,6 @@ module Issues
 
   # A hostname may only contain letters, digits, '_', '-', and '.'.
   #
-  #ILLEGAL_HOSTNAME_INTERPOLATION = hard_issue :ILLEGAL_HOSTNAME_INTERPOLATION do
-  #  _("An interpolated expression is not allowed in a hostname of a node")
-  #end
   ILLEGAL_HOSTNAME_INTERPOLATION = simple_hard_issue(
     :ILLEGAL_HOSTNAME_INTERPOLATION,
     "An interpolated expression is not allowed in a hostname of a node"
@@ -468,17 +402,11 @@ module Issues
 
   # If an attempt is made to make a resource default virtual or exported.
   #
-  #NOT_VIRTUALIZEABLE = hard_issue :NOT_VIRTUALIZEABLE do
-  #  _("Resource Defaults are not virtualizable")
-  #end
   NOT_VIRTUALIZEABLE = simple_hard_issue(
     :NOT_VIRTUALIZEABLE,
     "Resource Defaults are not virtualizable"
   )
 
-  #CLASS_NOT_VIRTUALIZABLE = issue :CLASS_NOT_VIRTUALIZABLE do
-  #  _("Classes are not virtualizable")
-  #end
   CLASS_NOT_VIRTUALIZABLE = simple_issue(
     :CLASS_NOT_VIRTUALIZABLE,
     "Classes are not virtualizable"
@@ -501,57 +429,36 @@ module Issues
     _("Illegal relationship operand, can not form a relationship with %{expression}. A Catalog type is required.") % { expression: label.a_an(operand) }
   end
 
-  #NOT_CATALOG_TYPE = issue :NOT_CATALOG_TYPE, :type do
-  #  _("Illegal relationship operand, can not form a relationship with something of type %{expression_type}. A Catalog type is required.") % { expression_type: type }
-  #end
   NOT_CATALOG_TYPE = simple_issue(
     :NOT_CATALOG_TYPE,
     "Illegal relationship operand, can not form a relationship with something of type %{type}. A Catalog type is required."
   )
 
-  #BAD_STRING_SLICE_ARITY = issue :BAD_STRING_SLICE_ARITY, :actual do
-  #  _("String supports [] with one or two arguments. Got %{actual}") % { actual: actual }
-  #end
   BAD_STRING_SLICE_ARITY = simple_issue(
     :BAD_STRING_SLICE_ARITY,
     "String supports [] with one or two arguments. Got %{actual}"
   )
 
-  #BAD_STRING_SLICE_TYPE = issue :BAD_STRING_SLICE_TYPE, :actual do
-  #  _("String-Type [] requires all arguments to be integers (or default). Got %{actual}") % { actual: actual }
-  #end
   BAD_STRING_SLICE_TYPE = simple_issue(
     :BAD_STRING_SLICE_TYPE,
     "String-Type [] requires all arguments to be integers (or default). Got %{actual}"
   )
 
-  #BAD_ARRAY_SLICE_ARITY = issue :BAD_ARRAY_SLICE_ARITY, :actual do
-  #  _("Array supports [] with one or two arguments. Got %{actual}") % { actual: actual }
-  #end
   BAD_ARRAY_SLICE_ARITY = simple_issue(
     :BAD_ARRAY_SLICE_ARITY,
     "Array supports [] with one or two arguments. Got %{actual}"
   )
 
-  #BAD_HASH_SLICE_ARITY = issue :BAD_HASH_SLICE_ARITY, :actual do
-  #  _("Hash supports [] with one or more arguments. Got %{actual}") % { actual: actual }
-  #end
   BAD_HASH_SLICE_ARITY = simple_issue(
     :BAD_HASH_SLICE_ARITY,
     "Hash supports [] with one or more arguments. Got %{actual}"
   )
 
-  #BAD_INTEGER_SLICE_ARITY = issue :BAD_INTEGER_SLICE_ARITY, :actual do
-  #  _("Integer-Type supports [] with one or two arguments (from, to). Got %{actual}") % { actual: actual }
-  #end
   BAD_INTEGER_SLICE_ARITY = simple_issue(
     :BAD_INTEGER_SLICE_ARITY,
     "Integer-Type supports [] with one or two arguments (from, to). Got %{actual}"
   )
 
-  #BAD_INTEGER_SLICE_TYPE = issue :BAD_INTEGER_SLICE_TYPE, :actual do
-  #  _("Integer-Type [] requires all arguments to be integers (or default). Got %{actual}") % { actual: actual }
-  #end
   BAD_INTEGER_SLICE_TYPE = simple_issue(
     :BAD_INTEGER_SLICE_TYPE,
     "Integer-Type [] requires all arguments to be integers (or default). Got %{actual}"
@@ -561,17 +468,11 @@ module Issues
     _("A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Got %{actual}") % { actual: label.a_an(actual) }
   end
 
-  #BAD_FLOAT_SLICE_ARITY = issue :BAD_INTEGER_SLICE_ARITY, :actual do
-  #  _("Float-Type supports [] with one or two arguments (from, to). Got %{actual}") % { actual: actual }
-  #end
   BAD_FLOAT_SLICE_ARITY = simple_issue(
     :BAD_INTEGER_SLICE_ARITY,
     "Float-Type supports [] with one or two arguments (from, to). Got %{actual}"
   )
 
-  #BAD_FLOAT_SLICE_TYPE = issue :BAD_INTEGER_SLICE_TYPE, :actual do
-  #  _("Float-Type [] requires all arguments to be floats, or integers (or default). Got %{actual}") % { actual: actual }
-  #end
   BAD_FLOAT_SLICE_TYPE = simple_issue(
     :BAD_INTEGER_SLICE_TYPE,
     "Float-Type [] requires all arguments to be floats, or integers (or default). Got %{actual}"
@@ -590,17 +491,11 @@ module Issues
     _("A substring operation does not accept %{label_article} %{actual_type} as a character index. Expected an Integer") % { label_article: label.article(actual_type), actual_type: actual_type }
   end
 
-  #BAD_NOT_UNDEF_SLICE_TYPE = issue :BAD_NOT_UNDEF_SLICE_TYPE, :base_type, :actual do
-  #  _("%{expression}[] argument must be a Type or a String. Got %{actual}") % { expression: base_type, actual: actual }
-  #end
   BAD_NOT_UNDEF_SLICE_TYPE = simple_issue(
     :BAD_NOT_UNDEF_SLICE_TYPE,
     "%{base_type}[] argument must be a Type or a String. Got %{actual}"
   )
 
-  #BAD_TYPE_SLICE_TYPE = issue :BAD_TYPE_SLICE_TYPE, :base_type, :actual do
-  #  _("%{base_type}[] arguments must be types. Got %{actual}") % { base_type: base_type, actual: actual }
-  #end
   BAD_TYPE_SLICE_TYPE = simple_issue(
     :BAD_TYPE_SLICE_TYPE,
     "%{base_type}[] arguments must be types. Got %{actual}"
@@ -621,25 +516,16 @@ module Issues
     _("Error creating type specialization of %{base_type}, %{message}") % { base_type: label.a_an(type), message: message }
   end
 
-  #ILLEGAL_TYPE_SPECIALIZATION = issue :ILLEGAL_TYPE_SPECIALIZATION, :kind do
-  #  _("Cannot specialize an already specialized %{kind} type") % { kind: kind }
-  #end
   ILLEGAL_TYPE_SPECIALIZATION = simple_issue(
     :ILLEGAL_TYPE_SPECIALIZATION,
     "Cannot specialize an already specialized %{kind} type"
   )
 
-  #ILLEGAL_RESOURCE_SPECIALIZATION = issue :ILLEGAL_RESOURCE_SPECIALIZATION, :actual do
-  #  _("First argument to Resource[] must be a resource type or a String. Got %{actual}.") % { actual: actual }
-  #end
   ILLEGAL_RESOURCE_SPECIALIZATION = simple_issue(
     :ILLEGAL_RESOURCE_SPECIALIZATION,
     "First argument to Resource[] must be a resource type or a String. Got %{actual}."
   )
 
-  #EMPTY_RESOURCE_SPECIALIZATION = issue :EMPTY_RESOURCE_SPECIALIZATION do
-  #  _("Arguments to Resource[] are all empty/undefined")
-  #end
   EMPTY_RESOURCE_SPECIALIZATION = simple_issue(
     :EMPTY_RESOURCE_SPECIALIZATION,
     "Arguments to Resource[] are all empty/undefined"
@@ -653,9 +539,6 @@ module Issues
     _("Unacceptable name. The name '%{name}' is unacceptable as the name of %{value}") % { name: name, value: label.a_an(semantic) }
   end
 
-  #ILLEGAL_DEFINITION_LOCATION = issue :ILLEGAL_DEFINITION_LOCATION, :name, :file do
-  #  _("Unacceptable location. The name '%{name}' is unacceptable in file '%{file}'") % { name: name, file: file }
-  #end
   ILLEGAL_DEFINITION_LOCATION = simple_issue(
     :ILLEGAL_DEFINITION_LOCATION,
     "Unacceptable location. The name '%{name}' is unacceptable in file '%{file}'"
@@ -669,9 +552,6 @@ module Issues
     end
   end
 
-  #CAPTURES_REST_NOT_LAST = hard_issue :CAPTURES_REST_NOT_LAST, :param_name do
-  #  _("Parameter $%{param} is not last, and has 'captures rest'") % { param: param_name }
-  #end
   CAPTURES_REST_NOT_LAST = simple_hard_issue(
     :CAPTURES_REST_NOT_LAST,
     "Parameter $%{param_name} is not last, and has 'captures rest'"
@@ -681,113 +561,68 @@ module Issues
     _("Parameter $%{param} has 'captures rest' - not supported in %{container}") % { param: param_name, container: label.a_an(container) }
   end
 
-  #REQUIRED_PARAMETER_AFTER_OPTIONAL = hard_issue :REQUIRED_PARAMETER_AFTER_OPTIONAL, :param_name do
-  #  _("Parameter $%{param} is required but appears after optional parameters") % { param: param_name }
-  #end
   REQUIRED_PARAMETER_AFTER_OPTIONAL = simple_hard_issue(
     :REQUIRED_PARAMETER_AFTER_OPTIONAL,
     "Parameter $%{param_name} is required but appears after optional parameters"
   )
 
-  #MISSING_REQUIRED_PARAMETER = hard_issue :MISSING_REQUIRED_PARAMETER, :param_name do
-  #  _("Parameter $%{param} is required but no value was given") % { param: param_name }
-  #end
   MISSING_REQUIRED_PARAMETER = simple_hard_issue(
     :MISSING_REQUIRED_PARAMETER,
     "Parameter $%{param_name} is required but no value was given"
   )
 
-  #NOT_NUMERIC = issue :NOT_NUMERIC, :value do
-  #  _("The value '%{value}' cannot be converted to Numeric.") % { value: value }
-  #end
   NOT_NUMERIC = simple_issue(:NOT_NUMERIC, "The value '%{value}' cannot be converted to Numeric.")
 
-  #NUMERIC_COERCION = issue :NUMERIC_COERCION, :before, :after do
-  #  _("The string '%{before}' was automatically coerced to the numerical value %{after}") % { before: before, after: after }
-  #end
   NUMERIC_COERCION = simple_issue(
     :NUMERIC_COERCION,
     "The string '%{before}' was automatically coerced to the numerical value %{after}"
   )
 
-  #UNKNOWN_FUNCTION = issue :UNKNOWN_FUNCTION, :name do
-  #  _("Unknown function: '%{name}'.") % { name: name }
-  #end
   UNKNOWN_FUNCTION = simple_issue(:UNKNOWN_FUNCTION, "Unknown function: '%{name}'.")
 
-  #UNKNOWN_VARIABLE = issue :UNKNOWN_VARIABLE, :name do
-  #  _("Unknown variable: '%{name}'.") % { name: name }
-  #end
   UNKNOWN_VARIABLE = simple_issue(:UNKNOWN_VARIABLE, "Unknown variable: '%{name}'.")
 
   RUNTIME_ERROR = issue :RUNTIME_ERROR, :detail do
     _("Error while evaluating %{expression}, %{detail}") % { expression: label.a_an(semantic), detail: detail }
   end
 
-  #UNKNOWN_RESOURCE_TYPE = issue :UNKNOWN_RESOURCE_TYPE, :type_name do
-  #  _("Resource type not found: %{res_type}") % { res_type: type_name }
-  #end
   UNKNOWN_RESOURCE_TYPE = simple_issue(
     :UNKNOWN_RESOURCE_TYPE,
     "Resource type not found: %{type_name}"
   )
 
-  #ILLEGAL_RESOURCE_TYPE = hard_issue :ILLEGAL_RESOURCE_TYPE, :actual do
-  #  _("Illegal Resource Type expression, expected result to be a type name, or untitled Resource, got %{actual}") % { actual: actual }
-  #end
   ILLEGAL_RESOURCE_TYPE = simple_hard_issue(
     :ILLEGAL_RESOURCE_TYPE,
     "Illegal Resource Type expression, expected result to be a type name, or untitled Resource, got %{actual}"
   )
 
-  #DUPLICATE_TITLE = issue :DUPLICATE_TITLE, :title  do
-  #  _("The title '%{title}' has already been used in this resource expression") % { title: title }
-  #end
   DUPLICATE_TITLE = simple_issue(
     :DUPLICATE_TITLE,
     "The title '%{title}' has already been used in this resource expression"
   )
 
-  #DUPLICATE_ATTRIBUTE = issue :DUPLICATE_ATTRIBUE, :attribute  do
-  #  _("The attribute '%{attribute}' has already been set") % { attribute: attribute }
-  #end
   DUPLICATE_ATTRIBUTE = simple_issue(
     :DUPLICATE_ATTRIBUE,
     "The attribute '%{attribute}' has already been set"
   )
 
-  #MISSING_TITLE = hard_issue :MISSING_TITLE do
-  #  _("Missing title. The title expression resulted in undef")
-  #end
   MISSING_TITLE = simple_hard_issue(:MISSING_TITLE, "Missing title. The title expression resulted in undef")
 
-  #MISSING_TITLE_AT = hard_issue :MISSING_TITLE_AT, :index do
-  #  _("Missing title at index %{index}. The title expression resulted in an undef title") % { index: index }
-  #end
   MISSING_TITLE_AT = simple_hard_issue(
     :MISSING_TITLE_AT,
     "Missing title at index %{index}. The title expression resulted in an undef title"
   )
 
-  #ILLEGAL_TITLE_TYPE_AT = hard_issue :ILLEGAL_TITLE_TYPE_AT, :index, :actual do
-  #  _("Illegal title type at index %{index}. Expected String, got %{actual}") % { index: index, actual: actual }
-  #end
   ILLEGAL_TITLE_TYPE_AT = simple_hard_issue(
     :ILLEGAL_TITLE_TYPE_AT,
     "Illegal title type at index %{index}. Expected String, got %{actual}"
   )
 
-  #EMPTY_STRING_TITLE_AT = hard_issue :EMPTY_STRING_TITLE_AT, :index do
-  #  _("Empty string title at %{index}. Title strings must have a length greater than zero.") % { index: index }
-  #end
   EMPTY_STRING_TITLE_AT = simple_hard_issue(
     :EMPTY_STRING_TITLE_AT,
     "Empty string title at %{index}. Title strings must have a length greater than zero."
   )
 
-  #UNKNOWN_RESOURCE = issue :UNKNOWN_RESOURCE, :type_name, :title do
-  #  _("Resource not found: %{type_name}['%{title}']") % { type_name: type_name, title: title }
-  #end
   UNKNOWN_RESOURCE = simple_issue(
     :UNKNOWN_RESOURCE,
     "Resource not found: %{type_name}['%{title}']"
@@ -797,40 +632,24 @@ module Issues
     _("The resource %{type_name}['%{title}'] does not have a parameter called '%{param}'") % { type_name: type_name.capitalize, title: title, param: param_name }
   end
 
-  #DIV_BY_ZERO = hard_issue :DIV_BY_ZERO do
-  #  _("Division by 0")
-  #end
   DIV_BY_ZERO = simple_hard_issue(:DIV_BY_ZERO, "Division by 0")
 
-  #RESULT_IS_INFINITY = hard_issue :RESULT_IS_INFINITY, :operator do
-  #  _("The result of the %{operator} expression is Infinity") % { operator: operator }
-  #end
   RESULT_IS_INFINITY = simple_hard_issue(
     :RESULT_IS_INFINITY,
     "The result of the %{operator} expression is Infinity"
   )
 
   # TODO_HEREDOC
-  #EMPTY_HEREDOC_SYNTAX_SEGMENT = issue :EMPTY_HEREDOC_SYNTAX_SEGMENT, :syntax do
-  #  _("Heredoc syntax specification has empty segment between '+' : '%{syntax}'") % { syntax: syntax }
-  #end
   EMPTY_HEREDOC_SYNTAX_SEGMENT = simple_issue(
     :EMPTY_HEREDOC_SYNTAX_SEGMENT,
     "Heredoc syntax specification has empty segment between '+' : '%{syntax}'"
   )
 
-  #ILLEGAL_EPP_PARAMETERS = issue :ILLEGAL_EPP_PARAMETERS do
-  #  _("Ambiguous EPP parameter expression. Probably missing '<%-' before parameters to remove leading whitespace")
-  #end
   ILLEGAL_EPP_PARAMETERS = simple_issue(
     :ILLEGAL_EPP_PARAMETERS,
     "Ambiguous EPP parameter expression. Probably missing '<%-' before parameters to remove leading whitespace"
   )
 
-  #DISCONTINUED_IMPORT = hard_issue :DISCONTINUED_IMPORT do
-  #  #TRANSLATORS "import" is a function name and should not be translated
-  #  _("Use of 'import' has been discontinued in favor of a manifest directory. See http://links.puppet.com/puppet-import-deprecation")
-  #end
   DISCONTINUED_IMPORT = simple_hard_issue(
     :DISCONTINUED_IMPORT,
     #TRANSLATORS "import" is a function name and should not be translated
@@ -841,9 +660,6 @@ module Issues
     _("This %{expression} has no effect. A value was produced and then forgotten (one or more preceding expressions may have the wrong form)") % { expression: label.label(semantic) }
   end
 
-  #RESOURCE_WITHOUT_TITLE = issue :RESOURCE_WITHOUT_TITLE, :name do
-  #  _("This expression is invalid. Did you try declaring a '%{name}' resource without a title?") % { name: name }
-  #end
   RESOURCE_WITHOUT_TITLE = simple_issue(
     :RESOURCE_WITHOUT_TITLE,
     "This expression is invalid. Did you try declaring a '%{name}' resource without a title?"
@@ -853,17 +669,11 @@ module Issues
     _("This %{expression} has no effect. %{container} can not end with a value-producing expression without other effect") % { expression: label.label(semantic), container: label.a_an_uc(container) }
   end
 
-  #RESERVED_WORD = hard_issue :RESERVED_WORD, :word do
-  #  _("Use of reserved word: %{word}, must be quoted if intended to be a String value") % { word: word }
-  #end
   RESERVED_WORD = simple_hard_issue(
     :RESERVED_WORD,
     "Use of reserved word: %{word}, must be quoted if intended to be a String value"
   )
 
-  #FUTURE_RESERVED_WORD = issue :FUTURE_RESERVED_WORD, :word do
-  #  _("Use of future reserved word: '%{word}'") % { word: word }
-  #end
   FUTURE_RESERVED_WORD = simple_issue(
     :FUTURE_RESERVED_WORD,
     "Use of future reserved word: '%{word}'"
@@ -873,17 +683,11 @@ module Issues
     _("The name: '%{name}' is already defined by Puppet and can not be used as the name of %{expression}.") % { name: name, expression: label.a_an(semantic) }
   end
 
-  #UNMATCHED_SELECTOR = hard_issue :UNMATCHED_SELECTOR, :param_value do
-  #  _("No matching entry for selector parameter with value '%{param}'") % { param: param_value }
-  #end
   UNMATCHED_SELECTOR = simple_hard_issue(
     :UNMATCHED_SELECTOR,
     "No matching entry for selector parameter with value '%{param_value}'"
   )
 
-  #ILLEGAL_NODE_INHERITANCE = issue :ILLEGAL_NODE_INHERITANCE do
-  #  _("Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation")
-  #end
   ILLEGAL_NODE_INHERITANCE = simple_issue(
     :ILLEGAL_NODE_INHERITANCE,
     "Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation"
@@ -893,17 +697,11 @@ module Issues
     _("Resource Override can only operate on resources, got: %{actual}") % { actual: label.label(actual) }
   end
 
-  #DUPLICATE_PARAMETER = hard_issue :DUPLICATE_PARAMETER, :param_name do
-  #  _("The parameter '%{param}' is declared more than once in the parameter list") % { param: param_name }
-  #end
   DUPLICATE_PARAMETER = simple_hard_issue(
     :DUPLICATE_PARAMETER,
     "The parameter '%{param_name}' is declared more than once in the parameter list"
   )
 
-  #DUPLICATE_KEY = issue :DUPLICATE_KEY, :key do
-  #  _("The key '%{key}' is declared more than once") % { key: key }
-  #end
   DUPLICATE_KEY = simple_issue(:DUPLICATE_KEY, "The key '%{key}' is declared more than once")
 
   DUPLICATE_DEFAULT = hard_issue :DUPLICATE_DEFAULT, :container do
@@ -914,17 +712,11 @@ module Issues
     _("The parameter $%{param} redefines a built in parameter in %{container}") % { param: param_name, container: label.the(container) }
   end
 
-  #TYPE_MISMATCH = hard_issue :TYPE_MISMATCH, :expected, :actual do
-  #  _("Expected value of type %{expected}, got %{actual}") % { expected: expected, actual: actual }
-  #end
   TYPE_MISMATCH = simple_hard_issue(
     :TYPE_MISMATCH,
     "Expected value of type %{expected}, got %{actual}"
   )
 
-  #MULTIPLE_ATTRIBUTES_UNFOLD = hard_issue :MULTIPLE_ATTRIBUTES_UNFOLD do
-  #  _("Unfolding of attributes from Hash can only be used once per resource body")
-  #end
   MULTIPLE_ATTRIBUTES_UNFOLD = simple_hard_issue(
     :MULTIPLE_ATTRIBUTES_UNFOLD,
     "Unfolding of attributes from Hash can only be used once per resource body"
@@ -934,214 +726,130 @@ module Issues
     _("This %{expression} appears in a context where catalog related expressions are not allowed") % { expression: label.label(semantic) }
   end
 
-  #SYNTAX_ERROR = hard_issue :SYNTAX_ERROR, :where do
-  #  _("Syntax error at %{location}") % { location: where }
-  #end
   SYNTAX_ERROR = simple_hard_issue(:SYNTAX_ERROR, "Syntax error at %{where}")
 
-  #ILLEGAL_CLASS_REFERENCE = hard_issue :ILLEGAL_CLASS_REFERENCE do
-  #  _('Illegal class reference')
-  #end
   ILLEGAL_CLASS_REFERENCE = simple_hard_issue(:ILLEGAL_CLASS_REFERENCE, 'Illegal class reference')
 
-  #ILLEGAL_FULLY_QUALIFIED_CLASS_REFERENCE = hard_issue :ILLEGAL_FULLY_QUALIFIED_CLASS_REFERENCE do
-  #  _('Illegal fully qualified class reference')
-  #end
   ILLEGAL_FULLY_QUALIFIED_CLASS_REFERENCE = simple_hard_issue(
     :ILLEGAL_FULLY_QUALIFIED_CLASS_REFERENCE,
     'Illegal fully qualified class reference'
   )
 
-  #ILLEGAL_FULLY_QUALIFIED_NAME = hard_issue :ILLEGAL_FULLY_QUALIFIED_NAME do
-  #  _('Illegal fully qualified name')
-  #end
   ILLEGAL_FULLY_QUALIFIED_NAME = simple_hard_issue(
     :ILLEGAL_FULLY_QUALIFIED_NAME,
     'Illegal fully qualified name'
   )
 
-  #ILLEGAL_NAME_OR_BARE_WORD = hard_issue :ILLEGAL_NAME_OR_BARE_WORD do
-  #  _('Illegal name or bare word')
-  #end
   ILLEGAL_NAME_OR_BARE_WORD = simple_hard_issue(
     :ILLEGAL_NAME_OR_BARE_WORD,
     'Illegal name or bare word'
   )
 
-  #ILLEGAL_NUMBER = hard_issue :ILLEGAL_NUMBER, :value do
-  #  _("Illegal number '%{value}'") % { value: value }
-  #end
   ILLEGAL_NUMBER = simple_hard_issue(:ILLEGAL_NUMBER, "Illegal number '%{value}'")
 
-  #ILLEGAL_UNICODE_ESCAPE = issue :ILLEGAL_UNICODE_ESCAPE do
-  #  _("Unicode escape '\\u' was not followed by 4 hex digits or 1-6 hex digits in {} or was > 10ffff")
-  #end
   ILLEGAL_UNICODE_ESCAPE = simple_issue(
     :ILLEGAL_UNICODE_ESCAPE,
     "Unicode escape '\\u' was not followed by 4 hex digits or 1-6 hex digits in {} or was > 10ffff"
   )
 
-  #INVALID_HEX_NUMBER = hard_issue :INVALID_HEX_NUMBER, :value do
-  #  _("Not a valid hex number %{value}") % { value: value }
-  #end
   INVALID_HEX_NUMBER = simple_hard_issue(
     :INVALID_HEX_NUMBER,
     "Not a valid hex number %{value}"
   )
 
-  #INVALID_OCTAL_NUMBER = hard_issue :INVALID_OCTAL_NUMBER, :value do
-  #  _("Not a valid octal number %{value}") % { value: value }
-  #end
   INVALID_OCTAL_NUMBER = simple_hard_issue(
     :INVALID_OCTAL_NUMBER,
     "Not a valid octal number %{value}"
   )
 
-  #INVALID_DECIMAL_NUMBER = hard_issue :INVALID_DECIMAL_NUMBER, :value do
-  #  _("Not a valid decimal number %{value}") % { value: value }
-  #end
   INVALID_DECIMAL_NUMBER = simple_hard_issue(
     :INVALID_DECIMAL_NUMBER,
     "Not a valid decimal number %{value}"
   )
 
-  #NO_INPUT_TO_LEXER = hard_issue :NO_INPUT_TO_LEXER do
-  #  _("Internal Error: No string or file given to lexer to process.")
-  #end
   NO_INPUT_TO_LEXER = simple_hard_issue(
     :NO_INPUT_TO_LEXER,
     "Internal Error: No string or file given to lexer to process."
   )
 
-  #UNRECOGNIZED_ESCAPE = issue :UNRECOGNIZED_ESCAPE, :ch do
-  #  _("Unrecognized escape sequence '\\%{ch}'") % { ch: ch }
-  #end
   UNRECOGNIZED_ESCAPE = simple_issue(
     :UNRECOGNIZED_ESCAPE,
     "Unrecognized escape sequence '\\%{ch}'"
   )
 
-  #UNCLOSED_QUOTE = hard_issue :UNCLOSED_QUOTE, :after, :followed_by do
-  #  _("Unclosed quote after %{after} followed by '%{followed_by}'") % { after: after, followed_by: followed_by }
-  #end
   UNCLOSED_QUOTE = simple_hard_issue(
     :UNCLOSED_QUOTE,
     "Unclosed quote after %{after} followed by '%{followed_by}'"
   )
 
-  #UNCLOSED_MLCOMMENT = hard_issue :UNCLOSED_MLCOMMENT do
-  #  _('Unclosed multiline comment')
-  #end
   UNCLOSED_MLCOMMENT = simple_hard_issue(:UNCLOSED_MLCOMMENT, 'Unclosed multiline comment')
 
-  #EPP_INTERNAL_ERROR = hard_issue :EPP_INTERNAL_ERROR, :error do
-  #  _("Internal error: %{error}") % { error: error }
-  #end
   EPP_INTERNAL_ERROR = simple_hard_issue(
     :EPP_INTERNAL_ERROR,
     "Internal error: %{error}"
   )
 
-  #EPP_UNBALANCED_TAG = hard_issue :EPP_UNBALANCED_TAG do
-  #  _('Unbalanced epp tag, reached <eof> without closing tag.')
-  #end
   EPP_UNBALANCED_TAG = simple_hard_issue(
     :EPP_UNBALANCED_TAG,
     'Unbalanced epp tag, reached <eof> without closing tag.'
   )
 
-  #EPP_UNBALANCED_COMMENT = hard_issue :EPP_UNBALANCED_COMMENT do
-  #  _('Reaching end after opening <%# without seeing %>')
-  #end
   EPP_UNBALANCED_COMMENT = simple_hard_issue(
     :EPP_UNBALANCED_COMMENT,
     'Reaching end after opening <%%# without seeing %%>'
   )
 
-  #EPP_UNBALANCED_EXPRESSION = hard_issue :EPP_UNBALANCED_EXPRESSION do
-  #  _('Unbalanced embedded expression - opening <% and reaching end of input')
-  #end
   EPP_UNBALANCED_EXPRESSION = simple_hard_issue(
     :EPP_UNBALANCED_EXPRESSION,
     'Unbalanced embedded expression - opening <%% and reaching end of input'
   )
 
-  #HEREDOC_UNCLOSED_PARENTHESIS = hard_issue :HEREDOC_UNCLOSED_PARENTHESIS, :followed_by do
-  #  _("Unclosed parenthesis after '@(' followed by '%{followed_by}'") % { followed_by: followed_by }
-  #end
   HEREDOC_UNCLOSED_PARENTHESIS = simple_hard_issue(
     :HEREDOC_UNCLOSED_PARENTHESIS,
     "Unclosed parenthesis after '@(' followed by '%{followed_by}'"
   )
 
-  #HEREDOC_WITHOUT_END_TAGGED_LINE = hard_issue :HEREDOC_WITHOUT_END_TAGGED_LINE do
-  #  _('Heredoc without end-tagged line')
-  #end
   HEREDOC_WITHOUT_END_TAGGED_LINE = simple_hard_issue(
     :HEREDOC_WITHOUT_END_TAGGED_LINE,
     'Heredoc without end-tagged line'
   )
 
-  #HEREDOC_INVALID_ESCAPE = hard_issue :HEREDOC_INVALID_ESCAPE, :actual do
-  #  _("Invalid heredoc escape char. Only t, r, n, s,  u, L, $ allowed. Got '%{actual}'") % { actual: actual }
-  #end
   HEREDOC_INVALID_ESCAPE = simple_hard_issue(
     :HEREDOC_INVALID_ESCAPE,
     "Invalid heredoc escape char. Only t, r, n, s,  u, L, $ allowed. Got '%{actual}'"
   )
 
-  #HEREDOC_INVALID_SYNTAX = hard_issue :HEREDOC_INVALID_SYNTAX do
-  #  _('Invalid syntax in heredoc expected @(endtag[:syntax][/escapes])')
-  #end
   HEREDOC_INVALID_SYNTAX = simple_hard_issue(
     :HEREDOC_INVALID_SYNTAX,
     'Invalid syntax in heredoc expected @(endtag[:syntax][/escapes])'
   )
 
-  #HEREDOC_WITHOUT_TEXT = hard_issue :HEREDOC_WITHOUT_TEXT do
-  #  _('Heredoc without any following lines of text')
-  #end
   HEREDOC_WITHOUT_TEXT = simple_hard_issue(
     :HEREDOC_WITHOUT_TEXT,
     'Heredoc without any following lines of text'
   )
 
-  #HEREDOC_EMPTY_ENDTAG = hard_issue :HEREDOC_EMPTY_ENDTAG do
-  #  _('Heredoc with an empty endtag')
-  #end
   HEREDOC_EMPTY_ENDTAG = simple_hard_issue(:HEREDOC_EMPTY_ENDTAG, 'Heredoc with an empty endtag')
 
   HEREDOC_MULTIPLE_AT_ESCAPES = hard_issue :HEREDOC_MULTIPLE_AT_ESCAPES, :escapes do
     _("An escape char for @() may only appear once. Got '%{escapes}'") % { escapes: escapes.join(', ') }
   end
 
-  #HEREDOC_DIRTY_MARGIN = hard_issue :HEREDOC_DIRTY_MARGIN, :heredoc_line do
-  #  _("Heredoc with text in the margin is not allowed (line %{heredoc_line} in this heredoc)") % { heredoc_line: heredoc_line }
-  #end
   HEREDOC_DIRTY_MARGIN = simple_hard_issue(
     :HEREDOC_DIRTY_MARGIN,
     "Heredoc with text in the margin is not allowed (line %{heredoc_line} in this heredoc)"
   )
 
-  #ILLEGAL_BOM = hard_issue :ILLEGAL_BOM, :format_name, :bytes do
-  #  _("Illegal %{format} Byte Order mark at beginning of input: %{bom} - remove these from the puppet source") % { format: format_name, bom: bytes }
-  #end
   ILLEGAL_BOM = simple_hard_issue(
     :ILLEGAL_BOM,
     "Illegal %{format_name} Byte Order mark at beginning of input: %{bytes} - remove these from the puppet source"
   )
 
-  #NO_SUCH_FILE_OR_DIRECTORY = hard_issue :NO_SUCH_FILE_OR_DIRECTORY, :file do
-  #  _('No such file or directory: %{file}') % { file: file }
-  #end
   NO_SUCH_FILE_OR_DIRECTORY = simple_hard_issue(
     :NO_SUCH_FILE_OR_DIRECTORY,
     'No such file or directory: %{file}'
   )
 
-  #NOT_A_FILE = hard_issue :NOT_A_FILE, :file do
-  #  _('%{file} is not a file') % { file: file }
-  #end
   NOT_A_FILE = simple_hard_issue(:NOT_A_FILE, '%{file} is not a file')
 
   NUMERIC_OVERFLOW = hard_issue :NUMERIC_OVERFLOW, :value do
@@ -1152,9 +860,6 @@ module Issues
     end
   end
 
-  #HIERA_UNSUPPORTED_VERSION = hard_issue :HIERA_UNSUPPORTED_VERSION, :version do
-  #  _("This runtime does not support hiera.yaml version %{version}") % { version: version }
-  #end
   HIERA_UNSUPPORTED_VERSION = simple_hard_issue(
     :HIERA_UNSUPPORTED_VERSION,
     "This runtime does not support hiera.yaml version %{version}"
@@ -1164,17 +869,11 @@ module Issues
     _("hiera.yaml version 3 cannot be used in %{location}") % { location: label.a_an(where) }
   end
 
-  #HIERA_UNSUPPORTED_VERSION_IN_GLOBAL = hard_issue :HIERA_UNSUPPORTED_VERSION_IN_GLOBAL do
-  #  _('hiera.yaml version 4 cannot be used in the global layer')
-  #end
   HIERA_UNSUPPORTED_VERSION_IN_GLOBAL = simple_hard_issue(
     :HIERA_UNSUPPORTED_VERSION_IN_GLOBAL,
     'hiera.yaml version 4 cannot be used in the global layer'
   )
 
-  #HIERA_UNDEFINED_VARIABLE = hard_issue :HIERA_UNDEFINED_VARIABLE, :name do
-  #  _("Undefined variable '%{name}'") % { name: name }
-  #end
   HIERA_UNDEFINED_VARIABLE = simple_hard_issue(
     :HIERA_UNDEFINED_VARIABLE,
     "Undefined variable '%{name}'"
@@ -1189,9 +888,6 @@ module Issues
     msg
   end
 
-  #HIERA_NO_PROVIDER_FOR_BACKEND = hard_issue :HIERA_NO_PROVIDER_FOR_BACKEND, :name do
-  #  _("No data provider is registered for backend '%{name}'") % { name: name }
-  #end
   HIERA_NO_PROVIDER_FOR_BACKEND = simple_hard_issue(
     :HIERA_NO_PROVIDER_FOR_BACKEND,
     "No data provider is registered for backend '%{name}'"
@@ -1206,25 +902,16 @@ module Issues
     msg
   end
 
-  #HIERA_V3_BACKEND_NOT_GLOBAL = hard_issue :HIERA_V3_BACKEND_NOT_GLOBAL do
-  #  _("'hiera3_backend' is only allowed in the global layer")
-  #end
   HIERA_V3_BACKEND_NOT_GLOBAL = simple_hard_issue(
     :HIERA_V3_BACKEND_NOT_GLOBAL,
     "'hiera3_backend' is only allowed in the global layer"
   )
 
-  #HIERA_DEFAULT_HIERARCHY_NOT_IN_MODULE = hard_issue :HIERA_DEFAULT_HIERARCHY_NOT_IN_MODULE do
-  #  _("'default_hierarchy' is only allowed in the module layer")
-  #end
   HIERA_DEFAULT_HIERARCHY_NOT_IN_MODULE = simple_hard_issue(
     :HIERA_DEFAULT_HIERARCHY_NOT_IN_MODULE,
     "'default_hierarchy' is only allowed in the module layer"
   )
 
-  #HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH = hard_issue :HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH, :function_name do
-  #  _("Use \"data_hash: %{function_name}_data\" instead of \"hiera3_backend: %{function_name}\"") % { function_name: function_name }
-  #end
   HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH = simple_hard_issue(
     :HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH,
     "Use \"data_hash: %{function_name}_data\" instead of \"hiera3_backend: %{function_name}\""
@@ -1246,65 +933,41 @@ module Issues
     _("Only one of %{keys} can be defined in hierarchy '%{name}'") % { keys: label.combine_strings(Lookup::HieraConfig::LOCATION_KEYS), name: name }
   end
 
-  #HIERA_OPTION_RESERVED_BY_PUPPET = hard_issue :HIERA_OPTION_RESERVED_BY_PUPPET, :key, :name do
-  #  _("Option key '%{key}' used in hierarchy '%{name}' is reserved by Puppet") % { key: key, name: name }
-  #end
   HIERA_OPTION_RESERVED_BY_PUPPET = simple_hard_issue(
     :HIERA_OPTION_RESERVED_BY_PUPPET,
     "Option key '%{key}' used in hierarchy '%{name}' is reserved by Puppet"
   )
 
-  #HIERA_DEFAULT_OPTION_RESERVED_BY_PUPPET = hard_issue :HIERA_DEFAULT_OPTION_RESERVED_BY_PUPPET, :key do
-  #  _("Option key '%{key}' used in defaults is reserved by Puppet") % { key: key }
-  #end
   HIERA_DEFAULT_OPTION_RESERVED_BY_PUPPET = simple_hard_issue(
     :HIERA_DEFAULT_OPTION_RESERVED_BY_PUPPET,
     "Option key '%{key}' used in defaults is reserved by Puppet"
   )
 
-  #HIERA_DATA_PROVIDER_FUNCTION_NOT_FOUND = hard_issue :HIERA_DATA_PROVIDER_FUNCTION_NOT_FOUND, :function_type, :function_name do
-  #  _("Unable to find '%{function_type}' function named '%{function_name}'") % { function_type: function_type, function_name: function_name }
-  #end
   HIERA_DATA_PROVIDER_FUNCTION_NOT_FOUND = simple_hard_issue(
     :HIERA_DATA_PROVIDER_FUNCTION_NOT_FOUND,
     "Unable to find '%{function_type}' function named '%{function_name}'"
   )
 
-  #HIERA_INTERPOLATION_ALIAS_NOT_ENTIRE_STRING = hard_issue :HIERA_INTERPOLATION_ALIAS_NOT_ENTIRE_STRING do
-  #  _("'alias' interpolation is only permitted if the expression is equal to the entire string")
-  #end
   HIERA_INTERPOLATION_ALIAS_NOT_ENTIRE_STRING = simple_hard_issue(
     :HIERA_INTERPOLATION_ALIAS_NOT_ENTIRE_STRING,
     "'alias' interpolation is only permitted if the expression is equal to the entire string"
   )
 
-  #HIERA_INTERPOLATION_UNKNOWN_INTERPOLATION_METHOD = hard_issue :HIERA_INTERPOLATION_UNKNOWN_INTERPOLATION_METHOD, :name do
-  #  _("Unknown interpolation method '%{name}'") % { name: name }
-  #end
   HIERA_INTERPOLATION_UNKNOWN_INTERPOLATION_METHOD = simple_hard_issue(
     :HIERA_INTERPOLATION_UNKNOWN_INTERPOLATION_METHOD,
     "Unknown interpolation method '%{name}'"
   )
 
-  #HIERA_INTERPOLATION_METHOD_SYNTAX_NOT_ALLOWED = hard_issue :HIERA_INTERPOLATION_METHOD_SYNTAX_NOT_ALLOWED do
-  #  _('Interpolation using method syntax is not allowed in this context')
-  #end
   HIERA_INTERPOLATION_METHOD_SYNTAX_NOT_ALLOWED = simple_hard_issue(
     :HIERA_INTERPOLATION_METHOD_SYNTAX_NOT_ALLOWED,
     'Interpolation using method syntax is not allowed in this context'
   )
 
-  #SERIALIZATION_ENDLESS_RECURSION = hard_issue :SERIALIZATION_ENDLESS_RECURSION, :type_name do
-  #  _('Endless recursion detected when attempting to serialize value of class %{type_name}') % { :type_name => type_name }
-  #end
   SERIALIZATION_ENDLESS_RECURSION = simple_hard_issue(
     :SERIALIZATION_ENDLESS_RECURSION,
     'Endless recursion detected when attempting to serialize value of class %{type_name}'
   )
 
-  #SERIALIZATION_DEFAULT_CONVERTED_TO_STRING = issue :SERIALIZATION_DEFAULT_CONVERTED_TO_STRING, :path, :klass, :value do
-  #  _("%{path} contains the special value default. It will be converted to the String 'default'") % { path: path }
-  #end
   SERIALIZATION_DEFAULT_CONVERTED_TO_STRING = simple_issue(
     :SERIALIZATION_DEFAULT_CONVERTED_TO_STRING,
     "%{path} contains the special value default. It will be converted to the String 'default'"
@@ -1318,43 +981,25 @@ module Issues
     _("%{path} contains a hash with %{klass} key. It will be converted to the String '%{value}'") % { path: path, klass: label.a_an(klass), value: value }
   end
 
-  #FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING = issue :NOT_SUPPORTED_WHEN_SCRIPTING, :feature do
-  #  _("The feature '%{feature}' is only available when compiling a catalog") % { feature: feature }
-  #end
   FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING = simple_issue(
     :NOT_SUPPORTED_WHEN_SCRIPTING,
     "The feature '%{feature}' is only available when compiling a catalog"
   )
 
-  #CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING = issue :CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING, :operation do
-  #  _("The catalog operation '%{operation}' is only available when compiling a catalog") % { operation: operation }
-  #end
   CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING = simple_issue(
     :CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
     "The catalog operation '%{operation}' is only available when compiling a catalog"
   )
 
-  #TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING = issue :TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING, :operation do
-  #  _("The task operation '%{operation}' is not available when compiling a catalog") % { operation: operation }
-  #end
   TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING = simple_issue(
     :TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING,
     "The task operation '%{operation}' is not available when compiling a catalog"
   )
 
-  #TASK_MISSING_BOLT = issue :TASK_MISSING_BOLT, :action do
-  #  _("The 'bolt' library is required to %{action}") % { action: action }
-  #end
   TASK_MISSING_BOLT = simple_issue(:TASK_MISSING_BOLT, "The 'bolt' library is required to %{action}")
 
-  #UNKNOWN_TASK = issue :UNKNOWN_TASK, :type_name do
-  #  _('Task not found: %{type_name}') % { type_name: type_name }
-  #end
   UNKNOWN_TASK = simple_issue(:UNKNOWN_TASK, 'Task not found: %{type_name}')
 
-  #LOADER_FAILURE = issue :LOADER_FAILURE, :type do
-  #  _('Failed to load: %{type_name}') % { type: type }
-  #end
   LOADER_FAILURE = simple_issue(:LOADER_FAILURE, 'Failed to load: %{type_name}')
 
   DEPRECATED_APP_ORCHESTRATION = issue :DEPRECATED_APP_ORCHESTRATION, :klass do
