@@ -69,6 +69,18 @@ module Issues
     end
   end
 
+  class DynamicIssue < Issue
+    def initialize(issue_code, demotable = true, message_proc)
+      @issue_code = issue_code
+      @message_proc = message_proc
+      @demotable = true
+    end
+
+    def format(data = {})
+      @message_proc.call(data)
+    end
+  end
+
   # Provides a binding of arguments passed to Issue.format to method names available
   # in the issue's message producing block.
   # @api private
@@ -154,6 +166,14 @@ module Issues
     SimpleIssue.new(issue_code, template, false)
   end
 
+  def self.dynamic_issue(issue_code, &block)
+    DynamicIssue.new(issue_code, block)
+  end
+
+  def self.dynamic_hard_issue(issue_code, &block)
+    DynamicIssue.new(issue_code, false, block)
+  end
+
   # @comment Here follows definitions of issues. The intent is to provide a list from which yardoc can be generated
   #   containing more detailed information / explanation of the issue.
   #   These issues are set as constants, but it is unfortunately not possible for the created object to easily know which
@@ -165,8 +185,8 @@ module Issues
   # This is allowed (3.1) and has not yet been deprecated.
   # @todo configuration
   #
-  NAME_WITH_HYPHEN = issue :NAME_WITH_HYPHEN, :name do
-    _("%{issue} may not have a name containing a hyphen. The name '%{name}' is not legal") % { issue: label.a_an_uc(semantic), name: name }
+  NAME_WITH_HYPHEN = dynamic_issue :NAME_WITH_HYPHEN do |data|
+    _("%{issue} may not have a name containing a hyphen. The name '%{name}' is not legal") % { issue: data[:label].a_an_uc(data[:semantic]), name: data[:name] }
   end
 
   # When a variable name contains a hyphen and these are illegal.
@@ -183,8 +203,8 @@ module Issues
   #
   NOT_TOP_LEVEL = simple_hard_issue(:NOT_TOP_LEVEL, "Classes, definitions, and nodes may only appear at toplevel or inside other classes")
 
-  NOT_ABSOLUTE_TOP_LEVEL = hard_issue :NOT_ABSOLUTE_TOP_LEVEL do
-    _("%{value} may only appear at toplevel") % { value: label.a_an_uc(semantic) }
+  NOT_ABSOLUTE_TOP_LEVEL = dynamic_hard_issue :NOT_ABSOLUTE_TOP_LEVEL do |data|
+    _("%{value} may only appear at toplevel") % { value: data[:label].a_an_uc(data[:semantic]) }
   end
 
   CROSS_SCOPE_ASSIGNMENT = simple_hard_issue(
@@ -193,16 +213,16 @@ module Issues
   )
 
   # Assignment can only be made to certain types of left hand expressions such as variables.
-  ILLEGAL_ASSIGNMENT = hard_issue :ILLEGAL_ASSIGNMENT do
-    _("Illegal attempt to assign to '%{value}'. Not an assignable reference") % { value: label.a_an(semantic) }
+  ILLEGAL_ASSIGNMENT = dynamic_hard_issue :ILLEGAL_ASSIGNMENT do |data|
+    _("Illegal attempt to assign to '%{value}'. Not an assignable reference") % { value: data[:label].a_an(data[:semantic]) }
   end
 
   # Variables are immutable, cannot reassign in the same assignment scope
-  ILLEGAL_REASSIGNMENT = hard_issue :ILLEGAL_REASSIGNMENT, :name do
-    if Validation::Checker4_0::RESERVED_PARAMETERS[name]
-      _("Cannot reassign built in (or already assigned) variable '$%{var}'") % { var: name }
+  ILLEGAL_REASSIGNMENT = dynamic_hard_issue :ILLEGAL_REASSIGNMENT do |data|
+    if Validation::Checker4_0::RESERVED_PARAMETERS[data[:name]]
+      _("Cannot reassign built in (or already assigned) variable '$%{var}'") % { var: data[:name] }
     else
-      _("Cannot reassign variable '$%{var}'") % { var: name }
+      _("Cannot reassign variable '$%{var}'") % { var: data[:name] }
     end
   end
 
@@ -239,8 +259,8 @@ module Issues
   # When indexed assignment ($x[]=) is allowed, the leftmost expression must be
   # a variable expression.
   #
-  ILLEGAL_ASSIGNMENT_VIA_INDEX = hard_issue :ILLEGAL_ASSIGNMENT_VIA_INDEX do
-    _("Illegal attempt to assign to %{value} via [index/key]. Not an assignable reference") % { value: label.a_an(semantic) }
+  ILLEGAL_ASSIGNMENT_VIA_INDEX = dynamic_hard_issue :ILLEGAL_ASSIGNMENT_VIA_INDEX do |data|
+    _("Illegal attempt to assign to %{value} via [index/key]. Not an assignable reference") % { value: data[:label].a_an(data[:semantic]) }
   end
 
   ILLEGAL_MULTI_ASSIGNMENT_SIZE = simple_hard_issue(
@@ -273,22 +293,22 @@ module Issues
   # For operators that are not supported in specific contexts (e.g. '* =>' in
   # resource defaults)
   #
-  UNSUPPORTED_OPERATOR_IN_CONTEXT = hard_issue :UNSUPPORTED_OPERATOR_IN_CONTEXT, :operator do
-    _("The operator '%{operator}' in %{value} is not supported.") % { operator: operator, value: label.a_an(semantic) }
+  UNSUPPORTED_OPERATOR_IN_CONTEXT = dynamic_hard_issue :UNSUPPORTED_OPERATOR_IN_CONTEXT do |data|
+    _("The operator '%{operator}' in %{value} is not supported.") % { operator: data[:operator], value: data[:label].a_an(data[:semantic]) }
   end
 
   # For non applicable operators (e.g. << on Hash).
   #
-  OPERATOR_NOT_APPLICABLE = hard_issue :OPERATOR_NOT_APPLICABLE, :operator, :left_value do
-    _("Operator '%{operator}' is not applicable to %{left}.") % { operator: operator, left: label.a_an(left_value) }
+  OPERATOR_NOT_APPLICABLE = dynamic_hard_issue :OPERATOR_NOT_APPLICABLE do |data|
+    _("Operator '%{operator}' is not applicable to %{left}.") % { operator: data[:operator], left: data[:label].a_an(data[:left_value]) }
   end
 
-  OPERATOR_NOT_APPLICABLE_WHEN = hard_issue :OPERATOR_NOT_APPLICABLE_WHEN, :operator, :left_value, :right_value do
-    _("Operator '%{operator}' is not applicable to %{left} when right side is %{right}.") % { operator: operator, left: label.a_an(left_value), right: label.a_an(right_value) }
+  OPERATOR_NOT_APPLICABLE_WHEN = dynamic_hard_issue :OPERATOR_NOT_APPLICABLE_WHEN do |data|
+    _("Operator '%{operator}' is not applicable to %{left} when right side is %{right}.") % { operator: data[:operator], left: data[:label].a_an(data[:left_value]), right: data[:label].a_an(data[:right_value]) }
   end
 
-  COMPARISON_NOT_POSSIBLE = hard_issue :COMPARISON_NOT_POSSIBLE, :operator, :left_value, :right_value, :detail do
-    _("Comparison of: %{left} %{operator} %{right}, is not possible. Caused by '%{detail}'.") % { left: label(left_value), operator: operator, right: label(right_value), detail: detail }
+  COMPARISON_NOT_POSSIBLE = dynamic_hard_issue :COMPARISON_NOT_POSSIBLE do |data|
+    _("Comparison of: %{left} %{operator} %{right}, is not possible. Caused by '%{detail}'.") % { left: data[:label].label(data[:left_value]), operator: data[:operator], right: data[:label].label(data[:right_value]), detail: data[:detail] }
   end
 
   MATCH_NOT_REGEXP = simple_hard_issue(
@@ -296,21 +316,21 @@ module Issues
     "Can not convert right match operand to a regular expression. Caused by '%{detail}'."
   )
 
-  MATCH_NOT_STRING = hard_issue :MATCH_NOT_STRING, :left_value do
-    _("Left match operand must result in a String value. Got %{left}.") % { left: label.a_an(left_value) }
+  MATCH_NOT_STRING = dynamic_hard_issue :MATCH_NOT_STRING do |data|
+    _("Left match operand must result in a String value. Got %{left}.") % { left: data[:label].a_an(data[:left_value]) }
   end
 
   # Some expressions/statements may not produce a value (known as right-value, or rvalue).
   # This may vary between puppet versions.
   #
-  NOT_RVALUE = issue :NOT_RVALUE do
-    _("Invalid use of expression. %{value} does not produce a value") % { value: label.a_an_uc(semantic) }
+  NOT_RVALUE = dynamic_issue :NOT_RVALUE do |data|
+    _("Invalid use of expression. %{value} does not produce a value") % { value: data[:label].a_an_uc(data[:semantic]) }
   end
 
   # Appending to attributes is only allowed in certain types of resource expressions.
   #
-  ILLEGAL_ATTRIBUTE_APPEND = hard_issue :ILLEGAL_ATTRIBUTE_APPEND, :name, :parent do
-    _("Illegal +> operation on attribute %{attr}. This operator can not be used in %{expression}") % { attr: name, expression: label.a_an(parent) }
+  ILLEGAL_ATTRIBUTE_APPEND = dynamic_hard_issue :ILLEGAL_ATTRIBUTE_APPEND do |data|
+    _("Illegal +> operation on attribute %{attr}. This operator can not be used in %{expression}") % { attr: data[:name], expression: data[:label].a_an(data[:parent]) }
   end
 
   ILLEGAL_NAME = simple_hard_issue(
@@ -318,12 +338,12 @@ module Issues
     "Illegal name. The given name '%{name}' does not conform to the naming rule /^((::)?[a-z_]\w*)(::[a-z]\\w*)*$/"
   )
 
-  ILLEGAL_SINGLE_TYPE_MAPPING = hard_issue :ILLEGAL_TYPE_MAPPING, :expression do
-    _("Illegal type mapping. Expected a Type on the left side, got %{expression}") % { expression: label.a_an_uc(semantic) }
+  ILLEGAL_SINGLE_TYPE_MAPPING = dynamic_hard_issue :ILLEGAL_TYPE_MAPPING do |data|
+    _("Illegal type mapping. Expected a Type on the left side, got %{expression}") % { expression: data[:label].a_an_uc(data[:semantic]) }
   end
 
-  ILLEGAL_REGEXP_TYPE_MAPPING = hard_issue :ILLEGAL_TYPE_MAPPING, :expression do
-    _("Illegal type mapping. Expected a Tuple[Regexp,String] on the left side, got %{expression}") % { expression: label.a_an_uc(semantic) }
+  ILLEGAL_REGEXP_TYPE_MAPPING = dynamic_hard_issue :ILLEGAL_TYPE_MAPPING do |data|
+    _("Illegal type mapping. Expected a Tuple[Regexp,String] on the left side, got %{expression}") % { expression: data[:label].a_an_uc(data[:semantic]) }
   end
 
   ILLEGAL_PARAM_NAME = simple_hard_issue(
@@ -383,21 +403,21 @@ module Issues
   # Issues when an expression is used where it is not legal.
   # E.g. an arithmetic expression where a hostname is expected.
   #
-  ILLEGAL_EXPRESSION = hard_issue :ILLEGAL_EXPRESSION, :feature, :container do
-    _("Illegal expression. %{expression} is unacceptable as %{feature} in %{container}") % { expression: label.a_an_uc(semantic), feature: feature, container: label.a_an(container) }
+  ILLEGAL_EXPRESSION = dynamic_hard_issue :ILLEGAL_EXPRESSION do |data|
+    _("Illegal expression. %{expression} is unacceptable as %{feature} in %{container}") % { expression: data[:label].a_an_uc(data[:semantic]), feature: data[:feature], container: data[:label].a_an(data[:container]) }
   end
 
   # Issues when a variable is not a NAME
   #
-  ILLEGAL_VARIABLE_EXPRESSION = hard_issue :ILLEGAL_VARIABLE_EXPRESSION do
-    _("Illegal variable expression. %{expression} did not produce a variable name (String or Numeric).") % { expression: label.a_an_uc(semantic) }
+  ILLEGAL_VARIABLE_EXPRESSION = dynamic_hard_issue :ILLEGAL_VARIABLE_EXPRESSION do |data|
+    _("Illegal variable expression. %{expression} did not produce a variable name (String or Numeric).") % { expression: data[:label].a_an_uc(data[:semantic]) }
   end
 
   # Issues when an expression is used illegally in a query.
   # query only supports == and !=, and not <, > etc.
   #
-  ILLEGAL_QUERY_EXPRESSION = hard_issue :ILLEGAL_QUERY_EXPRESSION do
-    _("Illegal query expression. %{expression} cannot be used in a query") % { expression: label.a_an_uc(semantic) }
+  ILLEGAL_QUERY_EXPRESSION = dynamic_hard_issue :ILLEGAL_QUERY_EXPRESSION do |data|
+    _("Illegal query expression. %{expression} cannot be used in a query") % { expression: data[:label].a_an_uc(data[:semantic]) }
   end
 
   # If an attempt is made to make a resource default virtual or exported.
@@ -415,18 +435,18 @@ module Issues
   # When an attempt is made to use multiple keys (to produce a range in Ruby - e.g. $arr[2,-1]).
   # This is not supported in 3x, but it allowed in 4x.
   #
-  UNSUPPORTED_RANGE = issue :UNSUPPORTED_RANGE, :count do
-    _("Attempt to use unsupported range in %{expression}, %{count} values given for max 1") % { expression: label.a_an(semantic), count: count }
+  UNSUPPORTED_RANGE = dynamic_issue :UNSUPPORTED_RANGE do |data|
+    _("Attempt to use unsupported range in %{expression}, %{count} values given for max 1") % { expression: data[:label].a_an(data[:semantic]), count: data[:count] }
   end
 
   # Issues when expressions that are not implemented or activated in the current version are used.
   #
-  UNSUPPORTED_EXPRESSION = issue :UNSUPPORTED_EXPRESSION do
-    _("Expressions of type %{expression} are not supported in this version of Puppet") % { expression: label.a_an(semantic) }
+  UNSUPPORTED_EXPRESSION = dynamic_issue :UNSUPPORTED_EXPRESSION do |data|
+    _("Expressions of type %{expression} are not supported in this version of Puppet") % { expression: data[:label].a_an(data[:semantic]) }
   end
 
-  ILLEGAL_RELATIONSHIP_OPERAND_TYPE = issue :ILLEGAL_RELATIONSHIP_OPERAND_TYPE, :operand do
-    _("Illegal relationship operand, can not form a relationship with %{expression}. A Catalog type is required.") % { expression: label.a_an(operand) }
+  ILLEGAL_RELATIONSHIP_OPERAND_TYPE = dynamic_issue :ILLEGAL_RELATIONSHIP_OPERAND_TYPE do |data|
+    _("Illegal relationship operand, can not form a relationship with %{expression}. A Catalog type is required.") % { expression: data[:label].a_an(data[:operand]) }
   end
 
   NOT_CATALOG_TYPE = simple_issue(
@@ -464,8 +484,8 @@ module Issues
     "Integer-Type [] requires all arguments to be integers (or default). Got %{actual}"
   )
 
-  BAD_COLLECTION_SLICE_TYPE = issue :BAD_COLLECTION_SLICE_TYPE, :actual do
-    _("A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Got %{actual}") % { actual: label.a_an(actual) }
+  BAD_COLLECTION_SLICE_TYPE = dynamic_issue :BAD_COLLECTION_SLICE_TYPE do |data|
+    _("A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Got %{actual}") % { actual: data[:label].a_an(data[:actual]) }
   end
 
   BAD_FLOAT_SLICE_ARITY = simple_issue(
@@ -478,17 +498,17 @@ module Issues
     "Float-Type [] requires all arguments to be floats, or integers (or default). Got %{actual}"
   )
 
-  BAD_SLICE_KEY_TYPE = issue :BAD_SLICE_KEY_TYPE, :left_value, :expected_classes, :actual do
-    expected_text = if expected_classes.size > 1
-      _("one of %{expected} are") % { expected: expected_classes.join(', ') }
+  BAD_SLICE_KEY_TYPE = dynamic_issue :BAD_SLICE_KEY_TYPE do |data|
+    expected_text = if data[:expected_classes].size > 1
+      _("one of %{expected} are") % { expected: data[:expected_classes].join(', ') }
     else
-      _("%{expected} is") % { expected: expected_classes[0] }
+      _("%{expected} is") % { expected: data[:expected_classes][0] }
     end
-    _("%{expression}[] cannot use %{actual} where %{expected_text} expected") % { expression: label.a_an_uc(left_value), actual: actual, expected_text: expected_text }
+    _("%{expression}[] cannot use %{actual} where %{expected_text} expected") % { expression: data[:label].a_an_uc(data[:left_value]), actual: data[:actual], expected_text: expected_text }
   end
 
-  BAD_STRING_SLICE_KEY_TYPE = issue :BAD_STRING_SLICE_KEY_TYPE, :left_value, :actual_type do
-    _("A substring operation does not accept %{label_article} %{actual_type} as a character index. Expected an Integer") % { label_article: label.article(actual_type), actual_type: actual_type }
+  BAD_STRING_SLICE_KEY_TYPE = dynamic_issue :BAD_STRING_SLICE_KEY_TYPE do |data|
+    _("A substring operation does not accept %{label_article} %{actual_type} as a character index. Expected an Integer") % { label_article: data[:label].article(data[:actual_type]), actual_type: data[:actual_type] }
   end
 
   BAD_NOT_UNDEF_SLICE_TYPE = simple_issue(
@@ -501,19 +521,19 @@ module Issues
     "%{base_type}[] arguments must be types. Got %{actual}"
   )
 
-  BAD_TYPE_SLICE_ARITY = issue :BAD_TYPE_SLICE_ARITY, :base_type, :min, :max, :actual do
-    base_type_label = base_type.is_a?(String) ? base_type : label.a_an_uc(base_type)
-    if max == -1 || max == Float::INFINITY
-      _("%{base_type_label}[] accepts %{min} or more arguments. Got %{actual}") % { base_type_label: base_type_label, min: min, actual: actual }
-    elsif max && max != min
-      _("%{base_type_label}[] accepts %{min} to %{max} arguments. Got %{actual}") % { base_type_label: base_type_label, min: min, max: max, actual: actual }
+  BAD_TYPE_SLICE_ARITY = dynamic_issue :BAD_TYPE_SLICE_ARITY do |data|
+    base_type_label = data[:base_type].is_a?(String) ? data[:base_type] : data[:label].a_an_uc(data[:base_type])
+    if data[:max] == -1 || data[:max] == Float::INFINITY
+      _("%{base_type_label}[] accepts %{min} or more arguments. Got %{actual}") % { base_type_label: base_type_label, min: data[:min], actual: data[:actual] }
+    elsif data[:max] && data[:max] != data[:min]
+      _("%{base_type_label}[] accepts %{min} to %{max} arguments. Got %{actual}") % { base_type_label: base_type_label, min: data[:min], max: data[:max], actual: data[:actual] }
     else
-      _("%{base_type_label}[] accepts %{min} %{label}. Got %{actual}") % { base_type_label: base_type_label, min: min, label: label.plural_s(min, _('argument')), actual: actual }
+      _("%{base_type_label}[] accepts %{min} %{label}. Got %{actual}") % { base_type_label: base_type_label, min: data[:min], label: data[:label].plural_s(data[:min], _('argument')), actual: data[:actual] }
     end
   end
 
-  BAD_TYPE_SPECIALIZATION = hard_issue :BAD_TYPE_SPECIALIZATION, :type, :message do
-    _("Error creating type specialization of %{base_type}, %{message}") % { base_type: label.a_an(type), message: message }
+  BAD_TYPE_SPECIALIZATION = dynamic_hard_issue :BAD_TYPE_SPECIALIZATION do |data|
+    _("Error creating type specialization of %{base_type}, %{message}") % { base_type: data[:label].a_an(data[:type]), message: data[:message] }
   end
 
   ILLEGAL_TYPE_SPECIALIZATION = simple_issue(
@@ -531,12 +551,12 @@ module Issues
     "Arguments to Resource[] are all empty/undefined"
   )
 
-  ILLEGAL_HOSTCLASS_NAME = hard_issue :ILLEGAL_HOSTCLASS_NAME, :name do
-    _("Illegal Class name in class reference. %{expression} cannot be used where a String is expected") % { expression: label.a_an_uc(name) }
+  ILLEGAL_HOSTCLASS_NAME = dynamic_hard_issue :ILLEGAL_HOSTCLASS_NAME do |data|
+    _("Illegal Class name in class reference. %{expression} cannot be used where a String is expected") % { expression: data[:label].a_an_uc(data[:name]) }
   end
 
-  ILLEGAL_DEFINITION_NAME = hard_issue :ILLEGAL_DEFINITION_NAME, :name do
-    _("Unacceptable name. The name '%{name}' is unacceptable as the name of %{value}") % { name: name, value: label.a_an(semantic) }
+  ILLEGAL_DEFINITION_NAME = dynamic_hard_issue :ILLEGAL_DEFINITION_NAME do |data|
+    _("Unacceptable name. The name '%{name}' is unacceptable as the name of %{value}") % { name: data[:name], value: data[:label].a_an(data[:semantic]) }
   end
 
   ILLEGAL_DEFINITION_LOCATION = simple_issue(
@@ -544,11 +564,11 @@ module Issues
     "Unacceptable location. The name '%{name}' is unacceptable in file '%{file}'"
   )
 
-  ILLEGAL_TOP_CONSTRUCT_LOCATION = issue :ILLEGAL_TOP_CONSTRUCT_LOCATION do
-    if semantic.is_a?(Puppet::Pops::Model::NamedDefinition)
-      _("The %{value} '%{name}' is unacceptable as a top level construct in this location") % { name: semantic.name, value: label(semantic) }
+  ILLEGAL_TOP_CONSTRUCT_LOCATION = dynamic_issue :ILLEGAL_TOP_CONSTRUCT_LOCATION do |data|
+    if data[:semantic].is_a?(Puppet::Pops::Model::NamedDefinition)
+      _("The %{value} '%{name}' is unacceptable as a top level construct in this location") % { name: data[:semantic].name, value: data[:label].label(data[:semantic]) }
     else
-      _("This %{value} is unacceptable as a top level construct in this location") % { value: label(semantic) }
+      _("This %{value} is unacceptable as a top level construct in this location") % { value: data[:label].label(data[:semantic]) }
     end
   end
 
@@ -557,8 +577,8 @@ module Issues
     "Parameter $%{param_name} is not last, and has 'captures rest'"
   )
 
-  CAPTURES_REST_NOT_SUPPORTED = hard_issue :CAPTURES_REST_NOT_SUPPORTED, :container, :param_name do
-    _("Parameter $%{param} has 'captures rest' - not supported in %{container}") % { param: param_name, container: label.a_an(container) }
+  CAPTURES_REST_NOT_SUPPORTED = dynamic_hard_issue :CAPTURES_REST_NOT_SUPPORTED do |data|
+    _("Parameter $%{param} has 'captures rest' - not supported in %{container}") % { param: data[:param_name], container: data[:label].a_an(data[:container]) }
   end
 
   REQUIRED_PARAMETER_AFTER_OPTIONAL = simple_hard_issue(
@@ -582,8 +602,8 @@ module Issues
 
   UNKNOWN_VARIABLE = simple_issue(:UNKNOWN_VARIABLE, "Unknown variable: '%{name}'.")
 
-  RUNTIME_ERROR = issue :RUNTIME_ERROR, :detail do
-    _("Error while evaluating %{expression}, %{detail}") % { expression: label.a_an(semantic), detail: detail }
+  RUNTIME_ERROR = dynamic_issue :RUNTIME_ERROR do |data|
+    _("Error while evaluating %{expression}, %{detail}") % { expression: data[:label].a_an(data[:semantic]), detail: data[:detail] }
   end
 
   UNKNOWN_RESOURCE_TYPE = simple_issue(
@@ -628,8 +648,8 @@ module Issues
     "Resource not found: %{type_name}['%{title}']"
   )
 
-  UNKNOWN_RESOURCE_PARAMETER = issue :UNKNOWN_RESOURCE_PARAMETER, :type_name, :title, :param_name do
-    _("The resource %{type_name}['%{title}'] does not have a parameter called '%{param}'") % { type_name: type_name.capitalize, title: title, param: param_name }
+  UNKNOWN_RESOURCE_PARAMETER = dynamic_issue :UNKNOWN_RESOURCE_PARAMETER do |data|
+    _("The resource %{type_name}['%{title}'] does not have a parameter called '%{param}'") % { type_name: data[:type_name].capitalize, title: data[:title], param: data[:param_name] }
   end
 
   DIV_BY_ZERO = simple_hard_issue(:DIV_BY_ZERO, "Division by 0")
@@ -656,8 +676,8 @@ module Issues
     "Use of 'import' has been discontinued in favor of a manifest directory. See http://links.puppet.com/puppet-import-deprecation"
   )
 
-  IDEM_EXPRESSION_NOT_LAST = issue :IDEM_EXPRESSION_NOT_LAST do
-    _("This %{expression} has no effect. A value was produced and then forgotten (one or more preceding expressions may have the wrong form)") % { expression: label.label(semantic) }
+  IDEM_EXPRESSION_NOT_LAST = dynamic_issue :IDEM_EXPRESSION_NOT_LAST do |data|
+    _("This %{expression} has no effect. A value was produced and then forgotten (one or more preceding expressions may have the wrong form)") % { expression: data[:label].label(data[:semantic]) }
   end
 
   RESOURCE_WITHOUT_TITLE = simple_issue(
@@ -665,8 +685,8 @@ module Issues
     "This expression is invalid. Did you try declaring a '%{name}' resource without a title?"
   )
 
-  IDEM_NOT_ALLOWED_LAST = hard_issue :IDEM_NOT_ALLOWED_LAST, :container do
-    _("This %{expression} has no effect. %{container} can not end with a value-producing expression without other effect") % { expression: label.label(semantic), container: label.a_an_uc(container) }
+  IDEM_NOT_ALLOWED_LAST = dynamic_hard_issue :IDEM_NOT_ALLOWED_LAST do |data|
+    _("This %{expression} has no effect. %{container} can not end with a value-producing expression without other effect") % { expression: data[:label].label(data[:semantic]), container: data[:label].a_an_uc(data[:container]) }
   end
 
   RESERVED_WORD = simple_hard_issue(
@@ -679,8 +699,8 @@ module Issues
     "Use of future reserved word: '%{word}'"
   )
 
-  RESERVED_TYPE_NAME = hard_issue :RESERVED_TYPE_NAME, :name do
-    _("The name: '%{name}' is already defined by Puppet and can not be used as the name of %{expression}.") % { name: name, expression: label.a_an(semantic) }
+  RESERVED_TYPE_NAME = dynamic_hard_issue :RESERVED_TYPE_NAME do |data|
+    _("The name: '%{name}' is already defined by Puppet and can not be used as the name of %{expression}.") % { name: data[:name], expression: data[:label].a_an(data[:semantic]) }
   end
 
   UNMATCHED_SELECTOR = simple_hard_issue(
@@ -693,8 +713,8 @@ module Issues
     "Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation"
   )
 
-  ILLEGAL_OVERRIDDEN_TYPE = issue :ILLEGAL_OVERRIDDEN_TYPE, :actual do
-    _("Resource Override can only operate on resources, got: %{actual}") % { actual: label.label(actual) }
+  ILLEGAL_OVERRIDDEN_TYPE = dynamic_issue :ILLEGAL_OVERRIDDEN_TYPE do |data|
+    _("Resource Override can only operate on resources, got: %{actual}") % { actual: data[:label].label(data[:actual]) }
   end
 
   DUPLICATE_PARAMETER = simple_hard_issue(
@@ -704,12 +724,12 @@ module Issues
 
   DUPLICATE_KEY = simple_issue(:DUPLICATE_KEY, "The key '%{key}' is declared more than once")
 
-  DUPLICATE_DEFAULT = hard_issue :DUPLICATE_DEFAULT, :container do
-    _("This %{container} already has a 'default' entry - this is a duplicate") % { container: label.label(container) }
+  DUPLICATE_DEFAULT = dynamic_hard_issue :DUPLICATE_DEFAULT do |data|
+    _("This %{container} already has a 'default' entry - this is a duplicate") % { container: data[:label].label(data[:container]) }
   end
 
-  RESERVED_PARAMETER = hard_issue :RESERVED_PARAMETER, :container, :param_name do
-    _("The parameter $%{param} redefines a built in parameter in %{container}") % { param: param_name, container: label.the(container) }
+  RESERVED_PARAMETER = dynamic_hard_issue :RESERVED_PARAMETER do |data|
+    _("The parameter $%{param} redefines a built in parameter in %{container}") % { param: data[:param_name], container: data[:label].the(data[:container]) }
   end
 
   TYPE_MISMATCH = simple_hard_issue(
@@ -722,8 +742,8 @@ module Issues
     "Unfolding of attributes from Hash can only be used once per resource body"
   )
 
-  ILLEGAL_CATALOG_RELATED_EXPRESSION = hard_issue :ILLEGAL_CATALOG_RELATED_EXPRESSION do
-    _("This %{expression} appears in a context where catalog related expressions are not allowed") % { expression: label.label(semantic) }
+  ILLEGAL_CATALOG_RELATED_EXPRESSION = dynamic_hard_issue :ILLEGAL_CATALOG_RELATED_EXPRESSION do |data|
+    _("This %{expression} appears in a context where catalog related expressions are not allowed") % { expression: data[:label].label(data[:semantic]) }
   end
 
   SYNTAX_ERROR = simple_hard_issue(:SYNTAX_ERROR, "Syntax error at %{where}")
@@ -831,8 +851,8 @@ module Issues
 
   HEREDOC_EMPTY_ENDTAG = simple_hard_issue(:HEREDOC_EMPTY_ENDTAG, 'Heredoc with an empty endtag')
 
-  HEREDOC_MULTIPLE_AT_ESCAPES = hard_issue :HEREDOC_MULTIPLE_AT_ESCAPES, :escapes do
-    _("An escape char for @() may only appear once. Got '%{escapes}'") % { escapes: escapes.join(', ') }
+  HEREDOC_MULTIPLE_AT_ESCAPES = dynamic_hard_issue :HEREDOC_MULTIPLE_AT_ESCAPES do |data|
+    _("An escape char for @() may only appear once. Got '%{escapes}'") % { escapes: data[:escapes].join(', ') }
   end
 
   HEREDOC_DIRTY_MARGIN = simple_hard_issue(
@@ -852,11 +872,11 @@ module Issues
 
   NOT_A_FILE = simple_hard_issue(:NOT_A_FILE, '%{file} is not a file')
 
-  NUMERIC_OVERFLOW = hard_issue :NUMERIC_OVERFLOW, :value do
-    if value > 0
-      _("%{expression} resulted in a value outside of Puppet Integer max range, got '%{value}'") % { expression: label.a_an_uc(semantic), value: ("%#+x" % value) }
+  NUMERIC_OVERFLOW = dynamic_hard_issue :NUMERIC_OVERFLOW do |data|
+    if data[:value] > 0
+      _("%{expression} resulted in a value outside of Puppet Integer max range, got '%{value}'") % { expression: data[:label].a_an_uc(data[:semantic]), value: ("%#+x" % data[:value]) }
     else
-      _("%{expression} resulted in a value outside of Puppet Integer min range, got '%{value}'") % { expression: label.a_an_uc(semantic), value: ("%#+x" % value) }
+      _("%{expression} resulted in a value outside of Puppet Integer min range, got '%{value}'") % { expression: data[:label].a_an_uc(data[:semantic]), value: ("%#+x" % data[:value]) }
     end
   end
 
@@ -865,8 +885,8 @@ module Issues
     "This runtime does not support hiera.yaml version %{version}"
   )
 
-  HIERA_VERSION_3_NOT_GLOBAL = hard_issue :HIERA_VERSION_3_NOT_GLOBAL, :where do
-    _("hiera.yaml version 3 cannot be used in %{location}") % { location: label.a_an(where) }
+  HIERA_VERSION_3_NOT_GLOBAL = dynamic_hard_issue :HIERA_VERSION_3_NOT_GLOBAL do |data|
+    _("hiera.yaml version 3 cannot be used in %{location}") % { location: data[:label].a_an(data[:where]) }
   end
 
   HIERA_UNSUPPORTED_VERSION_IN_GLOBAL = simple_hard_issue(
@@ -879,9 +899,9 @@ module Issues
     "Undefined variable '%{name}'"
   )
 
-  HIERA_BACKEND_MULTIPLY_DEFINED = hard_issue :HIERA_BACKEND_MULTIPLY_DEFINED, :name, :first_line do
-    msg = _("Backend '%{name}' is defined more than once.") % { name: name }
-    fl = first_line
+  HIERA_BACKEND_MULTIPLY_DEFINED = dynamic_hard_issue :HIERA_BACKEND_MULTIPLY_DEFINED do |data|
+    msg = _("Backend '%{name}' is defined more than once.") % { name: data[:name] }
+    fl = data[:first_line]
     if fl
       msg += ' ' + _("First defined at %{error_location}") % { error_location: Puppet::Util::Errors.error_location(nil, fl) }
     end
@@ -893,9 +913,9 @@ module Issues
     "No data provider is registered for backend '%{name}'"
   )
 
-  HIERA_HIERARCHY_NAME_MULTIPLY_DEFINED = hard_issue :HIERA_HIERARCHY_NAME_MULTIPLY_DEFINED, :name, :first_line do
-    msg = _("Hierarchy name '%{name}' defined more than once.") % { name: name }
-    fl = first_line
+  HIERA_HIERARCHY_NAME_MULTIPLY_DEFINED = dynamic_hard_issue :HIERA_HIERARCHY_NAME_MULTIPLY_DEFINED do |data|
+    msg = _("Hierarchy name '%{name}' defined more than once.") % { name: data[:name] }
+    fl = data[:first_line]
     if fl
       msg += ' ' + _("First defined at %{error_location}") % { error_location: Puppet::Util::Errors.error_location(nil, fl) }
     end
@@ -917,20 +937,20 @@ module Issues
     "Use \"data_hash: %{function_name}_data\" instead of \"hiera3_backend: %{function_name}\""
   )
 
-  HIERA_MISSING_DATA_PROVIDER_FUNCTION = hard_issue :HIERA_MISSING_DATA_PROVIDER_FUNCTION, :name do
-    _("One of %{keys} must be defined in hierarchy '%{name}'") % { keys: label.combine_strings(Lookup::HieraConfig::FUNCTION_KEYS), name: name }
+  HIERA_MISSING_DATA_PROVIDER_FUNCTION = dynamic_hard_issue :HIERA_MISSING_DATA_PROVIDER_FUNCTION do |data|
+    _("One of %{keys} must be defined in hierarchy '%{name}'") % { keys: data[:label].combine_strings(Lookup::HieraConfig::FUNCTION_KEYS), name: data[:name] }
   end
 
-  HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS = hard_issue :HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS, :name do
-    _("Only one of %{keys} can be defined in hierarchy '%{name}'") % { keys: label.combine_strings(Lookup::HieraConfig::FUNCTION_KEYS), name: name }
+  HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS = dynamic_hard_issue :HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS do |data|
+    _("Only one of %{keys} can be defined in hierarchy '%{name}'") % { keys: data[:label].combine_strings(Lookup::HieraConfig::FUNCTION_KEYS), name: data[:name] }
   end
 
-  HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS_IN_DEFAULT = hard_issue :HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS_IN_DEFAULT do
-    _("Only one of %{keys} can be defined in defaults") % { keys: label.combine_strings(Lookup::HieraConfig::FUNCTION_KEYS) }
+  HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS_IN_DEFAULT = dynamic_hard_issue :HIERA_MULTIPLE_DATA_PROVIDER_FUNCTIONS_IN_DEFAULT do |data|
+    _("Only one of %{keys} can be defined in defaults") % { keys: data[:label].combine_strings(Lookup::HieraConfig::FUNCTION_KEYS) }
   end
 
-  HIERA_MULTIPLE_LOCATION_SPECS = hard_issue :HIERA_MULTIPLE_LOCATION_SPECS, :name do
-    _("Only one of %{keys} can be defined in hierarchy '%{name}'") % { keys: label.combine_strings(Lookup::HieraConfig::LOCATION_KEYS), name: name }
+  HIERA_MULTIPLE_LOCATION_SPECS = dynamic_hard_issue :HIERA_MULTIPLE_LOCATION_SPECS do |data|
+    _("Only one of %{keys} can be defined in hierarchy '%{name}'") % { keys: data[:label].combine_strings(Lookup::HieraConfig::LOCATION_KEYS), name: data[:name] }
   end
 
   HIERA_OPTION_RESERVED_BY_PUPPET = simple_hard_issue(
@@ -973,12 +993,12 @@ module Issues
     "%{path} contains the special value default. It will be converted to the String 'default'"
   )
 
-  SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING = issue :SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING, :path, :klass, :value do
-    _("%{path} contains %{klass} value. It will be converted to the String '%{value}'") % { path: path, klass: label.a_an(klass), value: value }
+  SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING = dynamic_issue :SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING do |data|
+    _("%{path} contains %{klass} value. It will be converted to the String '%{value}'") % { path: data[:path], klass: data[:label].a_an(data[:klass]), value: data[:value] }
   end
 
-  SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING = issue :SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING, :path, :klass, :value do
-    _("%{path} contains a hash with %{klass} key. It will be converted to the String '%{value}'") % { path: path, klass: label.a_an(klass), value: value }
+  SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING = dynamic_issue :SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING do |data|
+    _("%{path} contains a hash with %{klass} key. It will be converted to the String '%{value}'") % { path: data[:path], klass: data[:label].a_an(data[:klass]), value: data[:value] }
   end
 
   FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING = simple_issue(
@@ -1002,8 +1022,8 @@ module Issues
 
   LOADER_FAILURE = simple_issue(:LOADER_FAILURE, 'Failed to load: %{type_name}')
 
-  DEPRECATED_APP_ORCHESTRATION = issue :DEPRECATED_APP_ORCHESTRATION, :klass do
-    _("Use of the application-orchestration %{expr} is deprecated. See https://puppet.com/docs/puppet/5.5/deprecated_language.html" % { expr: label(klass) })
+  DEPRECATED_APP_ORCHESTRATION = dynamic_issue :DEPRECATED_APP_ORCHESTRATION do |data|
+    _("Use of the application-orchestration %{expr} is deprecated. See https://puppet.com/docs/puppet/5.5/deprecated_language.html" % { expr: data[:label].label(data[:klass]) })
   end
 
 end

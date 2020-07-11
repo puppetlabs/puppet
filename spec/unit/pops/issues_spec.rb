@@ -6,7 +6,7 @@ describe "Puppet::Pops::Issues" do
 
   it "should have an issue called NAME_WITH_HYPHEN" do
     x = Puppet::Pops::Issues::NAME_WITH_HYPHEN
-    expect(x.class).to eq(Puppet::Pops::Issues::Issue)
+    expect(x.kind_of?(Puppet::Pops::Issues::Issue)).to be true
     expect(x.issue_code).to eq(:NAME_WITH_HYPHEN)
   end
 
