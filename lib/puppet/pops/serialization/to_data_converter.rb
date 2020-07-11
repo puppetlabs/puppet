@@ -5,6 +5,7 @@ module Serialization
   # @api public
   class ToDataConverter
     include Evaluator::Runtime3Support
+    include LabelProvider
 
     # Convert the given _value_ according to the given _options_ and return the result of the conversion
     #
@@ -189,13 +190,13 @@ module Serialization
 
     def unknown_key_to_string_with_warning(value)
       str = unknown_to_string(value)
-      serialization_issue(Issues::SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING, :path => path_to_s, :klass => value.class, :value => str)
+      serialization_issue(Issues::SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING, :path => path_to_s, :klass => a_an(value.class), :value => str)
       str
     end
 
     def unknown_to_string_with_warning(value)
       str = unknown_to_string(value)
-      serialization_issue(Issues::SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING, :path => path_to_s, :klass => value.class, :value => str)
+      serialization_issue(Issues::SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING, :path => path_to_s, :klass => a_an(value.class), :value => str)
       str
     end
 

@@ -993,13 +993,15 @@ module Issues
     "%{path} contains the special value default. It will be converted to the String 'default'"
   )
 
-  SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING = dynamic_issue :SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING do |data|
-    _("%{path} contains %{klass} value. It will be converted to the String '%{value}'") % { path: data[:path], klass: data[:label].a_an(data[:klass]), value: data[:value] }
-  end
+  SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING = simple_issue(
+    :SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING,
+    "%{path} contains %{klass} value. It will be converted to the String '%{value}'"
+  )
 
-  SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING = dynamic_issue :SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING do |data|
-    _("%{path} contains a hash with %{klass} key. It will be converted to the String '%{value}'") % { path: data[:path], klass: data[:label].a_an(data[:klass]), value: data[:value] }
-  end
+  SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING = simple_issue(
+    :SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING,
+    "%{path} contains a hash with %{klass} key. It will be converted to the String '%{value}'"
+  )
 
   FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING = simple_issue(
     :NOT_SUPPORTED_WHEN_SCRIPTING,
