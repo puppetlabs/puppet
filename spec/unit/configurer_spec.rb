@@ -97,7 +97,8 @@ describe Puppet::Configurer do
     end
 
     it "should initialize a transaction report if one is not provided" do
-      expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
+      # host and settings catalogs each create a report...
+      expect(Puppet::Transaction::Report).to receive(:new).and_return(report).twice
 
       configurer.run
     end
