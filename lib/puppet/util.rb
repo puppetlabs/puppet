@@ -758,6 +758,19 @@ module Util
     Random.new(seed).rand(max)
   end
   module_function :deterministic_rand_int
+
+  # Executes a block of code, wrapped around Facter.load_external(false) and
+  # Facter.load_external(true) which will cause Facter to not evaluate external facts.
+  def skip_external_facts
+    return yield unless Facter.respond_to? :load_external
+    begin
+      Facter.load_external(false)
+      yield
+    ensure
+      Facter.load_external(true)
+    end
+  end
+  module_function :skip_external_facts
 end
 end
 
