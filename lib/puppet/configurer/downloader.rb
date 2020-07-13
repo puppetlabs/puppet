@@ -24,19 +24,25 @@ class Puppet::Configurer::Downloader
 
   def initialize(name, path, source, ignore = nil, environment = nil, source_permissions = :ignore)
     @name, @path, @source, @ignore, @environment, @source_permissions = name, path, source, ignore, environment, source_permissions
-  end
 
-  def catalog
-    catalog = Puppet::Resource::Catalog.new("PluginSync", @environment)
-    catalog.host_config = false
-    catalog.add_resource(file)
-    catalog
   end
 
   def file
-    args = default_arguments.merge(:path => path, :source => source)
-    args[:ignore] = ignore.split if ignore
-    Puppet::Type.type(:file).new(args)
+    unless @file
+      args = default_arguments.merge(:path => path, :source => source)
+      args[:ignore] = ignore.split if ignore
+      @file = Puppet::Type.type(:file).new(args)
+    end
+    @file
+  end
+
+  def catalog
+    unless @catalog
+      @catalog = Puppet::Resource::Catalog.new("PluginSync", @environment)
+      @catalog.host_config = false
+      @catalog.add_resource(file)
+    end
+    @catalog
   end
 
   private
