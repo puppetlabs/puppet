@@ -192,9 +192,7 @@ describe Puppet::Configurer do
     end
 
     it "should remove the report as a log destination when the run is finished" do
-      expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
-
-      configurer.run
+      configurer.run(report: report)
 
       expect(Puppet::Util::Log.destinations).not_to include(report)
     end
@@ -207,7 +205,8 @@ describe Puppet::Configurer do
     end
 
     it "should return nil if catalog application fails" do
-      expect_any_instance_of(Puppet::Resource::Catalog).to receive(:apply).and_raise(Puppet::Error, 'One or more resource dependency cycles detected in graph')
+      expect(catalog).to receive(:apply).and_raise(Puppet::Error, 'One or more resource dependency cycles detected in graph')
+
       expect(configurer.run(catalog: catalog, report: report)).to be_nil
     end
 
@@ -222,34 +221,28 @@ describe Puppet::Configurer do
     end
 
     it "should include the pre-run command failure in the report" do
-      expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
-
       Puppet.settings[:prerun_command] = "/my/command"
       expect(Puppet::Util::Execution).to receive(:execute).with(["/my/command"]).and_raise(Puppet::ExecutionFailure, "Failed")
 
-      expect(configurer.run).to be_nil
+      expect(configurer.run(report: report)).to be_nil
       expect(report.logs.find { |x| x.message =~ /Could not run command from prerun_command/ }).to be
     end
 
     it "should send the transaction report even if the post-run command fails" do
-      expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
-
       Puppet.settings[:postrun_command] = "/my/command"
       expect(Puppet::Util::Execution).to receive(:execute).with(["/my/command"]).and_raise(Puppet::ExecutionFailure, "Failed")
       expect(configurer).to receive(:send_report).with(report)
 
-      expect(configurer.run).to be_nil
+      expect(configurer.run(report: report)).to be_nil
     end
 
     it "should include the post-run command failure in the report" do
-      expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
-
       Puppet.settings[:postrun_command] = "/my/command"
       expect(Puppet::Util::Execution).to receive(:execute).with(["/my/command"]).and_raise(Puppet::ExecutionFailure, "Failed")
 
       expect(report).to receive(:<<) { |log, _| expect(log.message).to match(/Could not run command from postrun_command/) }.at_least(:once)
 
-      expect(configurer.run).to be_nil
+      expect(configurer.run(report: report)).to be_nil
     end
 
     it "should execute post-run command even if the pre-run command fails" do
@@ -262,34 +255,28 @@ describe Puppet::Configurer do
     end
 
     it "should finalize the report" do
-      expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
-
       expect(report).to receive(:finalize_report)
-      configurer.run
+      configurer.run(report: report)
     end
 
     it "should not apply the catalog if the pre-run command fails" do
-      expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
-
       Puppet.settings[:prerun_command] = "/my/command"
       expect(Puppet::Util::Execution).to receive(:execute).with(["/my/command"]).and_raise(Puppet::ExecutionFailure, "Failed")
 
       expect_any_instance_of(Puppet::Resource::Catalog).not_to receive(:apply)
       expect(configurer).to receive(:send_report)
 
-      expect(configurer.run).to be_nil
+      expect(configurer.run(report: report)).to be_nil
     end
 
     it "should apply the catalog, send the report, and return nil if the post-run command fails" do
-      expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
-
       Puppet.settings[:postrun_command] = "/my/command"
       expect(Puppet::Util::Execution).to receive(:execute).with(["/my/command"]).and_raise(Puppet::ExecutionFailure, "Failed")
 
       expect_any_instance_of(Puppet::Resource::Catalog).to receive(:apply)
       expect(configurer).to receive(:send_report)
 
-      expect(configurer.run).to be_nil
+      expect(configurer.run(report: report)).to be_nil
     end
 
     it 'includes total time metrics in the report after successfully applying the catalog' do
