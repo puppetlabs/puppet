@@ -27,20 +27,21 @@ module Util
 
   extend Puppet::Util::SymbolicFileMode
 
-  DEFAULT_ENV = if Puppet::Util::Platform.windows?
-                  :windows
-                else
-                  :posix
-                end.freeze
+  def default_env
+    Puppet.features.microsoft_windows? ?
+      :windows :
+      :posix
+  end
+  module_function :default_env
 
   # @param name [String] The name of the environment variable to retrieve
   # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
   # @return [String] Value of the specified environment variable.  nil if it does not exist
   # @api private
-  def get_env(name, mode = DEFAULT_ENV)
+  def get_env(name, mode = default_env)
     if mode == :windows
-      Puppet::Util::Windows::Process.get_environment_strings.find do |key, value|
-        if name.casecmp(key) == 0
+      Puppet::Util::Windows::Process.get_environment_strings.each do |key, value |
+        if name.casecmp(key) == 0 then
           return value
         end
       end
@@ -54,7 +55,7 @@ module Util
   # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
   # @return [Hash] A hashtable of all environment variables
   # @api private
-  def get_environment(mode = DEFAULT_ENV)
+  def get_environment(mode = default_env)
     case mode
       when :posix
         ENV.to_hash
@@ -69,7 +70,7 @@ module Util
   # Removes all environment variables
   # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
   # @api private
-  def clear_environment(mode = DEFAULT_ENV)
+  def clear_environment(mode = default_env)
     case mode
       when :posix
         ENV.clear
@@ -87,7 +88,7 @@ module Util
   # @param value [String] The value to set the variable to.  nil deletes the environment variable
   # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
   # @api private
-  def set_env(name, value = nil, mode = DEFAULT_ENV)
+  def set_env(name, value = nil, mode = default_env)
     case mode
       when :posix
         ENV[name] = value
@@ -102,7 +103,7 @@ module Util
   # @param name [Hash] Environment variables to merge into the existing environment.  nil values will remove the variable
   # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
   # @api private
-  def merge_environment(env_hash, mode = DEFAULT_ENV)
+  def merge_environment(env_hash, mode = default_env)
     case mode
       when :posix
         env_hash.each { |name, val| ENV[name.to_s] = val }
