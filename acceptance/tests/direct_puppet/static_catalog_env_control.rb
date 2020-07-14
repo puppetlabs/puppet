@@ -64,6 +64,11 @@ file { '#{@coderoot}/environments/canary/modules/can_hello/manifests/init.pp':
 MANIFESTAGENT
 end
 
+# The code_content script needs to return the correct content whose checksum
+# matches the metadata contained in the static catalog.
+PRODUCTION_CONTENT = "Hello message from production/hello module, content from source attribute.".freeze
+CANARY_CONTENT = "Hello message from canary/can_hello module, content from source attribute.".freeze
+
 @manifest = <<MANIFEST
 File {
   ensure => directory,
@@ -102,10 +107,15 @@ file { '#{@coderoot}/code_content.sh' :
   ensure => file,
   mode => "0755",
   content => '#! /bin/bash
-if [ $2 == "code_version_1" ] ; then
-  echo "code_version_1"
+# script arguments:
+#  $1 environment
+#  $2 code_id
+#  $3 path relative to mount
+# use echo -n to omit newline
+if [ $1 == "production" ] ; then
+  echo -n "#{PRODUCTION_CONTENT}"
 else
-  echo "newer_version"
+  echo -n "#{CANARY_CONTENT}"
 fi
 ',
 }
@@ -146,15 +156,13 @@ file { '#{@coderoot}/environments/canary/manifests/site.pp':
 file { '#{@coderoot}/environments/production/modules/hello/files/hello_msg':
   ensure => file,
   mode => "0644",
-  content => "Hello message from production/hello module, content from source attribute.
-",
+  content => "#{PRODUCTION_CONTENT}",
 }
 
 file { '#{@coderoot}/environments/canary/modules/can_hello/files/hello_msg':
   ensure => file,
   mode => "0644",
-  content => "Hello message from canary/can_hello module, content from source attribute.
-",
+  content => "#{CANARY_CONTENT}",
 }
 MANIFEST
 
