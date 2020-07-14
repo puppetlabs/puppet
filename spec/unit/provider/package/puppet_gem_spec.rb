@@ -20,7 +20,10 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
     let(:provider_gem_cmd) { '/opt/puppetlabs/puppet/bin/gem' }
   end
 
-  let(:execute_options) { {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}} }
+  custom_environment = {"HOME"=>ENV["HOME"]}
+  custom_environment['PKG_CONFIG_PATH'] = '/opt/puppetlabs/puppet/lib/pkgconfig' unless Puppet::Util::Platform.windows?
+
+  let(:execute_options) { {:failonfail => true, :combine => true, :custom_environment => custom_environment} }
 
   before :each do
     resource.provider = provider
