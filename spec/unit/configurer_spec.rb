@@ -197,11 +197,11 @@ describe Puppet::Configurer do
       expect(Puppet::Util::Log.destinations).not_to include(report)
     end
 
-    it "should return the report exit_status as the result of the run" do
-      expect(Puppet::Transaction::Report).to receive(:new).and_return(report)
-      expect(report).to receive(:exit_status).and_return(1234)
+    it "should return an exit status of 2 due to the notify resource 'changing'" do
+      cat = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote(Puppet[:environment].to_sym))
+      cat.add_resource(Puppet::Type.type(:notify).new(:name => 'something changed'))
 
-      expect(configurer.run).to eq(1234)
+      expect(configurer.run(catalog: cat, report: report)).to eq(2)
     end
 
     it "should return nil if catalog application fails" do
