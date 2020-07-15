@@ -123,6 +123,21 @@ describe Puppet::Transaction::Persistence do
         persistence = Puppet::Transaction::Persistence.new
         persistence.load
       end
+
+      it 'should load Time and Symbols' do
+        write_state_file(<<~END)
+          File[/tmp/audit]:
+            parameters:
+              mtime:
+                system_value:
+                  - 2020-07-15 05:38:12.427678398 +00:00
+              ensure:
+                system_value:
+        END
+
+        persistence = Puppet::Transaction::Persistence.new
+        expect(persistence.load.dig("File[/tmp/audit]", "parameters", "mtime", "system_value")).to contain_exactly(be_a(Time))
+      end
     end
   end
 
