@@ -48,11 +48,13 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
   #
   # In this case, causing the puppet_gem provider to inherit the parent gem provider's convenience gemcmd() methods, with the wrong path.
 
-  def self.execute_gem_command(command, command_options)
+  def self.execute_gem_command(command, command_options, custom_environment = {})
     validate_command(command)
     cmd = [command] << command_options
 
-    execute(cmd, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}})
+    custom_environment = {'HOME'=>Puppet::Util.get_env('HOME')}.merge(custom_environment)
+
+    execute(cmd, {:failonfail => true, :combine => true, :custom_environment => custom_environment})
   end
 
   def self.instances(target_command = nil)
