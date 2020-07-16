@@ -72,8 +72,8 @@ group(:development, :test) do
   gem 'addressable', '< 2.5.0'
   # webmock requires hashdiff which requires ruby 2 as of 0.3.9
   gem 'hashdiff', '0.3.8'
-  gem 'webmock', '~> 1.24'
-  gem 'vcr', '~> 2.9'
+  gem 'webmock', '~> 2.3'
+  gem 'vcr', '~> 5.0'
   gem "hiera-eyaml", *location_for(ENV['HIERA_EYAML_LOCATION'])
 
   gem 'memory_profiler', :platforms => [:mri_21, :mri_22, :mri_23, :mri_24, :mri_25]
