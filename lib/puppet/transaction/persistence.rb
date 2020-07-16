@@ -62,7 +62,7 @@ class Puppet::Transaction::Persistence
     result = nil
     Puppet::Util.benchmark(:debug, _("Loaded transaction store file in %{seconds} seconds")) do
       begin
-        result = Puppet::Util::Yaml.safe_load_file(filename, [Symbol])
+        result = Puppet::Util::Yaml.safe_load_file(filename, [Symbol, Time])
       rescue Puppet::Util::Yaml::YamlLoadError => detail
         Puppet.log_exception(detail, _("Transaction store file %{filename} is corrupt (%{detail}); replacing") % { filename: filename, detail: detail })
 
