@@ -140,6 +140,71 @@ describe "Data binding" do
     end
   end
 
+  context "with plan_hierarchy key" do
+    context "using Hiera 5" do
+      let(:hiera_config) { <<~CONF  }
+      ---
+      version: 5
+      plan_hierarchy:
+        - path: global
+          name: Common
+      CONF
+
+      it "ignores plan_hierarchy outside of a Bolt plan" do
+        configure_hiera_for_plan_hierarchy(data, hiera_config)
+
+        create_manifest_in_module("testing", "binding.pp",
+                                  <<-MANIFEST)
+      class testing::binding($value) {}
+        MANIFEST
+
+        expect { compile_to_catalog("include testing::binding") }
+          .to raise_error(/Class\[Testing::Binding\]: expects a value for parameter 'value'/)
+      end
+    end
+
+    context "with invalid data" do
+      let(:hiera_config) { <<~CONF  }
+      ---
+      version: 5
+      plan_hierarchy:
+        - pop: the question
+      CONF
+
+      it "raises a validation error" do
+        configure_hiera_for_plan_hierarchy(data, hiera_config)
+
+        create_manifest_in_module("testing", "binding.pp",
+                                  <<-MANIFEST)
+      class testing::binding($value) {}
+        MANIFEST
+
+        expect { compile_to_catalog("include testing::binding") }
+          .to raise_error(/entry 'plan_hierarchy' index 0 unrecognized key 'pop'/)
+      end
+    end
+
+    context "with Hiera 3" do
+      let(:hiera_config) { <<~CONF  }
+      ---
+      plan_hierarchy: ['global']
+      CONF
+
+      it "errors with plan_hierarchy key" do
+        configure_hiera_for_plan_hierarchy(data, hiera_config)
+
+        create_manifest_in_module("testing", "binding.pp",
+                                  <<-MANIFEST)
+      class testing::binding($value) {}
+        MANIFEST
+
+        expect { compile_to_catalog("include testing::binding") }
+          .to raise_error(/unrecognized key 'plan_hierarchy'/)
+
+      end
+    end
+  end
+
 
   def configure_hiera_for_one_tier(data)
     hiera_config_file = tmpfile("hiera.yaml")
@@ -152,6 +217,22 @@ describe "Data binding" do
         :logger: 'noop'
         :backends: ['yaml']
       ")
+    end
+
+    data.each do | file, contents |
+      File.open(File.join(dir, "#{file}.yaml"), 'w:UTF-8') do |f|
+        f.write(YAML.dump(contents))
+      end
+    end
+
+    Puppet[:hiera_config] = hiera_config_file
+  end
+
+  def configure_hiera_for_plan_hierarchy(data, config)
+    hiera_config_file = tmpfile("hiera.yaml")
+
+    File.open(hiera_config_file, 'w:UTF-8') do |f|
+      f.write(config)
     end
 
     data.each do | file, contents |
