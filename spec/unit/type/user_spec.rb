@@ -4,7 +4,7 @@ require 'spec_helper'
 describe Puppet::Type.type(:user) do
   before :each do
     @provider_class = described_class.provide(:simple) do
-      has_features :manages_expiry, :manages_password_age, :manages_passwords, :manages_solaris_rbac, :manages_shell
+      has_features :manages_expiry, :manages_password_age, :manages_passwords, :manages_solaris_rbac, :manages_roles, :manages_shell
       mk_resource_methods
       def create; end
       def delete; end
@@ -33,6 +33,10 @@ describe Puppet::Type.type(:user) do
 
   it "should have a manages_solaris_rbac feature" do
     expect(described_class.provider_feature(:manages_solaris_rbac)).not_to be_nil
+  end
+
+  it "should have a manages_roles feature" do
+    expect(described_class.provider_feature(:manages_roles)).not_to be_nil
   end
 
   it "should have a manages_expiry feature" do

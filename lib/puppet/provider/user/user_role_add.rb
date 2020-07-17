@@ -33,7 +33,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     set("shell", value)
   end
 
-  has_features :manages_homedir, :allows_duplicates, :manages_solaris_rbac, :manages_passwords, :manages_password_age, :manages_shell
+  has_features :manages_homedir, :allows_duplicates, :manages_solaris_rbac, :manages_roles, :manages_passwords, :manages_password_age, :manages_shell
 
   def check_valid_shell
     unless File.exist?(@resource.should(:shell))

@@ -40,7 +40,10 @@ module Puppet
        implement PBKDF2 passwords with salt properties."
 
     feature :manages_solaris_rbac,
-      "The provider can manage roles and normal users"
+      "The provider can manage normal users"
+
+    feature :manages_roles,
+      "The provider can manage roles"
 
     feature :manages_expiry,
       "The provider can manage the expiry date for a user."
@@ -505,7 +508,7 @@ module Puppet
       provider.exists?
     end
 
-    newproperty(:roles, :parent => Puppet::Property::List, :required_features => :manages_solaris_rbac) do
+    newproperty(:roles, :parent => Puppet::Property::List, :required_features => :manages_roles) do
       desc "The roles the user has.  Multiple roles should be
         specified as an array."
 
