@@ -44,12 +44,14 @@ MANIFEST
     :stop_sleep => 40,
   }
 
+  new_user = "tempUser#{rand(999999).to_i}"
+
   teardown do
     delete_service(agent, mock_service_long_start_stop[:name])
+    on(agent, puppet("resource user #{new_user} ensure=absent"))
   end
 
   agents.each do |agent|
-    administrator_locale_name = agent['locale'] == 'fr' ? '.\Administrateur' : '.\Administrator'
     local_service_locale_name = agent['locale'] == 'fr' ? 'AUTORITE NT\SERVICE LOCAL' : 'NT AUTHORITY\LOCAL SERVICE'
 
     run_nonexistent_service_tests(mock_service_nofail[:name])
@@ -102,15 +104,8 @@ MANIFEST
     end
 
     step 'Verify that setting logonaccount fails if input is invalid' do
-      apply_manifest_on(agent, service_manifest(mock_service_long_start_stop[:name], logonaccount: 'InvalidUser'), :acceptable_exit_codes => [1]) do |result|
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], logonaccount: 'InvalidUser'), :acceptable_exit_codes => [1]) do |result|
         assert_match(/"InvalidUser" is not a valid account/, result.stderr)
-      end
-      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: local_service_locale_name)
-    end
-
-    step 'Verify that setting logonpassword fails if input is invalid' do
-      apply_manifest_on(agent, service_manifest(mock_service_long_start_stop[:name], logonaccount: administrator_locale_name, logonpassword: 'wrongPass'), :acceptable_exit_codes => [1]) do |result|
-        assert_match(/The given password is invalid for user '#{Regexp.escape(administrator_locale_name)}'/, result.stderr)
       end
       assert_service_properties_on(agent, mock_service_nofail[:name], StartName: local_service_locale_name)
     end
@@ -136,9 +131,103 @@ MANIFEST
       assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
     end
 
-    step 'Verify that we can stop the service' do
-      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], ensure: :stopped))
+    step "Create a new user named #{new_user}" do
+      on(agent, puppet("resource user #{new_user} ensure=present password=firstPassword")) do |result|
+        assert_match(/User\[#{new_user}\]\/ensure: created/, result.stdout)
+      end
+    end
+
+    step 'Verify that a user without the `Logon As A Service` right cannot be managed as the logonaccount of a service' do
+      apply_manifest_on(agent, service_manifest(mock_service_long_start_stop[:name], logonaccount: new_user), :acceptable_exit_codes => [1]) do |result|
+        assert_match(/#{new_user}" is missing the 'Log On As A Service' right./, result.stderr)
+      end
+    end
+
+    step "Grant #{new_user} the `Logon As A Service` right" do
+      on(agent, puppet("resource user #{new_user} roles='SeServiceLogonRight'")) do |result|
+        assert_match(/User\[#{new_user}\]\/roles: roles changed  to 'SeServiceLogonRight'/, result.stdout)
+      end
+    end
+
+    step 'Verify that setting logonpassword fails if input is invalid' do
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], logonaccount: new_user, logonpassword: 'wrongPass'), :acceptable_exit_codes => [1]) do |result|
+        assert_match(/The given password is invalid for user '\.\\#{new_user}'/, result.stderr)
+      end
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
+    end
+
+    step "Verify that #{new_user} can be set as logonaccount and service is still running" do
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
+      on(agent, puppet("resource service #{mock_service_nofail[:name]} logonaccount=#{new_user} logonpassword=firstPassword ensure=running --debug")) do |result|
+        assert_match(/Service\[#{mock_service_nofail[:name]}\]\/logonaccount: logonaccount changed 'LocalSystem' to '.\\#{new_user}'/, result.stdout)
+        assert_match(/Transitioning the #{mock_service_nofail[:name]} service from SERVICE_RUNNING to SERVICE_STOPPED/, result.stdout)
+        assert_match(/Successfully started the #{mock_service_nofail[:name]} service/, result.stdout)
+      end
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Running')
+    end
+
+    step "Change password for #{new_user} and verify that service state isn't yet affected by this" do
+      on(agent, puppet("resource user #{new_user} ensure=present password=secondPassword")) do |result|
+        assert_match(/User\[#{new_user}\]\/password: changed \[redacted\] to \[redacted\]/, result.stdout)
+      end
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Running')
+    end
+
+    step 'Verify that setting logonpassword fails when using old password and service remains running' do
+      apply_manifest_on(agent, service_manifest(mock_service_long_start_stop[:name], logonaccount: new_user, logonpassword: 'firstPassword'), :acceptable_exit_codes => [1]) do |result|
+        assert_match(/The given password is invalid for user/, result.stderr)
+      end
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Running')
+    end
+
+    step 'Verify that setting the new logonpassword does not report any changes' do
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Running')
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], logonaccount: new_user, logonpassword: 'secondPassword'), catch_changes: true)
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Running')
+    end
+
+    step 'Verify that we can still stop the service' do
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Running')
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], ensure: :stopped), expect_changes: true)
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Stopped')
+    end
+
+    step 'Verify that the new logonpassword has actually been set by succesfully restarting the service' do
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Stopped')
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], ensure: :running), expect_changes: true)
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Running')
+    end
+
+    step "Deny #{new_user} the `Logon As A Service` right" do
+      on(agent, puppet("resource user #{new_user} roles='SeDenyServiceLogonRight'")) do |result|
+        assert_match(/User\[#{new_user}\]\/roles: roles changed SeServiceLogonRight to 'SeDenyServiceLogonRight,SeServiceLogonRight'/, result.stdout)
+      end
+    end
+
+    step 'Verify that we can still stop the service' do
+      assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Running')
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], ensure: :stopped), expect_changes: true)
       assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Stopped')
+    end
+
+    step 'Verify that the service cannot be started anymore because of the denied `Logon As A Service` right' do
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], ensure: :running), :acceptable_exit_codes => [4], catch_changes: true) do |result|
+        assert_match(/Failed to start the service/, result.stderr)
+      end
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Stopped')
+    end
+
+    step 'Verify that a user with `Logon As A Service` right denied will raise error when managing it as logonaccount for a service' do
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], logonaccount: new_user), :acceptable_exit_codes => [1], catch_changes: true) do |result|
+        assert_match(/#{new_user}\" has the 'Log On As A Service' right set to denied./, result.stderr)
+      end
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Stopped')
+    end
+
+    step "Grant back #{new_user} the `Logon As A Service` right for our subsequent tests" do
+      on(agent, puppet("resource user #{new_user} roles='SeServiceLogonRight' role_membership=inclusive")) do |result|
+        assert_match(/User\[#{new_user}\]\/roles: roles changed SeServiceLogonRight,SeDenyServiceLogonRight to 'SeServiceLogonRight'/, result.stdout)
+      end
     end
 
     step 'Verify that ensure noops if the ensure property is already synced' do
@@ -147,11 +236,9 @@ MANIFEST
     end
 
     step 'Verify that we can change logonaccount for a stopped service' do
-      assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Stopped')
-      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
+      assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Stopped', StartName: new_user)
       apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], logonaccount: local_service_locale_name), expect_changes: true)
-      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: local_service_locale_name)
-      assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Stopped')
+      assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Stopped', StartName: local_service_locale_name)
     end
 
     step 'Verify that logonaccount noops if the logonaccount property is already synced' do
@@ -165,10 +252,9 @@ MANIFEST
       end
     end
 
-    step 'Disable the service and change logonaccount to localsystem in preparation for our subsequent tests' do
+    step 'Disable the service and change logonaccount back to `LocalSystem` in preparation for our subsequent tests' do
       apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], enable: false, logonaccount: 'LocalSystem'))
-      assert_service_properties_on(agent, mock_service_nofail[:name], StartMode: 'Disabled')
-      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem', StartMode: 'Disabled')
     end
 
     step 'Verify that starting a disabled service fails if the enable property is not managed' do

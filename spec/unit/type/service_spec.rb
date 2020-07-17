@@ -165,8 +165,38 @@ describe test_title, "when validating attribute values" do
 
       context "when on Windows", :if => Puppet::Util::Platform.windows? do
         before do
+          allow(Puppet::Util::Windows::User).to receive(:password_is?).and_return(true)
           allow(Puppet::Util::Windows::ADSI).to receive(:computer_name).and_return("myPC")
+          allow(Puppet::Util::Windows::User).to receive(:get_rights).and_return('SeServiceLogonRight')
+        end
+
+        it "should fail when the `Log On As A Service` right is missing from given user" do
+          allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).and_return(Puppet::Util::Windows::SID::Principal.new("myUser", nil, nil, "myPC", :SidTypeUser))
+          allow(Puppet::Util::Windows::User).to receive(:get_rights).with('myPC\\myUser').and_return("")
+
+          expect { Puppet::Type.type(:service).new(:name => "yay", :logonaccount => 'myUser') }.to raise_error(Puppet::Error, /"myPC\\myUser" is missing the 'Log On As A Service' right./)
+        end
+
+        it "should fail when the `Log On As A Service` right is set to denied for given user" do
+          allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).and_return(Puppet::Util::Windows::SID::Principal.new("myUser", nil, nil, "myPC", :SidTypeUser))
+          allow(Puppet::Util::Windows::User).to receive(:get_rights).with('myPC\\myUser').and_return("SeDenyServiceLogonRight")
+
+          expect { Puppet::Type.type(:service).new(:name => "yay", :logonaccount => 'myUser') }.to raise_error(Puppet::Error, /"myPC\\myUser" has the 'Log On As A Service' right set to denied./)
+        end
+
+        it "should not fail when given user has the `Log On As A Service` right" do
+          allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).and_return(Puppet::Util::Windows::SID::Principal.new("myUser", nil, nil, "myPC", :SidTypeUser))
+          allow(Puppet::Util::Windows::User).to receive(:get_rights).with('myPC\\myUser').and_return("SeServiceLogonRight")
+
+          expect { Puppet::Type.type(:service).new(:name => "yay", :logonaccount => 'myUser') }.not_to raise_error
+        end
+
+        it "should not fail when given user is a default system account even if the `Log On As A Service` right is missing" do
+          allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).and_return(Puppet::Util::Windows::SID::Principal.new("LOCAL SERVICE", nil, nil, "NT AUTHORITY", :SidTypeUser))
           allow(Puppet::Util::Windows::User).to receive(:default_system_account?).and_return(true)
+
+          expect(Puppet::Util::Windows::User).not_to receive(:get_rights)
+          expect { Puppet::Type.type(:service).new(:name => "yay", :logonaccount => 'myUser') }.not_to raise_error
         end
 
         ['LocalSystem', '.\LocalSystem', 'myPC\LocalSystem', 'lOcALsysTem'].each do |user_input|
@@ -212,12 +242,12 @@ describe test_title, "when validating attribute values" do
 
         it "should fail when account is invalid" do
           allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).and_return(nil)
-          expect { Puppet::Type.type(:service).new(:name => "yay", :logonaccount => 'InvalidUser') }.to raise_error(Puppet::Error, /\"InvalidUser\" is not a valid account/)
+          expect { Puppet::Type.type(:service).new(:name => "yay", :logonaccount => 'InvalidUser') }.to raise_error(Puppet::Error, /"InvalidUser" is not a valid account/)
         end
 
         it "should fail when sid type is not user or well known user" do
           allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).and_return(Puppet::Util::Windows::SID::Principal.new("Administrators", nil, nil, "BUILTIN", :SidTypeAlias))
-          expect { Puppet::Type.type(:service).new(:name => "yay", :logonaccount => 'Administrators') }.to raise_error(Puppet::Error, /\"Administrators\" is not a valid account/)
+          expect { Puppet::Type.type(:service).new(:name => "yay", :logonaccount => 'Administrators') }.to raise_error(Puppet::Error, /"Administrators" is not a valid account/)
         end
       end
     end
@@ -254,6 +284,7 @@ describe test_title, "when validating attribute values" do
         before do
           allow(Puppet::Util::Windows::ADSI).to receive(:computer_name).and_return("myPC")
           allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).and_return(name_to_principal_result)
+          allow(Puppet::Util::Windows::User).to receive(:get_rights).and_return('SeServiceLogonRight')
         end
 
         it "should pass validation when given account is 'LocalSystem'" do
@@ -273,6 +304,7 @@ describe test_title, "when validating attribute values" do
 
             it "should pass validation" do
               allow(Puppet::Util::Windows::User).to receive(:localsystem?).with(predefined_local_account).and_return(false)
+              expect(Puppet::Util::Windows::User).to receive(:default_system_account?).with(predefined_local_account).and_return(true)
               expect(Puppet::Util::Windows::User).to receive(:default_system_account?).with("NT AUTHORITY\\#{predefined_local_account}").and_return(true)
 
               expect(Puppet::Util::Windows::User).not_to receive(:password_is?)
@@ -288,6 +320,7 @@ describe test_title, "when validating attribute values" do
         describe "when given logonaccount is not a predefined local account" do
           before do
             allow(Puppet::Util::Windows::User).to receive(:localsystem?).with('myUser').and_return(false)
+            allow(Puppet::Util::Windows::User).to receive(:default_system_account?).with('myUser').and_return(false)
             allow(Puppet::Util::Windows::User).to receive(:default_system_account?).with('.\\myUser').and_return(false)
           end
 
