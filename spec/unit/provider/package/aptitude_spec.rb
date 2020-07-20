@@ -13,6 +13,7 @@ describe Puppet::Type.type(:package).provider(:aptitude) do
 
     before do
       allow(Puppet::Util).to receive(:which).with('/usr/bin/dpkg-query').and_return(dpkgquery_path)
+      allow(described_class).to receive(:aptmark).with('showmanual').and_return("")
     end
 
     { :absent   => "deinstall ok config-files faff 1.2.3-1\n",
