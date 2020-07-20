@@ -18,4 +18,9 @@ Puppet::Type.type(:package).provide :puppet_gem, :parent => :gem do
     Puppet.debug("Invalidating rubygems cache after uninstalling gem '#{resource[:name]}'")
     Puppet::Util::Autoload.gem_source.clear_paths
   end
+
+  def self.execute_gem_command(command, command_options, custom_environment = {})
+    custom_environment['PKG_CONFIG_PATH'] = '/opt/puppetlabs/puppet/lib/pkgconfig' unless Puppet::Util::Platform.windows?
+    super(command, command_options, custom_environment)
+  end
 end
