@@ -40,9 +40,10 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     packages
   end
 
-  def self.query
+  def query
     hash = super
     hash[:mark] = :manual if aptmark('showmanual').split("\n").include?(@resource[:name])
+    hash
   end
 
   def initialize(value={})
@@ -57,7 +58,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   def flush
     # unless we are removing the package mark it if it hasn't already been marked
     if @property_flush
-      unless @property_flush[:mark] or [:purge, :absent].include?(resource[:ensure])
+      unless @property_flush[:mark] || [:purge, :absent].include?(resource[:ensure])
         aptmark('manual', resource[:name])
       end
     end
