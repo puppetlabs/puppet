@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 require 'puppet_spec/compiler'
+require 'puppet/indirector/data_binding/hiera'
 
 describe "Data binding" do
   include PuppetSpec::Files

@@ -158,6 +158,7 @@ describe Puppet::SSL::Host do
 
       it "should not include defaults if we can't resolve our fqdn" do
         allow(Puppet::SSL::CertificateAuthority).to receive(:ca?).and_return(true)
+        allow(Facter).to receive(:value).and_call_original
         allow(Facter).to receive(:value).with(:fqdn).and_return(nil)
 
         expect(@cr).to receive(:generate).with(@key, {})
@@ -167,6 +168,7 @@ describe Puppet::SSL::Host do
 
       it "should provide defaults if we're bootstrapping the local master" do
         allow(Puppet::SSL::CertificateAuthority).to receive(:ca?).and_return(true)
+        allow(Facter).to receive(:value).and_call_original
         allow(Facter).to receive(:value).with(:fqdn).and_return('web.foo.com')
         allow(Facter).to receive(:value).with(:domain).and_return('foo.com')
 
