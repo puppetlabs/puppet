@@ -120,8 +120,11 @@ module Puppet::Test
       indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
       indirections.each do |indirector|
         $saved_indirection_state[indirector.name] = {
-            :@terminus_class => indirector.instance_variable_get(:@terminus_class).value,
-            :@cache_class    => indirector.instance_variable_get(:@cache_class).value
+          :@terminus_class => indirector.instance_variable_get(:@terminus_class).value,
+          :@cache_class    => indirector.instance_variable_get(:@cache_class).value,
+          # dup the termini hash so termini created and registered during
+          # the test aren't stored in our saved_indirection_state
+          :@termini        => indirector.instance_variable_get(:@termini).dup
         }
       end
 
@@ -176,7 +179,11 @@ module Puppet::Test
       indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
       indirections.each do |indirector|
         $saved_indirection_state.fetch(indirector.name, {}).each do |variable, value|
-          indirector.instance_variable_get(variable).value = value
+          if variable == :@termini
+            indirector.instance_variable_set(variable, value)
+          else
+            indirector.instance_variable_get(variable).value = value
+          end
         end
       end
       $saved_indirection_state = nil
