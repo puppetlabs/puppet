@@ -16,7 +16,7 @@ describe "directory environments" do
       expect {
         puppet.run
       }.to exit_with(0)
-       .and have_printed('/direnv/modules')
+       .and output(%r{/direnv/modules}).to_stdout
     end
 
     it "config prints the cli --modulepath despite environment" do
@@ -25,7 +25,7 @@ describe "directory environments" do
       expect {
         puppet.run
       }.to exit_with(0)
-       .and have_printed('/completely/different')
+       .and output(%r{/completely/different}).to_stdout
     end
 
     it 'given an 8.3 style path on Windows, will config print an expanded path',
@@ -42,7 +42,7 @@ describe "directory environments" do
       expect {
         puppet.run
       }.to exit_with(0)
-       .and have_printed(expanded)
+       .and output(a_string_matching(expanded)).to_stdout
     end
   end
 
@@ -61,7 +61,7 @@ describe "directory environments" do
       expect {
         puppet.run
       }.to exit_with(0)
-       .and have_printed('otherdirenv/modules')
+       .and output(%r{otherdirenv/modules}).to_stdout
     end
   end
 end

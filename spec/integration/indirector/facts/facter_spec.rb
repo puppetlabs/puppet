@@ -46,7 +46,7 @@ describe Puppet::Node::Facts::Facter do
       expect {
         apply.run
       }.to exit_with(0)
-       .and have_printed(Puppet.version)
+       .and output(/defined 'message' as '#{Puppet.version}'/).to_stdout
     end
 
     it "should resolve external facts" do
@@ -62,7 +62,7 @@ describe Puppet::Node::Facts::Facter do
       expect {
         apply.run
       }.to exit_with(0)
-       .and have_printed('bar')
+       .and output(/defined 'message' as 'bar'/).to_stdout
     end
   end
 

@@ -38,7 +38,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
   def expects_command_to_pass(expected_output = nil)
     expect {
       ssl.run_command
-    }.to have_printed(expected_output)
+    }.to output(expected_output).to_stdout
   end
 
   def expects_command_to_fail(message)
@@ -46,7 +46,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       expect {
         ssl.run_command
       }.to raise_error(Puppet::Error, message)
-    }.to have_printed(/.*/) # ignore output
+    }.to output(/.*/).to_stdout
   end
 
   shared_examples_for 'an ssl action' do
@@ -265,6 +265,19 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     it 'reports when verification succeeds with a password protected private key' do
       FileUtils.cp(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'encrypted-key.pem'), Puppet[:hostprivkey])
       FileUtils.cp(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'signed.pem'), Puppet[:hostcert])
+
+      # To verify the client cert we need the root and intermediate certs and crls.
+      # We don't need to do this with `ssl-client` cert above, because it is issued
+      # directly from the generated TestCa above.
+      File.open(Puppet[:localcacert], 'w') do |f|
+        f.write(File.read(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'ca.pem')))
+        f.write(File.read(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'intermediate.pem')))
+      end
+
+      File.open(Puppet[:hostcrl], 'w') do |f|
+        f.write(File.read(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'crl.pem')))
+        f.write(File.read(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'intermediate-crl.pem')))
+      end
 
       Puppet[:passfile] = file_containing('passfile', '74695716c8b6')
 

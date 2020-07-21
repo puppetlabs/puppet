@@ -15,7 +15,7 @@ describe Puppet::Face[:man, '0.0.1'] do
   end
 
   it 'accepts a call with no arguments' do
-    expect { subject.man() }.to have_printed(/USAGE: puppet man <action>/)
+    expect { subject.man }.to output(/USAGE: puppet man <action>/).to_stdout
   end
 
   it 'raises an ArgumentError when given to many arguments' do

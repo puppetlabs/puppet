@@ -425,7 +425,7 @@ EOT
       expect {
         app.run
       }.to exit_with(0)
-       .and have_printed(/3/)
+       .and output(/3/).to_stdout
     end
 
     it "should invoke when_rendering hook 's' when asked to render-as 's'" do
@@ -434,7 +434,7 @@ EOT
       expect {
         app.run
       }.to exit_with(0)
-       .and have_printed(/you invoked the 's' rendering hook/)
+       .and output(/you invoked the 's' rendering hook/).to_stdout
     end
   end
 
