@@ -1701,8 +1701,7 @@ EOT
       :type     => :duration,
       :desc     => "How often puppet agent applies the catalog.
           Note that a runinterval of 0 means \"run continuously\" rather than
-          \"never run.\" If you want puppet agent to never run, you should start
-          it with the `--no-client` option. #{AS_DURATION}",
+          \"never run.\" #{AS_DURATION}",
     },
     :runtimeout => {
       :default  => "1h",
