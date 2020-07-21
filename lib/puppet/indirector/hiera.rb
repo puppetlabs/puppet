@@ -1,6 +1,10 @@
 require 'puppet/indirector/terminus'
 require 'hiera/scope'
 
+# This class can't be collapsed into Puppet::Indirector::DataBindings::Hiera
+# because some community plugins rely on this class directly, see PUP-1843.
+# This class is deprecated and will be deleted in a future release.
+# Use `Puppet::DataBinding.indirection.terminus(:hiera)` instead.
 class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   def initialize(*args)
     if ! Puppet.features.hiera?
