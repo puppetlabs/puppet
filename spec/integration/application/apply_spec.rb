@@ -40,8 +40,6 @@ describe "apply", unless: Puppet::Util::Platform.jruby? do
       end
 
       it 'does not load the pcore type' do
-        pending("PUP-9602")
-
         apply = Puppet::Application[:apply]
         apply.command_line.args = [ '-e', "Applytest { message => 'the default'} applytest { 'applytest was here': }" ]
 

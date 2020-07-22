@@ -307,7 +307,8 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   private
 
   def create_loaders(env)
-    Puppet::Pops::Loaders.new(env)
+    # Ignore both 'cached_puppet_lib' and pcore resource type loaders
+    Puppet::Pops::Loaders.new(env, false, false)
   end
 
   def read_catalog(text)
