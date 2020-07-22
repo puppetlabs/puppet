@@ -116,9 +116,9 @@ Puppet::Type.newtype(:file) do
         that sufficient disk space is available for the file backups. Generally, you 
         can implement this using one of the following two options:
         - Use a `find` command and `crontab` entry to retain only the last X days 
-        of file backups. For example,
+        of file backups. For example:
         
-        ```shell script
+        ```
         find /opt/puppetlabs/server/data/puppetserver/bucket -type f -mtime +45 -atime +45 -print0 | xargs -0 rm
         ```
         
