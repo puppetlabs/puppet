@@ -530,6 +530,15 @@ describe Puppet::Configurer do
     end
   end
 
+  def expects_pluginsync
+    metadata = "[{\"path\":\"/etc/puppetlabs/code\",\"relative_path\":\".\",\"links\":\"follow\",\"owner\":0,\"group\":0,\"mode\":420,\"checksum\":{\"type\":\"ctime\",\"value\":\"{ctime}2020-07-10 14:00:00 -0700\"},\"type\":\"directory\",\"destination\":null}]"
+    stub_request(:get, %r{/puppet/v3/file_metadatas/(plugins|locales)}).to_return(status: 200, body: metadata, headers: {'Content-Type' => 'application/json'})
+
+    # response retains owner/group/mode due to source_permissions => use
+    facts_metadata = "[{\"path\":\"/etc/puppetlabs/code\",\"relative_path\":\".\",\"links\":\"follow\",\"owner\":500,\"group\":500,\"mode\":493,\"checksum\":{\"type\":\"ctime\",\"value\":\"{ctime}2020-07-10 14:00:00 -0700\"},\"type\":\"directory\",\"destination\":null}]"
+    stub_request(:get, %r{/puppet/v3/file_metadatas/pluginfacts}).to_return(status: 200, body: facts_metadata, headers: {'Content-Type' => 'application/json'})
+  end
+
   def expects_new_catalog_only(catalog)
     expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_return(catalog)
     expect(Puppet::Resource::Catalog.indirection).not_to receive(:find).with(anything, hash_including(ignore_terminus: true))
@@ -546,6 +555,7 @@ describe Puppet::Configurer do
   end
 
   def expects_fallback_to_new_catalog(catalog)
+    expects_pluginsync
     expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_terminus: true)).and_return(nil)
     expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_return(catalog)
   end
@@ -582,7 +592,6 @@ describe Puppet::Configurer do
       it "should make a node request and pluginsync when a cached catalog cannot be retrieved" do
         expect(Puppet::Node.indirection).to receive(:find).and_return(nil)
         expects_fallback_to_new_catalog(catalog)
-        expect(configurer).to receive(:download_plugins)
 
         configurer.run
       end
@@ -618,6 +627,7 @@ describe Puppet::Configurer do
       it "should not attempt to retrieve a cached catalog again if the first attempt failed" do
         expect(Puppet::Node.indirection).to receive(:find).and_return(nil)
         expects_neither_new_or_cached_catalog
+        expects_pluginsync
 
         configurer.run
       end
@@ -633,8 +643,7 @@ describe Puppet::Configurer do
       end
 
       it "applies the catalog passed as options when the catalog cache terminus is not set" do
-        stub_request(:get, %r{/puppet/v3/file_metadatas?/plugins}).to_return(:status => 404)
-        stub_request(:get, %r{/puppet/v3/file_metadatas?/pluginfacts}).to_return(:status => 404)
+        expects_pluginsync
 
         catalog.add_resource(Puppet::Resource.new('notify', 'from apply'))
         configurer.run(catalog: catalog.to_ral)
