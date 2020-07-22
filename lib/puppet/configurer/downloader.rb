@@ -11,13 +11,28 @@ class Puppet::Configurer::Downloader
     files = []
     begin
       catalog.apply do |trans|
+        unless Puppet[:ignore_plugin_errors]
+          # Propagate the first failure associated with the transaction. The any_failed?
+          # method returns the first resource status that failed or nil, not a boolean.
+          first_failure = trans.any_failed?
+          if first_failure
+            event = (first_failure.events || []).first
+            detail = event ? event.message : 'unknown'
+            raise Puppet::Error.new(_("Failed to retrieve %{name}: %{detail}") % { name: name, detail: detail })
+          end
+        end
+
         trans.changed?.each do |resource|
           yield resource if block_given?
           files << resource[:path]
         end
       end
     rescue Puppet::Error => detail
-      Puppet.log_exception(detail, _("Could not retrieve %{name}: %{detail}") % { name: name, detail: detail })
+      if Puppet[:ignore_plugin_errors]
+        Puppet.log_exception(detail, _("Could not retrieve %{name}: %{detail}") % { name: name, detail: detail })
+      else
+        raise detail
+      end
     end
     files
   end
