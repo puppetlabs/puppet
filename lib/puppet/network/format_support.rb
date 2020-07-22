@@ -49,7 +49,7 @@ module Puppet::Network::FormatSupport
 
       result = put_preferred_format_first(result).map(&:name)
 
-      Puppet.debug "#{friendly_name} supports formats: #{result.join(' ')}"
+      Puppet.debug { "#{friendly_name} supports formats: #{result.join(' ')}" }
 
       result
     end
@@ -81,7 +81,7 @@ module Puppet::Network::FormatSupport
       }
 
       if preferred.empty?
-        Puppet.debug "Value of 'preferred_serialization_format' (#{preferred_format}) is invalid for #{friendly_name}, using default (#{list.first.name})"
+        Puppet.debug { "Value of 'preferred_serialization_format' (#{preferred_format}) is invalid for #{friendly_name}, using default (#{list.first.name})" }
       else
         list = preferred + list.reject { |format|
           format.mime.end_with?(preferred_format)

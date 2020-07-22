@@ -340,10 +340,10 @@ module Puppet::Util::Windows::Security
           Puppet.warning _("Setting control rights for %{path} owner SYSTEM to less than Full Control rights. Setting SYSTEM rights to less than Full Control may have unintented consequences for operations on this file") % { path: path }
         elsif managing_owner && isownergroup
           #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
-          Puppet.debug _("%{path} owner and group both set to user SYSTEM, but group is not managed directly: SYSTEM user rights will be set to FullControl by group") % { path: path }
+          Puppet.debug { _("%{path} owner and group both set to user SYSTEM, but group is not managed directly: SYSTEM user rights will be set to FullControl by group") % { path: path } }
         else
           #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
-          Puppet.debug _("An attempt to set mode %{mode} on item %{path} would result in the owner, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control") % { mode: mode.to_s(8), path: path }
+          Puppet.debug { _("An attempt to set mode %{mode} on item %{path} would result in the owner, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control") % { mode: mode.to_s(8), path: path } }
           owner_allow = FILE::FILE_ALL_ACCESS
         end
       end
@@ -356,10 +356,10 @@ module Puppet::Util::Windows::Security
           Puppet.warning _("Setting control rights for %{path} group SYSTEM to less than Full Control rights. Setting SYSTEM rights to less than Full Control may have unintented consequences for operations on this file") % { path: path }
         elsif managing_group && isownergroup
           #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
-          Puppet.debug _("%{path} owner and group both set to user SYSTEM, but owner is not managed directly: SYSTEM user rights will be set to FullControl by owner") % { path: path }
+          Puppet.debug { _("%{path} owner and group both set to user SYSTEM, but owner is not managed directly: SYSTEM user rights will be set to FullControl by owner") % { path: path } }
         else
           #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
-          Puppet.debug _("An attempt to set mode %{mode} on item %{path} would result in the group, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control") % { mode: mode.to_s(8), path: path }
+          Puppet.debug { _("An attempt to set mode %{mode} on item %{path} would result in the group, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control") % { mode: mode.to_s(8), path: path } }
           group_allow = FILE::FILE_ALL_ACCESS
         end
       end

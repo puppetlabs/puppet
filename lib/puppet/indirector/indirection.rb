@@ -269,7 +269,7 @@ class Puppet::Indirector::Indirection
       return nil
     end
 
-    Puppet.debug "Using cached #{self.name} for #{request.key}"
+    Puppet.debug { "Using cached #{self.name} for #{request.key}" }
     cached
   rescue => detail
     Puppet.log_exception(detail, _("Cached %{indirection} for %{request} failed: %{detail}") % { indirection: self.name, request: request.key, detail: detail })

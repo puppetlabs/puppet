@@ -68,7 +68,7 @@ module Puppet::Util::Execution
     if respond_to? :debug
       debug "Executing '#{command_str}'"
     else
-      Puppet.debug "Executing '#{command_str}'"
+      Puppet.debug { "Executing '#{command_str}'" }
     end
 
     # force the run of the command with
@@ -186,7 +186,7 @@ module Puppet::Util::Execution
     if respond_to? :debug
       debug "Executing#{user_log_s}: '#{command_str}'"
     else
-      Puppet.debug "Executing#{user_log_s}: '#{command_str}'"
+      Puppet.debug { "Executing#{user_log_s}: '#{command_str}'" }
     end
 
     null_file = Puppet::Util::Platform.windows? ? 'NUL' : '/dev/null'

@@ -104,7 +104,7 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
         crl = store_context.current_crl
         if crl
           if crl.last_update && crl.last_update < Time.now + FIVE_MINUTES_AS_SECONDS
-            Puppet.debug("Ignoring CRL not yet valid, current time #{Time.now.utc}, CRL last updated #{crl.last_update.utc}")
+            Puppet.debug { "Ignoring CRL not yet valid, current time #{Time.now.utc}, CRL last updated #{crl.last_update.utc}" }
             preverify_ok = true
           else
             @verify_errors << "#{error_string} for #{crl.issuer.to_utf8}"

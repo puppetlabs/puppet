@@ -429,7 +429,7 @@ class Puppet::Parameter
     begin
       ret = unsafe_munge(value)
     rescue Puppet::Error => detail
-      Puppet.debug "Reraising #{detail}"
+      Puppet.debug { "Reraising #{detail}" }
       raise
     rescue => detail
       raise Puppet::DevError, _("Munging failed for value %{value} in class %{class_name}: %{detail}") % { value: value.inspect, class_name: self.name, detail: detail }, detail.backtrace

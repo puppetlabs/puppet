@@ -202,7 +202,7 @@ class Puppet::Transaction
     # mark the end of transaction evaluate.
     report.transaction_completed = true
 
-    Puppet.debug "Finishing transaction #{object_id}"
+    Puppet.debug { "Finishing transaction #{object_id}" }
   end
 
   # Wraps application run state check to flag need to interrupt processing
@@ -373,7 +373,7 @@ class Puppet::Transaction
     type_name = provider_class.resource_type.name
     return if @prefetched_providers[type_name][provider_class.name] ||
       @prefetch_failed_providers[type_name][provider_class.name]
-    Puppet.debug "Prefetching #{provider_class.name} resources for #{type_name}"
+    Puppet.debug { "Prefetching #{provider_class.name} resources for #{type_name}" }
     begin
       provider_class.prefetch(resources)
     rescue LoadError, Puppet::MissingCommand => detail

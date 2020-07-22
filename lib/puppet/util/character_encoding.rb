@@ -19,8 +19,9 @@ module Puppet::Util::CharacterEncoding
       begin
         if original_encoding == Encoding::UTF_8
           if !string_copy.valid_encoding?
-            Puppet.debug(_("%{value} is already labeled as UTF-8 but this encoding is invalid. It cannot be transcoded by Puppet.") %
-              { value: string.dump })
+            Puppet.debug {
+              _("%{value} is already labeled as UTF-8 but this encoding is invalid. It cannot be transcoded by Puppet.") % { value: string.dump }
+            }
           end
           # String is already valid UTF-8 - noop
           return string_copy
@@ -40,8 +41,9 @@ module Puppet::Util::CharacterEncoding
         # Catch both our own self-determined failure to transcode as well as any
         # error on ruby's part, ie Encoding::UndefinedConversionError on a
         # failure to encode!.
-        Puppet.debug(_("%{error}: %{value} cannot be transcoded by Puppet.") %
-          { error: detail.inspect, value: string.dump })
+        Puppet.debug {
+          _("%{error}: %{value} cannot be transcoded by Puppet.") % { error: detail.inspect, value: string.dump }
+        }
         return string_copy
       end
     end
@@ -67,7 +69,9 @@ module Puppet::Util::CharacterEncoding
       if string_copy.force_encoding(Encoding::UTF_8).valid_encoding?
         return string_copy
       else
-        Puppet.debug(_("%{value} is not valid UTF-8 and result of overriding encoding would be invalid.") % { value: string.dump })
+        Puppet.debug {
+          _("%{value} is not valid UTF-8 and result of overriding encoding would be invalid.") % { value: string.dump }
+        }
         # Set copy back to its original encoding before returning
         return string_copy.force_encoding(original_encoding)
       end
