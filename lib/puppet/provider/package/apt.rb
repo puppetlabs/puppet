@@ -16,6 +16,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
   commands :aptget => "/usr/bin/apt-get"
   commands :aptcache => "/usr/bin/apt-cache"
+  commands :aptmark => "/usr/bin/apt-mark"
   commands :preseed => "/usr/bin/debconf-set-selections"
 
   defaultfor :osfamily => :debian
@@ -28,6 +29,39 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
   def self.defaultto_allow_virtual
     false
+  end
+
+  def self.instances
+    packages = super
+    manual_marks = aptmark('showmanual').split("\n")
+    packages.each do |package|
+      package.mark = :manual if manual_marks.include?(package.name)
+    end
+    packages
+  end
+
+  def query
+    hash = super
+    hash[:mark] = :manual if aptmark('showmanual').split("\n").include?(@resource[:name])
+    hash
+  end
+
+  def initialize(value={})
+    super(value)
+    @property_flush = {}
+  end
+
+  def mark=(value)
+    @property_flush[:mark] = value
+  end
+
+  def flush
+    # unless we are removing the package mark it if it hasn't already been marked
+    if @property_flush
+      unless @property_flush[:mark] || [:purge, :absent].include?(resource[:ensure])
+        aptmark('manual', resource[:name])
+      end
+    end
   end
 
   # A derivative of DPKG; this is how most people actually manage

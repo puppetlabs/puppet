@@ -86,6 +86,83 @@ Version table:
     provider.run_preseed
   end
 
+  describe ".instances" do
+    before do
+      allow(Puppet::Type::Package::ProviderDpkg).to receive(:instances).and_return([resource])
+    end
+
+    context "when package is manual marked" do
+      before do
+        allow(described_class).to receive(:aptmark).with('showmanual').and_return("#{resource.name}\n")
+      end
+
+      it 'sets mark to manual' do
+        expect(resource).to receive(:mark=).with(:manual)
+        described_class.instances
+      end
+    end
+
+    context 'when package is not manual marked ' do
+      before do
+        allow(described_class).to receive(:aptmark).with('showmanual').and_return('')
+      end
+
+      it 'does not set mark to manual' do
+        expect(resource).not_to receive(:mark=).with(:manual)
+        described_class.instances
+      end
+    end
+  end
+
+  describe 'query' do
+    before do
+      allow(provider).to receive(:dpkgquery).and_return("name: #{resource.name}" )
+    end
+
+    context "when package is manual marked" do
+      before do
+        allow(described_class).to receive(:aptmark).with('showmanual').and_return("#{resource.name}\n")
+      end
+
+      it 'sets mark to manual' do
+        result = provider.query
+        expect(result[:mark]).to eql(:manual)
+      end
+    end
+
+    context 'when package is not manual marked ' do
+      before do
+        allow(described_class).to receive(:aptmark).with('showmanual').and_return('')
+      end
+
+      it 'does not set mark to manual' do
+        result = provider.query
+        expect(result[:mark]).to be_nil
+      end
+    end
+  end
+
+  describe 'flush' do
+
+    context "when package is manual marked" do
+      before do
+        provider.mark = :manual
+      end
+
+      it 'does not call aptmark' do
+        expect(provider).not_to receive(:aptmark)
+        provider.flush
+      end
+    end
+
+    context 'when package is not manual marked ' do
+      it 'calls aptmark' do
+        expect(described_class).to receive(:aptmark).with('manual', resource.name)
+        provider.flush
+      end
+    end
+  end
+
   describe "when installing" do
     it "should preseed if a responsefile is provided" do
       resource[:responsefile] = "/my/file"
