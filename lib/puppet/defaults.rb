@@ -822,7 +822,9 @@ API to expire the cache as needed
           only use lowercase letters, numbers, periods, underscores, and dashes. (That is,
           it should match `/\A[a-z0-9._-]+\Z/`.)
         * The special value `ca` is reserved, and can't be used as the certname
-          for a normal node.
+          for a normal node.         
+
+          **Note:** You must set the certname in the main section of the puppet.conf file. Setting it in a different section causes errors.
 
         Defaults to the node's fully qualified domain name.",
       :hook => proc { |value| raise(ArgumentError, _("Certificate names must be lower case")) unless value == value.downcase }},
