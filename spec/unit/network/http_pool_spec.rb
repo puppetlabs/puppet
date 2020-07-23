@@ -69,10 +69,6 @@ describe Puppet::Network::HttpPool do
       expect(Puppet::Network::HttpPool.http_instance("me", 54321, true)).to be_use_ssl
     end
 
-    it 'has an http_ssl_instance method' do
-      expect(Puppet::Network::HttpPool.http_ssl_instance("me", 54321)).to be_use_ssl
-    end
-
     context "when calling 'connection'" do
       it 'requires an ssl_context' do
         expect {
