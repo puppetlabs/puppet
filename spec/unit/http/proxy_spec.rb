@@ -1,8 +1,8 @@
 require 'uri'
 require 'spec_helper'
-require 'puppet/util/http_proxy'
+require 'puppet/http'
 
-describe Puppet::Util::HttpProxy do
+describe Puppet::HTTP::Proxy do
   before(:all) do
     ENV['http_proxy'] = nil
     ENV['HTTP_PROXY'] = nil

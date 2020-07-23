@@ -1,6 +1,5 @@
 require 'spec_helper'
-require 'puppet/network/http'
-require 'puppet/util/http_proxy'
+require 'puppet/http'
 
 describe Puppet::Network::HTTP::Factory do
   before(:all) do

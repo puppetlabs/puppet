@@ -1,6 +1,6 @@
 require 'puppet/ssl/openssl_loader'
 require 'net/http'
-require 'puppet/util/http_proxy'
+require 'puppet/http/proxy'
 
 # Factory for <tt>Net::HTTP</tt> objects.
 #
@@ -25,7 +25,7 @@ class Puppet::Network::HTTP::Factory
   def create_connection(site)
     Puppet.debug("Creating new connection for #{site}")
 
-    http = Puppet::Util::HttpProxy.proxy(URI(site.addr))
+    http = Puppet::HTTP::Proxy.proxy(URI(site.addr))
     http.use_ssl = site.use_ssl?
     http.read_timeout = Puppet[:http_read_timeout]
     http.open_timeout = Puppet[:http_connect_timeout]
