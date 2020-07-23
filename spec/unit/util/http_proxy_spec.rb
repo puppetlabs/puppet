@@ -3,8 +3,6 @@ require 'spec_helper'
 require 'puppet/util/http_proxy'
 
 describe Puppet::Util::HttpProxy do
-  include Puppet::Network::HTTP::Compression.module
-
   before(:all) do
     ENV['http_proxy'] = nil
     ENV['HTTP_PROXY'] = nil
@@ -343,71 +341,6 @@ describe Puppet::Util::HttpProxy do
       Puppet::Util.withenv('no_proxy' => no_proxy) do
         dest = URI.parse('http://sub.otheroddport.com:8080')
         expect(subject.no_proxy?(dest)).to be true
-      end
-    end
-  end
-
-  describe '.request_with_redirects' do
-    let(:dest) { URI.parse('http://mydomain.com/some/path') }
-
-    it 'generates accept and accept-encoding headers' do
-      stub_request(:head, dest)
-
-      headers = {
-        'Accept' => '*/*',
-        'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-        'User-Agent' => /Puppet/
-      }
-      stub_request(:get, dest).with(headers: headers)
-
-      subject.request_with_redirects(dest, :get, 0)
-    end
-
-    it 'can return a compressed response body' do
-      stub_request(:head, dest)
-
-      compressed_body = [
-        0x1f, 0x8b, 0x08, 0x08, 0xe9, 0x08, 0x7a, 0x5a, 0x00, 0x03,
-        0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x00, 0xcb, 0xc8, 0xe4, 0x02,
-        0x00, 0x7a, 0x7a, 0x6f, 0xed, 0x03, 0x00, 0x00, 0x00
-      ].pack('C*')
-
-      stub_request(:get, dest).to_return(status: 200, body: compressed_body, headers: { 'Content-Encoding' => 'gzip' })
-
-      expect(
-        uncompress_body(subject.request_with_redirects(dest, :get, 0))
-      ).to eq("hi\n")
-    end
-
-    it 'generates accept and accept-encoding headers when a block is provided' do
-      stub_request(:head, dest)
-
-      headers = {
-        'Accept' => '*/*',
-        'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-        'User-Agent' => /Puppet/
-      }
-      stub_request(:get, dest).with(headers: headers)
-
-      subject.request_with_redirects(dest, :get, 0) do
-        # unused
-      end
-    end
-
-    it 'only makes a single HEAD request' do
-      stub_request(:head, dest)
-
-      subject.request_with_redirects(dest, :head, 0)
-    end
-
-    it 'preserves query parameters' do
-      url = URI.parse('http://mydomain.com/some/path?foo=bar')
-
-      stub_request(:head, url)
-      stub_request(:get, url)
-
-      subject.request_with_redirects(url, :get, 0) do
-        # unused
       end
     end
   end
