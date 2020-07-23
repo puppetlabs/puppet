@@ -1,5 +1,9 @@
 Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => <<-'ENDHEREDOC') do |args|
     Converts a hash into a set of resources and adds them to the catalog.
+    
+    **Note**: Use this function selectively. It's generally better to write resources in
+     [Puppet](https://puppet.com/docs/puppet/latest/lang_resources.html), as
+     resources created with `create_resource` are difficult to read and troubleshoot.
 
     This function takes two mandatory arguments: a resource type, and a hash describing
     a set of resources. The hash should be in the form `{title => {parameters} }`:
@@ -33,7 +37,7 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
     as native resources.
 
     Virtual and Exported resources may be created by prefixing the type name
-    with @ or @@ respectively.  For example, the $myusers hash may be exported
+    with @ or @@ respectively. For example, the $myusers hash may be exported
     in the following manner:
 
         create_resources("@@user", $myusers)
@@ -42,9 +46,9 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
 
         create_resources("@user", $myusers)
 
-    Note that `create_resources` will filter out parameter values that are `undef` so that normal
-    data binding and puppet default value expressions are considered (in that order) for the
-    final value of a parameter (just as when setting a parameter to `undef` in a puppet language
+    Note that `create_resources` filters out parameter values that are `undef` so that normal
+    data binding and Puppet default value expressions are considered (in that order) for the
+    final value of a parameter (just as when setting a parameter to `undef` in a Puppet language
     resource declaration).
   ENDHEREDOC
   if Puppet[:tasks]
@@ -63,9 +67,9 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
   defaults ||= {}
   type_name = type.sub(/^@{1,2}/, '').downcase
 
-  # Get file/line information from the puppet stack (where call comes from in puppet source)
-  # If relayed via other puppet functions in ruby that do not nest their calls, the source position
-  # will be in the original puppet source.
+  # Get file/line information from the Puppet stack (where call comes from in Puppet source)
+  # If relayed via other Puppet functions in ruby that do not nest their calls, the source position
+  # will be in the original Puppet source.
   #
   file, line = Puppet::Pops::PuppetStack.top_of_stack
 
