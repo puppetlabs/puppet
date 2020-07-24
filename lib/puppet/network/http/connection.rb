@@ -16,7 +16,6 @@ class Puppet::Network::HTTP::RedirectionLimitExceededException < Puppet::Error ;
 class Puppet::Network::HTTP::Connection
   OPTION_DEFAULTS = {
     :use_ssl => true,
-    :verify => nil, # Puppet::SSL::Validator is deprecated
     :verifier => nil,
     :redirect_limit => 10,
   }
@@ -28,7 +27,7 @@ class Puppet::Network::HTTP::Connection
   #   connection,
   # @option options [Boolean] :use_ssl true to connect with SSL, false
   #   otherwise, defaults to true
-  # @option options [#setup_connection] :verify An object that will configure
+  # @option options [Puppet::SSL::Verifier] :verifier An object that will configure
   #   any verification to do on the connection
   # @option options [Integer] :redirect_limit the number of allowed
   #   redirections, defaults to 10 passing any other option in the options
@@ -46,15 +45,11 @@ class Puppet::Network::HTTP::Connection
     options = OPTION_DEFAULTS.merge(options)
     @use_ssl = options[:use_ssl]
     if @use_ssl
-      if options[:verifier]
-        unless options[:verifier].is_a?(Puppet::SSL::Verifier)
-          raise ArgumentError, _("Expected an instance of Puppet::SSL::Verifier but was passed a %{klass}") % { klass: options[:verifier].class }
-        end
-
-        @verifier = options[:verifier]
-      else
-        @verifier = Puppet::SSL::VerifierAdapter.new(options[:verify])
+      unless options[:verifier].is_a?(Puppet::SSL::Verifier)
+        raise ArgumentError, _("Expected an instance of Puppet::SSL::Verifier but was passed a %{klass}") % { klass: options[:verifier].class }
       end
+
+      @verifier = options[:verifier]
     end
     @redirect_limit = options[:redirect_limit]
     @site = Puppet::HTTP::Site.new(@use_ssl ? 'https' : 'http', host, port)

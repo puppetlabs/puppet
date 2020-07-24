@@ -13,7 +13,6 @@ module Puppet::SSL # :nodoc:
   require 'puppet/ssl/error'
   require 'puppet/ssl/ssl_context'
   require 'puppet/ssl/verifier'
-  require 'puppet/ssl/verifier_adapter'
   require 'puppet/ssl/ssl_provider'
   require 'puppet/ssl/state_machine'
 end
