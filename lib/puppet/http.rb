@@ -1,6 +1,7 @@
 module Puppet
   module Network
     module HTTP
+      require 'puppet/network/http_pool'
       require 'puppet/network/resolver'
     end
   end

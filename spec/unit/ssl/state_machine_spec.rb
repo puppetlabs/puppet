@@ -505,7 +505,6 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       Puppet[:certificate_revocation] = false
 
       expect(cert_provider).not_to receive(:load_crls)
-      expect(Puppet::Rest::Routes).not_to receive(:get_crls)
 
       state.next_state
 
