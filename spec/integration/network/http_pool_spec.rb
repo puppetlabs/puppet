@@ -183,10 +183,6 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
     end
 
     describe Puppet::Network::HTTP::Connection do
-      it_behaves_like "an HttpPool connection", described_class, true
-    end
-
-    describe Puppet::Network::HTTP::ConnectionAdapter do
       it_behaves_like "an HttpPool connection", described_class, false
     end
   end

@@ -1,6 +1,5 @@
 require 'spec_helper'
 require 'puppet/network/http/connection'
-require 'puppet/network/http/connection_adapter'
 require 'puppet/test_ca'
 
 describe Puppet::Network::HTTP::Connection do
@@ -649,10 +648,6 @@ describe Puppet::Network::HTTP::Connection do
   end
 
   describe Puppet::Network::HTTP::Connection do
-    it_behaves_like "an HTTP connection", described_class, true
-  end
-
-  describe Puppet::Network::HTTP::ConnectionAdapter do
     it_behaves_like "an HTTP connection", described_class, false
   end
 end
