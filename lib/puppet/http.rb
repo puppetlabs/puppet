@@ -1,7 +1,6 @@
 module Puppet
   module Network
     module HTTP
-      require 'puppet/network/http/session'
       require 'puppet/network/http/base_pool'
       require 'puppet/network/http/nocache_pool'
       require 'puppet/network/http/pool'
@@ -16,6 +15,7 @@ module Puppet
 
     require 'puppet/http/errors'
     require 'puppet/http/site'
+    require 'puppet/http/pool_entry'
     require 'puppet/http/proxy'
     require 'puppet/http/factory'
     require 'puppet/http/response'

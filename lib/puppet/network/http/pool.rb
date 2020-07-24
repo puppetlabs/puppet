@@ -40,9 +40,9 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   end
 
   def close
-    @pool.each_pair do |site, sessions|
-      sessions.each do |session|
-        close_connection(site, session.connection)
+    @pool.each_pair do |site, entries|
+      entries.each do |entry|
+        close_connection(site, entry.connection)
       end
     end
     @pool.clear
@@ -72,17 +72,17 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   #
   # @api private
   def borrow(site, verifier)
-    @pool[site] = active_sessions(site)
-    index = @pool[site].index do |session|
-      (verifier.nil? && session.verifier.nil?) ||
-        (!verifier.nil? && verifier.reusable?(session.verifier))
+    @pool[site] = active_entries(site)
+    index = @pool[site].index do |entry|
+      (verifier.nil? && entry.verifier.nil?) ||
+        (!verifier.nil? && verifier.reusable?(entry.verifier))
     end
-    session = index ? @pool[site].delete_at(index) : nil
-    if session
+    entry = index ? @pool[site].delete_at(index) : nil
+    if entry
       @pool.delete(site) if @pool[site].empty?
 
       Puppet.debug("Using cached connection for #{site}")
-      session.connection
+      entry.connection
     else
       http = @factory.create_connection(site)
 
@@ -107,27 +107,27 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   # @api private
   def release(site, verifier, http)
     expiration = Time.now + @keepalive_timeout
-    session = Puppet::Network::HTTP::Session.new(http, verifier, expiration)
+    entry = Puppet::HTTP::PoolEntry.new(http, verifier, expiration)
     Puppet.debug("Caching connection for #{site}")
 
-    sessions = @pool[site]
-    if sessions
-      sessions.unshift(session)
+    entries = @pool[site]
+    if entries
+      entries.unshift(entry)
     else
-      @pool[site] = [session]
+      @pool[site] = [entry]
     end
   end
 
-  # Returns an Array of sessions whose connections are not expired.
+  # Returns an Array of entries whose connections are not expired.
   #
   # @api private
-  def active_sessions(site)
+  def active_entries(site)
     now = Time.now
 
-    sessions = @pool[site] || []
-    sessions.select do |session|
-      if session.expired?(now)
-        close_connection(site, session.connection)
+    entries = @pool[site] || []
+    entries.select do |entry|
+      if entry.expired?(now)
+        close_connection(site, entry.connection)
         false
       else
         true
