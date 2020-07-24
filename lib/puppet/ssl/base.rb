@@ -1,7 +1,6 @@
 require 'puppet/ssl/openssl_loader'
 require 'puppet/ssl'
 require 'puppet/ssl/digest'
-require 'puppet/util/ssl'
 
 # The base class for wrapping SSL instances.
 class Puppet::SSL::Base
@@ -54,7 +53,9 @@ class Puppet::SSL::Base
   #
   # @return [String] the name (CN) extracted from the subject.
   def self.name_from_subject(subject)
-    Puppet::Util::SSL.cn_from_subject(subject)
+    if subject.respond_to? :to_a
+      (subject.to_a.assoc('CN') || [])[1]
+    end
   end
 
   # Create an instance of our Puppet::SSL::* class using a given instance of the wrapped class
