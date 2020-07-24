@@ -2,7 +2,6 @@ module Puppet
   module Network
     module HTTP
       require 'puppet/network/http/base_pool'
-      require 'puppet/network/http/nocache_pool'
       require 'puppet/network/http/pool'
       require 'puppet/network/resolver'
     end
