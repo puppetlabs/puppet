@@ -1,7 +1,6 @@
 module Puppet
   module Network
     module HTTP
-      require 'puppet/network/http/site'
       require 'puppet/network/http/session'
       require 'puppet/network/http/base_pool'
       require 'puppet/network/http/nocache_pool'
@@ -16,6 +15,7 @@ module Puppet
     HEADER_PUPPET_VERSION = "X-Puppet-Version".freeze
 
     require 'puppet/http/errors'
+    require 'puppet/http/site'
     require 'puppet/http/proxy'
     require 'puppet/http/factory'
     require 'puppet/http/response'

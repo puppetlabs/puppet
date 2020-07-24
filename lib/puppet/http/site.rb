@@ -5,7 +5,7 @@
 #
 # @api private
 #
-class Puppet::Network::HTTP::Site
+class Puppet::HTTP::Site
   attr_reader :scheme, :host, :port
 
   def self.from_uri(uri)

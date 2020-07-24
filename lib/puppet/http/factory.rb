@@ -5,7 +5,7 @@ require 'puppet/http'
 # Factory for <tt>Net::HTTP</tt> objects.
 #
 # Encapsulates the logic for creating a <tt>Net::HTTP</tt> object based on the
-# specified {Puppet::Network::HTTP::Site Site} and puppet settings.
+# specified {Puppet::HTTP::Site Site} and puppet settings.
 #
 # @api private
 #

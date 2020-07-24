@@ -92,7 +92,7 @@ class Puppet::HTTP::Session
   def process_response(response)
     version = response[Puppet::HTTP::HEADER_PUPPET_VERSION]
     if version
-      site = Puppet::Network::HTTP::Site.from_uri(response.url)
+      site = Puppet::HTTP::Site.from_uri(response.url)
       @server_versions[site] = version
     end
   end
@@ -115,7 +115,7 @@ class Puppet::HTTP::Session
     service = @resolved_services[name]
     return false unless service
 
-    site = Puppet::Network::HTTP::Site.from_uri(service.url)
+    site = Puppet::HTTP::Site.from_uri(service.url)
     server_version = @server_versions[site]
 
     case capability

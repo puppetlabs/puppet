@@ -11,7 +11,7 @@ describe Puppet::HTTP::Factory do
     Puppet::SSL::CertificateRequest.indirection.terminus_class = :memory
   end
 
-  let(:site) { Puppet::Network::HTTP::Site.new('https', 'www.example.com', 443) }
+  let(:site) { Puppet::HTTP::Site.new('https', 'www.example.com', 443) }
 
   def create_connection(site)
     factory = described_class.new

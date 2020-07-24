@@ -27,7 +27,7 @@ class Puppet::HTTP::TestExternal
       request.basic_auth(options[:basic_auth][:user], options[:basic_auth][:password])
     end
 
-    site = Puppet::Network::HTTP::Site.new(@options[:use_ssl] ? 'https' : 'http', @host, @port)
+    site = Puppet::HTTP::Site.new(@options[:use_ssl] ? 'https' : 'http', @host, @port)
     http = @factory.create_connection(site)
     http.start
     begin

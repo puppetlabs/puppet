@@ -771,7 +771,7 @@ describe Puppet::HTTP::Client do
     it "should close the connection before sleeping" do
       retry_after('42')
 
-      site = Puppet::Network::HTTP::Site.from_uri(uri)
+      site = Puppet::HTTP::Site.from_uri(uri)
 
       http1 = Net::HTTP.new(site.host, site.port)
       http1.use_ssl = true

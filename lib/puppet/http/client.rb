@@ -72,7 +72,7 @@ class Puppet::HTTP::Client
     verifier = nil
     connected = false
 
-    site = Puppet::Network::HTTP::Site.from_uri(uri)
+    site = Puppet::HTTP::Site.from_uri(uri)
     if site.use_ssl?
       ssl_context = options.fetch(:ssl_context, nil)
       include_system_store = options.fetch(:include_system_store, false)
@@ -320,7 +320,7 @@ class Puppet::HTTP::Client
               retries += 1
               if interval
                 if http.started?
-                  Puppet.debug("Closing connection for #{Puppet::Network::HTTP::Site.from_uri(request.uri)}")
+                  Puppet.debug("Closing connection for #{Puppet::HTTP::Site.from_uri(request.uri)}")
                   http.finish
                 end
                 Puppet.warning(_("Sleeping for %{interval} seconds before retrying the request") % { interval: interval })

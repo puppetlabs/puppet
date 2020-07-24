@@ -57,7 +57,7 @@ class Puppet::Network::HTTP::Connection
       end
     end
     @redirect_limit = options[:redirect_limit]
-    @site = Puppet::Network::HTTP::Site.new(@use_ssl ? 'https' : 'http', host, port)
+    @site = Puppet::HTTP::Site.new(@use_ssl ? 'https' : 'http', host, port)
     @client = Puppet.runtime[:http]
   end
 

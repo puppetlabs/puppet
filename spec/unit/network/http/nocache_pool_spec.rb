@@ -4,7 +4,7 @@ require 'puppet/network/http'
 require 'puppet/network/http/connection'
 
 describe Puppet::Network::HTTP::NoCachePool do
-  let(:site) { Puppet::Network::HTTP::Site.new('https', 'rubygems.org', 443) }
+  let(:site) { Puppet::HTTP::Site.new('https', 'rubygems.org', 443) }
   let(:verifier) { double('verifier', :setup_connection => nil) }
 
   it 'yields a started connection' do

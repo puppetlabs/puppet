@@ -11,11 +11,11 @@ describe Puppet::Network::HTTP::Pool do
   end
 
   let(:site) do
-    Puppet::Network::HTTP::Site.new('https', 'rubygems.org', 443)
+    Puppet::HTTP::Site.new('https', 'rubygems.org', 443)
   end
 
   let(:different_site) do
-    Puppet::Network::HTTP::Site.new('https', 'github.com', 443)
+    Puppet::HTTP::Site.new('https', 'github.com', 443)
   end
 
   let(:ssl_context) { Puppet::SSL::SSLContext.new }
@@ -230,11 +230,11 @@ describe Puppet::Network::HTTP::Pool do
     end
 
     it 'returns a new HTTP connection if the cached connection is HTTPS' do
-      https_site = Puppet::Network::HTTP::Site.new('https', 'www.example.com', 443)
+      https_site = Puppet::HTTP::Site.new('https', 'www.example.com', 443)
       old_conn = create_connection(https_site)
       pool = create_pool_with_connections(https_site, old_conn)
 
-      http_site = Puppet::Network::HTTP::Site.new('http', 'www.example.com', 443)
+      http_site = Puppet::HTTP::Site.new('http', 'www.example.com', 443)
       new_conn = create_http_connection(http_site)
       allow(pool.factory).to receive(:create_connection).with(http_site).and_return(new_conn)
 
@@ -242,11 +242,11 @@ describe Puppet::Network::HTTP::Pool do
     end
 
     it 'returns a new HTTPS connection if the cached connection is HTTP' do
-      http_site = Puppet::Network::HTTP::Site.new('http', 'www.example.com', 443)
+      http_site = Puppet::HTTP::Site.new('http', 'www.example.com', 443)
       old_conn = create_http_connection(http_site)
       pool = create_pool_with_http_connections(http_site, old_conn)
 
-      https_site = Puppet::Network::HTTP::Site.new('https', 'www.example.com', 443)
+      https_site = Puppet::HTTP::Site.new('https', 'www.example.com', 443)
       new_conn = create_connection(https_site)
       allow(pool.factory).to receive(:create_connection).with(https_site).and_return(new_conn)
 
@@ -279,7 +279,7 @@ describe Puppet::Network::HTTP::Pool do
     end
 
     it 'returns a cached connection if both connections are http' do
-      http_site = Puppet::Network::HTTP::Site.new('http', 'www.example.com', 80)
+      http_site = Puppet::HTTP::Site.new('http', 'www.example.com', 80)
       old_conn = create_http_connection(http_site)
       pool = create_pool_with_http_connections(http_site, old_conn)
 
