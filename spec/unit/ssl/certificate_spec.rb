@@ -4,7 +4,7 @@ require 'puppet/certificate_factory'
 require 'puppet/ssl/certificate'
 
 describe Puppet::SSL::Certificate do
-  let :key do Puppet::SSL::Key.new("test.localdomain").generate end
+  let :key do OpenSSL::PKey::RSA.new(Puppet[:keylength]) end
 
   # Sign the provided cert so that it can be DER-decoded later
   def sign_wrapped_cert(cert)
@@ -74,8 +74,7 @@ describe Puppet::SSL::Certificate do
 
   describe "when managing instances" do
     def build_cert(opts)
-      key = Puppet::SSL::Key.new('quux')
-      key.generate
+      key = OpenSSL::PKey::RSA.new(Puppet[:keylength])
       csr = Puppet::SSL::CertificateRequest.new('quux')
       csr.generate(key, opts)
 

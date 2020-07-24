@@ -40,8 +40,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
 
   # Create a certificate request with our system settings.
   #
-  # @param key [OpenSSL::X509::Key, Puppet::SSL::Key] The key pair associated
-  #   with this CSR.
+  # @param key [OpenSSL::X509::Key] The private key associated with this CSR.
   # @param options [Hash]
   # @option options [String] :dns_alt_names A comma separated list of
   #   Subject Alternative Names to include in the CSR extension request.
@@ -56,9 +55,6 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
   # @return [OpenSSL::X509::Request] The generated CSR
   def generate(key, options = {})
     Puppet.info _("Creating a new SSL certificate request for %{name}") % { name: name }
-
-    # Support either an actual SSL key, or a Puppet key.
-    key = key.content if key.is_a?(Puppet::SSL::Key)
 
     # If we're a CSR for the CA, then use the real ca_name, rather than the
     # fake 'ca' name.  This is mostly for backward compatibility with 0.24.x,

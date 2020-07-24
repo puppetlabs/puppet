@@ -11,7 +11,6 @@ module Puppet::SSL # :nodoc:
   require 'puppet/ssl/verifier'
   require 'puppet/ssl/ssl_provider'
   require 'puppet/ssl/state_machine'
-  require 'puppet/ssl/key'
   require 'puppet/ssl/certificate'
   require 'puppet/ssl/certificate_request'
   require 'puppet/ssl/certificate_request_attributes'

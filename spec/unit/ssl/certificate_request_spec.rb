@@ -1,15 +1,10 @@
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_request'
-require 'puppet/ssl/key'
 
 describe Puppet::SSL::CertificateRequest do
   let(:request) { described_class.new("myname") }
-  let(:key) {
-    k = Puppet::SSL::Key.new("myname")
-    k.generate
-    k
-  }
+  let(:key) { OpenSSL::PKey::RSA.new(Puppet[:keylength]) }
 
   it "should use any provided name as its name" do
     expect(described_class.new("myname").name).to eq("myname")
@@ -75,14 +70,9 @@ describe Puppet::SSL::CertificateRequest do
   end
 
   describe "when generating", :unless => RUBY_PLATFORM == 'java' do
-    it "should use the content of the provided key if the key is a Puppet::SSL::Key instance" do
+    it "should verify the CSR using the public key associated with the private key" do
       request.generate(key)
-      expect(request.content.verify(key.content.public_key)).to be_truthy
-    end
-
-    it "should set the subject to [CN, name]" do
-      request.generate(key)
-      expect(request.content.subject).to eq OpenSSL::X509::Name.new([['CN', key.name]])
+      expect(request.content.verify(key.public_key)).to be_truthy
     end
 
     it "should set the version to 0" do
@@ -93,7 +83,7 @@ describe Puppet::SSL::CertificateRequest do
     it "should set the public key to the provided key's public key" do
       request.generate(key)
       # The openssl bindings do not define equality on keys so we use to_s
-      expect(request.content.public_key.to_s).to eq(key.content.public_key.to_s)
+      expect(request.content.public_key.to_s).to eq(key.public_key.to_s)
     end
 
     context "without subjectAltName / dns_alt_names" do
@@ -287,20 +277,20 @@ describe Puppet::SSL::CertificateRequest do
 
     it "should sign the csr with the provided key" do
       request.generate(key)
-      expect(request.content.verify(key.content.public_key)).to be_truthy
+      expect(request.content.verify(key.public_key)).to be_truthy
     end
 
     it "should verify the generated request using the public key" do
       # Stupid keys don't have a competent == method.
       expect_any_instance_of(OpenSSL::X509::Request).to receive(:verify) do |public_key|
-        public_key.to_s == key.content.public_key.to_s
+        public_key.to_s == key.public_key.to_s
       end.and_return(true)
       request.generate(key)
     end
 
     it "should fail if verification fails" do
       expect_any_instance_of(OpenSSL::X509::Request).to receive(:verify) do |public_key|
-        public_key.to_s == key.content.public_key.to_s
+        public_key.to_s == key.public_key.to_s
       end.and_return(false)
 
       expect do
@@ -326,8 +316,8 @@ describe Puppet::SSL::CertificateRequest do
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA256").and_return(false)
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA1").and_return(true)
       signer = Puppet::SSL::CertificateSigner.new
-      signer.sign(csr, key.content)
-      expect(csr.verify(key.content)).to be_truthy
+      signer.sign(csr, key)
+      expect(csr.verify(key)).to be_truthy
     end
 
     # Attempts to use SHA512 and SHA384 for signing certificates don't seem to work
@@ -340,8 +330,8 @@ describe Puppet::SSL::CertificateRequest do
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA1").and_return(false)
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA512").and_return(true)
       signer = Puppet::SSL::CertificateSigner.new
-      signer.sign(csr, key.content)
-      expect(csr.verify(key.content)).to be_truthy
+      signer.sign(csr, key)
+      expect(csr.verify(key)).to be_truthy
     end
 
     # Attempts to use SHA512 and SHA384 for signing certificates don't seem to work
@@ -355,8 +345,8 @@ describe Puppet::SSL::CertificateRequest do
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA512").and_return(false)
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA384").and_return(true)
       signer = Puppet::SSL::CertificateSigner.new
-      signer.sign(csr, key.content)
-      expect(csr.verify(key.content)).to be_truthy
+      signer.sign(csr, key)
+      expect(csr.verify(key)).to be_truthy
     end
 
     it "should use SHA224 to sign the csr when SHA256/SHA1/SHA512/SHA384 aren't available" do
@@ -367,8 +357,8 @@ describe Puppet::SSL::CertificateRequest do
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA384").and_return(false)
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA224").and_return(true)
       signer = Puppet::SSL::CertificateSigner.new
-      signer.sign(csr, key.content)
-      expect(csr.verify(key.content)).to be_truthy
+      signer.sign(csr, key)
+      expect(csr.verify(key)).to be_truthy
     end
 
     it "should raise an error if neither SHA256/SHA1/SHA512/SHA384/SHA224 are available" do

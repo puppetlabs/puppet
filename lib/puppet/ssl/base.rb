@@ -82,7 +82,6 @@ class Puppet::SSL::Base
   # Read content from disk appropriately.
   def read(path)
     # applies to Puppet::SSL::Certificate, Puppet::SSL::CertificateRequest
-    # Puppet::SSL::Key uses this, but also provides its own override
     # nothing derives from Puppet::SSL::Certificate, but it is called by a number of other SSL Indirectors:
     # Puppet::Indirector::CertificateStatus::File (.indirection.find)
     # Puppet::Network::HTTP::WEBrick (.indirection.find)
