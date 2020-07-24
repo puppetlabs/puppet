@@ -8,7 +8,7 @@
 #
 # @api private
 #
-class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
+class Puppet::Network::HTTP::Pool
   attr_reader :factory, :keepalive_timeout
 
   def initialize(keepalive_timeout)
@@ -52,6 +52,25 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   def pool
     @pool
   end
+
+  # Start a persistent connection
+  #
+  # @api private
+  def start(site, verifier, http)
+    Puppet.debug("Starting connection for #{site}")
+    if site.use_ssl?
+      verifier.setup_connection(http)
+      begin
+        http.start
+        print_ssl_info(http) if Puppet::Util::Log.sendlevel?(:debug)
+      rescue OpenSSL::SSL::SSLError => error
+        verifier.handle_connection_error(http, error)
+      end
+    else
+      http.start
+    end
+  end
+
 
   # Safely close a persistent connection.
   # Don't try to close a connection that's already closed.
@@ -133,5 +152,22 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
         true
       end
     end
+  end
+
+  private
+
+  def print_ssl_info(http)
+    buffered_io = http.instance_variable_get(:@socket)
+    return unless buffered_io
+
+    socket = buffered_io.io
+    return unless socket
+
+    cipher = if Puppet::Util::Platform.jruby?
+               socket.cipher
+             else
+               socket.cipher.first
+             end
+    Puppet.debug("Using #{socket.ssl_version} with cipher #{cipher}")
   end
 end
