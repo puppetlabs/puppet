@@ -101,17 +101,13 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
       end
     end
 
-    context "when using single use HTTPS connections" do
-      include_examples 'HTTPS client'
-    end
-
     context "when using persistent HTTPS connections" do
       around :each do |example|
-        pool = Puppet::HTTP::Pool.new(15)
-        Puppet.override(:http_pool => pool) do
+        begin
           example.run
+        ensure
+          Puppet.runtime[:http].close
         end
-        pool.close
       end
 
       include_examples 'HTTPS client'

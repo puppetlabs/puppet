@@ -51,14 +51,6 @@ describe Puppet::Face[:plugin, :current] do
       expect(receive_count).to eq(3)
       expect(render(result)).to eq('Downloaded these plugins: /a, /b, /c')
     end
-
-    it "uses persistent HTTP pool" do
-      allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) do
-        expect(Puppet.lookup(:http_pool)).to be_instance_of(Puppet::HTTP::Pool)
-      end.and_return([])
-
-      pluginface.download
-    end
   end
 
   context "download when server_agent_version is 5.3.3" do
