@@ -10,7 +10,7 @@ describe Puppet::Network::HTTP::NoCachePool do
   it 'yields a started connection' do
     http  = double('http', start: nil, finish: nil, started?: true)
 
-    factory = Puppet::Network::HTTP::Factory.new
+    factory = Puppet::HTTP::Factory.new
     allow(factory).to receive(:create_connection).and_return(http)
     pool = Puppet::Network::HTTP::NoCachePool.new(factory)
 
@@ -23,7 +23,7 @@ describe Puppet::Network::HTTP::NoCachePool do
     http1  = double('http1', start: nil, finish: nil, started?: true)
     http2  = double('http2', start: nil, finish: nil, started?: true)
 
-    factory = Puppet::Network::HTTP::Factory.new
+    factory = Puppet::HTTP::Factory.new
     allow(factory).to receive(:create_connection).and_return(http1, http2)
     pool = Puppet::Network::HTTP::NoCachePool.new(factory)
 
@@ -43,7 +43,7 @@ describe Puppet::Network::HTTP::NoCachePool do
   it 'logs a deprecation warning' do
     http  = double('http', start: nil, finish: nil, started?: true)
 
-    factory = Puppet::Network::HTTP::Factory.new
+    factory = Puppet::HTTP::Factory.new
     allow(factory).to receive(:create_connection).and_return(http)
     Puppet::Network::HTTP::NoCachePool.new(factory)
 
@@ -55,7 +55,7 @@ describe Puppet::Network::HTTP::NoCachePool do
 
     http  = double('http', start: nil, finish: nil, started?: true)
 
-    factory = Puppet::Network::HTTP::Factory.new
+    factory = Puppet::HTTP::Factory.new
     allow(factory).to receive(:create_connection).and_return(http)
     Puppet::Network::HTTP::NoCachePool.new(factory)
 

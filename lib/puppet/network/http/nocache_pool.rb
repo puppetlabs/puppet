@@ -2,7 +2,7 @@
 #
 # @api private
 class Puppet::Network::HTTP::NoCachePool < Puppet::Network::HTTP::BasePool
-  def initialize(factory = Puppet::Network::HTTP::Factory.new)
+  def initialize(factory = Puppet::HTTP::Factory.new)
     Puppet.deprecation_warning(_('Puppet::Network::HTTP::NoCachePool is deprecated.'))
     @factory = factory
   end

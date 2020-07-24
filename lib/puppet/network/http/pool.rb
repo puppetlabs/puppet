@@ -13,7 +13,7 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
 
   def initialize(keepalive_timeout)
     @pool = {}
-    @factory = Puppet::Network::HTTP::Factory.new
+    @factory = Puppet::HTTP::Factory.new
     @keepalive_timeout = keepalive_timeout
   end
 

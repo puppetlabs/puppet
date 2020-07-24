@@ -9,7 +9,7 @@ class Puppet::HTTP::TestExternal
     @host = host
     @port = port
     @options = options
-    @factory = Puppet::Network::HTTP::Factory.new
+    @factory = Puppet::HTTP::Factory.new
   end
 
   def get(path, headers = {}, options = {})
