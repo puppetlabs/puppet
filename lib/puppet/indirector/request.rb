@@ -109,47 +109,6 @@ class Puppet::Indirector::Request
     method == :search
   end
 
-  # Create the query string, if options are present.
-  def query_string
-    return "" if options.nil? || options.empty?
-    encode_params(expand_into_parameters(options.to_a))
-  end
-
-  def expand_into_parameters(data)
-    data.inject([]) do |params, key_value|
-      key, value = key_value
-
-      expanded_value = case value
-                       when Array
-                         value.collect { |val| [key, val] }
-                       else
-                         [key_value]
-                       end
-
-      params.concat(expand_primitive_types_into_parameters(expanded_value))
-    end
-  end
-
-  def expand_primitive_types_into_parameters(data)
-    data.inject([]) do |params, key_value|
-      key, value = key_value
-      case value
-      when nil
-        params
-      when true, false, String, Symbol, Integer, Float
-        params << [key, value]
-      else
-        raise ArgumentError, _("HTTP REST queries cannot handle values of type '%{klass}'") % { klass: value.class }
-      end
-    end
-  end
-
-  def encode_params(params)
-    params.collect do |key, value|
-      "#{key}=#{Puppet::Util.uri_query_encode(value.to_s)}"
-    end.join("&")
-  end
-
   def initialize_from_hash(hash)
     @indirection_name = hash['indirection_name'].to_sym
     @method = hash['method'].to_sym
@@ -180,65 +139,6 @@ class Puppet::Indirector::Request
 
   def description
     return(uri ? uri : "/#{indirection_name}/#{key}")
-  end
-
-  def do_request(srv_service=:puppet, default_server=nil, default_port=nil, &block)
-    # We were given a specific server to use, so just use that one.
-    # This happens if someone does something like specifying a file
-    # source using a puppet:// URI with a specific server.
-    return yield(self) if !self.server.nil?
-
-    if Puppet.settings[:use_srv_records]
-      # We may want to consider not creating a new resolver here
-      # every request eventually, to take advantage of the resolver's
-      # caching behavior.
-      resolver = Puppet::Network::Resolver.new
-      resolver.each_srv_record(Puppet.settings[:srv_domain], srv_service) do |srv_server, srv_port|
-        begin
-          self.server = srv_server
-          self.port   = srv_port
-          return yield(self)
-        rescue SystemCallError => e
-          Puppet.warning _("Error connecting to %{srv_server}:%{srv_port}: %{message}") % { srv_server: srv_server, srv_port: srv_port, message: e.message }
-        end
-      end
-    end
-
-    if default_server
-      self.server = default_server
-    else
-      self.server = Puppet.lookup(:server) do
-        primary_server = Puppet.settings[:server_list][0]
-        if primary_server
-          #TRANSLATORS 'server_list' is the name of a setting and should not be translated
-          debug_once _("Selected server from first entry of the `server_list` setting: %{server}") % {server: primary_server[0]}
-          primary_server[0]
-        else
-          #TRANSLATORS 'server' is the name of a setting and should not be translated
-          debug_once _("Selected server from the `server` setting: %{server}") % {server: Puppet.settings[:server]}
-          Puppet.settings[:server]
-        end
-      end
-    end
-
-    if default_port
-      self.port = default_port
-    else
-      self.port = Puppet.lookup(:serverport) do
-        primary_server = Puppet.settings[:server_list][0]
-        if primary_server
-          #TRANSLATORS 'server_list' is the name of a setting and should not be translated
-          debug_once _("Selected port from the first entry of the `server_list` setting: %{port}") % {port: primary_server[1]}
-          primary_server[1]
-        else
-          #TRANSLATORS 'masterport' is the name of a setting and should not be translated
-          debug_once _("Selected port from the `masterport` setting: %{port}") % {port: Puppet.settings[:masterport]}
-          Puppet.settings[:masterport]
-        end
-      end
-    end
-
-    return yield(self)
   end
 
   def remote?
