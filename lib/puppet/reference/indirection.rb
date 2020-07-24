@@ -46,7 +46,7 @@ An indirector has five methods, which are mapped into HTTP verbs for the REST in
 
 These methods are available via the `indirection` class method on the indirected classes.  For example:
 
-    foo_cert = Puppet::SSL::Certificate.indirection.find('foo.example.com')
+    node = Puppet::Node.indirection.find('foo.example.com')
 
 At startup, each indirection is configured with a terminus.
 In most cases, this is the default terminus defined by the indirected class, but it can be overridden by the application or face, or overridden with the `route_file` configuration.

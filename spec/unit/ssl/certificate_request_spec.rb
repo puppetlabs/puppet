@@ -11,14 +11,6 @@ describe Puppet::SSL::CertificateRequest do
     k
   }
 
-  it "should be extended with the Indirector module" do
-    expect(described_class.singleton_class).to be_include(Puppet::Indirector)
-  end
-
-  it "should indirect certificate_request" do
-    expect(described_class.indirection.name).to eq(:certificate_request)
-  end
-
   it "should use any provided name as its name" do
     expect(described_class.new("myname").name).to eq("myname")
   end
@@ -389,17 +381,5 @@ describe Puppet::SSL::CertificateRequest do
         Puppet::SSL::CertificateSigner.new
       }.to raise_error(Puppet::Error)
     end
-  end
-
-  it "should save the CSR" do
-    csr = Puppet::SSL::CertificateRequest.new("me")
-    terminus = double('terminus')
-    allow(terminus).to receive(:validate)
-    expect(Puppet::SSL::CertificateRequest.indirection).to receive(:prepare).and_return(terminus)
-    expect(terminus).to receive(:save) do |request|
-      expect(request.instance).to eq(csr)
-      expect(request.key).to eq("me")
-    end
-    Puppet::SSL::CertificateRequest.indirection.save(csr)
   end
 end

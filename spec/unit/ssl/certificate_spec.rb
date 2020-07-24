@@ -16,14 +16,6 @@ describe Puppet::SSL::Certificate do
     @class = Puppet::SSL::Certificate
   end
 
-  it "should be extended with the Indirector module" do
-    expect(@class.singleton_class).to be_include(Puppet::Indirector)
-  end
-
-  it "should indirect certificate" do
-    expect(@class.indirection.name).to eq(:certificate)
-  end
-
   it "should only support the text format" do
     expect(@class.supported_formats).to eq([:s])
   end

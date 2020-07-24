@@ -7,14 +7,6 @@ describe Puppet::SSL::Key do
     @class = Puppet::SSL::Key
   end
 
-  it "should be extended with the Indirector module" do
-    expect(@class.singleton_class).to be_include(Puppet::Indirector)
-  end
-
-  it "should indirect key" do
-    expect(@class.indirection.name).to eq(:key)
-  end
-
   it "should only support the text format" do
     expect(@class.supported_formats).to eq([:s])
   end

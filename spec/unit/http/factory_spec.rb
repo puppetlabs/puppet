@@ -6,10 +6,6 @@ describe Puppet::HTTP::Factory do
     ENV['http_proxy'] = nil
     ENV['HTTP_PROXY'] = nil
   end
-  before :each do
-    Puppet::SSL::Key.indirection.terminus_class = :memory
-    Puppet::SSL::CertificateRequest.indirection.terminus_class = :memory
-  end
 
   let(:site) { Puppet::HTTP::Site.new('https', 'www.example.com', 443) }
 

@@ -5,11 +5,6 @@ require 'puppet/network/http'
 require 'puppet/network/http_pool'
 
 describe Puppet::HTTP::Pool do
-  before :each do
-    Puppet::SSL::Key.indirection.terminus_class = :memory
-    Puppet::SSL::CertificateRequest.indirection.terminus_class = :memory
-  end
-
   let(:site) do
     Puppet::HTTP::Site.new('https', 'rubygems.org', 443)
   end

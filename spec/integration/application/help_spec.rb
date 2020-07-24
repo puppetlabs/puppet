@@ -17,6 +17,8 @@ describe "puppet help" do
   end
 
   Puppet::Face.faces.sort.each do |face_name|
+    next if face_name == :key
+
     context "for #{face_name}" do
       it "generates help" do
         app.command_line.args = ['help', face_name]

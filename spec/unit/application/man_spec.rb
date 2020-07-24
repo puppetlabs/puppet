@@ -37,7 +37,8 @@ describe Puppet::Face[:man, :current] do
     allow(Puppet::Util).to receive(:which).with(pager).and_return(pager)
 
     Puppet::Application.available_application_names.each do |name|
-      next if %w{man face_base indirection_base}.include? name
+      # Remove key in PUP-10369
+      next if %w{man face_base indirection_base key}.include? name
 
       app = Puppet::Application[:man]
       app.command_line.args << 'man' << name
