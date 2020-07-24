@@ -54,7 +54,7 @@ describe Puppet::Face[:plugin, :current] do
 
     it "uses persistent HTTP pool" do
       allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) do
-        expect(Puppet.lookup(:http_pool)).to be_instance_of(Puppet::Network::HTTP::Pool)
+        expect(Puppet.lookup(:http_pool)).to be_instance_of(Puppet::HTTP::Pool)
       end.and_return([])
 
       pluginface.download

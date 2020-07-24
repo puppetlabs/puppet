@@ -7,7 +7,7 @@
 class Puppet::HTTP::Client
 
   # @api private
-  # @return [Puppet::Network::HTTP::Pool] the pool instance associated with
+  # @return [Puppet::HTTP::Pool] the pool instance associated with
   #   this client
   attr_reader :pool
 
@@ -17,7 +17,7 @@ class Puppet::HTTP::Client
   # Create a new http client instance. The client contains a pool of persistent
   # HTTP connections and creates HTTP sessions.
   #
-  # @param [Puppet::Network::HTTP::Pool] pool pool of persistent Net::HTTP
+  # @param [Puppet::HTTP::Pool] pool pool of persistent Net::HTTP
   #   connections
   # @param [Puppet::SSL::SSLContext] ssl_context ssl context to be used for
   #   connections
@@ -28,7 +28,7 @@ class Puppet::HTTP::Client
   # @param [Integer] retry_limit number of HTTP reties allowed in a given
   #   request
   #
-  def initialize(pool: Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout]), ssl_context: nil, system_ssl_context: nil, redirect_limit: 10, retry_limit: 100)
+  def initialize(pool: Puppet::HTTP::Pool.new(Puppet[:http_keepalive_timeout]), ssl_context: nil, system_ssl_context: nil, redirect_limit: 10, retry_limit: 100)
     @pool = pool
     @default_headers = {
       'X-Puppet-Version' => Puppet.version,

@@ -8,7 +8,7 @@
 #
 # @api private
 #
-class Puppet::Network::HTTP::Pool
+class Puppet::HTTP::Pool
   attr_reader :factory, :keepalive_timeout
 
   def initialize(keepalive_timeout)

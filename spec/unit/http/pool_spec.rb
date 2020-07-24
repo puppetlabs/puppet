@@ -4,7 +4,7 @@ require 'openssl'
 require 'puppet/network/http'
 require 'puppet/network/http_pool'
 
-describe Puppet::Network::HTTP::Pool do
+describe Puppet::HTTP::Pool do
   before :each do
     Puppet::SSL::Key.indirection.terminus_class = :memory
     Puppet::SSL::CertificateRequest.indirection.terminus_class = :memory
@@ -26,11 +26,11 @@ describe Puppet::Network::HTTP::Pool do
   end
 
   def create_pool
-    Puppet::Network::HTTP::Pool.new(15)
+    Puppet::HTTP::Pool.new(15)
   end
 
   def create_pool_with_connections(site, *connections)
-    pool = Puppet::Network::HTTP::Pool.new(15)
+    pool = Puppet::HTTP::Pool.new(15)
     connections.each do |conn|
       pool.release(site, verifier, conn)
     end
@@ -38,7 +38,7 @@ describe Puppet::Network::HTTP::Pool do
   end
 
   def create_pool_with_http_connections(site, *connections)
-    pool = Puppet::Network::HTTP::Pool.new(15)
+    pool = Puppet::HTTP::Pool.new(15)
     connections.each do |conn|
       pool.release(site, nil, conn)
     end
@@ -48,7 +48,7 @@ describe Puppet::Network::HTTP::Pool do
   def create_pool_with_expired_connections(site, *connections)
     # setting keepalive timeout to -1 ensures any newly added
     # connections have already expired
-    pool = Puppet::Network::HTTP::Pool.new(-1)
+    pool = Puppet::HTTP::Pool.new(-1)
     connections.each do |conn|
       pool.release(site, verifier, conn)
     end
