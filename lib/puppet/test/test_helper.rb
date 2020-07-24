@@ -147,7 +147,6 @@ module Puppet::Test
       Puppet::Application.clear!
       Puppet::Util::Profiler.clear
 
-      Puppet::SSL::Host.reset
       Puppet::Rest::Routes.clear
 
       Puppet::Node::Facts.indirection.terminus_class = :memory

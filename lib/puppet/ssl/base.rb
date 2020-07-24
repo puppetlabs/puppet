@@ -88,7 +88,6 @@ class Puppet::SSL::Base
     # Puppet::Network::HTTP::WEBrick (.indirection.find)
     # Puppet::Network::HTTP::RackREST (.from_instance)
     # Puppet::Network::HTTP::WEBrickREST (.from_instance)
-    # Puppet::SSL::Host (.indirection.find)
     # Puppet::SSL::Inventory (.indirection.search, implements its own add / rebuild / serials with encoding UTF8)
     @content = wrapped_class.new(Puppet::FileSystem.read(path, :encoding => Encoding::ASCII))
   end

@@ -203,7 +203,6 @@ The following classes support indirections, but are not documented because they 
 * `Puppet::SSL::Certificate`
 * `Puppet::SSL::CertificateRevocationList`
 * `Puppet::SSL::CertificateRequest`
-* `Puppet::SSL::Host`
 * `Puppet::SSL::Key`
 
 ## Limitations
