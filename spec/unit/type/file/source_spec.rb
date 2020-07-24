@@ -1,7 +1,6 @@
 require 'spec_helper'
 require 'uri'
 require 'puppet/network/http_pool'
-#require 'puppet/network/resolver'
 
 describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
   include PuppetSpec::Files

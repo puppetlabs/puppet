@@ -1,7 +1,6 @@
 require 'cgi'
 require 'uri'
 require 'puppet/indirector'
-require 'puppet/network/resolver'
 require 'puppet/util/psych_support'
 require 'puppet/util/warnings'
 
