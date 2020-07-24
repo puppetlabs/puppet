@@ -210,14 +210,10 @@ class Puppet::Network::HTTP::Connection
 
   private
 
-  # The old Connection class ignores the ssl_context on the Puppet stack,
-  # and always loads certs/keys based on what is currently in the filesystem.
-  # If the files are missing, it would attempt to bootstrap the certs/keys
-  # while in the process of making a network request, due to the call to
-  # Puppet.lookup(:ssl_host) in Puppet::SSL::Validator::DefaultValidator#setup_connection.
-  # This class doesn't preserve the boostrap behavior because that is handled
-  # outside of this class, and can only be triggered by running `puppet ssl` or
-  # `puppet agent`.
+  # Resolve the ssl_context based on the verifier associated with this
+  # connection or load the available set of certs and key on disk.
+  # Don't try to bootstrap the agent, as we only want that to be triggered
+  # when running `puppet ssl` or `puppet agent`.
   def resolve_ssl_context
     # don't need an ssl context for http connections
     return nil unless @site.use_ssl?

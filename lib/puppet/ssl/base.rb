@@ -90,7 +90,6 @@ class Puppet::SSL::Base
     # Puppet::Network::HTTP::WEBrickREST (.from_instance)
     # Puppet::SSL::Host (.indirection.find)
     # Puppet::SSL::Inventory (.indirection.search, implements its own add / rebuild / serials with encoding UTF8)
-    # Puppet::SSL::Validator::DefaultValidator (.from_instance) / Puppet::SSL::Validator::NoValidator does nothing
     @content = wrapped_class.new(Puppet::FileSystem.read(path, :encoding => Encoding::ASCII))
   end
 
