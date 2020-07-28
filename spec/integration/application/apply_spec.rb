@@ -30,65 +30,42 @@ describe "apply", unless: Puppet::Util::Platform.jruby? do
       expect(File.read(file_to_create)).to eq("my stuff")
     end
 
+    context 'and pcore types are available' do
+      let(:envdir) { my_fixture('environments') }
+      let(:env_name) { 'spec' }
+
+      before(:each) do
+        Puppet[:environmentpath] = envdir
+        Puppet[:environment] = env_name
+      end
+
+      it 'does not load the pcore type' do
+        apply = Puppet::Application[:apply]
+        apply.command_line.args = [ '-e', "Applytest { message => 'the default'} applytest { 'applytest was here': }" ]
+
+        expect {
+          apply.run
+        }.to exit_with(0)
+         .and output(a_string_matching(
+           /the Puppet::Type says hello/
+         ).and matching(
+           /applytest was here/
+         )).to_stdout
+      end
+    end
+
     context 'from environment with a pcore defined resource type' do
       include PuppetSpec::Compiler
 
-      let!(:envdir) { tmpdir('environments') }
+      let(:envdir) { my_fixture('environments') }
       let(:env_name) { 'spec' }
-      let(:dir_structure) {
-        {
-          '.resource_types' => {
-            'applytest.pp' => <<-CODE
-            Puppet::Resource::ResourceType3.new(
-              'applytest',
-              [Puppet::Resource::Param.new(String, 'message')],
-              [Puppet::Resource::Param.new(String, 'name', true)])
-          CODE
-          },
-          'modules' => {
-            'amod' => {
-              'lib' => {
-                'puppet' => {
-                  'type' => { 'applytest.rb' => <<-CODE
-Puppet::Type.newtype(:applytest) do
-newproperty(:message) do
-  def sync
-    Puppet.send(@resource[:loglevel], self.should)
-  end
-
-  def retrieve
-    :absent
-  end
-
-  def insync?(is)
-    false
-  end
-
-  defaultto { @resource[:name] }
-end
-
-newparam(:name) do
-  desc "An arbitrary tag for your own reference; the name of the message."
-  Puppet.notice('the Puppet::Type says hello')
-  isnamevar
-end
-end
-                  CODE
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-
       let(:environments) { Puppet::Environments::Directories.new(envdir, []) }
       let(:env) { Puppet::Node::Environment.create(:'spec', [File.join(envdir, 'spec', 'modules')]) }
       let(:node) { Puppet::Node.new('test', :environment => env) }
+
       around(:each) do |example|
         Puppet::Type.rmtype(:applytest)
         Puppet[:environment] = env_name
-        dir_contained_in(envdir, env_name => dir_structure)
         Puppet.override(:environments => environments, :current_environment => env) do
           example.run
         end
