@@ -2,4 +2,3 @@
 # Add one requirement per vendored package (or a comment if it is loaded on demand).
 
 # The vendored library 'rgen' is loaded on demand.
-# The vendored library 'pathspec' is loaded on demand.
