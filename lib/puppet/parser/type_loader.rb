@@ -81,7 +81,7 @@ class Puppet::Parser::TypeLoader
   end
 
   def parse_file(file)
-    Puppet.debug("importing '#{file}' in environment #{environment}")
+    Puppet.debug { "importing '#{file}' in environment #{environment}" }
     parser = Puppet::Parser::ParserFactory.parser
     parser.file = file
     return parser.parse
@@ -118,7 +118,7 @@ class Puppet::Parser::TypeLoader
         # still be parsed. Mark this file as loaded so that
         # it would not be parsed next time (handle it as if
         # it was successfully parsed).
-        Puppet.debug("Unable to parse '#{file}': #{e.message}")
+        Puppet.debug { "Unable to parse '#{file}': #{e.message}" }
       end
     else
       loaded_asts << parse_file(file)

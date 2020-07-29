@@ -107,8 +107,7 @@ class Puppet::Module
     define_method(type + '?') do
       type_subpath = subpath(location)
       unless Puppet::FileSystem.exist?(type_subpath)
-        Puppet.debug("No #{type} found in subpath '#{type_subpath}' " +
-                         "(file / directory does not exist)")
+        Puppet.debug { "No #{type} found in subpath '#{type_subpath}' (file / directory does not exist)" }
         return false
       end
 

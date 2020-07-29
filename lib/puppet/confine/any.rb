@@ -19,7 +19,7 @@ class Puppet::Confine::Any < Puppet::Confine
     if @values.any? { |value| pass?(value) }
       true
     else
-      Puppet.debug("#{label}: #{message(@values)}")
+      Puppet.debug { "#{label}: #{message(@values)}" }
       false
     end
   end
