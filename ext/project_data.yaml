@@ -23,7 +23,6 @@ gem_runtime_dependencies:
   fast_gettext: '~> 1.1'
   locale: '~> 2.1'
   multi_json: '~> 1.10'
-  httpclient: '~> 2.8'
   puppet-resource_api: '~>1.5'
   concurrent-ruby: '~> 1.0'
   deep_merge: '~> 1.0'
