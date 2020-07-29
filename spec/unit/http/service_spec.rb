@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'webmock/rspec'
 require 'puppet/http'
 require 'puppet/file_serving'
 require 'puppet/file_serving/content'

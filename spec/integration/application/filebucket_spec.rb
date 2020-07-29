@@ -10,20 +10,34 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
   let(:server) { PuppetSpec::Puppetserver.new }
   let(:filebucket) { Puppet::Application[:filebucket] }
   let(:backup_file) { tmpfile('backup_file') }
+  let(:text) { 'some random text' }
+  let(:md5) { Digest::MD5.file(backup_file).to_s }
 
   before :each do
     Puppet[:log_level] = 'debug'
+    File.binwrite(backup_file, text)
   end
 
-  it "backs up files to the filebucket server" do
-    File.binwrite(backup_file, 'some random text')
-    md5 = Digest::MD5.file(backup_file).to_s
+  it "backs up to and restores from the local filebucket" do
+    filebucket.command_line.args = ['backup', backup_file, '--local']
+    expect {
+      filebucket.run
+    }.to output(/: #{md5}/).to_stdout
 
+    dest = tmpfile('file_bucket_restore')
+    filebucket.command_line.args = ['restore', dest, md5, '--local']
+    expect {
+      filebucket.run
+    }.to output(/FileBucket read #{md5}/).to_stdout
+
+    expect(FileUtils.compare_file(backup_file, dest)).to eq(true)
+  end
+
+  it "backs up text files to the filebucket server" do
     server.start_server do |port|
       Puppet[:masterport] = port
       expect {
-        filebucket.command_line.args << 'backup'
-        filebucket.command_line.args << backup_file
+        filebucket.command_line.args = ['backup', backup_file]
         filebucket.run
       }.to output(a_string_matching(
         %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/#{md5}\/#{File.realpath(backup_file)}\?environment\=production returned 404 Not Found}
@@ -32,22 +46,58 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
       ).and matching(
         %r{#{backup_file}: #{md5}}
       )).to_stdout
+
+      expect(File.binread(File.join(server.upload_directory, 'filebucket'))).to eq(text)
+    end
+  end
+
+  it "backs up binary files to the filebucket server" do
+    binary = "\xD1\xF2\r\n\x81NuSc\x00".force_encoding(Encoding::ASCII_8BIT)
+    File.binwrite(backup_file, binary)
+
+    server.start_server do |port|
+      Puppet[:masterport] = port
+      expect {
+        filebucket.command_line.args = ['backup', backup_file]
+        filebucket.run
+      }.to output(a_string_matching(
+        %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file/md5/b10778ecd8b08dff525e367cf15b2622/}
+      ).and matching(
+        %r{Debug: HTTP PUT https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file/md5/b10778ecd8b08dff525e367cf15b2622/}
+      )).to_stdout
+
+      expect(File.binread(File.join(server.upload_directory, 'filebucket'))).to eq(binary)
+    end
+  end
+
+  it "backs up utf-8 encoded files to the filebucket server" do
+    utf8 = "\u2603".force_encoding(Encoding::UTF_8)
+    File.binwrite(backup_file, utf8)
+
+    server.start_server do |port|
+      Puppet[:masterport] = port
+      expect {
+        filebucket.command_line.args = ['backup', backup_file]
+        filebucket.run
+      }.to output(a_string_matching(
+        %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file/md5/48856faf4534a876adeadc72aec53cb2/}
+      ).and matching(
+        %r{Debug: HTTP PUT https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file/md5/48856faf4534a876adeadc72aec53cb2/}
+      )).to_stdout
+
+      expect(File.read(File.join(server.upload_directory, 'filebucket'), encoding: 'utf-8')).to eq(utf8)
     end
   end
 
   it "doesn't attempt to back up file that already exists on the filebucket server" do
     file_exists_handler = -> (req, res) {
-        res.status = 200
+      res.status = 200
     }
-
-    File.binwrite(backup_file, 'some random text')
-    md5 = Digest::MD5.file(backup_file).to_s
 
     server.start_server(mounts: {filebucket: file_exists_handler}) do |port|
       Puppet[:masterport] = port
       expect {
-        filebucket.command_line.args << 'backup'
-        filebucket.command_line.args << backup_file
+        filebucket.command_line.args = ['backup', backup_file]
         filebucket.run
       }.to output(a_string_matching(
         %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/#{md5}\/#{File.realpath(backup_file)}\?environment\=production returned 200 OK}
@@ -66,8 +116,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
     server.start_server(mounts: {filebucket: get_handler}) do |port|
       Puppet[:masterport] = port
       expect {
-        filebucket.command_line.args << 'get'
-        filebucket.command_line.args << 'fac251367c9e083c6b1f0f3181'
+        filebucket.command_line.args = ['get', 'fac251367c9e083c6b1f0f3181']
         filebucket.run
       }.to output(a_string_matching(
         %r{Debug: HTTP GET https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/fac251367c9e083c6b1f0f3181\?environment\=production returned 200 OK}
@@ -90,7 +139,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
         server.start_server(mounts: {filebucket: get_handler}) do |port|
           Puppet[:masterport] = port
           expect {
-            filebucket.command_line.args += ['diff', 'fac251367c9e083c6b1f0f3181', backup_file, '--remote']
+            filebucket.command_line.args = ['diff', 'fac251367c9e083c6b1f0f3181', backup_file, '--remote']
             filebucket.run
           }.to output(a_string_matching(
             /[-<] ?foo/
@@ -118,7 +167,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
         server.start_server(mounts: {filebucket: get_handler}) do |port|
           Puppet[:masterport] = port
           expect {
-            filebucket.command_line.args += ['diff', 'd3b07384d113edec49eaa6238ad5ff00', "99b999207e287afffc86c053e5693247", '--remote']
+            filebucket.command_line.args = ['diff', 'd3b07384d113edec49eaa6238ad5ff00', "99b999207e287afffc86c053e5693247", '--remote']
             filebucket.run
           }.to output(a_string_matching(
             /[-<] ?foo/

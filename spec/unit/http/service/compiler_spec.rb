@@ -1,6 +1,5 @@
 # coding: utf-8
 require 'spec_helper'
-require 'webmock/rspec'
 require 'puppet/http'
 
 describe Puppet::HTTP::Service::Compiler do

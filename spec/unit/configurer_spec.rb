@@ -1,6 +1,5 @@
 require 'spec_helper'
 require 'puppet/configurer'
-require 'webmock/rspec'
 
 describe Puppet::Configurer do
   before do

@@ -6,6 +6,8 @@ require 'puppet_spec/https'
 describe "apply", unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
+  let(:apply) { Puppet::Application[:apply] }
+
   before :each do
     Puppet[:reports] = "none"
     # Let exceptions be raised instead of exiting
@@ -19,12 +21,10 @@ describe "apply", unless: Puppet::Util::Platform.jruby? do
       resource = Puppet::Resource.new(:file, file_to_create, :parameters => {:content => "my stuff"})
       catalog.add_resource resource
 
-      manifest = file_containing("manifest", catalog.to_json)
-
-      puppet = Puppet::Application[:apply]
-      puppet.options[:catalog] = manifest
-
-      puppet.apply
+      apply.command_line.args = ['--catalog', file_containing("manifest", catalog.to_json)]
+      expect {
+        apply.run
+      }.to output(/ensure: defined content as/).to_stdout
 
       expect(Puppet::FileSystem.exist?(file_to_create)).to be_truthy
       expect(File.read(file_to_create)).to eq("my stuff")
@@ -73,12 +73,13 @@ describe "apply", unless: Puppet::Util::Platform.jruby? do
 
       it 'does not load the pcore type' do
         catalog = compile_to_catalog('applytest { "applytest was here":}', node)
-        apply = Puppet::Application[:apply]
-        apply.options[:catalog] = file_containing('manifest', catalog.to_json)
+        apply.command_line.args = ['--catalog', file_containing('manifest', catalog.to_json)]
 
         Puppet[:environmentpath] = envdir
         expect_any_instance_of(Puppet::Pops::Loader::Runtime3TypeLoader).not_to receive(:find)
-        expect { apply.run }.to have_printed(/the Puppet::Type says hello.*applytest was here/m)
+        expect {
+          apply.run
+        }.to output(/the Puppet::Type says hello.*applytest was here/m).to_stdout
       end
 
       # Test just to verify that the Pcore Resource Type and not the Ruby one is produced when the catalog is produced
@@ -90,7 +91,9 @@ describe "apply", unless: Puppet::Util::Platform.jruby? do
 
         expect(compiler.loaders.runtime3_type_loader.instance_variable_get(:@resource_3x_loader)).to receive(:set_entry).once.with(tn, rt, instance_of(String))
           .and_return(Puppet::Pops::Loader::Loader::NamedEntry.new(tn, rt, nil))
-        expect { compiler.compile }.not_to have_printed(/the Puppet::Type says hello/)
+        expect {
+          compiler.compile
+        }.not_to output(/the Puppet::Type says hello/).to_stdout
       end
 
       it "does not fail when pcore type is loaded twice" do
@@ -203,36 +206,36 @@ describe "apply", unless: Puppet::Util::Platform.jruby? do
       catalog = compile_to_catalog('include mod', node)
 
       Puppet[:environment] = env_name
-      apply = Puppet::Application[:apply]
-      apply.options[:catalog] = file_containing('manifest', catalog.to_json)
-      expect { apply.run_command; exit(0) }.to exit_with(0)
-      expect(@logs.map(&:to_s)).to include('The Street 23')
+      apply.command_line.args = ['--catalog', file_containing('manifest', catalog.to_json)]
+
+      expect {
+        apply.run
+      }.to output(%r{Notify\[The Street 23\]/message: defined 'message' as 'The Street 23'}).to_stdout
     end
   end
 
-  it "applies a given file even when a directory environment is specified" do
+  it "raises if the environment directory does not exist" do
     manifest = file_containing("manifest.pp", "notice('it was applied')")
+    apply.command_line.args = [manifest]
 
     special = Puppet::Node::Environment.create(:special, [])
     Puppet.override(:current_environment => special) do
       Puppet[:environment] = 'special'
-      puppet = Puppet::Application[:apply]
-      allow(puppet).to receive(:command_line).and_return(double('command_line', :args => [manifest]))
-      expect { puppet.run_command }.to exit_with(0)
+      expect {
+        apply.run
+      }.to raise_error(Puppet::Environments::EnvironmentNotFound,
+                       /Could not find a directory environment named 'special' anywhere in the path/)
     end
-
-    expect(@logs.map(&:to_s)).to include('it was applied')
   end
 
   it "adds environment to the $server_facts variable" do
     manifest = file_containing("manifest.pp", "notice(\"$server_facts\")")
+    apply.command_line.args = [manifest]
 
-    puppet = Puppet::Application[:apply]
-    allow(puppet).to receive(:command_line).and_return(double('command_line', :args => [manifest]))
-
-    expect { puppet.run_command }.to exit_with(0)
-
-    expect(@logs.map(&:to_s)).to include(/{environment =>.*/)
+    expect {
+      apply.run
+    }.to exit_with(0)
+     .and output(/{environment => production}/).to_stdout
   end
 
   it "applies a given file even when an ENC is configured", :unless => Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
@@ -248,48 +251,36 @@ describe "apply", unless: Puppet::Util::Platform.jruby? do
       Puppet[:environment] = 'special'
       Puppet[:node_terminus] = 'exec'
       Puppet[:external_nodes] = enc
-      puppet = Puppet::Application[:apply]
-      allow(puppet).to receive(:command_line).and_return(double('command_line', :args => [manifest]))
-      expect { puppet.run_command }.to exit_with(0)
+      apply.command_line.args = [manifest]
+      expect {
+        apply.run
+      }.to exit_with(0)
+       .and output(/Notice: Scope\(Class\[main\]\): specific manifest applied/).to_stdout
     end
-
-    expect(@logs.map(&:to_s)).to include('specific manifest applied')
   end
 
   context "handles errors" do
     it "logs compile errors once" do
-      Puppet.initialize_settings([])
-      apply = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => []))
-      apply.options[:code] = '08'
-
-      msg = 'valid octal'
-      callback = Proc.new do |actual|
-        expect(actual.scan(Regexp.new(msg))).to eq([msg])
-      end
-
-      expect do
+      apply.command_line.args = ['-e', '08']
+      expect {
         apply.run
-      end.to have_printed(callback).and_exit_with(1)
+      }.to exit_with(1)
+       .and output(/Not a valid octal number/).to_stderr
     end
 
     it "logs compile post processing errors once" do
-      Puppet.initialize_settings([])
-      apply = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => []))
       path = File.expand_path('/tmp/content_file_test.Q634Dlmtime')
-      apply.options[:code] = "file { '#{path}':
+      apply.command_line.args = ['-e', "file { '#{path}':
         content => 'This is the test file content',
         ensure => present,
         checksum => mtime
-      }"
+      }"]
 
-      msg = 'You cannot specify content when using checksum'
-      callback = Proc.new do |actual|
-        expect(actual.scan(Regexp.new(msg))).to eq([msg])
-      end
-
-      expect do
+      expect {
         apply.run
-      end.to have_printed(callback).and_exit_with(1)
+      }.to exit_with(1)
+       .and output(/Compiled catalog/).to_stdout
+       .and output(/You cannot specify content when using checksum/).to_stderr
     end
   end
 
@@ -314,51 +305,42 @@ describe "apply", unless: Puppet::Util::Platform.jruby? do
       Puppet[:environmentpath] = envdir
     end
 
-    def init_cli_args_and_apply_app(args, execute)
-      Puppet.initialize_settings(args)
-      puppet = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => args))
-      puppet.options[:code] = execute
-      return puppet
-    end
+    context "given a modulepath" do
+      let(:args) { ['-e', execute] }
 
-    context "given the --modulepath option" do
-      let(:args) { ['-e', execute, '--modulepath', modulepath] }
+      before :each do
+        Puppet[:modulepath] = modulepath
 
-      it "looks in --modulepath even when the default directory environment exists" do
-        apply = init_cli_args_and_apply_app(args, execute)
-
-        expect do
-          expect { apply.run }.to exit_with(0)
-        end.to have_printed('amod class included')
+        apply.command_line.args = args
       end
 
-      it "looks in --modulepath even when given a specific directory --environment" do
-        args << '--environment' << 'production'
-        apply = init_cli_args_and_apply_app(args, execute)
-
-        expect do
-          expect { apply.run }.to exit_with(0)
-        end.to have_printed('amod class included')
+      it "looks in modulepath even when the default directory environment exists" do
+        expect {
+          apply.run
+        }.to exit_with(0)
+         .and output(/amod class included/).to_stdout
       end
 
-      it "looks in --modulepath when given multiple paths in --modulepath" do
-        args = ['-e', execute, '--modulepath', [tmpdir('notmodulepath'), modulepath].join(File::PATH_SEPARATOR)]
-        apply = init_cli_args_and_apply_app(args, execute)
+      it "looks in modulepath even when given a specific directory --environment" do
+        apply.command_line.args = args << '--environment' << 'production'
 
-        expect do
-          expect { apply.run }.to exit_with(0)
-        end.to have_printed('amod class included')
+        expect {
+          apply.run
+        }.to exit_with(0)
+         .and output(/amod class included/).to_stdout
+      end
+
+      it "looks in modulepath when given multiple paths in modulepath" do
+        Puppet[:modulepath] = [tmpdir('notmodulepath'), modulepath].join(File::PATH_SEPARATOR)
+
+        expect {
+          apply.run
+        }.to exit_with(0)
+         .and output(/amod class included/).to_stdout
       end
     end
 
-    # When executing an ENC script, output cannot be captured using
-    # expect { }.to have_printed(...)
-    # External node script execution will fail, likely due to the tampering
-    # with the basic file descriptors.
-    # Workaround: Define a log destination and merely inspect logs.
     context "with an ENC" do
-      let(:logdest) { tmpfile('logdest') }
-      let(:args) { ['-e', execute, '--logdest', logdest ] }
       let(:enc) do
         script_containing('enc_script',
           :windows => '@echo environment: spec',
@@ -371,17 +353,23 @@ describe "apply", unless: Puppet::Util::Platform.jruby? do
       end
 
       it "should use the environment that the ENC mandates" do
-        apply = init_cli_args_and_apply_app(args, execute)
-        expect { apply.run }.to exit_with(0)
-        expect(@logs.map(&:to_s)).to include('amod class included')
+        apply.command_line.args = ['-e', execute]
+
+        expect {
+          apply.run
+       }.to exit_with(0)
+        .and output(a_string_matching(/amod class included/)
+        .and matching(/Compiled catalog for .* in environment spec/)).to_stdout
       end
 
       it "should prefer the ENC environment over the configured one and emit a warning" do
-        apply = init_cli_args_and_apply_app(args + [ '--environment', 'production' ], execute)
-        expect { apply.run }.to exit_with(0)
-        logs = @logs.map(&:to_s)
-        expect(logs).to include('amod class included')
-        expect(logs).to include(match(/doesn't match server specified environment/))
+        apply.command_line.args = ['-e', execute, '--environment', 'production']
+
+        expect {
+          apply.run
+        }.to exit_with(0)
+         .and output(a_string_matching('amod class included')
+         .and matching(/doesn't match server specified environment/)).to_stdout
       end
     end
   end
@@ -452,8 +440,7 @@ class amod::bad_type {
     context 'and the file is not serialized with rich_data' do
       it 'will notify a string that is the result of Regexp#inspect (from Runtime3xConverter)' do
         catalog = compile_to_catalog(execute, node)
-        apply = Puppet::Application[:apply]
-        apply.options[:catalog] = file_containing('manifest', catalog.to_json)
+        apply.command_line.args = ['--catalog', file_containing('manifest', catalog.to_json)]
         expect(apply).to receive(:apply_catalog) do |cat|
           expect(cat.resource(:notify, 'rx')['message']).to be_a(String)
           expect(cat.resource(:notify, 'bin')['message']).to be_a(String)
@@ -468,8 +455,7 @@ class amod::bad_type {
 
       it 'will notify a string that is the result of to_s on uknown data types' do
         json = compile_to_catalog('include amod::bad_type', node).to_json
-        apply = Puppet::Application[:apply]
-        apply.options[:catalog] = file_containing('manifest', json)
+        apply.command_line.args = ['--catalog', file_containing('manifest', json)]
         expect(apply).to receive(:apply_catalog) do |catalog|
           expect(catalog.resource(:notify, 'bogus')['message']).to be_a(String)
         end
@@ -491,11 +477,10 @@ class amod::bad_type {
     context 'and the file is serialized with rich_data' do
       it 'will notify a regexp using Regexp#to_s' do
         catalog = compile_to_catalog(execute, node)
-        apply = Puppet::Application[:apply]
         serialized_catalog = Puppet.override(rich_data: true) do
           catalog.to_json
         end
-        apply.options[:catalog] = file_containing('manifest', serialized_catalog)
+        apply.command_line.args = ['--catalog', file_containing('manifest', serialized_catalog)]
         expect(apply).to receive(:apply_catalog) do |cat|
           expect(cat.resource(:notify, 'rx')['message']).to be_a(Regexp)
           # The resource return in this expect is a String, but since it was a Binary type that
@@ -518,7 +503,6 @@ class amod::bad_type {
     let(:env_dir) { File.join(Puppet[:environmentpath], env_name) }
     let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(env_dir, 'modules')]) }
     let(:node) { Puppet::Node.new(Puppet[:certname], environment: environment) }
-    let(:apply) { Puppet::Application[:apply] }
 
     before :each do
       Puppet[:environment] = env_name
@@ -563,7 +547,6 @@ class amod::bad_type {
       Puppet[:reports] = 'http'
     end
 
-    let(:apply) { Puppet::Application[:apply] }
     let(:unknown_server) do
       unknown_ca_cert = cert_fixture('unknown-ca.pem')
       PuppetSpec::HTTPSServer.new(

@@ -234,7 +234,9 @@ trace = true
       allow(Puppet::Settings::IniFile::Manipulator).to receive(:new).and_return(manipulator)
 
       expect(manipulator).to receive(:delete).with('main', 'setting').and_return('    setting=value')
-      expect { subject.delete('setting', {:section => 'main'}) }.to have_printed("Deleted setting from 'main': 'setting=value'")
+      expect {
+        subject.delete('setting', {:section => 'main'})
+      }.to output("Deleted setting from 'main': 'setting=value'\n").to_stdout
     end
 
     it 'prints a warning when a setting is not found to delete' do

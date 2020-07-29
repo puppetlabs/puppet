@@ -102,7 +102,7 @@ class Puppet::Application::Lookup < Puppet::Application
   def help
     <<-HELP
 
-puppet lookup(8) -- #{summary}
+puppet-lookup(8) -- #{summary}
 ========
 
 SYNOPSIS
