@@ -6,8 +6,6 @@ class Puppet::Node::Rest < Puppet::Indirector::REST
     to override its environment."
 
   def find(request)
-    return super unless use_http_client?
-
     session = Puppet.lookup(:http_session)
     api = session.route_to(:puppet)
     _, node = api.get_node(

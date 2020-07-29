@@ -57,8 +57,4 @@ describe Puppet::Indirector::FileContent::Rest do
 
     described_class.indirection.find("puppet://example.com:8140/:mount/path/to/file")
   end
-
-  it "should use the :fileserver SRV service" do
-    expect(Puppet::Indirector::FileContent::Rest.srv_service).to eq(:fileserver)
-  end
 end

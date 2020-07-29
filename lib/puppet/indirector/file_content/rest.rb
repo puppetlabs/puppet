@@ -5,11 +5,7 @@ require 'puppet/indirector/rest'
 class Puppet::Indirector::FileContent::Rest < Puppet::Indirector::REST
   desc "Retrieve file contents via a REST HTTP interface."
 
-  use_srv_service(:fileserver)
-
   def find(request)
-    return super unless use_http_client?
-
     content = StringIO.new
     content.binmode
 

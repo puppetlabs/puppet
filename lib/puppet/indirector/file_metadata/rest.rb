@@ -5,11 +5,7 @@ require 'puppet/indirector/rest'
 class Puppet::Indirector::FileMetadata::Rest < Puppet::Indirector::REST
   desc "Retrieve file metadata via a REST HTTP interface."
 
-  use_srv_service(:fileserver)
-
   def find(request)
-    return super unless use_http_client?
-
     url = URI.parse(Puppet::Util.uri_encode(request.uri))
     session = Puppet.lookup(:http_session)
     api = session.route_to(:fileserver, url: url)
@@ -35,8 +31,6 @@ class Puppet::Indirector::FileMetadata::Rest < Puppet::Indirector::REST
   end
 
   def search(request)
-    return super unless use_http_client?
-
     url = URI.parse(Puppet::Util.uri_encode(request.uri))
     session = Puppet.lookup(:http_session)
     api = session.route_to(:fileserver, url: url)

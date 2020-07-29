@@ -20,21 +20,6 @@ describe Puppet::Transaction::Report::Rest do
     { body: formatter.render(["store", "http"]), headers: {'Content-Type' => formatter.mime } }
   end
 
-  it "should use the :report_server setting in preference to :server" do
-    Puppet.settings[:server] = "server"
-    Puppet.settings[:report_server] = "report_server"
-    expect(Puppet::Transaction::Report::Rest.server).to eq("report_server")
-  end
-
-  it "should have a value for report_server and report_port" do
-    expect(Puppet::Transaction::Report::Rest.server).not_to be_nil
-    expect(Puppet::Transaction::Report::Rest.port).not_to be_nil
-  end
-
-  it "should use the :report SRV service" do
-    expect(Puppet::Transaction::Report::Rest.srv_service).to eq(:report)
-  end
-
   it "saves a report " do
     stub_request(:put, uri)
       .to_return(status: 200, **report_response)

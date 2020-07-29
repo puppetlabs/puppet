@@ -3,13 +3,8 @@ require 'semantic_puppet'
 
 class Puppet::Transaction::Report::Rest < Puppet::Indirector::REST
   desc "Get server report over HTTP via REST."
-  use_server_setting(:report_server)
-  use_port_setting(:report_port)
-  use_srv_service(:report)
 
   def save(request)
-    return super unless use_http_client?
-
     session = Puppet.lookup(:http_session)
     api = session.route_to(:report)
     response = api.put_report(
