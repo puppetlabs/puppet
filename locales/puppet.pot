@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.20-62-g352a8c16bd\n"
+"Project-Id-Version: Puppet automation framework 5.5.21-20-gfdd7102523\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-06-19 16:16+0000\n"
-"PO-Revision-Date: 2020-06-19 16:16+0000\n"
+"POT-Creation-Date: 2020-07-29 14:16+0000\n"
+"PO-Revision-Date: 2020-07-29 14:16+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -44,7 +44,7 @@ msgstr ""
 msgid "Please supply a parameter to perform a Hiera lookup"
 msgstr ""
 
-#: ../lib/hiera_puppet.rb:74 ../lib/puppet/indirector/hiera.rb:81
+#: ../lib/hiera_puppet.rb:74 ../lib/puppet/indirector/hiera.rb:85
 msgid "Config file %{hiera_config} not found, using Hiera defaults"
 msgstr ""
 
@@ -614,7 +614,11 @@ msgstr ""
 msgid "Retrieving %{name}"
 msgstr ""
 
-#: ../lib/puppet/configurer/downloader.rb:20
+#: ../lib/puppet/configurer/downloader.rb:21
+msgid "Failed to retrieve %{name}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer/downloader.rb:32
 msgid "Could not retrieve %{name}: %{detail}"
 msgstr ""
 
@@ -718,7 +722,7 @@ msgid "Setting %{name} is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1905
+#: ../lib/puppet/defaults.rb:1904
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -2726,12 +2730,12 @@ msgid "Could not find filesystem info for file '%{request}' in environment %{env
 msgstr ""
 
 #. TRANSLATORS "Hiera" is the name of a code library and should not be translated
-#: ../lib/puppet/indirector/hiera.rb:8
+#: ../lib/puppet/indirector/hiera.rb:12
 msgid "Hiera terminus not supported without hiera library"
 msgstr ""
 
 #. TRANSLATORS "merge" is a parameter name and should not be translated
-#: ../lib/puppet/indirector/hiera.rb:68
+#: ../lib/puppet/indirector/hiera.rb:72
 msgid "Unrecognized value for request 'merge' parameter: '%{merge}'"
 msgstr ""
 
@@ -7054,27 +7058,27 @@ msgstr ""
 msgid "source is defined but does not have trailing slash, ignoring %{source}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:94
+#: ../lib/puppet/provider/package/gem.rb:96
 msgid "Could not list gems: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:120
+#: ../lib/puppet/provider/package/gem.rb:122
 msgid "Could not match %{desc}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:168
+#: ../lib/puppet/provider/package/gem.rb:170
 msgid "Invalid source '%{uri}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:179
+#: ../lib/puppet/provider/package/gem.rb:181
 msgid "puppet:// URLs are not supported as gem sources"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:195
+#: ../lib/puppet/provider/package/gem.rb:197
 msgid "Could not install: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:221
+#: ../lib/puppet/provider/package/gem.rb:223
 msgid "Could not uninstall: %{output}"
 msgstr ""
 
@@ -10161,11 +10165,11 @@ msgstr ""
 msgid "Cannot create group if user '%{name}' exists."
 msgstr ""
 
-#: ../lib/puppet/util/windows/api_types.rb:79
+#: ../lib/puppet/util/windows/api_types.rb:85
 msgid "Unable to read wide strings with %{null_terminator} terminal nulls"
 msgstr ""
 
-#: ../lib/puppet/util/windows/api_types.rb:210
+#: ../lib/puppet/util/windows/api_types.rb:216
 msgid "Bad GUID format."
 msgstr ""
 
@@ -10220,20 +10224,20 @@ msgstr ""
 msgid "Failed to call GetLongPathName"
 msgstr ""
 
-#: ../lib/puppet/util/windows/principal.rb:69 ../lib/puppet/util/windows/principal.rb:76
+#: ../lib/puppet/util/windows/principal.rb:67 ../lib/puppet/util/windows/principal.rb:74
 msgid "Failed to call LookupAccountNameW with account: %{account_name}"
 msgstr ""
 
 #. TRANSLATORS `lookup_account_sid` is a variable name and should not be translated
-#: ../lib/puppet/util/windows/principal.rb:99
+#: ../lib/puppet/util/windows/principal.rb:97
 msgid "Byte array for lookup_account_sid must not be nil and must be at least 1 byte long"
 msgstr ""
 
-#: ../lib/puppet/util/windows/principal.rb:118
+#: ../lib/puppet/util/windows/principal.rb:114
 msgid "Byte array for lookup_account_sid is invalid: %{sid_bytes}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/principal.rb:126 ../lib/puppet/util/windows/principal.rb:133
+#: ../lib/puppet/util/windows/principal.rb:122 ../lib/puppet/util/windows/principal.rb:129
 msgid "Failed to call LookupAccountSidW with bytes: %{sid_bytes}"
 msgstr ""
 
@@ -10269,39 +10273,39 @@ msgstr ""
 msgid "Failed to open registry key '%{key}\\%{path}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:130
+#: ../lib/puppet/util/windows/registry.rb:133
 msgid "Failed to enumerate %{key} registry keys at index %{index}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:161
+#: ../lib/puppet/util/windows/registry.rb:167
 msgid "Failed to enumerate %{key} registry values at index %{index}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:191
+#: ../lib/puppet/util/windows/registry.rb:197
 msgid "Failed to query registry %{key} for sizes"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:227
+#: ../lib/puppet/util/windows/registry.rb:233
 msgid "Type mismatch (expect %{rtype} but %{type} present)"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:249
+#: ../lib/puppet/util/windows/registry.rb:255
 msgid "Type %{type} is not supported."
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:254
+#: ../lib/puppet/util/windows/registry.rb:260
 msgid "A value in the registry key %{parent_key_name}%{key} is corrupt or invalid"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:276
+#: ../lib/puppet/util/windows/registry.rb:282
 msgid "Failed to read registry value %{value} at %{key}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:294
+#: ../lib/puppet/util/windows/registry.rb:300
 msgid "Failed to delete registry value %{name} at %{key}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:309
+#: ../lib/puppet/util/windows/registry.rb:315
 msgid "Failed to delete registry key %{name} at %{key}"
 msgstr ""
 
