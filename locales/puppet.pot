@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.16.0-141-g9bc4af5078\n"
+"Project-Id-Version: Puppet automation framework 6.17.0-61-g8f9e413752\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-07-08 11:31+0000\n"
-"PO-Revision-Date: 2020-07-08 11:31+0000\n"
+"POT-Creation-Date: 2020-07-30 16:27+0000\n"
+"PO-Revision-Date: 2020-07-30 16:27+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -44,7 +44,7 @@ msgstr ""
 msgid "Please supply a parameter to perform a Hiera lookup"
 msgstr ""
 
-#: ../lib/hiera_puppet.rb:75 ../lib/puppet/indirector/hiera.rb:81
+#: ../lib/hiera_puppet.rb:75 ../lib/puppet/indirector/hiera.rb:85
 msgid "Config file %{hiera_config} not found, using Hiera defaults"
 msgstr ""
 
@@ -216,7 +216,7 @@ msgstr ""
 
 #. TRANSLATORS "puppet apply" is a program command and should not be translated
 #. TRANSLATORS "puppet apply" is a program command and should not be translated
-#: ../lib/puppet/application/apply.rb:207 ../lib/puppet/application/apply.rb:322
+#: ../lib/puppet/application/apply.rb:207 ../lib/puppet/application/apply.rb:320
 msgid "For puppet apply"
 msgstr ""
 
@@ -224,27 +224,27 @@ msgstr ""
 msgid "%{file} is not readable"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:293 ../lib/puppet/application/script.rb:239
+#: ../lib/puppet/application/apply.rb:286 ../lib/puppet/application/script.rb:239
 msgid "Exiting"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:332
+#: ../lib/puppet/application/apply.rb:330
 msgid "Could not deserialize catalog from %{format}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:353 ../lib/puppet/application/script.rb:144
+#: ../lib/puppet/application/apply.rb:351 ../lib/puppet/application/script.rb:144
 msgid "Could not find facts for %{node}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:365 ../lib/puppet/application/script.rb:152
+#: ../lib/puppet/application/apply.rb:363 ../lib/puppet/application/script.rb:152
 msgid "Could not find node %{node}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:378 ../lib/puppet/application/script.rb:137
+#: ../lib/puppet/application/apply.rb:376 ../lib/puppet/application/script.rb:137
 msgid "Could not find file %{manifest}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:379
+#: ../lib/puppet/application/apply.rb:377
 msgid "Only one file can be applied per run.  Skipping %{files}"
 msgstr ""
 
@@ -717,15 +717,15 @@ msgstr ""
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:828
+#: ../lib/puppet/defaults.rb:830
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1022
+#: ../lib/puppet/defaults.rb:1024
 msgid "Setting 'ssl_client_ca_auth' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1101 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1103 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
@@ -1782,7 +1782,7 @@ msgstr ""
 msgid "Timeout waiting for exclusive lock on %{path}"
 msgstr ""
 
-#: ../lib/puppet/file_system/jruby.rb:18 ../lib/puppet/file_system/windows.rb:127 ../lib/puppet/util.rb:705
+#: ../lib/puppet/file_system/jruby.rb:18 ../lib/puppet/file_system/windows.rb:127 ../lib/puppet/util.rb:706
 msgid "Is a directory: %{directory}"
 msgstr ""
 
@@ -2591,10 +2591,6 @@ msgstr ""
 msgid "Invalid checksum %{checksum}"
 msgstr ""
 
-#: ../lib/puppet/indirector/file_content/http.rb:14
-msgid "Puppet::Indirector::FileContent::Http is deprecated. Use Puppet::HTTP::Client instead."
-msgstr ""
-
 #: ../lib/puppet/indirector/file_metadata/http.rb:31
 msgid "cannot lookup multiple files"
 msgstr ""
@@ -2608,12 +2604,12 @@ msgid "Could not find filesystem info for file '%{request}' in environment %{env
 msgstr ""
 
 #. TRANSLATORS "Hiera" is the name of a code library and should not be translated
-#: ../lib/puppet/indirector/hiera.rb:8
+#: ../lib/puppet/indirector/hiera.rb:12
 msgid "Hiera terminus not supported without hiera library"
 msgstr ""
 
 #. TRANSLATORS "merge" is a parameter name and should not be translated
-#: ../lib/puppet/indirector/hiera.rb:68
+#: ../lib/puppet/indirector/hiera.rb:72
 msgid "Unrecognized value for request 'merge' parameter: '%{merge}'"
 msgstr ""
 
@@ -4163,7 +4159,7 @@ msgstr ""
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:561 ../lib/puppet/pops/loaders.rb:300
+#: ../lib/puppet/node/environment.rb:561 ../lib/puppet/pops/loaders.rb:301
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -4579,15 +4575,15 @@ msgstr ""
 msgid "Calling function_contain via the Scope class is deprecated. Use Scope#call_function instead"
 msgstr ""
 
-#: ../lib/puppet/parser/functions/create_resources.rb:56
+#: ../lib/puppet/parser/functions/create_resources.rb:60
 msgid "create_resources(): wrong number of arguments (%{count}; must be 2 or 3)"
 msgstr ""
 
-#: ../lib/puppet/parser/functions/create_resources.rb:57
+#: ../lib/puppet/parser/functions/create_resources.rb:61
 msgid "create_resources(): second argument must be a hash"
 msgstr ""
 
-#: ../lib/puppet/parser/functions/create_resources.rb:59
+#: ../lib/puppet/parser/functions/create_resources.rb:63
 msgid "create_resources(): third argument, if provided, must be a hash"
 msgstr ""
 
@@ -5918,19 +5914,19 @@ msgstr ""
 msgid "Attempt to redefine already initialized loaders for environment"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:176
+#: ../lib/puppet/pops/loaders.rb:177
 msgid "Internal Error: Puppet Context ':loaders' missing"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:190
+#: ../lib/puppet/pops/loaders.rb:191
 msgid "Unable to find loader named '%{loader_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:211
+#: ../lib/puppet/pops/loaders.rb:212
 msgid "Internal Error: did not find public loader for module: '%{module_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:257
+#: ../lib/puppet/pops/loaders.rb:258
 msgid "Internal Error: Attempt to redefine loader named '%{name}'"
 msgstr ""
 
@@ -6794,19 +6790,19 @@ msgstr ""
 msgid "Mac OS X packages must specify a package source"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:47
+#: ../lib/puppet/provider/package/apt.rb:81
 msgid "/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure."
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:129 ../lib/puppet/provider/package/fink.rb:55
+#: ../lib/puppet/provider/package/apt.rb:163 ../lib/puppet/provider/package/fink.rb:55
 msgid "Could not find latest version"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:140 ../lib/puppet/provider/package/fink.rb:66
+#: ../lib/puppet/provider/package/apt.rb:174 ../lib/puppet/provider/package/fink.rb:66
 msgid "Preseeding %{response} to debconf-set-selections"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:144 ../lib/puppet/provider/package/fink.rb:70
+#: ../lib/puppet/provider/package/apt.rb:178 ../lib/puppet/provider/package/fink.rb:70
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
@@ -6858,27 +6854,27 @@ msgstr ""
 msgid "source is defined but does not have trailing slash, ignoring %{source}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:100
+#: ../lib/puppet/provider/package/gem.rb:102
 msgid "Could not list gems: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:126
+#: ../lib/puppet/provider/package/gem.rb:128
 msgid "Could not match %{desc}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:204
+#: ../lib/puppet/provider/package/gem.rb:206
 msgid "Invalid source '%{uri}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:215
+#: ../lib/puppet/provider/package/gem.rb:217
 msgid "puppet:// URLs are not supported as gem sources"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:231
+#: ../lib/puppet/provider/package/gem.rb:233
 msgid "Could not install: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:257
+#: ../lib/puppet/provider/package/gem.rb:259
 msgid "Could not uninstall: %{output}"
 msgstr ""
 
@@ -8979,70 +8975,70 @@ msgstr ""
 msgid "Class name must be provided."
 msgstr ""
 
-#: ../lib/puppet/util.rb:63
+#: ../lib/puppet/util.rb:64
 msgid "Unable to retrieve the environment for mode %{mode}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:80
+#: ../lib/puppet/util.rb:81
 msgid "Unable to clear the environment for mode %{mode}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:96
+#: ../lib/puppet/util.rb:97
 msgid "Unable to set the environment variable %{name} for mode %{mode}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:113
+#: ../lib/puppet/util.rb:114
 msgid "Unable to merge given values into the current environment for mode %{mode}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:155
+#: ../lib/puppet/util.rb:156
 msgid "could not change to group %{group}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:156
+#: ../lib/puppet/util.rb:157
 msgid "could not change to group %{group}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:169
+#: ../lib/puppet/util.rb:170
 msgid "Could not change to user %{user}: %{detail}"
 msgstr ""
 
 #. TRANSLATORS 'benchmark' is a method name and should not be translated
-#: ../lib/puppet/util.rb:223
+#: ../lib/puppet/util.rb:224
 msgid "Failed to provide level to benchmark"
 msgstr ""
 
-#: ../lib/puppet/util.rb:226
+#: ../lib/puppet/util.rb:227
 msgid "Benchmarked object does not respond to %{value}"
 msgstr ""
 
 #. TRANSLATORS PATH and HOME are environment variables and should not be translated
-#: ../lib/puppet/util.rb:266
+#: ../lib/puppet/util.rb:267
 msgid "PATH contains a ~ character, and HOME is not set; ignoring PATH element '%{dir}'."
 msgstr ""
 
 #. TRANSLATORS PATH is an environment variable and should not be translated
-#: ../lib/puppet/util.rb:270
+#: ../lib/puppet/util.rb:271
 msgid "Couldn't expand PATH containing a ~ character; ignoring PATH element '%{dir}'."
 msgstr ""
 
-#: ../lib/puppet/util.rb:317
+#: ../lib/puppet/util.rb:318
 msgid "unknown platform %{platform} in absolute_path"
 msgstr ""
 
-#: ../lib/puppet/util.rb:352
+#: ../lib/puppet/util.rb:353
 msgid "Failed to convert '%{path}' to URI: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:452
+#: ../lib/puppet/util.rb:453
 msgid "path may not be nil"
 msgstr ""
 
-#: ../lib/puppet/util.rb:620
+#: ../lib/puppet/util.rb:621
 msgid "replace_file requires a block"
 msgstr ""
 
-#: ../lib/puppet/util.rb:624
+#: ../lib/puppet/util.rb:625
 msgid "replace_file default_mode: %{default_mode} is invalid"
 msgstr ""
 
