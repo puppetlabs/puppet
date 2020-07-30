@@ -11,32 +11,53 @@ class Puppet::Configurer::Downloader
     files = []
     begin
       catalog.apply do |trans|
+        unless Puppet[:ignore_plugin_errors]
+          # Propagate the first failure associated with the transaction. The any_failed?
+          # method returns the first resource status that failed or nil, not a boolean.
+          first_failure = trans.any_failed?
+          if first_failure
+            event = (first_failure.events || []).first
+            detail = event ? event.message : 'unknown'
+            raise Puppet::Error.new(_("Failed to retrieve %{name}: %{detail}") % { name: name, detail: detail })
+          end
+        end
+
         trans.changed?.each do |resource|
           yield resource if block_given?
           files << resource[:path]
         end
       end
     rescue Puppet::Error => detail
-      Puppet.log_exception(detail, _("Could not retrieve %{name}: %{detail}") % { name: name, detail: detail })
+      if Puppet[:ignore_plugin_errors]
+        Puppet.log_exception(detail, _("Could not retrieve %{name}: %{detail}") % { name: name, detail: detail })
+      else
+        raise detail
+      end
     end
     files
   end
 
   def initialize(name, path, source, ignore = nil, environment = nil, source_permissions = :ignore)
     @name, @path, @source, @ignore, @environment, @source_permissions = name, path, source, ignore, environment, source_permissions
-  end
 
-  def catalog
-    catalog = Puppet::Resource::Catalog.new("PluginSync", @environment)
-    catalog.host_config = false
-    catalog.add_resource(file)
-    catalog
   end
 
   def file
-    args = default_arguments.merge(:path => path, :source => source)
-    args[:ignore] = ignore.split if ignore
-    Puppet::Type.type(:file).new(args)
+    unless @file
+      args = default_arguments.merge(:path => path, :source => source)
+      args[:ignore] = ignore.split if ignore
+      @file = Puppet::Type.type(:file).new(args)
+    end
+    @file
+  end
+
+  def catalog
+    unless @catalog
+      @catalog = Puppet::Resource::Catalog.new("PluginSync", @environment)
+      @catalog.host_config = false
+      @catalog.add_resource(file)
+    end
+    @catalog
   end
 
   private
