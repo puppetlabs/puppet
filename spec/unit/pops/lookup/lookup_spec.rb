@@ -14,6 +14,7 @@ describe 'The lookup API' do
   let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, 'modules')]) }
   let(:node) { Puppet::Node.new('test', :environment => env) }
   let(:compiler) { Puppet::Parser::Compiler.new(node) }
+  let(:pal_compiler) { Puppet::Pal::ScriptCompiler.new(compiler) }
   let(:scope) { compiler.topscope }
   let(:invocation) { Invocation.new(scope) }
 
@@ -342,6 +343,30 @@ describe 'The lookup API' do
             }
           }
         )
+      end
+    end
+  end
+
+  context 'when using plan_hierarchy' do
+    let(:code_dir_content) do
+      {
+        'hiera.yaml' => <<-YAML.unindent,
+        version: 5
+        plan_hierarchy:
+          - path: foo.yaml
+            name: Common
+        YAML
+        'data' => {
+          'foo.yaml' => <<-YAML.unindent
+          pop: star
+          YAML
+        }
+      }
+    end
+
+    it 'uses plan_hierarchy when using ScriptCompiler' do
+      Puppet.override(pal_compiler: pal_compiler) do
+        expect(Lookup.lookup('pop', nil, nil, true, nil, invocation)).to eq('star')
       end
     end
   end

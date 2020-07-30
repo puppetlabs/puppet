@@ -46,6 +46,7 @@ class HieraConfig
   KEY_DATADIR = 'datadir'.freeze
   KEY_DEFAULT_HIERARCHY = 'default_hierarchy'.freeze
   KEY_HIERARCHY = 'hierarchy'.freeze
+  KEY_PLAN_HIERARCHY = 'plan_hierarchy'.freeze
   KEY_LOGGER = 'logger'.freeze
   KEY_OPTIONS = 'options'.freeze
   KEY_PATH = 'path'.freeze
@@ -580,6 +581,7 @@ class HieraConfigV5 < HieraConfig
           tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
         }),
       tf.optional(KEY_HIERARCHY) => hierarchy_t,
+      tf.optional(KEY_PLAN_HIERARCHY) => hierarchy_t,
       tf.optional(KEY_DEFAULT_HIERARCHY) => hierarchy_t
     })
   end
@@ -600,7 +602,15 @@ class HieraConfigV5 < HieraConfig
       return data_providers
     end
 
-    @config[use_default_hierarchy ? KEY_DEFAULT_HIERARCHY : KEY_HIERARCHY].each do |he|
+    compiler = Puppet.lookup(:pal_compiler) { nil }
+    config_key = if compiler.is_a?(Puppet::Pal::ScriptCompiler) && !@config[KEY_PLAN_HIERARCHY].nil?
+          KEY_PLAN_HIERARCHY
+        elsif use_default_hierarchy
+          KEY_DEFAULT_HIERARCHY
+        else
+          KEY_HIERARCHY
+        end
+    @config[config_key].each do |he|
       name = he[KEY_NAME]
       if data_providers.include?(name)
         first_line = find_line_matching(/\s+name:\s+['"]?#{name}(?:[^\w]|$)/)
@@ -691,6 +701,9 @@ class HieraConfigV5 < HieraConfig
     defaults = config[KEY_DEFAULTS]
     validate_defaults(defaults) unless defaults.nil?
     config[KEY_HIERARCHY].each { |he| validate_hierarchy(he, defaults, owner) }
+    if config.include?(KEY_PLAN_HIERARCHY)
+      config[KEY_PLAN_HIERARCHY].each { |he| validate_hierarchy(he, defaults, owner) }
+    end
 
     if config.include?(KEY_DEFAULT_HIERARCHY)
       unless owner.is_a?(ModuleDataProvider)
