@@ -1959,9 +1959,26 @@ EOT
       is used for retrieval, so anything that is a valid file source can
       be used here.",
     },
+    :pluginsync => {
+      :default    => true,
+      :type       => :boolean,
+      :desc       => "Whether plugins should be synced with the central server. This setting is
+        deprecated.",
+      :hook => proc { |value|
+        #TRANSLATORS 'pluginsync' is a setting and should not be translated
+        Puppet.deprecation_warning(_("Setting 'pluginsync' is deprecated."))
+      }
+    },
     :pluginsignore => {
         :default  => ".svn CVS .git .hg",
         :desc     => "What files to ignore when pulling down plugins.",
+    },
+    :ignore_plugin_errors => {
+      :default    => true,
+      :type       => :boolean,
+      :desc       => "Whether the puppet run should ignore errors during pluginsync. If the setting
+        is false and there are errors during pluginsync, then the agent will abort the run and
+        submit a report containing information about the failed run."
     }
   )
 
