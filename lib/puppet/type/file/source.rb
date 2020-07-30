@@ -23,7 +23,7 @@ module Puppet
       * Fully qualified paths to locally available files (including files on NFS
       shares or Windows mapped drives).
       * `file:` URIs, which behave the same as local file paths.
-      * `http:` URIs, which point to files served by common web servers.
+      * `http(s):` URIs, which point to files served by common web servers.
 
       The normal form of a `puppet:` URI is:
 
@@ -44,11 +44,26 @@ module Puppet
       because HTTP servers do not transfer any metadata that translates to
       ownership or permission details.
 
-      The `http` source uses the server `Content-MD5` header as a checksum to
-      determine if the remote file has changed. If the server response does not
-      include that header, Puppet defaults to using the `Last-Modified` header.
-      Puppet will update the local file if the header is newer than the modified
-      time (mtime) of the local file.
+      Puppet determines if file content is synchronized by computing a checksum
+      for the local file and comparing it against the `checksum_value`
+      parameter. If the `checksum_value` parameter is not specified for
+      `puppet` and `file` sources, Puppet computes a checksum based on its
+      `Puppet[:digest_algorithm]`. For `http(s)` sources, Puppet uses the
+      first HTTP header it recognizes out of the following list:
+      `X-Checksum-Sha256`, `X-Checksum-Sha1`, `X-Checksum-Md5` or `Content-MD5`.
+      If the server response does not include one of these headers, Puppet
+      defaults to using the `Last-Modified` header. Puppet updates the local
+      file if the header is newer than the modified time (mtime) of the local
+      file.
+
+      _HTTP_ URIs can include a user information component so that Puppet can
+      retrieve file metadata and content from HTTP servers that require HTTP Basic
+      authentication. For example `https://<user>:<pass>@<server>:<port>/path/to/file.`
+
+      When connecting to _HTTPS_ servers, Puppet trusts CA certificates in the
+      puppet-agent certificate bundle and the Puppet CA. You can configure Puppet
+      to trust additional CA certificates using the `Puppet[:ssl_trust_store]`
+      setting.
 
       Multiple `source` values can be specified as an array, and Puppet will
       use the first source that exists. This can be used to serve different
