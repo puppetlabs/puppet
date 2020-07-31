@@ -927,6 +927,14 @@ The HTTP User\-Agent string to send when making network requests\.
 .
 .IP "" 0
 .
+.SS "ignore_plugin_errors"
+Whether the puppet run should ignore errors during pluginsync\. If the setting is false and there are errors during pluginsync, then the agent will abort the run and submit a report containing information about the failed run\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: true
+.
+.IP "" 0
+.
 .SS "ignoremissingtypes"
 Skip searching for classes and definitions that were missing during a prior compilation\. The list of missing objects is maintained per\-environment and persists until the environment is cleared or the master is restarted\.
 .
@@ -1432,6 +1440,14 @@ From where to retrieve plugins\. The standard Puppet \fBfile\fR type is used for
 .
 .IP "\(bu" 4
 \fIDefault\fR: puppet:///plugins
+.
+.IP "" 0
+.
+.SS "pluginsync"
+Whether plugins should be synced with the central server\. This setting is deprecated\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: true
 .
 .IP "" 0
 .
