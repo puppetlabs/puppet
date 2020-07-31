@@ -3,7 +3,7 @@ module Puppet::TrustedExternal
   def retrieve(certname)
     command = Puppet[:trusted_external_command]
     return nil unless command
-    Puppet.debug _("Retrieving trusted external data from %{command}") % {command: command}
+    Puppet.debug { _("Retrieving trusted external data from %{command}") % {command: command} }
     setting_type = Puppet.settings.setting(:trusted_external_command).type
     if setting_type == :file
       return fetch_data(command, certname)
@@ -17,7 +17,7 @@ module Puppet::TrustedExternal
       abs_path = Puppet::FileSystem.expand_path(file)
       executable_file = Puppet::FileSystem.file?(abs_path) && Puppet::FileSystem.executable?(abs_path)
       unless executable_file
-        Puppet.debug _("Skipping non-executable file %{file}")  % { file: abs_path }
+        Puppet.debug { _("Skipping non-executable file %{file}")  % { file: abs_path } }
         next
       end
       basename = file.basename(file.extname).to_s

@@ -62,7 +62,7 @@ describe Puppet::Util::CommandLine do
       it "should print the version and exit if #{arg} is given" do
         expect do
           described_class.new("puppet", [arg]).execute
-        end.to have_printed(/^#{Regexp.escape(Puppet.version)}$/)
+        end.to output(/^#{Regexp.escape(Puppet.version)}$/).to_stdout
       end
     end
 
@@ -73,7 +73,8 @@ describe Puppet::Util::CommandLine do
 
         expect {
           commandline.execute
-        }.to have_printed(/Usage: puppet <subcommand> \[options\] <action> \[options\]/).and_exit_with(0)
+        }.to exit_with(0)
+         .and output(/Usage: puppet <subcommand> \[options\] <action> \[options\]/).to_stdout
       end
     end
 
@@ -95,7 +96,8 @@ describe Puppet::Util::CommandLine do
 
       expect {
         commandline.execute
-      }.to have_printed(/Usage: puppet <subcommand> \[options\] <action> \[options\]/).and_exit_with(0)
+      }.to exit_with(0)
+       .and output(/Usage: puppet <subcommand> \[options\] <action> \[options\]/).to_stdout
     end
   end
 
@@ -124,7 +126,8 @@ describe Puppet::Util::CommandLine do
 
           expect {
             commandline.execute
-          }.to have_printed(/Unknown Puppet subcommand 'whatever'/).and_exit_with(1)
+          }.to exit_with(1)
+           .and output(/Unknown Puppet subcommand 'whatever'/).to_stdout
         end
 
         it "should abort and show the help message" do
@@ -134,7 +137,8 @@ describe Puppet::Util::CommandLine do
 
           expect {
             commandline.execute
-          }.to have_printed(/See 'puppet help' for help on available puppet subcommands/).and_exit_with(1)
+          }.to exit_with(1)
+           .and output(/See 'puppet help' for help on available puppet subcommands/).to_stdout
         end
 
         %w{--version -V}.each do |arg|
@@ -145,7 +149,8 @@ describe Puppet::Util::CommandLine do
 
             expect {
               commandline.execute
-            }.to have_printed(%r[^#{Regexp.escape(Puppet.version)}$]).and_exit_with(1)
+            }.to exit_with(1)
+             .and output(%r[^#{Regexp.escape(Puppet.version)}$]).to_stdout
           end
         end
       end

@@ -335,9 +335,10 @@ class Puppet::Node::Environment
   # @param name [String] The directory name
   def warn_about_mistaken_path(path, name)
     if name == "lib"
-      Puppet.debug("Warning: Found directory named 'lib' in module path ('#{path}/lib'); unless " +
-          "you are expecting to load a module named 'lib', your module path may be set " +
-          "incorrectly.")
+      Puppet.debug {
+        "Warning: Found directory named 'lib' in module path ('#{path}/lib'); unless you \
+        are expecting to load a module named 'lib', your module path may be set incorrectly."
+      }
     end
   end
 

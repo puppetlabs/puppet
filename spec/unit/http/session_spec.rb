@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'webmock/rspec'
 require 'puppet/http'
 
 describe Puppet::HTTP::Session do

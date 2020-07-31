@@ -33,17 +33,7 @@ describe "Puppet::Util::Windows::Process", :if => Puppet::Util::Platform.windows
   end
 
   describe "when reading environment variables" do
-    after :each do
-      # spec\integration\test\test_helper_spec.rb calls set_environment_strings
-      # after :all and thus needs access to the real APIs once again
-      allow(Puppet::Util::Windows::Process).to receive(:GetEnvironmentStringsW).and_call_original
-      allow(Puppet::Util::Windows::Process).to receive(:FreeEnvironmentStringsW).and_call_original
-    end
-
     it "will ignore only keys or values with corrupt byte sequences" do
-      arraydest = []
-      Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(arraydest))
-
       env_vars = {}
 
       # Create a UTF-16LE version of the below null separated environment string
@@ -61,9 +51,9 @@ describe "Puppet::Util::Windows::Process", :if => Puppet::Util::Platform.windows
         ptr.put_array_of_uchar(0, env_var_block_bytes)
 
         # stub the block of memory that the Win32 API would typically return via pointer
-        expect(Puppet::Util::Windows::Process).to receive(:GetEnvironmentStringsW).and_return(ptr)
+        allow(Puppet::Util::Windows::Process).to receive(:GetEnvironmentStringsW).and_return(ptr)
         # stub out the real API call to free memory, else process crashes
-        expect(Puppet::Util::Windows::Process).to receive(:FreeEnvironmentStringsW)
+        allow(Puppet::Util::Windows::Process).to receive(:FreeEnvironmentStringsW)
 
         env_vars = Puppet::Util::Windows::Process.get_environment_strings
       end
@@ -72,39 +62,43 @@ describe "Puppet::Util::Windows::Process", :if => Puppet::Util::Platform.windows
       expect(env_vars).to eq({'a' => 'b', 'c' => 'd', 'f' => 'g'})
 
       # and Puppet should emit a warning about it
-      expect(arraydest.last.level).to eq(:warning)
-      expect(arraydest.last.message).to eq("Discarding environment variable e=\uFFFD which contains invalid bytes")
+      expect(@logs.last.level).to eq(:warning)
+      expect(@logs.last.message).to eq("Discarding environment variable e=\uFFFD which contains invalid bytes")
     end
   end
 
   describe "when setting environment variables" do
-    it "can properly handle env var values with = in them" do
+    let(:name) { SecureRandom.uuid }
+
+    around :each do |example|
       begin
-        name = SecureRandom.uuid
-        value = 'foo=bar'
-
-        Puppet::Util::Windows::Process.set_environment_variable(name, value)
-
-        env = Puppet::Util::Windows::Process.get_environment_strings
-
-        expect(env[name]).to eq(value)
+        example.run
       ensure
         Puppet::Util::Windows::Process.set_environment_variable(name, nil)
       end
     end
 
-    it "can properly handle empty env var values" do
-      begin
-        name = SecureRandom.uuid
+    it "sets environment variables containing '='" do
+      value = 'foo=bar'
+      Puppet::Util::Windows::Process.set_environment_variable(name, value)
+      env = Puppet::Util::Windows::Process.get_environment_strings
 
-        Puppet::Util::Windows::Process.set_environment_variable(name, '')
+      expect(env[name]).to eq(value)
+    end
 
-        env = Puppet::Util::Windows::Process.get_environment_strings
+    it "sets environment variables contains spaces" do
+      Puppet::Util::Windows::Process.set_environment_variable(name, '')
+      env = Puppet::Util::Windows::Process.get_environment_strings
 
-        expect(env[name]).to eq('')
-      ensure
-        Puppet::Util::Windows::Process.set_environment_variable(name, nil)
-      end
+      expect(env[name]).to eq('')
+    end
+
+    it "sets environment variables containing UTF-8" do
+      rune_utf8 = "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7"
+      Puppet::Util::Windows::Process.set_environment_variable(name, rune_utf8)
+      env = Puppet::Util::Windows::Process.get_environment_strings
+
+      expect(env[name]).to eq(rune_utf8)
     end
   end
 end

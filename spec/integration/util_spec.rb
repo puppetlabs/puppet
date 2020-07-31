@@ -1,31 +1,8 @@
+# coding: utf-8
 require 'spec_helper'
 
 describe Puppet::Util do
   include PuppetSpec::Files
-
-  describe "#execute", unless: Puppet::Util::Platform.jruby? do
-    it "should properly allow stdout and stderr to share a file" do
-      command = "ruby -e '(1..10).each {|i| (i%2==0) ? $stdout.puts(i) : $stderr.puts(i)}'"
-
-      expect(Puppet::Util::Execution.execute(command, :combine => true).split).to match_array([*'1'..'10'])
-    end
-
-    it "should return output and set $CHILD_STATUS" do
-      command = "ruby -e 'puts \"foo\"; exit 42'"
-
-      output = Puppet::Util::Execution.execute(command, {:failonfail => false})
-
-      expect(output).to eq("foo\n")
-      expect($CHILD_STATUS.exitstatus).to eq(42)
-    end
-
-    it "should raise an error if non-zero exit status is returned" do
-      command = "ruby -e 'exit 43'"
-
-      expect { Puppet::Util::Execution.execute(command) }.to raise_error(Puppet::ExecutionFailure, /Execution of '#{command}' returned 43: /)
-      expect($CHILD_STATUS.exitstatus).to eq(43)
-    end
-  end
 
   describe "#replace_file on Windows", :if => Puppet::Util::Platform.windows? do
     it "replace_file should preserve original ACEs from existing replaced file on Windows" do
@@ -110,18 +87,15 @@ describe Puppet::Util do
   describe "#which on Windows", :if => Puppet::Util::Platform.windows? do
     let (:rune_utf8) { "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7" }
     let (:filename) { 'foo.exe' }
-    let (:filepath) { File.expand_path('C:\\' + rune_utf8 + '\\' + filename) }
-
-    before :each do
-      allow(FileTest).to receive(:file?).and_return(false)
-      allow(FileTest).to receive(:file?).with(filepath).and_return(true)
-
-      allow(FileTest).to receive(:executable?).and_return(false)
-      allow(FileTest).to receive(:executable?).with(filepath).and_return(true)
-    end
 
     it "should be able to use UTF8 characters in the path" do
-      path = "C:\\" + rune_utf8 + "#{File::PATH_SEPARATOR}c:\\windows\\system32#{File::PATH_SEPARATOR}c:\\windows"
+      utf8 = tmpdir(rune_utf8)
+      Puppet::FileSystem.mkpath(utf8)
+
+      filepath = File.join(utf8, filename)
+      Puppet::FileSystem.touch(filepath)
+
+      path = [utf8, "c:\\windows\\system32", "c:\\windows"].join(File::PATH_SEPARATOR)
       Puppet::Util.withenv( { "PATH" => path } , :windows) do
         expect(Puppet::Util.which(filename)).to eq(filepath)
       end

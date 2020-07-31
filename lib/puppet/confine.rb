@@ -67,7 +67,7 @@ class Puppet::Confine
   def valid?
     values.each do |value|
       unless pass?(value)
-        Puppet.debug(label + ": " + message(value))
+        Puppet.debug { label + ": " + message(value) }
         return false
       end
     end

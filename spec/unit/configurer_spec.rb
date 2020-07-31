@@ -1,6 +1,5 @@
 require 'spec_helper'
 require 'puppet/configurer'
-require 'webmock/rspec'
 
 describe Puppet::Configurer do
   before do
@@ -83,6 +82,26 @@ describe Puppet::Configurer do
       error = Net::HTTPError.new(400, 'dummy server communication error')
       expect(Puppet::Node.indirection).to receive(:find).and_raise(error)
       expect(configurer.run).to eq(0)
+    end
+
+    it "fails the run if pluginsync fails when usecacheonfailure is false" do
+      Puppet[:ignore_plugin_errors] = false
+
+      # --test implies these, set them so we don't fall back to a cached catalog
+      Puppet[:use_cached_catalog] = false
+      Puppet[:usecacheonfailure] = false
+
+      body = "{\"message\":\"Not Found: Could not find environment 'fasdfad'\",\"issue_kind\":\"RUNTIME_ERROR\"}"
+      stub_request(:get, %r{/puppet/v3/file_metadatas/pluginfacts}).to_return(
+        status: 404, body: body, headers: {'Content-Type' => 'application/json'}
+      )
+      stub_request(:get, %r{/puppet/v3/file_metadata/pluginfacts}).to_return(
+        status: 404, body: body, headers: {'Content-Type' => 'application/json'}
+      )
+
+      configurer.run(pluginsync: true)
+
+      expect(@logs).to include(an_object_having_attributes(level: :err, message: %r{Failed to apply catalog: Failed to retrieve pluginfacts: Could not retrieve information from environment production source\(s\) puppet:///pluginfacts}))
     end
 
     it "applies a cached catalog when it can't connect to the master" do
@@ -534,6 +553,15 @@ describe Puppet::Configurer do
     end
   end
 
+  def expects_pluginsync
+    metadata = "[{\"path\":\"/etc/puppetlabs/code\",\"relative_path\":\".\",\"links\":\"follow\",\"owner\":0,\"group\":0,\"mode\":420,\"checksum\":{\"type\":\"ctime\",\"value\":\"{ctime}2020-07-10 14:00:00 -0700\"},\"type\":\"directory\",\"destination\":null}]"
+    stub_request(:get, %r{/puppet/v3/file_metadatas/(plugins|locales)}).to_return(status: 200, body: metadata, headers: {'Content-Type' => 'application/json'})
+
+    # response retains owner/group/mode due to source_permissions => use
+    facts_metadata = "[{\"path\":\"/etc/puppetlabs/code\",\"relative_path\":\".\",\"links\":\"follow\",\"owner\":500,\"group\":500,\"mode\":493,\"checksum\":{\"type\":\"ctime\",\"value\":\"{ctime}2020-07-10 14:00:00 -0700\"},\"type\":\"directory\",\"destination\":null}]"
+    stub_request(:get, %r{/puppet/v3/file_metadatas/pluginfacts}).to_return(status: 200, body: facts_metadata, headers: {'Content-Type' => 'application/json'})
+  end
+
   def expects_new_catalog_only(catalog)
     expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_return(catalog)
     expect(Puppet::Resource::Catalog.indirection).not_to receive(:find).with(anything, hash_including(ignore_terminus: true))
@@ -550,6 +578,7 @@ describe Puppet::Configurer do
   end
 
   def expects_fallback_to_new_catalog(catalog)
+    expects_pluginsync
     expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_terminus: true)).and_return(nil)
     expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_return(catalog)
   end
@@ -586,7 +615,6 @@ describe Puppet::Configurer do
       it "should make a node request and pluginsync when a cached catalog cannot be retrieved" do
         expect(Puppet::Node.indirection).to receive(:find).and_return(nil)
         expects_fallback_to_new_catalog(catalog)
-        expect(configurer).to receive(:download_plugins)
 
         configurer.run
       end
@@ -624,6 +652,7 @@ describe Puppet::Configurer do
       it "should not attempt to retrieve a cached catalog again if the first attempt failed" do
         expect(Puppet::Node.indirection).to receive(:find).and_return(nil)
         expects_neither_new_or_cached_catalog
+        expects_pluginsync
 
         # after failing to use a cached catalog, we'll need to pluginsync before getting
         # a new catalog, which also fails.
@@ -644,8 +673,7 @@ describe Puppet::Configurer do
       end
 
       it "applies the catalog passed as options when the catalog cache terminus is not set" do
-        stub_request(:get, %r{/puppet/v3/file_metadatas?/plugins}).to_return(:status => 404)
-        stub_request(:get, %r{/puppet/v3/file_metadatas?/pluginfacts}).to_return(:status => 404)
+        expects_pluginsync
 
         catalog.add_resource(Puppet::Resource.new('notify', 'from apply'))
         configurer.run(catalog: catalog.to_ral)

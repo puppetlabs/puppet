@@ -50,6 +50,28 @@ describe Puppet::Util::Execution, unless: Puppet::Util::Platform.jruby? do
       Puppet::Util::Execution.execute(str, sensitive: true)
       expect(@logs).to include(an_object_having_attributes(level: :debug, message: "Executing: '[redacted]'"))
     end
+
+    it "allows stdout and stderr to share a file" do
+      command = "ruby -e '(1..10).each {|i| (i%2==0) ? $stdout.puts(i) : $stderr.puts(i)}'"
+
+      expect(Puppet::Util::Execution.execute(command, :combine => true).split).to match_array([*'1'..'10'])
+    end
+
+    it "returns output and set $CHILD_STATUS" do
+      command = "ruby -e 'puts \"foo\"; exit 42'"
+
+      output = Puppet::Util::Execution.execute(command, {:failonfail => false})
+
+      expect(output).to eq("foo\n")
+      expect($CHILD_STATUS.exitstatus).to eq(42)
+    end
+
+    it "raises an error if non-zero exit status is returned" do
+      command = "ruby -e 'exit 43'"
+
+      expect { Puppet::Util::Execution.execute(command) }.to raise_error(Puppet::ExecutionFailure, /Execution of '#{command}' returned 43: /)
+      expect($CHILD_STATUS.exitstatus).to eq(43)
+    end
   end
 
   describe "#execute (non-Windows)", :if => !Puppet::Util::Platform.windows? do

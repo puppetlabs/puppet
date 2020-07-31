@@ -13,9 +13,9 @@ module Puppet::ModuleTranslations
 
       module_name = mod.forge_name.tr('/', '-')
       if Puppet::GettextConfig.load_translations(module_name, mod.locale_directory, :po)
-        Puppet.debug "Loaded translations for #{module_name}."
+        Puppet.debug { "Loaded translations for #{module_name}." }
       elsif Puppet::GettextConfig.gettext_loaded?
-        Puppet.debug "Could not find translation files for #{module_name} at #{mod.locale_directory}. Skipping translation initialization."
+        Puppet.debug { "Could not find translation files for #{module_name} at #{mod.locale_directory}. Skipping translation initialization." }
       else
         Puppet.warn_once("gettext_unavailable", "gettext_unavailable", "No gettext library found, skipping translation initialization.")
       end
@@ -31,9 +31,9 @@ module Puppet::ModuleTranslations
     Dir.glob("#{vardir}/locales/#{locale}/*.po") do |f|
       module_name = File.basename(f, ".po")
       if Puppet::GettextConfig.load_translations(module_name, File.join(vardir, "locales"), :po)
-        Puppet.debug "Loaded translations for #{module_name}."
+        Puppet.debug { "Loaded translations for #{module_name}." }
       elsif Puppet::GettextConfig.gettext_loaded?
-        Puppet.debug "Could not load translations for #{module_name}."
+        Puppet.debug { "Could not load translations for #{module_name}." }
       else
         Puppet.warn_once("gettext_unavailable", "gettext_unavailable", "No gettext library found, skipping translation initialization.")
       end

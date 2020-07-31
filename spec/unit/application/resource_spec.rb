@@ -51,7 +51,9 @@ describe Puppet::Application::Resource do
       # provider is a parameter that should always be available
       @resource_app.extra_params = [ :provider ]
 
-      expect { @resource_app.main }.to have_printed(/provider\s+=>/)
+      expect {
+        @resource_app.main
+      }.to output(/provider\s+=>/).to_stdout
     end
   end
 

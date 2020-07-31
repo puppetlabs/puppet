@@ -571,10 +571,9 @@ describe Puppet::Application::Agent do
         allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_request).and_return(nil)
 
         expect {
-          expect {
-            @puppetd.fingerprint
-          }.to exit_with(1)
-        }.to output(/Fingerprint asked but neither the certificate, nor the certificate request have been issued/).to_stderr
+          @puppetd.fingerprint
+        }.to exit_with(1)
+         .and output(/Fingerprint asked but neither the certificate, nor the certificate request have been issued/).to_stderr
       end
 
       it "should log an error if an exception occurs" do

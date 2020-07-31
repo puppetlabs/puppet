@@ -54,10 +54,11 @@ describe Puppet::Confine do
     end
 
     it "should log failing confines with the label and message" do
+      Puppet[:log_level] = 'debug'
       allow(@confine).to receive(:pass?).and_return(false)
       expect(@confine).to receive(:message).and_return("My message")
       expect(@confine).to receive(:label).and_return("Mylabel")
-      expect(Puppet).to receive(:debug).with("Mylabel: My message")
+      expect(Puppet).to receive(:debug) { |&b| expect(b.call).to eq("Mylabel: My message") }
       @confine.valid?
     end
   end

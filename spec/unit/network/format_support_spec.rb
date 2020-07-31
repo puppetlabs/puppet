@@ -67,8 +67,9 @@ describe Puppet::Network::FormatHandler do
       end
 
       it "should log a debug message" do
-        expect(Puppet).to receive(:debug).with("Value of 'preferred_serialization_format' (unsupported) is invalid for FormatTester, using default (two)")
-        expect(Puppet).to receive(:debug).with("FormatTester supports formats: two one")
+        Puppet[:log_level] = 'debug'
+        expect(Puppet).to receive(:debug) { |&b| expect(b.call).to eq("Value of 'preferred_serialization_format' (unsupported) is invalid for FormatTester, using default (two)") }
+        expect(Puppet).to receive(:debug) { |&b| expect(b.call).to eq("FormatTester supports formats: two one") }
         FormatTester.supported_formats
       end
     end

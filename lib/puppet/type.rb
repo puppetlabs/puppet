@@ -1212,8 +1212,9 @@ class Type
         title = instance.respond_to?(:title) ? instance.title : instance.name
         other = provider_instances[title]
         if other
-          Puppet.debug "%s %s found in both %s and %s; skipping the %s version" %
-            [self.name.to_s.capitalize, title, other.class.name, instance.class.name, instance.class.name]
+          Puppet.debug {
+            "%s %s found in both %s and %s; skipping the %s version" % [self.name.to_s.capitalize, title, other.class.name, instance.class.name, instance.class.name]
+          }
           next
         end
         provider_instances[title] = instance
@@ -1895,7 +1896,7 @@ end
     name = name.intern
 
     if unprovide(name)
-      Puppet.debug "Reloading #{name} #{self.name} provider"
+      Puppet.debug { "Reloading #{name} #{self.name} provider" }
     end
 
     pname = options[:parent]

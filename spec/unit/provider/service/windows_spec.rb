@@ -127,6 +127,34 @@ describe 'Puppet::Type::Service::Provider::Windows',
         expect(provider.status).to eq(:running)
       end
     end
+
+    context 'when querying lmhosts', if: Puppet::Util::Platform.windows? do
+      # This service should be ubiquitous across all supported Windows platforms
+      let(:service) { Puppet::Type.type(:service).new(:name => 'lmhosts') }
+
+      before :each do
+        allow(service_util).to receive(:exists?).with(service.name).and_call_original
+      end
+
+      it "reports if the service is enabled" do
+        expect([:true, :false, :manual]).to include(service.provider.enabled?)
+      end
+
+      it "reports on the service status" do
+        expect(
+          [
+            :running,
+            :'continue pending',
+            :'pause pending',
+            :paused,
+            :running,
+            :'start pending',
+            :'stop pending',
+            :stopped
+          ]
+        ).to include(service.provider.status)
+      end
+    end
   end
 
   describe "#restart" do

@@ -47,7 +47,7 @@ class EnvironmentContext < Adaptable::Adapter
     file_data = @file_data_cache[path]
     stat = Puppet::FileSystem.stat(path)
     unless file_data && file_data.valid?(stat)
-      Puppet.debug("File at '#{path}' was changed, reloading") if file_data
+      Puppet.debug { "File at '#{path}' was changed, reloading" } if file_data
       content = Puppet::FileSystem.read(path, :encoding => 'utf-8')
       file_data = FileData.new(path, stat.ino, stat.mtime, stat.size, block_given? ? yield(content) : content)
       @file_data_cache[path] = file_data

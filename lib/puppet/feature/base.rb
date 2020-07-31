@@ -63,7 +63,7 @@ Puppet.features.add(:manages_symlinks) do
 
           true
         rescue LoadError
-          Puppet.debug("CreateSymbolicLink is not available")
+          Puppet.debug { "CreateSymbolicLink is not available" }
           false
         end
       end
