@@ -1,4 +1,8 @@
 module Puppet
+  module HTTP
+    require 'puppet/http/proxy'
+  end
+
   module Network
     module HTTP
       require 'puppet/network/http/site'

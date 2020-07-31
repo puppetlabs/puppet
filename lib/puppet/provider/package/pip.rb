@@ -4,7 +4,6 @@
 require 'puppet/util/package/version/pip'
 require 'puppet/util/package/version/range'
 require 'puppet/provider/package_targetable'
-require 'puppet/util/http_proxy'
 
 Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package::Targetable do
 
