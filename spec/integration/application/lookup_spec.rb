@@ -90,6 +90,19 @@ describe 'lookup' do
       expect(lookup('a')).to eql('value a')
     end
 
+    it 'loads external facts when running without --node' do
+      expect(Puppet::Util).not_to receive(:skip_external_facts)
+      expect(Facter).not_to receive(:load_external)
+      lookup('a')
+    end
+
+    it 'skip loading of external facts when run with --node' do
+      app.options[:node] = "random_node"
+      expect(Facter).to receive(:load_external).once.with(false)
+      expect(Facter).to receive(:load_external).once.with(true)
+      lookup('a')
+    end
+
     context 'uses node_terminus' do
       require 'puppet/indirector/node/exec'
       require 'puppet/indirector/node/plain'
