@@ -72,6 +72,88 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet::Util::
     end
   end
 
+  describe "when setting roles" do
+    context "when role_membership => minimum" do
+      before :each do
+        resource[:role_membership] = :minimum
+      end
+
+      it "should set the given role when user has no roles" do
+        allow(Puppet::Util::Windows::User).to receive(:get_rights).and_return('')
+
+        expect(Puppet::Util::Windows::User).to receive(:set_rights).with('testuser', ['givenRole1']).and_return(nil)
+        provider.roles = 'givenRole1'
+      end
+
+      it "should set only the misssing role when user already has other roles" do
+        allow(Puppet::Util::Windows::User).to receive(:get_rights).and_return('givenRole1')
+
+        expect(Puppet::Util::Windows::User).to receive(:set_rights).with('testuser', ['givenRole2']).and_return(nil)
+        provider.roles = 'givenRole1,givenRole2'
+      end
+
+      it "should never remove any roles" do
+        allow(Puppet::Util::Windows::User).to receive(:get_rights).and_return('givenRole1')
+        allow(Puppet::Util::Windows::User).to receive(:set_rights).and_return(nil)
+
+        expect(Puppet::Util::Windows::User).not_to receive(:remove_rights)
+        provider.roles = 'givenRole1,givenRole2'
+      end
+    end
+
+    context "when role_membership => inclusive" do
+      before :each do
+        resource[:role_membership] = :inclusive
+      end
+
+      it "should remove the unwanted role" do
+        allow(Puppet::Util::Windows::User).to receive(:get_rights).and_return('givenRole1,givenRole2')
+
+        expect(Puppet::Util::Windows::User).to receive(:remove_rights).with('testuser', ['givenRole2']).and_return(nil)
+        provider.roles = 'givenRole1'
+      end
+
+      it "should add the missing role and remove the unwanted one" do
+        allow(Puppet::Util::Windows::User).to receive(:get_rights).and_return('givenRole1,givenRole2')
+
+        expect(Puppet::Util::Windows::User).to receive(:set_rights).with('testuser', ['givenRole3']).and_return(nil)
+        expect(Puppet::Util::Windows::User).to receive(:remove_rights).with('testuser', ['givenRole2']).and_return(nil)
+        provider.roles = 'givenRole1,givenRole3'
+      end
+
+      it "should not set any roles when the user already has given role" do
+        allow(Puppet::Util::Windows::User).to receive(:get_rights).and_return('givenRole1,givenRole2')
+        allow(Puppet::Util::Windows::User).to receive(:remove_rights).with('testuser', ['givenRole2']).and_return(nil)
+
+        expect(Puppet::Util::Windows::User).not_to receive(:set_rights)
+        provider.roles = 'givenRole1'
+      end
+
+      it "should set the given role when user has no roles" do
+        allow(Puppet::Util::Windows::User).to receive(:get_rights).and_return('')
+
+        expect(Puppet::Util::Windows::User).to receive(:set_rights).with('testuser', ['givenRole1']).and_return(nil)
+        provider.roles = 'givenRole1'
+      end
+
+      it "should not remove any roles when user has no roles" do
+        allow(Puppet::Util::Windows::User).to receive(:get_rights).and_return('')
+        allow(Puppet::Util::Windows::User).to receive(:set_rights).with('testuser', ['givenRole1']).and_return(nil)
+
+        expect(Puppet::Util::Windows::User).not_to receive(:remove_rights)
+        provider.roles = 'givenRole1'
+      end
+
+      it "should remove all roles when none given" do
+        allow(Puppet::Util::Windows::User).to receive(:get_rights).and_return('givenRole1,givenRole2')
+
+        expect(Puppet::Util::Windows::User).not_to receive(:set_rights)
+        expect(Puppet::Util::Windows::User).to receive(:remove_rights).with('testuser', ['givenRole1', 'givenRole2']).and_return(nil)
+        provider.roles = ''
+      end
+    end
+  end
+
   describe "#groups_insync?" do
     let(:group1) { double(:account => 'group1', :domain => '.', :sid => 'group1sid') }
     let(:group2) { double(:account => 'group2', :domain => '.', :sid => 'group2sid') }
