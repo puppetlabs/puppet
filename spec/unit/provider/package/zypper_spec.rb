@@ -309,5 +309,19 @@ describe Puppet::Type.type(:package).provider(:zypper) do
 
       it { is_expected.to be false }
     end
+
+    context 'when using eq range' do
+      context 'when ensure without release' do
+        before { allow(@resource).to receive(:[]).with(:ensure).and_return('1.19') }
+
+        it { is_expected.to be true }
+      end
+
+      context 'when ensure with release' do
+        before { allow(@resource).to receive(:[]).with(:ensure).and_return('1.19-2') }
+
+        it { is_expected.to be true }
+      end
+    end
   end
 end
