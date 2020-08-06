@@ -187,6 +187,9 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
     if should.is_a?(String)
       begin
         should_version = Puppet::Util::Package::Version::Range.parse(should, Puppet::Util::Package::Version::Rpm)
+        if should_version.is_a?(RPM_VERSION_RANGE::Eq)
+          return super
+        end
       rescue Puppet::Util::Package::Version::Range::ValidationFailure, Puppet::Util::Package::Version::Rpm::ValidationFailure
         Puppet.debug("Cannot parse #{should} as a RPM version range")
         return super
