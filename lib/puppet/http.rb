@@ -1,16 +1,6 @@
 module Puppet
-  module HTTP
-    require 'puppet/http/proxy'
-  end
-
   module Network
     module HTTP
-      require 'puppet/network/http/site'
-      require 'puppet/network/http/session'
-      require 'puppet/network/http/factory'
-      require 'puppet/network/http/base_pool'
-      require 'puppet/network/http/nocache_pool'
-      require 'puppet/network/http/pool'
       require 'puppet/network/resolver'
     end
   end
@@ -21,6 +11,11 @@ module Puppet
     HEADER_PUPPET_VERSION = "X-Puppet-Version".freeze
 
     require 'puppet/http/errors'
+    require 'puppet/http/site'
+    require 'puppet/http/pool_entry'
+    require 'puppet/http/proxy'
+    require 'puppet/http/factory'
+    require 'puppet/http/pool'
     require 'puppet/http/response'
     require 'puppet/http/service'
     require 'puppet/http/service/ca'

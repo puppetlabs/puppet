@@ -1,14 +1,14 @@
 require 'spec_helper'
 
-require 'puppet/network/http'
+require 'puppet/http'
 
-describe Puppet::Network::HTTP::Site do
+describe Puppet::HTTP::Site do
   let(:scheme)      { 'https' }
   let(:host)        { 'rubygems.org' }
   let(:port)        { 443 }
 
   def create_site(scheme, host, port)
-    Puppet::Network::HTTP::Site.new(scheme, host, port)
+    described_class.new(scheme, host, port)
   end
 
   it 'accepts scheme, host, and port' do

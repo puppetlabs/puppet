@@ -1,15 +1,15 @@
 require 'puppet/ssl/openssl_loader'
 require 'net/http'
-require 'puppet/http/proxy'
+require 'puppet/http'
 
 # Factory for <tt>Net::HTTP</tt> objects.
 #
 # Encapsulates the logic for creating a <tt>Net::HTTP</tt> object based on the
-# specified {Puppet::Network::HTTP::Site Site} and puppet settings.
+# specified {Puppet::HTTP::Site Site} and puppet settings.
 #
 # @api private
 #
-class Puppet::Network::HTTP::Factory
+class Puppet::HTTP::Factory
   @@openssl_initialized = false
 
   KEEP_ALIVE_TIMEOUT = 2**31 - 1

@@ -1,15 +1,15 @@
 require 'spec_helper'
 
-require 'puppet/network/http'
+require 'puppet/http'
 
-describe Puppet::Network::HTTP::Session do
+describe Puppet::HTTP::PoolEntry do
   let(:connection) { double('connection') }
   let(:verifier) { double('verifier') }
 
   def create_session(connection, expiration_time = nil)
     expiration_time ||= Time.now + 60 * 60
 
-    Puppet::Network::HTTP::Session.new(connection, verifier, expiration_time)
+    described_class.new(connection, verifier, expiration_time)
   end
 
   it 'provides access to its connection' do

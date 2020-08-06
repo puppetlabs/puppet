@@ -194,7 +194,6 @@ class Puppet::Configurer
   # This just passes any options on to the catalog,
   # which accepts :tags and :ignoreschedules.
   def run(options = {})
-    pool = Puppet.runtime[:http].pool
     # We create the report pre-populated with default settings for
     # environment and transaction_uuid very early, this is to ensure
     # they are sent regardless of any catalog compilation failures or
@@ -207,28 +206,27 @@ class Puppet::Configurer
 
     completed = nil
     begin
-      Puppet.override(:http_pool => pool) do
-        # Skip failover logic if the server_list setting is empty
-        do_failover = Puppet.settings[:server_list] && !Puppet.settings[:server_list].empty?
+      # Skip failover logic if the server_list setting is empty
+      do_failover = Puppet.settings[:server_list] && !Puppet.settings[:server_list].empty?
 
-        # When we are passed a catalog, that means we're in apply
-        # mode. We shouldn't try to do any failover in that case.
-        if options[:catalog].nil? && do_failover
-          server, port = find_functional_server
-          if server.nil?
-            raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet.settings.value(:server_list, Puppet[:environment].to_sym, true) }
-          else
-            report.master_used = "#{server}:#{port}"
-          end
-          Puppet.override(server: server, serverport: port) do
-            completed = run_internal(options)
-          end
+      # When we are passed a catalog, that means we're in apply
+      # mode. We shouldn't try to do any failover in that case.
+      if options[:catalog].nil? && do_failover
+        server, port = find_functional_server
+        if server.nil?
+          raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet.settings.value(:server_list, Puppet[:environment].to_sym, true) }
         else
+          report.master_used = "#{server}:#{port}"
+        end
+        Puppet.override(server: server, serverport: port) do
           completed = run_internal(options)
         end
+      else
+        completed = run_internal(options)
       end
     ensure
-      pool.close
+      # we may sleep for awhile, close connections now
+      Puppet.runtime[:http].close
     end
 
     completed ? report.exit_status : nil

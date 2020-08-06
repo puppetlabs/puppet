@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'puppet/http'
 
-describe Puppet::Network::HTTP::Factory do
+describe Puppet::HTTP::Factory do
   before(:all) do
     ENV['http_proxy'] = nil
     ENV['HTTP_PROXY'] = nil
@@ -11,11 +11,10 @@ describe Puppet::Network::HTTP::Factory do
     Puppet::SSL::CertificateRequest.indirection.terminus_class = :memory
   end
 
-  let(:site) { Puppet::Network::HTTP::Site.new('https', 'www.example.com', 443) }
+  let(:site) { Puppet::HTTP::Site.new('https', 'www.example.com', 443) }
 
   def create_connection(site)
-    factory = Puppet::Network::HTTP::Factory.new
-
+    factory = described_class.new
     factory.create_connection(site)
   end
 

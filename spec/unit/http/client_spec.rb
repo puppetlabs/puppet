@@ -771,7 +771,7 @@ describe Puppet::HTTP::Client do
     it "should close the connection before sleeping" do
       retry_after('42')
 
-      site = Puppet::Network::HTTP::Site.from_uri(uri)
+      site = Puppet::HTTP::Site.from_uri(uri)
 
       http1 = Net::HTTP.new(site.host, site.port)
       http1.use_ssl = true
@@ -781,8 +781,7 @@ describe Puppet::HTTP::Client do
       http2.use_ssl = true
       allow(http2).to receive(:started?).and_return(true)
 
-
-      pool = Puppet::Network::HTTP::Pool.new(15)
+      pool = Puppet::HTTP::Pool.new(15)
       client = Puppet::HTTP::Client.new(pool: pool)
 
       # The "with_connection" method is required to yield started connections

@@ -1,5 +1,5 @@
 # A pool for persistent <tt>Net::HTTP</tt> connections. Connections are
-# stored in the pool indexed by their {Puppet::Network::HTTP::Site Site}.
+# stored in the pool indexed by their {Puppet::HTTP::Site Site}.
 # Connections are borrowed from the pool, yielded to the caller, and
 # released back into the pool. If a connection is expired, it will be
 # closed either when a connection to that site is requested, or when
@@ -8,12 +8,12 @@
 #
 # @api private
 #
-class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
+class Puppet::HTTP::Pool
   attr_reader :factory, :keepalive_timeout
 
   def initialize(keepalive_timeout)
     @pool = {}
-    @factory = Puppet::Network::HTTP::Factory.new
+    @factory = Puppet::HTTP::Factory.new
     @keepalive_timeout = keepalive_timeout
   end
 
@@ -40,9 +40,9 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   end
 
   def close
-    @pool.each_pair do |site, sessions|
-      sessions.each do |session|
-        close_connection(site, session.connection)
+    @pool.each_pair do |site, entries|
+      entries.each do |entry|
+        close_connection(site, entry.connection)
       end
     end
     @pool.clear
@@ -52,6 +52,25 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   def pool
     @pool
   end
+
+  # Start a persistent connection
+  #
+  # @api private
+  def start(site, verifier, http)
+    Puppet.debug("Starting connection for #{site}")
+    if site.use_ssl?
+      verifier.setup_connection(http)
+      begin
+        http.start
+        print_ssl_info(http) if Puppet::Util::Log.sendlevel?(:debug)
+      rescue OpenSSL::SSL::SSLError => error
+        verifier.handle_connection_error(http, error)
+      end
+    else
+      http.start
+    end
+  end
+
 
   # Safely close a persistent connection.
   # Don't try to close a connection that's already closed.
@@ -72,17 +91,17 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   #
   # @api private
   def borrow(site, verifier)
-    @pool[site] = active_sessions(site)
-    index = @pool[site].index do |session|
-      (verifier.nil? && session.verifier.nil?) ||
-        (!verifier.nil? && verifier.reusable?(session.verifier))
+    @pool[site] = active_entries(site)
+    index = @pool[site].index do |entry|
+      (verifier.nil? && entry.verifier.nil?) ||
+        (!verifier.nil? && verifier.reusable?(entry.verifier))
     end
-    session = index ? @pool[site].delete_at(index) : nil
-    if session
+    entry = index ? @pool[site].delete_at(index) : nil
+    if entry
       @pool.delete(site) if @pool[site].empty?
 
       Puppet.debug("Using cached connection for #{site}")
-      session.connection
+      entry.connection
     else
       http = @factory.create_connection(site)
 
@@ -107,31 +126,48 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   # @api private
   def release(site, verifier, http)
     expiration = Time.now + @keepalive_timeout
-    session = Puppet::Network::HTTP::Session.new(http, verifier, expiration)
+    entry = Puppet::HTTP::PoolEntry.new(http, verifier, expiration)
     Puppet.debug("Caching connection for #{site}")
 
-    sessions = @pool[site]
-    if sessions
-      sessions.unshift(session)
+    entries = @pool[site]
+    if entries
+      entries.unshift(entry)
     else
-      @pool[site] = [session]
+      @pool[site] = [entry]
     end
   end
 
-  # Returns an Array of sessions whose connections are not expired.
+  # Returns an Array of entries whose connections are not expired.
   #
   # @api private
-  def active_sessions(site)
+  def active_entries(site)
     now = Time.now
 
-    sessions = @pool[site] || []
-    sessions.select do |session|
-      if session.expired?(now)
-        close_connection(site, session.connection)
+    entries = @pool[site] || []
+    entries.select do |entry|
+      if entry.expired?(now)
+        close_connection(site, entry.connection)
         false
       else
         true
       end
     end
+  end
+
+  private
+
+  def print_ssl_info(http)
+    buffered_io = http.instance_variable_get(:@socket)
+    return unless buffered_io
+
+    socket = buffered_io.io
+    return unless socket
+
+    cipher = if Puppet::Util::Platform.jruby?
+               socket.cipher
+             else
+               socket.cipher.first
+             end
+    Puppet.debug("Using #{socket.ssl_version} with cipher #{cipher}")
   end
 end
