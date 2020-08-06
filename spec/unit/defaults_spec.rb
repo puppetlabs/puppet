@@ -181,38 +181,4 @@ describe "Defaults" do
       end
     end
   end
-
-  describe "facterng" do
-    it "defaults to false" do
-      expect(Puppet[:facterng]).to be_falsey
-    end
-
-    it "raises an exception if facter-ng could not be loaded" do
-      allow_any_instance_of(Puppet::Settings::BooleanSetting).to receive(:require).with('facter-ng').and_raise(LoadError)
-
-      expect{ Puppet.settings[:facterng] = true }.to raise_exception ArgumentError, 'facter-ng could not be loaded'
-    end
-
-    context 'set logger' do
-      before do
-        @original_facter = Object.const_get(:Facter)
-
-        Object.send(:remove_const, :Facter)
-        Object.const_set(:Facter, Module.new)
-
-        allow_any_instance_of(Puppet::Settings::BooleanSetting).to receive(:require).with('facter-ng').and_return(true)
-        allow(Facter).to receive(:respond_to?).and_return(false)
-      end
-
-      after do
-        Object.const_set(:Facter, @original_facter)
-      end
-
-      it 'calls setup_facter_logging!' do
-        allow(Puppet::Util::Logging).to receive(:setup_facter_logging!).and_return(true)
-        Puppet.settings[:facterng] = true
-        expect(Puppet::Util::Logging).to have_received(:setup_facter_logging!).once
-      end
-    end
-  end
 end
