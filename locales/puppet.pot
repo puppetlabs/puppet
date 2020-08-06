@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.17.0-134-gc6e708372c\n"
+"Project-Id-Version: Puppet automation framework 6.17.0-151-g0e5139e2c3\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-08-06 13:13+0000\n"
-"PO-Revision-Date: 2020-08-06 13:13+0000\n"
+"POT-Creation-Date: 2020-08-06 23:27+0000\n"
+"PO-Revision-Date: 2020-08-06 23:27+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -57,12 +57,12 @@ msgid "The environmentpath setting cannot be empty or nil."
 msgstr ""
 
 #. TRANSLATORS: `message` is an already translated string of why SSL failed to initialize
-#: ../lib/puppet.rb:257
+#: ../lib/puppet.rb:256
 msgid "Failed to initialize SSL: %{message}"
 msgstr ""
 
 #. TRANSLATORS: `puppet agent -t` is a command and should not be translated
-#: ../lib/puppet.rb:259
+#: ../lib/puppet.rb:258
 msgid "Run `puppet agent -t`"
 msgstr ""
 
@@ -284,23 +284,23 @@ msgstr ""
 msgid "No device found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:316
+#: ../lib/puppet/application/device.rb:314
 msgid "retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:331
+#: ../lib/puppet/application/device.rb:329
 msgid "retrieving facts from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:354
+#: ../lib/puppet/application/device.rb:352
 msgid "starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:392 ../lib/puppet/application/resource.rb:196
+#: ../lib/puppet/application/device.rb:388 ../lib/puppet/application/resource.rb:196
 msgid "You must specify the type to display"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:393 ../lib/puppet/application/resource.rb:197
+#: ../lib/puppet/application/device.rb:389 ../lib/puppet/application/resource.rb:197
 msgid "Could not find type %{type}"
 msgstr ""
 
@@ -560,77 +560,77 @@ msgstr ""
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:219 ../lib/puppet/http/resolver/server_list.rb:68
+#: ../lib/puppet/configurer.rb:217 ../lib/puppet/http/resolver/server_list.rb:68
 msgid "Could not select a functional puppet master from server_list: '%{server_list}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:256
+#: ../lib/puppet/configurer.rb:254
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:301
+#: ../lib/puppet/configurer.rb:299
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:316
+#: ../lib/puppet/configurer.rb:314
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:320
+#: ../lib/puppet/configurer.rb:318
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:348
+#: ../lib/puppet/configurer.rb:346
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:359
+#: ../lib/puppet/configurer.rb:357
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:361
+#: ../lib/puppet/configurer.rb:359
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:402
+#: ../lib/puppet/configurer.rb:400
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:431 ../lib/puppet/http/resolver/server_list.rb:89
+#: ../lib/puppet/configurer.rb:429 ../lib/puppet/http/resolver/server_list.rb:89
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:435 ../lib/puppet/http/resolver/server_list.rb:95
+#: ../lib/puppet/configurer.rb:433 ../lib/puppet/http/resolver/server_list.rb:95
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:446 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:444 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:455
+#: ../lib/puppet/configurer.rb:453
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:474
+#: ../lib/puppet/configurer.rb:472
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:482
+#: ../lib/puppet/configurer.rb:480
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:497
+#: ../lib/puppet/configurer.rb:495
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:515
+#: ../lib/puppet/configurer.rb:513
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:536
+#: ../lib/puppet/configurer.rb:534
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -698,43 +698,43 @@ msgstr ""
 msgid "a data type can only have one implementation"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:178
+#: ../lib/puppet/defaults.rb:156
 msgid "Cannot disable unrecognized warning types '%{invalid}'."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:179
+#: ../lib/puppet/defaults.rb:157
 msgid "Valid values are '%{values}'."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:546
+#: ../lib/puppet/defaults.rb:524
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:548
+#: ../lib/puppet/defaults.rb:526
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:747
+#: ../lib/puppet/defaults.rb:725
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:830
+#: ../lib/puppet/defaults.rb:808
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1024
+#: ../lib/puppet/defaults.rb:1002
 msgid "Setting 'ssl_client_ca_auth' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1103 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1081 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1969
+#: ../lib/puppet/defaults.rb:1947
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -1481,11 +1481,11 @@ msgid ""
 "      the files downloaded, which will be empty if none were retrieved.\n"
 msgstr ""
 
-#: ../lib/puppet/face/plugin.rb:57
+#: ../lib/puppet/face/plugin.rb:54
 msgid "No plugins downloaded."
 msgstr ""
 
-#: ../lib/puppet/face/plugin.rb:59
+#: ../lib/puppet/face/plugin.rb:56
 msgid "Downloaded these plugins: %{plugins}"
 msgstr ""
 
@@ -2269,6 +2269,10 @@ msgstr ""
 
 #: ../lib/puppet/http/errors.rb:29
 msgid "Too many HTTP retries for %{addr}"
+msgstr ""
+
+#: ../lib/puppet/http/pool.rb:85
+msgid "Failed to close connection for %{site}: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/http/redirector.rb:78
@@ -3947,46 +3951,16 @@ msgstr ""
 msgid "Puppet::Network::HTTP::Compression::IdentityAdapter#uncompress is deprecated."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:56
+#: ../lib/puppet/network/http/connection.rb:44
 msgid "Unrecognized option(s): %{opts}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:63
+#: ../lib/puppet/network/http/connection.rb:51
 msgid "Expected an instance of Puppet::SSL::Verifier but was passed a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:229 ../lib/puppet/network/http/connection_adapter.rb:174
+#: ../lib/puppet/network/http/connection.rb:281
 msgid "Too many HTTP redirections for %{host}:%{port}"
-msgstr ""
-
-#. TRANSLATORS: Used in the phrase:
-#. "Received a response from the remote server."
-#: ../lib/puppet/network/http/connection.rb:259
-msgid "the remote server"
-msgstr ""
-
-#: ../lib/puppet/network/http/connection.rb:263
-msgid "Received a %{status_code} response from %{server_hostname}, but the Retry-After header value of \"%{retry_after}\" could not be converted to an integer or RFC 2822 date."
-msgstr ""
-
-#: ../lib/puppet/network/http/connection.rb:274
-msgid "Received a %{status_code} response from %{server_hostname}. Sleeping for %{retry_sleep} seconds before retrying the request."
-msgstr ""
-
-#: ../lib/puppet/network/http/connection.rb:335
-msgid "request %{uri} interrupted after %{elapsed} seconds"
-msgstr ""
-
-#: ../lib/puppet/network/http/connection.rb:337
-msgid "request %{uri} timed out after %{elapsed} seconds"
-msgstr ""
-
-#: ../lib/puppet/network/http/connection.rb:339
-msgid "request %{uri} failed: %{msg}"
-msgstr ""
-
-#: ../lib/puppet/network/http/connection.rb:346
-msgid "Puppet::Network::HTTP::Connection is deprecated. Please use Puppet::Network::HTTP::ConnectionAdapter instead."
 msgstr ""
 
 #: ../lib/puppet/network/http/error.rb:23
@@ -4033,14 +4007,6 @@ msgstr ""
 msgid "Could not resolve %{ip}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/network/http/nocache_pool.rb:6
-msgid "Puppet::Network::HTTP::NoCachePool is deprecated."
-msgstr ""
-
-#: ../lib/puppet/network/http/pool.rb:66
-msgid "Failed to close connection for %{site}: %{detail}"
-msgstr ""
-
 #: ../lib/puppet/network/http/request.rb:14
 msgid "Unknown arguments: %{args}"
 msgstr ""
@@ -4054,12 +4020,12 @@ msgid "Missing required Accept header"
 msgstr ""
 
 #. TRANSLATORS 'ssl_context' is an argument and should not be translated
-#: ../lib/puppet/network/http_pool.rb:81
+#: ../lib/puppet/network/http_pool.rb:61
 msgid "An ssl_context is required when connecting to 'https://%{host}:%{port}'"
 msgstr ""
 
 #. TRANSLATORS 'ssl_context' is an argument and should not be translated
-#: ../lib/puppet/network/http_pool.rb:89
+#: ../lib/puppet/network/http_pool.rb:69
 msgid "An ssl_context is unnecessary when connecting to 'http://%{host}:%{port}' and will be ignored"
 msgstr ""
 
