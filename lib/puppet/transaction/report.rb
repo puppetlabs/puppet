@@ -122,7 +122,7 @@ class Puppet::Transaction::Report
 
   # @!attribute [r] corrective_change
   #   @return [Boolean] true if the report contains any events and resources that had
-  #      corrective changes.
+  #      corrective changes, including noop corrective changes.
   attr_reader :corrective_change
 
   # @return [Boolean] true if one or more resources attempted to generate
