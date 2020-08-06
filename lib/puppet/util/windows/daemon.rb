@@ -159,7 +159,7 @@ module Puppet::Util::Windows
         end
 
         # Register the service ctrl handler.
-        @@ssh = RegisterServiceCtrlHandlerExA(
+        @@ssh = RegisterServiceCtrlHandlerExW(
           lpszServiceName,
           Service_Ctrl_ex,
           nil
@@ -187,18 +187,18 @@ module Puppet::Util::Windows
     end
 
     ThreadProc = FFI::Function.new(:ulong,[:pointer]) do |lpParameter|
-      ste = FFI::MemoryPointer.new(SERVICE_TABLE_ENTRYA, 2)
+      ste = FFI::MemoryPointer.new(SERVICE_TABLE_ENTRYW, 2)
 
-      s = SERVICE_TABLE_ENTRYA.new(ste[0])
+      s = SERVICE_TABLE_ENTRYW.new(ste[0])
       s[:lpServiceName] = FFI::MemoryPointer.from_string('')
       s[:lpServiceProc] = lpParameter
 
-      s = SERVICE_TABLE_ENTRYA.new(ste[1])
+      s = SERVICE_TABLE_ENTRYW.new(ste[1])
       s[:lpServiceName] = nil
       s[:lpServiceProc] = nil
 
       # No service to step, no service handle, no ruby exceptions, just terminate the thread..
-      if !StartServiceCtrlDispatcherA(ste)
+      if !StartServiceCtrlDispatcherW(ste)
         return 1
       end
 
@@ -234,21 +234,21 @@ module Puppet::Util::Windows
       service_init() if respond_to?('service_init')
 
       # Create the event to signal the service to start.
-      @@hStartEvent = CreateEventA(nil, 1, 0, nil)
+      @@hStartEvent = CreateEventW(nil, 1, 0, nil)
 
       if @@hStartEvent == 0
         raise SystemCallError.new('CreateEvent', FFI.errno)
       end
 
       # Create the event to signal the service to stop.
-      @@hStopEvent = CreateEventA(nil, 1, 0, nil)
+      @@hStopEvent = CreateEventW(nil, 1, 0, nil)
 
       if @@hStopEvent == 0
         raise SystemCallError.new('CreateEvent', FFI.errno)
       end
 
       # Create the event to signal the service that stop has completed
-      @@hStopCompletedEvent = CreateEventA(nil, 1, 0, nil)
+      @@hStopCompletedEvent = CreateEventW(nil, 1, 0, nil)
 
       if @@hStopCompletedEvent == 0
         raise SystemCallError.new('CreateEvent', FFI.errno)

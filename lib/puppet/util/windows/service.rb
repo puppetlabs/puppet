@@ -317,11 +317,11 @@ module Puppet::Util::Windows
       )
     end
 
-    # typedef struct _SERVICE_TABLE_ENTRYA {
-    #   LPSTR                    lpServiceName;
-    #   LPSERVICE_MAIN_FUNCTIONA lpServiceProc;
-    # } SERVICE_TABLE_ENTRYA, *LPSERVICE_TABLE_ENTRYA;
-    class SERVICE_TABLE_ENTRYA < FFI::Struct
+    # typedef struct _SERVICE_TABLE_ENTRYW {
+    #   LPWSTR                   lpServiceName;
+    #   LPSERVICE_MAIN_FUNCTIONW lpServiceProc;
+    # } SERVICE_TABLE_ENTRYW, *LPSERVICE_TABLE_ENTRYW;
+    class SERVICE_TABLE_ENTRYW < FFI::Struct
       layout(
         :lpServiceName, :pointer,
         :lpServiceProc, :pointer
@@ -1079,12 +1079,12 @@ module Puppet::Util::Windows
     attach_function_private :StartServiceW,
       [:handle, :dword, :pointer], :win32_bool
 
-    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-startservicectrldispatchera
-    # BOOL StartServiceCtrlDispatcherA(
-    #   const SERVICE_TABLE_ENTRYA *lpServiceStartTable
+    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-startservicectrldispatcherw
+    # BOOL StartServiceCtrlDispatcherW(
+    #   const SERVICE_TABLE_ENTRYW *lpServiceStartTable
     # );
     ffi_lib :advapi32
-    attach_function_private :StartServiceCtrlDispatcherA,
+    attach_function_private :StartServiceCtrlDispatcherW,
       [:pointer], :win32_bool, :blocking => true
 
     # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-setservicestatus
@@ -1114,15 +1114,15 @@ module Puppet::Util::Windows
     # )
     callback :handler_ex, [:dword, :dword, :lpvoid, :lpvoid], :void
 
-    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-registerservicectrlhandlerexa
-    # SERVICE_STATUS_HANDLE RegisterServiceCtrlHandlerExA(
-    #   LPCSTR                lpServiceName,
+    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-registerservicectrlhandlerexw
+    # SERVICE_STATUS_HANDLE RegisterServiceCtrlHandlerExW(
+    #   LPCWSTR               lpServiceName,
     #   LPHANDLER_FUNCTION_EX lpHandlerProc,
     #   LPVOID                lpContext
     # );
     ffi_lib :advapi32
-    attach_function_private :RegisterServiceCtrlHandlerExA,
-      [:lpcstr, :handler_ex, :lpvoid], :handle
+    attach_function_private :RegisterServiceCtrlHandlerExW,
+      [:lpcwstr, :handler_ex, :lpvoid], :handle
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-changeserviceconfigw
     # BOOL ChangeServiceConfigW(

@@ -390,16 +390,16 @@ module Puppet::Util::Windows::Process
   attach_function_private :WaitForMultipleObjects,
     [:dword, :phandle, :win32_bool, :dword], :dword
 
-  # https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventa
-  # HANDLE CreateEventA(
+  # https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventw
+  # HANDLE CreateEventW(
   #   LPSECURITY_ATTRIBUTES lpEventAttributes,
   #   BOOL                  bManualReset,
   #   BOOL                  bInitialState,
-  #   LPCSTR                lpName
+  #   LPCWSTR               lpName
   # );
   ffi_lib :kernel32
-  attach_function_private :CreateEventA,
-    [:pointer, :win32_bool, :win32_bool, :lpcstr], :handle
+  attach_function_private :CreateEventW,
+    [:pointer, :win32_bool, :win32_bool, :lpcwstr], :handle
 
   # https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createthread
   # HANDLE CreateThread(
