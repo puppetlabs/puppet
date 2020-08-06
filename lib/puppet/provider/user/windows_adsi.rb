@@ -6,7 +6,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
   defaultfor :operatingsystem => :windows
   confine    :operatingsystem => :windows
 
-  has_features :manages_homedir, :manages_passwords
+  has_features :manages_homedir, :manages_passwords, :manages_roles
 
   def initialize(value={})
     super(value)
@@ -15,6 +15,23 @@ Puppet::Type.type(:user).provide :windows_adsi do
 
   def user
     @user ||= Puppet::Util::Windows::ADSI::User.new(@resource[:name])
+  end
+
+  def roles
+    Puppet::Util::Windows::User::get_rights(@resource[:name])
+  end
+
+  def roles=(value)
+    current = roles.split(',')
+    should  = value.split(',')
+
+    add_list = should - current
+    Puppet::Util::Windows::User::set_rights(@resource[:name], add_list) unless add_list.empty?
+
+    if @resource[:role_membership] == :inclusive
+      remove_list = current - should
+      Puppet::Util::Windows::User::remove_rights(@resource[:name], remove_list) unless remove_list.empty?
+    end
   end
 
   def groups

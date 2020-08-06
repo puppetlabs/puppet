@@ -288,7 +288,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   # UNSUPPORTED
   #- **roles**
   #    The roles the user has.  Multiple roles should be
-  #    specified as an array.  Requires features manages_solaris_rbac.
+  #    specified as an array.  Requires features manages_roles.
   # UNSUPPORTED
   #- **key_membership**
   #    Whether specified key value pairs should be treated as the only

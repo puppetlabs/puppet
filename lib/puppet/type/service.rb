@@ -147,6 +147,10 @@ module Puppet
         user_information = Puppet::Util::Windows::SID.name_to_principal(value)
         raise Puppet::Error.new("\"#{value}\" is not a valid account") unless user_information && [:SidTypeUser, :SidTypeWellKnownGroup].include?(user_information.account_type)
 
+        user_rights = Puppet::Util::Windows::User::get_rights(user_information.domain_account) unless Puppet::Util::Windows::User::default_system_account?(value)
+        raise Puppet::Error.new("\"#{user_information.domain_account}\" has the 'Log On As A Service' right set to denied.") if user_rights =~ /SeDenyServiceLogonRight/
+        raise Puppet::Error.new("\"#{user_information.domain_account}\" is missing the 'Log On As A Service' right.") unless user_rights.nil? || user_rights =~ /SeServiceLogonRight/
+
         if user_information.domain == Puppet::Util::Windows::ADSI.computer_name
           ".\\#{user_information.account}"
         else

@@ -145,6 +145,125 @@ module Puppet::Util::Windows::User
   end
   module_function :load_profile
 
+  def get_rights(name)
+    user_info = Puppet::Util::Windows::SID.name_to_principal(name.sub(/^\.\\/, "#{Puppet::Util::Windows::ADSI.computer_name}\\"))
+    return "" unless user_info
+
+    rights = []
+    rights_pointer = FFI::MemoryPointer.new(:pointer)
+    number_of_rights = FFI::MemoryPointer.new(:ulong)
+    sid_pointer = FFI::MemoryPointer.new(:byte, user_info.sid_bytes.length).write_array_of_uchar(user_info.sid_bytes)
+
+    new_lsa_policy_handle do |policy_handle|
+      result = LsaEnumerateAccountRights(policy_handle.read_pointer, sid_pointer, rights_pointer, number_of_rights)
+      check_lsa_nt_status_and_raise_failures(result, "LsaEnumerateAccountRights")
+    end
+
+    number_of_rights.read_ulong.times do |index|
+      right = LSA_UNICODE_STRING.new(rights_pointer.read_pointer + index * LSA_UNICODE_STRING.size)
+      rights << right[:Buffer].read_arbitrary_wide_string_up_to
+    end
+
+    result = LsaFreeMemory(rights_pointer.read_pointer)
+    check_lsa_nt_status_and_raise_failures(result, "LsaFreeMemory")
+
+    rights.join(",")
+  end
+  module_function :get_rights
+
+  def set_rights(name, rights)
+    rights_pointer = new_lsa_unicode_strings_pointer(rights)
+    user_info = Puppet::Util::Windows::SID.name_to_principal(name.sub(/^\.\\/, "#{Puppet::Util::Windows::ADSI.computer_name}\\"))
+    sid_pointer = FFI::MemoryPointer.new(:byte, user_info.sid_bytes.length).write_array_of_uchar(user_info.sid_bytes)
+
+    new_lsa_policy_handle do |policy_handle|
+      result = LsaAddAccountRights(policy_handle.read_pointer, sid_pointer, rights_pointer, rights.size)
+      check_lsa_nt_status_and_raise_failures(result, "LsaAddAccountRights")
+    end
+  end
+  module_function :set_rights
+
+  def remove_rights(name, rights)
+    rights_pointer = new_lsa_unicode_strings_pointer(rights)
+    user_info = Puppet::Util::Windows::SID.name_to_principal(name.sub(/^\.\\/, "#{Puppet::Util::Windows::ADSI.computer_name}\\"))
+    sid_pointer = FFI::MemoryPointer.new(:byte, user_info.sid_bytes.length).write_array_of_uchar(user_info.sid_bytes)
+
+    new_lsa_policy_handle do |policy_handle|
+      result = LsaRemoveAccountRights(policy_handle.read_pointer, sid_pointer, false, rights_pointer, rights.size)
+      check_lsa_nt_status_and_raise_failures(result, "LsaRemoveAccountRights")
+    end
+  end
+  module_function :remove_rights
+
+  # ACCESS_MASK flags for Policy Objects
+  # https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-lsad/b61b7268-987a-420b-84f9-6c75f8dc8558
+  POLICY_VIEW_LOCAL_INFORMATION   = 0x00000001
+  POLICY_VIEW_AUDIT_INFORMATION   = 0x00000002
+  POLICY_GET_PRIVATE_INFORMATION  = 0x00000004
+  POLICY_TRUST_ADMIN              = 0x00000008
+  POLICY_CREATE_ACCOUNT           = 0x00000010
+  POLICY_CREATE_SECRET            = 0x00000020
+  POLICY_CREATE_PRIVILEGE         = 0x00000040
+  POLICY_SET_DEFAULT_QUOTA_LIMITS = 0x00000080
+  POLICY_SET_AUDIT_REQUIREMENTS   = 0x00000100
+  POLICY_AUDIT_LOG_ADMIN          = 0x00000200
+  POLICY_SERVER_ADMIN             = 0x00000400
+  POLICY_LOOKUP_NAMES             = 0x00000800
+  POLICY_NOTIFICATION             = 0x00001000
+
+  def self.new_lsa_policy_handle
+    access = 0
+    access |= POLICY_LOOKUP_NAMES
+    access |= POLICY_CREATE_ACCOUNT
+    policy_handle = FFI::MemoryPointer.new(:pointer)
+
+    result = LsaOpenPolicy(nil, LSA_OBJECT_ATTRIBUTES.new, access, policy_handle)
+    check_lsa_nt_status_and_raise_failures(result, "LsaOpenPolicy")
+
+    begin
+      yield policy_handle
+    ensure
+      result = LsaClose(policy_handle.read_pointer)
+      check_lsa_nt_status_and_raise_failures(result, "LsaClose")
+    end
+  end
+  private_class_method :new_lsa_policy_handle
+
+  def self.new_lsa_unicode_strings_pointer(strings)
+    lsa_unicode_strings_pointer = FFI::MemoryPointer.new(LSA_UNICODE_STRING, strings.size)
+
+    strings.each_with_index do |string, index|
+      lsa_string = LSA_UNICODE_STRING.new(lsa_unicode_strings_pointer + index * LSA_UNICODE_STRING.size)
+      lsa_string[:Buffer] = FFI::MemoryPointer.from_string(wide_string(string))
+      lsa_string[:Length] = string.length * 2
+      lsa_string[:MaximumLength] = lsa_string[:Length] + 2
+    end
+
+    lsa_unicode_strings_pointer
+  end
+  private_class_method :new_lsa_unicode_strings_pointer
+
+  # https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/18d8fbe8-a967-4f1c-ae50-99ca8e491d2d
+  def self.check_lsa_nt_status_and_raise_failures(status, method_name)
+    error_code = LsaNtStatusToWinError(status)
+
+    error_reason = case error_code.to_s(16)
+    when '0' # ERROR_SUCCESS
+      return # Method call succeded
+    when '2' # ERROR_FILE_NOT_FOUND
+      return # No rights/privilleges assigned to given user
+    when '5' # ERROR_ACCESS_DENIED
+      "Access is denied. Please make sure that puppet is running as administrator."
+    when '521' # ERROR_NO_SUCH_PRIVILEGE
+      "One or more of the given rights/privilleges are incorrect."
+    when '6ba' # RPC_S_SERVER_UNAVAILABLE
+      "The RPC server is unavailable or given domain name is invalid."
+    end
+
+    raise Puppet::Error.new("Calling `#{method_name}` returned 'Win32 Error Code 0x%08X'. #{error_reason}" % error_code)
+  end
+  private_class_method :check_lsa_nt_status_and_raise_failures
+
   ffi_convention :stdcall
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa378184(v=vs.85).aspx
@@ -329,4 +448,104 @@ module Puppet::Util::Windows::User
   ffi_lib :advapi32
   attach_function_private :IsValidSid,
     [:pointer], :win32_bool
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/lsalookup/ns-lsalookup-lsa_object_attributes
+  # typedef struct _LSA_OBJECT_ATTRIBUTES {
+  #   ULONG               Length;
+  #   HANDLE              RootDirectory;
+  #   PLSA_UNICODE_STRING ObjectName;
+  #   ULONG               Attributes;
+  #   PVOID               SecurityDescriptor;
+  #   PVOID               SecurityQualityOfService;
+  # } LSA_OBJECT_ATTRIBUTES, *PLSA_OBJECT_ATTRIBUTES;
+  class LSA_OBJECT_ATTRIBUTES < FFI::Struct
+    layout :Length, :ulong,
+      :RootDirectory, :handle,
+      :ObjectName, :plsa_unicode_string,
+      :Attributes, :ulong,
+      :SecurityDescriptor, :pvoid,
+      :SecurityQualityOfService, :pvoid
+  end
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/lsalookup/ns-lsalookup-lsa_unicode_string
+  # typedef struct _LSA_UNICODE_STRING {
+  #   USHORT Length;
+  #   USHORT MaximumLength;
+  #   PWSTR  Buffer;
+  # } LSA_UNICODE_STRING, *PLSA_UNICODE_STRING;
+  class LSA_UNICODE_STRING < FFI::Struct
+    layout :Length, :ushort,
+      :MaximumLength, :ushort,
+      :Buffer, :pwstr
+  end
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-lsaenumerateaccountrights
+  # https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/user-rights-assignment
+  # NTSTATUS LsaEnumerateAccountRights(
+  #   LSA_HANDLE          PolicyHandle,
+  #   PSID                AccountSid,
+  #   PLSA_UNICODE_STRING *UserRights,
+  #   PULONG              CountOfRights
+  # );
+  ffi_lib :advapi32
+  attach_function_private :LsaEnumerateAccountRights,
+    [:lsa_handle, :psid, :plsa_unicode_string, :pulong], :ntstatus
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-lsaaddaccountrights
+  # NTSTATUS LsaAddAccountRights(
+  #   LSA_HANDLE          PolicyHandle,
+  #   PSID                AccountSid,
+  #   PLSA_UNICODE_STRING UserRights,
+  #   ULONG               CountOfRights
+  # );
+  ffi_lib :advapi32
+  attach_function_private :LsaAddAccountRights,
+    [:lsa_handle, :psid, :plsa_unicode_string, :ulong], :ntstatus
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-lsaremoveaccountrights
+  # NTSTATUS LsaRemoveAccountRights(
+  #   LSA_HANDLE          PolicyHandle,
+  #   PSID                AccountSid,
+  #   BOOLEAN             AllRights,
+  #   PLSA_UNICODE_STRING UserRights,
+  #   ULONG               CountOfRights
+  # );
+  ffi_lib :advapi32
+  attach_function_private :LsaRemoveAccountRights,
+    [:lsa_handle, :psid, :bool, :plsa_unicode_string, :ulong], :ntstatus
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-lsaopenpolicy
+  # NTSTATUS LsaOpenPolicy(
+  #   PLSA_UNICODE_STRING    SystemName,
+  #   PLSA_OBJECT_ATTRIBUTES ObjectAttributes,
+  #   ACCESS_MASK            DesiredAccess,
+  #   PLSA_HANDLE            PolicyHandle
+  # );
+  ffi_lib :advapi32
+  attach_function_private :LsaOpenPolicy,
+    [:plsa_unicode_string, :plsa_object_attributes, :access_mask, :plsa_handle], :ntstatus
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-lsaclose
+  # NTSTATUS LsaClose(
+  #   LSA_HANDLE ObjectHandle
+  # );
+  ffi_lib :advapi32
+  attach_function_private :LsaClose,
+    [:lsa_handle], :ntstatus
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-lsafreememory
+  # NTSTATUS LsaFreeMemory(
+  #   PVOID Buffer
+  # );
+  ffi_lib :advapi32
+  attach_function_private :LsaFreeMemory,
+    [:pvoid], :ntstatus
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-lsantstatustowinerror
+  # ULONG LsaNtStatusToWinError(
+  #   NTSTATUS Status
+  # );
+  ffi_lib :advapi32
+  attach_function_private :LsaNtStatusToWinError,
+    [:ntstatus], :ulong
 end

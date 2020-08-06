@@ -215,5 +215,12 @@ describe "Puppet::Util::Windows::User", :if => Puppet::Util::Platform.windows? d
         expect(Puppet::Util::Windows::User.localsystem?('OtherUser')).to eq(false)
       end
     end
+
+    describe "get_rights" do
+      it "should be empty when given user does not exist" do
+        allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('NonExistingUser').and_return(nil)
+        expect(Puppet::Util::Windows::User.get_rights('NonExistingUser')).to eq("")
+      end
+    end
   end
 end

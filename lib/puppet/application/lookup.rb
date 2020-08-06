@@ -90,8 +90,14 @@ class Puppet::Application::Lookup < Puppet::Application
 
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
-    Puppet.settings.use :main, :master, :ssl, :metrics
-
+    if options[:node]
+      Puppet::Util.skip_external_facts do
+        Puppet.settings.use :main, :master, :ssl, :metrics
+      end
+    else
+      Puppet.settings.use :main, :master, :ssl, :metrics
+    end
+    
     setup_terminuses
   end
 
@@ -364,6 +370,12 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
     Puppet[:code] = 'undef' unless options[:compile]
     compiler = Puppet::Parser::Compiler.new(node)
-    compiler.compile { |catalog| yield(compiler.topscope); catalog }
+    if options[:node]
+      Puppet::Util.skip_external_facts do 
+        compiler.compile { |catalog| yield(compiler.topscope); catalog }
+      end
+    else
+      compiler.compile { |catalog| yield(compiler.topscope); catalog }
+    end
   end
 end
