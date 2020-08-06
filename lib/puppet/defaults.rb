@@ -70,28 +70,6 @@ module Puppet
   # @return void
   def self.initialize_default_settings!(settings)
     settings.define_settings(:main,
-      :facterng => {
-        :default => false,
-        :type    => :boolean,
-        :desc    => 'Whether to enable a pre-Facter 4.0 release of Facter (distributed as
-          the "facter-ng" gem). This is not necessary if Facter 3.x or later is installed.
-          This setting is still experimental.',
-        :hook    => proc do |value|
-          if value
-            begin
-              original_facter = Object.const_get(:Facter)
-              Object.send(:remove_const, :Facter)
-
-              require 'facter-ng'
-              # It is required to re-setup logger for facter-ng
-              Puppet::Util::Logging.setup_facter_logging!
-            rescue LoadError
-              Object.const_set(:Facter, original_facter)
-              raise ArgumentError, 'facter-ng could not be loaded'
-            end
-          end
-        end
-    },
     :confdir  => {
         :default  => nil,
         :type     => :directory,
