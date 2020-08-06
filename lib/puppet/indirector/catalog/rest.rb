@@ -5,8 +5,6 @@ class Puppet::Resource::Catalog::Rest < Puppet::Indirector::REST
   desc "Find resource catalogs over HTTP via REST."
 
   def find(request)
-    return super unless use_http_client?
-
     checksum_type = if request.options[:checksum_type]
                       request.options[:checksum_type].split('.')
                     else

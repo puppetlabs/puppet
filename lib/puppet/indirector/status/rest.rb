@@ -7,8 +7,6 @@ class Puppet::Indirector::Status::Rest < Puppet::Indirector::REST
     of both the web server and the indirector."
 
   def find(request)
-    return super unless use_http_client?
-
     session = Puppet.lookup(:http_session)
     api = session.route_to(:puppet)
     _, status = api.get_status(request.key)

@@ -120,17 +120,6 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     [indirection, method, key, params]
   end
 
-  def self.request_to_uri(request)
-    uri, body = request_to_uri_and_body(request)
-    "#{uri}?#{body}"
-  end
-
-  def self.request_to_uri_and_body(request)
-    url_prefix = IndirectionType.url_prefix_for(request.indirection_name.to_s)
-    indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
-    ["#{url_prefix}/#{indirection}/#{Puppet::Util.uri_encode(request.key)}", "environment=#{request.environment.name}&#{request.query_string}"]
-  end
-
   private
 
   # Execute our find.

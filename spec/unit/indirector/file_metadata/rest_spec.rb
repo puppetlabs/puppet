@@ -113,8 +113,4 @@ describe Puppet::Indirector::FileMetadata::Rest do
       model.indirection.search("puppet://example.com:8140/:mount/path/to/dir")
     end
   end
-
-  it "should use the :fileserver SRV service" do
-    expect(Puppet::Indirector::FileMetadata::Rest.srv_service).to eq(:fileserver)
-  end
 end

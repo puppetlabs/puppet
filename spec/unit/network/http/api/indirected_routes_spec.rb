@@ -176,61 +176,6 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
 
   end
 
-  describe "when converting a request into a URI" do
-    let(:environment) { Puppet::Node::Environment.create(:myenv, []) }
-    let(:request) { Puppet::Indirector::Request.new(:foo, :find, "with spaces", nil, :foo => :bar, :environment => environment) }
-
-    before do
-      allow(handler).to receive(:handler).and_return("foo")
-    end
-
-    it "should include the environment in the query string of the URI" do
-      expect(handler.class.request_to_uri(request)).to eq("#{master_url_prefix}/foo/with%20spaces?environment=myenv&foo=bar")
-    end
-
-    it "should include the correct url prefix if it is a ca request" do
-      allow(request).to receive(:indirection_name).and_return("certificate")
-      expect(handler.class.request_to_uri(request)).to eq("#{ca_url_prefix}/certificate/with%20spaces?environment=myenv&foo=bar")
-    end
-
-    it "should pluralize the indirection name if the method is 'search'" do
-      allow(request).to receive(:method).and_return(:search)
-      expect(handler.class.request_to_uri(request).split("/")[3]).to eq("foos")
-    end
-
-    it "should add the query string to the URI" do
-      expect(request).to receive(:query_string).and_return("query")
-      expect(handler.class.request_to_uri(request)).to match(/\&query$/)
-    end
-  end
-
-  describe "when converting a request into a URI with body" do
-    let(:environment) { Puppet::Node::Environment.create(:myenv, []) }
-    let(:request) { Puppet::Indirector::Request.new(:foo, :find, "with spaces", nil, :foo => :bar, :environment => environment) }
-
-    it "should use the indirection as the first field of the URI" do
-      expect(handler.class.request_to_uri_and_body(request).first.split("/")[3]).to eq("foo")
-    end
-
-    it "should use the escaped key as the remainder of the URI" do
-      escaped = Puppet::Util.uri_encode("with spaces")
-      expect(handler.class.request_to_uri_and_body(request).first.split("/")[4].sub(/\?.+/, '')).to eq(escaped)
-    end
-
-    it "should include the correct url prefix if it is a master request" do
-      expect(handler.class.request_to_uri_and_body(request).first).to eq("#{master_url_prefix}/foo/with%20spaces")
-    end
-
-    it "should include the correct url prefix if it is a ca request" do
-      allow(request).to receive(:indirection_name).and_return("certificate")
-      expect(handler.class.request_to_uri_and_body(request).first).to eq("#{ca_url_prefix}/certificate/with%20spaces")
-    end
-
-    it "should return the URI and body separately" do
-      expect(handler.class.request_to_uri_and_body(request)).to eq(["#{master_url_prefix}/foo/with%20spaces", "environment=myenv&foo=bar"])
-    end
-  end
-
   describe "when processing a request" do
     it "should raise not_authorized_error when authorization fails" do
       data = Puppet::IndirectorTesting.new("my data")

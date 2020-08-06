@@ -6,8 +6,6 @@ module Puppet::FileBucketFile
     desc "This is a REST based mechanism to send/retrieve file to/from the filebucket"
 
     def head(request)
-      return super unless use_http_client?
-
       session = Puppet.lookup(:http_session)
       api = session.route_to(:puppet)
       api.head_filebucket_file(
@@ -21,8 +19,6 @@ module Puppet::FileBucketFile
     end
 
     def find(request)
-      return super unless use_http_client?
-
       session = Puppet.lookup(:http_session)
       api = session.route_to(:puppet)
       _, filebucket_file = api.get_filebucket_file(
@@ -40,8 +36,6 @@ module Puppet::FileBucketFile
     end
 
     def save(request)
-      return super unless use_http_client?
-
       session = Puppet.lookup(:http_session)
       api = session.route_to(:puppet)
       api.put_filebucket_file(
