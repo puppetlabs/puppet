@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'win32/service' if Puppet::Util::Platform.windows?
 
 describe 'Puppet::Type::Service::Provider::Windows',
     :if => Puppet::Util::Platform.windows? && !Puppet::Util::Platform.jruby? do

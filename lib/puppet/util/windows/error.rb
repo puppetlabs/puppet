@@ -1,4 +1,5 @@
 require 'puppet/util/windows'
+require 'puppet/error'
 
 # represents an error resulting from a Win32 error code
 class Puppet::Util::Windows::Error < Puppet::Error
