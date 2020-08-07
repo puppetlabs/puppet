@@ -26,7 +26,6 @@ module Puppet::Util::Windows
     require 'win32ole' ; WIN32OLE.codepage = WIN32OLE::CP_UTF8
     # gems
     require 'win32/dir'
-    require 'win32/service'
 
     # these reference platform specific gems
     require 'puppet/util/windows/api_types'

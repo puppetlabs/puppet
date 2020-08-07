@@ -379,6 +379,49 @@ module Puppet::Util::Windows::Process
   attach_function_private :WaitForSingleObject,
     [:handle, :dword], :dword
 
+  # https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitformultipleobjects
+  #   DWORD WaitForMultipleObjects(
+  #   DWORD        nCount,
+  #   const HANDLE *lpHandles,
+  #   BOOL         bWaitAll,
+  #   DWORD        dwMilliseconds
+  # );
+  ffi_lib :kernel32
+  attach_function_private :WaitForMultipleObjects,
+    [:dword, :phandle, :win32_bool, :dword], :dword
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventa
+  # HANDLE CreateEventA(
+  #   LPSECURITY_ATTRIBUTES lpEventAttributes,
+  #   BOOL                  bManualReset,
+  #   BOOL                  bInitialState,
+  #   LPCSTR                lpName
+  # );
+  ffi_lib :kernel32
+  attach_function_private :CreateEventA,
+    [:pointer, :win32_bool, :win32_bool, :lpcstr], :handle
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createthread
+  # HANDLE CreateThread(
+  #   LPSECURITY_ATTRIBUTES   lpThreadAttributes,
+  #   SIZE_T                  dwStackSize,
+  #   LPTHREAD_START_ROUTINE  lpStartAddress,
+  #   __drv_aliasesMem LPVOID lpParameter,
+  #   DWORD                   dwCreationFlags,
+  #   LPDWORD                 lpThreadId
+  # );
+  ffi_lib :kernel32
+  attach_function_private :CreateThread,
+    [:pointer, :size_t, :pointer, :lpvoid, :dword, :lpdword], :handle, :blocking => true
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-setevent
+  # BOOL SetEvent(
+  #   HANDLE hEvent
+  # );
+  ffi_lib :kernel32
+  attach_function_private :SetEvent,
+    [:handle], :win32_bool
+
   # https://msdn.microsoft.com/en-us/library/windows/desktop/ms683189(v=vs.85).aspx
   # BOOL WINAPI GetExitCodeProcess(
   #   _In_   HANDLE hProcess,
