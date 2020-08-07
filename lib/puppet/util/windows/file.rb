@@ -6,6 +6,7 @@ module Puppet::Util::Windows::File
   extend Puppet::Util::Windows::String
 
   FILE_ATTRIBUTE_READONLY      = 0x00000001
+  FILE_ATTRIBUTE_DIRECTORY     = 0x00000010
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379607(v=vs.85).aspx
   # The right to use the object for synchronization. This enables a thread to
@@ -295,11 +296,15 @@ module Puppet::Util::Windows::File
   GENERIC_WRITE                 = 0x40000000
   GENERIC_EXECUTE               = 0x20000000
   GENERIC_ALL                   = 0x10000000
+  METHOD_BUFFERED               = 0
   FILE_SHARE_READ               = 1
   FILE_SHARE_WRITE              = 2
   OPEN_EXISTING                 = 3
+  FILE_DEVICE_FILE_SYSTEM       = 0x00000009
   FILE_FLAG_OPEN_REPARSE_POINT  = 0x00200000
   FILE_FLAG_BACKUP_SEMANTICS    = 0x02000000
+  SHGFI_DISPLAYNAME             = 0x000000200
+  SHGFI_PIDL                    = 0x000000008
 
   def self.open_symlink(link_name)
     begin
@@ -331,6 +336,7 @@ module Puppet::Util::Windows::File
 
   ERROR_FILE_NOT_FOUND = 2
   ERROR_PATH_NOT_FOUND = 3
+  ERROR_ALREADY_EXISTS = 183
 
   def get_long_pathname(path)
     converted = ''
@@ -485,6 +491,15 @@ module Puppet::Util::Windows::File
   rescue LoadError
   end
 
+  # https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getcurrentdirectory
+  # DWORD GetCurrentDirectory(
+  #   DWORD  nBufferLength,
+  #   LPTSTR lpBuffer
+  # );
+  ffi_lib :kernel32
+  attach_function_private :GetCurrentDirectoryW,
+    [:dword, :lpwstr], :dword
+
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364944(v=vs.85).aspx
   # DWORD WINAPI GetFileAttributes(
   #   _In_  LPCTSTR lpFileName
@@ -514,6 +529,23 @@ module Puppet::Util::Windows::File
   ffi_lib :kernel32
   attach_function_private :CreateFileW,
     [:lpcwstr, :dword, :dword, :pointer, :dword, :dword, :handle], :handle
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createdirectoryw
+  # BOOL CreateDirectoryW(
+  #   LPCWSTR               lpPathName,
+  #   LPSECURITY_ATTRIBUTES lpSecurityAttributes
+  # );
+  ffi_lib :kernel32
+  attach_function_private :CreateDirectoryW,
+    [:lpcwstr, :pointer], :win32_bool
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-removedirectoryw
+  # BOOL RemoveDirectoryW(
+  #   LPCWSTR lpPathName
+  # );
+  ffi_lib :kernel32
+  attach_function_private :RemoveDirectoryW,
+    [:lpcwstr], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa363216(v=vs.85).aspx
   # BOOL WINAPI DeviceIoControl(
@@ -567,6 +599,47 @@ module Puppet::Util::Windows::File
            :PathBuffer, [:byte, MAXIMUM_REPARSE_DATA_BUFFER_SIZE - 16]
   end
 
+  # SHFILEINFO
+  # https://docs.microsoft.com/en-us/windows/win32/api/shellapi/ns-shellapi-shfileinfow
+  # typedef struct _SHFILEINFOW {
+  #   HICON hIcon;
+  #   int   iIcon;
+  #   DWORD dwAttributes;
+  #   WCHAR szDisplayName[MAX_PATH];
+  #   WCHAR szTypeName[80];
+  # } SHFILEINFOW;
+  class SHFILEINFO < FFI::Struct
+    layout(
+      :hIcon, :ulong,
+      :iIcon, :int,
+      :dwAttributes, :ulong,
+      :szDisplayName, [:char, 256],
+      :szTypeName, [:char, 80]
+    )
+  end
+
+  # REPARSE_JDATA_BUFFER
+  class REPARSE_JDATA_BUFFER < FFI::Struct
+    layout(
+      :ReparseTag, :ulong,
+      :ReparseDataLength, :ushort,
+      :Reserved, :ushort,
+      :SubstituteNameOffset, :ushort,
+      :SubstituteNameLength, :ushort,
+      :PrintNameOffset, :ushort,
+      :PrintNameLength, :ushort,
+      :PathBuffer, [:char, 1024]
+    )
+
+    # The REPARSE_DATA_BUFFER_HEADER_SIZE which is calculated as:
+    #
+    # sizeof(ReparseTag) + sizeof(ReparseDataLength) + sizeof(Reserved)
+    #
+    def header_size
+      FFI::Type::ULONG.size + FFI::Type::USHORT.size + FFI::Type::USHORT.size
+    end
+  end
+
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364980(v=vs.85).aspx
   # DWORD WINAPI GetLongPathName(
   #   _In_  LPCTSTR lpszShortPath,
@@ -586,4 +659,59 @@ module Puppet::Util::Windows::File
   ffi_lib :kernel32
   attach_function_private :GetShortPathNameW,
     [:lpcwstr, :lpwstr, :dword], :dword
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfullpathnamew
+  # DWORD GetFullPathNameW(
+  #   LPCWSTR lpFileName,
+  #   DWORD   nBufferLength,
+  #   LPWSTR  lpBuffer,
+  #   LPWSTR  *lpFilePart
+  # );
+  ffi_lib :kernel32
+  attach_function_private :GetFullPathNameW,
+    [:lpcwstr, :dword, :lpwstr, :pointer], :dword
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shgetfolderpathw
+  # SHFOLDERAPI SHGetFolderPathW(
+  #   HWND   hwnd,
+  #   int    csidl,
+  #   HANDLE hToken,
+  #   DWORD  dwFlags,
+  #   LPWSTR pszPath
+  # );
+  ffi_lib :shell32
+  attach_function_private :SHGetFolderPathW,
+    [:hwnd, :int, :handle, :dword, :lpwstr], :dword
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shgetfolderlocation
+  # SHSTDAPI SHGetFolderLocation(
+  #   HWND             hwnd,
+  #   int              csidl,
+  #   HANDLE           hToken,
+  #   DWORD            dwFlags,
+  #   PIDLIST_ABSOLUTE *ppidl
+  # );
+  ffi_lib :shell32
+  attach_function_private :SHGetFolderLocation,
+    [:hwnd, :int, :handle, :dword, :pointer], :dword
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shgetfileinfoa
+  # DWORD_PTR SHGetFileInfoA(
+  #   LPCSTR      pszPath,
+  #   DWORD       dwFileAttributes,
+  #   SHFILEINFOA *psfi,
+  #   UINT        cbFileInfo,
+  #   UINT        uFlags
+  # );
+  ffi_lib :shell32
+  attach_function_private :SHGetFileInfo,
+    [:dword, :dword, :pointer, :uint, :uint], :dword
+
+  # https://docs.microsoft.com/en-us/windows/win32/api/shlwapi/nf-shlwapi-pathisdirectoryemptyw
+  # BOOL PathIsDirectoryEmptyW(
+  #   LPCWSTR pszPath
+  # );
+  ffi_lib :shlwapi
+  attach_function_private :PathIsDirectoryEmptyW,
+    [:lpcwstr], :win32_bool
 end

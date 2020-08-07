@@ -58,7 +58,7 @@ module Puppet::Util::Windows::APITypes
         str = str[0, i] if i
       end
 
-      str.encode(dst_encoding, str.encoding, encode_options)
+      str.encode(dst_encoding, str.encoding, **encode_options)
     rescue EncodingError => e
       Puppet.debug { "Unable to convert value #{str.nil? ? 'nil' : str.dump} to encoding #{dst_encoding} due to #{e.inspect}" }
       raise
