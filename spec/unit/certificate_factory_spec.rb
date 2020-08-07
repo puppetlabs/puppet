@@ -7,7 +7,7 @@ describe Puppet::CertificateFactory, :unless => RUBY_PLATFORM == 'java' do
   let :serial    do OpenSSL::BN.new('12') end
   let :name      do "example.local" end
   let :x509_name do OpenSSL::X509::Name.new([['CN', name]]) end
-  let :key       do Puppet::SSL::Key.new(name).generate end
+  let :key       do OpenSSL::PKey::RSA.new(Puppet[:keylength]) end
   let :csr       do
     csr = Puppet::SSL::CertificateRequest.new(name)
     csr.generate(key)

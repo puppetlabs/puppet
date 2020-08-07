@@ -4,11 +4,7 @@ require 'puppet/certificate_factory'
 require 'puppet/context/trusted_information'
 
 describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java' do
-  let(:key) do
-    key = Puppet::SSL::Key.new("myname")
-    key.generate
-    key
-  end
+  let(:key) { OpenSSL::PKey::RSA.new(Puppet[:keylength]) }
 
   let(:csr) do
     csr = Puppet::SSL::CertificateRequest.new("csr")
@@ -26,7 +22,7 @@ describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java'
 
     # The cert must be signed so that it can be successfully be DER-decoded later
     signer = Puppet::SSL::CertificateSigner.new
-    signer.sign(cert.content, key.content)
+    signer.sign(cert.content, key)
     cert
   end
 

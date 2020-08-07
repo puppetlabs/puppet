@@ -38,9 +38,8 @@ describe Puppet::SSL::Certificate do
 
   describe "when determining a name from a certificate subject" do
     it "should extract only the CN and not any other components" do
-      subject = double('sub')
-      expect(Puppet::Util::SSL).to receive(:cn_from_subject).with(subject).and_return('host.domain.com')
-      expect(@class.name_from_subject(subject)).to eq('host.domain.com')
+      name = OpenSSL::X509::Name.parse('/CN=host.domain.com/L=Portland/ST=Oregon')
+      expect(@class.name_from_subject(name)).to eq('host.domain.com')
     end
   end
 
@@ -88,6 +87,40 @@ describe Puppet::SSL::Certificate do
       expect {
         base.digest_algorithm
       }.to raise_error(Puppet::Error, "Unknown signature algorithm 'nonsense'")
+    end
+  end
+
+  describe "when getting a CN from a subject" do
+    def parse(dn)
+      OpenSSL::X509::Name.parse(dn)
+    end
+
+    def cn_from(subject)
+      @class.name_from_subject(subject)
+    end
+
+    it "should correctly parse a subject containing only a CN" do
+      subj = parse('/CN=foo')
+      expect(cn_from(subj)).to eq('foo')
+    end
+
+    it "should correctly parse a subject containing other components" do
+      subj = parse('/CN=Root CA/OU=Server Operations/O=Example Org')
+      expect(cn_from(subj)).to eq('Root CA')
+    end
+
+    it "should correctly parse a subject containing other components with CN not first" do
+      subj = parse('/emailAddress=foo@bar.com/CN=foo.bar.com/O=Example Org')
+      expect(cn_from(subj)).to eq('foo.bar.com')
+    end
+
+    it "should return nil for a subject with no CN" do
+      subj = parse('/OU=Server Operations/O=Example Org')
+      expect(cn_from(subj)).to eq(nil)
+    end
+
+    it "should return nil for a bare string" do
+      expect(cn_from("/CN=foo")).to eq(nil)
     end
   end
 end

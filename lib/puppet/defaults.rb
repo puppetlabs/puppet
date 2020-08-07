@@ -989,29 +989,6 @@ EOT
         puppet module tool and the 'http' report processor. This setting is ignored when
         making requests to puppet:// URLs such as catalog and report requests.",
     },
-    :ssl_client_ca_auth => {
-      :type  => :file,
-      :mode  => "0644",
-      :owner => "service",
-      :group => "service",
-      :desc  => "Certificate authorities who issue server certificates.  SSL servers will not be
-        considered authentic unless they possess a certificate issued by an authority
-        listed in this file.  If this setting has no value then the Puppet master's CA
-        certificate (localcacert) will be used.",
-      :hook => proc do |val|
-        Puppet.deprecation_warning(_("Setting 'ssl_client_ca_auth' is deprecated."))
-      end
-    },
-    :ssl_server_ca_auth => {
-      :type  => :file,
-      :mode  => "0644",
-      :owner => "service",
-      :group => "service",
-      :deprecated  => :completely,
-      :desc => "The setting is deprecated and has no effect. Ensure all root and
-        intermediate certificate authorities used to issue client certificates are
-        contained in the server's `cacert` file on the server."
-    },
     :hostcrl => {
       :default => "$ssldir/crl.pem",
       :type   => :file,

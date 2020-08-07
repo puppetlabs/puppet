@@ -81,16 +81,6 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
         end
       end
 
-      it "doesn't generate a Puppet::SSL::Host deprecation warning" do
-        server.start_server do |port|
-          http = connection(hostname, port)
-          res = http.get('/')
-          expect(res.code).to eq('200')
-        end
-
-        expect(@logs).to eq([])
-      end
-
       it "detects when the server has closed the connection and reconnects" do
         server.start_server do |port|
           http = connection(hostname, port)

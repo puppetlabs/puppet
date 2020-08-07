@@ -9,21 +9,23 @@ describe Puppet::Network::HTTP::Connection do
   let(:url) { "https://#{host}:#{port}#{path}" }
   let(:params) { { 'key' => 'a value' } }
   let(:encoded_url_with_params) { "#{url}?%7B%22key%22:%22a%20value%22%7D" }
+  let(:ssl_context) { Puppet::SSL::SSLProvider.new.create_system_context(cacerts: []) }
+  let(:verifier) { Puppet::SSL::Verifier.new(host, ssl_context) }
 
   shared_examples_for "an HTTP connection" do |klass|
-    subject { klass.new(host, port, :verify => Puppet::SSL::Validator.no_validator) }
+    subject { klass.new(host, port, :verifier => verifier) }
 
     context "when providing HTTP connections" do
       context "when initializing http instances" do
         it "should return an http instance created with the passed host and port" do
-          conn = klass.new(host, port, :verify => Puppet::SSL::Validator.no_validator)
+          conn = klass.new(host, port, :verifier => verifier)
 
           expect(conn.address).to eq(host)
           expect(conn.port).to eq(port)
         end
 
         it "should enable ssl on the http instance by default" do
-          conn = klass.new(host, port, :verify => Puppet::SSL::Validator.no_validator)
+          conn = klass.new(host, port, :verifier => verifier)
 
           expect(conn).to be_use_ssl
         end
@@ -35,21 +37,21 @@ describe Puppet::Network::HTTP::Connection do
         end
 
         it "can enable ssl using an option" do
-          conn = klass.new(host, port, :use_ssl => true, :verify => Puppet::SSL::Validator.no_validator)
+          conn = klass.new(host, port, :use_ssl => true, :verifier => verifier)
 
           expect(conn).to be_use_ssl
         end
 
         it "ignores the ':verify' option when ssl is disabled" do
-          conn = klass.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator)
+          conn = klass.new(host, port, :use_ssl => false, :verifier => verifier)
 
           expect(conn.verifier).to be_nil
         end
 
         it "wraps the validator in an adapter" do
-          conn = klass.new(host, port, :verify => Puppet::SSL::Validator.no_validator)
+          conn = klass.new(host, port, :verifier => verifier)
 
-          expect(conn.verifier).to be_a_kind_of(Puppet::SSL::VerifierAdapter)
+          expect(conn.verifier).to be_a(Puppet::SSL::Verifier)
         end
 
         it "should raise Puppet::Error when invalid options are specified" do
@@ -65,9 +67,9 @@ describe Puppet::Network::HTTP::Connection do
 
         it "raises if the wrong verifier class is specified" do
           expect {
-            klass.new(host, port, :verifier => Puppet::SSL::Validator.default_validator)
+            klass.new(host, port, :verifier => Object.new)
           }.to raise_error(ArgumentError,
-                           "Expected an instance of Puppet::SSL::Verifier but was passed a Puppet::SSL::Validator::DefaultValidator")
+                           "Expected an instance of Puppet::SSL::Verifier but was passed a Object")
         end
       end
     end
@@ -420,7 +422,7 @@ describe Puppet::Network::HTTP::Connection do
 
       def create_connection(options = {})
         options[:use_ssl] = false
-        options[:verify] = Puppet::SSL::Validator.no_validator
+        options[:verifier] = verifier
         subject.new(host, port, options)
       end
 

@@ -28,13 +28,6 @@ require 'puppet/ssl/certificate_signer'
 class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
   wraps OpenSSL::X509::Request
 
-  extend Puppet::Indirector
-
-  indirects :certificate_request, :terminus_class => :file, :doc => <<DOC
-    This indirection wraps an `OpenSSL::X509::Request` object, representing a certificate signing request (CSR).
-    The indirection key is the certificate CN (generally a hostname).
-DOC
-
   # Because of how the format handler class is included, this
   # can't be in the base class.
   def self.supported_formats
@@ -47,8 +40,7 @@ DOC
 
   # Create a certificate request with our system settings.
   #
-  # @param key [OpenSSL::X509::Key, Puppet::SSL::Key] The key pair associated
-  #   with this CSR.
+  # @param key [OpenSSL::X509::Key] The private key associated with this CSR.
   # @param options [Hash]
   # @option options [String] :dns_alt_names A comma separated list of
   #   Subject Alternative Names to include in the CSR extension request.
@@ -63,9 +55,6 @@ DOC
   # @return [OpenSSL::X509::Request] The generated CSR
   def generate(key, options = {})
     Puppet.info _("Creating a new SSL certificate request for %{name}") % { name: name }
-
-    # Support either an actual SSL key, or a Puppet key.
-    key = key.content if key.is_a?(Puppet::SSL::Key)
 
     # If we're a CSR for the CA, then use the real ca_name, rather than the
     # fake 'ca' name.  This is mostly for backward compatibility with 0.24.x,

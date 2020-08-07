@@ -196,16 +196,6 @@ Get status locally. Only used internally.
 `rest` terminus
 Get puppet master's status via REST. Useful because it tests the health of both the web server and the indirector.
 
-## Deprecated Indirected Types
-
-The following classes support indirections, but are not documented because they are deprecated and will be removed soon:
-
-* `Puppet::SSL::Certificate`
-* `Puppet::SSL::CertificateRevocationList`
-* `Puppet::SSL::CertificateRequest`
-* `Puppet::SSL::Host`
-* `Puppet::SSL::Key`
-
 ## Limitations
 
 Here are specific issues with the indirector:

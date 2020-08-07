@@ -1,7 +1,6 @@
 require 'puppet/ssl/openssl_loader'
 require 'puppet/ssl'
 require 'puppet/ssl/digest'
-require 'puppet/util/ssl'
 
 # The base class for wrapping SSL instances.
 class Puppet::SSL::Base
@@ -54,7 +53,9 @@ class Puppet::SSL::Base
   #
   # @return [String] the name (CN) extracted from the subject.
   def self.name_from_subject(subject)
-    Puppet::Util::SSL.cn_from_subject(subject)
+    if subject.respond_to? :to_a
+      (subject.to_a.assoc('CN') || [])[1]
+    end
   end
 
   # Create an instance of our Puppet::SSL::* class using a given instance of the wrapped class
@@ -82,15 +83,12 @@ class Puppet::SSL::Base
   # Read content from disk appropriately.
   def read(path)
     # applies to Puppet::SSL::Certificate, Puppet::SSL::CertificateRequest
-    # Puppet::SSL::Key uses this, but also provides its own override
     # nothing derives from Puppet::SSL::Certificate, but it is called by a number of other SSL Indirectors:
     # Puppet::Indirector::CertificateStatus::File (.indirection.find)
     # Puppet::Network::HTTP::WEBrick (.indirection.find)
     # Puppet::Network::HTTP::RackREST (.from_instance)
     # Puppet::Network::HTTP::WEBrickREST (.from_instance)
-    # Puppet::SSL::Host (.indirection.find)
     # Puppet::SSL::Inventory (.indirection.search, implements its own add / rebuild / serials with encoding UTF8)
-    # Puppet::SSL::Validator::DefaultValidator (.from_instance) / Puppet::SSL::Validator::NoValidator does nothing
     @content = wrapped_class.new(Puppet::FileSystem.read(path, :encoding => Encoding::ASCII))
   end
 

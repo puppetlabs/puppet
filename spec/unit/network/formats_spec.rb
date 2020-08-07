@@ -161,19 +161,19 @@ describe "Puppet Network Format" do
     end
 
     it 'raises when interning an instance of an unacceptable indirected type' do
-      obj = Puppet::SSL::Key.new('foo')
+      obj = :something
 
       expect {
         yaml.intern(obj.class, YAML.dump(obj))
-      }.to raise_error(Puppet::Network::FormatHandler::FormatError, /Tried to load unspecified class: Puppet::SSL::Key/)
+      }.to raise_error(Puppet::Network::FormatHandler::FormatError, /Tried to load unspecified class: Symbol/)
     end
 
     it 'raises when interning multple instances of an unacceptable indirected type' do
-      obj = Puppet::SSL::Key.new('foo')
+      obj = :something
 
       expect {
         yaml.intern_multiple(obj.class, YAML.dump([obj]))
-      }.to raise_error(Puppet::Network::FormatHandler::FormatError, /Tried to load unspecified class: Puppet::SSL::Key/)
+      }.to raise_error(Puppet::Network::FormatHandler::FormatError, /Tried to load unspecified class: Symbol/)
     end
   end
 

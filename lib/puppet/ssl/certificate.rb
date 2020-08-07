@@ -11,12 +11,6 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
   # This is defined from the base class
   wraps OpenSSL::X509::Certificate
 
-  extend Puppet::Indirector
-  indirects :certificate, :terminus_class => :file, :doc => <<DOC
-    This indirection wraps an `OpenSSL::X509::Certificate` object, representing a certificate (signed public key).
-    The indirection key is the certificate CN (generally a hostname).
-DOC
-
   # Because of how the format handler class is included, this
   # can't be in the base class.
   def self.supported_formats
