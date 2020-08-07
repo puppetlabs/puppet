@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.17.0-151-g0e5139e2c3\n"
+"Project-Id-Version: Puppet automation framework 6.17.0-160-gb6f708676a\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-08-06 23:27+0000\n"
-"PO-Revision-Date: 2020-08-06 23:27+0000\n"
+"POT-Creation-Date: 2020-08-07 03:42+0000\n"
+"PO-Revision-Date: 2020-08-07 03:42+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -480,7 +480,7 @@ msgstr ""
 msgid "Creating a new EC SSL key for %{name} using curve %{curve}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:157 ../lib/puppet/ssl/key.rb:26
+#: ../lib/puppet/application/ssl.rb:157
 msgid "Creating a new SSL key for %{name}"
 msgstr ""
 
@@ -725,16 +725,12 @@ msgstr ""
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1002
-msgid "Setting 'ssl_client_ca_auth' is deprecated."
-msgstr ""
-
-#: ../lib/puppet/defaults.rb:1081 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1058 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1947
+#: ../lib/puppet/defaults.rb:1924
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -780,7 +776,7 @@ msgstr ""
 msgid "no matching resources found"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:7 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:6 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
+#: ../lib/puppet/face/config.rb:7 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:6 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
 msgid "Apache 2 license; see COPYING"
 msgstr ""
 
@@ -1141,10 +1137,6 @@ msgstr ""
 
 #: ../lib/puppet/face/help.rb:174 ../lib/puppet/face/help.rb:186
 msgid "Check error logs."
-msgstr ""
-
-#: ../lib/puppet/face/key.rb:7
-msgid "Create, save, and remove certificate keys."
 msgstr ""
 
 #: ../lib/puppet/face/man.rb:10
@@ -2707,7 +2699,7 @@ msgstr ""
 msgid "directory traversal detected in %{json}: %{name}"
 msgstr ""
 
-#: ../lib/puppet/indirector/json.rb:41 ../lib/puppet/indirector/msgpack.rb:48 ../lib/puppet/indirector/ssl_file.rb:40 ../lib/puppet/indirector/yaml.rb:40
+#: ../lib/puppet/indirector/json.rb:41 ../lib/puppet/indirector/msgpack.rb:48 ../lib/puppet/indirector/yaml.rb:40
 msgid "invalid key"
 msgstr ""
 
@@ -2717,14 +2709,6 @@ msgstr ""
 
 #: ../lib/puppet/indirector/json.rb:64
 msgid "Could not parse JSON data for %{name} %{key}: %{detail}"
-msgstr ""
-
-#: ../lib/puppet/indirector/key/file.rb:29
-msgid "Could not remove %{request} public key: %{detail}"
-msgstr ""
-
-#: ../lib/puppet/indirector/key/file.rb:43
-msgid "Could not write %{request}: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/indirector/memory.rb:14
@@ -2743,7 +2727,7 @@ msgstr ""
 msgid "Could not destroy %{name} %{request}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/msgpack.rb:47 ../lib/puppet/indirector/ssl_file.rb:39 ../lib/puppet/indirector/yaml.rb:39
+#: ../lib/puppet/indirector/msgpack.rb:47 ../lib/puppet/indirector/yaml.rb:39
 msgid "directory traversal detected in %{indirection}: %{name}"
 msgstr ""
 
@@ -2810,42 +2794,6 @@ msgstr ""
 
 #: ../lib/puppet/indirector/rest.rb:43 ../lib/puppet/rest/response.rb:31
 msgid "Error %{code} on SERVER: %{returned_message}"
-msgstr ""
-
-#: ../lib/puppet/indirector/ssl_file.rb:34
-msgid "No file or directory setting provided; terminus %{class_name} cannot function"
-msgstr ""
-
-#: ../lib/puppet/indirector/ssl_file.rb:55
-msgid "Removing file %{model} %{request} at '%{path}'"
-msgstr ""
-
-#: ../lib/puppet/indirector/ssl_file.rb:59
-msgid "Could not remove %{request}: %{detail}"
-msgstr ""
-
-#: ../lib/puppet/indirector/ssl_file.rb:75
-msgid "Cannot save %{request}; parent directory %{dir} does not exist"
-msgstr ""
-
-#: ../lib/puppet/indirector/ssl_file.rb:76
-msgid "Cannot save %{request}; parent directory %{dir} is not writable"
-msgstr ""
-
-#: ../lib/puppet/indirector/ssl_file.rb:121
-msgid "Tried to fix SSL files to a file containing uppercase"
-msgstr ""
-
-#: ../lib/puppet/indirector/ssl_file.rb:130
-msgid "Automatic downcasing and renaming of ssl files is deprecated; please request the file using its correct case: %{full_file}"
-msgstr ""
-
-#: ../lib/puppet/indirector/ssl_file.rb:150
-msgid "Could not write %{path} to %{setting}: %{detail}"
-msgstr ""
-
-#: ../lib/puppet/indirector/ssl_file.rb:153
-msgid "You must provide a setting to determine where the files are stored"
 msgstr ""
 
 #: ../lib/puppet/indirector/terminus.rb:37
@@ -3951,15 +3899,15 @@ msgstr ""
 msgid "Puppet::Network::HTTP::Compression::IdentityAdapter#uncompress is deprecated."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:44
+#: ../lib/puppet/network/http/connection.rb:43
 msgid "Unrecognized option(s): %{opts}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:51
+#: ../lib/puppet/network/http/connection.rb:49
 msgid "Expected an instance of Puppet::SSL::Verifier but was passed a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:281
+#: ../lib/puppet/network/http/connection.rb:272
 msgid "Too many HTTP redirections for %{host}:%{port}"
 msgstr ""
 
@@ -7741,83 +7689,83 @@ msgstr ""
 msgid "Invalid 'time to live' format '%{value}' for parameter: %{param_name}"
 msgstr ""
 
-#: ../lib/puppet/ssl/base.rb:27
+#: ../lib/puppet/ssl/base.rb:26
 msgid "%{name} has not declared what class it wraps"
 msgstr ""
 
-#: ../lib/puppet/ssl/base.rb:32 ../lib/puppet/x509/cert_provider.rb:342
+#: ../lib/puppet/ssl/base.rb:31 ../lib/puppet/x509/cert_provider.rb:342
 msgid "Certname %{name} must not contain unprintable or non-ASCII characters"
 msgstr ""
 
-#: ../lib/puppet/ssl/base.rb:38
+#: ../lib/puppet/ssl/base.rb:37
 msgid "%{class_name} did not override 'generate'"
 msgstr ""
 
-#: ../lib/puppet/ssl/base.rb:63
+#: ../lib/puppet/ssl/base.rb:64
 msgid "Object must be an instance of %{class_name}, %{actual_class} given"
 msgstr ""
 
-#: ../lib/puppet/ssl/base.rb:67
+#: ../lib/puppet/ssl/base.rb:68
 msgid "Name must be supplied if it cannot be determined from the instance"
 msgstr ""
 
-#: ../lib/puppet/ssl/base.rb:142
+#: ../lib/puppet/ssl/base.rb:140
 msgid "Unknown signature algorithm '%{ln}'"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:65
+#: ../lib/puppet/ssl/certificate_request.rb:57
 msgid "Creating a new SSL certificate request for %{name}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:101
+#: ../lib/puppet/ssl/certificate_request.rb:90
 msgid "CSR sign verification failed; you need to clean the certificate request for %{name} on the server"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:107
+#: ../lib/puppet/ssl/certificate_request.rb:96
 msgid "Certificate Request fingerprint (%{digest}): %{hex_digest}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:151
+#: ../lib/puppet/ssl/certificate_request.rb:140
 msgid "CSR needs content to extract fields"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:178
+#: ../lib/puppet/ssl/certificate_request.rb:167
 msgid "In %{attr}, expected extension record %{index} to have two or three items, but found %{count}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:229
+#: ../lib/puppet/ssl/certificate_request.rb:218
 msgid "Cannot specify CSR attribute %{oid}: conflicts with internally used CSR attribute"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:238
+#: ../lib/puppet/ssl/certificate_request.rb:227
 msgid "Cannot create CSR with attribute %{oid}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:255
+#: ../lib/puppet/ssl/certificate_request.rb:244
 msgid "Cannot specify CSR extension request %{oid}: conflicts with internally used extension request"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:261
+#: ../lib/puppet/ssl/certificate_request.rb:250
 msgid "Cannot create CSR with extension request %{oid}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:312
+#: ../lib/puppet/ssl/certificate_request.rb:301
 msgid "In %{attr}, expected Set but found %{klass}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:316
+#: ../lib/puppet/ssl/certificate_request.rb:305
 msgid "In %{attr}, expected Set[Array] but found %{klass}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:320
+#: ../lib/puppet/ssl/certificate_request.rb:309
 msgid "In %{attr}, expected Set[Array] with one value but found %{count} elements"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:324
+#: ../lib/puppet/ssl/certificate_request.rb:313
 msgid "In %{attr}, expected Set[Array[Sequence[...]]], but found %{klass}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:328
+#: ../lib/puppet/ssl/certificate_request.rb:317
 msgid "In %{attr}, expected Set[Array[Sequence[Array[...]]]], but found %{klass}"
 msgstr ""
 
@@ -7843,94 +7791,6 @@ msgstr ""
 
 #: ../lib/puppet/ssl/error.rb:23
 msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:154
-msgid "No certificate to validate."
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:155
-msgid "No private key with which to validate certificate with fingerprint: %{fingerprint}"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:157
-msgid ""
-"The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?\n"
-"Certificate fingerprint: %{fingerprint}\n"
-"To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certificate.\n"
-"On the master:\n"
-"  puppetserver ca clean --certname %{cert_name}\n"
-"On the agent:\n"
-"  1. puppet ssl clean %{clean_params}\n"
-"  2. puppet %{puppet_params}\n"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:212
-msgid ""
-"The CSR retrieved from the master does not match the agent's public key.\n"
-"CSR fingerprint: %{fingerprint}\n"
-"CSR public key: %{csr_public_key}\n"
-"Agent public key: %{agent_public_key}\n"
-"To fix this, remove the CSR from both the master and the agent and then start a puppet run, which will automatically regenerate a CSR.\n"
-"On the master:\n"
-"  puppetserver ca clean --certname %{cert_name}\n"
-"On the agent:\n"
-"  1. puppet ssl clean %{clean_params}\n"
-"  2. puppet %{puppet_params}\n"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:235
-msgid "Puppet::SSL::Host is deprecated and will be removed in a future release of Puppet."
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:267 ../lib/puppet/ssl/host.rb:288
-msgid "Could not request certificate: %{message}"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:269
-msgid "Exiting; failed to retrieve certificate and waitforcert is disabled"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:278
-msgid "Exiting; no certificate found and waitforcert is disabled"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:286
-msgid "Did not receive certificate"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:326
-msgid "Response from the CA did not contain a valid certificate request: %{message}"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:332
-msgid "Could not download certificate request: %{message}"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:359
-msgid ""
-"Failed attempting to load CRL from %{crl_path}! The CRL below caused the error '%{error}':\n"
-"%{crl}"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:391 ../lib/puppet/ssl/state_machine.rb:120
-msgid "Could not download CRLs: %{message}"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:425
-msgid "The certificate at %{file_path} is invalid. Could not load."
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:446
-msgid "Response from the CA did not contain a valid certificate for %{cert_name}."
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:450
-msgid "No certificate for %{cert_name} on CA"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:453
-msgid "Could not download host certificate: %{message}"
 msgstr ""
 
 #: ../lib/puppet/ssl/oids.rb:110
@@ -8055,6 +7915,10 @@ msgstr ""
 
 #: ../lib/puppet/ssl/state_machine.rb:118
 msgid "CRL is missing from the server"
+msgstr ""
+
+#: ../lib/puppet/ssl/state_machine.rb:120
+msgid "Could not download CRLs: %{message}"
 msgstr ""
 
 #: ../lib/puppet/ssl/state_machine.rb:127
