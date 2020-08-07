@@ -10,6 +10,7 @@ class Puppet::Indirector::FileMetadata::Http < Puppet::Indirector::GenericHttp
 
   def find(request)
     checksum_type = request.options[:checksum_type]
+    # See URL encoding comment in Puppet::Type::File::ParamSource#chunk_file_from_source
     uri = URI(request.uri)
     client = Puppet.runtime[:http]
     head = client.head(uri, options: {include_system_store: true})
