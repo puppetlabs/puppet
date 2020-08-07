@@ -1751,13 +1751,6 @@ The domain which will be queried to find the SRV records of servers to use\.
 .
 .IP "" 0
 .
-.SS "ssl_client_ca_auth"
-Certificate authorities who issue server certificates\. SSL servers will not be considered authentic unless they possess a certificate issued by an authority listed in this file\. If this setting has no value then the Puppet master\'s CA certificate (localcacert) will be used\.
-.
-.TP
-\fIDefault\fR:
-
-.
 .SS "ssl_client_header"
 The header containing an authenticated client\'s SSL DN\. This header must be set by the proxy to the authenticated client\'s SSL DN (e\.g\., \fB/CN=puppet\.puppetlabs\.com\fR)\. Puppet will parse out the Common Name (CN) from the Distinguished Name (DN) and use the value of the CN field for authorization\.
 .
@@ -1787,13 +1780,6 @@ A lock file to indicate that the ssl bootstrap process is currently in progress\
 \fIDefault\fR: $ssldir/ssl\.lock
 .
 .IP "" 0
-.
-.SS "ssl_server_ca_auth"
-The setting is deprecated and has no effect\. Ensure all root and intermediate certificate authorities used to issue client certificates are contained in the server\'s \fBcacert\fR file on the server\.
-.
-.TP
-\fIDefault\fR:
-
 .
 .SS "ssl_trust_store"
 A file containing CA certificates in PEM format that puppet should trust when making HTTPS requests\. This \fBonly\fR applies to https requests to non\-puppet infrastructure, such as retrieving file metadata and content from https file sources, puppet module tool and the \'http\' report processor\. This setting is ignored when making requests to puppet:// URLs such as catalog and report requests\.
