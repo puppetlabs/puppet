@@ -243,13 +243,9 @@ def prepare_installation
   end
 
   if $operatingsystem == "windows"
-    begin
-      # populates constants used to specify default Windows directories
-      require 'win32/dir'
-    rescue LoadError => e
-      puts "Cannot run on Microsoft Windows without the win32-process, win32-dir & win32-service gems: #{e}"
-      exit(-1)
-    end
+    # TODO check if this can be required here
+    # may need to change to require_relative
+    require 'puppet/util/windows/monkey_patches/dir'
   end
 
   if not InstallOptions.configdir.nil?

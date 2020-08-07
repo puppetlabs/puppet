@@ -9,7 +9,7 @@ module Puppet
       def profile_base(agent)
         ruby = Puppet::Acceptance::CommandUtils.ruby_command(agent)
         getbasedir = <<'END'
-require 'win32/dir'
+require 'puppet/util/windows/monkey_patches/dir'
 puts Dir::PROFILE.match(/(.*)\\\\[^\\\\]*/)[1]
 END
         on(agent, "#{ruby} -e \"#{getbasedir}\"").stdout.chomp
