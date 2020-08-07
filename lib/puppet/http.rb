@@ -1,7 +1,7 @@
 module Puppet
   module Network
     module HTTP
-      require 'puppet/network/resolver'
+      require 'puppet/network/http_pool'
     end
   end
 
@@ -16,6 +16,7 @@ module Puppet
     require 'puppet/http/proxy'
     require 'puppet/http/factory'
     require 'puppet/http/pool'
+    require 'puppet/http/dns'
     require 'puppet/http/response'
     require 'puppet/http/service'
     require 'puppet/http/service/ca'

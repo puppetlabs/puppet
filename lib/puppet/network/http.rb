@@ -1,3 +1,4 @@
+# This module is used to handle puppet REST requests in puppetserver.
 module Puppet::Network::HTTP
   HEADER_ENABLE_PROFILING = "X-Puppet-Profiling"
   HEADER_PUPPET_VERSION = "X-Puppet-Version"
@@ -19,7 +20,4 @@ module Puppet::Network::HTTP
   require 'puppet/network/http/response'
   require 'puppet/network/http/request'
   require 'puppet/network/http/memory_response'
-  require 'puppet/network/http/compression'
-
-  require 'puppet/http'
 end

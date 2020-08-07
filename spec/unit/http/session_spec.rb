@@ -138,7 +138,7 @@ describe Puppet::HTTP::Session do
       Puppet[:server_list] = 'foo.example.com,bar.example.com,baz.example.com'
       Puppet[:ca_server] = 'caserver.example.com'
 
-      allow_any_instance_of(Puppet::Network::Resolver).to receive(:each_srv_record).and_yield('mars.example.srv', 8140)
+      allow_any_instance_of(Puppet::HTTP::DNS).to receive(:each_srv_record).and_yield('mars.example.srv', 8140)
       service = session.route_to(:ca)
 
       expect(service.url).to eq(URI("https://mars.example.srv:8140/puppet-ca/v1"))
@@ -158,7 +158,7 @@ describe Puppet::HTTP::Session do
       Puppet[:use_srv_records] = true
       Puppet[:server_list] = 'foo.example.com,bar.example.com,baz.example.com'
 
-      allow_any_instance_of(Puppet::Network::Resolver).to receive(:each_srv_record)
+      allow_any_instance_of(Puppet::HTTP::DNS).to receive(:each_srv_record)
       stub_request(:get, "https://foo.example.com:8140/status/v1/simple/master").to_return(status: 500)
       stub_request(:get, "https://bar.example.com:8140/status/v1/simple/master").to_return(status: 200)
 
@@ -170,7 +170,7 @@ describe Puppet::HTTP::Session do
     it "fails if server_list doesn't return anything valid" do
       Puppet[:server_list] = 'foo.example.com,bar.example.com'
 
-      allow_any_instance_of(Puppet::Network::Resolver).to receive(:each_srv_record)
+      allow_any_instance_of(Puppet::HTTP::DNS).to receive(:each_srv_record)
       stub_request(:get, "https://foo.example.com:8140/status/v1/simple/master").to_return(status: 500)
       stub_request(:get, "https://bar.example.com:8140/status/v1/simple/master").to_return(status: 500)
 

@@ -1,7 +1,7 @@
 require 'spec_helper'
-require 'puppet/network/resolver'
+require 'puppet/http'
 
-describe Puppet::Network::Resolver do
+describe Puppet::HTTP::DNS do
   before do
     @dns_mock_object = double('dns')
     allow(Resolv::DNS).to receive(:new).and_return(@dns_mock_object)
@@ -26,7 +26,7 @@ describe Puppet::Network::Resolver do
     end
   end
 
-  let(:resolver) { Puppet::Network::Resolver.new }
+  let(:resolver) { described_class.new }
 
   describe 'when the domain is not known' do
     before :each do

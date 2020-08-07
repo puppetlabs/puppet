@@ -1,14 +1,11 @@
 require 'puppet/network/http/connection'
-require 'puppet/util/platform'
 
 module Puppet::Network; end
 
-# This module contains the factory methods that should be used for getting a
-# {Puppet::Network::HTTP::Connection} instance. The pool may return a new
-# connection or a persistent cached connection, depending on the underlying
-# pool implementation in use.
+# This module is deprecated.
 #
 # @api public
+# @deprecated Use {Puppet::HTTP::Client} instead.
 #
 module Puppet::Network::HttpPool
 
@@ -29,10 +26,12 @@ module Puppet::Network::HttpPool
   # @param verify_peer [Boolean] Whether to verify the peer credentials, if possible. Verification will not take place if the CA certificate is missing.
   # @return [Puppet::Network::HTTP::Connection]
   #
-  # @deprecated Use {#http_connection} instead.
+  # @deprecated Use {Puppet.runtime[:http]} instead.
   # @api public
   #
   def self.http_instance(host, port, use_ssl = true, verify_peer = true)
+    Puppet.warn_once('deprecations', self, "The method 'Puppet::Network::HttpPool.http_instance' is deprecated. Use Puppet.runtime[:http] instead")
+
     if verify_peer
       verifier = Puppet::SSL::Verifier.new(host, nil)
       http_client_class.new(host, port, use_ssl: use_ssl, verifier: verifier)
@@ -52,9 +51,12 @@ module Puppet::Network::HttpPool
   #   when making HTTPS connections. Required when `use_ssl` is `true`.
   # @return [Puppet::Network::HTTP::Connection]
   #
+  # @deprecated Use {Puppet.runtime[:http]} instead.
   # @api public
   #
   def self.connection(host, port, use_ssl: true, ssl_context: nil)
+    Puppet.warn_once('deprecations', self, "The method 'Puppet::Network::HttpPool.connection' is deprecated. Use Puppet.runtime[:http] instead")
+
     if use_ssl
       unless ssl_context
         # TRANSLATORS 'ssl_context' is an argument and should not be translated

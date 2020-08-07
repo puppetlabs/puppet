@@ -14,7 +14,7 @@ class Puppet::HTTP::Resolver::SRV < Puppet::HTTP::Resolver
   def initialize(client, domain:, dns: Resolv::DNS.new)
     @client = client
     @srv_domain = domain
-    @delegate = Puppet::Network::Resolver.new(dns)
+    @delegate = Puppet::HTTP::DNS.new(dns)
   end
 
   #

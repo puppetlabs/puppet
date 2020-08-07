@@ -147,8 +147,6 @@ module Puppet::Test
       Puppet::Application.clear!
       Puppet::Util::Profiler.clear
 
-      Puppet::Rest::Routes.clear
-
       Puppet::Node::Facts.indirection.terminus_class = :memory
       facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
       Puppet::Node::Facts.indirection.save(facts)

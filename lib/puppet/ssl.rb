@@ -14,6 +14,4 @@ module Puppet::SSL # :nodoc:
   require 'puppet/ssl/certificate'
   require 'puppet/ssl/certificate_request'
   require 'puppet/ssl/certificate_request_attributes'
-  require 'puppet/rest/errors'
-  require 'puppet/rest/routes'
 end
