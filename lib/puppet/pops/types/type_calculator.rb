@@ -182,13 +182,6 @@ class TypeCalculator
   end
 
   # Returns an iterable if the t represents something that can be iterated
-  def enumerable(t)
-    #TRANSLATOR 'TypeCalculator.enumerable' and 'iterable' are methods and should not be translated
-    Puppet.deprecation_warning(_('TypeCalculator.enumerable is deprecated. Use iterable'))
-    iterable(t)
-  end
-
-  # Returns an iterable if the t represents something that can be iterated
   def iterable(t)
     # Create an iterable on the type if possible
     Iterable.on(t)
