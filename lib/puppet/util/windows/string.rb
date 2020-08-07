@@ -1,5 +1,3 @@
-require 'puppet/util/windows'
-
 module Puppet::Util::Windows::String
   def wide_string(str)
     # if given a nil string, assume caller wants to pass a nil pointer to win32

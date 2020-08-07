@@ -3,12 +3,14 @@
 require 'fileutils'
 require 'win32/daemon'
 require 'win32/dir'
-require 'win32/process'
 
 # This file defines utilities for logging to eventlog. While it lives inside
 # Puppet, it is completely independent and loads no other parts of Puppet, so we
 # can safely require *just* it.
 require 'puppet/util/windows/eventlog'
+
+# monkey patches ruby Process to add .create method
+require 'puppet/util/windows/monkey_patches/process'
 
 class WindowsDaemon < Win32::Daemon
   CREATE_NEW_CONSOLE          = 0x00000010

@@ -1,6 +1,6 @@
 require 'puppet/util/windows'
-require 'win32/process'
 require 'ffi'
+require 'puppet/util/windows/monkey_patches/process'
 
 module Puppet::Util::Windows::Process
   extend Puppet::Util::Windows::String
