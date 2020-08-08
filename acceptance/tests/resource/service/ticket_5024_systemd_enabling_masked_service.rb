@@ -78,8 +78,8 @@ agents.each do |agent|
   step "Masking the #{package_name[platform]} service"
   apply_manifest_on(agent, manifest_service_masked, :catch_failures => true)
   on(agent, puppet_resource('service', package_name[platform])) do
-    assert_match(/ensure => 'stopped'/, stdout, "Expected #{package_name[platform]} service to be stopped")
-    assert_match(/enable => 'false'/, stdout, "Expected #{package_name[platform]} service to be masked")
+    assert_match(/ensure.+=> 'stopped'/, stdout, "Expected #{package_name[platform]} service to be stopped")
+    assert_match(/enable.+=> 'false'/, stdout, "Expected #{package_name[platform]} service to be masked")
     on(agent, "readlink #{masked_symlink_systemd}") do
       assert_equal('/dev/null', stdout.chomp, "Expected service symlink to point to /dev/null")
     end
@@ -88,8 +88,8 @@ agents.each do |agent|
   step "Enabling the #{package_name[platform]} service"
   apply_manifest_on(agent, manifest_service_enabled, :catch_failures => true)
   on(agent, puppet_resource('service', package_name[platform])) do
-    assert_match(/ensure => 'running'/, stdout, "Expected #{package_name[platform]} service to be running")
-    assert_match(/enable => 'true'/, stdout, "Expected #{package_name[platform]} service to be enabled")
+    assert_match(/ensure.+=> 'running'/, stdout, "Expected #{package_name[platform]} service to be running")
+    assert_match(/enable.+=> 'true'/, stdout, "Expected #{package_name[platform]} service to be enabled")
     on(agent, "readlink #{symlink_systemd}") do
       assert_equal(init_script_systemd, stdout.chomp, "Expected service symlink to point to systemd init script")
     end

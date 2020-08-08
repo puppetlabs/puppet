@@ -83,8 +83,8 @@ module Puppet
       # @param block [Proc] optional: block to verify service state
       # @return None
       def assert_service_status_on_host(host, service, status, &block)
-        ensure_status = "ensure => '#{status[:ensure]}'" if status[:ensure]
-        enable_status = "enable => '#{status[:enable]}'" if status[:enable]
+        ensure_status = "ensure.+=> '#{status[:ensure]}'" if status[:ensure]
+        enable_status = "enable.+=> '#{status[:enable]}'" if status[:enable]
 
         on host, puppet_resource('service', service) do
           assert_match(/'#{service}'.+#{ensure_status}.+#{enable_status}/m, stdout, "Service status does not match expectation #{status}")
