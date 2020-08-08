@@ -222,7 +222,7 @@ Puppet::Face.define(:help, '0.0.1') do
   #private :horribly_extract_summary_from
 
   def exclude_from_docs?(appname)
-    %w{face_base indirection_base cert key man report status}.include? appname
+    %w{face_base indirection_base report status}.include? appname
   end
   # This should absolutely be a private method, but for some reason it appears
   #  that you can't use the 'private' keyword inside of a Face definition.
