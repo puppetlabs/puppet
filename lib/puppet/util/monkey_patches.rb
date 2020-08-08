@@ -175,7 +175,9 @@ class OpenSSL::SSL::SSLContext
   else
     DEFAULT_PARAMS[:options] = OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
   end
-  DEFAULT_PARAMS[:ciphers] << ':!SSLv2'
+  if DEFAULT_PARAMS[:ciphers]
+    DEFAULT_PARAMS[:ciphers] << ':!SSLv2'
+  end
 
   alias __original_initialize initialize
   private :__original_initialize

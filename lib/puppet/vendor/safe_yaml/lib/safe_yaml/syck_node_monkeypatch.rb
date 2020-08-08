@@ -39,5 +39,6 @@ EORUBY
 if defined?(YAML::Syck::Node)
   YAML::Syck.module_eval monkeypatch
 else
+  require 'syck' if RUBY_VERSION >= '2.2'
   Syck.module_eval monkeypatch
 end
