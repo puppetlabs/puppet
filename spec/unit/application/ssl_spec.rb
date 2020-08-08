@@ -92,7 +92,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
   end
 
   context 'when submitting a CSR' do
-    let(:csr_path) { File.join(Puppet[:requestdir], "#{name}.pem") }
+    let(:csr_path) { Puppet[:hostcsr] }
 
     before do
       ssl.command_line.args << 'submit_request'
@@ -318,7 +318,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'deletes the request' do
-      path = File.join(Puppet[:requestdir], "#{Puppet[:certname]}.pem")
+      path = Puppet[:hostcsr]
       File.write(path, @host[:csr].to_pem)
 
       expects_command_to_pass(%r{Removed certificate request #{path}})
