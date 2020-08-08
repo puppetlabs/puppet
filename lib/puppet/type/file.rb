@@ -83,13 +83,11 @@ Puppet::Type.newtype(:file) do
         use copy the file in the same directory with that value as the extension
         of the backup. (A value of `true` is a synonym for `.puppet-bak`.)
       * If set to any other string, Puppet will try to back up to a filebucket
-        with that title. See the `filebucket` resource type for more details.
-        (This is the preferred method for backup, since it can be centralized
-        and queried.)
+        with that title. Puppet automatically creates a **local** filebucket
+        named `puppet` if one doesn't already exist. See the `filebucket` resource
+        type for more details.
 
-      Default value: `puppet`, which backs up to a filebucket of the same name.
-      (Puppet automatically creates a **local** filebucket named `puppet` if one
-      doesn't already exist.)
+      Default value: `false`
 
       Backing up to a local filebucket isn't particularly useful. If you want
       to make organized use of backups, you will generally want to use the
@@ -125,7 +123,7 @@ Puppet::Type.newtype(:file) do
         - Restrict the directory to a maximum size after which the oldest items are removed.
     EOT
 
-    defaultto "puppet"
+    defaultto false
 
     munge do |value|
       # I don't really know how this is happening.

@@ -15,7 +15,7 @@ agents.each do |agent|
   apply_manifest_on(agent, manifest)
 
   step "overwrite file, causing zero-length file to be backed up"
-  manifest = "file { '#{target}': content => 'some text' }"
+  manifest = "file { '#{target}': content => 'some text', backup => 'puppet' }"
   apply_manifest_on(agent, manifest)
 
   test_name "verify invalid hashes should not change the file"
@@ -40,9 +40,9 @@ agents.each do |agent|
 
   test_name "verify that an empty file can be retrieved from the filebucket"
   if fips_mode
-    manifest = "file { '#{target}': content => '{sha256}e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' }"
+    manifest = "file { '#{target}': content => '{sha256}e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', backup => 'puppet' }"
   else
-    manifest = "file { '#{target}': content => '{md5}d41d8cd98f00b204e9800998ecf8427e' }"
+    manifest = "file { '#{target}': content => '{md5}d41d8cd98f00b204e9800998ecf8427e', backup => 'puppet' }"
   end
 
   apply_manifest_on(agent, manifest) do
