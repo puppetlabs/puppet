@@ -45,7 +45,7 @@ test_name "SMF: basic tests" do
 
     step "SMF: ensure you can query the service with the ral" do
       on(agent, puppet("resource service tstapp")) do
-        assert_match( /ensure => 'running'/, result.stdout, "err: #{agent}")
+        assert_match( /ensure.+=> 'running'/, result.stdout, "err: #{agent}")
       end
     end
 
