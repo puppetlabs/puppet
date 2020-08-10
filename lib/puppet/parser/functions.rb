@@ -45,9 +45,9 @@ module Puppet::Parser::Functions
   class AnonymousModuleAdapter < Puppet::Pops::Adaptable::Adapter
     attr_accessor :module
 
-    def self.create_adapter(o)
-      a = super(o)
-      a.module = Module.new do
+    def self.create_adapter(env)
+      adapter = super(env)
+      adapter.module = Module.new do
         @metadata = {}
 
         def self.all_function_info
@@ -62,7 +62,7 @@ module Puppet::Parser::Functions
           @metadata[name] = info
         end
       end
-      a
+      adapter
     end
   end
 

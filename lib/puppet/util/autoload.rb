@@ -12,11 +12,11 @@ class Puppet::Util::ModuleDirectoriesAdapter < Puppet::Pops::Adaptable::Adapter
   attr_accessor :directories
 
   def self.create_adapter(env)
-    a = super(env)
-    a.directories = env.modulepath.flat_map do |dir|
+    adapter = super(env)
+    adapter.directories = env.modulepath.flat_map do |dir|
       Dir.glob(File.join(dir, '*', 'lib'))
     end
-    a
+    adapter
   end
 end
 

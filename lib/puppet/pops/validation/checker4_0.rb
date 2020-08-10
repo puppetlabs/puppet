@@ -583,9 +583,9 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     attr_accessor :file_to_namespace
 
     def self.create_adapter(env)
-      a = super(env)
-      a.file_to_namespace = {}
-      a
+      adapter = super(env)
+      adapter.file_to_namespace = {}
+      adapter
     end
   end
 

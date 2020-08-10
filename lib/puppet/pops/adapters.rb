@@ -87,10 +87,10 @@ module Adapters
       attr_accessor :cache, :paths
 
       def self.create_adapter(env)
-        a = super(env)
-        a.paths = env.modulepath.map { |p| Pathname.new(p) }
-        a.cache = {}
-        a
+        adapter = super(env)
+        adapter.paths = env.modulepath.map { |p| Pathname.new(p) }
+        adapter.cache = {}
+        adapter
       end
     end
 
