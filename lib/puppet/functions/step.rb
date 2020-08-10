@@ -88,7 +88,7 @@ Puppet::Functions.create_function(:step) do
 
   def step(iterable, step)
     # produces an Iterable
-    Puppet::Pops::Types::Iterable.asserted_iterable(self, iterable).step(step)
+    Puppet::Pops::Types::Iterable.asserted_iterable(self, iterable, true).step(step)
   end
 
   def step_block(iterable, step, &block)
