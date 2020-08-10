@@ -813,10 +813,10 @@ Where the host\'s certificate revocation list can be found\. This is distinct fr
 .IP "" 0
 .
 .SS "hostcsr"
-This setting is deprecated\.
+Where individual hosts store their certificate request (CSR) while waiting for the CA to issue their certificate\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $ssldir/csr_$certname\.pem
+\fIDefault\fR: $requestdir/$certname\.pem
 .
 .IP "" 0
 .
