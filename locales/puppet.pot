@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.17.0-179-g20fb4911a6\n"
+"Project-Id-Version: Puppet automation framework 6.17.0-193-gb356fdd18b\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-08-07 23:06+0000\n"
-"PO-Revision-Date: 2020-08-07 23:06+0000\n"
+"POT-Creation-Date: 2020-08-10 10:36+0000\n"
+"PO-Revision-Date: 2020-08-10 10:36+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -6096,10 +6096,6 @@ msgstr ""
 msgid "%{klass} cannot be subtracted from a Timestamp"
 msgstr ""
 
-#: ../lib/puppet/pops/types/enumeration.rb:7 ../lib/puppet/pops/types/enumeration.rb:12
-msgid "Enumeration.enumerator is deprecated. Use Iterable.on instead"
-msgstr ""
-
 #: ../lib/puppet/pops/types/p_binary_type.rb:77
 msgid "The given string in encoding '%{enc}' is invalid. Cannot create a Binary UTF-8 representation"
 msgstr ""
@@ -6213,10 +6209,6 @@ msgstr ""
 msgid "Options 'include_containers' and 'include_values' cannot both be false"
 msgstr ""
 
-#: ../lib/puppet/pops/types/type_calculator.rb:187
-msgid "TypeCalculator.enumerable is deprecated. Use iterable"
-msgstr ""
-
 #. TRANSLATORS 'TypeFactory#string' is a class and method name and should not be translated
 #: ../lib/puppet/pops/types/type_factory.rb:117
 msgid "Passing more than one argument to TypeFactory#string is deprecated"
@@ -6251,65 +6243,65 @@ msgstr ""
 msgid "Unknown type <%{type}>"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:930
+#: ../lib/puppet/pops/types/types.rb:929
 msgid "The string '%{str}' cannot be converted to Numeric"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:933
+#: ../lib/puppet/pops/types/types.rb:932
 msgid "Value of type %{type} cannot be converted to Numeric"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1171
+#: ../lib/puppet/pops/types/types.rb:1170
 msgid "The string '%{str}' cannot be converted to Integer"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1174
+#: ../lib/puppet/pops/types/types.rb:1173
 msgid "Value of type %{type} cannot be converted to Integer"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1182
+#: ../lib/puppet/pops/types/types.rb:1181
 msgid "Illegal radix: %{radix}, expected 2, 8, 10, 16, or default"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1295
+#: ../lib/puppet/pops/types/types.rb:1294
 msgid "The string '%{str}' cannot be converted to Float"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1298
+#: ../lib/puppet/pops/types/types.rb:1297
 msgid "Value of type %{type} cannot be converted to Float"
 msgstr ""
 
 #. TRANSLATORS 'PStringType#initialize' is a class and method name and should not be translated
-#: ../lib/puppet/pops/types/types.rb:1515
+#: ../lib/puppet/pops/types/types.rb:1514
 msgid "Passing more than one argument to PStringType#initialize is deprecated"
 msgstr ""
 
 #. TRANSLATORS 'PStringType#values' and '#value' are classes and method names and should not be translated
-#: ../lib/puppet/pops/types/types.rb:1569
+#: ../lib/puppet/pops/types/types.rb:1568
 msgid "Method PStringType#values is deprecated. Use #value instead"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1895
+#: ../lib/puppet/pops/types/types.rb:1894
 msgid "The string '%{str}' cannot be converted to Boolean"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1898
+#: ../lib/puppet/pops/types/types.rb:1897
 msgid "Value of type %{type} cannot be converted to Boolean"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2626
+#: ../lib/puppet/pops/types/types.rb:2625
 msgid "Value of type %{type} cannot be converted to Array"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2696
+#: ../lib/puppet/pops/types/types.rb:2695
 msgid "Puppet::Pops::Types::PHashType#element_type is deprecated, use #value_type instead"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2833
+#: ../lib/puppet/pops/types/types.rb:2832
 msgid "odd number of arguments for Hash"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2844
+#: ../lib/puppet/pops/types/types.rb:2843
 msgid "Value of type %{type} cannot be converted to Hash"
 msgstr ""
 
