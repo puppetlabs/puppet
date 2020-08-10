@@ -112,7 +112,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       # do the search
       should = @resource[:ensure]
       case should
-      # The terms present, absent, purged, held, installed, latest in :ensure 
+      # The terms present, absent, purged, installed, latest in :ensure
       # resolve as Symbols, and we do not need specific package version in this case
       when true, false, Symbol
         search = @resource[:name]

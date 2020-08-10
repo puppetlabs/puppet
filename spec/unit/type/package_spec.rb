@@ -349,7 +349,7 @@ describe Puppet::Type.type(:package) do
         end
       end
 
-      [:purged, :absent, :held].each do |state|
+      [:purged, :absent].each do |state|
         it "should not reinstall if it should be #{state.to_s} and reinstall_on_refresh is true" do
           @package[:ensure] = state
           allow(@provider).to receive(:reinstallable?).and_return(true)

@@ -106,10 +106,6 @@ module Puppet
         provider.purge
       end
 
-      newvalue(:held, :event => :package_held, :required_features => :holdable) do
-        provider.deprecated_hold
-      end
-
       newvalue(:disabled, :required_features => :disableable) do
         provider.disable
       end
@@ -161,7 +157,7 @@ module Puppet
         @should.each { |should|
           case should
           when :present
-            return true unless [:absent, :purged, :held, :disabled].include?(is)
+            return true unless [:absent, :purged, :disabled].include?(is)
           when :latest
             # Short-circuit packages that are not present
             return false if is == :absent || is == :purged
@@ -657,8 +653,7 @@ module Puppet
       if provider.reinstallable? &&
         @parameters[:reinstall_on_refresh].value == :true &&
         @parameters[:ensure].value != :purged &&
-        @parameters[:ensure].value != :absent &&
-        @parameters[:ensure].value != :held
+        @parameters[:ensure].value != :absent
 
         provider.reinstall
       end
@@ -673,7 +668,7 @@ module Puppet
         Default is "none". Mark can be specified with or without `ensure`,
         if `ensure` is missing will default to "present".
 
-        Mark cannot be specified together with "purged", "absent" or "held"
+        Mark cannot be specified together with "purged", or "absent"
         values for `ensure`.
       EOT
       newvalues(:hold, :none)
@@ -710,11 +705,8 @@ module Puppet
     end
 
     validate do
-      if :held == @parameters[:ensure].should
-        warning '"ensure=>held" has been deprecated and will be removed in a future version, use "mark=hold" instead'
-      end
-      if @parameters[:mark] && [:absent, :purged, :held].include?(@parameters[:ensure].should)
-        raise ArgumentError, _('You cannot use "mark" property while "ensure" is one of ["absent", "purged", "held"]')
+      if @parameters[:mark] && [:absent, :purged].include?(@parameters[:ensure].should)
+        raise ArgumentError, _('You cannot use "mark" property while "ensure" is one of ["absent", "purged"]')
       end
     end
   end

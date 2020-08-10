@@ -381,24 +381,21 @@ describe Puppet::Type.type(:package).provider(:dpkg), unless: Puppet::Util::Plat
       allow(provider).to receive(:execute)
       allow(provider).to receive(:package_not_installed?).and_return(true)
       expect(provider).to receive(:install).once
-      expect(provider).to receive(:hold)
-      provider.deprecated_hold
+      provider.hold
     end
 
-    it "skips install new package if hold is true" do
+    it "install new package if hold is true and package not installed" do
       allow(provider).to receive(:execute)
       allow(provider).to receive(:package_not_installed?).and_return(true)
       expect(provider).to receive(:install).once
-      expect(provider).to receive(:hold)
-      provider.deprecated_hold
+      provider.hold
     end
 
     it "skips install new package if package is allready installed" do
       allow(provider).to receive(:execute)
       allow(provider).to receive(:package_not_installed?).and_return(false)
       expect(provider).not_to receive(:install)
-      expect(provider).to receive(:hold)
-      provider.deprecated_hold
+      provider.hold
     end
 
     it "executes dpkg --set-selections when holding" do
