@@ -15,8 +15,6 @@ module Puppet::Util::Windows
   class EventLog; end
 
   if Puppet::Util::Platform.windows?
-    require 'Win32API' # case matters in this require!
-
     # Note: Setting codepage here globally ensures all strings returned via
     # WIN32OLE (Ruby's late-bound COM support) are encoded in Encoding::UTF_8
     #
