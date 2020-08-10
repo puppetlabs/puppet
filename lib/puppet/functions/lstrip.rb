@@ -12,15 +12,15 @@
 #
 # @example Removing leading space from a String
 # ```puppet
-# "\n\thello".lstrip()
-# camelcase("\n\thello")
+# "\n\thello ".lstrip()
+# lstrip("\n\thello ")
 # ```
 # Would both result in `"hello"`
 #
 # @example Removing leading space from strings in an Array
 # ```puppet
-# ["\n\thello", "\n\thi"].lstrip()
-# lstrip(["\n\thello", "\n\thi"])
+# ["\n\thello ", "\n\thi "].lstrip()
+# lstrip(["\n\thello ", "\n\thi "])
 # ```
 # Would both result in `['hello', 'hi']`
 #
