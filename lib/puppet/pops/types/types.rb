@@ -1,5 +1,4 @@
 require_relative 'iterable'
-require_relative 'enumeration'
 require_relative 'recursion_guard'
 require_relative 'type_acceptor'
 require_relative 'type_asserter'
