@@ -279,7 +279,7 @@ class Dir
           raise SystemCallError.new("DeviceIoControl", error)
         end
       ensure
-        CloseHandle(handle)
+        FFI::WIN32.CloseHandle(handle)
       end
     end
 
@@ -357,7 +357,7 @@ class Dir
           raise SystemCallError.new("DeviceIoControl", error)
         end
       ensure
-        CloseHandle(handle)
+        FFI::WIN32.CloseHandle(handle)
       end
     end
 
@@ -377,13 +377,14 @@ class Dir
   # a directory, or contains any files other than '.' or '..'.
   #
   def self.empty?(path)
-    PathIsDirectoryEmptyW(Puppet::Util::Windows::String.wide_string(path))
+    path = string_check(path)
+    PathIsDirectoryEmptyW(Puppet::Util::Windows::String.wide_string(path)) != 0
   end
 
   # Returns whether or not +path+ is a junction.
   #
   def self.junction?(path)
-    string_check(path)
+    path = string_check(path)
     bool = true
 
     attrib = GetFileAttributesW(Puppet::Util::Windows::String.wide_string(path))
