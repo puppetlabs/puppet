@@ -85,6 +85,13 @@ module Adapters
 
     class PathsAndNameCacheAdapter < Puppet::Pops::Adaptable::Adapter
       attr_accessor :cache, :paths
+
+      def self.create_adapter(env)
+        adapter = super(env)
+        adapter.paths = env.modulepath.map { |p| Pathname.new(p) }
+        adapter.cache = {}
+        adapter
+      end
     end
 
     # Attempts to find the module that `instance` originates from by looking at it's {SourcePosAdapter} and
@@ -103,10 +110,7 @@ module Adapters
     def self.loader_name_by_source(environment, instance, file)
       file = instance.file if file.nil?
       return nil if file.nil? || EMPTY_STRING == file
-      pn_adapter = PathsAndNameCacheAdapter.adapt(environment) do |a|
-        a.paths ||= environment.modulepath.map { |p| Pathname.new(p) }
-        a.cache ||= {}
-      end
+      pn_adapter = PathsAndNameCacheAdapter.adapt(environment)
       dir = File.dirname(file)
       pn_adapter.cache.fetch(dir) do |key|
         mod = find_module_for_dir(environment, pn_adapter.paths, dir)

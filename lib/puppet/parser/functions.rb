@@ -44,15 +44,10 @@ module Puppet::Parser::Functions
   # @api private
   class AnonymousModuleAdapter < Puppet::Pops::Adaptable::Adapter
     attr_accessor :module
-  end
 
-  # Get the module that functions are mixed into corresponding to an
-  # environment
-  #
-  # @api private
-  def self.environment_module(env)
-    AnonymousModuleAdapter.adapt(env) do |a|
-      a.module ||= Module.new do
+    def self.create_adapter(env)
+      adapter = super(env)
+      adapter.module = Module.new do
         @metadata = {}
 
         def self.all_function_info
@@ -67,7 +62,16 @@ module Puppet::Parser::Functions
           @metadata[name] = info
         end
       end
-    end.module
+      adapter
+    end
+  end
+
+  # Get the module that functions are mixed into corresponding to an
+  # environment
+  #
+  # @api private
+  def self.environment_module(env)
+    AnonymousModuleAdapter.adapt(env).module
   end
 
   # Create a new Puppet DSL function.

@@ -69,11 +69,7 @@ module Adaptable
     #
     def self.get(o)
       attr_name = self_attr_name
-      if o.instance_variable_defined?(attr_name)
-        o.instance_variable_get(attr_name)
-      else
-        nil
-      end
+      o.instance_variable_get(attr_name)
     end
 
     # Returns an existing adapter for the given object, or creates a new adapter if the
@@ -94,17 +90,16 @@ module Adaptable
     #
     def self.adapt(o, &block)
       attr_name = self_attr_name
-      adapter = if o.instance_variable_defined?(attr_name) && value = o.instance_variable_get(attr_name)
+      adapter = if value = o.instance_variable_get(attr_name)
         value
       else
         associate_adapter(create_adapter(o), o)
       end
       if block_given?
-        case block.arity
-          when 1
-            block.call(adapter)
-          else
-            block.call(adapter, o)
+        if block.arity == 1
+          block.call(adapter)
+        else
+          block.call(adapter, o)
         end
       end
       adapter
@@ -130,8 +125,7 @@ module Adaptable
     def self.adapt_new(o, &block)
       adapter = associate_adapter(create_adapter(o), o)
       if block_given?
-        case block.arity
-        when 1
+        if block.arity == 1
           block.call(adapter)
         else
           block.call(adapter, o)
