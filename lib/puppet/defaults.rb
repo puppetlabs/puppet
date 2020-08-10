@@ -932,13 +932,13 @@ EOT
         Generally unused."
     },
     :hostcsr => {
-      :default => "$ssldir/csr_$certname.pem",
+      :default => "$requestdir/$certname.pem",
       :type   => :file,
       :mode => "0644",
       :owner => "service",
       :group => "service",
-      :deprecated  => :completely,
-      :desc => "This setting is deprecated."
+      :desc => "Where individual hosts store their certificate request (CSR)
+         while waiting for the CA to issue their certificate."
     },
     :hostcert => {
       :default => "$certdir/$certname.pem",
