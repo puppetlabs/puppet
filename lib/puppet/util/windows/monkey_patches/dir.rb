@@ -96,7 +96,7 @@ class Dir
 
   # Set Dir::MYDOCUMENTS to the same as Dir::PERSONAL if undefined
   unless defined? MYDOCUMENTS
-    MYDOCUMENTS = PERSONAL
+    MYDOCUMENTS = PERSONAL if defined? PERSONAL
   end
 
   class << self
