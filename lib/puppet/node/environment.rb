@@ -266,7 +266,7 @@ class Puppet::Node::Environment
   # @param name [String] The module name
   # @return [Puppet::Module, nil] The module if found, else nil
   def module(name)
-    modules.find {|mod| mod.name == name}
+    modules_by_name[name]
   end
 
   # Locate a module instance by the full forge name (EG authorname/module)
@@ -326,6 +326,12 @@ class Puppet::Node::Environment
     end
     @modules
   end
+
+  # @api private
+  def modules_by_name
+    @modules_by_name ||= Hash[modules.map { |mod| [mod.name, mod] }]
+  end
+  private :modules_by_name
 
   # Generate a warning if the given directory in a module path entry is named `lib`.
   #

@@ -84,7 +84,7 @@ Puppet::Functions.create_function(:reverse_each) do
 
   def reverse_each(iterable)
     # produces an Iterable
-    Puppet::Pops::Types::Iterable.asserted_iterable(self, iterable).reverse_each
+    Puppet::Pops::Types::Iterable.asserted_iterable(self, iterable, true).reverse_each
   end
 
   def reverse_each_block(iterable, &block)

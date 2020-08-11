@@ -10,6 +10,14 @@ require 'puppet/concurrent/synchronized'
 # @api private
 class Puppet::Util::ModuleDirectoriesAdapter < Puppet::Pops::Adaptable::Adapter
   attr_accessor :directories
+
+  def self.create_adapter(env)
+    adapter = super(env)
+    adapter.directories = env.modulepath.flat_map do |dir|
+      Dir.glob(File.join(dir, '*', 'lib'))
+    end
+    adapter
+  end
 end
 
 # Autoload paths, either based on names or all at once.
@@ -119,13 +127,7 @@ class Puppet::Util::Autoload
     def module_directories(env)
       raise ArgumentError, "Autoloader requires an environment" unless env
 
-      Puppet::Util::ModuleDirectoriesAdapter.adapt(env) do |a|
-        a.directories ||= env.modulepath.collect do |dir|
-          Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f, "lib") }
-        end.flatten.find_all do |d|
-          FileTest.directory?(d)
-        end
-      end.directories
+      Puppet::Util::ModuleDirectoriesAdapter.adapt(env).directories
     end
 
     # @api private

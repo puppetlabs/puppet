@@ -77,6 +77,26 @@ module Puppet::Parser::Functions
   # @api private
   class AnonymousModuleAdapter < Puppet::Pops::Adaptable::Adapter
     attr_accessor :module
+
+    def self.create_adapter(env)
+      adapter = super(env)
+      adapter.module = Module.new do
+        @metadata = {}
+
+        def self.all_function_info
+          @metadata
+        end
+
+        def self.get_function_info(name)
+          @metadata[name]
+        end
+
+        def self.add_function_info(name, info)
+          @metadata[name] = info
+        end
+      end
+      adapter
+    end
   end
 
   @environment_module_lock = Puppet::Concurrent::Lock.new
@@ -87,23 +107,7 @@ module Puppet::Parser::Functions
   # @api private
   def self.environment_module(env)
     @environment_module_lock.synchronize do
-      AnonymousModuleAdapter.adapt(env) do |a|
-        a.module ||= Module.new do
-          @metadata = {}
-
-          def self.all_function_info
-            @metadata
-          end
-
-          def self.get_function_info(name)
-            @metadata[name]
-          end
-
-          def self.add_function_info(name, info)
-            @metadata[name] = info
-          end
-        end
-      end.module
+      AnonymousModuleAdapter.adapt(env).module
     end
   end
 
