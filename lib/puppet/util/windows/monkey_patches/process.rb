@@ -3,46 +3,14 @@
 require 'ffi'
 require 'puppet/util/windows/api_types'
 require 'puppet/util/windows/string'
+require 'puppet/util/ffi/constants'
+require 'puppet/util/ffi/structs'
+require 'puppet/util/ffi/functions'
 
 module Process
   extend FFI::Library
   extend Puppet::Util::Windows::APITypes
   extend Puppet::Util::Windows::String
-
-  # Priority constants
-  # https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setpriorityclass
-  ABOVE_NORMAL_PRIORITY_CLASS = 0x0008000
-  BELOW_NORMAL_PRIORITY_CLASS = 0x0004000
-  HIGH_PRIORITY_CLASS         = 0x0000080
-  IDLE_PRIORITY_CLASS         = 0x0000040
-  NORMAL_PRIORITY_CLASS       = 0x0000020
-  REALTIME_PRIORITY_CLASS     = 0x0000010
-
-  # Process Access Rights
-  # https://docs.microsoft.com/en-us/windows/win32/procthread/process-security-and-access-rights
-  PROCESS_TERMINATE         = 0x00000001
-  PROCESS_SET_INFORMATION   = 0x00000200
-  PROCESS_QUERY_INFORMATION = 0x00000400
-  PROCESS_ALL_ACCESS        = 0x001F0FFF
-  PROCESS_VM_READ           = 0x00000010
-
-  # Process creation flags
-  # https://docs.microsoft.com/en-us/windows/win32/procthread/process-creation-flags
-  CREATE_BREAKAWAY_FROM_JOB        = 0x01000000
-  CREATE_DEFAULT_ERROR_MODE        = 0x04000000
-  CREATE_NEW_CONSOLE               = 0x00000010
-  CREATE_NEW_PROCESS_GROUP         = 0x00000200
-  CREATE_NO_WINDOW                 = 0x08000000
-  CREATE_PROTECTED_PROCESS         = 0x00040000
-  CREATE_PRESERVE_CODE_AUTHZ_LEVEL = 0x02000000
-  CREATE_SEPARATE_WOW_VDM          = 0x00000800
-  CREATE_SHARED_WOW_VDM            = 0x00001000
-  CREATE_SUSPENDED                 = 0x00000004
-  CREATE_UNICODE_ENVIRONMENT       = 0x00000400
-  DEBUG_ONLY_THIS_PROCESS          = 0x00000002
-  DEBUG_PROCESS                    = 0x00000001
-  DETACHED_PROCESS                 = 0x00000008
-  INHERIT_PARENT_AFFINITY          = 0x00010000
 
   # Logon options
   LOGON_WITH_PROFILE        = 0x00000001
@@ -68,177 +36,7 @@ module Process
   )
 
   private_constant :ProcessInfo
-
-  # https://docs.microsoft.com/en-us/previous-versions/windows/desktop/legacy/aa379560(v=vs.85)
-  # typedef struct _SECURITY_ATTRIBUTES {
-  #   DWORD  nLength;
-  #   LPVOID lpSecurityDescriptor;
-  #   BOOL   bInheritHandle;
-  # } SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
-  class SECURITY_ATTRIBUTES < FFI::Struct
-    layout(
-      :nLength, :dword,
-      :lpSecurityDescriptor, :lpvoid,
-      :bInheritHandle, :win32_bool
-    )
-  end
-
-  private_constant :SECURITY_ATTRIBUTES
-
-  # sizeof(STARTUPINFO) == 68
-  # https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/ns-processthreadsapi-startupinfoa
-  # typedef struct _STARTUPINFOA {
-  #   DWORD  cb;
-  #   LPSTR  lpReserved;
-  #   LPSTR  lpDesktop;
-  #   LPSTR  lpTitle;
-  #   DWORD  dwX;
-  #   DWORD  dwY;
-  #   DWORD  dwXSize;
-  #   DWORD  dwYSize;
-  #   DWORD  dwXCountChars;
-  #   DWORD  dwYCountChars;
-  #   DWORD  dwFillAttribute;
-  #   DWORD  dwFlags;
-  #   WORD   wShowWindow;
-  #   WORD   cbReserved2;
-  #   LPBYTE lpReserved2;
-  #   HANDLE hStdInput;
-  #   HANDLE hStdOutput;
-  #   HANDLE hStdError;
-  # } STARTUPINFOA, *LPSTARTUPINFOA;
-  class STARTUPINFO < FFI::Struct
-    layout(
-      :cb, :dword,
-      :lpReserved, :lpcstr,
-      :lpDesktop, :lpcstr,
-      :lpTitle, :lpcstr,
-      :dwX, :dword,
-      :dwY, :dword,
-      :dwXSize, :dword,
-      :dwYSize, :dword,
-      :dwXCountChars, :dword,
-      :dwYCountChars, :dword,
-      :dwFillAttribute, :dword,
-      :dwFlags, :dword,
-      :wShowWindow, :word,
-      :cbReserved2, :word,
-      :lpReserved2, :pointer,
-      :hStdInput, :handle,
-      :hStdOutput, :handle,
-      :hStdError, :handle
-    )
-  end
-
-  private_constant :STARTUPINFO
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/ns-processthreadsapi-process_information
-  # typedef struct _PROCESS_INFORMATION {
-  #   HANDLE hProcess;
-  #   HANDLE hThread;
-  #   DWORD  dwProcessId;
-  #   DWORD  dwThreadId;
-  # } PROCESS_INFORMATION, *PPROCESS_INFORMATION, *LPPROCESS_INFORMATION;
-  class PROCESS_INFORMATION < FFI::Struct
-    layout(
-      :hProcess, :handle,
-      :hThread, :handle,
-      :dwProcessId, :dword,
-      :dwThreadId, :dword
-    )
-  end
-
-  private_constant :PROCESS_INFORMATION
-
-  ffi_convention :stdcall
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/handleapi/nf-handleapi-sethandleinformation
-  # BOOL SetHandleInformation(
-  #   HANDLE hObject,
-  #   DWORD  dwMask,
-  #   DWORD  dwFlags
-  # );
-  ffi_lib :kernel32
-  attach_function_private :SetHandleInformation, [:handle, :dword, :dword], :win32_bool
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-seterrormode
-  # UINT SetErrorMode(
-  #   UINT uMode
-  # );
-  ffi_lib :kernel32
-  attach_function_private :SetErrorMode, [:uint], :uint
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw
-  # BOOL CreateProcessW(
-  #   LPCWSTR               lpApplicationName,
-  #   LPWSTR                lpCommandLine,
-  #   LPSECURITY_ATTRIBUTES lpProcessAttributes,
-  #   LPSECURITY_ATTRIBUTES lpThreadAttributes,
-  #   BOOL                  bInheritHandles,
-  #   DWORD                 dwCreationFlags,
-  #   LPVOID                lpEnvironment,
-  #   LPCWSTR               lpCurrentDirectory,
-  #   LPSTARTUPINFOW        lpStartupInfo,
-  #   LPPROCESS_INFORMATION lpProcessInformation
-  # );
-  ffi_lib :kernel32
-  attach_function_private :CreateProcessW,
-    [:lpcwstr, :lpwstr, :pointer, :pointer, :win32_bool,
-     :dword, :lpvoid, :lpcwstr, :pointer, :pointer], :bool
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-openprocess
-  # HANDLE OpenProcess(
-  #   DWORD dwDesiredAccess,
-  #   BOOL  bInheritHandle,
-  #   DWORD dwProcessId
-  # );
-  ffi_lib :kernel32
-  attach_function_private :OpenProcess, [:dword, :win32_bool, :dword], :handle
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setpriorityclass
-  # BOOL SetPriorityClass(
-  #   HANDLE hProcess,
-  #   DWORD  dwPriorityClass
-  # );
-  ffi_lib :kernel32
-  attach_function_private :SetPriorityClass, [:handle, :dword], :win32_bool
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createprocesswithlogonw
-  # BOOL CreateProcessWithLogonW(
-  #   LPCWSTR               lpUsername,
-  #   LPCWSTR               lpDomain,
-  #   LPCWSTR               lpPassword,
-  #   DWORD                 dwLogonFlags,
-  #   LPCWSTR               lpApplicationName,
-  #   LPWSTR                lpCommandLine,
-  #   DWORD                 dwCreationFlags,
-  #   LPVOID                lpEnvironment,
-  #   LPCWSTR               lpCurrentDirectory,
-  #   LPSTARTUPINFOW        lpStartupInfo,
-  #   LPPROCESS_INFORMATION lpProcessInformation
-  # );
-  ffi_lib :advapi32
-  attach_function_private :CreateProcessWithLogonW,
-    [:lpcwstr, :lpcwstr, :lpcwstr, :dword, :lpcwstr, :lpwstr,
-     :dword, :lpvoid, :lpcwstr, :pointer, :pointer], :bool
-
-  # https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/get-osfhandle?view=vs-2019
-  # intptr_t _get_osfhandle(
-  #    int fd
-  # );
-  ffi_lib FFI::Library::LIBC
-  attach_function_private :get_osfhandle, :_get_osfhandle, [:int], :intptr_t
-
-  begin
-    # https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/get-errno?view=vs-2019
-    # errno_t _get_errno(
-    #    int * pValue
-    # );
-    attach_function_private :get_errno, :_get_errno, [:pointer], :int
-  rescue FFI::NotFoundError
-    # Do nothing, Windows XP or earlier.
-  end
-
+ 
   # Disable popups. This mostly affects the Process.kill method.
   SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX)
 
