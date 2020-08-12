@@ -100,7 +100,216 @@ class Dir
   end
 
   class << self
-    alias old_glob glob
+    # Creates the symlink +to+, linked to the existing directory +from+. If the
+    # +to+ directory already exists, it must be empty or an error is raised.
+    #
+    # Example:
+    #
+    #    Dir.mkdir('C:/from')
+    #    Dir.create_junction('C:/to', 'C:/from')
+    #
+    def create_junction(to, from)
+      to   = Puppet::Util::Windows::String.wide_string(string_check(to))
+      from = Puppet::Util::Windows::String.wide_string(string_check(from))
+
+      from_path = (0.chr * 1024).encode(Encoding::UTF_16LE)
+
+      length = GetFullPathNameW(from, from_path.size, from_path, nil)
+
+      if length == 0 || length > from_path.size
+        raise SystemCallError.new("GetFullPathNameW", FFI.errno)
+      else
+        from_path.strip!
+      end
+
+      to_path = (0.chr * 1024).encode(Encoding::UTF_16LE)
+
+      length = GetFullPathNameW(to, to_path.size, to_path, nil)
+
+      if length == 0 || length > to_path.size
+        raise SystemCallError.new("GetFullPathNameW", FFI.errno)
+      else
+        to_path.strip!
+      end
+
+      # You can create a junction to a directory that already exists, so
+      # long as it's empty.
+      unless CreateDirectoryW(to_path, nil)
+        if FFI.errno != ERROR_ALREADY_EXISTS
+          raise SystemCallError.new("CreateDirectoryW", FFI.errno)
+        end
+      end
+
+      begin
+        # Generic read & write + open existing + reparse point & backup semantics
+        handle = CreateFileW(
+          to_path,
+          GENERIC_READ | GENERIC_WRITE,
+          0,
+          nil,
+          OPEN_EXISTING,
+          FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
+          0
+        )
+
+        if handle == INVALID_HANDLE_VALUE
+          raise SystemCallError.new("CreateFileW", FFI.errno)
+        end
+
+        target = "\\??\\".encode(Encoding::UTF_16LE) + from_path
+
+        rdb = REPARSE_JDATA_BUFFER.new
+        rdb[:ReparseTag] = 2684354563 # IO_REPARSE_TAG_MOUNT_POINT
+        rdb[:ReparseDataLength] = target.bytesize + 12
+        rdb[:Reserved] = 0
+        rdb[:SubstituteNameOffset] = 0
+        rdb[:SubstituteNameLength] = target.bytesize
+        rdb[:PrintNameOffset] = target.bytesize + 2
+        rdb[:PrintNameLength] = 0
+        rdb[:PathBuffer] = target
+
+        bytes = FFI::MemoryPointer.new(:ulong)
+
+        begin
+          bool = DeviceIoControl(
+            handle,
+            CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 41, METHOD_BUFFERED, 0),
+            rdb,
+            rdb[:ReparseDataLength] + rdb.header_size,
+            nil,
+            0,
+            bytes,
+            nil
+          )
+
+          error = FFI.errno
+
+          unless bool
+            RemoveDirectoryW(to_path)
+            raise SystemCallError.new("DeviceIoControl", error)
+          end
+        ensure
+          FFI::WIN32.CloseHandle(handle)
+        end
+      end
+
+      self
+    end
+
+    # Returns the path that a given junction points to. Raises an
+    # Errno::ENOENT error if the given path does not exist. Returns false
+    # if it is not a junction.
+    #
+    # Example:
+    #
+    #    Dir.mkdir('C:/from')
+    #    Dir.create_junction('C:/to', 'C:/from')
+    #    Dir.read_junction("c:/to") # => "c:/from"
+    #
+    def read_junction(junction)
+      return false unless Dir.junction?(junction)
+
+      junction = Puppet::Util::Windows::String.wide_string(string_check(junction))
+
+      junction_path = (0.chr * 1024).encode(Encoding::UTF_16LE)
+
+      length = GetFullPathNameW(junction, junction_path.size, junction_path, nil)
+
+      if length == 0 || length > junction_path.size
+        raise SystemCallError.new("GetFullPathNameW", FFI.errno)
+      else
+        junction_path.strip!
+      end
+
+      begin
+        # Generic read & write + open existing + reparse point & backup semantics
+        handle = CreateFileW(
+          junction_path,
+          GENERIC_READ | GENERIC_WRITE,
+          0,
+          nil,
+          OPEN_EXISTING,
+          FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
+          0
+        )
+
+        if handle == INVALID_HANDLE_VALUE
+          raise SystemCallError.new("CreateFileW", FFI.errno)
+        end
+
+        rdb = REPARSE_JDATA_BUFFER.new
+        rdb[:ReparseTag] = 0
+        rdb[:ReparseDataLength] = 0
+        rdb[:Reserved] = 0
+        rdb[:SubstituteNameOffset] = 0
+        rdb[:SubstituteNameLength] = 0
+        rdb[:PrintNameOffset] = 0
+        rdb[:PrintNameLength] = 0
+        rdb[:PathBuffer] = ""
+
+        bytes = FFI::MemoryPointer.new(:ulong)
+
+        begin
+          bool = DeviceIoControl(
+            handle,
+            CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 42, METHOD_BUFFERED, 0),
+            nil,
+            0,
+            rdb,
+            1024,
+            bytes,
+            nil
+          )
+
+          error = FFI.errno
+
+          unless bool
+            raise SystemCallError.new("DeviceIoControl", error)
+          end
+        ensure
+          FFI::WIN32.CloseHandle(handle)
+        end
+      end
+
+      # MSDN says print and substitute names can be in any order
+      jname = (rdb[:PathBuffer].to_ptr + rdb[:SubstituteNameOffset]).read_string(rdb[:SubstituteNameLength])
+      jname = jname.bytes.to_a.pack("C*")
+      jname = jname.force_encoding(Encoding::UTF_16LE)
+      raise "Invalid junction name: #{jname.encode(Encoding::UTF_8)}" unless jname[0..3] == "\\??\\".encode(Encoding::UTF_16LE)
+      begin
+        File.expand_path(jname[4..-1].encode(Encoding.default_external))
+      rescue Encoding::UndefinedConversionError
+        File.expand_path(jname[4..-1].encode(Encoding::UTF_8))
+      end
+    end
+
+    # Returns whether or not +path+ is empty.  Returns false if +path+ is not
+    # a directory, or contains any files other than '.' or '..'.
+    #
+    def empty?(path)
+      path = string_check(path)
+      PathIsDirectoryEmptyW(Puppet::Util::Windows::String.wide_string(path)) != 0
+    end
+
+    # Returns whether or not +path+ is a junction.
+    #
+    def junction?(path)
+      path = string_check(path)
+      bool = true
+
+      attrib = GetFileAttributesW(Puppet::Util::Windows::String.wide_string(path))
+
+      # Only directories with a reparse point attribute can be junctions
+      if attrib == INVALID_FILE_ATTRIBUTES ||
+         attrib & FILE_ATTRIBUTE_DIRECTORY == 0 ||
+         attrib & FILE_ATTRIBUTE_REPARSE_POINT == 0
+        bool = false
+      end
+
+      bool
+    end
+
+    alias :old_glob :glob
 
     # Same as the standard MRI Dir.glob method except that it handles
     # backslashes in path names.
@@ -178,8 +387,22 @@ class Dir
       end
 
       alias :pwd :getwd
+      alias :reparse_dir? :junction?
 
       private
+
+      # Simulate MRI's contortions for a stringiness check.
+      def string_check(arg)
+        return arg if arg.is_a?(String)
+        return arg.send(:to_str) if arg.respond_to?(:to_str, true) # MRI honors it, even if private
+        return arg.to_path if arg.respond_to?(:to_path)
+        raise TypeError
+      end
+
+      # Macro from Windows header file, used by the create_junction method.
+      def CTL_CODE(device, function, method, access)
+        ((device) << 16) | ((access) << 14) | ((function) << 2) | (method)
+      end
 
       # Read a wide character string up until the first double null, and delete
       # any remaining null characters.
@@ -187,232 +410,6 @@ class Dir
         str.force_encoding(Encoding::UTF_16LE).encode(Encoding::UTF_8, invalid: :replace, undef: :replace).
           split("\x00")[0].encode(Encoding.default_external)
       end
-    end
-  end
-
-  # Creates the symlink +to+, linked to the existing directory +from+. If the
-  # +to+ directory already exists, it must be empty or an error is raised.
-  #
-  # Example:
-  #
-  #    Dir.mkdir('C:/from')
-  #    Dir.create_junction('C:/to', 'C:/from')
-  #
-  def self.create_junction(to, from)
-    to   = Puppet::Util::Windows::String.wide_string(string_check(to))
-    from = Puppet::Util::Windows::String.wide_string(string_check(from))
-
-    from_path = (0.chr * 1024).encode(Encoding::UTF_16LE)
-
-    length = GetFullPathNameW(from, from_path.size, from_path, nil)
-
-    if length == 0 || length > from_path.size
-      raise SystemCallError.new("GetFullPathNameW", FFI.errno)
-    else
-      from_path.strip!
-    end
-
-    to_path = (0.chr * 1024).encode(Encoding::UTF_16LE)
-
-    length = GetFullPathNameW(to, to_path.size, to_path, nil)
-
-    if length == 0 || length > to_path.size
-      raise SystemCallError.new("GetFullPathNameW", FFI.errno)
-    else
-      to_path.strip!
-    end
-
-    # You can create a junction to a directory that already exists, so
-    # long as it's empty.
-    unless CreateDirectoryW(to_path, nil)
-      if FFI.errno != ERROR_ALREADY_EXISTS
-        raise SystemCallError.new("CreateDirectoryW", FFI.errno)
-      end
-    end
-
-    begin
-      # Generic read & write + open existing + reparse point & backup semantics
-      handle = CreateFileW(
-        to_path,
-        GENERIC_READ | GENERIC_WRITE,
-        0,
-        nil,
-        OPEN_EXISTING,
-        FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
-        0
-      )
-
-      if handle == INVALID_HANDLE_VALUE
-        raise SystemCallError.new("CreateFileW", FFI.errno)
-      end
-
-      target = "\\??\\".encode(Encoding::UTF_16LE) + from_path
-
-      rdb = REPARSE_JDATA_BUFFER.new
-      rdb[:ReparseTag] = 2684354563 # IO_REPARSE_TAG_MOUNT_POINT
-      rdb[:ReparseDataLength] = target.bytesize + 12
-      rdb[:Reserved] = 0
-      rdb[:SubstituteNameOffset] = 0
-      rdb[:SubstituteNameLength] = target.bytesize
-      rdb[:PrintNameOffset] = target.bytesize + 2
-      rdb[:PrintNameLength] = 0
-      rdb[:PathBuffer] = target
-
-      bytes = FFI::MemoryPointer.new(:ulong)
-
-      begin
-        bool = DeviceIoControl(
-          handle,
-          CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 41, METHOD_BUFFERED, 0),
-          rdb,
-          rdb[:ReparseDataLength] + rdb.header_size,
-          nil,
-          0,
-          bytes,
-          nil
-        )
-
-        error = FFI.errno
-
-        unless bool
-          RemoveDirectoryW(to_path)
-          raise SystemCallError.new("DeviceIoControl", error)
-        end
-      ensure
-        FFI::WIN32.CloseHandle(handle)
-      end
-    end
-
-    self
-  end
-
-  # Returns the path that a given junction points to. Raises an
-  # Errno::ENOENT error if the given path does not exist. Returns false
-  # if it is not a junction.
-  #
-  # Example:
-  #
-  #    Dir.mkdir('C:/from')
-  #    Dir.create_junction('C:/to', 'C:/from')
-  #    Dir.read_junction("c:/to") # => "c:/from"
-  #
-  def self.read_junction(junction)
-    return false unless Dir.junction?(junction)
-
-    junction = Puppet::Util::Windows::String.wide_string(string_check(junction))
-
-    junction_path = (0.chr * 1024).encode(Encoding::UTF_16LE)
-
-    length = GetFullPathNameW(junction, junction_path.size, junction_path, nil)
-
-    if length == 0 || length > junction_path.size
-      raise SystemCallError.new("GetFullPathNameW", FFI.errno)
-    else
-      junction_path.strip!
-    end
-
-    begin
-      # Generic read & write + open existing + reparse point & backup semantics
-      handle = CreateFileW(
-        junction_path,
-        GENERIC_READ | GENERIC_WRITE,
-        0,
-        nil,
-        OPEN_EXISTING,
-        FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
-        0
-      )
-
-      if handle == INVALID_HANDLE_VALUE
-        raise SystemCallError.new("CreateFileW", FFI.errno)
-      end
-
-      rdb = REPARSE_JDATA_BUFFER.new
-      rdb[:ReparseTag] = 0
-      rdb[:ReparseDataLength] = 0
-      rdb[:Reserved] = 0
-      rdb[:SubstituteNameOffset] = 0
-      rdb[:SubstituteNameLength] = 0
-      rdb[:PrintNameOffset] = 0
-      rdb[:PrintNameLength] = 0
-      rdb[:PathBuffer] = ""
-
-      bytes = FFI::MemoryPointer.new(:ulong)
-
-      begin
-        bool = DeviceIoControl(
-          handle,
-          CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 42, METHOD_BUFFERED, 0),
-          nil,
-          0,
-          rdb,
-          1024,
-          bytes,
-          nil
-        )
-
-        error = FFI.errno
-
-        unless bool
-          raise SystemCallError.new("DeviceIoControl", error)
-        end
-      ensure
-        FFI::WIN32.CloseHandle(handle)
-      end
-    end
-
-    # MSDN says print and substitute names can be in any order
-    jname = (rdb[:PathBuffer].to_ptr + rdb[:SubstituteNameOffset]).read_string(rdb[:SubstituteNameLength])
-    jname = jname.bytes.to_a.pack("C*")
-    jname = jname.force_encoding(Encoding::UTF_16LE)
-    raise "Invalid junction name: #{jname.encode(Encoding::UTF_8)}" unless jname[0..3] == "\\??\\".encode(Encoding::UTF_16LE)
-    begin
-      File.expand_path(jname[4..-1].encode(Encoding.default_external))
-    rescue Encoding::UndefinedConversionError
-      File.expand_path(jname[4..-1].encode(Encoding::UTF_8))
-    end
-  end
-
-  # Returns whether or not +path+ is empty.  Returns false if +path+ is not
-  # a directory, or contains any files other than '.' or '..'.
-  #
-  def self.empty?(path)
-    path = string_check(path)
-    PathIsDirectoryEmptyW(Puppet::Util::Windows::String.wide_string(path)) != 0
-  end
-
-  # Returns whether or not +path+ is a junction.
-  #
-  def self.junction?(path)
-    path = string_check(path)
-    bool = true
-
-    attrib = GetFileAttributesW(Puppet::Util::Windows::String.wide_string(path))
-
-    # Only directories with a reparse point attribute can be junctions
-    if attrib == INVALID_FILE_ATTRIBUTES ||
-        attrib & FILE_ATTRIBUTE_DIRECTORY == 0 ||
-        attrib & FILE_ATTRIBUTE_REPARSE_POINT == 0
-      bool = false
-    end
-
-    bool
-  end
-
-  class << self
-    alias reparse_dir? junction?
-
-    # Simulate MRI's contortions for a stringiness check.
-    def string_check(arg)
-      return arg if arg.is_a?(String)
-      return arg.send(:to_str) if arg.respond_to?(:to_str, true) # MRI honors it, even if private
-      return arg.to_path if arg.respond_to?(:to_path)
-      raise TypeError
-    end
-
-    # Macro from Windows header file, used by the create_junction method.
-    def CTL_CODE(device, function, method, access)
-      ((device) << 16) | ((access) << 14) | ((function) << 2) | (method)
     end
   end
 end
