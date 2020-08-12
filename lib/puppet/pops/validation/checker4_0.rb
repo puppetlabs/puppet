@@ -595,36 +595,40 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   # @api private
   class Puppet::Util::FileNamespaceAdapter < Puppet::Pops::Adaptable::Adapter
     attr_accessor :file_to_namespace
+
+    def self.create_adapter(env)
+      adapter = super(env)
+      adapter.file_to_namespace = {}
+      adapter
+    end
   end
 
   def namespace_for_file(file)
     env = Puppet.lookup(:current_environment)
     return NO_NAMESPACE if env.nil?
 
-    Puppet::Util::FileNamespaceAdapter.adapt(env) do |adapter|
-      adapter.file_to_namespace ||= {}
+    adapter = Puppet::Util::FileNamespaceAdapter.adapt(env)
 
-      file_namespace = adapter.file_to_namespace[file]
-      return file_namespace unless file_namespace.nil? # No cache entry, so we do the calculation
+    file_namespace = adapter.file_to_namespace[file]
+    return file_namespace unless file_namespace.nil? # No cache entry, so we do the calculation
 
-      path = Pathname.new(file)
+    path = Pathname.new(file)
 
-      return adapter.file_to_namespace[file] = NO_NAMESPACE if path.extname != ".pp"
+    return adapter.file_to_namespace[file] = NO_NAMESPACE if path.extname != ".pp"
 
-      path = path.expand_path
+    path = path.expand_path
 
-      return adapter.file_to_namespace[file] = NO_NAMESPACE if initial_manifest?(path, env.manifest)
+    return adapter.file_to_namespace[file] = NO_NAMESPACE if initial_manifest?(path, env.manifest)
 
-      #All auto-loaded files from modules come from a module search path dir
-      relative_path = get_module_relative_path(path, env.full_modulepath)
+    #All auto-loaded files from modules come from a module search path dir
+    relative_path = get_module_relative_path(path, env.full_modulepath)
 
-      return adapter.file_to_namespace[file] = NO_NAMESPACE if relative_path == NO_PATH
+    return adapter.file_to_namespace[file] = NO_NAMESPACE if relative_path == NO_PATH
 
-      #If a file comes from a module, but isn't in the right place, always error
-      names = dir_to_names(relative_path)
+    #If a file comes from a module, but isn't in the right place, always error
+    names = dir_to_names(relative_path)
 
-      return adapter.file_to_namespace[file] = (names == BAD_MODULE_FILE ? BAD_MODULE_FILE : names.join("::").freeze)
-    end
+    return adapter.file_to_namespace[file] = (names == BAD_MODULE_FILE ? BAD_MODULE_FILE : names.join("::").freeze)
   end
 
   def initial_manifest?(path, manifest_setting)

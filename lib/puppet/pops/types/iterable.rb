@@ -23,13 +23,16 @@ module Puppet::Pops::Types
     #
     # An `ArgumentError` is raised for all other objects.
     #
-    # @param o [Object] The object to produce an `Iterable` for
+    # @param my_caller [Object] The calling object to reference in errors
+    # @param obj [Object] The object to produce an `Iterable` for
+    # @param infer_elements [Boolean] Whether or not to recursively infer all elements of obj. Optional
+    #
     # @return [Iterable,nil] The produced `Iterable`
     # @raise [ArgumentError] In case an `Iterable` cannot be produced
     # @api public
-    def self.asserted_iterable(caller, obj)
-      iter = self.on(obj)
-      raise ArgumentError, "#{caller.class}(): wrong argument type (#{obj.class}; is not Iterable." if iter.nil?
+    def self.asserted_iterable(my_caller, obj, infer_elements = false)
+      iter = self.on(obj, nil, infer_elements)
+      raise ArgumentError, "#{my_caller.class}(): wrong argument type (#{obj.class}; is not Iterable." if iter.nil?
       iter
     end
 
@@ -48,11 +51,14 @@ module Puppet::Pops::Types
     # The value `nil` is returned for all other objects.
     #
     # @param o [Object] The object to produce an `Iterable` for
-    # @param element_type [PAnyType] the element type for the iterator. Optional (inferred if not provided)
+    # @param element_type [PAnyType] the element type for the iterator. Optional
+    # @param infer_elements [Boolean] if element_type is nil, whether or not to recursively
+    #   infer types for the entire collection. Optional
+    #
     # @return [Iterable,nil] The produced `Iterable` or `nil` if it couldn't be produced
     #
     # @api public
-    def self.on(o, element_type = nil)
+    def self.on(o, element_type = nil, infer_elements = true)
       case o
       when IteratorProducer
         o.iterator
@@ -64,7 +70,7 @@ module Puppet::Pops::Types
         if o.empty?
           Iterator.new(PUnitType::DEFAULT, o.each)
         else
-          if element_type.nil?
+          if element_type.nil? && infer_elements
             tc = TypeCalculator.singleton
             element_type = PVariantType.maybe_create(o.map {|e| tc.infer_set(e) })
           end
@@ -75,7 +81,7 @@ module Puppet::Pops::Types
         if o.empty?
           HashIterator.new(PHashType::DEFAULT_KEY_PAIR_TUPLE, o.each)
         else
-          if element_type.nil?
+          if element_type.nil? && infer_elements
             tc = TypeCalculator.singleton
             element_type = PTupleType.new([
               PVariantType.maybe_create(o.keys.map {|e| tc.infer_set(e) }),
@@ -200,6 +206,26 @@ module Puppet::Pops::Types
 
     def method_missing(name, *arguments, &block)
       @enumeration.send(name, *arguments, &block)
+    end
+
+    def next
+      @enumeration.next
+    end
+
+    def map(*args, &block)
+      @enumeration.map(*args, &block)
+    end
+
+    def reduce(*args, &block)
+      @enumeration.reduce(*args, &block)
+    end
+
+    def all?(&block)
+      @enumeration.all?(&block)
+    end
+
+    def any?(&block)
+      @enumeration.any?(&block)
     end
 
     def step(step, &block)
