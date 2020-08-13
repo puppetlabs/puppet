@@ -1290,17 +1290,6 @@ How to store cached nodes\. Valid values are (none), \'json\', \'msgpack\', or \
 \fIDefault\fR:
 
 .
-.SS "node_name"
-How the puppet master determines the client\'s identity and sets the \'hostname\', \'fqdn\' and \'domain\' facts for use in the manifest, in particular for determining which \'node\' statement applies to the client\. Possible values are \'cert\' (use the subject\'s CN in the client\'s certificate) and \'facter\' (use the hostname that the client reported in its facts)\.
-.
-.P
-This setting is deprecated, please use explicit fact matching for classification\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: cert
-.
-.IP "" 0
-.
 .SS "node_name_fact"
 The fact name used to determine the node name used for all requests the agent makes to the master\. WARNING: This setting is mutually exclusive with node_name_value\. Changing this setting also requires changes to the default auth\.conf configuration on the Puppet Master\. Please see http://links\.puppet\.com/node_name_fact for more information\.
 .
@@ -1883,17 +1872,6 @@ Whether the agent specified environment should be considered authoritative, caus
 .
 .IP "\(bu" 4
 \fIDefault\fR: false
-.
-.IP "" 0
-.
-.SS "strict_hostname_checking"
-Whether to only search for the complete hostname as it is in the certificate when searching for node information in the catalogs or to match dot delimited segments of the cert\'s certname and the hostname, fqdn, and/or domain facts\.
-.
-.P
-This setting is deprecated and will be removed in a future release\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: true
 .
 .IP "" 0
 .
