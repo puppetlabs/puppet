@@ -242,20 +242,10 @@ def prepare_installation
     $operatingsystem = Facter.value :operatingsystem
   end
 
-  if $operatingsystem == "windows"
-    begin
-      # populates constants used to specify default Windows directories
-      require 'win32/dir'
-    rescue LoadError => e
-      puts "Cannot run on Microsoft Windows without the win32-process, win32-dir & win32-service gems: #{e}"
-      exit(-1)
-    end
-  end
-
   if not InstallOptions.configdir.nil?
     configdir = InstallOptions.configdir
   elsif $operatingsystem == "windows"
-    configdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")
+    configdir = File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "etc")
   else
     configdir = "/etc/puppetlabs/puppet"
   end
@@ -263,7 +253,7 @@ def prepare_installation
   if not InstallOptions.codedir.nil?
     codedir = InstallOptions.codedir
   elsif $operatingsystem == "windows"
-    codedir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "code")
+    codedir = File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "code")
   else
     codedir = "/etc/puppetlabs/code"
   end
@@ -271,7 +261,7 @@ def prepare_installation
   if not InstallOptions.vardir.nil?
     vardir = InstallOptions.vardir
   elsif $operatingsystem == "windows"
-    vardir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "cache")
+    vardir = File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "cache")
   else
     vardir = "/opt/puppetlabs/puppet/cache"
   end
@@ -279,7 +269,7 @@ def prepare_installation
   if not InstallOptions.rundir.nil?
     rundir = InstallOptions.rundir
   elsif $operatingsystem == "windows"
-    rundir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var", "run")
+    rundir = File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "var", "run")
   else
     rundir = "/var/run/puppetlabs"
   end
@@ -287,7 +277,7 @@ def prepare_installation
   if not InstallOptions.logdir.nil?
     logdir = InstallOptions.logdir
   elsif $operatingsystem == "windows"
-    logdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var", "log")
+    logdir = File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "var", "log")
   else
     logdir = "/var/log/puppetlabs/puppet"
   end
@@ -302,7 +292,7 @@ def prepare_installation
     localedir = InstallOptions.localedir
   else
     if $operatingsystem == "windows"
-      localedir = File.join(Dir::PROGRAM_FILES, "Puppet Labs", "Puppet", "puppet", "share", "locale")
+      localedir = File.join(ENV['PROGRAMFILES'], "Puppet Labs", "Puppet", "puppet", "share", "locale")
     else
       localedir = "/opt/puppetlabs/puppet/share/locale"
     end
