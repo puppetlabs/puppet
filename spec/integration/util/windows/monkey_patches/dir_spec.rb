@@ -222,7 +222,7 @@ describe 'Dir', if: Puppet::Util::Platform.windows? do
      "RESOURCES_LOCALIZED", "COMMON_OEM_LINKS", "CDBURN_AREA",
      "COMMON_ADMINTOOLS", "ADMINTOOLS"].each do |constant|
       it "#{constant} is set" do
-        expect(Dir.const_get(constant)).not_to be_nil
+        expect { Dir.const_get(constant) }.not_to raise_error
         expect(Dir.const_get(constant)).to be_a_kind_of(String)
       end
     end
