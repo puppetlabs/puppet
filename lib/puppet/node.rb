@@ -203,15 +203,6 @@ class Puppet::Node
     # list to search, in order of longest to shortest.
     names += split_name(fqdn) if fqdn
 
-    # And make sure the node name is first, since that's the most
-    # likely usage.
-    #   The name is usually the Certificate CN, but it can be
-    # set to the 'facter' hostname instead.
-    if Puppet[:node_name] == 'cert'
-      names.unshift name
-    else
-      names.unshift parameters["hostname"]
-    end
     names.uniq
   end
 

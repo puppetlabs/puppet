@@ -1359,25 +1359,6 @@ EOT
       with Puppet Server. (eg `puppet facts upload`, `puppet agent`). May be
       overridden by more specific settings (see `ca_port`, `report_port`).",
     },
-    :node_name => {
-      :default    => 'cert',
-      :type       => :enum,
-      :values     => ['cert', 'facter'],
-      :deprecated => :completely,
-      :hook       => proc { |val|
-        if val != 'cert'
-          Puppet.deprecation_warning("The node_name setting is deprecated and will be removed in a future release.")
-        end
-      },
-      :desc       => "How the puppet master determines the client's identity
-      and sets the 'hostname', 'fqdn' and 'domain' facts for use in the manifest,
-      in particular for determining which 'node' statement applies to the client.
-      Possible values are 'cert' (use the subject's CN in the client's
-      certificate) and 'facter' (use the hostname that the client
-      reported in its facts).
-
-      This setting is deprecated, please use explicit fact matching for classification.",
-    },
     :bucketdir => {
       :default => "$vardir/bucket",
       :type => :directory,
