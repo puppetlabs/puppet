@@ -1314,25 +1314,6 @@ EOT
       with Puppet Server. (eg `puppet facts upload`, `puppet agent`). May be
       overridden by more specific settings (see `ca_port`, `report_port`).",
     },
-    :node_name => {
-      :default    => 'cert',
-      :type       => :enum,
-      :values     => ['cert', 'facter'],
-      :deprecated => :completely,
-      :hook       => proc { |val|
-        if val != 'cert'
-          Puppet.deprecation_warning("The node_name setting is deprecated and will be removed in a future release.")
-        end
-      },
-      :desc       => "How the puppet master determines the client's identity
-      and sets the 'hostname', 'fqdn' and 'domain' facts for use in the manifest,
-      in particular for determining which 'node' statement applies to the client.
-      Possible values are 'cert' (use the subject's CN in the client's
-      certificate) and 'facter' (use the hostname that the client
-      reported in its facts).
-
-      This setting is deprecated, please use explicit fact matching for classification.",
-    },
     :bucketdir => {
       :default => "$vardir/bucket",
       :type => :directory,
@@ -1452,23 +1433,7 @@ EOT
       :default    => "$confdir/fileserver.conf",
       :type       => :file,
       :desc       => "Where the fileserver configuration is stored.",
-    },
-    :strict_hostname_checking => {
-      :default    => true,
-      :type       => :boolean,
-      :desc       => "Whether to only search for the complete
-        hostname as it is in the certificate when searching for node information
-        in the catalogs or to match dot delimited segments of the cert's certname
-        and the hostname, fqdn, and/or domain facts.
-
-        This setting is deprecated and will be removed in a future release.",
-      :hook => proc { |val|
-        if val != true
-          Puppet.deprecation_warning("Setting strict_hostname_checking to false is deprecated and will be removed in a future release. Please use regular expressions in your node declarations or explicit fact matching for classification (though be warned that fact based classification may be considered insecure).")
-        end
-      }
-    }
-  )
+    })
 
   settings.define_settings(:device,
     :devicedir =>  {

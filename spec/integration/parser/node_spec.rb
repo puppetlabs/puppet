@@ -117,15 +117,6 @@ describe 'node statements' do
       expect(catalog).to have_resource('Notify[matched]')
     end
 
-    it 'selects a node that is a prefix of the agent name' do
-      Puppet[:strict_hostname_checking] = false
-      catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("node.name.com"))
-      node 'node.name' { notify { matched: } }
-      MANIFEST
-
-      expect(catalog).to have_resource('Notify[matched]')
-    end
-
     it 'does not treat regex symbols as a regex inside a string literal' do
       catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("nodexname"))
       node 'node.name' { notify { 'not matched': } }

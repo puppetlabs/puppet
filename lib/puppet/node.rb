@@ -183,36 +183,7 @@ class Puppet::Node
   # Calculate the list of names we might use for looking
   # up our node.  This is only used for AST nodes.
   def names
-    return [name] if Puppet.settings[:strict_hostname_checking]
-
-    names = []
-
-    names += split_name(name) if name.include?(".")
-
-    # First, get the fqdn
-    fqdn = parameters["fqdn"]
-    unless fqdn
-      if parameters["hostname"] and parameters["domain"]
-        fqdn = parameters["hostname"] + "." + parameters["domain"]
-      else
-        Puppet.warning _("Host is missing hostname and/or domain: %{name}") % { name: name }
-      end
-    end
-
-    # Now that we (might) have the fqdn, add each piece to the name
-    # list to search, in order of longest to shortest.
-    names += split_name(fqdn) if fqdn
-
-    # And make sure the node name is first, since that's the most
-    # likely usage.
-    #   The name is usually the Certificate CN, but it can be
-    # set to the 'facter' hostname instead.
-    if Puppet[:node_name] == 'cert'
-      names.unshift name
-    else
-      names.unshift parameters["hostname"]
-    end
-    names.uniq
+    @names ||= [name]
   end
 
   def split_name(name)

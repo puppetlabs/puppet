@@ -417,64 +417,12 @@ end
 
 describe Puppet::Node, "when generating the list of names to search through" do
   before do
-    Puppet[:strict_hostname_checking] = false
     @node = Puppet::Node.new("foo.domain.com",
                              :parameters => {"hostname" => "yay", "domain" => "domain.com"})
   end
 
-  it "returns an array of names" do
+  it "returns an array of one name" do
     expect(@node.names).to be_instance_of(Array)
-  end
-
-  describe "and the node name is fully qualified" do
-    it "contains an entry for each part of the node name" do
-      expect(@node.names).to include("foo.domain.com")
-      expect(@node.names).to include("foo.domain")
-      expect(@node.names).to include("foo")
-    end
-  end
-
-  it "includes the node's fqdn" do
-    expect(@node.names).to include("yay.domain.com")
-  end
-
-  it "combines and include the node's hostname and domain if no fqdn is available" do
-    expect(@node.names).to include("yay.domain.com")
-  end
-
-  it "contains an entry for each name available by stripping a segment of the fqdn" do
-    @node.parameters["fqdn"] = "foo.deep.sub.domain.com"
-    expect(@node.names).to include("foo.deep.sub.domain")
-    expect(@node.names).to include("foo.deep.sub")
-  end
-
-  describe "and :node_name is set to 'cert'" do
-    before do
-      Puppet[:node_name] = "cert"
-    end
-
-    it "uses the passed-in key as the first value" do
-      expect(@node.names[0]).to eq("foo.domain.com")
-    end
-
-    describe "and strict hostname checking is enabled" do
-      before do
-        Puppet[:strict_hostname_checking] = true
-      end
-
-      it "only uses the passed-in key" do
-        expect(@node.names).to eq(["foo.domain.com"])
-      end
-    end
-  end
-
-  describe "and :node_name is set to 'facter'" do
-    before do
-      Puppet[:node_name] = "facter"
-    end
-
-    it "uses the node's 'hostname' fact as the first value" do
-      expect(@node.names[0]).to eq("yay")
-    end
+    expect(@node.names).to eq ["foo.domain.com"]
   end
 end
