@@ -79,7 +79,7 @@ describe Puppet::Node::Environment do
   it "should not yield a module with the same name as a defined Bolt project" do
     project_path = File.join(tmpfile('project'), 'bolt_project')
     FileUtils.mkdir_p(project_path)
-    project = Struct.new("Project", :name, :path).new('project', project_path)
+    project = Struct.new("Project", :name, :path, :load_as_module?).new('project', project_path, true)
 
     Puppet.override(bolt_project: project) do
       base = tmpfile("base")

@@ -298,7 +298,7 @@ class Puppet::Node::Environment
     if @modules.nil?
       module_references = []
       project = Puppet.lookup(:bolt_project) { nil }
-      seen_modules = if project
+      seen_modules = if project && project.load_as_module?
                        module_references << project.to_h
                        { project.name => true }
                      else
