@@ -26,6 +26,7 @@ module Puppet::Util::Windows
     require 'win32ole' ; WIN32OLE.codepage = WIN32OLE::CP_UTF8
     # gems
     require 'win32/process'
+    require 'puppet/util/windows/monkey_patches/dir'
     require 'win32/dir'
     require 'win32/service'
 
