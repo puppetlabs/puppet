@@ -1,6 +1,6 @@
 # coding: utf-8
-require 'puppet/util/windows'
 require 'ffi'
+require 'puppet/ffi/windows'
 
 module Puppet::Util::Windows
   # This module is designed to provide an API between the windows system and puppet for
@@ -11,322 +11,19 @@ module Puppet::Util::Windows
     extend FFI::Library
     extend Puppet::Util::Windows::String
 
-    FILE = Puppet::Util::Windows::File
+    include Puppet::FFI::Windows::Constants
+    extend Puppet::FFI::Windows::Constants
+
+    include Puppet::FFI::Windows::Structs
+    extend Puppet::FFI::Windows::Structs
+
+    include Puppet::FFI::Windows::Functions
+    extend Puppet::FFI::Windows::Functions
 
     # integer value of the floor for timeouts when waiting for service pending states.
     # puppet will wait the length of dwWaitHint if it is longer than this value, but
     # no shorter
     DEFAULT_TIMEOUT = 30
-
-    # Service error codes
-    # https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes--1000-1299-
-    ERROR_SERVICE_DOES_NOT_EXIST = 0x00000424
-
-    # Service control codes
-    # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-controlserviceexw
-    SERVICE_CONTROL_STOP                  = 0x00000001
-    SERVICE_CONTROL_PAUSE                 = 0x00000002
-    SERVICE_CONTROL_CONTINUE              = 0x00000003
-    SERVICE_CONTROL_INTERROGATE           = 0x00000004
-    SERVICE_CONTROL_SHUTDOWN              = 0x00000005
-    SERVICE_CONTROL_PARAMCHANGE           = 0x00000006
-    SERVICE_CONTROL_NETBINDADD            = 0x00000007
-    SERVICE_CONTROL_NETBINDREMOVE         = 0x00000008
-    SERVICE_CONTROL_NETBINDENABLE         = 0x00000009
-    SERVICE_CONTROL_NETBINDDISABLE        = 0x0000000A
-    SERVICE_CONTROL_DEVICEEVENT           = 0x0000000B
-    SERVICE_CONTROL_HARDWAREPROFILECHANGE = 0x0000000C
-    SERVICE_CONTROL_POWEREVENT            = 0x0000000D
-    SERVICE_CONTROL_SESSIONCHANGE         = 0x0000000E
-    SERVICE_CONTROL_PRESHUTDOWN           = 0x0000000F
-    SERVICE_CONTROL_TIMECHANGE            = 0x00000010
-    SERVICE_CONTROL_TRIGGEREVENT          = 0x00000020
-    SERVICE_CONTROL_SIGNALS               = {
-      SERVICE_CONTROL_STOP                  => :SERVICE_CONTROL_STOP,
-      SERVICE_CONTROL_PAUSE                 => :SERVICE_CONTROL_PAUSE,
-      SERVICE_CONTROL_CONTINUE              => :SERVICE_CONTROL_CONTINUE,
-      SERVICE_CONTROL_INTERROGATE           => :SERVICE_CONTROL_INTERROGATE,
-      SERVICE_CONTROL_SHUTDOWN              => :SERVICE_CONTROL_SHUTDOWN,
-      SERVICE_CONTROL_PARAMCHANGE           => :SERVICE_CONTROL_PARAMCHANGE,
-      SERVICE_CONTROL_NETBINDADD            => :SERVICE_CONTROL_NETBINDADD,
-      SERVICE_CONTROL_NETBINDREMOVE         => :SERVICE_CONTROL_NETBINDREMOVE,
-      SERVICE_CONTROL_NETBINDENABLE         => :SERVICE_CONTROL_NETBINDENABLE,
-      SERVICE_CONTROL_NETBINDDISABLE        => :SERVICE_CONTROL_NETBINDDISABLE,
-      SERVICE_CONTROL_DEVICEEVENT           => :SERVICE_CONTROL_DEVICEEVENT,
-      SERVICE_CONTROL_HARDWAREPROFILECHANGE => :SERVICE_CONTROL_HARDWAREPROFILECHANGE,
-      SERVICE_CONTROL_POWEREVENT            => :SERVICE_CONTROL_POWEREVENT,
-      SERVICE_CONTROL_SESSIONCHANGE         => :SERVICE_CONTROL_SESSIONCHANGE,
-      SERVICE_CONTROL_PRESHUTDOWN           => :SERVICE_CONTROL_PRESHUTDOWN,
-      SERVICE_CONTROL_TIMECHANGE            => :SERVICE_CONTROL_TIMECHANGE,
-      SERVICE_CONTROL_TRIGGEREVENT          => :SERVICE_CONTROL_TRIGGEREVENT
-    }
-
-
-    # Service start type codes
-    # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-changeserviceconfigw
-    SERVICE_AUTO_START = 0x00000002
-    SERVICE_BOOT_START = 0x00000000
-    SERVICE_DEMAND_START = 0x00000003
-    SERVICE_DISABLED = 0x00000004
-    SERVICE_SYSTEM_START = 0x00000001
-    SERVICE_START_TYPES = {
-      SERVICE_AUTO_START => :SERVICE_AUTO_START,
-      SERVICE_BOOT_START => :SERVICE_BOOT_START,
-      SERVICE_DEMAND_START => :SERVICE_DEMAND_START,
-      SERVICE_DISABLED => :SERVICE_DISABLED,
-      SERVICE_SYSTEM_START => :SERVICE_SYSTEM_START,
-    }
-
-    # Service type codes
-    # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-changeserviceconfigw
-    SERVICE_FILE_SYSTEM_DRIVER  = 0x00000002
-    SERVICE_KERNEL_DRIVER       = 0x00000001
-    SERVICE_WIN32_OWN_PROCESS   = 0x00000010
-    SERVICE_WIN32_SHARE_PROCESS = 0x00000020
-    SERVICE_USER_OWN_PROCESS    = 0x00000050
-    SERVICE_USER_SHARE_PROCESS  = 0x00000060
-    # Available only if service is also SERVICE_WIN32_OWN_PROCESS or SERVICE_WIN32_SHARE_PROCESS
-    SERVICE_INTERACTIVE_PROCESS = 0x00000100
-    ALL_SERVICE_TYPES =
-      SERVICE_FILE_SYSTEM_DRIVER |
-      SERVICE_KERNEL_DRIVER |
-      SERVICE_WIN32_OWN_PROCESS |
-      SERVICE_WIN32_SHARE_PROCESS
-
-    # Current state codes
-    # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_service_status_process
-    SERVICE_CONTINUE_PENDING = 0x00000005
-    SERVICE_PAUSE_PENDING    = 0x00000006
-    SERVICE_PAUSED           = 0x00000007
-    SERVICE_RUNNING          = 0x00000004
-    SERVICE_START_PENDING    = 0x00000002
-    SERVICE_STOP_PENDING     = 0x00000003
-    SERVICE_STOPPED          = 0x00000001
-    UNSAFE_PENDING_STATES    = [SERVICE_START_PENDING, SERVICE_STOP_PENDING]
-    FINAL_STATES             = {
-      SERVICE_CONTINUE_PENDING => SERVICE_RUNNING,
-      SERVICE_PAUSE_PENDING    => SERVICE_PAUSED,
-      SERVICE_START_PENDING    => SERVICE_RUNNING,
-      SERVICE_STOP_PENDING     => SERVICE_STOPPED
-    }
-    SERVICE_STATES           = {
-      SERVICE_CONTINUE_PENDING => :SERVICE_CONTINUE_PENDING,
-      SERVICE_PAUSE_PENDING => :SERVICE_PAUSE_PENDING,
-      SERVICE_PAUSED => :SERVICE_PAUSED,
-      SERVICE_RUNNING => :SERVICE_RUNNING,
-      SERVICE_START_PENDING => :SERVICE_START_PENDING,
-      SERVICE_STOP_PENDING => :SERVICE_STOP_PENDING,
-      SERVICE_STOPPED => :SERVICE_STOPPED,
-    }
-
-    # Service accepts control codes
-    # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_service_status_process
-    SERVICE_ACCEPT_STOP                  = 0x00000001
-    SERVICE_ACCEPT_PAUSE_CONTINUE        = 0x00000002
-    SERVICE_ACCEPT_SHUTDOWN              = 0x00000004
-    SERVICE_ACCEPT_PARAMCHANGE           = 0x00000008
-    SERVICE_ACCEPT_NETBINDCHANGE         = 0x00000010
-    SERVICE_ACCEPT_HARDWAREPROFILECHANGE = 0x00000020
-    SERVICE_ACCEPT_POWEREVENT            = 0x00000040
-    SERVICE_ACCEPT_SESSIONCHANGE         = 0x00000080
-    SERVICE_ACCEPT_PRESHUTDOWN           = 0x00000100
-    SERVICE_ACCEPT_TIMECHANGE            = 0x00000200
-    SERVICE_ACCEPT_TRIGGEREVENT          = 0x00000400
-    SERVICE_ACCEPT_USER_LOGOFF           = 0x00000800
-
-    # Service manager access codes
-    # https://docs.microsoft.com/en-us/windows/desktop/Services/service-security-and-access-rights
-    SC_MANAGER_CREATE_SERVICE     = 0x00000002
-    SC_MANAGER_CONNECT            = 0x00000001
-    SC_MANAGER_ENUMERATE_SERVICE  = 0x00000004
-    SC_MANAGER_LOCK               = 0x00000008
-    SC_MANAGER_MODIFY_BOOT_CONFIG = 0x00000020
-    SC_MANAGER_QUERY_LOCK_STATUS  = 0x00000010
-    SC_MANAGER_ALL_ACCESS         =
-      FILE::STANDARD_RIGHTS_REQUIRED |
-      SC_MANAGER_CREATE_SERVICE      |
-      SC_MANAGER_CONNECT             |
-      SC_MANAGER_ENUMERATE_SERVICE   |
-      SC_MANAGER_LOCK                |
-      SC_MANAGER_MODIFY_BOOT_CONFIG  |
-      SC_MANAGER_QUERY_LOCK_STATUS
-
-
-    # Service access codes
-    # https://docs.microsoft.com/en-us/windows/desktop/Services/service-security-and-access-rights
-    SERVICE_CHANGE_CONFIG        = 0x0002
-    SERVICE_ENUMERATE_DEPENDENTS = 0x0008
-    SERVICE_INTERROGATE          = 0x0080
-    SERVICE_PAUSE_CONTINUE       = 0x0040
-    SERVICE_QUERY_STATUS         = 0x0004
-    SERVICE_QUERY_CONFIG         = 0x0001
-    SERVICE_START                = 0x0010
-    SERVICE_STOP                 = 0x0020
-    SERVICE_USER_DEFINED_CONTROL = 0x0100
-    SERVICE_ALL_ACCESS           =
-      FILE::STANDARD_RIGHTS_REQUIRED |
-      SERVICE_CHANGE_CONFIG          |
-      SERVICE_ENUMERATE_DEPENDENTS   |
-      SERVICE_INTERROGATE            |
-      SERVICE_PAUSE_CONTINUE         |
-      SERVICE_QUERY_STATUS           |
-      SERVICE_QUERY_CONFIG           |
-      SERVICE_START                  |
-      SERVICE_STOP                   |
-      SERVICE_USER_DEFINED_CONTROL
-
-    # Service config codes
-    # From the windows 10 SDK:
-    # //
-    # // Value to indicate no change to an optional parameter
-    # //
-    # #define SERVICE_NO_CHANGE              0xffffffff
-    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w
-    SERVICE_CONFIG_DESCRIPTION              = 0x00000001
-    SERVICE_CONFIG_FAILURE_ACTIONS          = 0x00000002
-    SERVICE_CONFIG_DELAYED_AUTO_START_INFO  = 0x00000003
-    SERVICE_CONFIG_FAILURE_ACTIONS_FLAG     = 0x00000004
-    SERVICE_CONFIG_SERVICE_SID_INFO         = 0x00000005
-    SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO = 0x00000006
-    SERVICE_CONFIG_PRESHUTDOWN_INFO         = 0x00000007
-    SERVICE_CONFIG_TRIGGER_INFO             = 0x00000008
-    SERVICE_CONFIG_PREFERRED_NODE           = 0x00000009
-    SERVICE_CONFIG_LAUNCH_PROTECTED         = 0x00000012
-    SERVICE_NO_CHANGE                       = 0xffffffff
-    SERVICE_CONFIG_TYPES = {
-      SERVICE_CONFIG_DESCRIPTION => :SERVICE_CONFIG_DESCRIPTION,
-      SERVICE_CONFIG_FAILURE_ACTIONS => :SERVICE_CONFIG_FAILURE_ACTIONS,
-      SERVICE_CONFIG_DELAYED_AUTO_START_INFO => :SERVICE_CONFIG_DELAYED_AUTO_START_INFO,
-      SERVICE_CONFIG_FAILURE_ACTIONS_FLAG => :SERVICE_CONFIG_FAILURE_ACTIONS_FLAG,
-      SERVICE_CONFIG_SERVICE_SID_INFO => :SERVICE_CONFIG_SERVICE_SID_INFO,
-      SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO => :SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO,
-      SERVICE_CONFIG_PRESHUTDOWN_INFO => :SERVICE_CONFIG_PRESHUTDOWN_INFO,
-      SERVICE_CONFIG_TRIGGER_INFO => :SERVICE_CONFIG_TRIGGER_INFO,
-      SERVICE_CONFIG_PREFERRED_NODE => :SERVICE_CONFIG_PREFERRED_NODE,
-      SERVICE_CONFIG_LAUNCH_PROTECTED => :SERVICE_CONFIG_LAUNCH_PROTECTED,
-    }
-
-    # Service enum codes
-    # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-enumservicesstatusexa
-    SERVICE_ACTIVE = 0x00000001
-    SERVICE_INACTIVE = 0x00000002
-    SERVICE_STATE_ALL =
-      SERVICE_ACTIVE |
-      SERVICE_INACTIVE
-
-    # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_enum_service_status_processw
-    SERVICENAME_MAX = 256
-
-    # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_service_status_process
-    # typedef struct _SERVICE_STATUS_PROCESS {
-    #   DWORD dwServiceType;
-    #   DWORD dwCurrentState;
-    #   DWORD dwControlsAccepted;
-    #   DWORD dwWin32ExitCode;
-    #   DWORD dwServiceSpecificExitCode;
-    #   DWORD dwCheckPoint;
-    #   DWORD dwWaitHint;
-    #   DWORD dwProcessId;
-    #   DWORD dwServiceFlags;
-    # } SERVICE_STATUS_PROCESS, *LPSERVICE_STATUS_PROCESS;
-    class SERVICE_STATUS_PROCESS < FFI::Struct
-      layout(
-        :dwServiceType, :dword,
-        :dwCurrentState, :dword,
-        :dwControlsAccepted, :dword,
-        :dwWin32ExitCode, :dword,
-        :dwServiceSpecificExitCode, :dword,
-        :dwCheckPoint, :dword,
-        :dwWaitHint, :dword,
-        :dwProcessId, :dword,
-        :dwServiceFlags, :dword
-      )
-    end
-
-    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_delayed_auto_start_info
-    # typedef struct _SERVICE_DELAYED_AUTO_START_INFO {
-    #   BOOL fDelayedAutostart;
-    # } SERVICE_DELAYED_AUTO_START_INFO, *LPSERVICE_DELAYED_AUTO_START_INFO;
-    class SERVICE_DELAYED_AUTO_START_INFO < FFI::Struct
-      layout(:fDelayedAutostart, :int)
-      alias aset []=
-      # Intercept the accessor so that we can handle either true/false or 1/0.
-      # Since there is only one member, there’s no need to check the key name.
-      def []=(key, value)
-        [0, false].include?(value) ? aset(key, 0) : aset(key, 1)
-      end
-    end
-
-    # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_enum_service_status_processw
-    # typedef struct _ENUM_SERVICE_STATUS_PROCESSW {
-    #   LPWSTR                 lpServiceName;
-    #   LPWSTR                 lpDisplayName;
-    #   SERVICE_STATUS_PROCESS ServiceStatusProcess;
-    # } ENUM_SERVICE_STATUS_PROCESSW, *LPENUM_SERVICE_STATUS_PROCESSW;
-    class ENUM_SERVICE_STATUS_PROCESSW < FFI::Struct
-      layout(
-        :lpServiceName, :pointer,
-        :lpDisplayName, :pointer,
-        :ServiceStatusProcess, SERVICE_STATUS_PROCESS
-      )
-    end
-
-    # typedef struct _SERVICE_STATUS {
-    #   DWORD dwServiceType;
-    #   DWORD dwCurrentState;
-    #   DWORD dwControlsAccepted;
-    #   DWORD dwWin32ExitCode;
-    #   DWORD dwServiceSpecificExitCode;
-    #   DWORD dwCheckPoint;
-    #   DWORD dwWaitHint;
-    # } SERVICE_STATUS, *LPSERVICE_STATUS;
-    class SERVICE_STATUS < FFI::Struct
-      layout(
-        :dwServiceType, :dword,
-        :dwCurrentState, :dword,
-        :dwControlsAccepted, :dword,
-        :dwWin32ExitCode, :dword,
-        :dwServiceSpecificExitCode, :dword,
-        :dwCheckPoint, :dword,
-        :dwWaitHint, :dword,
-      )
-    end
-
-    # typedef struct _QUERY_SERVICE_CONFIGW {
-    #   DWORD  dwServiceType;
-    #   DWORD  dwStartType;
-    #   DWORD  dwErrorControl;
-    #   LPWSTR lpBinaryPathName;
-    #   LPWSTR lpLoadOrderGroup;
-    #   DWORD  dwTagId;
-    #   LPWSTR lpDependencies;
-    #   LPWSTR lpServiceStartName;
-    #   LPWSTR lpDisplayName;
-    # } QUERY_SERVICE_CONFIGW, *LPQUERY_SERVICE_CONFIGW;
-    class QUERY_SERVICE_CONFIGW < FFI::Struct
-      layout(
-        :dwServiceType, :dword,
-        :dwStartType, :dword,
-        :dwErrorControl, :dword,
-        :lpBinaryPathName, :pointer,
-        :lpLoadOrderGroup, :pointer,
-        :dwTagId, :dword,
-        :lpDependencies, :pointer,
-        :lpServiceStartName, :pointer,
-        :lpDisplayName, :pointer,
-      )
-    end
-
-    # typedef struct _SERVICE_TABLE_ENTRYW {
-    #   LPWSTR                   lpServiceName;
-    #   LPSERVICE_MAIN_FUNCTIONW lpServiceProc;
-    # } SERVICE_TABLE_ENTRYW, *LPSERVICE_TABLE_ENTRYW;
-    class SERVICE_TABLE_ENTRYW < FFI::Struct
-      layout(
-        :lpServiceName, :pointer,
-        :lpServiceProc, :pointer
-      )
-    end
 
     # Returns true if the service exists, false otherwise.
     #
@@ -1003,196 +700,196 @@ module Puppet::Util::Windows
       private :milliseconds_to_seconds
     end
 
-    # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-openscmanagerw
-    # SC_HANDLE OpenSCManagerW(
-    #   LPCWSTR lpMachineName,
-    #   LPCWSTR lpDatabaseName,
-    #   DWORD   dwDesiredAccess
-    # );
-    ffi_lib :advapi32
-    attach_function_private :OpenSCManagerW,
-      [:lpcwstr, :lpcwstr, :dword], :handle
+    # # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-openscmanagerw
+    # # SC_HANDLE OpenSCManagerW(
+    # #   LPCWSTR lpMachineName,
+    # #   LPCWSTR lpDatabaseName,
+    # #   DWORD   dwDesiredAccess
+    # # );
+    # ffi_lib :advapi32
+    # attach_function_private :OpenSCManagerW,
+    #   [:lpcwstr, :lpcwstr, :dword], :handle
 
-    # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-openservicew
-    # SC_HANDLE OpenServiceW(
-    #   SC_HANDLE hSCManager,
-    #   LPCWSTR   lpServiceName,
-    #   DWORD     dwDesiredAccess
-    # );
-    ffi_lib :advapi32
-    attach_function_private :OpenServiceW,
-      [:handle, :lpcwstr, :dword], :handle
+    # # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-openservicew
+    # # SC_HANDLE OpenServiceW(
+    # #   SC_HANDLE hSCManager,
+    # #   LPCWSTR   lpServiceName,
+    # #   DWORD     dwDesiredAccess
+    # # );
+    # ffi_lib :advapi32
+    # attach_function_private :OpenServiceW,
+    #   [:handle, :lpcwstr, :dword], :handle
 
-    # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-closeservicehandle
-    # BOOL CloseServiceHandle(
-    #   SC_HANDLE hSCObject
-    # );
-    ffi_lib :advapi32
-    attach_function_private :CloseServiceHandle,
-      [:handle], :win32_bool
+    # # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-closeservicehandle
+    # # BOOL CloseServiceHandle(
+    # #   SC_HANDLE hSCObject
+    # # );
+    # ffi_lib :advapi32
+    # attach_function_private :CloseServiceHandle,
+    #   [:handle], :win32_bool
 
-    # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-queryservicestatusex
-    # BOOL QueryServiceStatusEx(
-    #   SC_HANDLE      hService,
-    #   SC_STATUS_TYPE InfoLevel,
-    #   LPBYTE         lpBuffer,
-    #   DWORD          cbBufSize,
-    #   LPDWORD        pcbBytesNeeded
-    # );
-    SC_STATUS_TYPE = enum(
-      :SC_STATUS_PROCESS_INFO, 0,
-    )
-    ffi_lib :advapi32
-    attach_function_private :QueryServiceStatusEx,
-      [:handle, SC_STATUS_TYPE, :lpbyte, :dword, :lpdword], :win32_bool
-
-    # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-queryserviceconfigw
-    # BOOL QueryServiceConfigW(
-    #   SC_HANDLE               hService,
-    #   LPQUERY_SERVICE_CONFIGW lpServiceConfig,
-    #   DWORD                   cbBufSize,
-    #   LPDWORD                 pcbBytesNeeded
-    # );
-    ffi_lib :advapi32
-    attach_function_private :QueryServiceConfigW,
-      [:handle, :lpbyte, :dword, :lpdword], :win32_bool
-
-    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-queryserviceconfig2w
-    # BOOL QueryServiceConfig2W(
-    #   SC_HANDLE hService,
-    #   DWORD     dwInfoLevel,
-    #   LPBYTE    lpBuffer,
-    #   DWORD     cbBufSize,
-    #   LPDWORD   pcbBytesNeeded
-    # );
-    ffi_lib :advapi32
-    attach_function_private :QueryServiceConfig2W,
-      [:handle, :dword, :lpbyte, :dword, :lpdword], :win32_bool
-
-    # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-startservicew
-    # BOOL StartServiceW(
-    #   SC_HANDLE hService,
-    #   DWORD     dwNumServiceArgs,
-    #   LPCWSTR   *lpServiceArgVectors
-    # );
-    ffi_lib :advapi32
-    attach_function_private :StartServiceW,
-      [:handle, :dword, :pointer], :win32_bool
-
-    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-startservicectrldispatcherw
-    # BOOL StartServiceCtrlDispatcherW(
-    #   const SERVICE_TABLE_ENTRYW *lpServiceStartTable
-    # );
-    ffi_lib :advapi32
-    attach_function_private :StartServiceCtrlDispatcherW,
-      [:pointer], :win32_bool, :blocking => true
-
-    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-setservicestatus
-    # BOOL SetServiceStatus(
-    #   SERVICE_STATUS_HANDLE hServiceStatus,
-    #   LPSERVICE_STATUS      lpServiceStatus
-    # );
-    ffi_lib :advapi32
-    attach_function_private :SetServiceStatus,
-      [:handle, :pointer], :win32_bool
-
-    # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-controlservice
-    # BOOL ControlService(
-    #   SC_HANDLE        hService,
-    #   DWORD            dwControl,
-    #   LPSERVICE_STATUS lpServiceStatus
-    # );
-    ffi_lib :advapi32
-    attach_function_private :ControlService,
-      [:handle, :dword, :pointer], :win32_bool
-
-    #   DWORD LphandlerFunctionEx(
-    #   DWORD dwControl,
-    #   DWORD dwEventType,
-    #   LPVOID lpEventData,
-    #   LPVOID lpContext
+    # # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-queryservicestatusex
+    # # BOOL QueryServiceStatusEx(
+    # #   SC_HANDLE      hService,
+    # #   SC_STATUS_TYPE InfoLevel,
+    # #   LPBYTE         lpBuffer,
+    # #   DWORD          cbBufSize,
+    # #   LPDWORD        pcbBytesNeeded
+    # # );
+    # SC_STATUS_TYPE = enum(
+    #   :SC_STATUS_PROCESS_INFO, 0,
     # )
-    callback :handler_ex, [:dword, :dword, :lpvoid, :lpvoid], :void
+    # ffi_lib :advapi32
+    # attach_function_private :QueryServiceStatusEx,
+    #   [:handle, SC_STATUS_TYPE, :lpbyte, :dword, :lpdword], :win32_bool
 
-    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-registerservicectrlhandlerexw
-    # SERVICE_STATUS_HANDLE RegisterServiceCtrlHandlerExW(
-    #   LPCWSTR               lpServiceName,
-    #   LPHANDLER_FUNCTION_EX lpHandlerProc,
-    #   LPVOID                lpContext
-    # );
-    ffi_lib :advapi32
-    attach_function_private :RegisterServiceCtrlHandlerExW,
-      [:lpcwstr, :handler_ex, :lpvoid], :handle
+    # # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-queryserviceconfigw
+    # # BOOL QueryServiceConfigW(
+    # #   SC_HANDLE               hService,
+    # #   LPQUERY_SERVICE_CONFIGW lpServiceConfig,
+    # #   DWORD                   cbBufSize,
+    # #   LPDWORD                 pcbBytesNeeded
+    # # );
+    # ffi_lib :advapi32
+    # attach_function_private :QueryServiceConfigW,
+    #   [:handle, :lpbyte, :dword, :lpdword], :win32_bool
 
-    # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-changeserviceconfigw
-    # BOOL ChangeServiceConfigW(
-    #   SC_HANDLE hService,
-    #   DWORD     dwServiceType,
-    #   DWORD     dwStartType,
-    #   DWORD     dwErrorControl,
-    #   LPCWSTR   lpBinaryPathName,
-    #   LPCWSTR   lpLoadOrderGroup,
-    #   LPDWORD   lpdwTagId,
-    #   LPCWSTR   lpDependencies,
-    #   LPCWSTR   lpServiceStartName,
-    #   LPCWSTR   lpPassword,
-    #   LPCWSTR   lpDisplayName
-    # );
-    ffi_lib :advapi32
-    attach_function_private :ChangeServiceConfigW,
-      [
-        :handle,
-        :dword,
-        :dword,
-        :dword,
-        :lpcwstr,
-        :lpcwstr,
-        :lpdword,
-        :lpcwstr,
-        :lpcwstr,
-        :lpcwstr,
-        :lpcwstr
-      ], :win32_bool
+    # # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-queryserviceconfig2w
+    # # BOOL QueryServiceConfig2W(
+    # #   SC_HANDLE hService,
+    # #   DWORD     dwInfoLevel,
+    # #   LPBYTE    lpBuffer,
+    # #   DWORD     cbBufSize,
+    # #   LPDWORD   pcbBytesNeeded
+    # # );
+    # ffi_lib :advapi32
+    # attach_function_private :QueryServiceConfig2W,
+    #   [:handle, :dword, :lpbyte, :dword, :lpdword], :win32_bool
 
-    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w
-    # BOOL ChangeServiceConfig2W(
-    #   SC_HANDLE hService,
-    #   DWORD     dwInfoLevel,
-    #   LPVOID    lpInfo
-    # );
-    ffi_lib :advapi32
-    attach_function_private :ChangeServiceConfig2W,
-      [:handle, :dword, :lpvoid], :win32_bool
+    # # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-startservicew
+    # # BOOL StartServiceW(
+    # #   SC_HANDLE hService,
+    # #   DWORD     dwNumServiceArgs,
+    # #   LPCWSTR   *lpServiceArgVectors
+    # # );
+    # ffi_lib :advapi32
+    # attach_function_private :StartServiceW,
+    #   [:handle, :dword, :pointer], :win32_bool
 
-    # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-enumservicesstatusexw
-    # BOOL EnumServicesStatusExW(
-    #   SC_HANDLE    hSCManager,
-    #   SC_ENUM_TYPE InfoLevel,
-    #   DWORD        dwServiceType,
-    #   DWORD        dwServiceState,
-    #   LPBYTE       lpServices,
-    #   DWORD        cbBufSize,
-    #   LPDWORD      pcbBytesNeeded,
-    #   LPDWORD      lpServicesReturned,
-    #   LPDWORD      lpResumeHandle,
-    #   LPCWSTR      pszGroupName
-    # );
-    SC_ENUM_TYPE = enum(
-      :SC_ENUM_PROCESS_INFO, 0,
-    )
-    ffi_lib :advapi32
-    attach_function_private :EnumServicesStatusExW,
-      [
-        :handle,
-        SC_ENUM_TYPE,
-        :dword,
-        :dword,
-        :lpbyte,
-        :dword,
-        :lpdword,
-        :lpdword,
-        :lpdword,
-        :lpcwstr
-      ], :win32_bool
+    # # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-startservicectrldispatcherw
+    # # BOOL StartServiceCtrlDispatcherW(
+    # #   const SERVICE_TABLE_ENTRYW *lpServiceStartTable
+    # # );
+    # ffi_lib :advapi32
+    # attach_function_private :StartServiceCtrlDispatcherW,
+    #   [:pointer], :win32_bool, :blocking => true
+
+    # # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-setservicestatus
+    # # BOOL SetServiceStatus(
+    # #   SERVICE_STATUS_HANDLE hServiceStatus,
+    # #   LPSERVICE_STATUS      lpServiceStatus
+    # # );
+    # ffi_lib :advapi32
+    # attach_function_private :SetServiceStatus,
+    #   [:handle, :pointer], :win32_bool
+
+    # # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-controlservice
+    # # BOOL ControlService(
+    # #   SC_HANDLE        hService,
+    # #   DWORD            dwControl,
+    # #   LPSERVICE_STATUS lpServiceStatus
+    # # );
+    # ffi_lib :advapi32
+    # attach_function_private :ControlService,
+    #   [:handle, :dword, :pointer], :win32_bool
+
+    # #   DWORD LphandlerFunctionEx(
+    # #   DWORD dwControl,
+    # #   DWORD dwEventType,
+    # #   LPVOID lpEventData,
+    # #   LPVOID lpContext
+    # # )
+    # callback :handler_ex, [:dword, :dword, :lpvoid, :lpvoid], :void
+
+    # # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-registerservicectrlhandlerexw
+    # # SERVICE_STATUS_HANDLE RegisterServiceCtrlHandlerExW(
+    # #   LPCWSTR               lpServiceName,
+    # #   LPHANDLER_FUNCTION_EX lpHandlerProc,
+    # #   LPVOID                lpContext
+    # # );
+    # ffi_lib :advapi32
+    # attach_function_private :RegisterServiceCtrlHandlerExW,
+    #   [:lpcwstr, :handler_ex, :lpvoid], :handle
+
+    # # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-changeserviceconfigw
+    # # BOOL ChangeServiceConfigW(
+    # #   SC_HANDLE hService,
+    # #   DWORD     dwServiceType,
+    # #   DWORD     dwStartType,
+    # #   DWORD     dwErrorControl,
+    # #   LPCWSTR   lpBinaryPathName,
+    # #   LPCWSTR   lpLoadOrderGroup,
+    # #   LPDWORD   lpdwTagId,
+    # #   LPCWSTR   lpDependencies,
+    # #   LPCWSTR   lpServiceStartName,
+    # #   LPCWSTR   lpPassword,
+    # #   LPCWSTR   lpDisplayName
+    # # );
+    # ffi_lib :advapi32
+    # attach_function_private :ChangeServiceConfigW,
+    #   [
+    #     :handle,
+    #     :dword,
+    #     :dword,
+    #     :dword,
+    #     :lpcwstr,
+    #     :lpcwstr,
+    #     :lpdword,
+    #     :lpcwstr,
+    #     :lpcwstr,
+    #     :lpcwstr,
+    #     :lpcwstr
+    #   ], :win32_bool
+
+    # # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w
+    # # BOOL ChangeServiceConfig2W(
+    # #   SC_HANDLE hService,
+    # #   DWORD     dwInfoLevel,
+    # #   LPVOID    lpInfo
+    # # );
+    # ffi_lib :advapi32
+    # attach_function_private :ChangeServiceConfig2W,
+    #   [:handle, :dword, :lpvoid], :win32_bool
+
+    # # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-enumservicesstatusexw
+    # # BOOL EnumServicesStatusExW(
+    # #   SC_HANDLE    hSCManager,
+    # #   SC_ENUM_TYPE InfoLevel,
+    # #   DWORD        dwServiceType,
+    # #   DWORD        dwServiceState,
+    # #   LPBYTE       lpServices,
+    # #   DWORD        cbBufSize,
+    # #   LPDWORD      pcbBytesNeeded,
+    # #   LPDWORD      lpServicesReturned,
+    # #   LPDWORD      lpResumeHandle,
+    # #   LPCWSTR      pszGroupName
+    # # );
+    # SC_ENUM_TYPE = enum(
+    #   :SC_ENUM_PROCESS_INFO, 0,
+    # )
+    # ffi_lib :advapi32
+    # attach_function_private :EnumServicesStatusExW,
+    #   [
+    #     :handle,
+    #     SC_ENUM_TYPE,
+    #     :dword,
+    #     :dword,
+    #     :lpbyte,
+    #     :dword,
+    #     :lpdword,
+    #     :lpdword,
+    #     :lpdword,
+    #     :lpcwstr
+    #   ], :win32_bool
   end
 end

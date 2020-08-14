@@ -1,4 +1,5 @@
 require 'puppet/util/platform'
+
 module Puppet::Util::Windows
   module ADSI
     class ADSIObject; end

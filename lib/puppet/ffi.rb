@@ -1,0 +1,2 @@
+module Puppet::FFI
+end

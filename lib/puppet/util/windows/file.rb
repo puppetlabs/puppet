@@ -1,75 +1,17 @@
-require 'puppet/util/windows'
+require 'puppet/ffi/windows'
 
 module Puppet::Util::Windows::File
   require 'ffi'
   extend FFI::Library
   extend Puppet::Util::Windows::String
 
-  FILE_ATTRIBUTE_READONLY      = 0x00000001
-  FILE_ATTRIBUTE_DIRECTORY     = 0x00000010
+  include Puppet::FFI::Windows::Constants
 
-  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379607(v=vs.85).aspx
-  # The right to use the object for synchronization. This enables a thread to
-  # wait until the object is in the signaled state. Some object types do not
-  # support this access right.
-  SYNCHRONIZE                 = 0x100000
-  # The right to delete the object.
-  DELETE                      = 0x00010000
-  # The right to read the information in the object's security descriptor, not including the information in the system access control list (SACL).
-  # READ_CONTROL              = 0x00020000
-  # The right to modify the discretionary access control list (DACL) in the object's security descriptor.
-  WRITE_DAC                   = 0x00040000
-  # The right to change the owner in the object's security descriptor.
-  WRITE_OWNER                 = 0x00080000
+  extend Puppet::FFI::Windows::Structs
+  include Puppet::FFI::Windows::Structs
 
-  # Combines DELETE, READ_CONTROL, WRITE_DAC, and WRITE_OWNER access.
-  STANDARD_RIGHTS_REQUIRED    = 0xf0000
-  # Currently defined to equal READ_CONTROL.
-  STANDARD_RIGHTS_READ        = 0x20000
-  # Currently defined to equal READ_CONTROL.
-  STANDARD_RIGHTS_WRITE       = 0x20000
-  # Currently defined to equal READ_CONTROL.
-  STANDARD_RIGHTS_EXECUTE     = 0x20000
-  # Combines DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, and SYNCHRONIZE access.
-  STANDARD_RIGHTS_ALL         = 0x1F0000
-  SPECIFIC_RIGHTS_ALL         = 0xFFFF
-
-  FILE_READ_DATA               = 1
-  FILE_WRITE_DATA              = 2
-  FILE_APPEND_DATA             = 4
-  FILE_READ_EA                 = 8
-  FILE_WRITE_EA                = 16
-  FILE_EXECUTE                 = 32
-  FILE_DELETE_CHILD            = 64
-  FILE_READ_ATTRIBUTES         = 128
-  FILE_WRITE_ATTRIBUTES        = 256
-
-  FILE_ALL_ACCESS = STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x1FF
-
-  FILE_GENERIC_READ =
-     STANDARD_RIGHTS_READ |
-     FILE_READ_DATA |
-     FILE_READ_ATTRIBUTES |
-     FILE_READ_EA |
-     SYNCHRONIZE
-
-  FILE_GENERIC_WRITE =
-     STANDARD_RIGHTS_WRITE |
-     FILE_WRITE_DATA |
-     FILE_WRITE_ATTRIBUTES |
-     FILE_WRITE_EA |
-     FILE_APPEND_DATA |
-     SYNCHRONIZE
-
-  FILE_GENERIC_EXECUTE =
-     STANDARD_RIGHTS_EXECUTE |
-     FILE_READ_ATTRIBUTES |
-     FILE_EXECUTE |
-     SYNCHRONIZE
-
-  REPLACEFILE_WRITE_THROUGH         = 0x1
-  REPLACEFILE_IGNORE_MERGE_ERRORS   = 0x2
-  REPLACEFILE_IGNORE_ACL_ERRORS     = 0x3
+  include Puppet::FFI::Windows::Functions
+  extend Puppet::FFI::Windows::Functions
 
   def replace_file(target, source)
     target_encoded = wide_string(target.to_s)
@@ -112,7 +54,6 @@ module Puppet::Util::Windows::File
   end
   module_function :symlink
 
-
   def exist?(path)
     path = path.to_str if path.respond_to?(:to_str) # support WatchedFile
     path = path.to_s # support String and Pathname
@@ -144,9 +85,6 @@ module Puppet::Util::Windows::File
     false
   end
   module_function :exist?
-
-
-  INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF #define INVALID_FILE_ATTRIBUTES (DWORD (-1))
 
   def get_attributes(file_name, raise_on_invalid = true)
     result = GetFileAttributesW(wide_string(file_name.to_s))
@@ -199,18 +137,6 @@ module Puppet::Util::Windows::File
         "#{security_attributes}, #{creation_disposition.to_s(8)}, " +
         "#{flags_and_attributes.to_s(8)}, #{template_file_handle})")
   end
-
-  IO_REPARSE_TAG_MOUNT_POINT  = 0xA0000003
-  IO_REPARSE_TAG_HSM          = 0xC0000004
-  IO_REPARSE_TAG_HSM2         = 0x80000006
-  IO_REPARSE_TAG_SIS          = 0x80000007
-  IO_REPARSE_TAG_WIM          = 0x80000008
-  IO_REPARSE_TAG_CSV          = 0x80000009
-  IO_REPARSE_TAG_DFS          = 0x8000000A
-  IO_REPARSE_TAG_SYMLINK      = 0xA000000C
-  IO_REPARSE_TAG_DFSR         = 0x80000012
-  IO_REPARSE_TAG_DEDUP        = 0x80000013
-  IO_REPARSE_TAG_NFS          = 0x80000014
 
   def self.get_reparse_point_data(handle, &block)
     # must be multiple of 1024, min 10240
@@ -277,7 +203,6 @@ module Puppet::Util::Windows::File
     out_buffer
   end
 
-  FILE_ATTRIBUTE_REPARSE_POINT = 0x400
   def reparse_point?(file_name)
     attributes = get_attributes(file_name, false)
 
@@ -291,20 +216,6 @@ module Puppet::Util::Windows::File
     reparse_point?(file_name) && symlink_reparse_point?(file_name)
   end
   module_function :symlink?
-
-  GENERIC_READ                  = 0x80000000
-  GENERIC_WRITE                 = 0x40000000
-  GENERIC_EXECUTE               = 0x20000000
-  GENERIC_ALL                   = 0x10000000
-  METHOD_BUFFERED               = 0
-  FILE_SHARE_READ               = 1
-  FILE_SHARE_WRITE              = 2
-  OPEN_EXISTING                 = 3
-  FILE_DEVICE_FILE_SYSTEM       = 0x00000009
-  FILE_FLAG_OPEN_REPARSE_POINT  = 0x00200000
-  FILE_FLAG_BACKUP_SEMANTICS    = 0x02000000
-  SHGFI_DISPLAYNAME             = 0x000000200
-  SHGFI_PIDL                    = 0x000000008
 
   def self.open_symlink(link_name)
     begin
@@ -333,10 +244,6 @@ module Puppet::Util::Windows::File
     link
   end
   module_function :readlink
-
-  ERROR_FILE_NOT_FOUND = 2
-  ERROR_PATH_NOT_FOUND = 3
-  ERROR_ALREADY_EXISTS = 183
 
   def get_long_pathname(path)
     converted = ''
@@ -417,9 +324,6 @@ module Puppet::Util::Windows::File
   end
   module_function :lstat
 
-  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364571(v=vs.85).aspx
-  FSCTL_GET_REPARSE_POINT = 0x900a8
-
   def self.resolve_symlink(handle)
     path = nil
     get_reparse_point_data(handle) do |reparse_data|
@@ -450,268 +354,4 @@ module Puppet::Util::Windows::File
     symlink
   end
   private_class_method :symlink_reparse_point?
-
-  ffi_convention :stdcall
-
-  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365512(v=vs.85).aspx
-  # BOOL WINAPI ReplaceFile(
-  #   _In_        LPCTSTR lpReplacedFileName,
-  #   _In_        LPCTSTR lpReplacementFileName,
-  #   _In_opt_    LPCTSTR lpBackupFileName,
-  #   _In_        DWORD dwReplaceFlags - 0x1 REPLACEFILE_WRITE_THROUGH,
-  #                                      0x2 REPLACEFILE_IGNORE_MERGE_ERRORS,
-  #                                      0x4 REPLACEFILE_IGNORE_ACL_ERRORS
-  #   _Reserved_  LPVOID lpExclude,
-  #   _Reserved_  LPVOID lpReserved
-  # );
-  ffi_lib :kernel32
-  attach_function_private :ReplaceFileW,
-    [:lpcwstr, :lpcwstr, :lpcwstr, :dword, :lpvoid, :lpvoid], :win32_bool
-
-  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365240(v=vs.85).aspx
-  # BOOL WINAPI MoveFileEx(
-  #   _In_      LPCTSTR lpExistingFileName,
-  #   _In_opt_  LPCTSTR lpNewFileName,
-  #   _In_      DWORD dwFlags
-  # );
-  ffi_lib :kernel32
-  attach_function_private :MoveFileExW,
-    [:lpcwstr, :lpcwstr, :dword], :win32_bool
-
-  # BOOLEAN WINAPI CreateSymbolicLink(
-  #   _In_  LPTSTR lpSymlinkFileName, - symbolic link to be created
-  #   _In_  LPTSTR lpTargetFileName, - name of target for symbolic link
-  #   _In_  DWORD dwFlags - 0x0 target is a file, 0x1 target is a directory
-  # );
-  # rescue on Windows < 6.0 so that code doesn't explode
-  begin
-    ffi_lib :kernel32
-    attach_function_private :CreateSymbolicLinkW,
-      [:lpwstr, :lpwstr, :dword], :boolean
-  rescue LoadError
-  end
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getcurrentdirectory
-  # DWORD GetCurrentDirectory(
-  #   DWORD  nBufferLength,
-  #   LPTSTR lpBuffer
-  # );
-  ffi_lib :kernel32
-  attach_function_private :GetCurrentDirectoryW,
-    [:dword, :lpwstr], :dword
-
-  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364944(v=vs.85).aspx
-  # DWORD WINAPI GetFileAttributes(
-  #   _In_  LPCTSTR lpFileName
-  # );
-  ffi_lib :kernel32
-  attach_function_private :GetFileAttributesW,
-    [:lpcwstr], :dword
-
-  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365535(v=vs.85).aspx
-  # BOOL WINAPI SetFileAttributes(
-  #   _In_  LPCTSTR lpFileName,
-  #   _In_  DWORD dwFileAttributes
-  # );
-  ffi_lib :kernel32
-  attach_function_private :SetFileAttributesW,
-    [:lpcwstr, :dword], :win32_bool
-
-  # HANDLE WINAPI CreateFile(
-  #   _In_      LPCTSTR lpFileName,
-  #   _In_      DWORD dwDesiredAccess,
-  #   _In_      DWORD dwShareMode,
-  #   _In_opt_  LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-  #   _In_      DWORD dwCreationDisposition,
-  #   _In_      DWORD dwFlagsAndAttributes,
-  #   _In_opt_  HANDLE hTemplateFile
-  # );
-  ffi_lib :kernel32
-  attach_function_private :CreateFileW,
-    [:lpcwstr, :dword, :dword, :pointer, :dword, :dword, :handle], :handle
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createdirectoryw
-  # BOOL CreateDirectoryW(
-  #   LPCWSTR               lpPathName,
-  #   LPSECURITY_ATTRIBUTES lpSecurityAttributes
-  # );
-  ffi_lib :kernel32
-  attach_function_private :CreateDirectoryW,
-    [:lpcwstr, :pointer], :win32_bool
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-removedirectoryw
-  # BOOL RemoveDirectoryW(
-  #   LPCWSTR lpPathName
-  # );
-  ffi_lib :kernel32
-  attach_function_private :RemoveDirectoryW,
-    [:lpcwstr], :win32_bool
-
-  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa363216(v=vs.85).aspx
-  # BOOL WINAPI DeviceIoControl(
-  #   _In_         HANDLE hDevice,
-  #   _In_         DWORD dwIoControlCode,
-  #   _In_opt_     LPVOID lpInBuffer,
-  #   _In_         DWORD nInBufferSize,
-  #   _Out_opt_    LPVOID lpOutBuffer,
-  #   _In_         DWORD nOutBufferSize,
-  #   _Out_opt_    LPDWORD lpBytesReturned,
-  #   _Inout_opt_  LPOVERLAPPED lpOverlapped
-  # );
-  ffi_lib :kernel32
-  attach_function_private :DeviceIoControl,
-    [:handle, :dword, :lpvoid, :dword, :lpvoid, :dword, :lpdword, :pointer], :win32_bool
-
-  MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16384
-
-  # SYMLINK_REPARSE_DATA_BUFFER
-  # https://msdn.microsoft.com/en-us/library/cc232006.aspx
-  # https://msdn.microsoft.com/en-us/library/windows/hardware/ff552012(v=vs.85).aspx
-  # struct is always MAXIMUM_REPARSE_DATA_BUFFER_SIZE bytes
-  class SYMLINK_REPARSE_DATA_BUFFER < FFI::Struct
-    layout :ReparseTag, :win32_ulong,
-           :ReparseDataLength, :ushort,
-           :Reserved, :ushort,
-           :SubstituteNameOffset, :ushort,
-           :SubstituteNameLength, :ushort,
-           :PrintNameOffset, :ushort,
-           :PrintNameLength, :ushort,
-           :Flags, :win32_ulong,
-           # max less above fields dword / uint 4 bytes, ushort 2 bytes
-           # technically a WCHAR buffer, but we care about size in bytes here
-           :PathBuffer, [:byte, MAXIMUM_REPARSE_DATA_BUFFER_SIZE - 20]
-  end
-
-  # MOUNT_POINT_REPARSE_DATA_BUFFER
-  # https://msdn.microsoft.com/en-us/library/cc232007.aspx
-  # https://msdn.microsoft.com/en-us/library/windows/hardware/ff552012(v=vs.85).aspx
-  # struct is always MAXIMUM_REPARSE_DATA_BUFFER_SIZE bytes
-  class MOUNT_POINT_REPARSE_DATA_BUFFER < FFI::Struct
-    layout :ReparseTag, :win32_ulong,
-           :ReparseDataLength, :ushort,
-           :Reserved, :ushort,
-           :SubstituteNameOffset, :ushort,
-           :SubstituteNameLength, :ushort,
-           :PrintNameOffset, :ushort,
-           :PrintNameLength, :ushort,
-           # max less above fields dword / uint 4 bytes, ushort 2 bytes
-           # technically a WCHAR buffer, but we care about size in bytes here
-           :PathBuffer, [:byte, MAXIMUM_REPARSE_DATA_BUFFER_SIZE - 16]
-  end
-
-  # SHFILEINFO
-  # https://docs.microsoft.com/en-us/windows/win32/api/shellapi/ns-shellapi-shfileinfow
-  # typedef struct _SHFILEINFOW {
-  #   HICON hIcon;
-  #   int   iIcon;
-  #   DWORD dwAttributes;
-  #   WCHAR szDisplayName[MAX_PATH];
-  #   WCHAR szTypeName[80];
-  # } SHFILEINFOW;
-  class SHFILEINFO < FFI::Struct
-    layout(
-      :hIcon, :ulong,
-      :iIcon, :int,
-      :dwAttributes, :ulong,
-      :szDisplayName, [:char, 256],
-      :szTypeName, [:char, 80]
-    )
-  end
-
-  # REPARSE_JDATA_BUFFER
-  class REPARSE_JDATA_BUFFER < FFI::Struct
-    layout(
-      :ReparseTag, :ulong,
-      :ReparseDataLength, :ushort,
-      :Reserved, :ushort,
-      :SubstituteNameOffset, :ushort,
-      :SubstituteNameLength, :ushort,
-      :PrintNameOffset, :ushort,
-      :PrintNameLength, :ushort,
-      :PathBuffer, [:char, 1024]
-    )
-
-    # The REPARSE_DATA_BUFFER_HEADER_SIZE which is calculated as:
-    #
-    # sizeof(ReparseTag) + sizeof(ReparseDataLength) + sizeof(Reserved)
-    #
-    def header_size
-      FFI::Type::ULONG.size + FFI::Type::USHORT.size + FFI::Type::USHORT.size
-    end
-  end
-
-  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364980(v=vs.85).aspx
-  # DWORD WINAPI GetLongPathName(
-  #   _In_  LPCTSTR lpszShortPath,
-  #   _Out_ LPTSTR  lpszLongPath,
-  #   _In_  DWORD   cchBuffer
-  # );
-  ffi_lib :kernel32
-  attach_function_private :GetLongPathNameW,
-    [:lpcwstr, :lpwstr, :dword], :dword
-
-  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364989(v=vs.85).aspx
-  # DWORD WINAPI GetShortPathName(
-  #   _In_  LPCTSTR lpszLongPath,
-  #   _Out_ LPTSTR  lpszShortPath,
-  #   _In_  DWORD   cchBuffer
-  # );
-  ffi_lib :kernel32
-  attach_function_private :GetShortPathNameW,
-    [:lpcwstr, :lpwstr, :dword], :dword
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfullpathnamew
-  # DWORD GetFullPathNameW(
-  #   LPCWSTR lpFileName,
-  #   DWORD   nBufferLength,
-  #   LPWSTR  lpBuffer,
-  #   LPWSTR  *lpFilePart
-  # );
-  ffi_lib :kernel32
-  attach_function_private :GetFullPathNameW,
-    [:lpcwstr, :dword, :lpwstr, :pointer], :dword
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shgetfolderpathw
-  # SHFOLDERAPI SHGetFolderPathW(
-  #   HWND   hwnd,
-  #   int    csidl,
-  #   HANDLE hToken,
-  #   DWORD  dwFlags,
-  #   LPWSTR pszPath
-  # );
-  ffi_lib :shell32
-  attach_function_private :SHGetFolderPathW,
-    [:hwnd, :int, :handle, :dword, :lpwstr], :dword
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shgetfolderlocation
-  # SHSTDAPI SHGetFolderLocation(
-  #   HWND             hwnd,
-  #   int              csidl,
-  #   HANDLE           hToken,
-  #   DWORD            dwFlags,
-  #   PIDLIST_ABSOLUTE *ppidl
-  # );
-  ffi_lib :shell32
-  attach_function_private :SHGetFolderLocation,
-    [:hwnd, :int, :handle, :dword, :pointer], :dword
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shgetfileinfoa
-  # DWORD_PTR SHGetFileInfoA(
-  #   LPCSTR      pszPath,
-  #   DWORD       dwFileAttributes,
-  #   SHFILEINFOA *psfi,
-  #   UINT        cbFileInfo,
-  #   UINT        uFlags
-  # );
-  ffi_lib :shell32
-  attach_function_private :SHGetFileInfo,
-    [:dword, :dword, :pointer, :uint, :uint], :dword
-
-  # https://docs.microsoft.com/en-us/windows/win32/api/shlwapi/nf-shlwapi-pathisdirectoryemptyw
-  # BOOL PathIsDirectoryEmptyW(
-  #   LPCWSTR pszPath
-  # );
-  ffi_lib :shlwapi
-  attach_function_private :PathIsDirectoryEmptyW,
-    [:lpcwstr], :win32_bool
 end
