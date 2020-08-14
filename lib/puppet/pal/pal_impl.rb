@@ -49,6 +49,7 @@ module Pal
   #   If given at the environment level, the facts given here are merged with higher priority.
   # @param variables [Hash] optional map of fully qualified variable name to value. If given at the environment level, the variables
   #   given here are merged with higher priority.
+  # @param set_local_facts [Boolean] when true, the $facts, $server_facts, and $trusted variables are set for the scope.
   # @param block [Proc] the block performing operations on compiler
   # @return [Object] what the block returns
   # @yieldparam [Puppet::Pal::ScriptCompiler] compiler, a ScriptCompiler to perform operations on.
@@ -59,6 +60,7 @@ module Pal
       code_string:       nil,
       facts:             nil,
       variables:         nil,
+      set_local_facts:   true,
       &block
     )
     # TRANSLATORS: do not translate variable name strings in these assertions
@@ -91,7 +93,7 @@ module Pal
 
     # If manifest_file is nil, the #main method will use the env configured manifest
     # to do things in the block while a Script Compiler is in effect
-    main(manifest_file, facts, variables, :script, &block)
+    main(manifest_file, facts, variables, :script, set_local_facts, &block)
   ensure
     Puppet[:tasks] = previous_tasks_value
     Puppet[:code] = previous_code_value
@@ -191,7 +193,7 @@ module Pal
 
     # If manifest_file is nil, the #main method will use the env configured manifest
     # to do things in the block while a Script Compiler is in effect
-    main(manifest_file, facts, variables, :catalog, &block)
+    main(manifest_file, facts, variables, :catalog, false, &block)
   ensure
     # Clean up after ourselves
     Puppet[:tasks] = previous_tasks_value
@@ -379,7 +381,13 @@ module Pal
   # Picks up information from the puppet context and configures a script compiler which is given to
   # the provided block
   #
-  def self.main(manifest, facts, variables, internal_compiler_class)
+  def self.main(
+    manifest,
+    facts,
+    variables,
+    internal_compiler_class,
+    set_local_facts
+  )
     # Configure the load path
     env = Puppet.lookup(:pal_env)
     env.each_plugin_directory do |dir|
@@ -432,6 +440,22 @@ module Pal
         when :catalog
           pal_compiler = CatalogCompiler.new(compiler)
           overrides[:pal_catalog_compiler] = overrides[:pal_compiler] = pal_compiler
+        end
+
+        # When scripting the trusted data are always local; default is to set them anyway
+        # When compiling for a catalog, the catalog compiler does this
+        if set_local_facts
+          compiler.topscope.set_trusted(node.trusted_data)
+
+          # Server facts are always about the local node's version etc.
+          compiler.topscope.set_server_facts(node.server_facts)
+
+          # Set $facts for the node running the script
+          facts_hash = node.facts.nil? ? {} : node.facts.values
+          compiler.topscope.set_facts(facts_hash)
+
+          # create the $settings:: variables
+          compiler.topscope.merge_settings(node.environment.name, false)
         end
 
         # Make compiler available to Puppet#lookup and injection in functions
