@@ -178,6 +178,9 @@ def prepare_installation
     opts.on('--vardir[=OPTIONAL]', 'Installation directory for var files', 'Default /opt/puppetlabs/puppet/cache') do |vardir|
       InstallOptions.vardir = vardir
     end
+    opts.on('--publicdir[=OPTIONAL]', 'Installation directory for public files such as the `last_run_summary.yaml` report', 'Default /opt/puppetlabs/puppet/public') do |publicdir|
+      InstallOptions.publicdir = publicdir
+    end
     opts.on('--rundir[=OPTIONAL]', 'Installation directory for state files', 'Default /var/run/puppetlabs') do |rundir|
       InstallOptions.rundir = rundir
     end
@@ -266,6 +269,14 @@ def prepare_installation
     vardir = "/opt/puppetlabs/puppet/cache"
   end
 
+  if not InstallOptions.publicdir.nil?
+    publicdir = InstallOptions.publicdir
+  elsif $operatingsystem == "windows"
+    publicdir = File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "public")
+  else
+    publicdir = "/opt/puppetlabs/puppet/public"
+  end
+
   if not InstallOptions.rundir.nil?
     rundir = InstallOptions.rundir
   elsif $operatingsystem == "windows"
@@ -332,6 +343,7 @@ def prepare_installation
   configdir = join(destdir, configdir)
   codedir = join(destdir, codedir)
   vardir = join(destdir, vardir)
+  publicdir = join(destdir, publicdir)
   rundir = join(destdir, rundir)
   logdir = join(destdir, logdir)
   bindir = join(destdir, bindir)
@@ -345,6 +357,7 @@ def prepare_installation
   FileUtils.makedirs(mandir)
   FileUtils.makedirs(sitelibdir)
   FileUtils.makedirs(vardir)
+  FileUtils.makedirs(publicdir)
   FileUtils.makedirs(rundir)
   FileUtils.makedirs(logdir)
   FileUtils.makedirs(localedir)
@@ -356,6 +369,7 @@ def prepare_installation
   InstallOptions.lib_dir = libdir
   InstallOptions.man_dir = mandir
   InstallOptions.var_dir = vardir
+  InstallOptions.public_dir = publicdir
   InstallOptions.run_dir = rundir
   InstallOptions.log_dir = logdir
   InstallOptions.locale_dir = localedir

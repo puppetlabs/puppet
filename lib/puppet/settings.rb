@@ -52,13 +52,14 @@ class Puppet::Settings
   # returns reasonable application default settings values for a given run_mode.
   def self.app_defaults_for_run_mode(run_mode)
     {
-        :name     => run_mode.to_s,
-        :run_mode => run_mode.name,
-        :confdir  => run_mode.conf_dir,
-        :codedir  => run_mode.code_dir,
-        :vardir   => run_mode.var_dir,
-        :rundir   => run_mode.run_dir,
-        :logdir   => run_mode.log_dir,
+        :name      => run_mode.to_s,
+        :run_mode  => run_mode.name,
+        :confdir   => run_mode.conf_dir,
+        :codedir   => run_mode.code_dir,
+        :vardir    => run_mode.var_dir,
+        :publicdir => run_mode.public_dir,
+        :rundir    => run_mode.run_dir,
+        :logdir    => run_mode.log_dir,
     }
   end
 

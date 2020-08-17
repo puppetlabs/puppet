@@ -70,6 +70,10 @@ module Puppet
         which_dir("/opt/puppetlabs/puppet/cache", "~/.puppetlabs/opt/puppet/cache")
       end
 
+      def public_dir
+        which_dir("/opt/puppetlabs/puppet/public", "~/.puppetlabs/opt/puppet/public")
+      end
+
       def run_dir
         which_dir("/var/run/puppetlabs", "~/.puppetlabs/var/run")
       end
@@ -90,6 +94,10 @@ module Puppet
 
       def var_dir
         which_dir(File.join(windows_common_base("puppet/cache")), "~/.puppetlabs/opt/puppet/cache")
+      end
+
+      def public_dir
+        which_dir(File.join(windows_common_base("puppet/public")), "~/.puppetlabs/opt/puppet/public")
       end
 
       def run_dir

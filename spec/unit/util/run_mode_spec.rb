@@ -90,6 +90,24 @@ describe Puppet::Util::RunMode do
       end
     end
 
+    describe "#public_dir" do
+      it "has publicdir /opt/puppetlabs/puppet/public when run as root" do
+        as_root { expect(@run_mode.public_dir).to eq(File.expand_path('/opt/puppetlabs/puppet/public')) }
+      end
+
+      it "has publicdir ~/.puppetlabs/opt/puppet/public when run as non-root" do
+        as_non_root { expect(@run_mode.public_dir).to eq(File.expand_path('~/.puppetlabs/opt/puppet/public')) }
+      end
+
+      it "fails when asking for the public_dir as non-root and there is no $HOME", :unless => gte_ruby_2_4 || Puppet::Util::Platform.windows? do
+        as_non_root do
+          without_home do
+            expect { @run_mode.public_dir }.to raise_error ArgumentError, /couldn't find HOME/
+          end
+        end
+      end
+    end
+
     describe "#log_dir" do
       describe "when run as root" do
         it "has logdir /var/log/puppetlabs/puppet" do
@@ -209,6 +227,28 @@ describe Puppet::Util::RunMode do
             without_env('HOMEDRIVE') do
               without_env('USERPROFILE') do
                 expect { @run_mode.var_dir }.to raise_error ArgumentError, /couldn't find HOME/
+              end
+            end
+          end
+        end
+      end
+    end
+
+    describe "#public_dir" do
+      it "has publicdir ending in PuppetLabs/puppet/public when run as root" do
+        as_root { expect(@run_mode.public_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "public"))) }
+      end
+
+      it "has publicdir in ~/.puppetlabs/opt/puppet/public when run as non-root" do
+        as_non_root { expect(@run_mode.public_dir).to eq(File.expand_path("~/.puppetlabs/opt/puppet/public")) }
+      end
+
+      it "fails when asking for the public_dir as non-root and there is no %HOME%, %HOMEDRIVE%, and %USERPROFILE%", :unless => gte_ruby_2_4 do
+        as_non_root do
+          without_env('HOME') do
+            without_env('HOMEDRIVE') do
+              without_env('USERPROFILE') do
+                expect { @run_mode.public_dir }.to raise_error ArgumentError, /couldn't find HOME/
               end
             end
           end

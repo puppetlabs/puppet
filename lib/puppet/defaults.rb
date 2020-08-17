@@ -1751,8 +1751,14 @@ EOT
         for the node stored in puppetdb are current. However, this will double the fact
         submission load on puppetdb, so it is disabled by default.",
     },
+    :publicdir => {
+      :default  => nil,
+      :type     => :directory,
+      :mode     => "0755",
+      :desc     => "Where Puppet stores public files."
+    },
     :lastrunfile =>  {
-      :default  => "$statedir/last_run_summary.yaml",
+      :default  => "$publicdir/last_run_summary.yaml",
       :type     => :file,
       :mode     => "0644",
       :desc     => "Where puppet agent stores the last run report summary in yaml format."

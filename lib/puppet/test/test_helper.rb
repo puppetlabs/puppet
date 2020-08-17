@@ -220,6 +220,7 @@ module Puppet::Test
       {
           :logdir     => "/dev/null",
           :confdir    => "/dev/null",
+          :publicdir  => "/dev/null",
           :codedir    => "/dev/null",
           :vardir     => "/dev/null",
           :rundir     => "/dev/null",
