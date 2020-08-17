@@ -12,15 +12,15 @@
 #
 # @example Removing trailing space from a String
 # ```puppet
-# "hello\n\t".lstrip()
-# camelcase("hello\n\t")
+# " hello\n\t".rstrip()
+# rstrip(" hello\n\t")
 # ```
 # Would both result in `"hello"`
 #
 # @example Removing trailing space from strings in an Array
 # ```puppet
-# ["hello\n\t", "hi\n\t"].lstrip()
-# lstrip(["hello\n\t", "hi\n\t"])
+# [" hello\n\t", " hi\n\t"].rstrip()
+# rstrip([" hello\n\t", " hi\n\t"])
 # ```
 # Would both result in `['hello', 'hi']`
 #
