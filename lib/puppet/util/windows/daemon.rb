@@ -1,15 +1,20 @@
-require 'puppet/util/windows'
 require 'ffi'
+require 'puppet/ffi/windows/constants'
+require 'puppet/ffi/windows/structs'
+require 'puppet/ffi/windows/functions'
 
 module Puppet::Util::Windows
 
   # The Daemon class, based on the chef/win32-service implementation
   class Daemon
-    include Puppet::Util::Windows::Service
-    include Puppet::Util::Windows::Process
+    include Puppet::FFI::Windows::Constants
+    extend Puppet::FFI::Windows::Constants
 
-    extend Puppet::Util::Windows::Service
-    extend Puppet::Util::Windows::Process
+    include Puppet::FFI::Windows::Structs
+    extend Puppet::FFI::Windows::Structs
+
+    include Puppet::FFI::Windows::Functions
+    extend Puppet::FFI::Windows::Functions
 
     # Service is not running
     STOPPED = SERVICE_STOPPED
