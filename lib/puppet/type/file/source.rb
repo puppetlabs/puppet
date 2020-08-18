@@ -322,7 +322,12 @@ module Puppet
 
     def chunk_file_from_source(&block)
       if uri.scheme =~ /^https?/
-        get_from_http_source(uri, &block)
+        # Historically puppet has not encoded the http(s) source URL before parsing
+        # it, for example, if the path contains spaces, then it must be URL encoded
+        # as %20 in the manifest. Puppet behaves the same when retrieving file
+        # metadata via http(s), see Puppet::Indirector::FileMetadata::Http#find.
+        url = URI.parse(metadata.source)
+        get_from_http_source(url, &block)
       elsif metadata.content_uri
         content_url = URI.parse(Puppet::Util.uri_encode(metadata.content_uri))
         get_from_content_uri_source(content_url, &block)
