@@ -174,9 +174,6 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   end
 
   def hold
-    if package_not_installed?
-      self.install
-    end
     Tempfile.open('puppet_dpkg_set_selection') do |tmpfile|
       tmpfile.write("#{@resource[:name]} hold\n")
       tmpfile.flush
@@ -192,7 +189,4 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     end
   end
 
-  def package_not_installed?
-    query[:status] != "installed"
-  end
 end

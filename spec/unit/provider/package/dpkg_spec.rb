@@ -377,36 +377,13 @@ describe Puppet::Type.type(:package).provider(:dpkg), unless: Puppet::Util::Plat
       allow(Tempfile).to receive(:open).and_yield(tempfile)
     end
 
-    it "installs first if package is not present and ensure holding" do
-      allow(provider).to receive(:execute)
-      allow(provider).to receive(:package_not_installed?).and_return(true)
-      expect(provider).to receive(:install).once
-      provider.hold
-    end
-
-    it "install new package if hold is true and package not installed" do
-      allow(provider).to receive(:execute)
-      allow(provider).to receive(:package_not_installed?).and_return(true)
-      expect(provider).to receive(:install).once
-      provider.hold
-    end
-
-    it "skips install new package if package is allready installed" do
-      allow(provider).to receive(:execute)
-      allow(provider).to receive(:package_not_installed?).and_return(false)
-      expect(provider).not_to receive(:install)
-      provider.hold
-    end
-
     it "executes dpkg --set-selections when holding" do
-      allow(provider).to receive(:package_not_installed?).and_return(false)
       allow(provider).to receive(:install)
       expect(provider).to receive(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => tempfile.path}).once
       provider.hold
     end
 
     it "executes dpkg --set-selections when unholding" do
-      allow(provider).to receive(:package_not_installed?).and_return(false)
       allow(provider).to receive(:install)
       expect(provider).to receive(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => tempfile.path}).once
       provider.hold
@@ -449,26 +426,4 @@ describe Puppet::Type.type(:package).provider(:dpkg), unless: Puppet::Util::Plat
     provider.purge
   end
 
-  context "package_not_installed?" do
-    context "allow_virtual false" do
-        before do
-          allow(resource).to receive(:allow_virtual?).and_return(false)
-        end
-
-      it "returns true if package is not found" do
-        expect(provider).to receive(:dpkgquery).with("-W", "--showformat", "'${Status} ${Package} ${Version}\\n'", resource_name).and_raise(Puppet::ExecutionFailure.new("eh"))
-        expect(provider.package_not_installed?).to eq(true)
-      end
-
-      it "returns true if package is not installed" do
-        expect(provider).to receive(:dpkgquery).with("-W", "--showformat", "'${Status} ${Package} ${Version}\\n'", resource_name).and_return("unknown ok not-installed #{resource_name}")
-        expect(provider.package_not_installed?).to eq(true)
-      end
-
-      it "returns false if package is installed" do
-        expect(provider).to receive(:dpkgquery).with("-W", "--showformat", "'${Status} ${Package} ${Version}\\n'", resource_name).and_return("install ok installed resource_name 1.2.3")
-        expect(provider.package_not_installed?).to eq(false)
-      end
-    end
-  end
 end
