@@ -14,8 +14,6 @@ matrix:
 platform:
   - Ruby26-x64
   - Ruby25-x64
-  - Ruby24-x64
-  - Ruby23-x64
 
 # Note that locales are mainly code page changes and are not the FULL set of localization
 #  changes that happen when you install French/Germam/Japanese etc. Windows
