@@ -383,9 +383,6 @@ class Puppet::Transaction
     rescue StandardError => detail
       message = _("Could not prefetch %{type_name} provider '%{name}': %{detail}") % { type_name: type_name, name: provider_class.name, detail: detail }
       Puppet.log_exception(detail, message)
-
-      raise unless Puppet.settings[:future_features]
-
       @prefetch_failed_providers[type_name][provider_class.name] = true
     end
     @prefetched_providers[type_name][provider_class.name] = true

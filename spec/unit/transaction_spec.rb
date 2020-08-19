@@ -598,115 +598,80 @@ describe Puppet::Transaction do
       transaction.prefetch_if_necessary(resource)
     end
 
-    it "should not rescue SystemExit without future_features flag" do
-      Puppet.settings[:future_features] = false
+    it "should not rescue SystemExit" do
       expect(resource.provider.class).to receive(:prefetch).and_raise(SystemExit, "SystemMessage")
       expect { transaction.prefetch_if_necessary(resource) }.to raise_error(SystemExit, "SystemMessage")
     end
 
-    it "should not rescue SystemExit with future_features flag" do
-      Puppet.settings[:future_features] = true
-      expect(resource.provider.class).to receive(:prefetch).and_raise(SystemExit, "SystemMessage")
-      expect { transaction.prefetch_if_necessary(resource) }.to raise_error(SystemExit, "SystemMessage")
-    end
-
-    it "should rescue LoadError without future_features flag" do
-      Puppet.settings[:future_features] = false
+    it "should rescue LoadError" do
       expect(resource.provider.class).to receive(:prefetch).and_raise(LoadError, "LoadMessage")
       expect { transaction.prefetch_if_necessary(resource) }.not_to raise_error
     end
 
-    it "should rescue LoadError with future_features flag" do
-      Puppet.settings[:future_features] = true
-      expect(resource.provider.class).to receive(:prefetch).and_raise(LoadError, "LoadMessage")
-      expect { transaction.prefetch_if_necessary(resource) }.not_to raise_error
-    end
-
-    describe "and prefetching fails" do
+    describe "and prefetching raises Puppet::Error" do
       before :each do
         expect(resource.provider.class).to receive(:prefetch).and_raise(Puppet::Error, "message")
       end
 
-      context "without future_features flag" do
-        before :each do
-          Puppet.settings[:future_features] = false
-        end
+      it "should rescue prefetch executions" do
+        transaction.prefetch_if_necessary(resource)
 
-        it "should not rescue prefetch executions" do
-          expect { transaction.prefetch_if_necessary(resource) }.to raise_error(Puppet::Error)
-        end
-
-        it "should log the exception during prefetch" do
-          expect(Puppet).to receive(:log_exception).with(anything, "Could not prefetch package provider 'pkgng': message")
-          expect { transaction.prefetch_if_necessary(resource) }.to raise_error(Puppet::Error, "message")
-        end
+        expect(transaction.prefetched_providers[:package][:pkgng]).to be_truthy
       end
 
-      context "with future_features flag" do
+      it "should mark resources as failed", :unless => RUBY_PLATFORM == 'java' do
+        transaction.evaluate
+
+        expect(transaction.resource_status(resource).failed?).to be_truthy
+      end
+
+      it "should mark a provider that has failed prefetch" do
+        transaction.prefetch_if_necessary(resource)
+
+        expect(transaction.prefetch_failed_providers[:package][:pkgng]).to be_truthy
+      end
+
+      describe "and new resources are generated" do
+        let(:generator) { Puppet::Type.type(:notify).new :title => "generator" }
+        let(:generated) do
+          %w[a b c].map { |name| Puppet::Type.type(:package).new :title => "foo", :name => name, :provider => :apt }
+        end
+
         before :each do
-          Puppet.settings[:future_features] = true
+          catalog.add_resource generator
+          allow(generator).to receive(:generate).and_return(generated)
+          allow(catalog).to receive(:container_of).and_return(generator)
         end
 
-        it "should rescue prefetch executions" do
-          transaction.prefetch_if_necessary(resource)
+        it "should not evaluate resources with a failed provider, even if the prefetch is rescued" do
+          #Only the generator resource should be applied, all the other resources are failed, and skipped.
+          catalog.remove_resource resource2
+          expect(transaction).to receive(:apply).once
 
-          expect(transaction.prefetched_providers[:package][:pkgng]).to be_truthy
+          transaction.evaluate
         end
 
-        it "should mark resources as failed", :unless => RUBY_PLATFORM == 'java' do
+        it "should not fail other resources added after the failing resource", :unless => RUBY_PLATFORM == 'java' do
+          new_resource = Puppet::Type.type(:notify).new :name => "baz"
+          catalog.add_resource(new_resource)
+
+          transaction.evaluate
+
+          expect(transaction.resource_status(new_resource).failed?).to be_falsey
+        end
+
+        it "should fail other resources that require the failing resource" do
+          new_resource = Puppet::Type.type(:notify).new(:name => "baz", :require => resource)
+          catalog.add_resource(new_resource)
+
+          catalog.remove_resource resource2
+          expect(transaction).to receive(:apply).once
+
           transaction.evaluate
 
           expect(transaction.resource_status(resource).failed?).to be_truthy
-        end
-
-        it "should mark a provider that has failed prefetch" do
-          transaction.prefetch_if_necessary(resource)
-
-          expect(transaction.prefetch_failed_providers[:package][:pkgng]).to be_truthy
-        end
-
-        describe "and new resources are generated" do
-          let(:generator) { Puppet::Type.type(:notify).new :title => "generator" }
-          let(:generated) do
-            %w[a b c].map { |name| Puppet::Type.type(:package).new :title => "foo", :name => name, :provider => :apt }
-          end
-
-          before :each do
-            catalog.add_resource generator
-            allow(generator).to receive(:generate).and_return(generated)
-            allow(catalog).to receive(:container_of).and_return(generator)
-          end
-
-          it "should not evaluate resources with a failed provider, even if the prefetch is rescued" do
-            #Only the generator resource should be applied, all the other resources are failed, and skipped.
-            catalog.remove_resource resource2
-            expect(transaction).to receive(:apply).once
-
-            transaction.evaluate
-          end
-
-          it "should not fail other resources added after the failing resource", :unless => RUBY_PLATFORM == 'java' do
-            new_resource = Puppet::Type.type(:notify).new :name => "baz"
-            catalog.add_resource(new_resource)
-
-            transaction.evaluate
-
-            expect(transaction.resource_status(new_resource).failed?).to be_falsey
-          end
-
-          it "should fail other resources that require the failing resource" do
-            new_resource = Puppet::Type.type(:notify).new(:name => "baz", :require => resource)
-            catalog.add_resource(new_resource)
-
-            catalog.remove_resource resource2
-            expect(transaction).to receive(:apply).once
-
-            transaction.evaluate
-
-            expect(transaction.resource_status(resource).failed?).to be_truthy
-            expect(transaction.resource_status(new_resource).dependency_failed?).to be_truthy
-            expect(transaction.skip?(new_resource)).to be_truthy
-          end
+          expect(transaction.resource_status(new_resource).dependency_failed?).to be_truthy
+          expect(transaction.skip?(new_resource)).to be_truthy
         end
       end
     end
