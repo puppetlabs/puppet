@@ -525,7 +525,7 @@ class amod::bad_type {
 
       expect {
         apply.command_line.args << manifest
-         apply.run
+        apply.run
       }.to exit_with(0)
        .and output(a_string_matching(
          /dir1\]\/ensure: created/
@@ -537,6 +537,46 @@ class amod::bad_type {
 
       dest_file = File.join(base_dir, 'dir1', 'dir2', 'file')
       expect(File.read(dest_file)).to eq("content from the module")
+    end
+  end
+
+  context 'http file sources' do
+    include_context 'https client'
+
+    it "requires the caller to URL encode special characters in the request path and query" do
+      Puppet[:server] = '127.0.0.1'
+      request = nil
+
+      response_proc = -> (req, res) {
+        request = req
+
+        res['Content-Type'] = 'text/plain'
+        res.body = "from the server"
+      }
+
+      https = PuppetSpec::HTTPSServer.new
+      https.start_server(response_proc: response_proc) do |https_port|
+        dest = tmpfile('http_file_source')
+
+        # spaces in path are encoded as %20 and '[' in query is encoded as %5B,
+        # but ':', '=', '-' are not encoded
+        manifest = file_containing("manifest.pp", <<~MANIFEST)
+          file { "#{dest}":
+            ensure  => file,
+            source  => "https://#{Puppet[:server]}:#{https_port}/path%20to%20file?x=b%5Bc&sv=2019-02-02&st=2020-07-28T20:18:53Z&se=2020-07-28T21:03:00Z&sr=b&sp=r&sig=JaZhcqxT4akJcOwUdUGrQB2m1geUoh89iL8WMag8a8c=",
+          }
+        MANIFEST
+
+        expect {
+          apply.command_line.args << manifest
+          apply.run
+        }.to exit_with(0)
+         .and output(%r{Main/File\[#{dest}\]/ensure: defined content as}).to_stdout
+
+        expect(request.path).to eq('/path to file')
+        expect(request.query).to include('x' => 'b[c')
+        expect(request.query).to include('sig' => 'JaZhcqxT4akJcOwUdUGrQB2m1geUoh89iL8WMag8a8c=')
+      end
     end
   end
 
