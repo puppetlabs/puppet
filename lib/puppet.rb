@@ -97,12 +97,6 @@ module Puppet
   # Load the base features.
   require 'puppet/feature/base'
 
-  # Store a new default value.
-  def self.define_settings(section, hash)
-    Puppet.deprecation_warning('The method Puppet.define_settings is deprecated and will be removed in a future release')
-    @@settings.define_settings(section, hash)
-  end
-
   # setting access and stuff
   def self.[]=(param,value)
     @@settings[param] = value
