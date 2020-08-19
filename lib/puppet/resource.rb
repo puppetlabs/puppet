@@ -515,75 +515,12 @@ class Puppet::Resource
   end
   private :missing_arguments
 
-  # @deprecated Not used by Puppet
-  # @api private
-  def set_default_parameters(scope)
-    Puppet.deprecation_warning(_('The method Puppet::Resource.set_default_parameters is deprecated and will be removed in the next major release of Puppet.'))
-
-    return [] unless resource_type and resource_type.respond_to?(:arguments)
-
-    unless is_a?(Puppet::Parser::Resource)
-      fail Puppet::DevError, _("Cannot evaluate default parameters for %{resource} - not a parser resource") % { resource: self }
-    end
-
-    missing_arguments.collect do |param, default|
-      rtype = resource_type
-      if rtype.type == :hostclass
-        using_bound_value = false
-        catch(:no_such_key) do
-          bound_value = Puppet::Pops::Lookup.search_and_merge("#{rtype.name}::#{param}", Puppet::Pops::Lookup::Invocation.new(scope), nil)
-          # Assign bound value but don't let an undef trump a default expression
-          unless bound_value.nil? && !default.nil?
-            self[param.to_sym] = bound_value
-            using_bound_value = true
-          end
-        end
-      end
-      unless using_bound_value
-        next if default.nil?
-        self[param.to_sym] = default.safeevaluate(scope)
-      end
-      param
-    end.compact
-  end
-
   def copy_as_resource
     Puppet::Resource.new(self)
   end
 
   def valid_parameter?(name)
     resource_type.valid_parameter?(name)
-  end
-
-  # Verify that all required arguments are either present or
-  # have been provided with defaults.
-  # Must be called after 'set_default_parameters'.  We can't join the methods
-  # because Type#set_parameters needs specifically ordered behavior.
-  #
-  # @deprecated Not used by Puppet
-  # @api private
-  def validate_complete
-    Puppet.deprecation_warning(_('The method Puppet::Resource.validate_complete is deprecated and will be removed in the next major release of Puppet.'))
-
-    return unless resource_type and resource_type.respond_to?(:arguments)
-
-    resource_type.arguments.each do |param, default|
-      param = param.to_sym
-      fail Puppet::ParseError, _("Must pass %{param} to %{resource}") % { param: param, resource: self } unless parameters.include?(param)
-    end
-
-    # Perform optional type checking
-    arg_types = resource_type.argument_types
-    # Parameters is a map from name, to parameter, and the parameter again has name and value
-    parameters.each do |name, value|
-      t = arg_types[name.to_s] # untyped, and parameters are symbols here (aargh, strings in the type)
-      next unless t
-      unless Puppet::Pops::Types::TypeCalculator.instance?(t, value.value)
-        inferred_type = Puppet::Pops::Types::TypeCalculator.infer_set(value.value)
-        actual = inferred_type.generalize()
-        fail Puppet::ParseError, _("Expected parameter '%{name}' of '%{value0}' to have type %{value1}, got %{value2}") % { name: name, value0: self, value1: t.to_s, value2: actual.to_s }
-      end
-    end
   end
 
   def validate_parameter(name)
