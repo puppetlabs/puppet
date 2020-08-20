@@ -603,9 +603,10 @@ describe Puppet::Transaction do
       expect { transaction.prefetch_if_necessary(resource) }.to raise_error(SystemExit, "SystemMessage")
     end
 
-    it "should rescue LoadError" do
+    it "should mark resources as failed when prefetching raises LoadError" do
       expect(resource.provider.class).to receive(:prefetch).and_raise(LoadError, "LoadMessage")
-      expect { transaction.prefetch_if_necessary(resource) }.not_to raise_error
+      transaction.prefetch_if_necessary(resource)
+      expect(transaction.prefetched_providers[:package][:pkgng]).to be_truthy
     end
 
     describe "and prefetching raises Puppet::Error" do
