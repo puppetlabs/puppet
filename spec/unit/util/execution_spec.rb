@@ -935,33 +935,4 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
       expect(Puppet::Util::Execution.execpipe('echo hello', false)).to eq('error message')
     end
   end
-
-  describe "execfail" do
-    it "returns the executed command output" do
-      allow(Puppet::Util::Execution).to receive(:execute)
-        .and_return(Puppet::Util::Execution::ProcessOutput.new("process output", 0))
-      expect(Puppet::Util::Execution.execfail('echo hello', Puppet::Error)).to eq('process output')
-    end
-
-    it "raises a caller-specified exception on failure with the backtrace" do
-      allow(Puppet::Util::Execution).to receive(:execute).and_raise(Puppet::ExecutionFailure, "failed to execute")
-      expect {
-        Puppet::Util::Execution.execfail("this will fail", Puppet::Error)
-      }.to raise_error(Puppet::Error, /failed to execute/)
-    end
-
-    it "raises exceptions that don't extend ExecutionFailure" do
-      allow(Puppet::Util::Execution).to receive(:execute).and_raise(ArgumentError, "failed to execute")
-      expect {
-        Puppet::Util::Execution.execfail("this will fail", Puppet::Error)
-      }.to raise_error(ArgumentError, /failed to execute/)
-    end
-
-    it "raises a TypeError if the exception class is nil" do
-      allow(Puppet::Util::Execution).to receive(:execute).and_raise(Puppet::ExecutionFailure, "failed to execute")
-      expect {
-        Puppet::Util::Execution.execfail('echo hello', nil)
-      }.to raise_error(TypeError, /exception class\/object expected/)
-    end
-  end
 end

@@ -117,19 +117,6 @@ class Puppet::Provider
     Puppet::Util::Execution.execpipe(*args, &block)
   end
 
-  # Convenience methods - see class method with the same name.
-  # @return (see self.execfail)
-  # @deprecated
-  def execfail(*args)
-    Puppet::Util::Execution.execfail(*args)
-  end
-
-  # (see Puppet::Util::Execution.execfail)
-  # @deprecated
-  def self.execfail(*args)
-    Puppet::Util::Execution.execfail(*args)
-  end
-
   # Returns the absolute path to the executable for the command referenced by the given name.
   # @raise [Puppet::DevError] if the name does not reference an existing command.
   # @return [String] the absolute path to the found executable for the command

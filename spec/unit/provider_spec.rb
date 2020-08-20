@@ -670,18 +670,6 @@ describe Puppet::Provider do
 
       provider.send(:execpipe, "a_command", true, block)
     end
-
-    it "delegates instance execfail to Puppet::Util::Execution" do
-      expect(Puppet::Util::Execution).to receive(:execfail).with("a_command", "an exception to raise")
-
-      provider.new.send(:execfail, "a_command", "an exception to raise")
-    end
-
-    it "delegates class execfail to Puppet::Util::Execution" do
-      expect(Puppet::Util::Execution).to receive(:execfail).with("a_command", "an exception to raise")
-
-      provider.send(:execfail, "a_command", "an exception to raise")
-    end
   end
 
   context "mk_resource_methods" do
