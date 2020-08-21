@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.17.0-93-gddd91ef701\n"
+"Project-Id-Version: Puppet automation framework 6.17.0-140-g12956c616d\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-07-30 16:49+0000\n"
-"PO-Revision-Date: 2020-07-30 16:49+0000\n"
+"POT-Creation-Date: 2020-08-21 22:04+0000\n"
+"PO-Revision-Date: 2020-08-21 22:04+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -118,16 +118,6 @@ msgstr ""
 
 #: ../lib/puppet/agent/locker.rb:26
 msgid "Failed to acquire lock"
-msgstr ""
-
-#. TRANSLATORS 'Puppet::Agent::Locker.running?' is a method name and should not be translated
-#: ../lib/puppet/agent/locker.rb:33
-msgid "Puppet::Agent::Locker.running? is deprecated as it is inherently unsafe."
-msgstr ""
-
-#. TRANSLATORS 'LockError' should not be translated
-#: ../lib/puppet/agent/locker.rb:35
-msgid "The only safe way to know if the lock is locked is to try lock and perform some action and then handle the LockError that may result."
 msgstr ""
 
 #: ../lib/puppet/application.rb:238
@@ -400,31 +390,31 @@ msgid ""
 "%{run_help}"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:99
+#: ../lib/puppet/application/lookup.rb:105
 msgid "Interactive Hiera lookup"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:266
+#: ../lib/puppet/application/lookup.rb:272
 msgid ""
 "The options %{deep_merge_opts} are only available with '--merge deep'\n"
 "%{run_help}"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:277
+#: ../lib/puppet/application/lookup.rb:283
 msgid ""
 "The --merge option only accepts %{strategies}, or %{last_strategy}\n"
 "%{run_help}"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:302
+#: ../lib/puppet/application/lookup.rb:308
 msgid "No keys were given to lookup."
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:310
+#: ../lib/puppet/application/lookup.rb:316
 msgid "Unknown rendering format '%{format}'"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:360 ../lib/puppet/face/epp.rb:520
+#: ../lib/puppet/application/lookup.rb:366 ../lib/puppet/face/epp.rb:520
 msgid "Incorrect formatted data in %{fact_file} given via the --facts flag"
 msgstr ""
 
@@ -2604,7 +2594,7 @@ msgstr ""
 msgid "Puppet::Indirector::FileContent::Http is deprecated. Use Puppet::HTTP::Client instead."
 msgstr ""
 
-#: ../lib/puppet/indirector/file_metadata/http.rb:31
+#: ../lib/puppet/indirector/file_metadata/http.rb:32
 msgid "cannot lookup multiple files"
 msgstr ""
 
@@ -4172,7 +4162,7 @@ msgstr ""
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:562 ../lib/puppet/pops/loaders.rb:301
+#: ../lib/puppet/node/environment.rb:568 ../lib/puppet/pops/loaders.rb:301
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -4204,54 +4194,54 @@ msgstr ""
 
 #. TRANSLATORS: do not translate the variable names in this error message
 #. TRANSLATORS: do not translate the variable names in this error message
-#: ../lib/puppet/pal/pal_impl.rb:73 ../lib/puppet/pal/pal_impl.rb:171
+#: ../lib/puppet/pal/pal_impl.rb:75 ../lib/puppet/pal/pal_impl.rb:173
 msgid "manifest_file or code_string cannot be given when configured_by_env is true"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:219
+#: ../lib/puppet/pal/pal_impl.rb:221
 msgid "temporary environment name"
 msgstr ""
 
 #. TRANSLATORS: do not translate variable name string in these assertions
-#: ../lib/puppet/pal/pal_impl.rb:224
+#: ../lib/puppet/pal/pal_impl.rb:226
 msgid "A block must be given to 'in_tmp_environment'"
 msgstr ""
 
 #. TRANSLATORS terms in the assertions below are names of terms in code
-#: ../lib/puppet/pal/pal_impl.rb:278
+#: ../lib/puppet/pal/pal_impl.rb:280
 msgid "A block must be given to 'in_environment'"
 msgstr ""
 
 #. TRANSLATORS 'in_environment' is a name, do not translate
-#: ../lib/puppet/pal/pal_impl.rb:283
+#: ../lib/puppet/pal/pal_impl.rb:285
 msgid "The environment directory '%{env_dir}' does not exist"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:306
+#: ../lib/puppet/pal/pal_impl.rb:308
 msgid "No directory found for the environment '%{env_name}' on the path '%{envpath}'"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:360
+#: ../lib/puppet/pal/pal_impl.rb:362
 msgid "Given variables must be a hash, got %{type}"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:366
+#: ../lib/puppet/pal/pal_impl.rb:368
 msgid "Given variable '%{varname}' has illegal name"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:370
+#: ../lib/puppet/pal/pal_impl.rb:372
 msgid "Given value for '%{varname}' has illegal type - got: %{type}"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:485
+#: ../lib/puppet/pal/pal_impl.rb:509
 msgid "Puppet Pal: %{what}"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:499
+#: ../lib/puppet/pal/pal_impl.rb:523
 msgid "Cannot use '%{a_term}' and '%{b_term}' at the same time"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:506
+#: ../lib/puppet/pal/pal_impl.rb:530
 msgid "A block must be given"
 msgstr ""
 
@@ -4556,31 +4546,31 @@ msgstr ""
 msgid "The method 'Puppet::Parser::Functions.autoloader#loaded?(\"%{name}\")' is deprecated in favor of using 'Scope#call_function'."
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:186
+#: ../lib/puppet/parser/functions.rb:190
 msgid "Overwriting previous definition for function %{name}"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:192
+#: ../lib/puppet/parser/functions.rb:196
 msgid "Invalid statement type %{type}"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:204
+#: ../lib/puppet/parser/functions.rb:208
 msgid "Called %{name}"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:207
+#: ../lib/puppet/parser/functions.rb:211
 msgid "%{name}(): Wrong number of arguments given (%{arg_count} for %{arity})"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:209
+#: ../lib/puppet/parser/functions.rb:213
 msgid "%{name}(): Wrong number of arguments given (%{arg_count} for minimum %{min_arg_count})"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:215
+#: ../lib/puppet/parser/functions.rb:219
 msgid "custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:314
+#: ../lib/puppet/parser/functions.rb:318
 msgid "%{name}() can only be called using the 4.x function API. See Scope#call_function"
 msgstr ""
 
@@ -5958,23 +5948,23 @@ msgstr ""
 msgid "Unknown Explain type %{qualifier_type}"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/hiera_config.rb:85
+#: ../lib/puppet/pops/lookup/hiera_config.rb:86
 msgid "Using of legacy data provider function '%{function_name}'. Please convert to a 'data_hash' function"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/hiera_config.rb:142
+#: ../lib/puppet/pops/lookup/hiera_config.rb:143
 msgid "%{config_path}: File exists but does not contain a valid YAML hash. Falling back to Hiera version 3 default config"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/hiera_config.rb:200
+#: ../lib/puppet/pops/lookup/hiera_config.rb:201
 msgid "Hiera configuration recreated due to change of scope variables used in interpolation expressions"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/hiera_config.rb:428
+#: ../lib/puppet/pops/lookup/hiera_config.rb:429
 msgid "%{config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/hiera_config.rb:528
+#: ../lib/puppet/pops/lookup/hiera_config.rb:529
 msgid "%{config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5"
 msgstr ""
 
@@ -7282,15 +7272,15 @@ msgstr ""
 msgid "ruby-shadow doesn't support %{method}"
 msgstr ""
 
-#: ../lib/puppet/provider/user/windows_adsi.rb:128
+#: ../lib/puppet/provider/user/windows_adsi.rb:145
 msgid "The user account '%s' is disabled; The password will still be changed"
 msgstr ""
 
-#: ../lib/puppet/provider/user/windows_adsi.rb:130
+#: ../lib/puppet/provider/user/windows_adsi.rb:147
 msgid "The user account '%s' is locked out; The password will still be changed"
 msgstr ""
 
-#: ../lib/puppet/provider/user/windows_adsi.rb:132
+#: ../lib/puppet/provider/user/windows_adsi.rb:149
 msgid "The user account '%s' is expired; The password will still be changed"
 msgstr ""
 
@@ -8755,7 +8745,7 @@ msgid "Not managing symlink mode"
 msgstr ""
 
 #. TRANSLATORS "source_permissions" is a parameter name and should not be translated
-#: ../lib/puppet/type/file/source.rb:368
+#: ../lib/puppet/type/file/source.rb:373
 msgid "The `source_permissions` parameter is deprecated. Explicitly set `owner`, `group`, and `mode`."
 msgstr ""
 
@@ -8867,15 +8857,15 @@ msgstr ""
 msgid "Setting enable to %{value} is only supported on Microsoft Windows."
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:162
+#: ../lib/puppet/type/service.rb:166
 msgid "The 'logonaccount' parameter is mandatory when setting 'logonpassword'."
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:163 ../lib/puppet/type/user.rb:256
+#: ../lib/puppet/type/service.rb:167 ../lib/puppet/type/user.rb:271
 msgid "Passwords cannot include ':'"
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:300
+#: ../lib/puppet/type/service.rb:304
 msgid "\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer"
 msgstr ""
 
@@ -8910,81 +8900,81 @@ msgstr ""
 msgid "File does not exist"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:167
+#: ../lib/puppet/type/user.rb:182
 msgid "Could not find group(s) %{groups}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:276
+#: ../lib/puppet/type/user.rb:291
 msgid "Password minimum age must be provided as a number."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:295
+#: ../lib/puppet/type/user.rb:310
 msgid "Password maximum age must be provided as a number."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:326
+#: ../lib/puppet/type/user.rb:341
 msgid "Group names must be provided, not GID numbers."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:328
+#: ../lib/puppet/type/user.rb:343
 msgid "Group names must be provided as an array, not a comma-separated list."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:329
+#: ../lib/puppet/type/user.rb:344
 msgid "Group names must not be empty. If you want to specify \"no groups\" pass an empty array"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:422
+#: ../lib/puppet/type/user.rb:437
 msgid "User provider %{name} can not manage home directories"
 msgstr ""
 
 #. TRANSLATORS YYYY-MM-DD represents a date with a four-digit year, a two-digit month, and a two-digit day,
 #. TRANSLATORS separated by dashes.
-#: ../lib/puppet/type/user.rb:439
+#: ../lib/puppet/type/user.rb:454
 msgid "Expiry dates must be YYYY-MM-DD or the string \"absent\""
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:506
+#: ../lib/puppet/type/user.rb:521
 msgid "Role names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:508
+#: ../lib/puppet/type/user.rb:523
 msgid "Role names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:545
+#: ../lib/puppet/type/user.rb:560
 msgid "Auth names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:547
+#: ../lib/puppet/type/user.rb:562
 msgid "Auth names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:571
+#: ../lib/puppet/type/user.rb:586
 msgid "Profile names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:573
+#: ../lib/puppet/type/user.rb:588
 msgid "Profile names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:684
+#: ../lib/puppet/type/user.rb:699
 msgid "Ssh_authorized_key type is not available. Cannot purge SSH keys."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:722
+#: ../lib/puppet/type/user.rb:737
 msgid "Each entry for purge_ssh_keys must be a string, not a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:725
+#: ../lib/puppet/type/user.rb:740
 msgid "Paths to keyfiles must be absolute, not %{entry}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:729
+#: ../lib/puppet/type/user.rb:744
 msgid "purge_ssh_keys must be true, false, or an array of file names, not %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:757
+#: ../lib/puppet/type/user.rb:772
 msgid "Class name must be provided."
 msgstr ""
 
@@ -9083,11 +9073,11 @@ msgstr ""
 msgid "Failed to abandon a child process contract"
 msgstr ""
 
-#: ../lib/puppet/util/autoload.rb:75
+#: ../lib/puppet/util/autoload.rb:83
 msgid "Could not autoload %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/autoload.rb:182
+#: ../lib/puppet/util/autoload.rb:184
 msgid "Autoload paths cannot be fully qualified"
 msgstr ""
 
@@ -9907,7 +9897,7 @@ msgstr ""
 msgid "Unable to read wide strings with %{null_terminator} terminal nulls"
 msgstr ""
 
-#: ../lib/puppet/util/windows/api_types.rb:216
+#: ../lib/puppet/util/windows/api_types.rb:230
 msgid "Bad GUID format."
 msgstr ""
 
