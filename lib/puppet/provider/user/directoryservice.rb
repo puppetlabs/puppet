@@ -657,14 +657,4 @@ Puppet::Type.type(:user).provide :directoryservice do
   def write_users_plist_to_disk(users_plist)
     Puppet::Util::Plist.write_plist_file(users_plist, "#{users_plist_dir}/#{@resource.name}.plist", :binary)
   end
-
-  # This is a simple wrapper method for writing values to a file.
-  def write_to_file(filename, value)
-    Puppet.deprecation_warning("Puppet::Type.type(:user).provider(:directoryservice).write_to_file is deprecated and will be removed in Puppet 5.")
-    begin
-      File.open(filename, 'w') { |f| f.write(value)}
-    rescue Errno::EACCES => detail
-      raise Puppet::Error, "Could not write to file #{filename}: #{detail}", detail.backtrace
-    end
-  end
 end
