@@ -32,7 +32,7 @@ describe Puppet::Type.type(:package).provider(:dpkg), unless: Puppet::Util::Plat
       expect(Puppet::Util::Execution).to receive(:execpipe).with(execpipe_args).and_yield(bash_installed_io)
 
       installed = double('bash')
-      expect(described_class).to receive(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).and_return(installed)
+      expect(described_class).to receive(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :mark => :none, :status => "installed", :provider => :dpkg).and_return(installed)
 
       expect(described_class.instances).to eq([installed])
     end
@@ -41,9 +41,9 @@ describe Puppet::Type.type(:package).provider(:dpkg), unless: Puppet::Util::Plat
       expect(Puppet::Util::Execution).to receive(:execpipe).with(execpipe_args).and_yield(all_installed_io)
 
       bash = double('bash')
-      expect(described_class).to receive(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).and_return(bash)
+      expect(described_class).to receive(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :mark => :none, :status => "installed", :provider => :dpkg).and_return(bash)
       vim = double('vim')
-      expect(described_class).to receive(:new).with(:ensure => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :status => "installed", :provider => :dpkg).and_return(vim)
+      expect(described_class).to receive(:new).with(:ensure => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :mark => :none, :status => "installed", :provider => :dpkg).and_return(vim)
 
       expect(described_class.instances).to eq([bash, vim])
     end
@@ -107,7 +107,7 @@ describe Puppet::Type.type(:package).provider(:dpkg), unless: Puppet::Util::Plat
         it "returns a hash of the found package status for an installed package" do
           dpkg_query_execution_with_multiple_args_returns(query_output, args_with_provides,virtual_packages_query_args)
           dpkg_query_execution_with_multiple_args_returns(dpkg_query_result, args, query_args)
-          expect(provider.query).to eq(:ensure => "2.7.13", :error => "ok", :desired => "install", :name => "python", :status => "installed", :provider => :dpkg)
+          expect(provider.query).to eq(:ensure => "2.7.13", :error => "ok", :desired => "install", :name => "python", :mark => :none, :status => "installed", :provider => :dpkg)
         end
 
         it "considers the package absent if the dpkg-query result cannot be interpreted" do
@@ -160,6 +160,20 @@ describe Puppet::Type.type(:package).provider(:dpkg), unless: Puppet::Util::Plat
           expect(provider.query[:mark]).to eq(:hold)
         end
 
+        it "considers the package held if its state is 'hold'" do
+          dpkg_query_execution_with_multiple_args_returns(query_output.gsub("install","hold"),args_with_provides,virtual_packages_query_args)
+          dpkg_query_execution_with_multiple_args_returns(dpkg_query_result.gsub("install","hold"), args, query_args)
+          expect(provider.query[:ensure]).to eq("2.7.13")
+          expect(provider.query[:mark]).to eq(:hold)
+        end
+
+        it "considers mark status to be none if package is not held" do
+          dpkg_query_execution_with_multiple_args_returns(query_output.gsub("install","ok"),args_with_provides,virtual_packages_query_args)
+          dpkg_query_execution_with_multiple_args_returns(dpkg_query_result.gsub("install","ok"), args, query_args)
+          expect(provider.query[:ensure]).to eq("2.7.13")
+          expect(provider.query[:mark]).to eq(:none)
+        end
+
         context "regex check for query search" do
           let(:resource_name) { 'python-email' }
           let(:resource) { instance_double('Puppet::Type::Package') }
@@ -168,10 +182,10 @@ describe Puppet::Type.type(:package).provider(:dpkg), unless: Puppet::Util::Plat
             allow(resource).to receive(:[]=)
           end
 
-          it "checks if virtual package regex for query is correctand phisical package is installed" do
+          it "checks if virtual package regex for query is correct and physical package is installed" do
             dpkg_query_execution_with_multiple_args_returns(query_output,args_with_provides,virtual_packages_query_args)
             dpkg_query_execution_with_multiple_args_returns(dpkg_query_result, args, query_args)
-            expect(provider.query).to match({:desired=>"install", :ensure=>"2.7.13", :error=>"ok", :name=>"python", :provider=>:dpkg, :status=>"installed"})
+            expect(provider.query).to match({:desired => "install", :ensure => "2.7.13", :error => "ok", :name => "python", :mark => :none, :provider => :dpkg, :status => "installed"})
           end
 
           context "regex check with no partial matching" do
@@ -208,7 +222,7 @@ describe Puppet::Type.type(:package).provider(:dpkg), unless: Puppet::Util::Plat
       it "returns a hash of the found package status for an installed package" do
         dpkg_query_execution_returns(bash_installed_output)
 
-        expect(provider.query).to eq({:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg})
+        expect(provider.query).to eq({:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :mark => :none, :status => "installed", :provider => :dpkg})
       end
 
       it "considers the package absent if the dpkg-query result cannot be interpreted" do
@@ -271,6 +285,7 @@ describe Puppet::Type.type(:package).provider(:dpkg), unless: Puppet::Util::Plat
             :error => 'ok',
             :status => 'status',
             :name => resource_name,
+            :mark => :none,
             :ensure => 'ensure',
             :provider => :dpkg,
           }
