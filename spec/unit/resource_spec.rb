@@ -286,39 +286,6 @@ describe Puppet::Resource do
       Puppet::Parser::AST::Leaf.new(value: value)
     end
 
-    it "should fail when asked to set default values and it is not a parser resource" do
-      environment.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_leaf("default")})
-      )
-      resource = Puppet::Resource.new("default_param", "name", :environment => environment)
-      expect { resource.set_default_parameters(scope) }.to raise_error(Puppet::DevError)
-    end
-
-    it "should evaluate and set any default values when no value is provided" do
-      environment.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_leaf("a_default_value")})
-      )
-      resource = Puppet::Parser::Resource.new("default_param", "name", :scope => scope)
-      resource.set_default_parameters(scope)
-      expect(resource["a"]).to eq("a_default_value")
-    end
-
-    it "should skip attributes with no default value" do
-      environment.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "no_default_param", :arguments => {"a" => ast_leaf("a_default_value")})
-      )
-      resource = Puppet::Parser::Resource.new("no_default_param", "name", :scope => scope)
-      expect { resource.set_default_parameters(scope) }.not_to raise_error
-    end
-
-    it "should return the list of default parameters set" do
-      environment.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_leaf("a_default_value")})
-      )
-      resource = Puppet::Parser::Resource.new("default_param", "name", :scope => scope)
-      expect(resource.set_default_parameters(scope)).to eq(["a"])
-    end
-
     describe "when the resource type is :hostclass" do
       let(:environment_name) { "testing env" }
       let(:fact_values) { { :a => 1 } }
@@ -405,7 +372,6 @@ describe Puppet::Resource do
 
           it "should use the value provided" do
             expect(Puppet::DataBinding.indirection).not_to receive(:find)
-            expect(resource.set_default_parameters(scope)).to eq([])
             expect(resource[:port]).to eq('8080')
           end
 
@@ -444,28 +410,6 @@ describe Puppet::Resource do
           expect(resource[:port]).to be_nil
         end
       end
-    end
-  end
-
-  describe "when validating all required parameters are present" do
-    it "should be able to validate that all required parameters are present" do
-      environment.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "required_param", :arguments => {"a" => nil})
-      )
-      expect { Puppet::Resource.new("required_param", "name", :environment => environment).validate_complete }.to raise_error(Puppet::ParseError)
-    end
-
-    it "should not fail when all required parameters are present" do
-      environment.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "no_required_param")
-      )
-      resource = Puppet::Resource.new("no_required_param", "name", :environment => environment)
-      resource["a"] = "meh"
-      expect { resource.validate_complete }.not_to raise_error
-    end
-
-    it "should not validate against builtin types" do
-      expect { Puppet::Resource.new("file", "/bar").validate_complete }.not_to raise_error
     end
   end
 

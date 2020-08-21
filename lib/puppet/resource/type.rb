@@ -288,21 +288,6 @@ class Puppet::Resource::Type
     @name.is_a?(Regexp)
   end
 
-  # @deprecated Not used by Puppet
-  # @api private
-  def assign_parameter_values(parameters, resource)
-    Puppet.deprecation_warning(_('The method Puppet::Resource::Type.assign_parameter_values is deprecated and will be removed in the next major release of Puppet.'))
-
-    return unless parameters
-
-    # It'd be nice to assign default parameter values here,
-    # but we can't because they often rely on local variables
-    # created during set_resource_parameters.
-    parameters.each do |name, value|
-      resource.set_parameter name, value
-    end
-  end
-
   def parent_type(scope = nil)
     return nil unless parent
 
