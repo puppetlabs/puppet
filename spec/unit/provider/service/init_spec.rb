@@ -1,12 +1,11 @@
 require 'spec_helper'
 
-describe 'Puppet::Type::Service::Provider::Init', unless: Puppet::Util::Platform.jruby? do
+describe 'Puppet::Type::Service::Provider::Init',
+         unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:init) }
 
-  if Puppet::Util::Platform.windows?
-    # Get a pid for $CHILD_STATUS to latch on to
-    cmd = "cmd.exe /c \"exit 0\""
-    Puppet::Util::Execution.execute(cmd, {:failonfail => false})
+  before :all do
+    `exit 0`
   end
 
   before do
