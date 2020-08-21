@@ -1,21 +1,28 @@
 version: 4.1.0.{build}
+image:
+  - Visual Studio 2015
+  - Visual Studio 2019
 clone_depth: 10
 install:
 build: off
 matrix:
   fast_finish: true
   exclude:
+    - platform: Ruby27-x64
+      image: Visual Studio 2015
+    - platform: Ruby26-x64
+      image: Visual Studio 2019
     - platform: Ruby25-x64
-      LOCALE: ja-JP
-    - platform: Ruby24-x64
+      image: Visual Studio 2019
+    - platform: Ruby25-x64
+      image: Visual Studio 2015
       LOCALE: ja-JP
 
 # Ruby versions under test
 platform:
+  - Ruby27-x64
   - Ruby26-x64
   - Ruby25-x64
-  - Ruby24-x64
-  - Ruby23-x64
 
 # Note that locales are mainly code page changes and are not the FULL set of localization
 #  changes that happen when you install French/Germam/Japanese etc. Windows
@@ -53,6 +60,9 @@ test_script:
       $Env:PATH = "C:\${Env:PLATFORM}\bin;${Env:PATH}"
       $Env:LOG_SPEC_ORDER = 'true'
       Get-ChildItem Env: | % { Write-Output "$($_.Key): $($_.Value)"  }
+      # override RUBYOPT so we don't use UTF-8 encoding when running specs
+      # if Ruby is installed via RubyInstaller it probably defaults to '-Eutf-8'
+      $Env:RUBYOPT = ''
       # list current OpenSSL install
       gem list openssl
       ruby -ropenssl -e 'puts \"OpenSSL Version - #{OpenSSL::OPENSSL_VERSION}\"; puts \"OpenSSL Library Version - #{OpenSSL::OPENSSL_LIBRARY_VERSION}\"'

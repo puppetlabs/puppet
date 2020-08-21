@@ -10,12 +10,6 @@ notifications:
 
 matrix:
   include:
-    - rvm: 2.3
-      env: "CHECK=parallel:spec\\[2\\]"
-
-    - rvm: 2.4
-      env: "CHECK=parallel:spec\\[2\\]"
-
     - rvm: 2.5
       env: "CHECK=parallel:spec\\[2\\]"
 
