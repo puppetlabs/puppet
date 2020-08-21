@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'Puppet::Type::Service::Provider::Smf',
-         if: Puppet.features.posix? && !Puppet::Util::Platform.jruby? do
+         unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:smf) }
 
   before(:each) do
