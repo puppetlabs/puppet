@@ -149,63 +149,6 @@ describe Puppet::Provider::NameService do
     end
   end
 
-  describe "#listbyname" do
-    it "should be deprecated" do
-      expect(Puppet).to receive(:deprecation_warning).with(/listbyname is deprecated/)
-      described_class.listbyname
-    end
-
-    it "should return a list of users if resource_type is user" do
-      described_class.resource_type = Puppet::Type.type(:user)
-      expect(Puppet::Etc).to receive(:setpwent)
-      allow(Puppet::Etc).to receive(:getpwent).and_return(*users)
-      expect(Puppet::Etc).to receive(:endpwent)
-      expect(described_class.listbyname).to eq(%w{root foo})
-    end
-
-    context "encoding handling" do
-      described_class.resource_type = Puppet::Type.type(:user)
-
-      # These two tests simulate an environment where there are two users with
-      # the same name on disk, but each name is stored on disk in a different
-      # encoding
-      it "should return names with invalid byte sequences replaced with '?'" do
-        allow(Etc).to receive(:getpwent).and_return(*utf_8_mixed_users)
-        expect(invalid_utf_8_jose).to_not be_valid_encoding
-        result = PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::UTF_8) do
-          described_class.listbyname
-        end
-        expect(result).to eq(['root', 'foo', utf_8_jose, escaped_utf_8_jose])
-      end
-
-      it "should return names in their original encoding/bytes if they would not be valid UTF-8" do
-        allow(Etc).to receive(:getpwent).and_return(*latin_1_mixed_users)
-        result = PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::ISO_8859_1) do
-          described_class.listbyname
-        end
-        expect(result).to eq(['root'.force_encoding(Encoding::UTF_8), 'foo'.force_encoding(Encoding::UTF_8), utf_8_jose, valid_latin1_jose])
-      end
-    end
-
-    it "should return a list of groups if resource_type is group", :unless => Puppet::Util::Platform.windows? do
-      described_class.resource_type = Puppet::Type.type(:group)
-      expect(Puppet::Etc).to receive(:setgrent)
-      allow(Puppet::Etc).to receive(:getgrent).and_return(*groups)
-      expect(Puppet::Etc).to receive(:endgrent)
-      expect(described_class.listbyname).to eq(%w{root bin})
-    end
-
-    it "should yield if a block given" do
-      yield_results = []
-      described_class.resource_type = Puppet::Type.type(:user)
-      expect(Puppet::Etc).to receive(:setpwent)
-      allow(Puppet::Etc).to receive(:getpwent).and_return(*users)
-      expect(Puppet::Etc).to receive(:endpwent)
-      described_class.listbyname {|x| yield_results << x }
-      expect(yield_results).to eq(%w{root foo})
-    end
-  end
-
   describe "instances" do
     it "should return a list of objects in UTF-8 with any invalid characters replaced with '?'" do
       # These two tests simulate an environment where there are two users with

@@ -54,24 +54,6 @@ class Puppet::Provider::NameService < Puppet::Provider
       end
     end
 
-    # List everything out by name.  Abstracted a bit so that it works
-    # for both users and groups.
-    def listbyname
-      Puppet.deprecation_warning(_("listbyname is deprecated and will be removed in a future release of Puppet. Please use `self.instances` to obtain a list of users."))
-      names = []
-      Puppet::Etc.send("set#{section()}ent")
-      begin
-        while ent = Puppet::Etc.send("get#{section()}ent") #rubocop:disable Lint/AssignmentInCondition
-          names << ent.name
-          yield ent.name if block_given?
-        end
-      ensure
-        Puppet::Etc.send("end#{section()}ent")
-      end
-
-      names
-    end
-
     def resource_type=(resource_type)
       super
       @resource_type.validproperties.each do |prop|
