@@ -94,17 +94,6 @@ module Puppet::Util::Execution
   end
   private_class_method :exitstatus
 
-  # Wraps execution of {execute} with mapping of exception to given exception (and output as argument).
-  # @raise [exception] under same conditions as {execute}, but raises the given `exception` with the output as argument
-  # @return (see execute)
-  # @api public
-  # @deprecated
-  def self.execfail(command, exception)
-    execute(command)
-  rescue Puppet::ExecutionFailure => detail
-    raise exception, detail.message, detail.backtrace
-  end
-
   # Default empty options for {execute}
   NoOptionsSpecified = {}
 
