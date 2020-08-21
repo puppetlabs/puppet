@@ -28,7 +28,7 @@ class StaticLoader < Loader
   BUILTIN_ALIASES = {
     'Data' => 'Variant[ScalarData,Undef,Hash[String,Data],Array[Data]]',
     'RichDataKey' => 'Variant[String,Numeric]',
-    'RichData' => 'Variant[Scalar,SemVerRange,Binary,Sensitive,Type,TypeSet,URI,Object,Undef,Default,Hash[RichDataKey,RichData],Array[RichData]]',
+    'RichData' => 'Variant[Scalar,SemVerRange,Binary,Sensitive,URI,Object,Undef,Default,Hash[RichDataKey,RichData],Array[RichData]]',
 
     # Backward compatible aliases.
     'Puppet::LookupKey' => 'RichDataKey',
