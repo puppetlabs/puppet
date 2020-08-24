@@ -32,34 +32,34 @@ class Benchmarker
   end
 
   def generate
+    # $codedir/
+    #   environments/benchmarking/
+    #     hiera.yaml
+    #     data/
+    #       test/data.yaml
+    #       common.yaml
+    #
     env_dir = File.join(@target, 'environments', 'benchmarking')
     hiera_yaml = File.join(env_dir, 'hiera.yaml')
-    env_conf = File.join(env_dir, 'environment.conf')
     datadir = File.join(env_dir, 'data')
     datadir_test = File.join(datadir, 'test')
     test_data_yaml = File.join(datadir_test, 'data.yaml')
     common_yaml = File.join(datadir, 'common.yaml')
 
-    mkdir_p(env_dir)
-    mkdir_p(datadir)
     mkdir_p(datadir_test)
 
     File.open(hiera_yaml, 'w') do |f|
       f.puts(<<-YAML)
-version: 4
-datadir: data
+version: 5
+defaults:
+  datadir: data
+  data_hash: yaml_data
 hierarchy:
   - name: Common
-    backend: yaml
-    path: common
+    path: common.yaml
   - name: Configured
-    backend: yaml
-    path: "%{confdir}/data"
-      YAML
-    end
-
-    File.open(env_conf, 'w') do |f|
-      f.puts("environment_data_provider=hiera")
+    path: test/data.yaml
+YAML
     end
 
     File.open(common_yaml, 'w') do |f|
