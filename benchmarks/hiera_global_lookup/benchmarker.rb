@@ -26,6 +26,11 @@ class Benchmarker
           invocation = Puppet::Pops::Lookup::Invocation.new(scope)
           Puppet::Pops::Lookup.lookup("x#{index}", nil, nil, true, nil, invocation)
         end
+
+        100.times do
+          invocation = Puppet::Pops::Lookup::Invocation.new(scope)
+          Puppet::Pops::Lookup.lookup("h1.h2.h3.k0", nil, nil, true, nil, invocation)
+        end
       end
       catalog
     end
@@ -75,6 +80,15 @@ YAML
 
     File.open(test_data_yaml, 'w') do |f|
       100.times { |index| f.puts("x#{index}: \"%{hiera('cbm#{index}')}\"")}
+
+      f.puts(<<-YAML)
+h1:
+  h2:
+    h3:
+YAML
+      100.times { |index| f.puts(<<-YAML) }
+      k#{index}: v#{index}
+YAML
     end
 
     templates = File.join('benchmarks', 'hiera_global_lookup')
