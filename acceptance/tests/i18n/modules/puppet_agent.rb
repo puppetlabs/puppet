@@ -1,7 +1,4 @@
 test_name 'C100565: puppet agent with module should translate messages' do
-  confine :except, :platform => /^eos-/ # translation not supported
-  confine :except, :platform => /^cisco/ # translation not supported
-  confine :except, :platform => /^cumulus/ # translation not supported
   confine :except, :platform => /^solaris/ # translation not supported
 
   tag 'audit:medium',

@@ -7,8 +7,6 @@ tag 'audit:medium',
     'audit:refactor',     # This could be a component of a larger workflow scenario.
     'server'
 
-  # user resource doesn't have a provider on arista
-  skip_test if agents.any? {|agent| agent['platform'] =~ /^eos/ } # see PUP-5404, ARISTA-42
   skip_test 'requires puppetserver to service restart' if @options[:type] != 'aio'
 
   app_type = File.basename(__FILE__, '.*')

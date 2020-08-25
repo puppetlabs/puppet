@@ -5,8 +5,6 @@ test_name "should correctly manage the groups property for the User resource" do
   # sense.
 
   confine :except, :platform => /windows/
-  confine :except, :platform => /eos-/ # See ARISTA-37
-  confine :except, :platform => /cisco_/ # See PUP-5828
 
   tag 'audit:medium',
       'audit:acceptance' # Could be done as integration tests, but would

@@ -6,11 +6,7 @@ test_name 'utf-8 characters in function parameters' do
 
   confine :except, :platform => [
     'windows',      # PUP-6983
-    'eos-4',        # PUP-7146
-    'cumulus',      # PUP-7147
-    'cisco',        # PUP-7150
     'aix',          # PUP-7194
-    'huawei',       # PUP-7195
   ]
 
   # utf8chars = "€‰ㄘ万竹ÜÖ"

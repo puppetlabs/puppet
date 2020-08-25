@@ -1,5 +1,5 @@
 test_name "test that we can query and find a group that exists."
-confine :except, :platform => /^cisco_/ # See PUP-5828
+
 tag 'audit:high',
     'audit:refactor',  # Use block style `test_name`
     'audit:acceptance' # Could be done at the integration (or unit) layer though
