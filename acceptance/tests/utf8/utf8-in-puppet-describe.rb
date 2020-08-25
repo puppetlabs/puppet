@@ -6,11 +6,6 @@ test_name 'utf-8 characters in module doc string, puppet describe' do
                            # remove with_puppet_running_on unless pluginsync is absolutely necessary
                            # (if it is, add 'server' tag
 
-  platforms = hosts.map {|val| val[:platform]}
-  if (platforms.any? { |val| /^eos-/ =~ val})
-    skip_test "Skipping because Puppet describe fails when the Arista module is installed (ARISTA-51)"
-  end 
-
   # utf8chars = "€‰ㄘ万竹ÜÖ"
   utf8chars = "\u20ac\u2030\u3118\u4e07\u7af9\u00dc\u00d6"
 

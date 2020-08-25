@@ -1,7 +1,5 @@
 test_name "verifies that puppet resource creates a user and assigns the correct group"
 confine :except, :platform => 'windows'
-confine :except, :platform => /^eos-/ # See ARISTA-37
-confine :except, :platform => /^cisco_/ # See PUP-5828
 
 tag 'audit:medium',
     'audit:refactor',  # Use block style `test_run`

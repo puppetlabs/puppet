@@ -6,7 +6,6 @@ tag 'audit:medium',
 
 confine :except, :platform => 'windows'
 confine :except, :platform => 'solaris'
-confine :except, :platform => /^cisco_/ # See PUP-5827
 
 # For each script in /etc/init.d, the init service provider will call
 # the script with the `status` argument, except for blacklisted

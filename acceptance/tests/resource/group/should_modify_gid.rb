@@ -1,6 +1,6 @@
 test_name "should modify gid of existing group"
 confine :except, :platform => 'windows'
-confine :except, :platform => /^cisco_/ # See PUP-5828
+
 tag 'audit:high',
     'audit:refactor',  # Use block style `test_name`
     'audit:acceptance' # Could be done at the integration (or unit) layer though

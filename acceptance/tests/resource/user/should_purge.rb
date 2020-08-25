@@ -1,6 +1,4 @@
 test_name "should purge a user" do
-  confine :except, :platform => /^eos-/ # See ARISTA-37
-  confine :except, :platform => /^cisco_/ # See PUP-5828
   # Until purging works on AIX, Solaris, and OSX. See PUP-9188
   confine :except, :platform => /^aix/
   confine :except, :platform => /^solaris/

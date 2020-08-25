@@ -5,29 +5,6 @@ module Puppet
       def assert_matching_arrays(expected, actual, message = "")
         assert_equal(expected.sort, actual.sort, message)
       end
-
-      # TODO: Remove the wrappers to user_present
-      # and user_absent if Beaker::Host's user_present
-      # and user_absent functions are fixed to work with
-      # Arista (EOS).
-
-      def user_present(host, username)
-        case host['platform']
-        when /eos/
-          on(host, "useradd #{username}")
-        else
-          host.user_present(username)
-        end
-      end
-
-      def user_absent(host, username)
-        case host['platform']
-        when /eos/
-          on(host, "userdel #{username}", acceptable_exit_codes: [0, 1])
-        else
-          host.user_absent(username)
-        end
-      end
     end
 
     module PackageUtils

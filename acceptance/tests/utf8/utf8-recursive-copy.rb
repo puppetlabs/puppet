@@ -4,9 +4,6 @@ test_name "PUP-8735: UTF-8 characters are preserved after recursively copying di
       'audit:integration' # not package dependent but may want to vary platform by LOCALE/encoding
 
   # Translation is not supported on these platforms:
-  confine :except, :platform => /^eos-/
-  confine :except, :platform => /^cisco/
-  confine :except, :platform => /^cumulus/
   confine :except, :platform => /^solaris/
 
   # for file_exists?

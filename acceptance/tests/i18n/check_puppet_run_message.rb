@@ -1,7 +1,4 @@
 test_name 'C100559: puppet agent run output with a supported language should be localized' do
-  confine :except, :platform => /^eos-/    # translation not supported
-  confine :except, :platform => /^cisco_/  # translation not supported
-  confine :except, :platform => /^cumulus/ # translation not supported
   confine :except, :platform => /^solaris/ # translation not supported
   confine :except, :platform => /^aix/     # QENG-5283 needed for this to work
 

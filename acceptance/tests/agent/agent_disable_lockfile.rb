@@ -1,6 +1,4 @@
 test_name "C4553 - agent --disable/--enable functionality should manage the agent lockfile properly"
-confine :except, :platform => 'cisco_nexus' #See BKR-749
-
 tag 'audit:integration', # lockfile uses the standard `vardir` location to store/query lockfile.
                          # The validation of the `vardir` at the OS level
                          # should be accomplished in another test.

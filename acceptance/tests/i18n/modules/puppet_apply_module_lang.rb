@@ -1,6 +1,5 @@
 test_name 'C100574: puppet apply using a module should translate messages in a language not supported by puppet' do
 
-  confine :except, :platform => /^cisco/ # translation not supported
   confine :except, :platform => /^windows/ # Can't print Finish on an English or Japanese code page
 
   tag 'audit:medium',

@@ -1,6 +1,5 @@
 test_name "ensure that puppet does not report removing a user that does not exist"
-confine :except, :platform => /^eos-/ # See ARISTA-37
-confine :except, :platform => /^cisco_/ # See PUP-5828
+
 tag 'audit:medium',
     'audit:refactor',  # Use block style `test_run`
     'audit:acceptance' # Could be done as integration tests, but would

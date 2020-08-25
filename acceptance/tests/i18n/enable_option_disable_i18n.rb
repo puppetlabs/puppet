@@ -1,7 +1,4 @@
 test_name 'C100561: verify that disable_i18n can be set to true and have translations disabled' do
-  confine :except, :platform => /^eos-/ # translation not supported
-  confine :except, :platform => /^cisco_/ # translation not supported
-  confine :except, :platform => /^cumulus/ # translation not supported
   confine :except, :platform => /^solaris/ # translation not supported
   confine :except, :platform => /^aix/ # QENG-5283 needed for this to work
 

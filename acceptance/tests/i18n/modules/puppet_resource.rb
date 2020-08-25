@@ -1,7 +1,4 @@
 test_name 'C100572: puppet resource with module translates messages' do
-  confine :except, :platform => /^eos-/ # translation not supported
-  confine :except, :platform => /^cisco/ # translation not supported
-  confine :except, :platform => /^cumulus/ # translation not supported
   confine :except, :platform => /^solaris/ # translation not supported
 
   tag 'audit:medium',

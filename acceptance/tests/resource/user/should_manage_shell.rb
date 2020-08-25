@@ -10,8 +10,6 @@ tag 'audit:medium',
 name = "pl#{rand(999999).to_i}"
 
 confine :except, :platform => 'windows'
-confine :except, :platform => /^eos-/ # See ARISTA-37
-confine :except, :platform => /^cisco_/ # See PUP-5828
 
 agents.each do |agent|
   step "ensure the user and group do not exist"

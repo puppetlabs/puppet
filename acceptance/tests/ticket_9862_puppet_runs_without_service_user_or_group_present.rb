@@ -8,8 +8,6 @@ tag 'audit:medium',     # startup/configuration, high impact, low risk
 
 # puppet doesn't try to manage ownership on windows.
 confine :except, :platform => 'windows'
-confine :except, :platform => /^eos-/
-confine :except, :platform => /^cisco_/ # See PUP-5828
 
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils

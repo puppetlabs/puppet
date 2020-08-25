@@ -2,8 +2,6 @@ require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
 
 test_name "certificate extensions available as trusted data" do
-  confine :except, :platform => /^cisco_/ # See PUP-5827
-
   skip_test "Test requires at least one non-master agent" if hosts.length == 1
 
   tag 'audit:high',        # ca/cert core functionality

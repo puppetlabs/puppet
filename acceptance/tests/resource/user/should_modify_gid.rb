@@ -1,8 +1,6 @@
 test_name "verify that we can modify the gid"
 confine :except, :platform => 'windows'
 confine :except, :platform => /aix/ # PUP-5358
-confine :except, :platform => /^eos-/ # See ARISTA-37
-confine :except, :platform => /^cisco_/ # See PUP-5828
 
 tag 'audit:medium',
     'audit:refactor',  # Use block style `test_run`
