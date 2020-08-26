@@ -22,13 +22,6 @@ describe Puppet::Network::HTTP::API::Master::V3 do
     expect(response.code).to eq(200)
   end
 
-  it "mounts the environment endpoint" do
-    request = Puppet::Network::HTTP::Request.from_hash(:path => "#{master_url_prefix}/environment/production")
-    master_routes.process(request, response)
-
-    expect(response.code).to eq(200)
-  end
-
   it "matches only complete routes" do
     request = Puppet::Network::HTTP::Request.from_hash(:path => "#{master_url_prefix}/foo/environments")
     expect { master_routes.process(request, response) }.to raise_error(Puppet::Network::HTTP::Error::HTTPNotFoundError)
