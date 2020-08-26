@@ -16,8 +16,6 @@ describe Puppet::Util::Backups do
     let(:path) { make_absolute('/no/such/file') }
 
     it "should noop if the file does not exist" do
-      file = Puppet::Type.type(:file).new(:name => path)
-
       expect(file).not_to receive(:bucket)
       expect(Puppet::FileSystem).to receive(:exist?).with(path).and_return(false)
 

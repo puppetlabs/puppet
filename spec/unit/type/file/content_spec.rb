@@ -7,7 +7,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
   let(:filename) { tmpfile('testfile') }
   let(:environment) { Puppet::Node::Environment.create(:testing, []) }
   let(:catalog) { Puppet::Resource::Catalog.new(:test, environment) }
-  let(:resource) { Puppet::Type.type(:file).new :path => filename, :catalog => catalog }
+  let(:resource) { Puppet::Type.type(:file).new :path => filename, :catalog => catalog, :backup => 'puppet' }
 
   before do
     File.open(filename, 'w') {|f| f.write "initial file content"}

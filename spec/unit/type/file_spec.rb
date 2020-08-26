@@ -133,6 +133,10 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "the backup parameter" do
+    it 'should be disabled by default' do
+      expect(file[:backup]).to eq(nil)
+    end
+
     [false, 'false', :false].each do |value|
       it "should disable backup if the value is #{value.inspect}" do
         file[:backup] = value
@@ -928,7 +932,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should fail if it can't backup the file" do
-      # Default: file[:backup] = true
+      file[:backup] = true
       allow(file).to receive(:stat).and_return(double('stat', :ftype => 'file'))
       allow(file).to receive(:perform_backup).and_return(false)
 
@@ -937,7 +941,7 @@ describe Puppet::Type.type(:file) do
 
     describe "backing up directories" do
       it "should not backup directories if backup is true and force is false" do
-        # Default: file[:backup] = true
+        file[:backup] = true
         file[:force] = false
         allow(file).to receive(:stat).and_return(double('stat', :ftype => 'directory'))
 
@@ -947,7 +951,7 @@ describe Puppet::Type.type(:file) do
       end
 
       it "should backup directories if backup is true and force is true" do
-        # Default: file[:backup] = true
+        file[:backup] = true
         file[:force] = true
         allow(file).to receive(:stat).and_return(double('stat', :ftype => 'directory'))
 
@@ -974,7 +978,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should remove a directory if backup is true and force is true" do
-      # Default: file[:backup] = true
+      file[:backup] = true
       file[:force] = true
       allow(file).to receive(:stat).and_return(double('stat', :ftype => 'directory'))
 
@@ -1006,6 +1010,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should fail if the file is not a directory, link, file, fifo, socket, or is unknown" do
+      file[:backup] = 'puppet'
       allow(file).to receive(:stat).and_return(double('stat', :ftype => 'blockSpecial'))
 
       expect(file).to receive(:warning).with("Could not back up file of type blockSpecial")

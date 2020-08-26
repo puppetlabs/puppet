@@ -14,7 +14,7 @@ test_name 'C99977 corrupted clientbucket' do
     end
 
     managed_content = "managed\n"
-    manifest = "file { '#{tmpfile}': content => '#{managed_content}', }"
+    manifest = "file { '#{tmpfile}': content => '#{managed_content}', backup => 'puppet' }"
 
     step 'create unmanaged file' do
       create_remote_file(agent, tmpfile, unmanaged_content)
