@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.17.0-257-gec9143f74c\n"
+"Project-Id-Version: Puppet automation framework 6.18.0-146-gf906a68208\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-08-21 08:21+0000\n"
-"PO-Revision-Date: 2020-08-21 08:21+0000\n"
+"POT-Creation-Date: 2020-08-26 13:51+0000\n"
+"PO-Revision-Date: 2020-08-26 13:51+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -118,16 +118,6 @@ msgstr ""
 
 #: ../lib/puppet/agent/locker.rb:26
 msgid "Failed to acquire lock"
-msgstr ""
-
-#. TRANSLATORS 'Puppet::Agent::Locker.running?' is a method name and should not be translated
-#: ../lib/puppet/agent/locker.rb:33
-msgid "Puppet::Agent::Locker.running? is deprecated as it is inherently unsafe."
-msgstr ""
-
-#. TRANSLATORS 'LockError' should not be translated
-#: ../lib/puppet/agent/locker.rb:35
-msgid "The only safe way to know if the lock is locked is to try lock and perform some action and then handle the LockError that may result."
 msgstr ""
 
 #: ../lib/puppet/application.rb:238
@@ -6310,19 +6300,19 @@ msgstr ""
 msgid "Key/value pairs must be separated by '%{separator}'"
 msgstr ""
 
-#: ../lib/puppet/provider.rb:145
+#: ../lib/puppet/provider.rb:132
 msgid "No command %{command} defined for provider %{provider}"
 msgstr ""
 
-#: ../lib/puppet/provider.rb:397
+#: ../lib/puppet/provider.rb:384
 msgid "To support listing resources of this type the '%{provider}' provider needs to implement an 'instances' class method returning the current set of resources. We recommend porting your module to the simpler Resource API instead: https://puppet.com/search/docs?keys=resource+api"
 msgstr ""
 
-#: ../lib/puppet/provider.rb:470
+#: ../lib/puppet/provider.rb:457
 msgid "'%{parameter_name}' is not a valid parameter for %{resource_type}"
 msgstr ""
 
-#: ../lib/puppet/provider.rb:556
+#: ../lib/puppet/provider.rb:543
 msgid "No resource and no name in property hash in %{class_name} instance"
 msgstr ""
 
@@ -8951,23 +8941,23 @@ msgstr ""
 msgid "%{klass} failed with error %{error_type}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:196
+#: ../lib/puppet/util/execution.rb:185
 msgid "Working directory %{cwd} does not exist!"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:288
+#: ../lib/puppet/util/execution.rb:277
 msgid "Could not get output"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:297
+#: ../lib/puppet/util/execution.rb:286
 msgid "Execution of '%{str}' returned %{exit_status}: %{output}"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:374
+#: ../lib/puppet/util/execution.rb:363
 msgid "Could not execute posix command: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:422
+#: ../lib/puppet/util/execution.rb:411
 msgid "Waiting for output; will sleep %{time_to_sleep} seconds"
 msgstr ""
 
