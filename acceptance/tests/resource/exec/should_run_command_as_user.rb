@@ -36,9 +36,9 @@ MANIFEST
     username = random_username
 
     # Create our user. Ensure that we start with a clean slate.
-    user_absent(agent, username)
-    user_present(agent, username)
-    teardown { user_absent(agent, username) }
+    agent.user_absent(username)
+    agent.user_present(username)
+    teardown { agent.user_absent(username) }
 
     tmpdir = agent.tmpdir("forbidden")
     on(agent, "chmod 700 #{tmpdir}")

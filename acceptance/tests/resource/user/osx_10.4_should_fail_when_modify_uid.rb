@@ -15,7 +15,7 @@ test_name "should not modify the uid of an user on OS X >= 10.14" do
 
   agents.each do |agent|
     teardown do
-      user_absent(agent, user)
+      agent.user_absent(user)
     end
 
     step "ensure the user is present" do
