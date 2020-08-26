@@ -1,4 +1,4 @@
-require 'puppet/ffi/windows/constants'
+require 'puppet/ffi/windows'
 
 module Puppet::FFI::Windows
   module Functions

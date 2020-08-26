@@ -1,7 +1,4 @@
-require 'ffi'
-require 'puppet/ffi/windows/constants'
-require 'puppet/ffi/windows/structs'
-require 'puppet/ffi/windows/functions'
+require 'puppet/ffi/windows'
 
 module Puppet::Util::Windows
 

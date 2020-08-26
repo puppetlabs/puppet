@@ -1,11 +1,11 @@
+# coding: utf-8
 require 'puppet/ffi/windows'
-require 'puppet/util/windows/api_types'
 
 module Puppet::FFI::Windows
   module Structs
 
     extend FFI::Library
-    extend Puppet::Util::Windows::APITypes
+    extend Puppet::FFI::Windows::APITypes
 
     # https://docs.microsoft.com/en-us/previous-versions/windows/desktop/legacy/aa379560(v=vs.85)
     # typedef struct _SECURITY_ATTRIBUTES {

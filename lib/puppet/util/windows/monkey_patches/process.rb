@@ -2,16 +2,16 @@
 
 require 'ffi'
 require 'puppet/ffi/windows'
-require 'puppet/util/windows/api_types'
 require 'puppet/util/windows/string'
 
 module Process
   extend FFI::Library
-  extend Puppet::Util::Windows::APITypes
   extend Puppet::Util::Windows::String
+
+  extend Puppet::FFI::Windows::APITypes
   extend Puppet::FFI::Windows::Functions
   extend Puppet::FFI::Windows::Structs
-  
+
   include Puppet::FFI::Windows::Constants
   include Puppet::FFI::Windows::Structs
 
