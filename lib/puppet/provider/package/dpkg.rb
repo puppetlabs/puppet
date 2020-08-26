@@ -74,7 +74,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       elsif ['config-files', 'half-installed', 'unpacked', 'half-configured'].include?(hash[:status])
         hash[:ensure] = :absent
       end
-      hash[:mark] = :hold if hash[:desired] == 'hold'
+      hash[:mark] = hash[:desired] == 'hold' ? :hold : :none
     else
       Puppet.debug("Failed to match dpkg-query line #{line.inspect}")
     end
