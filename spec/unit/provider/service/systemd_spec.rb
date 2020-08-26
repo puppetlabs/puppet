@@ -1,6 +1,8 @@
 require 'spec_helper'
 
-describe 'Puppet::Type::Service::Provider::Systemd', unless: Puppet::Util::Platform.jruby? || Puppet::Util::Platform.windows? do
+describe 'Puppet::Type::Service::Provider::Systemd',
+         unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
+
   let(:provider_class) { Puppet::Type.type(:service).provider(:systemd) }
 
   before :each do

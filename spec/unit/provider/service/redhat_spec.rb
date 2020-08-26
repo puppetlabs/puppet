@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'Puppet::Type::Service::Provider::Redhat',
-         if: Puppet.features.posix? && !Puppet::Util::Platform.jruby?do
+         unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:redhat) }
 
   # `execute` and `texecute` start a new process, consequently setting $CHILD_STATUS to a Process::Status instance,
