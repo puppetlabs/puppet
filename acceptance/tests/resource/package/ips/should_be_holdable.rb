@@ -53,8 +53,8 @@ agents.each do |agent|
     assert_match( /mypkg2@0.0.2/, result.stdout, "err: #{agent}")
   end
 
-  step "IPS: it should not upgrade current and dependent package if dependent package is held"
-  apply_manifest_on(agent, 'package {mypkg : ensure=>"held", provider=>"pkg"}') do
+  step "IPS: it should not upgrade current and dependent package if dependent package is hold"
+  apply_manifest_on(agent, 'package {mypkg : ensure=>"present", mark=>"hold", provider=>"pkg"}') do
     assert_match( //, result.stdout, "err: #{agent}")
   end
   setup_fakeroot agent

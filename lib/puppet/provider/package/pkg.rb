@@ -114,10 +114,6 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     end).merge({:provider => self.name})
   end
 
-  def deprecated_hold
-    hold
-  end
-
   def hold
     pkg(:freeze, @resource[:name])
   end
