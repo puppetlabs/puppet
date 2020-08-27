@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.18.0-146-gf906a68208\n"
+"Project-Id-Version: Puppet automation framework 6.18.0-162-g52fc63610e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-08-26 13:51+0000\n"
-"PO-Revision-Date: 2020-08-26 13:51+0000\n"
+"POT-Creation-Date: 2020-08-27 17:51+0000\n"
+"PO-Revision-Date: 2020-08-27 17:51+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -546,7 +546,7 @@ msgstr ""
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:217 ../lib/puppet/http/resolver/server_list.rb:68
+#: ../lib/puppet/configurer.rb:217 ../lib/puppet/http/resolver/server_list.rb:78
 msgid "Could not select a functional puppet master from server_list: '%{server_list}'"
 msgstr ""
 
@@ -582,13 +582,12 @@ msgstr ""
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:429 ../lib/puppet/http/resolver/server_list.rb:89
+#: ../lib/puppet/configurer.rb:429 ../lib/puppet/http/resolver/server_list.rb:67
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:433 ../lib/puppet/http/resolver/server_list.rb:95
+#: ../lib/puppet/configurer.rb:433 ../lib/puppet/http/resolver/server_list.rb:72
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
@@ -693,30 +692,30 @@ msgid "Valid values are '%{values}'."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:524
+#: ../lib/puppet/defaults.rb:517
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:526
+#: ../lib/puppet/defaults.rb:519
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:725
+#: ../lib/puppet/defaults.rb:718
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:808
+#: ../lib/puppet/defaults.rb:801
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1058 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1051 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1889
+#: ../lib/puppet/defaults.rb:1882
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -2203,15 +2202,15 @@ msgstr ""
 msgid "Failed to parse Retry-After header '%{retry_after}' as an integer or RFC 2822 date"
 msgstr ""
 
-#: ../lib/puppet/http/service.rb:119
+#: ../lib/puppet/http/service.rb:121
 msgid "Ignoring extra header \"%{name}\" as it was previously set."
 msgstr ""
 
-#: ../lib/puppet/http/service.rb:122
+#: ../lib/puppet/http/service.rb:124
 msgid "Ignoring extra header \"%{name}\" as it has no value."
 msgstr ""
 
-#: ../lib/puppet/http/service.rb:145 ../lib/puppet/indirector/rest.rb:54
+#: ../lib/puppet/http/service.rb:147 ../lib/puppet/indirector/rest.rb:54
 msgid "No content type in http response; cannot parse"
 msgstr ""
 
@@ -6746,27 +6745,27 @@ msgstr ""
 msgid "Unknown line format %{resource_name}: %{parse_line}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:127
+#: ../lib/puppet/provider/package/pkg.rb:123
 msgid "Unable to unfreeze %{package}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:162
+#: ../lib/puppet/provider/package/pkg.rb:158
 msgid "Implicit version %{should} has %{n} possible matches"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:174
+#: ../lib/puppet/provider/package/pkg.rb:170
 msgid "Selecting version '%{version}' for implicit '%{should}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:179
+#: ../lib/puppet/provider/package/pkg.rb:175
 msgid "No version of %{name} matching %{should} is installable, even though the package is currently installed"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:198
+#: ../lib/puppet/provider/package/pkg.rb:194
 msgid "pkg warning: %{warnings}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:242 ../lib/puppet/provider/package/pkg.rb:268
+#: ../lib/puppet/provider/package/pkg.rb:238 ../lib/puppet/provider/package/pkg.rb:264
 msgid "Unable to update %{package}"
 msgstr ""
 
@@ -7963,19 +7962,19 @@ msgid "Prefetch failed for %{type_name} provider '%{name}'"
 msgstr ""
 
 #. TRANSLATORS `prefetch` is a function name and should not be translated
-#: ../lib/puppet/transaction.rb:381 ../lib/puppet/transaction.rb:384
+#: ../lib/puppet/transaction.rb:381
 msgid "Could not prefetch %{type_name} provider '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:421
+#: ../lib/puppet/transaction.rb:415
 msgid "Skipping resources in class because of failed class dependencies"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:425
+#: ../lib/puppet/transaction.rb:419
 msgid "Skipping because of failed dependencies"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:430
+#: ../lib/puppet/transaction.rb:424
 msgid "Skipping because provider prefetch failed"
 msgstr ""
 
@@ -8243,86 +8242,86 @@ msgstr ""
 msgid "File paths must be fully qualified, not '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:142
+#: ../lib/puppet/type/file.rb:140
 msgid "Invalid backup type %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:186 ../lib/puppet/type/tidy.rb:48
+#: ../lib/puppet/type/file.rb:184 ../lib/puppet/type/tidy.rb:48
 msgid "Invalid recurse value %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:218
+#: ../lib/puppet/type/file.rb:216
 msgid "Invalid recurselimit value %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:418
+#: ../lib/puppet/type/file.rb:416
 msgid "You cannot specify more than one of %{creators}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:420
+#: ../lib/puppet/type/file.rb:418
 msgid "You cannot specify a remote recursion without a source"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:422
+#: ../lib/puppet/type/file.rb:420
 msgid "You cannot specify source when using checksum 'none'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:425
+#: ../lib/puppet/type/file.rb:423
 msgid "You cannot specify content when using checksum '%{checksum_type}'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:428
+#: ../lib/puppet/type/file.rb:426
 msgid "Possible error: recurselimit is set but not recurse, no recursion will happen"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:436
+#: ../lib/puppet/type/file.rb:434
 msgid "Checksum value '%{value}' is not a valid checksum type %{checksum}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:439
+#: ../lib/puppet/type/file.rb:437
 msgid "Checksum value is ignored unless content or source are specified"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:477
+#: ../lib/puppet/type/file.rb:475
 msgid "Can not find filebucket for backups without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:482
+#: ../lib/puppet/type/file.rb:480
 msgid "Could not find filebucket %{backup} specified in backup"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:780
+#: ../lib/puppet/type/file.rb:778
 msgid "Could not back up file of type %{current_type}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:795
+#: ../lib/puppet/type/file.rb:793
 msgid "Could not remove files of type %{current_type}"
 msgstr ""
 
 #. TRANSLATORS "source_permissions => ignore" should not be translated
-#: ../lib/puppet/type/file.rb:806
+#: ../lib/puppet/type/file.rb:804
 msgid "Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore."
 msgstr ""
 
 #. TRANSLATORS "stat" is a program name and should not be translated
-#: ../lib/puppet/type/file.rb:887 ../lib/puppet/type/tidy.rb:352
+#: ../lib/puppet/type/file.rb:885 ../lib/puppet/type/tidy.rb:352
 msgid "Could not stat; permission denied"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:890
+#: ../lib/puppet/type/file.rb:888
 msgid "Could not stat; invalid pathname"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:1018
+#: ../lib/puppet/type/file.rb:1016
 msgid "Not removing directory; use 'force' to override"
 msgstr ""
 
 #. TRANSLATORS refers to a file which could not be backed up
-#: ../lib/puppet/type/file.rb:1043
+#: ../lib/puppet/type/file.rb:1041
 msgid "Could not back up; will not remove"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:1058
+#: ../lib/puppet/type/file.rb:1056
 msgid "File written to disk did not match desired checksum; discarding changes (%{content_checksum} vs %{desired_checksum})"
 msgstr ""
 
@@ -8388,36 +8387,36 @@ msgstr ""
 msgid "Invalid GID %{gid}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:128 ../lib/puppet/type/package.rb:142
+#: ../lib/puppet/type/package.rb:124 ../lib/puppet/type/package.rb:138
 msgid "Could not update: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:177
+#: ../lib/puppet/type/package.rb:173
 msgid "Could not get latest version: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:277
+#: ../lib/puppet/type/package.rb:273
 msgid "Name must be a String not %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:423
+#: ../lib/puppet/type/package.rb:419
 msgid "Cannot have both `ensure => disabled` and `flavor`"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:522
+#: ../lib/puppet/type/package.rb:518
 msgid "Cannot have both `enable_only => true` and `flavor`"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:525
+#: ../lib/puppet/type/package.rb:521
 msgid "Cannot have both `ensure => disabled` and `enable_only => true`"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:687
+#: ../lib/puppet/type/package.rb:682
 msgid "Invalid hold value %{value}. %{doc}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:717
-msgid "You cannot use \"mark\" property while \"ensure\" is one of [\"absent\", \"purged\", \"held\"]"
+#: ../lib/puppet/type/package.rb:709
+msgid "You cannot use \"mark\" property while \"ensure\" is one of [\"absent\", \"purged\"]"
 msgstr ""
 
 #: ../lib/puppet/type/resources.rb:15
