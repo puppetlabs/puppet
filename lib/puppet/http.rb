@@ -22,6 +22,7 @@ module Puppet
     require 'puppet/http/service/ca'
     require 'puppet/http/service/compiler'
     require 'puppet/http/service/file_server'
+    require 'puppet/http/service/puppetserver'
     require 'puppet/http/service/report'
     require 'puppet/http/session'
     require 'puppet/http/resolver'
