@@ -102,7 +102,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :WaitForSingleObject,
-      [:handle, :dword], :dword
+      [:handle, :dword], :dword, :blocking => true
 
     # https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitformultipleobjects
     #   DWORD WaitForMultipleObjects(
