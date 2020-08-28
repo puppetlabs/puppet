@@ -26,12 +26,24 @@ class Benchmarker
           invocation = Puppet::Pops::Lookup::Invocation.new(scope)
           Puppet::Pops::Lookup.lookup("x#{index}", nil, nil, true, nil, invocation)
         end
+
+        100.times do
+          invocation = Puppet::Pops::Lookup::Invocation.new(scope)
+          Puppet::Pops::Lookup.lookup("h1.h2.h3.k0", nil, nil, true, nil, invocation)
+        end
       end
       catalog
     end
   end
 
   def generate
+    # $codedir/
+    #   environments/benchmarking/
+    #   hiera.yaml
+    #   data/
+    #     test/data.yaml
+    #     common.yaml
+    #
     env_dir = File.join(@target, 'environments', 'benchmarking')
     hiera_yaml = File.join(@target, 'hiera.yaml')
     datadir = File.join(@target, 'data')
@@ -40,20 +52,21 @@ class Benchmarker
     common_yaml = File.join(datadir, 'common.yaml')
 
     mkdir_p(env_dir)
-    mkdir_p(datadir)
     mkdir_p(datadir_test)
 
     File.open(hiera_yaml, 'w') do |f|
       f.puts(<<-YAML)
 ---
-:backends: yaml
-:yaml:
-   :datadir: #{datadir}
-:hierarchy:
-   - "%{confdir}/data"
-   - common
-:logger: noop
-      YAML
+version: 5
+defaults:
+  datadir: data
+  data_hash: yaml_data
+hierarchy:
+  - name: Configured
+    path: test/data.yaml
+  - name: Common
+    path: common.yaml
+YAML
     end
 
     File.open(common_yaml, 'w') do |f|
@@ -67,6 +80,15 @@ class Benchmarker
 
     File.open(test_data_yaml, 'w') do |f|
       100.times { |index| f.puts("x#{index}: \"%{hiera('cbm#{index}')}\"")}
+
+      f.puts(<<-YAML)
+h1:
+  h2:
+    h3:
+YAML
+      100.times { |index| f.puts(<<-YAML) }
+      k#{index}: v#{index}
+YAML
     end
 
     templates = File.join('benchmarks', 'hiera_global_lookup')
