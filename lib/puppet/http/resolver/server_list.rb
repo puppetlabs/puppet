@@ -60,7 +60,7 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
 
       service = Puppet::HTTP::Service.create_service(@client, session, :puppetserver, host, port)
       begin
-        service.get_simple_status
+        service.get_simple_status(ssl_context: ssl_context)
         @resolved_url = service.url
         return Puppet::HTTP::Service.create_service(@client, session, name, @resolved_url.host, @resolved_url.port)
       rescue Puppet::HTTP::ResponseError => detail
