@@ -5,7 +5,6 @@ module Puppet::Util::Windows::Process
   extend Puppet::FFI::Windows::Functions
   include Puppet::FFI::Windows::Structs
   extend Puppet::Util::Windows::String
-  extend FFI::Library
 
   WAIT_TIMEOUT = 0x102
   WAIT_INTERVAL = 200

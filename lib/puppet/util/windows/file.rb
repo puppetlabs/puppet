@@ -1,8 +1,6 @@
 require 'puppet/ffi/windows'
 
 module Puppet::Util::Windows::File
-  require 'ffi'
-  extend FFI::Library
   extend Puppet::Util::Windows::String
 
   include Puppet::FFI::Windows::Constants
