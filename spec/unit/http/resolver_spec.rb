@@ -43,15 +43,6 @@ describe Puppet::HTTP::Resolver do
       expect(service.url.to_s).to eq("https://ca.example.com:8141/puppet-ca/v1")
     end
 
-    it 'includes extra http headers' do
-      Puppet[:http_extra_headers] = 'region:us-west'
-
-      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master")
-        .with(headers: {'Region' => 'us-west'})
-
-      subject.resolve(session, :ca)
-    end
-
     it 'logs unsuccessful HTTP 500 responses' do
       Puppet[:log_level] = "debug"
 

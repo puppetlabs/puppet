@@ -10,7 +10,7 @@ class Puppet::HTTP::Service
 
   # @api private
   # @return [Array<Symbol>] available services
-  SERVICE_NAMES = [:ca, :fileserver, :puppet, :puppetserver, :report].freeze
+  SERVICE_NAMES = [:ca, :fileserver, :puppet, :report].freeze
 
   # @api private
   # @return [Array<Symbol>] format types that are unsupported
@@ -43,8 +43,6 @@ class Puppet::HTTP::Service
       Puppet::HTTP::Service::FileServer.new(client, session, server, port)
     when :puppet
       ::Puppet::HTTP::Service::Compiler.new(client, session, server, port)
-    when :puppetserver
-      ::Puppet::HTTP::Service::Puppetserver.new(client, session, server, port)
     when :report
       Puppet::HTTP::Service::Report.new(client, session, server, port)
     else
