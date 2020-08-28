@@ -66,5 +66,17 @@ describe Puppet::HTTP::Service::Puppetserver do
         expect(err.response.code).to eq(500)
       end
     end
+
+    it 'accepts an ssl context' do
+      stub_request(:get, url)
+        .to_return(body: "running", headers: {'Content-Type' => 'text/plain;charset=utf-8'})
+
+      other_ctx = Puppet::SSL::SSLContext.new
+      expect(client).to receive(:connect).with(URI(url), options: {ssl_context: other_ctx}).and_call_original
+
+      session = client.create_session
+      service = Puppet::HTTP::Service.create_service(client, session, :puppetserver, 'puppetserver.example.com', 8140)
+      service.get_simple_status(ssl_context: other_ctx)
+    end
   end
 end
