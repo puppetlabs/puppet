@@ -52,6 +52,15 @@ describe Puppet::HTTP::Resolver do
       subject.resolve(session, :ca)
     end
 
+    it 'uses the provided ssl context during resolution' do
+      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 200)
+
+      other_ctx = Puppet::SSL::SSLContext.new
+      expect(client).to receive(:connect).with(URI("https://ca.example.com:8141/status/v1/simple/master"), options: {ssl_context: other_ctx}).and_call_original
+
+      subject.resolve(session, :ca, ssl_context: other_ctx)
+    end
+
     it 'logs unsuccessful HTTP 500 responses' do
       Puppet[:log_level] = "debug"
 

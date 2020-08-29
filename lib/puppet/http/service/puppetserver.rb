@@ -20,13 +20,16 @@ class Puppet::HTTP::Service::Puppetserver < Puppet::HTTP::Service
 
   # Request the puppetserver's simple status
   #
+  # @param [Puppet::SSL::SSLContext] ssl_context to use when establishing
+  # the connection.
   # @return Puppet::HTTP::Response The HTTP response
   # @api private
   #
-  def get_simple_status
+  def get_simple_status(ssl_context: nil)
     response = @client.get(
       with_base_url("/status/v1/simple/master"),
       headers: add_puppet_headers({}),
+      options: {ssl_context: ssl_context}
     )
 
     process_response(response)
