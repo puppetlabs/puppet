@@ -187,6 +187,8 @@ shared_context 'types_setup' do
     result << Puppet::Pops::Types::PURIType
     result << Puppet::Pops::Types::PTupleType.new([tf.rich_data])
     result << Puppet::Pops::Types::PObjectType
+    result << Puppet::Pops::Types::PTypeType
+    result << Puppet::Pops::Types::PTypeSetType
     result
   end
   def rich_data_compatible_types

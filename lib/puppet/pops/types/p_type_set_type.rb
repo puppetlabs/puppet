@@ -350,15 +350,7 @@ class PTypeSetType < PMetaType
   end
 
   def instance?(o, guard = nil)
-    # KEY_NAME_AUTHORITY, KEY_VERSION and Pcore::KEY_PCORE_URI seem to be optional, for example
-    # https://github.com/puppetlabs/puppet/blob/6.18.0/lib/puppet/pops/model/ast.rb#L4952-L4956,
-    if o.is_a?(Hash) &&
-       o.include?(KEY_NAME) &&
-       o.include?(Pcore::KEY_PCORE_VERSION) &&
-      super(o, guard)
-    else
-      false
-    end
+    o.is_a?(PTypeSetType)
   end
 
   DEFAULT = self.new({
