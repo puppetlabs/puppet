@@ -189,33 +189,6 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   #
   # @api private
   #
-  # Submit a GET request to find the status of a compiler
-  #
-  # @param [String] name The name of the node that a status being requested for
-  #
-  # @return [Array<Puppet::HTTP::Response, Puppet::Status>] An array containing
-  #   the request response and the deserialized status returned from the server
-  #
-  def get_status(name)
-    headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Status).join(', '))
-
-    response = @client.get(
-      with_base_url("/status/#{name}"),
-      headers: headers,
-      params: {
-        # environment is required, but meaningless, default to production
-        environment: 'production'
-      },
-    )
-
-    process_response(response)
-
-    [response, deserialize(response, Puppet::Status)]
-  end
-
-  #
-  # @api private
-  #
   # Submit a GET request to retrieve a file stored with filebucket
   #
   # @param [String] path The request path, formatted by Puppet::FileBucket::Dipper

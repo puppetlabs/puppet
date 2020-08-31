@@ -20,8 +20,6 @@ end
 
 describe Puppet::Agent do
   before do
-    allow(Puppet::Status.indirection).to receive(:find).and_return(Puppet::Status.new("version" => Puppet.version))
-
     @agent = Puppet::Agent.new(AgentTestClient, false)
 
     # make Puppet::Application safe for stubbing; restore in an :after block; silence warnings for this.

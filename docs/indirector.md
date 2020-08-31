@@ -188,11 +188,6 @@ Manipulate resources with the resource abstraction layer. Only used internally.
 `store_configs` terminus
 Part of the "storeconfigs" feature. Should not be directly set by end users.
 
-### status
-Indirected Class: `Puppet::Status`
-`local` terminus
-Get status locally. Only used internally.
-
 `rest` terminus
 Get puppet master's status via REST. Useful because it tests the health of both the web server and the indirector.
 
