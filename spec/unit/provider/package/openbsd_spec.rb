@@ -46,6 +46,8 @@ describe Puppet::Type.type(:package).provider(:openbsd) do
     allow(described_class).to receive(:command).with(:pkginfo).and_return('/bin/pkg_info')
     allow(described_class).to receive(:command).with(:pkgadd).and_return('/bin/pkg_add')
     allow(described_class).to receive(:command).with(:pkgdelete).and_return('/bin/pkg_delete')
+
+    allow(Puppet::FileSystem).to receive(:exist?)
   end
 
   context "#instances" do
