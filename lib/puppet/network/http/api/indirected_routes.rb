@@ -1,8 +1,6 @@
-require 'puppet/network/authorization'
 require 'puppet/network/http/api/indirection_type'
 
 class Puppet::Network::HTTP::API::IndirectedRoutes
-  include Puppet::Network::Authorization
 
   # How we map http methods and the indirection name in the URI
   # to an indirection method.
@@ -31,7 +29,8 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     Puppet::Network::HTTP::Route.path(/.*/).any(new)
   end
 
-  # handle an HTTP request
+  # Handle an HTTP request. The request has already been authenticated prior
+  # to calling this method.
   def call(request, response)
     indirection, method, key, params = uri2indirection(request.method, request.path, request.params)
     certificate = request.client_cert
@@ -97,12 +96,6 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     unless configured_environment.nil?
       configured_environment = configured_environment.override_from_commandline(Puppet.settings)
       params[:environment] = configured_environment
-    end
-
-    begin
-      check_authorization(method, "#{url_prefix}/#{indirection_name}/#{key}", params)
-    rescue Puppet::Network::AuthorizationError => e
-      raise Puppet::Network::HTTP::Error::HTTPNotAuthorizedError.new(e.message)
     end
 
     if configured_environment.nil?
