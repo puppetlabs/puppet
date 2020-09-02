@@ -195,6 +195,26 @@ describe Puppet::Type, :unless => Puppet::Util::Platform.windows? do
     end
   end
 
+  context 'aliased resource' do
+    it 'fails if a resource is defined and then redefined using name that results in the same alias' do
+      drive = Puppet::Util::Platform.windows? ? 'C:' : ''
+      code = <<~PUPPET
+        $dir='#{drive}/tmp/test'
+        $same_dir='#{drive}/tmp/test/'
+
+        file {$dir:
+          ensure => directory
+        }
+
+        file { $same_dir:
+          ensure => directory
+        }
+      PUPPET
+
+      expect { compile_to_ral(code) }.to raise_error(/resource \["File", "#{drive}\/tmp\/test"\] already declared/)
+    end
+  end
+
   context "resource attributes" do
     let(:resource) {
       resource = klass.new(:name => "foo")

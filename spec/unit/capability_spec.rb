@@ -392,23 +392,5 @@ test { one: hostname => "ahost", export => Cap[two] }
     end
   end
 
-  context 'and aliased resources' do
-    let(:drive) { Puppet::Util::Platform.windows? ? 'C:' : '' }
-    let(:code) { <<-PUPPET }
-      $dir='#{drive}/tmp/test'
-      $same_dir='#{drive}/tmp/test/'
 
-      file {$dir:
-        ensure => directory
-      }
-
-      file { $same_dir:
-        ensure => directory
-      }
-    PUPPET
-
-    it 'fails if a resource is defined and then redefined using name that results in the same alias' do
-      expect { compile_to_ral(code) }.to raise_error(/resource \["File", "#{drive}\/tmp\/test"\] already declared/)
-    end
-  end
 end
