@@ -31,10 +31,8 @@ class Puppet::HTTP::Factory
     http.open_timeout = Puppet[:http_connect_timeout]
     http.keep_alive_timeout = KEEP_ALIVE_TIMEOUT if http.respond_to?(:keep_alive_timeout=)
 
-    if http.respond_to?(:max_retries)
-      # 0 means make one request and never retry
-      http.max_retries = 0
-    end
+    # 0 means make one request and never retry
+    http.max_retries = 0
 
     if Puppet[:sourceaddress]
       Puppet.debug("Using source IP #{Puppet[:sourceaddress]}")
