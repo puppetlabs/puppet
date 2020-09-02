@@ -6,41 +6,37 @@ describe "egrammar parsing of site expression" do
   include ParserRspecHelper
 
   context "when parsing 'site'" do
-    it "an empty body is allowed" do
-      prog = "site { }"
-      ast = "(site ())"
-      expect(dump(parse(prog))).to eq(ast)
-    end
-
-    it "a body with one expression is allowed" do
-      prog = "site { $x = 1 }"
-      ast = "(site (block\n  (= $x 1)\n))"
-      expect(dump(parse(prog))).to eq(ast)
-    end
-
-    it "a body with more than one expression is allowed" do
-      prog = "site { $x = 1 $y = 2}"
-      ast = "(site (block\n  (= $x 1)\n  (= $y 2)\n))"
-      expect(dump(parse(prog))).to eq(ast)
+    it "raises a syntax error" do
+      expect {
+        parse("site { }")
+      }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'site' \(line: 1, column: 1\)/)
     end
   end
 
   context 'When parsing collections containing application management specific keywords' do
     %w(application site produces consumes).each do |keyword|
-      it "allows the keyword '#{keyword}' in a list" do
-        expect(dump(parse("$a = [#{keyword}]"))).to(eq("(= $a ([] '#{keyword}'))"))
+      it "disallows the keyword '#{keyword}' in a list" do
+        expect {
+          parse("$a = [#{keyword}]")
+        }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at '#{keyword}' \(line: 1, column: 7\)/)
       end
 
-      it "allows the keyword '#{keyword}' as a key in a hash" do
-        expect(dump(parse("$a = {#{keyword}=>'x'}"))).to(eq("(= $a ({} ('#{keyword}' 'x')))"))
+      it "disallows the keyword '#{keyword}' as a key in a hash" do
+        expect {
+          parse("$a = {#{keyword}=>'x'}")
+        }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at '#{keyword}' \(line: 1, column: 7\)/)
       end
 
-      it "allows the keyword '#{keyword}' as a value in a hash" do
-        expect(dump(parse("$a = {'x'=>#{keyword}}"))).to(eq("(= $a ({} ('x' '#{keyword}')))"))
+      it "disallows the keyword '#{keyword}' as a value in a hash" do
+        expect {
+          parse("$a = {'x'=>#{keyword}}")
+        }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at '#{keyword}' \(line: 1, column: 12\)/)
       end
 
-      it "allows the keyword '#{keyword}' as an attribute name" do
-        expect(dump(parse("foo { 'x': #{keyword} => 'value' } "))).to eql("(resource foo\n  ('x'\n    (#{keyword} => 'value')))")
+      it "disallows the keyword '#{keyword}' as an attribute name" do
+        expect {
+          parse("foo { 'x': #{keyword} => 'value' } ")
+        }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at '#{keyword}' \(line: 1, column: 12\)/)
       end
     end
   end
