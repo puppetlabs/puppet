@@ -22,7 +22,6 @@ token RENDER_STRING RENDER_EXPR EPP_START EPP_END EPP_END_TRIM
 token FUNCTION
 token TYPE
 token PRIVATE ATTR
-token APPLICATION PRODUCES CONSUMES SITE
 token PLAN APPLY
 token LOW
 
@@ -200,7 +199,6 @@ resource
 #
 expression
   : primary_expression
-  | capability_mapping
   | call_function_expression
   | bracketed_expression
   | expression IN           expression                 { result = val[0].in val[2]        ; loc result, val[1] }
@@ -257,12 +255,10 @@ primary_expression
   | if_expression
   | unless_expression
   | definition_expression
-  | application_expression
   | hostclass_expression
   | plan_expression
   | apply_expression
   | node_definition_expression
-  | site_definition_expression
   | epp_render_expression
   | function_definition
   | type_alias
@@ -520,34 +516,6 @@ definition_expression
       end
     }
 
-#---APPLICATION
-application_expression
-  : APPLICATION classname parameter_list LBRACE opt_statements RBRACE {
-    definition = Factory.APPLICATION(classname(val[1][:value]), val[2], val[4])
-    loc(definition, val[0], val[5])
-    result = add_definition(definition)
-  }
-
-capability_mapping
-  : classname capability_kw classname LBRACE  attribute_operations endcomma RBRACE {
-    result = Factory.CAPABILITY_MAPPING(val[1][:value],
-                                        Factory.QREF(classname(val[0][:value])),
-                                        classname(val[2][:value]), val[4])
-    loc result, val[0], val[6]
-    add_mapping(result)
-  }
-  | bracketed_expression capability_kw classname LBRACE  attribute_operations endcomma RBRACE {
-    result = Factory.CAPABILITY_MAPPING(val[1][:value],
-                                        val[0],
-                                        classname(val[2][:value]), val[4])
-    loc result, val[0], val[6]
-    add_mapping(result)
-  }
-
-capability_kw
-  : PRODUCES
-  | CONSUMES
-
 #--PLAN
 plan_expression
   : PLAN stacked_classname parameter_list LBRACE opt_statements RBRACE {
@@ -604,22 +572,6 @@ hostclass_expression
   classnameordefault
     : classname
     | DEFAULT
-
-#---SITE
-#
-# Produces Model::SiteDefinition
-#
-site_definition_expression
-  : SITE LBRACE statements RBRACE {
-    definition = Factory.SITE(val[2])
-    loc(definition, val[0], val[3])
-    result = add_definition(definition)
-    }
-  | SITE LBRACE RBRACE {
-    definition = Factory.SITE(nil)
-    loc(definition, val[0], val[2])
-    result = add_definition(definition)
-    }
 
 #---NODE
 #
@@ -828,10 +780,6 @@ collection_entries
 collection_entry_keyword
   : TYPE
   | FUNCTION
-  | APPLICATION
-  | CONSUMES
-  | PRODUCES
-  | SITE
 
 quotedtext
   : string
@@ -915,10 +863,6 @@ keyword
   | ATTR
   | FUNCTION
   | PRIVATE
-  | APPLICATION
-  | CONSUMES
-  | PRODUCES
-  | SITE
 
 nil
   : { result = nil}
