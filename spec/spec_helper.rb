@@ -148,6 +148,7 @@ RSpec.configure do |config|
 
     base = PuppetSpec::Files.tmpdir('tmp_settings')
     Puppet[:vardir] = File.join(base, 'var')
+    Puppet[:publicdir] = File.join(base, 'public')
     Puppet[:confdir] = File.join(base, 'etc')
     Puppet[:codedir] = File.join(base, 'code')
     Puppet[:logdir] = "$vardir/log"
@@ -155,6 +156,7 @@ RSpec.configure do |config|
     Puppet[:hiera_config] = File.join(base, 'hiera')
 
     FileUtils.mkdir_p Puppet[:statedir]
+    FileUtils.mkdir_p Puppet[:publicdir]
 
     Puppet::Test::TestHelper.before_each_test()
   end

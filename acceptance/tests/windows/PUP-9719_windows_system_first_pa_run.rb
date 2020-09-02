@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 test_name 'PUP-9719 Windows First Agent run as SYSTEM sets cache file permissions correctly' do
-  tag 'risk:medium',
-      'audit:high',
+  tag 'audit:high',
       'audit:integration'
 
   confine :to, platform: 'windows'
@@ -11,17 +10,20 @@ test_name 'PUP-9719 Windows First Agent run as SYSTEM sets cache file permission
   extend Puppet::Acceptance::TempFileUtils
 
   agents.each do |agent|
-    statedir = on(agent, puppet('config print statedir')).stdout.chomp
+    publicdir = on(agent, puppet('config print publicdir')).stdout.chomp
     client_datadir = on(agent, puppet('config print client_datadir')).stdout.chomp
 
     teardown do
       on agent, 'schtasks /delete /tn PuppetSystemRun /F'
-      on agent, "rm -rf #{statedir}/*"
-      on agent, "rm -rf #{client_datadir}/catalog/*"
+      on agent, "rm -rf #{publicdir}/*"              unless publicdir.empty?
+      on agent, "rm -rf #{client_datadir}/catalog/*" unless client_datadir.empty?
     end
 
-    step 'Clean the ProgramData cache directory first' do
-      on agent, "rm -rf #{statedir}/*"
+    step 'Clean the public and catalog directories first' do
+      fail_test("The publicdir config is not set!")      if publicdir.empty?
+      fail_test("The client_datadir config is not set!") if client_datadir.empty?
+
+      on agent, "rm -rf #{publicdir}/*"
       on agent, "rm -rf #{client_datadir}/catalog/*"
     end
 
@@ -40,7 +42,7 @@ test_name 'PUP-9719 Windows First Agent run as SYSTEM sets cache file permission
     end
 
     step 'Wait for Puppet Agent run to complete' do
-      last_puppet_run = File.join(statedir, 'last_run_summary.yaml')
+      last_puppet_run = File.join(publicdir, 'last_run_summary.yaml')
       trymax = 10
       try = 1
       last_wait = 2

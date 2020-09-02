@@ -24,6 +24,8 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
     val = object.default
     if name.to_s == 'vardir'
       val = 'Unix/Linux: /opt/puppetlabs/puppet/cache -- Windows: C:\ProgramData\PuppetLabs\puppet\cache -- Non-root user: ~/.puppetlabs/opt/puppet/cache'
+    elsif name.to_s == 'publicdir'
+      val = 'Unix/Linux: /opt/puppetlabs/puppet/public -- Windows: C:\ProgramData\PuppetLabs\puppet\public -- Non-root user: ~/.puppetlabs/opt/puppet/public'
     elsif name.to_s == 'confdir'
       val = 'Unix/Linux: /etc/puppetlabs/puppet -- Windows: C:\ProgramData\PuppetLabs\puppet\etc -- Non-root user: ~/.puppetlabs/etc/puppet'
     elsif name.to_s == 'codedir'
