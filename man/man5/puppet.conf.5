@@ -955,7 +955,7 @@ The bit length of keys\.
 Where puppet agent stores the last run report summary in yaml format\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $statedir/last_run_summary\.yaml
+\fIDefault\fR: $publicdir/last_run_summary\.yaml
 .
 .IP "" 0
 .
@@ -1474,6 +1474,14 @@ Whether to enable experimental performance profiling
 .
 .IP "\(bu" 4
 \fIDefault\fR: false
+.
+.IP "" 0
+.
+.SS "publicdir"
+Where Puppet stores public files\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: Unix/Linux: /opt/puppetlabs/puppet/public \-\- Windows: C:\eProgramData\ePuppetLabs\epuppet\epublic \-\- Non\-root user: ~/\.puppetlabs/opt/puppet/public
 .
 .IP "" 0
 .
