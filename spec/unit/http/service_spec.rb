@@ -126,7 +126,6 @@ describe Puppet::HTTP::Service do
       Puppet::Node::Facts,
       Puppet::Transaction::Report,
       Puppet::FileServing::Metadata,
-      Puppet::Status
     ].each do |model|
       expect(service.mime_types(model)).to eq(mimes)
     end
