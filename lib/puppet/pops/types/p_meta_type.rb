@@ -22,7 +22,7 @@ class PMetaType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    assignable?(TypeCalculator.infer(o), guard)
+    raise NotImplementedError, "Subclass of PMetaType should implement 'instance?'"
   end
 
   # Called from the TypeParser once it has found a type using the Loader. The TypeParser will
