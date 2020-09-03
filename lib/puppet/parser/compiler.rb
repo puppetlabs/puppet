@@ -72,22 +72,6 @@ class Puppet::Parser::Compiler
   end
 
   def add_resource(scope, resource)
-    type = resource.resource_type
-    if type.is_a?(Puppet::Resource::Type) && type.application?
-      @applications << resource
-      assert_app_in_site(scope, resource)
-      return
-    end
-
-    if @current_app
-      # We are in the process of pulling application components out that
-      # apply to this node
-      Puppet.notice "Check #{resource}"
-      return unless @current_components.any? do |comp|
-        comp.type == resource.type && comp.title == resource.title
-      end
-    end
-
     @resources << resource
 
     # Note that this will fail if the resource is not unique.
@@ -107,22 +91,6 @@ class Puppet::Parser::Compiler
     # manifest.
     unless resource.class?
       @catalog.add_edge(scope.resource, resource)
-    end
-  end
-
-  def assert_app_in_site(scope, resource)
-    if resource.type == 'App'
-      if scope.resource
-        # directly contained in a Site
-        return if scope.resource.type == 'Site'
-        # contained in something that may be contained in Site
-        upstream = @catalog.upstream_from_vertex(scope.resource)
-        if upstream
-          return if upstream.keys.map(&:type).include?('Site')
-        end
-      end
-      #TRANSLATORS "Site" is a puppet keyword and should not be translated
-      raise ArgumentError, _("Application instances like '%{resource}' can only be contained within a Site") % { resource: resource }
     end
   end
 
@@ -160,21 +128,12 @@ class Puppet::Parser::Compiler
 
       Puppet::Util::Profiler.profile(_("Compile: Created settings scope"), [:compiler, :create_settings_scope]) { create_settings_scope }
 
-      Puppet::Util::Profiler.profile(_("Compile: Evaluated capability mappings"), [:compiler, :evaluate_capability_mappings]) { evaluate_capability_mappings }
-
       #TRANSLATORS "main" is a function name and should not be translated
       Puppet::Util::Profiler.profile(_("Compile: Evaluated main"), [:compiler, :evaluate_main]) { evaluate_main }
-
-      Puppet::Util::Profiler.profile(_("Compile: Evaluated site"), [:compiler, :evaluate_site]) { evaluate_site }
 
       Puppet::Util::Profiler.profile(_("Compile: Evaluated AST node"), [:compiler, :evaluate_ast_node]) { evaluate_ast_node }
 
       Puppet::Util::Profiler.profile(_("Compile: Evaluated node classes"), [:compiler, :evaluate_node_classes]) { evaluate_node_classes }
-
-      Puppet::Util::Profiler.profile(_("Compile: Evaluated application instances"), [:compiler, :evaluate_applications]) { evaluate_applications }
-
-      # New capability mappings may have been defined when the site was evaluated
-      Puppet::Util::Profiler.profile(_("Compile: Evaluated site capability mappings"), [:compiler, :evaluate_capability_mappings]) { evaluate_capability_mappings }
 
       Puppet::Util::Profiler.profile(_("Compile: Evaluated generators"), [:compiler, :evaluate_generators]) { evaluate_generators }
 
@@ -183,8 +142,6 @@ class Puppet::Parser::Compiler
       end
 
       Puppet::Util::Profiler.profile(_("Compile: Finished catalog"), [:compiler, :finish_catalog]) { finish }
-
-      Puppet::Util::Profiler.profile(_("Compile: Prune"), [:compiler, :prune_catalog]) { prune_catalog }
 
       fail_on_unevaluated
 
@@ -243,112 +200,6 @@ class Puppet::Parser::Compiler
     evaluate_classes(classes_without_params, @node_scope || topscope)
   end
 
-  # Evaluates the site - the top container for an environment catalog
-  # The site contain behaves analogous to a node - for the environment catalog, node expressions are ignored
-  # as the result is cross node. The site expression serves as a container for everything that is across
-  # all nodes.
-  #
-  # @api private
-  #
-  def evaluate_site
-    # Has a site been defined? If not, do nothing but issue a warning.
-    #
-    site = environment.known_resource_types.find_site()
-    unless site
-      on_empty_site()
-      return
-    end
-
-    # Create a resource to model this site and add it to catalog
-    resource = site.ensure_in_catalog(topscope)
-
-    # The site sets node scope to be able to shadow what is in top scope
-    @node_scope = topscope.class_scope(site)
-
-    # Evaluates the logic contain in the site expression
-    resource.evaluate
-  end
-
-  # @api private
-  def on_empty_site
-    # do nothing
-  end
-
-  # Prunes the catalog by dropping all resources are contained under the Site (if a site expression is used).
-  # As a consequence all edges to/from dropped resources are also dropped.
-  # Once the pruning is performed, this compiler returns the pruned list when calling the #resources method.
-  # The pruning does not alter the order of resources in the resources list.
-  #
-  # @api private
-  def prune_catalog
-    prune_node_catalog
-  end
-
-  def prune_node_catalog
-    # Everything under Site[site] should be pruned as that is for the environment catalog, not a node
-    #
-    the_site_resource = @catalog.resource('Site', 'site')
-
-    if the_site_resource
-      # Get downstream vertexes returns a hash where the keys are the resources and values nesting level
-      to_be_removed = @catalog.downstream_from_vertex(the_site_resource).keys
-
-      # Drop the Site[site] resource if it has no content
-      if to_be_removed.empty?
-        to_be_removed << the_site_resource
-      end
-    else
-      to_be_removed = []
-    end
-
-    # keep_from_site is populated with any App resources.
-    application_resources = @resources.select {|r| r.type == 'App' }
-    # keep all applications plus what is directly referenced from applications
-    keep_from_site = application_resources
-    keep_from_site += application_resources.map {|app| @catalog.direct_dependents_of(app) }.flatten
-
-    to_be_removed -= keep_from_site
-    @catalog.remove_resource(*to_be_removed)
-    # set the pruned result
-    @resources = @catalog.resources
-  end
-
-  # @api private
-  def evaluate_applications
-    @applications.each do |app|
-      components = []
-      mapping = app.parameters[:nodes] ? app.parameters[:nodes].value : {}
-      raise Puppet::Error, _("Invalid node mapping in %{app}: Mapping must be a hash") % { app: app.ref } unless mapping.is_a?(Hash)
-      all_mapped = Set.new
-      mapping.each do |k,v|
-        raise Puppet::Error, _("Invalid node mapping in %{app}: Key %{k} is not a Node") % { app: app.ref, k: k } unless k.is_a?(Puppet::Resource) && k.type == 'Node'
-        v = [v] unless v.is_a?(Array)
-        v.each do |res|
-          raise Puppet::Error, _("Invalid node mapping in %{app}: Value %{res} is not a resource") % { app: app.ref, res: res } unless res.is_a?(Puppet::Resource)
-          raise Puppet::Error, _("Application %{app} maps component %{res} to multiple nodes") % { app: app.ref, res: res } if all_mapped.add?(res.ref).nil?
-          components << res if k.title == node.name
-        end
-      end
-      begin
-        @current_app = app
-        @current_components = components
-        unless @current_components.empty?
-          Puppet.notice "EVAL APP #{app} #{components.inspect}"
-          # Add the app itself since components mapped to the current node
-          # will have a containment edge for it
-          # @todo lutter 2015-01-28: the node mapping winds up in the
-          # catalog, but probably shouldn't
-          @catalog.add_resource(@current_app)
-          @current_app.evaluate
-        end
-      ensure
-        @current_app = nil
-        @current_components = nil
-      end
-    end
-  end
-
-
   # If ast nodes are enabled, then see if we can find and evaluate one.
   #
   # @api private
@@ -391,12 +242,6 @@ class Puppet::Parser::Compiler
       classes = classes.keys
     end
 
-    unless @current_components.nil?
-      classes = classes.select do |title|
-        @current_components.any? { |comp| comp.class? && comp.title == title }
-      end
-    end
-
     hostclasses = classes.collect do |name|
       environment.known_resource_types.find_hostclass(name) or raise Puppet::Error, _("Could not find class %{name} for %{node}") % { name: name, node: node.name }
     end
@@ -427,16 +272,6 @@ class Puppet::Parser::Compiler
 
   def initialize(node, code_id: nil)
     @node = sanitize_node(node)
-    # Array of resources representing all application instances we've found
-    @applications = []
-    # We use @current_app and @current_components to signal to the
-    # evaluator that we are in the middle of evaluating an
-    # application. They are set in evaluate_applications to the application
-    # instance, resp. to an array of the components of that application
-    # that is mapped to the current node. They are only non-nil when we are
-    # in the middle of executing evaluate_applications
-    @current_app = nil
-    @current_components = nil
     @code_id = code_id
     initvars
     add_catalog_validators
@@ -479,39 +314,6 @@ class Puppet::Parser::Compiler
     end
 
     [already_included, newly_included]
-  end
-
-  def evaluate_capability_mappings
-    krt = environment.known_resource_types
-    krt.capability_mappings.each_value do |capability_mapping|
-      args = capability_mapping.arguments
-      component_ref = args['component']
-      kind = args['kind']
-
-      # That component_ref is either a QREF or a Class['literal'|QREF] is asserted during validation so no
-      # need to check that here
-      if component_ref.is_a?(Puppet::Pops::Model::QualifiedReference)
-        component_name = component_ref.cased_value
-        component_type = 'type'
-        component = krt.find_definition(component_name)
-      else
-        component_name = component_ref.keys[0].value
-        component_type = 'class'
-        component = krt.find_hostclass(component_name)
-      end
-      if component.nil?
-        raise Puppet::ParseError, _("Capability mapping error: %{kind} clause references nonexistent %{component_type} %{component_name}") %
-            { kind: kind, component_type: component_type, component_name: component_name }
-      end
-
-      blueprint = args['blueprint']
-      if kind == 'produces'
-        component.add_produces(blueprint)
-      else
-        component.add_consumes(blueprint)
-      end
-    end
-    krt.capability_mappings.clear # No longer needed
   end
 
   # Evaluate our collections and return true if anything returned an object.
