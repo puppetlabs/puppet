@@ -742,8 +742,6 @@ class Factory
 
   def self.NODE(hosts, parent, body);    new(NodeDefinition, hosts, parent, body);       end
 
-  def self.SITE(body);                   new(SiteDefinition, body);                      end
-
   # Parameters
 
   # Mark parameter as capturing the rest of arguments
@@ -948,14 +946,6 @@ class Factory
 
   def self.DEFINITION(name, parameters, body)
     new(ResourceTypeDefinition, name, parameters, body)
-  end
-
-  def self.CAPABILITY_MAPPING(kind, component, cap_name, mappings)
-    new(CapabilityMapping, kind, component, cap_name, mappings)
-  end
-
-  def self.APPLICATION(name, parameters, body)
-    new(Application, name, parameters, body)
   end
 
   def self.PLAN(name, parameters, body)
