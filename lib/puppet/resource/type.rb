@@ -11,16 +11,13 @@ class Puppet::Resource::Type
   include Puppet::Util::Warnings
   include Puppet::Util::Errors
 
-  # @deprecated application orchestration will be removed in puppet 7 (capability_mapping, application, site)
-  RESOURCE_KINDS = [:hostclass, :node, :definition, :capability_mapping, :application, :site]
+  RESOURCE_KINDS = [:hostclass, :node, :definition]
 
   # Map the names used in our documentation to the names used internally
   RESOURCE_KINDS_TO_EXTERNAL_NAMES = {
       :hostclass => "class",
       :node => "node",
-      :definition => "defined_type",
-      :application => "application",
-      :site => 'site'
+      :definition => "defined_type"
   }
   RESOURCE_EXTERNAL_NAMES_TO_KINDS = RESOURCE_KINDS_TO_EXTERNAL_NAMES.invert
 
@@ -36,15 +33,6 @@ class Puppet::Resource::Type
 
   attr_accessor :file, :line, :doc, :code, :parent, :resource_type_collection
   attr_reader :namespace, :arguments, :behaves_like, :module_name
-
-  # The attributes 'produces' and 'consumes' are arrays of the blueprints
-  # of capabilities this type can produce/consume. The entries in the array
-  # are a fairly direct representation of what goes into produces/consumes
-  # clauses. Each entry is a hash with attributes
-  #   :capability  - the type name of the capres produced/consumed
-  #   :mappings    - a hash of attribute_name => Expression
-  # These two attributes are populated in
-  # PopsBridge::instantiate_CapabilityMapping
 
   # Map from argument (aka parameter) names to Puppet Type
   # @return [Hash<Symbol, Puppet::Pops::Types::PAnyType] map from name to type
@@ -68,53 +56,6 @@ class Puppet::Resource::Type
     return(klass == parent_type ? true : parent_type.child_of?(klass))
   end
 
-  # Evaluate the resources produced by the given resource. These resources are
-  # evaluated in a separate but identical scope from the rest of the resource.
-  #
-  # @deprecated application orchestration will be removed in puppet 7
-  def evaluate_produces(resource, scope)
-    # Only defined types and classes can produce capabilities
-    return unless definition? || hostclass?
-
-    resource.export.map do |ex|
-      # Assert that the ref really is a resource reference
-      raise Puppet::Error, _("Invalid export in %{reference}: %{ex} is not a resource") % { reference: resource.ref, ex: ex } unless ex.is_a?(Puppet::Resource)
-      raise Puppet::Error, _("Invalid export in %{reference}: %{ex} is not a capability resource") % { reference: resource.ref, ex: ex } if ex.resource_type.nil? || !ex.resource_type.is_capability?
-
-      blueprint = produces.find { |pr| pr[:capability] == ex.type }
-      if blueprint.nil?
-        raise Puppet::ParseError, _("Resource type %{res_type} does not produce %{ex_type}") % { res_type: resource.type, ex_type: ex.type }
-      end
-      t = ex.type
-      t = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, t) unless t == 'class' || t == 'node'
-      produced_resource = Puppet::Parser::Resource.new(t, ex.title, :scope => scope, :source => self)
-
-      produced_resource.resource_type.parameters.each do |name|
-        next if name == :name
-
-        expr = blueprint[:mappings][name.to_s]
-        if expr
-          produced_resource[name] = expr.safeevaluate(scope)
-        else
-          produced_resource[name] = scope[name.to_s]
-        end
-      end
-      # Tag the produced resource so we can later distinguish it from
-      # copies of the resource that wind up in the catalogs of nodes that
-      # use this resource. We tag the resource with producer:<environment>,
-      # meaning produced resources need to be unique within their
-      # environment
-      # @todo lutter 2014-11-13: we would really like to use a dedicated
-      # metadata field to indicate the producer of a resource, but that
-      # requires changes to PuppetDB and its API; so for now, we just use
-      # tagging
-      produced_resource.tag("producer:#{scope.catalog.environment}")
-      scope.catalog.add_resource(produced_resource)
-      produced_resource[:require] = resource.ref
-      produced_resource
-    end
-  end
-
   # Now evaluate the code associated with this class or definition.
   def evaluate_code(resource)
 
@@ -127,8 +68,6 @@ class Puppet::Resource::Type
     set_resource_parameters(resource, scope)
 
     resource.add_edge_to_stage
-
-    evaluate_produces(resource, scope)
 
     if code
       if @match # Only bother setting up the ephemeral scope if there are match variables to add into it
@@ -162,28 +101,6 @@ class Puppet::Resource::Type
     @match = nil
 
     @module_name = options[:module_name]
-  end
-
-  # @deprecated application orchestration will be removed in puppet 7
-  def produces
-    @produces || EMPTY_ARRAY
-  end
-
-  # @deprecated application orchestration will be removed in puppet 7
-  def consumes
-    @consumes || EMPTY_ARRAY
-  end
-
-  # @deprecated application orchestration will be removed in puppet 7
-  def add_produces(blueprint)
-    @produces ||= []
-    @produces << blueprint
-  end
-
-  # @deprecated application orchestration will be removed in puppet 7
-  def add_consumes(blueprint)
-    @consumes ||= []
-    @consumes << blueprint
   end
 
   # This is only used for node names, and really only when the node name
@@ -241,9 +158,6 @@ class Puppet::Resource::Type
       :class
     when :node
       :node
-    when :site
-      # @deprecated application orchestration will be removed in puppet 7
-      :site
     end
 
     # Do nothing if the resource already exists; this makes sure we don't
@@ -310,7 +224,6 @@ class Puppet::Resource::Type
     caller_name = resource[:caller_module_name] || scope.parent_module_name
     scope[CALLER_MODULE_NAME] = caller_name unless caller_name.nil?
 
-    resource.add_parameters_from_consume
     inject_external_parameters(resource, scope)
 
     if @type == :hostclass
@@ -373,7 +286,7 @@ class Puppet::Resource::Type
   private :assign_defaults
 
   def validate_resource_hash(resource, resource_hash)
-    Puppet::Pops::Types::TypeMismatchDescriber.validate_parameters(resource.to_s, parameter_struct, resource_hash, resource.is_unevaluated_consumer?)
+    Puppet::Pops::Types::TypeMismatchDescriber.validate_parameters(resource.to_s, parameter_struct, resource_hash, false)
   end
   private :validate_resource_hash
 
@@ -426,14 +339,6 @@ class Puppet::Resource::Type
       end
       @argument_types[name] = t
     end
-  end
-
-  # Returns boolean true if an instance of this type is a capability. This
-  # implementation always returns false. This "duck-typing" interface is
-  # shared among other classes and makes it easier to detect capabilities
-  # when they are intermixed with non capability instances.
-  def is_capability?
-    false
   end
 
   private
@@ -499,12 +404,6 @@ class Puppet::Resource::Type
     arg_types = argument_types
     type_factory = Puppet::Pops::Types::TypeFactory
     members = { type_factory.optional(type_factory.string(NAME)) =>  type_factory.any }
-
-    if application?
-      resource_type = type_factory.type_type(type_factory.resource)
-      members[type_factory.string(NODES)] = type_factory.hash_of(type_factory.variant(
-          resource_type, type_factory.array_of(resource_type)), type_factory.type_type(type_factory.resource('node')))
-    end
 
     Puppet::Type.eachmetaparam do |name|
       # TODO: Once meta parameters are typed, this should change to reflect that type

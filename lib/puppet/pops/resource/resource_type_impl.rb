@@ -107,7 +107,7 @@ class ResourceTypeImpl
     @parameters = parameters
     @title_patterns_hash = title_patterns_hash
     @isomorphic = isomorphic
-    @capability = capability
+    # ignore capability parameter
 
     # Compute attributes hash
     # Compute key_names (possibly compound key if there are multiple name vars).
@@ -175,10 +175,6 @@ class ResourceTypeImpl
     false
   end
 
-  def is_capability?
-    @capability
-  end
-
   # Answers if the parameter name is a parameter/attribute of this type
   # This is part of the Puppet::Type API
   # Check if used when compiling (it is triggered in an apply)
@@ -242,22 +238,6 @@ class ResourceTypeImpl
     # TODO: Current API somewhat unclear, if done at type level, or per
     #       Param.
   end
-
-  #######################
-  # UNSUPPORTED STUFF
-  #######################
-
-  # Applications are not supported
-  #
-  # @deprecated application orchestration will be removed in puppet 7
-  def application?
-    false
-  end
-
-  ############################
-  # DON'T KNOW YET
-  ############################
-
 
   ##################################################
   # NEVER CALLED COMPILE SIDE FOR A COMPILATION

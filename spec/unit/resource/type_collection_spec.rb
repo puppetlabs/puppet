@@ -75,18 +75,16 @@ describe Puppet::Resource::TypeCollection do
     end.to raise_error(Puppet::ParseError, /cannot be redefined/)
   end
 
-  it "should remove all nodes, classes, definitions, and applications when cleared" do
+  it "should remove all nodes, classes and definitions when cleared" do
     loader = Puppet::Resource::TypeCollection.new(environment)
     loader.add Puppet::Resource::Type.new(:hostclass, "class")
     loader.add Puppet::Resource::Type.new(:definition, "define")
     loader.add Puppet::Resource::Type.new(:node, "node")
-    loader.add Puppet::Resource::Type.new(:application, "application")
 
     loader.clear
     expect(loader.hostclass("class")).to be_nil
     expect(loader.definition("define")).to be_nil
     expect(loader.node("node")).to be_nil
-    expect(loader.node("application")).to be_nil
   end
 
   describe "when looking up names" do
@@ -155,7 +153,7 @@ describe Puppet::Resource::TypeCollection do
     end
   end
 
-  KINDS = %w{hostclass node definition application}
+  KINDS = %w{hostclass node definition}
   KINDS.each do |data|
     describe "behavior of add for #{data}" do
 
@@ -177,24 +175,6 @@ describe Puppet::Resource::TypeCollection do
 
       it "should return nil when asked for a #{data} that has not been added" do
         expect(Puppet::Resource::TypeCollection.new(environment).send(data, "foo")).to be_nil
-      end
-
-      if data != "node"
-        it "should fail if an application with the same name is added" do
-          loader = Puppet::Resource::TypeCollection.new(environment)
-          instance = Puppet::Resource::Type.new(data, "foo")
-          application = Puppet::Resource::Type.new(:application, "foo")
-          loader.add(instance)
-          expect { loader.add(application) }.to raise_error(Puppet::ParseError, /redefine/)
-        end
-
-        it "should fail if there is an application with the same name" do
-          loader = Puppet::Resource::TypeCollection.new(environment)
-          application = Puppet::Resource::Type.new(:application, "foo")
-          instance = Puppet::Resource::Type.new(data, "foo")
-          loader.add(instance)
-          expect { loader.add(application) }.to raise_error(Puppet::ParseError, /redefine/)
-        end
       end
     end
   end

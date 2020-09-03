@@ -13,22 +13,16 @@ class Puppet::Resource::TypeCollection
   def clear
     @hostclasses.clear
     @definitions.clear
-    @applications.clear
     @nodes.clear
     @notfound.clear
-    @capability_mappings.clear
-    @sites.clear
   end
 
   def initialize(env)
     @environment = env
     @hostclasses = {}
     @definitions = {}
-    @capability_mappings = {}
-    @applications = {}
     @nodes = {}
     @notfound = {}
-    @sites = []
     @lock = Puppet::Concurrent::Lock.new
 
     # So we can keep a list and match the first-defined regex
@@ -45,10 +39,7 @@ class Puppet::Resource::TypeCollection
     "TypeCollection" + {
       :hostclasses => @hostclasses.keys,
       :definitions => @definitions.keys,
-      :nodes => @nodes.keys,
-      :capability_mappings => @capability_mappings.keys,
-      :applications => @applications.keys,
-      :site => @sites[0] # todo, could be just a binary, this dumps the entire body (good while developing)
+      :nodes => @nodes.keys
     }.inspect
   end
 
@@ -71,7 +62,6 @@ class Puppet::Resource::TypeCollection
     handle_hostclass_merge(instance)
     dupe_check(instance, @hostclasses) { |dupe| _("Class '%{klass}' is already defined%{error}; cannot redefine") % { klass: instance.name, error: dupe.error_context } }
     dupe_check(instance, @definitions) { |dupe| _("Definition '%{klass}' is already defined%{error}; cannot be redefined as a class") % { klass: instance.name, error: dupe.error_context } }
-    dupe_check(instance, @applications) { |dupe| _("Application '%{klass}' is already defined%{error}; cannot be redefined as a class") % { klass: instance.name, error: dupe.error_context } }
 
     @hostclasses[instance.name] = instance
     instance
@@ -109,16 +99,6 @@ class Puppet::Resource::TypeCollection
     instance
   end
 
-  def add_site(instance)
-    dupe_check_singleton(instance, @sites) { |dupe| _("Site is already defined%{error}; cannot redefine") % { error: dupe.error_context } }
-    @sites << instance
-    instance
-  end
-
-  def site(_)
-    @sites[0]
-  end
-
   def loader
     @loader ||= Puppet::Parser::TypeLoader.new(environment)
   end
@@ -149,36 +129,16 @@ class Puppet::Resource::TypeCollection
   def add_definition(instance)
     dupe_check(instance, @hostclasses) { |dupe| _("'%{name}' is already defined%{error} as a class; cannot redefine as a definition") % { name: instance.name, error: dupe.error_context } }
     dupe_check(instance, @definitions) { |dupe| _("Definition '%{name}' is already defined%{error}; cannot be redefined") % { name: instance.name, error: dupe.error_context } }
-    dupe_check(instance, @applications) { |dupe| _("'%{name}' is already defined%{error} as an application; cannot be redefined") % { name: instance.name, error: dupe.error_context } }
-    @definitions[instance.name] = instance
-  end
 
-  def add_capability_mapping(instance)
-    dupe_check(instance, @capability_mappings) { |dupe| _("'%{name}' is already defined%{error} as a class; cannot redefine as a mapping") % { name: instance.name, error: dupe.error_context } }
-    @capability_mappings[instance.name] = instance
+    @definitions[instance.name] = instance
   end
 
   def definition(name)
     @definitions[munge_name(name)]
   end
 
-  def add_application(instance)
-    dupe_check(instance, @hostclasses) { |dupe| _("'%{name}' is already defined%{error} as a class; cannot redefine as an application") % { name: instance.name, error: dupe.error_context } }
-    dupe_check(instance, @definitions) { |dupe| _("'%{name}' is already defined%{error} as a definition; cannot redefine as an application") % { name: instance.name, error: dupe.error_context } }
-    dupe_check(instance, @applications) { |dupe| _("'%{name}' is already defined%{error} as an application; cannot be redefined") % { name: instance.name, error: dupe.error_context } }
-    @applications[instance.name] = instance
-  end
-
-  def application(name)
-    @applications[munge_name(name)]
-  end
-
   def find_node(name)
     @nodes[munge_name(name)]
-  end
-
-  def find_site()
-    @sites[0]
   end
 
   def find_hostclass(name)
@@ -189,14 +149,9 @@ class Puppet::Resource::TypeCollection
     find_or_load(name, :definition)
   end
 
-  def find_application(name)
-    find_or_load(name, :application)
-  end
-
   # TODO: This implementation is wasteful as it creates a copy on each request
   #
-  [:hostclasses, :nodes, :definitions, :capability_mappings,
-   :applications].each do |m|
+  [:hostclasses, :nodes, :definitions].each do |m|
     define_method(m) do
       instance_variable_get("@#{m}").dup
     end

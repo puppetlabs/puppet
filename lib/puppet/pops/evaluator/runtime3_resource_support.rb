@@ -19,7 +19,7 @@ module Runtime3ResourceSupport
       # resolved type is just the string CLASS
       resolved_type = CLASS_STRING
     else
-      # resolve a resource type - pcore based, ruby impl, user defined, or application
+      # resolve a resource type - pcore based, ruby impl or user defined
       resolved_type = find_resource_type(scope, type_name)
     end
 
@@ -109,7 +109,7 @@ module Runtime3ResourceSupport
 
   def self.find_defined_resource_type(scope, type_name)
     krt = scope.environment.known_resource_types
-    krt.find_definition(type_name) || krt.application(type_name)
+    krt.find_definition(type_name)
   end
   private_class_method :find_defined_resource_type
 
