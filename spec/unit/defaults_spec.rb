@@ -65,9 +65,9 @@ describe "Defaults" do
   end
 
   describe '.default_digest_algorithm' do
-    it 'defaults to md5 when FIPS is not enabled' do
+    it 'defaults to sha256 when FIPS is not enabled' do
       allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(false)
-      expect(Puppet.default_digest_algorithm).to eq('md5')
+      expect(Puppet.default_digest_algorithm).to eq('sha256')
     end
 
     it 'defaults to sha256 when FIPS is enabled' do

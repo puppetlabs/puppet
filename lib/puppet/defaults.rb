@@ -11,7 +11,7 @@ module Puppet
   end
 
   def self.default_digest_algorithm
-    Puppet::Util::Platform.fips_enabled? ? 'sha256' : 'md5'
+    'sha256'
   end
 
   def self.valid_digest_algorithms

@@ -18,7 +18,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
     describe "when servicing a save request" do
       it "should return a result whose content is empty" do
         bucket_file = Puppet::FileBucket::File.new('stuff')
-        result = Puppet::FileBucket::File.indirection.save(bucket_file, "md5/c13d88cb4cb02003daedb8a84e5d272a")
+        result = Puppet::FileBucket::File.indirection.save(bucket_file, "sha256/35bafb1ce99aef3ab068afbaabae8f21fd9b9f02d3a9442e364fa92c0b3eeef0")
         expect(result.contents).to be_empty
       end
 
@@ -34,12 +34,14 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         end
         children.each { |child| Process.wait(child) }
 
-        paths = File.read("#{Puppet[:bucketdir]}/9/8/b/f/7/d/8/c/98bf7d8c15784f0a3d63204441e1e2aa/paths").lines.to_a
+        paths = File.read("#{Puppet[:bucketdir]}/d/1/b/2/a/5/9/f/d1b2a59fbea7e20077af9f91b27e95e865061b270be03ff539ab3b73587882e8/paths").lines.to_a
         expect(paths.length).to eq(1)
         expect(Puppet::FileBucket::File.indirection.head("#{bucket_file.checksum_type}/#{bucket_file.checksum_data}/testing")).to be_truthy
       end
 
       it "fails if the contents collide with existing contents" do
+        Puppet[:digest_algorithm] = 'md5'
+
         # This is the shortest known MD5 collision (little endian). See https://eprint.iacr.org/2010/643.pdf
         first_contents = [0x6165300e,0x87a79a55,0xf7c60bd0,0x34febd0b,
                           0x6503cf04,0x854f709e,0xfb0fc034,0x874c9c65,
@@ -66,7 +68,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
       context "when the contents file exists but is corrupted and does not match the expected checksum" do
         let(:original_contents) { "a file that will get corrupted" }
         let(:bucket_file) { Puppet::FileBucket::File.new(original_contents) }
-        let(:contents_file) { "#{Puppet[:bucketdir]}/8/e/6/4/f/8/5/d/8e64f85dd54a412f65edabcafe44d491/contents" }
+        let(:contents_file) { "#{Puppet[:bucketdir]}/7/7/4/1/0/2/7/9/77410279bb789b799c2f38bf654b46a509dd27ddad6e47a6684805e9ba390bce/contents" }
 
         before(:each) do
           # Ensure we're starting with a clean slate - no pre-existing backup

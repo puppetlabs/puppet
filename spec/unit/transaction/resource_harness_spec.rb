@@ -612,14 +612,14 @@ describe Puppet::Transaction::ResourceHarness do
       allow_any_instance_of(Puppet::Transaction::Event).to receive(:corrective_change).and_return(true)
       status = @harness.evaluate(resource)
       sync_event = status.events[0]
-      expect(sync_event.message).to match(/content changed '{md5}[0-9a-f]+' to '{md5}[0-9a-f]+' \(corrective\)/)
+      expect(sync_event.message).to match(/content changed '{sha256}[0-9a-f]+' to '{sha256}[0-9a-f]+' \(corrective\)/)
     end
 
     it "contains no modifier when intentional change" do
       allow_any_instance_of(Puppet::Transaction::Event).to receive(:corrective_change).and_return(false)
       status = @harness.evaluate(resource)
       sync_event = status.events[0]
-      expect(sync_event.message).to match(/content changed '{md5}[0-9a-f]+' to '{md5}[0-9a-f]+'$/)
+      expect(sync_event.message).to match(/content changed '{sha256}[0-9a-f]+' to '{sha256}[0-9a-f]+'$/)
     end
   end
 end

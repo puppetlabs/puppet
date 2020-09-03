@@ -245,7 +245,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
           agent.command_line.args << '--test'
           agent.run
         }.to exit_with(2)
-         .and output(/content changed '{md5}d41d8cd98f00b204e9800998ecf8427e' to '{md5}4cf49285ae567157ebfba72bd04ccf32'/).to_stdout
+         .and output(/content changed '{sha256}e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' to '{sha256}3bef83ad320b471d8e3a03c9b9f150749eea610fe266560395d3195cfbd8e6b8'/).to_stdout
 
         # verify puppet restored binary content
         expect(File.binread(path)).to eq(binary_content)

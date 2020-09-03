@@ -532,7 +532,7 @@ class amod::bad_type {
       ).and matching(
          /dir1\/dir2\]\/ensure: created/
       ).and matching(
-         /dir1\/dir2\/file\]\/ensure: defined content as '{md5}51f37efb13c3a1e486106f90db6490a5'/
+         /dir1\/dir2\/file\]\/ensure: defined content as '{sha256}b37c1d77e09471b3139b2cdfee449fd8ba72ebf7634d52023aff0c0cd088cf1b'/
       )).to_stdout
 
       dest_file = File.join(base_dir, 'dir1', 'dir2', 'file')

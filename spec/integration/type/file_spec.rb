@@ -1,3 +1,4 @@
+# coding: utf-8
 require 'spec_helper'
 
 require 'puppet_spec/files'
@@ -657,9 +658,9 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
     CHECKSUM_TYPES_TO_TRY.each do |checksum_type, checksum|
       describe "when checksum_type is #{checksum_type}" do
-        # FileBucket uses the globally configured default for lookup by digest, which right now is MD5.
+        # FileBucket uses the globally configured default for lookup by digest, which right now is SHA256.
         it_should_behave_like "files are backed up", {:checksum => checksum_type} do
-          let(:filebucket_digest) { Proc.new {|x| Puppet::Util::Checksums.md5(x)} }
+          let(:filebucket_digest) { Proc.new {|x| Puppet::Util::Checksums.sha256(x)} }
         end
       end
     end
@@ -1727,7 +1728,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
                                                #{test_cmd} "644" == "$(#{stat_cmd} ^)"
                                                }))
       report = catalog.apply.report
-      expect(report.resource_statuses["File[#{path}]"].events.first.message).to match(/defined content as '{md5}/)
+      expect(report.resource_statuses["File[#{path}]"].events.first.message).to match(/defined content as '{sha256}/)
       expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
       expect(Puppet::FileSystem.exist?(path)).to be_truthy
     end
@@ -1741,7 +1742,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
                                                #{test_cmd} "555" == "$(#{stat_cmd} ^)"
                                                }))
       report = catalog.apply.report
-      expect(report.resource_statuses["File[#{path}]"].events.first.message).to match(/defined content as '{md5}/)
+      expect(report.resource_statuses["File[#{path}]"].events.first.message).to match(/defined content as '{sha256}/)
       expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
       expect(Puppet::FileSystem.exist?(path)).to be_truthy
     end

@@ -18,8 +18,8 @@ describe checksum do
     @checksum.sum("foobar")
   end
 
-  it "should use :md5 to sum when no value is set" do
-    expect(@checksum).to receive(:md5).with("foobar").and_return("yay")
+  it "should use :sha256 to sum when no value is set" do
+    expect(@checksum).to receive(:sha256).with("foobar").and_return("yay")
     @checksum.sum("foobar")
   end
 
@@ -47,8 +47,8 @@ describe checksum do
     expect(@checksum.sum("foobar")).to eq("{sha384}#{sum}")
   end
 
-  it "should use :md5 as its default type" do
-    expect(@checksum.default).to eq(:md5)
+  it "should use :sha256 as its default type" do
+    expect(@checksum.default).to eq(:sha256)
   end
 
   it "should use its current value when asked to sum a file's content" do
@@ -57,8 +57,8 @@ describe checksum do
     @checksum.sum_file(@path)
   end
 
-  it "should use :md5 to sum a file when no value is set" do
-    expect(@checksum).to receive(:md5_file).with(@path).and_return("yay")
+  it "should use :sha256 to sum a file when no value is set" do
+    expect(@checksum).to receive(:sha256_file).with(@path).and_return("yay")
     @checksum.sum_file(@path)
   end
 
