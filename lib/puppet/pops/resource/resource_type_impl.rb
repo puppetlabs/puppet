@@ -87,9 +87,7 @@ class ResourceTypeImpl
     :subscribe,
     :before,
     :notify,
-    :stage,
-    :export,
-    :consume
+    :stage
     ].freeze
 
   # Speed up lookup
