@@ -5,8 +5,6 @@ require 'puppet/util/tagging'
 require 'puppet/graph'
 require 'securerandom'
 
-require 'puppet/resource/capability_finder'
-
 # This class models a node catalog.  It is the thing meant to be passed
 # from server to client, and it contains all of the information in the
 # catalog, including the resources and the relationships between them.
