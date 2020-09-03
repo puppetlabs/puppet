@@ -5,6 +5,8 @@ test_name "The 'last_run_summary.yaml' report has the right location and permiss
   extend Puppet::Acceptance::TempFileUtils
   
   agents.each do |agent|
+    skip_test('This test does not work on Windows in japanese') if agent['platform'] =~ /windows/ && agent['locale'] == 'ja'
+
     custom_publicdir = agent.tmpdir('custom_public_dir')
 
     statedir = on(agent, puppet('config print statedir')).stdout.chomp
