@@ -141,11 +141,11 @@ describe 'The type calculator' do
 
   context 'when inferring ruby' do
 
-    it 'fixnum translates to PIntegerType' do
+    it 'integer translates to PIntegerType' do
       expect(calculator.infer(1).class).to eq(PIntegerType)
     end
 
-    it 'large fixnum (or bignum depending on architecture) translates to PIntegerType' do
+    it 'large integer translates to PIntegerType' do
       expect(calculator.infer(2**33).class).to eq(PIntegerType)
     end
 
@@ -329,7 +329,7 @@ describe 'The type calculator' do
         expect(object_t('name' => 'DerivedObjectArray')).to be_instance(derived_object)
       end
 
-      it 'with fixnum values translates to PArrayType[PIntegerType]' do
+      it 'with integer values translates to PArrayType[PIntegerType]' do
         expect(calculator.infer([1,2]).element_type.class).to eq(PIntegerType)
       end
 
@@ -407,7 +407,7 @@ describe 'The type calculator' do
         expect(et.class).to eq(PEnumType)
       end
 
-      it 'with array of string values and array of fixnums translates to PArrayType[PArrayType[PScalarDataType]]' do
+      it 'with array of string values and array of integers translates to PArrayType[PArrayType[PScalarDataType]]' do
         et = calculator.infer([['first', 'array'], [1,2]])
         expect(et.class).to eq(PArrayType)
         et = et.element_type
@@ -425,7 +425,7 @@ describe 'The type calculator' do
         expect(et.class).to eq(PEnumType)
       end
 
-      it 'with hash of string values and hash of fixnums translates to PArrayType[PHashType[PScalarDataType]]' do
+      it 'with hash of string values and hash of integers translates to PArrayType[PHashType[PScalarDataType]]' do
         et = calculator.infer([{:first => 'first', :second => 'second' }, {:first => 1, :second => 2 }])
         expect(et.class).to eq(PArrayType)
         et = et.element_type
@@ -489,7 +489,7 @@ describe 'The type calculator' do
         expect(calculator.infer({'first' => 1, 'second' => 2}).key_type.class).to eq(PEnumType)
       end
 
-      it 'with fixnum values translates to PHashType[key, PIntegerType]' do
+      it 'with integer values translates to PHashType[key, PIntegerType]' do
         expect(calculator.infer({:first => 1, :second => 2}).value_type.class).to eq(PIntegerType)
       end
 

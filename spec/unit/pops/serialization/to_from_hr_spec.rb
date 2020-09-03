@@ -629,7 +629,7 @@ module Serialization
     it 'the value of a type description is something other than a String or a Hash' do
       expect do
         from_converter.convert({ '__ptype' => { '__ptype' => 'Pcore::TimestampType', '__pvalue' => 12345 }})
-      end.to raise_error(/Cannot create a Pcore::TimestampType from a (Fixnum|Integer)/)
+      end.to raise_error(/Cannot create a Pcore::TimestampType from a Integer/)
     end
   end
 end

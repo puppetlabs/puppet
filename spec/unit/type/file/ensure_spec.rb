@@ -85,7 +85,7 @@ describe Puppet::Type.type(:file).attrclass(:ensure) do
         }.to raise_error(Puppet::Error, /Cannot create #{newpath}; parent directory #{File.dirname(newpath)} does not exist/)
       end
 
-      it "should accept octal mode as fixnum" do
+      it "should accept octal mode as integer" do
         resource[:mode] = '0700'
         expect(resource).to receive(:property_fix)
         expect(Dir).to receive(:mkdir).with(path, 0700)

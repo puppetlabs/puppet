@@ -26,7 +26,7 @@ describe Puppet::FileBucket::File, :uses_checksums => true do
   end
 
   it "should require contents to be a string" do
-    expect { Puppet::FileBucket::File.new(5) }.to raise_error(ArgumentError, /contents must be a String or Pathname, got a (?:Fixnum|Integer)$/)
+    expect { Puppet::FileBucket::File.new(5) }.to raise_error(ArgumentError, /contents must be a String or Pathname, got a Integer$/)
   end
 
   it "should complain about options other than :bucket_path" do

@@ -151,7 +151,7 @@ describe 'The type factory' do
       expect(hc.class_name).to eq('x')
     end
 
-    it 'array_of(fixnum) returns PArrayType[PIntegerType]' do
+    it 'array_of(integer) returns PArrayType[PIntegerType]' do
       at = TypeFactory.array_of(1)
       expect(at.class()).to eq(PArrayType)
       expect(at.element_type.class).to eq(PIntegerType)

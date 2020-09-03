@@ -1,4 +1,4 @@
-test_name 'C97760: Bignum in reduce() should not cause exception' do
+test_name 'C97760: Integer in reduce() should not cause exception' do
   require 'puppet/acceptance/environment_utils'
   extend Puppet::Acceptance::EnvironmentUtils
 
@@ -8,7 +8,7 @@ test_name 'C97760: Bignum in reduce() should not cause exception' do
   app_type = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
 
-  step 'On master, create site.pp with bignum' do
+  step 'On master, create site.pp with integer' do
     create_sitepp(master, tmp_environment, <<-SITEPP)
 $data = [
 {
