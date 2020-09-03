@@ -43,7 +43,6 @@ module Puppet::Util::Windows
     require 'puppet/util/windows/registry'
     require 'puppet/util/windows/eventlog'
     require 'puppet/util/windows/service'
-    require 'puppet/util/windows/monkey_patches/dir'
     require 'puppet/util/windows/monkey_patches/process'
   end
 end

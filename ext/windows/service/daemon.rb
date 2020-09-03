@@ -11,16 +11,13 @@ require 'puppet/util/windows/eventlog'
 # monkey patches ruby Process to add .create method
 require 'puppet/util/windows/monkey_patches/process'
 
-# monkey patch Dir to add constants
-require 'puppet/util/windows/monkey_patches/dir'
-
 class WindowsDaemon < Puppet::Util::Windows::Daemon
   CREATE_NEW_CONSOLE          = 0x00000010
 
   @run_thread = nil
   @LOG_TO_FILE = false
   @loglevel = 0
-  LOG_FILE =  File.expand_path(File.join(Dir::COMMON_APPDATA, 'PuppetLabs', 'puppet', 'var', 'log', 'windows.log'))
+  LOG_FILE =  File.expand_path(File.join(ENV['ALLUSERSPROFILE'], 'PuppetLabs', 'puppet', 'var', 'log', 'windows.log'))
   LEVELS = [:debug, :info, :notice, :warning, :err, :alert, :emerg, :crit]
   LEVELS.each do |level|
     define_method("log_#{level}") do |msg|

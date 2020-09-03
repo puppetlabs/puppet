@@ -822,7 +822,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet::Util::Platform.window
     end
 
     describe "locked files" do
-      let (:explorer) { File.join(Dir::WINDOWS, "explorer.exe") }
+      let (:explorer) { File.join(ENV['SystemRoot'], "explorer.exe") }
 
       it "should get the owner" do
         expect(winsec.get_owner(explorer)).to match(/^S-1-5-/)

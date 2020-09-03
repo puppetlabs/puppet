@@ -101,22 +101,12 @@ describe Puppet::Util::RunMode do
 
   describe Puppet::Util::WindowsRunMode, :if => Puppet::Util::Platform.windows? do
     before do
-      if not Dir.const_defined? :COMMON_APPDATA
-        Dir.const_set :COMMON_APPDATA, "/CommonFakeBase"
-        @remove_const = true
-      end
       @run_mode = Puppet::Util::WindowsRunMode.new('fake')
-    end
-
-    after do
-      if @remove_const
-        Dir.send :remove_const, :COMMON_APPDATA
-      end
     end
 
     describe "#conf_dir" do
       it "has confdir ending in Puppetlabs/puppet/etc when run as root" do
-        as_root { expect(@run_mode.conf_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc"))) }
+        as_root { expect(@run_mode.conf_dir).to eq(File.expand_path(File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "etc"))) }
       end
 
       it "has confdir in ~/.puppetlabs/etc/puppet when run as non-root" do
@@ -126,7 +116,7 @@ describe Puppet::Util::RunMode do
 
     describe "#code_dir" do
       it "has codedir ending in PuppetLabs/code when run as root" do
-        as_root { expect(@run_mode.code_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "code"))) }
+        as_root { expect(@run_mode.code_dir).to eq(File.expand_path(File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "code"))) }
       end
 
       it "has codedir in ~/.puppetlabs/etc/code when run as non-root" do
@@ -136,7 +126,7 @@ describe Puppet::Util::RunMode do
 
     describe "#var_dir" do
       it "has vardir ending in PuppetLabs/puppet/cache when run as root" do
-        as_root { expect(@run_mode.var_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "cache"))) }
+        as_root { expect(@run_mode.var_dir).to eq(File.expand_path(File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "cache"))) }
       end
 
       it "has vardir in ~/.puppetlabs/opt/puppet/cache when run as non-root" do
@@ -146,7 +136,7 @@ describe Puppet::Util::RunMode do
 
     describe "#public_dir" do
       it "has publicdir ending in PuppetLabs/puppet/public when run as root" do
-        as_root { expect(@run_mode.public_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "public"))) }
+        as_root { expect(@run_mode.public_dir).to eq(File.expand_path(File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "public"))) }
       end
 
       it "has publicdir in ~/.puppetlabs/opt/puppet/public when run as non-root" do
@@ -157,7 +147,7 @@ describe Puppet::Util::RunMode do
     describe "#log_dir" do
       describe "when run as root" do
         it "has logdir ending in PuppetLabs/puppet/var/log" do
-          as_root { expect(@run_mode.log_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var", "log"))) }
+          as_root { expect(@run_mode.log_dir).to eq(File.expand_path(File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "var", "log"))) }
         end
       end
 
@@ -171,7 +161,7 @@ describe Puppet::Util::RunMode do
     describe "#run_dir" do
       describe "when run as root" do
         it "has rundir ending in PuppetLabs/puppet/var/run" do
-          as_root { expect(@run_mode.run_dir).to eq(File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var", "run"))) }
+          as_root { expect(@run_mode.run_dir).to eq(File.expand_path(File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "var", "run"))) }
         end
       end
 
