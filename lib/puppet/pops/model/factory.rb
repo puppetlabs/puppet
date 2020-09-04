@@ -120,13 +120,6 @@ class Factory
 
   # Building of Model classes
 
-  def build_Application(o, n, ps, body)
-    @init_hash[KEY_NAME] = n
-    @init_hash[KEY_PARAMETERS] = ps
-    b = f_build_body(body)
-    @init_hash[KEY_BODY] = b unless b.nil?
-  end
-
   def build_ArithmeticExpression(o, op, a, b)
     @init_hash[KEY_OPERATOR] = op
     build_BinaryExpression(o, a, b)
@@ -387,21 +380,9 @@ class Factory
     @init_hash['return_type'] = return_type unless return_type.nil?
   end
 
-  def build_CapabilityMapping(o, kind, component, capability, mappings)
-    @init_hash['kind'] = kind
-    @init_hash['component'] = component
-    @init_hash['capability'] = capability
-    @init_hash['mappings'] = mappings
-  end
-
   def build_NodeDefinition(o, hosts, parent, body)
     @init_hash['host_matches'] = hosts
     @init_hash['parent'] = parent unless parent.nil? # no nop here
-    b = f_build_body(body)
-    @init_hash[KEY_BODY] = b unless b.nil?
-  end
-
-  def build_SiteDefinition(o, body)
     b = f_build_body(body)
     @init_hash[KEY_BODY] = b unless b.nil?
   end

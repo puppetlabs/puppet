@@ -13,14 +13,6 @@ class TasksChecker < Checker4_0
     end
   end
 
-  def check_Application(o)
-    illegalTasksExpression(o)
-  end
-
-  def check_CapabilityMapping(o)
-    illegalTasksExpression(o)
-  end
-
   def check_CollectExpression(o)
     # Only virtual resource queries are allowed in apply blocks, not exported
     # resource queries
@@ -80,10 +72,6 @@ class TasksChecker < Checker4_0
   end
 
   def check_ResourceTypeDefinition(o)
-    illegalTasksExpression(o)
-  end
-
-  def check_SiteDefinition(o)
     illegalTasksExpression(o)
   end
 

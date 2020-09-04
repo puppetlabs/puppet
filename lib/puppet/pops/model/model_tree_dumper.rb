@@ -37,10 +37,6 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     do_dump(o.model)
   end
 
-  def dump_Application o
-    ["application", o.name, do_dump(o.parameters), do_dump(o.body)]
-  end
-
   def dump_ArithmeticExpression o
     [o.operator.to_s, do_dump(o.left_expr), do_dump(o.right_expr)]
   end
@@ -251,16 +247,6 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     result
   end
 
-  def dump_SiteDefinition o
-    result = ["site"]
-    if o.body
-      result << do_dump(o.body)
-    else
-      result << []
-    end
-    result
-  end
-
   def dump_NamedDefinition o
     # the nil must be replaced with a string
     result = [nil, o.name]
@@ -289,10 +275,6 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     result = dump_NamedDefinition(o)
     result[0] = 'define'
     result
-  end
-
-  def dump_CapabilityMapping o
-    [o.kind, do_dump(o.component), o.capability, do_dump(o.mappings)]
   end
 
   def dump_ResourceOverrideExpression o
