@@ -8,19 +8,18 @@ tag 'audit:medium',
 success_message = "node_name_value setting was correctly used as the node name"
 testdir = master.tmpdir('nodenamevalue')
 
-if @options[:is_puppetserver]
-  step "Prepare for custom tk-auth rules" do
-    on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.conf /etc/puppetlabs/puppetserver/conf.d/auth.bak'
-    modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => false}})
-  end
+step "Prepare for custom tk-auth rules" do
+  on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.conf /etc/puppetlabs/puppetserver/conf.d/auth.bak'
+  modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => false}})
+end
 
-  teardown do
-    on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.bak /etc/puppetlabs/puppetserver/conf.d/auth.conf'
-    modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => true}})
-  end
+teardown do
+  on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.bak /etc/puppetlabs/puppetserver/conf.d/auth.conf'
+  modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => true}})
+end
 
-  step "Setup tk-auth rules" do
-    tk_auth = <<-TK_AUTH
+step "Setup tk-auth rules" do
+  tk_auth = <<-TK_AUTH
 authorization: {
     version: 1
     rules: [
@@ -76,39 +75,13 @@ authorization: {
 }
     TK_AUTH
 
-    apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+  apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
       file { '/etc/puppetlabs/puppetserver/conf.d/auth.conf':
         ensure => file,
         mode => '0644',
         content => '#{tk_auth}',
       }
     MANIFEST
-  end
-else
-  step "setup auth.conf rules" do
-    authfile = "#{testdir}/auth.conf"
-    authconf = <<-AUTHCONF
-path /puppet/v3/catalog/specified_node_name
-auth yes
-allow *
-
-path /puppet/v3/node/specified_node_name
-auth yes
-allow *
-
-path /puppet/v3/report/specified_node_name
-auth yes
-allow *
-    AUTHCONF
-
-    apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
-      file { '#{authfile}':
-        ensure => file,
-        mode => '0644',
-        content => '#{authconf}',
-      }
-    MANIFEST
-  end
 end
 
 step "Setup site.pp for node name based classification" do
@@ -149,7 +122,6 @@ step "Ensure nodes are classified based on the node name fact" do
       'environmentpath' => "#{testdir}/environments",
     },
     'master' => {
-      'rest_authconfig' => "#{testdir}/auth.conf",
       'node_terminus'   => 'plain',
     },
   }
