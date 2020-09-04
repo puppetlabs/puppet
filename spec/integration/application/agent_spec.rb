@@ -413,7 +413,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       path = Puppet[:agent_catalog_run_lockfile]
 
       th = Thread.new {
-        %x{ruby -e "$0 = 'puppet'; File.write('#{path}', Process.pid); sleep(2)"}
+        %x{ruby -e "$0 = 'puppet'; File.write('#{path}', Process.pid); sleep(20)"}
       }
 
       until File.exists?(path) && File.size(path) > 0 do
@@ -430,12 +430,23 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
 
     it "waits for other agent run to finish before starting" do
       server.start_server do |port|
+        script = tmpfile('wait_for_log_entry')
+        logdest = tmpfile('agent_log')
         path = Puppet[:agent_catalog_run_lockfile]
         Puppet[:masterport] = port
         Puppet[:waitforlock] = 1
 
         th = Thread.new {
-          %x{ruby -e "$0 = 'puppet'; File.write('#{path}', Process.pid); sleep(2)"}
+          File.write(script, <<~SCRIPT)
+            $0 = 'puppet'
+            # lock pidfile
+            File.write('#{path}', Process.pid)
+            # wait for foreground agent to fail once
+            until File.exists?("#{logdest}") && File.readlines("#{logdest}").grep(/Will try again/).any? do
+              sleep 0.1
+            end
+          SCRIPT
+          %x{ruby '#{script}'}
         }
 
         until File.exists?(path) && File.size(path) > 0 do
@@ -443,9 +454,14 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         end
 
         expect {
-          agent.command_line.args << '--test'
+          agent.command_line.args << '--test' << '--logdest' << logdest << '--logdest' << 'console'
           agent.run
-        }.to exit_with(0).and output(/Info: Will try again in #{Puppet[:waitforlock]} seconds./).to_stdout
+        }.to exit_with(0)
+         .and output(a_string_matching(
+          /Info: Will try again in #{Puppet[:waitforlock]} seconds/
+        ).and matching(
+          /Applied catalog/
+        )).to_stdout
 
         th.kill # kill thread so we don't wait too much
       end
@@ -457,7 +473,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       Puppet[:maxwaitforlock] = 0
 
       th = Thread.new {
-        %x{ruby -e "$0 = 'puppet'; File.write('#{path}', Process.pid); sleep(2)"}
+        %x{ruby -e "$0 = 'puppet'; File.write('#{path}', Process.pid); sleep(20)"}
       }
 
       until File.exists?(path) && File.size(path) > 0 do
