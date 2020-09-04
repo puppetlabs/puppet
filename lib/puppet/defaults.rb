@@ -1315,15 +1315,6 @@ EOT
       :group => "service",
       :desc => "Where FileBucket files are stored."
     },
-    :rest_authconfig => {
-      :default    => "$confdir/auth.conf",
-      :type       => :file,
-      :deprecated  => :completely,
-      :desc       => "The configuration file that defines the rights to the different
-      rest indirections.  This can be used as a fine-grained authorization system for
-      `puppet master`.  The `puppet master` command is deprecated and Puppet Server
-      uses its own auth.conf that must be placed within its configuration directory.",
-    },
     :trusted_oid_mapping_file => {
       :default    => "$confdir/custom_trusted_oid_mapping.yaml",
       :type       => :file,
