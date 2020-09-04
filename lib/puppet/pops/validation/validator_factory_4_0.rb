@@ -31,7 +31,6 @@ class ValidatorFactory_4_0 < Factory
     p[Issues::RT_NO_STORECONFIGS]             = Puppet[:storeconfigs] ? :ignore : :warning
 
     p[Issues::FUTURE_RESERVED_WORD]           = :deprecation
-    p[Issues::DEPRECATED_APP_ORCHESTRATION]   = :deprecation
 
     p[Issues::DUPLICATE_KEY]                  = Puppet[:strict] == :off ? :ignore : Puppet[:strict]
     p[Issues::NAME_WITH_HYPHEN]               = :error
