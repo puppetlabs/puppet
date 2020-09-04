@@ -49,7 +49,7 @@ describe Puppet::FileServing::Configuration::Parser do
       expect { @parser.parse }.to raise_error(ArgumentError)
     end
 
-    it "should fail if the value for path/allow/deny starts with an equals sign" do
+    it "should fail if the value for path starts with an equals sign" do
       write_config_file "[one]\npath = /testing"
       expect { @parser.parse }.to raise_error(ArgumentError)
     end
@@ -98,32 +98,28 @@ describe Puppet::FileServing::Configuration::Parser do
     end
 
     [:allow,:deny].each { |acl_type|
-      it "should support inline comments in #{acl_type}" do
+      it "should ignore inline comments in #{acl_type}" do
         write_config_file "[one]\n#{acl_type} something \# will it work?\n"
 
-      expect(@mount).to receive(:info)
-      expect(@mount).to receive(acl_type).with("something")
-      @parser.parse
-      end
-
-      it "should tell the mount to #{acl_type} from ACLs with varying spacing around commas" do
-        write_config_file "[one]\n#{acl_type} someone,sometwo, somethree , somefour ,somefive\n"
-
-        expect(@mount).to receive(:info).exactly(5).times
-        expect(@mount).to receive(acl_type).exactly(5).times.with(eq('someone').or eq('sometwo').or eq('somethree').or eq('somefour').or eq('somefive'))
         @parser.parse
       end
 
-      # each ip, with glob in the various octet positions
-      ['100','4','42','*'].permutation.map {|permutes| permutes.join('.') }.each { |ip_pattern|
-        it "should tell the mount to #{acl_type} from ACLs with glob at #{ip_pattern}" do
-          write_config_file "[one]\n#{acl_type} #{ip_pattern}\n"
+      it "should ignore #{acl_type} from ACLs with varying spacing around commas" do
+        write_config_file "[one]\n#{acl_type} someone,sometwo, somethree , somefour ,somefive\n"
 
-          expect(@mount).to receive(:info)
-          expect(@mount).to receive(acl_type).with(ip_pattern)
-          @parser.parse
-        end
-      }
+        @parser.parse
+      end
+
+      it "should log an error and print the location of the #{acl_type} rule" do
+        write_config_file(<<~CONFIG)
+        [one]
+        #{acl_type} one
+        CONFIG
+
+        expect(Puppet).to receive(:err).with(/Entry '#{acl_type} one' is unsupported and will be ignored at \(file: .*, line: 2\)/)
+
+        @parser.parse
+      end
     }
 
     it "should return comprehensible error message, if failed on invalid attribute" do

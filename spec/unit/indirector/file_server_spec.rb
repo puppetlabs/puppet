@@ -246,7 +246,7 @@ describe Puppet::Indirector::FileServer do
   end
 
   describe "when checking authorization" do
-    let(:mount) { double('mount', :empty? => nil, :globalallow? => nil) }
+    let(:mount) { double('mount') }
     let(:request) { Puppet::Indirector::Request.new(:myind, :mymethod, uri, :environment => "myenv") }
 
     before(:each) do
@@ -282,21 +282,7 @@ describe Puppet::Indirector::FileServer do
     end
 
     it "should return true when no auth directives are defined for the mount point" do
-      allow(mount).to receive(:empty?).and_return(true)
-      allow(mount).to receive(:globalallow?).and_return(nil)
       expect(terminus).to be_authorized(request)
-    end
-
-    it "should return true when a global allow directive is defined for the mount point" do
-      allow(mount).to receive(:empty?).and_return(false)
-      allow(mount).to receive(:globalallow?).and_return(true)
-      expect(terminus).to be_authorized(request)
-    end
-
-    it "should return false when a non-global allow directive is defined for the mount point" do
-      allow(mount).to receive(:empty?).and_return(false)
-      allow(mount).to receive(:globalallow?).and_return(false)
-      expect(terminus).not_to be_authorized(request)
     end
   end
 end

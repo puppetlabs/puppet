@@ -32,10 +32,9 @@ class Puppet::FileServing::Configuration::Parser
           case var
           when "path"
             path(mount, value)
-          when "allow"
-            allow(mount, value)
-          when "deny"
-            deny(mount, value)
+          when "allow", "deny"
+            error_location_str = Puppet::Util::Errors.error_location(@file.filename, @count)
+            Puppet.err("Entry '#{line.chomp}' is unsupported and will be ignored at #{error_location_str}")
           else
             error_location_str = Puppet::Util::Errors.error_location(@file.filename, @count)
             raise ArgumentError.new(_("Invalid argument '%{var}' at %{error_location}") %
@@ -63,34 +62,6 @@ class Puppet::FileServing::Configuration::Parser
   end
 
   private
-
-  # Allow a given pattern access to a mount.
-  def allow(mount, value)
-    value.split(/\s*,\s*/).each { |val|
-      begin
-        mount.info _("allowing %{val} access") % { val: val }
-        mount.allow(val)
-      rescue Puppet::AuthStoreError => detail
-        error_location_str = Puppet::Util::Errors.error_location(@file, @count)
-        raise ArgumentError.new("%{detail} %{error_location}" %
-                                    { detail: detail.to_s, error_location: error_location_str })
-      end
-    }
-  end
-
-  # Deny a given pattern access to a mount.
-  def deny(mount, value)
-    value.split(/\s*,\s*/).each { |val|
-      begin
-        mount.info _("denying %{val} access") % { val: val }
-        mount.deny(val)
-      rescue Puppet::AuthStoreError => detail
-        error_location_str = Puppet::Util::Errors.error_location(@file, @count)
-        raise ArgumentError.new("%{detail} %{error_location}" %
-                                    { detail: detail.to_s, error_location: error_location_str  })
-      end
-    }
-  end
 
   # Create a new mount.
   def newmount(name)

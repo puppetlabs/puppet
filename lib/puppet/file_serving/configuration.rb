@@ -80,15 +80,10 @@ class Puppet::FileServing::Configuration
 
   def mk_default_mounts
     @mounts["modules"] ||= Mount::Modules.new("modules")
-    @mounts["modules"].allow('*') if @mounts["modules"].empty?
     @mounts["plugins"] ||= Mount::Plugins.new("plugins")
-    @mounts["plugins"].allow('*') if @mounts["plugins"].empty?
     @mounts["locales"] ||= Mount::Locales.new("locales")
-    @mounts["locales"].allow('*') if @mounts["locales"].empty?
     @mounts["pluginfacts"] ||= Mount::PluginFacts.new("pluginfacts")
-    @mounts["pluginfacts"].allow('*') if @mounts["pluginfacts"].empty?
     @mounts["tasks"] ||= Mount::Tasks.new("tasks")
-    @mounts["tasks"].allow('*') if @mounts["tasks"].empty?
   end
 
   # Read the configuration file.

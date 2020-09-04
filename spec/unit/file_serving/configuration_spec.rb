@@ -90,17 +90,14 @@ describe Puppet::FileServing::Configuration do
 
     it "should allow all access to modules, plugins, and tasks if no fileserver.conf exists" do
       expect(Puppet::FileSystem).to receive(:exist?).and_return(false) # the file doesn't exist
-      modules = double('modules', :empty? => true)
+      modules = double('modules')
       allow(Puppet::FileServing::Mount::Modules).to receive(:new).and_return(modules)
-      expect(modules).to receive(:allow).with('*')
 
-      plugins = double('plugins', :empty? => true)
+      plugins = double('plugins')
       allow(Puppet::FileServing::Mount::Plugins).to receive(:new).and_return(plugins)
-      expect(plugins).to receive(:allow).with('*')
 
-      tasks = double('tasks', :empty? => true)
+      tasks = double('tasks')
       allow(Puppet::FileServing::Mount::Tasks).to receive(:new).and_return(tasks)
-      expect(tasks).to receive(:allow).with('*')
 
       Puppet::FileServing::Configuration.configuration
     end
@@ -108,17 +105,14 @@ describe Puppet::FileServing::Configuration do
     it "should not allow access from all to modules, plugins, and tasks if the fileserver.conf provided some rules" do
       expect(Puppet::FileSystem).to receive(:exist?).and_return(false) # the file doesn't exist
 
-      modules = double('modules', :empty? => false)
+      modules = double('modules')
       allow(Puppet::FileServing::Mount::Modules).to receive(:new).and_return(modules)
-      expect(modules).not_to receive(:allow).with('*')
 
-      plugins = double('plugins', :empty? => false)
+      plugins = double('plugins')
       allow(Puppet::FileServing::Mount::Plugins).to receive(:new).and_return(plugins)
-      expect(plugins).not_to receive(:allow).with('*')
 
-      tasks = double('tasks', :empty? => false)
+      tasks = double('tasks')
       allow(Puppet::FileServing::Mount::Tasks).to receive(:new).and_return(tasks)
-      expect(tasks).not_to receive(:allow).with('*')
 
       Puppet::FileServing::Configuration.configuration
     end
