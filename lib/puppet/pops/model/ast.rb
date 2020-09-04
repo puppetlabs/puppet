@@ -2055,32 +2055,6 @@ class ResourceTypeDefinition < NamedDefinition
   end
 end
 
-class Application < NamedDefinition
-  def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Application', {
-      'parent' => NamedDefinition._pcore_type
-    })
-  end
-
-  def _pcore_contents
-    @parameters.each { |value| yield(value) }
-    yield(@body) unless @body.nil?
-  end
-
-  def _pcore_all_contents(path, &block)
-    path << self
-    @parameters.each do |value|
-      block.call(value, path)
-      value._pcore_all_contents(path, &block)
-    end
-    unless @body.nil?
-      block.call(@body, path)
-      @body._pcore_all_contents(path, &block)
-    end
-    path.pop
-  end
-end
-
 class QRefDefinition < Definition
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::QRefDefinition', {
@@ -2461,75 +2435,6 @@ class NodeDefinition < Definition
     super &&
     @parent.eql?(o.parent) &&
     @host_matches.eql?(o.host_matches) &&
-    @body.eql?(o.body)
-  end
-  alias == eql?
-end
-
-class SiteDefinition < Definition
-  def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::SiteDefinition', {
-      'parent' => Definition._pcore_type,
-      'attributes' => {
-        'body' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        }
-      }
-    })
-  end
-
-  def self.from_hash(init_hash)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SiteDefinition initializer', _pcore_type.init_hash_type, init_hash))
-  end
-
-  def self.from_asserted_hash(init_hash)
-    new(
-      init_hash['locator'],
-      init_hash['offset'],
-      init_hash['length'],
-      init_hash['body'])
-  end
-
-  def self.create(locator, offset, length, body = nil)
-    ta = Types::TypeAsserter
-    attrs = _pcore_type.attributes(true)
-    ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
-    ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
-    ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
-    ta.assert_instance_of('Puppet::AST::SiteDefinition[body]', attrs['body'].type, body)
-    new(locator, offset, length, body)
-  end
-
-  attr_reader :body
-
-  def initialize(locator, offset, length, body = nil)
-    super(locator, offset, length)
-    @hash = @hash ^ body.hash
-    @body = body
-  end
-
-  def _pcore_init_hash
-    result = super
-    result['body'] = @body unless @body == nil
-    result
-  end
-
-  def _pcore_contents
-    yield(@body) unless @body.nil?
-  end
-
-  def _pcore_all_contents(path, &block)
-    path << self
-    unless @body.nil?
-      block.call(@body, path)
-      @body._pcore_all_contents(path, &block)
-    end
-    path.pop
-  end
-
-  def eql?(o)
-    super &&
     @body.eql?(o.body)
   end
   alias == eql?
@@ -4188,101 +4093,6 @@ class ResourceExpression < AbstractResource
   alias == eql?
 end
 
-class CapabilityMapping < Definition
-  def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CapabilityMapping', {
-      'parent' => Definition._pcore_type,
-      'attributes' => {
-        'kind' => Types::PStringType::DEFAULT,
-        'capability' => Types::PStringType::DEFAULT,
-        'component' => Expression._pcore_type,
-        'mappings' => {
-          'type' => Types::PArrayType.new(AbstractAttributeOperation._pcore_type),
-          'value' => []
-        }
-      }
-    })
-  end
-
-  def self.from_hash(init_hash)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::CapabilityMapping initializer', _pcore_type.init_hash_type, init_hash))
-  end
-
-  def self.from_asserted_hash(init_hash)
-    new(
-      init_hash['locator'],
-      init_hash['offset'],
-      init_hash['length'],
-      init_hash['kind'],
-      init_hash['capability'],
-      init_hash['component'],
-      init_hash.fetch('mappings') { _pcore_type['mappings'].value })
-  end
-
-  def self.create(locator, offset, length, kind, capability, component, mappings = _pcore_type['mappings'].value)
-    ta = Types::TypeAsserter
-    attrs = _pcore_type.attributes(true)
-    ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
-    ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
-    ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
-    ta.assert_instance_of('Puppet::AST::CapabilityMapping[kind]', attrs['kind'].type, kind)
-    ta.assert_instance_of('Puppet::AST::CapabilityMapping[capability]', attrs['capability'].type, capability)
-    ta.assert_instance_of('Puppet::AST::CapabilityMapping[component]', attrs['component'].type, component)
-    ta.assert_instance_of('Puppet::AST::CapabilityMapping[mappings]', attrs['mappings'].type, mappings)
-    new(locator, offset, length, kind, capability, component, mappings)
-  end
-
-  attr_reader :kind
-  attr_reader :capability
-  attr_reader :component
-  attr_reader :mappings
-
-  def initialize(locator, offset, length, kind, capability, component, mappings = _pcore_type['mappings'].value)
-    super(locator, offset, length)
-    @hash = @hash ^ kind.hash ^ capability.hash ^ component.hash ^ mappings.hash
-    @kind = kind
-    @capability = capability
-    @component = component
-    @mappings = mappings
-  end
-
-  def _pcore_init_hash
-    result = super
-    result['kind'] = @kind
-    result['capability'] = @capability
-    result['component'] = @component
-    result['mappings'] = @mappings unless _pcore_type['mappings'].default_value?(@mappings)
-    result
-  end
-
-  def _pcore_contents
-    yield(@component) unless @component.nil?
-    @mappings.each { |value| yield(value) }
-  end
-
-  def _pcore_all_contents(path, &block)
-    path << self
-    unless @component.nil?
-      block.call(@component, path)
-      @component._pcore_all_contents(path, &block)
-    end
-    @mappings.each do |value|
-      block.call(value, path)
-      value._pcore_all_contents(path, &block)
-    end
-    path.pop
-  end
-
-  def eql?(o)
-    super &&
-    @kind.eql?(o.kind) &&
-    @capability.eql?(o.capability) &&
-    @component.eql?(o.component) &&
-    @mappings.eql?(o.mappings)
-  end
-  alias == eql?
-end
-
 class ResourceDefaultsExpression < AbstractResource
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceDefaultsExpression', {
@@ -4799,13 +4609,11 @@ def self.register_pcore_types
   Model::NamedDefinition,
   Model::FunctionDefinition,
   Model::ResourceTypeDefinition,
-  Model::Application,
   Model::QRefDefinition,
   Model::TypeAlias,
   Model::TypeMapping,
   Model::TypeDefinition,
   Model::NodeDefinition,
-  Model::SiteDefinition,
   Model::HeredocExpression,
   Model::HostClassDefinition,
   Model::PlanDefinition,
@@ -4839,7 +4647,6 @@ def self.register_pcore_types
   Model::ResourceBody,
   Model::AbstractResource,
   Model::ResourceExpression,
-  Model::CapabilityMapping,
   Model::ResourceDefaultsExpression,
   Model::ResourceOverrideExpression,
   Model::SelectorEntry,

@@ -276,9 +276,6 @@ type Puppet::AST = TypeSet[{
     ResourceTypeDefinition => Object[{
       parent => NamedDefinition
     }],
-    Application => Object[{
-      parent => NamedDefinition
-    }],
     QRefDefinition => Object[{
       parent => Definition,
       attributes => {
@@ -328,15 +325,6 @@ type Puppet::AST = TypeSet[{
           value => undef
         },
         'host_matches' => Array[Expression, 1, default],
-        'body' => {
-          type => Optional[Expression],
-          value => undef
-        }
-      }
-    }],
-    SiteDefinition => Object[{
-      parent => Definition,
-      attributes => {
         'body' => {
           type => Optional[Expression],
           value => undef
@@ -594,18 +582,6 @@ type Puppet::AST = TypeSet[{
         'type_name' => Expression,
         'bodies' => {
           type => Array[ResourceBody],
-          value => []
-        }
-      }
-    }],
-    CapabilityMapping => Object[{
-      parent => Definition,
-      attributes => {
-        'kind' => String,
-        'capability' => String,
-        'component' => Expression,
-        'mappings' => {
-          type => Array[AbstractAttributeOperation],
           value => []
         }
       }
