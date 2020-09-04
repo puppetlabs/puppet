@@ -9,7 +9,9 @@ module Puppet::Network::HTTP
   CA_URL_PREFIX = "/puppet-ca"
   CA_URL_VERSIONS = "v1"
 
+  require 'puppet/network/authconfig'
   require 'puppet/network/authorization'
+
   require 'puppet/network/http/issues'
   require 'puppet/network/http/error'
   require 'puppet/network/http/route'
