@@ -44,16 +44,12 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
     EOT
     returns "Nothing."
     notes <<-'EOT'
-      This action requires that the puppet master's `auth.conf` file
+      This action requires that the Puppet Server's `auth.conf` file
       allow `PUT` or `save` access to the `/puppet/v3/facts` API endpoint.
 
       For details on configuring Puppet Server's `auth.conf`, see:
 
       <https://puppet.com/docs/puppetserver/latest/config_file_auth.html>
-
-      For legacy Rack-based Puppet Masters, see:
-
-      <https://puppet.com/docs/puppet/latest/config_file_auth.html>
     EOT
     examples <<-'EOT'
       Upload facts:

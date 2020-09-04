@@ -778,7 +778,7 @@ API to expire the cache as needed
         `certname` setting as its requested Subject CN.
 
         This is the name used when managing a node's permissions in
-        [auth.conf](https://puppet.com/docs/puppet/latest/config_file_auth.html).
+        Puppet Server's [auth.conf](https://puppet.com/docs/puppetserver/latest/config_file_auth.html).
         In most cases, it is also used as the node's name when matching
         [node definitions](https://puppet.com/docs/puppet/latest/lang_node_definitions.html)
         and requesting data from an ENC. (This can be changed with the `node_name_value`
@@ -793,7 +793,7 @@ API to expire the cache as needed
           only use lowercase letters, numbers, periods, underscores, and dashes. (That is,
           it should match `/\A[a-z0-9._-]+\Z/`.)
         * The special value `ca` is reserved, and can't be used as the certname
-          for a normal node.         
+          for a normal node.
 
           **Note:** You must set the certname in the main section of the puppet.conf file. Setting it in a different section causes errors.
 
@@ -1439,17 +1439,15 @@ EOT
       :default => "$certname",
       :desc => "The explicit value used for the node name for all requests the agent
         makes to the master. WARNING: This setting is mutually exclusive with
-        node_name_fact.  Changing this setting also requires changes to the default
-        auth.conf configuration on the Puppet Master.  Please see
-        http://links.puppet.com/node_name_value for more information."
+        node_name_fact.  Changing this setting also requires changes to
+        Puppet Server's default [auth.conf](https://puppet.com/docs/puppetserver/latest/config_file_auth.html)."
     },
     :node_name_fact => {
       :default => "",
       :desc => "The fact name used to determine the node name used for all requests the agent
         makes to the master. WARNING: This setting is mutually exclusive with
-        node_name_value.  Changing this setting also requires changes to the default
-        auth.conf configuration on the Puppet Master.  Please see
-        http://links.puppet.com/node_name_fact for more information.",
+        node_name_value.  Changing this setting also requires changes to
+        Puppet Server's default [auth.conf](https://puppet.com/docs/puppetserver/latest/config_file_auth.html).",
       :hook => proc do |value|
         if !value.empty? and Puppet[:node_name_value] != Puppet[:certname]
           raise "Cannot specify both the node_name_value and node_name_fact settings"

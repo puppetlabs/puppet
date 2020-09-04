@@ -54,7 +54,7 @@ Delete a submitted CSR
 ### Supported HTTP Methods
 
 The default configuration only allows requests that result in a Find and a
-Save. You need to modify auth.conf in order to allow clients to use Search and
+Save. You need to modify Puppet Server's `auth.conf` in order to allow clients to use Search and
 Destroy actions. It is not recommended that you change the default settings.
 
 GET, PUT, DELETE
