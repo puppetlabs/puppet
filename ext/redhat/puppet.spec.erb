@@ -199,7 +199,6 @@ touch %{buildroot}%{_localstatedir}/log/puppet/masterhttp.log
 %config(noreplace) %{_sysconfdir}/tmpfiles.d/%{name}.conf
 %endif
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
-%config(noreplace) %{_sysconfdir}/puppet/auth.conf
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
 # We don't want to require emacs or vim, so we need to own these dirs
 %{_datadir}/emacs
