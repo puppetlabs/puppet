@@ -1,8 +1,12 @@
-require 'puppet/util/windows'
+require 'puppet/ffi/windows'
+require 'puppet/util/windows/string'
 
 class Dir
-  include Puppet::Util::Windows::File
-  extend Puppet::Util::Windows::File
+  extend Puppet::FFI::Windows::Functions
+  extend Puppet::FFI::Windows::Structs
+
+  include Puppet::FFI::Windows::Constants
+  include Puppet::FFI::Windows::Structs
 
   # CSIDL constants
   csidl = Hash[

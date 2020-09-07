@@ -6,11 +6,12 @@ class Puppet::Settings::PrioritySetting < Puppet::Settings::BaseSetting
   PRIORITY_MAP =
     if Puppet::Util::Platform.windows?
       require 'puppet/util/windows/process'
+      require 'puppet/ffi/windows/constants'
       {
-        :high    => Puppet::Util::Windows::Process::HIGH_PRIORITY_CLASS,
-        :normal  => Puppet::Util::Windows::Process::NORMAL_PRIORITY_CLASS,
-        :low     => Puppet::Util::Windows::Process::BELOW_NORMAL_PRIORITY_CLASS,
-        :idle    => Puppet::Util::Windows::Process::IDLE_PRIORITY_CLASS
+        :high    => Puppet::FFI::Windows::Constants::HIGH_PRIORITY_CLASS,
+        :normal  => Puppet::FFI::Windows::Constants::NORMAL_PRIORITY_CLASS,
+        :low     => Puppet::FFI::Windows::Constants::BELOW_NORMAL_PRIORITY_CLASS,
+        :idle    => Puppet::FFI::Windows::Constants::IDLE_PRIORITY_CLASS
       }
     else
       {
