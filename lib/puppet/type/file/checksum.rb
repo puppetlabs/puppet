@@ -7,7 +7,7 @@ Puppet::Type.type(:file).newparam(:checksum) do
 
   desc "The checksum type to use when determining whether to replace a file's contents.
 
-    The default checksum type is md5."
+    The default checksum type is #{Puppet.default_digest_algorithm}."
 
   newvalues(*Puppet::Util::Checksums.known_checksum_types)
 

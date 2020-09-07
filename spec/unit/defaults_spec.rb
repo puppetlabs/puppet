@@ -77,9 +77,9 @@ describe "Defaults" do
   end
 
   describe '.supported_checksum_types' do
-    it 'defaults to md5, sha256, sha384, sha512, sha224 when FIPS is not enabled' do
+    it 'defaults to sha256, sha384, sha512, sha224, md5 when FIPS is not enabled' do
       allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(false)
-      expect(Puppet.default_file_checksum_types).to eq(%w[md5 sha256 sha384 sha512 sha224])
+      expect(Puppet.default_file_checksum_types).to eq(%w[sha256 sha384 sha512 sha224 md5])
     end
 
     it 'defaults to sha256, sha384, sha512, sha224 when FIPS is enabled' do
@@ -89,8 +89,8 @@ describe "Defaults" do
   end
 
   describe 'Puppet[:supported_checksum_types]' do
-    it 'defaults to md5, sha256, sha512, sha384, sha224' do
-      expect(Puppet.settings[:supported_checksum_types]).to eq(%w[md5 sha256 sha384 sha512 sha224])
+    it 'defaults to sha256, sha512, sha384, sha224, md5' do
+      expect(Puppet.settings[:supported_checksum_types]).to eq(%w[sha256 sha384 sha512 sha224 md5])
     end
 
     it 'should raise an error on an unsupported checksum type' do

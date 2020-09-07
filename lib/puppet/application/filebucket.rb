@@ -16,6 +16,10 @@ class Puppet::Application::Filebucket < Puppet::Application
     _("Store and retrieve files in a filebucket")
   end
 
+  def digest_algorithm
+    Puppet.default_digest_algorithm
+  end
+
   def help
     <<-HELP
 
@@ -38,14 +42,14 @@ Puppet filebucket can operate in three modes, with only one mode per call:
 
 backup:
   Send one or more files to the specified file bucket. Each sent file is
-  printed with its resulting md5 sum.
+  printed with its resulting #{digest_algorithm} sum.
 
 get:
-  Return the text associated with an md5 sum. The text is printed to
+  Return the text associated with an #{digest_algorithm} sum. The text is printed to
   stdout, and only one file can be retrieved at a time.
 
 restore:
-  Given a file path and an md5 sum, store the content associated with
+  Given a file path and an #{digest_algorithm} sum, store the content associated with
   the sum into the specified file path. You can specify an entirely new
   path to this argument; you are not restricted to restoring the content
   to its original location.
@@ -212,8 +216,8 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def get
-    md5 = args.shift
-    out = @client.getfile(md5)
+    digest = args.shift
+    out = @client.getfile(digest)
     print out
   end
 
@@ -229,8 +233,8 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
         $stderr.puts _("%{file}: cannot read file") % { file: file }
         next
       end
-      md5 = @client.backup(file)
-      puts "#{file}: #{md5}"
+      digest = @client.backup(file)
+      puts "#{file}: #{digest}"
     end
   end
 
@@ -243,8 +247,8 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
   def restore
     file = args.shift
-    md5 = args.shift
-    @client.restore(file, md5)
+    digest = args.shift
+    @client.restore(file, digest)
   end
 
   def diff
