@@ -187,11 +187,11 @@ describe Puppet::Application::Filebucket do
         @filebucket.get
       end
 
-      it "should call the client getfile method with the given md5" do
-        md5="DEADBEEF"
-        allow(@filebucket).to receive(:args).and_return([md5])
+      it "should call the client getfile method with the given digest" do
+        digest = 'DEADBEEF'
+        allow(@filebucket).to receive(:args).and_return([digest])
 
-        expect(@client).to receive(:getfile).with(md5)
+        expect(@client).to receive(:getfile).with(digest)
 
         @filebucket.get
       end
@@ -225,12 +225,12 @@ describe Puppet::Application::Filebucket do
     end
 
     describe "the command restore" do
-      it "should call the client getfile method with the given md5" do
-        md5="DEADBEEF"
-        file="testfile"
-        allow(@filebucket).to receive(:args).and_return([file, md5])
+      it "should call the client getfile method with the given digest" do
+        digest = 'DEADBEEF'
+        file = 'testfile'
+        allow(@filebucket).to receive(:args).and_return([file, digest])
 
-        expect(@client).to receive(:restore).with(file,md5)
+        expect(@client).to receive(:restore).with(file, digest)
 
         @filebucket.restore
       end
@@ -238,55 +238,55 @@ describe Puppet::Application::Filebucket do
 
     describe "the command diff" do
       it "should call the client diff method with 2 given checksums" do
-        md5a="DEADBEEF"
-        md5b="BEEF"
+        digest_a = 'DEADBEEF'
+        digest_b = 'BEEF'
         allow(Puppet::FileSystem).to receive(:exist?).and_return(false)
-        allow(@filebucket).to receive(:args).and_return([md5a, md5b])
+        allow(@filebucket).to receive(:args).and_return([digest_a, digest_b])
 
-        expect(@client).to receive(:diff).with(md5a,md5b, nil, nil)
-
-        @filebucket.diff
-      end
-
-      it "should call the clien diff with a path if the second argument is a file" do
-        md5a="DEADBEEF"
-        md5b="BEEF"
-        allow(Puppet::FileSystem).to receive(:exist?).with(md5a).and_return(false)
-        allow(Puppet::FileSystem).to receive(:exist?).with(md5b).and_return(true)
-        allow(@filebucket).to receive(:args).and_return([md5a, md5b])
-
-        expect(@client).to receive(:diff).with(md5a, nil, nil, md5b)
+        expect(@client).to receive(:diff).with(digest_a, digest_b, nil, nil)
 
         @filebucket.diff
       end
 
-      it "should call the clien diff with a path if the first argument is a file" do
-        md5a="DEADBEEF"
-        md5b="BEEF"
-        allow(Puppet::FileSystem).to receive(:exist?).with(md5a).and_return(true)
-        allow(Puppet::FileSystem).to receive(:exist?).with(md5b).and_return(false)
-        allow(@filebucket).to receive(:args).and_return([md5a, md5b])
+      it "should call the client diff with a path if the second argument is a file" do
+        digest_a = 'DEADBEEF'
+        digest_b = 'BEEF'
+        allow(Puppet::FileSystem).to receive(:exist?).with(digest_a).and_return(false)
+        allow(Puppet::FileSystem).to receive(:exist?).with(digest_b).and_return(true)
+        allow(@filebucket).to receive(:args).and_return([digest_a, digest_b])
 
-        expect(@client).to receive(:diff).with(nil, md5b, md5a, nil)
+        expect(@client).to receive(:diff).with(digest_a, nil, nil, digest_b)
+
+        @filebucket.diff
+      end
+
+      it "should call the client diff with a path if the first argument is a file" do
+        digest_a = 'DEADBEEF'
+        digest_b = 'BEEF'
+        allow(Puppet::FileSystem).to receive(:exist?).with(digest_a).and_return(true)
+        allow(Puppet::FileSystem).to receive(:exist?).with(digest_b).and_return(false)
+        allow(@filebucket).to receive(:args).and_return([digest_a, digest_b])
+
+        expect(@client).to receive(:diff).with(nil, digest_b, digest_a, nil)
 
         @filebucket.diff
       end
 
       it "should call the clien diff with paths if the both arguments are files" do
-        md5a="DEADBEEF"
-        md5b="BEEF"
-        allow(Puppet::FileSystem).to receive(:exist?).with(md5a).and_return(true)
-        allow(Puppet::FileSystem).to receive(:exist?).with(md5b).and_return(true)
-        allow(@filebucket).to receive(:args).and_return([md5a, md5b])
+        digest_a = 'DEADBEEF'
+        digest_b = 'BEEF'
+        allow(Puppet::FileSystem).to receive(:exist?).with(digest_a).and_return(true)
+        allow(Puppet::FileSystem).to receive(:exist?).with(digest_b).and_return(true)
+        allow(@filebucket).to receive(:args).and_return([digest_a, digest_b])
 
-        expect(@client).to receive(:diff).with(nil, nil, md5a, md5b)
+        expect(@client).to receive(:diff).with(nil, nil, digest_a, digest_b)
 
         @filebucket.diff
       end
 
       it "should fail if only one checksum is given" do
-        md5a="DEADBEEF"
-        allow(@filebucket).to receive(:args).and_return([md5a])
+        digest_a = 'DEADBEEF'
+        allow(@filebucket).to receive(:args).and_return([digest_a])
 
         expect { @filebucket.diff }.to raise_error Puppet::Error
       end
