@@ -1,4 +1,6 @@
-require 'rubygems/commands/list_command'
+unless Puppet::Util::Platform.jruby_fips?
+  require 'rubygems/commands/list_command'
+end
 require 'stringio'
 require 'uri'
 
@@ -15,6 +17,8 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
   has_feature :versionable, :install_options, :uninstall_options
 
   confine :feature => :hocon
+  # see SERVER-2578
+  confine :fips_enabled => false
 
   # Define the default provider package command name, as the parent 'gem' provider is targetable.
   # Required by Puppet::Provider::Package::Targetable::resource_or_provider_command
