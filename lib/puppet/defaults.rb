@@ -196,7 +196,7 @@ module Puppet
       end
     },
     :disable_i18n => {
-      :default => false,
+      :default => true,
       :type    => :boolean,
       :desc    => "If true, turns off all translations of Puppet and module
         log messages, which affects error, warning, and info log messages,

@@ -526,34 +526,46 @@ describe Puppet::Node::Environment do
   end
 
   describe "managing module translations" do
-    it "creates a new text domain the first time we try to use the text domain" do
-      expect(Puppet::GettextConfig).to receive(:reset_text_domain).with(env.name)
-      expect(Puppet::ModuleTranslations).to receive(:load_from_modulepath)
-      expect(Puppet::GettextConfig).to receive(:clear_text_domain)
+    context "when i18n is enabled" do
+      before(:each) do
+        Puppet[:disable_i18n] = false
+      end
 
-      env.with_text_domain do; end
+      it "yields block results" do
+        ran = false
+        expect(env.with_text_domain { ran = true; :result }).to eq(:result)
+        expect(ran).to eq(true)
+      end
+
+      it "creates a new text domain the first time we try to use the text domain" do
+        expect(Puppet::GettextConfig).to receive(:reset_text_domain).with(env.name)
+        expect(Puppet::ModuleTranslations).to receive(:load_from_modulepath)
+        expect(Puppet::GettextConfig).to receive(:clear_text_domain)
+
+        env.with_text_domain do; end
+      end
+
+      it "uses the existing text domain once it has been created" do
+        env.with_text_domain do; end
+
+        expect(Puppet::GettextConfig).to receive(:use_text_domain).with(env.name)
+        env.with_text_domain do; end
+      end
     end
 
-    it "uses the existing text domain once it has been created" do
-      env.with_text_domain do; end
+    context "when i18n is disabled" do
+      it "yields block results" do
+        ran = false
+        expect(env.with_text_domain { ran = true; :result }).to eq(:result)
+        expect(ran).to eq(true)
+      end
 
-      expect(Puppet::GettextConfig).to receive(:use_text_domain).with(env.name)
-      env.with_text_domain do; end
-    end
+      it "does not create a new text domain the first time we try to use the text domain" do
+        expect(Puppet::GettextConfig).not_to receive(:reset_text_domain)
+        expect(Puppet::ModuleTranslations).not_to receive(:load_from_modulepath)
 
-    it "yields block results" do
-      ran = false
-      expect(env.with_text_domain { ran = true; :result }).to eq(:result)
-      expect(ran).to eq(true)
-    end
-
-    it "yields block results when i18n is disabled" do
-      Puppet[:disable_i18n] = true
-
-      ran = false
-      expect(env.with_text_domain { ran = true; :result }).to eq(:result)
-      expect(ran).to eq(true)
+        env.with_text_domain do; end
+      end
     end
   end
-
 end
