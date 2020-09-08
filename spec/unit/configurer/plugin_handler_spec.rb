@@ -19,30 +19,68 @@ describe Puppet::Configurer::PluginHandler do
       end
     end
 
-    it "downloads plugins, facts, and locales" do
-      times_called = 0
-      allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) { times_called += 1 }.and_return([])
-
-      pluginhandler.download_plugins(environment)
-      expect(times_called).to eq(3)
-    end
-
-    it "returns downloaded plugin, fact, and locale filenames" do
-      times_called = 0
-      allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) do
-        times_called += 1
-
-        if times_called == 1
-          %w[/a]
-        elsif times_called == 2
-          %w[/b]
-        else
-          %w[/c]
-        end
+    context "when i18n is enabled" do
+      before :each do
+        Puppet[:disable_i18n] = false
       end
 
-      expect(pluginhandler.download_plugins(environment)).to match_array(%w[/a /b /c])
-      expect(times_called).to eq(3)
+      it "downloads plugins, facts, and locales" do
+        times_called = 0
+        allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) { times_called += 1 }.and_return([])
+
+        pluginhandler.download_plugins(environment)
+        expect(times_called).to eq(3)
+      end
+
+      it "returns downloaded plugin, fact, and locale filenames" do
+        times_called = 0
+        allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) do
+          times_called += 1
+
+          if times_called == 1
+            %w[/a]
+          elsif times_called == 2
+            %w[/b]
+          else
+            %w[/c]
+          end
+        end
+
+        expect(pluginhandler.download_plugins(environment)).to match_array(%w[/a /b /c])
+        expect(times_called).to eq(3)
+      end
+    end
+
+    context "when i18n is disabled" do
+      before :each do
+        Puppet[:disable_i18n] = true
+      end
+
+      it "downloads plugins, facts, but no locales" do
+        times_called = 0
+        allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) { times_called += 1 }.and_return([])
+
+        pluginhandler.download_plugins(environment)
+        expect(times_called).to eq(2)
+      end
+
+      it "returns downloaded plugin, fact, and locale filenames" do
+        times_called = 0
+        allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) do
+          times_called += 1
+
+          if times_called == 1
+            %w[/a]
+          elsif times_called == 2
+            %w[/b]
+          else
+            %w[/c]
+          end
+        end
+
+        expect(pluginhandler.download_plugins(environment)).to match_array(%w[/a /b])
+        expect(times_called).to eq(2)
+      end
     end
   end
 
