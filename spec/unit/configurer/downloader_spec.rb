@@ -189,8 +189,6 @@ describe Puppet::Configurer::Downloader do
     end
 
     it "should return all changed file paths" do
-      Puppet[:ignore_plugin_errors] = true
-
       trans = double('transaction')
 
       catalog = double('catalog')
@@ -206,8 +204,6 @@ describe Puppet::Configurer::Downloader do
     end
 
     it "should yield the resources if a block is given" do
-      Puppet[:ignore_plugin_errors] = true
-
       trans = double('transaction')
 
       catalog = double('catalog')
@@ -225,8 +221,6 @@ describe Puppet::Configurer::Downloader do
     end
 
     it "should catch and log exceptions" do
-      Puppet[:ignore_plugin_errors] = true
-
       expect(Puppet).to receive(:log_exception)
       # The downloader creates a new catalog for each apply, and really the only object
       # that it is possible to stub for the purpose of generating a puppet error
@@ -236,6 +230,8 @@ describe Puppet::Configurer::Downloader do
     end
 
     it "raises an exception if catalog application fails" do
+      Puppet[:ignore_plugin_errors] = false
+
       expect(@dler.file).to receive(:retrieve).and_raise(Puppet::Error, "testing")
 
       expect {

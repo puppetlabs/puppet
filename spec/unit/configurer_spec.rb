@@ -639,8 +639,6 @@ describe Puppet::Configurer do
       end
 
       it "should pluginsync and compile a new catalog if none is found in the cache" do
-        Puppet[:ignore_plugin_errors] = true
-
         expects_fallback_to_new_catalog(catalog)
         stub_request(:get, %r{/puppet/v3/file_metadatas?/plugins}).to_return(:status => 404)
         stub_request(:get, %r{/puppet/v3/file_metadatas?/pluginfacts}).to_return(:status => 404)
@@ -652,8 +650,6 @@ describe Puppet::Configurer do
       end
 
       it "should not attempt to retrieve a cached catalog again if the first attempt failed" do
-        Puppet[:ignore_plugin_errors] = true
-
         expect(Puppet::Node.indirection).to receive(:find).and_return(nil)
         expects_neither_new_or_cached_catalog
         expects_pluginsync

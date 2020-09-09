@@ -1893,7 +1893,7 @@ EOT
         :desc     => "What files to ignore when pulling down plugins.",
     },
     :ignore_plugin_errors => {
-      :default    => false,
+      :default    => true,
       :type       => :boolean,
       :desc       => "Whether the puppet run should ignore errors during pluginsync. If the setting
         is false and there are errors during pluginsync, then the agent will abort the run and
