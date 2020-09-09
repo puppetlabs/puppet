@@ -178,11 +178,6 @@ class Parser
     definition
   end
 
-  def add_mapping(produces)
-    # The actual handling of mappings happens in PopsBridge
-    add_definition(produces)
-  end
-
   # Transforms an array of expressions containing literal name expressions to calls if followed by an
   # expression, or expression list
   #
