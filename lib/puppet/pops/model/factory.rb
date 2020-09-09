@@ -444,22 +444,6 @@ class Factory
     @init_hash['selectors'] = selectors
   end
 
-  # Builds a SubLocatedExpression - this wraps the expression in a sublocation configured
-  # from the given token
-  # A SubLocated holds its own locator that is used for subexpressions holding positions relative
-  # to what it describes.
-  #
-  def build_SubLocatedExpression(o, token, expression)
-    @init_hash[KEY_EXPR] = expression
-    @init_hash[KEY_OFFSET] = token.offset
-    @init_hash[KEY_LENGTH] =  token.length
-    locator = token.locator
-    @init_hash[KEY_LOCATOR] = locator
-    @init_hash['leading_line_count'] = locator.leading_line_count
-    @init_hash['leading_line_offset'] = locator.leading_line_offset
-    @init_hash['line_offsets'] = locator.line_index # index of lines in sublocated
-  end
-
   def build_SelectorEntry(o, matching, value)
     @init_hash['matching_expr'] = matching
     @init_hash['value_expr'] = value

@@ -343,24 +343,6 @@ type Puppet::AST = TypeSet[{
         }
       }
     }],
-    SubLocatedExpression => Object[{
-      parent => Expression,
-      attributes => {
-        'expr' => Expression,
-        'line_offsets' => {
-          type => Array[Integer],
-          value => []
-        },
-        'leading_line_count' => {
-          type => Optional[Integer],
-          value => undef
-        },
-        'leading_line_offset' => {
-          type => Optional[Integer],
-          value => undef
-        }
-      }
-    }],
     HeredocExpression => Object[{
       parent => Expression,
       attributes => {
