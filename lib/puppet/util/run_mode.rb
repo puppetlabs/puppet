@@ -111,7 +111,7 @@ module Puppet
     private
 
       def windows_common_base(*extra)
-        [Dir::COMMON_APPDATA, "PuppetLabs"] + extra
+        [ENV['ALLUSERSPROFILE'], "PuppetLabs"] + extra
       end
     end
   end
