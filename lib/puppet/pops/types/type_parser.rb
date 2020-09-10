@@ -94,10 +94,6 @@ class TypeParser
     interpret_any(o.text_expr, context)
   end
 
-  def interpret_SubLocatedExpression(o, context)
-    interpret_any(o.expr, context)
-  end
-
   # @api private
   def interpret_QualifiedName(o, context)
     o.value

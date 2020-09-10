@@ -297,10 +297,6 @@ class PNTransformer
     transform(e.body).as_call('site')
   end
 
-  def transform_SubLocatedExpression(e)
-    transform(e.expr)
-  end
-
   def transform_TextExpression(e)
     PN::Call.new('str', transform(e.expr))
   end

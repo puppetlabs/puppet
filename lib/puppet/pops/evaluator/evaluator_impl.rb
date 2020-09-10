@@ -1021,11 +1021,6 @@ class EvaluatorImpl
     end
   end
 
-  # SubLocatable is simply an expression that holds location information
-  def eval_SubLocatedExpression o, scope
-    evaluate(o.expr, scope)
-  end
-
   # Evaluates Puppet DSL Heredoc
   def eval_HeredocExpression o, scope
     expr = o.text_expr

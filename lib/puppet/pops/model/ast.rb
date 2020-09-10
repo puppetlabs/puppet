@@ -2535,102 +2535,6 @@ class SiteDefinition < Definition
   alias == eql?
 end
 
-class SubLocatedExpression < Expression
-  def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::SubLocatedExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'expr' => Expression._pcore_type,
-        'line_offsets' => {
-          'type' => Types::PArrayType.new(Types::PIntegerType::DEFAULT),
-          'value' => []
-        },
-        'leading_line_count' => {
-          'type' => Types::POptionalType.new(Types::PIntegerType::DEFAULT),
-          'value' => nil
-        },
-        'leading_line_offset' => {
-          'type' => Types::POptionalType.new(Types::PIntegerType::DEFAULT),
-          'value' => nil
-        }
-      }
-    })
-  end
-
-  def self.from_hash(init_hash)
-    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::SubLocatedExpression initializer', _pcore_type.init_hash_type, init_hash))
-  end
-
-  def self.from_asserted_hash(init_hash)
-    new(
-      init_hash['locator'],
-      init_hash['offset'],
-      init_hash['length'],
-      init_hash['expr'],
-      init_hash.fetch('line_offsets') { _pcore_type['line_offsets'].value },
-      init_hash['leading_line_count'],
-      init_hash['leading_line_offset'])
-  end
-
-  def self.create(locator, offset, length, expr, line_offsets = _pcore_type['line_offsets'].value, leading_line_count = nil, leading_line_offset = nil)
-    ta = Types::TypeAsserter
-    attrs = _pcore_type.attributes(true)
-    ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
-    ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
-    ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
-    ta.assert_instance_of('Puppet::AST::SubLocatedExpression[expr]', attrs['expr'].type, expr)
-    ta.assert_instance_of('Puppet::AST::SubLocatedExpression[line_offsets]', attrs['line_offsets'].type, line_offsets)
-    ta.assert_instance_of('Puppet::AST::SubLocatedExpression[leading_line_count]', attrs['leading_line_count'].type, leading_line_count)
-    ta.assert_instance_of('Puppet::AST::SubLocatedExpression[leading_line_offset]', attrs['leading_line_offset'].type, leading_line_offset)
-    new(locator, offset, length, expr, line_offsets, leading_line_count, leading_line_offset)
-  end
-
-  attr_reader :expr
-  attr_reader :line_offsets
-  attr_reader :leading_line_count
-  attr_reader :leading_line_offset
-
-  def initialize(locator, offset, length, expr, line_offsets = _pcore_type['line_offsets'].value, leading_line_count = nil, leading_line_offset = nil)
-    super(locator, offset, length)
-    @hash = @hash ^ expr.hash ^ line_offsets.hash ^ leading_line_count.hash ^ leading_line_offset.hash
-    @expr = expr
-    @line_offsets = line_offsets
-    @leading_line_count = leading_line_count
-    @leading_line_offset = leading_line_offset
-  end
-
-  def _pcore_init_hash
-    result = super
-    result['expr'] = @expr
-    result['line_offsets'] = @line_offsets unless _pcore_type['line_offsets'].default_value?(@line_offsets)
-    result['leading_line_count'] = @leading_line_count unless @leading_line_count == nil
-    result['leading_line_offset'] = @leading_line_offset unless @leading_line_offset == nil
-    result
-  end
-
-  def _pcore_contents
-    yield(@expr) unless @expr.nil?
-  end
-
-  def _pcore_all_contents(path, &block)
-    path << self
-    unless @expr.nil?
-      block.call(@expr, path)
-      @expr._pcore_all_contents(path, &block)
-    end
-    path.pop
-  end
-
-  def eql?(o)
-    super &&
-    @expr.eql?(o.expr) &&
-    @line_offsets.eql?(o.line_offsets) &&
-    @leading_line_count.eql?(o.leading_line_count) &&
-    @leading_line_offset.eql?(o.leading_line_offset)
-  end
-  alias == eql?
-end
-
 class HeredocExpression < Expression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::HeredocExpression', {
@@ -4902,7 +4806,6 @@ def self.register_pcore_types
   Model::TypeDefinition,
   Model::NodeDefinition,
   Model::SiteDefinition,
-  Model::SubLocatedExpression,
   Model::HeredocExpression,
   Model::HostClassDefinition,
   Model::PlanDefinition,
