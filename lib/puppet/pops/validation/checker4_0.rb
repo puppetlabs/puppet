@@ -199,11 +199,6 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     end
   end
 
-  def check_Application(o)
-    check_NamedDefinition(o)
-    acceptor.accept(Issues::DEPRECATED_APP_ORCHESTRATION, o, {:klass => o})
-  end
-
   def check_AssignmentExpression(o)
     case o.operator
     when '='
@@ -241,7 +236,6 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     case p
     when Model::AbstractResource
     when Model::CollectExpression
-    when Model::CapabilityMapping
       acceptor.accept(Issues::UNSUPPORTED_OPERATOR_IN_CONTEXT, p, :operator=>'* =>')
     else
       # protect against just testing a snippet that has no parent, error message will be a bit strange
@@ -297,33 +291,6 @@ class Checker4_0 < Evaluator::LiteralEvaluator
       acceptor.accept(Issues::ILLEGAL_EPP_PARAMETERS, o)
     else
       acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
-    end
-  end
-
-  def check_CapabilityMapping(o)
-    acceptor.accept(Issues::DEPRECATED_APP_ORCHESTRATION, o, {:klass => o})
-    ok =
-    case o.component
-    when Model::QualifiedReference
-      name = o.component.cased_value
-      acceptor.accept(Issues::ILLEGAL_CLASSREF, o.component, {:name=>name}) unless name =~ Patterns::CLASSREF_EXT
-      true
-    when Model::AccessExpression
-      keys = o.component.keys
-      expr = o.component.left_expr
-      if expr.is_a?(Model::QualifiedReference) && keys.size == 1
-        key = keys[0]
-        key.is_a?(Model::LiteralString) || key.is_a?(Model::QualifiedName) || key.is_a?(Model::QualifiedReference)
-      else
-        false
-      end
-    else
-      false
-    end
-    acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.component, :feature=>'capability mapping', :container => o) unless ok
-
-    if o.capability !~ Patterns::CLASSREF_EXT
-      acceptor.accept(Issues::ILLEGAL_CLASSREF, o, {:name=>o.capability})
     end
   end
 
@@ -873,10 +840,6 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def check_SelectorEntry(o)
     rvalue(o.matching_expr)
-  end
-
-  def check_SiteDefinition(o)
-    acceptor.accept(Issues::DEPRECATED_APP_ORCHESTRATION, o, {:klass => o})
   end
 
   def check_UnaryExpression(o)

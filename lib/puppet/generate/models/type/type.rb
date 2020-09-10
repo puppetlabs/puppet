@@ -49,7 +49,10 @@ module Puppet
               ]
             end]
             @isomorphic = type.isomorphic?
-            @capability = type.is_capability?
+            # continue to emit capability as false when rendering the ERB
+            # template, so that pcore modules generated prior to puppet7 can be
+            # read by puppet7 and vice-versa.
+            @capability = false
           end
 
           def render(template)

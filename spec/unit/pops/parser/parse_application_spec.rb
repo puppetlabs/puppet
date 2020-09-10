@@ -5,27 +5,9 @@ require_relative 'parser_rspec_helper'
 describe "egrammar parsing of 'application'" do
   include ParserRspecHelper
 
-  it "an empty body" do
-    expect(dump(parse("application foo { }"))).to eq("(application foo () ())")
-  end
-
-  it "an empty body" do
-    prog = <<-EPROG
-application foo {
-  db { one:
-    password => 'secret'
-  }
-}
-EPROG
-    expect(dump(parse(prog))).to eq( [
-"(application foo () (block",
-"  (resource db",
-"    (one",
-"      (password => 'secret')))", "))" ].join("\n"))
-  end
-
-  it "accepts parameters" do
-    s = "application foo($p1 = 'yo', $p2) { }"
-    expect(dump(parse(s))).to eq("(application foo ((= p1 'yo') p2) ())")
+  it "raises a syntax error" do
+    expect {
+      parse("application foo { }")
+    }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'application' \(line: 1, column: 1\)/)
   end
 end

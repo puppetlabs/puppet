@@ -120,13 +120,6 @@ class Factory
 
   # Building of Model classes
 
-  def build_Application(o, n, ps, body)
-    @init_hash[KEY_NAME] = n
-    @init_hash[KEY_PARAMETERS] = ps
-    b = f_build_body(body)
-    @init_hash[KEY_BODY] = b unless b.nil?
-  end
-
   def build_ArithmeticExpression(o, op, a, b)
     @init_hash[KEY_OPERATOR] = op
     build_BinaryExpression(o, a, b)
@@ -387,21 +380,9 @@ class Factory
     @init_hash['return_type'] = return_type unless return_type.nil?
   end
 
-  def build_CapabilityMapping(o, kind, component, capability, mappings)
-    @init_hash['kind'] = kind
-    @init_hash['component'] = component
-    @init_hash['capability'] = capability
-    @init_hash['mappings'] = mappings
-  end
-
   def build_NodeDefinition(o, hosts, parent, body)
     @init_hash['host_matches'] = hosts
     @init_hash['parent'] = parent unless parent.nil? # no nop here
-    b = f_build_body(body)
-    @init_hash[KEY_BODY] = b unless b.nil?
-  end
-
-  def build_SiteDefinition(o, body)
     b = f_build_body(body)
     @init_hash[KEY_BODY] = b unless b.nil?
   end
@@ -742,8 +723,6 @@ class Factory
 
   def self.NODE(hosts, parent, body);    new(NodeDefinition, hosts, parent, body);       end
 
-  def self.SITE(body);                   new(SiteDefinition, body);                      end
-
   # Parameters
 
   # Mark parameter as capturing the rest of arguments
@@ -948,14 +927,6 @@ class Factory
 
   def self.DEFINITION(name, parameters, body)
     new(ResourceTypeDefinition, name, parameters, body)
-  end
-
-  def self.CAPABILITY_MAPPING(kind, component, cap_name, mappings)
-    new(CapabilityMapping, kind, component, cap_name, mappings)
-  end
-
-  def self.APPLICATION(name, parameters, body)
-    new(Application, name, parameters, body)
   end
 
   def self.PLAN(name, parameters, body)

@@ -91,16 +91,12 @@ tools.
 
 * [Status](./http_status.md)
 
-### Environment Endpoints
+### Environments Endpoint
 
-The endpoints with a different format are the `/puppet/v3/environments` and
-the `/puppet/v3/environment/:environment` endpoints.
-
-These endpoints will only accept payloads formatted as JSON and respond
-with JSON (MIME type of `application/json`).
+The `/puppet/v3/environments` endpoint is different as it will only accept payloads
+formatted as JSON and respond with JSON (MIME type of `application/json`).
 
 * [Environments](./http_environments.md)
-* [Environment Catalog](./http_environment.md)
 
 ### Puppet Server-specific endpoints
 

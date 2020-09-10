@@ -63,7 +63,6 @@ class ModelLabelProvider
   def label_FunctionDefinition o          ; "Function Definition"               end
   def label_PlanDefinition o              ; "Plan Definition"                   end
   def label_NodeDefinition o              ; "Node Definition"                   end
-  def label_SiteDefinition o              ; "Site Definition"                   end
   def label_ResourceTypeDefinition o      ; "'define' expression"               end
   def label_ResourceOverrideExpression o  ; "Resource Override"                 end
   def label_Parameter o                   ; "Parameter Definition"              end
@@ -73,7 +72,6 @@ class ModelLabelProvider
   def label_CallNamedFunctionExpression o ; "Function Call"                     end
   def label_CallMethodExpression o        ; "Method call"                       end
   def label_ApplyExpression o             ; "'apply' expression"                end
-  def label_CapabilityMapping o           ; "Capability Mapping"                end
   def label_CaseExpression o              ; "'case' statement"                  end
   def label_CaseOption o                  ; "Case Option"                       end
   def label_RenderStringExpression o      ; "Epp Text"                          end
@@ -100,7 +98,6 @@ class ModelLabelProvider
   def label_TypeMapping o                 ; "Type Mapping"                      end
   def label_TypeDefinition o              ; "Type Definition"                   end
   def label_Binary o                      ; "Binary"                            end
-  def label_Application o                 ; "Application"                       end
   def label_Sensitive o                   ; "Sensitive"                         end
   def label_Timestamp o                   ; "Timestamp"                         end
   def label_Timespan o                    ; "Timespan"                          end

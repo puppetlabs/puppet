@@ -344,16 +344,16 @@ describe "validating 4x" do
       end
     end
 
-    it 'produces an error for application' do
-      acceptor = validate(parse('application test {}'))
-      expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
+    it 'produces a syntax error for application' do
+      expect {
+        parse('application test {}')
+      }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'application'/)
     end
 
-    it 'produces an error for capability mapping' do
-      acceptor = validate(parse('Foo produces Sql {}'))
-      expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
+    it 'produces a syntax error for capability mapping' do
+      expect {
+        parse('Foo produces Sql {}')
+      }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'produces'/)
     end
 
     it 'produces an error for collect expressions with virtual query' do
@@ -410,10 +410,10 @@ describe "validating 4x" do
       expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
 
-    it 'produces an error for site definitions' do
-      acceptor = validate(parse('site {}'))
-      expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
+    it 'produces a syntax error for site definitions' do
+      expect {
+        parse('site {}')
+      }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'site'/)
     end
 
     context 'validating apply() blocks' do
@@ -468,16 +468,16 @@ describe "validating 4x" do
         expect(acceptor.error_count).to eql(0)
       end
 
-      it 'produces an error for application' do
-        acceptor = validate(parse('apply("foo.example.com") { application test {} }'))
-        expect(acceptor.error_count).to eql(1)
-        expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      it 'produces a syntax error for application' do
+        expect {
+          parse('apply("foo.example.com") { application test {} }')
+        }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'application'/)
       end
 
-      it 'produces an error for capability mapping' do
-        acceptor = validate(parse('apply("foo.example.com") { Foo produces Sql {} }'))
-        expect(acceptor.error_count).to eql(1)
-        expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      it 'produces a syntax error for capability mapping' do
+        expect {
+          parse('apply("foo.example.com") { Foo produces Sql {} }')
+        }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'produces'/)
       end
 
       it 'produces an error for class expressions' do
@@ -504,9 +504,9 @@ describe "validating 4x" do
       end
 
       it 'produces an error for site definitions' do
-        acceptor = validate(parse('apply("foo.example.com") { site {} }'))
-        expect(acceptor.error_count).to eql(1)
-        expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
+        expect {
+          parse('apply("foo.example.com") { site {} }')
+        }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'site'/)
       end
 
       it 'produces an error for apply() inside apply()' do
@@ -992,17 +992,10 @@ describe "validating 4x" do
 
   context "capability annotations" do
     ['produces', 'consumes'].each do |word|
-      it "rejects illegal resource types in #{word} clauses" do
-        expect(validate(parse("foo produces Bar {}"))).to have_issue(Puppet::Pops::Issues::ILLEGAL_CLASSREF)
-      end
-
-      it "accepts legal resource and capability types in #{word} clauses" do
-        expect(validate(parse("Foo produces Bar {}"))).to_not have_issue(Puppet::Pops::Issues::ILLEGAL_CLASSREF)
-        expect(validate(parse("Mod::Foo produces ::Mod2::Bar {}"))).to_not have_issue(Puppet::Pops::Issues::ILLEGAL_CLASSREF)
-      end
-
-      it "rejects illegal capability types in #{word} clauses" do
-        expect(validate(parse("Foo produces bar {}"))).to have_issue(Puppet::Pops::Issues::ILLEGAL_CLASSREF)
+      it "raises a syntax error in #{word} clauses" do
+        expect {
+          parse("foo #{word} Bar {}")
+        }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at '#{word}'/)
       end
     end
   end

@@ -27,10 +27,6 @@ class PNTransformer
     binary_op(e, 'and')
   end
 
-  def transform_Application(e)
-    definition_to_pn(e, 'application')
-  end
-
   def transform_ArithmeticExpression(e)
     binary_op(e, e.operator)
   end
@@ -65,10 +61,6 @@ class PNTransformer
 
   def transform_CallNamedFunctionExpression(e)
     call_to_pn(e, 'call', 'invoke')
-  end
-
-  def transform_CapabilityMapping(e)
-    PN::Call.new(e.kind, transform(e.component), PN::List.new([PN::Literal.new(e.capability)] + pn_array(e.mappings)))
   end
 
   def transform_CaseExpression(e)
@@ -291,10 +283,6 @@ class PNTransformer
 
   def transform_SelectorExpression(e)
     PN::Call.new('?', transform(e.left_expr), transform(e.selectors))
-  end
-
-  def transform_SiteDefinition(e)
-    transform(e.body).as_call('site')
   end
 
   def transform_TextExpression(e)

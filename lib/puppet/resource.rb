@@ -32,7 +32,6 @@ class Puppet::Resource
   ATTRIBUTES = [:file, :line, :exported].freeze
   TYPE_CLASS = 'Class'.freeze
   TYPE_NODE  = 'Node'.freeze
-  TYPE_SITE  = 'Site'.freeze
 
   PCORE_TYPE_KEY = '__ptype'.freeze
   VALUE_KEY = 'value'.freeze
@@ -340,29 +339,6 @@ class Puppet::Resource
     catalog ? catalog.resource(to_s) : nil
   end
 
-  # A resource is an application component if it exports or consumes
-  # one or more capabilities, or if it requires a capability resource
-  def is_application_component?
-    return true if ! export.empty? || self[:consume]
-    # Array(self[:require]) does not work for Puppet::Resource instances
-    req = self[:require] || []
-    req = [ req ] unless req.is_a?(Array)
-    req.any? { |r| r.is_capability? }
-  end
-
-  # A resource is a capability (instance) if its underlying type is a
-  # capability type
-  def is_capability?
-    !resource_type.nil? && resource_type.is_capability?
-  end
-
-  # Returns the value of the 'export' metaparam as an Array
-  # @api private
-  def export
-    v = self[:export] || []
-    v.is_a?(Array) ? v : [ v ]
-  end
-
   # The resource's type implementation
   # @return [Puppet::Type, Puppet::Resource::Type]
   # @api private
@@ -377,12 +353,11 @@ class Puppet::Resource
     case type
     when TYPE_CLASS; environment.known_resource_types.hostclass(title == :main ? "" : title)
     when TYPE_NODE; environment.known_resource_types.node(title)
-    when TYPE_SITE; environment.known_resource_types.site(nil)
     else
       result = Puppet::Type.type(type)
       if !result
         krt = environment.known_resource_types
-        result = krt.definition(type) || krt.application(type)
+        result = krt.definition(type)
       end
       result
     end

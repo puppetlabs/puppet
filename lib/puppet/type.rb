@@ -114,29 +114,6 @@ class Type
     attr_reader :properties
   end
 
-  # Allow declaring that a type is actually a capability
-  class << self
-    # @deprecated application orchestration will be removed in puppet 7
-    attr_accessor :is_capability
-
-    # @deprecated application orchestration will be removed in puppet 7
-    def is_capability?
-      c = is_capability
-      c.nil? ? false : c
-    end
-  end
-
-  # Returns whether this type represents an application instance; since
-  # only defined types, i.e., instances of Puppet::Resource::Type can
-  # represent application instances, this implementation always returns
-  # +false+. Having this method though makes code checking whether a
-  # resource is an application instance simpler
-  #
-  # @deprecated application orchestration will be removed in puppet 7
-  def self.application?
-      false
-  end
-
   # Returns all the attribute names of the type in the appropriate order.
   # The {key_attributes} come first, then the {provider}, then the {properties}, and finally
   # the {parameters} and {metaparams},
@@ -1719,59 +1696,6 @@ class Type
           }
     }
   end
-
-  # @deprecated application orchestration will be removed in puppet 7
-  newmetaparam(:export, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :NONE}) do
-          desc <<EOS
-Export a capability resource.
-
-The value of this parameter must be a reference to a capability resource,
-or an array of such references. Each capability resource referenced here
-will be instantiated in the node catalog and exported to consumers of this
-resource. The title of the capability resource will be the title given in
-the reference, and all other attributes of the resource will be filled
-according to the corresponding produces statement.
-
-It is an error if this metaparameter references resources whose type is not
-a capability type, or of there is no produces clause for the type of the
-current resource and the capability resource mentioned in this parameter.
-
-For example:
-
-define web(..) { .. }
-Web produces Http { .. }
-web { server:
-  export => Http[main_server]
-}
-EOS
-  end
-
-  # @deprecated application orchestration will be removed in puppet 7
-  newmetaparam(:consume, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :NONE}) do
-          desc <<EOS
-Consume a capability resource.
-
-The value of this parameter must be a reference to a capability resource,
-or an array of such references. Each capability resource referenced here
-must have been exported by another resource in the same environment.
-
-The referenced capability resources will be looked up, added to the
-current node catalog, and processed following the underlying consumes
-clause.
-
-It is an error if this metaparameter references resources whose type is not
-a capability type, or of there is no consumes clause for the type of the
-current resource and the capability resource mentioned in this parameter.
-
-For example:
-
-define web(..) { .. }
-Web consumes Sql { .. }
-web { server:
-  consume => Sql[my_db]
-}
-EOS
-end
 
   ###############################
   # All of the provider plumbing for the resource types.

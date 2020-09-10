@@ -191,7 +191,6 @@ describe "egrammar parsing basic expressions" do
 
     {
       'keyword' => %w(type function),
-      'reserved word' => %w(application site produces consumes)
     }.each_pair do |word_type, words|
       words.each do |word|
         it "allows the #{word_type} '#{word}' in a list" do

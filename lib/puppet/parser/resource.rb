@@ -150,15 +150,6 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
   end
 
-  def is_unevaluated_consumer?
-    # We don't declare a new variable here just to test. Saves memory
-    instance_variable_defined?(:@unevaluated_consumer)
-  end
-
-  def mark_unevaluated_consumer
-    @unevaluated_consumer = true
-  end
-
   # Merge an override resource in.  This will throw exceptions if
   # any overrides aren't allowed.
   def merge(resource)
@@ -258,66 +249,6 @@ class Puppet::Parser::Resource < Puppet::Resource
   #
   def raw_tagged?(tag_array)
     super || ((scope_resource = scope.resource) && !scope_resource.equal?(self) && scope_resource.raw_tagged?(tag_array))
-  end
-
-  # Fills resource params from a capability
-  #
-  # This backs 'consumes => Sql[one]'
-  # @api private
-  def add_parameters_from_consume
-    return if self[:consume].nil?
-
-    map = {}
-    [ self[:consume] ].flatten.map do |ref|
-      # Assert that the ref really is a resource reference
-      raise Puppet::Error, _("Invalid consume in %{value0}: %{ref} is not a resource") % { value0: self.ref, ref: ref } unless ref.is_a?(Puppet::Resource)
-
-      # Resolve references
-      t = ref.type
-      t = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, t) unless t == 'class' || t == 'node'
-      cap = catalog.resource(t, ref.title)
-      if cap.nil?
-        raise Puppet::Error, _("Resource %{ref} could not be found; it might not have been produced yet") % { ref: ref }
-      end
-
-      # Ensure that the found resource is a capability resource
-      raise Puppet::Error, _("Invalid consume in %{ref}: %{cap} is not a capability resource") % { ref: ref, cap: cap } unless cap.resource_type.is_capability?
-      cap
-    end.each do |cns|
-      # Establish mappings
-      blueprint = resource_type.consumes.find do |bp|
-        bp[:capability] == cns.type
-      end
-      # @todo lutter 2015-08-03: catch this earlier, can we do this during
-      # static analysis ?
-      raise _("Resource %{res} tries to consume %{cns} but no 'consumes' mapping exists for %{resource_type} and %{cns_type}") % { res: self, cns: cns, resource_type: self.resource_type, cns_type: cns.type } unless blueprint
-
-      # setup scope that has, for each attr of cns, a binding to cns[attr]
-      scope.with_global_scope do |global_scope|
-        cns_scope = global_scope.newscope(:source => self, :resource => self)
-        cns.to_hash.each { |name, value| cns_scope[name.to_s] = value }
-
-        # evaluate mappings in that scope
-        resource_type.arguments.keys.each do |name|
-          expr = blueprint[:mappings][name]
-          if expr
-            # Explicit mapping
-            value = expr.safeevaluate(cns_scope)
-          else
-            value = cns[name]
-          end
-          unless value.nil?
-            # @todo lutter 2015-07-01: this should be caught by the checker
-            # much earlier. We consume several capres, at least two of which
-            # want to map to the same parameter (PUP-5080)
-            raise _("Attempt to reassign attribute '%{name}' in '%{resource}' caused by multiple consumed mappings to the same attribute") % { name: name, resource: self } if map[name]
-            map[name] = value
-          end
-        end
-      end
-    end
-
-    map.each { |name, value| self[name] = value if self[name].nil? }
   end
 
   def offset

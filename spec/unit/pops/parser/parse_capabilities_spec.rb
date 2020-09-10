@@ -6,31 +6,18 @@ describe "egrammar parsing of capability mappings" do
   include ParserRspecHelper
 
   context "when parsing 'produces'" do
-    it "the ast contains produces and attributes" do
-      prog = "Foo produces Sql { name => value }"
-      ast = "(produces Foo Sql ((name => value)))"
-      expect(dump(parse(prog))).to eq(ast)
-    end
-
-    it "optional end comma is allowed" do
-      prog = "Foo produces Sql { name => value, }"
-      ast = "(produces Foo Sql ((name => value)))"
-      expect(dump(parse(prog))).to eq(ast)
+    it "raises syntax error" do
+      expect {
+        parse("Foo produces Sql { name => value }")
+      }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'produces' \(line: 1, column: 5\)/)
     end
   end
 
   context "when parsing 'consumes'" do
-    it "the ast contains consumes and attributes" do
-      prog = "Foo consumes Sql { name => value }"
-      ast = "(consumes Foo Sql ((name => value)))"
-      expect(dump(parse(prog))).to eq(ast)
+    it "raises syntax error" do
+      expect {
+        parse("Foo consumes Sql { name => value }")
+      }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'consumes' \(line: 1, column: 5\)/)
     end
-
-    it "optional end comma is allowed" do
-      prog = "Foo consumes Sql { name => value, }"
-      ast = "(consumes Foo Sql ((name => value)))"
-      expect(dump(parse(prog))).to eq(ast)
-    end
-
   end
 end
