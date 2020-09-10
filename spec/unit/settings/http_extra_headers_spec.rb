@@ -46,18 +46,16 @@ describe Puppet::Settings::HttpExtraHeadersSetting do
     end
 
     describe 'raises an error when' do
-
-      # Ruby 2.3 reports the class of these objects as Fixnum, whereas later ruby versions report them as Integer
       it 'is given an unexpected object type' do
         expect {
           subject.munge(65)
-          }.to raise_error(ArgumentError, /^Expected an Array, String, or Hash, got a (Integer|Fixnum)/)
+          }.to raise_error(ArgumentError, /^Expected an Array, String, or Hash, got a Integer/)
       end
 
       it 'is given an array of unexpected object types' do
         expect {
           subject.munge([65, 82])
-          }.to raise_error(ArgumentError, /^Expected an Array or String, got a (Integer|Fixnum)/)
+          }.to raise_error(ArgumentError, /^Expected an Array or String, got a Integer/)
       end
     end
   end

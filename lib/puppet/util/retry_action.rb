@@ -7,7 +7,7 @@ module Puppet::Util::RetryAction
   # Execute the supplied block retrying with exponential backoff.
   #
   # @param [Hash] options the retry options
-  # @option options [FixNum] :retries Maximum number of times to retry.
+  # @option options [Integer] :retries Maximum number of times to retry.
   # @option options [Array<Exception>] :retry_exceptions ([StandardError]) Optional array of exceptions that are allowed to be retried.
   # @yield The block to be executed.
   def self.retry_action(options = {})

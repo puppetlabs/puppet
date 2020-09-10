@@ -46,8 +46,8 @@ class Puppet::Util::Windows::EventLog
   end
 
   # Report an event to this instance's event log handle. Accepts a string to
-  #   report (:data => <string>) and event type (:event_type => FixNum) and id
-  # (:event_id => FixNum) as returned by #to_native. The additional arguments to
+  #   report (:data => <string>) and event type (:event_type => Integer) and id
+  # (:event_id => Integer) as returned by #to_native. The additional arguments to
   # ReportEventW seen in this method aren't exposed - though ReportEventW
   # technically can accept multiple strings as well as raw binary data to log,
   # we accept a single string from Puppet::Util::Log

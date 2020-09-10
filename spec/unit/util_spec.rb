@@ -3,12 +3,6 @@ require 'spec_helper'
 describe Puppet::Util do
   include PuppetSpec::Files
 
-  # Discriminator for tests that attempts to unset HOME since that, for reasons currently unknown,
-  # doesn't work in Ruby >= 2.4.0
-  def self.gte_ruby_2_4
-    @gte_ruby_2_4 ||= SemanticPuppet::Version.parse(RUBY_VERSION) >= SemanticPuppet::Version.parse('2.4.0')
-  end
-
   if Puppet::Util::Platform.windows?
     def set_mode(mode, file)
       Puppet::Util::Windows::Security.set_mode(mode, file)
@@ -667,18 +661,6 @@ describe Puppet::Util do
 
     it "should return nil if no executable found" do
       expect(Puppet::Util.which('doesnotexist')).to be_nil
-    end
-
-    it "should warn if the user's HOME is not set but their PATH contains a ~", :unless => gte_ruby_2_4 do
-      env_path = %w[~/bin /usr/bin /bin].join(File::PATH_SEPARATOR)
-
-      env = {:HOME => nil, :PATH => env_path}
-      env.merge!({:HOMEDRIVE => nil, :USERPROFILE => nil}) if Puppet::Util::Platform.windows?
-
-      expect(Puppet::Util::Warnings).to receive(:warnonce).once
-      Puppet::Util.withenv(env) do
-        Puppet::Util.which('foo')
-      end
     end
 
     it "should reject directories" do

@@ -118,7 +118,7 @@ describe Puppet::HTTP::Factory do
     expect(conn.keep_alive_timeout).to eq(2147483647)
   end
 
-  it "disables ruby's max retry on 2.5 and up", if: RUBY_VERSION.to_f >= 2.5 do
+  it "disables ruby's max retry" do
     conn = create_connection(site)
 
     expect(conn.max_retries).to eq(0)

@@ -11,7 +11,7 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
     it "should reject non-string values" do
       expect {
         mode.value = 0755
-      }.to raise_error(Puppet::Error, /The file mode specification must be a string, not '(?:Fixnum|Integer)'/)
+      }.to raise_error(Puppet::Error, /The file mode specification must be a string, not 'Integer'/)
     end
 
     it "should accept values specified as octal numbers in strings" do

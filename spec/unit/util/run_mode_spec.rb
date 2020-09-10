@@ -1,12 +1,6 @@
 require 'spec_helper'
 
 describe Puppet::Util::RunMode do
-  # Discriminator for tests that attempts to unset HOME since that, for reasons currently unknown,
-  # doesn't work in Ruby >= 2.4.0
-  def self.gte_ruby_2_4
-    @gte_ruby_2_4 ||= SemanticPuppet::Version.parse(RUBY_VERSION) >= SemanticPuppet::Version.parse('2.4.0')
-  end
-
   before do
     @run_mode = Puppet::Util::RunMode.new('fake')
   end
@@ -34,14 +28,6 @@ describe Puppet::Util::RunMode do
           as_non_root { expect(@run_mode.conf_dir).to eq(File.expand_path('~/.puppetlabs/etc/puppet')) }
         end
       end
-
-      it "fails when asking for the conf_dir as non-root and there is no $HOME", :unless => gte_ruby_2_4 || Puppet::Util::Platform.windows? do
-        as_non_root do
-          without_home do
-            expect { @run_mode.conf_dir }.to raise_error ArgumentError, /couldn't find HOME/
-          end
-        end
-      end
     end
 
     describe "#code_dir" do
@@ -62,14 +48,6 @@ describe Puppet::Util::RunMode do
           as_non_root { expect(@run_mode.code_dir).to eq(File.expand_path('~/.puppetlabs/etc/code')) }
         end
       end
-
-      it "fails when asking for the code_dir as non-root and there is no $HOME", :unless => gte_ruby_2_4 || Puppet::Util::Platform.windows? do
-        as_non_root do
-          without_home do
-            expect { @run_mode.code_dir }.to raise_error ArgumentError, /couldn't find HOME/
-          end
-        end
-      end
     end
 
     describe "#var_dir" do
@@ -80,14 +58,6 @@ describe Puppet::Util::RunMode do
       it "has vardir ~/.puppetlabs/opt/puppet/cache when run as non-root" do
         as_non_root { expect(@run_mode.var_dir).to eq(File.expand_path('~/.puppetlabs/opt/puppet/cache')) }
       end
-
-      it "fails when asking for the var_dir as non-root and there is no $HOME", :unless => gte_ruby_2_4 || Puppet::Util::Platform.windows? do
-        as_non_root do
-          without_home do
-            expect { @run_mode.var_dir }.to raise_error ArgumentError, /couldn't find HOME/
-          end
-        end
-      end
     end
 
     describe "#public_dir" do
@@ -97,14 +67,6 @@ describe Puppet::Util::RunMode do
 
       it "has publicdir ~/.puppetlabs/opt/puppet/public when run as non-root" do
         as_non_root { expect(@run_mode.public_dir).to eq(File.expand_path('~/.puppetlabs/opt/puppet/public')) }
-      end
-
-      it "fails when asking for the public_dir as non-root and there is no $HOME", :unless => gte_ruby_2_4 || Puppet::Util::Platform.windows? do
-        as_non_root do
-          without_home do
-            expect { @run_mode.public_dir }.to raise_error ArgumentError, /couldn't find HOME/
-          end
-        end
       end
     end
 
@@ -119,14 +81,6 @@ describe Puppet::Util::RunMode do
         it "has default logdir ~/.puppetlabs/var/log" do
           as_non_root { expect(@run_mode.log_dir).to eq(File.expand_path('~/.puppetlabs/var/log')) }
         end
-
-        it "fails when asking for the log_dir and there is no $HOME", :unless => gte_ruby_2_4 || Puppet::Util::Platform.windows? do
-          as_non_root do
-            without_home do
-              expect { @run_mode.log_dir }.to raise_error ArgumentError, /couldn't find HOME/
-            end
-          end
-        end
       end
     end
 
@@ -140,14 +94,6 @@ describe Puppet::Util::RunMode do
       describe "when run as non-root" do
         it "has default rundir ~/.puppetlabs/var/run" do
           as_non_root { expect(@run_mode.run_dir).to eq(File.expand_path('~/.puppetlabs/var/run')) }
-        end
-
-        it "fails when asking for the run_dir and there is no $HOME", :unless => gte_ruby_2_4 || Puppet::Util::Platform.windows? do
-          as_non_root do
-            without_home do
-              expect { @run_mode.run_dir }.to raise_error ArgumentError, /couldn't find HOME/
-            end
-          end
         end
       end
     end
@@ -176,18 +122,6 @@ describe Puppet::Util::RunMode do
       it "has confdir in ~/.puppetlabs/etc/puppet when run as non-root" do
         as_non_root { expect(@run_mode.conf_dir).to eq(File.expand_path("~/.puppetlabs/etc/puppet")) }
       end
-
-      it "fails when asking for the conf_dir as non-root and there is no %HOME%, %HOMEDRIVE%, and %USERPROFILE%", :unless => gte_ruby_2_4 do
-        as_non_root do
-          without_env('HOME') do
-            without_env('HOMEDRIVE') do
-              without_env('USERPROFILE') do
-                expect { @run_mode.conf_dir }.to raise_error ArgumentError, /couldn't find HOME/
-              end
-            end
-          end
-        end
-      end
     end
 
     describe "#code_dir" do
@@ -197,18 +131,6 @@ describe Puppet::Util::RunMode do
 
       it "has codedir in ~/.puppetlabs/etc/code when run as non-root" do
         as_non_root { expect(@run_mode.code_dir).to eq(File.expand_path("~/.puppetlabs/etc/code")) }
-      end
-
-      it "fails when asking for the code_dir as non-root and there is no %HOME%, %HOMEDRIVE%, and %USERPROFILE%", :unless => gte_ruby_2_4 do
-        as_non_root do
-          without_env('HOME') do
-            without_env('HOMEDRIVE') do
-              without_env('USERPROFILE') do
-                expect { @run_mode.code_dir }.to raise_error ArgumentError, /couldn't find HOME/
-              end
-            end
-          end
-        end
       end
     end
 
@@ -220,18 +142,6 @@ describe Puppet::Util::RunMode do
       it "has vardir in ~/.puppetlabs/opt/puppet/cache when run as non-root" do
         as_non_root { expect(@run_mode.var_dir).to eq(File.expand_path("~/.puppetlabs/opt/puppet/cache")) }
       end
-
-      it "fails when asking for the conf_dir as non-root and there is no %HOME%, %HOMEDRIVE%, and %USERPROFILE%", :unless => gte_ruby_2_4 do
-        as_non_root do
-          without_env('HOME') do
-            without_env('HOMEDRIVE') do
-              without_env('USERPROFILE') do
-                expect { @run_mode.var_dir }.to raise_error ArgumentError, /couldn't find HOME/
-              end
-            end
-          end
-        end
-      end
     end
 
     describe "#public_dir" do
@@ -241,18 +151,6 @@ describe Puppet::Util::RunMode do
 
       it "has publicdir in ~/.puppetlabs/opt/puppet/public when run as non-root" do
         as_non_root { expect(@run_mode.public_dir).to eq(File.expand_path("~/.puppetlabs/opt/puppet/public")) }
-      end
-
-      it "fails when asking for the public_dir as non-root and there is no %HOME%, %HOMEDRIVE%, and %USERPROFILE%", :unless => gte_ruby_2_4 do
-        as_non_root do
-          without_env('HOME') do
-            without_env('HOMEDRIVE') do
-              without_env('USERPROFILE') do
-                expect { @run_mode.public_dir }.to raise_error ArgumentError, /couldn't find HOME/
-              end
-            end
-          end
-        end
       end
     end
 
@@ -267,18 +165,6 @@ describe Puppet::Util::RunMode do
         it "has default logdir ~/.puppetlabs/var/log" do
           as_non_root { expect(@run_mode.log_dir).to eq(File.expand_path('~/.puppetlabs/var/log')) }
         end
-
-        it "fails when asking for the log_dir and there is no $HOME", :unless => gte_ruby_2_4 do
-          as_non_root do
-            without_env('HOME') do
-              without_env('HOMEDRIVE') do
-                without_env('USERPROFILE') do
-                  expect { @run_mode.log_dir }.to raise_error ArgumentError, /couldn't find HOME/
-                end
-              end
-            end
-          end
-        end
       end
     end
 
@@ -292,18 +178,6 @@ describe Puppet::Util::RunMode do
       describe "when run as non-root" do
         it "has default rundir ~/.puppetlabs/var/run" do
           as_non_root { expect(@run_mode.run_dir).to eq(File.expand_path('~/.puppetlabs/var/run')) }
-        end
-
-        it "fails when asking for the run_dir and there is no $HOME", :unless => gte_ruby_2_4 do
-          as_non_root do
-            without_env('HOME') do
-              without_env('HOMEDRIVE') do
-                without_env('USERPROFILE') do
-                  expect { @run_mode.run_dir }.to raise_error ArgumentError, /couldn't find HOME/
-                end
-              end
-            end
-          end
         end
       end
     end
@@ -349,9 +223,5 @@ describe Puppet::Util::RunMode do
     yield
   ensure
     Puppet::Util.set_env(name, saved)
-  end
-
-  def without_home(&block)
-    without_env('HOME', &block)
   end
 end

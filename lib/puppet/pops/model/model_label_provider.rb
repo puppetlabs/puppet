@@ -85,8 +85,6 @@ class ModelLabelProvider
   def label_SelectorExpression o          ; "Selector Expression"               end
   def label_SelectorEntry o               ; "Selector Option"                   end
   def label_Integer o                     ; "Integer"                           end
-  def label_Fixnum o                      ; "Integer"                           end
-  def label_Bignum o                      ; "Integer"                           end
   def label_Float o                       ; "Float"                             end
   def label_String o                      ; "String"                            end
   def label_Regexp o                      ; "Regexp"                            end

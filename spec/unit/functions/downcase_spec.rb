@@ -15,7 +15,7 @@ describe 'the downcase function' do
     expect(compile_to_catalog("notify { String(42.downcase == 42): }")).to have_resource('Notify[true]')
   end
 
-  it 'performs capitalize of international UTF-8 characters', :if => RUBY_VERSION >= "2.4" do
+  it 'performs downcase of international UTF-8 characters' do
     expect(compile_to_catalog("notify { 'ÅÄÖ'.downcase: }")).to have_resource('Notify[åäö]')
   end
 
