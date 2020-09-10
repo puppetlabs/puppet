@@ -56,18 +56,6 @@ agents.each do |agent|
 
   dir = on(agent, puppet_filebucket("--configprint clientbucketdir")).stdout.chomp
 
-  md5_manifest = %Q|
-    filebucket { 'local':
-      path => '#{dir}',
-    }
-
-    file { '#{target}':
-      ensure  => present,
-      content => '{md5}18571d3a04b2bb7ccfdbb2c44c72caa9',
-      backup  => local,
-    }
-  |
-
   sha256_manifest = %Q|
     filebucket { 'local':
       path => '#{dir}',
@@ -81,11 +69,7 @@ agents.each do |agent|
   |
 
   step "Applying Manifest on Agent"
-  if on(agent, facter("fips_enabled")).stdout =~ /true/
-    apply_manifest_on agent, sha256_manifest
-  else    
-    apply_manifest_on agent, md5_manifest
-  end
+  apply_manifest_on agent, sha256_manifest
 
   step "Validate filebucket checksum file contents"
   on agent, "cat #{target}" do
