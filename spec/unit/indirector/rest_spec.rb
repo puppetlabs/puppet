@@ -10,40 +10,39 @@ end
 class Puppet::TestModel::Rest < Puppet::Indirector::REST
 end
 
-describe Puppet::Indirector::REST do
-  let(:terminus) { Puppet::TestModel::Rest.new }
 
+describe Puppet::Indirector::REST do
   before :each do
-    terminus.indirection.terminus_class = :rest
+    Puppet::TestModel.indirection.terminus_class = :rest
   end
 
   it "raises when find is called" do
     expect {
-      terminus.find(Puppet::Indirector::Request.new(:test_model, :find, 'foo', nil))
+      Puppet::TestModel.indirection.find('foo')
     }.to raise_error(NotImplementedError)
   end
 
   it "raises when head is called" do
     expect {
-      terminus.head(Puppet::Indirector::Request.new(:test_model, :head, 'foo', nil))
+      Puppet::TestModel.indirection.head('foo')
     }.to raise_error(NotImplementedError)
   end
 
   it "raises when search is called" do
     expect {
-      terminus.search(Puppet::Indirector::Request.new(:test_model, :search, 'foo', nil))
+      Puppet::TestModel.indirection.search('foo')
     }.to raise_error(NotImplementedError)
   end
 
   it "raises when save is called" do
     expect {
-      terminus.save(Puppet::Indirector::Request.new(:test_model, :save, 'foo', Puppet::TestModel.new))
+      Puppet::TestModel.indirection.save(Puppet::TestModel.new, 'foo')
     }.to raise_error(NotImplementedError)
   end
 
   it "raises when destroy is called" do
     expect {
-      terminus.destroy(Puppet::Indirector::Request.new(:test_model, :destroy, 'foo', nil))
+      Puppet::TestModel.indirection.destroy('foo')
     }.to raise_error(NotImplementedError)
   end
 end
