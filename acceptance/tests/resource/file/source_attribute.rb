@@ -14,7 +14,7 @@ test_name "The source attribute" do
   # In case any of the hosts happens to be fips enabled we limit to the lowest
   # common denominator.
   checksums_fips = [nil, 'sha256', 'sha256lite', 'ctime', 'mtime']
-  checksums_no_fips = [nil, 'md5', 'md5lite', 'sha256', 'sha256lite', 'ctime', 'mtime']
+  checksums_no_fips = [nil, 'sha256', 'sha256lite', 'md5', 'md5lite', 'ctime', 'mtime']
 
   fips_host_present = hosts.any? { |host| on(host, facter("fips_enabled")).stdout =~ /true/ }
 
