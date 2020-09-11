@@ -12,7 +12,7 @@ agents.each do |agent|
   step "Content Attribute: using raw content"
 
   checksums_fips = ['sha256', 'sha256lite']
-  checksums_no_fips = ['md5', 'md5lite', 'sha256', 'sha256lite']
+  checksums_no_fips = ['sha256', 'sha256lite', 'md5', 'md5lite']
 
   if on(agent, facter("fips_enabled")).stdout =~ /true/
     checksums = checksums_fips
