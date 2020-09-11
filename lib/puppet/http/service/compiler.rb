@@ -77,9 +77,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   # @param [Boolean] static_catalog Indicates if the file metadata(s) are inlined
   #   in the catalog. This informs the agent if it needs to make a second request
   #   to retrieve metadata in addition to the initial catalog request.
-  # @param [Array<String>] checksum_type An array of accepted checksum type.
-  #   Currently defaults to `["md5", "sha256", "sha384", "sha512", "sha224"]`,
-  #   or `["sha256", "sha384", "sha512", "sha224"]` if fips is enabled.
+  # @param [Array<String>] checksum_type An array of accepted checksum types.
   #
   # @return [Array<Puppet::HTTP::Response, Puppet::Resource::Catalog>] An array
   #   containing the request response and the deserialized catalog returned by

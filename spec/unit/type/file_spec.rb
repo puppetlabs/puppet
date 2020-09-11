@@ -1,3 +1,4 @@
+# coding: utf-8
 require 'spec_helper'
 
 describe Puppet::Type.type(:file) do
@@ -778,7 +779,7 @@ describe Puppet::Type.type(:file) do
     it "should set the checksum parameter based on the metadata" do
       allow(file).to receive(:perform_recursion).and_return([@first])
       allow(@resource).to receive(:[]=)
-      expect(@resource).to receive(:[]=).with(:checksum, "md5")
+      expect(@resource).to receive(:[]=).with(:checksum, "sha256")
       file.recurse_remote("first" => @resource)
     end
 
@@ -814,7 +815,7 @@ describe Puppet::Type.type(:file) do
       allow(file).to receive(:perform_recursion).and_return([@first])
 
       allow(file).to receive(:[]=)
-      expect(file). to receive(:[]=).with(:checksum, "md5")
+      expect(file). to receive(:[]=).with(:checksum, "sha256")
 
       file.recurse_remote("first" => @resource)
     end

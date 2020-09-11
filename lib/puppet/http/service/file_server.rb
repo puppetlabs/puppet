@@ -42,8 +42,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   # @param [Symbol] links Can be one of either `:follow` or `:manage`, defines
   #   how links are handled.
   # @param [String] checksum_type The digest algorithm used to verify the file.
-  #   Currently if fips is enabled, this defaults to `sha256`. Otherwise, it
-  #   defaults to `md5`.
+  #   Defaults to `sha256`.
   # @param [Symbol] source_permissions Can be one of `:use`, `:use_when_creating`,
   #   or `:ignore`. This parameter tells the server if it should include the
   #   file permissions in the response. If set to `:ignore`, the server will

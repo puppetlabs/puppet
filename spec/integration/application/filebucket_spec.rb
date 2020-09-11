@@ -11,7 +11,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
   let(:filebucket) { Puppet::Application[:filebucket] }
   let(:backup_file) { tmpfile('backup_file') }
   let(:text) { 'some random text' }
-  let(:md5) { Digest::MD5.file(backup_file).to_s }
+  let(:sha256) { Digest::SHA256.file(backup_file).to_s }
 
   before :each do
     Puppet[:log_level] = 'debug'
@@ -22,13 +22,13 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
     filebucket.command_line.args = ['backup', backup_file, '--local']
     expect {
       filebucket.run
-    }.to output(/: #{md5}/).to_stdout
+    }.to output(/: #{sha256}/).to_stdout
 
     dest = tmpfile('file_bucket_restore')
-    filebucket.command_line.args = ['restore', dest, md5, '--local']
+    filebucket.command_line.args = ['restore', dest, sha256, '--local']
     expect {
       filebucket.run
-    }.to output(/FileBucket read #{md5}/).to_stdout
+    }.to output(/FileBucket read #{sha256}/).to_stdout
 
     expect(FileUtils.compare_file(backup_file, dest)).to eq(true)
   end
@@ -40,11 +40,11 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
         filebucket.command_line.args = ['backup', backup_file]
         filebucket.run
       }.to output(a_string_matching(
-        %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/#{md5}\/#{File.realpath(backup_file)}\?environment\=production returned 404 Not Found}
+        %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/sha256\/#{sha256}\/#{File.realpath(backup_file)}\?environment\=production returned 404 Not Found}
       ).and matching(
-        %r{Debug: HTTP PUT https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/#{md5}\/#{File.realpath(backup_file)}\?environment\=production returned 200 OK}
+        %r{Debug: HTTP PUT https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/sha256\/#{sha256}\/#{File.realpath(backup_file)}\?environment\=production returned 200 OK}
       ).and matching(
-        %r{#{backup_file}: #{md5}}
+        %r{#{backup_file}: #{sha256}}
       )).to_stdout
 
       expect(File.binread(File.join(server.upload_directory, 'filebucket'))).to eq(text)
@@ -61,9 +61,9 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
         filebucket.command_line.args = ['backup', backup_file]
         filebucket.run
       }.to output(a_string_matching(
-        %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file/md5/b10778ecd8b08dff525e367cf15b2622/}
+        %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file/sha256/f3aee54d781e413862eb068d89661f930385cc81bbafffc68477ff82eb9bea43/}
       ).and matching(
-        %r{Debug: HTTP PUT https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file/md5/b10778ecd8b08dff525e367cf15b2622/}
+        %r{Debug: HTTP PUT https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file/sha256/f3aee54d781e413862eb068d89661f930385cc81bbafffc68477ff82eb9bea43/}
       )).to_stdout
 
       expect(File.binread(File.join(server.upload_directory, 'filebucket'))).to eq(binary)
@@ -80,9 +80,9 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
         filebucket.command_line.args = ['backup', backup_file]
         filebucket.run
       }.to output(a_string_matching(
-        %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file/md5/48856faf4534a876adeadc72aec53cb2/}
+        %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file/sha256/51643361c79ecaef25a8de802de24f570ba25d9c2df1d22d94fade11b4f466cc/}
       ).and matching(
-        %r{Debug: HTTP PUT https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file/md5/48856faf4534a876adeadc72aec53cb2/}
+        %r{Debug: HTTP PUT https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file/sha256/51643361c79ecaef25a8de802de24f570ba25d9c2df1d22d94fade11b4f466cc/}
       )).to_stdout
 
       expect(File.read(File.join(server.upload_directory, 'filebucket'), encoding: 'utf-8')).to eq(utf8)
@@ -100,9 +100,9 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
         filebucket.command_line.args = ['backup', backup_file]
         filebucket.run
       }.to output(a_string_matching(
-        %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/#{md5}\/#{File.realpath(backup_file)}\?environment\=production returned 200 OK}
+        %r{Debug: HTTP HEAD https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/sha256\/#{sha256}\/#{File.realpath(backup_file)}\?environment\=production returned 200 OK}
       ).and matching(
-        %r{#{backup_file}: #{md5}}
+        %r{#{backup_file}: #{sha256}}
       )).to_stdout
     end
   end
@@ -119,7 +119,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
         filebucket.command_line.args = ['get', 'fac251367c9e083c6b1f0f3181']
         filebucket.run
       }.to output(a_string_matching(
-        %r{Debug: HTTP GET https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/md5\/fac251367c9e083c6b1f0f3181\?environment\=production returned 200 OK}
+        %r{Debug: HTTP GET https:\/\/127.0.0.1:#{port}\/puppet\/v3\/file_bucket_file\/sha256\/fac251367c9e083c6b1f0f3181\?environment\=production returned 200 OK}
       ).and matching(
         %r{something to store}
        )).to_stdout
@@ -191,8 +191,8 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
         File.binwrite(f, "bar\nbaz")
         f
       }
-      let(:checksuma) { Digest::MD5.file(filea).to_s }
-      let(:checksumb) { Digest::MD5.file(fileb).to_s }
+      let(:checksuma) { Digest::SHA256.file(filea).to_s }
+      let(:checksumb) { Digest::SHA256.file(fileb).to_s }
 
       it 'compares to files stored in a local bucket' do
         expect {

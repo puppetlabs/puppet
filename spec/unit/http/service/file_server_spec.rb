@@ -41,7 +41,7 @@ describe Puppet::HTTP::Service::FileServer do
 
   context 'retrieving file metadata' do
     let(:path) { tmpfile('get_file_metadata') }
-    let(:url) { "https://www.example.com/puppet/v3/file_metadata/:mount/#{path}?checksum_type=md5&environment=testing&links=manage&source_permissions=ignore" }
+    let(:url) { "https://www.example.com/puppet/v3/file_metadata/:mount/#{path}?checksum_type=sha256&environment=testing&links=manage&source_permissions=ignore" }
     let(:filemetadata) { Puppet::FileServing::Metadata.new(path) }
     let(:request_path) { "/:mount/#{path}"}
 
@@ -122,7 +122,7 @@ describe Puppet::HTTP::Service::FileServer do
 
   context 'retrieving multiple file metadatas' do
     let(:path) { tmpfile('get_file_metadatas') }
-    let(:url) { "https://www.example.com/puppet/v3/file_metadatas/:mount/#{path}?checksum_type=md5&links=manage&recurse=false&source_permissions=ignore&environment=testing" }
+    let(:url) { "https://www.example.com/puppet/v3/file_metadatas/:mount/#{path}?checksum_type=sha256&links=manage&recurse=false&source_permissions=ignore&environment=testing" }
     let(:filemetadatas) { [Puppet::FileServing::Metadata.new(path)] }
     let(:formatter) { Puppet::Network::FormatHandler.format(:json) }
     let(:request_path) { "/:mount/#{path}"}
@@ -158,7 +158,7 @@ describe Puppet::HTTP::Service::FileServer do
     end
 
     it 'automatically converts an array of parameters to the stringified query' do
-      url = "https://www.example.com/puppet/v3/file_metadatas/:mount/#{path}?checksum_type=md5&environment=testing&ignore=CVS&ignore=.git&ignore=.hg&links=manage&recurse=false&source_permissions=ignore"
+      url = "https://www.example.com/puppet/v3/file_metadatas/:mount/#{path}?checksum_type=sha256&environment=testing&ignore=CVS&ignore=.git&ignore=.hg&links=manage&recurse=false&source_permissions=ignore"
       stub_request(:get, url).with(
         headers: {'Accept'=>'application/json, application/x-msgpack, text/pson',}
       ).to_return(

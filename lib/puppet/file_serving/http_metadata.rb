@@ -51,7 +51,7 @@ class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
   def collect
     # Prefer the checksum_type from the indirector request options
     # but fall back to the alternative otherwise
-    [ @checksum_type, :md5, :sha256, :sha1, :mtime ].each do |type|
+    [ @checksum_type, :sha256, :sha1, :md5, :mtime ].each do |type|
       @checksum_type = type
       @checksum = @checksums[type]
       break if @checksum

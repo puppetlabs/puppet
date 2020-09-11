@@ -11,25 +11,25 @@ module Puppet
   end
 
   def self.default_digest_algorithm
-    Puppet::Util::Platform.fips_enabled? ? 'sha256' : 'md5'
+    'sha256'
   end
 
   def self.valid_digest_algorithms
     Puppet::Util::Platform.fips_enabled? ?
       %w[sha256 sha384 sha512 sha224] :
-      %w[md5 sha256 sha384 sha512 sha224]
+      %w[sha256 sha384 sha512 sha224 md5]
   end
 
   def self.default_file_checksum_types
     Puppet::Util::Platform.fips_enabled? ?
       %w[sha256 sha384 sha512 sha224] :
-      %w[md5 sha256 sha384 sha512 sha224]
+      %w[sha256 sha384 sha512 sha224 md5]
   end
 
   def self.valid_file_checksum_types
     Puppet::Util::Platform.fips_enabled? ?
       %w[sha256 sha256lite sha384 sha512 sha224 sha1 sha1lite mtime ctime] :
-      %w[md5 md5lite sha256 sha256lite sha384 sha512 sha224 sha1 sha1lite mtime ctime]
+      %w[sha256 sha256lite sha384 sha512 sha224 sha1 sha1lite md5 md5lite mtime ctime]
   end
 
   def self.default_basemodulepath
@@ -793,9 +793,9 @@ API to expire the cache as needed
           only use lowercase letters, numbers, periods, underscores, and dashes. (That is,
           it should match `/\A[a-z0-9._-]+\Z/`.)
         * The special value `ca` is reserved, and can't be used as the certname
-          for a normal node.         
+          for a normal node.
 
-          **Note:** You must set the certname in the main section of the puppet.conf file. Setting it in a different section causes errors.
+          **Note:** You must set the certname in the main section of the puppet.conf file. Setting it in a different section causes errors.
 
         Defaults to the node's fully qualified domain name.",
       :hook => proc { |value| raise(ArgumentError, _("Certificate names must be lower case")) unless value == value.downcase }},
@@ -1836,7 +1836,7 @@ EOT
       :type     => :ttl,
       :desc     => "The maximum amount of time the puppet agent should wait for an
       already running puppet agent to finish before starting a new one. This is set by default to 1 minute.
-      A value of `unlimited` will cause puppet agent to wait indefinitely. 
+      A value of `unlimited` will cause puppet agent to wait indefinitely.
       #{AS_DURATION}",
     }
   )
