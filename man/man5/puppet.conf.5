@@ -276,7 +276,7 @@ For best compatibility, you should limit the value of \fBcertname\fR to only use
 The special value \fBca\fR is reserved, and can\'t be used as the certname for a normal node\.
 .
 .IP
-\fBNote:\fR You must set the certname in the main section of the puppet\.conf file\. Setting it in a different section causes errors\.
+\fBNote:\fR You must set the certname in the main section of the puppet\.conf file\. Setting it in a different section causes errors\.
 .
 .IP "" 0
 .
@@ -497,10 +497,10 @@ Which arguments to pass to the diff command when printing differences between fi
 .IP "" 0
 .
 .SS "digest_algorithm"
-Which digest algorithm to use for file resources and the filebucket\. Valid values are md5, sha256, sha384, sha512, sha224\. Default is md5\.
+Which digest algorithm to use for file resources and the filebucket\. Valid values are sha256, sha384, sha512, sha224, md5\. Default is sha256\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: md5
+\fIDefault\fR: sha256
 .
 .IP "" 0
 .
@@ -1892,10 +1892,10 @@ Whether to print a transaction summary\.
 .IP "" 0
 .
 .SS "supported_checksum_types"
-Checksum types supported by this agent for use in file resources of a static catalog\. Values must be comma\-separated\. Valid types are md5, md5lite, sha256, sha256lite, sha384, sha512, sha224, sha1, sha1lite, mtime, ctime\. Default is md5, sha256, sha384, sha512, sha224\.
+Checksum types supported by this agent for use in file resources of a static catalog\. Values must be comma\-separated\. Valid types are sha256, sha256lite, sha384, sha512, sha224, sha1, sha1lite, md5, md5lite, mtime, ctime\. Default is sha256, sha384, sha512, sha224, md5\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: ["md5", "sha256", "sha384", "sha512", "sha224"]
+\fIDefault\fR: ["sha256", "sha384", "sha512", "sha224", "md5"]
 .
 .IP "" 0
 .

@@ -16,13 +16,13 @@ puppet filebucket \fImode\fR [\-h|\-\-help] [\-V|\-\-version] [\-d|\-\-debug] [\
 Puppet filebucket can operate in three modes, with only one mode per call:
 .
 .P
-backup: Send one or more files to the specified file bucket\. Each sent file is printed with its resulting md5 sum\.
+backup: Send one or more files to the specified file bucket\. Each sent file is printed with its resulting sha256 sum\.
 .
 .P
-get: Return the text associated with an md5 sum\. The text is printed to stdout, and only one file can be retrieved at a time\.
+get: Return the text associated with an sha256 sum\. The text is printed to stdout, and only one file can be retrieved at a time\.
 .
 .P
-restore: Given a file path and an md5 sum, store the content associated with the sum into the specified file path\. You can specify an entirely new path to this argument; you are not restricted to restoring the content to its original location\.
+restore: Given a file path and an sha256 sum, store the content associated with the sum into the specified file path\. You can specify an entirely new path to this argument; you are not restricted to restoring the content to its original location\.
 .
 .P
 diff: Print a diff in unified format between two checksums in the filebucket or between a checksum and its matching file\.
