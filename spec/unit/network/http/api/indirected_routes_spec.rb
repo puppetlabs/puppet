@@ -63,7 +63,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       }.to raise_error(bad_request_error)
     end
 
-    it "should not pass a buck_path parameter through (See Bugs #13553, #13518, #13511)" do
+    it "should not pass a bucket_path parameter through (See Bugs #13553, #13518, #13511)" do
       expect(handler.uri2indirection("GET", "#{master_url_prefix}/node/bar",
                               { :environment => "env",
                                 :bucket_path => "/malicious/path" })[3]).not_to include({ :bucket_path => "/malicious/path" })
