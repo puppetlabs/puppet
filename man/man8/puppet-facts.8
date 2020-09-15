@@ -4,7 +4,7 @@
 .TH "PUPPET\-FACTS" "8" "September 2020" "Puppet, Inc." "Puppet manual"
 .
 .SH "NAME"
-\fBpuppet\-facts\fR \- Retrieve and store facts\.
+\fBpuppet\-facts\fR
 .
 .SH "SYNOPSIS"
 puppet facts \fIaction\fR [\-\-terminus _TERMINUS] [\-\-extra HASH]
@@ -123,19 +123,13 @@ Nothing\.
 \fBNOTES\fR
 .
 .IP
-This action requires that the puppet master\'s \fBauth\.conf\fR file allow \fBPUT\fR or \fBsave\fR access to the \fB/puppet/v3/facts\fR API endpoint\.
+This action requires that the Puppet Server\'s \fBauth\.conf\fR file allow \fBPUT\fR or \fBsave\fR access to the \fB/puppet/v3/facts\fR API endpoint\.
 .
 .IP
 For details on configuring Puppet Server\'s \fBauth\.conf\fR, see:
 .
 .IP
 \fIhttps://puppet\.com/docs/puppetserver/latest/config_file_auth\.html\fR
-.
-.IP
-For legacy Rack\-based Puppet Masters, see:
-.
-.IP
-\fIhttps://puppet\.com/docs/puppet/latest/config_file_auth\.html\fR
 .
 .SH "EXAMPLES"
 \fBfind\fR
