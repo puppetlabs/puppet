@@ -15,12 +15,9 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
   let(:formatter) { Puppet::Network::FormatHandler.format(:rich_data_json) }
 
   context 'server_list' do
-    before :each do
-      Puppet[:log_level] = 'debug'
-    end
-
     it "uses the first server in the list" do
       Puppet[:server_list] = '127.0.0.1'
+      Puppet[:log_level] = 'debug'
 
       server.start_server do |port|
         Puppet[:masterport] = port
@@ -41,7 +38,8 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
           agent.command_line.args << '--test'
           agent.run
         }.to exit_with(0)
-         .and output(%r{Unable to connect to server from server_list setting: Request to https://puppet.example.com:#{port}/status/v1/simple/master failed}).to_stdout
+         .and output(%r{Notice: Applied catalog}).to_stdout
+         .and output(%r{Unable to connect to server from server_list setting: Request to https://puppet.example.com:#{port}/status/v1/simple/master failed}).to_stderr
 
         report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
         expect(report.master_used).to eq("127.0.0.1:#{port}")
@@ -55,8 +53,8 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         agent.command_line.args << '--test'
         agent.run
       }.to exit_with(1)
-       .and output(%r{Unable to connect to server from server_list setting: Could not select a functional puppet master from server_list: 'puppet.example.com'}).to_stdout
-       .and output(/Error: Could not run Puppet configuration client: Could not select a functional puppet master from server_list: 'puppet.example.com'/).to_stderr
+       .and output(a_string_matching(%r{Unable to connect to server from server_list setting})
+       .and matching(/Error: Could not run Puppet configuration client: Could not select a functional puppet master from server_list: 'puppet.example.com'/)).to_stderr
 
       # I'd expect puppet to update the last run report even if the server_list was
       # exhausted, but it doesn't work that way currently, see PUP-6708
@@ -64,6 +62,8 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
     end
 
     it "omits master_used when not using server_list" do
+      Puppet[:log_level] = 'debug'
+
       server.start_server do |port|
         Puppet[:masterport] = port
         expect {
@@ -79,6 +79,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
 
     it "server_list takes precedence over server" do
       Puppet[:server] = 'notvalid.example.com'
+      Puppet[:log_level] = 'debug'
 
       server.start_server do |port|
         Puppet[:server_list] = "127.0.0.1:#{port}"

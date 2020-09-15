@@ -64,20 +64,21 @@ class Puppet::HTTP::Session
     cached = @resolved_services[name]
     return cached if cached
 
-    resolution_exceptions = []
-    error_handler = proc { |e| resolution_exceptions << e }
+    canceled = false
+    canceled_handler  = lambda { |cancel| canceled = cancel }
 
     @resolvers.each do |resolver|
       Puppet.debug("Resolving service '#{name}' using #{resolver.class}")
-      service = resolver.resolve(self, name, ssl_context: ssl_context, error_handler: error_handler)
+      service = resolver.resolve(self, name, ssl_context: ssl_context, canceled_handler: canceled_handler)
       if service
         @resolved_services[name] = service
         Puppet.debug("Resolved service '#{name}' to #{service.url}")
         return service
+      elsif canceled
+        break
       end
     end
 
-    resolution_exceptions.each { |e| Puppet.log_exception(e) }
     raise Puppet::HTTP::RouteError, "No more routes to #{name}"
   end
 
