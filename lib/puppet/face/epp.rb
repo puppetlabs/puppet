@@ -440,7 +440,12 @@ Puppet::Face.define(:epp, '0.0.1') do
 
   def render_inline(epp_source, compiler, options)
     template_args = get_values(compiler, options)
-    Puppet::Pops::Evaluator::EppEvaluator.inline_epp(compiler.topscope, epp_source, template_args)
+    result = Puppet::Pops::Evaluator::EppEvaluator.inline_epp(compiler.topscope, epp_source, template_args)
+    if result.instance_of?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+      result.unwrap
+    else
+      result
+    end
   end
 
   def render_file(epp_template_name, compiler, options, show_filename, file_nbr)
@@ -457,7 +462,12 @@ Puppet::Face.define(:epp, '0.0.1') do
       if template_file.nil? && Puppet::FileSystem.exist?(epp_template_name)
         epp_template_name = File.expand_path(epp_template_name)
       end
-      output << Puppet::Pops::Evaluator::EppEvaluator.epp(compiler.topscope, epp_template_name, compiler.environment, template_args)
+      result = Puppet::Pops::Evaluator::EppEvaluator.epp(compiler.topscope, epp_template_name, compiler.environment, template_args)
+      if result.instance_of?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+        output << result.unwrap
+      else
+        output << result
+      end
     rescue Puppet::ParseError => detail
       Puppet.err("--- #{epp_template_name}") if show_filename
       raise detail

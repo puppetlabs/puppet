@@ -51,6 +51,7 @@ Puppet::Functions.create_function(:inline_epp, Puppet::Functions::InternalFuncti
     scope_param()
     param 'String', :template
     optional_param 'Hash[Pattern[/^\w+$/], Any]', :parameters
+    return_type 'Variant[String, Sensitive[String]]'
   end
 
   def inline_epp(scope, template, parameters = nil)
