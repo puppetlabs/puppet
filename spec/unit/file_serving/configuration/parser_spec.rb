@@ -101,13 +101,13 @@ describe Puppet::FileServing::Configuration::Parser do
       it "should ignore inline comments in #{acl_type}" do
         write_config_file "[one]\n#{acl_type} something \# will it work?\n"
 
-        @parser.parse
+        expect(@parser.parse).to eq('one' => @mount)
       end
 
       it "should ignore #{acl_type} from ACLs with varying spacing around commas" do
         write_config_file "[one]\n#{acl_type} someone,sometwo, somethree , somefour ,somefive\n"
 
-        @parser.parse
+        expect(@parser.parse).to eq('one' => @mount)
       end
 
       it "should log an error and print the location of the #{acl_type} rule" do
