@@ -5,7 +5,7 @@ module Puppet
     @doc = <<-EOT
       A repository for storing and retrieving file content by MD5 checksum. Can
       be local to each agent node, or centralized on a puppet master server. All
-      puppet masters provide a filebucket service that agent nodes can access
+      puppet servers provide a filebucket service that agent nodes can access
       via HTTP, but you must declare a filebucket resource before any agents
       will do so.
 
@@ -30,9 +30,9 @@ module Puppet
 
           File { backup => main, }
 
-      Puppet master servers automatically provide the filebucket service, so
+      Puppet Servers automatically provide the filebucket service, so
       this will work in a default configuration. If you have a heavily
-      restricted `auth.conf` file, you may need to allow access to the
+      restricted Puppet Server `auth.conf` file, you may need to allow access to the
       `file_bucket_file` endpoint.
     EOT
 

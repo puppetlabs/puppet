@@ -1,4 +1,4 @@
-A Puppet master server provides several services via HTTP API, and the Puppet
+A Puppet server provides several services via HTTP API, and the Puppet
 agent application uses those services to resolve a node's credentials, retrieve
 a configuration catalog, retrieve file data, and submit reports.
 
@@ -32,23 +32,17 @@ the letter `v`, and the version number of the API).
 
 ### Authorization
 
-Authorization for `/puppet` endpoints is still controlled with Puppet's `auth.conf`
-authorization system.
-
-Puppet Server ignores `auth.conf` for `/puppet-ca` endpoints. Access to the
-`certificate_status` endpoint is configured in Puppet Server's `ca.conf` file,
-and the remaining CA endpoints are always accessible.
-
-When specifying authorization in `auth.conf`, the prefix and the version number
-(such as `/puppet/v3`) on the paths must be retained, since Puppet matches
-authorization rules against the full request path.
+As of Puppet 7, support for legacy auth.conf is removed. Puppet Server 7
+enforces all authorization using its `auth.conf`. See
+https://puppet.com/docs/puppetserver/latest/config_file_auth.html for more
+details.
 
 Puppet V3 HTTP API
 ------------------
 
 The Puppet agent application uses several network services to manage systems.
 These services are all grouped under the `/puppet` API. Other tools can access
-these services and use the Puppet master's data for other purposes.
+these services and use the Puppet server's data for other purposes.
 
 The V3 API contains endpoints of two types: those that are based on dispatching
 to Puppet's internal "indirector" framework, and those that are not (namely the
@@ -100,8 +94,7 @@ formatted as JSON and respond with JSON (MIME type of `application/json`).
 
 ### Puppet Server-specific endpoints
 
-When using [Puppet Server 2.3 or newer](https://puppet.com/docs/puppetserver/2.3/)
-as a Puppet master, Puppet Server adds additional `/puppet/v3/` endpoints:
+Puppet Server adds additional `/puppet/v3/` endpoints:
 
 * [Static File Content](https://puppet.com/docs/puppetserver/latest/puppet-api/v3/static_file_content.md)
 * [Environment Classes](https://puppet.com/docs/puppetserver/latest/puppet-api/v3/environment_classes.md)

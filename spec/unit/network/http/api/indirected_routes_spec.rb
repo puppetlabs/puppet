@@ -146,45 +146,9 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       _, _, key, _ = handler.uri2indirection("GET", "#{master_url_prefix}/node/#{escaped}", params)
       expect(key).to eq(escaped)
     end
-
-    it "should not unescape the URI passed through in a call to check_authorization" do
-      key_escaped = Puppet::Util.uri_encode("foo bar")
-      uri_escaped = "#{master_url_prefix}/node/#{key_escaped}"
-      expect(handler).to receive(:check_authorization).with(anything, uri_escaped, anything)
-      handler.uri2indirection("GET", uri_escaped, params)
-    end
-
-    it "when the environment is unknown should remove :environment from params passed to check_authorization and therefore fail" do
-      expect(handler).to receive(:check_authorization).with(anything,
-                                                            anything,
-                                                            excluding(:environment))
-      expect { handler.uri2indirection("GET",
-                                       "#{master_url_prefix}/node/bar",
-                                       {:environment => 'bogus'})
-      }.to raise_error(not_found_error)
-    end
-
-    it "should not URI unescape the indirection key as passed through to a call to check_authorization" do
-      expect(handler).to receive(:check_authorization).with(anything, anything, hash_including(environment: be_a(Puppet::Node::Environment).and(have_attributes(name: :env))))
-
-      handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)
-    end
-
   end
 
   describe "when processing a request" do
-    it "should raise not_authorized_error when authorization fails" do
-      data = Puppet::IndirectorTesting.new("my data")
-      indirection.save(data, "my data")
-      request = a_request_that_heads(data)
-
-      expect(handler).to receive(:check_authorization).and_raise(Puppet::Network::AuthorizationError.new("forbidden"))
-
-      expect {
-        handler.call(request, response)
-      }.to raise_error(not_authorized_error)
-    end
-
     it "should raise not_found_error if the indirection does not support remote requests" do
       request = a_request_that_heads(Puppet::IndirectorTesting.new("my data"))
 

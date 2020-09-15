@@ -2,7 +2,6 @@ module Puppet::Network::HTTP
 end
 
 require 'puppet/network/http'
-require 'puppet/network/rights'
 require 'puppet/util/profiler'
 require 'puppet/util/profiler/aggregate'
 require 'resolv'

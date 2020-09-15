@@ -16,19 +16,18 @@ end
 
 node_names.uniq!
 
-if @options[:is_puppetserver]
-  step "Prepare for custom tk-auth rules" do
-    on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.conf /etc/puppetlabs/puppetserver/conf.d/auth.bak'
-    modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => false}})
-  end
+step "Prepare for custom tk-auth rules" do
+  on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.conf /etc/puppetlabs/puppetserver/conf.d/auth.bak'
+  modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => false}})
+end
 
-  teardown do
-    modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => true}})
-    on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.bak /etc/puppetlabs/puppetserver/conf.d/auth.conf'
-  end
+teardown do
+  modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => true}})
+  on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.bak /etc/puppetlabs/puppetserver/conf.d/auth.conf'
+end
 
-  step "Setup tk-auth rules" do
-    tka_header = <<-HEADER
+step "Setup tk-auth rules" do
+  tka_header = <<-HEADER
 authorization: {
     version: 1
     rules: [
@@ -43,8 +42,8 @@ authorization: {
         },
     HEADER
 
-    tka_node_rules = node_names.map do |node_name|
-      <<-NODE_RULES
+  tka_node_rules = node_names.map do |node_name|
+    <<-NODE_RULES
         {
             match-request: {
                 path: "/puppet/v3/catalog/#{node_name}"
@@ -76,9 +75,9 @@ authorization: {
             name: "puppetlabs report #{node_name}"
         },
       NODE_RULES
-    end
+  end
 
-    tka_footer = <<-FOOTER
+  tka_footer = <<-FOOTER
         {
           match-request: {
             path: "/"
@@ -92,43 +91,15 @@ authorization: {
 }
     FOOTER
 
-    tk_auth = [tka_header, tka_node_rules, tka_footer].flatten.join("\n")
+  tk_auth = [tka_header, tka_node_rules, tka_footer].flatten.join("\n")
 
-    apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+  apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
       file { '/etc/puppetlabs/puppetserver/conf.d/auth.conf':
         ensure => file,
         mode => '0644',
         content => '#{tk_auth}',
       }
     MANIFEST
-  end
-else
-  step "Setup legacy auth.conf rules" do
-    authfile = "#{testdir}/auth.conf"
-    authconf = node_names.map do |node_name|
-      <<-AUTHCONF
-path /puppet/v3/catalog/#{node_name}
-auth yes
-allow *
-
-path /puppet/v3/node/#{node_name}
-auth yes
-allow *
-
-path /puppet/v3/report/#{node_name}
-auth yes
-allow *
-      AUTHCONF
-    end.join("\n")
-
-    apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
-    file { '#{authfile}':
-      ensure => file,
-      mode => '0644',
-      content => '#{authconf}',
-    }
-    MANIFEST
-  end
 end
 
 step "Setup site.pp for node name based classification" do
@@ -170,7 +141,6 @@ step "Ensure nodes are classified based on the node name fact" do
       'environmentpath' => "#{testdir}/environments",
     },
     'master' => {
-      'rest_authconfig' => "#{testdir}/auth.conf",
       'node_terminus'   => 'plain',
     },
   }
