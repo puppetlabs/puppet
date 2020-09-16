@@ -34,10 +34,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       if content_type =~ /[pj]son/
         returned_message = Puppet::Util::Json.load(body)["message"]
       else
-        returned_message = uncompress_body(response)
+        returned_message = response.body
       end
     else
-      returned_message = uncompress_body(response)
+      returned_message = response.body
     end
 
     message = _("Error %{code} on SERVER: %{returned_message}") % { code: response.code, returned_message: returned_message }
@@ -45,8 +45,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   # Returns the content_type, stripping any appended charset, and the
-  # body, decompressed if necessary (content-encoding is checked inside
-  # uncompress_body)
+  # body, decompressed if necessary
   def parse_response(response)
     if response['content-type']
       [ response['content-type'].gsub(/\s*;.*$/,''), response.body ]
