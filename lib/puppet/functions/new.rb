@@ -991,12 +991,17 @@ Puppet::Functions.create_function(:new, Puppet::Functions::InternalFunction) do
 
   def new_instance(scope, t, *args)
     return args[0] if args.size == 1 && !t.is_a?(Puppet::Pops::Types::PInitType) && t.instance?(args[0])
-    result = assert_type(t, new_function_for_type(t, scope).call(scope, *args))
+    result = assert_type(t, new_function_for_type(t).call(scope, *args))
     return block_given? ? yield(result) : result
   end
 
-  def new_function_for_type(t, scope)
-    @new_function_cache ||= Hash.new() {|hsh, key| hsh[key] = key.new_function.new(scope, loader) }
+  def new_function_for_type(t)
+    @new_function_cache ||= {}
+
+    unless @new_function_cache.key?(t)
+      @new_function_cache[t] = t.new_function.new(nil, loader)
+    end
+
     @new_function_cache[t]
   end
 
