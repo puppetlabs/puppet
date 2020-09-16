@@ -1545,8 +1545,8 @@ EOT
     :server_list => {
       :default => [],
       :type => :server_list,
-      :desc => "The list of puppet master servers to which the puppet agent should connect,
-        in the order that they will be tried.",
+      :desc => "The list of Puppet master servers to which the Puppet agent should connect,
+        in the order that they will be tried. Values must be comma-separated. Default is an empty string.",
     },
     :use_srv_records => {
       :default    => false,
