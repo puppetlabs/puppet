@@ -34,7 +34,7 @@ class Puppet::Resource::Type
   DOUBLE_COLON = '::'.freeze
   EMPTY_ARRAY = [].freeze
 
-  attr_accessor :file, :line, :doc, :code, :parent, :resource_type_collection
+  attr_accessor :file, :line, :doc, :code, :parent, :resource_type_collection, :override
   attr_reader :namespace, :arguments, :behaves_like, :module_name
 
   # The attributes 'produces' and 'consumes' are arrays of the blueprints
@@ -63,6 +63,7 @@ class Puppet::Resource::Type
   # Are we a child of the passed class?  Do a recursive search up our
   # parentage tree to figure it out.
   def child_of?(klass)
+    return true if override
     return false unless parent
 
     return(klass == parent_type ? true : parent_type.child_of?(klass))
