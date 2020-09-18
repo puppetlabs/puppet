@@ -32,8 +32,8 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
   # @param [Puppet::HTTP::Session] session <description>
   # @param [Symbol] name the name of the service being resolved
   # @param [Puppet::SSL::SSLContext] ssl_context
-  # @param [Proc] error_handler (nil) optional callback for each error
-  #   encountered while resolving a route.
+  # @param [Proc] canceled_handler (nil) optional callback allowing a resolver
+  #   to cancel resolution.
   #
   # @return [nil] return nil if the service to be resolved does not support
   #   server_list
@@ -43,7 +43,7 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
   # @raise [Puppet::Error] raise if none of the servers defined in server_list
   #   are available
   #
-  def resolve(session, name, ssl_context: nil, error_handler: nil)
+  def resolve(session, name, ssl_context: nil, canceled_handler: nil)
     # If we're configured to use an explicit service host, e.g. report_server
     # then don't use server_list to resolve the `:report` service.
     return nil unless @services.include?(name)
@@ -64,17 +64,17 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
         @resolved_url = service.url
         return Puppet::HTTP::Service.create_service(@client, session, name, @resolved_url.host, @resolved_url.port)
       rescue Puppet::HTTP::ResponseError => detail
-        Puppet.debug(_("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
-                     { host: service.url.host, port: service.url.port, code: detail.response.code, reason: detail.response.reason })
-
-        error_handler.call(detail) if error_handler
+        Puppet.log_exception(detail, _("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
+                             { host: service.url.host, port: service.url.port, code: detail.response.code, reason: detail.response.reason })
       rescue Puppet::HTTP::HTTPError => detail
-        Puppet.debug _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail}
-
-        error_handler.call(detail) if error_handler
+        Puppet.log_exception(detail, _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail})
       end
     end
 
-    raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: @server_list_setting.print(@server_list_setting.value) }
+    # don't fallback to other resolvers
+    canceled_handler.call(true) if canceled_handler
+
+    # not found
+    nil
   end
 end

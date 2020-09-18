@@ -26,9 +26,9 @@ describe Puppet::HTTP::Session do
       @count = 0
     end
 
-    def resolve(session, name, ssl_context: nil, error_handler: nil)
+    def resolve(session, name, ssl_context: nil, canceled_handler: nil)
       @count += 1
-      return @service if check_connection?(session, @service, ssl_context: ssl_context, error_handler: error_handler)
+      return @service if check_connection?(session, @service, ssl_context: ssl_context)
     end
   end
 
@@ -67,19 +67,8 @@ describe Puppet::HTTP::Session do
         session.route_to(:ca)
       }.to raise_error(Puppet::HTTP::RouteError, 'No more routes to ca')
 
-      expect(@logs).to include(an_object_having_attributes(level: :err, message: "whoops1"),
-                               an_object_having_attributes(level: :err, message: "whoops2"))
-    end
-
-    it 'logs routing failures as debug until routing succeeds' do
-      Puppet[:log_level] = 'debug'
-
-      resolvers = [DummyResolver.new(bad_service), DummyResolver.new(good_service)]
-      session = described_class.new(client, resolvers)
-      session.route_to(:ca)
-
-      expect(@logs).to include(an_object_having_attributes(level: :debug, message: "Connection to #{uri} failed, trying next route: whoops"))
-      expect(@logs).to_not include(an_object_having_attributes(level: :err))
+      expect(@logs).to include(an_object_having_attributes(level: :err, message: "Connection to #{uri} failed, trying next route: whoops1"),
+                               an_object_having_attributes(level: :err, message: "Connection to #{uri} failed, trying next route: whoops2"))
     end
 
     it 'accepts an ssl context to use when connecting' do
@@ -167,16 +156,15 @@ describe Puppet::HTTP::Session do
       expect(service.url).to eq(URI("https://bar.example.com:8140/puppet-ca/v1"))
     end
 
-    it "fails if server_list doesn't return anything valid" do
-      Puppet[:server_list] = 'foo.example.com,bar.example.com'
+    it "does not fallback from server_list to the settings resolver when server_list is exhausted" do
+      Puppet[:server_list] = 'foo.example.com'
 
-      allow_any_instance_of(Puppet::HTTP::DNS).to receive(:each_srv_record)
+      expect_any_instance_of(Puppet::HTTP::Resolver::Settings).to receive(:resolve).never
       stub_request(:get, "https://foo.example.com:8140/status/v1/simple/master").to_return(status: 500)
-      stub_request(:get, "https://bar.example.com:8140/status/v1/simple/master").to_return(status: 500)
 
       expect {
         session.route_to(:ca)
-      }.to raise_error(Puppet::Error, "Could not select a functional puppet master from server_list: 'foo.example.com,bar.example.com'")
+      }.to raise_error(Puppet::HTTP::RouteError, "No more routes to ca")
     end
 
     it "raises when there are no more routes" do

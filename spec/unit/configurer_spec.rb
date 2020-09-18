@@ -1033,12 +1033,11 @@ describe Puppet::Configurer do
 
       stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: [500, "Internal Server Error"])
 
-      allow(Puppet).to receive(:debug)
-      expect(Puppet).to receive(:debug).with("Puppet server myserver:123 is unavailable: 500 Internal Server Error")
-
       expect {
         configurer.run
       }.to raise_error(Puppet::Error, /Could not select a functional puppet master from server_list:/)
+
+      expect(@logs).to include(an_object_having_attributes(level: :err, message: /Puppet server myserver:123 is unavailable: 500 Internal Server Error/))
     end
 
     it "should error when no servers in 'server_list' are reachable" do

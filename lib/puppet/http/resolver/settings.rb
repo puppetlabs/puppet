@@ -13,14 +13,14 @@ class Puppet::HTTP::Resolver::Settings < Puppet::HTTP::Resolver
   # @param [Puppet::HTTP::Session] session
   # @param [Symbol] name the name of the service to be resolved
   # @param [Puppet::SSL::SSLContext] ssl_context
-  # @param [Proc] error_handler (nil) optional callback for each error
-  #   encountered while resolving a route.
+  # @param [Proc] canceled_handler (nil) optional callback allowing a resolver
+  #   to cancel resolution.
   #
   # @return [Puppet::HTTP::Service] if the service successfully connects,
   #   return it. Otherwise, return nil.
   #
-  def resolve(session, name, ssl_context: nil, error_handler: nil)
+  def resolve(session, name, ssl_context: nil, canceled_handler: nil)
     service = Puppet::HTTP::Service.create_service(@client, session, name)
-    check_connection?(session, service, ssl_context: ssl_context, error_handler: error_handler) ? service : nil
+    check_connection?(session, service, ssl_context: ssl_context) ? service : nil
   end
 end

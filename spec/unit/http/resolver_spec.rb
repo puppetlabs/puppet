@@ -62,8 +62,6 @@ describe Puppet::HTTP::Resolver do
     end
 
     it 'logs unsuccessful HTTP 500 responses' do
-      Puppet[:log_level] = "debug"
-
       stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: [500, 'Internal Server Error'])
       stub_request(:get, "https://apple.example.com:8142/status/v1/simple/master").to_return(status: 200)
 
@@ -72,11 +70,15 @@ describe Puppet::HTTP::Resolver do
       expect(@logs.map(&:message)).to include(/Puppet server ca.example.com:8141 is unavailable: 500 Internal Server Error/)
     end
 
-    it 'fails if no servers in server_list are accessible' do
+    it 'cancels resolution if no servers in server_list are accessible' do
       stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 503)
       stub_request(:get, "https://apple.example.com:8142/status/v1/simple/master").to_return(status: 503)
 
-      expect { subject.resolve(session, :ca) }.to raise_error(Puppet::Error, /^Could not select a functional puppet master from server_list:/)
+      canceled = false
+      canceled_handler = lambda { |cancel| canceled = cancel }
+
+      expect(subject.resolve(session, :ca, canceled_handler: canceled_handler)).to eq(nil)
+      expect(canceled).to eq(true)
     end
 
     it 'cycles through server_list until a valid server is found' do
