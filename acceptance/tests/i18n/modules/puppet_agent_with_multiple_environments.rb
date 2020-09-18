@@ -1,7 +1,7 @@
 test_name 'C100575: puppet agent with different modules in different environments should translate based on their module' do
   confine :except, :platform => /^solaris/ # translation not supported
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   require 'puppet/acceptance/environment_utils.rb'
@@ -22,6 +22,10 @@ test_name 'C100575: puppet agent with different modules in different environment
   full_path_env_1 = File.join('/tmp', tmp_environment_1)
   full_path_env_2 = File.join('/tmp', tmp_environment_2)
   tmp_po_file = master.tmpfile('tmp_po_file')
+
+  step 'enable i18n on master' do
+    on(master, puppet("config set disable_i18n false"))
+  end
 
   step 'install a i18ndemo module' do
     install_i18n_demo_module(master, tmp_environment_1)
@@ -51,6 +55,10 @@ test_name 'C100575: puppet agent with different modules in different environment
     agent_language = enable_locale_language(agent, language)
     skip_test("test machine is missing #{agent_language} locale. Skipping") if agent_language.nil?
     shell_env_language = { 'LANGUAGE' => agent_language, 'LANG' => agent_language }
+
+    step 'enable i18n' do
+      on(agent, puppet("config set disable_i18n false"))
+    end
 
     env_1_po_file = File.join(full_path_env_1, 'modules', I18NDEMO_NAME, 'locales', 'ja', "#{I18NDEMO_MODULE_NAME}.po")
     on(master, "sed -e 's/\\(msgstr \"\\)\\([^\"]\\)/\\1'\"ENV_1\"':\\2/' #{env_1_po_file} > #{tmp_po_file} && mv #{tmp_po_file} #{env_1_po_file}")

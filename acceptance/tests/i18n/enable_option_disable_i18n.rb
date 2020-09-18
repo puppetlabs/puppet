@@ -1,28 +1,78 @@
-test_name 'C100561: verify that disable_i18n can be set to true and have translations disabled' do
+test_name 'Verify that disable_i18n can be set to true and have translations disabled' do
   confine :except, :platform => /^solaris/ # translation not supported
-  confine :except, :platform => /^aix/ # QENG-5283 needed for this to work
 
-  tag 'risk:medium',
+  tag 'audit:high',
       'audit:acceptance'
+
+  require 'puppet/acceptance/environment_utils.rb'
+  extend Puppet::Acceptance::EnvironmentUtils
 
   require 'puppet/acceptance/i18n_utils'
   extend Puppet::Acceptance::I18nUtils
 
+  require 'puppet/acceptance/i18ndemo_utils'
+  extend Puppet::Acceptance::I18nDemoUtils
+
   language = 'ja_JP'
 
-  with_puppet_running_on master, 'master' => { 'disable_i18n' => true } do
-    agents.each do |agent|
-      step("ensure #{language} locale is configured") do
-        language = enable_locale_language(agent, language)
-        # fall back to ja_JP since we're expecting english fallback for this test anyways
-        language = 'ja_JP' if language.nil?
-      end
+  step "configure server locale to #{language}" do
+    configure_master_system_locale(language)
+  end
 
-      step "Run Puppet agent with language #{language} and check the output" do
-        on(agent, puppet("agent -t --disable_i18n", 'ENV' => {'LANGUAGE' => language})) do |agent_result|
-          assert_match(/Applying configuration version '[^']*'/, agent_result.stdout, "agent run does not contain english 'Applying configuration version'")
-          assert_match(/Applied catalog in\s+[0-9.]*\s+seconds/, agent_result.stdout, "agent run does not contain english 'Applied catalog in' ")
-        end
+  tmp_environment = mk_tmp_environment_with_teardown(master, File.basename(__FILE__, '.*'))
+
+  step 'install a i18ndemo module' do
+    install_i18n_demo_module(master, tmp_environment)
+  end
+
+  teardown do
+    step 'resetting the server locale' do
+      reset_master_system_locale
+    end
+    step 'uninstall the module' do
+      agents.each do |agent|
+        uninstall_i18n_demo_module(agent)
+      end
+      uninstall_i18n_demo_module(master)
+    end
+  end
+
+  agents.each do |agent|
+    agent_language = enable_locale_language(agent, language)
+    skip_test("test machine is missing #{agent_language} locale. Skipping") if agent_language.nil?
+    shell_env_language = { 'LANGUAGE' => agent_language, 'LANG' => agent_language }
+
+    step 'enable i18n' do
+      on(master, puppet("config set disable_i18n false"))
+      on(agent, puppet("config set disable_i18n false"))
+    end
+
+    step 'expect #{language} translation for a custom type' do
+      site_pp_content = <<-PP
+        node default {
+          i18ndemo_type { '12345': }
+        }
+      PP
+      create_sitepp(master, tmp_environment, site_pp_content)
+      on(agent, puppet("agent -t --environment #{tmp_environment}", 'ENV' => shell_env_language), :acceptable_exit_codes => 1) do |result|
+        assert_match(/Error: .* \w+-i18ndemo type: 値は有12345効な値ではありません/, result.stderr, 'missing error from invalid value for custom type param')
+      end
+    end
+
+    step 'disable i18n' do
+      on(master, puppet("config set disable_i18n true"))
+      on(agent, puppet("config set disable_i18n true"))
+    end
+
+    step 'expect no #{language} translation for a custom type' do
+      site_pp_content = <<-PP
+        node default {
+          i18ndemo_type { '12345': }
+        }
+      PP
+      create_sitepp(master, tmp_environment, site_pp_content)
+      on(agent, puppet("agent -t --environment #{tmp_environment}", 'ENV' => shell_env_language), :acceptable_exit_codes => 1) do |result|
+        assert_match(/Error: .* Value 12345 is not a valid value for i18ndemo_type\:\:name/, result.stderr)
       end
     end
   end
