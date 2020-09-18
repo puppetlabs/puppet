@@ -15,7 +15,7 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
   end
 
   if Puppet::Util::Platform.windows?
-    let(:provider_gem_cmd) { 'gem' }
+    let(:provider_gem_cmd) { 'C:\Program Files\Puppet Labs\Puppet\puppet\bin\gem.bat' }
   else
     let(:provider_gem_cmd) { '/opt/puppetlabs/puppet/bin/gem' }
   end

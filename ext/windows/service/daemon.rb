@@ -200,10 +200,10 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
       ENV['OPENSSL_CONF'] = File.join(base_dir, 'puppet', 'ssl', 'openssl.cnf').tr('/', '\\')
       ENV['SSL_CERT_DIR'] = File.join(base_dir, 'puppet', 'ssl', 'certs').tr('/', '\\')
       ENV['SSL_CERT_FILE'] = File.join(base_dir, 'puppet', 'ssl', 'cert.pem').tr('/', '\\')
-      ENV['Path'] = [
+      ENV['Path'] += [
         File.join(base_dir, 'puppet', 'bin'),
         File.join(base_dir, 'bin'),
-      ].join(';').tr('/', '\\') + ';' + ENV['Path']
+      ].join(';').tr('/', '\\') + ';'
 
       # ENV that uses forward slashes
       ENV['RUBYLIB'] = "#{File.join(base_dir, 'puppet','lib')};#{ENV['RUBYLIB']}"
