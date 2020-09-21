@@ -1,7 +1,7 @@
 test_name 'C100576: puppet describe with module type translates message' do
   confine :except, :platform => /^solaris/ # translation not supported
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   require 'puppet/acceptance/i18n_utils'
@@ -26,6 +26,10 @@ test_name 'C100576: puppet describe with module type translates message' do
     agent_language = enable_locale_language(agent, language)
     skip_test("test machine is missing #{agent_language} locale. Skipping") if agent_language.nil?
     shell_env_language = { 'LANGUAGE' => agent_language, 'LANG' => agent_language }
+
+    step 'enable i18n' do
+      on(agent, puppet("config set disable_i18n false"))
+    end
 
     step 'install a i18ndemo module' do
       install_i18n_demo_module(agent)

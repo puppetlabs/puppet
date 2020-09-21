@@ -16,40 +16,88 @@ describe Puppet::Face[:plugin, :current] do
       end
     end
 
-    it "downloads plugins, external facts, and locales" do
-      receive_count = 0
-      allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) { receive_count += 1 }.and_return([])
-
-      pluginface.download
-      expect(receive_count).to eq(3)
-    end
-
-    it "renders 'No plugins downloaded' if nothing was downloaded" do
-      receive_count = 0
-      allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) { receive_count += 1 }.and_return([])
-
-      result = pluginface.download
-      expect(receive_count).to eq(3)
-      expect(render(result)).to eq('No plugins downloaded.')
-    end
-
-    it "renders comma separate list of downloaded file names" do
-      receive_count = 0
-      allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) do
-        receive_count += 1
-        case receive_count
-        when 1
-          %w[/a]
-        when 2
-          %w[/b]
-        when 3
-          %w[/c]
-        end
+    context "when i18n is enabled" do
+      before(:each) do
+        Puppet[:disable_i18n] = false
       end
 
-      result = pluginface.download
-      expect(receive_count).to eq(3)
-      expect(render(result)).to eq('Downloaded these plugins: /a, /b, /c')
+      it "downloads plugins, external facts, and locales" do
+        receive_count = 0
+        allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) { receive_count += 1 }.and_return([])
+
+        pluginface.download
+        expect(receive_count).to eq(3)
+      end
+
+      it "renders 'No plugins downloaded' if nothing was downloaded" do
+        receive_count = 0
+        allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) { receive_count += 1 }.and_return([])
+
+        result = pluginface.download
+        expect(receive_count).to eq(3)
+        expect(render(result)).to eq('No plugins downloaded.')
+      end
+
+      it "renders comma separate list of downloaded file names" do
+        receive_count = 0
+        allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) do
+          receive_count += 1
+          case receive_count
+          when 1
+            %w[/a]
+          when 2
+            %w[/b]
+          when 3
+            %w[/c]
+          end
+        end
+
+        result = pluginface.download
+        expect(receive_count).to eq(3)
+        expect(render(result)).to eq('Downloaded these plugins: /a, /b, /c')
+      end
+    end
+
+    context "when i18n is enabled" do
+      before(:each) do
+        Puppet[:disable_i18n] = true
+      end
+
+      it "downloads only plugins and external facts, no locales" do
+        receive_count = 0
+        allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) { receive_count += 1 }.and_return([])
+
+        pluginface.download
+        expect(receive_count).to eq(2)
+      end
+
+      it "renders 'No plugins downloaded' if nothing was downloaded, without checking for locales" do
+        receive_count = 0
+        allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) { receive_count += 1 }.and_return([])
+
+        result = pluginface.download
+        expect(receive_count).to eq(2)
+        expect(render(result)).to eq('No plugins downloaded.')
+      end
+
+      it "renders comma separate list of downloaded file names" do
+        receive_count = 0
+        allow_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate) do
+          receive_count += 1
+          case receive_count
+          when 1
+            %w[/a]
+          when 2
+            %w[/b]
+          when 3
+            %w[/c]
+          end
+        end
+
+        result = pluginface.download
+        expect(receive_count).to eq(2)
+        expect(render(result)).to eq('Downloaded these plugins: /a, /b')
+      end
     end
   end
 

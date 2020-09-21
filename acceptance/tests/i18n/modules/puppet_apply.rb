@@ -1,9 +1,7 @@
 test_name 'C100567: puppet apply of module should translate messages' do
   confine :except, :platform => /^solaris/ # translation not supported
 
-  skip_test "Localizations are unavailable"
-
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   require 'puppet/acceptance/temp_file_utils'
@@ -37,6 +35,10 @@ test_name 'C100567: puppet apply of module should translate messages' do
       install_i18n_demo_module(agent)
     end
 
+    step 'enable i18n' do
+      on(agent, puppet("config set disable_i18n false"))
+    end
+
     teardown do
       uninstall_i18n_demo_module(agent)
       on(agent, "rm -rf '#{type_path}'")
@@ -47,17 +49,7 @@ test_name 'C100567: puppet apply of module should translate messages' do
         on(agent, puppet("apply -e \"class { 'i18ndemo': filename => '#{type_path}' }\"", 'ENV' => shell_env_language)) do |apply_result|
           assert_match(/.*\w+-i18ndemo fact: これは\w+-i18ndemoからのカスタムファクトからのレイズです/, apply_result.stderr, 'missing translation for raise from ruby fact')
         end
-      end
-
-      step 'verify translations from init.pp' do
-        on(agent, puppet("apply -e \"class { 'i18ndemo': filename => '#{type_path}' }\"", 'ENV' => shell_env_language)) do |apply_result|
-          assert_match(/Warning:.*\w+-i18ndemo init.pp: ファイルの作成/, apply_result.stderr, 'missing warning translation from init.pp')
-        end
-
-        on(agent, puppet("apply -e \"class { 'i18ndemo': param1 => false }\"", 'ENV' => shell_env_language), :acceptable_exit_codes => 1) do |apply_result|
-          assert_match(/Error:.*の検証中にエラーが生じました。.*ファイルの作成に失敗しました/, apply_result.stderr, 'missing translation for fail from init.pp')
-        end
-      end
+      end unless agent['platform'] =~ /ubuntu-16.04/ # Condition to be removed after FACT-2799 gets resolved
 
       step 'verify custom translations' do
         on(agent, puppet("apply -e \"i18ndemo_type { 'hello': }\"", 'ENV' => shell_env_language), :acceptable_exit_codes => 1) do |apply_result|

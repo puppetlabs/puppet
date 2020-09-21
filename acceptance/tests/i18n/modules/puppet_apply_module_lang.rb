@@ -2,7 +2,7 @@ test_name 'C100574: puppet apply using a module should translate messages in a l
 
   confine :except, :platform => /^windows/ # Can't print Finish on an English or Japanese code page
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   require 'puppet/acceptance/temp_file_utils'
@@ -34,6 +34,10 @@ test_name 'C100574: puppet apply using a module should translate messages in a l
     end
     type_path = agent.tmpdir('provider')
 
+    step 'enable i18n' do
+      on(agent, puppet("config set disable_i18n false"))
+    end
+
     teardown do
       uninstall_i18n_demo_module(agent)
       on(agent, "rm -rf '#{type_path}'")
@@ -46,7 +50,7 @@ test_name 'C100574: puppet apply using a module should translate messages in a l
                        apply_result.stderr, 'missing translated message for raise from ruby fact')
           assert_match(/Notice: Applied catalog in [0-9.]+ seconds/, apply_result.stdout, 'missing untranslated message for catalog applied')
         end
-      end
+      end unless agent['platform'] =~ /ubuntu-16.04/ # Condition to be removed after FACT-2799 gets resolved
 
       step 'verify warning translated from init.pp' do
         on(agent, puppet("apply -e \"class { 'i18ndemo': filename => '#{type_path}' }\"", 'ENV' => shell_env_language)) do |apply_result|

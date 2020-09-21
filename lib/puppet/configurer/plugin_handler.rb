@@ -29,25 +29,27 @@ class Puppet::Configurer::PluginHandler
     result += plugin_fact_downloader.evaluate
     result += plugin_downloader.evaluate
 
-    # until file metadata/content are using the rest client, we need to check
-    # both :server_agent_version and the session to see if the server supports
-    # the "locales" mount
-    server_agent_version = Puppet.lookup(:server_agent_version) { "0.0" }
-    locales = Gem::Version.new(server_agent_version) >= SUPPORTED_LOCALES_MOUNT_AGENT_VERSION
-    unless locales
-      session = Puppet.lookup(:http_session)
-      locales = session.supports?(:fileserver, 'locales') || session.supports?(:puppet, 'locales')
-    end
+    unless Puppet[:disable_i18n]
+      # until file metadata/content are using the rest client, we need to check
+      # both :server_agent_version and the session to see if the server supports
+      # the "locales" mount
+      server_agent_version = Puppet.lookup(:server_agent_version) { "0.0" }
+      locales = Gem::Version.new(server_agent_version) >= SUPPORTED_LOCALES_MOUNT_AGENT_VERSION
+      unless locales
+        session = Puppet.lookup(:http_session)
+        locales = session.supports?(:fileserver, 'locales') || session.supports?(:puppet, 'locales')
+      end
 
-    if locales
-      locales_downloader = Puppet::Configurer::Downloader.new(
-        "locales",
-        Puppet[:localedest],
-        Puppet[:localesource],
-        Puppet[:pluginsignore] + " *.pot config.yaml",
-        environment
-      )
-      result += locales_downloader.evaluate
+      if locales
+        locales_downloader = Puppet::Configurer::Downloader.new(
+          "locales",
+          Puppet[:localedest],
+          Puppet[:localesource],
+          Puppet[:pluginsignore] + " *.pot config.yaml",
+          environment
+        )
+        result += locales_downloader.evaluate
+      end
     end
 
     Puppet::Util::Autoload.reload_changed(Puppet.lookup(:current_environment))

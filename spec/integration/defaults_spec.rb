@@ -139,6 +139,10 @@ describe "Puppet defaults" do
     expect(Puppet.settings.value(:preferred_serialization_format)).to eq("json")
   end
 
+  it "should default to true the disable_i18n setting" do
+    expect(Puppet.settings.value(:disable_i18n)).to eq(true)
+  end
+
   it "should have a setting for determining the configuration version and should default to an empty string" do
     expect(Puppet.settings[:config_version]).to eq("")
   end
