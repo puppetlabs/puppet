@@ -26,9 +26,10 @@ module Puppet
       def gem_command(host, type='aio')
         if type == 'aio'
           if host['platform'] =~ /windows/
-            "env PATH=\"#{host['privatebindir']}:${PATH}\" cmd /c gem"
+            install_dir = on(host, facter('env_windows_installdir')).stdout.strip
+            %(cmd /c "#{install_dir}\\puppet\\bin\\gem.bat")
           else
-            "env PATH=\"#{host['privatebindir']}:${PATH}\" gem"
+            "/opt/puppetlabs/puppet/bin/gem"
           end
         else
           on(host, 'which gem').stdout.chomp
