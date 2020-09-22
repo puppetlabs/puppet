@@ -60,6 +60,20 @@ describe Puppet::Configurer do
       expect(summary["time"]["last_run"]).to be_between(t1, t2)
     end
 
+    it "applies a cached catalog if pluginsync fails when usecacheonfailure is true" do
+      Puppet[:ignore_plugin_errors] = false
+
+      Puppet[:use_cached_catalog] = false
+      Puppet[:usecacheonfailure] = true
+
+      report = Puppet::Transaction::Report.new
+      expect_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate).and_raise(Puppet::Error, 'Failed to retrieve: some file')
+      expect(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(@catalog)
+
+      @configurer.run(pluginsync: true, report: report)
+      expect(report.cached_catalog_status).to eq('on_pluginsync_failure')
+    end
+
     describe 'resubmitting facts' do
       context 'when resubmit_facts is set to false' do
         it 'should not send data' do

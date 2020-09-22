@@ -53,6 +53,7 @@ class Puppet::Configurer
   def initialize(transaction_uuid = nil, job_id = nil)
     @running = false
     @splayed = false
+    @pluginsync_failed = false
     @cached_catalog_status = 'not_used'
     @environment = Puppet[:environment]
     @transaction_uuid = transaction_uuid || SecureRandom.uuid
@@ -68,6 +69,10 @@ class Puppet::Configurer
     result = retrieve_catalog_from_cache(query_options) if Puppet[:use_cached_catalog]
     if result
       @cached_catalog_status = 'explicitly_requested'
+
+      Puppet.info _("Using cached catalog from environment '%{environment}'") % { environment: result.environment }
+    elsif (@pluginsync_failed && result = retrieve_catalog_from_cache(query_options))
+      @cached_catalog_status = 'on_pluginsync_failure'
 
       Puppet.info _("Using cached catalog from environment '%{environment}'") % { environment: result.environment }
     else
@@ -536,6 +541,14 @@ class Puppet::Configurer
   end
 
   def download_plugins(remote_environment_for_plugins)
-    @handler.download_plugins(remote_environment_for_plugins)
+    begin
+      @handler.download_plugins(remote_environment_for_plugins)
+    rescue Puppet::Error => detail
+      if !Puppet[:ignore_plugin_errors] && Puppet[:usecacheonfailure]
+        @pluginsync_failed = true
+      else
+        raise detail
+      end
+    end
   end
 end
