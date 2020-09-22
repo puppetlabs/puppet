@@ -104,6 +104,24 @@ describe Puppet::Configurer do
       expect(@logs).to include(an_object_having_attributes(level: :err, message: %r{Failed to apply catalog: Failed to retrieve pluginfacts: Could not retrieve information from environment production source\(s\) puppet:///pluginfacts}))
     end
 
+    it "applies a cached catalog if pluginsync fails when usecacheonfailure is true" do
+      Puppet[:ignore_plugin_errors] = false
+
+      Puppet[:use_cached_catalog] = false
+      Puppet[:usecacheonfailure] = true
+
+      body = "{\"message\":\"Not Found: Could not find environment 'fasdfad'\",\"issue_kind\":\"RUNTIME_ERROR\"}"
+      stub_request(:get, %r{/puppet/v3/file_metadatas/pluginfacts}).to_return(
+        status: 404, body: body, headers: {'Content-Type' => 'application/json'}
+      )
+      stub_request(:get, %r{/puppet/v3/file_metadata/pluginfacts}).to_return(
+        status: 404, body: body, headers: {'Content-Type' => 'application/json'}
+      )
+
+      expect(configurer.run(pluginsync: true, :report => report)).to eq(0)
+      expect(report.cached_catalog_status).to eq('on_pluginsync_failure')
+    end
+
     it "applies a cached catalog when it can't connect to the master" do
       error = Errno::ECONNREFUSED.new('Connection refused - connect(2)')
 
