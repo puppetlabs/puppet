@@ -106,6 +106,37 @@ describe Puppet::Type.type(:package).provider(:yum) do
     end
   end
 
+  context "latest" do
+    let(:name) { 'baz' }
+
+    let(:resource) do
+      Puppet::Type.type(:package).new(
+        :name => name,
+        :provider => 'yum',
+      )
+    end
+
+    let(:provider) do
+      provider = described_class.new
+      provider.resource = resource
+      provider
+    end
+
+    before {
+      allow(described_class).to receive(:command).with(:cmd).and_return("/usr/bin/yum")
+      Puppet[:log_level] = 'debug'
+    }
+
+    it "should print a debug message with the current version if newer package is not available" do
+      expect(provider).to receive(:query).and_return({:ensure => "1.2.3"})
+      expect(described_class).to receive(:latest_package_version).and_return(nil)
+      resource[:ensure] = :present
+
+      provider.latest
+      expect(@logs).to include(an_object_having_attributes(level: :debug, message: "Yum didn't find updates, current version (1.2.3) is the latest"))
+    end
+  end
+
   context "parsing the output of check-update" do
     context "with no multiline entries" do
       let(:check_update) { File.read(my_fixture("yum-check-update-simple.txt")) }
