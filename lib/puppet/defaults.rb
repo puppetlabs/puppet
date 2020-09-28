@@ -1545,8 +1545,8 @@ EOT
     :server_list => {
       :default => [],
       :type => :server_list,
-      :desc => "The list of puppet master servers to which the puppet agent should connect,
-        in the order that they will be tried.",
+      :desc => "The list of Puppet master servers to which the Puppet agent should connect,
+        in the order that they will be tried. Each value should be a fully qualified domain name, followed by an optional ':' and port number. If a port is omitted, Puppet uses masterport for that host.",
     },
     :use_srv_records => {
       :default    => false,
