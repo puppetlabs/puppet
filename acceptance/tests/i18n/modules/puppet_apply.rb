@@ -1,7 +1,7 @@
 test_name 'C100567: puppet apply of module should translate messages' do
   confine :except, :platform => /^solaris/ # translation not supported
 
-  tag 'audit:high',
+  tag 'audit:medium',
       'audit:acceptance'
 
   require 'puppet/acceptance/temp_file_utils'
@@ -35,13 +35,15 @@ test_name 'C100567: puppet apply of module should translate messages' do
       install_i18n_demo_module(agent)
     end
 
-    step 'enable i18n' do
-      on(agent, puppet("config set disable_i18n false"))
-    end
-
+    disable_i18n_default_agent = agent.puppet['disable_i18n']
     teardown do
+      on(agent, puppet("config set disable_i18n #{ disable_i18n_default_agent }"))
       uninstall_i18n_demo_module(agent)
       on(agent, "rm -rf '#{type_path}'")
+    end
+
+    step 'enable i18n' do
+      on(agent, puppet("config set disable_i18n false"))
     end
 
     step "Run puppet apply of a module with language #{agent_language} and verify the translations" do

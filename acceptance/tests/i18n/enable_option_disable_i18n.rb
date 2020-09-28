@@ -1,7 +1,7 @@
 test_name 'Verify that disable_i18n can be set to true and have translations disabled' do
   confine :except, :platform => /^solaris/ # translation not supported
 
-  tag 'audit:high',
+  tag 'audit:medium',
       'audit:acceptance'
 
   require 'puppet/acceptance/environment_utils.rb'
@@ -25,8 +25,10 @@ test_name 'Verify that disable_i18n can be set to true and have translations dis
     install_i18n_demo_module(master, tmp_environment)
   end
 
+  disable_i18n_default_master = master.puppet['disable_i18n']
   teardown do
     step 'resetting the server locale' do
+      on(master, puppet("config set disable_i18n #{ disable_i18n_default_master }"))
       reset_master_system_locale
     end
     step 'uninstall the module' do
@@ -42,9 +44,15 @@ test_name 'Verify that disable_i18n can be set to true and have translations dis
     skip_test("test machine is missing #{agent_language} locale. Skipping") if agent_language.nil?
     shell_env_language = { 'LANGUAGE' => agent_language, 'LANG' => agent_language }
 
+    disable_i18n_default_agent = agent.puppet['disable_i18n']
+    teardown do
+      on(agent, puppet("config set disable_i18n #{ disable_i18n_default_agent }"))
+    end
+
     step 'enable i18n' do
-      on(master, puppet("config set disable_i18n false"))
       on(agent, puppet("config set disable_i18n false"))
+      on(master, puppet("config set disable_i18n false"))
+      reset_master_system_locale
     end
 
     step 'expect #{language} translation for a custom type' do
@@ -60,8 +68,9 @@ test_name 'Verify that disable_i18n can be set to true and have translations dis
     end
 
     step 'disable i18n' do
-      on(master, puppet("config set disable_i18n true"))
       on(agent, puppet("config set disable_i18n true"))
+      on(master, puppet("config set disable_i18n true"))
+      reset_master_system_locale
     end
 
     step 'expect no #{language} translation for a custom type' do

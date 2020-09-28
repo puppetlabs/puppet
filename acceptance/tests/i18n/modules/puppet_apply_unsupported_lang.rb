@@ -21,14 +21,20 @@ test_name 'C100568: puppet apply of module for an unsupported language should fa
       next
     end
 
-    step 'install a i18ndemo module' do
-      install_i18n_demo_module(agent)
-    end
     type_path = agent.tmpdir('provider')
-
+    disable_i18n_default_agent = agent.puppet['disable_i18n']
     teardown do
+      on(agent, puppet("config set disable_i18n #{ disable_i18n_default_agent }"))
       uninstall_i18n_demo_module(agent)
       on(agent, "rm -rf '#{type_path}'")
+    end
+
+    step 'enable i18n' do
+      on(agent, puppet("config set disable_i18n false"))
+    end
+
+    step 'install a i18ndemo module' do
+      install_i18n_demo_module(agent)
     end
 
     step "Run puppet apply of a module with language #{unsupported_language} and verify default english returned" do

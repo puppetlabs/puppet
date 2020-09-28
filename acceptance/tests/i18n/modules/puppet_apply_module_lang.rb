@@ -2,7 +2,7 @@ test_name 'C100574: puppet apply using a module should translate messages in a l
 
   confine :except, :platform => /^windows/ # Can't print Finish on an English or Japanese code page
 
-  tag 'audit:high',
+  tag 'audit:medium',
       'audit:acceptance'
 
   require 'puppet/acceptance/temp_file_utils'
@@ -29,18 +29,20 @@ test_name 'C100574: puppet apply using a module should translate messages in a l
     skip_test("test machine is missing #{agent_language} locale. Skipping") if agent_language.nil?
     shell_env_language = { 'LANGUAGE' => agent_language, 'LANG' => agent_language }
 
+    type_path = agent.tmpdir('provider')
+    disable_i18n_default_agent = agent.puppet['disable_i18n']
+    teardown do
+      on(agent, puppet("config set disable_i18n #{ disable_i18n_default_agent }"))
+      uninstall_i18n_demo_module(agent)
+      on(agent, "rm -rf '#{type_path}'")
+    end
+
     step 'install a i18ndemo module' do
       install_i18n_demo_module(agent)
     end
-    type_path = agent.tmpdir('provider')
 
     step 'enable i18n' do
       on(agent, puppet("config set disable_i18n false"))
-    end
-
-    teardown do
-      uninstall_i18n_demo_module(agent)
-      on(agent, "rm -rf '#{type_path}'")
     end
 
     step "Run puppet apply of a module with language #{agent_language} and verify default english returned" do
