@@ -12,6 +12,10 @@ context Puppet::Type.type(:package).provider(:gem) do
   let(:provider_gem_cmd) { '/provider/gem' }
   let(:execute_options) { {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}} }
 
+  before do
+    allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
+  end
+
   context 'installing myresource' do
     let(:resource) do
       Puppet::Type.type(:package).new(
@@ -34,6 +38,34 @@ context Puppet::Type.type(:package).provider(:gem) do
     context "when installing" do
       before :each do
         allow(provider).to receive(:rubygem_version).and_return('1.9.9')
+      end
+
+      context 'on windows' do
+        let(:path) do
+          "C:\\Program Files\\Puppet Labs\\Puppet\\puppet\\bin;C:\\Program Files\\Puppet Labs\\Puppet\\bin;C:\\Ruby26-x64\\bin;C:\\Windows\\system32\\bin"
+        end
+
+        let(:expected_path) do
+          "C:\\Program Files\\Puppet Labs\\Puppet\\bin;C:\\Ruby26-x64\\bin;C:\\Windows\\system32\\bin"
+        end
+
+        before do
+          allow(Puppet::Util::Platform).to receive(:windows?).and_return(true)
+          allow(Puppet::Util).to receive(:get_env)
+          allow(Puppet::Util).to receive(:get_env).with('PATH').and_return(path)
+          allow(described_class).to receive(:validate_command).with(provider_gem_cmd)
+          stub_const('::File::PATH_SEPARATOR', ';')
+        end
+
+        it 'removes puppet/bin from PATH' do
+          expect(described_class).to receive(:execute) \
+            .with(
+              anything,
+              hash_including(custom_environment: hash_including(PATH: expected_path))
+            )
+            .and_return("")
+          provider.install
+        end
       end
 
       it "should use the path to the gem command" do

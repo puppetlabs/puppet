@@ -14,7 +14,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
 
     This provider supports the `install_options` and `uninstall_options` attributes,
     which allow command-line flags to be passed to the gem command.
-    These options should be specified as an array where each element is either a 
+    These options should be specified as an array where each element is either a
     string or a hash."
 
   has_feature :versionable, :install_options, :uninstall_options, :targetable, :version_ranges
@@ -36,7 +36,11 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
   # Required by Puppet::Provider::Package::Targetable::resource_or_provider_command
 
   def self.provider_command
-    command(:gemcmd)
+    if Puppet::Util::Platform.windows?
+      Puppet::Util.withenv(PATH: windows_path_without_puppet_bin) { command(:gemcmd) }
+    else
+      command(:gemcmd)
+    end
   end
 
   # Define the default provider package command as optional when the provider is targetable.
@@ -45,6 +49,18 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
   has_command(:gemcmd, 'gem') do
     is_optional
   end
+
+  # Having puppet/bin in PATH makes gem provider to use puppet/bin/gem
+  # This is an utility methods that reads the PATH and returns a string
+  # that contains the content of PATH but without puppet/bin dir.
+  # This is used to pass a custom PATH and execute commands in a controlled environment
+  def self.windows_path_without_puppet_bin
+    @path ||= Puppet::Util.get_env('PATH').split(File::PATH_SEPARATOR)
+                                          .reject { |dir| dir =~ /puppet\\bin$/ }
+                                          .join(File::PATH_SEPARATOR)
+  end
+
+  private_class_method :windows_path_without_puppet_bin
 
   # CommandDefiner in provider.rb creates convenience execution methods that set failonfail, combine, and optionally, environment.
   # And when a child provider defines its own command via commands() or has_command(), the provider-specific path is always returned by command().
@@ -58,6 +74,10 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
     cmd = [command] << command_options
 
     custom_environment = {'HOME'=>Puppet::Util.get_env('HOME')}.merge(custom_environment)
+
+    if Puppet::Util::Platform.windows?
+      custom_environment[:PATH] = windows_path_without_puppet_bin
+    end
 
     execute(cmd, {:failonfail => true, :combine => true, :custom_environment => custom_environment})
   end
@@ -152,7 +172,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
         end
       end
     end
-    
+
     begin
       # Range intersections are not supported by Gem::Requirement, so just split by comma.
       dependency = Gem::Dependency.new('', should.split(','))
