@@ -35,7 +35,7 @@ class ValidatorFactory_4_0 < Factory
     p[Issues::DUPLICATE_KEY]                  = Puppet[:strict] == :off ? :ignore : Puppet[:strict]
     p[Issues::NAME_WITH_HYPHEN]               = :error
     p[Issues::EMPTY_RESOURCE_SPECIALIZATION]  = :ignore
-    p[Issues::CLASS_NOT_VIRTUALIZABLE]        = Puppet[:strict] == :off ? :warning : Puppet[:strict]
+    p[Issues::CLASS_NOT_VIRTUALIZABLE]        = :error
     p
   end
 end
