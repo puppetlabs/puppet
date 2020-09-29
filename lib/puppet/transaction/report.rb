@@ -224,7 +224,7 @@ class Puppet::Transaction::Report
     @external_times ||= {}
     @host = Puppet[:node_name_value]
     @time = Time.now
-    @report_format = 10
+    @report_format = 11
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
     @transaction_uuid = transaction_uuid
