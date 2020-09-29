@@ -276,13 +276,6 @@ file { '#{testdir}/environments/production/modules/#{module_name}/manifests/init
 file { '#{testdir}/environments/production/manifests/site.pp':
   ensure => file,
   content => "
-    site {
-      #this should not do anything on the agents as it's compiled into the environment catalog
-      # we're just ensuring it compiles, here
-      \\$lookup_port = lookup('#{hiera_data_key}')
-      notify { \\"the call to #{hiera_data_key} is coming from inside the site clause: \\$lookup_port\\": }
-      }
-
       node default {
         include #{module_name}
     }",
