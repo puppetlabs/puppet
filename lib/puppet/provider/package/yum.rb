@@ -328,6 +328,7 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
       return "#{upd[:epoch]}:#{upd[:version]}-#{upd[:release]}"
     else
       # Yum didn't find updates, pretend the current version is the latest
+      self.debug "Yum didn't find updates, current version (#{properties[:ensure]}) is the latest"
       version = properties[:ensure]
       raise Puppet::DevError, _("Tried to get latest on a missing package") if version == :absent || version == :purged
       return version
