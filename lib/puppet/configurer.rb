@@ -71,12 +71,16 @@ class Puppet::Configurer
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
   def retrieve_catalog(query_options)
     query_options ||= {}
-    if (Puppet[:use_cached_catalog] && result = retrieve_catalog_from_cache(query_options))
-      @cached_catalog_status = 'explicitly_requested'
+    if Puppet[:use_cached_catalog] || @pluginsync_failed
+      result = retrieve_catalog_from_cache(query_options)
+    end
 
-      Puppet.info _("Using cached catalog from environment '%{environment}'") % { environment: result.environment }
-    elsif (@pluginsync_failed && result = retrieve_catalog_from_cache(query_options))
-      @cached_catalog_status = 'on_pluginsync_failure'
+    if result
+      if Puppet[:use_cached_catalog]
+        @cached_catalog_status = 'explicitly_requested'
+      elsif @pluginsync_failed
+        @cached_catalog_status = 'on_pluginsync_failure'
+      end
 
       Puppet.info _("Using cached catalog from environment '%{environment}'") % { environment: result.environment }
     else
