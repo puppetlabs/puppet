@@ -179,17 +179,17 @@ describe "validating 4x" do
       expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
     end
 
-    it 'produces a warning for virtual class resource' do
+    it 'produces an error for virtual class resource' do
       acceptor = validate(parse('@class { test: }'))
-      expect(acceptor.warning_count).to eql(1)
-      expect(acceptor.error_count).to eql(0)
+      expect(acceptor.warning_count).to eql(0)
+      expect(acceptor.error_count).to eql(1)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
 
-    it 'produces a warning for exported class resource' do
+    it 'produces an error for exported class resource' do
       acceptor = validate(parse('@@class { test: }'))
-      expect(acceptor.warning_count).to eql(1)
-      expect(acceptor.error_count).to eql(0)
+      expect(acceptor.warning_count).to eql(0)
+      expect(acceptor.error_count).to eql(1)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
 
@@ -310,17 +310,17 @@ describe "validating 4x" do
       expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_DEFAULT)
     end
 
-    it 'produces a warning for virtual class resource' do
+    it 'produces an error for virtual class resource' do
       acceptor = validate(parse('@class { test: }'))
-      expect(acceptor.warning_count).to eql(1)
-      expect(acceptor.error_count).to eql(0)
+      expect(acceptor.warning_count).to eql(0)
+      expect(acceptor.error_count).to eql(1)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
 
-    it 'produces a warning for exported class resource' do
+    it 'produces an error for exported class resource' do
       acceptor = validate(parse('@@class { test: }'))
-      expect(acceptor.warning_count).to eql(1)
-      expect(acceptor.error_count).to eql(0)
+      expect(acceptor.warning_count).to eql(0)
+      expect(acceptor.error_count).to eql(1)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
   end
