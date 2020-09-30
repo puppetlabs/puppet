@@ -257,31 +257,13 @@ describe 'function for dynamically creating resources' do
       expect(catalog.resource(:class, "bar")).not_to be_nil
     end
 
-    [:off, :warning].each do | strictness |
-      it "should warn if strict = #{strictness} and class is exported" do
-        Puppet[:strict] = strictness
-        collect_notices('class test{} create_resources("@@class", {test => {}})')
-        expect(warnings).to include(/Classes are not virtualizable/)
-      end
-    end
-
-    it 'should error if strict = error and class is exported' do
-      Puppet[:strict] = :error
+    it 'should error if class is exported' do
       expect{
         compile_to_catalog('class test{} create_resources("@@class", {test => {}})')
       }.to raise_error(/Classes are not virtualizable/)
     end
 
-    [:off, :warning].each do | strictness |
-      it "should warn if strict = #{strictness} and class is virtual" do
-        Puppet[:strict] = strictness
-        collect_notices('class test{} create_resources("@class", {test => {}})')
-        expect(warnings).to include(/Classes are not virtualizable/)
-      end
-    end
-
-    it 'should error if strict = error and class is virtual' do
-      Puppet[:strict] = :error
+    it 'should error if class is virtual' do
       expect{
         compile_to_catalog('class test{} create_resources("@class", {test => {}})')
       }.to raise_error(/Classes are not virtualizable/)
