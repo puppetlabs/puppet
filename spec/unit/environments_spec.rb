@@ -674,6 +674,49 @@ config_version=$vardir/random/scripts
         expect(service.created_envs).to eq([:an_environment, :an_environment])
         expect(service.evicted_envs).to eq([:an_environment])
       end
+
+      it "evicts an environment that hasn't been recently touched" do
+        Puppet[:environment_ttl] = 1
+
+        with_environment_loaded(service) do |cached|
+          future = Time.now + 60
+          expect(Time).to receive(:now).and_return(future).at_least(:once)
+
+          # this should cause the cached environment to be evicted and a new one created
+          cached.get!(:an_environment)
+        end
+
+        expect(service.created_envs).to eq([:an_environment, :an_environment])
+        expect(service.evicted_envs).to eq([:an_environment])
+
+      end
+
+      it "reuses an environment that was recently touched" do
+        Puppet[:environment_ttl] = 60
+
+        with_environment_loaded(service) do |cached|
+          # reuse the already cached environment
+          cached.get!(:an_environment)
+        end
+
+        expect(service.created_envs).to eq([:an_environment])
+        expect(service.evicted_envs).to eq([])
+      end
+
+      it "evicts a recently touched environment" do
+        Puppet[:environment_ttl] = 60
+
+        # see note above about "twice"
+        expect(service).to receive(:expired?).twice.and_return(true)
+
+        with_environment_loaded(service) do |cached|
+          # even though the environment was recently touched, it's been expired
+          cached.get!(:an_environment)
+        end
+
+        expect(service.created_envs).to eq([:an_environment, :an_environment])
+        expect(service.evicted_envs).to eq([:an_environment])
+      end
     end
 
     it "gets an environment.conf" do

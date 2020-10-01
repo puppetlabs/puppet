@@ -447,14 +447,26 @@ module Puppet::Environments
     # Creates a suitable cache entry given the time to live for one environment
     #
     def entry(env)
-      ttl = (conf = get_conf(env.name)) ? conf.environment_timeout : Puppet.settings.value(:environment_timeout)
+      mru_entry = Puppet.settings.set_by_config?(:environment_ttl)
+      ttl = if mru_entry
+              Puppet[:environment_ttl]
+            elsif (conf = get_conf(env.name))
+              conf.environment_timeout
+            else
+              Puppet[:environment_timeout]
+            end
+
       case ttl
       when 0
         NotCachedEntry.new(env)     # Entry that is always expired (avoids syscall to get time)
       when Float::INFINITY
         Entry.new(env)              # Entry that never expires (avoids syscall to get time)
       else
-        TTLEntry.new(env, ttl)
+        if mru_entry
+          MRUEntry.new(env, ttl)    # Entry that expires in ttl from when it was last touched
+        else
+          TTLEntry.new(env, ttl)    # Entry that expires in ttl from when it was created
+        end
       end
     end
 
@@ -526,6 +538,23 @@ module Puppet::Environments
 
       def expires
         @ttl
+      end
+    end
+
+    # Policy that expires if it hasn't been touched within ttl_seconds
+    class MRUEntry < TTLEntry
+      def initialize(value, ttl_seconds)
+        super(value, ttl_seconds)
+
+        touch
+      end
+
+      def touch
+        @ttl = Time.now + @ttl_seconds
+      end
+
+      def label
+        "(mru = #{@ttl_seconds} sec)"
       end
     end
   end
