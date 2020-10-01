@@ -1,7 +1,7 @@
 test_name 'C100575: puppet agent with different modules in different environments should translate based on their module' do
   confine :except, :platform => /^solaris/ # translation not supported
 
-  tag 'audit:high',
+  tag 'audit:medium',
       'audit:acceptance'
 
   require 'puppet/acceptance/environment_utils.rb'
@@ -23,6 +23,7 @@ test_name 'C100575: puppet agent with different modules in different environment
   full_path_env_2 = File.join('/tmp', tmp_environment_2)
   tmp_po_file = master.tmpfile('tmp_po_file')
 
+  disable_i18n_default_master = master.puppet['disable_i18n']
   step 'enable i18n on master' do
     on(master, puppet("config set disable_i18n false"))
   end
@@ -45,6 +46,7 @@ test_name 'C100575: puppet agent with different modules in different environment
       uninstall_i18n_demo_module(master)
     end
     step 'resetting the server locale' do
+      on(master, puppet("config set disable_i18n #{ disable_i18n_default_master }"))
       reset_master_system_locale
     end
   end
@@ -55,6 +57,11 @@ test_name 'C100575: puppet agent with different modules in different environment
     agent_language = enable_locale_language(agent, language)
     skip_test("test machine is missing #{agent_language} locale. Skipping") if agent_language.nil?
     shell_env_language = { 'LANGUAGE' => agent_language, 'LANG' => agent_language }
+
+    disable_i18n_default_agent = agent.puppet['disable_i18n']
+    teardown do
+      on(agent, puppet("config set disable_i18n #{ disable_i18n_default_agent }"))
+    end
 
     step 'enable i18n' do
       on(agent, puppet("config set disable_i18n false"))

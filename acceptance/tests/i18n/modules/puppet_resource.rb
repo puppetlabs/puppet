@@ -1,7 +1,7 @@
 test_name 'C100572: puppet resource with module translates messages' do
   confine :except, :platform => /^solaris/ # translation not supported
 
-  tag 'audit:high',
+  tag 'audit:medium',
       'audit:acceptance'
 
   require 'puppet/acceptance/i18n_utils'
@@ -27,12 +27,18 @@ test_name 'C100572: puppet resource with module translates messages' do
     skip_test("test machine is missing #{agent_language} locale. Skipping") if agent_language.nil?
     shell_env_language = { 'LANGUAGE' => agent_language, 'LANG' => agent_language }
 
-    step 'install a i18ndemo module' do
-      install_i18n_demo_module(agent)
+    disable_i18n_default_agent = agent.puppet['disable_i18n']
+    teardown do
+      on(agent, puppet("config set disable_i18n #{ disable_i18n_default_agent }"))
+      uninstall_i18n_demo_module(agent)
     end
 
-    teardown do
-      uninstall_i18n_demo_module(agent)
+    step 'enable i18n' do
+      on(agent, puppet("config set disable_i18n false"))
+    end
+
+    step 'install a i18ndemo module' do
+      install_i18n_demo_module(agent)
     end
 
     step "Run puppet resource for a module with language #{agent_language} and verify the translations" do
