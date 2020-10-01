@@ -1,0 +1,37 @@
+---
+name: Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  checks:
+    name: ${{ matrix.cfg.check }}
+    strategy:
+      matrix:
+        cfg:
+          - {check: rubocop, os: ubuntu-18.04, ruby: 2.5}
+          - {check: commits, os: ubuntu-18.04, ruby: 2.5}
+          - {check: warnings, os: ubuntu-18.04, ruby: 2.5}
+
+    runs-on: ${{ matrix.cfg.os }}
+    steps:
+      - name: Checkout current PR
+        uses: actions/checkout@v2
+
+      - name: Install ruby version ${{ matrix.cfg.ruby }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.cfg.ruby }}
+
+      - name: Install bundler and gems
+        run: |
+          gem install bundler
+          bundle config set without packaging documentation
+          bundle install --jobs 4 --retry 3
+
+      - name: Run ${{ matrix.cfg.check }} check
+        run: bundle exec rake ${{ matrix.cfg.check }}
