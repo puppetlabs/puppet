@@ -33,7 +33,7 @@ describe Puppet::Util::Windows::ADSI::User,
 
   describe '.[]' do
     it 'should return string attributes as UTF-8' do
-      administrator = Puppet::Util::Windows::ADSI::User.new('Administrator')
+      administrator = Puppet::Util::Windows::ADSI::User.new('Guest')
       expect(administrator['Description'].encoding).to eq(Encoding::UTF_8)
     end
   end

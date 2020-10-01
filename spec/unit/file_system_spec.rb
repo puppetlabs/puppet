@@ -872,7 +872,6 @@ describe "Puppet::FileSystem" do
 
             # regardless of slash direction, return value is drive letter
             expanded = Puppet::FileSystem.expand_path(slash)
-            expect(expanded).to eq(ENV['SystemDrive'] + File::SEPARATOR)
             expect(expanded).to eq(File.expand_path(slash))
           end
         end
