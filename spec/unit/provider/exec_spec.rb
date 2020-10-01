@@ -49,9 +49,10 @@ describe Puppet::Provider::Exec do
         # we can't reference that in our manifest. Windows PATHs can contain
         # double quotes and trailing backslashes, which confuse HEREDOC
         # interpolation below. So sanitize it:
-        ENV['PATH'].split(File::PATH_SEPARATOR).map do |dir|
-          dir.gsub(/"/, '\"').gsub(/\\$/, '')
-        end.join(File::PATH_SEPARATOR)
+        ENV['PATH'].split(File::PATH_SEPARATOR)
+                   .map { |dir| dir.gsub(/"/, '\"').gsub(/\\$/, '') }
+                   .map { |dir| Pathname.new(dir).cleanpath.to_s }
+                   .join(File::PATH_SEPARATOR)
       else
         ENV['PATH']
       end
