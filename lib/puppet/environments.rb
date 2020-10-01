@@ -305,13 +305,23 @@ module Puppet::Environments
     include Puppet::Concurrent::Synchronized
 
     class DefaultCacheExpirationService
+      # Called when the environment is created.
+      #
+      # @param [Puppet::Node::Environment] env
       def created(env)
       end
 
+      # Is the environment with this name expired?
+      #
+      # @param [Symbol] env_name The symbolic environment name
+      # @return [Boolean]
       def expired?(env_name)
         false
       end
 
+      # The environment with this name was evicted.
+      #
+      # @param [Symbol] env_name The symbolic environment name
       def evicted(env_name)
       end
     end
@@ -411,7 +421,7 @@ module Puppet::Environments
       to_expire = @cache.select { |name, entry| entry.expires < t || @cache_expiration_service.expired?(name.to_sym) }
       to_expire.each do |name, entry|
         Puppet.debug {"Evicting cache entry for environment '#{name}'"}
-        @cache_expiration_service.evicted(name)
+        @cache_expiration_service.evicted(name.to_sym)
         clear(name)
         @expirations.delete(entry.expires)
         Puppet.settings.clear_environment_settings(name)
@@ -449,9 +459,9 @@ module Puppet::Environments
     # Evicts the entry if it has expired
     # Also clears caches in Settings that may prevent the entry from being updated
     def evict_if_expired(name)
-      if (result = @cache[name]) && (result.expired? || @cache_expiration_service.expired?(name))
+      if (result = @cache[name]) && (result.expired? || @cache_expiration_service.expired?(name.to_sym))
         Puppet.debug {"Evicting cache entry for environment '#{name}'"}
-        @cache_expiration_service.evicted(name)
+        @cache_expiration_service.evicted(name.to_sym)
         clear(name)
         Puppet.settings.clear_environment_settings(name)
       end
