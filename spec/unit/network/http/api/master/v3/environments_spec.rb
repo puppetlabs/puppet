@@ -7,13 +7,14 @@ require 'matchers/json'
 describe Puppet::Network::HTTP::API::Master::V3::Environments do
   include JSONMatchers
 
-  it "responds with all of the available environments" do
-    environment = Puppet::Node::Environment.create(:production, ["/first", "/second"], '/manifests')
-    loader = Puppet::Environments::Static.new(environment)
-    handler = Puppet::Network::HTTP::API::Master::V3::Environments.new(loader)
-    response = Puppet::Network::HTTP::MemoryResponse.new
+  let(:environment) { Puppet::Node::Environment.create(:production, ["/first", "/second"], '/manifests') }
+  let(:loader) { Puppet::Environments::Static.new(environment) }
+  let(:handler) { Puppet::Network::HTTP::API::Master::V3::Environments.new(loader) }
+  let(:request) { Puppet::Network::HTTP::Request.from_hash(:headers => { 'accept' => 'application/json' }) }
+  let(:response) { Puppet::Network::HTTP::MemoryResponse.new }
 
-    handler.call(Puppet::Network::HTTP::Request.from_hash(:headers => { 'accept' => 'application/json' }), response)
+  it "responds with all of the available environments" do
+    handler.call(request, response)
 
     expect(response.code).to eq(200)
     expect(response.type).to eq("application/json")
@@ -33,29 +34,17 @@ describe Puppet::Network::HTTP::API::Master::V3::Environments do
   end
 
   it "the response conforms to the environments schema for unlimited timeout" do
-    conf_stub = double('conf_stub')
-    expect(conf_stub).to receive(:environment_timeout).and_return(Float::INFINITY)
-    environment = Puppet::Node::Environment.create(:production, [])
-    env_loader = Puppet::Environments::Static.new(environment)
-    expect(env_loader).to receive(:get_conf).with(:production).and_return(conf_stub)
-    handler = Puppet::Network::HTTP::API::Master::V3::Environments.new(env_loader)
-    response = Puppet::Network::HTTP::MemoryResponse.new
+    Puppet[:environment_timeout] = 'unlimited'
 
-    handler.call(Puppet::Network::HTTP::Request.from_hash(:headers => { 'accept' => 'application/json' }), response)
+    handler.call(request, response)
 
     expect(response.body).to validate_against('api/schemas/environments.json')
   end
 
   it "the response conforms to the environments schema for integer timeout" do
-    conf_stub = double('conf_stub')
-    expect(conf_stub).to receive(:environment_timeout).and_return(1)
-    environment = Puppet::Node::Environment.create(:production, [])
-    env_loader = Puppet::Environments::Static.new(environment)
-    expect(env_loader).to receive(:get_conf).with(:production).and_return(conf_stub)
-    handler = Puppet::Network::HTTP::API::Master::V3::Environments.new(env_loader)
-    response = Puppet::Network::HTTP::MemoryResponse.new
+    Puppet[:environment_timeout] = 1
 
-    handler.call(Puppet::Network::HTTP::Request.from_hash(:headers => { 'accept' => 'application/json' }), response)
+    handler.call(request, response)
 
     expect(response.body).to validate_against('api/schemas/environments.json')
   end
