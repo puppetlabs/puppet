@@ -33,6 +33,16 @@ describe Puppet::Network::HTTP::API::Master::V3::Environments do
     })
   end
 
+  it "prefers environment_ttl" do
+    Puppet[:environment_ttl] = 60
+
+    handler.call(request, response)
+
+    expect(response.code).to eq(200)
+    expect(response.type).to eq("application/json")
+    expect(JSON.parse(response.body)["environments"]["production"]["settings"]["environment_timeout"]).to eq(60)
+  end
+
   it "the response conforms to the environments schema for unlimited timeout" do
     Puppet[:environment_timeout] = 'unlimited'
 
