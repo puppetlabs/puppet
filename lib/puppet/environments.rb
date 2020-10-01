@@ -372,7 +372,9 @@ module Puppet::Environments
       clear_all_expired
       result = @cache[name]
       if result
+        Puppet.debug {"Found in cache '#{name}' #{result.label}"}
         # found in cache
+        result.touch
         return result.value
       elsif (result = @loader.get(name))
         # environment loaded, cache it
@@ -475,6 +477,9 @@ module Puppet::Environments
         @value = value
       end
 
+      def touch
+      end
+
       def expired?
         false
       end
@@ -503,10 +508,10 @@ module Puppet::Environments
       end
     end
 
-    # Time to Live eviction policy entry
+    # Policy that expires in ttl_seconds from when it was created
     class TTLEntry < Entry
       def initialize(value, ttl_seconds)
-        super value
+        super(value)
         @ttl = Time.now + ttl_seconds
         @ttl_seconds = ttl_seconds
       end
