@@ -5,7 +5,13 @@ module Puppet
     end
   end
 
-  # @api private
+  # Contains an HTTP client for making network requests to puppet and other
+  # HTTP servers.
+  #
+  # @see Puppet::HTTP::Client
+  # @see Puppet::HTTP::HTTPError
+  # @see Puppet::HTTP::Response
+  # @api public
   module HTTP
     ACCEPT_ENCODING = "gzip;q=1.0,deflate;q=0.6,identity;q=0.3".freeze
     HEADER_PUPPET_VERSION = "X-Puppet-Version".freeze

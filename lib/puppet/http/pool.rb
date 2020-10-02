@@ -7,7 +7,6 @@
 # same site, and will be reused in MRU order.
 #
 # @api private
-#
 class Puppet::HTTP::Pool
   attr_reader :factory, :keepalive_timeout
 

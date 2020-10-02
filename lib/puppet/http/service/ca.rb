@@ -1,26 +1,21 @@
+# The CA service is used to handle certificate related REST requests.
 #
-# @api private
-#
-# The Ca service is used to handle certificate requests
-#
+# @api public
 class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
-  # @api private
   # @return [Hash] default headers for the ca service
   HEADERS = { 'Accept' => 'text/plain' }.freeze
 
-  # @api private
   # @return [String] default API for the ca service
   API = '/puppet-ca/v1'.freeze
 
-  #
-  # @api private
+  # Use `Puppet::HTTP::Session.route_to(:ca)` to create or get an instance of this class.
   #
   # @param [Puppet::HTTP::Client] client
   # @param [Puppet::HTTP::Session] session
-  # @param [String] server (Puppet[:ca_server]) If an explicit server is given,
+  # @param [String] server (`Puppet[:ca_server]`) If an explicit server is given,
   #   create a service using that server. If server is nil, the default value
   #   is used to create the service.
-  # @param [Integer] port (Puppet[:ca_port]) If an explicit port is given, create
+  # @param [Integer] port (`Puppet[:ca_port]`) If an explicit port is given, create
   #   a service using that port. If port is nil, the default value is used to
   #   create the service.
   #
@@ -29,10 +24,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
     super(client, session, url)
   end
 
-  #
-  # @api private
-  #
-  # Submit a GET request to retrieve the named certificate from the server
+  # Submit a GET request to retrieve the named certificate from the server.
   #
   # @param [String] name name of the certificate to request
   # @param [Puppet::SSL::SSLContext] ssl_context
@@ -40,6 +32,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   # @return [Array<Puppet::HTTP::Response, String>] An array containing the
   #   request response and the stringified body of the request response
   #
+  # @api public
   def get_certificate(name, ssl_context: nil)
     response = @client.get(
       with_base_url("/certificate/#{name}"),
@@ -52,11 +45,8 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
     [response, response.body.to_s]
   end
 
-  #
-  # @api private
-  #
   # Submit a GET request to retrieve the certificate revocation list from the
-  #   server
+  #   server.
   #
   # @param [Time] if_modified_since If not nil, only download the CRL if it has
   #   been modified since the specified time.
@@ -65,6 +55,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   # @return [Array<Puppet::HTTP::Response, String>] An array containing the
   #   request response and the stringified body of the request response
   #
+  # @api public
   def get_certificate_revocation_list(if_modified_since: nil, ssl_context: nil)
     headers = add_puppet_headers(HEADERS)
     headers['If-Modified-Since'] = if_modified_since.httpdate if if_modified_since
@@ -80,10 +71,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
     [response, response.body.to_s]
   end
 
-  #
-  # @api private
-  #
-  # Submit a PUT request to send a certificate request to the server
+  # Submit a PUT request to send a certificate request to the server.
   #
   # @param [String] name The name of the certificate request being sent
   # @param [OpenSSL::X509::Request] csr Certificate request to send to the
@@ -92,6 +80,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   #
   # @return [Puppet::HTTP::Response] The request response
   #
+  # @api public
   def put_certificate_request(name, csr, ssl_context: nil)
     headers = add_puppet_headers(HEADERS)
     headers['Content-Type'] = 'text/plain'

@@ -4,7 +4,6 @@
 # for the second.
 #
 # @api private
-#
 class Puppet::HTTP::Site
   attr_reader :scheme, :host, :port
 

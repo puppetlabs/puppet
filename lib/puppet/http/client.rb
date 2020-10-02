@@ -1,21 +1,94 @@
+# The HTTP client provides methods for making `GET`, `POST`, etc requests to
+# HTTP(S) servers. It also provides methods for resolving Puppetserver REST
+# service endpoints using SRV records and settings (such as `server_list`,
+# `server`, `ca_server`, etc). Once a service endpoint has been resolved, there
+# are methods for making REST requests (such as getting a node, sending facts,
+# etc).
 #
-# @api private
+# The client uses persistent HTTP connections by default unless the `Connection:
+# close` header is specified and supports streaming response bodies.
 #
-# The client contains a pool of persistent HTTP connections and creates HTTP
-# sessions.
+# By default the client only trusts the Puppet CA for HTTPS connections. However,
+# if the `include_system_store` request option is set to true, then Puppet will
+# trust certificates in the puppet-agent CA bundle.
 #
+# @example To access the HTTP client:
+#   client = Puppet.runtime[:http]
+#
+# @example To make an HTTP GET request:
+#   response = client.get(URI("http://www.example.com"))
+#
+# @example To make an HTTPS GET request, trusting the puppet CA and certs in Puppet's CA bundle:
+#   response = client.get(URI("https://www.example.com"), include_system_store: true)
+#
+# @example To use a URL containing special characters, such as spaces:
+#  response = client.get(URI(Puppet::Util.uri_encode("https://www.example.com/path to file")))
+#
+# @example To pass query parameters:
+#   response = client.get(URI("https://www.example.com"), query: {'q' => 'puppet'})
+#
+# @example To pass custom headers:
+#   response = client.get(URI("https://www.example.com"), headers: {'Accept-Content' => 'application/json'})
+#
+# @example To check if the response is successful (2xx):
+#   response = client.get(URI("http://www.example.com"))
+#   puts response.success?
+#
+# @example To get the response code and reason:
+#   response = client.get(URI("http://www.example.com"))
+#   unless response.success?
+#     puts "HTTP #{response.code} #{response.reason}"
+#    end
+#
+# @example To read response headers:
+#   response = client.get(URI("http://www.example.com"))
+#   puts response['Content-Type']
+#
+# @example To stream the response body:
+#   client.get(URI("http://www.example.com")) do |response|
+#     if response.success?
+#       response.read_body do |data|
+#         puts data
+#       end
+#     end
+#   end
+#
+# @example To handle exceptions:
+#   begin
+#     client.get(URI("https://www.example.com"))
+#   rescue Puppet::HTTP::ResponseError => e
+#     puts "HTTP #{e.response.code} #{e.response.reason}"
+#   rescue Puppet::HTTP::ConnectionError => e
+#     puts "Connection error #{e.message}"
+#   rescue Puppet::SSL::SSLError => e
+#     puts "SSL error #{e.message}"
+#   rescue Puppet::HTTP::HTTPError => e
+#     puts "General HTTP error #{e.message}"
+#   end
+#
+# @example To route to the `:puppet` service:
+#   session = client.create_session
+#   service = session.route_to(:puppet)
+#
+# @example To make a node request:
+#   node = service.get_node(Puppet[:certname], environment: 'production')
+#
+# @example To submit facts:
+#   facts = Puppet::Indirection::Facts.indirection.find(Puppet[:certname])
+#   service.put_facts(Puppet[:certname], environment: 'production', facts: facts)
+#
+# @example To submit a report to the `:report` service:
+#   report = Puppet::Transaction::Report.new
+#   service = session.route_to(:report)
+#   service.put_report(Puppet[:certname], report, environment: 'production')
+#
+# @api public
 class Puppet::HTTP::Client
 
-  # @api private
-  # @return [Puppet::HTTP::Pool] the pool instance associated with
-  #   this client
   attr_reader :pool
 
-  #
-  # @api private
-  #
-  # Create a new http client instance. The client contains a pool of persistent
-  # HTTP connections and creates HTTP sessions.
+  # Create a new http client instance. Use `Puppet.runtime[:http]` to get
+  # the current client instead of creating an instance of this class.
   #
   # @param [Puppet::HTTP::Pool] pool pool of persistent Net::HTTP
   #   connections
@@ -40,22 +113,19 @@ class Puppet::HTTP::Client
     @retry_after_handler = Puppet::HTTP::RetryAfterHandler.new(retry_limit, Puppet[:runinterval])
   end
 
-  #
-  # @api private
-  #
   # Create a new HTTP session. A session is the object through which services
   # may be connected to and accessed.
   #
   # @return [Puppet::HTTP::Session] the newly created HTTP session
   #
+  # @api public
   def create_session
     Puppet::HTTP::Session.new(self, build_resolvers)
   end
 
-  #
-  # @api private
-  #
-  # Open a connection to the given URI
+  # Open a connection to the given URI. It is typically not necessary to call
+  # this method as the client will create connections as needed when a request
+  # is made.
   #
   # @param [URI] uri the connection destination
   # @param [Hash] options
@@ -63,10 +133,6 @@ class Puppet::HTTP::Client
   #   be used for connections
   # @option options [Boolean] :include_system_store (false) if we should include
   #   the system store for connection
-  #
-  # @yield [Net::HTTP] If a block is given, yields an active http connection
-  #   from the pool
-  #
   def connect(uri, options: {}, &block)
     start = Time.now
     verifier = nil
@@ -101,26 +167,34 @@ class Puppet::HTTP::Client
                 {uri: uri, elapsed: elapsed(start), message: e.message}, e, connected)
   end
 
+  # These options apply to all HTTP request methods
   #
-  # @api private
-  #
+  # @!macro [new] request_options
+  #   @param [Hash] options HTTP request options. Options not recognized by the
+  #     HTTP implementation will be ignored.
+  #   @option options [Puppet::SSL::SSLContext] :ssl_context (nil) ssl context to
+  #     be used for connections
+  #   @option options [Boolean] :include_system_store (false) if we should include
+  #     the system store for connection
+  #   @option options [Integer] :redirect_limit (10) The maximum number of HTTP
+  #     redirections to allow for this request.
+  #   @option options [Hash] :basic_auth A map of `:username` => `String` and
+  #     `:password` => `String`
+  #   @option options [String] :metric_id The metric id used to track metrics
+  #     on requests.
+
   # Submits a GET HTTP request to the given url
   #
   # @param [URI] url the location to submit the http request
   # @param [Hash] headers merged with the default headers defined by the client
   # @param [Hash] params encoded and set as the url query
-  # @param [Hash] options passed through to the request execution
-  # @option options [Puppet::SSL::SSLContext] :ssl_context (nil) ssl context to
-  #   be used for connections
-  # @option options [Boolean] :include_system_store (false) if we should include
-  #   the system store for connection
-  # @param options [Integer] :redirect_limit number of HTTP redirections to allow
-  #   for this request.
+  # @!macro request_options
   #
   # @yield [Puppet::HTTP::Response] if a block is given yields the response
   #
-  # @return [String] if a block is not given, returns the response body
+  # @return [Puppet::HTTP::Response] the response
   #
+  # @api public
   def get(url, headers: {}, params: {}, options: {}, &block)
     url = encode_query(url, params)
 
@@ -135,24 +209,16 @@ class Puppet::HTTP::Client
     end
   end
 
-  #
-  # @api private
-  #
   # Submits a HEAD HTTP request to the given url
   #
   # @param [URI] url the location to submit the http request
   # @param [Hash] headers merged with the default headers defined by the client
   # @param [Hash] params encoded and set as the url query
-  # @param [Hash] options passed through to the request execution
-  # @option options [Puppet::SSL::SSLContext] :ssl_context (nil) ssl context to
-  #   be used for connections
-  # @option options [Boolean] :include_system_store (false) if we should include
-  #   the system store for connection
-  # @param options [Integer] :redirect_limit number of HTTP redirections to allow
-  #   for this request.
+  # @!macro request_options
   #
-  # @return [String] the body of the request response
+  # @return [Puppet::HTTP::Response] the response
   #
+  # @api public
   def head(url, headers: {}, params: {}, options: {})
     url = encode_query(url, params)
 
@@ -163,26 +229,19 @@ class Puppet::HTTP::Client
     end
   end
 
-  #
-  # @api private
-  #
   # Submits a PUT HTTP request to the given url
   #
   # @param [URI] url the location to submit the http request
   # @param [String] body the body of the PUT request
-  # @param [Hash] headers merged with the default headers defined by the client
+  # @param [Hash] headers merged with the default headers defined by the client. The
+  #   `Content-Type` header is required and should correspond to the type of data passed
+  #   as the `body` argument.
   # @param [Hash] params encoded and set as the url query
-  # @param [Hash] options passed through to the request execution
-  # @option options [String] :content_type the type of the body content
-  # @option options [Puppet::SSL::SSLContext] :ssl_context (nil) ssl context to
-  #   be used for connections
-  # @option options [Boolean] :include_system_store (false) if we should include
-  #   the system store for connection
-  # @param options [Integer] :redirect_limit number of HTTP redirections to allow
-  #   for this request.
+  # @!macro request_options
   #
-  # @return [String] the body of the request response
+  # @return [Puppet::HTTP::Response] the response
   #
+  # @api public
   def put(url, body, headers: {}, params: {}, options: {})
     raise ArgumentError, "'put' requires a string 'body' argument" unless body.is_a?(String)
     url = encode_query(url, params)
@@ -198,26 +257,21 @@ class Puppet::HTTP::Client
     end
   end
 
-  #
-  # @api private
-  #
   # Submits a POST HTTP request to the given url
   #
   # @param [URI] url the location to submit the http request
   # @param [String] body the body of the POST request
-  # @param [Hash] headers merged with the default headers defined by the client
+  # @param [Hash] headers merged with the default headers defined by the client. The
+  #   `Content-Type` header is required and should correspond to the type of data passed
+  #   as the `body` argument.
   # @param [Hash] params encoded and set as the url query
-  # @param [Hash] options passed through to the request execution
-  # @option options [String] :content_type the type of the body content
-  # @option options [Puppet::SSL::SSLContext] :ssl_context (nil) ssl context to
-  #   be used for connections
-  # @option options [Boolean] :include_system_store (false) if we should include
-  #   the system store for connection
-  # @param options [Integer] :redirect_limit number of HTTP redirections to allow
-  #   for this request.
+  # @!macro request_options
   #
-  # @return [String] the body of the request response
+  # @yield [Puppet::HTTP::Response] if a block is given yields the response
   #
+  # @return [Puppet::HTTP::Response] the response
+  #
+  # @api public
   def post(url, body, headers: {}, params: {}, options: {}, &block)
     raise ArgumentError, "'post' requires a string 'body' argument" unless body.is_a?(String)
     url = encode_query(url, params)
@@ -237,24 +291,16 @@ class Puppet::HTTP::Client
     end
   end
 
-  #
-  # @api private
-  #
-  # Submits a DELETE HTTP request to the given url
+  # Submits a DELETE HTTP request to the given url.
   #
   # @param [URI] url the location to submit the http request
   # @param [Hash] headers merged with the default headers defined by the client
   # @param [Hash] params encoded and set as the url query
-  # @param [Hash] options options hash passed through to the request execution
-  # @option options [Puppet::SSL::SSLContext] :ssl_context (nil) ssl context to
-  #   be used for connections
-  # @option options [Boolean] :include_system_store (false) if we should include
-  #   the system store for connection
-  # @param options [Integer] :redirect_limit number of HTTP redirections to allow
-  #   for this request.
+  # @!macro request_options
   #
-  # @return [String] the body of the request response
+  # @return [Puppet::HTTP::Response] the response
   #
+  # @api public
   def delete(url, headers: {}, params: {}, options: {})
     url = encode_query(url, params)
 
@@ -265,11 +311,11 @@ class Puppet::HTTP::Client
     end
   end
 
+  # Close persistent connections in the pool.
   #
-  # @api private
+  # @return [void]
   #
-  # Close persistent connections in the pool
-  #
+  # @api public
   def close
     @pool.close
   end
@@ -286,6 +332,21 @@ class Puppet::HTTP::Client
 
   private
 
+  # Connect or borrow a connection from the pool to the host and port associated
+  # with the request's URL. Then execute the HTTP request, retrying and
+  # following redirects as needed, and return the HTTP response. The response
+  # body will always be fully drained/consumed when this method returns.
+  #
+  # If a block is provided, then the response will be yielded to the caller,
+  # allowing the response body to be streamed.
+  #
+  # If the request/response did not result in an exception and the caller did
+  # not ask for the connection to be closed (via Connection: close), then the
+  # connection will be returned to the pool.
+  #
+  # @yieldparam [Puppet::HTTP::Response] response The final response, after
+  # following redirects and retrying
+  # @return [Puppet::HTTP::Response]
   def execute_streaming(request, options: {}, &block)
     redirector = Puppet::HTTP::Redirector.new(options.fetch(:redirect_limit, @default_redirect_limit))
 
@@ -331,6 +392,9 @@ class Puppet::HTTP::Client
 
             yield response
           ensure
+            # we need to make sure the response body is fully consumed before
+            # the connection is put back in the pool, otherwise the response
+            # for one request could leak into a future response.
             response.drain
           end
 

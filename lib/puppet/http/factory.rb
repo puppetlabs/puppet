@@ -8,7 +8,6 @@ require 'puppet/http'
 # specified {Puppet::HTTP::Site Site} and puppet settings.
 #
 # @api private
-#
 class Puppet::HTTP::Factory
   @@openssl_initialized = false
 

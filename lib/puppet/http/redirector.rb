@@ -1,23 +1,16 @@
-#
-# @api private
-#
 # Handle HTTP redirects
 #
+# @api private
 class Puppet::HTTP::Redirector
-  #
-  # @api private
-  #
   # Create a new redirect handler
   #
   # @param [Integer] redirect_limit maximum number of redirects allowed
   #
+  # @api private
   def initialize(redirect_limit)
     @redirect_limit = redirect_limit
   end
 
-  #
-  # @api private
-  #
   # Determine of the HTTP response code indicates a redirect
   #
   # @param [Net::HTTP] request request that received the response
@@ -25,6 +18,7 @@ class Puppet::HTTP::Redirector
   #
   # @return [Boolean] true if the response code is 301, 302, or 307.
   #
+  # @api private
   def redirect?(request, response)
     # Net::HTTPRedirection is not used because historically puppet
     # has only handled these, and we're not a browser
@@ -36,9 +30,6 @@ class Puppet::HTTP::Redirector
     end
   end
 
-  #
-  # @api private
-  #
   # Implement the HTTP request redirection
   #
   # @param [Net::HTTP] request request that has been redirected
@@ -48,6 +39,7 @@ class Puppet::HTTP::Redirector
   # @return [Net::HTTP] A new request based on the original request, but with
   #   the redirected location
   #
+  # @api private
   def redirect_to(request, response, redirects)
     raise Puppet::HTTP::TooManyRedirects.new(request.uri) if redirects >= @redirect_limit
 
