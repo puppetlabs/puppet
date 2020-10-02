@@ -48,7 +48,7 @@ found in the project Gemfile.
 
 ## Puppet Continuous integration
 
-  * Travis-ci (spec tests only): https://travis-ci.org/puppetlabs/puppet/
+  * GitHub Actions (spec tests only): https://github.com/puppetlabs/puppet/actions
   * Jenkins (spec and acceptance tests): https://jenkins.puppetlabs.com/view/Puppet%20FOSS/
 
 ## RSpec

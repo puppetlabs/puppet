@@ -61,12 +61,8 @@ end
 desc "verify that commit messages match CONTRIBUTING.md requirements"
 task(:commits) do
   # This rake task looks at the summary from every commit from this branch not
-  # in the branch targeted for a PR. This is accomplished by using the
-  # TRAVIS_COMMIT_RANGE environment variable, which is present in travis CI and
-  # populated with the range of commits the PR contains. If not available, this
-  # falls back to `master..HEAD` as a next best bet as `master` is unlikely to
-  # ever be absent.
-  commit_range = ENV['TRAVIS_COMMIT_RANGE'].nil? ? 'master..HEAD' : ENV['TRAVIS_COMMIT_RANGE'].sub(/\.\.\./, '..')
+  # in the branch targeted for a PR.
+  commit_range = 'HEAD^..HEAD'
   puts "Checking commits #{commit_range}"
   %x{git log --no-merges --pretty=%s #{commit_range}}.each_line do |commit_summary|
     # This regex tests for the currently supported commit summary tokens: maint, doc, packaging, or pup-<number>.
@@ -91,12 +87,8 @@ end
 
 desc "verify that changed files are clean of Ruby warnings"
 task(:warnings) do
-  # This rake task looks at all files modified in this branch. This is
-  # accomplished by using the TRAVIS_COMMIT_RANGE environment variable, which
-  # is present in travis CI and populated with the range of commits the PR
-  # contains. If not available, this falls back to `master..HEAD` as a next
-  # best bet as `master` is unlikely to ever be absent.
-  commit_range = ENV['TRAVIS_COMMIT_RANGE'].nil? ? 'master...HEAD' : ENV['TRAVIS_COMMIT_RANGE']
+  # This rake task looks at all files modified in this branch.
+  commit_range = 'HEAD^..HEAD'
   ruby_files_ok = true
   puts "Checking modified files #{commit_range}"
   %x{git diff --diff-filter=ACM --name-only #{commit_range}}.each_line do |modified_file|
