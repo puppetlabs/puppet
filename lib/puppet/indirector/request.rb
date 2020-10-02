@@ -231,9 +231,9 @@ class Puppet::Indirector::Request
           debug_once _("Selected port from the first entry of the `server_list` setting: %{port}") % {port: primary_server[1]}
           primary_server[1]
         else
-          #TRANSLATORS 'masterport' is the name of a setting and should not be translated
-          debug_once _("Selected port from the `masterport` setting: %{port}") % {port: Puppet.settings[:masterport]}
-          Puppet.settings[:masterport]
+          #TRANSLATORS 'serverport' is the name of a setting and should not be translated
+          debug_once _("Selected port from the `serverport` setting: %{port}") % {port: Puppet.settings[:serverport]}
+          Puppet.settings[:serverport]
         end
       end
     end
@@ -277,7 +277,7 @@ class Puppet::Indirector::Request
     # If the URI class can look up the scheme, it will provide a port,
     # otherwise it will default to '0'.
     if uri.port.to_i == 0 and uri.scheme == "puppet"
-      @port = Puppet.settings[:masterport].to_i
+      @port = Puppet.settings[:serverport].to_i
     else
       @port = uri.port.to_i
     end
