@@ -14,12 +14,14 @@ test_name 'C100565: puppet agent with module should translate messages' do
   extend Puppet::Acceptance::I18nDemoUtils
 
   language = 'ja_JP'
-  step "configure server locale to #{language}" do
-    configure_master_system_locale(language)
-  end
+  disable_i18n_default_master = master.puppet['disable_i18n']
 
   step 'enable i18n on master' do
     on(master, puppet("config set disable_i18n false"))
+  end
+
+  step "configure server locale to #{language}" do
+    configure_master_system_locale(language)
   end
 
   tmp_environment = mk_tmp_environment_with_teardown(master, File.basename(__FILE__, '.*'))
@@ -30,6 +32,7 @@ test_name 'C100565: puppet agent with module should translate messages' do
 
   teardown do
     step 'resetting the server locale' do
+      on(master, puppet("config set disable_i18n #{ disable_i18n_default_master }"))
       reset_master_system_locale
     end
     step 'uninstall the module' do
@@ -48,7 +51,9 @@ test_name 'C100565: puppet agent with module should translate messages' do
     shell_env_language = { 'LANGUAGE' => agent_language, 'LANG' => agent_language }
 
     type_path = agent.tmpdir('provider')
+    disable_i18n_default_agent = agent.puppet['disable_i18n']
     teardown do
+      on(agent, puppet("config set disable_i18n #{ disable_i18n_default_agent }"))
       agent.rm_rf(type_path)
     end
 
