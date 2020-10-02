@@ -3,6 +3,23 @@ require 'puppet/ssl'
 # SSL Provider creates `SSLContext` objects that can be used to create
 # secure connections.
 #
+# @example To load an SSLContext from an existing private key and related certs/crls:
+#   ssl_context = provider.load_context
+#
+# @example To load an SSLContext from an existing password-protected private key and related certs/crls:
+#   ssl_context = provider.load_context(password: 'opensesame')
+#
+# @example To create an SSLContext from in-memory certs and keys:
+#   cacerts = [<OpenSSL::X509::Certificate>]
+#   crls = [<OpenSSL::X509::CRL>]
+#   key = <OpenSSL::X509::PKey>
+#   cert = <OpenSSL::X509::Certificate>
+#   ssl_context = provider.create_context(cacerts: cacerts, crls: crls, private_key: key, client_cert: cert)
+#
+# @example To create an SSLContext to connect to non-puppet HTTPS servers:
+#   cacerts = [<OpenSSL::X509::Certificate>]
+#   ssl_context = provider.create_root_context(cacerts: cacerts)
+#
 # @api private
 class Puppet::SSL::SSLProvider
   # Create an insecure `SSLContext`. Connections made from the returned context

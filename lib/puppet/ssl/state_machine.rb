@@ -10,7 +10,7 @@ require 'puppet/util/pidlock'
 # certs. This way we're sure about which SSLContext is being used during any
 # phase of the bootstrapping process.
 #
-# @private
+# @api private
 class Puppet::SSL::StateMachine
   class SSLState
     attr_reader :ssl_context
@@ -405,6 +405,7 @@ class Puppet::SSL::StateMachine
   #
   # @return [Puppet::SSL::SSLContext] initialized SSLContext
   # @raise [Puppet::Error] If we fail to generate an SSLContext
+  # @api private
   def ensure_ca_certificates
     final_state = run_machine(NeedLock.new(self), NeedKey)
     final_state.ssl_context
@@ -414,6 +415,7 @@ class Puppet::SSL::StateMachine
   #
   # @return [Puppet::SSL::SSLContext] initialized SSLContext
   # @raise [Puppet::Error] If we fail to generate an SSLContext
+  # @api private
   def ensure_client_certificate
     final_state = run_machine(NeedLock.new(self), Done)
     ssl_context = final_state.ssl_context

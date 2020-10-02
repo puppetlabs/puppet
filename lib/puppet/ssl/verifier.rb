@@ -14,6 +14,7 @@ class Puppet::SSL::Verifier
   # @param hostname [String] FQDN of the server we're attempting to connect to
   # @param ssl_context [Puppet::SSL::SSLContext] ssl_context containing CA certs,
   #   CRLs, etc needed to verify the server's certificate chain
+  # @api private
   def initialize(hostname, ssl_context)
     @hostname = hostname
     @ssl_context = ssl_context
@@ -25,6 +26,7 @@ class Puppet::SSL::Verifier
   #
   # @param verifier [Puppet::SSL::Verifier] the verifier to compare against
   # @return [Boolean] return true if a cached connection can be used, false otherwise
+  # @api private
   def reusable?(verifier)
     verifier.instance_of?(self.class) &&
       verifier.ssl_context.object_id == @ssl_context.object_id
