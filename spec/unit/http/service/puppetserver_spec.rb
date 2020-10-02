@@ -34,7 +34,7 @@ describe Puppet::HTTP::Service::Puppetserver do
   context 'when routing to the puppetserver service' do
     it 'defaults the server and port based on settings' do
       Puppet[:server] = 'compiler2.example.com'
-      Puppet[:masterport] = 8141
+      Puppet[:serverport] = 8141
 
       stub_request(:get, "https://compiler2.example.com:8141/status/v1/simple/master")
         .to_return(body: "running", headers: {'Content-Type' => 'text/plain;charset=utf-8'})

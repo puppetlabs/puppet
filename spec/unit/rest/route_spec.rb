@@ -30,7 +30,7 @@ describe Puppet::Rest::Route do
 
       it "yields a base URL with Puppet's configured server and port when no defaults are specified" do
         Puppet[:server] = 'configured.net'
-        Puppet[:masterport] = 8140
+        Puppet[:serverport] = 8140
         fallback_route = Puppet::Rest::Route.new(api: '/fakeapi/v1/')
         count = 0
         rval = fallback_route.with_base_url(dns_resolver) do |url|
@@ -55,9 +55,9 @@ describe Puppet::Rest::Route do
         expect(rval).to eq('Block return value')
       end
 
-      it 'falls back to :server and :masterport if nil is passed' do
+      it 'falls back to :server and :serverport if nil is passed' do
         Puppet[:server] = 'one.net'
-        Puppet[:masterport] = 111
+        Puppet[:serverport] = 111
         nil_route = Puppet::Rest::Route.new(api: '/fakeapi/v1/',
                                             server_setting: nil,
                                             port_setting: nil)
@@ -109,7 +109,7 @@ describe Puppet::Rest::Route do
 
         it "should fall back to the default server when the block raises a SystemCallError" do
           Puppet[:server] = "testserver"
-          Puppet[:masterport] = 555
+          Puppet[:serverport] = 555
 
           count = 0
           rval = route.with_base_url(Puppet::Network::Resolver.new) do |url|

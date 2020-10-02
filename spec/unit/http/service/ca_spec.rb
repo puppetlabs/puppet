@@ -38,11 +38,11 @@ describe Puppet::HTTP::Service::Ca do
       subject.get_certificate('ca')
     end
 
-    it 'fallbacks to server and masterport' do
+    it 'fallbacks to server and serverport' do
       Puppet[:ca_server] = nil
       Puppet[:ca_port] = nil
       Puppet[:server] = 'ca2.example.com'
-      Puppet[:masterport] = 8142
+      Puppet[:serverport] = 8142
 
       stub_request(:get, "https://ca2.example.com:8142/puppet-ca/v1/certificate/ca").to_return(body: pem)
 
