@@ -234,9 +234,9 @@ The resolver selects a route based on the puppet settings for that service:
 | service    | server setting | port setting |
 |------------|----------------|--------------|
 | ca         | ca_server      | ca_port      |
-| fileserver | server         | masterport   |
+| fileserver | server         | serverport   |
 | report     | report_server  | report_port  |
-| puppet     | server         | masterport   |
+| puppet     | server         | serverport   |
 
 For example, `route_to(:report)` would use `Puppet[:report_server]` and
 `Puppet[:report_port]`.
