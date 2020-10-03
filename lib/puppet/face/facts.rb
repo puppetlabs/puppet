@@ -83,4 +83,65 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
       nil
     end
   end
+
+  action(:show) do
+    summary _("Facter plugin sync")
+    arguments _("[<facts>]")
+    description <<-'EOT'
+    Reads facts from the local system using facter gem.
+    EOT
+    returns "The output of facter with added puppet specific facts"
+    notes <<-'EOT'
+
+    EOT
+    examples <<-'EOT'
+    retrieve facts:
+
+    $ puppet facts show os
+    EOT
+
+    option("--config-file " + _("<path>")) do
+      default_to { nil }
+      summary _("The location of the config file for Facter.")
+    end
+
+    option("--custom-dir " + _("<path>")) do
+      default_to { nil }
+      summary _("The path to a directory that contains custom facts.")
+    end
+
+    option("--external-dir " + _("<path>")) do
+      default_to { nil }
+      summary _("The path to a directory that contains external facts.")
+    end
+
+    option("--no-block") do
+      summary _("Disable fact blocking mechanism.")
+    end
+
+    option("--no-cache") do
+      summary _("Disable fact caching mechanism.")
+    end
+
+    option("--show-legacy") do
+      summary _("Show legacy facts when querying all facts.")
+    end
+
+    render_as :json
+
+    when_invoked do |*args|
+      options = args.pop
+
+      Puppet.settings.preferred_run_mode = :agent
+      Puppet::Node::Facts.indirection.terminus_class = :facter
+
+
+      options[:user_query] = args
+      options[:resolve_options] = true
+      result = Puppet::Node::Facts.indirection.find(Puppet.settings[:certname], options)
+
+      result.values
+    end
+  end
 end
+

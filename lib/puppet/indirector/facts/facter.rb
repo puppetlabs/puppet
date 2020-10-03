@@ -32,7 +32,13 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     # Initialize core Puppet facts, such as puppetversion
     Puppet.initialize_facts
 
-    result = Puppet::Node::Facts.new(request.key, Facter.to_hash)
+    result = if request.options[:resolve_options]
+               raise(Puppet::Error, _("puppet facts show requires version 4.0.40 or greater of Facter.")) unless Facter.respond_to?(:resolve)
+               find_with_options(request)
+             else
+               Puppet::Node::Facts.new(request.key, Facter.to_hash)
+             end
+
     result.add_local_facts
     result.sanitize
     result
@@ -61,7 +67,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
 
       true
     end
-
+    dirs << request.options[:custom_dir] if request.options[:custom_dir]
     Facter.search(*dirs)
   end
 
@@ -83,6 +89,21 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
       dirs << dir
     end
 
+    dirs << request.options[:external_dir] if request.options[:external_dir]
     Facter.search_external dirs
+  end
+
+  private
+
+  def find_with_options(request)
+    options = request.options
+    options_for_facter = String.new
+    options_for_facter += options[:user_query].join(' ')
+    options_for_facter += " --config #{options[:config_file]}" if options[:config_file]
+    options_for_facter += " --show-legacy" if options[:show_legacy]
+    options_for_facter += " --no-block" if options[:no_block] == false
+    options_for_facter += " --no-cache" if options[:no_cache] == false
+
+    Puppet::Node::Facts.new(request.key, Facter.resolve(options_for_facter))
   end
 end
