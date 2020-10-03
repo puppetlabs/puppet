@@ -101,6 +101,46 @@ puppet facts save [\-\-terminus _TERMINUS] [\-\-extra HASH] \fIkey\fR
 API only: create or overwrite an object\. As the Faces framework does not currently accept data from STDIN, save actions cannot currently be invoked from the command line\.
 .
 .TP
+\fBshow\fR \- Facter plugin sync
+\fBSYNOPSIS\fR
+.
+.IP
+puppet facts show [\-\-terminus _TERMINUS] [\-\-extra HASH] [\-\-config\-file \fIpath\fR] [\-\-custom\-dir \fIpath\fR] [\-\-external\-dir \fIpath\fR] [\-\-no\-block] [\-\-no\-cache] [\-\-show\-legacy] [\fIfacts\fR]
+.
+.IP
+\fBDESCRIPTION\fR
+.
+.IP
+Reads facts from the local system using facter gem\.
+.
+.IP
+\fBOPTIONS\fR \fI\-\-config\-file <path\fR> \- The location of the config file for Facter\.
+.
+.IP
+\fI\-\-custom\-dir <path\fR> \- The path to a directory that contains custom facts\.
+.
+.IP
+\fI\-\-external\-dir <path\fR> \- The path to a directory that contains external facts\.
+.
+.IP
+\fI\-\-no\-block\fR \- Disable fact blocking mechanism\.
+.
+.IP
+\fI\-\-no\-cache\fR \- Disable fact caching mechanism\.
+.
+.IP
+\fI\-\-show\-legacy\fR \- Show legacy facts when querying all facts\.
+.
+.IP
+\fBRETURNS\fR
+.
+.IP
+The output of facter with added puppet specific facts
+.
+.IP
+\fBNOTES\fR
+.
+.TP
 \fBupload\fR \- Upload local facts to the puppet master\.
 \fBSYNOPSIS\fR
 .
@@ -139,6 +179,15 @@ Get facts from the local system:
 .
 .P
 $ puppet facts find
+.
+.P
+\fBshow\fR
+.
+.P
+retrieve facts:
+.
+.P
+$ puppet facts show os
 .
 .P
 \fBupload\fR
