@@ -234,8 +234,8 @@ describe Puppet::Application::Doc do
         end
       end
 
-      it "should operate in master run_mode" do
-        expect(@doc.class.run_mode.name).to eq(:master)
+      it "should operate in server run_mode" do
+        expect(@doc.class.run_mode.name).to eq(:server)
 
         @doc.setup_rdoc
       end

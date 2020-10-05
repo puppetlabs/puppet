@@ -1,7 +1,7 @@
 require 'puppet/application'
 
 class Puppet::Application::Doc < Puppet::Application
-  run_mode :master
+  run_mode :server
 
   attr_accessor :unknown_args, :manifest
 

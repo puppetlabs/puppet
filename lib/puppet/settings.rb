@@ -330,7 +330,7 @@ class Puppet::Settings
     end
 
     option_parser.on('--run_mode',
-                     "The effective 'run mode' of the application: master, agent, or user.",
+                     "The effective 'run mode' of the application: server, agent, or user.",
                      :REQUIRED) do |arg|
       Puppet.settings.preferred_run_mode = arg
     end
@@ -564,7 +564,7 @@ class Puppet::Settings
   # @api private
   def preferred_run_mode=(mode)
     mode = mode.to_s.downcase.intern
-    raise ValidationError, "Invalid run mode '#{mode}'" unless [:master, :agent, :user].include?(mode)
+    raise ValidationError, "Invalid run mode '#{mode}'" unless [:server, :master, :agent, :user].include?(mode)
     @preferred_run_mode_name = mode
     # Changing the run mode has far-reaching consequences. Flush any cached
     # settings so they will be re-generated.
@@ -659,7 +659,7 @@ class Puppet::Settings
     if explicit_config_file?
       return self[:config]
     else
-      return File.join(Puppet::Util::RunMode[:master].conf_dir, config_file_name)
+      return File.join(Puppet::Util::RunMode[:server].conf_dir, config_file_name)
     end
   end
   private :main_config_file
