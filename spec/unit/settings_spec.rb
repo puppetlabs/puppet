@@ -1654,6 +1654,23 @@ describe Puppet::Settings do
     end
   end
 
+  describe 'when settings_catalog is disabled' do
+    let(:settings) { Puppet::Settings.new }
+    before do
+      allow(Puppet).to receive(:[]).with(:settings_catalog).and_return(false)
+    end
+
+    it 'does not compile and apply settings catalog' do
+      expect(settings).not_to receive(:to_catalog)
+      settings.use(:main)
+    end
+
+    it 'logs a message that settings catalog is skipped' do
+      expect(Puppet).to receive(:debug).with('Skipping settings catalog for sections main')
+      settings.use(:main)
+    end
+  end
+
   describe "when dealing with printing configs" do
     before do
       @settings = Puppet::Settings.new

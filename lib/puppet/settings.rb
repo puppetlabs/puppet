@@ -1054,36 +1054,40 @@ Generated on #{Time.now}.
   # Create the necessary objects to use a section.  This is idempotent;
   # you can 'use' a section as many times as you want.
   def use(*sections)
-    sections = sections.collect { |s| s.to_sym }
-    sections = sections.reject { |s| @used.include?(s) }
+    if Puppet[:settings_catalog]
+      sections = sections.collect { |s| s.to_sym }
+      sections = sections.reject { |s| @used.include?(s) }
 
-    return if sections.empty?
+      return if sections.empty?
 
-    Puppet.debug { "Applying settings catalog for sections #{sections.join(', ')}" }
+      Puppet.debug { "Applying settings catalog for sections #{sections.join(', ')}" }
 
-    begin
-      catalog = to_catalog(*sections).to_ral
-    rescue => detail
-      Puppet.log_and_raise(detail, "Could not create resources for managing Puppet's files and directories in sections #{sections.inspect}: #{detail}")
-    end
-
-    catalog.host_config = false
-    catalog.apply do |transaction|
-      if transaction.any_failed?
-        report = transaction.report
-        status_failures = report.resource_statuses.values.select { |r| r.failed? }
-        status_fail_msg = status_failures.
-          collect(&:events).
-          flatten.
-          select { |event| event.status == 'failure' }.
-          collect { |event| "#{event.resource}: #{event.message}" }.join("; ")
-
-        raise "Got #{status_failures.length} failure(s) while initializing: #{status_fail_msg}"
+      begin
+        catalog = to_catalog(*sections).to_ral
+      rescue => detail
+        Puppet.log_and_raise(detail, "Could not create resources for managing Puppet's files and directories in sections #{sections.inspect}: #{detail}")
       end
-    end
 
-    sections.each { |s| @used << s }
-    @used.uniq!
+      catalog.host_config = false
+      catalog.apply do |transaction|
+        if transaction.any_failed?
+          report = transaction.report
+          status_failures = report.resource_statuses.values.select { |r| r.failed? }
+          status_fail_msg = status_failures.
+            collect(&:events).
+            flatten.
+            select { |event| event.status == 'failure' }.
+            collect { |event| "#{event.resource}: #{event.message}" }.join("; ")
+
+          raise "Got #{status_failures.length} failure(s) while initializing: #{status_fail_msg}"
+        end
+      end
+
+      sections.each { |s| @used << s }
+      @used.uniq!
+    else
+      Puppet.debug("Skipping settings catalog for sections #{sections.join(', ')}")
+    end
   end
 
   def valid?(param)
