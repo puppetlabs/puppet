@@ -21,7 +21,7 @@ class Puppet::Parser::Scope
   Puppet::Util.logmethods(self)
 
   include Puppet::Util::Errors
-  attr_accessor :source, :resource
+  attr_accessor :source, :resource, :ephemeral
   attr_reader :compiler
   attr_accessor :parent
 
@@ -985,6 +985,30 @@ class Puppet::Parser::Scope
     ensure
       pop_ephemerals(elevel)
     end
+  end
+
+  # Execute given block with a new scope object
+  # @api private
+  def with_new_scope(scope_variables)
+    # Create a new scope object
+    newscope = Puppet::Parser::Scope.new(@compiler, source: @source, resource: @resource)
+    local = LocalScope.new
+    existing_vars = get_existing_vars
+    merged = existing_vars.merge(scope_variables)
+    merged.each_pair { |k, v| local[k] = v }
+    newscope.ephemeral.push(local)
+    yield(newscope)
+  end
+
+  def get_existing_vars
+    current_scope = effective_symtable(true)
+    vars = {}
+    until current_scope.parent.nil?
+      current_scope.instance_variable_get(:@symbols)&.each_pair { |k,v| vars[k] = v }
+      current_scope = current_scope.parent
+    end
+    current_scope.instance_variable_get(:@symbols)&.each_pair { |k,v| vars[k] = v }
+    vars
   end
 
   # Sets match data in the most nested scope (which always is a MatchScope), it clobbers match data already set there

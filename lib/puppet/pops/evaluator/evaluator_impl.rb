@@ -178,6 +178,14 @@ class EvaluatorImpl
     end
   end
 
+  def evaluate_concurrent_block_with_bindings(scope, variable_bindings, block_expr)
+    # This creates a new scope object from the parent to use for the block
+    scope.with_new_scope(variable_bindings) do |newscope|
+      create_local_scope_from(variable_bindings, newscope)
+      evaluate(block_expr, newscope)
+    end
+  end
+
   # Implementation of case option matching.
   #
   # This is the type of matching performed in a case option, using == for every type

@@ -110,13 +110,21 @@ class Closure < CallableSignature
       end
       Types::TypeMismatchDescriber.validate_parameters(closure_name, params_struct, args_hash)
       result = catch(:next) do
-        @evaluator.evaluate_block_with_bindings(closure_scope, args_hash, @model.body)
+        if Puppet[:tasks]
+          @evaluator.evaluate_concurrent_block_with_bindings(closure_scope, args_hash, @model.body)
+        else
+          @evaluator.evaluate_block_with_bindings(closure_scope, args_hash, @model.body)
+        end
       end
       Types::TypeAsserter.assert_instance_of(nil, return_type, result) do
         "value returned from #{closure_name}"
       end
     else
-      @evaluator.evaluate_block_with_bindings(closure_scope, args_hash, @model.body)
+      if Puppet[:tasks]
+        @evaluator.evaluate_concurrent_block_with_bindings(closure_scope, args_hash, @model.body)
+      else
+        @evaluator.evaluate_block_with_bindings(closure_scope, args_hash, @model.body)
+      end
     end
   end
   private :call_by_name_internal
@@ -230,7 +238,11 @@ class Closure < CallableSignature
 
     if type.callable?(final_args)
       result = catch(:next) do
-        @evaluator.evaluate_block_with_bindings(scope, variable_bindings, @model.body)
+        if Puppet[:tasks]
+          @evaluator.evaluate_concurrent_block_with_bindings(scope, variable_bindings, @model.body)
+        else
+          @evaluator.evaluate_block_with_bindings(scope, variable_bindings, @model.body)
+        end
       end
       Types::TypeAsserter.assert_instance_of(nil, return_type, result) do
         "value returned from #{closure_name}"
