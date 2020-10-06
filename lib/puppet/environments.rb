@@ -159,8 +159,8 @@ module Puppet::Environments
   # Reads environments from a directory on disk. Each environment is
   # represented as a sub-directory. The environment's manifest setting is the
   # `manifest` directory of the environment directory. The environment's
-  # modulepath setting is the global modulepath (from the `[master]` section
-  # for the master) prepended with the `modules` directory of the environment
+  # modulepath setting is the global modulepath (from the `[server]` section
+  # for the server) prepended with the `modules` directory of the environment
   # directory.
   #
   # @api private
@@ -277,7 +277,7 @@ module Puppet::Environments
     def get(name)
       @loaders.each do |loader|
         env = loader.get(name)
-        if env 
+        if env
           return env
         end
       end

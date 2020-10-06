@@ -374,7 +374,7 @@ module Puppet
           from the parent process.
 
           This setting can only be set in the `[main]` section of puppet.conf; it cannot
-          be set in `[master]`, `[agent]`, or an environment config section.",
+          be set in `[server]`, `[agent]`, or an environment config section.",
         :call_hook => :on_define_and_write,
         :hook             => proc do |value|
           Puppet::Util.set_env('PATH', '') if Puppet::Util.get_env('PATH').nil?
@@ -562,7 +562,7 @@ module Puppet
         config = File.expand_path(File.join(settings[:confdir], 'hiera.yaml')) if config.nil?
         config
       end,
-      :desc    => "The hiera configuration file. Puppet only reads this file on startup, so you must restart the puppet master every time you edit it.",
+      :desc    => "The hiera configuration file. Puppet only reads this file on startup, so you must restart the puppet server every time you edit it.",
       :type    => :file,
     },
     :binder_config => {
@@ -1327,7 +1327,7 @@ EOT
     }
   )
 
-  settings.define_settings(:master,
+  settings.define_settings(:server,
     :user => {
       :default    => "puppet",
       :desc       => "The user Puppet Server will run as. Used to ensure
@@ -2159,7 +2159,7 @@ EOT
     }
   )
 
-  settings.define_settings(:master,
+  settings.define_settings(:server,
     :storeconfigs => {
       :default  => false,
       :type     => :boolean,

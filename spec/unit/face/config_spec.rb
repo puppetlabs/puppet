@@ -200,6 +200,44 @@ trace = true
       expect(Puppet::FileSystem).to receive(:open).with(path, nil, 'r+:UTF-8')
       subject.set('foo', 'bar')
     end
+
+    it "sets settings into the [server] section when setting [master] section settings" do
+      initial_contents = <<-CONFIG
+[master]
+setting = old_setting_value
+untouched_setting = value
+      CONFIG
+
+      myinitialfile = StringIO.new(initial_contents)
+      allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(myinitialfile)
+
+      expect {
+        subject.set('setting', 'new_setting_value', {:section => 'master'})
+      }.to output("Deleted setting from 'master': 'setting = old_setting_value', and adding it to 'server' section\n").to_stdout
+      modified_content = <<-CONFIG
+[master]
+untouched_setting = value
+[server]
+setting = new_setting_value
+      CONFIG
+
+      mymodifiedfile = StringIO.new(modified_content)
+      expect(myinitialfile.string).to match(mymodifiedfile.string)
+    end
+
+    it "setting [master] section settings, sets settings into [server] section instead" do
+      myinitialfile = StringIO.new("")
+      allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(myinitialfile)
+      subject.set('setting_name', 'value', {:section => 'master'})
+
+      expected_content = <<-CONFIG
+[server]
+setting_name = value
+      CONFIG
+
+      myexpectedfile = StringIO.new(expected_content)
+      expect(myinitialfile.string).to match(myexpectedfile.string)
+    end
   end
 
   context 'when the puppet.conf file does not exist' do
@@ -249,6 +287,24 @@ trace = true
       expect(Puppet).to receive(:warning).with("No setting found in configuration file for section 'main' setting name 'setting'")
       subject.delete('setting', {:section => 'main'})
     end
+
+    ['master', 'server'].each do |section|
+      describe "when deleting from [#{section}] section" do
+        it "deletes section values from both [server] and [master] sections" do
+          allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(StringIO.new)
+          config = Puppet::Settings::IniFile.new([Puppet::Settings::IniFile::DefaultSection.new])
+          manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
+          allow(Puppet::Settings::IniFile::Manipulator).to receive(:new).and_return(manipulator)
+
+          expect(manipulator).to receive(:delete).with('master', 'setting').and_return('setting=value')
+          expect(manipulator).to receive(:delete).with('server', 'setting').and_return('setting=value')
+          expect {
+            subject.delete('setting', {:section => section})
+          }.to output(/Deleted setting from 'master': 'setting'\nDeleted setting from 'server': 'setting'\n/).to_stdout
+        end
+      end
+    end
+
   end
 
   shared_examples_for :config_printing_a_section do |section|

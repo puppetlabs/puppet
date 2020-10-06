@@ -1062,6 +1062,11 @@ Generated on #{Time.now}.
   # Create the necessary objects to use a section.  This is idempotent;
   # you can 'use' a section as many times as you want.
   def use(*sections)
+    Puppet.warning(":master section deprecated in favor of :server section") if sections.include?(:master)
+
+    # add :server if sections include :master or :master if sections include :server
+    sections |= [:master, :server] if (sections & [:master, :server]).any?
+
     sections = sections.collect { |s| s.to_sym }
     sections = sections.reject { |s| @used.include?(s) }
 
