@@ -505,7 +505,7 @@ module Runtime3Support
       # Store config issues, ignore or warning
       p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] ? :ignore : :warning
       p[Issues::RT_NO_STORECONFIGS]           = Puppet[:storeconfigs] ? :ignore : :warning
-      p[Issues::CLASS_NOT_VIRTUALIZABLE]      = Puppet[:strict] == :off ? :warning : Puppet[:strict]
+      p[Issues::CLASS_NOT_VIRTUALIZABLE]      = :error
       p[Issues::NUMERIC_COERCION]             = Puppet[:strict] == :off ? :ignore : Puppet[:strict]
       p[Issues::SERIALIZATION_DEFAULT_CONVERTED_TO_STRING] = Puppet[:strict] == :off ? :warning : Puppet[:strict]
       p[Issues::SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING] = Puppet[:strict] == :off ? :warning : Puppet[:strict]
