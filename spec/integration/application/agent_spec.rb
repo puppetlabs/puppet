@@ -43,6 +43,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
 
         report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
         expect(report.master_used).to eq("127.0.0.1:#{port}")
+        expect(report.server_used).to eq("127.0.0.1:#{port}")
       end
     end
 
@@ -54,14 +55,14 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         agent.run
       }.to exit_with(1)
        .and output(a_string_matching(%r{Unable to connect to server from server_list setting})
-       .and matching(/Error: Could not run Puppet configuration client: Could not select a functional puppet master from server_list: 'puppet.example.com'/)).to_stderr
+       .and matching(/Error: Could not run Puppet configuration client: Could not select a functional puppet server from server_list: 'puppet.example.com'/)).to_stderr
 
       # I'd expect puppet to update the last run report even if the server_list was
       # exhausted, but it doesn't work that way currently, see PUP-6708
       expect(File).to_not be_exist(Puppet[:lastrunreport])
     end
 
-    it "omits master_used when not using server_list" do
+    it "omits server_used when not using server_list" do
       Puppet[:log_level] = 'debug'
 
       server.start_server do |port|
@@ -75,6 +76,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
 
       report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
       expect(report.master_used).to be_nil
+      expect(report.server_used).to be_nil
     end
 
     it "server_list takes precedence over server" do
@@ -92,6 +94,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
 
         report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
         expect(report.master_used).to eq("127.0.0.1:#{port}")
+        expect(report.server_used).to eq("127.0.0.1:#{port}")
       end
     end
   end

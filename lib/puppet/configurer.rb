@@ -224,9 +224,9 @@ class Puppet::Configurer
         if options[:catalog].nil? && do_failover
           server, port = find_functional_server
           if server.nil?
-            raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet.settings.value(:server_list, Puppet[:environment].to_sym, true) }
+            raise Puppet::Error, _("Could not select a functional puppet server from server_list: '%{server_list}'") % { server_list: Puppet.settings.value(:server_list, Puppet[:environment].to_sym, true) }
           else
-            report.master_used = "#{server}:#{port}"
+            report.server_used = "#{server}:#{port}"
           end
           Puppet.override(server: server, serverport: port) do
             completed = run_internal(options)

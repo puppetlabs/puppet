@@ -63,9 +63,11 @@ class Puppet::Transaction::Report
   # or 'on_failure'
   attr_accessor :cached_catalog_status
 
-  # Contains the name and port of the master that was successfully contacted
+  # Contains the name and port of the server that was successfully contacted
   # @return [String] a string of the format 'servername:port'
-  attr_accessor :master_used
+  attr_accessor :server_used
+  alias :master_used :server_used
+  alias :master_used= :server_used=
 
   # The host name for which the report is generated
   # @return [String] the host name
@@ -224,7 +226,7 @@ class Puppet::Transaction::Report
     @external_times ||= {}
     @host = Puppet[:node_name_value]
     @time = start_time
-    @report_format = 10
+    @report_format = 11
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
     @transaction_uuid = transaction_uuid
@@ -232,7 +234,7 @@ class Puppet::Transaction::Report
     @job_id = job_id
     @catalog_uuid = nil
     @cached_catalog_status = nil
-    @master_used = nil
+    @server_used = nil
     @environment = environment
     @status = 'failed' # assume failed until the report is finalized
     @noop = Puppet[:noop]
@@ -256,8 +258,10 @@ class Puppet::Transaction::Report
     @time = data['time']
     @corrective_change = data['corrective_change']
 
-    if data['master_used']
-      @master_used = data['master_used']
+    if data['server_used']
+      @server_used = data['server_used']
+    elsif data['master_used']
+      @server_used = data['master_used']
     end
 
     if data['catalog_uuid']
@@ -322,7 +326,7 @@ class Puppet::Transaction::Report
     }
 
     # The following is include only when set
-    hash['master_used'] = @master_used unless @master_used.nil?
+    hash['master_used'] = hash['server_used'] = @server_used unless @server_used.nil?
     hash['catalog_uuid'] = @catalog_uuid unless @catalog_uuid.nil?
     hash['code_id'] = @code_id unless @code_id.nil?
     hash['job_id'] = @job_id unless @job_id.nil?
