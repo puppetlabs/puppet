@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.17.0-140-g12956c616d\n"
+"Project-Id-Version: Puppet automation framework 6.18.0-60-ga2230bc8f3\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-08-21 22:04+0000\n"
-"PO-Revision-Date: 2020-08-21 22:04+0000\n"
+"POT-Creation-Date: 2020-10-06 21:53+0000\n"
+"PO-Revision-Date: 2020-10-06 21:53+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -184,19 +184,19 @@ msgstr ""
 msgid "The puppet agent daemon"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:409
+#: ../lib/puppet/application/agent.rb:414
 msgid "Fingerprint asked but neither the certificate, nor the certificate request have been issued"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:414
+#: ../lib/puppet/application/agent.rb:419
 msgid "Failed to generate fingerprint: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:437
+#: ../lib/puppet/application/agent.rb:442
 msgid "Starting Puppet client version %{version}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:453
+#: ../lib/puppet/application/agent.rb:458
 msgid "The puppet agent command does not take parameters"
 msgstr ""
 
@@ -526,101 +526,100 @@ msgstr ""
 msgid "Cannot remove %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:72
+#: ../lib/puppet/configurer.rb:80
 msgid "Using cached catalog from environment '%{environment}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:78
+#: ../lib/puppet/configurer.rb:86
 msgid "Not using cache on failed catalog"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:87
+#: ../lib/puppet/configurer.rb:95
 msgid "Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:92 ../lib/puppet/configurer.rb:174
+#: ../lib/puppet/configurer.rb:100 ../lib/puppet/configurer.rb:182
 msgid "Using cached catalog from environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:167
+#: ../lib/puppet/configurer.rb:175
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:183
+#: ../lib/puppet/configurer.rb:191
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:219 ../lib/puppet/http/resolver/server_list.rb:68
+#: ../lib/puppet/configurer.rb:227
 msgid "Could not select a functional puppet master from server_list: '%{server_list}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:256
+#: ../lib/puppet/configurer.rb:264
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:301
+#: ../lib/puppet/configurer.rb:309
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:316
+#: ../lib/puppet/configurer.rb:324
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:320
+#: ../lib/puppet/configurer.rb:328
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:348
+#: ../lib/puppet/configurer.rb:356
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:359
+#: ../lib/puppet/configurer.rb:367
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:361
+#: ../lib/puppet/configurer.rb:369
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:402
+#: ../lib/puppet/configurer.rb:410
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:431 ../lib/puppet/http/resolver/server_list.rb:89
+#: ../lib/puppet/configurer.rb:439 ../lib/puppet/http/resolver/server_list.rb:67
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:435 ../lib/puppet/http/resolver/server_list.rb:95
+#: ../lib/puppet/configurer.rb:443 ../lib/puppet/http/resolver/server_list.rb:70
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:446 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:454 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:455
+#: ../lib/puppet/configurer.rb:463
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:474
+#: ../lib/puppet/configurer.rb:482
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:482
+#: ../lib/puppet/configurer.rb:490
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:497
+#: ../lib/puppet/configurer.rb:505
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:515
+#: ../lib/puppet/configurer.rb:523
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:536
+#: ../lib/puppet/configurer.rb:544
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -724,7 +723,7 @@ msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{all
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1969
+#: ../lib/puppet/defaults.rb:1976
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -2273,15 +2272,15 @@ msgstr ""
 msgid "Failed to parse Retry-After header '%{retry_after}' as an integer or RFC 2822 date"
 msgstr ""
 
-#: ../lib/puppet/http/service.rb:119
+#: ../lib/puppet/http/service.rb:121
 msgid "Ignoring extra header \"%{name}\" as it was previously set."
 msgstr ""
 
-#: ../lib/puppet/http/service.rb:122
+#: ../lib/puppet/http/service.rb:124
 msgid "Ignoring extra header \"%{name}\" as it has no value."
 msgstr ""
 
-#: ../lib/puppet/http/service.rb:145 ../lib/puppet/indirector/rest.rb:288
+#: ../lib/puppet/http/service.rb:147 ../lib/puppet/indirector/rest.rb:288
 msgid "No content type in http response; cannot parse"
 msgstr ""
 
@@ -2805,9 +2804,9 @@ msgstr ""
 msgid "Selected port from the first entry of the `server_list` setting: %{port}"
 msgstr ""
 
-#. TRANSLATORS 'masterport' is the name of a setting and should not be translated
+#. TRANSLATORS 'serverport' is the name of a setting and should not be translated
 #: ../lib/puppet/indirector/request.rb:235
-msgid "Selected port from the `masterport` setting: %{port}"
+msgid "Selected port from the `serverport` setting: %{port}"
 msgstr ""
 
 #: ../lib/puppet/indirector/request.rb:266
@@ -6777,7 +6776,7 @@ msgstr ""
 msgid "Could not list installed Packages: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:156 ../lib/puppet/provider/package/yum.rb:332
+#: ../lib/puppet/provider/package/aix.rb:156 ../lib/puppet/provider/package/yum.rb:333
 msgid "Tried to get latest on a missing package"
 msgstr ""
 
@@ -6857,7 +6856,7 @@ msgstr ""
 msgid "source is defined but does not have trailing slash, ignoring %{source}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:102
+#: ../lib/puppet/provider/package/gem.rb:102 ../lib/puppet/provider/package/puppetserver_gem.rb:61
 msgid "Could not list gems: %{detail}"
 msgstr ""
 
@@ -6865,19 +6864,19 @@ msgstr ""
 msgid "Could not match %{desc}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:206
+#: ../lib/puppet/provider/package/gem.rb:206 ../lib/puppet/provider/package/puppetserver_gem.rb:93
 msgid "Invalid source '%{uri}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:217
+#: ../lib/puppet/provider/package/gem.rb:217 ../lib/puppet/provider/package/puppetserver_gem.rb:104
 msgid "puppet:// URLs are not supported as gem sources"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:233
+#: ../lib/puppet/provider/package/gem.rb:233 ../lib/puppet/provider/package/puppetserver_gem.rb:115
 msgid "Could not install: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:259
+#: ../lib/puppet/provider/package/gem.rb:259 ../lib/puppet/provider/package/puppetserver_gem.rb:125
 msgid "Could not uninstall: %{output}"
 msgstr ""
 
@@ -7486,67 +7485,67 @@ msgstr ""
 msgid "Could not evaluate: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:81
+#: ../lib/puppet/resource/type.rb:82
 msgid "Invalid export in %{reference}: %{ex} is not a resource"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:82
+#: ../lib/puppet/resource/type.rb:83
 msgid "Invalid export in %{reference}: %{ex} is not a capability resource"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:86
+#: ../lib/puppet/resource/type.rb:87
 msgid "Resource type %{res_type} does not produce %{ex_type}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:147
+#: ../lib/puppet/resource/type.rb:148
 msgid "Invalid resource supertype '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:199
+#: ../lib/puppet/resource/type.rb:200
 msgid "%{name} is not a class; cannot add code to it"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:200
+#: ../lib/puppet/resource/type.rb:201
 msgid "%{name} is not a class; cannot add code from it"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:204
+#: ../lib/puppet/resource/type.rb:205
 msgid "Cannot have code outside of a class/node/define because 'freeze_main' is enabled"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:208
+#: ../lib/puppet/resource/type.rb:209
 msgid "Cannot merge classes with different parent classes (%{name} => %{parent} vs. %{other_name} => %{other_parent})"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:239
+#: ../lib/puppet/resource/type.rb:240
 msgid "Cannot create resources for defined resource types"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:294
+#: ../lib/puppet/resource/type.rb:295
 msgid "The method Puppet::Resource::Type.assign_parameter_values is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:310
+#: ../lib/puppet/resource/type.rb:311
 msgid "Could not find parent resource type '%{parent}' of type %{parent_type} in %{env}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:437
+#: ../lib/puppet/resource/type.rb:438
 msgid "Parameter '%{name}' is given a type, but is not a valid parameter."
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:440
+#: ../lib/puppet/resource/type.rb:441
 msgid "Parameter '%{name}' is given a type that is not a Puppet Type, got %{class_name}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:482
+#: ../lib/puppet/resource/type.rb:483
 msgid "Could not find scope for %{class_name}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:503
+#: ../lib/puppet/resource/type.rb:504
 msgid "%{param} is a metaparam; this value will inherit to all contained resources in the %{name} definition"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:505
+#: ../lib/puppet/resource/type.rb:506
 msgid "%{param} is a metaparameter; please choose another parameter name in the %{name} definition"
 msgstr ""
 
@@ -9312,9 +9311,9 @@ msgstr ""
 msgid "Dynamically-bound port lookup failed; using first entry from the `server_list` setting: %{port}"
 msgstr ""
 
-#. TRANSLATORS 'masterport' is the name of a setting and should not be translated
+#. TRANSLATORS 'serverport' is the name of a setting and should not be translated
 #: ../lib/puppet/util/connection.rb:75
-msgid "Dynamically-bound port lookup failed; falling back to `masterport` setting: %{port}"
+msgid "Dynamically-bound port lookup failed; falling back to `serverport` setting: %{port}"
 msgstr ""
 
 #: ../lib/puppet/util/connection.rb:80
