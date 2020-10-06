@@ -16,7 +16,7 @@ class Puppet::FileBucket::Dipper
   def initialize(hash = {})
     # Emulate the XMLRPC client
     server      = hash[:Server]
-    port        = hash[:Port] || Puppet[:masterport]
+    port        = hash[:Port] || Puppet[:serverport]
 
     if hash.include?(:Path)
       @local_path = hash[:Path]
