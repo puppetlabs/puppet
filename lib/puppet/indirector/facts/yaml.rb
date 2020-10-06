@@ -20,7 +20,7 @@ class Puppet::Node::Facts::Yaml < Puppet::Indirector::Yaml
 
   # Return the path to a given node's file.
   def yaml_dir_path
-    base = Puppet.run_mode.master? ? Puppet[:yamldir] : Puppet[:clientyamldir]
+    base = Puppet.run_mode.server? ? Puppet[:yamldir] : Puppet[:clientyamldir]
     File.join(base, 'facts', '*.yaml')
   end
 

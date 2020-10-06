@@ -11,24 +11,24 @@ describe Puppet::Indirector::Msgpack, :if => Puppet.features.msgpack? do
 
   context "#path" do
     before :each do
-      Puppet[:server_datadir] = '/sample/datadir/master'
+      Puppet[:server_datadir] = '/sample/datadir/server'
       Puppet[:client_datadir] = '/sample/datadir/client'
     end
 
-    it "uses the :server_datadir setting if this is the master" do
-      allow(Puppet.run_mode).to receive(:master?).and_return(true)
+    it "uses the :server_datadir setting if this is the server" do
+      allow(Puppet.run_mode).to receive(:server?).and_return(true)
       expected = File.join(Puppet[:server_datadir], 'indirector_testing', 'testing.msgpack')
       expect(subject.path('testing')).to eq(expected)
     end
 
-    it "uses the :client_datadir setting if this is not the master" do
-      allow(Puppet.run_mode).to receive(:master?).and_return(false)
+    it "uses the :client_datadir setting if this is not the server" do
+      allow(Puppet.run_mode).to receive(:server?).and_return(false)
       expected = File.join(Puppet[:client_datadir], 'indirector_testing', 'testing.msgpack')
       expect(subject.path('testing')).to eq(expected)
     end
 
     it "overrides the default extension with a supplied value" do
-      allow(Puppet.run_mode).to receive(:master?).and_return(true)
+      allow(Puppet.run_mode).to receive(:server?).and_return(true)
       expected = File.join(Puppet[:server_datadir], 'indirector_testing', 'testing.not-msgpack')
       expect(subject.path('testing', '.not-msgpack')).to eq(expected)
     end
@@ -50,7 +50,7 @@ describe Puppet::Indirector::Msgpack, :if => Puppet.features.msgpack? do
 
   context "handling requests" do
     before :each do
-      allow(Puppet.run_mode).to receive(:master?).and_return(true)
+      allow(Puppet.run_mode).to receive(:server?).and_return(true)
       Puppet[:server_datadir] = tmpdir('msgpackdir')
       FileUtils.mkdir_p(File.join(Puppet[:server_datadir], 'indirector_testing'))
     end
@@ -158,7 +158,7 @@ describe Puppet::Indirector::Msgpack, :if => Puppet.features.msgpack? do
 
   context "#search" do
     before :each do
-      allow(Puppet.run_mode).to receive(:master?).and_return(true)
+      allow(Puppet.run_mode).to receive(:server?).and_return(true)
       Puppet[:server_datadir] = tmpdir('msgpackdir')
       FileUtils.mkdir_p(File.join(Puppet[:server_datadir], 'indirector_testing'))
     end

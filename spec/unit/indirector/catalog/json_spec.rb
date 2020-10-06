@@ -24,7 +24,7 @@ describe Puppet::Resource::Catalog::Json do
     end
 
     before :each do
-      allow(Puppet.run_mode).to receive(:master?).and_return(true)
+      allow(Puppet.run_mode).to receive(:server?).and_return(true)
       Puppet[:server_datadir] = tmpdir('jsondir')
       FileUtils.mkdir_p(File.join(Puppet[:server_datadir], 'indirector_testing'))
       Puppet.push_context(:loaders => Puppet::Pops::Loaders.new(env))

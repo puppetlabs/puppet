@@ -40,7 +40,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
       raise ArgumentError, _("invalid key")
     end
 
-    base = Puppet.run_mode.master? ? Puppet[:yamldir] : Puppet[:clientyamldir]
+    base = Puppet.run_mode.server? ? Puppet[:yamldir] : Puppet[:clientyamldir]
     File.join(base, self.class.indirection_name.to_s, name.to_s + ext)
   end
 

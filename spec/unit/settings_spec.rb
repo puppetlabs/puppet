@@ -9,7 +9,7 @@ describe Puppet::Settings do
   include Matchers::Resource
 
   let(:main_config_file_default_location) do
-    File.join(Puppet::Util::RunMode[:master].conf_dir, "puppet.conf")
+    File.join(Puppet::Util::RunMode[:server].conf_dir, "puppet.conf")
   end
 
   let(:user_config_file_default_location) do
@@ -112,9 +112,9 @@ describe Puppet::Settings do
     #  case behaviors / uses.  However, until that time... we need to make sure that our private run_mode=
     #  setter method gets properly called during app initialization.
     it "sets the preferred run mode when initializing the app defaults" do
-      @settings.initialize_app_defaults(default_values.merge(:run_mode => :master))
+      @settings.initialize_app_defaults(default_values.merge(:run_mode => :server))
 
-      expect(@settings.preferred_run_mode).to eq(:master)
+      expect(@settings.preferred_run_mode).to eq(:server)
     end
 
     it "creates ancestor directories for all required app settings" do
@@ -382,7 +382,7 @@ describe Puppet::Settings do
 
     it "should clear the cache when the preferred_run_mode is changed" do
       expect(@settings).to receive(:flush_cache)
-      @settings.preferred_run_mode = :master
+      @settings.preferred_run_mode = :server
     end
 
     it "should not clear other values when setting getopt-specific values" do
@@ -1900,18 +1900,18 @@ describe Puppet::Settings do
     end
 
     it "should set preferred run mode from --run_mode <foo> string without error" do
-      args = ["--run_mode", "master"]
-      expect(settings).not_to receive(:handlearg).with("--run_mode", "master")
+      args = ["--run_mode", "server"]
+      expect(settings).not_to receive(:handlearg).with("--run_mode", "server")
       expect { settings.send(:parse_global_options, args) } .to_not raise_error
-      expect(Puppet.settings.preferred_run_mode).to eq(:master)
+      expect(Puppet.settings.preferred_run_mode).to eq(:server)
       expect(args.empty?).to eq(true)
     end
 
     it "should set preferred run mode from --run_mode=<foo> string without error" do
-      args = ["--run_mode=master"]
-      expect(settings).not_to receive(:handlearg).with("--run_mode", "master")
+      args = ["--run_mode=server"]
+      expect(settings).not_to receive(:handlearg).with("--run_mode", "server")
       expect { settings.send(:parse_global_options, args) }.to_not raise_error
-      expect(Puppet.settings.preferred_run_mode).to eq(:master)
+      expect(Puppet.settings.preferred_run_mode).to eq(:server)
       expect(args.empty?).to eq(true)
     end
   end
