@@ -5,10 +5,7 @@ Puppet::Type.type(:package).provide :puppet_gem, :parent => :gem do
   has_feature :versionable, :install_options, :uninstall_options
 
   if Puppet::Util::Platform.windows?
-    # On windows, we put our ruby ahead of anything that already
-    # existed on the system PATH. This means that we do not need to
-    # sort out the absolute path.
-    commands :gemcmd => "gem"
+    commands :gemcmd => File.join(Puppet::Util.get_env('PUPPET_DIR').to_s, 'bin', 'gem.bat')
   else
     commands :gemcmd => "/opt/puppetlabs/puppet/bin/gem"
   end

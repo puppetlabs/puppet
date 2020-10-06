@@ -15,19 +15,20 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
   end
 
   if Puppet::Util::Platform.windows?
-    let(:provider_gem_cmd) { 'gem' }
+    let(:provider_gem_cmd) { 'C:\Program Files\Puppet Labs\Puppet\puppet\bin\gem.bat' }
   else
     let(:provider_gem_cmd) { '/opt/puppetlabs/puppet/bin/gem' }
   end
 
   custom_environment = {"HOME"=>ENV["HOME"]}
-  custom_environment['PKG_CONFIG_PATH'] = '/opt/puppetlabs/puppet/lib/pkgconfig' unless Puppet::Util::Platform.windows?
+  custom_environment['PKG_CONFIG_PATH'] = '/opt/puppetlabs/puppet/lib/pkgconfig'
 
   let(:execute_options) { {:failonfail => true, :combine => true, :custom_environment => custom_environment} }
 
   before :each do
     resource.provider = provider
     allow(described_class).to receive(:command).with(:gemcmd).and_return(provider_gem_cmd)
+    allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
   end
 
   context "when installing" do
