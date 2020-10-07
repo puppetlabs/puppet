@@ -255,6 +255,11 @@ module Puppet
         which occurs only on a Puppet Server master when the `code-id-command` and
         `code-content-command` settings are configured in its `puppetserver.conf` file.",
     },
+    :settings_catalog => {
+      :default    => true,
+      :type       => :boolean,
+      :desc       => "Whether to compile and apply the settings catalog",
+    },
     :strict_environment_mode => {
       :default    => false,
       :type       => :boolean,
