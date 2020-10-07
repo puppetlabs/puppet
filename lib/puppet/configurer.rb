@@ -74,7 +74,7 @@ class Puppet::Configurer
       if Puppet[:use_cached_catalog]
         @cached_catalog_status = 'explicitly_requested'
       elsif @pluginsync_failed
-        @cached_catalog_status = 'on_pluginsync_failure'
+        @cached_catalog_status = 'on_failure'
       end
 
       Puppet.info _("Using cached catalog from environment '%{environment}'") % { environment: result.environment }
