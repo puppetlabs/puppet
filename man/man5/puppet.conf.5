@@ -1673,6 +1673,14 @@ The list of Puppet master servers to which the Puppet agent should connect, in t
 .
 .IP "" 0
 .
+.SS "settings_catalog"
+Whether to compile and apply the settings catalog
+.
+.IP "\(bu" 4
+\fIDefault\fR: true
+.
+.IP "" 0
+.
 .SS "show_diff"
 Whether to log and report a contextual diff when files are being replaced\. This causes partial file contents to pass through Puppet\'s normal logging and reporting system, so this setting should be used with caution if you are sending Puppet\'s reports to an insecure destination\. This feature currently requires the \fBdiff/lcs\fR Ruby library\.
 .
