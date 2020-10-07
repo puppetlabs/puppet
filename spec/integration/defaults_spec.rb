@@ -28,6 +28,19 @@ describe "Puppet defaults" do
       Puppet.settings[:masterport] = 3939
       expect(Puppet.settings[:serverport]).to eq(3939)
     end
+
+    it "should not overwrite :serverport if explicitly set" do
+      Puppet.settings[:serverport] = 9000
+      Puppet.settings[:masterport] = 9001
+      expect(Puppet.settings[:serverport]).to eq(9000)
+    end
+  end
+
+  describe "when setting the :serverport" do
+    it "should also set the :masterport to the same value" do
+      Puppet.settings[:serverport] = 9000
+      expect(Puppet.settings[:masterport]).to eq(9000)
+    end
   end
 
   describe "when setting the :factpath" do
