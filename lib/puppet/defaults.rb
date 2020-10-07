@@ -1364,7 +1364,9 @@ EOT
       :desc       => "The default port puppet subcommands use to communicate
       with Puppet Server. (eg `puppet facts upload`, `puppet agent`). May be
       overridden by more specific settings (see `ca_port`, `report_port`).",
-      :hook => proc { |value| Puppet[:serverport] = value }
+      :hook => proc do |value|
+        Puppet[:serverport] = value unless Puppet.settings.set_by_config?(:serverport)
+      end
     },
     :node_name => {
       :default    => 'cert',
