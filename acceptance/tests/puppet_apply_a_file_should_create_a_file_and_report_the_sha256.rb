@@ -1,3 +1,4 @@
+#just to trigger the tests
 test_name "puppet apply should create a file and report a SHA256 digest"
 
 tag 'audit:medium',
