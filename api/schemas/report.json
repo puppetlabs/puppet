@@ -111,12 +111,11 @@
         },
 
         "cached_catalog_status": {
-            "description": "Whether a cached catalog was used, and if so, why it was used. Enumerator with one of the values:\n\n* `not_used`, if a cached catalog was not used.\n* `explicitly_requested`, if a cached catalog was used because the use_cached_catalog option was set.\n* `on_failure`, if a cached catalog was used because the usecacheonfailure setting was set and the agent failed to download a new catalog. \n* `on_pluginsync_failure`, if a cached catalog was used because the usecacheonfailure setting was set and the pluginsync failed while having ignore_plugin_errors set to false.",
+            "description": "Whether a cached catalog was used, and if so, why it was used. Enumerator with one of the values:\n\n* `not_used`, if a cached catalog was not used.\n* `explicitly_requested`, if a cached catalog was used because the use_cached_catalog option was set.\n* `on_failure`, if a cached catalog was used because the usecacheonfailure setting was set and the agent failed to download a new catalog",
             "enum": [
               "not_used",
               "explicitly_requested",
-              "on_failure",
-              "on_pluginsync_failure"
+              "on_failure"
             ]
         },
 
@@ -128,7 +127,7 @@
         "report_format": {
             "description": "The report format version documented by this schema",
             "type":        "integer",
-            "enum":        ["11", 11]
+            "enum":        ["10", 10]
         },
 
         "puppet_version": {
