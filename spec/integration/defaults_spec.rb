@@ -23,6 +23,13 @@ describe "Puppet defaults" do
     end
   end
 
+  describe "when setting the :masterport" do
+    it "should also set :serverport to the same value" do
+      Puppet.settings[:masterport] = 3939
+      expect(Puppet.settings[:serverport]).to eq(3939)
+    end
+  end
+
   describe "when setting the :factpath" do
     it "should add the :factpath to Facter's search paths" do
       expect(Facter).to receive(:search).with("/my/fact/path")
@@ -153,13 +160,18 @@ describe "Puppet defaults" do
       expect(Puppet.settings[:report_server]).to eq("server")
     end
 
+    it "should use the default serverport value when report port is unspecified" do
+      Puppet.settings[:serverport] = "1234"
+      expect(Puppet.settings[:report_port]).to eq("1234")
+    end
+
     it "should use the default masterport value when report port is unspecified" do
       Puppet.settings[:masterport] = "1234"
       expect(Puppet.settings[:report_port]).to eq("1234")
     end
 
     it "should use report_port when set" do
-      Puppet.settings[:masterport] = "1234"
+      Puppet.settings[:serverport] = "1234"
       Puppet.settings[:report_port] = "5678"
       expect(Puppet.settings[:report_port]).to eq("5678")
     end

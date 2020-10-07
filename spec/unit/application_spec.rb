@@ -118,6 +118,11 @@ describe Puppet::Application do
       @appclass.run_mode :agent
       expect(@appclass.run_mode.name).to eq(:agent)
     end
+
+    it "considers :server to be master" do
+      @appclass.run_mode :server
+      expect(@appclass.run_mode).to be_master
+    end
   end
 
   describe ".environment_mode" do
@@ -147,7 +152,7 @@ describe Puppet::Application do
   describe "when dealing with run_mode" do
 
     class TestApp < Puppet::Application
-      run_mode :master
+      run_mode :server
       def run_command
         # no-op
       end
@@ -159,16 +164,16 @@ describe Puppet::Application do
       app = TestApp.new
       app.initialize_app_defaults
 
-      expect(Puppet.run_mode).to be_master
+      expect(Puppet.run_mode).to be_server
     end
 
     it "should sadly and frighteningly allow run_mode to change at runtime via #run" do
       app = TestApp.new
       app.run
 
-      expect(app.class.run_mode.name).to eq(:master)
+      expect(app.class.run_mode.name).to eq(:server)
 
-      expect(Puppet.run_mode).to be_master
+      expect(Puppet.run_mode).to be_server
     end
   end
 

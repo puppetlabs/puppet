@@ -38,30 +38,30 @@ describe Puppet::Indirector::Yaml do
 
   before :each do
     Puppet[:clientyamldir] = dir
-    allow(Puppet.run_mode).to receive(:master?).and_return(false)
+    allow(Puppet.run_mode).to receive(:server?).and_return(false)
   end
 
   describe "when choosing file location" do
-    it "should use the server_datadir if the run_mode is master" do
-      allow(Puppet.run_mode).to receive(:master?).and_return(true)
+    it "should use the server_datadir if the run_mode is server" do
+      allow(Puppet.run_mode).to receive(:server?).and_return(true)
       Puppet[:yamldir] = serverdir
       expect(terminus.path(:me)).to match(/^#{serverdir}/)
     end
 
-    it "should use the client yamldir if the run_mode is not master" do
-      allow(Puppet.run_mode).to receive(:master?).and_return(false)
+    it "should use the client yamldir if the run_mode is not server" do
+      allow(Puppet.run_mode).to receive(:server?).and_return(false)
       Puppet[:clientyamldir] = clientdir
       expect(terminus.path(:me)).to match(/^#{clientdir}/)
     end
 
     it "should use the extension if one is specified" do
-      allow(Puppet.run_mode).to receive(:master?).and_return(true)
+      allow(Puppet.run_mode).to receive(:server?).and_return(true)
       Puppet[:yamldir] = serverdir
       expect(terminus.path(:me,'.farfignewton')).to match(%r{\.farfignewton$})
     end
 
     it "should assume an extension of .yaml if none is specified" do
-      allow(Puppet.run_mode).to receive(:master?).and_return(true)
+      allow(Puppet.run_mode).to receive(:server?).and_return(true)
       Puppet[:yamldir] = serverdir
       expect(terminus.path(:me)).to match(%r{\.yaml$})
     end

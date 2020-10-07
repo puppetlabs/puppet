@@ -20,7 +20,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       Puppet[:log_level] = 'debug'
 
       server.start_server do |port|
-        Puppet[:masterport] = port
+        Puppet[:serverport] = port
         expect {
           agent.command_line.args << '--test'
           agent.run
@@ -33,7 +33,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       Puppet[:server_list] = "puppet.example.com,#{Puppet[:server]}"
 
       server.start_server do |port|
-        Puppet[:masterport] = port
+        Puppet[:serverport] = port
         expect {
           agent.command_line.args << '--test'
           agent.run
@@ -65,7 +65,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       Puppet[:log_level] = 'debug'
 
       server.start_server do |port|
-        Puppet[:masterport] = port
+        Puppet[:serverport] = port
         expect {
           agent.command_line.args << '--test'
           agent.run
@@ -110,7 +110,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       }
 
       server.start_server(mounts: {catalog: catalog_handler}) do |port|
-        Puppet[:masterport] = port
+        Puppet[:serverport] = port
         expect {
           agent.command_line.args << '--test'
           agent.run
@@ -132,7 +132,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       }
 
       server.start_server(mounts: {catalog: catalog_handler}) do |port|
-        Puppet[:masterport] = port
+        Puppet[:serverport] = port
         expect {
           agent.command_line.args << '--test'
           agent.run
@@ -196,7 +196,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       }
 
       server.start_server(mounts: {catalog: catalog_handler}) do |port|
-        Puppet[:masterport] = port
+        Puppet[:serverport] = port
         expect {
           expect {
             agent.command_line.args << '--test'
@@ -241,7 +241,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       }
 
       server.start_server(mounts: mounts) do |port|
-        Puppet[:masterport] = port
+        Puppet[:serverport] = port
         expect {
           agent.command_line.args << '--test'
           agent.run
@@ -289,7 +289,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         }
 
         server.start_server(mounts: {catalog: catalog_handler}) do |puppetserver_port|
-          Puppet[:masterport] = puppetserver_port
+          Puppet[:serverport] = puppetserver_port
 
           # override path to system cacert bundle, this must be done before
           # the SSLContext is created and the call to X509::Store.set_default_paths
@@ -341,7 +341,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         }
 
         server.start_server(mounts: {catalog: catalog_handler}) do |puppetserver_port|
-          Puppet[:masterport] = puppetserver_port
+          Puppet[:serverport] = puppetserver_port
 
           # override path to system cacert bundle, this must be done before
           # the SSLContext is created and the call to X509::Store.set_default_paths
@@ -392,7 +392,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         }
 
         server.start_server(mounts: {catalog: catalog_handler}) do |puppetserver_port|
-          Puppet[:masterport] = puppetserver_port
+          Puppet[:serverport] = puppetserver_port
 
           # set path to external cacert bundle, this must be done before
           # the SSLContext is created
@@ -434,7 +434,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         script = tmpfile('wait_for_log_entry')
         logdest = tmpfile('agent_log')
         path = Puppet[:agent_catalog_run_lockfile]
-        Puppet[:masterport] = port
+        Puppet[:serverport] = port
         Puppet[:waitforlock] = 1
 
         th = Thread.new {

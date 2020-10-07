@@ -101,7 +101,7 @@ file { '#{moduledir}/yaml_terminus/lib/puppet/indirector/resource/#{storeconfigs
     class Puppet::Resource::#{terminus_class_name} < Puppet::Indirector::Yaml
       desc "Read resource instances from cached catalogs"
       def search(request)
-        catalog_dir = File.join(Puppet.run_mode.master? ? Puppet[:yamldir] : Puppet[:clientyamldir], "catalog", "*")
+        catalog_dir = File.join(Puppet.run_mode.server? ? Puppet[:yamldir] : Puppet[:clientyamldir], "catalog", "*")
         results = Dir.glob(catalog_dir).collect { |file|
           catalog = Puppet::Resource::Catalog.convert_from(:pson, File.read(file))
           if catalog.name == request.options[:host]

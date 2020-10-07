@@ -13,7 +13,7 @@ Retrieves the client configuration from the Puppet master and applies it to the 
 This service may be run as a daemon, run periodically using cron (or something similar), or run interactively for testing purposes\.
 .
 .SH "USAGE"
-puppet agent [\-\-certname \fINAME\fR] [\-D|\-\-daemonize|\-\-no\-daemonize] [\-d|\-\-debug] [\-\-detailed\-exitcodes] [\-\-digest \fIDIGEST\fR] [\-\-disable [MESSAGE]] [\-\-enable] [\-\-fingerprint] [\-h|\-\-help] [\-l|\-\-logdest syslog|eventlog|\fIABS FILEPATH\fR|console] [\-\-masterport \fIPORT\fR] [\-\-noop] [\-o|\-\-onetime] [\-\-sourceaddress \fIIP_ADDRESS\fR] [\-t|\-\-test] [\-v|\-\-verbose] [\-V|\-\-version] [\-w|\-\-waitforcert \fISECONDS\fR]
+puppet agent [\-\-certname \fINAME\fR] [\-D|\-\-daemonize|\-\-no\-daemonize] [\-d|\-\-debug] [\-\-detailed\-exitcodes] [\-\-digest \fIDIGEST\fR] [\-\-disable [MESSAGE]] [\-\-enable] [\-\-fingerprint] [\-h|\-\-help] [\-l|\-\-logdest syslog|eventlog|\fIABS FILEPATH\fR|console] [\-\-serverport \fIPORT\fR] [\-\-noop] [\-o|\-\-onetime] [\-\-sourceaddress \fIIP_ADDRESS\fR] [\-t|\-\-test] [\-v|\-\-verbose] [\-V|\-\-version] [\-w|\-\-waitforcert \fISECONDS\fR]
 .
 .SH "DESCRIPTION"
 This is the main puppet client\. Its job is to retrieve the local machine\'s configuration from a remote server and apply it\. In order to successfully communicate with the remote server, the client must have a certificate signed by a certificate authority that the server trusts; the recommended method for this, at the moment, is to run a certificate authority as part of the puppet server (which is the default)\. The client will connect and request a signed certificate, and will continue connecting until it receives one\.
@@ -135,13 +135,16 @@ A path ending with \'\.json\' will receive structured output in JSON format\. Th
 A path ending with \'\.jsonl\' will receive structured output in JSON Lines format\.
 .
 .IP "\(bu" 4
-\-\-masterport: The port on which to contact the puppet master\. (This is a Puppet setting, and can go in puppet\.conf\.)
+\-\-masterport: The port on which to contact the Puppet Server\. (This is a Puppet setting, and can go in puppet\.conf\. Deprecated in favor of the \'serverport\' setting\.)
 .
 .IP "\(bu" 4
 \-\-noop: Use \'noop\' mode where the daemon runs in a no\-op or dry\-run mode\. This is useful for seeing what changes Puppet would make without actually executing the changes\. (This is a Puppet setting, and can go in puppet\.conf\. Note the special \'no\-\' prefix for boolean settings on the command line\.)
 .
 .IP "\(bu" 4
 \-\-onetime: Run the configuration once\. Runs a single (normally daemonized) Puppet run\. Useful for interactively running puppet agent when used in conjunction with the \-\-no\-daemonize option\. (This is a Puppet setting, and can go in puppet\.conf\. Note the special \'no\-\' prefix for boolean settings on the command line\.)
+.
+.IP "\(bu" 4
+\-\-serverport: The port on which to contact the Puppet Server\. (This is a Puppet setting, and can go in puppet\.conf\.)
 .
 .IP "\(bu" 4
 \-\-sourceaddress: Set the source IP address for transactions\. This defaults to automatically selected\. (This is a Puppet setting, and can go in puppet\.conf\.)

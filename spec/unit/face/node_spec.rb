@@ -74,9 +74,9 @@ describe Puppet::Face[:node, '0.0.1'] do
           subject.clean('hostname')
         end
 
-        it "should run in master mode" do
+        it "should run in server mode" do
           subject.clean('hostname')
-          expect(Puppet.run_mode).to be_master
+          expect(Puppet.run_mode).to be_server
         end
 
         it "should set node cache as yaml" do

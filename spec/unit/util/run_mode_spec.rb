@@ -19,12 +19,12 @@ describe Puppet::Util::RunMode do
         as_non_root { expect(@run_mode.conf_dir).to eq(File.expand_path('~/.puppetlabs/etc/puppet')) }
       end
 
-      context "master run mode" do
+      context "server run mode" do
         before do
-          @run_mode = Puppet::Util::UnixRunMode.new('master')
+          @run_mode = Puppet::Util::UnixRunMode.new('server')
         end
 
-        it "has confdir ~/.puppetlabs/etc/puppet when run as non-root and master run mode" do
+        it "has confdir ~/.puppetlabs/etc/puppet when run as non-root and server run mode" do
           as_non_root { expect(@run_mode.conf_dir).to eq(File.expand_path('~/.puppetlabs/etc/puppet')) }
         end
       end
@@ -39,12 +39,12 @@ describe Puppet::Util::RunMode do
         as_non_root { expect(@run_mode.code_dir).to eq(File.expand_path('~/.puppetlabs/etc/code')) }
       end
 
-      context "master run mode" do
+      context "server run mode" do
         before do
-          @run_mode = Puppet::Util::UnixRunMode.new('master')
+          @run_mode = Puppet::Util::UnixRunMode.new('server')
         end
 
-        it "has codedir ~/.puppetlabs/etc/code when run as non-root and master run mode" do
+        it "has codedir ~/.puppetlabs/etc/code when run as non-root and server run mode" do
           as_non_root { expect(@run_mode.code_dir).to eq(File.expand_path('~/.puppetlabs/etc/code')) }
         end
       end

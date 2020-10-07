@@ -14,7 +14,7 @@ class Puppet::HTTP::Service::Puppetserver < Puppet::HTTP::Service
   # @api private
   #
   def initialize(client, session, server, port)
-    url = build_url('', server || Puppet[:server], port || Puppet[:masterport])
+    url = build_url('', server || Puppet[:server], port || Puppet[:serverport])
     super(client, session, url)
   end
 
