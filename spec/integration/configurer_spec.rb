@@ -71,7 +71,7 @@ describe Puppet::Configurer do
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(@catalog)
 
       @configurer.run(pluginsync: true, report: report)
-      expect(report.cached_catalog_status).to eq('on_pluginsync_failure')
+      expect(report.cached_catalog_status).to eq('on_failure')
     end
 
     describe 'resubmitting facts' do
