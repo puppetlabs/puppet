@@ -1,3 +1,5 @@
+empty change
+
 # How to contribute
 
 Third-party patches are essential for keeping Puppet great. We simply can't
