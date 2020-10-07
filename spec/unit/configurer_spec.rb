@@ -121,7 +121,7 @@ describe Puppet::Configurer do
       )
 
       expect(configurer.run(pluginsync: true, :report => report)).to eq(0)
-      expect(report.cached_catalog_status).to eq('on_pluginsync_failure')
+      expect(report.cached_catalog_status).to eq('on_failure')
     end
 
     it "applies a cached catalog when it can't connect to the master" do
