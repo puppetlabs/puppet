@@ -21,7 +21,7 @@ describe Puppet::Type.type(:filebucket) do
   end
 
   it "should not have a default port" do
-    Puppet.settings[:masterport] = 50
+    Puppet.settings[:serverport] = 50
     expect(Puppet::Type.type(:filebucket).new(:name => "main")[:port]).to eq(nil)
   end
 

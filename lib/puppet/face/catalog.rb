@@ -97,7 +97,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
       A serialized catalog.
     EOT
     when_invoked do |*args|
-      Puppet.settings.preferred_run_mode = :master
+      Puppet.settings.preferred_run_mode = :server
       Puppet::Face[:catalog, :current].find(*args)
     end
   end

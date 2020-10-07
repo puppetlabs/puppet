@@ -32,11 +32,11 @@ Puppet::Indirector::Face.define(:node, '0.0.1') do
 
     $ puppet node find somenode.puppetlabs.lan --terminus plain --render-as yaml
 
-    Retrieve a node using the puppet master's configured ENC:
+    Retrieve a node using the Puppet Server's configured ENC:
 
-    $ puppet node find somenode.puppetlabs.lan --terminus exec --run_mode master --render-as yaml
+    $ puppet node find somenode.puppetlabs.lan --terminus exec --run_mode server --render-as yaml
 
-    Retrieve the same node from the puppet master:
+    Retrieve the same node from the Puppet Server:
 
     $ puppet node find somenode.puppetlabs.lan --terminus rest --render-as yaml
   EOT

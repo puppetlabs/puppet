@@ -119,13 +119,13 @@ Retrieve an "empty" (no classes, no ENC\-imposed parameters, and an environment 
 $ puppet node find somenode\.puppetlabs\.lan \-\-terminus plain \-\-render\-as yaml
 .
 .P
-Retrieve a node using the puppet master\'s configured ENC:
+Retrieve a node using the Puppet Server\'s configured ENC:
 .
 .P
-$ puppet node find somenode\.puppetlabs\.lan \-\-terminus exec \-\-run_mode master \-\-render\-as yaml
+$ puppet node find somenode\.puppetlabs\.lan \-\-terminus exec \-\-run_mode server \-\-render\-as yaml
 .
 .P
-Retrieve the same node from the puppet master:
+Retrieve the same node from the Puppet Server:
 .
 .P
 $ puppet node find somenode\.puppetlabs\.lan \-\-terminus rest \-\-render\-as yaml

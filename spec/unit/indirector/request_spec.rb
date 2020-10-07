@@ -126,8 +126,8 @@ describe Puppet::Indirector::Request do
         expect(Puppet::Indirector::Request.new(:ind, :method, "http://host:543/", nil).port).to eq(543)
       end
 
-      it "should default to the masterport if the URI scheme is 'puppet'" do
-        Puppet[:masterport] = "321"
+      it "should default to the serverport if the URI scheme is 'puppet'" do
+        Puppet[:serverport] = "321"
         expect(Puppet::Indirector::Request.new(:ind, :method, "puppet://host/", nil).port).to eq(321)
       end
 

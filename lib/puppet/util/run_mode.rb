@@ -18,8 +18,12 @@ module Puppet
         end
       end
 
+      def server?
+        name == :master || name == :server
+      end
+
       def master?
-        name == :master
+        name == :master || name == :server
       end
 
       def agent?

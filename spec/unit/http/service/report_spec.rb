@@ -36,11 +36,11 @@ describe Puppet::HTTP::Service::Report do
       subject.put_report('report', report, environment: environment)
     end
 
-    it 'fallbacks to server and masterport' do
+    it 'fallbacks to server and serverport' do
       Puppet[:report_server] = nil
       Puppet[:report_port] = nil
       Puppet[:server] = 'report2.example.com'
-      Puppet[:masterport] = 8142
+      Puppet[:serverport] = 8142
 
       stub_request(:put, "https://report2.example.com:8142/puppet/v3/report/report?environment=testing")
 

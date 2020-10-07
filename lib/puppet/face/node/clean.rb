@@ -26,9 +26,9 @@ Puppet::Face.define(:node, '0.0.1') do
       # definition, and should not be modifiable beyond that.  This is one of
       # the only places left in the code that tries to manipulate it. Other
       # parts of code that handle certificates behave differently if the
-      # run_mode is master. Those other behaviors are needed for cleaning the
+      # run_mode is server. Those other behaviors are needed for cleaning the
       # certificates correctly.
-      Puppet.settings.preferred_run_mode = "master"
+      Puppet.settings.preferred_run_mode = "server"
 
       Puppet::Node::Facts.indirection.terminus_class = :yaml
       Puppet::Node::Facts.indirection.cache_class = :yaml

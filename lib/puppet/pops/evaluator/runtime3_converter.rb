@@ -79,9 +79,9 @@ class Runtime3Converter
 
   def convert_String(o, scope, undef_value)
     # Although wasteful, a dup is needed because user code may mutate these strings when applying
-    # Resources. This does not happen when in master mode since it only uses Resources that are
+    # Resources. This does not happen when in server mode since it only uses Resources that are
     # in puppet core and those are all safe.
-    o.frozen? && !Puppet.run_mode.master? ? o.dup : o
+    o.frozen? && !Puppet.run_mode.server? ? o.dup : o
   end
 
   def convert_Object(o, scope, undef_value)
