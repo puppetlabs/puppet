@@ -148,8 +148,8 @@ describe Puppet::HTTP::Session do
       Puppet[:server_list] = 'foo.example.com,bar.example.com,baz.example.com'
 
       allow_any_instance_of(Puppet::HTTP::DNS).to receive(:each_srv_record)
-      stub_request(:get, "https://foo.example.com:8140/status/v1/simple/master").to_return(status: 500)
-      stub_request(:get, "https://bar.example.com:8140/status/v1/simple/master").to_return(status: 200)
+      stub_request(:get, "https://foo.example.com:8140/status/v1/simple/server").to_return(status: 500)
+      stub_request(:get, "https://bar.example.com:8140/status/v1/simple/server").to_return(status: 200)
 
       service = session.route_to(:ca)
 
@@ -160,7 +160,7 @@ describe Puppet::HTTP::Session do
       Puppet[:server_list] = 'foo.example.com'
 
       expect_any_instance_of(Puppet::HTTP::Resolver::Settings).to receive(:resolve).never
-      stub_request(:get, "https://foo.example.com:8140/status/v1/simple/master").to_return(status: 500)
+      stub_request(:get, "https://foo.example.com:8140/status/v1/simple/server").to_return(status: 500)
 
       expect {
         session.route_to(:ca)
@@ -179,7 +179,7 @@ describe Puppet::HTTP::Session do
     Puppet::HTTP::Service::SERVICE_NAMES.each do |name|
       it "resolves #{name} using server_list" do
         Puppet[:server_list] = 'apple.example.com'
-        req = stub_request(:get, "https://apple.example.com:8140/status/v1/simple/master").to_return(status: 200)
+        req = stub_request(:get, "https://apple.example.com:8140/status/v1/simple/server").to_return(status: 200)
 
         session.route_to(name)
 
@@ -201,7 +201,7 @@ describe Puppet::HTTP::Session do
 
     it 'resolves once for all services in a session' do
       Puppet[:server_list] = 'apple.example.com'
-      req = stub_request(:get, "https://apple.example.com:8140/status/v1/simple/master").to_return(status: 200)
+      req = stub_request(:get, "https://apple.example.com:8140/status/v1/simple/server").to_return(status: 200)
 
       Puppet::HTTP::Service::SERVICE_NAMES.each do |name|
         session.route_to(name)
@@ -212,7 +212,7 @@ describe Puppet::HTTP::Session do
 
     it 'resolves server_list for each new session' do
       Puppet[:server_list] = 'apple.example.com'
-      req = stub_request(:get, "https://apple.example.com:8140/status/v1/simple/master").to_return(status: 200)
+      req = stub_request(:get, "https://apple.example.com:8140/status/v1/simple/server").to_return(status: 200)
 
       client.create_session.route_to(:puppet)
       client.create_session.route_to(:puppet)

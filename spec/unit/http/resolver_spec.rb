@@ -28,7 +28,7 @@ describe Puppet::HTTP::Resolver do
     end
 
     it 'returns a service based on the current server_list setting' do
-      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 200)
+      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/server").to_return(status: 200)
 
       service = subject.resolve(session, :ca)
       expect(service).to be_an_instance_of(Puppet::HTTP::Service::Ca)
@@ -36,7 +36,7 @@ describe Puppet::HTTP::Resolver do
     end
 
     it 'returns a service based on the current server_list setting if the server returns any success codes' do
-      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 202)
+      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/server").to_return(status: 202)
 
       service = subject.resolve(session, :ca)
       expect(service).to be_an_instance_of(Puppet::HTTP::Service::Ca)
@@ -46,24 +46,24 @@ describe Puppet::HTTP::Resolver do
     it 'includes extra http headers' do
       Puppet[:http_extra_headers] = 'region:us-west'
 
-      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master")
+      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/server")
         .with(headers: {'Region' => 'us-west'})
 
       subject.resolve(session, :ca)
     end
 
     it 'uses the provided ssl context during resolution' do
-      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 200)
+      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/server").to_return(status: 200)
 
       other_ctx = Puppet::SSL::SSLContext.new
-      expect(client).to receive(:connect).with(URI("https://ca.example.com:8141/status/v1/simple/master"), options: {ssl_context: other_ctx}).and_call_original
+      expect(client).to receive(:connect).with(URI("https://ca.example.com:8141/status/v1/simple/server"), options: {ssl_context: other_ctx}).and_call_original
 
       subject.resolve(session, :ca, ssl_context: other_ctx)
     end
 
     it 'logs unsuccessful HTTP 500 responses' do
-      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: [500, 'Internal Server Error'])
-      stub_request(:get, "https://apple.example.com:8142/status/v1/simple/master").to_return(status: 200)
+      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/server").to_return(status: [500, 'Internal Server Error'])
+      stub_request(:get, "https://apple.example.com:8142/status/v1/simple/server").to_return(status: 200)
 
       subject.resolve(session, :ca)
 
@@ -71,8 +71,8 @@ describe Puppet::HTTP::Resolver do
     end
 
     it 'cancels resolution if no servers in server_list are accessible' do
-      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 503)
-      stub_request(:get, "https://apple.example.com:8142/status/v1/simple/master").to_return(status: 503)
+      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/server").to_return(status: 503)
+      stub_request(:get, "https://apple.example.com:8142/status/v1/simple/server").to_return(status: 503)
 
       canceled = false
       canceled_handler = lambda { |cancel| canceled = cancel }
@@ -82,8 +82,8 @@ describe Puppet::HTTP::Resolver do
     end
 
     it 'cycles through server_list until a valid server is found' do
-      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 503)
-      stub_request(:get, "https://apple.example.com:8142/status/v1/simple/master").to_return(status: 200)
+      stub_request(:get, "https://ca.example.com:8141/status/v1/simple/server").to_return(status: 503)
+      stub_request(:get, "https://apple.example.com:8142/status/v1/simple/server").to_return(status: 200)
 
       service = subject.resolve(session, :ca)
       expect(service).to be_an_instance_of(Puppet::HTTP::Service::Ca)
@@ -91,8 +91,8 @@ describe Puppet::HTTP::Resolver do
     end
 
     it 'resolves once per session' do
-      failed = stub_request(:get, "https://ca.example.com:8141/status/v1/simple/master").to_return(status: 503)
-      passed = stub_request(:get, "https://apple.example.com:8142/status/v1/simple/master").to_return(status: 200)
+      failed = stub_request(:get, "https://ca.example.com:8141/status/v1/simple/server").to_return(status: 503)
+      passed = stub_request(:get, "https://apple.example.com:8142/status/v1/simple/server").to_return(status: 200)
 
       service = subject.resolve(session, :puppet)
       expect(service).to be_a(Puppet::HTTP::Service::Compiler)

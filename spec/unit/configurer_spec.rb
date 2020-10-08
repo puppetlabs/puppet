@@ -1043,7 +1043,7 @@ describe Puppet::Configurer do
     it "should select a server when it receives 200 OK response" do
       Puppet.settings[:server_list] = ["myserver:123"]
 
-      stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: 200)
+      stub_request(:get, 'https://myserver:123/status/v1/simple/server').to_return(status: 200)
 
       options = {}
       configurer.run(options)
@@ -1054,7 +1054,7 @@ describe Puppet::Configurer do
     it "should report when a server is unavailable" do
       Puppet.settings[:server_list] = ["myserver:123"]
 
-      stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: [500, "Internal Server Error"])
+      stub_request(:get, 'https://myserver:123/status/v1/simple/server').to_return(status: [500, "Internal Server Error"])
 
       expect {
         configurer.run
@@ -1066,8 +1066,8 @@ describe Puppet::Configurer do
     it "should error when no servers in 'server_list' are reachable" do
       Puppet.settings[:server_list] = "myserver:123,someotherservername"
 
-      stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: 400)
-      stub_request(:get, 'https://someotherservername:8140/status/v1/simple/master').to_return(status: 400)
+      stub_request(:get, 'https://myserver:123/status/v1/simple/server').to_return(status: 400)
+      stub_request(:get, 'https://someotherservername:8140/status/v1/simple/server').to_return(status: 400)
 
       expect{
         configurer.run
@@ -1080,7 +1080,7 @@ describe Puppet::Configurer do
       Puppet::Node.indirection.terminus_class = :rest
       Puppet::Resource::Catalog.indirection.terminus_class = :rest
 
-      stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: 200)
+      stub_request(:get, 'https://myserver:123/status/v1/simple/server').to_return(status: 200)
       stub_request(:post, %r{https://myserver:123/puppet/v3/catalog}).to_return(status: 200)
       node_request = stub_request(:get, %r{https://myserver:123/puppet/v3/node/}).to_return(status: 200)
 

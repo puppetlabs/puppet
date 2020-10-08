@@ -12,7 +12,7 @@ describe Puppet::HTTP::Service::Puppetserver do
 
   context 'when making requests' do
     it 'includes default HTTP headers' do
-      stub_request(:get, "https://puppetserver.example.com:8140/status/v1/simple/master").with do |request|
+      stub_request(:get, "https://puppetserver.example.com:8140/status/v1/simple/server").with do |request|
         expect(request.headers).to include({'X-Puppet-Version' => /./, 'User-Agent' => /./})
         expect(request.headers).to_not include('X-Puppet-Profiling')
       end.to_return(body: "running", headers: {'Content-Type' => 'text/plain;charset=utf-8'})
@@ -23,7 +23,7 @@ describe Puppet::HTTP::Service::Puppetserver do
     it 'includes extra headers' do
       Puppet[:http_extra_headers] = 'region:us-west'
 
-      stub_request(:get, "https://puppetserver.example.com:8140/status/v1/simple/master")
+      stub_request(:get, "https://puppetserver.example.com:8140/status/v1/simple/server")
         .with(headers: {'Region' => 'us-west'})
         .to_return(body: "running", headers: {'Content-Type' => 'text/plain;charset=utf-8'})
 
@@ -36,7 +36,7 @@ describe Puppet::HTTP::Service::Puppetserver do
       Puppet[:server] = 'compiler2.example.com'
       Puppet[:masterport] = 8141
 
-      stub_request(:get, "https://compiler2.example.com:8141/status/v1/simple/master")
+      stub_request(:get, "https://compiler2.example.com:8141/status/v1/simple/server")
         .to_return(body: "running", headers: {'Content-Type' => 'text/plain;charset=utf-8'})
 
       subject.get_simple_status
@@ -44,7 +44,7 @@ describe Puppet::HTTP::Service::Puppetserver do
   end
 
   context 'when getting puppetserver status' do
-    let(:url) { "https://puppetserver.example.com:8140/status/v1/simple/master" }
+    let(:url) { "https://puppetserver.example.com:8140/status/v1/simple/server" }
 
     it 'returns the request response and status' do
       stub_request(:get, url)
@@ -77,6 +77,36 @@ describe Puppet::HTTP::Service::Puppetserver do
       session = client.create_session
       service = Puppet::HTTP::Service.create_service(client, session, :puppetserver, 'puppetserver.example.com', 8140)
       service.get_simple_status(ssl_context: other_ctx)
+    end
+  end
+
+  context 'when /status/v1/simple/server returns not found' do
+    it 'calls /status/v1/simple/master' do
+      stub_request(:get, "https://puppetserver.example.com:8140/status/v1/simple/server")
+        .to_return(status: [404, 'not found: server'])
+
+      stub_request(:get, "https://puppetserver.example.com:8140/status/v1/simple/master")
+        .to_return(body: "running", headers: {'Content-Type' => 'text/plain;charset=utf-8'})
+
+      resp, status = subject.get_simple_status
+      expect(resp).to be_a(Puppet::HTTP::Response)
+      expect(status).to eq('running')
+    end
+
+    it 'raises a response error if fallback is unsuccessful' do
+      stub_request(:get, "https://puppetserver.example.com:8140/status/v1/simple/server")
+        .to_return(status: [404, 'not found: server'])
+
+      stub_request(:get, "https://puppetserver.example.com:8140/status/v1/simple/master")
+        .to_return(status: [404, 'not found: master'])
+
+      expect {
+        subject.get_simple_status
+      }.to raise_error do |err|
+        expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
+        expect(err.message).to eq('not found: master')
+        expect(err.response.code).to eq(404)
+      end
     end
   end
 end
