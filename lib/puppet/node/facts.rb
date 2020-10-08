@@ -116,7 +116,24 @@ class Puppet::Node::Facts
     @timestamp = Time.now
   end
 
+  def to_yaml
+    facts_to_display = Psych.parse_stream(YAML.dump(self))
+    quote_special_strings(facts_to_display)
+  end
+
   private
+
+  def quote_special_strings(fact_hash)
+    fact_hash.grep(Psych::Nodes::Scalar).each do |node|
+      next unless node.value =~ /:/
+
+      node.plain  = false
+      node.quoted = true
+      node.style  = Psych::Nodes::Scalar::DOUBLE_QUOTED
+    end
+
+    fact_hash.yaml
+  end
 
   def sanitize_fact(fact)
     if fact.is_a? Hash then
