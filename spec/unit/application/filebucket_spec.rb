@@ -131,8 +131,8 @@ describe Puppet::Application::Filebucket do
 
       # FileBucket catches any exceptions raised, logs them, then just exits
       it "raises an error if there are no functional servers in server_list" do
-        stub_request(:get, "https://foo:8140/status/v1/simple/master").to_return(status: 404)
-        stub_request(:get, "https://bar:8140/status/v1/simple/master").to_return(status: 404)
+        stub_request(:get, "https://foo:8140/status/v1/simple/master").to_return(status: 400)
+        stub_request(:get, "https://bar:8140/status/v1/simple/master").to_return(status: 400)
         Puppet[:server] = 'horacio'
         Puppet[:server_list] = "foo,bar"
 

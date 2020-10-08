@@ -79,4 +79,34 @@ describe Puppet::HTTP::Service::Puppetserver do
       service.get_simple_status(ssl_context: other_ctx)
     end
   end
+
+  context 'when /status/v1/simple/master returns not found' do
+    it 'calls /status/v1/simple/server' do
+      stub_request(:get, "https://puppetserver.example.com:8140/status/v1/simple/master")
+        .to_return(status: [404, 'not found: server'])
+
+      stub_request(:get, "https://puppetserver.example.com:8140/status/v1/simple/server")
+        .to_return(body: "running", headers: {'Content-Type' => 'text/plain;charset=utf-8'})
+
+      resp, status = subject.get_simple_status
+      expect(resp).to be_a(Puppet::HTTP::Response)
+      expect(status).to eq('running')
+    end
+
+    it 'raises a response error if fallback is unsuccessful' do
+      stub_request(:get, "https://puppetserver.example.com:8140/status/v1/simple/master")
+        .to_return(status: [404, 'not found: server'])
+
+      stub_request(:get, "https://puppetserver.example.com:8140/status/v1/simple/server")
+        .to_return(status: [404, 'not found: master'])
+
+      expect {
+        subject.get_simple_status
+      }.to raise_error do |err|
+        expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
+        expect(err.message).to eq('not found: master')
+        expect(err.response.code).to eq(404)
+      end
+    end
+  end
 end
