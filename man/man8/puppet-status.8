@@ -57,7 +57,7 @@ puppet status [\-\-terminus _TERMINUS] [\-\-extra HASH] [\fIkey\fR]
 Checks whether a Puppet server is properly receiving and processing HTTP requests\. This action is only useful when used with \'\-\-terminus rest\'; when invoked with the \fBlocal\fR terminus, \fBfind\fR will always return true\.
 .
 .IP
-Over REST, this action will query the configured puppet master by default\. To query other servers, including puppet agent nodes started with the \fI\-\-listen\fR option, you can set the global \fI\-\-server\fR and \fI\-\-serverport\fR options on the command line; note that agent nodes listen on port 8139\.
+Over REST, this action will query the configured puppet master by default\. To query other servers, including puppet agent nodes started with the \fI\-\-listen\fR option, you can set the global \fI\-\-server\fR and \fI\-\-masterport\fR options on the command line; note that agent nodes listen on port 8139\.
 .
 .IP
 \fBRETURNS\fR
