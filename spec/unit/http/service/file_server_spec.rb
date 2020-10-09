@@ -12,7 +12,7 @@ describe Puppet::HTTP::Service::FileServer do
 
   before :each do
     Puppet[:server] = 'www.example.com'
-    Puppet[:serverport] = 443
+    Puppet[:masterport] = 443
   end
 
   context 'when making requests' do
@@ -31,7 +31,7 @@ describe Puppet::HTTP::Service::FileServer do
   context 'when routing to the file service' do
     it 'defaults the server and port based on settings' do
       Puppet[:server] = 'file.example.com'
-      Puppet[:serverport] = 8141
+      Puppet[:masterport] = 8141
 
       stub_request(:get, "https://file.example.com:8141/puppet/v3/file_content/:mount/:path?environment=testing")
 

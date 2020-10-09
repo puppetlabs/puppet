@@ -521,7 +521,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
             end
 
             it "should return the default source port" do
-              Puppet[:serverport] = 1234
+              Puppet[:masterport] = 1234
               expect(resource.parameter(:source).port).to eq(1234)
             end
           end

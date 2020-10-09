@@ -126,8 +126,8 @@ describe Puppet::Indirector::Request do
         expect(Puppet::Indirector::Request.new(:ind, :method, "http://host:543/", nil).port).to eq(543)
       end
 
-      it "should default to the serverport if the URI scheme is 'puppet'" do
-        Puppet[:serverport] = "321"
+      it "should default to the masterport if the URI scheme is 'puppet'" do
+        Puppet[:masterport] = "321"
         expect(Puppet::Indirector::Request.new(:ind, :method, "puppet://host/", nil).port).to eq(321)
       end
 
@@ -534,7 +534,7 @@ describe Puppet::Indirector::Request do
           expect(request.server).to be_nil
           expect(request.port).to be_nil
           expect(Puppet.settings[:server]).not_to be_nil
-          expect(Puppet.settings[:serverport]).not_to be_nil
+          expect(Puppet.settings[:masterport]).not_to be_nil
         end
       end
     end
@@ -552,7 +552,7 @@ describe Puppet::Indirector::Request do
       req = Puppet::Indirector::Request.new('node', 'find', 'localhost', nil)
       req.do_request() do |request|
         expect(request.server).to eq(Puppet.settings[:server])
-        expect(request.port).to eq(Puppet.settings[:serverport])
+        expect(request.port).to eq(Puppet.settings[:masterport])
       end
     end
   end

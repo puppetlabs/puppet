@@ -14,11 +14,11 @@ module Puppet::Rest
     #                 construction
     # @param [Symbol] server_setting the setting to check for special
     #                 server configuration
-    # @param [Symbol] port_setting the setting to check for special
+    # @param [Symbol] port_setting the setting to check for speical
     #                  port configuration
     # @param [Symbol] srv_service the name of the service when using SRV
     #                 records
-    def initialize(api:, server_setting: :server, port_setting: :serverport, srv_service: :puppet)
+    def initialize(api:, server_setting: :server, port_setting: :masterport, srv_service: :puppet)
       @api = api
       @default_server = Puppet::Util::Connection.determine_server(server_setting)
       @default_port = Puppet::Util::Connection.determine_port(port_setting, server_setting)

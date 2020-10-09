@@ -249,7 +249,7 @@ describe Puppet::Indirector::REST do
 
   it "should default to :port for the port setting" do
     expect(terminus_class).to receive(:port_setting).and_return(nil)
-    Puppet[:serverport] = "543"
+    Puppet[:masterport] = "543"
     expect(terminus_class.port).to eq(543)
   end
 

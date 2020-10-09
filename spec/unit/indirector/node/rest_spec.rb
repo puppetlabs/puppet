@@ -10,7 +10,7 @@ describe Puppet::Node::Rest do
 
   before :each do
     Puppet[:server] = 'compiler.example.com'
-    Puppet[:serverport] = 8140
+    Puppet[:masterport] = 8140
 
     described_class.indirection.terminus_class = :rest
   end
