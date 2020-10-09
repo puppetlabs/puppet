@@ -57,7 +57,7 @@ module Puppet
         This setting is _only_ consulted if the `path` attribute is set to `false`.
 
         If this attribute is not specified, the first entry in the `server_list`
-        configuration setting is used, followed by the value of the `serverport`
+        configuration setting is used, followed by the value of the `masterport`
         setting if `server_list` is not set."
     end
 

@@ -35,7 +35,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
 
   it "backs up text files to the filebucket server" do
     server.start_server do |port|
-      Puppet[:serverport] = port
+      Puppet[:masterport] = port
       expect {
         filebucket.command_line.args = ['backup', backup_file]
         filebucket.run
@@ -56,7 +56,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
     File.binwrite(backup_file, binary)
 
     server.start_server do |port|
-      Puppet[:serverport] = port
+      Puppet[:masterport] = port
       expect {
         filebucket.command_line.args = ['backup', backup_file]
         filebucket.run
@@ -75,7 +75,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
     File.binwrite(backup_file, utf8)
 
     server.start_server do |port|
-      Puppet[:serverport] = port
+      Puppet[:masterport] = port
       expect {
         filebucket.command_line.args = ['backup', backup_file]
         filebucket.run
@@ -95,7 +95,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
     }
 
     server.start_server(mounts: {filebucket: file_exists_handler}) do |port|
-      Puppet[:serverport] = port
+      Puppet[:masterport] = port
       expect {
         filebucket.command_line.args = ['backup', backup_file]
         filebucket.run
@@ -114,7 +114,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
     }
 
     server.start_server(mounts: {filebucket: get_handler}) do |port|
-      Puppet[:serverport] = port
+      Puppet[:masterport] = port
       expect {
         filebucket.command_line.args = ['get', 'fac251367c9e083c6b1f0f3181']
         filebucket.run
@@ -137,7 +137,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
         }
 
         server.start_server(mounts: {filebucket: get_handler}) do |port|
-          Puppet[:serverport] = port
+          Puppet[:masterport] = port
           expect {
             filebucket.command_line.args = ['diff', 'fac251367c9e083c6b1f0f3181', backup_file, '--remote']
             filebucket.run
@@ -165,7 +165,7 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
         }
 
         server.start_server(mounts: {filebucket: get_handler}) do |port|
-          Puppet[:serverport] = port
+          Puppet[:masterport] = port
           expect {
             filebucket.command_line.args = ['diff', 'd3b07384d113edec49eaa6238ad5ff00', "99b999207e287afffc86c053e5693247", '--remote']
             filebucket.run
