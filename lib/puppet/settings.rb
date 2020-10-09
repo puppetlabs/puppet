@@ -44,7 +44,7 @@ class Puppet::Settings
   REQUIRED_APP_SETTINGS = [:logdir, :confdir, :vardir, :codedir]
 
   # The acceptable sections of the puppet.conf configuration file.
-  ALLOWED_SECTION_NAMES = ['main', 'master', 'agent', 'user'].freeze
+  ALLOWED_SECTION_NAMES = ['main', 'server', 'master', 'agent', 'user'].freeze
 
   NONE = 'none'.freeze
 
@@ -829,7 +829,16 @@ class Puppet::Settings
       SearchPathElement.new(:cli, :values),
     ]
     searchpath << SearchPathElement.new(environment.intern, :environment) if environment
-    searchpath << SearchPathElement.new(run_mode, :section) if run_mode
+
+    if run_mode
+      if [:master, :server].include?(run_mode)
+        searchpath << SearchPathElement.new(:server, :section)
+        searchpath << SearchPathElement.new(:master, :section)
+      else
+        searchpath << SearchPathElement.new(run_mode, :section)
+      end
+    end
+
     searchpath << SearchPathElement.new(:main, :section)
   end
 
