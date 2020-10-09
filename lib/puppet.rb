@@ -27,16 +27,16 @@ require 'puppet/external/pson/pure'
 require 'puppet/gettext/config'
 require 'puppet/defaults'
 
-
-#------------------------------------------------------------
-# the top-level module
+# Defines the `Puppet` module. There are different entry points into Puppet
+# depending on your use case.
 #
-# all this really does is dictate how the whole system behaves, through
-# preferences for things like debugging
+# To use puppet as a library, see {Puppet::Pal}.
 #
-# it's also a place to find top-level commands like 'debug'
-
-# The main Puppet class. Everything is contained here.
+# To create a new application, see {Puppet::Application}.
+#
+# To create a new function, see {Puppet::Functions}.
+#
+# To access puppet's REST APIs, see https://puppet.com/docs/puppet/latest/http_api/http_api_index.html.
 #
 # @api public
 module Puppet
