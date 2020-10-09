@@ -18,7 +18,7 @@ describe "puppet plugin" do
     }
 
     server.start_server(mounts: {file_metadatas: current_version_handler}) do |port|
-      Puppet[:serverport] = port
+      Puppet[:masterport] = port
       expect {
         plugin.command_line.args << 'download'
         plugin.run
@@ -39,7 +39,7 @@ describe "puppet plugin" do
     }
 
     server.start_server(mounts: {file_metadatas: current_version_handler}) do |port|
-      Puppet[:serverport] = port
+      Puppet[:masterport] = port
       expect {
         plugin.command_line.args << 'download'
         plugin.run
@@ -58,7 +58,7 @@ describe "puppet plugin" do
     }
 
     server.start_server(mounts: {file_metadatas: no_locales_handler}) do |port|
-      Puppet[:serverport] = port
+      Puppet[:masterport] = port
       expect {
         plugin.command_line.args << 'download'
         plugin.run
@@ -81,7 +81,7 @@ describe "puppet plugin" do
 
     server.start_server(mounts: {file_metadatas: current_version_handler}) do |port|
       Puppet[:environment] = 'doesnotexistontheagent'
-      Puppet[:serverport] = port
+      Puppet[:masterport] = port
       expect {
         plugin.command_line.args << 'download'
         plugin.run

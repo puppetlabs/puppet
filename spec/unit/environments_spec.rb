@@ -436,25 +436,6 @@ config_version=$vardir/random/scripts
           end
         end
       end
-
-      context "custom cache expiration service" do
-        it "consults the custom service to expire the cache" do
-          loader_from(:filesystem => [directory_tree],
-                      :directory => directory_tree.children.first) do |loader|
-            service = ReplayExpirationService.new([true])
-            using_expiration_service(service) do
-
-              cached = Puppet::Environments::Cached.new(loader)
-              cached.get(:an_environment)
-              cached.get(:an_environment)
-
-              expect(service.created_envs).to include(:an_environment)
-              expect(service.expired_envs).to include(:an_environment)
-              expect(service.evicted_envs).to include(:an_environment)
-            end
-          end
-        end
-      end
     end
   end
 
@@ -645,6 +626,99 @@ config_version=$vardir/random/scripts
       end
     end
 
+    context "expiration policies" do
+      let(:service) { ReplayExpirationService.new }
+
+      # The environment named `:an_environment` will already be loaded when the
+      # block is yielded to
+      def with_environment_loaded(service, &block)
+        loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+          using_expiration_service(service) do
+            cached = Puppet::Environments::Cached.new(loader)
+            cached.get!(:an_environment)
+
+            yield cached if block_given?
+          end
+        end
+      end
+
+      it "notifies when the environment is first created" do
+        with_environment_loaded(service)
+
+        expect(service.created_envs).to eq([:an_environment])
+      end
+
+      it "does not evict an unexpired environment" do
+        Puppet[:environment_timeout] = 'unlimited'
+
+        with_environment_loaded(service) do |cached|
+          cached.get!(:an_environment)
+        end
+
+        expect(service.created_envs).to eq([:an_environment])
+        expect(service.evicted_envs).to eq([])
+      end
+
+      it "evicts an expired environment" do
+        service = ReplayExpirationService.new
+
+        # The `Cached#clear_all_expired` method tries to optimize the case where
+        # no entries are expired. But if `Time.now < @next_expiration` and there is
+        # an expired entry, then the `service#expired?` method is called twice.
+        expect(service).to receive(:expired?).twice.and_return(true)
+
+        with_environment_loaded(service) do |cached|
+          cached.get!(:an_environment)
+        end
+
+        expect(service.created_envs).to eq([:an_environment, :an_environment])
+        expect(service.evicted_envs).to eq([:an_environment])
+      end
+
+      it "evicts an environment that hasn't been recently touched" do
+        Puppet[:environment_ttl] = 1
+
+        with_environment_loaded(service) do |cached|
+          future = Time.now + 60
+          expect(Time).to receive(:now).and_return(future).at_least(:once)
+
+          # this should cause the cached environment to be evicted and a new one created
+          cached.get!(:an_environment)
+        end
+
+        expect(service.created_envs).to eq([:an_environment, :an_environment])
+        expect(service.evicted_envs).to eq([:an_environment])
+
+      end
+
+      it "reuses an environment that was recently touched" do
+        Puppet[:environment_ttl] = 60
+
+        with_environment_loaded(service) do |cached|
+          # reuse the already cached environment
+          cached.get!(:an_environment)
+        end
+
+        expect(service.created_envs).to eq([:an_environment])
+        expect(service.evicted_envs).to eq([])
+      end
+
+      it "evicts a recently touched environment" do
+        Puppet[:environment_ttl] = 60
+
+        # see note above about "twice"
+        expect(service).to receive(:expired?).twice.and_return(true)
+
+        with_environment_loaded(service) do |cached|
+          # even though the environment was recently touched, it's been expired
+          cached.get!(:an_environment)
+        end
+
+        expect(service.created_envs).to eq([:an_environment, :an_environment])
+        expect(service.evicted_envs).to eq([:an_environment])
+      end
+    end
+
     it "gets an environment.conf" do
       loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
         expect(Puppet::Environments::Cached.new(loader).get_conf(:an_environment)).to match_environment_conf(:an_environment).
@@ -746,31 +820,21 @@ config_version=$vardir/random/scripts
     end
   end
 
-  class ReplayExpirationService
-    attr_reader :created_envs, :expired_envs, :evicted_envs
+  class ReplayExpirationService < Puppet::Environments::Cached::DefaultCacheExpirationService
+    attr_reader :created_envs, :evicted_envs
 
-    def initialize(expiration_sequence)
+    def initialize
       @created_envs = []
-      @expired_envs = []
       @evicted_envs = []
-      @expiration_sequence = expiration_sequence
     end
 
     def created(env)
       @created_envs << env.name
     end
 
-    def expired?(env_name)
-      # make expired? idempotent
-      return true if @expired_envs.include? (env_name)
-      @expired_envs << env_name
-      @expiration_sequence.pop
-    end
-
     def evicted(env_name)
       @evicted_envs << env_name
     end
   end
-
 end
 end

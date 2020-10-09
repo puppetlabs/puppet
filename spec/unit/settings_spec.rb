@@ -326,7 +326,7 @@ describe Puppet::Settings do
     end
 
     it "should identify configured settings from the specified run mode" do
-      user_config_text = "[master]\nmyval = foo"
+      user_config_text = "[server]\nmyval = foo"
 
       allow(Puppet.features).to receive(:root?).and_return(false)
       expect(Puppet::FileSystem).to receive(:exist?).
@@ -337,7 +337,7 @@ describe Puppet::Settings do
         and_return(user_config_text).ordered
 
       @settings.send(:parse_config_files)
-      expect(@settings.set_by_config?(:myval, nil, :master)).to be_truthy
+      expect(@settings.set_by_config?(:myval, nil, :server)).to be_truthy
     end
 
     it "should not identify configured settings from an unspecified run mode" do
@@ -658,6 +658,28 @@ describe Puppet::Settings do
       expect(@settings[:one]).to eq("modeval")
     end
 
+    [:master, :server].each do |run_mode|
+      describe "when run mode is '#{run_mode}'" do
+        before(:each) { @settings.preferred_run_mode = run_mode }
+
+        it "returns values set in the 'master' section if the 'server' section does not exist" do
+          text = "[main]\none = mainval\n[master]\none = modeval\n"
+          allow(@settings).to receive(:read_file).and_return(text)
+          @settings.send(:parse_config_files)
+
+          expect(@settings[:one]).to eq("modeval")
+        end
+
+        it "prioritizes values set in the 'server' section if set" do
+          text = "[main]\none = mainval\n[server]\none = serverval\n[master]\none = masterval\n"
+          allow(@settings).to receive(:read_file).and_return(text)
+          @settings.send(:parse_config_files)
+
+          expect(@settings[:one]).to eq("serverval")
+        end
+      end
+    end
+
     it "should not return values outside of its search path" do
       text = "[other]\none = oval\n"
       allow(@settings).to receive(:read_file).and_return(text)
@@ -854,10 +876,10 @@ describe Puppet::Settings do
         default_values[key] = 'default value'
       end
       @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
-      @settings.define_settings :master, :myfile => { :type => :file, :default => make_absolute("/myfile"), :desc => "a" }
+      @settings.define_settings :server, :myfile => { :type => :file, :default => make_absolute("/myfile"), :desc => "a" }
 
       otherfile = make_absolute("/other/file")
-      text = "[master]
+      text = "[server]
       myfile = #{otherfile} {mode = 664}
       "
       expect(@settings).to receive(:read_file).and_return(text)
@@ -866,9 +888,9 @@ describe Puppet::Settings do
       expect(@settings.preferred_run_mode).to eq(:user)
       @settings.send(:parse_config_files)
 
-      # change app run_mode to master
-      @settings.initialize_app_defaults(default_values.merge(:run_mode => :master))
-      expect(@settings.preferred_run_mode).to eq(:master)
+      # change app run_mode to server
+      @settings.initialize_app_defaults(default_values.merge(:run_mode => :server))
+      expect(@settings.preferred_run_mode).to eq(:server)
 
       # initializing the app should have reloaded the metadata based on run_mode
       expect(@settings[:myfile]).to eq(otherfile)
@@ -884,9 +906,9 @@ describe Puppet::Settings do
       file = make_absolute("/file")
       default_mode = "0600"
       @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
-      @settings.define_settings :master, :myfile => { :type => :file, :default => file, :desc => "a", :mode => default_mode }
+      @settings.define_settings :server, :myfile => { :type => :file, :default => file, :desc => "a", :mode => default_mode }
 
-      text = "[master]
+      text = "[server]
       myfile = #{file}/foo
       [agent]
       myfile = #{file} {mode = 664}
@@ -897,9 +919,9 @@ describe Puppet::Settings do
       expect(@settings.preferred_run_mode).to eq(:user)
       @settings.send(:parse_config_files)
 
-      # change app run_mode to master
-      @settings.initialize_app_defaults(default_values.merge(:run_mode => :master))
-      expect(@settings.preferred_run_mode).to eq(:master)
+      # change app run_mode to server
+      @settings.initialize_app_defaults(default_values.merge(:run_mode => :server))
+      expect(@settings.preferred_run_mode).to eq(:server)
 
       # initializing the app should have reloaded the metadata based on run_mode
       expect(@settings[:myfile]).to eq("#{file}/foo")
