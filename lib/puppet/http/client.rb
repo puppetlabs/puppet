@@ -438,7 +438,7 @@ class Puppet::HTTP::Client
         services.delete(:report)
       end
 
-      resolvers << Puppet::HTTP::Resolver::ServerList.new(self, server_list_setting: server_list_setting, default_port: Puppet[:serverport], services: services)
+      resolvers << Puppet::HTTP::Resolver::ServerList.new(self, server_list_setting: server_list_setting, default_port: Puppet[:masterport], services: services)
     end
 
     resolvers << Puppet::HTTP::Resolver::Settings.new(self)

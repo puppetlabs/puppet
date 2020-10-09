@@ -27,7 +27,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   #   create the service.
   #
   def initialize(client, session, server, port)
-    url = build_url(API, server || Puppet[:server], port || Puppet[:serverport])
+    url = build_url(API, server || Puppet[:server], port || Puppet[:masterport])
     super(client, session, url)
   end
 

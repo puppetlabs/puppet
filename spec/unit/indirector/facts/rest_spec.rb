@@ -9,7 +9,7 @@ describe Puppet::Node::Facts::Rest do
 
   before do
     Puppet[:server] = 'compiler.example.com'
-    Puppet[:serverport] = 8140
+    Puppet[:masterport] = 8140
 
     described_class.indirection.terminus_class = :rest
   end

@@ -6,8 +6,8 @@ tag 'audit:high',
 
 confine :except, :platform => /osx/ # see PUP-4820
 
-def server_port(agent)
-  setting_on(agent, "agent", "serverport")
+def master_port(agent)
+  setting_on(agent, "agent", "masterport")
 end
 
 def setting_on(host, section, name)
@@ -23,7 +23,7 @@ def full_path(host, path)
 end
 
 def curl_master_from(agent, path, headers = '', &block)
-  url = "https://#{master}:#{server_port(agent)}#{path}"
+  url = "https://#{master}:#{master_port(agent)}#{path}"
   cert_path = full_path(agent, setting_on(agent, "agent", "hostcert"))
   key_path = full_path(agent, setting_on(agent, "agent", "hostprivkey"))
   curl_base = "curl --tlsv1 -sg --cert \"#{cert_path}\" --key \"#{key_path}\" -k -H '#{headers}'"
@@ -59,7 +59,7 @@ end
 
 with_puppet_running_on(master, master_opts) do
   step "Ensure that an unauthenticated client cannot access the environments list" do
-    on master, "curl --tlsv1 -ksv https://#{master}:#{server_port(master)}/puppet/v3/environments", :acceptable_exit_codes => [0,7] do
+    on master, "curl --tlsv1 -ksv https://#{master}:#{master_port(master)}/puppet/v3/environments", :acceptable_exit_codes => [0,7] do
       assert_match(/< HTTP\/1\.\d 403/, stderr)
     end
   end

@@ -15,7 +15,7 @@ describe Puppet::HTTP::Service::Compiler do
 
   before :each do
     Puppet[:server] = 'compiler.example.com'
-    Puppet[:serverport] = 8140
+    Puppet[:masterport] = 8140
 
     Puppet::Node::Facts.indirection.terminus_class = :memory
   end
@@ -36,7 +36,7 @@ describe Puppet::HTTP::Service::Compiler do
   context 'when routing to the compiler service' do
     it 'defaults the server and port based on settings' do
       Puppet[:server] = 'compiler2.example.com'
-      Puppet[:serverport] = 8141
+      Puppet[:masterport] = 8141
 
       stub_request(:post, "https://compiler2.example.com:8141/puppet/v3/catalog/ziggy?environment=testing")
         .to_return(body: formatter.render(catalog), headers: {'Content-Type' => formatter.mime })
