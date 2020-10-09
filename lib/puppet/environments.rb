@@ -305,13 +305,23 @@ module Puppet::Environments
     include Puppet::Concurrent::Synchronized
 
     class DefaultCacheExpirationService
+      # Called when the environment is created.
+      #
+      # @param [Puppet::Node::Environment] env
       def created(env)
       end
 
+      # Is the environment with this name expired?
+      #
+      # @param [Symbol] env_name The symbolic environment name
+      # @return [Boolean]
       def expired?(env_name)
         false
       end
 
+      # The environment with this name was evicted.
+      #
+      # @param [Symbol] env_name The symbolic environment name
       def evicted(env_name)
       end
     end
@@ -362,7 +372,9 @@ module Puppet::Environments
       clear_all_expired
       result = @cache[name]
       if result
+        Puppet.debug {"Found in cache '#{name}' #{result.label}"}
         # found in cache
+        result.touch
         return result.value
       elsif (result = @loader.get(name))
         # environment loaded, cache it
@@ -411,7 +423,7 @@ module Puppet::Environments
       to_expire = @cache.select { |name, entry| entry.expires < t || @cache_expiration_service.expired?(name.to_sym) }
       to_expire.each do |name, entry|
         Puppet.debug {"Evicting cache entry for environment '#{name}'"}
-        @cache_expiration_service.evicted(name)
+        @cache_expiration_service.evicted(name.to_sym)
         clear(name)
         @expirations.delete(entry.expires)
         Puppet.settings.clear_environment_settings(name)
@@ -435,23 +447,35 @@ module Puppet::Environments
     # Creates a suitable cache entry given the time to live for one environment
     #
     def entry(env)
-      ttl = (conf = get_conf(env.name)) ? conf.environment_timeout : Puppet.settings.value(:environment_timeout)
+      mru_entry = Puppet.settings.set_by_config?(:environment_ttl)
+      ttl = if mru_entry
+              Puppet[:environment_ttl]
+            elsif (conf = get_conf(env.name))
+              conf.environment_timeout
+            else
+              Puppet[:environment_timeout]
+            end
+
       case ttl
       when 0
         NotCachedEntry.new(env)     # Entry that is always expired (avoids syscall to get time)
       when Float::INFINITY
         Entry.new(env)              # Entry that never expires (avoids syscall to get time)
       else
-        TTLEntry.new(env, ttl)
+        if mru_entry
+          MRUEntry.new(env, ttl)    # Entry that expires in ttl from when it was last touched
+        else
+          TTLEntry.new(env, ttl)    # Entry that expires in ttl from when it was created
+        end
       end
     end
 
     # Evicts the entry if it has expired
     # Also clears caches in Settings that may prevent the entry from being updated
     def evict_if_expired(name)
-      if (result = @cache[name]) && (result.expired? || @cache_expiration_service.expired?(name))
+      if (result = @cache[name]) && (result.expired? || @cache_expiration_service.expired?(name.to_sym))
         Puppet.debug {"Evicting cache entry for environment '#{name}'"}
-        @cache_expiration_service.evicted(name)
+        @cache_expiration_service.evicted(name.to_sym)
         clear(name)
         Puppet.settings.clear_environment_settings(name)
       end
@@ -463,6 +487,9 @@ module Puppet::Environments
 
       def initialize(value)
         @value = value
+      end
+
+      def touch
       end
 
       def expired?
@@ -493,10 +520,10 @@ module Puppet::Environments
       end
     end
 
-    # Time to Live eviction policy entry
+    # Policy that expires in ttl_seconds from when it was created
     class TTLEntry < Entry
       def initialize(value, ttl_seconds)
-        super value
+        super(value)
         @ttl = Time.now + ttl_seconds
         @ttl_seconds = ttl_seconds
       end
@@ -511,6 +538,23 @@ module Puppet::Environments
 
       def expires
         @ttl
+      end
+    end
+
+    # Policy that expires if it hasn't been touched within ttl_seconds
+    class MRUEntry < TTLEntry
+      def initialize(value, ttl_seconds)
+        super(value, ttl_seconds)
+
+        touch
+      end
+
+      def touch
+        @ttl = Time.now + @ttl_seconds
+      end
+
+      def label
+        "(mru = #{@ttl_seconds} sec)"
       end
     end
   end

@@ -727,12 +727,36 @@ Valid values are 0 (never cache) and 15 (15 second minimum wait time).
         unless [0, 'unlimited', Float::INFINITY].include?(val)
           Puppet.deprecation_warning(<<-WARNING)
 Fine grained control of environment timeouts is deprecated,
-please use `0` or `unlimited` to control default caching behavior
-and the environment-cache endpoint in Puppet Server's administrative
-API to expire the cache as needed
+please use `environment_ttl` instead.
           WARNING
         end
       end
+    },
+    :environment_ttl => {
+      :default    => "0",
+      :type       => :ttl,
+      :desc       => "How long after the last access Puppet server will wait to
+      evict an environment from the environment cache.
+
+      A value of `0` will disable caching. This setting can also be set to
+      `unlimited`, which will cache environments until the server is restarted
+      or told to refresh the cache. All other values will result in Puppet server
+      evicting environments that have not been accessed within that ttl.
+
+      You should change this setting once your Puppet deployment is doing
+      non-trivial work. We chose the default value of `0` because it lets new
+      users update their code without any extra steps, but it lowers the
+      performance of your Puppet server.
+
+      We recommend setting this to a number that will keep your most actively
+      used environments cached, but allow testing environments to fall out of
+      the cache and reduce memory usage. A value of 3 minutes (3m) is a
+      reasonable value.
+
+      Once you set `environment_ttl` to a non-zero value, you need to tell
+      Puppet server to read new code from disk using the `environment-cache` API
+      endpoint after you deploy new code. See the docs for the Puppet Server
+      [administrative API](https://puppet.com/docs/puppetserver/latest/admin-api/v1/environment-cache.html)."
     },
     :environment_data_provider => {
       :desc       => "The name of a registered environment data provider used when obtaining environment
