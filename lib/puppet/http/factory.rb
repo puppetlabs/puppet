@@ -2,10 +2,10 @@ require 'puppet/ssl/openssl_loader'
 require 'net/http'
 require 'puppet/http'
 
-# Factory for <tt>Net::HTTP</tt> objects.
+# Factory for `Net::HTTP` objects.
 #
-# Encapsulates the logic for creating a <tt>Net::HTTP</tt> object based on the
-# specified {Puppet::HTTP::Site Site} and puppet settings.
+# Encapsulates the logic for creating a `Net::HTTP` object based on the
+# specified {Site} and puppet settings.
 #
 # @api private
 class Puppet::HTTP::Factory
