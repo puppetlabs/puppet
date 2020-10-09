@@ -5,6 +5,7 @@ require 'puppet'
 require 'puppet/parser/script_compiler'
 require 'puppet/parser/catalog_compiler'
 
+module Puppet
 # This is the main entry point for "Puppet As a Library" PAL.
 # This file should be required instead of "puppet"
 # Initially, this will require ALL of puppet - over time this will change as the monolithical "puppet" is broken up
@@ -24,7 +25,7 @@ require 'puppet/parser/catalog_compiler'
 #   end
 #   # The result is what 'mymodule::myfunction' returns
 #
-module Puppet
+# @api public
 module Pal
 
   # Defines a context in which multiple operations in an env with a script compiler can be performed in a given block.
@@ -258,6 +259,7 @@ module Pal
   # @return [Object] returns what the given block returns
   # @yieldparam [Puppet::Pal] context, a context that responds to Puppet::Pal methods
   #
+  # @api public
   def self.in_environment(env_name,
       modulepath:    nil,
       pre_modulepath: [],
