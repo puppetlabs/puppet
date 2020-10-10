@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.18.0-326-ga3da3cd354\n"
+"Project-Id-Version: Puppet automation framework 6.18.0-385-g4f90b0dfd8\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-10-03 00:36+0000\n"
-"PO-Revision-Date: 2020-10-03 00:36+0000\n"
+"POT-Creation-Date: 2020-10-10 22:51+0000\n"
+"PO-Revision-Date: 2020-10-10 22:51+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -547,7 +547,7 @@ msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
 #: ../lib/puppet/configurer.rb:225
-msgid "Could not select a functional puppet master from server_list: '%{server_list}'"
+msgid "Could not select a functional puppet server from server_list: '%{server_list}'"
 msgstr ""
 
 #: ../lib/puppet/configurer.rb:262
@@ -692,30 +692,30 @@ msgid "Valid values are '%{values}'."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:517
+#: ../lib/puppet/defaults.rb:522
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:519
+#: ../lib/puppet/defaults.rb:524
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:718
+#: ../lib/puppet/defaults.rb:747
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:801
+#: ../lib/puppet/defaults.rb:830
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1051 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1080 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1877
+#: ../lib/puppet/defaults.rb:1906
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -6382,27 +6382,27 @@ msgstr ""
 msgid "source is defined but does not have trailing slash, ignoring %{source}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:102 ../lib/puppet/provider/package/puppetserver_gem.rb:61
+#: ../lib/puppet/provider/package/gem.rb:122 ../lib/puppet/provider/package/puppetserver_gem.rb:61
 msgid "Could not list gems: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:128
+#: ../lib/puppet/provider/package/gem.rb:148
 msgid "Could not match %{desc}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:206 ../lib/puppet/provider/package/puppetserver_gem.rb:93
+#: ../lib/puppet/provider/package/gem.rb:226 ../lib/puppet/provider/package/puppetserver_gem.rb:93
 msgid "Invalid source '%{uri}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:217 ../lib/puppet/provider/package/puppetserver_gem.rb:104
+#: ../lib/puppet/provider/package/gem.rb:237 ../lib/puppet/provider/package/puppetserver_gem.rb:104
 msgid "puppet:// URLs are not supported as gem sources"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:233 ../lib/puppet/provider/package/puppetserver_gem.rb:115
+#: ../lib/puppet/provider/package/gem.rb:253 ../lib/puppet/provider/package/puppetserver_gem.rb:115
 msgid "Could not install: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:259 ../lib/puppet/provider/package/puppetserver_gem.rb:125
+#: ../lib/puppet/provider/package/gem.rb:279 ../lib/puppet/provider/package/puppetserver_gem.rb:125
 msgid "Could not uninstall: %{output}"
 msgstr ""
 
@@ -7055,49 +7055,49 @@ msgstr ""
 msgid "Invalid setting type '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:895
+#: ../lib/puppet/settings.rb:904
 msgid "Unknown searchpath case: %{source_type} for the %{source} settings path element."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:958
+#: ../lib/puppet/settings.rb:967
 msgid "setting definition for '%{name}' is not a hash!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:963
+#: ../lib/puppet/settings.rb:972
 msgid "Setting %{name} is already defined"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:969
+#: ../lib/puppet/settings.rb:978
 msgid "Setting %{name} is already using short name '%{short}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1228
+#: ../lib/puppet/settings.rb:1241
 msgid "Setting %{name} is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'puppet.conf' is a file name and should not be translated
-#: ../lib/puppet/settings.rb:1233
+#: ../lib/puppet/settings.rb:1246
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1404
+#: ../lib/puppet/settings.rb:1417
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1428
+#: ../lib/puppet/settings.rb:1441
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1438
+#: ../lib/puppet/settings.rb:1451
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1439
+#: ../lib/puppet/settings.rb:1452
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1470
+#: ../lib/puppet/settings.rb:1483
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
