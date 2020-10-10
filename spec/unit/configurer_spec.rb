@@ -1048,6 +1048,7 @@ describe Puppet::Configurer do
       options = {}
       configurer.run(options)
       expect(options[:report].master_used).to eq('myserver:123')
+      expect(options[:report].server_used).to eq('myserver:123')
     end
 
     it "should report when a server is unavailable" do
@@ -1057,7 +1058,7 @@ describe Puppet::Configurer do
 
       expect {
         configurer.run
-      }.to raise_error(Puppet::Error, /Could not select a functional puppet master from server_list:/)
+      }.to raise_error(Puppet::Error, /Could not select a functional puppet server from server_list:/)
 
       expect(@logs).to include(an_object_having_attributes(level: :err, message: /Puppet server myserver:123 is unavailable: 500 Internal Server Error/))
     end
@@ -1070,7 +1071,7 @@ describe Puppet::Configurer do
 
       expect{
         configurer.run
-      }.to raise_error(Puppet::Error, /Could not select a functional puppet master from server_list: 'myserver:123,someotherservername'/)
+      }.to raise_error(Puppet::Error, /Could not select a functional puppet server from server_list: 'myserver:123,someotherservername'/)
     end
 
     it "should not make multiple node requests when the server is found" do
