@@ -124,10 +124,15 @@
             "type": "string"
         },
 
+        "server_used": {
+            "description": "The name of the server that was used to compile the catalog. If failover occurred, this will hold the first server successfully contacted. If this run had no server (e.g. a `puppet apply` run), this field will be blank",
+            "type": "string"
+        },
+
         "report_format": {
             "description": "The report format version documented by this schema",
             "type":        "integer",
-            "enum":        ["10", 10]
+            "enum":        ["11", 11]
         },
 
         "puppet_version": {

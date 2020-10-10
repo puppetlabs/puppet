@@ -676,6 +676,7 @@ Version:
     report.catalog_uuid = "some catalog uuid"
     report.cached_catalog_status = "not_used"
     report.master_used = "test:000"
+    report.server_used = "test:000"
     report.add_resource_status(status)
     report.transaction_completed = true
     report.finalize_report
@@ -694,6 +695,7 @@ Version:
     report.catalog_uuid = "some catalog uuid"
     report.cached_catalog_status = "not_used"
     report.master_used = "test:000"
+    report.server_used = "test:000"
     report.add_resource_status(status)
     report.transaction_completed = true
     report.finalize_report
