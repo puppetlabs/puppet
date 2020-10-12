@@ -1047,7 +1047,6 @@ describe Puppet::Configurer do
 
       options = {}
       configurer.run(options)
-      expect(options[:report].master_used).to eq('myserver:123')
       expect(options[:report].server_used).to eq('myserver:123')
     end
 

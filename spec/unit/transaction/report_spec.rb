@@ -675,7 +675,6 @@ Version:
     report.code_id = "some code id"
     report.catalog_uuid = "some catalog uuid"
     report.cached_catalog_status = "not_used"
-    report.master_used = "test:000"
     report.server_used = "test:000"
     report.add_resource_status(status)
     report.transaction_completed = true
@@ -694,7 +693,6 @@ Version:
     report.code_id = "some code id"
     report.catalog_uuid = "some catalog uuid"
     report.cached_catalog_status = "not_used"
-    report.master_used = "test:000"
     report.server_used = "test:000"
     report.add_resource_status(status)
     report.transaction_completed = true

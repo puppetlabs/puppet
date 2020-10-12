@@ -66,8 +66,6 @@ class Puppet::Transaction::Report
   # Contains the name and port of the server that was successfully contacted
   # @return [String] a string of the format 'servername:port'
   attr_accessor :server_used
-  alias :master_used :server_used
-  alias :master_used= :server_used=
 
   # The host name for which the report is generated
   # @return [String] the host name
@@ -226,7 +224,7 @@ class Puppet::Transaction::Report
     @external_times ||= {}
     @host = Puppet[:node_name_value]
     @time = start_time
-    @report_format = 11
+    @report_format = 12
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
     @transaction_uuid = transaction_uuid
@@ -326,7 +324,7 @@ class Puppet::Transaction::Report
     }
 
     # The following is include only when set
-    hash['master_used'] = hash['server_used'] = @server_used unless @server_used.nil?
+    hash['server_used'] = @server_used unless @server_used.nil?
     hash['catalog_uuid'] = @catalog_uuid unless @catalog_uuid.nil?
     hash['code_id'] = @code_id unless @code_id.nil?
     hash['job_id'] = @job_id unless @job_id.nil?

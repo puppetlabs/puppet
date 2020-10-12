@@ -42,7 +42,6 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
          .and output(%r{Unable to connect to server from server_list setting: Request to https://puppet.example.com:#{port}/status/v1/simple/master failed}).to_stderr
 
         report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
-        expect(report.master_used).to eq("127.0.0.1:#{port}")
         expect(report.server_used).to eq("127.0.0.1:#{port}")
       end
     end
@@ -75,7 +74,6 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       end
 
       report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
-      expect(report.master_used).to be_nil
       expect(report.server_used).to be_nil
     end
 
@@ -93,7 +91,6 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
          .and output(%r{Debug: Resolved service 'puppet' to https://127.0.0.1:#{port}/puppet/v3}).to_stdout
 
         report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
-        expect(report.master_used).to eq("127.0.0.1:#{port}")
         expect(report.server_used).to eq("127.0.0.1:#{port}")
       end
     end
