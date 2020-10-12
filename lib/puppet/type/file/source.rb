@@ -225,7 +225,7 @@ module Puppet
     end
 
     def port
-      (uri and uri.port) or Puppet.settings[:masterport]
+      (uri and uri.port) or Puppet.settings[:serverport]
     end
 
     def uri

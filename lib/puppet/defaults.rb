@@ -1377,11 +1377,23 @@ EOT
       by `puppet`, and should only be set if you're writing your own Puppet
       executable.",
     },
+    :serverport => {
+      :default    => 8140,
+      :desc       => "The default port puppet subcommands use to communicate
+      with Puppet Server. (eg `puppet facts upload`, `puppet agent`). May be
+      overridden by more specific settings (see `ca_port`, `report_port`).",
+      :hook       => proc do |value|
+        Puppet[:masterport] = value unless Puppet.settings.set_by_config?(:masterport)
+      end
+    },
     :masterport => {
       :default    => 8140,
       :desc       => "The default port puppet subcommands use to communicate
       with Puppet Server. (eg `puppet facts upload`, `puppet agent`). May be
       overridden by more specific settings (see `ca_port`, `report_port`).",
+      :hook => proc do |value|
+        Puppet[:serverport] = value unless Puppet.settings.set_by_config?(:serverport)
+      end
     },
     :node_name => {
       :default    => 'cert',
@@ -1743,7 +1755,7 @@ EOT
       and does not need to horizontally scale.",
     },
     :ca_port => {
-      :default    => "$masterport",
+      :default    => "$serverport",
       :desc       => "The port to use for the certificate authority.",
     },
     :preferred_serialization_format => {
@@ -1832,7 +1844,7 @@ EOT
       :desc     => "The server to send transaction reports to.",
     },
     :report_port => {
-      :default  => "$masterport",
+      :default  => "$serverport",
       :desc     => "The port to communicate with the report_server.",
     },
     :report => {
