@@ -101,11 +101,6 @@ describe Puppet::Network::HTTP::Handler do
       { :status => 200 }
     end
 
-    before do
-      allow(handler).to receive(:check_authorization)
-      allow(handler).to receive(:warn_if_near_expiration)
-    end
-
     it "should setup a profiler when the puppet-profiling header exists" do
       request = a_request
       request[:headers][Puppet::Network::HTTP::HEADER_ENABLE_PROFILING.downcase] = "true"

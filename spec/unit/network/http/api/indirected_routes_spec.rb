@@ -17,7 +17,6 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
   before do
     Puppet::IndirectorTesting.indirection.terminus_class = :memory
     Puppet::IndirectorTesting.indirection.terminus.clear
-    allow(handler).to receive(:warn_if_near_expiration)
   end
 
   describe "when converting a URI into a request" do
