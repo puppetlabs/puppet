@@ -677,7 +677,6 @@ config_version=$vardir/random/scripts
 
       it "evicts an environment that hasn't been recently touched" do
         Puppet[:environment_timeout] = 1
-        Puppet[:environment_timeout_mode] = :from_last_used
 
         with_environment_loaded(service) do |cached|
           future = Time.now + 60
@@ -694,7 +693,6 @@ config_version=$vardir/random/scripts
 
       it "reuses an environment that was recently touched" do
         Puppet[:environment_timeout] = 60
-        Puppet[:environment_timeout_mode] = :from_last_used
 
         with_environment_loaded(service) do |cached|
           # reuse the already cached environment
@@ -707,7 +705,6 @@ config_version=$vardir/random/scripts
 
       it "evicts a recently touched environment" do
         Puppet[:environment_timeout] = 60
-        Puppet[:environment_timeout_mode] = :from_last_used
 
         # see note above about "twice"
         expect(service).to receive(:expired?).twice.and_return(true)

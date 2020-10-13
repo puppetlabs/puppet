@@ -682,9 +682,8 @@ Valid values are 0 (never cache) and 15 (15 second minimum wait time).
       A value of `0` will disable caching. This setting can also be set to
       `unlimited`, which will cache environments until the server is restarted
       or told to refresh the cache. All other values will result in Puppet
-      server evicting expired environments. The expiration time is computed
-      based on either when the environment was created or last accessed, see
-      `environment_timeout_mode`.
+      server evicting environments that haven't been used within the last
+      `environment_timeout` seconds.
 
       You should change this setting once your Puppet deployment is doing
       non-trivial work. We chose the default value of `0` because it lets new
@@ -697,32 +696,13 @@ Valid values are 0 (never cache) and 15 (15 second minimum wait time).
       * Setting this to a number that will keep your most actively used
         environments cached, but allow testing environments to fall out of the
         cache and reduce memory usage. A value of 3 minutes (3m) is a reasonable
-        value. This option requires setting `environment_timeout_mode` to
-        `from_last_used`.
+        value.
 
       Once you set `environment_timeout` to a non-zero value, you need to tell
       Puppet server to read new code from disk using the `environment-cache` API
       endpoint after you deploy new code. See the docs for the Puppet Server
       [administrative API](https://puppet.com/docs/puppetserver/latest/admin-api/v1/environment-cache.html).
-      ",
-      :hook => proc do |val|
-        if Puppet[:environment_timeout_mode] == :from_created
-          unless [0, 'unlimited', Float::INFINITY].include?(val)
-            Puppet.deprecation_warning("Evicting environments based on their creation time is deprecated, please set `environment_timeout_mode` to `from_last_used` instead.")
-          end
-        end
-      end
-    },
-    :environment_timeout_mode => {
-      :default => :from_created,
-      :type    => :symbolic_enum,
-      :values  => [:from_created, :from_last_used],
-      :desc => "How Puppet interprets the `environment_timeout` setting when
-      `environment_timeout` is neither `0` nor `unlimited`. If set to
-      `from_created`, then the environment will be evicted `environment_timeout`
-      seconds from when it was created. If set to `from_last_used` then the
-      environment will be evicted `environment_timeout` seconds from when it
-      was last used."
+      "
     },
     :environment_data_provider => {
       :desc       => "The name of a registered environment data provider used when obtaining environment
