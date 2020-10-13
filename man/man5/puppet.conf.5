@@ -817,7 +817,7 @@ The group Puppet Server will run as\. Used to ensure the agent side processes (a
 .IP "" 0
 .
 .SS "hiera_config"
-The hiera configuration file\. Puppet only reads this file on startup, so you must restart the puppet master every time you edit it\.
+The hiera configuration file\. Puppet only reads this file on startup, so you must restart the puppet server every time you edit it\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $confdir/hiera\.yaml\. However, for backwards compatibility, if a file exists at $codedir/hiera\.yaml, Puppet uses that instead\.
@@ -1408,7 +1408,7 @@ Where puppet agent stores the password for its private key\. Generally unused\.
 The shell search path\. Defaults to whatever is inherited from the parent process\.
 .
 .P
-This setting can only be set in the \fB[main]\fR section of puppet\.conf; it cannot be set in \fB[master]\fR, \fB[agent]\fR, or an environment config section\.
+This setting can only be set in the \fB[main]\fR section of puppet\.conf; it cannot be set in \fB[server]\fR, \fB[agent]\fR, or an environment config section\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: none
