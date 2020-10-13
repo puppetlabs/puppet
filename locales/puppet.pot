@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.21-20-gfdd7102523\n"
+"Project-Id-Version: Puppet automation framework 5.5.22-4-g11e262e3aa\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-07-29 14:16+0000\n"
-"PO-Revision-Date: 2020-07-29 14:16+0000\n"
+"POT-Creation-Date: 2020-10-13 07:31+0000\n"
+"PO-Revision-Date: 2020-10-13 07:31+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -508,105 +508,105 @@ msgstr ""
 msgid "Cannot remove %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:76
+#: ../lib/puppet/configurer.rb:85
 msgid "Using cached catalog from environment '%{environment}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:82
+#: ../lib/puppet/configurer.rb:91
 msgid "Not using cache on failed catalog"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:91
+#: ../lib/puppet/configurer.rb:100
 msgid "Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:96 ../lib/puppet/configurer.rb:171
+#: ../lib/puppet/configurer.rb:105 ../lib/puppet/configurer.rb:180
 msgid "Using cached catalog from environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:164
+#: ../lib/puppet/configurer.rb:173
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:180
+#: ../lib/puppet/configurer.rb:189
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:220
-msgid "Could not select a functional puppet master from server_list: '%{server_list}'"
+#: ../lib/puppet/configurer.rb:230
+msgid "Could not select a functional puppet server from server_list: '%{server_list}'"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:223
+#: ../lib/puppet/configurer.rb:233
 msgid "Selected puppet server from the `server_list` setting: %{server}:%{port}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:254
+#: ../lib/puppet/configurer.rb:277
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:299
+#: ../lib/puppet/configurer.rb:322
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:304
+#: ../lib/puppet/configurer.rb:327
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:308
+#: ../lib/puppet/configurer.rb:331
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:332
+#: ../lib/puppet/configurer.rb:355
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:343
+#: ../lib/puppet/configurer.rb:366
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:345
+#: ../lib/puppet/configurer.rb:368
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:385
+#: ../lib/puppet/configurer.rb:408
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:417
+#: ../lib/puppet/configurer.rb:440
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:421
+#: ../lib/puppet/configurer.rb:444
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:433 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:456 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:442
+#: ../lib/puppet/configurer.rb:465
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:462
+#: ../lib/puppet/configurer.rb:485
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:473
+#: ../lib/puppet/configurer.rb:496
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:488
+#: ../lib/puppet/configurer.rb:511
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:506
+#: ../lib/puppet/configurer.rb:529
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:526
+#: ../lib/puppet/configurer.rb:549
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -4312,7 +4312,7 @@ msgstr ""
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:572 ../lib/puppet/pops/loaders.rb:298
+#: ../lib/puppet/node/environment.rb:578 ../lib/puppet/pops/loaders.rb:298
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -4605,31 +4605,31 @@ msgstr ""
 msgid "Evaluated application %{resource}"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:149
+#: ../lib/puppet/parser/functions.rb:153
 msgid "Overwriting previous definition for function %{name}"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:155
+#: ../lib/puppet/parser/functions.rb:159
 msgid "Invalid statement type %{type}"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:167
+#: ../lib/puppet/parser/functions.rb:171
 msgid "Called %{name}"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:170
+#: ../lib/puppet/parser/functions.rb:174
 msgid "%{name}(): Wrong number of arguments given (%{arg_count} for %{arity})"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:172
+#: ../lib/puppet/parser/functions.rb:176
 msgid "%{name}(): Wrong number of arguments given (%{arg_count} for minimum %{min_arg_count})"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:176
+#: ../lib/puppet/parser/functions.rb:180
 msgid "custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:274
+#: ../lib/puppet/parser/functions.rb:278
 msgid "%{name}() can only be called using the 4.x function API. See Scope#call_function"
 msgstr ""
 
@@ -6982,7 +6982,7 @@ msgstr ""
 msgid "Could not list installed Packages: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:154 ../lib/puppet/provider/package/yum.rb:255
+#: ../lib/puppet/provider/package/aix.rb:154 ../lib/puppet/provider/package/yum.rb:256
 msgid "Tried to get latest on a missing package"
 msgstr ""
 
@@ -7707,67 +7707,67 @@ msgstr ""
 msgid "Could not evaluate: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:81
+#: ../lib/puppet/resource/type.rb:82
 msgid "Invalid export in %{reference}: %{ex} is not a resource"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:82
+#: ../lib/puppet/resource/type.rb:83
 msgid "Invalid export in %{reference}: %{ex} is not a capability resource"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:86
+#: ../lib/puppet/resource/type.rb:87
 msgid "Resource type %{res_type} does not produce %{ex_type}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:146
+#: ../lib/puppet/resource/type.rb:147
 msgid "Invalid resource supertype '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:197
+#: ../lib/puppet/resource/type.rb:198
 msgid "%{name} is not a class; cannot add code to it"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:198
+#: ../lib/puppet/resource/type.rb:199
 msgid "%{name} is not a class; cannot add code from it"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:202
+#: ../lib/puppet/resource/type.rb:203
 msgid "Cannot have code outside of a class/node/define because 'freeze_main' is enabled"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:206
+#: ../lib/puppet/resource/type.rb:207
 msgid "Cannot merge classes with different parent classes (%{name} => %{parent} vs. %{other_name} => %{other_parent})"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:237
+#: ../lib/puppet/resource/type.rb:238
 msgid "Cannot create resources for defined resource types"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:292
+#: ../lib/puppet/resource/type.rb:293
 msgid "The method Puppet::Resource::Type.assign_parameter_values is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:308
+#: ../lib/puppet/resource/type.rb:309
 msgid "Could not find parent resource type '%{parent}' of type %{parent_type} in %{env}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:435
+#: ../lib/puppet/resource/type.rb:436
 msgid "Parameter '%{name}' is given a type, but is not a valid parameter."
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:438
+#: ../lib/puppet/resource/type.rb:439
 msgid "Parameter '%{name}' is given a type that is not a Puppet Type, got %{class_name}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:478
+#: ../lib/puppet/resource/type.rb:479
 msgid "Could not find scope for %{class_name}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:499
+#: ../lib/puppet/resource/type.rb:500
 msgid "%{param} is a metaparam; this value will inherit to all contained resources in the %{name} definition"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:501
+#: ../lib/puppet/resource/type.rb:502
 msgid "%{param} is a metaparameter; please choose another parameter name in the %{name} definition"
 msgstr ""
 
@@ -9326,11 +9326,11 @@ msgstr ""
 msgid "Failed to abandon a child process contract"
 msgstr ""
 
-#: ../lib/puppet/util/autoload.rb:73
+#: ../lib/puppet/util/autoload.rb:81
 msgid "Could not autoload %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/autoload.rb:187
+#: ../lib/puppet/util/autoload.rb:189
 msgid "Autoload paths cannot be fully qualified"
 msgstr ""
 
