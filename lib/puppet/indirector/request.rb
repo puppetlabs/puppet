@@ -176,7 +176,7 @@ class Puppet::Indirector::Request
     # If the URI class can look up the scheme, it will provide a port,
     # otherwise it will default to '0'.
     if uri.port.to_i == 0 and uri.scheme == "puppet"
-      @port = Puppet.settings[:masterport].to_i
+      @port = Puppet.settings[:serverport].to_i
     else
       @port = uri.port.to_i
     end

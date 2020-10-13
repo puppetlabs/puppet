@@ -159,8 +159,8 @@ module Puppet::Environments
   # Reads environments from a directory on disk. Each environment is
   # represented as a sub-directory. The environment's manifest setting is the
   # `manifest` directory of the environment directory. The environment's
-  # modulepath setting is the global modulepath (from the `[master]` section
-  # for the master) prepended with the `modules` directory of the environment
+  # modulepath setting is the global modulepath (from the `[server]` section
+  # for the server) prepended with the `modules` directory of the environment
   # directory.
   #
   # @api private
@@ -277,7 +277,7 @@ module Puppet::Environments
     def get(name)
       @loaders.each do |loader|
         env = loader.get(name)
-        if env 
+        if env
           return env
         end
       end
@@ -447,10 +447,7 @@ module Puppet::Environments
     # Creates a suitable cache entry given the time to live for one environment
     #
     def entry(env)
-      mru_entry = Puppet.settings.set_by_config?(:environment_ttl)
-      ttl = if mru_entry
-              Puppet[:environment_ttl]
-            elsif (conf = get_conf(env.name))
+      ttl = if (conf = get_conf(env.name))
               conf.environment_timeout
             else
               Puppet[:environment_timeout]
@@ -462,7 +459,7 @@ module Puppet::Environments
       when Float::INFINITY
         Entry.new(env)              # Entry that never expires (avoids syscall to get time)
       else
-        if mru_entry
+        if Puppet[:environment_timeout_mode] == :from_last_used
           MRUEntry.new(env, ttl)    # Entry that expires in ttl from when it was last touched
         else
           TTLEntry.new(env, ttl)    # Entry that expires in ttl from when it was created

@@ -92,12 +92,12 @@ class Puppet::Application::Lookup < Puppet::Application
 
     if options[:node]
       Puppet::Util.skip_external_facts do
-        Puppet.settings.use :main, :master, :ssl, :metrics
+        Puppet.settings.use :main, :server, :ssl, :metrics
       end
     else
-      Puppet.settings.use :main, :master, :ssl, :metrics
+      Puppet.settings.use :main, :server, :ssl, :metrics
     end
-    
+
     setup_terminuses
   end
 
@@ -371,7 +371,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
     Puppet[:code] = 'undef' unless options[:compile]
     compiler = Puppet::Parser::Compiler.new(node)
     if options[:node]
-      Puppet::Util.skip_external_facts do 
+      Puppet::Util.skip_external_facts do
         compiler.compile { |catalog| yield(compiler.topscope); catalog }
       end
     else
