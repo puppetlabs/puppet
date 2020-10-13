@@ -149,7 +149,7 @@ The name to use the Certificate Authority certificate\.
 The port to use for the certificate authority\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $masterport
+\fIDefault\fR: $serverport
 .
 .IP "" 0
 .
@@ -591,47 +591,35 @@ The name of a registered environment data provider used when obtaining environme
 
 .
 .SS "environment_timeout"
-How long the Puppet master should cache data it loads from an environment\.
+How long the Puppet server should cache data it loads from an environment\.
 .
 .P
-A value of \fB0\fR will disable caching\. This setting can also be set to \fBunlimited\fR, which will cache environments until the master is restarted or told to refresh the cache\.
+A value of \fB0\fR will disable caching\. This setting can also be set to \fBunlimited\fR, which will cache environments until the server is restarted or told to refresh the cache\. All other values will result in Puppet server evicting expired environments\. The expiration time is computed based on either when the environment was created or last accessed, see \fBenvironment_timeout_mode\fR\.
 .
 .P
-You should change this setting once your Puppet deployment is doing non\-trivial work\. We chose the default value of \fB0\fR because it lets new users update their code without any extra steps, but it lowers the performance of your Puppet master\.
-.
-.P
-We recommend setting this to \fBunlimited\fR and explicitly refreshing your Puppet master as part of your code deployment process\.
+You should change this setting once your Puppet deployment is doing non\-trivial work\. We chose the default value of \fB0\fR because it lets new users update their code without any extra steps, but it lowers the performance of your Puppet server\. We recommend either:
 .
 .IP "\(bu" 4
-With Puppet Server, you should refresh environments by calling the \fBenvironment\-cache\fR API endpoint\. See the docs for the Puppet Server administrative API \fIhttps://puppet\.com/docs/puppetserver/latest/admin\-api/v1/environment\-cache\.html\fR\.
+Setting this to \fBunlimited\fR and explicitly refreshing your Puppet server as part of your code deployment process\.
+.
+.IP "\(bu" 4
+Setting this to a number that will keep your most actively used environments cached, but allow testing environments to fall out of the cache and reduce memory usage\. A value of 3 minutes (3m) is a reasonable value\. This option requires setting \fBenvironment_timeout_mode\fR to \fBfrom_last_used\fR\.
 .
 .IP "" 0
 .
 .P
-Any value other than \fB0\fR or \fBunlimited\fR is deprecated, since most Puppet servers use a pool of Ruby interpreters which all have their own cache timers\. When these timers drift out of sync, agents can be served inconsistent catalogs\.
+Once you set \fBenvironment_timeout\fR to a non\-zero value, you need to tell Puppet server to read new code from disk using the \fBenvironment\-cache\fR API endpoint after you deploy new code\. See the docs for the Puppet Server administrative API \fIhttps://puppet\.com/docs/puppetserver/latest/admin\-api/v1/environment\-cache\.html\fR\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: 0
 .
 .IP "" 0
 .
-.SS "environment_ttl"
-How long after the last access Puppet server will wait to evict an environment from the environment cache\.
-.
-.P
-A value of \fB0\fR will disable caching\. This setting can also be set to \fBunlimited\fR, which will cache environments until the server is restarted or told to refresh the cache\. All other values will result in Puppet server evicting environments that have not been accessed within that ttl\.
-.
-.P
-You should change this setting once your Puppet deployment is doing non\-trivial work\. We chose the default value of \fB0\fR because it lets new users update their code without any extra steps, but it lowers the performance of your Puppet server\.
-.
-.P
-We recommend setting this to a number that will keep your most actively used environments cached, but allow testing environments to fall out of the cache and reduce memory usage\. A value of 3 minutes (3m) is a reasonable value\.
-.
-.P
-Once you set \fBenvironment_ttl\fR to a non\-zero value, you need to tell Puppet server to read new code from disk using the \fBenvironment\-cache\fR API endpoint after you deploy new code\. See the docs for the Puppet Server administrative API \fIhttps://puppet\.com/docs/puppetserver/latest/admin\-api/v1/environment\-cache\.html\fR\.
+.SS "environment_timeout_mode"
+How Puppet interprets the \fBenvironment_timeout\fR setting when \fBenvironment_timeout\fR is neither \fB0\fR nor \fBunlimited\fR\. If set to \fBfrom_created\fR, then the environment will be evicted \fBenvironment_timeout\fR seconds from when it was created\. If set to \fBfrom_last_used\fR then the environment will be evicted \fBenvironment_timeout\fR seconds from when it was last used\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 0
+\fIDefault\fR: from_created
 .
 .IP "" 0
 .
@@ -801,7 +789,7 @@ The group Puppet Server will run as\. Used to ensure the agent side processes (a
 .IP "" 0
 .
 .SS "hiera_config"
-The hiera configuration file\. Puppet only reads this file on startup, so you must restart the puppet master every time you edit it\.
+The hiera configuration file\. Puppet only reads this file on startup, so you must restart the puppet server every time you edit it\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $confdir/hiera\.yaml\. However, for backwards compatibility, if a file exists at $codedir/hiera\.yaml, Puppet uses that instead\.
@@ -1381,7 +1369,7 @@ Where puppet agent stores the password for its private key\. Generally unused\.
 The shell search path\. Defaults to whatever is inherited from the parent process\.
 .
 .P
-This setting can only be set in the \fB[main]\fR section of puppet\.conf; it cannot be set in \fB[master]\fR, \fB[agent]\fR, or an environment config section\.
+This setting can only be set in the \fB[main]\fR section of puppet\.conf; it cannot be set in \fB[server]\fR, \fB[agent]\fR, or an environment config section\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: none
@@ -1555,7 +1543,7 @@ Whether the \'http\' report processor should include the system certificate stor
 The port to communicate with the report_server\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $masterport
+\fIDefault\fR: $serverport
 .
 .IP "" 0
 .
@@ -1690,6 +1678,14 @@ The list of Puppet master servers to which the Puppet agent should connect, in t
 .
 .IP "\(bu" 4
 \fIDefault\fR: []
+.
+.IP "" 0
+.
+.SS "serverport"
+The default port puppet subcommands use to communicate with Puppet Server\. (eg \fBpuppet facts upload\fR, \fBpuppet agent\fR)\. May be overridden by more specific settings (see \fBca_port\fR, \fBreport_port\fR)\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: 8140
 .
 .IP "" 0
 .

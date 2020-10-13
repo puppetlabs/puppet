@@ -35,7 +35,7 @@ Whether to log debug information\.
 The section of the puppet\.conf configuration file to interact with\.
 .
 .IP
-The three most commonly used sections are \'main\', \'master\', and \'agent\'\. \'Main\' is the default, and is used by all Puppet applications\. Other sections can override \'main\' values for specific applications \-\-\- the \'master\' section affects Puppet Server, and the \'agent\' section affects puppet agent\.
+The three most commonly used sections are \'main\', \'server\', and \'agent\'\. \'Main\' is the default, and is used by all Puppet applications\. Other sections can override \'main\' values for specific applications \-\-\- the \'server\' section affects Puppet Server, and the \'agent\' section affects puppet agent\.
 .
 .IP
 Less commonly used is the \'user\' section, which affects puppet apply\. Any other section will be treated as the name of a legacy environment (a deprecated feature), and can only include the \'manifest\' and \'modulepath\' settings\.
@@ -112,10 +112,10 @@ Delete the setting \'setting_name\' from the \'main\' configuration domain:
 $ puppet config delete setting_name
 .
 .P
-Delete the setting \'setting_name\' from the \'master\' configuration domain:
+Delete the setting \'setting_name\' from the \'server\' configuration domain:
 .
 .P
-$ puppet config delete setting_name \-\-section master
+$ puppet config delete setting_name \-\-section server
 .
 .P
 \fBprint\fR
@@ -127,10 +127,10 @@ Get puppet\'s runfile directory:
 $ puppet config print rundir
 .
 .P
-Get a list of important directories from the master\'s config:
+Get a list of important directories from the server\'s config:
 .
 .P
-$ puppet config print all \-\-section master | grep \-E "(path|dir)"
+$ puppet config print all \-\-section server | grep \-E "(path|dir)"
 .
 .P
 \fBset\fR
