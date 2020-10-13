@@ -53,7 +53,7 @@ class Puppet::Configurer
   def initialize(transaction_uuid = nil, job_id = nil)
     @running = false
     @splayed = false
-    @pluginsync_failed = false
+    @running_failure = false
     @cached_catalog_status = 'not_used'
     @environment = Puppet[:environment]
     @transaction_uuid = transaction_uuid || SecureRandom.uuid
@@ -66,14 +66,14 @@ class Puppet::Configurer
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
   def retrieve_catalog(facts, query_options)
     query_options ||= {}
-    if Puppet[:use_cached_catalog] || @pluginsync_failed
+    if Puppet[:use_cached_catalog] || @running_failure
       result = retrieve_catalog_from_cache(query_options)
     end
 
     if result
       if Puppet[:use_cached_catalog]
         @cached_catalog_status = 'explicitly_requested'
-      elsif @pluginsync_failed
+      elsif @running_failure
         @cached_catalog_status = 'on_failure'
       end
 
@@ -223,10 +223,26 @@ class Puppet::Configurer
         # mode. We shouldn't try to do any failover in that case.
         if options[:catalog].nil? && do_failover
           server, port = find_functional_server
-          if server.nil?
-            raise Puppet::Error, _("Could not select a functional puppet server from server_list: '%{server_list}'") % { server_list: Puppet.settings.value(:server_list, Puppet[:environment].to_sym, true) }
-          else
-            report.server_used = "#{server}:#{port}"
+          begin
+            if server.nil?
+              raise Puppet::Error, _("Could not select a functional puppet server from server_list: '%{server_list}'") % { server_list: Puppet.settings.value(:server_list, Puppet[:environment].to_sym, true) }
+            else
+              #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+              Puppet.debug _("Selected puppet server from the `server_list` setting: %{server}:%{port}") % { server: server, port: port }
+              report.server_used = "#{server}:#{port}"
+            end
+          rescue Puppet::Error => detail
+            if Puppet[:usecacheonfailure]
+              options[:pluginsync] = false
+              @running_failure = true
+              if server.nil?
+                server = Puppet[:server_list].first[0]
+                port = Puppet[:server_list].first[1] || Puppet[:masterport]
+              end
+              Puppet.log_exception(detail)
+            else
+              raise detail
+            end
           end
           Puppet.override(server: server, serverport: port) do
             completed = run_internal(options)
@@ -550,7 +566,7 @@ class Puppet::Configurer
       @handler.download_plugins(remote_environment_for_plugins)
     rescue Puppet::Error => detail
       if !Puppet[:ignore_plugin_errors] && Puppet[:usecacheonfailure]
-        @pluginsync_failed = true
+        @running_failure = true
       else
         raise detail
       end
