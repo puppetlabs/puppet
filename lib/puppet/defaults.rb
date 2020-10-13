@@ -700,63 +700,53 @@ Valid values are 0 (never cache) and 15 (15 second minimum wait time).
     :environment_timeout => {
       :default    => "0",
       :type       => :ttl,
-      :desc       => "How long the Puppet master should cache data it loads from an
+      :desc       => "How long the Puppet server should cache data it loads from an
       environment.
 
       A value of `0` will disable caching. This setting can also be set to
-      `unlimited`, which will cache environments until the master is restarted
-      or told to refresh the cache.
+      `unlimited`, which will cache environments until the server is restarted
+      or told to refresh the cache. All other values will result in Puppet
+      server evicting expired environments. The expiration time is computed
+      based on either when the environment was created or last accessed, see
+      `environment_timeout_mode`.
 
       You should change this setting once your Puppet deployment is doing
       non-trivial work. We chose the default value of `0` because it lets new
       users update their code without any extra steps, but it lowers the
-      performance of your Puppet master.
+      performance of your Puppet server. We recommend either:
 
-      We recommend setting this to `unlimited` and explicitly refreshing your
-      Puppet master as part of your code deployment process.
+      * Setting this to `unlimited` and explicitly refreshing your Puppet server
+        as part of your code deployment process.
 
-      * With Puppet Server, you should refresh environments by calling the
-        `environment-cache` API endpoint. See the docs for the Puppet Server
-        [administrative API](https://puppet.com/docs/puppetserver/latest/admin-api/v1/environment-cache.html).
+      * Setting this to a number that will keep your most actively used
+        environments cached, but allow testing environments to fall out of the
+        cache and reduce memory usage. A value of 3 minutes (3m) is a reasonable
+        value. This option requires setting `environment_timeout_mode` to
+        `from_last_used`.
 
-      Any value other than `0` or `unlimited` is deprecated, since most Puppet
-      servers use a pool of Ruby interpreters which all have their own cache
-      timers. When these timers drift out of sync, agents can be served
-      inconsistent catalogs.",
+      Once you set `environment_timeout` to a non-zero value, you need to tell
+      Puppet server to read new code from disk using the `environment-cache` API
+      endpoint after you deploy new code. See the docs for the Puppet Server
+      [administrative API](https://puppet.com/docs/puppetserver/latest/admin-api/v1/environment-cache.html).
+      ",
       :hook => proc do |val|
-        unless [0, 'unlimited', Float::INFINITY].include?(val)
-          Puppet.deprecation_warning(<<-WARNING)
-Fine grained control of environment timeouts is deprecated,
-please use `environment_ttl` instead.
-          WARNING
+        if Puppet[:environment_timeout_mode] == :from_created
+          unless [0, 'unlimited', Float::INFINITY].include?(val)
+            Puppet.deprecation_warning("Evicting environments based on their creation time is deprecated, please set `environment_timeout_mode` to `from_last_used` instead.")
+          end
         end
       end
     },
-    :environment_ttl => {
-      :default    => "0",
-      :type       => :ttl,
-      :desc       => "How long after the last access Puppet server will wait to
-      evict an environment from the environment cache.
-
-      A value of `0` will disable caching. This setting can also be set to
-      `unlimited`, which will cache environments until the server is restarted
-      or told to refresh the cache. All other values will result in Puppet server
-      evicting environments that have not been accessed within that ttl.
-
-      You should change this setting once your Puppet deployment is doing
-      non-trivial work. We chose the default value of `0` because it lets new
-      users update their code without any extra steps, but it lowers the
-      performance of your Puppet server.
-
-      We recommend setting this to a number that will keep your most actively
-      used environments cached, but allow testing environments to fall out of
-      the cache and reduce memory usage. A value of 3 minutes (3m) is a
-      reasonable value.
-
-      Once you set `environment_ttl` to a non-zero value, you need to tell
-      Puppet server to read new code from disk using the `environment-cache` API
-      endpoint after you deploy new code. See the docs for the Puppet Server
-      [administrative API](https://puppet.com/docs/puppetserver/latest/admin-api/v1/environment-cache.html)."
+    :environment_timeout_mode => {
+      :default => :from_created,
+      :type    => :symbolic_enum,
+      :values  => [:from_created, :from_last_used],
+      :desc => "How Puppet interprets the `environment_timeout` setting when
+      `environment_timeout` is neither `0` nor `unlimited`. If set to
+      `from_created`, then the environment will be evicted `environment_timeout`
+      seconds from when it was created. If set to `from_last_used` then the
+      environment will be evicted `environment_timeout` seconds from when it
+      was last used."
     },
     :environment_data_provider => {
       :desc       => "The name of a registered environment data provider used when obtaining environment

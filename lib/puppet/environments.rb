@@ -447,10 +447,7 @@ module Puppet::Environments
     # Creates a suitable cache entry given the time to live for one environment
     #
     def entry(env)
-      mru_entry = Puppet.settings.set_by_config?(:environment_ttl)
-      ttl = if mru_entry
-              Puppet[:environment_ttl]
-            elsif (conf = get_conf(env.name))
+      ttl = if (conf = get_conf(env.name))
               conf.environment_timeout
             else
               Puppet[:environment_timeout]
@@ -462,7 +459,7 @@ module Puppet::Environments
       when Float::INFINITY
         Entry.new(env)              # Entry that never expires (avoids syscall to get time)
       else
-        if mru_entry
+        if Puppet[:environment_timeout_mode] == :from_last_used
           MRUEntry.new(env, ttl)    # Entry that expires in ttl from when it was last touched
         else
           TTLEntry.new(env, ttl)    # Entry that expires in ttl from when it was created
