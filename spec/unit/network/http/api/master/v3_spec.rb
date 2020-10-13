@@ -15,6 +15,16 @@ describe Puppet::Network::HTTP::API::Master::V3 do
         chain(Puppet::Network::HTTP::API::Master::V3.routes)
   }
 
+  # simulate puppetserver registering its authconfigloader class
+  around :each do |example|
+    Puppet::Network::Authorization.authconfigloader_class = Object
+    begin
+      example.run
+    ensure
+      Puppet::Network::Authorization.authconfigloader_class = nil
+    end
+  end
+
   it "mounts the environments endpoint" do
     request = Puppet::Network::HTTP::Request.from_hash(:path => "#{master_url_prefix}/environments")
     master_routes.process(request, response)
@@ -46,5 +56,23 @@ describe Puppet::Network::HTTP::API::Master::V3 do
     expect {
       master_routes.process(request, response)
     }.to raise_error(not_found_error)
+  end
+
+  it "checks authorization for indirected routes" do
+    Puppet::Network::Authorization.authconfigloader_class = nil
+
+    request = Puppet::Network::HTTP::Request.from_hash(:path => "#{master_url_prefix}/catalog/foo")
+    expect {
+      master_routes.process(request, response)
+    }.to raise_error(Puppet::Network::HTTP::Error::HTTPNotAuthorizedError, %r{Not Authorized: Forbidden request: /puppet/v3/catalog/foo \(method GET\)})
+  end
+
+  it "checks authorization for environments" do
+    Puppet::Network::Authorization.authconfigloader_class = nil
+
+    request = Puppet::Network::HTTP::Request.from_hash(:path => "#{master_url_prefix}/environments")
+    expect {
+      master_routes.process(request, response)
+    }.to raise_error(Puppet::Network::HTTP::Error::HTTPNotAuthorizedError, %r{Not Authorized: Forbidden request: /puppet/v3/environments \(method GET\)})
   end
 end

@@ -4,18 +4,19 @@ class Puppet::Network::HTTP::API::Master::V3
 
   def self.wrap(&block)
     lambda do |request, response|
+      Puppet::Network::Authorization.check_external_authorization(request.method, request.path)
+
       block.call.call(request, response)
     end
   end
 
   INDIRECTED = Puppet::Network::HTTP::Route.
       path(/.*/).
-      any(Puppet::Network::HTTP::API::IndirectedRoutes.new)
+      any(wrap { Puppet::Network::HTTP::API::IndirectedRoutes.new } )
 
   ENVIRONMENTS = Puppet::Network::HTTP::Route.
-      path(%r{^/environments$}).get(wrap do
-    Environments.new(Puppet.lookup(:environments))
-  end)
+      path(%r{^/environments$}).
+      get(wrap { Environments.new(Puppet.lookup(:environments)) } )
 
   def self.routes
     Puppet::Network::HTTP::Route.path(%r{v3}).
