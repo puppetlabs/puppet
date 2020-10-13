@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.18.0-385-g4f90b0dfd8\n"
+"Project-Id-Version: Puppet automation framework 6.18.0-410-gf8b64860f1\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-10-10 22:51+0000\n"
-"PO-Revision-Date: 2020-10-10 22:51+0000\n"
+"POT-Creation-Date: 2020-10-13 23:08+0000\n"
+"PO-Revision-Date: 2020-10-13 23:08+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -184,19 +184,19 @@ msgstr ""
 msgid "The puppet agent daemon"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:409
+#: ../lib/puppet/application/agent.rb:414
 msgid "Fingerprint asked but neither the certificate, nor the certificate request have been issued"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:414
+#: ../lib/puppet/application/agent.rb:419
 msgid "Failed to generate fingerprint: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:437
+#: ../lib/puppet/application/agent.rb:442
 msgid "Starting Puppet client version %{version}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:453
+#: ../lib/puppet/application/agent.rb:458
 msgid "The puppet agent command does not take parameters"
 msgstr ""
 
@@ -546,76 +546,76 @@ msgstr ""
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:225
+#: ../lib/puppet/configurer.rb:226
 msgid "Could not select a functional puppet server from server_list: '%{server_list}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:262
+#: ../lib/puppet/configurer.rb:276
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:307
+#: ../lib/puppet/configurer.rb:321
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:322
+#: ../lib/puppet/configurer.rb:336
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:326
+#: ../lib/puppet/configurer.rb:340
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:354
+#: ../lib/puppet/configurer.rb:368
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:365
+#: ../lib/puppet/configurer.rb:379
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:367
+#: ../lib/puppet/configurer.rb:381
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:408
+#: ../lib/puppet/configurer.rb:422
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:437 ../lib/puppet/http/resolver/server_list.rb:67
+#: ../lib/puppet/configurer.rb:451 ../lib/puppet/http/resolver/server_list.rb:67
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:441 ../lib/puppet/http/resolver/server_list.rb:70
+#: ../lib/puppet/configurer.rb:455 ../lib/puppet/http/resolver/server_list.rb:70
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:452 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:466 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:461
+#: ../lib/puppet/configurer.rb:475
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:480
+#: ../lib/puppet/configurer.rb:494
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:488
+#: ../lib/puppet/configurer.rb:502
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:503
+#: ../lib/puppet/configurer.rb:517
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:521
+#: ../lib/puppet/configurer.rb:535
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:542
+#: ../lib/puppet/configurer.rb:556
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -702,20 +702,20 @@ msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:747
+#: ../lib/puppet/defaults.rb:737
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:830
+#: ../lib/puppet/defaults.rb:820
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1080 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1070 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1906
+#: ../lib/puppet/defaults.rb:1908
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -817,7 +817,7 @@ msgstr ""
 
 #: ../lib/puppet/face/config.rb:146
 msgid ""
-"The environment should be set in either the `[user]`, `[agent]`, or `[master]`\n"
+"The environment should be set in either the `[user]`, `[agent]`, or `[server]`\n"
 "section. Variables set in the `[agent]` section are used when running\n"
 "`puppet agent`. Variables set in the `[user]` section are used when running\n"
 "various other puppet subcommands, like `puppet apply` and `puppet module`; these\n"
@@ -827,25 +827,28 @@ msgid ""
 "https://puppet.com/docs/puppet/latest/configuration.html#environment\n"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:174
+#: ../lib/puppet/face/config.rb:176
+msgid "Deleted setting from '%{section_name}': '%{setting_string}', and adding it to 'server' section"
+msgstr ""
+
+#: ../lib/puppet/face/config.rb:191
 msgid "Delete a Puppet setting."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:175
+#: ../lib/puppet/face/config.rb:192
 msgid "<setting>"
 msgstr ""
 
-#. TRANSLATORS 'main' is a specific section name and should not be translated
-#: ../lib/puppet/face/config.rb:212
+#: ../lib/puppet/face/config.rb:226 ../lib/puppet/face/config.rb:230 ../lib/puppet/face/config.rb:241
 msgid "Deleted setting from '%{section_name}': '%{setting_string}'"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:215
+#: ../lib/puppet/face/config.rb:244
 msgid "No setting found in configuration file for section '%{section_name}' setting name '%{name}'"
 msgstr ""
 
 #. TRANSLATORS the 'puppet.conf' is a specific file and should not be translated
-#: ../lib/puppet/face/config.rb:222
+#: ../lib/puppet/face/config.rb:252
 msgid "The puppet.conf file does not exist %{puppet_conf}"
 msgstr ""
 
@@ -7071,33 +7074,33 @@ msgstr ""
 msgid "Setting %{name} is already using short name '%{short}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1241
+#: ../lib/puppet/settings.rb:1249
 msgid "Setting %{name} is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'puppet.conf' is a file name and should not be translated
-#: ../lib/puppet/settings.rb:1246
+#: ../lib/puppet/settings.rb:1254
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1417
+#: ../lib/puppet/settings.rb:1425
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1441
+#: ../lib/puppet/settings.rb:1449
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1451
+#: ../lib/puppet/settings.rb:1459
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1452
+#: ../lib/puppet/settings.rb:1460
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1483
+#: ../lib/puppet/settings.rb:1491
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
