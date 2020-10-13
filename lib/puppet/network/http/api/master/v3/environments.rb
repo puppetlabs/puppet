@@ -24,12 +24,7 @@ class Puppet::Network::HTTP::API::Master::V3::Environments
   private
 
   def timeout(env)
-    ttl = if Puppet.settings.set_by_config?(:environment_ttl)
-            Puppet[:environment_ttl]
-          else
-            @env_loader.get_conf(env.name).environment_timeout
-          end
-
+    ttl = @env_loader.get_conf(env.name).environment_timeout
     if ttl == Float::INFINITY
       "unlimited"
     else

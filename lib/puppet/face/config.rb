@@ -20,10 +20,10 @@ Puppet::Face.define(:config, '0.0.1') do
     description <<-EOT
       The section of the puppet.conf configuration file to interact with.
 
-      The three most commonly used sections are 'main', 'master', and 'agent'.
+      The three most commonly used sections are 'main', 'server', and 'agent'.
       'Main' is the default, and is used by all Puppet applications. Other
       sections can override 'main' values for specific applications --- the
-      'master' section affects Puppet Server, and the 'agent'
+      'server' section affects Puppet Server, and the 'agent'
       section affects puppet agent.
 
       Less commonly used is the 'user' section, which affects puppet apply. Any
@@ -52,9 +52,9 @@ Puppet::Face.define(:config, '0.0.1') do
 
       $ puppet config print rundir
 
-      Get a list of important directories from the master's config:
+      Get a list of important directories from the server's config:
 
-      $ puppet config print all --section master | grep -E "(path|dir)"
+      $ puppet config print all --section server | grep -E "(path|dir)"
     EOT
 
     when_invoked do |*args|
@@ -144,7 +144,7 @@ Puppet::Face.define(:config, '0.0.1') do
 
       if name == 'environment' && options[:section] == 'main'
         Puppet.warning _(<<-EOM).chomp
-The environment should be set in either the `[user]`, `[agent]`, or `[master]`
+The environment should be set in either the `[user]`, `[agent]`, or `[server]`
 section. Variables set in the `[agent]` section are used when running
 `puppet agent`. Variables set in the `[user]` section are used when running
 various other puppet subcommands, like `puppet apply` and `puppet module`; these
@@ -163,7 +163,24 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
       Puppet::FileSystem.touch(path)
       Puppet::FileSystem.open(path, nil, 'r+:UTF-8') do |file|
         Puppet::Settings::IniFile.update(file) do |config|
-          config.set(options[:section], name, value)
+          if options[:section] == "master"
+            # delete requested master section if it exists,
+            # as server section should be used
+            setting_string = config.delete("master", name)
+            if setting_string
+
+              if Puppet::Util::Log.sendlevel?(:info)
+                report_section_and_environment(options[:section], Puppet.settings[:environment])
+              end
+
+              puts(_("Deleted setting from '%{section_name}': '%{setting_string}', and adding it to 'server' section") %
+                       { section_name: options[:section], name: name, setting_string: setting_string.strip })
+            end
+            # add the setting to the to server section instead of master section
+            config.set("server", name, value)
+          else
+            config.set(options[:section], name, value)
+          end
         end
       end
       nil
@@ -185,9 +202,9 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
 
       $ puppet config delete setting_name
 
-      Delete the setting 'setting_name' from the 'master' configuration domain:
+      Delete the setting 'setting_name' from the 'server' configuration domain:
 
-      $ puppet config delete setting_name --section master
+      $ puppet config delete setting_name --section server
     EOT
 
     when_invoked do |name, options|
@@ -202,18 +219,31 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
       if Puppet::FileSystem.exist?(path)
         Puppet::FileSystem.open(path, nil, 'r+:UTF-8') do |file|
           Puppet::Settings::IniFile.update(file) do |config|
-            setting_string = config.delete(options[:section], name)
-            if setting_string
 
-              if Puppet::Util::Log.sendlevel?(:info)
-                report_section_and_environment(options[:section], Puppet.settings[:environment])
-              end
-
+            # delete from both master section and server section
+            if options[:section] == "master" || options[:section] == "server"
+              master_setting_string = config.delete("master", name)
               puts(_("Deleted setting from '%{section_name}': '%{setting_string}'") %
-                       { section_name: options[:section], name: name, setting_string: setting_string.strip })
+              { section_name: 'master', name: name, setting_string: master_setting_string.strip[/[^=]+/] }) if master_setting_string
+
+              server_setting_string = config.delete("server", name)
+              puts(_("Deleted setting from '%{section_name}': '%{setting_string}'") %
+              { section_name: 'server', name: name, setting_string: server_setting_string.strip[/[^=]+/] }) if server_setting_string
+
             else
-              Puppet.warning(_("No setting found in configuration file for section '%{section_name}' setting name '%{name}'") %
-                                 { section_name: options[:section], name: name })
+              setting_string = config.delete(options[:section], name)
+              if setting_string
+
+                if Puppet::Util::Log.sendlevel?(:info)
+                  report_section_and_environment(options[:section], Puppet.settings[:environment])
+                end
+
+                puts(_("Deleted setting from '%{section_name}': '%{setting_string}'") %
+                         { section_name: options[:section], name: name, setting_string: setting_string.strip })
+              else
+                Puppet.warning(_("No setting found in configuration file for section '%{section_name}' setting name '%{name}'") %
+                                   { section_name: options[:section], name: name })
+              end
             end
           end
         end

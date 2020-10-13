@@ -1051,8 +1051,9 @@ describe Puppet::Configurer do
       expect(options[:report].server_used).to eq('myserver:123')
     end
 
-    it "should report when a server is unavailable" do
+    it "should report when usecacheonfailure is false and server is unavailable" do
       Puppet.settings[:server_list] = ["myserver:123"]
+      Puppet[:usecacheonfailure] = false
 
       stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: [500, "Internal Server Error"])
 
@@ -1065,6 +1066,7 @@ describe Puppet::Configurer do
 
     it "should error when no servers in 'server_list' are reachable" do
       Puppet.settings[:server_list] = "myserver:123,someotherservername"
+      Puppet[:usecacheonfailure] = false
 
       stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: 400)
       stub_request(:get, 'https://someotherservername:8140/status/v1/simple/master').to_return(status: 400)
@@ -1072,6 +1074,19 @@ describe Puppet::Configurer do
       expect{
         configurer.run
       }.to raise_error(Puppet::Error, /Could not select a functional puppet server from server_list: 'myserver:123,someotherservername'/)
+    end
+
+    it "should not error when usecacheonfailure is true and no servers in 'server_list' are reachable" do
+      Puppet.settings[:server_list] = "myserver:123,someotherservername"
+      Puppet[:usecacheonfailure] = true
+
+      stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: 400)
+      stub_request(:get, 'https://someotherservername:8140/status/v1/simple/master').to_return(status: 400)
+
+      options = {}
+
+      expect(configurer.run(options)).to eq(0)
+      expect(options[:report].server_used).to be_nil
     end
 
     it "should not make multiple node requests when the server is found" do
