@@ -237,7 +237,7 @@ class Puppet::Configurer
               @running_failure = true
               if server.nil?
                 server = Puppet[:server_list].first[0]
-                port = Puppet[:server_list].first[1] || Puppet[:masterport]
+                port = Puppet[:server_list].first[1] || Puppet[:serverport]
               end
               Puppet.log_exception(detail)
             else
