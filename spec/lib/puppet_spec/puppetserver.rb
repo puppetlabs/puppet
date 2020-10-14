@@ -103,7 +103,7 @@ class PuppetSpec::Puppetserver
   end
 
   def register_mounts(mounts: {})
-    register_mount('/status/v1/simple/master', proc { |req, res|  }, nil)
+    register_mount('/status/v1/simple/server', proc { |req, res|  }, nil)
     register_mount('/puppet/v3/node', mounts[:node], NodeServlet)
     register_mount('/puppet/v3/catalog', mounts[:catalog], CatalogServlet)
     register_mount('/puppet/v3/file_metadatas', mounts[:file_metadatas], FileMetadatasServlet)

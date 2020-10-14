@@ -115,15 +115,15 @@ describe Puppet::Application::Filebucket do
       end
 
       it "should default to the first good server_list entry if server_list is set" do
-        stub_request(:get, "https://foo:8140/status/v1/simple/master").to_return(status: 200)
+        stub_request(:get, "https://foo:8140/status/v1/simple/server").to_return(status: 200)
         Puppet[:server_list] = "foo,bar,baz"
         expect(Puppet::FileBucket::Dipper).to receive(:new).with(hash_including(Server: "foo"))
         @filebucket.setup
       end
 
       it "should walk server_list until it finds a good entry" do
-        stub_request(:get, "https://foo:8140/status/v1/simple/master").to_return(status: 502)
-        stub_request(:get, "https://bar:8140/status/v1/simple/master").to_return(status: 200)
+        stub_request(:get, "https://foo:8140/status/v1/simple/server").to_return(status: 502)
+        stub_request(:get, "https://bar:8140/status/v1/simple/server").to_return(status: 200)
         Puppet[:server_list] = "foo,bar,baz"
         expect(Puppet::FileBucket::Dipper).to receive(:new).with(hash_including(Server: "bar"))
         @filebucket.setup
@@ -131,6 +131,8 @@ describe Puppet::Application::Filebucket do
 
       # FileBucket catches any exceptions raised, logs them, then just exits
       it "raises an error if there are no functional servers in server_list" do
+        stub_request(:get, "https://foo:8140/status/v1/simple/server").to_return(status: 404)
+        stub_request(:get, "https://bar:8140/status/v1/simple/server").to_return(status: 404)
         stub_request(:get, "https://foo:8140/status/v1/simple/master").to_return(status: 404)
         stub_request(:get, "https://bar:8140/status/v1/simple/master").to_return(status: 404)
         Puppet[:server] = 'horacio'
@@ -146,7 +148,7 @@ describe Puppet::Application::Filebucket do
       end
 
       it "should take both the server and port specified in server_list" do
-        stub_request(:get, "https://foo:632/status/v1/simple/master").to_return(status: 200)
+        stub_request(:get, "https://foo:632/status/v1/simple/server").to_return(status: 200)
         Puppet[:server_list] = "foo:632,bar:6215,baz:351"
         expect(Puppet::FileBucket::Dipper).to receive(:new).with({ :Server => "foo", :Port => 632 })
         @filebucket.setup

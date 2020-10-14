@@ -25,7 +25,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
           agent.command_line.args << '--test'
           agent.run
         }.to exit_with(0)
-         .and output(%r{HTTP GET https://127.0.0.1:#{port}/status/v1/simple/master returned 200 OK}).to_stdout
+         .and output(%r{HTTP GET https://127.0.0.1:#{port}/status/v1/simple/server returned 200 OK}).to_stdout
       end
     end
 
@@ -39,7 +39,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
           agent.run
         }.to exit_with(0)
          .and output(%r{Notice: Applied catalog}).to_stdout
-         .and output(%r{Unable to connect to server from server_list setting: Request to https://puppet.example.com:#{port}/status/v1/simple/master failed}).to_stderr
+         .and output(%r{Unable to connect to server from server_list setting: Request to https://puppet.example.com:#{port}/status/v1/simple/server failed}).to_stderr
 
         report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
         expect(report.server_used).to eq("127.0.0.1:#{port}")

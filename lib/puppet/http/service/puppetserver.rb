@@ -26,13 +26,24 @@ class Puppet::HTTP::Service::Puppetserver < Puppet::HTTP::Service
   # @api private
   #
   def get_simple_status(ssl_context: nil)
-    response = @client.get(
-      with_base_url("/status/v1/simple/master"),
-      headers: add_puppet_headers({}),
-      options: {ssl_context: ssl_context}
-    )
+    request_path = "/status/v1/simple/server"
 
-    process_response(response)
+    begin
+      response = @client.get(
+        with_base_url(request_path),
+        headers: add_puppet_headers({}),
+        options: {ssl_context: ssl_context}
+      )
+
+      process_response(response)
+    rescue Puppet::HTTP::ResponseError => e
+      if e.response.code == 404 && e.response.url.path == "/status/v1/simple/server"
+        request_path = "/status/v1/simple/master"
+        retry
+      else
+        raise e
+      end
+    end
 
     [response, response.body.to_s]
   end
