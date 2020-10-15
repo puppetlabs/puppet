@@ -87,7 +87,6 @@ describe Puppet::Settings do
     end
   end
 
-
   describe "when initializing application defaults do" do
     let(:default_values) do
       values = {}
@@ -148,6 +147,7 @@ describe Puppet::Settings do
           end.to_not raise_error
         end
       end
+
       describe "if no interpolation error" do
         it "should not raise an error" do
           hook_values = []
@@ -177,6 +177,7 @@ describe Puppet::Settings do
               @settings.send(:call_hooks_deferred_to_application_initialization, options)
             end.to raise_error(Puppet::Settings::InterpolationError)
           end
+
           it "should contain the setting name in error message" do
             hook_values = []
             @settings.define_settings(
@@ -193,6 +194,7 @@ describe Puppet::Settings do
             end.to raise_error(Puppet::Settings::InterpolationError, /badhook/)
           end
         end
+
         describe "if no interpolation error" do
           it "should not raise an error" do
             hook_values = []
@@ -405,12 +407,14 @@ describe Puppet::Settings do
                 @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val})
               end.to raise_error(ArgumentError, /no :hook/)
             end
+
             it "should include the setting name in the error message" do
               expect do
                 @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val})
               end.to raise_error(ArgumentError, /for :hooker/)
             end
           end
+
           describe "and definition valid" do
             before(:each) do
               hook_values = []
@@ -435,6 +439,7 @@ describe Puppet::Settings do
           expect(Puppet).to receive(:warning)
           @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => nil, :hook => lambda { |v| hook_values << v  }})
         end
+
         it "should use default" do
           @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => nil, :hook => lambda { |v| hook_values << v  }})
           expect(@settings.setting(:hooker).call_hook).to eq(:on_write_only)
