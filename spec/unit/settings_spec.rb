@@ -88,14 +88,6 @@ describe Puppet::Settings do
   end
 
   describe "when initializing application defaults do" do
-    let(:default_values) do
-      values = {}
-      PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|
-        values[key] = 'default value'
-      end
-      values
-    end
-
     before do
       @settings = Puppet::Settings.new
       @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
@@ -103,7 +95,7 @@ describe Puppet::Settings do
 
     it "should fail if the app defaults hash is missing any required values" do
       expect {
-        @settings.initialize_app_defaults(default_values.reject { |key, _| key == :confdir })
+        @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.reject { |key, _| key == :confdir })
       }.to raise_error(Puppet::Settings::SettingsError)
     end
 
@@ -111,7 +103,7 @@ describe Puppet::Settings do
     #  case behaviors / uses.  However, until that time... we need to make sure that our private run_mode=
     #  setter method gets properly called during app initialization.
     it "sets the preferred run mode when initializing the app defaults" do
-      @settings.initialize_app_defaults(default_values.merge(:run_mode => :server))
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :server))
 
       expect(@settings.preferred_run_mode).to eq(:server)
     end
@@ -120,7 +112,7 @@ describe Puppet::Settings do
       # initialize_app_defaults is called in spec_helper, before we even
       # get here, but call it here to make it explicit what we're trying
       # to do.
-      @settings.initialize_app_defaults(default_values)
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
 
       Puppet::Settings::REQUIRED_APP_SETTINGS.each do |key|
         expect(File).to exist(File.dirname(Puppet[key]))
@@ -475,16 +467,11 @@ describe Puppet::Settings do
         end
 
         it "should call the hook at initialization" do
-          app_defaults = {}
-          Puppet::Settings::REQUIRED_APP_SETTINGS.each do |key|
-            app_defaults[key] = "foo"
-          end
-          app_defaults[:run_mode] = :user
           @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
 
           expect(@settings.setting(:hooker)).to receive(:handle).with("yay").once
 
-          @settings.initialize_app_defaults app_defaults
+          @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :user))
         end
       end
     end
@@ -566,12 +553,8 @@ describe Puppet::Settings do
     end
 
     it "setting a value to nil causes it to return to its default" do
-      default_values = { :one => "skipped value" }
-      [:logdir, :confdir, :codedir, :vardir].each do |key|
-        default_values[key] = 'default value'
-      end
       @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
-      @settings.initialize_app_defaults(default_values)
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:one => "skipped value"))
       @settings[:one] = "value will disappear"
 
       @settings[:one] = nil
@@ -876,10 +859,6 @@ describe Puppet::Settings do
     end
 
     it "should support loading metadata (owner, group, or mode) from a run_mode section in the configuration file" do
-      default_values = {}
-      PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|
-        default_values[key] = 'default value'
-      end
       @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
       @settings.define_settings :server, :myfile => { :type => :file, :default => make_absolute("/myfile"), :desc => "a" }
 
@@ -894,7 +873,7 @@ describe Puppet::Settings do
       @settings.send(:parse_config_files)
 
       # change app run_mode to server
-      @settings.initialize_app_defaults(default_values.merge(:run_mode => :server))
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :server))
       expect(@settings.preferred_run_mode).to eq(:server)
 
       # initializing the app should have reloaded the metadata based on run_mode
@@ -904,10 +883,6 @@ describe Puppet::Settings do
 
     context "when setting serverport and masterport" do
       before(:each) do
-        default_values = {}
-        PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|
-          default_values[key] = 'default value'
-        end
         @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
         @settings.define_settings :server, :masterport => { :desc => "a", :default => 1000 }
         @settings.define_settings :server, :serverport => { :desc => "a", :default => 1000 }
@@ -915,7 +890,7 @@ describe Puppet::Settings do
         @settings.define_settings :server, :report_port => { :desc => "a", :default => "$serverport" }
         expect(@settings).to receive(:read_file).and_return(text)
         @settings.send(:parse_config_files)
-        @settings.initialize_app_defaults(default_values.merge(:run_mode => :agent))
+        @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :agent))
         expect(@settings.preferred_run_mode).to eq(:agent)
       end
 
@@ -1041,11 +1016,6 @@ describe Puppet::Settings do
     end
 
     it "does not use the metadata from the same setting in a different section" do
-      default_values = {}
-      PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|
-        default_values[key] = 'default value'
-      end
-
       file = make_absolute("/file")
       default_mode = "0600"
       @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
@@ -1063,7 +1033,7 @@ describe Puppet::Settings do
       @settings.send(:parse_config_files)
 
       # change app run_mode to server
-      @settings.initialize_app_defaults(default_values.merge(:run_mode => :server))
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :server))
       expect(@settings.preferred_run_mode).to eq(:server)
 
       # initializing the app should have reloaded the metadata based on run_mode
@@ -1116,11 +1086,12 @@ describe Puppet::Settings do
                                                          :hook => proc { |v| hook_invoked = true },
                                                          :call_hook => :on_initialize_and_write, }
 
+      # This test relies on `confdir` defaulting to nil which causes the default
+      # value of `deferred=$confdir/goose` to raise an interpolation error during
+      # global initialization, and the hook to be skipped
       @settings.define_settings(:main,
-        :logdir       => { :type => :directory, :default => nil, :desc => "logdir" },
-        :confdir      => { :type => :directory, :default => nil, :desc => "confdir" },
-        :codedir      => { :type => :directory, :default => nil, :desc => "codedir" },
-        :vardir       => { :type => :directory, :default => nil, :desc => "vardir" })
+                                PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.merge(
+                                  :confdir => { :type => :directory, :default => nil, :desc => "confdir" }))
 
       text = <<-EOD
       [main]
@@ -1132,7 +1103,9 @@ describe Puppet::Settings do
 
       expect(hook_invoked).to be_falsey
 
-      @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :confdir => '/path/to/confdir', :vardir => '/path/to/vardir', :codedir => '/path/to/codedir')
+      # And now that we initialize app defaults with `confdir`, then `deferred`
+      # can be interpolated and its hook called
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:confdir => '/path/to/confdir'))
 
       expect(hook_invoked).to be_truthy
       expect(@settings[:deferred]).to eq(File.expand_path('/path/to/confdir/goose'))
@@ -1141,11 +1114,7 @@ describe Puppet::Settings do
     it "does not require the value for a setting without a hook to resolve during global setup" do
       @settings.define_settings :section, :can_cause_problems  => {:desc => '' }
 
-      @settings.define_settings(:main,
-        :logdir       => { :type => :directory, :default => nil, :desc => "logdir" },
-        :confdir      => { :type => :directory, :default => nil, :desc => "confdir" },
-        :codedir      => { :type => :directory, :default => nil, :desc => "codedir" },
-        :vardir       => { :type => :directory, :default => nil, :desc => "vardir" })
+      @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
 
       text = <<-EOD
       [main]
@@ -1154,7 +1123,7 @@ describe Puppet::Settings do
 
       allow(@settings).to receive(:read_file).and_return(text)
       @settings.initialize_global_settings
-      @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :confdir => '/path/to/confdir', :vardir => '/path/to/vardir', :codedir => '/path/to/codedir')
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:confdir => '/path/to/confdir'))
 
       expect(@settings[:can_cause_problems]).to eq(File.expand_path('/path/to/confdir/goose'))
     end
@@ -1172,14 +1141,6 @@ describe Puppet::Settings do
 
     describe "deprecations" do
       let(:settings) { Puppet::Settings.new }
-      let(:app_defaults) {
-        {
-          :logdir     => "/dev/null",
-          :confdir    => "/dev/null",
-          :codedir    => "/dev/null",
-          :vardir     => "/dev/null",
-        }
-      }
 
       def assert_accessing_setting_is_deprecated(settings, setting)
         expect(Puppet).to receive(:deprecation_warning).with("Accessing '#{setting}' as a setting is deprecated.")
@@ -1189,12 +1150,7 @@ describe Puppet::Settings do
       end
 
       before(:each) do
-        settings.define_settings(:main, {
-          :logdir => { :default => 'a', :desc => 'a' },
-          :confdir => { :default => 'b', :desc => 'b' },
-          :vardir => { :default => 'c', :desc => 'c' },
-          :codedir => { :default => 'd', :desc => 'd' },
-        })
+        settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
       end
 
       context "complete" do
@@ -1215,7 +1171,7 @@ describe Puppet::Settings do
           completely_deprecated_settings.parse_config(<<-CONF)
             completely_deprecated_setting='should warn'
           CONF
-          completely_deprecated_settings.initialize_app_defaults(app_defaults)
+          completely_deprecated_settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
         end
 
         it "warns when set on the commandline" do
@@ -1223,7 +1179,7 @@ describe Puppet::Settings do
 
           args = ["--completely_deprecated_setting", "/some/value"]
           completely_deprecated_settings.send(:parse_global_options, args)
-          completely_deprecated_settings.initialize_app_defaults(app_defaults)
+          completely_deprecated_settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
         end
 
         it "warns when set in code" do
@@ -1248,7 +1204,7 @@ describe Puppet::Settings do
           partially_deprecated_settings.parse_config(<<-CONF)
             partially_deprecated_setting='should warn'
           CONF
-          partially_deprecated_settings.initialize_app_defaults(app_defaults)
+          partially_deprecated_settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
         end
 
         it "does not warn when manifest is set on command line" do
@@ -1256,7 +1212,7 @@ describe Puppet::Settings do
 
           args = ["--partially_deprecated_setting", "/some/value"]
           partially_deprecated_settings.send(:parse_global_options, args)
-          partially_deprecated_settings.initialize_app_defaults(app_defaults)
+          partially_deprecated_settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
         end
 
         it "warns when set in code" do
