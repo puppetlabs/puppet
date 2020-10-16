@@ -1,8 +1,16 @@
+# coding: utf-8
 require 'spec_helper'
 require 'puppet/application/config'
 
 describe Puppet::Application::Config do
   include PuppetSpec::Files
+
+  # different UTF-8 widths
+  # 1-byte A
+  # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
+  # 3-byte ᚠ - http://www.fileformat.info/info/unicode/char/16A0/index.htm - 0xE1 0x9A 0xA0 / 225 154 160
+  # 4-byte 𠜎 - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
+  MIXED_UTF8 = "A\u06FF\u16A0\u{2070E}" # Aۿᚠ𠜎
 
   let(:app) { Puppet::Application[:config] }
 
@@ -14,6 +22,14 @@ describe Puppet::Application::Config do
     app.command_line.args = args
     # ensure global defaults are initialized prior to app defaults
     Puppet.initialize_settings(args)
+  end
+
+  def read_utf8(path)
+    File.read(path, :encoding => 'UTF-8')
+  end
+
+  def write_utf8(path, content)
+    File.write(path, content, 0, :encoding => 'UTF-8')
   end
 
   context "when printing" do
@@ -136,6 +152,53 @@ describe Puppet::Application::Config do
        .and output(/Deleted setting from 'server': 'external_nodes'/).to_stdout
 
       expect(File.read(Puppet[:config])).to eq("[main]\nexternal_nodes=none\n[server]\n")
+    end
+  end
+
+  context "when managing UTF-8 values" do
+    it "reads a UTF-8 value" do
+      write_utf8(Puppet[:config], <<~EOF)
+        [main]
+        tags=#{MIXED_UTF8}
+      EOF
+
+      initialize_app(%w[print tags])
+
+      expect {
+        app.run
+      }.to exit_with(0)
+       .and output("#{MIXED_UTF8}\n").to_stdout
+    end
+
+    it "sets a UTF-8 value" do
+      initialize_app(['set', 'tags', MIXED_UTF8])
+
+      expect {
+        app.run
+      }.to exit_with(0)
+
+      expect(read_utf8(Puppet[:config])).to eq(<<~EOF)
+        [main]
+        tags = #{MIXED_UTF8}
+      EOF
+    end
+
+    it "deletes a UTF-8 value" do
+      initialize_app(%w[delete tags])
+
+      write_utf8(Puppet[:config], <<~EOF)
+        [main]
+        tags=#{MIXED_UTF8}
+      EOF
+
+      expect {
+        app.run
+      }.to exit_with(0)
+       .and output(/Deleted setting from 'main': 'tags=#{MIXED_UTF8}'/).to_stdout
+
+      expect(read_utf8(Puppet[:config])).to eq(<<~EOF)
+        [main]
+      EOF
     end
   end
 end
