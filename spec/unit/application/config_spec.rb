@@ -88,6 +88,33 @@ describe Puppet::Application::Config do
 
       expect(File.read(Puppet[:config])).to eq("[server]\nexternal_nodes = exec\n")
     end
+
+    {
+      %w[certname WWW.EXAMPLE.COM] => /Certificate names must be lower case/,
+      %w[log_level all] => /Invalid loglevel all/,
+      %w[disable_warnings true] => /Cannot disable unrecognized warning types 'true'/,
+      %w[strict on] => /Invalid value 'on' for parameter strict/,
+      %w[digest_algorithm rot13] => /Invalid value 'rot13' for parameter digest_algorithm/,
+    }.each_pair do |args, message|
+      it "rejects #{args.join(' ')}" do
+        initialize_app(['set', *args])
+
+        expect {
+          app.run
+        }.to exit_with(1)
+         .and output(message).to_stderr
+      end
+    end
+
+    it 'sets unknown settings' do
+      initialize_app(['set', 'notarealsetting', 'true'])
+
+      expect {
+        app.run
+      }.to exit_with(0)
+
+      expect(File.read(Puppet[:config])).to eq("[main]\nnotarealsetting = true\n")
+    end
   end
 
   context "when deleting" do
