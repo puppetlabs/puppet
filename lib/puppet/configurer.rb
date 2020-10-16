@@ -225,26 +225,23 @@ class Puppet::Configurer
         # mode. We shouldn't try to do any failover in that case.
         if options[:catalog].nil? && do_failover
           server, port = find_functional_server
-          begin
-            if server.nil?
-              raise Puppet::Error, _("Could not select a functional puppet server from server_list: '%{server_list}'") % { server_list: Puppet.settings.value(:server_list, Puppet[:environment].to_sym, true) }
-            else
-              #TRANSLATORS 'server_list' is the name of a setting and should not be translated
-              Puppet.debug _("Selected puppet server from the `server_list` setting: %{server}:%{port}") % { server: server, port: port }
-              report.master_used = "#{server}:#{port}"
-            end
-          rescue Puppet::Error => detail
+          if server.nil?
+            detail = _("Could not select a functional puppet server from server_list: '%{server_list}'") % { server_list: Puppet.settings.value(:server_list, Puppet[:environment].to_sym, true) }
             if Puppet[:usecacheonfailure]
               options[:pluginsync] = false
               @running_failure = true
-              if server.nil?
-                server = Puppet[:server_list].first[0]
-                port = Puppet[:server_list].first[1] || Puppet[:masterport]
-              end
-              Puppet.log_exception(detail)
+
+              server = Puppet[:server_list].first[0]
+              port = Puppet[:server_list].first[1] || Puppet[:masterport]
+
+              Puppet.err(detail)
             else
-              raise detail
+              raise Puppet::Error, detail
             end
+          else
+            #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+            Puppet.debug _("Selected puppet server from the `server_list` setting: %{server}:%{port}") % { server: server, port: port }
+            report.master_used = "#{server}:#{port}"
           end
           Puppet.override(server: server, serverport: port) do
             completed = run_internal(options)
