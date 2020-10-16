@@ -1,3 +1,4 @@
+require 'set'
 require 'puppet/settings/errors'
 
 # The base setting type
@@ -21,27 +22,34 @@ class Puppet::Settings::BaseSetting
   # * :on_initialize_and_write - The hook will be called if the value is set in
   #   `main`, the section that matches the run mode, or programmatically.
   #
+  HOOK_TYPES = Set.new([:on_define_and_write, :on_initialize_and_write, :on_write_only]).freeze
+
   def self.available_call_hook_values
-    [:on_define_and_write, :on_initialize_and_write, :on_write_only]
+    HOOK_TYPES.to_a
   end
 
+  # Registers a hook to be called later based on the type of hook specified in `value`.
+  #
+  # @param value [Symbol] One of {HOOK_TYPES}
   def call_hook=(value)
     if value.nil?
       #TRANSLATORS ':%{name}', ':call_hook', and ':on_write_only' should not be translated
       Puppet.warning _("Setting :%{name} :call_hook is nil, defaulting to :on_write_only") % { name: name }
       value = :on_write_only
     end
-    unless self.class.available_call_hook_values.include?(value)
+    unless HOOK_TYPES.include?(value)
       #TRANSLATORS 'call_hook' is a Puppet option name and should not be translated
       raise ArgumentError, _("Invalid option %{value} for call_hook") % { value: value }
     end
     @call_hook = value
   end
 
+  # @see {HOOK_TYPES}
   def call_hook_on_define?
     call_hook == :on_define_and_write
   end
 
+  # @see {HOOK_TYPES}
   def call_hook_on_initialize?
     call_hook == :on_initialize_and_write
   end
