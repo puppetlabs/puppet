@@ -459,11 +459,7 @@ module Puppet::Environments
       when Float::INFINITY
         Entry.new(env)              # Entry that never expires (avoids syscall to get time)
       else
-        if Puppet[:environment_timeout_mode] == :from_last_used
-          MRUEntry.new(env, ttl)    # Entry that expires in ttl from when it was last touched
-        else
-          TTLEntry.new(env, ttl)    # Entry that expires in ttl from when it was created
-        end
+        MRUEntry.new(env, ttl)      # Entry that expires in ttl from when it was last touched
       end
     end
 
@@ -517,31 +513,12 @@ module Puppet::Environments
       end
     end
 
-    # Policy that expires in ttl_seconds from when it was created
-    class TTLEntry < Entry
+    # Policy that expires if it hasn't been touched within ttl_seconds
+    class MRUEntry < Entry
       def initialize(value, ttl_seconds)
         super(value)
         @ttl = Time.now + ttl_seconds
         @ttl_seconds = ttl_seconds
-      end
-
-      def expired?
-        Time.now > @ttl
-      end
-
-      def label
-        "(ttl = #{@ttl_seconds} sec)"
-      end
-
-      def expires
-        @ttl
-      end
-    end
-
-    # Policy that expires if it hasn't been touched within ttl_seconds
-    class MRUEntry < TTLEntry
-      def initialize(value, ttl_seconds)
-        super(value, ttl_seconds)
 
         touch
       end
@@ -550,8 +527,16 @@ module Puppet::Environments
         @ttl = Time.now + @ttl_seconds
       end
 
+      def expired?
+        Time.now > @ttl
+      end
+
+      def expires
+        @ttl
+      end
+
       def label
-        "(mru = #{@ttl_seconds} sec)"
+        "(ttl = #{@ttl_seconds} sec)"
       end
     end
   end

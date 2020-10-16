@@ -4,7 +4,7 @@ test_name 'C98115 compilation should get new values in variables on each compila
 
   confine :except, :platform => /^(aix|osx|solaris)/
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration',
       'server'
 
