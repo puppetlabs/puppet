@@ -594,7 +594,7 @@ The name of a registered environment data provider used when obtaining environme
 How long the Puppet server should cache data it loads from an environment\.
 .
 .P
-A value of \fB0\fR will disable caching\. This setting can also be set to \fBunlimited\fR, which will cache environments until the server is restarted or told to refresh the cache\. All other values will result in Puppet server evicting expired environments\. The expiration time is computed based on either when the environment was created or last accessed, see \fBenvironment_timeout_mode\fR\.
+A value of \fB0\fR will disable caching\. This setting can also be set to \fBunlimited\fR, which will cache environments until the server is restarted or told to refresh the cache\. All other values will result in Puppet server evicting environments that haven\'t been used within the last \fBenvironment_timeout\fR seconds\.
 .
 .P
 You should change this setting once your Puppet deployment is doing non\-trivial work\. We chose the default value of \fB0\fR because it lets new users update their code without any extra steps, but it lowers the performance of your Puppet server\. We recommend either:
@@ -603,7 +603,7 @@ You should change this setting once your Puppet deployment is doing non\-trivial
 Setting this to \fBunlimited\fR and explicitly refreshing your Puppet server as part of your code deployment process\.
 .
 .IP "\(bu" 4
-Setting this to a number that will keep your most actively used environments cached, but allow testing environments to fall out of the cache and reduce memory usage\. A value of 3 minutes (3m) is a reasonable value\. This option requires setting \fBenvironment_timeout_mode\fR to \fBfrom_last_used\fR\.
+Setting this to a number that will keep your most actively used environments cached, but allow testing environments to fall out of the cache and reduce memory usage\. A value of 3 minutes (3m) is a reasonable value\.
 .
 .IP "" 0
 .
@@ -612,14 +612,6 @@ Once you set \fBenvironment_timeout\fR to a non\-zero value, you need to tell Pu
 .
 .IP "\(bu" 4
 \fIDefault\fR: 0
-.
-.IP "" 0
-.
-.SS "environment_timeout_mode"
-How Puppet interprets the \fBenvironment_timeout\fR setting when \fBenvironment_timeout\fR is neither \fB0\fR nor \fBunlimited\fR\. If set to \fBfrom_created\fR, then the environment will be evicted \fBenvironment_timeout\fR seconds from when it was created\. If set to \fBfrom_last_used\fR then the environment will be evicted \fBenvironment_timeout\fR seconds from when it was last used\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: from_created
 .
 .IP "" 0
 .
