@@ -1079,8 +1079,8 @@ describe Puppet::Configurer do
       Puppet.settings[:server_list] = "myserver:123,someotherservername"
       Puppet[:usecacheonfailure] = true
 
-      stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: 400)
-      stub_request(:get, 'https://someotherservername:8140/status/v1/simple/master').to_return(status: 400)
+      stub_request(:get, 'https://myserver:123/status/v1/simple/server').to_return(status: 400)
+      stub_request(:get, 'https://someotherservername:8140/status/v1/simple/server').to_return(status: 400)
 
       options = {}
 
