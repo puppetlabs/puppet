@@ -841,6 +841,7 @@ Valid values are 0 (never cache) and 15 (15 second minimum wait time).
           **Note:** You must set the certname in the main section of the puppet.conf file. Setting it in a different section causes errors.
 
         Defaults to the node's fully qualified domain name.",
+      :call_hook => :on_initialize_and_write,
       :hook => proc { |value| raise(ArgumentError, _("Certificate names must be lower case")) unless value == value.downcase }},
     :dns_alt_names => {
       :default => '',
