@@ -170,6 +170,12 @@ describe Puppet::Node::Facts::Facter do
       @facter.find(@request)
     end
 
+    it 'should NOT add local facts' do
+      expect(facts).not_to receive(:add_local_facts)
+
+      @facter.find(@request)
+    end
+
     describe 'when Facter version is lower than 4.0.40' do
       before :each do
         allow(Facter).to receive(:respond_to?).and_return(false)

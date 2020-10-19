@@ -39,7 +39,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
                Puppet::Node::Facts.new(request.key, Facter.to_hash)
              end
 
-    result.add_local_facts
+    result.add_local_facts unless request.options[:resolve_options]
     result.sanitize
     result
   end
