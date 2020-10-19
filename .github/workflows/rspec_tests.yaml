@@ -4,9 +4,8 @@ name: RSpec tests
 on:
   push:
     branches: [master]
-    paths-ignore: ['**.md', 'docs/*', 'examples/*', 'ext/*', 'benchmarks/*']
   pull_request:
-    paths-ignore: ['**.md', 'docs/*', 'examples/*', 'ext/*', 'benchmarks/*']
+    branches: [master]
 
 jobs:
   rspec_tests:
