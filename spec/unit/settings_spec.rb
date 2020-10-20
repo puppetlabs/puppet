@@ -409,94 +409,94 @@ describe Puppet::Settings do
           describe "and definition invalid" do
             it "should raise error if no hook defined" do
               expect do
-                @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val})
+                @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :call_hook => val})
               end.to raise_error(ArgumentError, /no :hook/)
             end
 
             it "should include the setting name in the error message" do
               expect do
-                @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val})
-              end.to raise_error(ArgumentError, /for :hooker/)
+                @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :call_hook => val})
+              end.to raise_error(ArgumentError, /for :setting/)
             end
           end
 
           describe "and definition valid" do
             before(:each) do
               hook_values = []
-              @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val, :hook => lambda { |v| hook_values << v  }})
+              @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :call_hook => val, :hook => lambda { |v| hook_values << v  }})
             end
 
             it "should call the hook when value written" do
-              expect(@settings.setting(:hooker)).to receive(:handle).with("something").once
-              @settings[:hooker] = "something"
+              expect(@settings.setting(:setting)).to receive(:handle).with("something").once
+              @settings[:setting] = "something"
             end
           end
         end
       end
 
       it "should have a default value of :on_write_only" do
-        @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
-        expect(@settings.setting(:hooker).call_hook).to eq(:on_write_only)
+        @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
+        expect(@settings.setting(:setting).call_hook).to eq(:on_write_only)
       end
 
       describe "when nil" do
         it "should generate a warning" do
           expect(Puppet).to receive(:warning)
-          @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => nil, :hook => lambda { |v| hook_values << v  }})
+          @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :call_hook => nil, :hook => lambda { |v| hook_values << v  }})
         end
 
         it "should use default" do
-          @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => nil, :hook => lambda { |v| hook_values << v  }})
-          expect(@settings.setting(:hooker).call_hook).to eq(:on_write_only)
+          @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :call_hook => nil, :hook => lambda { |v| hook_values << v  }})
+          expect(@settings.setting(:setting).call_hook).to eq(:on_write_only)
         end
       end
 
       describe "when invalid" do
         it "should raise an error" do
           expect do
-            @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => :foo, :hook => lambda { |v| hook_values << v  }})
+            @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :call_hook => :foo, :hook => lambda { |v| hook_values << v  }})
           end.to raise_error(ArgumentError, /invalid.*call_hook/i)
         end
       end
 
       describe "when :on_write_only" do
         it "returns its hook type" do
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |_| }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |_| }})
 
-          expect(@settings.setting(:hooker).call_hook).to eq(:on_write_only)
+          expect(@settings.setting(:setting).call_hook).to eq(:on_write_only)
         end
 
         it "should not call the hook at definition" do
           hook_values = []
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
 
           expect(hook_values).to eq(%w[])
         end
 
         it "calls the hook when initializing global defaults with the value from the `main` section" do
           hook_values = []
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
 
           File.write(config_file, <<~END)
             [main]
-            hooker=in_main
+            setting=in_main
           END
           @settings.initialize_global_settings
 
-          expect(@settings[:hooker]).to eq('in_main')
+          expect(@settings[:setting]).to eq('in_main')
           expect(hook_values).to eq(%w[in_main])
         end
 
         it "doesn't call the hook when initializing app defaults" do
           hook_values = []
           @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v }})
 
           File.write(config_file, <<~END)
             [main]
-            hooker=in_main
+            setting=in_main
             [agent]
-            hooker=in_agent
+            setting=in_agent
           END
           @settings.initialize_global_settings
 
@@ -504,20 +504,20 @@ describe Puppet::Settings do
 
           @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
 
-          expect(@settings[:hooker]).to eq('in_main')
+          expect(@settings[:setting]).to eq('in_main')
           expect(hook_values).to eq(%w[])
         end
 
         it "doesn't call the hook with value from a section that matches the run_mode" do
           hook_values = []
           @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
 
           File.write(config_file, <<~END)
             [main]
-            hooker=in_main
+            setting=in_main
             [agent]
-            hooker=in_agent
+            setting=in_agent
           END
           @settings.initialize_global_settings
 
@@ -525,49 +525,49 @@ describe Puppet::Settings do
 
           @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :agent))
 
-          expect(@settings[:hooker]).to eq('in_agent')
+          expect(@settings[:setting]).to eq('in_agent')
           expect(hook_values).to eq(%w[])
         end
       end
 
       describe "when :on_define_and_write" do
         it "returns its hook type" do
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |_| }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |_| }})
 
-          expect(@settings.setting(:hooker).call_hook).to eq(:on_define_and_write)
+          expect(@settings.setting(:setting).call_hook).to eq(:on_define_and_write)
         end
 
         it "should call the hook at definition with the default value" do
           hook_values = []
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| hook_values << v  }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| hook_values << v  }})
 
           expect(hook_values).to eq(%w[yay])
         end
 
         it "calls the hook when initializing global defaults with the value from the `main` section" do
           hook_values = []
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| hook_values << v  }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| hook_values << v  }})
 
           File.write(config_file, <<~END)
             [main]
-            hooker=in_main
+            setting=in_main
           END
           @settings.initialize_global_settings
 
-          expect(@settings[:hooker]).to eq('in_main')
+          expect(@settings[:setting]).to eq('in_main')
           expect(hook_values).to eq(%w[yay in_main])
         end
 
         it "doesn't call the hook when initializing app defaults" do
           hook_values = []
           @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| hook_values << v  }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| hook_values << v  }})
 
           File.write(config_file, <<~END)
             [main]
-            hooker=in_main
+            setting=in_main
             [agent]
-            hooker=in_agent
+            setting=in_agent
           END
           @settings.initialize_global_settings
 
@@ -575,20 +575,20 @@ describe Puppet::Settings do
 
           @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
 
-          expect(@settings[:hooker]).to eq('in_main')
+          expect(@settings[:setting]).to eq('in_main')
           expect(hook_values).to eq([])
         end
 
         it "doesn't call the hook with value from a section that matches the run_mode" do
           hook_values = []
           @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| hook_values << v  }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| hook_values << v  }})
 
           File.write(config_file, <<~END)
             [main]
-            hooker=in_main
+            setting=in_main
             [agent]
-            hooker=in_agent
+            setting=in_agent
           END
 
           @settings.initialize_global_settings
@@ -598,7 +598,7 @@ describe Puppet::Settings do
           @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :agent))
 
           # The correct value is returned
-          expect(@settings[:hooker]).to eq('in_agent')
+          expect(@settings[:setting]).to eq('in_agent')
 
           # but the hook is never called, seems like a bug!
           expect(hook_values).to eq([])
@@ -607,41 +607,41 @@ describe Puppet::Settings do
 
       describe "when :on_initialize_and_write" do
         it "returns its hook type" do
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |_| }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |_| }})
 
-          expect(@settings.setting(:hooker).call_hook).to eq(:on_initialize_and_write)
+          expect(@settings.setting(:setting).call_hook).to eq(:on_initialize_and_write)
         end
 
         it "should not call the hook at definition" do
           hook_values = []
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v }})
           expect(hook_values).to eq([])
         end
 
         it "calls the hook when initializing global defaults with the value from the `main` section" do
           hook_values = []
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v }})
 
           File.write(config_file, <<~END)
             [main]
-            hooker=in_main
+            setting=in_main
           END
           @settings.initialize_global_settings
 
-          expect(@settings[:hooker]).to eq('in_main')
+          expect(@settings[:setting]).to eq('in_main')
           expect(hook_values).to eq(%w[in_main])
         end
 
         it "calls the hook when initializing app defaults" do
           hook_values = []
           @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v }})
 
           File.write(config_file, <<~END)
             [main]
-            hooker=in_main
+            setting=in_main
             [agent]
-            hooker=in_agent
+            setting=in_agent
           END
           @settings.initialize_global_settings
 
@@ -649,20 +649,20 @@ describe Puppet::Settings do
 
           @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
 
-          expect(@settings[:hooker]).to eq('in_main')
+          expect(@settings[:setting]).to eq('in_main')
           expect(hook_values).to eq(%w[in_main])
         end
 
         it "calls the hook with the overridden value from a section that matches the run_mode" do
           hook_values = []
           @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
-          @settings.define_settings(:main, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v  }})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v  }})
 
           File.write(config_file, <<~END)
             [main]
-            hooker=in_main
+            setting=in_main
             [agent]
-            hooker=in_agent
+            setting=in_agent
           END
           @settings.initialize_global_settings
 
@@ -670,7 +670,7 @@ describe Puppet::Settings do
 
           @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :agent))
 
-          expect(@settings[:hooker]).to eq('in_agent')
+          expect(@settings[:setting]).to eq('in_agent')
           expect(hook_values).to eq(%w[in_agent])
         end
       end
@@ -678,33 +678,33 @@ describe Puppet::Settings do
 
     it "should call passed blocks when values are set" do
       values = []
-      @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
+      @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
       expect(values).to eq([])
 
-      @settings[:hooker] = "something"
+      @settings[:setting] = "something"
       expect(values).to eq(%w{something})
     end
 
     it "should call passed blocks when values are set via the command line" do
       values = []
-      @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
+      @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
       expect(values).to eq([])
 
-      @settings.handlearg("--hooker", "yay")
+      @settings.handlearg("--setting", "yay")
 
       expect(values).to eq(%w{yay})
     end
 
     it "should provide an option to call passed blocks during definition" do
       values = []
-      @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| values << v }})
+      @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| values << v }})
       expect(values).to eq(%w{yay})
     end
 
     it "should pass the fully interpolated value to the hook when called on definition" do
       values = []
       @settings.define_settings(:section, :one => { :default => "test", :desc => "a" })
-      @settings.define_settings(:section, :hooker => {:default => "$one/yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| values << v }})
+      @settings.define_settings(:section, :setting => {:default => "$one/yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| values << v }})
       expect(values).to eq(%w{test/yay})
     end
 
