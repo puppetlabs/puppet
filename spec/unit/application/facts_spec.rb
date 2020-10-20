@@ -50,4 +50,21 @@ describe Puppet::Application::Facts do
     }.to exit_with(0)
      .and output(expected).to_stdout
   end
+
+  context 'when show action is called' do
+    let(:expected) { "{\n  \"filesystems\": \"apfs,autofs,devfs\",\n  \"macaddress\": \"64:52:11:22:03:25\"\n}\n" }
+
+    before :each do
+      Puppet::Node::Facts.indirection.terminus_class = :facter
+      allow(Facter).to receive(:resolve).and_return(values)
+      app.command_line.args = %w{show}
+    end
+
+    it 'correctly displays facts with default formatting' do
+      expect {
+        app.run
+      }.to exit_with(0)
+               .and output(expected).to_stdout
+    end
+  end
 end
