@@ -33,8 +33,8 @@ describe Puppet::Util::RubyGems::Source do
   describe '::Gems18Source' do
     before(:each) { allow(described_class).to receive(:source).and_return(Puppet::Util::RubyGems::Gems18Source) }
 
-    it "#directories returns the lib subdirs of Gem::Specification.latest_specs" do
-      expect(Gem::Specification).to receive(:latest_specs).with(true).and_return([fake_gem])
+    it "#directories returns the lib subdirs of Gem::Specification.stubs" do
+      expect(Gem::Specification).to receive(:stubs).and_return([fake_gem])
 
       expect(described_class.new.directories).to eq([gem_lib])
     end
