@@ -5,6 +5,22 @@ class Puppet::Settings::BaseSetting
   attr_accessor :name, :desc, :section, :default, :call_hook
   attr_reader :short, :deprecated
 
+  # Hooks are called during different parts of the settings lifecycle:
+  #
+  # * :on_write_only - This is the default hook type. The hook will be called
+  #   if its value is set in `main` or programmatically. If its value is set in
+  #   a section that doesn't match the application's run mode, it will be
+  #   ignored entirely. If the section does match the run mode, the value will
+  #   be used, but the hook will not be called!
+  #
+  # * :on_define_and_write - The hook behaves the same as above, except it is
+  #   also called immediately when the setting is defined in
+  #   {Puppet::Settings.define_settings}. In that case, the hook receives the
+  #   default value as specified.
+  #
+  # * :on_initialize_and_write - The hook will be called if the value is set in
+  #   `main`, the section that matches the run mode, or programmatically.
+  #
   def self.available_call_hook_values
     [:on_define_and_write, :on_initialize_and_write, :on_write_only]
   end
