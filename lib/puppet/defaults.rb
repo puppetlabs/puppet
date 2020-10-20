@@ -632,7 +632,7 @@ module Puppet
     :http_proxy_password =>{
       :default    => "none",
       :hook       => proc do |value|
-        if settings[:http_proxy_password] =~ /[@!# \/]/
+        if value =~ /[@!# \/]/
           raise "Passwords set in the http_proxy_password setting must be valid as part of a URL, and any reserved characters must be URL-encoded. We received: #{value}"
         end
       end,

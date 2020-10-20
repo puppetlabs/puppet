@@ -95,6 +95,7 @@ describe Puppet::Application::Config do
       %w[disable_warnings true] => /Cannot disable unrecognized warning types 'true'/,
       %w[strict on] => /Invalid value 'on' for parameter strict/,
       %w[digest_algorithm rot13] => /Invalid value 'rot13' for parameter digest_algorithm/,
+      %w[http_proxy_password a#b] => /Passwords set in the http_proxy_password setting must be valid as part of a URL/,
     }.each_pair do |args, message|
       it "rejects #{args.join(' ')}" do
         initialize_app(['set', *args])
