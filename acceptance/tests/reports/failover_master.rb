@@ -38,7 +38,7 @@ test_name "The report specifies which master was contacted during failover" do
 
         step "master_field should not appear when no master could be conatacted" do
           on(agent, puppet("agent", "-t", "--config #{tmpconf}", "--server_list=badmaster:1","--http_connect_timeout=5s", "--report_server=#{master}"), :acceptable_exit_codes => [1]) do
-            assert_match(/Could not select a functional puppet master from server_list:/, stderr)
+            assert_match(/Could not select a functional puppet server from server_list:/, stderr)
           end
           remove_reports_on_master(master_reportdir, agent.node_name)
         end
