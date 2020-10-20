@@ -41,7 +41,11 @@ module Puppet::Util::RubyGems
     def directories
       # `require 'mygem'` will consider and potentially load
       # prerelease gems, so we need to match that behavior.
-      Gem::Specification.latest_specs(true).collect do |spec|
+      #
+      # Just load the stub which points to the gem path, and
+      # delay loading the full specification until if/when the
+      # gem is required.
+      Gem::Specification.stubs.collect do |spec|
         File.join(spec.full_gem_path, 'lib')
       end
     end
