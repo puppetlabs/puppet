@@ -575,27 +575,6 @@ describe 'loaders' do
     end
   end
 
-context 'when a 3x load has illegal construct and --func3x_check is false' do
-  let(:env) { environment_for(mix_4x_and_3x_functions) }
-  let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
-  let(:scope) { compiler.topscope }
-  let(:loader) { compiler.loaders.private_loader_for_module('user') }
-
-  before(:each) do
-    Puppet.push_context(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders)
-    Puppet[:func3x_check] = false
-  end
-  after(:each) do
-    Puppet.pop_context
-    Puppet[:func3x_check] = true
-  end
-
-  it "an illegal function is loaded" do
-      f = loader.load_typed(typed_name(:function, 'bad_func_load3')).value
-      expect(f.call(scope)).to eql("some return value")
-  end
-end
-
   context 'when causing a 3x load followed by a 4x load' do
     let(:env) { environment_for(mix_4x_and_3x_functions) }
     let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
@@ -622,6 +601,12 @@ end
 
       function = loader.load_typed(typed_name(:function, 'callee_ws')).value
       expect(function.call(scope, 'passed in scope')).to eql("usee::callee_ws() got 'value'")
+    end
+
+    it "an illegal function is loaded" do
+      expect {
+        loader.load_typed(typed_name(:function, 'bad_func_load3')).value
+      }.to raise_error(SecurityError, /Illegal method definition of method 'bad_func_load3_illegal_method' on line 8 in legacy function/)
     end
   end
 

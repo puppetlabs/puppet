@@ -16,13 +16,11 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
   # @return [Puppet::Pops::Functions.Function] - an instantiated function with global scope closure associated with the given loader
   #
   def self.create(loader, typed_name, source_ref, ruby_code_string)
-    # When func3x turned on, assert content by parsing, when turned off continue with (legacy) undefined behavior
-    if Puppet[:func3x_check]
-      assertion_result = []
-      if assert_code(ruby_code_string, assertion_result)
-        unless ruby_code_string.is_a?(String) && assertion_result.include?(:found_newfunction)
-          raise ArgumentError, _("The code loaded from %{source_ref} does not seem to be a Puppet 3x API function - no 'newfunction' call.") % { source_ref: source_ref }
-        end
+    # Assert content of 3x function by parsing
+    assertion_result = []
+    if assert_code(ruby_code_string, assertion_result)
+      unless ruby_code_string.is_a?(String) && assertion_result.include?(:found_newfunction)
+        raise ArgumentError, _("The code loaded from %{source_ref} does not seem to be a Puppet 3x API function - no 'newfunction' call.") % { source_ref: source_ref }
       end
     end
 
@@ -91,7 +89,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
     when :def, :defs
       # There should not be any calls to def in a 3x function
       mname, mline = extract_name_line(find_identity(x))
-      raise SecurityError, _("Illegal method definition of method '%{method_name}' on line %{line}' in legacy function. See %{url} for more information") % { 
+      raise SecurityError, _("Illegal method definition of method '%{method_name}' on line %{line} in legacy function. See %{url} for more information") % { 
         method_name: mname,
         line: mline,
         url: "https://puppet.com/docs/puppet/latest/functions_refactor_legacy.html"
