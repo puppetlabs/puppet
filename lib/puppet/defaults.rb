@@ -2108,16 +2108,6 @@ EOT
       referencing variables that are explicitly set to undef).
     EOT
     },
-   :func3x_check => {
-     :default => true,
-     :type => :boolean,
-     :desc => <<-'EOT'
-       Causes validation of loaded legacy Ruby functions (3x API) to raise errors about illegal constructs that
-       could cause harm or that simply does not work. This flag is on by default. This flag is made available
-       so that the validation can be turned off in case the method of validation is faulty - if encountered, please
-       file a bug report.
-     EOT
-     },
   :tasks => {
     :default => false,
     :type => :boolean,
