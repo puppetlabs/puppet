@@ -723,14 +723,6 @@ Freezes the \'main\' class, disallowing any code to be added to it\. This essent
 .
 .IP "" 0
 .
-.SS "func3x_check"
-Causes validation of loaded legacy Ruby functions (3x API) to raise errors about illegal constructs that could cause harm or that simply does not work\. This flag is on by default\. This flag is made available so that the validation can be turned off in case the method of validation is faulty \- if encountered, please file a bug report\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: true
-.
-.IP "" 0
-.
 .SS "genconfig"
 When true, causes Puppet applications to print an example config file to stdout and exit\. The example will include descriptions of each setting, and the current (or default) value of each setting, incorporating any settings overridden on the CLI (with the exception of \fBgenconfig\fR itself)\. This setting only makes sense when specified on the command line as \fB\-\-genconfig\fR\.
 .
