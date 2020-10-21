@@ -215,4 +215,20 @@ describe "Defaults" do
       end
     end
   end
+
+  describe "deprecated settings" do
+    it 'does not issue a deprecation warning by default' do
+      expect(Puppet).to receive(:deprecation_warning).never
+
+      Puppet.initialize_settings
+    end
+
+    it 'issues a deprecation warning when func3x_check is disabled' do
+      Puppet[:func3x_check] = false
+
+      expect(Puppet).to receive(:deprecation_warning).with("The 'func3x_check' setting is deprecated and will be removed in a future release.")
+
+      Puppet.initialize_settings
+    end
+  end
 end
