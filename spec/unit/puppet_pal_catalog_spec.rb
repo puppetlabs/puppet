@@ -69,6 +69,51 @@ describe 'Puppet Pal' do
         }.to raise_error(/manifest_file or code_string cannot be given when configured_by_env is true/)
       end
 
+      it 'shadows target variables that collide with plan variables' do
+        facts       = { 'var' => 'fact' }
+        target_vars = { 'var' => 'target' }
+
+        expect(Puppet).to receive(:warning).with(/Target variable \$var will be overridden by fact of the same name/)
+
+        result = Puppet::Pal.in_tmp_environment('pal_env', facts: {}) do |ctx|
+          ctx.with_catalog_compiler(facts: facts, target_variables: target_vars ) do |c|
+            c.evaluate_string('$var')
+          end
+        end
+
+        expect(result).to eq('fact')
+      end
+
+      it 'shadows target variables that collide with facts' do
+        plan_vars   = { 'var' => 'plan' }
+        target_vars = { 'var' => 'target' }
+
+        expect(Puppet).to receive(:warning).with(/Target variable \$var will be overridden by plan variable of the same name/)
+        
+        result = Puppet::Pal.in_tmp_environment('pal_env', facts: {}) do |ctx|
+          ctx.with_catalog_compiler(variables: plan_vars, target_variables: target_vars ) do |c|
+            c.evaluate_string('$var')
+          end
+        end
+
+        expect(result).to eq('plan')
+      end
+
+      it 'shadows plan variables that collide with facts' do
+        facts     = { 'var' => 'fact' }
+        plan_vars = { 'var' => 'plan' }
+
+        expect(Puppet).to receive(:warning).with(/Plan variable \$var will be overridden by fact of the same name/)
+        
+        result = Puppet::Pal.in_tmp_environment('pal_env', facts: {}) do |ctx|
+          ctx.with_catalog_compiler(facts: facts, variables: plan_vars ) do |c|
+            c.evaluate_string('$var')
+          end
+        end
+
+        expect(result).to eq('fact')
+      end
+
       context "evaluate_string method" do
         it 'evaluates code string in a given tmp environment' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|

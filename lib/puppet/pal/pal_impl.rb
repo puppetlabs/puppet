@@ -58,8 +58,8 @@ module Pal
       configured_by_env: false,
       manifest_file:     nil,
       code_string:       nil,
-      facts:             nil,
-      variables:         nil,
+      facts:             {},
+      variables:         {},
       set_local_facts:   true,
       &block
     )
@@ -93,7 +93,14 @@ module Pal
 
     # If manifest_file is nil, the #main method will use the env configured manifest
     # to do things in the block while a Script Compiler is in effect
-    main(manifest_file, facts, variables, :script, set_local_facts, &block)
+    main(
+      manifest:                manifest_file,
+      facts:                   facts,
+      variables:               variables,
+      internal_compiler_class: :script,
+      set_local_facts:         set_local_facts,
+      &block
+    )
   ensure
     Puppet[:tasks] = previous_tasks_value
     Puppet[:code] = previous_code_value
@@ -157,8 +164,9 @@ module Pal
     configured_by_env: false,
       manifest_file:     nil,
       code_string:       nil,
-      facts:             nil,
-      variables:         nil,
+      facts:             {},
+      variables:         {},
+      target_variables:  {},
       &block
   )
     # TRANSLATORS: do not translate variable name strings in these assertions
@@ -193,7 +201,15 @@ module Pal
 
     # If manifest_file is nil, the #main method will use the env configured manifest
     # to do things in the block while a Script Compiler is in effect
-    main(manifest_file, facts, variables, :catalog, false, &block)
+    main(
+      manifest:                manifest_file,
+      facts:                   facts,
+      variables:               variables,
+      target_variables:        target_variables,
+      internal_compiler_class: :catalog,
+      set_local_facts:         false,
+      &block
+    )
   ensure
     # Clean up after ourselves
     Puppet[:tasks] = previous_tasks_value
@@ -382,11 +398,12 @@ module Pal
   # the provided block
   #
   def self.main(
-    manifest,
-    facts,
-    variables,
-    internal_compiler_class,
-    set_local_facts
+    manifest:                nil,
+    facts:                   {},
+    variables:               {},
+    target_variables:        {},
+    internal_compiler_class: nil,
+    set_local_facts:         true
   )
     # Configure the load path
     env = Puppet.lookup(:pal_env)
@@ -403,13 +420,10 @@ module Pal
     pal_variables = Puppet.lookup(:pal_variables)
 
     overrides = {}
+
     unless facts.nil? || facts.empty?
       pal_facts = pal_facts.merge(facts)
       overrides[:pal_facts] = pal_facts
-    end
-    unless variables.nil? || variables.empty?
-      pal_variables = pal_variables.merge(variables)
-      overrides[:pal_variables] = pal_variables
     end
 
     prepare_node_facts(node, pal_facts)
@@ -463,10 +477,17 @@ module Pal
         # TRANSLATORS: Do not translate, symbolic name
         Puppet.override(overrides, "PAL::with_#{internal_compiler_class}_compiler") do
           compiler.compile do | compiler_yield |
-            # In case the varaibles passed to the compiler are PCore types defined in modules, they
+            # In case the variables passed to the compiler are PCore types defined in modules, they
             # need to be deserialized and added from within the this scope, so that loaders are
             # available during deserizlization.
-            add_variables(compiler.topscope, Puppet::Pops::Serialization::FromDataConverter.convert(pal_variables))
+            pal_variables = Puppet::Pops::Serialization::FromDataConverter.convert(pal_variables)
+            variables     = Puppet::Pops::Serialization::FromDataConverter.convert(variables)
+
+            # Merge together target variables and plan variables. This will also shadow any
+            # collisions with facts and emit a warning.
+            topscope_vars = pal_variables.merge(merge_vars(target_variables, variables, node.facts.values))
+
+            add_variables(compiler.topscope, topscope_vars)
             # wrap the internal compiler to prevent it from leaking in the PAL API
             if block_given?
               yield(pal_compiler)
@@ -485,6 +506,38 @@ module Pal
     end
   end
   private_class_method :main
+
+  # Warn and remove variables that will be shadowed by facts of the same
+  # name, which are set in scope earlier.
+  def self.merge_vars(target_vars, vars, facts)
+    # First, shadow plan and target variables by facts of the same name
+    vars        = shadow_vars(facts || {}, vars, 'fact', 'plan variable')
+    target_vars = shadow_vars(facts || {}, target_vars, 'fact', 'target variable')
+    # Then, shadow target variables by plan variables of the same name
+    target_vars = shadow_vars(vars, target_vars, 'plan variable', 'target variable')
+
+    target_vars.merge(vars)
+  end
+  private_class_method :merge_vars
+
+  def self.shadow_vars(vars, other_vars, vars_type, other_vars_type)
+    collisions, valid = other_vars.partition do |k, _|
+      vars.include?(k)
+    end
+
+    if collisions.any?
+      names = collisions.map { |k, _| "$#{k}" }.join(', ')
+      plural = collisions.length == 1 ? '' : 's'
+
+      Puppet.warning(
+        "#{other_vars_type.capitalize}#{plural} #{names} will be overridden by "\
+        "#{vars_type}#{plural} of the same name in the apply block"
+      )
+    end
+
+    valid.to_h
+  end
+  private_class_method :shadow_vars
 
   def self.create_internal_compiler(compiler_class_reference, node)
     case compiler_class_reference
