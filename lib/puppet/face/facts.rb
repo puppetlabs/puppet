@@ -127,8 +127,6 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
       summary _("Show legacy facts when querying all facts.")
     end
 
-    render_as :json
-
     when_invoked do |*args|
       options = args.pop
 
@@ -141,6 +139,10 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
       result = Puppet::Node::Facts.indirection.find(Puppet.settings[:certname], options)
 
       result.values
+    end
+
+    when_rendering :console do |result|
+      Puppet::Util::Json.dump(result, :pretty => true)
     end
   end
 end
