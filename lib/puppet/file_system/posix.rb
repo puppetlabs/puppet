@@ -11,7 +11,7 @@ class Puppet::FileSystem::Posix < Puppet::FileSystem::FileImpl
   # issue this method reimplements the faster 2.0 version that will correctly
   # compare binary File and StringIO streams.
   def compare_stream(path, stream)
-    open(path, 0, 'rb') do |this|
+    ::File.open(path, 'rb') do |this|
       bsize = stream_blksize(this, stream)
       sa = String.new.force_encoding('ASCII-8BIT')
       sb = String.new.force_encoding('ASCII-8BIT')

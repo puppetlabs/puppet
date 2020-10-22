@@ -926,15 +926,6 @@ Security/Eval:
     - 'lib/puppet/pops/loader/ruby_function_instantiator.rb'
     - 'lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb'
 
-Security/Open:
-  Exclude:
-    - 'lib/puppet/file_system/file_impl.rb'
-    - 'lib/puppet/file_system/posix.rb'
-    - 'lib/puppet/provider/package/appdmg.rb'
-    - 'lib/puppet/provider/package/windows/package.rb'
-    - 'lib/puppet/util/command_line/trollop.rb'
-    - 'lib/puppet/util/execution.rb'
-
 # Configuration parameters: EnforcedStyle, AllowModifiersOnSymbols.
 # SupportedStyles: inline, group
 Style/AccessModifierDeclarations:

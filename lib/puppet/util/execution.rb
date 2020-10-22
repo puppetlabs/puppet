@@ -78,7 +78,8 @@ module Puppet::Util::Execution
     # a predictable output
     english_env = ENV.to_hash.merge( {'LANG' => 'C', 'LC_ALL' => 'C'} )
     output = Puppet::Util.withenv(english_env) do
-      open("| #{command_str} 2>&1") do |pipe|
+      # We are intentionally using 'pipe' with open to launch a process
+      open("| #{command_str} 2>&1") do |pipe| # rubocop:disable Security/Open
         yield pipe
       end
     end

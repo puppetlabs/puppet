@@ -44,9 +44,9 @@ class Puppet::Provider::Package::Windows
         [KEY64, KEY32].each do |mode|
           mode |= KEY_READ
           begin
-            open(hive, 'Software\Microsoft\Windows\CurrentVersion\Uninstall', mode) do |uninstall|
+            self.open(hive, 'Software\Microsoft\Windows\CurrentVersion\Uninstall', mode) do |uninstall|
               each_key(uninstall) do |name, wtime|
-                open(hive, "#{uninstall.keyname}\\#{name}", mode) do |key|
+                self.open(hive, "#{uninstall.keyname}\\#{name}", mode) do |key|
                   yield key, values_by_name(key, reg_value_names_to_load)
                 end
               end

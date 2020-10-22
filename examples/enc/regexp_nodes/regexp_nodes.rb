@@ -133,7 +133,7 @@ class ExternalNode
     patternlist = []
 
     begin
-      open(filepath).each do |l|
+      File.open(filepath).each do |l|
         l.chomp!
 
         next if l =~ /^$/
