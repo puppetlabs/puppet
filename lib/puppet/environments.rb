@@ -420,7 +420,7 @@ module Puppet::Environments
     def clear_all_expired()
       t = Time.now
       return if t < @next_expiration && ! @cache.any? {|name, _| @cache_expiration_service.expired?(name.to_sym) }
-      to_expire = @cache.select { |name, entry| entry.expires < t || @cache_expiration_service.expired?(name.to_sym) }
+      to_expire = @cache.select { |name, entry| entry.expired?(t) || @cache_expiration_service.expired?(name.to_sym) }
       to_expire.each do |name, entry|
         Puppet.debug {"Evicting cache entry for environment '#{name}'"}
         @cache_expiration_service.evicted(name.to_sym)
@@ -470,7 +470,8 @@ module Puppet::Environments
     # Evicts the entry if it has expired
     # Also clears caches in Settings that may prevent the entry from being updated
     def evict_if_expired(name)
-      if (result = @cache[name]) && (result.expired? || @cache_expiration_service.expired?(name.to_sym))
+      t = Time.now
+      if (entry = @cache[name]) && (entry.expired?(t) || @cache_expiration_service.expired?(name.to_sym))
         Puppet.debug {"Evicting cache entry for environment '#{name}'"}
         @cache_expiration_service.evicted(name.to_sym)
         clear(name)
@@ -489,7 +490,7 @@ module Puppet::Environments
       def touch
       end
 
-      def expired?
+      def expired?(now)
         false
       end
 
@@ -504,7 +505,7 @@ module Puppet::Environments
 
     # Always evicting entry
     class NotCachedEntry < Entry
-      def expired?
+      def expired?(now)
         true
       end
 
@@ -525,8 +526,8 @@ module Puppet::Environments
         @ttl_seconds = ttl_seconds
       end
 
-      def expired?
-        Time.now > @ttl
+      def expired?(now)
+        now > @ttl
       end
 
       def label
