@@ -462,10 +462,24 @@ class EvaluatorImpl
   end
 
   def eval_EppExpression(o, scope)
+    contains_sensitive = false
+
     scope["@epp"] = []
     evaluate(o.body, scope)
-    result = scope["@epp"].join
-    result
+    result = scope["@epp"].map do |r|
+      if r.instance_of?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+        contains_sensitive = true
+        string(r.unwrap, scope)
+      else
+        r
+      end
+    end.join
+
+    if contains_sensitive
+      Puppet::Pops::Types::PSensitiveType::Sensitive.new(result)
+    else
+      result
+    end
   end
 
   def eval_RenderStringExpression(o, scope)
@@ -474,7 +488,12 @@ class EvaluatorImpl
   end
 
   def eval_RenderExpression(o, scope)
-    scope["@epp"] << string(evaluate(o.expr, scope), scope)
+    result = evaluate(o.expr, scope)
+    if result.instance_of?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+      scope["@epp"] << result
+    else
+      scope["@epp"] << string(result, scope)
+    end
     nil
   end
 
