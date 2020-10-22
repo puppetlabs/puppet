@@ -379,7 +379,6 @@ module Puppet::Environments
       elsif (result = @loader.get(name))
         # environment loaded, cache it
         cache_entry = entry(result)
-        @cache_expiration_service.created(result)
         add_entry(name, cache_entry)
         result
       end
@@ -389,6 +388,7 @@ module Puppet::Environments
     def add_entry(name, cache_entry)
       Puppet.debug {"Caching environment '#{name}' #{cache_entry.label}"}
       @cache[name] = cache_entry
+      @cache_expiration_service.created(cache_entry.value)
       expires = cache_entry.expires
       @expirations.add(expires)
       if @next_expiration > expires
