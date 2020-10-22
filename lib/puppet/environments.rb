@@ -424,7 +424,6 @@ module Puppet::Environments
       @cache.each_pair do |name, entry|
         evict_if_expired(name, entry, t)
       end
-      @next_expiration = @expirations.first || END_OF_TIME
     end
 
     # This implementation evicts the cache, and always gets the current
@@ -473,6 +472,7 @@ module Puppet::Environments
         @cache_expiration_service.evicted(name.to_sym)
         clear(name)
         @expirations.delete(entry.expires)
+        @next_expiration = @expirations.first || END_OF_TIME
         Puppet.settings.clear_environment_settings(name)
       end
     end
