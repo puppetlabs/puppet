@@ -200,13 +200,7 @@ class Puppet::HTTP::Client
 
     request = Net::HTTP::Get.new(url, @default_headers.merge(headers))
 
-    execute_streaming(request, options: options) do |response|
-      if block_given?
-        yield response
-      else
-        response.body
-      end
-    end
+    execute_streaming(request, options: options, &block)
   end
 
   # Submits a HEAD HTTP request to the given url
@@ -224,9 +218,7 @@ class Puppet::HTTP::Client
 
     request = Net::HTTP::Head.new(url, @default_headers.merge(headers))
 
-    execute_streaming(request, options: options) do |response|
-      response.body
-    end
+    execute_streaming(request, options: options)
   end
 
   # Submits a PUT HTTP request to the given url
@@ -252,9 +244,7 @@ class Puppet::HTTP::Client
 
     raise ArgumentError, "'put' requires a 'content-type' header" unless request['Content-Type']
 
-    execute_streaming(request, options: options) do |response|
-      response.body
-    end
+    execute_streaming(request, options: options)
   end
 
   # Submits a POST HTTP request to the given url
@@ -282,13 +272,7 @@ class Puppet::HTTP::Client
 
     raise ArgumentError, "'post' requires a 'content-type' header" unless request['Content-Type']
 
-    execute_streaming(request, options: options) do |response|
-      if block_given?
-        yield response
-      else
-        response.body
-      end
-    end
+    execute_streaming(request, options: options, &block)
   end
 
   # Submits a DELETE HTTP request to the given url.
@@ -306,9 +290,7 @@ class Puppet::HTTP::Client
 
     request = Net::HTTP::Delete.new(url, @default_headers.merge(headers))
 
-    execute_streaming(request, options: options) do |response|
-      response.body
-    end
+    execute_streaming(request, options: options)
   end
 
   # Close persistent connections in the pool.
@@ -390,7 +372,11 @@ class Puppet::HTTP::Client
               end
             end
 
-            yield response
+            if block_given?
+              yield response
+            else
+              response.body
+            end
           ensure
             # we need to make sure the response body is fully consumed before
             # the connection is put back in the pool, otherwise the response
