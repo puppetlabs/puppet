@@ -649,7 +649,7 @@ private
     else
       require 'open-uri'
       begin
-        open param
+        URI.parse(param).open
       rescue SystemCallError => e
         raise CommandlineError, _("file or url for option '%{arg}' cannot be opened: %{value0}") % { arg: arg, value0: e.message }, e.backtrace
       end
