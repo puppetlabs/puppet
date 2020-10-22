@@ -1,24 +1,17 @@
+# Represents an abstract Puppet web service.
 #
-# @api private
-#
-# Represents a puppet web service
-#
+# @abstract Subclass and implement methods for the service's REST APIs.
+# @api public
 class Puppet::HTTP::Service
-  # @api private
   # @return [URI] the url associated with this service
   attr_reader :url
 
-  # @api private
   # @return [Array<Symbol>] available services
   SERVICE_NAMES = [:ca, :fileserver, :puppet, :puppetserver, :report].freeze
 
-  # @api private
   # @return [Array<Symbol>] format types that are unsupported
   EXCLUDED_FORMATS = [:yaml, :b64_zlib_yaml, :dot].freeze
 
-  #
-  # @api private
-  #
   # Create a new web service, which contains the URL used to connect to the
   # service. The four services implemented are `:ca`, `:fileserver`, `:puppet`,
   # and `:report`.
@@ -35,6 +28,7 @@ class Puppet::HTTP::Service
   #
   # @return [Puppet::HTTP::Service] an instance of the service type requested
   #
+  # @api private
   def self.create_service(client, session, name, server = nil, port = nil)
     case name
     when :ca
@@ -52,57 +46,49 @@ class Puppet::HTTP::Service
     end
   end
 
-  #
-  # @api private
-  #
   # Check if the service named is included in the list of available services.
   #
   # @param [Symbol] name
   #
   # @return [Boolean]
   #
+  # @api private
   def self.valid_name?(name)
     SERVICE_NAMES.include?(name)
   end
 
-  #
-  # @api private
-  #
-  # Create a new service
+  # Create a new service. Services should be created by calling `Puppet::HTTP::Session#route_to`.
   #
   # @param [Puppet::HTTP::Client] client
   # @param [Puppet::HTTP::Session] session
   # @param [URI] url The url to connect to
   #
+  # @api private
   def initialize(client, session, url)
     @client = client
     @session = session
     @url = url
   end
 
-  #
-  # @api private
-  #
   # Return the url with the given path encoded and appended
   #
   # @param [String] path the string to append to the base url
   #
   # @return [URI] the URI object containing the encoded path
   #
+  # @api public
   def with_base_url(path)
     u = @url.dup
     u.path += Puppet::Util.uri_encode(path)
     u
   end
 
+  # Open a connection using the given ssl context.
   #
-  # @api private
+  # @param [Puppet::SSL::SSLContext] ssl_context An optional ssl context to connect with
+  # @return [void]
   #
-  # Open a connection using the given ssl context
-  #
-  # @param [Puppet::SSL::SSLContext] ssl_context (nil) optional ssl context to
-  #   connect with
-  #
+  # @api public
   def connect(ssl_context: nil)
     @client.connect(@url, options: {ssl_context: ssl_context})
   end

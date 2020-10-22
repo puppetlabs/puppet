@@ -1,6 +1,11 @@
 require 'puppet/x509'
 
-# Class for loading and saving cert related objects.
+# Class for loading and saving cert related objects. By default the provider
+# loads and saves based on puppet's default settings, such as `Puppet[:localcacert]`.
+# The providers sets the permissions on files it saves, such as the private key.
+# All of the `load_*` methods take an optional `required` parameter. If an object
+# doesn't exist, then by default the provider returns `nil`. However, if the
+# `required` parameter is true, then an exception will be raised instead.
 #
 # @api private
 class Puppet::X509::CertProvider
@@ -32,6 +37,7 @@ class Puppet::X509::CertProvider
   #
   # @param certs [Array<OpenSSL::X509::Certificate>] Array of CA certs to save
   # @raise [Puppet::Error] if the certs cannot be saved
+  #
   # @api private
   def save_cacerts(certs)
     save_pem(certs.map(&:to_pem).join, @capath, **permissions_for_setting(:localcacert))
@@ -45,6 +51,7 @@ class Puppet::X509::CertProvider
   # @return (see #load_cacerts_from_pem)
   # @raise (see #load_cacerts_from_pem)
   # @raise [Puppet::Error] if the certs cannot be loaded
+  #
   # @api private
   def load_cacerts(required: false)
     pem = load_pem(@capath)
@@ -61,6 +68,7 @@ class Puppet::X509::CertProvider
   # @param pem [String] PEM encoded certificate(s)
   # @return [Array<OpenSSL::X509::Certificate>] Array of CA certs
   # @raise [OpenSSL::X509::CertificateError] The `pem` text does not contain a valid cert
+  #
   # @api private
   def load_cacerts_from_pem(pem)
     # TRANSLATORS 'PEM' is an acronym and shouldn't be translated
@@ -75,6 +83,7 @@ class Puppet::X509::CertProvider
   #
   # @param crls [Array<OpenSSL::X509::CRL>] Array of CRLs to save
   # @raise [Puppet::Error] if the CRLs cannot be saved
+  #
   # @api private
   def save_crls(crls)
     save_pem(crls.map(&:to_pem).join, @crlpath, **permissions_for_setting(:hostcrl))
@@ -88,6 +97,7 @@ class Puppet::X509::CertProvider
   # @return (see #load_crls_from_pem)
   # @raise (see #load_crls_from_pem)
   # @raise [Puppet::Error] if the CRLs cannot be loaded
+  #
   # @api private
   def load_crls(required: false)
     pem = load_pem(@crlpath)
@@ -104,6 +114,7 @@ class Puppet::X509::CertProvider
   # @param pem [String] PEM encoded CRL(s)
   # @return [Array<OpenSSL::X509::CRL>] Array of CRLs
   # @raise [OpenSSL::X509::CRLError] The `pem` text does not contain a valid CRL
+  #
   # @api private
   def load_crls_from_pem(pem)
     # TRANSLATORS 'PEM' is an acronym and shouldn't be translated
@@ -118,6 +129,8 @@ class Puppet::X509::CertProvider
   #
   # @return [Time, nil] Time when the CRL was last updated, or nil if we don't
   #   have a CRL
+  #
+  # @api private
   def crl_last_update
     stat = Puppet::FileSystem.stat(@crlpath)
     Time.at(stat.mtime)
@@ -129,6 +142,7 @@ class Puppet::X509::CertProvider
   #
   # @param time [Time] The last updated time
   #
+  # @api private
   def crl_last_update=(time)
     Puppet::FileSystem.touch(@crlpath, mtime: time)
   end
@@ -142,6 +156,7 @@ class Puppet::X509::CertProvider
   #   from the password, and use that to encrypt the private key. If nil,
   #   save the private key unencrypted.
   # @raise [Puppet::Error] if the private key cannot be saved
+  #
   # @api private
   def save_private_key(name, key, password: nil)
     pem = if password
@@ -167,6 +182,7 @@ class Puppet::X509::CertProvider
   # @return (see #load_private_key_from_pem)
   # @raise (see #load_private_key_from_pem)
   # @raise [Puppet::Error] if the private key cannot be loaded
+  #
   # @api private
   def load_private_key(name, required: false, password: nil)
     path = @hostprivkey || to_path(@privatekeydir, name)
@@ -187,6 +203,7 @@ class Puppet::X509::CertProvider
   #   not specified, then the key cannot be loaded.
   # @return [OpenSSL::PKey::RSA, OpenSSL::PKey::EC] The private key
   # @raise [OpenSSL::PKey::PKeyError] The `pem` text does not contain a valid key
+  #
   # @api private
   def load_private_key_from_pem(pem, password: nil)
     # set a non-nil password to ensure openssl doesn't prompt
@@ -216,6 +233,8 @@ class Puppet::X509::CertProvider
   #
   # @return [String, nil] The private key password as a binary string or nil
   #   if there is none.
+  #
+  # @api private
   def load_private_key_password
     Puppet::FileSystem.read(Puppet[:passfile], :encoding => Encoding::BINARY)
   rescue Errno::ENOENT
@@ -227,6 +246,7 @@ class Puppet::X509::CertProvider
   # @param name [String] The client cert identity
   # @param cert [OpenSSL::X509::Certificate] The cert to save
   # @raise [Puppet::Error] if the client cert cannot be saved
+  #
   # @api private
   def save_client_cert(name, cert)
     path = @hostcert || to_path(@certdir, name)
@@ -242,6 +262,7 @@ class Puppet::X509::CertProvider
   # @return (see #load_request_from_pem)
   # @raise (see #load_client_cert_from_pem)
   # @raise [Puppet::Error] if the client cert cannot be loaded
+  #
   # @api private
   def load_client_cert(name, required: false)
     path = @hostcert || to_path(@certdir, name)
@@ -259,6 +280,7 @@ class Puppet::X509::CertProvider
   # @param pem [String] PEM encoded cert
   # @return [OpenSSL::X509::Certificate] the certificate
   # @raise [OpenSSL::X509::CertificateError] The `pem` text does not contain a valid cert
+  #
   # @api private
   def load_client_cert_from_pem(pem)
     OpenSSL::X509::Certificate.new(pem)
@@ -270,6 +292,7 @@ class Puppet::X509::CertProvider
   # @param private_key [OpenSSL::PKey::RSA] private key
   # @return [Puppet::X509::Request] The request
   #
+  # @api private
   def create_request(name, private_key)
     options = {}
 
@@ -292,6 +315,7 @@ class Puppet::X509::CertProvider
   # @param name [String] the request identity
   # @param csr [OpenSSL::X509::Request] the request
   # @raise [Puppet::Error] if the cert request cannot be saved
+  #
   # @api private
   def save_request(name, csr)
     path = to_path(@requestdir, name)
@@ -306,6 +330,7 @@ class Puppet::X509::CertProvider
   # @return (see #load_request_from_pem)
   # @raise (see #load_request_from_pem)
   # @raise [Puppet::Error] if the cert request cannot be saved
+  #
   # @api private
   def load_request(name)
     path = to_path(@requestdir, name)
@@ -319,6 +344,8 @@ class Puppet::X509::CertProvider
   #
   # @param name [String] The request identity
   # @return [Boolean] true if the CSR was deleted
+  #
+  # @api private
   def delete_request(name)
     path = to_path(@requestdir, name)
     delete_pem(path)
@@ -331,6 +358,7 @@ class Puppet::X509::CertProvider
   # @param pem [String] PEM encoded request
   # @return [OpenSSL::X509::Request] the request
   # @raise [OpenSSL::X509::RequestError] The `pem` text does not contain a valid request
+  #
   # @api private
   def load_request_from_pem(pem)
     OpenSSL::X509::Request.new(pem)

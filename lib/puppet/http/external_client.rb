@@ -1,4 +1,3 @@
-#
 # Adapts an external http_client_class to the HTTP client API. The former
 # is typically registered by puppetserver and only implements a subset of
 # the Puppet::Network::HTTP::Connection methods. As a result, only the
@@ -7,10 +6,10 @@
 #
 # @api private
 class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
-  # Create an external http client
+
+  # Create an external http client.
   #
   # @param [Class] http_client_class The class to create to handle the request
-  # @api private
   def initialize(http_client_class)
     @http_client_class = http_client_class
   end
@@ -58,8 +57,7 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
     raise Puppet::HTTP::HTTPError.new(e.message, e)
   end
 
-  # Close the external http client.
-  #
+  # (see Puppet::HTTP::Client#close)
   # @api private
   def close
     # This is a noop as puppetserver doesn't provide a way to close its http client.

@@ -1,23 +1,19 @@
-#
-# @api private
-#
 # The Compiler service is used to submit and retrieve data from the
 # puppetserver.
 #
+# @api public
 class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
-  # @api private
   # @return [String] Default API for the Compiler service
   API = '/puppet/v3'.freeze
 
-  #
-  # @api private
+  # Use `Puppet::HTTP::Session.route_to(:puppet)` to create or get an instance of this class.
   #
   # @param [Puppet::HTTP::Client] client
   # @param [Puppet::HTTP::Session] session
-  # @param [String] server (Puppet[:ca_server]) If an explicit server is given,
+  # @param [String] server (`Puppet[:server]`) If an explicit server is given,
   #   create a service using that server. If server is nil, the default value
   #   is used to create the service.
-  # @param [Integer] port (Puppet[:ca_port]) If an explicit port is given, create
+  # @param [Integer] port (`Puppet[:masterport]`) If an explicit port is given, create
   #   a service using that port. If port is nil, the default value is used to
   #   create the service.
   #
@@ -26,10 +22,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
     super(client, session, url)
   end
 
-  #
-  # @api private
-  #
-  # Submit a GET request to retrieve a node from the server
+  # Submit a GET request to retrieve a node from the server.
   #
   # @param [String] name The name of the node being requested
   # @param [String] environment The name of the environment we are operating in
@@ -41,6 +34,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   # @return [Array<Puppet::HTTP::Response, Puppet::Node>] An array containing
   #   the request response and the deserialized requested node
   #
+  # @api public
   def get_node(name, environment:, configured_environment: nil, transaction_uuid: nil)
     headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Node).join(', '))
 
@@ -59,10 +53,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
     [response, deserialize(response, Puppet::Node)]
   end
 
-  #
-  # @api private
-  #
-  # Submit a POST request to submit a catalog to the server
+  # Submit a POST request to submit a catalog to the server.
   #
   # @param [String] name The name of the catalog to be submitted
   # @param [Puppet::Node::Facts] facts Facts for this catalog
@@ -83,6 +74,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   #   containing the request response and the deserialized catalog returned by
   #   the server
   #
+  # @api public
   def post_catalog(name, facts:, environment:, configured_environment: nil, transaction_uuid: nil, job_uuid: nil, static_catalog: true, checksum_type: Puppet[:supported_checksum_types])
     if Puppet[:preferred_serialization_format] == "pson"
       formatter = Puppet::Network::FormatHandler.format_for(:pson)
@@ -127,10 +119,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
     [response, deserialize(response, Puppet::Resource::Catalog)]
   end
 
-  #
-  # @api private
-  #
-  # Submit a GET request to retrieve the facts for the named node
+  # Submit a GET request to retrieve the facts for the named node.
   #
   # @param [String] name Name of the node to retrieve facts for
   # @param [String] environment Name of the environment we are operating in
@@ -139,6 +128,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   #   containing the request response and the deserialized facts for the
   #   specified node
   #
+  # @api public
   def get_facts(name, environment:)
     headers = add_puppet_headers('Accept' => get_mime_types(Puppet::Node::Facts).join(', '))
 
@@ -153,10 +143,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
     [response, deserialize(response, Puppet::Node::Facts)]
   end
 
-  #
-  # @api private
-  #
-  # Submits a PUT request to submit facts for the node to the server
+  # Submits a PUT request to submit facts for the node to the server.
   #
   # @param [String] name Name of the node we are submitting facts for
   # @param [String] environment Name of the environment we are operating in
@@ -164,6 +151,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   #
   # @return [Puppet::HTTP::Response] The request response
   #
+  # @api public
   def put_facts(name, environment:, facts:)
     formatter = Puppet::Network::FormatHandler.format_for(Puppet[:preferred_serialization_format])
 
@@ -184,12 +172,9 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
     response
   end
 
+  # Submit a GET request to retrieve a file stored with filebucket.
   #
-  # @api private
-  #
-  # Submit a GET request to retrieve a file stored with filebucket
-  #
-  # @param [String] path The request path, formatted by Puppet::FileBucket::Dipper
+  # @param [String] path The request path, formatted by `Puppet::FileBucket::Dipper`
   # @param [String] environment Name of the environment we are operating in.
   #   This should not impact filebucket at all, but is included to be consistent
   #   with legacy code.
@@ -204,6 +189,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   #   containing the request response and the deserialized file returned from
   #   the server.
   #
+  # @api public
   def get_filebucket_file(path, environment:, bucket_path: nil, diff_with: nil, list_all: nil, fromdate: nil, todate: nil)
     headers = add_puppet_headers('Accept' => 'application/octet-stream')
 
@@ -225,12 +211,9 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
     [response, deserialize(response, Puppet::FileBucket::File)]
   end
 
+  # Submit a PUT request to store a file with filebucket.
   #
-  # @api private
-  #
-  # Submit a PUT request to store a file with filebucket
-  #
-  # @param [String] path The request path, formatted by Puppet::FileBucket::Dipper
+  # @param [String] path The request path, formatted by `Puppet::FileBucket::Dipper`
   # @param [String] body The contents of the file to be backed
   # @param [String] environment Name of the environment we are operating in.
   #   This should not impact filebucket at all, but is included to be consistent
@@ -238,6 +221,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   #
   # @return [Puppet::HTTP::Response] The response request
   #
+  # @api public
   def put_filebucket_file(path, body:, environment:)
     headers = add_puppet_headers({
       'Accept' => 'application/octet-stream',
@@ -258,12 +242,9 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
     response
   end
 
+  # Submit a HEAD request to check the status of a file stored with filebucket.
   #
-  # @api private
-  #
-  # Submit a HEAD request to check the status of a file stored with filebucket
-  #
-  # @param [String] path The request path, formatted by Puppet::FileBucket::Dipper
+  # @param [String] path The request path, formatted by `Puppet::FileBucket::Dipper`
   # @param [String] environment Name of the environment we are operating in.
   #   This should not impact filebucket at all, but is included to be consistent
   #   with legacy code.
@@ -271,6 +252,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   #
   # @return [Puppet::HTTP::Response] The request response
   #
+  # @api public
   def head_filebucket_file(path, environment:, bucket_path: nil)
     headers = add_puppet_headers('Accept' => 'application/octet-stream')
 

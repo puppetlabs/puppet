@@ -4,6 +4,8 @@
 #
 # @api public
 #
+module Puppet
+module Pal
 class JsonCatalogEncoder
   # Is the resulting Json pretty printed or not.
   attr_reader :pretty
@@ -64,4 +66,6 @@ class JsonCatalogEncoder
     @filtered ||= (exclude_virtual ? catalog.filter { |r| r.virtual? } : catalog)
   end
   private :possibly_filtered_catalog
+end
+end
 end

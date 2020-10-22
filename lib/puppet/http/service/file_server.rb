@@ -1,28 +1,24 @@
 require 'puppet/file_serving/metadata'
 
+# The FileServer service is used to retrieve file metadata and content.
 #
-# @api private
-#
-# The FileServer service is used to retrieve file metadata and content
+# @api public
 #
 class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
-  # @api private
   # @return [String] Default API for the FileServer service
   API = '/puppet/v3'.freeze
 
-  # @api private
   # @return [RegEx] RegEx used to determine if a path contains a leading slash
   PATH_REGEX = /^\//
 
-  #
-  # @api private
+  # Use `Puppet::HTTP::Session.route_to(:fileserver)` to create or get an instance of this class.
   #
   # @param [Puppet::HTTP::Client] client
   # @param [Puppet::HTTP::Session] session
-  # @param [String] server (Puppet[:ca_server]) If an explicit server is given,
+  # @param [String] server (`Puppet[:server]`) If an explicit server is given,
   #   create a service using that server. If server is nil, the default value
   #   is used to create the service.
-  # @param [Integer] port (Puppet[:ca_port]) If an explicit port is given, create
+  # @param [Integer] port (`Puppet[:masterport]`) If an explicit port is given, create
   #   a service using that port. If port is nil, the default value is used to
   #   create the service.
   #
@@ -31,11 +27,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     super(client, session, url)
   end
 
-  #
-  # @api private
-  #
-  # Submit a GET request to the server to retrieve the metadata for a specified
-  # file
+  # Submit a GET request to the server to retrieve the metadata for a specified file.
   #
   # @param [String] path path to the file to retrieve data from
   # @param [String] environment the name of the environment we are operating in
@@ -51,6 +43,8 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   # @return [Array<Puppet::HTTP::Response, Puppet::FileServing::Metadata>] An
   #   array with the request response and the deserialized metadata for the
   #   file returned from the server
+  #
+  # @api public
   #
   def get_file_metadata(path:, environment:, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore)
     validate_path(path)
@@ -73,9 +67,6 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     [response, deserialize(response, Puppet::FileServing::Metadata)]
   end
 
-  #
-  # @api private
-  #
   # Submit a GET request to the server to retrieve the metadata for multiple files
   #
   # @param [String] path path to the file(s) to retrieve data from
@@ -105,6 +96,8 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   #   An array with the request response and an array of the deserialized
   #   metadata for each file returned from the server
   #
+  # @api public
+  #
   def get_file_metadatas(path: nil, environment:, recurse: :false, recurselimit: nil, ignore: nil, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore)
     validate_path(path)
 
@@ -129,10 +122,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     [response, deserialize_multiple(response, Puppet::FileServing::Metadata)]
   end
 
-  #
-  # @api private
-  #
-  # Submit a GET request to the server to retrieve content of a file
+  # Submit a GET request to the server to retrieve content of a file.
   #
   # @param [String] path path to the file to retrieve data from
   # @param [String] environment the name of the environment we are operating in
@@ -140,6 +130,8 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   # @yield [Sting] Yields the body of the response returned from the server
   #
   # @return [Puppet::HTTP::Response] The request response
+  #
+  # @api public
   #
   def get_file_content(path:, environment:, &block)
     validate_path(path)
@@ -162,10 +154,8 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
     response
   end
 
-  #
-  # @api private
-  #
-  # Submit a GET request to
+  # Submit a GET request to retrieve file content using the `static_file_content` API
+  # uniquely identified by (`code_id`, `environment`, `path`).
   #
   # @param [String] path path to the file to retrieve data from
   # @param [String] environment the name of the environment we are operating in
@@ -174,6 +164,8 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   # @yield [String] Yields the body of the response returned
   #
   # @return [Puppet::HTTP::Response] The request response
+  #
+  # @api public
   #
   def get_static_file_content(path:, environment:, code_id:, &block)
     validate_path(path)

@@ -2,10 +2,11 @@ require 'puppet/ssl'
 
 # This module defines OIDs for use within Puppet.
 #
-# == ASN.1 Definition
+# # ASN.1 Definition
 #
 # The following is the formal definition of OIDs specified in this file.
 #
+# ```
 # puppetCertExtensions OBJECT IDENTIFIER ::= {iso(1) identified-organization(3)
 #    dod(6) internet(1) private(4) enterprise(1) 34380 1}
 #
@@ -22,6 +23,7 @@ require 'puppet/ssl'
 # pp_instance_id OBJECT IDENTIFIER ::= { registeredExtensions 2 }
 # pp_image_name OBJECT IDENTIFIER ::= { registeredExtensions 3 }
 # pp_preshared_key OBJECT IDENTIFIER ::= { registeredExtensions 4 }
+# ```
 #
 # @api private
 module Puppet::SSL::Oids

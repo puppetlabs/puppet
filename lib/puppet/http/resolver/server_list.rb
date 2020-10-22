@@ -1,12 +1,10 @@
-#
-# @api private
-#
 # Use the server_list setting to resolve a service. This resolver is only used
 # if server_list is set either on the command line or in the configuration file.
 #
+# @api public
 class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
-  #
-  # @api private
+
+  # Create a server list resolver.
   #
   # @param [Puppet::HTTP::Client] client
   # @param [Array<String>] server_list_setting array of servers set via the
@@ -24,15 +22,12 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
     @services = services
   end
 
-  #
-  # @api private
-  #
   # Walk the server_list to find a server and port that will connect successfully.
   #
-  # @param [Puppet::HTTP::Session] session <description>
+  # @param [Puppet::HTTP::Session] session
   # @param [Symbol] name the name of the service being resolved
   # @param [Puppet::SSL::SSLContext] ssl_context
-  # @param [Proc] canceled_handler (nil) optional callback allowing a resolver
+  # @param [Proc] canceled_handler optional callback allowing a resolver
   #   to cancel resolution.
   #
   # @return [nil] return nil if the service to be resolved does not support
@@ -43,6 +38,7 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
   # @raise [Puppet::Error] raise if none of the servers defined in server_list
   #   are available
   #
+  # @api public
   def resolve(session, name, ssl_context: nil, canceled_handler: nil)
     # If we're configured to use an explicit service host, e.g. report_server
     # then don't use server_list to resolve the `:report` service.

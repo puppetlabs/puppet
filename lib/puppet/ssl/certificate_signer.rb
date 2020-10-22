@@ -27,6 +27,12 @@ class Puppet::SSL::CertificateSigner
     @digest
   end
 
+  # Sign a certificate signing request (CSR) with a private key.
+  #
+  # @param [OpenSSL::X509::Request] content The CSR to sign
+  # @param [OpenSSL::X509::PKey] key The private key to sign with
+  #
+  # @api private
   def sign(content, key)
     content.sign(key, @digest.new)
   end

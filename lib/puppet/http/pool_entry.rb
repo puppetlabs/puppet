@@ -2,7 +2,6 @@
 # an expiration time for the connection.
 #
 # @api private
-#
 class Puppet::HTTP::PoolEntry
   attr_reader :connection, :verifier
 

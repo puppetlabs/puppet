@@ -6,95 +6,74 @@ require 'puppet/application_support'
 
 module Puppet
 
-# This class handles all the aspects of a Puppet application/executable
-# * setting up options
-# * setting up logs
-# * choosing what to run
-# * representing execution status
+# Defines an abstract Puppet application.
 #
-# === Usage
-# An application is a subclass of Puppet::Application.
+# # Usage
 #
-# For legacy compatibility,
-#      Puppet::Application[:example].run
-# is equivalent to
-#      Puppet::Application::Example.new.run
+# To create a new application extend `Puppet::Application`. Derived applications
+# must implement the `main` method and should implement the `summary` and
+# `help` methods in order to be included in `puppet help`, and should define
+# application-specific options. For example:
 #
-#
+# ```
 # class Puppet::Application::Example < Puppet::Application
 #
-#     def preinit
-#         # perform some pre initialization
-#         @all = false
-#     end
+#   def summary
+#     "My puppet example application"
+#   end
 #
-#     # run_command is called to actually run the specified command
-#     def run_command
-#         send Puppet::Util::CommandLine.new.args.shift
-#     end
+#   def help
+#     <<~HELP
+#     puppet-example(8) -- #{summary}
+#     ...
+#     HELP
+#   end
 #
-#     # option uses metaprogramming to create a method
-#     # and also tells the option parser how to invoke that method
-#     option("--arg ARGUMENT") do |v|
-#         @args << v
-#     end
+#   # define arg with a required option
+#   option("--arg ARGUMENT") do |v|
+#     options[:arg] = v
+#   end
 #
-#     option("--debug", "-d") do |v|
-#         @debug = v
-#     end
+#   # define arg with an optional option
+#   option("--maybe [ARGUMENT]") do |v|
+#     options[:maybe] = v
+#   end
 #
-#     option("--all", "-a:) do |v|
-#         @all = v
-#     end
+#   # define long and short arg
+#   option("--all", "-a")
 #
-#     def handle_unknown(opt,arg)
-#         # last chance to manage an option
-#         ...
-#         # let's say to the framework we finally handle this option
-#         true
-#     end
+#   def initialize(command_line = Puppet::Util::CommandLine.new)
+#     super
+#     @data = {}
+#   end
 #
-#     def read
-#         # read action
-#     end
+#   def main
+#     # call action
+#     send(@command_line.args.shift)
+#   end
 #
-#     def write
-#         # writeaction
-#     end
+#   def read
+#     # read action
+#   end
+#
+#   def write
+#     # write action
+#   end
 #
 # end
+# ```
 #
-# === Preinit
-# The preinit block is the first code to be called in your application, before option parsing,
-# setup or command execution.
+# Puppet defines the following application lifecycle methods that are called in
+# the following order:
 #
-# === Options
-# Puppet::Application uses +OptionParser+ to manage the application options.
-# Options are defined with the +option+ method to which are passed various
-# arguments, including the long option, the short option, a description...
-# Refer to +OptionParser+ documentation for the exact format.
-# * If the option method is given a block, this one will be called whenever
-# the option is encountered in the command-line argument.
-# * If the option method has no block, a default functionality will be used, that
-# stores the argument (or true/false if the option doesn't require an argument) in
-# the global (to the application) options array.
-# * If a given option was not defined by a the +option+ method, but it exists as a Puppet settings:
-#  * if +unknown+ was used with a block, it will be called with the option name and argument
-#  * if +unknown+ wasn't used, then the option/argument is handed to Puppet.settings.handlearg for
-#    a default behavior
+# * {#initialize}
+# * {#initialize_app_defaults}
+# * {#preinit}
+# * {#parse_options}
+# * {#setup}
+# * {#main}
 #
-# --help is managed directly by the Puppet::Application class, but can be overridden.
-#
-# === Setup
-# Applications can use the setup block to perform any initialization.
-# The default +setup+ behaviour is to: read Puppet configuration and manage log level and destination
-#
-# === What and how to run
-# If the +dispatch+ block is defined it is called. This block should return the name of the registered command
-# to be run.
-# If it doesn't exist, it defaults to execute the +main+ command if defined.
-#
-# === Execution state
+# ## Execution state
 # The class attributes/methods of Puppet::Application serve as a global place to set and query the execution
 # status of the application: stopping, restarting, etc.  The setting of the application status does not directly
 # affect its running status; it's assumed that the various components within the application will consult these
@@ -104,21 +83,27 @@ module Puppet
 #
 # So, if something in your application needs to stop the process, for some reason, you might consider:
 #
+# ```
 #  def stop_me!
-#      # indicate that we're stopping
-#      Puppet::Application.stop!
-#      # ...do stuff...
+#    # indicate that we're stopping
+#    Puppet::Application.stop!
+#    # ...do stuff...
 #  end
+# ```
 #
 # And, if you have some component that involves a long-running process, you might want to consider:
 #
+# ```
 #  def my_long_process(giant_list_to_munge)
-#      giant_list_to_munge.collect do |member|
-#          # bail if we're stopping
-#          return if Puppet::Application.stop_requested?
-#          process_member(member)
-#      end
+#    giant_list_to_munge.collect do |member|
+#      # bail if we're stopping
+#      return if Puppet::Application.stop_requested?
+#      process_member(member)
+#    end
 #  end
+# ```
+# @abstract
+# @api public
 class Application
   require 'puppet/util'
   include Puppet::Util
@@ -137,34 +122,42 @@ class Application
       self.run_status = nil
     end
 
+    # Signal that the application should stop.
+    # @api public
     def stop!
       self.run_status = :stop_requested
     end
 
+    # Signal that the application should restart.
+    # @api public
     def restart!
       self.run_status = :restart_requested
     end
 
     # Indicates that Puppet::Application.restart! has been invoked and components should
     # do what is necessary to facilitate a restart.
+    # @api public
     def restart_requested?
       :restart_requested == run_status
     end
 
     # Indicates that Puppet::Application.stop! has been invoked and components should do what is necessary
     # for a clean stop.
+    # @api public
     def stop_requested?
       :stop_requested == run_status
     end
 
     # Indicates that one of stop! or start! was invoked on Puppet::Application, and some kind of process
     # shutdown/short-circuit may be necessary.
+    # @api public
     def interrupted?
       [:restart_requested, :stop_requested].include? run_status
     end
 
     # Indicates that Puppet::Application believes that it's in usual running run_mode (no stop/restart request
     # currently active).
+    # @api public
     def clear?
       run_status.nil?
     end
@@ -270,14 +263,21 @@ class Application
     end
     private :try_load_class
 
+    # Return an instance of the specified application.
+    #
+    # @param [Symbol] name the lowercase name of the application
+    # @return [Puppet::Application] an instance of the specified name
+    # @raise [Puppet::Error] if the application class was not found.
+    # @raise [LoadError] if there was a problem loading the application file.
+    # @api public
     def [](name)
       find(name).new
     end
 
     # Sets or gets the run_mode name. Sets the run_mode name if a mode_name is
     # passed. Otherwise, gets the run_mode or a default run_mode
-    #
-    def run_mode( mode_name = nil)
+    # @api public
+    def run_mode(mode_name = nil)
       if mode_name
         Puppet.settings.preferred_run_mode = mode_name
       end
@@ -288,12 +288,19 @@ class Application
       @run_mode = Puppet::Util::RunMode[ mode_name || Puppet.settings.preferred_run_mode ]
     end
 
-    # Sets environment_mode name
+    # Sets environment_mode name. When acting as a compiler, the environment mode
+    # should be `:local` since the directory must exist to compile the catalog.
+    # When acting as an agent, the environment mode should be `:remote` since
+    # the Puppet[:environment] setting refers to an environment directoy on a remote
+    # system. The `:not_required` mode is for cases where the application does not
+    # need an environment to run.
+    #
     # @param mode_name [Symbol] The name of the environment mode to run in. May
-    #   be one of :local, :remote, or :not_required. This impacts where the
-    #   application looks for its specified environment. If :not_required or
-    #   :remote are set, the application will not fail if the environment does
+    #   be one of `:local`, `:remote`, or `:not_required`. This impacts where the
+    #   application looks for its specified environment. If `:not_required` or
+    #   `:remote` are set, the application will not fail if the environment does
     #   not exist on the local filesystem.
+    # @api public
     def environment_mode(mode_name)
       raise Puppet::Error, _("Invalid environment mode '%{mode_name}'") % { mode_name: mode_name } unless [:local, :remote, :not_required].include?(mode_name)
       @environment_mode = mode_name
@@ -301,11 +308,14 @@ class Application
 
     # Gets environment_mode name. If none is set with `environment_mode=`,
     # default to :local.
+    # @return [Symbol] The current environment mode
+    # @api public
     def get_environment_mode
       @environment_mode || :local
     end
 
     # This is for testing only
+    # @api public
     def clear_everything_for_tests
       @run_mode = @banner = @run_status = @option_parser_commands = nil
     end
@@ -327,37 +337,66 @@ class Application
     exit(0)
   end
 
-  def app_defaults()
-    Puppet::Settings.app_defaults_for_run_mode(self.class.run_mode).merge(
-        :name => name
-    )
-  end
-
-  def initialize_app_defaults()
-    Puppet.settings.initialize_app_defaults(app_defaults)
-  end
-
-  # override to execute code before running anything else
-  def preinit
-  end
-
+  # Initialize the application receiving the {Puppet::Util::CommandLine} object
+  # containing the application name and arguments.
+  #
+  # @param command_line [Puppet::Util::CommandLine] An instance of the command line to create the application with
+  # @api public
   def initialize(command_line = Puppet::Util::CommandLine.new)
     @command_line = CommandLineArgs.new(command_line.subcommand_name, command_line.args.dup)
     @options = {}
   end
 
-  # call in setup of subclass to deprecate an application
+  # Now that the `run_mode` has been resolved, return default settings for the
+  # application. Note these values may be overridden when puppet's configuration
+  # is loaded later.
+  #
+  # @example To override the facts terminus:
+  #   def app_defaults
+  #     super.merge({
+  #       :facts_terminus => 'yaml'
+  #     })
+  #   end
+  #
+  # @return [Hash<String, String>] default application settings
+  # @api public
+  def app_defaults
+    Puppet::Settings.app_defaults_for_run_mode(self.class.run_mode).merge(
+        :name => name
+    )
+  end
+
+  # Initialize application defaults. It's usually not necessary to override this method.
+  # @return [void]
+  # @api public
+  def initialize_app_defaults()
+    Puppet.settings.initialize_app_defaults(app_defaults)
+  end
+
+  # The preinit block is the first code to be called in your application, after
+  # `initialize`, but before option parsing, setup or command execution. It is
+  # usually not necessary to override this method.
+  # @return [void]
+  # @api public
+  def preinit
+  end
+
+  # Call in setup of subclass to deprecate an application.
+  # @return [void]
+  # @api public
   def deprecate
     @deprecated = true
   end
 
+  # Return true if this application is deprecated.
+  # @api public
   def deprecated?
     @deprecated
   end
 
-  # Execute the application.
-  # @api public
+  # Execute the application. This method should not be overridden.
   # @return [void]
+  # @api public
   def run
 
     # I don't really like the names of these lifecycle phases.  It would be nice to change them to some more meaningful
@@ -382,18 +421,34 @@ class Application
     exit_on_fail(_("Could not run"))                                          { run_command }
   end
 
+  # This method must be overridden and perform whatever action is required for
+  # the application. The `command_line` reader contains the actions and
+  # arguments.
+  # @return [void]
+  # @api public
   def main
     raise NotImplementedError, _("No valid command or main")
   end
 
+  # Run the application. By default, it calls {#main}.
+  # @return [void]
+  # @api public
   def run_command
     main
   end
 
+  # Setup the application. It is usually not necessary to override this method.
+  # @return [void]
+  # @api public
   def setup
     setup_logs
   end
 
+  # Setup logging. By default the `console` log destination will only be created
+  # if `debug` or `verbose` is specified on the command line. Override to customize
+  # the logging behavior.
+  # @return [void]
+  # @api public
   def setup_logs
     handle_logdest_arg(Puppet[:logdest]) if !options[:setdest]
 
@@ -436,11 +491,10 @@ class Application
   # Output basic information about the runtime environment for debugging
   # purposes.
   #
-  # @api public
-  #
   # @param extra_info [Hash{String => #to_s}] a flat hash of extra information
   #   to log. Intended to be passed to super by subclasses.
   # @return [void]
+  # @api public
   def log_runtime_environment(extra_info=nil)
     runtime_info = {
       'puppet_version' => Puppet.version,
@@ -453,6 +507,21 @@ class Application
     Puppet.debug 'Runtime environment: ' + runtime_info.map{|k,v| k + '=' + v.to_s}.join(', ')
   end
 
+  # Options defined with the `option` method are parsed from settings and the command line.
+  # Refer to {OptionParser} documentation for the exact format. Options are parsed as follows:
+  #
+  # * If the option method is given a block, then it will be called whenever the option is encountered in the command-line argument.
+  # * If the option method has no block, then the default option handler will store the argument in the `options` instance variable.
+  # * If a given option was not defined by an `option` method, but it exists as a Puppet setting:
+  #   * if `unknown` was used with a block, it will be called with the option name and argument.
+  #   * if `unknown` wasn't used, then the option/argument is handed to Puppet.settings.handlearg for
+  #     a default behavior.
+  #  * The `-h` and `--help` options are automatically handled by the command line before creating the application.
+  #
+  # Options specified on the command line override settings. It is usually not
+  # necessary to override this method.
+  # @return [void]
+  # @api public
   def parse_options
     # Create an option parser
     option_parser = OptionParser.new(self.class.banner)
@@ -500,6 +569,9 @@ class Application
     self.class.to_s.sub(/.*::/,"").downcase.to_sym
   end
 
+  # Return the text to display when running `puppet help`.
+  # @return [String] The help to display
+  # @api public
   def help
     _("No help available for puppet %{app_name}") % { app_name: name }
   end
@@ -507,6 +579,8 @@ class Application
   # The description used in top level `puppet help` output
   # If left empty in implementations, we will attempt to extract
   # the summary from the help text itself.
+  # @return [String]
+  # @api public
   def summary
     ""
   end

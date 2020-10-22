@@ -1,5 +1,5 @@
-# A pool for persistent <tt>Net::HTTP</tt> connections. Connections are
-# stored in the pool indexed by their {Puppet::HTTP::Site Site}.
+# A pool for persistent `Net::HTTP` connections. Connections are
+# stored in the pool indexed by their {Site}.
 # Connections are borrowed from the pool, yielded to the caller, and
 # released back into the pool. If a connection is expired, it will be
 # closed either when a connection to that site is requested, or when
@@ -7,7 +7,6 @@
 # same site, and will be reused in MRU order.
 #
 # @api private
-#
 class Puppet::HTTP::Pool
   attr_reader :factory, :keepalive_timeout
 
