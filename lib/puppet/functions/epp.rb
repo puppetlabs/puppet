@@ -40,6 +40,7 @@ Puppet::Functions.create_function(:epp, Puppet::Functions::InternalFunction) do
     scope_param
     param 'String', :path
     optional_param 'Hash[Pattern[/^\w+$/], Any]', :parameters
+    return_type 'Variant[String, Sensitive[String]]'
   end
 
   def epp(scope, path, parameters = nil)

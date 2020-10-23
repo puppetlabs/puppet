@@ -386,6 +386,19 @@ class Puppet::Settings
     call_hooks_deferred_to_application_initialization
     issue_deprecations
 
+    run_mode = Puppet::Util::RunMode[self.preferred_run_mode]
+    if run_mode.agent? || run_mode.server?
+      if self.set_in_section?(:masterport, run_mode.name) && !self.set_in_section?(:serverport, run_mode.name)
+        self[:serverport] = self[:masterport]
+      elsif self.set_by_config?(:masterport) && !self.set_by_config?(:serverport)
+        self[:serverport] = self[:masterport]
+      elsif self.set_in_section?(:serverport, run_mode.name) && !self.set_in_section?(:masterport, run_mode.name)
+        self[:masterport] = self[:serverport]
+      elsif self.set_by_config?(:serverport) && !self.set_by_config?(:masterport)
+        self[:masterport] = self[:serverport]
+      end
+    end
+
     REQUIRED_APP_SETTINGS.each do |key|
       create_ancestors(Puppet[key])
     end
@@ -914,6 +927,16 @@ class Puppet::Settings
       if vals
         vals.lookup(param)
       end
+    end
+  end
+
+  # Allow later inspection to determine if the setting was set by user
+  # config, rather than a default setting.
+  def set_in_section?(param, section)
+    param = param.to_sym
+    vals = searchpath_values(SearchPathElement.new(section, :section))
+    if vals
+      vals.lookup(param)
     end
   end
 
