@@ -14,10 +14,6 @@ describe Puppet::Node::Json do
       indirection.terminus_class = :json
     end
 
-    it 'is saves node details' do
-      indirection.save(node)
-    end
-
     it 'saves the instance of the node as JSON to disk' do
       indirection.save(node)
       json = Puppet::FileSystem.read(file, :encoding => 'bom|utf-8')
