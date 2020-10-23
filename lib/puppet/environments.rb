@@ -397,6 +397,18 @@ module Puppet::Environments
     end
     private :add_entry
 
+    # Clears a cache entry
+    #
+    def clear_entry(name, entry)
+      Puppet.debug {"Evicting cache entry for environment '#{name}'"}
+      @cache_expiration_service.evicted(name.to_sym)
+      @cache.delete(name)
+      Puppet::GettextConfig.delete_text_domain(name)
+      @expirations.delete(entry.expires)
+      @next_expiration = @expirations.first || END_OF_TIME
+      Puppet.settings.clear_environment_settings(name)
+    end
+    private :clear_entry
 
     # Clears all cached environments.
     # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
@@ -462,13 +474,7 @@ module Puppet::Environments
       return unless entry
 
       if entry.expired?(t) || @cache_expiration_service.expired?(name.to_sym)
-        Puppet.debug {"Evicting cache entry for environment '#{name}'"}
-        @cache_expiration_service.evicted(name.to_sym)
-        @cache.delete(name)
-        Puppet::GettextConfig.delete_text_domain(name)
-        @expirations.delete(entry.expires)
-        @next_expiration = @expirations.first || END_OF_TIME
-        Puppet.settings.clear_environment_settings(name)
+        clear_entry(name, entry)
       end
     end
 
