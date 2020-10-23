@@ -1,8 +1,10 @@
-
 require 'spec_helper'
+
+require 'puppet_spec/compiler'
 
 describe "the inline_epp function" do
   include PuppetSpec::Files
+  include PuppetSpec::Compiler
 
   let :node     do Puppet::Node.new('localhost') end
   let :compiler do Puppet::Parser::Compiler.new(node) end
@@ -73,6 +75,29 @@ describe "the inline_epp function" do
     expect(eval_template("string was: <%= $string %>")).to eq("string was: the string value")
   end
 
+  context "when using Sensitive" do
+    it "returns an unwrapped sensitive value as a String" do
+      expect(eval_and_collect_notices(<<~END)).to eq(["opensesame"])
+        notice(inline_epp("<%= Sensitive('opensesame').unwrap %>"))
+      END
+    end
+
+    it "rewraps a sensitive value" do
+      # note entire result is redacted, not just sensitive part
+      expect(eval_and_collect_notices(<<~END)).to eq(["Sensitive [value redacted]"])
+        notice(inline_epp("This is sensitive <%= Sensitive('opensesame') %>"))
+      END
+    end
+
+    it "can be double wrapped" do
+      catalog = compile_to_catalog(<<~END)
+        notify { 'title':
+          message => Sensitive(inline_epp("<%= Sensitive('opensesame') %>"))
+        }
+      END
+      expect(catalog.resource(:notify, 'title')['message']).to eq('opensesame')
+    end
+  end
 
   def eval_template_with_args(content, args_hash)
     epp_function.call(scope, content, args_hash)

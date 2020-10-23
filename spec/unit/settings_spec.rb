@@ -897,6 +897,144 @@ describe Puppet::Settings do
       expect(metadata(@settings.setting(:myfile))).to eq({:mode => "664"})
     end
 
+    context "when setting serverport and masterport" do
+      before(:each) do
+        default_values = {}
+        PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|
+          default_values[key] = 'default value'
+        end
+        @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
+        @settings.define_settings :server, :masterport => { :desc => "a", :default => 1000 }
+        @settings.define_settings :server, :serverport => { :desc => "a", :default => 1000 }
+        @settings.define_settings :server, :ca_port => { :desc => "a", :default => "$serverport" }
+        @settings.define_settings :server, :report_port => { :desc => "a", :default => "$serverport" }
+        expect(@settings).to receive(:read_file).and_return(text)
+        @settings.send(:parse_config_files)
+        @settings.initialize_app_defaults(default_values.merge(:run_mode => :agent))
+        expect(@settings.preferred_run_mode).to eq(:agent)
+      end
+
+      context 'with serverport in main and masterport in agent' do
+        let(:text) do
+          "[main]
+      serverport = 444
+      [agent]
+      masterport = 445
+      "
+        end
+
+        it { expect(@settings[:serverport]).to eq(445) }
+        it { expect(@settings[:ca_port]).to eq("445") }
+        it { expect(@settings[:report_port]).to eq("445") }
+      end
+
+      context 'with serverport and masterport in main' do
+        let(:text) do
+          "[main]
+      serverport = 445
+      masterport = 444
+      "
+        end
+
+        it { expect(@settings[:serverport]).to eq(445) }
+        it { expect(@settings[:ca_port]).to eq("445") }
+        it { expect(@settings[:report_port]).to eq("445") }
+      end
+
+      context 'with serverport and masterport in agent' do
+        let(:text) do
+          "[agent]
+      serverport = 445
+      masterport = 444
+      "
+        end
+
+        it { expect(@settings[:serverport]).to eq(445) }
+        it { expect(@settings[:ca_port]).to eq("445") }
+        it { expect(@settings[:report_port]).to eq("445") }
+      end
+
+      context 'with both serverport and masterport in main and agent' do
+        let(:text) do
+          "[main]
+      serverport = 447
+      masterport = 442
+      [agent]
+      serverport = 445
+      masterport = 444
+      "
+        end
+
+        it { expect(@settings[:serverport]).to eq(445) }
+        it { expect(@settings[:ca_port]).to eq("445") }
+        it { expect(@settings[:report_port]).to eq("445") }
+      end
+
+      context 'with serverport in agent and masterport in main' do
+        let(:text) do
+          "[agent]
+      serverport = 444
+      [main]
+      masterport = 445
+      "
+        end
+
+        it { expect(@settings[:serverport]).to eq(444) }
+        it { expect(@settings[:ca_port]).to eq("444") }
+        it { expect(@settings[:report_port]).to eq("444") }
+      end
+
+      context 'with masterport in main' do
+        let(:text) do
+          "[main]
+      masterport = 445
+      "
+        end
+
+        it { expect(@settings[:serverport]).to eq(445) }
+        it { expect(@settings[:ca_port]).to eq("445") }
+        it { expect(@settings[:report_port]).to eq("445") }
+      end
+
+      context 'with masterport in agent' do
+        let(:text) do
+          "[agent]
+      masterport = 445
+      "
+        end
+
+        it { expect(@settings[:serverport]).to eq(445) }
+        it { expect(@settings[:ca_port]).to eq("445") }
+        it { expect(@settings[:report_port]).to eq("445") }
+      end
+
+      context 'with serverport in agent' do
+        let(:text) do
+          "[agent]
+      serverport = 445
+      "
+        end
+
+        it { expect(@settings[:serverport]).to eq(445) }
+        it { expect(@settings[:masterport]).to eq(445) }
+        it { expect(@settings[:ca_port]).to eq("445") }
+        it { expect(@settings[:report_port]).to eq("445") }
+      end
+
+      context 'with serverport in main' do
+        let(:text) do
+          "[main]
+      serverport = 445
+      "
+        end
+
+        it { expect(@settings[:serverport]).to eq(445) }
+        it { expect(@settings[:masterport]).to eq(445) }
+        it { expect(@settings[:ca_port]).to eq("445") }
+        it { expect(@settings[:report_port]).to eq("445") }
+      end
+    end
+
     it "does not use the metadata from the same setting in a different section" do
       default_values = {}
       PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|

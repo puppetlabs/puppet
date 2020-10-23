@@ -181,4 +181,12 @@ describe "Defaults" do
       end
     end
   end
+
+  describe "deprecated settings" do
+    it 'does not issue a deprecation warning by default' do
+      expect(Puppet).to receive(:deprecation_warning).never
+
+      Puppet.initialize_settings
+    end
+  end
 end
