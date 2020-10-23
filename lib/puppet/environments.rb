@@ -397,24 +397,33 @@ module Puppet::Environments
     end
     private :add_entry
 
+    def clear_entry(name, entry)
+      @cache.delete(name)
+      Puppet.debug {"Evicting cache entry for environment '#{name}'"}
+      @cache_expiration_service.evicted(name.to_sym)
+      Puppet::GettextConfig.delete_text_domain(name)
+      @expirations.delete(entry.expires)
+      @next_expiration = @expirations.first || END_OF_TIME
+      Puppet.settings.clear_environment_settings(name)
+    end
+    private :clear_entry
+
     # Clears the cache of the environment with the given name.
     # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
     def clear(name)
-      cache_entry = @cache.delete(name)
-      if cache_entry
-        Puppet.debug {"Evicting cache entry for environment '#{name}'"}
-        @cache_expiration_service.evicted(name.to_sym)
-        Puppet::GettextConfig.delete_text_domain(name)
-        @expirations.delete(cache_entry.expires)
-        @next_expiration = @expirations.first || END_OF_TIME
-        Puppet.settings.clear_environment_settings(name)
-      end
+      entry = @cache[name]
+      clear_entry(name, entry) if entry
     end
 
     # Clears all cached environments.
     # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
-    def clear_all()
+    def clear_all
       super
+
+      @cache.each_pair do |name, entry|
+        clear_entry(name, entry)
+      end
+
       @cache = {}
       @expirations.clear
       @next_expiration = END_OF_TIME
@@ -475,13 +484,7 @@ module Puppet::Environments
       return unless entry
 
       if entry.expired?(t) || @cache_expiration_service.expired?(name.to_sym)
-        @cache.delete(name)
-        Puppet.debug {"Evicting cache entry for environment '#{name}'"}
-        @cache_expiration_service.evicted(name.to_sym)
-        Puppet::GettextConfig.delete_text_domain(name)
-        @expirations.delete(entry.expires)
-        @next_expiration = @expirations.first || END_OF_TIME
-        Puppet.settings.clear_environment_settings(name)
+        clear_entry(name, entry)
       end
     end
 

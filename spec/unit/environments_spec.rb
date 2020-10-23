@@ -656,6 +656,15 @@ config_version=$vardir/random/scripts
         expect(service.evicted_envs).to eq([:an_environment])
       end
 
+      it "clears all environments" do
+        with_environment_loaded(service) do |cached|
+          cached.get!(:another_environment)
+          cached.clear_all
+        end
+
+        expect(service.evicted_envs).to eq([:an_environment, :another_environment])
+      end
+
       it "does not evict an unexpired environment" do
         Puppet[:environment_timeout] = 'unlimited'
 
