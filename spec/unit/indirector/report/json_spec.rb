@@ -1,9 +1,9 @@
 require 'spec_helper'
 
 require 'puppet/transaction/report'
-require 'puppet/indirector/report/yaml'
+require 'puppet/indirector/report/json'
 
-describe Puppet::Transaction::Report::Yaml do
+describe Puppet::Transaction::Report::Json do
   describe '#save' do
     subject(:indirection) { described_class.indirection }
 
@@ -17,19 +17,17 @@ describe Puppet::Transaction::Report::Yaml do
     let(:file) { request.path(:me) }
 
     before do
-      indirection.terminus_class = :yaml
+      Puppet[:lastrunreport] = File.join(Puppet[:statedir], "last_run_report.json")
+
+      indirection.terminus_class = :json
     end
 
-    it 'is saves a report' do
-      indirection.save(report)
-    end
+    it 'saves the instance of the report as JSON to disk' do
 
-    it 'saves the instance of the report as YAML to disk' do
       indirection.save(report)
-      content = Puppet::Util::Yaml.safe_load_file(
-        Puppet[:lastrunreport], [Puppet::Transaction::Report]
-      )
-      expect(content.host).to eq(certname)
+      json = Puppet::FileSystem.read(Puppet[:lastrunreport], :encoding => 'bom|utf-8')
+      content = Puppet::Util::Json.load(json)
+      expect(content["host"]).to eq(certname)
     end
 
     it 'allows mode overwrite' do
@@ -62,21 +60,18 @@ describe Puppet::Transaction::Report::Yaml do
       end
     end
 
-    context 'when repport is invalid' do
-      it 'logs error' do
-        expect(Puppet).to receive(:send_log).with(:err, /Could not save yaml ziggy: can't dump anonymous class/)
-
-        report.configuration_version = Class.new
-        indirection.save(report)
-      end
-    end
-
     context 'when report cannot be saved' do
-      it 'raises Errno::EISDIR' do
+      it 'raises Error' do
         FileUtils.mkdir_p(file)
-        expect {
-          indirection.save(report)
-         }.to raise_error(Errno::EISDIR, /last_run_report.yaml/)
+        if Puppet::Util::Platform.windows?
+          expect {
+            indirection.save(report)
+           }.to raise_error(Puppet::Util::Windows::Error, /Access is denied./)
+        else
+          expect {
+            indirection.save(report)
+           }.to raise_error(Errno::EISDIR, /last_run_report.json/)
+        end
       end
     end
   end

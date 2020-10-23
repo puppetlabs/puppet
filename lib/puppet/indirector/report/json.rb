@@ -1,13 +1,13 @@
 require 'puppet/transaction/report'
-require 'puppet/indirector/yaml'
+require 'puppet/indirector/json'
 
-class Puppet::Transaction::Report::Yaml < Puppet::Indirector::Yaml
+class Puppet::Transaction::Report::Json < Puppet::Indirector::JSON
   include Puppet::Util::SymbolicFileMode
 
-  desc "Store last report as a flat file, serialized using YAML."
+  desc "Store last report as a flat file, serialized using JSON."
 
   # Force report to be saved there
-  def path(name,ext='.yaml')
+  def path(name,ext='.json')
     Puppet[:lastrunreport]
   end
 
@@ -25,7 +25,7 @@ class Puppet::Transaction::Report::Yaml < Puppet::Indirector::Yaml
 
     begin
       Puppet::Util.replace_file(filename, mode) do |fh|
-        fh.print YAML.dump(request.instance)
+        fh.print JSON.dump(request.instance)
       end
     rescue TypeError => detail
       Puppet.err _("Could not save %{indirection} %{request}: %{detail}") % { indirection: self.name, request: request.key, detail: detail }
