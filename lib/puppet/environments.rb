@@ -412,8 +412,13 @@ module Puppet::Environments
 
     # Clears all cached environments.
     # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
-    def clear_all()
+    def clear_all
       super
+
+      @cache.keys.each do |name|
+        @cache_expiration_service.evicted(name)
+        Puppet.settings.clear_environment_settings(name)
+      end
       @cache = {}
       @expirations.clear
       @next_expiration = END_OF_TIME
