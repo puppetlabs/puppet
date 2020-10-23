@@ -346,12 +346,6 @@ module Puppet::Environments
       @loader = loader
       @cache_expiration_service = Puppet::Environments::Cached.cache_expiration_service
       @cache = {}
-
-      # Holds expiration times in sorted order - next to expire is first
-      @expirations = SortedSet.new
-
-      # Infinity since it there are no entries, this is a cache of the first to expire time
-      @next_expiration = END_OF_TIME
     end
 
     # @!macro loader_list
@@ -389,11 +383,6 @@ module Puppet::Environments
       Puppet.debug {"Caching environment '#{name}' #{cache_entry.label}"}
       @cache[name] = cache_entry
       @cache_expiration_service.created(cache_entry.value)
-      expires = cache_entry.expires
-      @expirations.add(expires)
-      if @next_expiration > expires
-        @next_expiration = expires
-      end
     end
     private :add_entry
 
@@ -404,8 +393,6 @@ module Puppet::Environments
       @cache_expiration_service.evicted(name.to_sym)
       @cache.delete(name)
       Puppet::GettextConfig.delete_text_domain(name)
-      @expirations.delete(entry.expires)
-      @next_expiration = @expirations.first || END_OF_TIME
       Puppet.settings.clear_environment_settings(name)
     end
     private :clear_entry
@@ -420,8 +407,6 @@ module Puppet::Environments
         Puppet.settings.clear_environment_settings(name)
       end
       @cache = {}
-      @expirations.clear
-      @next_expiration = END_OF_TIME
       Puppet::GettextConfig.delete_environment_text_domains
     end
 
@@ -430,7 +415,6 @@ module Puppet::Environments
     #
     def clear_all_expired()
       t = Time.now
-      return if t < @next_expiration && ! @cache.any? {|name, _| @cache_expiration_service.expired?(name.to_sym) }
 
       @cache.each_pair do |name, entry|
         clear_if_expired(name, entry, t)
@@ -501,10 +485,6 @@ module Puppet::Environments
       def label
         ""
       end
-
-      def expires
-        END_OF_TIME
-      end
     end
 
     # Always evicting entry
@@ -515,10 +495,6 @@ module Puppet::Environments
 
       def label
         "(ttl = 0 sec)"
-      end
-
-      def expires
-        START_OF_TIME
       end
     end
 
@@ -536,10 +512,6 @@ module Puppet::Environments
 
       def label
         "(ttl = #{@ttl_seconds} sec)"
-      end
-
-      def expires
-        @ttl
       end
     end
 
