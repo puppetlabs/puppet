@@ -67,4 +67,22 @@ describe Puppet::Application::Facts do
                .and output(expected).to_stdout
     end
   end
+
+  context 'when default action is called' do
+    let(:expected) { "---\nfilesystems: apfs,autofs,devfs\nmacaddress: 64:52:11:22:03:25\n" }
+
+    before :each do
+      Puppet::Node::Facts.indirection.terminus_class = :facter
+      allow(Facter).to receive(:resolve).and_return(values)
+      app.command_line.args = %w{--render-as yaml}
+    end
+
+    it 'calls show action' do
+      expect {
+        app.run
+      }.to exit_with(0)
+               .and output(expected).to_stdout
+      expect(app.action.name).to eq(:show)
+    end
+  end
 end

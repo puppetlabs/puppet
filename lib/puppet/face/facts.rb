@@ -31,7 +31,6 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
 
     $ puppet facts find
   EOT
-  find.default = true
 
   deactivate_action(:destroy)
   deactivate_action(:search)
@@ -85,12 +84,13 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
   end
 
   action(:show) do
-    summary _("Facter plugin sync")
+    summary _("Retrieve current node's facts.")
     arguments _("[<facts>]")
     description <<-'EOT'
-    Reads facts from the local system using facter gem.
+    Reads facts from the local system using `facter` terminus.
+    A query can be provided to retrieve just a specific fact or a set of facts.
     EOT
-    returns "The output of facter with added puppet specific facts"
+    returns "The output of facter with added puppet specific facts."
     notes <<-'EOT'
 
     EOT
@@ -99,6 +99,7 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
 
     $ puppet facts show os
     EOT
+    default true
 
     option("--config-file " + _("<path>")) do
       default_to { nil }
