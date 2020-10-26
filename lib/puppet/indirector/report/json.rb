@@ -24,7 +24,7 @@ class Puppet::Transaction::Report::Json < Puppet::Indirector::JSON
     FileUtils.mkdir_p(File.dirname(filename))
 
     begin
-      Puppet::Util.replace_file(filename, mode) do |fh|
+      Puppet::FileSystem.replace_file(filename, mode) do |fh|
         fh.print JSON.dump(request.instance)
       end
     rescue TypeError => detail
