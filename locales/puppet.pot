@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.19.0-342-g36d30c1b1d\n"
+"Project-Id-Version: Puppet automation framework 6.19.1-378-g1ea1f3c274\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-10-21 23:36+0000\n"
-"PO-Revision-Date: 2020-10-21 23:36+0000\n"
+"POT-Creation-Date: 2020-10-26 09:06+0000\n"
+"PO-Revision-Date: 2020-10-26 09:06+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -120,59 +120,59 @@ msgstr ""
 msgid "Failed to acquire lock"
 msgstr ""
 
-#: ../lib/puppet/application.rb:238
+#: ../lib/puppet/application.rb:231
 msgid "Unable to find application '%{application_name}'. %{error}"
 msgstr ""
 
-#: ../lib/puppet/application.rb:259
+#: ../lib/puppet/application.rb:252
 msgid "Unable to load application class '%{class_name}' from file 'puppet/application/%{application_name}.rb'"
 msgstr ""
 
-#: ../lib/puppet/application.rb:298
+#: ../lib/puppet/application.rb:305
 msgid "Invalid environment mode '%{mode_name}'"
 msgstr ""
 
-#: ../lib/puppet/application.rb:366
+#: ../lib/puppet/application.rb:405
 msgid "Could not get application-specific default settings"
 msgstr ""
 
-#: ../lib/puppet/application.rb:372
+#: ../lib/puppet/application.rb:411
 msgid "Could not initialize"
 msgstr ""
 
-#: ../lib/puppet/application.rb:373
+#: ../lib/puppet/application.rb:412
 msgid "Could not parse application options"
 msgstr ""
 
-#: ../lib/puppet/application.rb:374
+#: ../lib/puppet/application.rb:413
 msgid "Could not prepare for execution"
 msgstr ""
 
-#: ../lib/puppet/application.rb:377
+#: ../lib/puppet/application.rb:416
 msgid "`puppet %{name}` is deprecated and will be removed in a future release."
 msgstr ""
 
-#: ../lib/puppet/application.rb:380
+#: ../lib/puppet/application.rb:419
 msgid "Could not configure routes from %{route_file}"
 msgstr ""
 
-#: ../lib/puppet/application.rb:381
+#: ../lib/puppet/application.rb:420
 msgid "Could not log runtime debug info"
 msgstr ""
 
-#: ../lib/puppet/application.rb:382
+#: ../lib/puppet/application.rb:421
 msgid "Could not run"
 msgstr ""
 
-#: ../lib/puppet/application.rb:386
+#: ../lib/puppet/application.rb:430
 msgid "No valid command or main"
 msgstr ""
 
-#: ../lib/puppet/application.rb:428
+#: ../lib/puppet/application.rb:483
 msgid "Could not set logdest to %{dest}."
 msgstr ""
 
-#: ../lib/puppet/application.rb:504
+#: ../lib/puppet/application.rb:576
 msgid "No help available for puppet %{app_name}"
 msgstr ""
 
@@ -410,7 +410,7 @@ msgstr ""
 msgid "Unknown rendering format '%{format}'"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:366 ../lib/puppet/face/epp.rb:520
+#: ../lib/puppet/application/lookup.rb:366 ../lib/puppet/face/epp.rb:530
 msgid "Incorrect formatted data in %{fact_file} given via the --facts flag"
 msgstr ""
 
@@ -587,12 +587,12 @@ msgstr ""
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:450 ../lib/puppet/http/resolver/server_list.rb:67
+#: ../lib/puppet/configurer.rb:450 ../lib/puppet/http/resolver/server_list.rb:63
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:454 ../lib/puppet/http/resolver/server_list.rb:70
+#: ../lib/puppet/configurer.rb:454 ../lib/puppet/http/resolver/server_list.rb:66
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
@@ -1015,47 +1015,47 @@ msgstr ""
 msgid "[<node_certname>]"
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:40
+#: ../lib/puppet/face/facts.rb:39
 msgid "Upload local facts to the puppet master."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:78
+#: ../lib/puppet/face/facts.rb:77
 msgid "Uploading facts for '%{node}' to '%{server}'"
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:88
-msgid "Facter plugin sync"
+#: ../lib/puppet/face/facts.rb:87
+msgid "Retrieve current node's facts."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:89
+#: ../lib/puppet/face/facts.rb:88
 msgid "[<facts>]"
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:103 ../lib/puppet/face/facts.rb:108 ../lib/puppet/face/facts.rb:113 ../lib/puppet/face/module/changes.rb:21
+#: ../lib/puppet/face/facts.rb:104 ../lib/puppet/face/facts.rb:109 ../lib/puppet/face/facts.rb:114 ../lib/puppet/face/module/changes.rb:21
 msgid "<path>"
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:105
+#: ../lib/puppet/face/facts.rb:106
 msgid "The location of the config file for Facter."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:110
+#: ../lib/puppet/face/facts.rb:111
 msgid "The path to a directory that contains custom facts."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:115
+#: ../lib/puppet/face/facts.rb:116
 msgid "The path to a directory that contains external facts."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:119
+#: ../lib/puppet/face/facts.rb:120
 msgid "Disable fact blocking mechanism."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:123
+#: ../lib/puppet/face/facts.rb:124
 msgid "Disable fact caching mechanism."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:127
+#: ../lib/puppet/face/facts.rb:128
 msgid "Show legacy facts when querying all facts."
 msgstr ""
 
@@ -2179,68 +2179,68 @@ msgstr ""
 msgid "Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:90
+#: ../lib/puppet/http/client.rb:156
 msgid "Request to %{uri} timed out connect operation after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:92
+#: ../lib/puppet/http/client.rb:158
 msgid "Request to %{uri} timed out read operation after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:94
+#: ../lib/puppet/http/client.rb:160
 msgid "Request to %{uri} interrupted after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:100
+#: ../lib/puppet/http/client.rb:166
 msgid "Request to %{uri} failed after %{elapsed} seconds: %{message}"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:326
+#: ../lib/puppet/http/client.rb:369
 msgid "Sleeping for %{interval} seconds before retrying the request"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:369
+#: ../lib/puppet/http/client.rb:419
 msgid "HTTP REST queries cannot handle values of type '%{klass}'"
 msgstr ""
 
-#: ../lib/puppet/http/errors.rb:23
+#: ../lib/puppet/http/errors.rb:37
 msgid "Too many HTTP redirections for %{addr}"
 msgstr ""
 
-#: ../lib/puppet/http/errors.rb:29
+#: ../lib/puppet/http/errors.rb:45
 msgid "Too many HTTP retries for %{addr}"
 msgstr ""
 
-#: ../lib/puppet/http/pool.rb:85
+#: ../lib/puppet/http/pool.rb:84
 msgid "Failed to close connection for %{site}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/http/redirector.rb:78
+#: ../lib/puppet/http/redirector.rb:70
 msgid "Location response header is missing"
 msgstr ""
 
-#: ../lib/puppet/http/redirector.rb:82
+#: ../lib/puppet/http/redirector.rb:74
 msgid "Location URI is invalid: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/http/retry_after_handler.rb:83
+#: ../lib/puppet/http/retry_after_handler.rb:74
 msgid "Failed to parse Retry-After header '%{retry_after}' as an integer or RFC 2822 date"
 msgstr ""
 
-#: ../lib/puppet/http/service.rb:121
+#: ../lib/puppet/http/service.rb:107
 msgid "Ignoring extra header \"%{name}\" as it was previously set."
 msgstr ""
 
-#: ../lib/puppet/http/service.rb:124
+#: ../lib/puppet/http/service.rb:110
 msgid "Ignoring extra header \"%{name}\" as it has no value."
 msgstr ""
 
-#: ../lib/puppet/http/service.rb:147 ../lib/puppet/indirector/rest.rb:53
+#: ../lib/puppet/http/service.rb:133 ../lib/puppet/indirector/rest.rb:53
 msgid "No content type in http response; cannot parse"
 msgstr ""
 
 #. TRANSLATORS "pson", "preferred_serialization_format", and "puppetserver" should not be translated
-#: ../lib/puppet/http/service/report.rb:61
+#: ../lib/puppet/http/service/report.rb:59
 msgid "To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson"
 msgstr ""
 
@@ -2651,11 +2651,11 @@ msgstr ""
 msgid "invalid key"
 msgstr ""
 
-#: ../lib/puppet/indirector/json.rb:58
+#: ../lib/puppet/indirector/json.rb:62
 msgid "Could not read JSON data for %{name} %{key}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/json.rb:64
+#: ../lib/puppet/indirector/json.rb:68
 msgid "Could not parse JSON data for %{name} %{key}: %{detail}"
 msgstr ""
 
@@ -2704,6 +2704,14 @@ msgstr ""
 msgid "Could not load external node results for %{name}: %{detail}"
 msgstr ""
 
+#: ../lib/puppet/indirector/report/json.rb:19 ../lib/puppet/indirector/report/yaml.rb:19
+msgid "replace_file mode: %{mode} is invalid"
+msgstr ""
+
+#: ../lib/puppet/indirector/report/json.rb:31 ../lib/puppet/indirector/report/yaml.rb:31 ../lib/puppet/indirector/yaml.rb:32
+msgid "Could not save %{indirection} %{request}: %{detail}"
+msgstr ""
+
 #: ../lib/puppet/indirector/report/processor.rb:39
 msgid "Report %{report} failed: %{detail}"
 msgstr ""
@@ -2714,14 +2722,6 @@ msgstr ""
 
 #: ../lib/puppet/indirector/report/rest.rb:31
 msgid "Server version %{version} does not accept reports in '%{format}', use `preferred_serialization_format=pson`"
-msgstr ""
-
-#: ../lib/puppet/indirector/report/yaml.rb:19
-msgid "replace_file mode: %{mode} is invalid"
-msgstr ""
-
-#: ../lib/puppet/indirector/report/yaml.rb:31 ../lib/puppet/indirector/yaml.rb:32
-msgid "Could not save %{indirection} %{request}: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/indirector/request.rb:102
@@ -3866,60 +3866,60 @@ msgid "Given data_type value is not a data type, got '%{type}'"
 msgstr ""
 
 #. TRANSLATORS 'type' and 'title' are internal parameter names - do not translate
-#: ../lib/puppet/pal/json_catalog_encoder.rb:52
+#: ../lib/puppet/pal/json_catalog_encoder.rb:54
 msgid "Both type and title must be given"
 msgstr ""
 
 #. TRANSLATORS: do not translate the variable names in this error message
 #. TRANSLATORS: do not translate the variable names in this error message
-#: ../lib/puppet/pal/pal_impl.rb:75 ../lib/puppet/pal/pal_impl.rb:173
+#: ../lib/puppet/pal/pal_impl.rb:76 ../lib/puppet/pal/pal_impl.rb:174
 msgid "manifest_file or code_string cannot be given when configured_by_env is true"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:221
+#: ../lib/puppet/pal/pal_impl.rb:222
 msgid "temporary environment name"
 msgstr ""
 
 #. TRANSLATORS: do not translate variable name string in these assertions
-#: ../lib/puppet/pal/pal_impl.rb:226
+#: ../lib/puppet/pal/pal_impl.rb:227
 msgid "A block must be given to 'in_tmp_environment'"
 msgstr ""
 
 #. TRANSLATORS terms in the assertions below are names of terms in code
-#: ../lib/puppet/pal/pal_impl.rb:280
+#: ../lib/puppet/pal/pal_impl.rb:282
 msgid "A block must be given to 'in_environment'"
 msgstr ""
 
 #. TRANSLATORS 'in_environment' is a name, do not translate
-#: ../lib/puppet/pal/pal_impl.rb:285
+#: ../lib/puppet/pal/pal_impl.rb:287
 msgid "The environment directory '%{env_dir}' does not exist"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:308
+#: ../lib/puppet/pal/pal_impl.rb:310
 msgid "No directory found for the environment '%{env_name}' on the path '%{envpath}'"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:362
+#: ../lib/puppet/pal/pal_impl.rb:364
 msgid "Given variables must be a hash, got %{type}"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:368
+#: ../lib/puppet/pal/pal_impl.rb:370
 msgid "Given variable '%{varname}' has illegal name"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:372
+#: ../lib/puppet/pal/pal_impl.rb:374
 msgid "Given value for '%{varname}' has illegal type - got: %{type}"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:509
+#: ../lib/puppet/pal/pal_impl.rb:511
 msgid "Puppet Pal: %{what}"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:523
+#: ../lib/puppet/pal/pal_impl.rb:525
 msgid "Cannot use '%{a_term}' and '%{b_term}' at the same time"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:530
+#: ../lib/puppet/pal/pal_impl.rb:532
 msgid "A block must be given"
 msgstr ""
 
@@ -4503,23 +4503,23 @@ msgstr ""
 msgid "multi var assignment from class"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:742
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:761
 msgid "break() from context where this is illegal"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1217
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1236
 msgid "Can only append Array or Hash to a Hash"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1221
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1240
 msgid "An URI can only be merged with an URI or String"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1224
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1243
 msgid "Can only append Binary to a Binary"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1257
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1276
 msgid "Can only delete from an Array or Hash."
 msgstr ""
 
@@ -7051,61 +7051,61 @@ msgstr ""
 msgid "Attempting to initialize global default settings more than once!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:501
+#: ../lib/puppet/settings.rb:514
 msgid "Using --configprint is deprecated. Use 'puppet config <subcommand>' instead."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:643
+#: ../lib/puppet/settings.rb:656
 msgid "Could not load %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:749
+#: ../lib/puppet/settings.rb:762
 msgid "Invalid setting type '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:904
+#: ../lib/puppet/settings.rb:917
 msgid "Unknown searchpath case: %{source_type} for the %{source} settings path element."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:967
+#: ../lib/puppet/settings.rb:990
 msgid "setting definition for '%{name}' is not a hash!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:972
+#: ../lib/puppet/settings.rb:995
 msgid "Setting %{name} is already defined"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:978
+#: ../lib/puppet/settings.rb:1001
 msgid "Setting %{name} is already using short name '%{short}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1249
+#: ../lib/puppet/settings.rb:1272
 msgid "Setting %{name} is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'puppet.conf' is a file name and should not be translated
-#: ../lib/puppet/settings.rb:1254
+#: ../lib/puppet/settings.rb:1277
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1425
+#: ../lib/puppet/settings.rb:1448
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1449
+#: ../lib/puppet/settings.rb:1472
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1459
+#: ../lib/puppet/settings.rb:1482
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1460
+#: ../lib/puppet/settings.rb:1483
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1491
+#: ../lib/puppet/settings.rb:1514
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
@@ -7251,7 +7251,7 @@ msgstr ""
 msgid "%{name} has not declared what class it wraps"
 msgstr ""
 
-#: ../lib/puppet/ssl/base.rb:31 ../lib/puppet/x509/cert_provider.rb:342
+#: ../lib/puppet/ssl/base.rb:31 ../lib/puppet/x509/cert_provider.rb:370
 msgid "Certname %{name} must not contain unprintable or non-ASCII characters"
 msgstr ""
 
@@ -7351,107 +7351,107 @@ msgstr ""
 msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
 msgstr ""
 
-#: ../lib/puppet/ssl/oids.rb:110
+#: ../lib/puppet/ssl/oids.rb:112
 msgid "Error loading ssl custom OIDs mapping file from '%{custom_oid_file}': %{err}"
 msgstr ""
 
-#: ../lib/puppet/ssl/oids.rb:114
+#: ../lib/puppet/ssl/oids.rb:116
 msgid "Error loading ssl custom OIDs mapping file from '%{custom_oid_file}': no such index '%{map_key}'"
 msgstr ""
 
-#: ../lib/puppet/ssl/oids.rb:118
+#: ../lib/puppet/ssl/oids.rb:120
 msgid "Error loading ssl custom OIDs mapping file from '%{custom_oid_file}': data under index '%{map_key}' must be a Hash"
 msgstr ""
 
-#: ../lib/puppet/ssl/oids.rb:125
+#: ../lib/puppet/ssl/oids.rb:127
 msgid "Error loading ssl custom OIDs mapping file from '%{custom_oid_file}': incomplete definition of oid '%{oid}'"
 msgstr ""
 
-#: ../lib/puppet/ssl/oids.rb:157
+#: ../lib/puppet/ssl/oids.rb:159
 msgid "Error registering ssl custom OIDs mapping from file '%{custom_oid_file}': %{err}"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:66
+#: ../lib/puppet/ssl/ssl_provider.rb:83
 msgid "Failed to add '%{path}' as a trusted CA file: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:70
+#: ../lib/puppet/ssl/ssl_provider.rb:87
 msgid "The 'ssl_trust_store' setting does not refer to a file and will be ignored: '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:104
+#: ../lib/puppet/ssl/ssl_provider.rb:121
 msgid "CA certs are missing"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:105
+#: ../lib/puppet/ssl/ssl_provider.rb:122
 msgid "CRLs are missing"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:106
+#: ../lib/puppet/ssl/ssl_provider.rb:123
 msgid "Private key is missing"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:107
+#: ../lib/puppet/ssl/ssl_provider.rb:124
 msgid "Client cert is missing"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:113
+#: ../lib/puppet/ssl/ssl_provider.rb:130
 msgid "Unsupported key '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:117
+#: ../lib/puppet/ssl/ssl_provider.rb:134
 msgid "The certificate for '%{name}' does not match its private key"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:156
+#: ../lib/puppet/ssl/ssl_provider.rb:173
 msgid "Failed to load private key for host '%{name}': %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:170
+#: ../lib/puppet/ssl/ssl_provider.rb:187
 msgid "The CSR for host '%{name}' does not match the public key"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:234
+#: ../lib/puppet/ssl/ssl_provider.rb:251
 msgid "The issuer '%{issuer}' of certificate '%{subject}' cannot be found locally"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:250
+#: ../lib/puppet/ssl/ssl_provider.rb:267
 msgid "The certificate '%{subject}' is not yet valid, verify time is synchronized"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:252
+#: ../lib/puppet/ssl/ssl_provider.rb:269
 msgid "The certificate '%{subject}' has expired, verify time is synchronized"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:254
+#: ../lib/puppet/ssl/ssl_provider.rb:271
 msgid "The CRL issued by '%{issuer}' is not yet valid, verify time is synchronized"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:256
+#: ../lib/puppet/ssl/ssl_provider.rb:273
 msgid "The CRL issued by '%{issuer}' has expired, verify time is synchronized"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:258
+#: ../lib/puppet/ssl/ssl_provider.rb:275
 msgid "Invalid signature for certificate '%{subject}'"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:260
+#: ../lib/puppet/ssl/ssl_provider.rb:277
 msgid "Invalid signature for CRL issued by '%{issuer}'"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:262
+#: ../lib/puppet/ssl/ssl_provider.rb:279
 msgid "The issuer '%{issuer}' of certificate '%{subject}' is missing"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:265
+#: ../lib/puppet/ssl/ssl_provider.rb:282
 msgid "The CRL issued by '%{issuer}' is missing"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:267
+#: ../lib/puppet/ssl/ssl_provider.rb:284
 msgid "Certificate '%{subject}' is revoked"
 msgstr ""
 
-#: ../lib/puppet/ssl/ssl_provider.rb:271
+#: ../lib/puppet/ssl/ssl_provider.rb:288
 msgid "Certificate '%{subject}' failed verification (%{err}): %{err_utf8}"
 msgstr ""
 
@@ -7551,16 +7551,16 @@ msgstr ""
 msgid "Another puppet instance is already running; waiting for it to finish"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:427
+#: ../lib/puppet/ssl/state_machine.rb:429
 msgid "Verified client certificate '%{subject}' fingerprint %{digest}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:429
+#: ../lib/puppet/ssl/state_machine.rb:431
 msgid "Verified CA certificate '%{subject}' fingerprint %{digest}"
 msgstr ""
 
 #. TRANSLATORS: `error` is an untranslated message from openssl describing why a certificate in the server's chain is invalid, and `subject` is the identity/name of the failed certificate
-#: ../lib/puppet/ssl/verifier.rb:128
+#: ../lib/puppet/ssl/verifier.rb:130
 msgid "certificate verify failed [%{error} for %{subject}]"
 msgstr ""
 
@@ -9569,72 +9569,72 @@ msgstr ""
 msgid "Failed to unload user profile %{user}"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:39
+#: ../lib/puppet/x509/cert_provider.rb:45
 msgid "Failed to save CA certificates to '%{capath}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:52
+#: ../lib/puppet/x509/cert_provider.rb:59
 msgid "The CA certificates are missing from '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:56
+#: ../lib/puppet/x509/cert_provider.rb:63
 msgid "Failed to load CA certificates from '%{capath}'"
 msgstr ""
 
 #. TRANSLATORS 'PEM' is an acronym and shouldn't be translated
-#: ../lib/puppet/x509/cert_provider.rb:67
+#: ../lib/puppet/x509/cert_provider.rb:75
 msgid "Failed to parse CA certificates as PEM"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:82
+#: ../lib/puppet/x509/cert_provider.rb:91
 msgid "Failed to save CRLs to '%{crlpath}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:95
+#: ../lib/puppet/x509/cert_provider.rb:105
 msgid "The CRL is missing from '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:99
+#: ../lib/puppet/x509/cert_provider.rb:109
 msgid "Failed to load CRLs from '%{crlpath}'"
 msgstr ""
 
 #. TRANSLATORS 'PEM' is an acronym and shouldn't be translated
-#: ../lib/puppet/x509/cert_provider.rb:110
+#: ../lib/puppet/x509/cert_provider.rb:121
 msgid "Failed to parse CRLs as PEM"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:156
+#: ../lib/puppet/x509/cert_provider.rb:171
 msgid "Failed to save private key for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:175
+#: ../lib/puppet/x509/cert_provider.rb:191
 msgid "The private key is missing from '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:179
+#: ../lib/puppet/x509/cert_provider.rb:195
 msgid "Failed to load private key for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:235
+#: ../lib/puppet/x509/cert_provider.rb:255
 msgid "Failed to save client certificate for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:250
+#: ../lib/puppet/x509/cert_provider.rb:271
 msgid "The client certificate is missing from '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:254
+#: ../lib/puppet/x509/cert_provider.rb:275
 msgid "Failed to load client certificate for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:300
+#: ../lib/puppet/x509/cert_provider.rb:324
 msgid "Failed to save certificate request for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:315
+#: ../lib/puppet/x509/cert_provider.rb:340
 msgid "Failed to load certificate request for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:326
+#: ../lib/puppet/x509/cert_provider.rb:353
 msgid "Failed to delete certificate request for '%{name}'"
 msgstr ""
