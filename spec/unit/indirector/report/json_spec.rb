@@ -4,6 +4,7 @@ require 'puppet/transaction/report'
 require 'puppet/indirector/report/json'
 
 describe Puppet::Transaction::Report::Json do
+  include PuppetSpec::Files
   describe '#save' do
     subject(:indirection) { described_class.indirection }
 
