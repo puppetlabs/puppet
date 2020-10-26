@@ -1302,6 +1302,7 @@ EOT
     },
     :serverport => {
       :default    => 8140,
+      :type       => :port,
       :desc       => "The default port puppet subcommands use to communicate
       with Puppet Server. (eg `puppet facts upload`, `puppet agent`). May be
       overridden by more specific settings (see `ca_port`, `report_port`).",
@@ -1310,7 +1311,8 @@ EOT
       end
     },
     :masterport => {
-      :default    => 8140,
+      :default    => "$serverport",
+      :type       => :port,
       :desc       => "The default port puppet subcommands use to communicate
       with Puppet Server. (eg `puppet facts upload`, `puppet agent`). May be
       overridden by more specific settings (see `ca_port`, `report_port`).",
@@ -1633,6 +1635,7 @@ EOT
     },
     :ca_port => {
       :default    => "$serverport",
+      :type       => :port,
       :desc       => "The port to use for the certificate authority.",
     },
     :preferred_serialization_format => {
@@ -1722,6 +1725,7 @@ EOT
     },
     :report_port => {
       :default  => "$serverport",
+      :type     => :port,
       :desc     => "The port to communicate with the report_server.",
     },
     :report => {
