@@ -2055,7 +2055,7 @@ MANIFEST
 file { '#{@confdir}/puppet.conf' :
   ensure => file,
   mode => "0664",
-  content => "[master]
+  content => "[server]
 vardir = /opt/puppetlabs/server/data/puppetserver
 logdir = /var/log/puppetlabs/puppetserver
 rundir = /var/run/puppetlabs/puppetserver
@@ -2074,7 +2074,7 @@ MANI1
 file { '#{@confdir}/puppet.conf' :
   ensure => file,
   mode => "0664",
-  content => "[master]
+  content => "[server]
 vardir = /opt/puppetlabs/server/data/puppetserver
 logdir = /var/log/puppetlabs/puppetserver
 rundir = /var/run/puppetlabs/puppetserver
@@ -2093,7 +2093,7 @@ MANI2
 file { '#{@confdir}/puppet.conf' :
   ensure => file,
   mode => "0664",
-  content => "[master]
+  content => "[server]
 vardir = /opt/puppetlabs/server/data/puppetserver
 logdir = /var/log/puppetlabs/puppetserver
 rundir = /var/run/puppetlabs/puppetserver
@@ -2112,7 +2112,7 @@ MANI3
 file { '#{@confdir}/puppet.conf' :
   ensure => file,
   mode => "0664",
-  content => "[master]
+  content => "[server]
 vardir = /opt/puppetlabs/server/data/puppetserver
 logdir = /var/log/puppetlabs/puppetserver
 rundir = /var/run/puppetlabs/puppetserver
@@ -2144,14 +2144,14 @@ puts (\\\"\#{node2env[nodename]}\\\" ||'')
 file { '#{@confdir}/puppet.conf' :
   ensure => file,
   mode => "0664",
-  content => "[master]
+  content => "[server]
 vardir = /opt/puppetlabs/server/data/puppetserver
 logdir = /var/log/puppetlabs/puppetserver
 rundir = /var/run/puppetlabs/puppetserver
 pidfile = /var/run/puppetlabs/puppetserver/puppetserver.pid
 codedir = #{@coderoot}
 
-[master]
+[server]
 node_terminus = exec
 external_nodes = #{@coderoot}/enc.rb
 
