@@ -12,7 +12,7 @@ describe "setting hooks" do
     end
 
     it "accesses correct directory environment settings after initializing a setting with an on_write hook" do
-      expect(Puppet.settings.setting(:certname).call_hook).to eq(:on_write_only) 
+      expect(Puppet.settings.setting(:strict).call_hook).to eq(:on_write_only)
 
       File.open(File.join(confdir, "puppet.conf"), "w:UTF-8") do |f|
         f.puts("environmentpath=#{environmentpath}")

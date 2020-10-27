@@ -1,3 +1,4 @@
+require 'set'
 require 'puppet/settings/errors'
 
 # The base setting type
@@ -5,27 +6,50 @@ class Puppet::Settings::BaseSetting
   attr_accessor :name, :desc, :section, :default, :call_hook
   attr_reader :short, :deprecated
 
+  # Hooks are called during different parts of the settings lifecycle:
+  #
+  # * :on_write_only - This is the default hook type. The hook will be called
+  #   if its value is set in `main` or programmatically. If its value is set in
+  #   a section that doesn't match the application's run mode, it will be
+  #   ignored entirely. If the section does match the run mode, the value will
+  #   be used, but the hook will not be called!
+  #
+  # * :on_define_and_write - The hook behaves the same as above, except it is
+  #   also called immediately when the setting is defined in
+  #   {Puppet::Settings.define_settings}. In that case, the hook receives the
+  #   default value as specified.
+  #
+  # * :on_initialize_and_write - The hook will be called if the value is set in
+  #   `main`, the section that matches the run mode, or programmatically.
+  #
+  HOOK_TYPES = Set.new([:on_define_and_write, :on_initialize_and_write, :on_write_only]).freeze
+
   def self.available_call_hook_values
-    [:on_define_and_write, :on_initialize_and_write, :on_write_only]
+    HOOK_TYPES.to_a
   end
 
+  # Registers a hook to be called later based on the type of hook specified in `value`.
+  #
+  # @param value [Symbol] One of {HOOK_TYPES}
   def call_hook=(value)
     if value.nil?
       #TRANSLATORS ':%{name}', ':call_hook', and ':on_write_only' should not be translated
       Puppet.warning _("Setting :%{name} :call_hook is nil, defaulting to :on_write_only") % { name: name }
       value = :on_write_only
     end
-    unless self.class.available_call_hook_values.include?(value)
+    unless HOOK_TYPES.include?(value)
       #TRANSLATORS 'call_hook' is a Puppet option name and should not be translated
       raise ArgumentError, _("Invalid option %{value} for call_hook") % { value: value }
     end
     @call_hook = value
   end
 
+  # @see {HOOK_TYPES}
   def call_hook_on_define?
     call_hook == :on_define_and_write
   end
 
+  # @see {HOOK_TYPES}
   def call_hook_on_initialize?
     call_hook == :on_initialize_and_write
   end
