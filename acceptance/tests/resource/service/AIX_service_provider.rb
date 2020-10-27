@@ -60,7 +60,12 @@ end
 
 agents.each do |agent|
 
-  run_nonexistent_service_tests('nonexistent_service')
+  ## Setup
+  run_nonexistent_service_tests(
+    'sloth_daemon',
+    /The sloth_daemon Subsystem is not on file/,
+    { 'starting' => 'ensure => running' }
+  )
 
   step "Setup on #{agent}"
   sloth_daemon_path = agent.tmpfile("sloth_daemon.sh")
