@@ -41,11 +41,15 @@ class Puppet::Indirector::JSON < Puppet::Indirector::Terminus
       raise ArgumentError, _("invalid key")
     end
 
-    base = Puppet.run_mode.server? ? Puppet[:server_datadir] : Puppet[:client_datadir]
+    base = data_dir
     File.join(base, self.class.indirection_name.to_s, name.to_s + ext)
   end
 
   private
+
+  def data_dir()
+    Puppet.run_mode.server? ? Puppet[:server_datadir] : Puppet[:client_datadir]
+  end
 
   def load_json_from_file(file, key)
     json = nil
