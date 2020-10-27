@@ -152,8 +152,8 @@ $ puppet filebucket \-b /tmp/TestBucket backup /tmp/TestFile2
 $ puppet filebucket \-b /tmp/TestBucket list
 d41d8cd98f00b204e9800998ecf8427e 2015\-05\-11 09:33:22 /tmp/TestFile2
 
-## From a Puppet master, list files in the master bucketdir
-$ puppet filebucket \-b $(puppet config print bucketdir \-\-section master) list
+## From a Puppet Server, list files in the server bucketdir
+$ puppet filebucket \-b $(puppet config print bucketdir \-\-section server) list
 d43a6ecaa892a1962398ac9170ea9bf2 2015\-05\-11 09:27:56 /tmp/TestFile
 7ae322f5791217e031dc60188f4521ef 2015\-05\-11 09:52:15 /tmp/TestFile
 .
