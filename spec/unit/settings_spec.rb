@@ -87,16 +87,7 @@ describe Puppet::Settings do
     end
   end
 
-
   describe "when initializing application defaults do" do
-    let(:default_values) do
-      values = {}
-      PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|
-        values[key] = 'default value'
-      end
-      values
-    end
-
     before do
       @settings = Puppet::Settings.new
       @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
@@ -104,7 +95,7 @@ describe Puppet::Settings do
 
     it "should fail if the app defaults hash is missing any required values" do
       expect {
-        @settings.initialize_app_defaults(default_values.reject { |key, _| key == :confdir })
+        @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.reject { |key, _| key == :confdir })
       }.to raise_error(Puppet::Settings::SettingsError)
     end
 
@@ -112,7 +103,7 @@ describe Puppet::Settings do
     #  case behaviors / uses.  However, until that time... we need to make sure that our private run_mode=
     #  setter method gets properly called during app initialization.
     it "sets the preferred run mode when initializing the app defaults" do
-      @settings.initialize_app_defaults(default_values.merge(:run_mode => :server))
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :server))
 
       expect(@settings.preferred_run_mode).to eq(:server)
     end
@@ -121,7 +112,7 @@ describe Puppet::Settings do
       # initialize_app_defaults is called in spec_helper, before we even
       # get here, but call it here to make it explicit what we're trying
       # to do.
-      @settings.initialize_app_defaults(default_values)
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
 
       Puppet::Settings::REQUIRED_APP_SETTINGS.each do |key|
         expect(File).to exist(File.dirname(Puppet[key]))
@@ -148,6 +139,7 @@ describe Puppet::Settings do
           end.to_not raise_error
         end
       end
+
       describe "if no interpolation error" do
         it "should not raise an error" do
           hook_values = []
@@ -177,6 +169,7 @@ describe Puppet::Settings do
               @settings.send(:call_hooks_deferred_to_application_initialization, options)
             end.to raise_error(Puppet::Settings::InterpolationError)
           end
+
           it "should contain the setting name in error message" do
             hook_values = []
             @settings.define_settings(
@@ -193,6 +186,7 @@ describe Puppet::Settings do
             end.to raise_error(Puppet::Settings::InterpolationError, /badhook/)
           end
         end
+
         describe "if no interpolation error" do
           it "should not raise an error" do
             hook_values = []
@@ -397,122 +391,320 @@ describe Puppet::Settings do
     end
 
     describe "call_hook" do
+      let(:config_file) { tmpfile('config') }
+
+      before :each do
+        # We can't specify the config file to read from using `Puppet[:config] =`
+        # or pass it as an arg to Puppet.initialize_global_settings, because
+        # both of those will set the value on the `Puppet.settings` instance
+        # which is different from the `@settings` instance created in the test.
+        # Instead, we define a `:config` setting and set its default value to
+        # the `config_file` temp file, and then access the `config_file` within
+        # each test.
+        @settings.define_settings(:main, :config => { :type => :file, :desc => "config file", :default => config_file })
+      end
+
       Puppet::Settings::StringSetting.available_call_hook_values.each do |val|
         describe "when :#{val}" do
           describe "and definition invalid" do
             it "should raise error if no hook defined" do
               expect do
-                @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val})
+                @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :call_hook => val})
               end.to raise_error(ArgumentError, /no :hook/)
             end
+
             it "should include the setting name in the error message" do
               expect do
-                @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val})
-              end.to raise_error(ArgumentError, /for :hooker/)
+                @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :call_hook => val})
+              end.to raise_error(ArgumentError, /for :setting/)
             end
           end
+
           describe "and definition valid" do
             before(:each) do
               hook_values = []
-              @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val, :hook => lambda { |v| hook_values << v  }})
+              @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :call_hook => val, :hook => lambda { |v| hook_values << v  }})
             end
 
             it "should call the hook when value written" do
-              expect(@settings.setting(:hooker)).to receive(:handle).with("something").once
-              @settings[:hooker] = "something"
+              expect(@settings.setting(:setting)).to receive(:handle).with("something").once
+              @settings[:setting] = "something"
             end
           end
         end
       end
 
       it "should have a default value of :on_write_only" do
-        @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
-        expect(@settings.setting(:hooker).call_hook).to eq(:on_write_only)
+        @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
+        expect(@settings.setting(:setting).call_hook).to eq(:on_write_only)
       end
 
       describe "when nil" do
         it "should generate a warning" do
           expect(Puppet).to receive(:warning)
-          @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => nil, :hook => lambda { |v| hook_values << v  }})
+          @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :call_hook => nil, :hook => lambda { |v| hook_values << v  }})
         end
+
         it "should use default" do
-          @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => nil, :hook => lambda { |v| hook_values << v  }})
-          expect(@settings.setting(:hooker).call_hook).to eq(:on_write_only)
+          @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :call_hook => nil, :hook => lambda { |v| hook_values << v  }})
+          expect(@settings.setting(:setting).call_hook).to eq(:on_write_only)
         end
       end
 
       describe "when invalid" do
         it "should raise an error" do
           expect do
-            @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => :foo, :hook => lambda { |v| hook_values << v  }})
+            @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :call_hook => :foo, :hook => lambda { |v| hook_values << v  }})
           end.to raise_error(ArgumentError, /invalid.*call_hook/i)
         end
       end
 
-      describe "when :on_define_and_write" do
-        it "should call the hook at definition" do
+      describe "when :on_write_only" do
+        it "returns its hook type" do
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |_| }})
+
+          expect(@settings.setting(:setting).call_hook).to eq(:on_write_only)
+        end
+
+        it "should not call the hook at definition" do
           hook_values = []
-          @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| hook_values << v  }})
-          expect(@settings.setting(:hooker).call_hook).to eq(:on_define_and_write)
-          expect(hook_values).to eq(%w{yay})
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
+
+          expect(hook_values).to eq(%w[])
+        end
+
+        it "calls the hook when initializing global defaults with the value from the `main` section" do
+          hook_values = []
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
+
+          File.write(config_file, <<~END)
+            [main]
+            setting=in_main
+          END
+          @settings.initialize_global_settings
+
+          expect(@settings[:setting]).to eq('in_main')
+          expect(hook_values).to eq(%w[in_main])
+        end
+
+        it "doesn't call the hook when initializing app defaults" do
+          hook_values = []
+          @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v }})
+
+          File.write(config_file, <<~END)
+            [main]
+            setting=in_main
+            [agent]
+            setting=in_agent
+          END
+          @settings.initialize_global_settings
+
+          hook_values.clear
+
+          @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
+
+          expect(@settings[:setting]).to eq('in_main')
+          expect(hook_values).to eq(%w[])
+        end
+
+        it "doesn't call the hook with value from a section that matches the run_mode" do
+          hook_values = []
+          @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |v| hook_values << v  }})
+
+          File.write(config_file, <<~END)
+            [main]
+            setting=in_main
+            [agent]
+            setting=in_agent
+          END
+          @settings.initialize_global_settings
+
+          hook_values.clear
+
+          @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :agent))
+
+          expect(@settings[:setting]).to eq('in_agent')
+          expect(hook_values).to eq(%w[])
+        end
+      end
+
+      describe "when :on_define_and_write" do
+        it "returns its hook type" do
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |_| }})
+
+          expect(@settings.setting(:setting).call_hook).to eq(:on_define_and_write)
+        end
+
+        it "should call the hook at definition with the default value" do
+          hook_values = []
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| hook_values << v  }})
+
+          expect(hook_values).to eq(%w[yay])
+        end
+
+        it "calls the hook when initializing global defaults with the value from the `main` section" do
+          hook_values = []
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| hook_values << v  }})
+
+          File.write(config_file, <<~END)
+            [main]
+            setting=in_main
+          END
+          @settings.initialize_global_settings
+
+          expect(@settings[:setting]).to eq('in_main')
+          expect(hook_values).to eq(%w[yay in_main])
+        end
+
+        it "doesn't call the hook when initializing app defaults" do
+          hook_values = []
+          @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| hook_values << v  }})
+
+          File.write(config_file, <<~END)
+            [main]
+            setting=in_main
+            [agent]
+            setting=in_agent
+          END
+          @settings.initialize_global_settings
+
+          hook_values.clear
+
+          @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
+
+          expect(@settings[:setting]).to eq('in_main')
+          expect(hook_values).to eq([])
+        end
+
+        it "doesn't call the hook with value from a section that matches the run_mode" do
+          hook_values = []
+          @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| hook_values << v  }})
+
+          File.write(config_file, <<~END)
+            [main]
+            setting=in_main
+            [agent]
+            setting=in_agent
+          END
+
+          @settings.initialize_global_settings
+
+          hook_values.clear
+
+          @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :agent))
+
+          # The correct value is returned
+          expect(@settings[:setting]).to eq('in_agent')
+
+          # but the hook is never called, seems like a bug!
+          expect(hook_values).to eq([])
         end
       end
 
       describe "when :on_initialize_and_write" do
-        before(:each) do
-          @hook_values = []
-          @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| @hook_values << v  }})
+        it "returns its hook type" do
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |_| }})
+
+          expect(@settings.setting(:setting).call_hook).to eq(:on_initialize_and_write)
         end
 
         it "should not call the hook at definition" do
-          expect(@hook_values).to eq([])
-          expect(@hook_values).not_to eq(%w{yay})
+          hook_values = []
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v }})
+          expect(hook_values).to eq([])
         end
 
-        it "should call the hook at initialization" do
-          app_defaults = {}
-          Puppet::Settings::REQUIRED_APP_SETTINGS.each do |key|
-            app_defaults[key] = "foo"
-          end
-          app_defaults[:run_mode] = :user
+        it "calls the hook when initializing global defaults with the value from the `main` section" do
+          hook_values = []
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v }})
+
+          File.write(config_file, <<~END)
+            [main]
+            setting=in_main
+          END
+          @settings.initialize_global_settings
+
+          expect(@settings[:setting]).to eq('in_main')
+          expect(hook_values).to eq(%w[in_main])
+        end
+
+        it "calls the hook when initializing app defaults" do
+          hook_values = []
           @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v }})
 
-          expect(@settings.setting(:hooker)).to receive(:handle).with("yay").once
+          File.write(config_file, <<~END)
+            [main]
+            setting=in_main
+            [agent]
+            setting=in_agent
+          END
+          @settings.initialize_global_settings
 
-          @settings.initialize_app_defaults app_defaults
+          hook_values.clear
+
+          @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
+
+          expect(@settings[:setting]).to eq('in_main')
+          expect(hook_values).to eq(%w[in_main])
+        end
+
+        it "calls the hook with the overridden value from a section that matches the run_mode" do
+          hook_values = []
+          @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
+          @settings.define_settings(:main, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_initialize_and_write, :hook => lambda { |v| hook_values << v  }})
+
+          File.write(config_file, <<~END)
+            [main]
+            setting=in_main
+            [agent]
+            setting=in_agent
+          END
+          @settings.initialize_global_settings
+
+          hook_values.clear
+
+          @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :agent))
+
+          expect(@settings[:setting]).to eq('in_agent')
+          expect(hook_values).to eq(%w[in_agent])
         end
       end
     end
 
     it "should call passed blocks when values are set" do
       values = []
-      @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
+      @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
       expect(values).to eq([])
 
-      @settings[:hooker] = "something"
+      @settings[:setting] = "something"
       expect(values).to eq(%w{something})
     end
 
     it "should call passed blocks when values are set via the command line" do
       values = []
-      @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
+      @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
       expect(values).to eq([])
 
-      @settings.handlearg("--hooker", "yay")
+      @settings.handlearg("--setting", "yay")
 
       expect(values).to eq(%w{yay})
     end
 
     it "should provide an option to call passed blocks during definition" do
       values = []
-      @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| values << v }})
+      @settings.define_settings(:section, :setting => {:default => "yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| values << v }})
       expect(values).to eq(%w{yay})
     end
 
     it "should pass the fully interpolated value to the hook when called on definition" do
       values = []
       @settings.define_settings(:section, :one => { :default => "test", :desc => "a" })
-      @settings.define_settings(:section, :hooker => {:default => "$one/yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| values << v }})
+      @settings.define_settings(:section, :setting => {:default => "$one/yay", :desc => "boo", :call_hook => :on_define_and_write, :hook => lambda { |v| values << v }})
       expect(values).to eq(%w{test/yay})
     end
 
@@ -561,12 +753,8 @@ describe Puppet::Settings do
     end
 
     it "setting a value to nil causes it to return to its default" do
-      default_values = { :one => "skipped value" }
-      [:logdir, :confdir, :codedir, :vardir].each do |key|
-        default_values[key] = 'default value'
-      end
       @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
-      @settings.initialize_app_defaults(default_values)
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:one => "skipped value"))
       @settings[:one] = "value will disappear"
 
       @settings[:one] = nil
@@ -627,13 +815,14 @@ describe Puppet::Settings do
   end
 
   describe "when choosing which value to return" do
+    let(:config_file) { tmpfile('settings') }
+
     before do
       @settings = Puppet::Settings.new
       @settings.define_settings :section,
-        :config => { :type => :file, :default => "/my/file", :desc => "a" },
+        :config => { :type => :file, :default => config_file, :desc => "a" },
         :one => { :default => "ONE", :desc => "a" },
         :two => { :default => "TWO", :desc => "b" }
-      allow(Puppet::FileSystem).to receive(:exist?).and_return(true)
       @settings.preferred_run_mode = :agent
     end
 
@@ -642,18 +831,16 @@ describe Puppet::Settings do
     end
 
     it "should return values set on the cli before values set in the configuration file" do
-      text = "[main]\none = fileval\n"
-      allow(@settings).to receive(:read_file).and_return(text)
+      File.write(config_file, "[main]\none = fileval\n")
       @settings.handlearg("--one", "clival")
-      @settings.send(:parse_config_files)
+      @settings.initialize_global_settings
 
       expect(@settings[:one]).to eq("clival")
     end
 
     it "should return values set in the mode-specific section before values set in the main section" do
-      text = "[main]\none = mainval\n[agent]\none = modeval\n"
-      allow(@settings).to receive(:read_file).and_return(text)
-      @settings.send(:parse_config_files)
+      File.write(config_file, "[main]\none = mainval\n[agent]\none = modeval\n")
+      @settings.initialize_global_settings
 
       expect(@settings[:one]).to eq("modeval")
     end
@@ -663,17 +850,15 @@ describe Puppet::Settings do
         before(:each) { @settings.preferred_run_mode = run_mode }
 
         it "returns values set in the 'master' section if the 'server' section does not exist" do
-          text = "[main]\none = mainval\n[master]\none = modeval\n"
-          allow(@settings).to receive(:read_file).and_return(text)
-          @settings.send(:parse_config_files)
+          File.write(config_file, "[main]\none = mainval\n[master]\none = modeval\n")
+          @settings.initialize_global_settings
 
           expect(@settings[:one]).to eq("modeval")
         end
 
         it "prioritizes values set in the 'server' section if set" do
-          text = "[main]\none = mainval\n[server]\none = serverval\n[master]\none = masterval\n"
-          allow(@settings).to receive(:read_file).and_return(text)
-          @settings.send(:parse_config_files)
+          File.write(config_file,  "[main]\none = mainval\n[server]\none = serverval\n[master]\none = masterval\n")
+          @settings.initialize_global_settings
 
           expect(@settings[:one]).to eq("serverval")
         end
@@ -681,9 +866,9 @@ describe Puppet::Settings do
     end
 
     it "should not return values outside of its search path" do
-      text = "[other]\none = oval\n"
-      allow(@settings).to receive(:read_file).and_return(text)
-      @settings.send(:parse_config_files)
+      File.write(config_file, "[other]\none = oval\n")
+      @settings.initialize_global_settings
+
       expect(@settings[:one]).to eq("ONE")
     end
 
@@ -705,7 +890,7 @@ describe Puppet::Settings do
         expect(Puppet::FileSystem).to receive(:exist?).with(main_config_file_default_location).and_return(false)
         expect(Puppet::FileSystem).not_to receive(:exist?).with(user_config_file_default_location)
 
-        @settings.send(:parse_config_files)
+        @settings.initialize_global_settings
       end
     end
 
@@ -715,7 +900,7 @@ describe Puppet::Settings do
 
         expect(Puppet::FileSystem).to receive(:exist?).with(user_config_file_default_location).and_return(false)
 
-        @settings.send(:parse_config_files)
+        @settings.initialize_global_settings
       end
     end
 
@@ -724,7 +909,7 @@ describe Puppet::Settings do
         expect(Puppet::FileSystem).to receive(:exist?).with(user_config_file_default_location).and_return(true)
         expect(@settings).to receive(:read_file).and_raise('Permission denied')
 
-        expect{ @settings.send(:parse_config_files) }.to raise_error(RuntimeError, /Could not load #{user_config_file_default_location}: Permission denied/)
+        expect{ @settings.initialize_global_settings }.to raise_error(RuntimeError, /Could not load #{user_config_file_default_location}: Permission denied/)
       end
 
       it "does not fail if the file is not readable and when `require_config` is false" do
@@ -734,7 +919,7 @@ describe Puppet::Settings do
         expect(@settings).not_to receive(:parse_config)
         expect(Puppet).to receive(:log_exception)
 
-        expect{ @settings.send(:parse_config_files, false) }.not_to raise_error
+        expect{ @settings.initialize_global_settings([], false) }.not_to raise_error
       end
 
       it "reads the file if it is readable" do
@@ -742,7 +927,7 @@ describe Puppet::Settings do
         expect(@settings).to receive(:read_file).and_return('server = host.string')
         expect(@settings).to receive(:parse_config)
 
-        @settings.send(:parse_config_files)
+        @settings.initialize_global_settings
       end
     end
 
@@ -751,7 +936,7 @@ describe Puppet::Settings do
         expect(Puppet::FileSystem).to receive(:exist?).with(user_config_file_default_location).and_return(false)
         expect(@settings).not_to receive(:parse_config)
 
-        @settings.send(:parse_config_files)
+        @settings.initialize_global_settings
       end
     end
   end
@@ -761,43 +946,41 @@ describe Puppet::Settings do
       @settings = Puppet::Settings.new
       allow(@settings).to receive(:service_user_available?).and_return(true)
       allow(@settings).to receive(:service_group_available?).and_return(true)
-      @file = make_absolute("/some/file")
-      @userconfig = make_absolute("/test/userconfigfile")
+      @file = tmpfile("somefile")
       @settings.define_settings :section, :user => { :default => "suser", :desc => "doc" }, :group => { :default => "sgroup", :desc => "doc" }
       @settings.define_settings :section,
           :config => { :type => :file, :default => @file, :desc => "eh" },
           :one => { :default => "ONE", :desc => "a" },
           :two => { :default => "$one TWO", :desc => "b" },
           :three => { :default => "$one $two THREE", :desc => "c" }
-      allow(@settings).to receive(:user_config_file).and_return(@userconfig)
-      allow(Puppet::FileSystem).to receive(:exist?).with(@file).and_return(true)
-      allow(Puppet::FileSystem).to receive(:exist?).with(@userconfig).and_return(false)
+
+      userconfig = tmpfile("userconfig")
+      allow(@settings).to receive(:user_config_file).and_return(userconfig)
     end
 
     it "should not ignore the report setting" do
       @settings.define_settings :section, :report => { :default => "false", :desc => "a" }
-      # This is needed in order to make sure we pass on windows
-      myfile = File.expand_path(@file)
-      @settings[:config] = myfile
-      text = <<-CONF
+      File.write(@file, <<~CONF)
         [puppetd]
-          report=true
+        report=true
       CONF
-      expect(Puppet::FileSystem).to receive(:exist?).with(myfile).and_return(true)
-      expect(@settings).to receive(:read_file).and_return(text)
-      @settings.send(:parse_config_files)
+
+      @settings.initialize_global_settings
+
       expect(@settings[:report]).to be_truthy
     end
 
     it "should use its current ':config' value for the file to parse" do
-      myfile = make_absolute("/my/file")
+      myfile = tmpfile('myfile')
+      File.write(myfile, <<~CONF)
+        [main]
+        one=myfile
+      CONF
+
       @settings[:config] = myfile
+      @settings.initialize_global_settings
 
-      expect(Puppet::FileSystem).to receive(:exist?).with(myfile).and_return(true)
-
-      expect(Puppet::FileSystem).to receive(:read).with(myfile, :encoding => 'utf-8').and_return("[main]")
-
-      @settings.send(:parse_config_files)
+      expect(@settings[:one]).to eq('myfile')
     end
 
     it "should not try to parse non-existent files" do
@@ -805,42 +988,50 @@ describe Puppet::Settings do
 
       expect(File).not_to receive(:read).with(@file)
 
-      @settings.send(:parse_config_files)
+      @settings.initialize_global_settings
     end
 
     it "should return values set in the configuration file" do
-      text = "[main]
-      one = fileval
-      "
-      expect(@settings).to receive(:read_file).and_return(text)
-      @settings.send(:parse_config_files)
+      File.write(@file, <<~CONF)
+        [main]
+        one = fileval
+      CONF
+
+      @settings.initialize_global_settings
       expect(@settings[:one]).to eq("fileval")
     end
 
     #484 - this should probably be in the regression area
     it "should not throw an exception on unknown parameters" do
-      text = "[main]\nnosuchparam = mval\n"
-      expect(@settings).to receive(:read_file).and_return(text)
-      expect { @settings.send(:parse_config_files) }.not_to raise_error
+      File.write(@file, <<~CONF)
+        [main]
+        nosuchparam = mval
+      CONF
+
+      expect { @settings.initialize_global_settings }.not_to raise_error
     end
 
     it "should convert booleans in the configuration file into Ruby booleans" do
-      text = "[main]
-      one = true
-      two = false
-      "
-      expect(@settings).to receive(:read_file).and_return(text)
-      @settings.send(:parse_config_files)
+      File.write(@file, <<~CONF)
+        [main]
+        one = true
+        two = false
+      CONF
+
+      @settings.initialize_global_settings
+
       expect(@settings[:one]).to eq(true)
       expect(@settings[:two]).to eq(false)
     end
 
     it "should convert integers in the configuration file into Ruby Integers" do
-      text = "[main]
-      one = 65
-      "
-      expect(@settings).to receive(:read_file).and_return(text)
-      @settings.send(:parse_config_files)
+      File.write(@file, <<~CONF)
+        [main]
+        one = 65
+      CONF
+
+      @settings.initialize_global_settings
+
       expect(@settings[:one]).to eq(65)
     end
 
@@ -871,25 +1062,21 @@ describe Puppet::Settings do
     end
 
     it "should support loading metadata (owner, group, or mode) from a run_mode section in the configuration file" do
-      default_values = {}
-      PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|
-        default_values[key] = 'default value'
-      end
       @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
       @settings.define_settings :server, :myfile => { :type => :file, :default => make_absolute("/myfile"), :desc => "a" }
 
       otherfile = make_absolute("/other/file")
-      text = "[server]
-      myfile = #{otherfile} {mode = 664}
-      "
-      expect(@settings).to receive(:read_file).and_return(text)
+      File.write(@file, <<~CONF)
+        [server]
+        myfile = #{otherfile} {mode = 664}
+      CONF
 
       # will start initialization as user
       expect(@settings.preferred_run_mode).to eq(:user)
-      @settings.send(:parse_config_files)
+      @settings.initialize_global_settings
 
       # change app run_mode to server
-      @settings.initialize_app_defaults(default_values.merge(:run_mode => :server))
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :server))
       expect(@settings.preferred_run_mode).to eq(:server)
 
       # initializing the app should have reloaded the metadata based on run_mode
@@ -899,18 +1086,18 @@ describe Puppet::Settings do
 
     context "when setting serverport and masterport" do
       before(:each) do
-        default_values = {}
-        PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|
-          default_values[key] = 'default value'
-        end
         @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
         @settings.define_settings :server, :masterport => { :desc => "a", :default => 1000 }
         @settings.define_settings :server, :serverport => { :desc => "a", :default => 1000 }
         @settings.define_settings :server, :ca_port => { :desc => "a", :default => "$serverport" }
         @settings.define_settings :server, :report_port => { :desc => "a", :default => "$serverport" }
-        expect(@settings).to receive(:read_file).and_return(text)
-        @settings.send(:parse_config_files)
-        @settings.initialize_app_defaults(default_values.merge(:run_mode => :agent))
+
+        config_file = tmpfile('config')
+        @settings[:config] = config_file
+        File.write(config_file, text)
+
+        @settings.initialize_global_settings
+        @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :agent))
         expect(@settings.preferred_run_mode).to eq(:agent)
       end
 
@@ -1036,29 +1223,24 @@ describe Puppet::Settings do
     end
 
     it "does not use the metadata from the same setting in a different section" do
-      default_values = {}
-      PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|
-        default_values[key] = 'default value'
-      end
-
       file = make_absolute("/file")
       default_mode = "0600"
       @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
       @settings.define_settings :server, :myfile => { :type => :file, :default => file, :desc => "a", :mode => default_mode }
 
-      text = "[server]
-      myfile = #{file}/foo
-      [agent]
-      myfile = #{file} {mode = 664}
-      "
-      expect(@settings).to receive(:read_file).and_return(text)
+      File.write(@file, <<~CONF)
+        [server]
+        myfile = #{file}/foo
+        [agent]
+        myfile = #{file} {mode = 664}
+      CONF
 
       # will start initialization as user
       expect(@settings.preferred_run_mode).to eq(:user)
-      @settings.send(:parse_config_files)
+      @settings.initialize_global_settings
 
       # change app run_mode to server
-      @settings.initialize_app_defaults(default_values.merge(:run_mode => :server))
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:run_mode => :server))
       expect(@settings.preferred_run_mode).to eq(:server)
 
       # initializing the app should have reloaded the metadata based on run_mode
@@ -1070,11 +1252,12 @@ describe Puppet::Settings do
       values = []
       @settings.define_settings :section, :mysetting => {:default => "defval", :desc => "a", :hook => proc { |v| values << v }}
 
-      text = "[main]
-      mysetting = setval
-      "
-      expect(@settings).to receive(:read_file).and_return(text)
-      @settings.send(:parse_config_files)
+      File.write(@file, <<~CONF)
+        [main]
+        mysetting = setval
+      CONF
+      @settings.initialize_global_settings
+
       expect(values).to eq(["setval"])
     end
 
@@ -1082,13 +1265,14 @@ describe Puppet::Settings do
       values = []
       @settings.define_settings :section, :mysetting => {:default => "defval", :desc => "a", :hook => proc { |v| values << v }}
 
-      text = "[user]
-      mysetting = setval
-      [main]
-      mysetting = other
-      "
-      expect(@settings).to receive(:read_file).and_return(text)
-      @settings.send(:parse_config_files)
+      File.write(@file, <<~CONF)
+        [user]
+        mysetting = setval
+        [main]
+        mysetting = other
+      CONF
+      @settings.initialize_global_settings
+
       expect(values).to eq(["setval"])
     end
 
@@ -1097,11 +1281,12 @@ describe Puppet::Settings do
       @settings.define_settings :section, :base => {:default => "yay", :desc => "a", :hook => proc { |v| values << v }}
       @settings.define_settings :section, :mysetting => {:default => "defval", :desc => "a", :hook => proc { |v| values << v }}
 
-      text = "[main]
-      mysetting = $base/setval
-      "
-      expect(@settings).to receive(:read_file).and_return(text)
-      @settings.send(:parse_config_files)
+      File.write(@file, <<~CONF)
+        [main]
+        mysetting = $base/setval
+      CONF
+      @settings.initialize_global_settings
+
       expect(values).to eq(["yay/setval"])
     end
 
@@ -1111,23 +1296,25 @@ describe Puppet::Settings do
                                                          :hook => proc { |v| hook_invoked = true },
                                                          :call_hook => :on_initialize_and_write, }
 
+      # This test relies on `confdir` defaulting to nil which causes the default
+      # value of `deferred=$confdir/goose` to raise an interpolation error during
+      # global initialization, and the hook to be skipped
       @settings.define_settings(:main,
-        :logdir       => { :type => :directory, :default => nil, :desc => "logdir" },
-        :confdir      => { :type => :directory, :default => nil, :desc => "confdir" },
-        :codedir      => { :type => :directory, :default => nil, :desc => "codedir" },
-        :vardir       => { :type => :directory, :default => nil, :desc => "vardir" })
+                                PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.merge(
+                                  :confdir => { :type => :directory, :default => nil, :desc => "confdir" }))
 
-      text = <<-EOD
-      [main]
-      deferred=$confdir/goose
+      File.write(@file, <<~EOD)
+        [main]
+        deferred=$confdir/goose
       EOD
 
-      allow(@settings).to receive(:read_file).and_return(text)
       @settings.initialize_global_settings
 
       expect(hook_invoked).to be_falsey
 
-      @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :confdir => '/path/to/confdir', :vardir => '/path/to/vardir', :codedir => '/path/to/codedir')
+      # And now that we initialize app defaults with `confdir`, then `deferred`
+      # can be interpolated and its hook called
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:confdir => '/path/to/confdir'))
 
       expect(hook_invoked).to be_truthy
       expect(@settings[:deferred]).to eq(File.expand_path('/path/to/confdir/goose'))
@@ -1136,45 +1323,33 @@ describe Puppet::Settings do
     it "does not require the value for a setting without a hook to resolve during global setup" do
       @settings.define_settings :section, :can_cause_problems  => {:desc => '' }
 
-      @settings.define_settings(:main,
-        :logdir       => { :type => :directory, :default => nil, :desc => "logdir" },
-        :confdir      => { :type => :directory, :default => nil, :desc => "confdir" },
-        :codedir      => { :type => :directory, :default => nil, :desc => "codedir" },
-        :vardir       => { :type => :directory, :default => nil, :desc => "vardir" })
+      @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
 
-      text = <<-EOD
+      File.write(@file, <<~EOD)
       [main]
       can_cause_problems=$confdir/goose
       EOD
 
-      allow(@settings).to receive(:read_file).and_return(text)
       @settings.initialize_global_settings
-      @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :confdir => '/path/to/confdir', :vardir => '/path/to/vardir', :codedir => '/path/to/codedir')
+      @settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES.merge(:confdir => '/path/to/confdir'))
 
-      expect(@settings[:can_cause_problems]).to eq(File.expand_path('/path/to/confdir/goose'))
+      expect(@settings[:can_cause_problems]).to eq('/path/to/confdir/goose')
     end
 
     it "should allow empty values" do
       @settings.define_settings :section, :myarg => { :default => "myfile", :desc => "a" }
 
-      text = "[main]
-      myarg =
-      "
-      allow(@settings).to receive(:read_file).and_return(text)
-      @settings.send(:parse_config_files)
+      File.write(@file, <<~CONF)
+        [main]
+        myarg =
+      CONF
+      @settings.initialize_global_settings
+
       expect(@settings[:myarg]).to eq("")
     end
 
     describe "deprecations" do
       let(:settings) { Puppet::Settings.new }
-      let(:app_defaults) {
-        {
-          :logdir     => "/dev/null",
-          :confdir    => "/dev/null",
-          :codedir    => "/dev/null",
-          :vardir     => "/dev/null",
-        }
-      }
 
       def assert_accessing_setting_is_deprecated(settings, setting)
         expect(Puppet).to receive(:deprecation_warning).with("Accessing '#{setting}' as a setting is deprecated.")
@@ -1184,12 +1359,7 @@ describe Puppet::Settings do
       end
 
       before(:each) do
-        settings.define_settings(:main, {
-          :logdir => { :default => 'a', :desc => 'a' },
-          :confdir => { :default => 'b', :desc => 'b' },
-          :vardir => { :default => 'c', :desc => 'c' },
-          :codedir => { :default => 'd', :desc => 'd' },
-        })
+        settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
       end
 
       context "complete" do
@@ -1210,7 +1380,7 @@ describe Puppet::Settings do
           completely_deprecated_settings.parse_config(<<-CONF)
             completely_deprecated_setting='should warn'
           CONF
-          completely_deprecated_settings.initialize_app_defaults(app_defaults)
+          completely_deprecated_settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
         end
 
         it "warns when set on the commandline" do
@@ -1218,7 +1388,7 @@ describe Puppet::Settings do
 
           args = ["--completely_deprecated_setting", "/some/value"]
           completely_deprecated_settings.send(:parse_global_options, args)
-          completely_deprecated_settings.initialize_app_defaults(app_defaults)
+          completely_deprecated_settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
         end
 
         it "warns when set in code" do
@@ -1243,7 +1413,7 @@ describe Puppet::Settings do
           partially_deprecated_settings.parse_config(<<-CONF)
             partially_deprecated_setting='should warn'
           CONF
-          partially_deprecated_settings.initialize_app_defaults(app_defaults)
+          partially_deprecated_settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
         end
 
         it "does not warn when manifest is set on command line" do
@@ -1251,7 +1421,7 @@ describe Puppet::Settings do
 
           args = ["--partially_deprecated_setting", "/some/value"]
           partially_deprecated_settings.send(:parse_global_options, args)
-          partially_deprecated_settings.initialize_app_defaults(app_defaults)
+          partially_deprecated_settings.initialize_app_defaults(PuppetSpec::Settings::TEST_APP_DEFAULT_VALUES)
         end
 
         it "warns when set in code" do
@@ -1344,23 +1514,24 @@ describe Puppet::Settings do
 
   describe "when reparsing its configuration" do
     before do
-      @file = make_absolute("/test/file")
-      @userconfig = make_absolute("/test/userconfigfile")
+      @file = tmpfile("testfile")
+      Puppet::FileSystem.touch(@file)
+
       @settings = Puppet::Settings.new
       @settings.define_settings :section,
           :config => { :type => :file, :default => @file, :desc => "a" },
           :one => { :default => "ONE", :desc => "a" },
           :two => { :default => "$one TWO", :desc => "b" },
           :three => { :default => "$one $two THREE", :desc => "c" }
-      allow(Puppet::FileSystem).to receive(:exist?).with(@file).and_return(true)
-      allow(Puppet::FileSystem).to receive(:exist?).with(@userconfig).and_return(false)
-      allow(@settings).to receive(:user_config_file).and_return(@userconfig)
+
+      userconfig = tmpfile("userconfig")
+      allow(@settings).to receive(:user_config_file).and_return(userconfig)
     end
 
     it "does not create the WatchedFile instance and should not parse if the file does not exist" do
-      expect(Puppet::FileSystem).to receive(:exist?).with(@file).and_return(false)
-      expect(Puppet::Util::WatchedFile).not_to receive(:new)
+      Puppet::FileSystem.unlink(@file)
 
+      expect(Puppet::Util::WatchedFile).not_to receive(:new)
       expect(@settings).not_to receive(:parse_config_files)
 
       @settings.reparse_config_files
@@ -1399,8 +1570,8 @@ describe Puppet::Settings do
         @settings[:one] = "init"
 
         # Now replace the value
-        text = "[main]\none = disk-replace\n"
-        allow(@settings).to receive(:read_file).and_return(text)
+        File.write(@file, "[main]\none = disk-replace\n")
+
         @settings.reparse_config_files
         expect(@settings[:one]).to eq("disk-replace")
       end
@@ -1409,23 +1580,20 @@ describe Puppet::Settings do
     it "should retain parameters set by cli when configuration files are reparsed" do
       @settings.handlearg("--one", "clival")
 
-      text = "[main]\none = on-disk\n"
-      allow(@settings).to receive(:read_file).and_return(text)
-      @settings.send(:parse_config_files)
+      File.write(@file, "[main]\none = on-disk\n")
+      @settings.initialize_global_settings
 
       expect(@settings[:one]).to eq("clival")
     end
 
     it "should remove in-memory values that are no longer set in the file" do
       # Init the value
-      text = "[main]\none = disk-init\n"
-      expect(@settings).to receive(:read_file).and_return(text)
+      File.write(@file, "[main]\none = disk-init\n")
       @settings.send(:parse_config_files)
       expect(@settings[:one]).to eq("disk-init")
 
       # Now replace the value
-      text = "[main]\ntwo = disk-replace\n"
-      expect(@settings).to receive(:read_file).and_return(text)
+      File.write(@file, "[main]\ntwo = disk-replace\n")
       @settings.send(:parse_config_files)
 
       # The originally-overridden value should be replaced with the default
@@ -1437,14 +1605,12 @@ describe Puppet::Settings do
 
     it "should retain in-memory values if the file has a syntax error" do
       # Init the value
-      text = "[main]\none = initial-value\n"
-      expect(@settings).to receive(:read_file).with(@file).and_return(text)
-      @settings.send(:parse_config_files)
+      File.write(@file, "[main]\none = initial-value\n")
+      @settings.initialize_global_settings
       expect(@settings[:one]).to eq("initial-value")
 
       # Now replace the value with something bogus
-      text = "[main]\nkenny = killed-by-what-follows\n1 is 2, blah blah florp\n"
-      expect(@settings).to receive(:read_file).with(@file).and_return(text)
+      File.write(@file, "[main]\nkenny = killed-by-what-follows\n1 is 2, blah blah florp\n")
       @settings.send(:parse_config_files)
 
       # The originally-overridden value should not be replaced with the default
@@ -1456,46 +1622,49 @@ describe Puppet::Settings do
   end
 
   it "should provide a method for creating a catalog of resources from its configuration" do
-    expect(Puppet::Settings.new).to respond_to(:to_catalog)
+    expect(Puppet::Settings.new.to_catalog).to be_an_instance_of(Puppet::Resource::Catalog)
   end
 
   describe "when creating a catalog" do
+    let(:maindir) { make_absolute('/maindir') }
+    let(:seconddir) { make_absolute('/seconddir') }
+    let(:otherdir) { make_absolute('/otherdir') }
+
     before do
       @settings = Puppet::Settings.new
       allow(@settings).to receive(:service_user_available?).and_return(true)
-      @prefix = Puppet.features.posix? ? "" : "C:"
     end
 
     it "should add all file resources to the catalog if no sections have been specified" do
       @settings.define_settings :main,
-          :maindir => { :type => :directory, :default => @prefix+"/maindir", :desc => "a"},
-          :seconddir => { :type => :directory, :default => @prefix+"/seconddir", :desc => "a"}
+          :maindir => { :type => :directory, :default => maindir, :desc => "a"},
+          :seconddir => { :type => :directory, :default => seconddir, :desc => "a"}
       @settings.define_settings :other,
-          :otherdir => { :type => :directory, :default => @prefix+"/otherdir", :desc => "a" }
+          :otherdir => { :type => :directory, :default => otherdir, :desc => "a" }
 
       catalog = @settings.to_catalog
 
-      [@prefix+"/maindir", @prefix+"/seconddir", @prefix+"/otherdir"].each do |path|
+      [maindir, seconddir, otherdir].each do |path|
         expect(catalog.resource(:file, path)).to be_instance_of(Puppet::Resource)
       end
     end
 
     it "should add only files in the specified sections if section names are provided" do
-      @settings.define_settings :main, :maindir => { :type => :directory, :default => @prefix+"/maindir", :desc => "a" }
-      @settings.define_settings :other, :otherdir => { :type => :directory, :default => @prefix+"/otherdir", :desc => "a" }
+      @settings.define_settings :main, :maindir => { :type => :directory, :default => maindir, :desc => "a" }
+      @settings.define_settings :other, :otherdir => { :type => :directory, :default => otherdir, :desc => "a" }
       catalog = @settings.to_catalog(:main)
-      expect(catalog.resource(:file, @prefix+"/otherdir")).to be_nil
-      expect(catalog.resource(:file, @prefix+"/maindir")).to be_instance_of(Puppet::Resource)
+      expect(catalog.resource(:file, otherdir)).to be_nil
+      expect(catalog.resource(:file, maindir)).to be_instance_of(Puppet::Resource)
     end
 
     it "should not try to add the same file twice" do
-      @settings.define_settings :main, :maindir => { :type => :directory, :default => @prefix+"/maindir", :desc => "a" }
-      @settings.define_settings :other, :otherdir => { :type => :directory, :default => @prefix+"/maindir", :desc => "a" }
+      @settings.define_settings :main, :maindir => { :type => :directory, :default => maindir, :desc => "a" }
+      @settings.define_settings :other, :otherdir => { :type => :directory, :default => maindir, :desc => "a" }
       expect { @settings.to_catalog }.not_to raise_error
     end
 
     it "should ignore files whose :to_resource method returns nil" do
-      @settings.define_settings :main, :maindir => { :type => :directory, :default => @prefix+"/maindir", :desc => "a" }
+      @settings.define_settings :main, :maindir => { :type => :directory, :default => maindir, :desc => "a" }
       expect(@settings.setting(:maindir)).to receive(:to_resource).and_return(nil)
 
       expect_any_instance_of(Puppet::Resource::Catalog).not_to receive(:add_resource)
@@ -1525,6 +1694,7 @@ describe Puppet::Settings do
     describe "adding default directory environment to the catalog" do
       let(:tmpenv) { tmpdir("envs") }
       let(:default_path) { "#{tmpenv}/environments" }
+
       before(:each) do
         @settings.define_settings :main,
           :environment     => { :default => "production", :desc => "env"},

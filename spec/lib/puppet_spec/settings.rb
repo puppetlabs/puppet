@@ -13,7 +13,12 @@ module PuppetSpec::Settings
     :vardir       => { :type => :directory, :default => "test", :desc => "vardir" },
     :publicdir    => { :type => :directory, :default => "test", :desc => "publicdir" },
     :rundir       => { :type => :directory, :default => "test", :desc => "rundir" },
-  }
+  }.freeze
+
+  TEST_APP_DEFAULT_VALUES = TEST_APP_DEFAULT_DEFINITIONS.inject({}) do |memo, (key, value)|
+    memo[key] = value[:default]
+    memo
+  end.freeze
 
   def set_puppet_conf(confdir, settings)
     write_file(File.join(confdir, "puppet.conf"), settings)
