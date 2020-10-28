@@ -22,11 +22,11 @@ class Puppet::Indirector::FileMetadata::Rest < Puppet::Indirector::REST
     if e.response.code == 404
       return nil unless request.options[:fail_on_404]
 
-      _, body = parse_response(e.response.nethttp)
+      _, body = parse_response(e.response)
       msg = _("Find %{uri} resulted in 404 with the message: %{body}") % { uri: elide(e.response.url.path, 100), body: body }
       raise Puppet::Error, msg
     else
-      raise convert_to_http_error(e.response.nethttp)
+      raise convert_to_http_error(e.response)
     end
   end
 
@@ -50,6 +50,6 @@ class Puppet::Indirector::FileMetadata::Rest < Puppet::Indirector::REST
     # since it's search, return empty array instead of nil
     return [] if e.response.code == 404
 
-    raise convert_to_http_error(e.response.nethttp)
+    raise convert_to_http_error(e.response)
   end
 end

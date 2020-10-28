@@ -24,11 +24,11 @@ class Puppet::FailingTestModel::Rest < Puppet::Indirector::REST
     if response.code == 404
       return nil unless request.options[:fail_on_404]
 
-      _, body = parse_response(response.nethttp)
+      _, body = parse_response(response)
       msg = _("Find %{uri} resulted in 404 with the message: %{body}") % { uri: elide(response.url.path, 100), body: body }
       raise Puppet::Error, msg
     else
-      raise convert_to_http_error(response.nethttp)
+      raise convert_to_http_error(response)
     end
   end
 end

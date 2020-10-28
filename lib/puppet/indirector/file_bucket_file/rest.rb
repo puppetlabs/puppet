@@ -15,7 +15,7 @@ module Puppet::FileBucketFile
       )
     rescue Puppet::HTTP::ResponseError => e
       return nil if e.response.code == 404
-      raise convert_to_http_error(e.response.nethttp)
+      raise convert_to_http_error(e.response)
     end
 
     def find(request)
@@ -32,7 +32,7 @@ module Puppet::FileBucketFile
       )
       filebucket_file
     rescue Puppet::HTTP::ResponseError => e
-      raise convert_to_http_error(e.response.nethttp)
+      raise convert_to_http_error(e.response)
     end
 
     def save(request)
@@ -44,7 +44,7 @@ module Puppet::FileBucketFile
         environment: request.environment.to_s,
       )
     rescue Puppet::HTTP::ResponseError => e
-      raise convert_to_http_error(e.response.nethttp)
+      raise convert_to_http_error(e.response)
     end
   end
 end
