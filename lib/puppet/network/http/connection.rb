@@ -1,3 +1,5 @@
+require 'puppet/http'
+
 # This will be raised if too many redirects happen for a given HTTP request
 class Puppet::Network::HTTP::RedirectionLimitExceededException < Puppet::Error ; end
 
@@ -14,6 +16,8 @@ class Puppet::Network::HTTP::RedirectionLimitExceededException < Puppet::Error ;
 # @deprecated Use {Puppet.runtime[:http]}
 # @api public
 class Puppet::Network::HTTP::Connection
+  include Puppet::HTTP::ResponseConverter
+
   OPTION_DEFAULTS = {
     :use_ssl => true,
     :verifier => nil,
@@ -95,8 +99,7 @@ class Puppet::Network::HTTP::Connection
     options[:redirect_limit] ||= @redirect_limit
 
     with_error_handling do
-      resp = @client.get(to_url(path), headers: headers, options: options)
-      resp.nethttp
+      to_ruby_response(@client.get(to_url(path), headers: headers, options: options))
     end
   end
 
@@ -113,8 +116,7 @@ class Puppet::Network::HTTP::Connection
     options[:redirect_limit] ||= @redirect_limit
 
     with_error_handling do
-      resp = @client.post(to_url(path), data, headers: headers, options: options)
-      resp.nethttp
+      to_ruby_response(@client.post(to_url(path), data, headers: headers, options: options))
     end
   end
 
@@ -128,8 +130,7 @@ class Puppet::Network::HTTP::Connection
     options[:redirect_limit] ||= @redirect_limit
 
     with_error_handling do
-      resp = @client.head(to_url(path), headers: headers, options: options)
-      resp.nethttp
+      to_ruby_response(@client.head(to_url(path), headers: headers, options: options))
     end
   end
 
@@ -143,8 +144,7 @@ class Puppet::Network::HTTP::Connection
     options[:redirect_limit] ||= @redirect_limit
 
     with_error_handling do
-      resp = @client.delete(to_url(path), headers: headers, options: options)
-      resp.nethttp
+      to_ruby_response(@client.delete(to_url(path), headers: headers, options: options))
     end
   end
 
@@ -161,8 +161,7 @@ class Puppet::Network::HTTP::Connection
     options[:redirect_limit] ||= @redirect_limit
 
     with_error_handling do
-      resp = @client.put(to_url(path), data, headers: headers, options: options)
-      resp.nethttp
+      to_ruby_response(@client.put(to_url(path), data, headers: headers, options: options))
     end
   end
 
@@ -174,10 +173,12 @@ class Puppet::Network::HTTP::Connection
       redirect_limit: @redirect_limit
     }
 
-    resp = @client.get(to_url(path), headers: headers, options: options) do |response|
-      yield response.nethttp if block_given?
+    ruby_response = nil
+    @client.get(to_url(path), headers: headers, options: options) do |response|
+      ruby_response = to_ruby_response(response)
+      yield ruby_response if block_given?
     end
-    resp.nethttp
+    ruby_response
   end
 
   def request_head(*args, &block)
@@ -189,8 +190,9 @@ class Puppet::Network::HTTP::Connection
     }
 
     response = @client.head(to_url(path), headers: headers, options: options)
-    yield response.nethttp if block_given?
-    response.nethttp
+    ruby_response = to_ruby_response(response)
+    yield ruby_response if block_given?
+    ruby_response
   end
 
   def request_post(*args, &block)
@@ -202,10 +204,12 @@ class Puppet::Network::HTTP::Connection
       redirect_limit: @redirect_limit
     }
 
-    resp = @client.post(to_url(path), data, headers: headers, options: options) do |response|
-      yield response.nethttp if block_given?
+    ruby_response = nil
+    @client.post(to_url(path), data, headers: headers, options: options) do |response|
+      ruby_response = to_ruby_response(response)
+      yield ruby_response if block_given?
     end
-    resp.nethttp
+    ruby_response
   end
 
   private
