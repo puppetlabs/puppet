@@ -370,6 +370,15 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     'regexp' => true,
     'pattern' => true,
     'runtime' => true,
+    'init' => true,
+    'object' => true,
+    'sensitive' => true,
+    'semver' => true,
+    'semverrange' => true,
+    'string' => true,
+    'timestamp' => true,
+    'timespan' => true,
+    'typeset' => true,
   }
 
   FUTURE_RESERVED_WORDS = {

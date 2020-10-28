@@ -669,6 +669,15 @@ describe "validating 4x" do
     'regexp',
     'pattern',
     'runtime',
+    'init',
+    'object',
+    'sensitive',
+    'semver',
+    'semverrange',
+    'string',
+    'timestamp',
+    'timespan',
+    'typeset',
     ].each do |name|
 
       it "produces an error for 'class #{name}'" do
@@ -693,6 +702,7 @@ describe "validating 4x" do
       source = "type('a', 'b')"
       expect(validate(parse(source))).not_to have_any_issues
     end
+
     it "should allow using the 'type' as the name of a function with no parameters and a block" do
       source = "type() |$x| { $x }"
       expect(validate(parse(source))).not_to have_any_issues
@@ -966,6 +976,18 @@ describe "validating 4x" do
           expect(validate(parse(source))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
         end
       end
+    end
+
+    it "allows a reserved type name" do
+      source = <<-SOURCE
+      class foo {
+        define string() {}
+        foo::string { 'a': }
+      }
+      SOURCE
+
+      acceptor = validate(parse(source, 'path/foo/manifests/init.pp'))
+      expect(acceptor.error_count).to eql(0)
     end
 
     it "will give multiple errors in one file with multiple issues" do
