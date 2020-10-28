@@ -381,6 +381,30 @@ class Puppet::Settings
         unsafe_flush_cache
       end
     end
+
+    # Handle :on_write_only hooks for our current application/run mode.
+    # This method is called twice, once when initializing global defaults, and
+    # once when initializing application defaults. We only want to call hooks
+    # in the context of the application.
+    if app_defaults_initialized?
+      if (value_sets = value_sets_for_run_mode(preferred_run_mode))
+        @config.values.select(&:has_hook?).each do |setting|
+          if value_sets.include?(setting.name)
+            if setting.call_hook_on_initialize? || setting.call_hook_on_define?
+              # already taken care of
+            else
+              # Do we need to handle setting interpolation here?
+              setting.handle(ChainedValues.new(
+                preferred_run_mode,
+                NONE,
+                [value_sets],
+                @config).interpolate(setting.name))
+            end
+          end
+        end
+      end
+    end
+
     apply_metadata
     call_hooks_deferred_to_application_initialization
     issue_deprecations
@@ -1319,6 +1343,11 @@ Generated on #{Time.now}.
   # Yield each search source in turn.
   def value_sets_for(environment, mode)
     searchpath(environment, mode).collect { |source| searchpath_values(source) }.compact
+  end
+
+  # Yield each search source in turn.
+  def value_sets_for_run_mode(mode)
+    searchpath_values(SearchPathElement.new(mode, :section))
   end
 
   # Read the file in.
