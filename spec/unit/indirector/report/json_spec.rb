@@ -4,6 +4,7 @@ require 'puppet/transaction/report'
 require 'puppet/indirector/report/json'
 
 describe Puppet::Transaction::Report::Json do
+  include PuppetSpec::Files
   describe '#save' do
     subject(:indirection) { described_class.indirection }
 
@@ -35,8 +36,7 @@ describe Puppet::Transaction::Report::Json do
       indirection.save(report)
 
       if Puppet::Util::Platform.windows?
-        require 'puppet/util/windows/security'
-        mode = Puppet::Util::Windows::Security.get_mode(file)
+        mode = File.stat(file).mode
       else
         mode = Puppet::FileSystem.stat(file).mode
       end
@@ -63,15 +63,9 @@ describe Puppet::Transaction::Report::Json do
     context 'when report cannot be saved' do
       it 'raises Error' do
         FileUtils.mkdir_p(file)
-        if Puppet::Util::Platform.windows?
-          expect {
-            indirection.save(report)
-           }.to raise_error(Puppet::Util::Windows::Error, /Access is denied./)
-        else
-          expect {
-            indirection.save(report)
-           }.to raise_error(Errno::EISDIR, /last_run_report.json/)
-        end
+        expect {
+          indirection.save(report)
+         }.to raise_error(Errno::EISDIR, /last_run_report.json/)
       end
     end
   end
