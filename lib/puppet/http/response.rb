@@ -3,10 +3,6 @@
 # @api abstract
 # @api public
 class Puppet::HTTP::Response
-  # @api private
-  # @return [Net::HTTP] the Net::HTTP response
-  attr_reader :nethttp
-
   # @return [URI] the response url
   attr_reader :url
 
