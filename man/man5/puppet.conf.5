@@ -984,7 +984,7 @@ Where puppet agent stores the last run report summary in yaml format\.
 .IP "" 0
 .
 .SS "lastrunreport"
-Where puppet agent stores the last run report in yaml format\.
+Where Puppet Agent stores the last run report, by default, in yaml format\. The format of the report can be changed by setting the \fBcache\fR key of the \fBreport\fR terminus in the routes\.yaml \fIhttps://puppet\.com/docs/puppet/latest/config_file_routes\.html\fR file\. To avoid mismatches between content and file extension, this setting needs to be manually updated to reflect the terminus changes\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $statedir/last_run_report\.yaml
