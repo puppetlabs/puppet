@@ -1469,7 +1469,7 @@ EOT
       end
     },
     :statefile => {
-      :default => "$statedir/state.yaml",
+      :default => "$statedir/state.json",
       :type => :file,
       :mode => "0640",
       :desc => "Where puppet agent and puppet master store state associated

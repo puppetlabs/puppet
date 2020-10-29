@@ -1,6 +1,4 @@
-require 'yaml'
 require 'singleton'
-require 'puppet/util/yaml'
 
 # a class for storing state
 class Puppet::Util::Storage
@@ -54,8 +52,9 @@ class Puppet::Util::Storage
     end
     Puppet::Util.benchmark(:debug, "Loaded state in %{seconds} seconds") do
       begin
-        @@state = Puppet::Util::Yaml.safe_load_file(filename, [Symbol, Time])
-      rescue Puppet::Util::Yaml::YamlLoadError => detail
+        data = Puppet::FileSystem.read(filename, :encoding => 'bom|utf-8')
+        @@state = Marshal.load(data)
+      rescue TypeError => detail
         Puppet.err _("Checksumfile %{filename} is corrupt (%{detail}); replacing") % { filename: filename, detail: detail }
 
         begin
@@ -63,6 +62,8 @@ class Puppet::Util::Storage
         rescue
           raise Puppet::Error, _("Could not rename corrupt %{filename}; remove manually") % { filename: filename }, detail.backtrace
         end
+
+        self.init
       end
     end
 
@@ -94,7 +95,9 @@ class Puppet::Util::Storage
     end
 
     Puppet::Util.benchmark(:debug, "Stored state in %{seconds} seconds") do
-      Puppet::Util::Yaml.dump(@@state, Puppet[:statefile])
+      Puppet::FileSystem.replace_file(Puppet[:statefile], 0660) do |fh|
+        fh.write Marshal.dump(@@state)
+      end
     end
   end
 end
