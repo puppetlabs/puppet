@@ -1,6 +1,3 @@
-require 'yaml'
-require 'puppet/util/yaml'
-
 # A persistence store implementation for storing information between
 # transaction runs for the purposes of information inference (such
 # as calculating corrective_change).
@@ -61,9 +58,15 @@ class Puppet::Transaction::Persistence
 
     result = nil
     Puppet::Util.benchmark(:debug, _("Loaded transaction store file in %{seconds} seconds")) do
+      # require 'pry-byebug'
+      # binding.pry
       begin
-        result = Puppet::Util::Yaml.safe_load_file(filename, [Symbol, Time])
-      rescue Puppet::Util::Yaml::YamlLoadError => detail
+        data = Puppet::FileSystem.read(filename, :encoding => 'bom|utf-8')
+        result = Marshal.load(data)
+        # result = Puppet::Util::Json.load_file(filename)
+      rescue TypeError => detail
+      #   result = Puppet::Util::Yaml.safe_load_file(filename, [Symbol, Time])
+      # rescue Puppet::Util::Yaml::YamlLoadError => detail
         Puppet.log_exception(detail, _("Transaction store file %{filename} is corrupt (%{detail}); replacing") % { filename: filename, detail: detail })
 
         begin
@@ -78,7 +81,7 @@ class Puppet::Transaction::Persistence
     end
 
     unless result.is_a?(Hash)
-      Puppet.err _("Transaction store file %{filename} is valid YAML but not returning a hash. Check the file for corruption, or remove it before continuing.") % { filename: filename }
+      Puppet.err _("Transaction store file %{filename} is valid JSON but not returning a hash. Check the file for corruption, or remove it before continuing.") % { filename: filename }
       return
     end
 
@@ -87,7 +90,13 @@ class Puppet::Transaction::Persistence
 
   # Save data from internal class to persistence store on disk.
   def save
-    Puppet::Util::Yaml.dump(@new_data, Puppet[:transactionstorefile])
+    # require 'pry-byebug'
+    # binding.pry
+    # Puppet::Util::Yaml.dump(@new_data, Puppet[:transactionstorefile])
+    # Puppet::Util::Json.dump_file(@new_data, Puppet[:transactionstorefile])
+    Puppet::FileSystem.replace_file(Puppet[:transactionstorefile], 0660) do |fh|
+      fh.write Marshal.dump(@new_data)
+    end
   end
 
   # Use the catalog and run_mode to determine if persistence should be enabled or not

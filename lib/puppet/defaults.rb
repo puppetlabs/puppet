@@ -1491,7 +1491,7 @@ EOT
       during a schedule due to its entry expiring from the cache."
     },
     :transactionstorefile => {
-      :default => "$statedir/transactionstore.yaml",
+      :default => "$statedir/transactionstore.json",
       :type => :file,
       :mode => "0640",
       :desc => "Transactional storage file for persisting data between

@@ -59,7 +59,7 @@ describe Puppet::Transaction::Persistence do
 
       it "should restore its internal state if the file contains valid YAML" do
         test_yaml = {"resources"=>{"a"=>"b"}}
-        write_state_file(test_yaml.to_yaml)
+        write_state_file(Marshal.dump(test_yaml))
 
         expect(Puppet).not_to receive(:err)
 
