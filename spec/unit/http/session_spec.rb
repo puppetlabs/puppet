@@ -222,6 +222,8 @@ describe Puppet::HTTP::Session do
   end
 
   context 'when retrieving capabilities' do
+    let(:response) { Puppet::HTTP::Response.new(uri, 200, 'OK') }
+
     let(:session) do
       resolver = DummyResolver.new(good_service)
       described_class.new(client, [resolver])
@@ -242,7 +244,7 @@ describe Puppet::HTTP::Session do
       end
 
       it "supports locales if the cached service's version is 5.3.4 or greater" do
-        response = Puppet::HTTP::Response.new({'X-Puppet-Version' => '5.3.4'}, uri)
+        allow(response).to receive(:[]).with('X-Puppet-Version').and_return('5.3.4')
 
         session.route_to(:puppet)
         session.process_response(response)
@@ -251,7 +253,7 @@ describe Puppet::HTTP::Session do
       end
 
       it "does not support locales if the cached service's version is 5.3.3" do
-        response = Puppet::HTTP::Response.new({'X-Puppet-Version' => '5.3.3'}, uri)
+        allow(response).to receive(:[]).with('X-Puppet-Version').and_return('5.3.3')
 
         session.route_to(:puppet)
         session.process_response(response)
@@ -260,7 +262,7 @@ describe Puppet::HTTP::Session do
       end
 
       it "does not support locales if the cached service's version is missing" do
-        response = Puppet::HTTP::Response.new({}, uri)
+        allow(response).to receive(:[]).with('X-Puppet-Version').and_return(nil)
 
         session.route_to(:puppet)
         session.process_response(response)
@@ -277,7 +279,7 @@ describe Puppet::HTTP::Session do
       end
 
       it "supports json if the cached service's version is 5 or greater" do
-        response = Puppet::HTTP::Response.new({'X-Puppet-Version' => '5.5.12'}, uri)
+        allow(response).to receive(:[]).with('X-Puppet-Version').and_return('5.5.12')
 
         session.route_to(:puppet)
         session.process_response(response)
@@ -286,7 +288,7 @@ describe Puppet::HTTP::Session do
       end
 
       it "does not support json if the cached service's version is less than 5.0" do
-        response = Puppet::HTTP::Response.new({'X-Puppet-Version' => '4.10.1'}, uri)
+        allow(response).to receive(:[]).with('X-Puppet-Version').and_return('4.10.1')
 
         session.route_to(:puppet)
         session.process_response(response)
@@ -295,7 +297,7 @@ describe Puppet::HTTP::Session do
       end
 
       it "supports json if the cached service's version is missing" do
-        response = Puppet::HTTP::Response.new({}, uri)
+        allow(response).to receive(:[]).with('X-Puppet-Version').and_return(nil)
 
         session.route_to(:puppet)
         session.process_response(response)

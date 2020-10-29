@@ -340,7 +340,7 @@ module Puppet
 
     def handle_response_error(response)
       message = "Error #{response.code} on SERVER: #{response.body.empty? ? response.reason : response.body}"
-      raise Net::HTTPError.new(message, response.nethttp)
+      raise Net::HTTPError.new(message, Puppet::HTTP::ResponseConverter.to_ruby_response(response))
     end
   end
 

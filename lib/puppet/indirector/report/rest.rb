@@ -17,13 +17,13 @@ class Puppet::Transaction::Report::Rest < Puppet::Indirector::REST
   rescue Puppet::HTTP::ResponseError => e
     return nil if e.response.code == 404
 
-    raise convert_to_http_error(e.response.nethttp)
+    raise convert_to_http_error(e.response)
   end
 
   # This is called by the superclass when not using our httpclient.
   def handle_response(request, response)
-    if !response.is_a?(Net::HTTPSuccess)
-      server_version = response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION]
+    if !response.success?
+      server_version = response[Puppet::Network::HEADER_PUPPET_VERSION]
       if server_version &&
          SemanticPuppet::Version.parse(server_version).major < Puppet::Indirector::REST::MAJOR_VERSION_JSON_DEFAULT &&
          Puppet[:preferred_serialization_format] != 'pson'

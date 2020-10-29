@@ -27,8 +27,8 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   private
 
   def convert_to_http_error(response)
-    if response.body.to_s.empty? && response.respond_to?(:message)
-      returned_message = response.message
+    if response.body.to_s.empty? && response.reason
+      returned_message = response.reason
     elsif response['content-type'].is_a?(String)
       content_type, body = parse_response(response)
       if content_type =~ /[pj]son/
@@ -41,7 +41,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     message = _("Error %{code} on SERVER: %{returned_message}") % { code: response.code, returned_message: returned_message }
-    Net::HTTPError.new(message, response)
+    Net::HTTPError.new(message, Puppet::HTTP::ResponseConverter.to_ruby_response(response))
   end
 
   # Returns the content_type, stripping any appended charset, and the

@@ -1,10 +1,4 @@
 module Puppet
-  module Network
-    module HTTP
-      require 'puppet/network/http_pool'
-    end
-  end
-
   # Contains an HTTP client for making network requests to puppet and other
   # HTTP servers.
   #
@@ -24,6 +18,8 @@ module Puppet
     require 'puppet/http/pool'
     require 'puppet/http/dns'
     require 'puppet/http/response'
+    require 'puppet/http/response_converter'
+    require 'puppet/http/response_net_http'
     require 'puppet/http/service'
     require 'puppet/http/service/ca'
     require 'puppet/http/service/compiler'
@@ -39,5 +35,12 @@ module Puppet
     require 'puppet/http/redirector'
     require 'puppet/http/retry_after_handler'
     require 'puppet/http/external_client'
+  end
+
+  # Legacy HTTP API
+  module Network
+    module HTTP
+      require 'puppet/network/http_pool'
+    end
   end
 end
