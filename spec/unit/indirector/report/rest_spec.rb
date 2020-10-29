@@ -62,7 +62,7 @@ describe Puppet::Transaction::Report::Rest do
 
       stub_request(:put, uri)
         .to_return(status: 500,
-                   headers: { 'Content-Type' => 'text/pson', Puppet::Network::HTTP::HEADER_PUPPET_VERSION => '4.10.1' })
+                   headers: { 'Content-Type' => 'text/pson', Puppet::HTTP::HEADER_PUPPET_VERSION => '4.10.1' })
 
       expect {
         described_class.indirection.save(report)
@@ -74,7 +74,7 @@ describe Puppet::Transaction::Report::Rest do
 
       stub_request(:put, uri)
         .to_return(status: 500,
-                   headers: { 'Content-Type' => 'text/pson', Puppet::Network::HTTP::HEADER_PUPPET_VERSION => '4.10.1' })
+                   headers: { 'Content-Type' => 'text/pson', Puppet::HTTP::HEADER_PUPPET_VERSION => '4.10.1' })
 
       expect {
         described_class.indirection.save(report)
