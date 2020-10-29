@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.19.1-378-g1ea1f3c274\n"
+"Project-Id-Version: Puppet automation framework 6.19.1-404-g6fd33ed69c\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-10-26 09:06+0000\n"
-"PO-Revision-Date: 2020-10-26 09:06+0000\n"
+"POT-Creation-Date: 2020-10-29 10:41+0000\n"
+"PO-Revision-Date: 2020-10-29 10:41+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -711,16 +711,16 @@ msgstr ""
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:800
+#: ../lib/puppet/defaults.rb:802
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1050 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1053 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1888
+#: ../lib/puppet/defaults.rb:1895
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -6743,15 +6743,15 @@ msgstr ""
 msgid "Waiting 5 seconds for runsvdir to discover service %{service}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/smf.rb:68
+#: ../lib/puppet/provider/service/smf.rb:120
 msgid "Failed to get the FMRI of the %{service} service: The pattern '%{service}' matches multiple FMRIs! These are the FMRIs it matches: %{all_fmris}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/smf.rb:83
+#: ../lib/puppet/provider/service/smf.rb:135
 msgid "Cannot query if the %{service} service is complete: The concept of complete/incomplete services was introduced in Solaris 11.1. You are on a Solaris %{release} machine."
 msgstr ""
 
-#: ../lib/puppet/provider/service/smf.rb:182
+#: ../lib/puppet/provider/service/smf.rb:221
 msgid "The %{service} service is incomplete so its status will be reported as :stopped. See `svcs -xv %{fmri}` for more details."
 msgstr ""
 
@@ -7043,69 +7043,69 @@ msgstr ""
 msgid "Not attempting to load %{type} %{fqname} as this object was missing during a prior compilation"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:99
+#: ../lib/puppet/settings.rb:101
 msgid "New environment loaders generated from the requested section."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:301
+#: ../lib/puppet/settings.rb:303
 msgid "Attempting to initialize global default settings more than once!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:514
+#: ../lib/puppet/settings.rb:516
 msgid "Using --configprint is deprecated. Use 'puppet config <subcommand>' instead."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:656
+#: ../lib/puppet/settings.rb:658
 msgid "Could not load %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:762
+#: ../lib/puppet/settings.rb:766
 msgid "Invalid setting type '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:917
+#: ../lib/puppet/settings.rb:921
 msgid "Unknown searchpath case: %{source_type} for the %{source} settings path element."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:990
+#: ../lib/puppet/settings.rb:994
 msgid "setting definition for '%{name}' is not a hash!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:995
+#: ../lib/puppet/settings.rb:999
 msgid "Setting %{name} is already defined"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1001
+#: ../lib/puppet/settings.rb:1005
 msgid "Setting %{name} is already using short name '%{short}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1272
+#: ../lib/puppet/settings.rb:1276
 msgid "Setting %{name} is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'puppet.conf' is a file name and should not be translated
-#: ../lib/puppet/settings.rb:1277
+#: ../lib/puppet/settings.rb:1281
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1448
+#: ../lib/puppet/settings.rb:1452
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1472
+#: ../lib/puppet/settings.rb:1476
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1482
+#: ../lib/puppet/settings.rb:1486
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1483
+#: ../lib/puppet/settings.rb:1487
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1514
+#: ../lib/puppet/settings.rb:1518
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
@@ -7118,38 +7118,38 @@ msgid "Invalid autosign value %{value}: must be 'true'/'false' or an absolute pa
 msgstr ""
 
 #. TRANSLATORS ':%{name}', ':call_hook', and ':on_write_only' should not be translated
-#: ../lib/puppet/settings/base_setting.rb:15
+#: ../lib/puppet/settings/base_setting.rb:37
 msgid "Setting :%{name} :call_hook is nil, defaulting to :on_write_only"
 msgstr ""
 
 #. TRANSLATORS 'call_hook' is a Puppet option name and should not be translated
-#: ../lib/puppet/settings/base_setting.rb:20
+#: ../lib/puppet/settings/base_setting.rb:42
 msgid "Invalid option %{value} for call_hook"
 msgstr ""
 
 #. TRANSLATORS ':call_hook' and ':hook' are specific setting names and should not be translated
-#: ../lib/puppet/settings/base_setting.rb:77
+#: ../lib/puppet/settings/base_setting.rb:101
 msgid "Cannot reference :call_hook for :%{name} if no :hook is defined"
 msgstr ""
 
-#: ../lib/puppet/settings/base_setting.rb:83
+#: ../lib/puppet/settings/base_setting.rb:107
 msgid "%{class_name} (setting '%{setting}') does not accept %{parameter}"
 msgstr ""
 
-#: ../lib/puppet/settings/base_setting.rb:90
+#: ../lib/puppet/settings/base_setting.rb:114
 msgid "You must provide a description for the %{class_name} config option"
 msgstr ""
 
-#: ../lib/puppet/settings/base_setting.rb:104
+#: ../lib/puppet/settings/base_setting.rb:128
 msgid "Short names can only be one character."
 msgstr ""
 
 #. TRANSLATORS 'deprecated' is a Puppet setting and ':completely' and ':allowed_on_commandline' are possible values and should not be translated
-#: ../lib/puppet/settings/base_setting.rb:173
+#: ../lib/puppet/settings/base_setting.rb:197
 msgid "Unsupported deprecated value '%{deprecation}'."
 msgstr ""
 
-#: ../lib/puppet/settings/base_setting.rb:174
+#: ../lib/puppet/settings/base_setting.rb:198
 msgid "Supported values for deprecated are ':completely' or ':allowed_on_commandline'"
 msgstr ""
 
@@ -7225,6 +7225,14 @@ msgstr ""
 
 #: ../lib/puppet/settings/http_extra_headers_setting.rb:12
 msgid "Expected an Array, String, or Hash, got a %{klass}"
+msgstr ""
+
+#: ../lib/puppet/settings/integer_setting.rb:8
+msgid "Cannot convert '%{value}' to an integer for parameter: %{name}"
+msgstr ""
+
+#: ../lib/puppet/settings/port_setting.rb:6
+msgid "Value '%{value}' is not a valid port number for parameter: %{name}"
 msgstr ""
 
 #: ../lib/puppet/settings/priority_setting.rb:40
