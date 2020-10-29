@@ -22,7 +22,7 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
     options[:use_ssl] = url.scheme == 'https'
 
     client = @http_client_class.new(url.host, url.port, options)
-    response = Puppet::HTTP::Response.new(client.get(url.request_uri, headers, options), url)
+    response = Puppet::HTTP::ResponseNetHTTP.new(url, client.get(url.request_uri, headers, options))
 
     if block_given?
       yield response
@@ -44,7 +44,7 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
     options[:use_ssl] = url.scheme == 'https'
 
     client = @http_client_class.new(url.host, url.port, options)
-    response = Puppet::HTTP::Response.new(client.post(url.request_uri, body, headers, options), url)
+    response = Puppet::HTTP::ResponseNetHTTP.new(url, client.post(url.request_uri, body, headers, options))
 
     if block_given?
       yield response

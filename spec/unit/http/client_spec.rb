@@ -154,7 +154,7 @@ describe Puppet::HTTP::Client do
       stub_request(:get, uri)
 
       response = client.get(uri)
-      expect(response).to be_an_instance_of(Puppet::HTTP::Response)
+      expect(response).to be_a(Puppet::HTTP::Response)
       expect(response).to be_success
       expect(response.code).to eq(200)
     end
@@ -224,7 +224,7 @@ describe Puppet::HTTP::Client do
       stub_request(:head, uri)
 
       response = client.head(uri)
-      expect(response).to be_an_instance_of(Puppet::HTTP::Response)
+      expect(response).to be_a(Puppet::HTTP::Response)
       expect(response).to be_success
       expect(response.code).to eq(200)
     end
@@ -284,7 +284,7 @@ describe Puppet::HTTP::Client do
       stub_request(:put, uri)
 
       response = client.put(uri, "", headers: {'Content-Type' => 'text/plain'})
-      expect(response).to be_an_instance_of(Puppet::HTTP::Response)
+      expect(response).to be_a(Puppet::HTTP::Response)
       expect(response).to be_success
       expect(response.code).to eq(200)
     end
@@ -353,7 +353,7 @@ describe Puppet::HTTP::Client do
       stub_request(:post, uri)
 
       response = client.post(uri, "", headers: {'Content-Type' => 'text/plain'})
-      expect(response).to be_an_instance_of(Puppet::HTTP::Response)
+      expect(response).to be_a(Puppet::HTTP::Response)
       expect(response).to be_success
       expect(response.code).to eq(200)
     end
@@ -435,7 +435,7 @@ describe Puppet::HTTP::Client do
       stub_request(:delete, uri)
 
       response = client.delete(uri)
-      expect(response).to be_an_instance_of(Puppet::HTTP::Response)
+      expect(response).to be_a(Puppet::HTTP::Response)
       expect(response).to be_success
       expect(response.code).to eq(200)
     end

@@ -61,7 +61,7 @@ describe Puppet::HTTP::ExternalClient do
       stub_request(:get, uri)
 
       response = client.get(uri)
-      expect(response).to be_an_instance_of(Puppet::HTTP::Response)
+      expect(response).to be_a(Puppet::HTTP::Response)
       expect(response).to be_success
       expect(response.code).to eq(200)
     end
@@ -113,7 +113,7 @@ describe Puppet::HTTP::ExternalClient do
       stub_request(:post, uri)
 
       response = client.post(uri, "", headers: {'Content-Type' => 'text/plain'})
-      expect(response).to be_an_instance_of(Puppet::HTTP::Response)
+      expect(response).to be_a(Puppet::HTTP::Response)
       expect(response).to be_success
       expect(response.code).to eq(200)
     end

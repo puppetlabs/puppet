@@ -24,6 +24,7 @@ module Puppet
     require 'puppet/http/pool'
     require 'puppet/http/dns'
     require 'puppet/http/response'
+    require 'puppet/http/response_net_http'
     require 'puppet/http/service'
     require 'puppet/http/service/ca'
     require 'puppet/http/service/compiler'

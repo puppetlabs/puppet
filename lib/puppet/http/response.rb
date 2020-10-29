@@ -1,39 +1,42 @@
 # Represents the response returned from the server from an HTTP request.
 #
+# @api abstract
 # @api public
 class Puppet::HTTP::Response
   # @api private
   # @return [Net::HTTP] the Net::HTTP response
   attr_reader :nethttp
 
-  # @return [URI] the response uri
+  # @return [URI] the response url
   attr_reader :url
 
-  # Object to represent the response returned from an HTTP request.
+  # Create a response associated with the URL.
   #
-  # @param [Net::HTTP] nethttp the request response
   # @param [URI] url
-  def initialize(nethttp, url)
-    @nethttp = nethttp
+  # @param [Integer] HTTP status
+  # @param [String] HTTP reason
+  def initialize(url, code, reason)
     @url = url
+    @code = code
+    @reason = reason
   end
 
-  # Extract the response code.
+  # Return the response code.
   #
   # @return [Integer] Response code for the request
   #
   # @api public
   def code
-    @nethttp.code.to_i
+    @code
   end
 
-  # Extract the response message.
+  # Return the response message.
   #
   # @return [String] Response message for the request
   #
   # @api public
   def reason
-    @nethttp.message
+    @reason
   end
 
   # Returns the entire response body. Can be used instead of
@@ -44,7 +47,7 @@ class Puppet::HTTP::Response
   #
   # @api public
   def body
-    @nethttp.body
+    raise NotImplementedError
   end
 
   # Streams the response body to the caller in chunks. Can be used instead of
@@ -57,9 +60,7 @@ class Puppet::HTTP::Response
   #
   # @api public
   def read_body(&block)
-    raise ArgumentError, "A block is required" unless block_given?
-
-    @nethttp.read_body(&block)
+    raise NotImplementedError
   end
 
   # Check if the request received a response of success (HTTP 2xx).
@@ -68,7 +69,7 @@ class Puppet::HTTP::Response
   #
   # @api public
   def success?
-    @nethttp.is_a?(Net::HTTPSuccess)
+    200 <= @code && @code < 300
   end
 
   # Get a header case-insensitively.
@@ -78,7 +79,7 @@ class Puppet::HTTP::Response
   #
   # @api public
   def [](name)
-    @nethttp[name]
+    raise NotImplementedError
   end
 
   # Yield each header name and value. Returns an enumerator if no block is given.
@@ -88,7 +89,7 @@ class Puppet::HTTP::Response
   #
   # @api public
   def each_header(&block)
-    @nethttp.each_header(&block)
+    raise NotImplementedError
   end
 
   # Ensure the response body is fully read so that the server is not blocked

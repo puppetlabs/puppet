@@ -350,7 +350,7 @@ class Puppet::HTTP::Client
 
         # don't call return within the `request` block
         http.request(request) do |nethttp|
-          response = Puppet::HTTP::Response.new(nethttp, request.uri)
+          response = Puppet::HTTP::ResponseNetHTTP.new(request.uri, nethttp)
           begin
             Puppet.debug("HTTP #{request.method.upcase} #{request.uri} returned #{response.code} #{response.reason}")
 
