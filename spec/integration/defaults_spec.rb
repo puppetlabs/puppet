@@ -175,18 +175,18 @@ describe "Puppet defaults" do
 
     it "should use the default serverport value when report port is unspecified" do
       Puppet.settings[:serverport] = "1234"
-      expect(Puppet.settings[:report_port]).to eq("1234")
+      expect(Puppet.settings[:report_port]).to eq(1234)
     end
 
     it "should use the default masterport value when report port is unspecified" do
       Puppet.settings[:masterport] = "1234"
-      expect(Puppet.settings[:report_port]).to eq("1234")
+      expect(Puppet.settings[:report_port]).to eq(1234)
     end
 
     it "should use report_port when set" do
       Puppet.settings[:serverport] = "1234"
       Puppet.settings[:report_port] = "5678"
-      expect(Puppet.settings[:report_port]).to eq("5678")
+      expect(Puppet.settings[:report_port]).to eq(5678)
     end
   end
 

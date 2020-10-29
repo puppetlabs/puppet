@@ -21,6 +21,8 @@ class Puppet::Settings
   require 'puppet/settings/file_or_directory_setting'
   require 'puppet/settings/path_setting'
   require 'puppet/settings/boolean_setting'
+  require 'puppet/settings/integer_setting'
+  require 'puppet/settings/port_setting'
   require 'puppet/settings/terminus_setting'
   require 'puppet/settings/duration_setting'
   require 'puppet/settings/ttl_setting'
@@ -733,6 +735,8 @@ class Puppet::Settings
       :file_or_directory => FileOrDirectorySetting,
       :path       => PathSetting,
       :boolean    => BooleanSetting,
+      :integer    => IntegerSetting,
+      :port       => PortSetting,
       :terminus   => TerminusSetting,
       :duration   => DurationSetting,
       :ttl        => TTLSetting,
