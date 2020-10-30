@@ -77,7 +77,8 @@ module Puppet
           the "facter-ng" gem). This is not necessary if Facter 3.x or later is installed.
           This setting is still experimental.',
         :hook    => proc do |value|
-          if value
+          value = munge(value)
+          if value && Puppet::Util::Package.versioncmp(Facter.value('facterversion'), '4.0.0') < 0
             begin
               original_facter = Object.const_get(:Facter)
               Object.send(:remove_const, :Facter)
