@@ -24,7 +24,7 @@ class Puppet::Transaction::Report::Yaml < Puppet::Indirector::Yaml
     FileUtils.mkdir_p(File.dirname(filename))
 
     begin
-      Puppet::Util.replace_file(filename, mode) do |fh|
+      Puppet::FileSystem.replace_file(filename, mode) do |fh|
         fh.print YAML.dump(request.instance)
       end
     rescue TypeError => detail

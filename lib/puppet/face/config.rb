@@ -159,6 +159,16 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
         report_section_and_environment(options[:section], Puppet.settings[:environment])
       end
 
+      # only validate settings we recognize
+      setting = Puppet.settings.setting(name.to_sym)
+      if setting
+        # set the value, which will call `on_*_and_write` hooks, if any
+        Puppet.settings[setting.name] = value
+
+        # read the value to trigger interpolation and munge validation logic
+        Puppet.settings[setting.name]
+      end
+
       path = Puppet::FileSystem.pathname(Puppet.settings.which_configuration_file)
       Puppet::FileSystem.touch(path)
       Puppet::FileSystem.open(path, nil, 'r+:UTF-8') do |file|
