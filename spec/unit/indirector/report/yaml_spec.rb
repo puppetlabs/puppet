@@ -46,8 +46,7 @@ describe Puppet::Transaction::Report::Yaml do
       indirection.save(report)
 
       if Puppet::Util::Platform.windows?
-        require 'puppet/util/windows/security'
-        mode = Puppet::Util::Windows::Security.get_mode(file)
+        mode = File.stat(file).mode
       else
         mode = Puppet::FileSystem.stat(file).mode
       end
@@ -83,15 +82,9 @@ describe Puppet::Transaction::Report::Yaml do
     context 'when report cannot be saved' do
       it 'raises Error' do
         FileUtils.mkdir_p(file)
-        if Puppet::Util::Platform.windows?
-          expect {
-            indirection.save(report)
-           }.to raise_error(Puppet::Util::Windows::Error, /Access is denied./)
-        else
-          expect {
-            indirection.save(report)
-           }.to raise_error(Errno::EISDIR, /last_run_report.yaml/)
-        end
+        expect {
+          indirection.save(report)
+        }.to raise_error(Errno::EISDIR, /last_run_report.yaml/)
       end
     end
   end

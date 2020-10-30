@@ -138,7 +138,7 @@ trace = true
       Puppet[:log_level] = 'info'
       allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(StringIO.new)
       expect {
-        subject.set('foo', 'bar')
+        subject.set('certname', 'bar')
       }.to output("\e[1;33mResolving settings from section 'main' in environment 'production'\e[0m\n").to_stderr
     end
 
@@ -146,19 +146,19 @@ trace = true
       Puppet[:log_level] = 'info'
       allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(StringIO.new)
       expect {
-        subject.set('foo', 'bar', {:section => "baz"})
+        subject.set('certname', 'bar', {:section => "baz"})
       }.to output("\e[1;33mResolving settings from section 'baz' in environment 'production'\e[0m\n").to_stderr
     end
 
     it "writes to the correct puppet config file" do
       expect(Puppet::FileSystem).to receive(:open).with(path, anything, anything)
-      subject.set('foo', 'bar')
+      subject.set('certname', 'bar')
     end
 
     it "creates a config file if one does not exist" do
       allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(StringIO.new)
       expect(Puppet::FileSystem).to receive(:touch).with(path)
-      subject.set('foo', 'bar')
+      subject.set('certname', 'bar')
     end
 
     it "sets the supplied config/value in the default section (main)" do
@@ -167,8 +167,8 @@ trace = true
       manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
       allow(Puppet::Settings::IniFile::Manipulator).to receive(:new).and_return(manipulator)
 
-      expect(manipulator).to receive(:set).with("main", "foo", "bar")
-      subject.set('foo', 'bar')
+      expect(manipulator).to receive(:set).with("main", "certname", "bar")
+      subject.set('certname', 'bar')
     end
 
     it "sets the value in the supplied section" do
@@ -177,8 +177,8 @@ trace = true
       manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
       allow(Puppet::Settings::IniFile::Manipulator).to receive(:new).and_return(manipulator)
 
-      expect(manipulator).to receive(:set).with("baz", "foo", "bar")
-      subject.set('foo', 'bar', {:section => "baz"})
+      expect(manipulator).to receive(:set).with("baz", "certname", "bar")
+      subject.set('certname', 'bar', {:section => "baz"})
     end
 
     it "does not duplicate an existing default section when a section is not specified" do
@@ -190,53 +190,48 @@ trace = true
       myfile = StringIO.new(contents)
       allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(myfile)
 
-      subject.set('foo', 'bar')
+      subject.set('certname', 'bar')
 
-      expect(myfile.string).to match(/foo = bar/)
+      expect(myfile.string).to match(/certname = bar/)
       expect(myfile.string).not_to match(/main.*main/)
     end
 
     it "opens the file with UTF-8 encoding" do
       expect(Puppet::FileSystem).to receive(:open).with(path, nil, 'r+:UTF-8')
-      subject.set('foo', 'bar')
+      subject.set('certname', 'bar')
     end
 
     it "sets settings into the [server] section when setting [master] section settings" do
-      initial_contents = <<-CONFIG
-[master]
-setting = old_setting_value
-untouched_setting = value
+      initial_contents = <<~CONFIG
+        [master]
+        node_terminus = none
+        reports = log
       CONFIG
 
       myinitialfile = StringIO.new(initial_contents)
       allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(myinitialfile)
 
       expect {
-        subject.set('setting', 'new_setting_value', {:section => 'master'})
-      }.to output("Deleted setting from 'master': 'setting = old_setting_value', and adding it to 'server' section\n").to_stdout
-      modified_content = <<-CONFIG
-[master]
-untouched_setting = value
-[server]
-setting = new_setting_value
-      CONFIG
+        subject.set('node_terminus', 'exec', {:section => 'master'})
+      }.to output("Deleted setting from 'master': 'node_terminus = none', and adding it to 'server' section\n").to_stdout
 
-      mymodifiedfile = StringIO.new(modified_content)
-      expect(myinitialfile.string).to match(mymodifiedfile.string)
+      expect(myinitialfile.string).to match(<<~CONFIG)
+        [master]
+        reports = log
+        [server]
+        node_terminus = exec
+      CONFIG
     end
 
     it "setting [master] section settings, sets settings into [server] section instead" do
       myinitialfile = StringIO.new("")
       allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(myinitialfile)
-      subject.set('setting_name', 'value', {:section => 'master'})
+      subject.set('node_terminus', 'exec', {:section => 'master'})
 
-      expected_content = <<-CONFIG
-[server]
-setting_name = value
+      expect(myinitialfile.string).to match(<<~CONFIG)
+        [server]
+        node_terminus = exec
       CONFIG
-
-      myexpectedfile = StringIO.new(expected_content)
-      expect(myinitialfile.string).to match(myexpectedfile.string)
     end
   end
 

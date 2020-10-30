@@ -608,7 +608,7 @@ module Puppet
     :http_proxy_password =>{
       :default    => "none",
       :hook       => proc do |value|
-        if settings[:http_proxy_password] =~ /[@!# \/]/
+        if value =~ /[@!# \/]/
           raise "Passwords set in the http_proxy_password setting must be valid as part of a URL, and any reserved characters must be URL-encoded. We received: #{value}"
         end
       end,
@@ -1774,7 +1774,11 @@ EOT
       :default  => "$statedir/last_run_report.yaml",
       :type     => :file,
       :mode     => "0640",
-      :desc     => "Where puppet agent stores the last run report in yaml format."
+      :desc     => "Where Puppet Agent stores the last run report, by default, in yaml format.
+        The format of the report can be changed by setting the `cache` key of the `report` terminus
+        in the [routes.yaml](https://puppet.com/docs/puppet/latest/config_file_routes.html) file.
+        To avoid mismatches between content and file extension, this setting needs to be
+        manually updated to reflect the terminus changes."
     },
     :graph => {
       :default  => false,
