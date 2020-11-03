@@ -32,6 +32,41 @@ module Puppet
       %w[sha256 sha256lite sha384 sha512 sha224 sha1 sha1lite md5 md5lite mtime ctime]
   end
 
+  def self.log_ca_migration_warning
+    urge_to_migrate = <<-UTM
+The cadir is currently configured to be inside the #{Puppet[:ssldir]} directory. This config
+setting and the directory location will not be used in a future version of puppet. Please run the
+puppetserver ca tool to migrate out from the puppet confdir to the /etc/puppetlabs/puppetserver/ca
+directory. Use `puppetserver ca migrate --help` for more info.
+UTM
+    Puppet.warn_once('deprecations',
+                     'CA migration message',
+                     urge_to_migrate,
+                     :default,
+                     :default)
+  end
+
+  def self.default_cadir
+    return "" if Puppet::Util::Platform.windows?
+    old_ca_dir = "#{Puppet[:ssldir]}/ca"
+    new_ca_dir = "/etc/puppetlabs/puppetserver/ca"
+
+    if File.exist?(old_ca_dir)
+      if File.symlink?(old_ca_dir)
+        target = File.readlink(old_ca_dir)
+        if target.start_with?(Puppet[:ssldir])
+          Puppet.log_ca_migration_warning
+        end
+        target
+      else
+        Puppet.log_ca_migration_warning
+        old_ca_dir
+      end
+    else
+      new_ca_dir
+    end
+  end
+
   def self.default_basemodulepath
     if Puppet::Util::Platform.windows?
       path = ['$codedir/modules']
@@ -1074,9 +1109,16 @@ EOT
       :desc    => "The name to use the Certificate Authority certificate.",
     },
     :cadir => {
-      :default => "$ssldir/ca",
+      :default => lambda { default_cadir },
       :type => :directory,
       :desc => "The root directory for the certificate authority.",
+      :call_hook => :on_initialize_and_write,
+      :hook => proc do |value|
+        if value.start_with?(Puppet[:ssldir])
+          Puppet.log_ca_migration_warning
+        end
+        value
+      end
     },
     :cacert => {
       :default => "$cadir/ca_crt.pem",
