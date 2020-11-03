@@ -136,7 +136,7 @@ describe Puppet::HTTP::Service do
     catalog_mimes = if Puppet.features.msgpack?
                       %w[application/vnd.puppet.rich+json application/json application/vnd.puppet.rich+msgpack application/x-msgpack text/pson]
                     else
-                      %w[application/vnd.puppet.rich+json application/json application/vnd.puppet.rich+msgpack text/pson]
+                      %w[application/vnd.puppet.rich+json application/json text/pson]
                     end
     expect(service.mime_types(Puppet::Resource::Catalog)).to eq(catalog_mimes)
   end
