@@ -131,7 +131,56 @@ describe Puppet::HTTP::Service::Compiler do
       subject.post_catalog(certname, environment: 'production', facts: facts, checksum_type: %w[sha256 sha384])
     end
 
+    it 'does not accept msgpack by default' do
+      stub_request(:post, uri)
+        .with(headers: {'Accept' => 'application/vnd.puppet.rich+json, application/json, text/pson'})
+        .to_return(**catalog_response)
+
+      allow(Puppet.features).to receive(:msgpack?).and_return(false)
+
+      subject.post_catalog(certname, environment: environment, facts: facts)
+    end
+
+    it 'accepts msgpack & rich_json_msgpack if the gem is present' do
+      stub_request(:post, uri)
+        .with(headers: {'Accept' => 'application/vnd.puppet.rich+json, application/json, application/vnd.puppet.rich+msgpack, application/x-msgpack, text/pson'})
+        .to_return(**catalog_response)
+
+      allow(Puppet.features).to receive(:msgpack?).and_return(true)
+
+      subject.post_catalog(certname, environment: environment, facts: facts)
+    end
+
     it 'returns a deserialized catalog' do
+      stub_request(:post, uri)
+        .to_return(**catalog_response)
+
+      _, cat = subject.post_catalog(certname, environment: 'production', facts: facts)
+      expect(cat).to be_a(Puppet::Resource::Catalog)
+      expect(cat.name).to eq(certname)
+    end
+
+    it 'deserializes the catalog from msgpack', if: Puppet.features.msgpack? do
+      body = catalog.to_msgpack
+      formatter = Puppet::Network::FormatHandler.format(:msgpack)
+      catalog_response = { body: body, headers: {'Content-Type' => formatter.mime }}
+
+      stub_request(:post, uri)
+        .to_return(**catalog_response)
+
+      _, cat = subject.post_catalog(certname, environment: 'production', facts: facts)
+      expect(cat).to be_a(Puppet::Resource::Catalog)
+      expect(cat.name).to eq(certname)
+    end
+
+    it 'deserializes the catalog from rich msgpack', if: Puppet.features.msgpack? do
+      body = Puppet.override(rich_data: true) do
+        catalog.to_msgpack
+      end
+
+      formatter = Puppet::Network::FormatHandler.format(:rich_data_msgpack)
+      catalog_response = { body: body, headers: {'Content-Type' => formatter.mime }}
+
       stub_request(:post, uri)
         .to_return(**catalog_response)
 

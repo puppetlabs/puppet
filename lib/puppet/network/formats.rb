@@ -255,7 +255,8 @@ Puppet::Network::FormatHandler.create_serialized_formats(:rich_data_msgpack, mim
   end
 
   def supported?(klass)
-    klass == Puppet::Resource::Catalog &&
+    suitable? &&
+      klass == Puppet::Resource::Catalog &&
       Puppet.lookup(:current_environment).rich_data?
   end
 end
