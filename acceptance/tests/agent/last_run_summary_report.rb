@@ -50,7 +50,7 @@ test_name "The 'last_run_summary.yaml' report has the right location and permiss
       end
     end
 
-    step "Check if the 'last_run_summary.yaml' report file created has '0644' permissions" do
+    step "Check if the 'last_run_summary.yaml' report file created has '0640' permissions" do
       if agent['platform'] =~ /windows/
         on(agent, "icacls #{File.join(publicdir, 'last_run_summary.yaml')}") do |result|
           # Linux 'Owner' premissions class equivalent
@@ -58,11 +58,16 @@ test_name "The 'last_run_summary.yaml' report has the right location and permiss
           # Linux 'Group' permissions class equivalent
           assert_match('None:(R)', result.stdout)
           # Linux 'Public' permissions class equivalent
-          assert_match('Everyone:(R)', result.stdout)
+          assert_match('Everyone:(Rc,S,RA)', result.stdout)
+          # According to icacls docs:
+          # Rc = Read control
+          # S  = Synchronize
+          # RA = Read attributes
+          # More at https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/icacls
         end
       else
         on(agent, "ls -al #{publicdir}") do |result|
-          assert_match(/rw-r--r--.+last_run_summary\.yaml$/, result.stdout)
+          assert_match(/rw-r-----.+last_run_summary\.yaml$/, result.stdout)
         end
       end
     end
@@ -86,7 +91,7 @@ test_name "The 'last_run_summary.yaml' report has the right location and permiss
       end
     end
 
-    step "Check if the 'last_run_summary.yaml' report file was created in the new location and still has '0644' permissions" do
+    step "Check if the 'last_run_summary.yaml' report file was created in the new location and still has '0640' permissions" do
       if agent['platform'] =~ /windows/
         on(agent, "icacls #{File.join(custom_publicdir, 'last_run_summary.yaml')}") do |result|
           # Linux 'Owner' premissions class equivalent
@@ -94,11 +99,16 @@ test_name "The 'last_run_summary.yaml' report has the right location and permiss
           # Linux 'Group' permissions class equivalent
           assert_match('None:(R)', result.stdout)
           # Linux 'Public' permissions class equivalent
-          assert_match('Everyone:(R)', result.stdout)
+          assert_match('Everyone:(Rc,S,RA)', result.stdout)
+          # According to icacls docs:
+          # Rc = Read control
+          # S  = Synchronize
+          # RA = Read attributes
+          # More at https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/icacls
         end
       else
         on(agent, "ls -al #{custom_publicdir}") do |result|
-          assert_match(/rw-r--r--.+last_run_summary\.yaml$/, result.stdout)
+          assert_match(/rw-r-----.+last_run_summary\.yaml$/, result.stdout)
         end
       end
     end

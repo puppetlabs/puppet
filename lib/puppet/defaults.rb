@@ -1809,7 +1809,7 @@ EOT
     :lastrunfile =>  {
       :default  => "$publicdir/last_run_summary.yaml",
       :type     => :file,
-      :mode     => "0644",
+      :mode     => "0640",
       :desc     => "Where puppet agent stores the last run report summary in yaml format."
     },
     :lastrunreport =>  {
