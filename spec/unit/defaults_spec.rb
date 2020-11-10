@@ -199,9 +199,10 @@ describe "Defaults" do
         @original_facter = Object.const_get(:Facter)
 
         Object.send(:remove_const, :Facter)
-        Object.const_set(:Facter, Module.new)
+        facter = double('facter')
+        allow(facter).to receive(:value).with('facterversion').and_return('3.11.4')
+        Object.const_set(:Facter, facter)
 
-        allow(Facter).to receive(:value).with('facterversion').and_return('3.11.4')
         allow_any_instance_of(Puppet::Settings::BooleanSetting).to receive(:require).with('facter-ng').and_return(true)
         allow(Facter).to receive(:respond_to?).and_return(false)
       end
