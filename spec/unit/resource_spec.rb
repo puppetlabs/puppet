@@ -288,7 +288,7 @@ describe Puppet::Resource do
 
     describe "when the resource type is :hostclass" do
       let(:environment_name) { "testing env" }
-      let(:fact_values) { { :a => 1 } }
+      let(:fact_values) { { 'a' => 1 } }
       let(:port) { Puppet::Parser::AST::Leaf.new(:value => '80') }
 
       def inject_and_set_defaults(resource, scope)
@@ -297,10 +297,7 @@ describe Puppet::Resource do
 
       before do
         environment.known_resource_types.add(apache)
-
-        allow(scope).to receive(:host).and_return('host')
-        allow(scope).to receive(:environment).and_return(environment)
-        allow(scope).to receive(:facts).and_return(Puppet::Node::Facts.new("facts", fact_values))
+        scope.set_facts(fact_values)
       end
 
       context 'with a default value expression' do
@@ -571,11 +568,15 @@ describe Puppet::Resource do
       expect(resource.to_hash[:myvar]).to eq("bob")
     end
 
-    it "should set :name to the title if :name is not present for non-builtin types" do
-      krt = Puppet::Resource::TypeCollection.new("myenv")
-      krt.add Puppet::Resource::Type.new(:definition, :foo)
-      resource = Puppet::Resource.new :foo, "bar"
-      allow(resource).to receive(:known_resource_types).and_return(krt)
+    it "should set :name to the title if :name is not present for non-existent types" do
+      resource = Puppet::Resource.new :doesnotexist, "bar"
+      expect(resource.to_hash[:name]).to eq("bar")
+    end
+
+    it "should set :name to the title if :name is not present for a definition" do
+      type = Puppet::Resource::Type.new(:definition, :foo)
+      environment.known_resource_types.add(type)
+      resource = Puppet::Resource.new :foo, "bar", :environment => environment
       expect(resource.to_hash[:name]).to eq("bar")
     end
   end
