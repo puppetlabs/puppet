@@ -50,8 +50,8 @@ describe 'Puppet::Util::AtFork' do
               const_set(:TYPE_VOID,  nil)
               const_set(:TYPE_INT,   nil)
               const_set(:DLError,    Class.new(StandardError))
-              const_set(:Handle,     Class.new)
-              const_set(:Function,   Class.new)
+              const_set(:Handle,     Class.new { def initialize(library = nil, flags = 0); end })
+              const_set(:Function,   Class.new { def initialize(ptr, args, ret_type, abi = 0); end })
             end)
           end
         end

@@ -6,9 +6,6 @@ describe Puppet::Network::DefaultAuthProvider do
   before :each do
     allow(Puppet::FileSystem).to receive(:stat).and_return(double('stat', :ctime => :now))
     allow(Time).to receive(:now).and_return(Time.now)
-
-    allow_any_instance_of(Puppet::Network::DefaultAuthProvider).to receive(:exists?).and_return(true)
-    # FIXME @authprovider = Puppet::Network::DefaultAuthProvider.new("dummy")
   end
 
   describe "when initializing" do

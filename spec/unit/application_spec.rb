@@ -594,13 +594,6 @@ describe Puppet::Application do
     end
 
     it "should raise an error if dispatch returns no command" do
-      allow(@app).to receive(:get_command).and_return(nil)
-      expect(Puppet).to receive(:send_log).with(:err, "Could not run: No valid command or main")
-      expect { @app.run }.to exit_with 1
-    end
-
-    it "should raise an error if dispatch returns an invalid command" do
-      allow(@app).to receive(:get_command).and_return(:this_function_doesnt_exist)
       expect(Puppet).to receive(:send_log).with(:err, "Could not run: No valid command or main")
       expect { @app.run }.to exit_with 1
     end

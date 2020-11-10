@@ -14,9 +14,8 @@ describe Puppet::Type.type(:package).provider(:pip) do
   it { is_expected.to be_version_ranges }
 
   before do
-    @resource = Puppet::Resource.new(:package, "fake_package")
-    allow(@resource).to receive(:original_parameters).and_return({})
-    @provider = described_class.new(@resource)
+    @resource = Puppet::Type.type(:package).new(name: "fake_package", provider: :pip)
+    @provider = @resource.provider
     @client = double('client')
     allow(@client).to receive(:call).with('package_releases', 'real_package').and_return(["1.3", "1.2.5", "1.2.4"])
     allow(@client).to receive(:call).with('package_releases', 'fake_package').and_return([])
@@ -335,7 +334,6 @@ describe Puppet::Type.type(:package).provider(:pip) do
 
     it "should install" do
       @resource[:ensure] = :installed
-      @resource[:source] = nil
       expect(@provider).to receive(:execute).with(["/fake/bin/pip", ["install", "-q", "fake_package"]])
       @provider.install
     end
@@ -368,7 +366,6 @@ describe Puppet::Type.type(:package).provider(:pip) do
 
     it "should install a particular version" do
       @resource[:ensure] = "0.0.0"
-      @resource[:source] = nil
       # TJK
       expect(@provider).to receive(:execute).with(["/fake/bin/pip", ["install", "-q", "fake_package==0.0.0"]])
       @provider.install
@@ -376,7 +373,6 @@ describe Puppet::Type.type(:package).provider(:pip) do
 
     it "should upgrade" do
       @resource[:ensure] = :latest
-      @resource[:source] = nil
       # TJK
       expect(@provider).to receive(:execute).with(["/fake/bin/pip", ["install", "-q", "--upgrade", "fake_package"]])
       @provider.install
@@ -384,7 +380,6 @@ describe Puppet::Type.type(:package).provider(:pip) do
 
     it "should handle install options" do
       @resource[:ensure] = :installed
-      @resource[:source] = nil
       @resource[:install_options] = [{"--timeout" => "10"}, "--no-index"]
       expect(@provider).to receive(:execute).with(["/fake/bin/pip", ["install", "-q", "--timeout=10", "--no-index", "fake_package"]])
       @provider.install
@@ -415,7 +410,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
     let(:pip) { '/fake/bin/pip' }
 
     it "should look up version if pip is present" do
-      allow(described_class).to receive(:pip_cmd).and_return(pip)
+      allow(described_class).to receive(:cmd).and_return(pip)
       process = ['pip 8.0.2 from /usr/local/lib/python2.7/dist-packages (python 2.7)']
       allow(described_class).to receive(:execpipe).with([pip, '--version']).and_yield(process)
 
@@ -423,7 +418,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
     end
 
     it "parses multiple lines of output" do
-      allow(described_class).to receive(:pip_cmd).and_return(pip)
+      allow(described_class).to receive(:cmd).and_return(pip)
       process = [
         "/usr/local/lib/python2.7/dist-packages/urllib3/contrib/socks.py:37: DependencyWarning: SOCKS support in urllib3 requires the installation of optional dependencies: specifically, PySocks. For more information, see https://urllib3.readthedocs.io/en/latest/contrib.html#socks-proxies",
         "  DependencyWarning",
@@ -435,7 +430,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
     end
 
     it "raises if there isn't a version string" do
-      allow(described_class).to receive(:pip_cmd).and_return(pip)
+      allow(described_class).to receive(:cmd).and_return(pip)
       allow(described_class).to receive(:execpipe).with([pip, '--version']).and_yield([""])
       expect {
         described_class.pip_version(pip)
@@ -444,7 +439,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
 
     it "quotes commands with spaces" do
       pip = 'C:\Program Files\Python27\Scripts\pip.exe'
-      allow(described_class).to receive(:pip_cmd).and_return(pip)
+      allow(described_class).to receive(:cmd).and_return(pip)
       process = ["pip 18.1 from c:\program files\python27\lib\site-packages\pip (python 2.7)\r\n"]
       allow(described_class).to receive(:execpipe).with(["\"#{pip}\"", '--version']).and_yield(process)
 

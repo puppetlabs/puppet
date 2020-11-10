@@ -17,17 +17,12 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
   before do
     Puppet::IndirectorTesting.indirection.terminus_class = :memory
     Puppet::IndirectorTesting.indirection.terminus.clear
-    allow(handler).to receive(:warn_if_near_expiration)
   end
 
   describe "when converting a URI into a request" do
     let(:environment) { Puppet::Node::Environment.create(:env, []) }
     let(:env_loaders) { Puppet::Environments::Static.new(environment) }
     let(:params) { { :environment => "env" } }
-
-    before do
-      allow(handler).to receive(:handler).and_return("foo")
-    end
 
     around do |example|
       Puppet.override(:environments => env_loaders) do
@@ -179,10 +174,6 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
   describe "when converting a request into a URI" do
     let(:environment) { Puppet::Node::Environment.create(:myenv, []) }
     let(:request) { Puppet::Indirector::Request.new(:foo, :find, "with spaces", nil, :foo => :bar, :environment => environment) }
-
-    before do
-      allow(handler).to receive(:handler).and_return("foo")
-    end
 
     it "should include the environment in the query string of the URI" do
       expect(handler.class.request_to_uri(request)).to eq("#{master_url_prefix}/foo/with%20spaces?environment=myenv&foo=bar")

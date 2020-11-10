@@ -828,7 +828,6 @@ describe Puppet::Transaction do
       before do
         @resource = Puppet::Type.type(:notify).new :title => "foobar"
         @catalog.add_resource @resource
-        allow(@transaction).to receive(:add_dynamically_generated_resources)
       end
 
       it 'should stop processing if :stop_processing? is true' do

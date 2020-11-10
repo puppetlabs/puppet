@@ -8,10 +8,6 @@ describe Puppet::Type.type(:package).provider(:pkgdmg) do
   it { is_expected.not_to be_uninstallable }
 
   describe "when installing it should fail when" do
-    before :each do
-      expect(Puppet::Util).not_to receive(:execute)
-    end
-
     it "no source is specified" do
       expect { provider.install }.to raise_error(Puppet::Error, /must specify a package source/)
     end

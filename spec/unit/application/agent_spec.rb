@@ -202,7 +202,6 @@ describe Puppet::Application::Agent do
       allow(Puppet::Resource::Catalog.indirection).to receive(:terminus_class=)
       allow(Puppet::Resource::Catalog.indirection).to receive(:cache_class=)
       allow(Puppet::Node::Facts.indirection).to receive(:terminus_class=)
-      allow(Puppet).to receive(:settraps)
     end
 
     it "should not run with extra arguments" do

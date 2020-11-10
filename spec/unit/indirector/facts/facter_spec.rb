@@ -22,7 +22,6 @@ describe Puppet::Node::Facts::Facter do
   end
 
   before :each do
-    allow(Puppet::Node::Facts::Facter).to receive(:reload_facter)
     @facter = Puppet::Node::Facts::Facter.new
     allow(Facter).to receive(:to_hash).and_return({})
     @name = "me"
