@@ -629,40 +629,10 @@ config_version=$vardir/random/scripts
     context "expiration policies" do
       let(:service) { ReplayExpirationService.new }
 
-      # The environment named `:an_environment` will already be loaded when the
-      # block is yielded to
-      def with_environment_loaded(service, &block)
-        loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
-          using_expiration_service(service) do
-            cached = Puppet::Environments::Cached.new(loader)
-            cached.get!(:an_environment)
-
-            yield cached if block_given?
-          end
-        end
-      end
-
       it "notifies when the environment is first created" do
         with_environment_loaded(service)
 
         expect(service.created_envs).to eq([:an_environment])
-      end
-
-      it "evicts an environment" do
-        with_environment_loaded(service) do |cached|
-          cached.clear(:an_environment)
-        end
-
-        expect(service.evicted_envs).to eq([:an_environment])
-      end
-
-      it "clears all environments" do
-        with_environment_loaded(service) do |cached|
-          cached.get!(:another_environment)
-          cached.clear_all
-        end
-
-        expect(service.evicted_envs).to eq([:an_environment, :another_environment])
       end
 
       it "does not evict an unexpired environment" do
@@ -740,6 +710,87 @@ config_version=$vardir/random/scripts
         expect(Puppet::Environments::Cached.new(loader).get_conf(:an_environment)).to match_environment_conf(:an_environment).
           with_env_path(directory_tree.children.first).
           with_global_module_path([])
+      end
+    end
+
+    context '#clear' do
+      let(:service) { ReplayExpirationService.new }
+
+      it "evicts an environment" do
+        with_environment_loaded(service) do |cached|
+          cached.clear(:an_environment)
+        end
+
+        expect(service.evicted_envs).to eq([:an_environment])
+      end
+    end
+
+    context '#clear_all' do
+      let(:service) { ReplayExpirationService.new }
+
+      it 'evicts all environments' do
+        with_environment_loaded(service) do |cached|
+          cached.get(:an_environment)
+          cached.get(:another_environment)
+          cached.clear_all
+
+          expect(service.evicted_envs).to match([:an_environment, :another_environment])
+        end
+      end
+
+      it 'clears cached environment settings' do
+        base_dir = File.expand_path("envdir")
+        original_envdir = FS::MemoryFile.a_directory(base_dir, [
+          FS::MemoryFile.a_directory("env3", [
+            FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
+              manifest=/manifest_orig
+              modulepath=/modules_orig
+              environment_timeout=60
+            EOF
+          ]),
+        ])
+
+        FS.overlay(original_envdir) do
+          dir_loader = Puppet::Environments::Directories.new(original_envdir, [])
+          loader = Puppet::Environments::Cached.new(dir_loader)
+          Puppet.override(:environments => loader) do
+            original_env = loader.get("env3") # force the environment.conf to be read
+
+            changed_envdir = FS::MemoryFile.a_directory(base_dir, [
+              FS::MemoryFile.a_directory("env3", [
+                FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
+                  manifest=/manifest_changed
+                  modulepath=/modules_changed
+                  environment_timeout=60
+                EOF
+              ]),
+            ])
+
+            #Clear all cached environments
+            loader.clear_all
+
+            FS.overlay(changed_envdir) do
+              changed_env = loader.get("env3")
+
+              expect(original_env).to environment(:env3).
+                with_manifest(File.expand_path("/manifest_orig")).
+                with_full_modulepath([File.expand_path("/modules_orig")])
+
+              expect(changed_env).to environment(:env3).
+                with_manifest(File.expand_path("/manifest_changed")).
+                with_full_modulepath([File.expand_path("/modules_changed")])
+            end
+          end
+        end
+      end
+
+      it 'deletes environment text domains' do
+        with_environment_loaded(service) do |cached|
+          cached.get(:an_environment)
+          cached.clear_all
+
+          expect(FastGettext.text_domain).to eq(Puppet::GettextConfig::DEFAULT_TEXT_DOMAIN)
+        end
       end
     end
   end
@@ -833,6 +884,19 @@ config_version=$vardir/random/scripts
       yield
     ensure
       Puppet::Environments::Cached.cache_expiration_service = orig_svc
+    end
+  end
+
+  # The environment named `:an_environment` will already be loaded when the
+  # block is yielded to
+  def with_environment_loaded(service, &block)
+    loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+      using_expiration_service(service) do
+        cached = Puppet::Environments::Cached.new(loader)
+        cached.get!(:an_environment)
+
+        yield cached if block_given?
+      end
     end
   end
 
