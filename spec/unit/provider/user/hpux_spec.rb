@@ -33,7 +33,7 @@ describe Puppet::Type.type(:user).provider(:hpuxuseradd),
     before :each do
       allow(Etc).to receive(:getpwent).and_return(pwent)
       allow(Etc).to receive(:getpwnam).and_return(pwent)
-      allow(resource).to receive(:command).with(:modify).and_return('/usr/sam/lbin/usermod.sam')
+      allow(provider).to receive(:command).with(:modify).and_return('/usr/sam/lbin/usermod.sam')
     end
 
     it "should have feature manages_passwords" do

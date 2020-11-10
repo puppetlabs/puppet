@@ -24,10 +24,6 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     let(:env_loaders) { Puppet::Environments::Static.new(environment) }
     let(:params) { { :environment => "env" } }
 
-    before do
-      allow(handler).to receive(:handler).and_return("foo")
-    end
-
     around do |example|
       Puppet.override(:environments => env_loaders) do
         example.run

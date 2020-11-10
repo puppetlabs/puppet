@@ -11,7 +11,6 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
 
   before do
     File.open(filename, 'w') {|f| f.write "initial file content"}
-    allow(described_class).to receive(:standalone?).and_return(false)
   end
 
   around do |example|

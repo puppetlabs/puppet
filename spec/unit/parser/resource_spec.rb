@@ -418,22 +418,27 @@ describe Puppet::Parser::Resource do
   end
 
   describe "when merging overrides" do
+    def resource_type(name)
+      double(name, :child_of? => false)
+    end
+
     before do
-      @source = "source1"
+      @source = resource_type("source1")
       @resource = mkresource :source => @source
       @override = mkresource :source => @source
     end
 
     it "should fail when the override was not created by a parent class" do
-      @override.source = "source2"
-      expect(@override.source).to receive(:child_of?).with("source1").and_return(false)
+      @override.source = resource_type("source2")
+      expect(@override.source).to receive(:child_of?).with(@source).and_return(false)
       expect { @resource.merge(@override) }.to raise_error(Puppet::ParseError)
     end
 
     it "should succeed when the override was created in the current scope" do
-      @resource.source = "source3"
+      @source3 = resource_type("source3")
+      @resource.source = @source3
       @override.source = @resource.source
-      expect(@override.source).not_to receive(:child_of?).with("source3")
+      expect(@override.source).not_to receive(:child_of?).with(@source3)
       params = {:a => :b, :c => :d}
       expect(@override).to receive(:parameters).and_return(params)
       expect(@resource).to receive(:override_parameter).with(:b)
@@ -442,9 +447,10 @@ describe Puppet::Parser::Resource do
     end
 
     it "should succeed when a parent class created the override" do
-      @resource.source = "source3"
-      @override.source = "source4"
-      expect(@override.source).to receive(:child_of?).with("source3").and_return(true)
+      @source3 = resource_type("source3")
+      @resource.source = @source3
+      @override.source = resource_type("source4")
+      expect(@override.source).to receive(:child_of?).with(@source3).and_return(true)
       params = {:a => :b, :c => :d}
       expect(@override).to receive(:parameters).and_return(params)
       expect(@resource).to receive(:override_parameter).with(:b)

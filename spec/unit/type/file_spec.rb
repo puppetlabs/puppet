@@ -349,12 +349,6 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "#flush" do
-    it "should flush all properties that respond to :flush" do
-      file[:source] = File.expand_path(__FILE__)
-      expect(file.parameter(:source)).to receive(:flush)
-      file.flush
-    end
-
     it "should reset its stat reference" do
       FileUtils.touch(path)
       stat1 = file.stat

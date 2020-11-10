@@ -11,12 +11,8 @@ describe Puppet::Resource::TypeCollection do
       @dir = tmpfile("autoload_testing")
       FileUtils.mkdir_p @dir
 
-      loader = Object.new
-      allow(loader).to receive(:load).and_return(nil)
-      allow(loader).to receive(:set_entry)
-
-      loaders = Object.new
-      expect(loaders).to receive(:runtime3_type_loader).at_most(:once).and_return(loader)
+      loader = double('loader', load: nil, set_entry: nil)
+      loaders = double('loaders', runtime3_type_loader: loader)
       expect(Puppet::Pops::Loaders).to receive(:loaders).at_most(:once).and_return(loaders)
 
       environment = Puppet::Node::Environment.create(:env, [@dir])

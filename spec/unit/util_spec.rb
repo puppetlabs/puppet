@@ -309,7 +309,7 @@ describe Puppet::Util do
 
     describe "when using platform :posix" do
       before :each do
-        allow(Puppet.features).to receive(:posix).and_return(true)
+        allow(Puppet.features).to receive(:posix?).and_return(true)
         allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
       end
 
@@ -322,7 +322,7 @@ describe Puppet::Util do
 
     describe "when using platform :windows" do
       before :each do
-        allow(Puppet.features).to receive(:posix).and_return(false)
+        allow(Puppet.features).to receive(:posix?).and_return(false)
         allow(Puppet::Util::Platform).to receive(:windows?).and_return(true)
       end
 
@@ -456,7 +456,7 @@ describe Puppet::Util do
 
     describe "when using platform :posix" do
       before :each do
-        allow(Puppet.features).to receive(:posix).and_return(true)
+        allow(Puppet.features).to receive(:posix?).and_return(true)
         allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
       end
 
@@ -495,7 +495,7 @@ describe Puppet::Util do
 
     describe "when using platform :windows" do
       before :each do
-        allow(Puppet.features).to receive(:posix).and_return(false)
+        allow(Puppet.features).to receive(:posix?).and_return(false)
         allow(Puppet::Util::Platform).to receive(:windows?).and_return(true)
       end
 

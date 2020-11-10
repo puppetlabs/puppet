@@ -59,8 +59,6 @@ describe Puppet::Indirector::FileMetadata::FileServer, " when finding files" do
 
         # Use a real mount, so the integration is a bit deeper.
         mount1 = Puppet::FileServing::Configuration::Mount::File.new("one")
-        allow(mount1).to receive(:globalallow?).and_return(true)
-        allow(mount1).to receive(:allowed?).and_return(true)
         mount1.path = File.join(env_path, "%h")
 
         parser = double('parser', :changed? => false)
