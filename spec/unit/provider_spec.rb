@@ -648,27 +648,25 @@ describe Puppet::Provider do
     it "delegates instance execute to Puppet::Util::Execution" do
       expect(Puppet::Util::Execution).to receive(:execute).with("a_command", { :option => "value" })
 
-      provider.new.send(:execute, "a_command", { :option => "value" })
+      provider.new.execute("a_command", { :option => "value" })
     end
 
     it "delegates class execute to Puppet::Util::Execution" do
       expect(Puppet::Util::Execution).to receive(:execute).with("a_command", { :option => "value" })
 
-      provider.send(:execute, "a_command", { :option => "value" })
+      provider.execute("a_command", { :option => "value" })
     end
 
     it "delegates instance execpipe to Puppet::Util::Execution" do
-      block = Proc.new { }
-      expect(Puppet::Util::Execution).to receive(:execpipe).with("a_command", true, block)
+      allow(Puppet::Util::Execution).to receive(:execpipe).with("a_command", true).and_yield('some output')
 
-      provider.new.send(:execpipe, "a_command", true, block)
+      expect { |b| provider.new.execpipe("a_command", true, &b) }.to yield_with_args('some output')
     end
 
     it "delegates class execpipe to Puppet::Util::Execution" do
-      block = Proc.new { }
-      expect(Puppet::Util::Execution).to receive(:execpipe).with("a_command", true, block)
+      allow(Puppet::Util::Execution).to receive(:execpipe).with("a_command", true).and_yield('some output')
 
-      provider.send(:execpipe, "a_command", true, block)
+      expect { |b| provider.execpipe("a_command", true, &b) }.to yield_with_args('some output')
     end
   end
 
