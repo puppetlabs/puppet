@@ -11,9 +11,7 @@ describe Puppet::Type.type(:package).provider(:apt) do
   end
 
   let(:provider) do
-    provider = subject()
-    provider.resource = resource
-    provider
+    resource.provider
   end
 
   it "should be the default provider on :osfamily => Debian" do
@@ -88,7 +86,7 @@ Version table:
 
   describe ".instances" do
     before do
-      allow(Puppet::Type::Package::ProviderDpkg).to receive(:instances).and_return([resource])
+      allow(Puppet::Type::Package::ProviderDpkg).to receive(:instances).and_return([provider])
     end
 
     context "when package is manual marked" do
@@ -97,8 +95,7 @@ Version table:
       end
 
       it 'sets mark to manual' do
-        expect(resource).to receive(:mark=).with(:manual)
-        described_class.instances
+        expect(described_class.instances.map(&:mark)).to eq([:manual])
       end
     end
 
@@ -108,8 +105,7 @@ Version table:
       end
 
       it 'does not set mark to manual' do
-        expect(resource).not_to receive(:mark=).with(:manual)
-        described_class.instances
+        expect(described_class.instances.map(&:mark)).to eq([nil])
       end
     end
   end
