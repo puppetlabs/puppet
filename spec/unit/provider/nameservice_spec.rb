@@ -3,11 +3,28 @@ require 'puppet/provider/nameservice'
 require 'puppet/etc'
 require 'puppet_spec/character_encoding'
 
+Puppet::Type.newtype(:nameservice_dummytype) do
+  newparam(:name)
+  ensurable
+  newproperty(:foo)
+  newproperty(:bar)
+end
+
+Puppet::Type.type(:nameservice_dummytype).provide(:nameservice_dummyprovider, parent: Puppet::Provider::NameService) do
+  def posixmethod(param)
+    param
+  end
+
+  def modifycmd(param, value)
+    []
+  end
+end
+
 describe Puppet::Provider::NameService do
 
   before :each do
-    described_class.initvars
-    described_class.resource_type = faketype
+    provider.class.initvars
+    provider.class.resource_type = faketype
   end
 
   # These are values getpwent might give you
@@ -41,16 +58,12 @@ describe Puppet::Provider::NameService do
   # The provider sometimes relies on @resource for valid properties so let's
   # create a fake type with properties that match our fake struct.
   let :faketype do
-    Puppet::Type.newtype(:nameservice_dummytype) do
-      newparam(:name)
-      ensurable
-      newproperty(:foo)
-      newproperty(:bar)
-    end
+    Puppet::Type.type(:nameservice_dummytype)
   end
 
   let :provider do
-    described_class.new(:name => 'bob', :foo => 'fooval', :bar => 'barval')
+    Puppet::Type.type(:nameservice_dummytype).provider(:nameservice_dummyprovider)
+      .new(:name => 'bob', :foo => 'fooval', :bar => 'barval')
   end
 
   let :resource do
@@ -91,61 +104,61 @@ describe Puppet::Provider::NameService do
 
   describe "#options" do
     it "should add options for a valid property" do
-      described_class.options :foo, :key1 => 'val1', :key2 => 'val2'
-      described_class.options :bar, :key3 => 'val3'
-      expect(described_class.option(:foo, :key1)).to eq('val1')
-      expect(described_class.option(:foo, :key2)).to eq('val2')
-      expect(described_class.option(:bar, :key3)).to eq('val3')
+      provider.class.options :foo, :key1 => 'val1', :key2 => 'val2'
+      provider.class.options :bar, :key3 => 'val3'
+      expect(provider.class.option(:foo, :key1)).to eq('val1')
+      expect(provider.class.option(:foo, :key2)).to eq('val2')
+      expect(provider.class.option(:bar, :key3)).to eq('val3')
     end
 
     it "should raise an error for an invalid property" do
-      expect { described_class.options :baz, :key1 => 'val1' }.to raise_error(
+      expect { provider.class.options :baz, :key1 => 'val1' }.to raise_error(
         Puppet::Error, 'baz is not a valid attribute for nameservice_dummytype')
     end
   end
 
   describe "#option" do
     it "should return the correct value" do
-      described_class.options :foo, :key1 => 'val1', :key2 => 'val2'
-      expect(described_class.option(:foo, :key2)).to eq('val2')
+      provider.class.options :foo, :key1 => 'val1', :key2 => 'val2'
+      expect(provider.class.option(:foo, :key2)).to eq('val2')
     end
 
     it "should symbolize the name first" do
-      described_class.options :foo, :key1 => 'val1', :key2 => 'val2'
-      expect(described_class.option('foo', :key2)).to eq('val2')
+      provider.class.options :foo, :key1 => 'val1', :key2 => 'val2'
+      expect(provider.class.option('foo', :key2)).to eq('val2')
     end
 
     it "should return nil if no option has been specified earlier" do
-      expect(described_class.option(:foo, :key2)).to be_nil
+      expect(provider.class.option(:foo, :key2)).to be_nil
     end
 
     it "should return nil if no option for that property has been specified earlier" do
-      described_class.options :bar, :key2 => 'val2'
-      expect(described_class.option(:foo, :key2)).to be_nil
+      provider.class.options :bar, :key2 => 'val2'
+      expect(provider.class.option(:foo, :key2)).to be_nil
     end
 
     it "should return nil if no matching key can be found for that property" do
-      described_class.options :foo, :key3 => 'val2'
-      expect(described_class.option(:foo, :key2)).to be_nil
+      provider.class.options :foo, :key3 => 'val2'
+      expect(provider.class.option(:foo, :key2)).to be_nil
     end
   end
 
   describe "#section" do
     it "should raise an error if resource_type has not been set" do
-      expect(described_class).to receive(:resource_type).and_return(nil)
-      expect { described_class.section }.to raise_error Puppet::Error, 'Cannot determine Etc section without a resource type'
+      expect(provider.class).to receive(:resource_type).and_return(nil)
+      expect { provider.class.section }.to raise_error Puppet::Error, 'Cannot determine Etc section without a resource type'
     end
 
     # the return values are hard coded so I am using types that actually make
     # use of the nameservice provider
     it "should return pw for users" do
-      described_class.resource_type = Puppet::Type.type(:user)
-      expect(described_class.section).to eq('pw')
+      provider.class.resource_type = Puppet::Type.type(:user)
+      expect(provider.class.section).to eq('pw')
     end
 
     it "should return gr for groups" do
-      described_class.resource_type = Puppet::Type.type(:group)
-      expect(described_class.section).to eq('gr')
+      provider.class.resource_type = Puppet::Type.type(:group)
+      expect(provider.class.section).to eq('gr')
     end
   end
 
@@ -156,7 +169,7 @@ describe Puppet::Provider::NameService do
       # encoding
       allow(Etc).to receive(:getpwent).and_return(*utf_8_mixed_users)
       result = PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::UTF_8) do
-        described_class.instances
+        provider.class.instances
       end
       expect(result.map(&:name)).to eq(
         [
@@ -171,7 +184,7 @@ describe Puppet::Provider::NameService do
     it "should have object names in their original encoding/bytes if they would not be valid UTF-8" do
       allow(Etc).to receive(:getpwent).and_return(*latin_1_mixed_users)
       result = PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::ISO_8859_1) do
-        described_class.instances
+        provider.class.instances
       end
       expect(result.map(&:name)).to eq(
         [
@@ -186,40 +199,40 @@ describe Puppet::Provider::NameService do
     it "should pass the Puppet::Etc :canonical_name Struct member to the constructor" do
       users = [ Struct::Passwd.new(invalid_utf_8_jose, invalid_utf_8_jose, 1002, 2000), nil ]
       allow(Etc).to receive(:getpwent).and_return(*users)
-      expect(described_class).to receive(:new).with(:name => escaped_utf_8_jose, :canonical_name => invalid_utf_8_jose, :ensure => :present)
-      described_class.instances
+      expect(provider.class).to receive(:new).with(:name => escaped_utf_8_jose, :canonical_name => invalid_utf_8_jose, :ensure => :present)
+      provider.class.instances
     end
   end
 
   describe "validate" do
     it "should pass if no check is registered at all" do
-      expect { described_class.validate(:foo, 300) }.to_not raise_error
-      expect { described_class.validate('foo', 300) }.to_not raise_error
+      expect { provider.class.validate(:foo, 300) }.to_not raise_error
+      expect { provider.class.validate('foo', 300) }.to_not raise_error
     end
 
     it "should pass if no check for that property is registered" do
-      described_class.verify(:bar, 'Must be 100') { |val| val == 100 }
-      expect { described_class.validate(:foo, 300) }.to_not raise_error
-      expect { described_class.validate('foo', 300) }.to_not raise_error
+      provider.class.verify(:bar, 'Must be 100') { |val| val == 100 }
+      expect { provider.class.validate(:foo, 300) }.to_not raise_error
+      expect { provider.class.validate('foo', 300) }.to_not raise_error
     end
 
     it "should pass if the value is valid" do
-      described_class.verify(:foo, 'Must be 100') { |val| val == 100 }
-      expect { described_class.validate(:foo, 100) }.to_not raise_error
-      expect { described_class.validate('foo', 100) }.to_not raise_error
+      provider.class.verify(:foo, 'Must be 100') { |val| val == 100 }
+      expect { provider.class.validate(:foo, 100) }.to_not raise_error
+      expect { provider.class.validate('foo', 100) }.to_not raise_error
     end
 
     it "should raise an error if the value is invalid" do
-      described_class.verify(:foo, 'Must be 100') { |val| val == 100 }
-      expect { described_class.validate(:foo, 200) }.to raise_error(ArgumentError, 'Invalid value 200: Must be 100')
-      expect { described_class.validate('foo', 200) }.to raise_error(ArgumentError, 'Invalid value 200: Must be 100')
+      provider.class.verify(:foo, 'Must be 100') { |val| val == 100 }
+      expect { provider.class.validate(:foo, 200) }.to raise_error(ArgumentError, 'Invalid value 200: Must be 100')
+      expect { provider.class.validate('foo', 200) }.to raise_error(ArgumentError, 'Invalid value 200: Must be 100')
     end
   end
 
   describe "getinfo" do
     before :each do
       # with section=foo we'll call Etc.getfoonam instead of getpwnam or getgrnam
-      allow(described_class).to receive(:section).and_return('foo')
+      allow(provider.class).to receive(:section).and_return('foo')
       resource # initialize the resource so our provider has a @resource instance variable
     end
 
@@ -239,13 +252,13 @@ describe Puppet::Provider::NameService do
     # overriding to UTF-8, in @canonical_name for querying that state on disk
     # again if needed
     it "should use the instance's @canonical_name to query the system" do
-      provider_instance = described_class.new(:name => 'foo', :canonical_name => 'original_foo', :ensure => :present)
+      provider_instance = provider.class.new(:name => 'foo', :canonical_name => 'original_foo', :ensure => :present)
       expect(Puppet::Etc).to receive(:send).with(:getfoonam, 'original_foo')
       provider_instance.getinfo(true)
     end
 
     it "should use the instance's name instead of canonical_name if not supplied during instantiation" do
-      provider_instance = described_class.new(:name => 'foo', :ensure => :present)
+      provider_instance = provider.class.new(:name => 'foo', :ensure => :present)
       expect(Puppet::Etc).to receive(:send).with(:getfoonam, 'foo')
       provider_instance.getinfo(true)
     end
@@ -253,16 +266,6 @@ describe Puppet::Provider::NameService do
 
   describe "info2hash" do
     it "should return a hash with all properties" do
-      # we have to have an implementation of posixmethod which has to
-      # convert a propertyname (e.g. comment) into a fieldname of our
-      # Struct (e.g. gecos). I do not want to test posixmethod here so
-      # let's fake an implementation which does not do any translation. We
-      # expect two method invocations because info2hash calls the method
-      # twice if the Struct responds to the propertyname (our fake Struct
-      # provides values for :foo and :bar) TODO: Fix that
-      expect(provider).to receive(:posixmethod).with(:foo).and_return(:foo).twice
-      expect(provider).to receive(:posixmethod).with(:bar).and_return(:bar).twice
-      expect(provider).to receive(:posixmethod).with(:ensure).and_return(:ensure)
       expect(provider.info2hash(fakeetcobject)).to eq({ :foo => 'fooval', :bar => 'barval' })
     end
   end
@@ -273,7 +276,7 @@ describe Puppet::Provider::NameService do
     end
 
     it "should return the munged value otherwise" do
-      described_class.options(:foo, :munge => proc { |x| x*2 })
+      provider.class.options(:foo, :munge => proc { |x| x*2 })
       expect(provider.munge(:foo, 100)).to eq(200)
     end
   end
@@ -284,7 +287,7 @@ describe Puppet::Provider::NameService do
     end
 
     it "should return the unmunged value otherwise" do
-      described_class.options(:foo, :unmunge => proc { |x| x/2 })
+      provider.class.options(:foo, :unmunge => proc { |x| x/2 })
       expect(provider.unmunge(:foo, 200)).to eq(100)
     end
   end
@@ -302,15 +305,13 @@ describe Puppet::Provider::NameService do
   end
 
   describe "get" do
-    before(:each) {described_class.resource_type = faketype }
-
     it "should return the correct getinfo value" do
       expect(provider).to receive(:getinfo).with(false).and_return(:foo => 'fooval', :bar => 'barval')
       expect(provider.get(:bar)).to eq('barval')
     end
 
     it "should unmunge the value first" do
-      described_class.options(:bar, :munge => proc { |x| x*2}, :unmunge => proc {|x| x/2})
+      provider.class.options(:bar, :munge => proc { |x| x*2}, :unmunge => proc {|x| x/2})
       expect(provider).to receive(:getinfo).with(false).and_return(:foo => 200, :bar => 500)
       expect(provider.get(:bar)).to eq(250)
     end
@@ -325,7 +326,7 @@ describe Puppet::Provider::NameService do
   describe "set" do
     before :each do
       resource # initialize resource so our provider has a @resource object
-      described_class.verify(:foo, 'Must be 100') { |val| val == 100 }
+      provider.class.verify(:foo, 'Must be 100') { |val| val == 100 }
     end
 
     it "should raise an error on invalid values" do
@@ -339,7 +340,7 @@ describe Puppet::Provider::NameService do
     end
 
     it "should munge the value first" do
-      described_class.options(:foo, :munge => proc { |x| x*2}, :unmunge => proc {|x| x/2})
+      provider.class.options(:foo, :munge => proc { |x| x*2}, :unmunge => proc {|x| x/2})
       expect(provider).to receive(:modifycmd).with(:foo, 200).and_return(['/bin/modify', '-f', '200' ])
       expect(provider).to receive(:execute).with(['/bin/modify', '-f', '200'], hash_including(custom_environment: {}))
       provider.set(:foo, 100)

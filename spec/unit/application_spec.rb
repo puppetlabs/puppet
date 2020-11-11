@@ -7,8 +7,10 @@ require 'timeout'
 
 describe Puppet::Application do
   before(:each) do
-    @app = Class.new(Puppet::Application).new
-    @appclass = @app.class
+    @appclass = Class.new(Puppet::Application) do
+      def handle_unknown(opt, arg); end
+    end
+    @app = @appclass.new
 
     allow(@app).to receive(:name).and_return("test_app")
   end

@@ -6,6 +6,9 @@ Puppet::Type.newtype(:purgeable_test) do
   newparam(:name) {}
 end
 Puppet::Type.type(:purgeable_test).provide(:purgeable_test) do
+  def self.instances
+    []
+  end
 end
 
 resources = Puppet::Type.type(:resources)
@@ -46,19 +49,16 @@ describe resources do
     end
 
     it "cannot be set to true for a resource type that does not accept ensure" do
-      allow(instance.resource_type).to receive(:respond_to?).and_return(true)
-      allow(instance.resource_type).to receive(:validproperty?).and_return(false)
-      expect { instance[:purge] = 'yes' }.to raise_error Puppet::Error
+      allow(instance.resource_type).to receive(:validproperty?).with(:ensure).and_return(false)
+      expect { instance[:purge] = 'yes' }.to raise_error Puppet::Error, /Purging is only supported on types that accept 'ensure'/
     end
 
     it "cannot be set to true for a resource type that does not have instances" do
-      allow(instance.resource_type).to receive(:respond_to?).and_return(false)
-      allow(instance.resource_type).to receive(:validproperty?).and_return(true)
-      expect { instance[:purge] = 'yes' }.to raise_error Puppet::Error
+      allow(instance.resource_type).to receive(:respond_to?).with(:instances).and_return(false)
+      expect { instance[:purge] = 'yes' }.to raise_error Puppet::Error, /Purging resources of type file is not supported/
     end
 
     it "can be set to true for a resource type that has instances and can accept ensure" do
-      allow(instance.resource_type).to receive(:respond_to?).and_return(true)
       allow(instance.resource_type).to receive(:validproperty?).and_return(true)
       expect { instance[:purge] = 'yes' }.to_not raise_error
     end

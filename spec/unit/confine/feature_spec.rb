@@ -22,7 +22,7 @@ describe Puppet::Confine::Feature do
     end
 
     it "should use the Puppet features instance to test validity" do
-      expect(Puppet.features).to receive(:myfeature?)
+      Puppet.features.add(:myfeature) do true end
       @confine.valid?
     end
 
