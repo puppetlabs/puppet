@@ -792,6 +792,9 @@ describe Puppet::Transaction do
           def self.is_selinux_enabled
             true
           end
+
+          def self.matchpathcon_fini
+          end
         end
       end
 
