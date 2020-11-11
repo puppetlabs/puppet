@@ -22,13 +22,8 @@ describe Puppet::Forge::ModuleRelease do
   let(:uri) { " "}
   let(:release) { Puppet::Forge::ModuleRelease.new(ssl_repository, JSON.parse(release_json)) }
 
-  let(:mock_file) {
-    mock_io = StringIO.new
-    allow(mock_io).to receive(:path).and_return('/dev/null')
-    mock_io
-  }
-
-  let(:mock_dir) { '/tmp' }
+  let(:mock_file) { double('file', path: '/dev/null') }
+  let(:mock_dir) { tmpdir('dir') }
 
   let(:destination) { tmpfile('forge_module_release') }
 
