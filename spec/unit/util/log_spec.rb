@@ -111,16 +111,20 @@ describe Puppet::Util::Log do
     end
 
     it "should fall back to :eventlog" do
-      allow(Puppet.features).to receive(:syslog?).and_return(false)
-      allow(Puppet.features).to receive(:eventlog?).and_return(true)
+      without_partial_double_verification do
+        allow(Puppet.features).to receive(:syslog?).and_return(false)
+        allow(Puppet.features).to receive(:eventlog?).and_return(true)
+      end
       expect(Puppet::Util::Log).to receive(:newdestination).with(:eventlog)
 
       Puppet::Util::Log.setup_default
     end
 
     it "should fall back to :file" do
-      allow(Puppet.features).to receive(:syslog?).and_return(false)
-      allow(Puppet.features).to receive(:eventlog?).and_return(false)
+      without_partial_double_verification do
+        allow(Puppet.features).to receive(:syslog?).and_return(false)
+        allow(Puppet.features).to receive(:eventlog?).and_return(false)
+      end
       expect(Puppet::Util::Log).to receive(:newdestination).with(Puppet[:puppetdlog])
 
       Puppet::Util::Log.setup_default

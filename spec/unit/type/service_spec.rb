@@ -488,7 +488,7 @@ describe test_title, "when changing the host" do
   it "insyncness should be resolved by provider instead of superclass implementation when provider responds to the 'enabled_insync?' method" do
     allow(@service.provider.class).to receive(:supports_parameter?).and_return(true)
     @service[:enable] = true
-    allow(@service.provider).to receive(:respond_to?).with(:enabled_insync?).and_return(true)
+    allow(@service.provider).to receive(:respond_to?).with(:enabled_insync?, any_args).and_return(true)
     allow(@service.provider).to receive(:enabled_insync?).and_return(false)
 
     expect(@service.property(:enable).insync?(:true)).to eq(false)

@@ -111,15 +111,19 @@ describe Puppet::Util::SELinux do
     end
 
     it "should return a context" do
-      expect(self).to receive(:selinux_support?).and_return(true)
-      expect(Selinux).to receive(:lgetfilecon).with("/foo").and_return([0, "user_u:role_r:type_t:s0"])
-      expect(get_selinux_current_context("/foo")).to eq("user_u:role_r:type_t:s0")
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(Selinux).to receive(:lgetfilecon).with("/foo").and_return([0, "user_u:role_r:type_t:s0"])
+        expect(get_selinux_current_context("/foo")).to eq("user_u:role_r:type_t:s0")
+      end
     end
 
     it "should return nil if lgetfilecon fails" do
-      expect(self).to receive(:selinux_support?).and_return(true)
-      expect(Selinux).to receive(:lgetfilecon).with("/foo").and_return(-1)
-      expect(get_selinux_current_context("/foo")).to be_nil
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(Selinux).to receive(:lgetfilecon).with("/foo").and_return(-1)
+        expect(get_selinux_current_context("/foo")).to be_nil
+      end
     end
   end
 
@@ -130,47 +134,57 @@ describe Puppet::Util::SELinux do
     end
 
     it "should return a context if a default context exists" do
-      expect(self).to receive(:selinux_support?).and_return(true)
-      fstat = double('File::Stat', :mode => 0)
-      expect(Puppet::FileSystem).to receive(:lstat).with('/foo').and_return(fstat)
-      expect(self).to receive(:find_fs).with("/foo").and_return("ext3")
-      expect(Selinux).to receive(:matchpathcon).with("/foo", 0).and_return([0, "user_u:role_r:type_t:s0"])
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        fstat = double('File::Stat', :mode => 0)
+        expect(Puppet::FileSystem).to receive(:lstat).with('/foo').and_return(fstat)
+        expect(self).to receive(:find_fs).with("/foo").and_return("ext3")
+        expect(Selinux).to receive(:matchpathcon).with("/foo", 0).and_return([0, "user_u:role_r:type_t:s0"])
 
-      expect(get_selinux_default_context("/foo")).to eq("user_u:role_r:type_t:s0")
+        expect(get_selinux_default_context("/foo")).to eq("user_u:role_r:type_t:s0")
+      end
     end
 
     it "handles permission denied errors by issuing a warning" do
-      allow(self).to receive(:selinux_support?).and_return(true)
-      allow(self).to receive(:selinux_label_support?).and_return(true)
-      allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 0).and_return(-1)
-      allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::EACCES, "/root/chuj")
+      without_partial_double_verification do
+        allow(self).to receive(:selinux_support?).and_return(true)
+        allow(self).to receive(:selinux_label_support?).and_return(true)
+        allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 0).and_return(-1)
+        allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::EACCES, "/root/chuj")
 
-      expect(get_selinux_default_context("/root/chuj")).to be_nil
+        expect(get_selinux_default_context("/root/chuj")).to be_nil
+      end
     end
 
     it "handles no such file or directory errors by issuing a warning" do
-      allow(self).to receive(:selinux_support?).and_return(true)
-      allow(self).to receive(:selinux_label_support?).and_return(true)
-      allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 0).and_return(-1)
-      allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
+      without_partial_double_verification do
+        allow(self).to receive(:selinux_support?).and_return(true)
+        allow(self).to receive(:selinux_label_support?).and_return(true)
+        allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 0).and_return(-1)
+        allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
 
-      expect(get_selinux_default_context("/root/chuj")).to be_nil
+        expect(get_selinux_default_context("/root/chuj")).to be_nil
+      end
     end
 
     it "should return nil if matchpathcon returns failure" do
-      expect(self).to receive(:selinux_support?).and_return(true)
-      fstat = double('File::Stat', :mode => 0)
-      expect(Puppet::FileSystem).to receive(:lstat).with('/foo').and_return(fstat)
-      expect(self).to receive(:find_fs).with("/foo").and_return("ext3")
-      expect(Selinux).to receive(:matchpathcon).with("/foo", 0).and_return(-1)
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        fstat = double('File::Stat', :mode => 0)
+        expect(Puppet::FileSystem).to receive(:lstat).with('/foo').and_return(fstat)
+        expect(self).to receive(:find_fs).with("/foo").and_return("ext3")
+        expect(Selinux).to receive(:matchpathcon).with("/foo", 0).and_return(-1)
 
-      expect(get_selinux_default_context("/foo")).to be_nil
+        expect(get_selinux_default_context("/foo")).to be_nil
+      end
     end
 
     it "should return nil if selinux_label_support returns false" do
-      expect(self).to receive(:selinux_support?).and_return(true)
-      expect(self).to receive(:find_fs).with("/foo").and_return("nfs")
-      expect(get_selinux_default_context("/foo")).to be_nil
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(self).to receive(:find_fs).with("/foo").and_return("nfs")
+        expect(get_selinux_default_context("/foo")).to be_nil
+      end
     end
   end
 
@@ -261,37 +275,47 @@ describe Puppet::Util::SELinux do
     end
 
     it "should use lsetfilecon to set a context" do
-      expect(self).to receive(:selinux_support?).and_return(true)
-      expect(Selinux).to receive(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").and_return(0)
-      expect(set_selinux_context("/foo", "user_u:role_r:type_t:s0")).to be_truthy
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(Selinux).to receive(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").and_return(0)
+        expect(set_selinux_context("/foo", "user_u:role_r:type_t:s0")).to be_truthy
+      end
     end
 
     it "should use lsetfilecon to set user_u user context" do
-      expect(self).to receive(:selinux_support?).and_return(true)
-      expect(Selinux).to receive(:lgetfilecon).with("/foo").and_return([0, "foo:role_r:type_t:s0"])
-      expect(Selinux).to receive(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").and_return(0)
-      expect(set_selinux_context("/foo", "user_u", :seluser)).to be_truthy
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(Selinux).to receive(:lgetfilecon).with("/foo").and_return([0, "foo:role_r:type_t:s0"])
+        expect(Selinux).to receive(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").and_return(0)
+        expect(set_selinux_context("/foo", "user_u", :seluser)).to be_truthy
+      end
     end
 
     it "should use lsetfilecon to set role_r role context" do
-      expect(self).to receive(:selinux_support?).and_return(true)
-      expect(Selinux).to receive(:lgetfilecon).with("/foo").and_return([0, "user_u:foo:type_t:s0"])
-      expect(Selinux).to receive(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").and_return(0)
-      expect(set_selinux_context("/foo", "role_r", :selrole)).to be_truthy
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(Selinux).to receive(:lgetfilecon).with("/foo").and_return([0, "user_u:foo:type_t:s0"])
+        expect(Selinux).to receive(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").and_return(0)
+        expect(set_selinux_context("/foo", "role_r", :selrole)).to be_truthy
+      end
     end
 
     it "should use lsetfilecon to set type_t type context" do
-      expect(self).to receive(:selinux_support?).and_return(true)
-      expect(Selinux).to receive(:lgetfilecon).with("/foo").and_return([0, "user_u:role_r:foo:s0"])
-      expect(Selinux).to receive(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").and_return(0)
-      expect(set_selinux_context("/foo", "type_t", :seltype)).to be_truthy
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(Selinux).to receive(:lgetfilecon).with("/foo").and_return([0, "user_u:role_r:foo:s0"])
+        expect(Selinux).to receive(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").and_return(0)
+        expect(set_selinux_context("/foo", "type_t", :seltype)).to be_truthy
+      end
     end
 
     it "should use lsetfilecon to set s0:c3,c5 range context" do
-      expect(self).to receive(:selinux_support?).and_return(true)
-      expect(Selinux).to receive(:lgetfilecon).with("/foo").and_return([0, "user_u:role_r:type_t:s0"])
-      expect(Selinux).to receive(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0:c3,c5").and_return(0)
-      expect(set_selinux_context("/foo", "s0:c3,c5", :selrange)).to be_truthy
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(Selinux).to receive(:lgetfilecon).with("/foo").and_return([0, "user_u:role_r:type_t:s0"])
+        expect(Selinux).to receive(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0:c3,c5").and_return(0)
+        expect(set_selinux_context("/foo", "s0:c3,c5", :selrange)).to be_truthy
+      end
     end
   end
 
