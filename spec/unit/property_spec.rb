@@ -5,6 +5,7 @@ Puppet::Type.newtype(:property_test) do
   newparam(:name, isnamevar: true)
 end
 Puppet::Type.type(:property_test).provide(:property_test) do
+  attr_accessor :foo
 end
 
 describe Puppet::Property do

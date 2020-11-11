@@ -33,10 +33,6 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
 
       newparam(:code)
 
-      def respond_to?(method_name)
-        method_name == self[:kind] || super
-      end
-
       def eval_generate
         eval_code
       end
@@ -314,13 +310,13 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
 
     it "sets resources_failed_to_generate to true if resource#eval_generate raises an exception" do
       catalog = compile_to_ral(<<-MANIFEST)
-        notify { 'hello': }
+        generator { thing: }
       MANIFEST
 
-      allow(catalog.resource("Notify[hello]")).to receive(:eval_generate).and_raise(RuntimeError)
+      allow(catalog.resource("Generator[thing]")).to receive(:eval_generate).and_raise(RuntimeError)
       relationship_graph = relationship_graph_for(catalog)
       generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph, prioritizer)
-      generator.eval_generate(catalog.resource("Notify[hello]"))
+      generator.eval_generate(catalog.resource("Generator[thing]"))
 
       expect(generator.resources_failed_to_generate).to be_truthy
     end
