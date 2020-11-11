@@ -84,10 +84,7 @@ RSpec.configure do |config|
   config.filter_run_when_matching :focus
 
   config.mock_with :rspec do |mocks|
-    # We really should have this on, but it breaks a _lot_ of tests. We'll
-    # need to go through and fix those tests first before it can be enabled
-    # for real.
-    mocks.verify_partial_doubles = false
+    mocks.verify_partial_doubles = true
   end
 
   tmpdir = Puppet::FileSystem.expand_path(Dir.mktmpdir("rspecrun"))
