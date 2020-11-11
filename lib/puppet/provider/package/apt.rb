@@ -51,6 +51,10 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     @property_flush = {}
   end
 
+  def mark
+    @property_flush[:mark]
+  end
+
   def mark=(value)
     @property_flush[:mark] = value
   end
