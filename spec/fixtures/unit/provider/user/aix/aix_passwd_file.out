@@ -6,6 +6,10 @@ test_aix_user:
 no_password_user:
         lastupdate = another_last_update
 
+tab_password_user:
+        password  =  some_password
+        lastupdate = another_last_update
+
 daemon:
         password = *
 
