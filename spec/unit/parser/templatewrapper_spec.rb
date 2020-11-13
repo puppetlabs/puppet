@@ -57,9 +57,10 @@ describe Puppet::Parser::TemplateWrapper do
     expect(tw.all_tags).to eq(["tag1","tag2"])
   end
 
-  it "provides the tags defined in the current scope with #tags" do
-    expect(scope).to receive(:tags).and_return(["tag1", "tag2"])
-    expect(tw.tags).to eq(["tag1","tag2"])
+  it "raises not implemented error" do
+    expect {
+      tw.tags
+    }.to raise_error(NotImplementedError, /Call 'all_tags' instead/)
   end
 
   it "raises error on access to removed in-scope variables via method calls" do

@@ -50,7 +50,7 @@ class Puppet::Parser::TemplateWrapper
   # @return [Array<String>] The tags defined in the current scope
   # @api public
   def tags
-    scope.tags
+    raise NotImplementedError, "Call 'all_tags' instead."
   end
 
   # @return [Array<String>] All the defined tags
