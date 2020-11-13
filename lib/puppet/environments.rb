@@ -346,12 +346,6 @@ module Puppet::Environments
       @loader = loader
       @cache_expiration_service = Puppet::Environments::Cached.cache_expiration_service
       @cache = {}
-
-      # Holds expiration times in sorted order - next to expire is first
-      @expirations = SortedSet.new
-
-      # Infinity since it there are no entries, this is a cache of the first to expire time
-      @next_expiration = END_OF_TIME
     end
 
     # @!macro loader_list
@@ -379,7 +373,6 @@ module Puppet::Environments
       elsif (result = @loader.get(name))
         # environment loaded, cache it
         cache_entry = entry(result)
-        @cache_expiration_service.created(result)
         add_entry(name, cache_entry)
         result
       end
@@ -389,28 +382,36 @@ module Puppet::Environments
     def add_entry(name, cache_entry)
       Puppet.debug {"Caching environment '#{name}' #{cache_entry.label}"}
       @cache[name] = cache_entry
-      expires = cache_entry.expires
-      @expirations.add(expires)
-      if @next_expiration > expires
-        @next_expiration = expires
-      end
+      @cache_expiration_service.created(cache_entry.value)
     end
     private :add_entry
+
+    def clear_entry(name, entry)
+      @cache.delete(name)
+      Puppet.debug {"Evicting cache entry for environment '#{name}'"}
+      @cache_expiration_service.evicted(name.to_sym)
+      Puppet::GettextConfig.delete_text_domain(name)
+      Puppet.settings.clear_environment_settings(name)
+    end
+    private :clear_entry
 
     # Clears the cache of the environment with the given name.
     # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
     def clear(name)
-      @cache.delete(name)
-      Puppet::GettextConfig.delete_text_domain(name)
+      entry = @cache[name]
+      clear_entry(name, entry) if entry
     end
 
     # Clears all cached environments.
     # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
-    def clear_all()
+    def clear_all
       super
+
+      @cache.each_pair do |name, entry|
+        clear_entry(name, entry)
+      end
+
       @cache = {}
-      @expirations.clear
-      @next_expiration = END_OF_TIME
       Puppet::GettextConfig.delete_environment_text_domains
     end
 
@@ -419,17 +420,23 @@ module Puppet::Environments
     #
     def clear_all_expired()
       t = Time.now
-      return if t < @next_expiration && ! @cache.any? {|name, _| @cache_expiration_service.expired?(name.to_sym) }
-      to_expire = @cache.select { |name, entry| entry.expires < t || @cache_expiration_service.expired?(name.to_sym) }
-      to_expire.each do |name, entry|
-        Puppet.debug {"Evicting cache entry for environment '#{name}'"}
-        @cache_expiration_service.evicted(name.to_sym)
-        clear(name)
-        @expirations.delete(entry.expires)
-        Puppet.settings.clear_environment_settings(name)
+
+      @cache.each_pair do |name, entry|
+        clear_if_expired(name, entry, t)
       end
-      @next_expiration = @expirations.first || END_OF_TIME
     end
+
+    # Clear an environment if it is expired, either by exceeding its time to live, or
+    # through an explicit eviction determined by the cache expiration service.
+    #
+    def clear_if_expired(name, entry, t = Time.now)
+      return unless entry
+
+      if entry.expired?(t) || @cache_expiration_service.expired?(name.to_sym)
+        clear_entry(name, entry)
+      end
+    end
+    private :clear_if_expired
 
     # This implementation evicts the cache, and always gets the current
     # configuration of the environment
@@ -440,7 +447,7 @@ module Puppet::Environments
     #
     # @!macro loader_get_conf
     def get_conf(name)
-      evict_if_expired(name)
+      clear_if_expired(name, @cache[name])
       @loader.get_conf(name)
     end
 
@@ -467,17 +474,6 @@ module Puppet::Environments
       end
     end
 
-    # Evicts the entry if it has expired
-    # Also clears caches in Settings that may prevent the entry from being updated
-    def evict_if_expired(name)
-      if (result = @cache[name]) && (result.expired? || @cache_expiration_service.expired?(name.to_sym))
-        Puppet.debug {"Evicting cache entry for environment '#{name}'"}
-        @cache_expiration_service.evicted(name.to_sym)
-        clear(name)
-        Puppet.settings.clear_environment_settings(name)
-      end
-    end
-
     # Never evicting entry
     class Entry
       attr_reader :value
@@ -489,31 +485,23 @@ module Puppet::Environments
       def touch
       end
 
-      def expired?
+      def expired?(now)
         false
       end
 
       def label
         ""
       end
-
-      def expires
-        END_OF_TIME
-      end
     end
 
     # Always evicting entry
     class NotCachedEntry < Entry
-      def expired?
+      def expired?(now)
         true
       end
 
       def label
         "(ttl = 0 sec)"
-      end
-
-      def expires
-        START_OF_TIME
       end
     end
 
@@ -525,16 +513,12 @@ module Puppet::Environments
         @ttl_seconds = ttl_seconds
       end
 
-      def expired?
-        Time.now > @ttl
+      def expired?(now)
+        now > @ttl
       end
 
       def label
         "(ttl = #{@ttl_seconds} sec)"
-      end
-
-      def expires
-        @ttl
       end
     end
 
