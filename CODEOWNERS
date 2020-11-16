@@ -1,22 +1,8 @@
-# default to platform-core
-* @puppetlabs/platform-core @puppetlabs/puppetserver-maintainers
-
-# Night's Watch
-/lib/puppet/type/group @puppetlabs/night-s-watch
-/lib/puppet/type/package @puppetlabs/night-s-watch
-/lib/puppet/type/service @puppetlabs/night-s-watch
-/lib/puppet/type/user @puppetlabs/night-s-watch
-/lib/puppet/provider/group @puppetlabs/night-s-watch
-/lib/puppet/provider/package @puppetlabs/night-s-watch
-/lib/puppet/provider/service @puppetlabs/night-s-watch
-/lib/puppet/provider/user @puppetlabs/night-s-watch
+# defaults
+* @puppetlabs/platform-core @puppetlabs/puppetserver-maintainers @puppetlabs/night-s-watch
 
 # PAL
 /lib/puppet/pal @puppetlabs/bolt
-
-# puppet device
-/lib/puppet/application/device.rb @puppetlabs/networking
-/lib/puppet/util/network_device @puppetlabs/networking
 
 # puppet module
 /lib/puppet/application/module.rb @puppetlabs/pdk
