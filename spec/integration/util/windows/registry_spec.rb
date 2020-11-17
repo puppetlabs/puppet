@@ -146,16 +146,6 @@ describe Puppet::Util::Windows::Registry do
         utf_8_bytes = ENDASH_UTF_8 + TM_UTF_8
         utf_8_str = utf_8_bytes.pack('c*').force_encoding(Encoding::UTF_8)
 
-        # this problematic Ruby codepath triggers a conversion of UTF-16LE to
-        # a local codepage which can totally break when that codepage has no
-        # conversion from the given UTF-16LE characters to local codepage
-        # a prime example is that IBM437 has no conversion from a Unicode en-dash
-        expect(Win32::Registry).not_to receive(:export_string)
-
-        # also, expect that we're using our variants of keys / values, not Rubys
-        expect(Win32::Registry).not_to receive(:each_key)
-        expect(Win32::Registry).not_to receive(:each_value)
-
         hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS | regsam) do |reg|
           reg.write("#{guid}", Win32::Registry::REG_SZ, utf_16_str)
 

@@ -539,7 +539,6 @@ describe Puppet::Util do
       expect(Puppet::Util.uri_to_path(URI.parse('http://foo/bar%20baz'))).to eq('/bar baz')
     end
 
-
     [
       "http://foo/A%DB%BF%E1%9A%A0%F0%A0%9C%8E",
       "http://foo/A%DB%BF%E1%9A%A0%F0%A0%9C%8E".force_encoding(Encoding::ASCII)
@@ -589,7 +588,15 @@ describe Puppet::Util do
     end
   end
 
-  describe "safe_posix_fork" do
+  describe "safe_posix_fork on Windows and JRuby", if: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
+    it "raises not implemented error" do
+      expect {
+        Puppet::Util.safe_posix_fork
+      }.to raise_error(NotImplementedError, /fork/)
+    end
+  end
+
+  describe "safe_posix_fork", unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
     let(:pid) { 5501 }
 
     before :each do
