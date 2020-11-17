@@ -228,9 +228,6 @@ describe Puppet::Util::Log do
   describe Puppet::Util::Log::DestEventlog, :if => Puppet.features.eventlog? do
     before :each do
       allow(Puppet::Util::Windows::EventLog).to receive(:open).and_return(double('mylog', :close => nil))
-      allow(Puppet::Util::Windows::EventLog).to receive(:report_event)
-      allow(Puppet::Util::Windows::EventLog).to receive(:close)
-      allow(Puppet.features).to receive(:eventlog?).and_return(true)
     end
 
     it "should restrict its suitability to Windows" do
