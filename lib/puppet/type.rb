@@ -1510,6 +1510,18 @@ class Type
     end
   end
 
+  newmetaparam(:annotation) do
+    desc "A user-supplied annotation about this resource. The annotation
+      is non-operative, but will be visible in the node's catalog and can
+      be queried for reporting purposes."
+
+    validate do |param|
+      # Not implemented. Should enforce JSON-compatible data structures only.
+      # Strings are fine. Arrays are fine. Hashes are fine.  No fancy objects,
+      # deferred stuff, etc.
+    end
+  end
+
   # RelationshipMetaparam is an implementation supporting the meta-parameters `:require`, `:subscribe`,
   # `:notify`, and `:before`.
   #
