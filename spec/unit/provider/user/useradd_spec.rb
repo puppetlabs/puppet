@@ -4,6 +4,7 @@ RSpec::Matchers.define_negated_matcher :excluding, :include
 
 describe Puppet::Type.type(:user).provider(:useradd) do
   before :each do
+    allow(Puppet::Util::POSIX).to receive(:groups_of).and_return([])
     allow(described_class).to receive(:command).with(:password).and_return('/usr/bin/chage')
     allow(described_class).to receive(:command).with(:localpassword).and_return('/usr/sbin/lchage')
     allow(described_class).to receive(:command).with(:add).and_return('/usr/sbin/useradd')

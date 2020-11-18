@@ -12,9 +12,16 @@ module Puppet::Util::POSIX
   class << self
     # Returns an array of all the groups that the user's a member of.
     def groups_of(user)
-      groups = []
-      Puppet::Etc.group do |group|
-        groups << group.name if group.mem.include?(user)
+      begin
+        require 'puppet/ffi/posix'
+        groups = get_groups_list(user)
+      rescue StandardError, LoadError => e
+        Puppet.debug("Falling back to Puppet::Etc.group: #{e.message}")
+
+        groups = []
+        Puppet::Etc.group do |group|
+          groups << group.name if group.mem.include?(user)
+        end
       end
   
       uniq_groups = groups.uniq
@@ -23,6 +30,39 @@ module Puppet::Util::POSIX
       end
 
       uniq_groups
+    end
+
+    private
+    def get_groups_list(user)
+      raise LoadError, "The 'getgrouplist' method is not available" unless Puppet::FFI::POSIX::Functions.respond_to?(:getgrouplist)
+
+      user_gid = Puppet::Etc.getpwnam(user).gid
+      ngroups = Puppet::FFI::POSIX::Constants::MAXIMUM_NUMBER_OF_GROUPS
+
+      while true do # rubocop:disable Lint/LiteralInCondition
+        FFI::MemoryPointer.new(:int) do |ngroups_ptr|
+          FFI::MemoryPointer.new(:uint, ngroups) do |groups_ptr|
+            old_ngroups = ngroups
+            ngroups_ptr.write_int(ngroups)
+
+            if Puppet::FFI::POSIX::Functions::getgrouplist(user, user_gid, groups_ptr, ngroups_ptr) != -1
+              groups_gids = groups_ptr.get_array_of_uint(0, ngroups_ptr.read_int)
+
+              result = []
+              groups_gids.each do |group_gid|
+                group_info = Puppet::Etc.getgrgid(group_gid)
+                result |= [group_info.name] if group_info.mem.include?(user)
+              end
+              return result
+            end
+
+            ngroups = ngroups_ptr.read_int
+            if ngroups <= old_ngroups
+              ngroups *= 2
+            end
+          end
+        end
+      end
     end
   end
 

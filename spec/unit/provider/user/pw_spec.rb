@@ -53,12 +53,14 @@ describe Puppet::Type.type(:user).provider(:pw) do
 
     it "should use -G with the correct argument when the groups property is set" do
       resource[:groups] = "group1"
+      allow(Puppet::Util::POSIX).to receive(:groups_of).with('testuser').and_return([])
       expect(provider).to receive(:execute).with(include("-G").and(include("group1")), kind_of(Hash))
       provider.create
     end
 
     it "should use -G with all the given groups when the groups property is set to an array" do
       resource[:groups] = ["group1", "group2"]
+      allow(Puppet::Util::POSIX).to receive(:groups_of).with('testuser').and_return([])
       expect(provider).to receive(:execute).with(include("-G").and(include("group1,group2")), kind_of(Hash))
       provider.create
     end
