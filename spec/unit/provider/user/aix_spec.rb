@@ -143,6 +143,11 @@ describe 'Puppet::Type::User::Provider::Aix' do
     it "returns the user's password" do
       expect(call_parse_password).to eql('some_password')
     end
+
+    it "returns the user's password with tabs" do
+      resource[:name] = 'tab_password_user'
+      expect(call_parse_password).to eql('some_password')
+    end
   end
 
   # TODO: If we move from using Mocha to rspec's mocks,

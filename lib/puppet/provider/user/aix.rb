@@ -178,7 +178,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
       # does not have a password.
       break if line =~ /^\S+:$/
 
-      match_obj = /password = (\S+)/.match(line)
+      match_obj = /password\s+=\s+(\S+)/.match(line)
     end
     return :absent unless match_obj
 
@@ -211,7 +211,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
       tempfile = Tempfile.new("puppet_#{user}_pw", :encoding => Encoding::ASCII)
       tempfile << "#{user}:#{value}\n"
       tempfile.close()
-  
+
       # Options '-e', '-c', use encrypted password and clear flags
       # Must receive "user:enc_password" as input
       # command, arguments = {:failonfail => true, :combine => true}
