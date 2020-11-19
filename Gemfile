@@ -33,7 +33,7 @@ group(:features) do
   # gem 'ruby-augeas', require: false, platforms: [:ruby]
   # requires native ldap headers/libs
   # gem 'ruby-ldap', '~> 0.9', require: false, platforms: [:ruby]
-  gem 'puppetserver-ca', '~> 1.1', require: false
+  gem 'puppetserver-ca', '~> 2.0', require: false
 end
 
 group(:test) do
