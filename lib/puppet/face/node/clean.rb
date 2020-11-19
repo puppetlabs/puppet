@@ -47,6 +47,14 @@ Puppet::Face.define(:node, '0.0.1') do
   end
 
   class LoggerIO
+    def debug(message)
+      Puppet.debug(message)
+    end
+
+    def warn(message)
+      Puppet.warning(message) unless message =~ /cadir is currently configured to be inside/
+    end
+
     def err(message)
       Puppet.err(message) unless message =~ /^\s*Error:\s*/
     end

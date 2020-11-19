@@ -89,8 +89,20 @@ describe Puppet::Face[:node, '0.0.1'] do
 
       describe "when cleaning certificate", :if => Puppet.features.puppetserver_ca? do
         it "should call the CA CLI gem's clean action" do
-          expect_any_instance_of(Puppetserver::Ca::Action::Clean).to receive(:run).with({ 'certnames' => ['hostname'] }).and_return(0)
-          subject.clean_cert('hostname')
+          expect_any_instance_of(Puppetserver::Ca::Action::Clean).
+            to receive(:clean_certs).
+            with(['hostname'], anything).
+            and_return(:success)
+
+          if Puppet[:cadir].start_with?(Puppet[:ssldir])
+            expect_any_instance_of(LoggerIO).
+              to receive(:warn).
+              with(/cadir is currently configured to be inside/)
+          end
+
+          expect(Puppet).not_to receive(:warning)
+          result = subject.clean_cert('hostname')
+          expect(result).to eq(0)
         end
 
         it "should not call the CA CLI gem's clean action if the gem is missing" do
