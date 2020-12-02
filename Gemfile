@@ -18,8 +18,6 @@ gem "hiera", *location_for(ENV['HIERA_LOCATION']) if ENV.has_key?('HIERA_LOCATIO
 gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ["~> 1.0"])
 gem "puppet-resource_api", *location_for(ENV['RESOURCE_API_LOCATION'] || ["~> 1.5"])
 
-gem "scanf" if RUBY_VERSION.to_f >= 2.7
-
 group(:features) do
   gem 'diff-lcs', '~> 1.3', require: false
   gem 'hiera-eyaml', *location_for(ENV['HIERA_EYAML_LOCATION'])
