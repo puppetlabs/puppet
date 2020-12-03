@@ -53,6 +53,13 @@ module Puppet
       route_file = Puppet[:route_file]
       if Puppet::FileSystem.exist?(route_file)
         routes = Puppet::Util::Yaml.safe_load_file(route_file, [Symbol])
+        if routes["server"] && routes["master"]
+          Puppet.warning("Route file #{route_file} contains both server and master route settings.")
+        elsif routes["server"] && !routes["master"]
+          routes["master"] = routes["server"]
+        elsif routes["master"] && !routes["server"]
+          routes["server"] = routes["master"]
+        end
         application_routes = routes[application_name]
         Puppet::Indirector.configure_routes(application_routes) if application_routes
       end

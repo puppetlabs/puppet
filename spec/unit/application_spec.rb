@@ -511,6 +511,40 @@ describe Puppet::Application do
 
       expect { @app.configure_indirector_routes }.to raise_error(Puppet::Error, /mapping values are not allowed/)
     end
+
+    it "should treat master routes on server application" do
+      allow(@app).to receive(:name).and_return("server")
+
+      Puppet[:route_file] = tmpfile('routes')
+      File.open(Puppet[:route_file], 'w') do |f|
+        f.print <<-ROUTES
+          master:
+            node:
+              terminus: exec
+        ROUTES
+      end
+
+      @app.configure_indirector_routes
+
+      expect(Puppet::Node.indirection.terminus_class).to eq('exec')
+    end
+
+    it "should treat server routes on master application" do
+      allow(@app).to receive(:name).and_return("master")
+
+      Puppet[:route_file] = tmpfile('routes')
+      File.open(Puppet[:route_file], 'w') do |f|
+        f.print <<-ROUTES
+          server:
+            node:
+              terminus: exec
+        ROUTES
+      end
+
+      @app.configure_indirector_routes
+
+      expect(Puppet::Node.indirection.terminus_class).to eq('exec')
+    end
   end
 
   describe "when running" do
