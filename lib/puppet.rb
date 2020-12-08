@@ -208,7 +208,7 @@ module Puppet
 
   # Load vendored (setup paths, and load what is needed upfront).
   # See the Vendor class for how to add additional vendored gems/code
-  require "puppet/vendor"
+  require 'puppet/vendor'
   Puppet::Vendor.load_vendored
 
   # The bindings used for initialization of puppet

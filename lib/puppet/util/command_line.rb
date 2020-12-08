@@ -11,8 +11,8 @@ end
 
 require 'puppet'
 require 'puppet/util'
-require "puppet/util/rubygems"
-require "puppet/util/limits"
+require 'puppet/util/rubygems'
+require 'puppet/util/limits'
 require 'puppet/util/colors'
 require 'puppet/gettext/module_translations'
 
