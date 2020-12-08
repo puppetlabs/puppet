@@ -52,7 +52,7 @@ Puppet::Face.define(:node, '0.0.1') do
     end
 
     def warn(message)
-      Puppet.warning(message) unless message =~ /cadir is currently configured to be inside/
+      Puppet.warning(message)
     end
 
     def err(message)
