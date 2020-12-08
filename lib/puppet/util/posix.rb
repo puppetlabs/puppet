@@ -186,7 +186,7 @@ module Puppet::Util::POSIX
     end
 
     if check_value != field
-      check_value_id = get_posix_field(location, id_field, check_value)
+      check_value_id = get_posix_field(location, id_field, check_value) if check_value
 
       if id == check_value_id
         Puppet.debug("Multiple entries found for resource: '#{location}' with #{id_field}: #{id}")
