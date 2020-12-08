@@ -5,6 +5,8 @@ require_relative '../puppet/util'
 class Puppet::Confine
   include Puppet::Util
 
+  BUILTIN_FEATURES = Set.new(%w[any boolean exists false feature true variable]).freeze
+
   @tests = {}
 
   class << self
@@ -23,7 +25,11 @@ class Puppet::Confine
   def self.test(name)
     unless @tests.include?(name)
       begin
-        require "puppet/confine/#{name}"
+        if BUILTIN_FEATURES.include?(name)
+          require_relative "../puppet/confine/#{name}"
+        else
+          require "puppet/confine/#{name}"
+        end
       rescue LoadError => detail
         unless detail.to_s =~ /No such file|cannot load such file/i
           Puppet.warning("Could not load confine test '#{name}': #{detail}")
