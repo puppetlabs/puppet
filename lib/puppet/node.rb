@@ -1,9 +1,9 @@
-require 'puppet/indirector'
+require_relative '../puppet/indirector'
 
 # A class for managing nodes, including their facts and environment.
 class Puppet::Node
-  require 'puppet/node/facts'
-  require 'puppet/node/environment'
+  require_relative '../puppet/node/facts'
+  require_relative '../puppet/node/environment'
 
   # Set up indirection, so that nodes can be looked for in
   # the node sources.

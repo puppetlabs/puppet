@@ -1,4 +1,4 @@
-require 'puppet/indirector/resource/validator'
+require_relative '../../../puppet/indirector/resource/validator'
 
 class Puppet::Resource::Ral < Puppet::Indirector::Code
   include Puppet::Resource::Validator

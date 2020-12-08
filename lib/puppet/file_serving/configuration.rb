@@ -1,15 +1,15 @@
-require 'puppet'
-require 'puppet/file_serving'
-require 'puppet/file_serving/mount'
-require 'puppet/file_serving/mount/file'
-require 'puppet/file_serving/mount/modules'
-require 'puppet/file_serving/mount/plugins'
-require 'puppet/file_serving/mount/locales'
-require 'puppet/file_serving/mount/pluginfacts'
-require 'puppet/file_serving/mount/tasks'
+require_relative '../../puppet'
+require_relative '../../puppet/file_serving'
+require_relative '../../puppet/file_serving/mount'
+require_relative '../../puppet/file_serving/mount/file'
+require_relative '../../puppet/file_serving/mount/modules'
+require_relative '../../puppet/file_serving/mount/plugins'
+require_relative '../../puppet/file_serving/mount/locales'
+require_relative '../../puppet/file_serving/mount/pluginfacts'
+require_relative '../../puppet/file_serving/mount/tasks'
 
 class Puppet::FileServing::Configuration
-  require 'puppet/file_serving/configuration/parser'
+  require_relative '../../puppet/file_serving/configuration/parser'
 
   def self.configuration
     @configuration ||= new

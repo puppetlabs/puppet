@@ -1,5 +1,5 @@
-require 'puppet/file_serving'
-require 'puppet/util'
+require_relative '../../puppet/file_serving'
+require_relative '../../puppet/util'
 
 # The base class for Content and Metadata; provides common
 # functionality like the behaviour around links.

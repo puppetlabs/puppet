@@ -1,5 +1,5 @@
-require 'puppet/provider/package'
-require 'puppet/util/windows'
+require_relative '../../../../puppet/provider/package'
+require_relative '../../../../puppet/util/windows'
 
 class Puppet::Provider::Package::Windows
   class Package
@@ -105,5 +105,5 @@ class Puppet::Provider::Package::Windows
   end
 end
 
-require 'puppet/provider/package/windows/msi_package'
-require 'puppet/provider/package/windows/exe_package'
+require_relative '../../../../puppet/provider/package/windows/msi_package'
+require_relative '../../../../puppet/provider/package/windows/exe_package'

@@ -1,4 +1,4 @@
-require 'puppet/provider/package/windows/package'
+require_relative '../../../../puppet/provider/package/windows/package'
 
 class Puppet::Provider::Package::Windows
   class ExePackage < Puppet::Provider::Package::Windows::Package

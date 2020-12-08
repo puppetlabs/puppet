@@ -1,5 +1,5 @@
-require 'puppet/provider'
-require 'puppet/util/execution'
+require_relative '../../puppet/provider'
+require_relative '../../puppet/util/execution'
 
 class Puppet::Provider::Exec < Puppet::Provider
   include Puppet::Util::Execution

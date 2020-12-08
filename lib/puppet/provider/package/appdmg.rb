@@ -12,8 +12,8 @@
 # As a result, we store installed .app.dmg file names
 # in /var/db/.puppet_appdmg_installed_<name>
 
-require 'puppet/provider/package'
-require 'puppet/util/plist' if Puppet.features.cfpropertylist?
+require_relative '../../../puppet/provider/package'
+require_relative '../../../puppet/util/plist' if Puppet.features.cfpropertylist?
 Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Package) do
   desc "Package management which copies application bundles to a target."
 

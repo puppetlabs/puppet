@@ -1,6 +1,6 @@
 require 'net/http'
-require 'puppet/util/json'
-require 'puppet/util/colors'
+require_relative '../../../puppet/util/json'
+require_relative '../../../puppet/util/colors'
 
 module Puppet::ModuleTool
   module Applications

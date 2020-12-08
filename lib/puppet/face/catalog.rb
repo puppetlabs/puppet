@@ -1,4 +1,4 @@
-require 'puppet/indirector/face'
+require_relative '../../puppet/indirector/face'
 
 Puppet::Indirector::Face.define(:catalog, '0.0.1') do
   copyright "Puppet Inc.", 2011

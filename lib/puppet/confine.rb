@@ -1,6 +1,6 @@
 # The class that handles testing whether our providers
 # actually work or not.
-require 'puppet/util'
+require_relative '../puppet/util'
 
 class Puppet::Confine
   include Puppet::Util

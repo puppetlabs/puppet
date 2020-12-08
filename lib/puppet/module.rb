@@ -1,7 +1,7 @@
-require 'puppet/util/logging'
-require 'puppet/module/task'
-require 'puppet/module/plan'
-require 'puppet/util/json'
+require_relative '../puppet/util/logging'
+require_relative '../puppet/module/task'
+require_relative '../puppet/module/plan'
+require_relative '../puppet/util/json'
 require 'semantic_puppet/gem_version'
 
 # Support for modules

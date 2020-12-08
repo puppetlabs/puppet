@@ -1,4 +1,4 @@
-require 'puppet/parser/script_compiler'
+require_relative '../../../puppet/parser/script_compiler'
 
 module Puppet::Pops
 module Evaluator

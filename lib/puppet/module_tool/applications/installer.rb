@@ -3,13 +3,13 @@ require 'pathname'
 require 'fileutils'
 require 'tmpdir'
 
-require 'puppet/forge'
-require 'puppet/module_tool'
-require 'puppet/module_tool/shared_behaviors'
-require 'puppet/module_tool/install_directory'
-require 'puppet/module_tool/local_tarball'
-require 'puppet/module_tool/installed_modules'
-require 'puppet/network/uri'
+require_relative '../../../puppet/forge'
+require_relative '../../../puppet/module_tool'
+require_relative '../../../puppet/module_tool/shared_behaviors'
+require_relative '../../../puppet/module_tool/install_directory'
+require_relative '../../../puppet/module_tool/local_tarball'
+require_relative '../../../puppet/module_tool/installed_modules'
+require_relative '../../../puppet/network/uri'
 
 module Puppet::ModuleTool
   module Applications

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require 'ffi'
-require 'puppet/ffi/windows'
-require 'puppet/util/windows/string'
+require_relative '../../../../puppet/ffi/windows'
+require_relative '../../../../puppet/util/windows/string'
 
 module Process
   extend FFI::Library

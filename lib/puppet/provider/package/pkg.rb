@@ -1,4 +1,4 @@
-require 'puppet/provider/package'
+require_relative '../../../puppet/provider/package'
 
 Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package do
   desc "OpenSolaris image packaging system. See pkg(5) for more information.

@@ -1,5 +1,5 @@
 # Exceptions for the settings module
-require 'puppet/error'
+require_relative '../../puppet/error'
 
 class Puppet::Settings
   class SettingsError < Puppet::Error ; end

@@ -1,6 +1,6 @@
-require 'puppet/indirector'
-require 'puppet/file_serving'
-require 'puppet/file_serving/base'
+require_relative '../../puppet/indirector'
+require_relative '../../puppet/file_serving'
+require_relative '../../puppet/file_serving/base'
 
 # A class that handles retrieving file contents.
 # It only reads the file when its content is specifically

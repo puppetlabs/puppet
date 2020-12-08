@@ -1,4 +1,4 @@
-require 'puppet/coercion'
+require_relative '../../puppet/coercion'
 
 # This specialized {Puppet::Parameter} handles Boolean options, accepting lots
 # of strings and symbols for both truth and falsehood.

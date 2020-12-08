@@ -1,4 +1,4 @@
-require 'puppet/settings/ini_file'
+require_relative '../../puppet/settings/ini_file'
 
 ##
 # @api private

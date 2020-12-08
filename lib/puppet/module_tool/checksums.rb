@@ -1,5 +1,5 @@
 require 'digest/md5'
-require 'puppet/network/format_support'
+require_relative '../../puppet/network/format_support'
 
 module Puppet::ModuleTool
 

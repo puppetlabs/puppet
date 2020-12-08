@@ -1,6 +1,6 @@
 # HP-UX packaging.
 
-require 'puppet/provider/package'
+require_relative '../../../puppet/provider/package'
 
 Puppet::Type.type(:package).provide :hpux, :parent => Puppet::Provider::Package do
 

@@ -2,8 +2,8 @@ require 'net/http'
 require 'uri'
 require 'tempfile'
 
-require 'puppet/util/checksums'
-require 'puppet/type/file/data_sync.rb'
+require_relative '../../../puppet/util/checksums'
+require_relative '../../../puppet/type/file/data_sync.rb'
 
 module Puppet
   Puppet::Type.type(:file).newproperty(:content) do

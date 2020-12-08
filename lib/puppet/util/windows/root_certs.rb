@@ -1,5 +1,5 @@
-require 'puppet/util/windows'
-require 'puppet/ssl/openssl_loader'
+require_relative '../../../puppet/util/windows'
+require_relative '../../../puppet/ssl/openssl_loader'
 require 'ffi'
 
 # Represents a collection of trusted root certificates.

@@ -1,6 +1,6 @@
 require 'find'
 require 'forwardable'
-require 'puppet/parser/parser_factory'
+require_relative '../../puppet/parser/parser_factory'
 
 class Puppet::Parser::TypeLoader
   extend  Forwardable

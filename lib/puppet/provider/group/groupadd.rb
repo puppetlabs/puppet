@@ -1,5 +1,5 @@
-require 'puppet/provider/nameservice/objectadd'
-require 'puppet/util/libuser'
+require_relative '../../../puppet/provider/nameservice/objectadd'
+require_relative '../../../puppet/util/libuser'
 
 Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameService::ObjectAdd do
   desc "Group management via `groupadd` and its ilk. The default for most platforms."

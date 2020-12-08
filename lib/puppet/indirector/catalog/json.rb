@@ -1,5 +1,5 @@
-require 'puppet/resource/catalog'
-require 'puppet/indirector/json'
+require_relative '../../../puppet/resource/catalog'
+require_relative '../../../puppet/indirector/json'
 
 class Puppet::Resource::Catalog::Json < Puppet::Indirector::JSON
   desc "Store catalogs as flat files, serialized using JSON."

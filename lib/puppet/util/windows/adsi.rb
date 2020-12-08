@@ -293,7 +293,7 @@ module Puppet::Util::Windows::ADSI
   class User < ADSIObject
     extend FFI::Library
 
-    require 'puppet/util/windows/sid'
+    require_relative '../../../puppet/util/windows/sid'
 
     # https://msdn.microsoft.com/en-us/library/aa746340.aspx
     # IADsUser interface

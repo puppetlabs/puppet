@@ -1,17 +1,17 @@
 # is only needed to create the name space
 module Puppet::Parser; end
 
-require 'puppet/parser/ast'
-require 'puppet/parser/abstract_compiler'
-require 'puppet/parser/compiler'
-require 'puppet/parser/compiler/catalog_validator'
-require 'puppet/resource/type_collection'
+require_relative '../puppet/parser/ast'
+require_relative '../puppet/parser/abstract_compiler'
+require_relative '../puppet/parser/compiler'
+require_relative '../puppet/parser/compiler/catalog_validator'
+require_relative '../puppet/resource/type_collection'
 
-require 'puppet/parser/functions'
-require 'puppet/parser/files'
-require 'puppet/parser/relationship'
+require_relative '../puppet/parser/functions'
+require_relative '../puppet/parser/files'
+require_relative '../puppet/parser/relationship'
 
-require 'puppet/resource/type'
+require_relative '../puppet/resource/type'
 require 'monitor'
 
 Dir[File.dirname(__FILE__) + '/parser/compiler/catalog_validator/*.rb'].each { |f| require f }

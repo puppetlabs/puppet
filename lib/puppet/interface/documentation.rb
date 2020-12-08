@@ -1,7 +1,7 @@
 class Puppet::Interface
   # @api private
   module DocGen
-    require 'puppet/util/docs'
+    require_relative '../../puppet/util/docs'
 
     # @api private
     def self.strip_whitespace(text)

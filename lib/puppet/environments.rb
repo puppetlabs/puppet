@@ -1,4 +1,4 @@
-require 'puppet/concurrent/synchronized'
+require_relative '../puppet/concurrent/synchronized'
 
 # @api private
 module Puppet::Environments

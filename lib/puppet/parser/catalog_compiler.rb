@@ -1,5 +1,5 @@
-require 'puppet/loaders'
-require 'puppet/pops'
+require_relative '../../puppet/loaders'
+require_relative '../../puppet/pops'
 
 # A Catalog "compiler" that is like the regular compiler but with an API
 # that is harmonized with the ScriptCompiler

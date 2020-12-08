@@ -1,7 +1,7 @@
 require 'erb'
 require 'fileutils'
-require 'puppet/util/autoload'
-require 'puppet/generate/models/type/type'
+require_relative '../../puppet/util/autoload'
+require_relative '../../puppet/generate/models/type/type'
 
 module Puppet
   module Generate

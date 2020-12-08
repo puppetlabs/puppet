@@ -1,4 +1,4 @@
-require 'puppet/provider/ldap'
+require_relative '../../../puppet/provider/ldap'
 
 Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
   desc "User management via LDAP.

@@ -1,5 +1,5 @@
 require 'uri'
-require 'puppet/ssl/openssl_loader'
+require_relative '../../puppet/ssl/openssl_loader'
 
 module Puppet::HTTP::Proxy
   def self.proxy(uri)

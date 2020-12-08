@@ -1,4 +1,4 @@
-require 'puppet/util/posix'
+require_relative '../../../puppet/util/posix'
 
 module Puppet
   # Manage file group ownership.

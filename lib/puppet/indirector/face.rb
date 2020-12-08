@@ -1,4 +1,4 @@
-require 'puppet/face'
+require_relative '../../puppet/face'
 
 class Puppet::Indirector::Face < Puppet::Face
   option "--terminus _" + _("TERMINUS") do

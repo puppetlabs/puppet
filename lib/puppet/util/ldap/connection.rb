@@ -1,4 +1,4 @@
-require 'puppet/util/ldap'
+require_relative '../../../puppet/util/ldap'
 
 class Puppet::Util::Ldap::Connection
   attr_accessor :host, :port, :user, :password, :reset, :ssl

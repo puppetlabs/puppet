@@ -3,10 +3,10 @@ require 'ffi'
 module Puppet
   module FFI
     module Windows
-      require 'puppet/ffi/windows/api_types'
-      require 'puppet/ffi/windows/constants'
-      require 'puppet/ffi/windows/structs'
-      require 'puppet/ffi/windows/functions'
+      require_relative '../../puppet/ffi/windows/api_types'
+      require_relative '../../puppet/ffi/windows/constants'
+      require_relative '../../puppet/ffi/windows/structs'
+      require_relative '../../puppet/ffi/windows/functions'
     end
   end
 end

@@ -1,4 +1,4 @@
-require 'puppet/parser/ast/top_level_construct'
+require_relative '../../../puppet/parser/ast/top_level_construct'
 
 class Puppet::Parser::AST::Hostclass < Puppet::Parser::AST::TopLevelConstruct
   attr_accessor :name, :context

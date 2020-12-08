@@ -1,11 +1,11 @@
-require 'puppet/resource'
+require_relative '../../puppet/resource'
 
 # The primary difference between this class and its
 # parent is that this class has rules on who can set
 # parameters
 class Puppet::Parser::Resource < Puppet::Resource
-  require 'puppet/parser/resource/param'
-  require 'puppet/util/tagging'
+  require_relative '../../puppet/parser/resource/param'
+  require_relative '../../puppet/util/tagging'
 
   include Puppet::Util
   include Puppet::Util::Errors

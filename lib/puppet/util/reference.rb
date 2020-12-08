@@ -1,4 +1,4 @@
-require 'puppet/util/instance_loader'
+require_relative '../../puppet/util/instance_loader'
 require 'fileutils'
 
 # Manage Reference Documentation.

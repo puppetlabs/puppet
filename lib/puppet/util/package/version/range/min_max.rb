@@ -1,4 +1,4 @@
-require 'puppet/util/package/version/range'
+require_relative '../../../../../puppet/util/package/version/range'
 
 module Puppet::Util::Package::Version
   class Range

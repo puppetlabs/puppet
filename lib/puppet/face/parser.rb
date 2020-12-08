@@ -1,5 +1,5 @@
-require 'puppet/face'
-require 'puppet/parser'
+require_relative '../../puppet/face'
+require_relative '../../puppet/parser'
 
 Puppet::Face.define(:parser, '0.0.1') do
   copyright "Puppet Inc.", 2014
@@ -142,7 +142,7 @@ Puppet::Face.define(:parser, '0.0.1') do
     end
 
     when_invoked do |*args|
-      require 'puppet/pops'
+      require_relative '../../puppet/pops'
       options = args.pop
       if options[:e]
         dump_parse(options[:e], 'command-line-string', options, false)
@@ -189,7 +189,7 @@ Puppet::Face.define(:parser, '0.0.1') do
       if fmt.nil? || fmt == 'old'
         output << Puppet::Pops::Model::ModelTreeDumper.new.dump(parse_result) << "\n"
       else
-        require 'puppet/pops/pn'
+        require_relative '../../puppet/pops/pn'
         pn = Puppet::Pops::Model::PNTransformer.transform(parse_result)
         case fmt
         when 'json'

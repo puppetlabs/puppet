@@ -1,5 +1,5 @@
-require 'puppet'
-require 'puppet/util/plist' if Puppet.features.cfpropertylist?
+require_relative '../../../puppet'
+require_relative '../../../puppet/util/plist' if Puppet.features.cfpropertylist?
 require 'base64'
 
 Puppet::Type.type(:user).provide :directoryservice do

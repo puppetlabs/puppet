@@ -1,4 +1,4 @@
-require 'puppet/gettext/config'
+require_relative '../../puppet/gettext/config'
 
 module Puppet::ModuleTranslations
 

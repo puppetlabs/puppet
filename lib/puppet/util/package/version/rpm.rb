@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require 'puppet/util/rpm_compare'
+require_relative '../../../../puppet/util/rpm_compare'
 
 module Puppet::Util::Package::Version
   class Rpm < Numeric

@@ -1,28 +1,28 @@
 # A module to collect utility functions.
 
 require 'English'
-require 'puppet/error'
-require 'puppet/util/execution_stub'
+require_relative '../puppet/error'
+require_relative '../puppet/util/execution_stub'
 require 'uri'
 require 'pathname'
 require 'ostruct'
-require 'puppet/util/platform'
-require 'puppet/util/symbolic_file_mode'
-require 'puppet/file_system/uniquefile'
+require_relative '../puppet/util/platform'
+require_relative '../puppet/util/symbolic_file_mode'
+require_relative '../puppet/file_system/uniquefile'
 require 'securerandom'
-require 'puppet/util/character_encoding'
+require_relative '../puppet/util/character_encoding'
 
 module Puppet
 module Util
-  require 'puppet/util/monkey_patches'
+  require_relative '../puppet/util/monkey_patches'
   require 'benchmark'
 
   # These are all for backward compatibility -- these are methods that used
   # to be in Puppet::Util but have been moved into external modules.
-  require 'puppet/util/posix'
+  require_relative '../puppet/util/posix'
   extend Puppet::Util::POSIX
 
-  require 'puppet/util/windows/process' if Puppet::Util::Platform.windows?
+  require_relative '../puppet/util/windows/process' if Puppet::Util::Platform.windows?
 
   extend Puppet::Util::SymbolicFileMode
 
@@ -776,11 +776,11 @@ end
 end
 
 
-require 'puppet/util/errors'
-require 'puppet/util/metaid'
-require 'puppet/util/classgen'
-require 'puppet/util/docs'
-require 'puppet/util/execution'
-require 'puppet/util/logging'
-require 'puppet/util/package'
-require 'puppet/util/warnings'
+require_relative '../puppet/util/errors'
+require_relative '../puppet/util/metaid'
+require_relative '../puppet/util/classgen'
+require_relative '../puppet/util/docs'
+require_relative '../puppet/util/execution'
+require_relative '../puppet/util/logging'
+require_relative '../puppet/util/package'
+require_relative '../puppet/util/warnings'

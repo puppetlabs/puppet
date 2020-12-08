@@ -1,7 +1,7 @@
 
-require 'puppet'
-require 'puppet/type'
-require 'puppet/transaction'
+require_relative '../../puppet'
+require_relative '../../puppet/type'
+require_relative '../../puppet/transaction'
 
 Puppet::Type.newtype(:component) do
   include Enumerable

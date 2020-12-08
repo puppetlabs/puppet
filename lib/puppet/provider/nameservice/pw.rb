@@ -1,4 +1,4 @@
-require 'puppet/provider/nameservice/objectadd'
+require_relative '../../../puppet/provider/nameservice/objectadd'
 
 class Puppet::Provider::NameService
   class PW < ObjectAdd

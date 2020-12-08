@@ -1,13 +1,13 @@
 # The client for interacting with the puppetmaster config server.
 require 'timeout'
-require 'puppet/util'
+require_relative '../puppet/util'
 require 'securerandom'
-#require 'puppet/parser/script_compiler'
-require 'puppet/pops/evaluator/deferred_resolver'
+#require_relative '../puppet/parser/script_compiler'
+require_relative '../puppet/pops/evaluator/deferred_resolver'
 
 class Puppet::Configurer
-  require 'puppet/configurer/fact_handler'
-  require 'puppet/configurer/plugin_handler'
+  require_relative '../puppet/configurer/fact_handler'
+  require_relative '../puppet/configurer/plugin_handler'
 
   include Puppet::Configurer::FactHandler
 

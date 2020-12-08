@@ -1,6 +1,6 @@
-require 'puppet/ssl/openssl_loader'
+require_relative '../../puppet/ssl/openssl_loader'
 require 'net/http'
-require 'puppet/http'
+require_relative '../../puppet/http'
 
 # Factory for `Net::HTTP` objects.
 #

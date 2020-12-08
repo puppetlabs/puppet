@@ -1,5 +1,5 @@
-require 'puppet/file_serving/configuration'
-require 'puppet/util/watched_file'
+require_relative '../../../puppet/file_serving/configuration'
+require_relative '../../../puppet/util/watched_file'
 
 class Puppet::FileServing::Configuration::Parser
   Mount = Puppet::FileServing::Mount

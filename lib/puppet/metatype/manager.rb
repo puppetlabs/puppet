@@ -1,6 +1,6 @@
-require 'puppet'
-require 'puppet/util/classgen'
-require 'puppet/node/environment'
+require_relative '../../puppet'
+require_relative '../../puppet/util/classgen'
+require_relative '../../puppet/node/environment'
 
 # This module defines methods dealing with Type management.
 # This module gets included into the Puppet::Type class, it's just split out here for clarity.

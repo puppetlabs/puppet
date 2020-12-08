@@ -8,9 +8,9 @@
 # As a result, we store installed .pkg.dmg file names
 # in /var/db/.puppet_pkgdmg_installed_<name>
 
-require 'puppet/provider/package'
-require 'puppet/util/plist'
-require 'puppet/util/http_proxy'
+require_relative '../../../puppet/provider/package'
+require_relative '../../../puppet/util/plist'
+require_relative '../../../puppet/util/http_proxy'
 
 Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Package do
   desc "Package management based on Apple's Installer.app and DiskUtility.app.

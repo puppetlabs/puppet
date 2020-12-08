@@ -1,5 +1,5 @@
-require 'puppet/loaders'
-require 'puppet/pops'
+require_relative '../../puppet/loaders'
+require_relative '../../puppet/pops'
 
 # A Script "compiler" that does not support catalog operations
 #

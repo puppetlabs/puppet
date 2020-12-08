@@ -1,6 +1,6 @@
 class Puppet::Network::HTTP::API::Master::V3
-  require 'puppet/network/http/api/master/v3/environments'
-  require 'puppet/network/http/api/indirected_routes'
+  require_relative '../../../../../puppet/network/http/api/master/v3/environments'
+  require_relative '../../../../../puppet/network/http/api/indirected_routes'
 
   def self.wrap(&block)
     lambda do |request, response|

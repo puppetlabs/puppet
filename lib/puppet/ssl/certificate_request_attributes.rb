@@ -1,5 +1,5 @@
-require 'puppet/ssl'
-require 'puppet/util/yaml'
+require_relative '../../puppet/ssl'
+require_relative '../../puppet/util/yaml'
 
 # This class transforms simple key/value pairs into the equivalent ASN1
 # structures. Values may be strings or arrays of strings.

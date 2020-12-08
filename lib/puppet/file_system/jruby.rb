@@ -1,4 +1,4 @@
-require 'puppet/file_system/posix'
+require_relative '../../puppet/file_system/posix'
 
 class Puppet::FileSystem::JRuby < Puppet::FileSystem::Posix
   def unlink(*paths)

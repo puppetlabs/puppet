@@ -4,9 +4,9 @@ require 'benchmark'
 #
 # @api public
 module Puppet::Util::Profiler
-  require 'puppet/util/profiler/wall_clock'
-  require 'puppet/util/profiler/object_counts'
-  require 'puppet/util/profiler/around_profiler'
+  require_relative '../../puppet/util/profiler/wall_clock'
+  require_relative '../../puppet/util/profiler/object_counts'
+  require_relative '../../puppet/util/profiler/around_profiler'
 
   @profiler = Puppet::Util::Profiler::AroundProfiler.new
 

@@ -1,4 +1,4 @@
-require 'puppet/util/instance_loader'
+require_relative '../puppet/util/instance_loader'
 
 # This class is an implementation of a simple mechanism for loading and returning reports.
 # The intent is that a user registers a report by calling {register_report} and providing a code

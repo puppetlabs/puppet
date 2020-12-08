@@ -1,6 +1,6 @@
 # Manage a collection of confines, returning a boolean or
 # helpful information.
-require 'puppet/confine'
+require_relative '../puppet/confine'
 
 class Puppet::ConfineCollection
   def confine(hash)

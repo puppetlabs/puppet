@@ -1,7 +1,7 @@
 # Basic classes for reading, writing, and emptying files.  Not much
 # to see here.
 
-require 'puppet/util/selinux'
+require_relative '../../puppet/util/selinux'
 require 'tempfile'
 require 'fileutils'
 

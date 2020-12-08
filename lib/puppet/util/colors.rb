@@ -1,4 +1,4 @@
-require 'puppet/util/platform'
+require_relative '../../puppet/util/platform'
 
 module Puppet::Util::Colors
   BLACK       = {:console => "\e[0;30m", :html => "color: #FFA0A0"     }

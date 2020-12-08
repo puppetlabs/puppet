@@ -1,5 +1,5 @@
 require 'facter'
-require 'puppet/util/warnings'
+require_relative '../../puppet/util/warnings'
 require 'forwardable'
 require 'etc'
 
@@ -48,7 +48,7 @@ module Puppet::Util::SUIDManager
 
   def self.root?
     if Puppet::Util::Platform.windows?
-      require 'puppet/util/windows/user'
+      require_relative '../../puppet/util/windows/user'
       Puppet::Util::Windows::User.admin?
     else
       Process.uid == 0

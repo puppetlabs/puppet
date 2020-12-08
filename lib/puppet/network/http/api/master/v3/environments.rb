@@ -1,4 +1,4 @@
-require 'puppet/util/json'
+require_relative '../../../../../../puppet/util/json'
 
 class Puppet::Network::HTTP::API::Master::V3::Environments
   def initialize(env_loader)

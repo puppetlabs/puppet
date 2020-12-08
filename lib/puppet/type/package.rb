@@ -4,8 +4,8 @@
 # This allows packages to exist on the same machine using different packaging
 # systems.
 
-require 'puppet/parameter/package_options'
-require 'puppet/parameter/boolean'
+require_relative '../../puppet/parameter/package_options'
+require_relative '../../puppet/parameter/boolean'
 
 module Puppet
   Type.newtype(:package) do

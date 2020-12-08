@@ -1,20 +1,20 @@
 module Puppet::FileSystem
-  require 'puppet/util'
-  require 'puppet/file_system/path_pattern'
-  require 'puppet/file_system/file_impl'
-  require 'puppet/file_system/memory_file'
-  require 'puppet/file_system/memory_impl'
-  require 'puppet/file_system/uniquefile'
+  require_relative '../puppet/util'
+  require_relative '../puppet/file_system/path_pattern'
+  require_relative '../puppet/file_system/file_impl'
+  require_relative '../puppet/file_system/memory_file'
+  require_relative '../puppet/file_system/memory_impl'
+  require_relative '../puppet/file_system/uniquefile'
 
   # create instance of the file system implementation to use for the current platform
   @impl = if Puppet::Util::Platform.windows?
-           require 'puppet/file_system/windows'
+           require_relative '../puppet/file_system/windows'
            Puppet::FileSystem::Windows
           elsif Puppet::Util::Platform.jruby?
-            require 'puppet/file_system/jruby'
+            require_relative '../puppet/file_system/jruby'
             Puppet::FileSystem::JRuby
           else
-            require 'puppet/file_system/posix'
+            require_relative '../puppet/file_system/posix'
             Puppet::FileSystem::Posix
           end.new()
 

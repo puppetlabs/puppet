@@ -1,8 +1,8 @@
 require 'cgi'
 require 'uri'
-require 'puppet/indirector'
-require 'puppet/util/psych_support'
-require 'puppet/util/warnings'
+require_relative '../../puppet/indirector'
+require_relative '../../puppet/util/psych_support'
+require_relative '../../puppet/util/warnings'
 
 # This class encapsulates all of the information you need to make an
 # Indirection call, and as a result also handles REST calls.  It's somewhat

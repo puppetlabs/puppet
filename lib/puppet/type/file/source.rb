@@ -1,8 +1,8 @@
-require 'puppet/file_serving/content'
-require 'puppet/file_serving/metadata'
-require 'puppet/file_serving/terminus_helper'
+require_relative '../../../puppet/file_serving/content'
+require_relative '../../../puppet/file_serving/metadata'
+require_relative '../../../puppet/file_serving/terminus_helper'
 
-require 'puppet/http'
+require_relative '../../../puppet/http'
 
 module Puppet
   # Copy files from a local or remote source.  This state *only* does any work

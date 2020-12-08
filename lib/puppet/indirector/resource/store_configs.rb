@@ -1,5 +1,5 @@
-require 'puppet/indirector/store_configs'
-require 'puppet/indirector/resource/validator'
+require_relative '../../../puppet/indirector/store_configs'
+require_relative '../../../puppet/indirector/resource/validator'
 
 class Puppet::Resource::StoreConfigs < Puppet::Indirector::StoreConfigs
   include Puppet::Resource::Validator

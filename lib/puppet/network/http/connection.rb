@@ -1,4 +1,4 @@
-require 'puppet/http'
+require_relative '../../../puppet/http'
 
 # This will be raised if too many redirects happen for a given HTTP request
 class Puppet::Network::HTTP::RedirectionLimitExceededException < Puppet::Error ; end

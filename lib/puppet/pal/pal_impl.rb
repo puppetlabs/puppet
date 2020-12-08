@@ -1,9 +1,9 @@
 # Puppet as a Library "PAL"
 
 # Yes, this requires all of puppet for now because 'settings' and many other things...
-require 'puppet'
-require 'puppet/parser/script_compiler'
-require 'puppet/parser/catalog_compiler'
+require_relative '../../puppet'
+require_relative '../../puppet/parser/script_compiler'
+require_relative '../../puppet/parser/catalog_compiler'
 
 module Puppet
 # This is the main entry point for "Puppet As a Library" PAL.
@@ -12,14 +12,14 @@ module Puppet
 # into smaller components.
 #
 # @example Running a snippet of Puppet Language code
-#   require 'puppet_pal'
+#   require_relative '../../puppet_pal'
 #   result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: ['/tmp/testmodules']) do |pal|
 #     pal.evaluate_script_string('1+2+3')
 #   end
 #   # The result is the value 6
 #
 # @example Calling a function
-#   require 'puppet_pal'
+#   require_relative '../../puppet_pal'
 #   result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: ['/tmp/testmodules']) do |pal|
 #     pal.call_function('mymodule::myfunction', 10, 20)
 #   end

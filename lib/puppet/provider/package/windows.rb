@@ -1,6 +1,6 @@
-require 'puppet/provider/package'
-require 'puppet/util/windows'
-require 'puppet/provider/package/windows/package'
+require_relative '../../../puppet/provider/package'
+require_relative '../../../puppet/util/windows'
+require_relative '../../../puppet/provider/package/windows/package'
 
 Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Package) do
   desc "Windows package management.

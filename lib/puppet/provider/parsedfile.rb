@@ -1,6 +1,6 @@
-require 'puppet'
-require 'puppet/util/filetype'
-require 'puppet/util/fileparsing'
+require_relative '../../puppet'
+require_relative '../../puppet/util/filetype'
+require_relative '../../puppet/util/fileparsing'
 
 # This provider can be used as the parent class for a provider that
 # parses and generates files.  Its content must be loaded via the

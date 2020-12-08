@@ -1,7 +1,7 @@
 # Break out the code related to plugins.  This module is
 # just included into the agent, but having it here makes it
 # easier to test.
-require 'puppet/configurer'
+require_relative '../../puppet/configurer'
 
 class Puppet::Configurer::PluginHandler
   SUPPORTED_LOCALES_MOUNT_AGENT_VERSION = Gem::Version.new("5.3.4")

@@ -1,9 +1,9 @@
-require 'puppet/module_tool'
-require 'puppet/util'
+require_relative '../../puppet/module_tool'
+require_relative '../../puppet/util'
 
 module Puppet::ModuleTool::Tar
-  require 'puppet/module_tool/tar/gnu'
-  require 'puppet/module_tool/tar/mini'
+  require_relative '../../puppet/module_tool/tar/gnu'
+  require_relative '../../puppet/module_tool/tar/mini'
 
   def self.instance
     if Puppet.features.minitar? && Puppet.features.zlib?

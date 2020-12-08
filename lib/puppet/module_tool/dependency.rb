@@ -1,5 +1,5 @@
-require 'puppet/module_tool'
-require 'puppet/network/format_support'
+require_relative '../../puppet/module_tool'
+require_relative '../../puppet/network/format_support'
 
 module Puppet::ModuleTool
 

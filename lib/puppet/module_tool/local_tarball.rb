@@ -1,8 +1,8 @@
 require 'pathname'
 require 'tmpdir'
 
-require 'puppet/forge'
-require 'puppet/module_tool'
+require_relative '../../puppet/forge'
+require_relative '../../puppet/module_tool'
 
 module Puppet::ModuleTool
   class LocalTarball < SemanticPuppet::Dependency::Source

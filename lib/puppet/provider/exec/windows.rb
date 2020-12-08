@@ -1,4 +1,4 @@
-require 'puppet/provider/exec'
+require_relative '../../../puppet/provider/exec'
 
 Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
 

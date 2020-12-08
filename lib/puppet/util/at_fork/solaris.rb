@@ -1,4 +1,4 @@
-require 'puppet'
+require_relative '../../../puppet'
 require 'fiddle'
 
 # Early versions of Fiddle relied on the deprecated DL module and used

@@ -1,4 +1,4 @@
-require 'puppet/indirector/terminus'
+require_relative '../../puppet/indirector/terminus'
 require 'hiera/scope'
 
 # This class can't be collapsed into Puppet::Indirector::DataBindings::Hiera

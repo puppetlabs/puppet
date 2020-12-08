@@ -1,7 +1,7 @@
-require 'puppet'
-require 'puppet/util/tagging'
-require 'puppet/util/skip_tags'
-require 'puppet/application'
+require_relative '../puppet'
+require_relative '../puppet/util/tagging'
+require_relative '../puppet/util/skip_tags'
+require_relative '../puppet/application'
 require 'digest/sha1'
 require 'set'
 
@@ -10,12 +10,12 @@ require 'set'
 #
 # @api private
 class Puppet::Transaction
-  require 'puppet/transaction/additional_resource_generator'
-  require 'puppet/transaction/event'
-  require 'puppet/transaction/event_manager'
-  require 'puppet/transaction/resource_harness'
-  require 'puppet/resource/status'
-  require 'puppet/transaction/persistence'
+  require_relative '../puppet/transaction/additional_resource_generator'
+  require_relative '../puppet/transaction/event'
+  require_relative '../puppet/transaction/event_manager'
+  require_relative '../puppet/transaction/resource_harness'
+  require_relative '../puppet/resource/status'
+  require_relative '../puppet/transaction/persistence'
 
   attr_accessor :catalog, :ignoreschedules, :for_network_device
 
@@ -466,4 +466,4 @@ class Puppet::Transaction
 
 end
 
-require 'puppet/transaction/report'
+require_relative '../puppet/transaction/report'

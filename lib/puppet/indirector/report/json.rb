@@ -1,5 +1,5 @@
-require 'puppet/transaction/report'
-require 'puppet/indirector/json'
+require_relative '../../../puppet/transaction/report'
+require_relative '../../../puppet/indirector/json'
 
 class Puppet::Transaction::Report::Json < Puppet::Indirector::JSON
   include Puppet::Util::SymbolicFileMode

@@ -1,7 +1,7 @@
 # This module is an integral part of the evaluator. It deals with the concern of validating
 # external syntax in text produced by heredoc and templates.
 #
-require 'puppet/plugins/syntax_checkers'
+require_relative '../../../puppet/plugins/syntax_checkers'
 module Puppet::Pops::Evaluator::ExternalSyntaxSupport
   def assert_external_syntax(_, result, syntax, reference_expr)
     # ignore 'unspecified syntax'

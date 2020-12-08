@@ -1,5 +1,5 @@
 require 'yaml'
-require 'puppet/util/yaml'
+require_relative '../../puppet/util/yaml'
 
 # A persistence store implementation for storing information between
 # transaction runs for the purposes of information inference (such

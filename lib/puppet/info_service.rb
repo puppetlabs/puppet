@@ -1,8 +1,8 @@
 
 module Puppet::InfoService
-  require 'puppet/info_service/class_information_service'
-  require 'puppet/info_service/task_information_service'
-  require 'puppet/info_service/plan_information_service'
+  require_relative '../puppet/info_service/class_information_service'
+  require_relative '../puppet/info_service/task_information_service'
+  require_relative '../puppet/info_service/plan_information_service'
 
   def self.classes_per_environment(env_file_hash)
     Puppet::InfoService::ClassInformationService.new.classes_per_environment(env_file_hash)

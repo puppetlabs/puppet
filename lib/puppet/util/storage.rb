@@ -1,6 +1,6 @@
 require 'yaml'
 require 'singleton'
-require 'puppet/util/yaml'
+require_relative '../../puppet/util/yaml'
 
 # a class for storing state
 class Puppet::Util::Storage

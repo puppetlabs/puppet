@@ -2,11 +2,11 @@
 # Load standard libraries
 require 'pathname'
 require 'fileutils'
-require 'puppet/util/colors'
+require_relative '../puppet/util/colors'
 
 module Puppet
   module ModuleTool
-    require 'puppet/module_tool/tar'
+    require_relative '../puppet/module_tool/tar'
     extend Puppet::Util::Colors
 
     # Directory and names that should not be checksummed.
@@ -184,11 +184,11 @@ module Puppet
 end
 
 # Load remaining libraries
-require 'puppet/module_tool/errors'
-require 'puppet/module_tool/applications'
-require 'puppet/module_tool/checksums'
-require 'puppet/module_tool/contents_description'
-require 'puppet/module_tool/dependency'
-require 'puppet/module_tool/metadata'
-require 'puppet/forge/cache'
-require 'puppet/forge'
+require_relative '../puppet/module_tool/errors'
+require_relative '../puppet/module_tool/applications'
+require_relative '../puppet/module_tool/checksums'
+require_relative '../puppet/module_tool/contents_description'
+require_relative '../puppet/module_tool/dependency'
+require_relative '../puppet/module_tool/metadata'
+require_relative '../puppet/forge/cache'
+require_relative '../puppet/forge'

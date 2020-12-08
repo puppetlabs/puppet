@@ -1,4 +1,4 @@
-require 'puppet/provider/package'
+require_relative '../../../puppet/provider/package'
 
 # OS X Packaging sucks.  We can install packages, but that's about it.
 Puppet::Type.type(:package).provide :apple, :parent => Puppet::Provider::Package do

@@ -1,4 +1,4 @@
-require 'puppet/provider'
+require_relative '../../puppet/provider'
 
 class Puppet::Provider::Package < Puppet::Provider
   # Prefetch our package list, yo.

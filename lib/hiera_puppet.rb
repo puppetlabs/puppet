@@ -1,6 +1,6 @@
 require 'hiera'
 require 'hiera/scope'
-require 'puppet'
+require_relative 'puppet'
 
 module HieraPuppet
   module_function

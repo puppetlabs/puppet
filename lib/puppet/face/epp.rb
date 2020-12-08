@@ -1,7 +1,7 @@
-require 'puppet/face'
-require 'puppet/pops'
-require 'puppet/parser/files'
-require 'puppet/file_system'
+require_relative '../../puppet/face'
+require_relative '../../puppet/pops'
+require_relative '../../puppet/parser/files'
+require_relative '../../puppet/file_system'
 
 Puppet::Face.define(:epp, '0.0.1') do
   copyright "Puppet Inc.", 2014
@@ -156,7 +156,7 @@ Puppet::Face.define(:epp, '0.0.1') do
     end
 
     when_invoked do |*args|
-      require 'puppet/pops'
+      require_relative '../../puppet/pops'
       options = args.pop
       # pass a dummy node, as facts are not needed for dump
       options[:node] = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
@@ -382,7 +382,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       if fmt.nil? || fmt == 'old'
         output << Puppet::Pops::Model::ModelTreeDumper.new.dump(parse_result) << "\n"
       else
-        require 'puppet/pops/pn'
+        require_relative '../../puppet/pops/pn'
         pn = Puppet::Pops::Model::PNTransformer.transform(parse_result)
         case fmt
         when 'json'

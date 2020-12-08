@@ -1,6 +1,6 @@
-require 'puppet/file_serving/http_metadata'
-require 'puppet/indirector/generic_http'
-require 'puppet/indirector/file_metadata'
+require_relative '../../../puppet/file_serving/http_metadata'
+require_relative '../../../puppet/indirector/generic_http'
+require_relative '../../../puppet/indirector/file_metadata'
 require 'net/http'
 
 class Puppet::Indirector::FileMetadata::Http < Puppet::Indirector::GenericHttp

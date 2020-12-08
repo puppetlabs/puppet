@@ -1,7 +1,7 @@
-require 'puppet/util/autoload'
-require 'puppet/parser/scope'
-require 'puppet/pops/adaptable'
-require 'puppet/concurrent/lock'
+require_relative '../../puppet/util/autoload'
+require_relative '../../puppet/parser/scope'
+require_relative '../../puppet/pops/adaptable'
+require_relative '../../puppet/concurrent/lock'
 
 # A module for managing parser functions.  Each specified function
 # is added to a central module that then gets included into the Scope
@@ -134,7 +134,7 @@ module Puppet::Parser::Functions
   #         :doc=>"Doubles an object, typically a number or string."}
   #
   # @example Invoke the double function from irb as is done in RSpec examples:
-  #     >> require 'puppet_spec/scope'
+  #     >> require_relative '../../puppet_spec/scope'
   #     >> scope = PuppetSpec::Scope.create_test_scope_for_node('example')
   #     => Scope()
   #     >> scope.function_double([2])

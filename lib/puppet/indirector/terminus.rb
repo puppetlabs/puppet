@@ -1,11 +1,11 @@
-require 'puppet/indirector'
-require 'puppet/indirector/errors'
-require 'puppet/indirector/indirection'
-require 'puppet/util/instance_loader'
+require_relative '../../puppet/indirector'
+require_relative '../../puppet/indirector/errors'
+require_relative '../../puppet/indirector/indirection'
+require_relative '../../puppet/util/instance_loader'
 
 # A simple class that can function as the base class for indirected types.
 class Puppet::Indirector::Terminus
-  require 'puppet/util/docs'
+  require_relative '../../puppet/util/docs'
   extend Puppet::Util::Docs
 
   class << self

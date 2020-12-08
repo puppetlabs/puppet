@@ -1,7 +1,7 @@
-require 'puppet/file_serving/configuration'
-require 'puppet/file_serving/fileset'
-require 'puppet/file_serving/terminus_helper'
-require 'puppet/indirector/terminus'
+require_relative '../../puppet/file_serving/configuration'
+require_relative '../../puppet/file_serving/fileset'
+require_relative '../../puppet/file_serving/terminus_helper'
+require_relative '../../puppet/indirector/terminus'
 
 # Look files up using the file server.
 class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus

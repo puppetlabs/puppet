@@ -1,6 +1,6 @@
-require 'puppet/util/ldap'
-require 'puppet/util/ldap/connection'
-require 'puppet/util/ldap/generator'
+require_relative '../../../puppet/util/ldap'
+require_relative '../../../puppet/util/ldap/connection'
+require_relative '../../../puppet/util/ldap/generator'
 
 # The configuration class for LDAP providers, plus
 # connection handling for actually interacting with ldap.

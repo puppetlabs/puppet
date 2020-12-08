@@ -1,8 +1,8 @@
-require 'puppet/util/docs'
-require 'puppet/util/profiler'
-require 'puppet/indirector/envelope'
-require 'puppet/indirector/request'
-require 'puppet/thread_local'
+require_relative '../../puppet/util/docs'
+require_relative '../../puppet/util/profiler'
+require_relative '../../puppet/indirector/envelope'
+require_relative '../../puppet/indirector/request'
+require_relative '../../puppet/thread_local'
 
 # The class that connects functional classes with their different collection
 # back-ends.  Each indirection has a set of associated terminus classes,

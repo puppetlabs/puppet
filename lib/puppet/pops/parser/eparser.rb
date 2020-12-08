@@ -6,8 +6,8 @@
 
 require 'racc/parser.rb'
 
-require 'puppet'
-require 'puppet/pops'
+require_relative '../../../puppet'
+require_relative '../../../puppet/pops'
 
 module Puppet
   class ParseError < Puppet::Error; end

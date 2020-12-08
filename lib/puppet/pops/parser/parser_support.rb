@@ -1,7 +1,7 @@
-require 'puppet/parser/functions'
-require 'puppet/parser/files'
-require 'puppet/resource/type_collection'
-require 'puppet/resource/type'
+require_relative '../../../puppet/parser/functions'
+require_relative '../../../puppet/parser/files'
+require_relative '../../../puppet/resource/type_collection'
+require_relative '../../../puppet/resource/type'
 require 'monitor'
 
 module Puppet::Pops

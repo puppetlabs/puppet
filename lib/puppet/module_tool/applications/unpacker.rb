@@ -1,7 +1,7 @@
 require 'pathname'
 require 'tmpdir'
-require 'puppet/util/json'
-require 'puppet/file_system'
+require_relative '../../../puppet/util/json'
+require_relative '../../../puppet/file_system'
 
 module Puppet::ModuleTool
   module Applications

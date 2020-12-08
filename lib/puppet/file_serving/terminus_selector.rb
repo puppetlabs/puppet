@@ -1,4 +1,4 @@
-require 'puppet/file_serving'
+require_relative '../../puppet/file_serving'
 
 # This module is used to pick the appropriate terminus
 # in file-serving indirections.  This is necessary because

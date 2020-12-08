@@ -1,4 +1,4 @@
-require 'puppet/pops/evaluator/external_syntax_support'
+require_relative '../../../puppet/pops/evaluator/external_syntax_support'
 
 module Puppet::Pops
 module Validation

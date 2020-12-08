@@ -1,4 +1,4 @@
-require 'puppet/indirector/hiera'
+require_relative '../../../puppet/indirector/hiera'
 require 'hiera/scope'
 
 class Puppet::DataBinding::Hiera < Puppet::Indirector::Hiera

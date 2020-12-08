@@ -1,8 +1,8 @@
-require 'puppet'
-require 'puppet/indirector'
-require 'puppet/file_serving'
-require 'puppet/file_serving/base'
-require 'puppet/util/checksums'
+require_relative '../../puppet'
+require_relative '../../puppet/indirector'
+require_relative '../../puppet/file_serving'
+require_relative '../../puppet/file_serving/base'
+require_relative '../../puppet/util/checksums'
 require 'uri'
 
 # A class that handles retrieving file metadata.
@@ -66,7 +66,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
 
   class WindowsStat < MetaStat
     if Puppet::Util::Platform.windows?
-      require 'puppet/util/windows/security'
+      require_relative '../../puppet/util/windows/security'
     end
 
     def initialize(stat, path, source_permissions)

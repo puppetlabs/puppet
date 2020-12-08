@@ -1,5 +1,5 @@
-require 'puppet/transaction/report'
-require 'puppet/indirector/yaml'
+require_relative '../../../puppet/transaction/report'
+require_relative '../../../puppet/indirector/yaml'
 
 class Puppet::Transaction::Report::Yaml < Puppet::Indirector::Yaml
   include Puppet::Util::SymbolicFileMode

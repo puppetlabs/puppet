@@ -1,6 +1,6 @@
 # A module to make logging a bit easier.
-require 'puppet/util/log'
-require 'puppet/error'
+require_relative '../../puppet/util/log'
+require_relative '../../puppet/error'
 
 require 'facter'
 

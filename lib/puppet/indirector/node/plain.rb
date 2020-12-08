@@ -1,5 +1,5 @@
-require 'puppet/node'
-require 'puppet/indirector/plain'
+require_relative '../../../puppet/node'
+require_relative '../../../puppet/indirector/plain'
 
 class Puppet::Node::Plain < Puppet::Indirector::Plain
   desc "Always return an empty node object. Assumes you keep track of nodes

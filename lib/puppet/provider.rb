@@ -40,8 +40,8 @@ class Puppet::Provider
   include Puppet::Util::Warnings
   extend Puppet::Util::Warnings
 
-  require 'puppet/confiner'
-  require 'puppet/provider/command'
+  require_relative '../puppet/confiner'
+  require_relative '../puppet/provider/command'
 
   extend Puppet::Confiner
 

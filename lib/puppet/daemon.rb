@@ -1,5 +1,5 @@
-require 'puppet/application'
-require 'puppet/scheduler'
+require_relative '../puppet/application'
+require_relative '../puppet/scheduler'
 
 # Run periodic actions in a daemonized process.
 #

@@ -1,5 +1,5 @@
-require 'puppet/indirector/terminus'
-require 'puppet/util'
+require_relative '../../puppet/indirector/terminus'
+require_relative '../../puppet/util'
 
 # The base class for MessagePack indirection terminus implementations.
 #

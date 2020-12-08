@@ -22,100 +22,100 @@ module Puppet
 
     require 'semantic_puppet'
 
-    require 'puppet/pops/patterns'
-    require 'puppet/pops/utils'
-    require 'puppet/pops/puppet_stack'
+    require_relative '../puppet/pops/patterns'
+    require_relative '../puppet/pops/utils'
+    require_relative '../puppet/pops/puppet_stack'
 
-    require 'puppet/pops/adaptable'
-    require 'puppet/pops/adapters'
+    require_relative '../puppet/pops/adaptable'
+    require_relative '../puppet/pops/adapters'
 
-    require 'puppet/pops/visitable'
-    require 'puppet/pops/visitor'
+    require_relative '../puppet/pops/visitable'
+    require_relative '../puppet/pops/visitor'
 
-    require 'puppet/pops/issues'
-    require 'puppet/pops/semantic_error'
-    require 'puppet/pops/label_provider'
-    require 'puppet/pops/validation'
-    require 'puppet/pops/issue_reporter'
+    require_relative '../puppet/pops/issues'
+    require_relative '../puppet/pops/semantic_error'
+    require_relative '../puppet/pops/label_provider'
+    require_relative '../puppet/pops/validation'
+    require_relative '../puppet/pops/issue_reporter'
 
-    require 'puppet/pops/time/timespan'
-    require 'puppet/pops/time/timestamp'
+    require_relative '../puppet/pops/time/timespan'
+    require_relative '../puppet/pops/time/timestamp'
 
     # (the Types module initializes itself)
-    require 'puppet/pops/types/types'
-    require 'puppet/pops/types/string_converter'
-    require 'puppet/pops/lookup'
+    require_relative '../puppet/pops/types/types'
+    require_relative '../puppet/pops/types/string_converter'
+    require_relative '../puppet/pops/lookup'
 
-    require 'puppet/pops/merge_strategy'
+    require_relative '../puppet/pops/merge_strategy'
 
     module Model
-      require 'puppet/pops/model/ast'
-      require 'puppet/pops/model/tree_dumper'
-      require 'puppet/pops/model/ast_transformer'
-      require 'puppet/pops/model/factory'
-      require 'puppet/pops/model/model_tree_dumper'
-      require 'puppet/pops/model/model_label_provider'
+      require_relative '../puppet/pops/model/ast'
+      require_relative '../puppet/pops/model/tree_dumper'
+      require_relative '../puppet/pops/model/ast_transformer'
+      require_relative '../puppet/pops/model/factory'
+      require_relative '../puppet/pops/model/model_tree_dumper'
+      require_relative '../puppet/pops/model/model_label_provider'
     end
 
     module Resource
-      require 'puppet/pops/resource/resource_type_impl'
+      require_relative '../puppet/pops/resource/resource_type_impl'
     end
     module Evaluator
-      require 'puppet/pops/evaluator/literal_evaluator'
-      require 'puppet/pops/evaluator/callable_signature'
-      require 'puppet/pops/evaluator/runtime3_converter'
-      require 'puppet/pops/evaluator/runtime3_resource_support'
-      require 'puppet/pops/evaluator/runtime3_support'
-      require 'puppet/pops/evaluator/evaluator_impl'
-      require 'puppet/pops/evaluator/epp_evaluator'
-      require 'puppet/pops/evaluator/collector_transformer'
-      require 'puppet/pops/evaluator/puppet_proc'
-      require 'puppet/pops/evaluator/deferred_resolver'
+      require_relative '../puppet/pops/evaluator/literal_evaluator'
+      require_relative '../puppet/pops/evaluator/callable_signature'
+      require_relative '../puppet/pops/evaluator/runtime3_converter'
+      require_relative '../puppet/pops/evaluator/runtime3_resource_support'
+      require_relative '../puppet/pops/evaluator/runtime3_support'
+      require_relative '../puppet/pops/evaluator/evaluator_impl'
+      require_relative '../puppet/pops/evaluator/epp_evaluator'
+      require_relative '../puppet/pops/evaluator/collector_transformer'
+      require_relative '../puppet/pops/evaluator/puppet_proc'
+      require_relative '../puppet/pops/evaluator/deferred_resolver'
       module Collectors
-        require 'puppet/pops/evaluator/collectors/abstract_collector'
-        require 'puppet/pops/evaluator/collectors/fixed_set_collector'
-        require 'puppet/pops/evaluator/collectors/catalog_collector'
-        require 'puppet/pops/evaluator/collectors/exported_collector'
+        require_relative '../puppet/pops/evaluator/collectors/abstract_collector'
+        require_relative '../puppet/pops/evaluator/collectors/fixed_set_collector'
+        require_relative '../puppet/pops/evaluator/collectors/catalog_collector'
+        require_relative '../puppet/pops/evaluator/collectors/exported_collector'
       end
     end
 
     module Parser
-      require 'puppet/pops/parser/eparser'
-      require 'puppet/pops/parser/parser_support'
-      require 'puppet/pops/parser/locator'
-      require 'puppet/pops/parser/locatable'
-      require 'puppet/pops/parser/lexer2'
-      require 'puppet/pops/parser/evaluating_parser'
-      require 'puppet/pops/parser/epp_parser'
-      require 'puppet/pops/parser/code_merger'
+      require_relative '../puppet/pops/parser/eparser'
+      require_relative '../puppet/pops/parser/parser_support'
+      require_relative '../puppet/pops/parser/locator'
+      require_relative '../puppet/pops/parser/locatable'
+      require_relative '../puppet/pops/parser/lexer2'
+      require_relative '../puppet/pops/parser/evaluating_parser'
+      require_relative '../puppet/pops/parser/epp_parser'
+      require_relative '../puppet/pops/parser/code_merger'
     end
 
     module Validation
-      require 'puppet/pops/validation/checker4_0'
-      require 'puppet/pops/validation/validator_factory_4_0'
+      require_relative '../puppet/pops/validation/checker4_0'
+      require_relative '../puppet/pops/validation/validator_factory_4_0'
     end
 
     # Subsystem for puppet functions defined in ruby.
     #
     # @api public
     module Functions
-      require 'puppet/pops/functions/function'
-      require 'puppet/pops/functions/dispatch'
-      require 'puppet/pops/functions/dispatcher'
+      require_relative '../puppet/pops/functions/function'
+      require_relative '../puppet/pops/functions/dispatch'
+      require_relative '../puppet/pops/functions/dispatcher'
     end
 
     module Migration
-      require 'puppet/pops/migration/migration_checker'
+      require_relative '../puppet/pops/migration/migration_checker'
     end
 
     module Serialization
-      require 'puppet/pops/serialization'
+      require_relative '../puppet/pops/serialization'
     end
   end
 
-  require 'puppet/parser/ast/pops_bridge'
-  require 'puppet/functions'
-  require 'puppet/datatypes'
+  require_relative '../puppet/parser/ast/pops_bridge'
+  require_relative '../puppet/functions'
+  require_relative '../puppet/datatypes'
 
   Puppet::Pops::Model.register_pcore_types
 end

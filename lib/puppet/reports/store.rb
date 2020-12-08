@@ -1,6 +1,6 @@
-require 'puppet'
+require_relative '../../puppet'
 require 'fileutils'
-require 'puppet/util'
+require_relative '../../puppet/util'
 
 SEPARATOR = [Regexp.escape(File::SEPARATOR.to_s), Regexp.escape(File::ALT_SEPARATOR.to_s)].join
 

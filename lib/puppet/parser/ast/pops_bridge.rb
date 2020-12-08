@@ -1,5 +1,5 @@
-require 'puppet/parser/ast/top_level_construct'
-require 'puppet/pops'
+require_relative '../../../puppet/parser/ast/top_level_construct'
+require_relative '../../../puppet/pops'
 
 # The AST::Bridge contains classes that bridges between the new Pops based model
 # and the 3.x AST. This is required to be able to reuse the Puppet::Resource::Type which is

@@ -1,8 +1,8 @@
 module Puppet::Scheduler
-  require 'puppet/scheduler/job'
-  require 'puppet/scheduler/splay_job'
-  require 'puppet/scheduler/scheduler'
-  require 'puppet/scheduler/timer'
+  require_relative '../puppet/scheduler/job'
+  require_relative '../puppet/scheduler/splay_job'
+  require_relative '../puppet/scheduler/scheduler'
+  require_relative '../puppet/scheduler/timer'
 
   module_function
 

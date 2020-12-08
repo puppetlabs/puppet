@@ -1,4 +1,4 @@
-require 'puppet/error'
+require_relative '../../../puppet/error'
 
 Puppet::Type.type(:user).provide :openbsd, :parent => :useradd do
   desc "User management via `useradd` and its ilk for OpenBSD. Note that you

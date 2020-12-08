@@ -1,5 +1,5 @@
-require 'puppet/file_serving/terminus_helper'
-require 'puppet/indirector/terminus'
+require_relative '../../puppet/file_serving/terminus_helper'
+require_relative '../../puppet/indirector/terminus'
 
 class Puppet::Indirector::DirectFileServer < Puppet::Indirector::Terminus
 

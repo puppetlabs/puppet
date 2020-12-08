@@ -1,6 +1,6 @@
-require 'puppet/transaction/report'
-require 'puppet/indirector/code'
-require 'puppet/reports'
+require_relative '../../../puppet/transaction/report'
+require_relative '../../../puppet/indirector/code'
+require_relative '../../../puppet/reports'
 
 class Puppet::Transaction::Report::Processor < Puppet::Indirector::Code
   desc "Puppet's report processor.  Processes the report with each of

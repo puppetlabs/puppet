@@ -1,5 +1,5 @@
 # The version method and constant are isolated in puppet/version.rb so that a
-# simple `require 'puppet/version'` allows a rubygems gemspec or bundler
+# simple `require_relative '../puppet/version'` allows a rubygems gemspec or bundler
 # Gemfile to get the Puppet version of the gem install.
 #
 # The version can be set programmatically because we want to allow the
@@ -15,7 +15,7 @@ module Puppet
   # The intent is that software external to Puppet be able to determine the
   # Puppet version with no side-effects.  The expected use is:
   #
-  #     require 'puppet/version'
+  #     require_relative '../puppet/version'
   #     version = Puppet.version
   #
   # This function has the following ordering precedence.  This precedence list
