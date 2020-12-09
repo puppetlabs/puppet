@@ -190,39 +190,8 @@ describe "Defaults" do
     end
   end
 
-  describe "the call hook for the cadir setting", unless: Puppet::Util::Platform.windows? do
-    it 'does not warn when the cadir is outside the puppet ssldir' do
-      FileUtils.mkdir_p(Puppet[:confdir])
-      # This is fun; in order to get the confdir setting from the spec_helper to
-      # not be deleted by the #unsafe_clear in Puppet::Settings#parse_config,
-      # we can code it into the confdir itself, and thus we can avoid getting
-      # that setting wiped out during Puppet.initialize_settings.
-      File.write(File.join(Puppet[:confdir], 'puppet.conf'),
-                 "cadir = /my/cool/path/for/my/cadir\n
-                  confdir = #{Puppet[:confdir]}")
-      expect(Puppet).to_not receive(:log_ca_migration_warning)
-      Puppet.initialize_settings
-      expect(Puppet[:cadir]).to eq("/my/cool/path/for/my/cadir")
-    end
-
-    it 'does warn when the cadir is inside the puppet ssldir' do
-      FileUtils.mkdir_p(Puppet[:confdir])
-      cadir_location = File.join(Puppet[:ssldir], 'still_inside_ssldir')
-      # This is fun; in order to get the confdir setting from the spec_helper to
-      # not be deleted by the #unsafe_clear in Puppet::Settings#parse_config,
-      # we can code it into the confdir itself, and thus we can avoid getting
-      # that setting wiped out during Puppet.initialize_settings.
-      File.write(File.join(Puppet[:confdir], 'puppet.conf'),
-                 "cadir = #{cadir_location}\n
-                  confdir = #{Puppet[:confdir]}")
-      expect(Puppet).to receive(:log_ca_migration_warning).twice
-      Puppet.initialize_settings
-      expect(Puppet[:cadir]).to eq(cadir_location)
-      end
-  end
-
   describe "the default cadir", :unless => Puppet::Util::Platform.windows?  do
-    it 'defaults to the puppetserver confdir' do
+    it 'defaults to the puppetserver confdir when no cadir is found' do
       Puppet.initialize_settings
       expect(Puppet[:cadir]).to eq('/etc/puppetlabs/puppetserver/ca')
     end
@@ -234,34 +203,10 @@ describe "Defaults" do
   end
 
   describe '#default_cadir', :unless => Puppet::Util::Platform.windows?  do
-    it 'returns the new puppetserver directory when no ca dir is present' do
-      expect(Puppet).to_not receive(:log_ca_migration_warning)
-      expect(Puppet.default_cadir).to eq('/etc/puppetlabs/puppetserver/ca')
-    end
-
     it 'warns when a CA dir exists in the current ssldir' do
       cadir = File.join(Puppet[:ssldir], 'ca')
       FileUtils.mkdir_p(cadir)
-      expect(Puppet).to receive(:log_ca_migration_warning)
       expect(Puppet.default_cadir).to eq(cadir)
-    end
-
-    it 'warns when the cadir is a symlink still inside the ssldir' do
-      another_dir = File.join(Puppet[:ssldir], 'another_dir')
-      cadir = File.join(Puppet[:ssldir], 'ca')
-      FileUtils.mkdir_p(another_dir)
-      File.symlink(another_dir, cadir)
-      expect(Puppet).to receive(:log_ca_migration_warning)
-      expect(Puppet.default_cadir).to eq(another_dir)
-    end
-
-    it 'does not warn when the cadir is a symlink targeted outside the ssldir' do
-      another_dir = Dir.mktmpdir
-      cadir = File.join(Puppet[:ssldir], 'ca')
-      FileUtils.mkdir_p(Puppet[:ssldir])
-      File.symlink(another_dir, cadir)
-      expect(Puppet).to_not receive(:log_ca_migration_warning)
-      expect(Puppet.default_cadir).to eq(another_dir)
     end
   end
 end
