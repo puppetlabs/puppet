@@ -465,7 +465,7 @@ module Puppet
       groups = obj.shouldorig if obj
       if groups
         groups = groups.collect { |group|
-          if group =~ /^\d+$/
+          if group.is_a?(String) && group =~/^\d+$/
             Integer(group)
           else
             group
