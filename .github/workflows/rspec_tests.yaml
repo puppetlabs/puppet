@@ -33,7 +33,8 @@ jobs:
 
       - name: Install bundler and gems
         run: |
-          gem install bundler
+          gem uninstall bundler
+          gem install bundler -v '2.1.4'
           bundle config set without packaging documentation
           bundle install --jobs 4 --retry 3
 
