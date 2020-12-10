@@ -143,9 +143,11 @@ describe Puppet::Util::Storage do
       end
 
       it "should raise an error if the state file does not contain valid YAML and cannot be renamed" do
+        allow(File).to receive(:rename).and_call_original
+
         write_state_file('{ invalid')
 
-        expect(File).to receive(:rename).and_raise(SystemCallError)
+        expect(File).to receive(:rename).with(@state_file, "#{@state_file}.bad").and_raise(SystemCallError)
 
         expect { Puppet::Util::Storage.load }.to raise_error(Puppet::Error, /Could not rename/)
       end
