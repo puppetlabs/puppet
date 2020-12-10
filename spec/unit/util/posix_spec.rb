@@ -493,6 +493,25 @@ describe Puppet::Util::POSIX do
         expect(@posix.gid("asdf")).to eq(100)
       end
 
+      it "returns the id without full groups query if multiple groups have the same id" do
+        expect(@posix).to receive(:get_posix_field).with(:group, :gid, "asdf").and_return(100)
+        expect(@posix).to receive(:get_posix_field).with(:group, :name, 100).and_return("boo")
+        expect(@posix).to receive(:get_posix_field).with(:group, :gid, "boo").and_return(100)
+
+        expect(@posix).not_to receive(:search_posix_field)
+        expect(@posix.gid("asdf")).to eq(100)
+      end
+
+      it "returns the id with full groups query if name is nil" do
+        expect(@posix).to receive(:get_posix_field).with(:group, :gid, "asdf").and_return(100)
+        expect(@posix).to receive(:get_posix_field).with(:group, :name, 100).and_return(nil)
+        expect(@posix).not_to receive(:get_posix_field).with(:group, :gid, nil)
+
+
+        expect(@posix).to receive(:search_posix_field).with(:group, :gid, "asdf").and_return(100)
+        expect(@posix.gid("asdf")).to eq(100)
+      end
+
       it "should use :search_posix_field if the discovered name does not match the passed-in name" do
         expect(@posix).to receive(:get_posix_field).with(:group, :gid, "asdf").and_return(100)
         expect(@posix).to receive(:get_posix_field).with(:group, :name, 100).and_return("boo")
@@ -566,6 +585,25 @@ describe Puppet::Util::POSIX do
         expect(@posix).to receive(:get_posix_field).with(:passwd, :uid, "asdf").and_return(100)
         expect(@posix).to receive(:get_posix_field).with(:passwd, :name, 100).and_return("asdf")
 
+        expect(@posix.uid("asdf")).to eq(100)
+      end
+
+      it "returns the id without full users query if multiple users have the same id" do
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :uid, "asdf").and_return(100)
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :name, 100).and_return("boo")
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :uid, "boo").and_return(100)
+
+        expect(@posix).not_to receive(:search_posix_field)
+        expect(@posix.uid("asdf")).to eq(100)
+      end
+
+      it "returns the id with full users query if name is nil" do
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :uid, "asdf").and_return(100)
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :name, 100).and_return(nil)
+        expect(@posix).not_to receive(:get_posix_field).with(:passwd, :uid, nil)
+
+
+        expect(@posix).to receive(:search_posix_field).with(:passwd, :uid, "asdf").and_return(100)
         expect(@posix.uid("asdf")).to eq(100)
       end
 

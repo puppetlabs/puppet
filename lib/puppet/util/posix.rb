@@ -184,8 +184,17 @@ module Puppet::Util::POSIX
       name = get_posix_field(location, :name, id)
       check_value = name
     end
+
     if check_value != field
-      return search_posix_field(location, id_field, field)
+      check_value_id = get_posix_field(location, id_field, check_value) if check_value
+
+      if id == check_value_id
+        Puppet.debug("Multiple entries found for resource: '#{location}' with #{id_field}: #{id}")
+        return id
+      else
+        Puppet.debug("The value retrieved: '#{check_value}' is different than the required state: '#{field}', searching in all entries")
+        return search_posix_field(location, id_field, field)
+      end
     else
       return id
     end
