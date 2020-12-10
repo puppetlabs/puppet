@@ -397,19 +397,22 @@ class Puppet::Configurer
       if !cached_catalog && options[:catalog]
         ral_catalog = options[:catalog]
       else
-        # REMIND @duration is the time spent loading the last catalog, and doesn't
-        # account for things like we failed to download and fell back to the cache
-        ral_catalog = convert_catalog(catalog, @duration, facts, options)
-
         # If not noop, commit the cached resource catalog (not ral catalog). Ideally
         # we'd just copy the downloaded response body, instead of serializing the
         # in-memory catalog, but that's hard due to the indirector.
+        #
+        # Important to save the catalog before evaluating deferred functions, as we
+        # want to cache the deferred function, not its result.
         indirection = Puppet::Resource::Catalog.indirection
         if !Puppet[:noop] && indirection.cache?
           request = indirection.request(:save, nil, catalog, environment: Puppet::Node::Environment.remote(catalog.environment))
           Puppet.info("Caching catalog for #{request.key}")
           indirection.cache.save(request)
         end
+
+        # REMIND @duration is the time spent loading the last catalog, and doesn't
+        # account for things like we failed to download and fell back to the cache
+        ral_catalog = convert_catalog(catalog, @duration, facts, options)
       end
 
       execute_prerun_command or return nil

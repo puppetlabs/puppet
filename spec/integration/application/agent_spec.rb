@@ -122,6 +122,43 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       end
     end
 
+    it "re-evaluates a deferred function in a cached catalog" do
+      Puppet[:report] = false
+      Puppet[:use_cached_catalog] = true
+      Puppet[:usecacheonfailure] = false
+
+      catalog_dir = File.join(Puppet[:client_datadir], 'catalog')
+      Puppet::FileSystem.mkpath(catalog_dir)
+      cached_catalog_path = "#{File.join(catalog_dir, Puppet[:certname])}.json"
+
+      # our catalog contains a deferred function that calls `binary_file`
+      # to read `source`. The function returns a Binary object, whose
+      # base64 value is printed to stdout
+      source = tmpfile('deferred_source')
+      catalog = File.read(my_fixture('cached_deferred_catalog.json'))
+      catalog.gsub!('__SOURCE_PATH__', source)
+      File.write(cached_catalog_path, catalog)
+
+      # verify we get a different result each time the deferred function
+      # is evaluated, and reads `source`.
+      {
+        '1234' => 'MTIzNA==',
+        '5678' => 'NTY3OA=='
+      }.each_pair do |content, base64|
+        File.write(source, content)
+
+        expect {
+          agent.command_line.args << '-t'
+          agent.run
+
+        }.to exit_with(2)
+         .and output(/Notice: #{base64}/).to_stdout
+
+        # reset state so we can run again
+        Puppet::Application.clear!
+      end
+    end
+
     it "redacts sensitive values" do
       catalog_handler = -> (req, res) {
         catalog = compile_to_catalog(<<-MANIFEST, node)
