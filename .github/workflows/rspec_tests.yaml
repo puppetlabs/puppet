@@ -3,9 +3,9 @@ name: RSpec tests
 
 on:
   push:
-    branches: [master]
+    branches: [6.x]
   pull_request:
-    branches: [master]
+    branches: [6.x]
 
 jobs:
   rspec_tests:
