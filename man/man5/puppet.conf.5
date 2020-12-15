@@ -10,7 +10,7 @@
 Each of these settings can be specified in \fBpuppet\.conf\fR or on the command line\.
 .
 .IP "\(bu" 4
-Puppet Enterprise (PE) and open source Puppet share the configuration settings that are documented here\. However, PE defaults for some settings differ from the open source Puppet defaults\. Some examples of settings that have different PE defaults include \fBdisable18n\fR, \fBenvironment_timeout\fR, \fBalways_retry_plugins\fR, and the Puppet Server JRuby \fBmax\-active\-instances\fR setting\. To verify PE configuration defaults, check the \fBpuppet\.conf\fR file after installation\.
+Puppet Enterprise (PE) and open source Puppet share the configuration settings documented here\. However, PE defaults differ from open source defaults for some settings, such as \fBnode_terminus\fR, \fBstoreconfigs\fR, \fBalways_retry_plugins\fR, \fBdisable18n\fR, \fBenvironment_timeout\fR (when Code Manager is enabled), and the Puppet Server JRuby \fBmax\-active\-instances\fR setting\. To verify PE configuration defaults, check the \fBpuppet\.conf\fR or \fBpe\-puppet\-server\.conf\fR file after installation\.
 .
 .IP "\(bu" 4
 When using boolean settings on the command line, use \fB\-\-setting\fR and \fB\-\-no\-setting\fR instead of \fB\-\-setting (true|false)\fR\. (Using \fB\-\-setting false\fR results in "Error: Could not parse application options: needless argument"\.)
