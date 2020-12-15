@@ -271,8 +271,11 @@ describe Puppet::SSL::SSLProvider do
     end
 
     # This option is only available in openssl 1.1
-    # TODO PUP-10689 behavior changed in openssl 1.1.1h
-    if Puppet::Util::Package.versioncmp(OpenSSL::OPENSSL_LIBRARY_VERSION.split[1], '1.1.1h') < 0
+    # OpenSSL 1.1.1h no longer reports expired root CAs when using "verify".
+    # This regression was fixed in 1.1.1i, so only skip this test if we're on
+    # the affected version.
+    # See: https://github.com/openssl/openssl/pull/13585
+    if Puppet::Util::Package.versioncmp(OpenSSL::OPENSSL_LIBRARY_VERSION.split[1], '1.1.1h') != 0
       it 'raises if root cert signature is invalid', if: defined?(OpenSSL::X509::V_FLAG_CHECK_SS_SIGNATURE) do
         ca = global_cacerts.first
         ca.sign(wrong_key, OpenSSL::Digest::SHA256.new)

@@ -57,11 +57,12 @@ config.header = <<EOT
 * Each of these settings can be specified in `puppet.conf` or on the
   command line.
 * Puppet Enterprise (PE) and open source Puppet share the configuration settings
-  that are documented here. However, PE defaults for some settings differ from
-  the open source Puppet defaults. Some examples of settings that have different
-  PE defaults include `disable18n`, `environment_timeout`, `always_retry_plugins`,
-  and the Puppet Server JRuby `max-active-instances` setting. To verify PE
-  configuration defaults, check the `puppet.conf` file after installation.
+  documented here. However, PE defaults differ from open source defaults for some
+  settings, such as `node_terminus`, `storeconfigs`, `always_retry_plugins`,
+  `disable18n`, `environment_timeout` (when Code Manager is enabled), and the
+  Puppet Server JRuby `max-active-instances` setting. To verify PE configuration
+  defaults, check the `puppet.conf` or `pe-puppet-server.conf` file after
+  installation.
 * When using boolean settings on the command line, use `--setting` and
   `--no-setting` instead of `--setting (true|false)`. (Using `--setting false`
   results in "Error: Could not parse application options: needless argument".)
