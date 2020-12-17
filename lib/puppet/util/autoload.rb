@@ -166,14 +166,7 @@ class Puppet::Util::Autoload
     # Normalize a path. This converts ALT_SEPARATOR to SEPARATOR on Windows
     # and eliminates unnecessary parts of a path.
     def cleanpath(path)
-      # There are two cases here because cleanpath does not handle absolute
-      # paths correctly on windows (c:\ and c:/ are treated as distinct) but
-      # we don't want to convert relative paths to absolute
-      if Puppet::Util.absolute_path?(path)
-        File.expand_path(path)
-      else
-        Pathname.new(path).cleanpath.to_s
-      end
+      Pathname.new(path).cleanpath.to_s
     end
   end
 
