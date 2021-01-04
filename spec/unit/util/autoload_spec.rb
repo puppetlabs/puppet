@@ -298,6 +298,10 @@ describe Puppet::Util::Autoload do
       it "should convert c:\ to c:/" do
         expect(Puppet::Util::Autoload.cleanpath('c:\\')).to eq('c:/')
       end
+
+      it "should convert all backslashes to forward slashes" do
+        expect(Puppet::Util::Autoload.cleanpath('c:\projects\ruby\bug\test.rb')).to eq('c:/projects/ruby/bug/test.rb')
+      end
     end
   end
 
