@@ -1,0 +1,91 @@
+{
+  "tags": [
+    "settings"
+  ],
+  "name": "127.0.0.1",
+  "version": 1607629733,
+  "code_id": null,
+  "catalog_uuid": "afc8472a-306b-4b24-b060-e956dffb79b8",
+  "catalog_format": 1,
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false,
+      "parameters": {
+        "name": "main"
+      }
+    },
+    {
+      "type": "Class",
+      "title": "Settings",
+      "tags": [
+        "class",
+        "settings"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class"
+      ],
+      "exported": false,
+      "parameters": {
+        "name": "main"
+      }
+    },
+    {
+      "type": "Notify",
+      "title": "deferred",
+      "tags": [
+        "notify",
+        "deferred",
+        "class"
+      ],
+      "file": "",
+      "line": 1,
+      "exported": false,
+      "parameters": {
+        "message": {
+          "__ptype": "Deferred",
+          "name": "new",
+          "arguments": [
+            {
+              "__ptype": "Pcore::StringType"
+            },
+            {
+              "__ptype": "Deferred",
+              "name": "binary_file",
+              "arguments": [
+                "__SOURCE_PATH__"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[Settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "Notify[deferred]"
+    }
+  ],
+  "classes": [
+    "settings"
+  ]
+}
