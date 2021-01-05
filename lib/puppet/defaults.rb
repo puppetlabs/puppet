@@ -1371,23 +1371,15 @@ EOT
       by `puppet`, and should only be set if you're writing your own Puppet
       executable.",
     },
-    :serverport => {
-      :default    => 8140,
-      :desc       => "The default port puppet subcommands use to communicate
-      with Puppet Server. (eg `puppet facts upload`, `puppet agent`). May be
-      overridden by more specific settings (see `ca_port`, `report_port`).",
-      :hook       => proc do |value|
-        Puppet[:masterport] = value unless Puppet.settings.set_by_config?(:masterport)
-      end
-    },
     :masterport => {
       :default    => 8140,
       :desc       => "The default port puppet subcommands use to communicate
       with Puppet Server. (eg `puppet facts upload`, `puppet agent`). May be
       overridden by more specific settings (see `ca_port`, `report_port`).",
-      :hook => proc do |value|
-        Puppet[:serverport] = value unless Puppet.settings.set_by_config?(:serverport)
-      end
+    },
+    :serverport => {
+      :type => :alias,
+      :alias_for => :masterport
     },
     :node_name => {
       :default    => 'cert',
