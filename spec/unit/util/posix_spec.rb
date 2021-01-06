@@ -63,7 +63,7 @@ describe Puppet::Util::POSIX do
     end
 
     before(:each) do
-      allow(Puppet::FFI::POSIX::Functions).to receive(:respond_to?).with(:getgrouplist).and_return(true)
+      allow(Puppet::FFI::POSIX::Functions).to receive(:respond_to?).with(:getgrouplist, any_args).and_return(true)
     end
 
     describe 'when it uses FFI function getgrouplist' do
@@ -77,7 +77,7 @@ describe Puppet::Util::POSIX do
         context 'for user1' do
           let(:user) { 'user1' }
           let(:expected_groups) { ['group1', 'group3'] }
-          
+
           before(:each) do
             prepare_user_and_groups_env(user, expected_groups)
             allow(Puppet::FFI::POSIX::Functions).to receive(:getgrouplist).and_return(1)
@@ -96,9 +96,10 @@ describe Puppet::Util::POSIX do
         context 'for user2' do
           let(:user) { 'user2' }
           let(:expected_groups) { ['group1', 'group2', 'group4'] }
-          
+
           before(:each) do
             prepare_user_and_groups_env(user, expected_groups)
+            allow(Puppet::FFI::POSIX::Functions).to receive(:respond_to?).with(:getgrouplist, any_args).and_return(true)
             allow(Puppet::FFI::POSIX::Functions).to receive(:getgrouplist).and_return(1)
           end
 
@@ -116,9 +117,10 @@ describe Puppet::Util::POSIX do
       describe 'when there are no groups' do
         let(:user) { 'nomembers' }
         let(:expected_groups) { [] }
-        
+
         before(:each) do
           prepare_user_and_groups_env(user, expected_groups)
+          allow(Puppet::FFI::POSIX::Functions).to receive(:respond_to?).with(:getgrouplist, any_args).and_return(true)
           allow(Puppet::FFI::POSIX::Functions).to receive(:getgrouplist).and_return(1)
         end
 
@@ -138,6 +140,7 @@ describe Puppet::Util::POSIX do
 
         before(:each) do
           prepare_user_and_groups_env(user, expected_groups)
+          allow(Puppet::FFI::POSIX::Functions).to receive(:respond_to?).with(:getgrouplist, any_args).and_return(true)
           allow(Puppet::FFI::POSIX::Functions).to receive(:getgrouplist).and_return(1)
         end
 
@@ -157,6 +160,7 @@ describe Puppet::Util::POSIX do
 
         before(:each) do
           prepare_user_and_groups_env(user, expected_groups)
+          allow(Puppet::FFI::POSIX::Functions).to receive(:respond_to?).with(:getgrouplist, any_args).and_return(true)
           allow(Puppet::FFI::POSIX::Functions).to receive(:getgrouplist).and_return(1)
         end
 
@@ -184,6 +188,7 @@ describe Puppet::Util::POSIX do
           let(:expected_groups) { ['root'] }
 
           before(:each) do
+            allow(Puppet::FFI::POSIX::Functions).to receive(:respond_to?).with(:getgrouplist, any_args).and_return(true)
             allow(Puppet::FFI::POSIX::Functions).to receive(:getgrouplist).and_return(1)
           end
 
@@ -206,6 +211,7 @@ describe Puppet::Util::POSIX do
             allow(FFI::MemoryPointer).to receive(:new).with(:uint, Puppet::FFI::POSIX::Constants::MAXIMUM_NUMBER_OF_GROUPS * 2).and_yield(groups_ptr)
             allow(ngroups_ptr).to receive(:write_int).with(Puppet::FFI::POSIX::Constants::MAXIMUM_NUMBER_OF_GROUPS * 2).and_return(ngroups_ptr)
 
+            allow(Puppet::FFI::POSIX::Functions).to receive(:respond_to?).with(:getgrouplist, any_args).and_return(true)
             allow(Puppet::FFI::POSIX::Functions).to receive(:getgrouplist).and_return(-1, 1)
           end
 
@@ -233,7 +239,7 @@ describe Puppet::Util::POSIX do
         allow(Puppet::Etc).to receive(:getpwnam).with(user).and_raise(ArgumentError, "can't find user for #{user}")
         allow(Puppet).to receive(:debug)
 
-        expect(Puppet::FFI::POSIX::Functions).not_to receive(:getgrouplist)
+        allow(Puppet::FFI::POSIX::Functions).to receive(:respond_to?).with(:getgrouplist, any_args).and_return(false)
       end
 
       describe 'when there are groups' do
@@ -246,7 +252,7 @@ describe Puppet::Util::POSIX do
           end
 
           it 'logs a debug message' do
-            expect(Puppet).to receive(:debug).with("Falling back to Puppet::Etc.group: can't find user for #{user}")
+            expect(Puppet).to receive(:debug).with("Falling back to Puppet::Etc.group: The 'getgrouplist' method is not available")
             Puppet::Util::POSIX.groups_of(user)
           end
         end
@@ -260,7 +266,7 @@ describe Puppet::Util::POSIX do
           end
 
           it 'logs a debug message' do
-            expect(Puppet).to receive(:debug).with("Falling back to Puppet::Etc.group: can't find user for #{user}")
+            expect(Puppet).to receive(:debug).with("Falling back to Puppet::Etc.group: The 'getgrouplist' method is not available")
             Puppet::Util::POSIX.groups_of(user)
           end
         end
@@ -275,7 +281,7 @@ describe Puppet::Util::POSIX do
         end
 
         it 'logs a debug message' do
-          expect(Puppet).to receive(:debug).with("Falling back to Puppet::Etc.group: can't find user for #{user}")
+          expect(Puppet).to receive(:debug).with("Falling back to Puppet::Etc.group: The 'getgrouplist' method is not available")
           Puppet::Util::POSIX.groups_of(user)
         end
       end
@@ -289,7 +295,7 @@ describe Puppet::Util::POSIX do
         end
 
         it 'logs a debug message' do
-          expect(Puppet).to receive(:debug).with("Falling back to Puppet::Etc.group: can't find user for #{user}")
+          expect(Puppet).to receive(:debug).with("Falling back to Puppet::Etc.group: The 'getgrouplist' method is not available")
           Puppet::Util::POSIX.groups_of(user)
         end
       end
@@ -303,7 +309,7 @@ describe Puppet::Util::POSIX do
         end
 
         it 'logs a debug message' do
-          expect(Puppet).to receive(:debug).with("Falling back to Puppet::Etc.group: can't find user for #{user}")
+          expect(Puppet).to receive(:debug).with("Falling back to Puppet::Etc.group: The 'getgrouplist' method is not available")
           Puppet::Util::POSIX.groups_of(user)
         end
       end
