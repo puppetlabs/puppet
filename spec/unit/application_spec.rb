@@ -718,5 +718,18 @@ describe Puppet::Application do
 
       @app.handle_logdest_arg(nil)
     end
+
+    it "accepts multiple destinations as a comma sepparated list" do
+      dest1 = '/tmp/path1'
+      dest2 = 'console'
+      dest3 = '/tmp/path2'
+      dest_args = [dest1, dest2, dest3].join(' , ')
+
+      [dest1, dest2, dest3].each do |dest|
+        expect(Puppet::Util::Log).to receive(:newdestination).with(dest)
+      end
+
+      @app.handle_logdest_arg(dest_args)
+    end
   end
 end

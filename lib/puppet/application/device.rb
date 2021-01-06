@@ -155,6 +155,7 @@ you can specify '--server <servername>' as an argument.
   Where to send log messages. Choose between 'syslog' (the POSIX syslog
   service), 'console', or the path to a log file. If debugging or verbosity is
   enabled, this defaults to 'console'. Otherwise, it defaults to 'syslog'.
+  Multiple destinations can be set using a comma separated list (eg: `/path/file1,console,/path/file2`)"
 
   A path ending with '.json' will receive structured output in JSON format. The
   log file will not have an ending ']' automatically written to it due to the

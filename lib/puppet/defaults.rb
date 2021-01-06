@@ -1128,7 +1128,7 @@ EOT
       :type      => :string,
       :desc      => "Where to send log messages. Choose between 'syslog' (the POSIX syslog
       service), 'eventlog' (the Windows Event Log), 'console', or the path to a log
-      file."
+      file. Multiple destinations can be set using a comma separated list (eg: `/path/file1,console,/path/file2`)"
       # Sure would be nice to set the Puppet::Util::Log destination here in an :on_initialize_and_write hook,
       # unfortunately we have a large number of tests that rely on the logging not resetting itself when the
       # settings are initialized as they test what gets logged during settings initialization.
