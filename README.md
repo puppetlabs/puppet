@@ -1,4 +1,4 @@
-# Puppet
+# Puppet 
 
 ![RSpec tests](https://github.com/puppetlabs/puppet/workflows/RSpec%20tests/badge.svg)
 [![Gem Version](https://badge.fury.io/rb/puppet.svg)](https://badge.fury.io/rb/puppet)
