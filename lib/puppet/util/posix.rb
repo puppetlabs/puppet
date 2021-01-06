@@ -23,7 +23,7 @@ module Puppet::Util::POSIX
           groups << group.name if group.mem.include?(user)
         end
       end
-  
+
       uniq_groups = groups.uniq
       if uniq_groups != groups
         Puppet.debug(_('Removing any duplicate group entries'))

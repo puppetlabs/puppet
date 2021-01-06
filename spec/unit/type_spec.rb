@@ -932,8 +932,8 @@ describe Puppet::Type, :unless => Puppet::Util::Platform.windows? do
 
     it "should always retrieve the ensure value by default" do
       @ensurable_resource = Puppet::Type.type(:file).new(:name => "/not/existent", :mode => "0644")
-      allow(Puppet::Type::File::Ensure).to receive(:ensure).and_return(:absent)
-      expect_any_instance_of(Puppet::Type::File::Ensure).to receive(:retrieve).once
+      # the ensure property is lazily metaprogrammed...
+      allow_any_instance_of(Puppet::Type::File::Ensure).to receive(:retrieve).and_return(:absent)
       @ensurable_resource.retrieve_resource
     end
 

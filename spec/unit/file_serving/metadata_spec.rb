@@ -266,9 +266,9 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
       path = tmpfile('bar')
       FileUtils.touch(path)
 
-      allow(Puppet::Util::Windows::Security).to receive(:get_owner).with(path, :use).and_raise(invalid_error)
-      allow(Puppet::Util::Windows::Security).to receive(:get_group).with(path, :use).and_raise(invalid_error)
-      allow(Puppet::Util::Windows::Security).to receive(:get_mode).with(path, :use).and_raise(invalid_error)
+      allow(Puppet::Util::Windows::Security).to receive(:get_owner).with(path).and_raise(invalid_error)
+      allow(Puppet::Util::Windows::Security).to receive(:get_group).with(path).and_raise(invalid_error)
+      allow(Puppet::Util::Windows::Security).to receive(:get_mode).with(path).and_raise(invalid_error)
 
       stat = Puppet::FileSystem.stat(path)
 

@@ -157,7 +157,9 @@ describe Puppet::Util::Windows::ADSI::Group,
 
       # touch the native_object member to have it lazily loaded, so COM objects can be stubbed
       admins.native_object
-      allow(admins.native_object).to receive(:Members).and_return(members)
+      without_partial_double_verification do
+        allow(admins.native_object).to receive(:Members).and_return(members)
+      end
 
       # well-known NULL SID
       expect(admins.members[0].sid).to eq('S-1-0-0')

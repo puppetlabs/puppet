@@ -554,7 +554,7 @@ describe Puppet::Resource::Type do
 
     it "should not create a subscope for the :main class" do
       allow(@resource).to receive(:title).and_return(:main)
-      expect(@type).not_to receive(:subscope)
+      expect(@scope).not_to receive(:newscope)
       expect(@type).to receive(:set_resource_parameters).with(@resource, @scope)
 
       @type.evaluate_code(@resource)

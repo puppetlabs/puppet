@@ -9,8 +9,6 @@ require 'spec_helper'
       @path = make_absolute("/my/file")
       @resource = Puppet::Type.type(:file).new :path => @path
       @sel = property.new :resource => @resource
-      allow(@sel).to receive(:normalize_selinux_category).with("s0").and_return("s0")
-      allow(@sel).to receive(:normalize_selinux_category).with(nil).and_return(nil)
     end
 
     it "retrieve on #{param} should return :absent if the file isn't statable" do

@@ -157,7 +157,7 @@ describe Puppet::Util::Autoload do
     end
 
     it "should load the first file in the searchpath" do
-      allow(@autoload).to receive(:search_directories).and_return([make_absolute("/a"), make_absolute("/b")])
+      allow(@autoload.class).to receive(:search_directories).and_return([make_absolute("/a"), make_absolute("/b")])
       allow(FileTest).to receive(:directory?).and_return(true)
       allow(Puppet::FileSystem).to receive(:exist?).and_return(true)
       expect(Kernel).to receive(:load).with(make_absolute("/a/tmp/myfile.rb"), any_args)

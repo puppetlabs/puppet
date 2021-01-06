@@ -639,6 +639,8 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
 
     describe "#execute (debug logging)" do
       before :each do
+        Puppet[:log_level] = 'debug'
+
         stub_process_wait(0)
 
         if Puppet::Util::Platform.windows?
@@ -649,47 +651,47 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
       end
 
       it "should log if no uid or gid specified" do
-        expect(Puppet::Util::Execution).to receive(:debug).with("Executing: 'echo hello'")
+        expect(Puppet).to receive(:send_log).with(:debug, "Executing: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello')
       end
 
       it "should log numeric uid if specified" do
-        expect(Puppet::Util::Execution).to receive(:debug).with("Executing with uid=100: 'echo hello'")
+        expect(Puppet).to receive(:send_log).with(:debug, "Executing with uid=100: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:uid => 100})
       end
 
       it "should log numeric gid if specified" do
-        expect(Puppet::Util::Execution).to receive(:debug).with("Executing with gid=500: 'echo hello'")
+        expect(Puppet).to receive(:send_log).with(:debug, "Executing with gid=500: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:gid => 500})
       end
 
       it "should log numeric uid and gid if specified" do
-        expect(Puppet::Util::Execution).to receive(:debug).with("Executing with uid=100 gid=500: 'echo hello'")
+        expect(Puppet).to receive(:send_log).with(:debug, "Executing with uid=100 gid=500: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:uid => 100, :gid => 500})
       end
 
       it "should log string uid if specified" do
-        expect(Puppet::Util::Execution).to receive(:debug).with("Executing with uid=myuser: 'echo hello'")
+        expect(Puppet).to receive(:send_log).with(:debug, "Executing with uid=myuser: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:uid => 'myuser'})
       end
 
       it "should log string gid if specified" do
-        expect(Puppet::Util::Execution).to receive(:debug).with("Executing with gid=mygroup: 'echo hello'")
+        expect(Puppet).to receive(:send_log).with(:debug, "Executing with gid=mygroup: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:gid => 'mygroup'})
       end
 
       it "should log string uid and gid if specified" do
-        expect(Puppet::Util::Execution).to receive(:debug).with("Executing with uid=myuser gid=mygroup: 'echo hello'")
+        expect(Puppet).to receive(:send_log).with(:debug, "Executing with uid=myuser gid=mygroup: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:uid => 'myuser', :gid => 'mygroup'})
       end
 
       it "should log numeric uid and string gid if specified" do
-        expect(Puppet::Util::Execution).to receive(:debug).with("Executing with uid=100 gid=mygroup: 'echo hello'")
+        expect(Puppet).to receive(:send_log).with(:debug, "Executing with uid=100 gid=mygroup: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:uid => 100, :gid => 'mygroup'})
       end
 
       it 'should redact commands in debug output when passed sensitive option' do
-        expect(Puppet::Util::Execution).to receive(:debug).with("Executing: '[redacted]'")
+        expect(Puppet).to receive(:send_log).with(:debug, "Executing: '[redacted]'")
         Puppet::Util::Execution.execute('echo hello', {:sensitive => true})
       end
     end
@@ -903,14 +905,16 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
     end
 
     it "should print meaningful debug message for string argument" do
-      expect(Puppet::Util::Execution).to receive(:debug).with("Executing 'echo hello'")
+      Puppet[:log_level] = 'debug'
+      expect(Puppet).to receive(:send_log).with(:debug, "Executing 'echo hello'")
       expect(Puppet::Util::Execution).to receive(:open).with('| echo hello 2>&1').and_return('hello')
       expect(Puppet::Util::Execution).to receive(:exitstatus).and_return(0)
       Puppet::Util::Execution.execpipe('echo hello')
     end
 
     it "should print meaningful debug message for array argument" do
-      expect(Puppet::Util::Execution).to receive(:debug).with("Executing 'echo hello'")
+      Puppet[:log_level] = 'debug'
+      expect(Puppet).to receive(:send_log).with(:debug, "Executing 'echo hello'")
       expect(Puppet::Util::Execution).to receive(:open).with('| echo hello 2>&1').and_return('hello')
       expect(Puppet::Util::Execution).to receive(:exitstatus).and_return(0)
       Puppet::Util::Execution.execpipe(['echo','hello'])

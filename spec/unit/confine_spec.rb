@@ -2,6 +2,12 @@ require 'spec_helper'
 
 require 'puppet/confine'
 
+class Puppet::TestConfine < Puppet::Confine
+  def pass?(value)
+    false
+  end
+end
+
 describe Puppet::Confine do
   it "should require a value" do
     expect { Puppet::Confine.new }.to raise_error(ArgumentError)
@@ -33,7 +39,7 @@ describe Puppet::Confine do
 
   describe "when testing all values" do
     before do
-      @confine = Puppet::Confine.new(%w{a b c})
+      @confine = Puppet::TestConfine.new(%w{a b c})
       @confine.label = "foo"
     end
 
@@ -64,7 +70,7 @@ describe Puppet::Confine do
   end
 
   describe "when testing the result of the values" do
-    before { @confine = Puppet::Confine.new(%w{a b c d}) }
+    before { @confine = Puppet::TestConfine.new(%w{a b c d}) }
 
     it "should return an array with the result of the test for each value" do
       allow(@confine).to receive(:pass?).and_return(true)

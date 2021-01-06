@@ -3,9 +3,13 @@ require 'puppet/agent'
 require 'puppet/configurer'
 
 class AgentTestClient
-  def run
+  def initialize(transaction_uuid = nil, job_id = nil)
+  end
+
+  def run(client_args)
     # no-op
   end
+
   def stop
     # no-op
   end
@@ -49,11 +53,10 @@ describe Puppet::Agent do
 
   it "should create an instance of its client class and run it when asked to run" do
     client = double('client')
-    expect(AgentTestClient).to receive(:new).and_return(client)
-
-    expect(client).to receive(:run)
+    allow(AgentTestClient).to receive(:new).with(nil, nil).and_return(client)
 
     allow(@agent).to receive(:disabled?).and_return(false)
+    expect(client).to receive(:run)
     @agent.run
   end
 
@@ -90,7 +93,6 @@ describe Puppet::Agent do
 
   describe "when being run" do
     before do
-      allow(AgentTestClient).to receive(:lockfile_path).and_return("/my/lock")
       allow(@agent).to receive(:disabled?).and_return(false)
     end
 
@@ -186,7 +188,7 @@ describe Puppet::Agent do
         allow(lockfile).to receive(:lock).and_return(false)
       end
 
-      it "should notify that a run is already in progres" do
+      it "should notify that a run is already in progress" do
         client = AgentTestClient.new
         expect(AgentTestClient).to receive(:new).and_return(client)
         expect(Puppet).to receive(:notice).with(/Run of .* already in progress; skipping .* exists/)

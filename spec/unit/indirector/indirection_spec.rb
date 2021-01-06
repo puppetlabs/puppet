@@ -178,29 +178,25 @@ describe Puppet::Indirector::Indirection do
 
     describe "creates a request" do
       it "should create it with its name as the request's indirection name" do
-        expect(Puppet::Indirector::Request).to receive(:new).with(@indirection.name, anything, anything)
-        @indirection.request(:funtest, "yayness")
+        expect(@indirection.request(:funtest, "yayness", nil).indirection_name).to eq(@indirection.name)
       end
 
       it "should require a method and key" do
-        expect(Puppet::Indirector::Request).to receive(:new).with(anything, :funtest, "yayness")
-        @indirection.request(:funtest, "yayness")
+        request = @indirection.request(:funtest, "yayness", nil)
+        expect(request.method).to eq(:funtest)
+        expect(request.key).to eq("yayness")
       end
 
       it "should support optional arguments" do
-        expect(Puppet::Indirector::Request).to receive(:new).with(anything, anything, anything, {:one => :two})
-        @indirection.request(:funtest, "yayness", :one => :two)
+        expect(@indirection.request(:funtest, "yayness", nil, :one => :two).options).to eq(:one => :two)
       end
 
       it "should not pass options if none are supplied" do
-        expect(Puppet::Indirector::Request).to receive(:new).with(anything, anything, anything)
-        @indirection.request(:funtest, "yayness")
+        expect(@indirection.request(:funtest, "yayness", nil).options).to eq({})
       end
 
       it "should return the request" do
-        request = double('request')
-        expect(Puppet::Indirector::Request).to receive(:new).and_return(request)
-        expect(@indirection.request(:funtest, "yayness")).to equal(request)
+        expect(@indirection.request(:funtest, "yayness", nil)).to be_a(Puppet::Indirector::Request)
       end
     end
 
@@ -833,7 +829,7 @@ describe Puppet::Indirector::Indirection do
     end
 
     it "should not create a terminus instance until one is actually needed" do
-      expect(Puppet::Indirector).not_to receive(:terminus)
+      expect(@indirection).not_to receive(:terminus)
       Puppet::Indirector::Indirection.new(double('model'), :lazytest)
     end
 

@@ -152,6 +152,9 @@ describe Puppet::Transaction::EventManager do
 
       @resource = Puppet::Type.type(:file).new :path => make_absolute("/my/file")
       @event = Puppet::Transaction::Event.new(:name => :event, :resource => @resource)
+
+      @resource.class.send(:define_method, :callback1) {}
+      @resource.class.send(:define_method, :callback2) {}
     end
 
     it "should call the required callback once for each set of associated events" do
@@ -178,7 +181,7 @@ describe Puppet::Transaction::EventManager do
 
       allow(@resource).to receive(:callback1)
 
-      @manager.process_events(@resource) #x
+      @manager.process_events(@resource)
 
       expect(@transaction.resource_status(@resource).events.length).to eq(1)
     end
@@ -211,9 +214,11 @@ describe Puppet::Transaction::EventManager do
         @event2 = Puppet::Transaction::Event.new(:name => :event, :resource => @resource)
         @event2.status = "success"
         expect(@manager).to receive(:queued_events).with(@resource).and_yield(:callback1, [@event, @event2])
+        @resource.class.send(:define_method, :callback1) {}
       end
 
       it "should call the callback" do
+
         expect(@resource).to receive(:callback1)
 
         @manager.process_events(@resource)
@@ -225,6 +230,7 @@ describe Puppet::Transaction::EventManager do
         allow(@event).to receive(:status).and_return("noop")
         allow(@resource).to receive(:event).and_return(Puppet::Transaction::Event.new)
         expect(@manager).to receive(:queued_events).with(@resource).and_yield(:callback1, [@event])
+        @resource.class.send(:define_method, :callback1) {}
       end
 
       it "should log" do
@@ -254,6 +260,7 @@ describe Puppet::Transaction::EventManager do
         allow(@resource).to receive(:event).and_return(Puppet::Transaction::Event.new)
         allow(@resource).to receive(:noop?).and_return(true)
         expect(@manager).to receive(:queued_events).with(@resource).and_yield(:callback1, [@event])
+        @resource.class.send(:define_method, :callback1) {}
       end
 
       it "should log" do
@@ -279,7 +286,7 @@ describe Puppet::Transaction::EventManager do
 
     describe "and the callback fails" do
       before do
-        expect(@resource).to receive(:callback1).and_raise("a failure")
+        @resource.class.send(:define_method, :callback1) { raise "a failure" }
 
         expect(@manager).to receive(:queued_events).and_yield(:callback1, [@event])
       end
@@ -323,16 +330,12 @@ describe Puppet::Transaction::EventManager do
 
   describe "when queueing then processing events for a given resource" do
     before do
-      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
-      @manager = Puppet::Transaction::EventManager.new(@transaction)
+      @catalog = Puppet::Resource::Catalog.new
+      @target = Puppet::Type.type(:exec).new(name: 'target', path: ENV['PATH'])
+      @resource = Puppet::Type.type(:exec).new(name: 'resource', path: ENV['PATH'], notify: @target)
+      @catalog.add_resource(@resource, @target)
 
-      @resource = Puppet::Type.type(:file).new :path => make_absolute("/my/file")
-      @target = Puppet::Type.type(:file).new :path => make_absolute("/your/file")
-
-      @graph = allow('graph')
-      allow(@graph).to receive(:matching_edges).and_return([])
-      allow(@graph).to receive(:matching_edges).with(anything, @resource).and_return([double('edge', :target => @target, :callback => :refresh)])
-      allow(@manager).to receive(:relationship_graph).and_return(@graph)
+      @manager = Puppet::Transaction::EventManager.new(Puppet::Transaction.new(@catalog, nil, nil))
 
       @event  = Puppet::Transaction::Event.new(:name => :notify, :resource => @target)
       @event2 = Puppet::Transaction::Event.new(:name => :service_start, :resource => @target, :invalidate_refreshes => true)

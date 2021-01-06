@@ -22,7 +22,6 @@ describe Puppet::Node::Facts::Facter do
   end
 
   before :each do
-    allow(Puppet::Node::Facts::Facter).to receive(:reload_facter)
     @facter = Puppet::Node::Facts::Facter.new
     allow(Facter).to receive(:to_hash).and_return({})
     @name = "me"
@@ -160,8 +159,6 @@ describe Puppet::Node::Facts::Facter do
     before :each do
       allow(@request).to receive(:options).and_return(options)
       allow(Puppet::Node::Facts).to receive(:new).and_return(facts)
-      allow(Facter).to receive(:respond_to?).and_return(false)
-      allow(Facter).to receive(:respond_to?).with(:resolve).and_return(true)
       allow(facts).to receive(:add_local_facts)
     end
 

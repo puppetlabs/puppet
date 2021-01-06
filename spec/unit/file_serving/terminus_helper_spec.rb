@@ -2,13 +2,20 @@ require 'spec_helper'
 
 require 'puppet/file_serving/terminus_helper'
 
+class Puppet::FileServing::TestHelper
+  include Puppet::FileServing::TerminusHelper
+
+  attr_reader :model
+
+  def initialize(model)
+    @model = model
+  end
+end
+
 describe Puppet::FileServing::TerminusHelper do
   before do
-    @helper = Object.new
-    @helper.extend(Puppet::FileServing::TerminusHelper)
-
     @model = double('model')
-    allow(@helper).to receive(:model).and_return(@model)
+    @helper = Puppet::FileServing::TestHelper.new(@model)
 
     @request = double('request', :key => "url", :options => {})
 

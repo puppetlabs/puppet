@@ -111,16 +111,20 @@ describe Puppet::Util::Log do
     end
 
     it "should fall back to :eventlog" do
-      allow(Puppet.features).to receive(:syslog?).and_return(false)
-      allow(Puppet.features).to receive(:eventlog?).and_return(true)
+      without_partial_double_verification do
+        allow(Puppet.features).to receive(:syslog?).and_return(false)
+        allow(Puppet.features).to receive(:eventlog?).and_return(true)
+      end
       expect(Puppet::Util::Log).to receive(:newdestination).with(:eventlog)
 
       Puppet::Util::Log.setup_default
     end
 
     it "should fall back to :file" do
-      allow(Puppet.features).to receive(:syslog?).and_return(false)
-      allow(Puppet.features).to receive(:eventlog?).and_return(false)
+      without_partial_double_verification do
+        allow(Puppet.features).to receive(:syslog?).and_return(false)
+        allow(Puppet.features).to receive(:eventlog?).and_return(false)
+      end
       expect(Puppet::Util::Log).to receive(:newdestination).with(Puppet[:puppetdlog])
 
       Puppet::Util::Log.setup_default
@@ -224,9 +228,6 @@ describe Puppet::Util::Log do
   describe Puppet::Util::Log::DestEventlog, :if => Puppet.features.eventlog? do
     before :each do
       allow(Puppet::Util::Windows::EventLog).to receive(:open).and_return(double('mylog', :close => nil))
-      allow(Puppet::Util::Windows::EventLog).to receive(:report_event)
-      allow(Puppet::Util::Windows::EventLog).to receive(:close)
-      allow(Puppet.features).to receive(:eventlog?).and_return(true)
     end
 
     it "should restrict its suitability to Windows" do
