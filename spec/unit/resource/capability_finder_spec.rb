@@ -16,7 +16,12 @@ describe Puppet::Resource::CapabilityFinder do
       Puppet.push_context({:loaders => loaders, :current_environment => env})
       if mock_pdb
         module Puppet::Util::Puppetdb
-          class Http; end
+          def query_puppetdb(query); end
+          module_function :query_puppetdb
+
+          class Http
+            def self.action(url); end
+          end
         end
       end
       make_cap_type

@@ -240,20 +240,9 @@ describe Puppet::Parser::Compiler do
   end
 
   describe "when compiling" do
-    def compile_methods
-      [:set_node_parameters, :evaluate_main, :evaluate_ast_node, :evaluate_node_classes, :evaluate_generators, :fail_on_unevaluated,
-        :finish, :store, :extract, :evaluate_relationships]
-    end
-
-    # Stub all of the main compile methods except the ones we're specifically interested in.
-    def compile_stub(*except)
-      (compile_methods - except).each { |m| allow(@compiler).to receive(m) }
-    end
-
     it "should set node parameters as variables in the top scope" do
       params = {"a" => "b", "c" => "d"}
       allow(@node).to receive(:parameters).and_return(params)
-      compile_stub(:set_node_parameters)
       @compiler.compile
       expect(@compiler.topscope['a']).to eq("b")
       expect(@compiler.topscope['c']).to eq("d")
@@ -262,13 +251,11 @@ describe Puppet::Parser::Compiler do
     it "should set node parameters that are of Symbol type as String variables in the top scope" do
       params = {"a" => :b}
       allow(@node).to receive(:parameters).and_return(params)
-      compile_stub(:set_node_parameters)
       @compiler.compile
       expect(@compiler.topscope['a']).to eq("b")
     end
 
     it "should set the node's environment as a string variable in top scope" do
-      compile_stub(:set_node_parameters)
       @node.merge({'wat' => 'this is how the sausage is made'})
       @compiler.compile
       expect(@compiler.topscope['environment']).to eq("testing")
@@ -276,7 +263,6 @@ describe Puppet::Parser::Compiler do
     end
 
     it "sets the environment based on node.environment instead of the parameters" do
-      compile_stub(:set_node_parameters)
       @node.parameters['environment'] = "Not actually #{@node.environment.name}"
 
       @compiler.compile
@@ -286,23 +272,21 @@ describe Puppet::Parser::Compiler do
     it "should set the client and server versions on the catalog" do
       params = {"clientversion" => "2", "serverversion" => "3"}
       allow(@node).to receive(:parameters).and_return(params)
-      compile_stub(:set_node_parameters)
       @compiler.compile
       expect(@compiler.catalog.client_version).to eq("2")
       expect(@compiler.catalog.server_version).to eq("3")
     end
 
     it "should evaluate the main class if it exists" do
-      compile_stub(:evaluate_main)
       main_class = @known_resource_types.add Puppet::Resource::Type.new(:hostclass, "")
+      @compiler.topscope.source = main_class
+
       expect(main_class).to receive(:evaluate_code).with(be_a(Puppet::Parser::Resource))
-      expect(@compiler.topscope).to receive(:source=).with(main_class)
 
       @compiler.compile
     end
 
     it "should create a new, empty 'main' if no main class exists" do
-      compile_stub(:evaluate_main)
       @compiler.compile
       expect(@known_resource_types.find_hostclass("")).to be_instance_of(Puppet::Resource::Type)
     end
@@ -325,7 +309,7 @@ describe Puppet::Parser::Compiler do
       @compiler.add_collection(colls[0])
       @compiler.add_collection(colls[1])
 
-      compile_stub(:evaluate_generators)
+      allow(@compiler).to receive(:fail_on_unevaluated)
       @compiler.compile
     end
 

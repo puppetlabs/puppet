@@ -443,13 +443,9 @@ describe Puppet::Util::IniConfig::FileCollection do
     end
 
     it "yields every section from every file" do
-      [sect_a1, sect_a2, sect_b1, sect_b2].each do |sect|
-        expect(sect).to receive(:touch).once
-      end
-
-      subject.each_section do |sect|
-        sect.touch
-      end
+      expect { |b|
+        subject.each_section(&b)
+      }.to yield_successive_args(sect_a1, sect_a2, sect_b1, sect_b2)
     end
   end
 
@@ -460,13 +456,9 @@ describe Puppet::Util::IniConfig::FileCollection do
     end
 
     it "yields the path to every file in the collection" do
-      seen = []
-      subject.each_file do |file|
-        seen << file
-      end
-
-      expect(seen).to include(path_a)
-      expect(seen).to include(path_b)
+      expect { |b|
+        subject.each_file(&b)
+      }.to yield_successive_args(path_a, path_b)
     end
   end
 

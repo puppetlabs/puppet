@@ -191,7 +191,6 @@ describe tidy do
     describe "and recursion is used" do
       before do
         @tidy[:recurse] = true
-        allow_any_instance_of(Puppet::FileServing::Fileset).to receive(:stat).and_return(double("stat"))
         @fileset = Puppet::FileServing::Fileset.new(@basepath)
         allow(Puppet::FileServing::Fileset).to receive(:new).and_return(@fileset)
       end

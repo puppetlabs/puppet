@@ -263,8 +263,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     end
 
     it "should send a new request to the CA for signing" do
-      @http = double("http")
-      allow(@host).to receive(:http_client).and_return(@http)
       allow(@host).to receive(:ssl_store).and_return(double("ssl store"))
       allow(@host).to receive(:key).and_return(key)
       request = double("request")
@@ -307,7 +305,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       Puppet[:certdir] = tmpdir('certs')
       allow(@host).to receive(:key).and_return(double("key"))
       allow(@host).to receive(:validate_certificate_with_key)
-      allow(@host).to receive(:http_client).and_return(@http)
       allow(@host).to receive(:ssl_store).and_return(double("ssl store"))
     end
 
@@ -464,8 +461,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
         @revoked_cert = @pki[:revoked_root_node_cert]
         localcacert = Puppet.settings[:localcacert]
         Puppet::Util.replace_file(localcacert, 0644) {|f| f.write @pki[:ca_bundle] }
-        @http = double('http')
-        allow(@host).to receive(:http_client).and_return(@http)
       end
 
       after do

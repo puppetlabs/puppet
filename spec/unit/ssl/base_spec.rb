@@ -47,7 +47,6 @@ describe Puppet::SSL::Certificate do
   describe "when initializing wrapped class from a file with #read" do
     it "should open the file with ASCII encoding" do
       path = '/foo/bar/cert'
-      allow(Puppet::SSL::Base).to receive(:valid_certname).and_return(true)
       expect(Puppet::FileSystem).to receive(:read).with(path, :encoding => Encoding::ASCII).and_return("bar")
       @base.read(path)
     end

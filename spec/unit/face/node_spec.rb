@@ -15,13 +15,6 @@ describe Puppet::Face[:node, '0.0.1'] do
   end
 
   describe 'when running #clean' do
-    before :each do
-      allow(Puppet::Node::Facts.indirection).to receive(:terminus_class=)
-      allow(Puppet::Node::Facts.indirection).to receive(:cache_class=)
-      allow(Puppet::Node).to receive(:terminus_class=)
-      allow(Puppet::Node).to receive(:cache_class=)
-    end
-
     it 'should invoke #cleanup' do
       expect(subject).to receive(:cleanup).with('hostname')
       subject.clean('hostname')
@@ -30,10 +23,6 @@ describe Puppet::Face[:node, '0.0.1'] do
 
   describe "clean action" do
     before :each do
-      allow(Puppet::Node::Facts.indirection).to receive(:terminus_class=)
-      allow(Puppet::Node::Facts.indirection).to receive(:cache_class=)
-      allow(Puppet::Node).to receive(:terminus_class=)
-      allow(Puppet::Node).to receive(:cache_class=)
       allow(subject).to receive(:cleanup)
     end
 

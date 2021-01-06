@@ -32,10 +32,12 @@ describe Puppet::Type.type(:package).provider(:pacman) do
     end
 
     it "should call yaourt to install the right package quietly when yaourt is installed" do
-      allow(described_class).to receive(:yaourt?).and_return(true)
-      args = ['--noconfirm', '--needed', '--noprogressbar', '-S', resource[:name]]
-      expect(provider).to receive(:yaourt).at_least(:once).with(*args).and_return('')
-      provider.install
+      without_partial_double_verification do
+        allow(described_class).to receive(:yaourt?).and_return(true)
+        args = ['--noconfirm', '--needed', '--noprogressbar', '-S', resource[:name]]
+        expect(provider).to receive(:yaourt).at_least(:once).with(*args).and_return('')
+        provider.install
+      end
     end
 
     it "should raise an Puppet::Error if the installation failed" do
@@ -74,10 +76,12 @@ describe Puppet::Type.type(:package).provider(:pacman) do
       end
 
       it "should call yaourt to install the right package quietly when yaourt is installed" do
-        expect(described_class).to receive(:yaourt?).and_return(true)
-        args = ['--noconfirm', '--needed', '--noprogressbar', '-x', '--arg=value', '-S', resource[:name]]
-        expect(provider).to receive(:yaourt).at_least(:once).with(*args).and_return('')
-        provider.install
+        without_partial_double_verification do
+          expect(described_class).to receive(:yaourt?).and_return(true)
+          args = ['--noconfirm', '--needed', '--noprogressbar', '-x', '--arg=value', '-S', resource[:name]]
+          expect(provider).to receive(:yaourt).at_least(:once).with(*args).and_return('')
+          provider.install
+        end
       end
     end
 
@@ -172,10 +176,12 @@ describe Puppet::Type.type(:package).provider(:pacman) do
     end
 
     it "should call yaourt to remove the right package quietly" do
-      allow(described_class).to receive(:yaourt?).and_return(true)
-      args = ["--noconfirm", "--noprogressbar", "-R", resource[:name]]
-      expect(provider).to receive(:yaourt).with(*args)
-      provider.uninstall
+      without_partial_double_verification do
+        allow(described_class).to receive(:yaourt?).and_return(true)
+        args = ["--noconfirm", "--noprogressbar", "-R", resource[:name]]
+        expect(provider).to receive(:yaourt).with(*args)
+        provider.uninstall
+      end
     end
 
     it "adds any uninstall_options" do

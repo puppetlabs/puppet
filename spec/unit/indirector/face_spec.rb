@@ -33,7 +33,6 @@ describe Puppet::Indirector::Face do
   describe "as an instance" do
     it "should be able to determine its indirection" do
       # Loading actions here can get, um, complicated
-      allow(Puppet::Face).to receive(:load_actions)
       expect(Puppet::Indirector::Face.new(:catalog, '0.0.1').indirection).to equal(Puppet::Resource::Catalog.indirection)
     end
   end

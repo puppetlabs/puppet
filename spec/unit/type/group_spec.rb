@@ -60,9 +60,12 @@ describe Puppet::Type.type(:group) do
   end
 
   it "delegates the existence check to its provider" do
-    provider = @class.provide(:testing) {}
+    provider = @class.provide(:testing) do
+      def exists?
+        true
+      end
+    end
     provider_instance = provider.new
-    expect(provider_instance).to receive(:exists?).and_return(true)
 
     type = @class.new(:name => "group", :provider => provider_instance)
 
@@ -77,20 +80,24 @@ describe Puppet::Type.type(:group) do
         def members
           []
         end
+
+        def members_insync?(current, should)
+          current == should
+        end
+
+        def members_to_s(values)
+          values.map { |v| "#{v} ()" }.join(', ')
+        end
       end
     end
     let (:provider_instance) { provider.new }
     let (:type) { @class.new(:name => "group", :provider => provider_instance, :members => ['user1']) }
 
     it "insync? calls members_insync?" do
-      expect(provider_instance).to receive(:members_insync?).with(['user1'], ['user1']).and_return(true)
       expect(type.property(:members).insync?(['user1'])).to be_truthy
     end
 
     it "is_to_s and should_to_s call members_to_s" do
-      expect(provider_instance).to receive(:members_to_s).with(['user1', 'user2']).and_return("user1 (), user2 ()")
-      expect(provider_instance).to receive(:members_to_s).with(['user1']).and_return("user1 ()")
-
       expect(type.property(:members).is_to_s('user1')).to eq('user1 ()')
       expect(type.property(:members).should_to_s('user1,user2')).to eq('user1 (), user2 ()')
     end

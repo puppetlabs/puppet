@@ -19,7 +19,6 @@ describe Puppet::SSL::Key::File do
       allow(Puppet.settings).to receive(:use)
 
       @searcher = Puppet::SSL::Key::File.new
-      allow(@searcher).to receive(:ca?).and_return(false)
       expect(@searcher.public_key_path("whatever")).to eq(File.expand_path("/public/key/dir/whatever.pem"))
     end
   end

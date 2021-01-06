@@ -7,8 +7,10 @@ require 'timeout'
 
 describe Puppet::Application do
   before(:each) do
-    @app = Class.new(Puppet::Application).new
-    @appclass = @app.class
+    @appclass = Class.new(Puppet::Application) do
+      def handle_unknown(opt, arg); end
+    end
+    @app = @appclass.new
 
     allow(@app).to receive(:name).and_return("test_app")
   end
@@ -594,13 +596,6 @@ describe Puppet::Application do
     end
 
     it "should raise an error if dispatch returns no command" do
-      allow(@app).to receive(:get_command).and_return(nil)
-      expect(Puppet).to receive(:send_log).with(:err, "Could not run: No valid command or main")
-      expect { @app.run }.to exit_with 1
-    end
-
-    it "should raise an error if dispatch returns an invalid command" do
-      allow(@app).to receive(:get_command).and_return(:this_function_doesnt_exist)
       expect(Puppet).to receive(:send_log).with(:err, "Could not run: No valid command or main")
       expect { @app.run }.to exit_with 1
     end

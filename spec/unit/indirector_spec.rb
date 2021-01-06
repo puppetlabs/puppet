@@ -112,8 +112,8 @@ describe Puppet::Indirector, "when registering an indirection" do
   end
 
   it "should pass any provided options to the indirection during initialization" do
-    expect(Puppet::Indirector::Indirection).to receive(:new).with(@thingie, :first, {:some => :options, :indirected_class => 'Thingie'})
-    @indirection = @thingie.indirects :first, :some => :options
+    expect(Puppet::Indirector::Indirection).to receive(:new).with(@thingie, :first, {:doc => 'some docs', :indirected_class => 'Thingie'})
+    @indirection = @thingie.indirects :first, :doc => 'some docs'
   end
 
   it "should extend the class to handle serialization" do

@@ -61,7 +61,7 @@ describe Puppet::Transaction do
 
     transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
 
-    expect(resource).not_to receive(:evaluate)
+    expect(resource).not_to receive(:retrieve)
 
     transaction.evaluate
   end
@@ -86,7 +86,7 @@ describe Puppet::Transaction do
 
     transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
 
-    expect(resource).not_to receive(:evaluate)
+    expect(resource).not_to receive(:retrieve)
 
     transaction.evaluate
   end
@@ -315,14 +315,12 @@ describe Puppet::Transaction do
         file1 = tmpfile("file1")
         file2 = tmpfile("file2")
 
+        expect(Puppet::FileSystem).to_not be_exist(file2)
+
         exec1 = Puppet::Type.type(:exec).new(
           :name        => "exec1",
           :path        => ENV["PATH"],
           :command     => touch(file1),
-        )
-
-        allow(exec1).to receive(:eval_generate).and_return(
-          [ Puppet::Type.type(:notify).new(:name => "eval1_notify") ]
         )
 
         exec2 = Puppet::Type.type(:exec).new(
@@ -331,9 +329,6 @@ describe Puppet::Transaction do
           :command     => touch(file2),
           :refreshonly => true,
           :subscribe   => exec1,
-        )
-        allow(exec2).to receive(:eval_generate).and_return(
-          [ Puppet::Type.type(:notify).new(:name => "eval2_notify") ]
         )
 
         Puppet[:tags] = "exec"

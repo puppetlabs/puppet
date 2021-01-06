@@ -87,7 +87,6 @@ describe Puppet::FileServing::Configuration::Parser do
     before do
       @mount = double('testmount', :name => "one", :validate => true)
       expect(Puppet::FileServing::Mount::File).to receive(:new).with("one").and_return(@mount)
-      allow(@parser).to receive(:add_modules_mount)
     end
 
     it "should set the mount path to the path attribute from that section" do

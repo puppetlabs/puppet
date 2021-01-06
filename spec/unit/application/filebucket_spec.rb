@@ -42,7 +42,6 @@ describe Puppet::Application::Filebucket do
   describe "during setup" do
     before :each do
       allow(Puppet::Log).to receive(:newdestination)
-      allow(Puppet).to receive(:settraps)
       allow(Puppet::FileBucket::Dipper).to receive(:new)
       allow(@filebucket.options).to receive(:[])
     end
@@ -157,7 +156,6 @@ describe Puppet::Application::Filebucket do
   describe "when running" do
     before :each do
       allow(Puppet::Log).to receive(:newdestination)
-      allow(Puppet).to receive(:settraps)
       allow(Puppet::FileBucket::Dipper).to receive(:new)
       allow(@filebucket.options).to receive(:[])
 

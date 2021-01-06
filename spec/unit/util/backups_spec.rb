@@ -119,8 +119,7 @@ describe Puppet::Util::Backups do
       file = Puppet::Type.type(:file).new(:name => path, :backup => 'foo', :recurse => true)
 
       expect(bucket).not_to receive(:backup)
-      stub_file = double('file', :stat => double('stat', :ftype => 'directory'))
-      allow(Puppet::FileSystem).to receive(:new).with(path).and_return(stub_file)
+      allow(Puppet::FileSystem).to receive(:stat).with(path).and_return(double('stat', :ftype => 'directory'))
       expect(Find).not_to receive(:find)
 
       file.perform_backup
