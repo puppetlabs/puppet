@@ -31,7 +31,7 @@ class Puppet::Pops::Model::AstTransformer
   def ast(o, klass, hash={})
     # create and pass hash with file and line information
     # PUP-3274 - still needed since hostname transformation requires AST::HostName, and AST::Regexp
-    klass.new(merge_location(hash, o))
+    klass.new(**merge_location(hash, o))
   end
 
   # THIS IS AN EXPENSIVE OPERATION

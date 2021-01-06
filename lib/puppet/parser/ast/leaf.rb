@@ -50,8 +50,9 @@ class Puppet::Parser::AST::HostName < Puppet::Parser::AST::Leaf
 end
 
 class Puppet::Parser::AST::Regex < Puppet::Parser::AST::Leaf
-  def initialize(hash)
-    super(**hash)
+  def initialize(value: nil, file: nil, line: nil, pos: nil)
+    super(value: value, file: file, line: line, pos: pos)
+
     # transform value from hash options unless it is already a regular expression
     @value = Regexp.new(@value) unless @value.is_a?(Regexp)
   end
