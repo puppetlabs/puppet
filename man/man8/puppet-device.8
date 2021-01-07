@@ -56,7 +56,7 @@ Enable full debugging\.
 .
 .TP
 \-\-logdest, \-l
-Where to send log messages\. Choose between \'syslog\' (the POSIX syslog service), \'console\', or the path to a log file\. If debugging or verbosity is enabled, this defaults to \'console\'\. Otherwise, it defaults to \'syslog\'\.
+Where to send log messages\. Choose between \'syslog\' (the POSIX syslog service), \'console\', or the path to a log file\. If debugging or verbosity is enabled, this defaults to \'console\'\. Otherwise, it defaults to \'syslog\'\. Multiple destinations can be set using a comma separated list (eg: \fB/path/file1,console,/path/file2\fR)"
 .
 .IP
 A path ending with \'\.json\' will receive structured output in JSON format\. The log file will not have an ending \']\' automatically written to it due to the appending nature of logging\. It must be appended manually to make the content valid JSON\.
