@@ -247,6 +247,21 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => RUBY_PLATFORM =
           expect(subject).to include :result => :success
           graph_should_include 'pmtacceptance-mysql', nil => v('0.8.0')
         end
+
+        context 'with an already installed dependency' do
+          before { preinstall('pmtacceptance-stdlib', '2.6.0') }
+
+          def options
+            super.merge(:version => '0.7.0')
+          end
+
+          it 'installs given version without errors and does not change version of dependency' do
+            expect(subject).to include :result => :success
+            graph_should_include 'pmtacceptance-mysql', nil => v('0.7.0')
+            expect(subject[:error]).to be_nil
+            graph_should_include 'pmtacceptance-stdlib', v('2.6.0') => v('2.6.0')
+          end
+        end
       end
 
       context 'with a --version that cannot satisfy' do
@@ -276,6 +291,43 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => RUBY_PLATFORM =
           it 'installs the greatest available version, ignoring dependencies' do
             expect(subject).to include :result => :success
             graph_should_include 'pmtacceptance-mysql', nil => v('2.1.0')
+          end
+        end
+
+        context 'with an already installed dependency' do
+          let(:graph) {
+            double(SemanticPuppet::Dependency::Graph,
+              :dependencies => {
+                'pmtacceptance-mysql' => {
+                  :version => '2.1.0'
+                }
+              },
+              :modules => ['pmtacceptance-mysql'],
+              :unsatisfied => 'pmtacceptance-stdlib'
+            )
+          }
+
+          let(:unsatisfiable_graph_exception) { SemanticPuppet::Dependency::UnsatisfiableGraph.new(graph) }
+
+          before do
+            allow(SemanticPuppet::Dependency).to receive(:resolve).and_raise(unsatisfiable_graph_exception)
+            allow(unsatisfiable_graph_exception).to receive(:respond_to?).and_return(true)
+            allow(unsatisfiable_graph_exception).to receive(:unsatisfied).and_return(graph.unsatisfied)
+
+            preinstall('pmtacceptance-stdlib', '2.6.0')
+          end
+
+          def options
+            super.merge(:version => '2.1.0')
+          end
+
+          it 'fails to install and outputs a multiline error containing the versions, expectations and workaround' do
+            expect(subject).to include :result => :failure
+            expect(subject[:error]).to include(:multiline)
+            expect(subject[:error][:multiline]).to include("Could not install module 'pmtacceptance-mysql' (v2.1.0)")
+            expect(subject[:error][:multiline]).to include("The requested version cannot satisfy the following dependency: pmtacceptance-stdlib")
+            expect(subject[:error][:multiline]).to include("Installed: 2.6.0, expected: >= 2.2.1")
+            expect(subject[:error][:multiline]).to include("Use `puppet module install 'pmtacceptance-mysql' --ignore-dependencies` to install only this module")
           end
         end
       end

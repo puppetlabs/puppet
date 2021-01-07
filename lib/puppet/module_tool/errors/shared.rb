@@ -7,6 +7,7 @@ module Puppet::ModuleTool::Errors
       @installed_version = options[:installed_version]
       @conditions        = options[:conditions]
       @action            = options[:action]
+      @unsatisfied       = options[:unsatisfied]
 
       super _("Could not %{action} '%{module_name}' (%{version}); no version satisfies all dependencies") % { action: @action, module_name: @requested_name, version: vstring }
     end
@@ -14,9 +15,16 @@ module Puppet::ModuleTool::Errors
     def multiline
       message = []
       message << _("Could not %{action} module '%{module_name}' (%{version})") % { action: @action, module_name: @requested_name, version: vstring }
-      message << _("  No version of '%{module_name}' can satisfy all dependencies") % { module_name: @requested_name }
+
+      if @unsatisfied
+        message << _("  The requested version cannot satisfy the following dependency: %{name}") % { name: @unsatisfied[:name] }
+        message << _("    Installed: %{current_version}, expected: %{constraints}") % { current_version: @unsatisfied[:current_version], constraints: @unsatisfied[:constraints] }
+      else
+        message << _("  The requested version cannot satisfy all dependencies")
+      end
+
       #TRANSLATORS `puppet module %{action} --ignore-dependencies` is a command line and should not be translated
-      message << _("    Use `puppet module %{action} --ignore-dependencies` to %{action} only this module") % { action: @action }
+      message << _("    Use `puppet module %{action} '%{module_name}' --ignore-dependencies` to %{action} only this module") % { action: @action, module_name: @requested_name }
       message.join("\n")
     end
   end
