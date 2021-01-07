@@ -1,16 +1,16 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) 2020 Puppet, Inc.
+# Copyright (C) 2021 Puppet, Inc.
 # This file is distributed under the same license as the Puppet automation framework package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.19.1-17-g0dbcbb37a1\n"
+"Project-Id-Version: Puppet automation framework 6.19.1-123-g14a2fdac59\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2020-10-22 18:07+0000\n"
-"PO-Revision-Date: 2020-10-22 18:07+0000\n"
+"POT-Creation-Date: 2021-01-07 11:17+0000\n"
+"PO-Revision-Date: 2021-01-07 11:17+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -168,11 +168,11 @@ msgstr ""
 msgid "No valid command or main"
 msgstr ""
 
-#: ../lib/puppet/application.rb:428
+#: ../lib/puppet/application.rb:431
 msgid "Could not set logdest to %{dest}."
 msgstr ""
 
-#: ../lib/puppet/application.rb:504
+#: ../lib/puppet/application.rb:508
 msgid "No help available for puppet %{app_name}"
 msgstr ""
 
@@ -184,19 +184,19 @@ msgstr ""
 msgid "The puppet agent daemon"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:414
+#: ../lib/puppet/application/agent.rb:415
 msgid "Fingerprint asked but neither the certificate, nor the certificate request have been issued"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:419
+#: ../lib/puppet/application/agent.rb:420
 msgid "Failed to generate fingerprint: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:442
+#: ../lib/puppet/application/agent.rb:443
 msgid "Starting Puppet client version %{version}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:458
+#: ../lib/puppet/application/agent.rb:459
 msgid "The puppet agent command does not take parameters"
 msgstr ""
 
@@ -206,35 +206,35 @@ msgstr ""
 
 #. TRANSLATORS "puppet apply" is a program command and should not be translated
 #. TRANSLATORS "puppet apply" is a program command and should not be translated
-#: ../lib/puppet/application/apply.rb:207 ../lib/puppet/application/apply.rb:320
+#: ../lib/puppet/application/apply.rb:208 ../lib/puppet/application/apply.rb:321
 msgid "For puppet apply"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:215
+#: ../lib/puppet/application/apply.rb:216
 msgid "%{file} is not readable"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:286 ../lib/puppet/application/script.rb:239
+#: ../lib/puppet/application/apply.rb:287 ../lib/puppet/application/script.rb:240
 msgid "Exiting"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:330
+#: ../lib/puppet/application/apply.rb:331
 msgid "Could not deserialize catalog from %{format}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:351 ../lib/puppet/application/script.rb:144
+#: ../lib/puppet/application/apply.rb:352 ../lib/puppet/application/script.rb:145
 msgid "Could not find facts for %{node}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:363 ../lib/puppet/application/script.rb:152
+#: ../lib/puppet/application/apply.rb:364 ../lib/puppet/application/script.rb:153
 msgid "Could not find node %{node}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:376 ../lib/puppet/application/script.rb:137
+#: ../lib/puppet/application/apply.rb:377 ../lib/puppet/application/script.rb:138
 msgid "Could not find file %{manifest}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:377
+#: ../lib/puppet/application/apply.rb:378
 msgid "Only one file can be applied per run.  Skipping %{files}"
 msgstr ""
 
@@ -250,47 +250,47 @@ msgstr ""
 msgid "Manage remote network devices"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:230
+#: ../lib/puppet/application/device.rb:231
 msgid "resource command requires target"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:233
+#: ../lib/puppet/application/device.rb:234
 msgid "facts command requires target"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:236
+#: ../lib/puppet/application/device.rb:237
 msgid "missing argument: --target is required when using --apply"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:237
+#: ../lib/puppet/application/device.rb:238
 msgid "%{file} does not exist, cannot apply"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:255
+#: ../lib/puppet/application/device.rb:256
 msgid "Target device / certificate '%{target}' not found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:257
+#: ../lib/puppet/application/device.rb:258
 msgid "No device found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:316
+#: ../lib/puppet/application/device.rb:317
 msgid "retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:331
+#: ../lib/puppet/application/device.rb:332
 msgid "retrieving facts from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:354
+#: ../lib/puppet/application/device.rb:355
 msgid "starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:392 ../lib/puppet/application/resource.rb:196
+#: ../lib/puppet/application/device.rb:393 ../lib/puppet/application/resource.rb:196
 msgid "You must specify the type to display"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:393 ../lib/puppet/application/resource.rb:197
+#: ../lib/puppet/application/device.rb:394 ../lib/puppet/application/resource.rb:197
 msgid "Could not find type %{type}"
 msgstr ""
 
@@ -414,7 +414,7 @@ msgstr ""
 msgid "Unknown rendering format '%{format}'"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:366 ../lib/puppet/face/epp.rb:520
+#: ../lib/puppet/application/lookup.rb:366 ../lib/puppet/face/epp.rb:530
 msgid "Incorrect formatted data in %{fact_file} given via the --facts flag"
 msgstr ""
 
@@ -438,11 +438,11 @@ msgstr ""
 msgid "Run a puppet manifests as a script without compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/application/script.rb:124
+#: ../lib/puppet/application/script.rb:125
 msgid "Bolt must be installed to use the script application"
 msgstr ""
 
-#: ../lib/puppet/application/script.rb:138
+#: ../lib/puppet/application/script.rb:139
 msgid "Only one file can be used per run. Skipping %{files}"
 msgstr ""
 
@@ -587,44 +587,44 @@ msgstr ""
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:423
+#: ../lib/puppet/configurer.rb:426
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:452 ../lib/puppet/http/resolver/server_list.rb:67
+#: ../lib/puppet/configurer.rb:455 ../lib/puppet/http/resolver/server_list.rb:67
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:456 ../lib/puppet/http/resolver/server_list.rb:70
+#: ../lib/puppet/configurer.rb:459 ../lib/puppet/http/resolver/server_list.rb:70
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:467 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:470 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:476
+#: ../lib/puppet/configurer.rb:479
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:495
+#: ../lib/puppet/configurer.rb:498
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:503
+#: ../lib/puppet/configurer.rb:506
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:518
+#: ../lib/puppet/configurer.rb:521
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:536
+#: ../lib/puppet/configurer.rb:539
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:557
+#: ../lib/puppet/configurer.rb:560
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -692,38 +692,38 @@ msgstr ""
 msgid "a data type can only have one implementation"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:178
+#: ../lib/puppet/defaults.rb:179
 msgid "Cannot disable unrecognized warning types '%{invalid}'."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:179
+#: ../lib/puppet/defaults.rb:180
 msgid "Valid values are '%{values}'."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:546
+#: ../lib/puppet/defaults.rb:547
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:548
+#: ../lib/puppet/defaults.rb:549
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:761
+#: ../lib/puppet/defaults.rb:762
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:844
+#: ../lib/puppet/defaults.rb:847
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1038
+#: ../lib/puppet/defaults.rb:1042
 msgid "Setting 'ssl_client_ca_auth' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1117 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1121 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
@@ -844,28 +844,28 @@ msgid ""
 "https://puppet.com/docs/puppet/latest/configuration.html#environment\n"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:176
+#: ../lib/puppet/face/config.rb:186
 msgid "Deleted setting from '%{section_name}': '%{setting_string}', and adding it to 'server' section"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:191
+#: ../lib/puppet/face/config.rb:201
 msgid "Delete a Puppet setting."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:192
+#: ../lib/puppet/face/config.rb:202
 msgid "<setting>"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:226 ../lib/puppet/face/config.rb:230 ../lib/puppet/face/config.rb:241
+#: ../lib/puppet/face/config.rb:236 ../lib/puppet/face/config.rb:240 ../lib/puppet/face/config.rb:251
 msgid "Deleted setting from '%{section_name}': '%{setting_string}'"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:244
+#: ../lib/puppet/face/config.rb:254
 msgid "No setting found in configuration file for section '%{section_name}' setting name '%{name}'"
 msgstr ""
 
 #. TRANSLATORS the 'puppet.conf' is a specific file and should not be translated
-#: ../lib/puppet/face/config.rb:252
+#: ../lib/puppet/face/config.rb:262
 msgid "The puppet.conf file does not exist %{puppet_conf}"
 msgstr ""
 
@@ -2712,11 +2712,11 @@ msgstr ""
 msgid "invalid key"
 msgstr ""
 
-#: ../lib/puppet/indirector/json.rb:58
+#: ../lib/puppet/indirector/json.rb:62
 msgid "Could not read JSON data for %{name} %{key}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/json.rb:64
+#: ../lib/puppet/indirector/json.rb:68
 msgid "Could not parse JSON data for %{name} %{key}: %{detail}"
 msgstr ""
 
@@ -2773,6 +2773,14 @@ msgstr ""
 msgid "Could not load external node results for %{name}: %{detail}"
 msgstr ""
 
+#: ../lib/puppet/indirector/report/json.rb:19 ../lib/puppet/indirector/report/yaml.rb:19
+msgid "replace_file mode: %{mode} is invalid"
+msgstr ""
+
+#: ../lib/puppet/indirector/report/json.rb:31 ../lib/puppet/indirector/report/yaml.rb:31 ../lib/puppet/indirector/yaml.rb:32
+msgid "Could not save %{indirection} %{request}: %{detail}"
+msgstr ""
+
 #: ../lib/puppet/indirector/report/processor.rb:39
 msgid "Report %{report} failed: %{detail}"
 msgstr ""
@@ -2783,14 +2791,6 @@ msgstr ""
 
 #: ../lib/puppet/indirector/report/rest.rb:36
 msgid "Server version %{version} does not accept reports in '%{format}', use `preferred_serialization_format=pson`"
-msgstr ""
-
-#: ../lib/puppet/indirector/report/yaml.rb:19
-msgid "replace_file mode: %{mode} is invalid"
-msgstr ""
-
-#: ../lib/puppet/indirector/report/yaml.rb:31 ../lib/puppet/indirector/yaml.rb:32
-msgid "Could not save %{indirection} %{request}: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/indirector/request.rb:103
@@ -3348,11 +3348,11 @@ msgstr ""
 msgid "Resolving dependencies ..."
 msgstr ""
 
-#: ../lib/puppet/module_tool/applications/installer.rb:162
+#: ../lib/puppet/module_tool/applications/installer.rb:175
 msgid "Preparing to install ..."
 msgstr ""
 
-#: ../lib/puppet/module_tool/applications/installer.rb:165
+#: ../lib/puppet/module_tool/applications/installer.rb:178
 msgid "Installing -- do not interrupt ..."
 msgstr ""
 
@@ -3396,7 +3396,7 @@ msgstr ""
 msgid "'%{module_name}' (%{version}) requested; '%{module_name}' (%{installed_version}) already installed"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/installer.rb:16 ../lib/puppet/module_tool/errors/installer.rb:54 ../lib/puppet/module_tool/errors/installer.rb:72 ../lib/puppet/module_tool/errors/shared.rb:64 ../lib/puppet/module_tool/errors/shared.rb:106
+#: ../lib/puppet/module_tool/errors/installer.rb:16 ../lib/puppet/module_tool/errors/installer.rb:54 ../lib/puppet/module_tool/errors/installer.rb:72 ../lib/puppet/module_tool/errors/shared.rb:72 ../lib/puppet/module_tool/errors/shared.rb:114
 msgid "Could not install module '%{module_name}' (%{version})"
 msgstr ""
 
@@ -3426,7 +3426,7 @@ msgstr ""
 msgid "Could not install '%{requested_package}'"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/installer.rb:38 ../lib/puppet/module_tool/errors/shared.rb:43
+#: ../lib/puppet/module_tool/errors/installer.rb:38 ../lib/puppet/module_tool/errors/shared.rb:51
 msgid "  No releases are available from %{source}"
 msgstr ""
 
@@ -3471,150 +3471,158 @@ msgstr ""
 msgid "  Package attempted to install file into %{path} under %{directory}."
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:11
+#: ../lib/puppet/module_tool/errors/shared.rb:12
 msgid "Could not %{action} '%{module_name}' (%{version}); no version satisfies all dependencies"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:16 ../lib/puppet/module_tool/errors/shared.rb:171 ../lib/puppet/module_tool/errors/upgrader.rb:58
+#: ../lib/puppet/module_tool/errors/shared.rb:17 ../lib/puppet/module_tool/errors/shared.rb:179 ../lib/puppet/module_tool/errors/upgrader.rb:58
 msgid "Could not %{action} module '%{module_name}' (%{version})"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:17
-msgid "  No version of '%{module_name}' can satisfy all dependencies"
+#: ../lib/puppet/module_tool/errors/shared.rb:20
+msgid "  The requested version cannot satisfy the following dependency: %{name}"
+msgstr ""
+
+#: ../lib/puppet/module_tool/errors/shared.rb:21
+msgid "    Installed: %{current_version}, expected: %{constraints}"
+msgstr ""
+
+#: ../lib/puppet/module_tool/errors/shared.rb:23
+msgid "  The requested version cannot satisfy all dependencies"
 msgstr ""
 
 #. TRANSLATORS `puppet module %{action} --ignore-dependencies` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:19
-msgid "    Use `puppet module %{action} --ignore-dependencies` to %{action} only this module"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/shared.rb:33
-msgid "Could not %{action} '%{module_name}'; no releases are available from %{source}"
-msgstr ""
-
-#: ../lib/puppet/module_tool/errors/shared.rb:35
-msgid "Could not %{action} '%{module_name}'; no releases matching '%{version}' are available from %{source}"
+#: ../lib/puppet/module_tool/errors/shared.rb:27
+msgid "    Use `puppet module %{action} '%{module_name}' --ignore-dependencies` to %{action} only this module"
 msgstr ""
 
 #: ../lib/puppet/module_tool/errors/shared.rb:41
+msgid "Could not %{action} '%{module_name}'; no releases are available from %{source}"
+msgstr ""
+
+#: ../lib/puppet/module_tool/errors/shared.rb:43
+msgid "Could not %{action} '%{module_name}'; no releases matching '%{version}' are available from %{source}"
+msgstr ""
+
+#: ../lib/puppet/module_tool/errors/shared.rb:49
 msgid "Could not %{action} '%{module_name}' (%{version})"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:44
+#: ../lib/puppet/module_tool/errors/shared.rb:52
 msgid "    Does '%{module_name}' have at least one published release?"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:46
+#: ../lib/puppet/module_tool/errors/shared.rb:54
 msgid "  No releases matching '%{requested_version}' are available from %{source}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:59
+#: ../lib/puppet/module_tool/errors/shared.rb:67
 msgid "'%{module_name}' (%{version}) requested; installation conflict"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:67
+#: ../lib/puppet/module_tool/errors/shared.rb:75
 msgid "  Dependency '%{name}' (%{version}) would overwrite %{directory}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:69
+#: ../lib/puppet/module_tool/errors/shared.rb:77
 msgid "  Installation would overwrite %{directory}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:73
+#: ../lib/puppet/module_tool/errors/shared.rb:81
 msgid "    Currently, '%{current_name}' (%{current_version}) is installed to that directory"
 msgstr ""
 
 #. TRANSLATORS `puppet module install --ignore-dependencies` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:78
+#: ../lib/puppet/module_tool/errors/shared.rb:86
 msgid "    Use `puppet module install --ignore-dependencies` to install only this module"
 msgstr ""
 
 #. TRANSLATORS `puppet module install --force` is a command line and should not be translated
 #. TRANSLATORS `puppet module install --force` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:81 ../lib/puppet/module_tool/errors/shared.rb:110
+#: ../lib/puppet/module_tool/errors/shared.rb:89 ../lib/puppet/module_tool/errors/shared.rb:118
 msgid "    Use `puppet module install --force` to install this module anyway"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:95
+#: ../lib/puppet/module_tool/errors/shared.rb:103
 msgid "'%{module_name}' (%{version}) requested; Invalid dependency cycle"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:100
+#: ../lib/puppet/module_tool/errors/shared.rb:108
 msgid "You specified '%{name}' (%{version})"
 msgstr ""
 
 #. TRANSLATORS This message repeats as separate lines as a list under the heading "You specified '%{name}' (%{version})\n"
-#: ../lib/puppet/module_tool/errors/shared.rb:103
+#: ../lib/puppet/module_tool/errors/shared.rb:111
 msgid "This depends on '%{name}' (%{version})"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:107
+#: ../lib/puppet/module_tool/errors/shared.rb:115
 msgid "  No version of '%{module_name}' will satisfy dependencies"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:120
+#: ../lib/puppet/module_tool/errors/shared.rb:128
 msgid "Could not %{action} '%{module_name}'; module is not installed"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:125 ../lib/puppet/module_tool/errors/shared.rb:148 ../lib/puppet/module_tool/errors/shared.rb:189
+#: ../lib/puppet/module_tool/errors/shared.rb:133 ../lib/puppet/module_tool/errors/shared.rb:156 ../lib/puppet/module_tool/errors/shared.rb:197
 msgid "Could not %{action} module '%{module_name}'"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:126
+#: ../lib/puppet/module_tool/errors/shared.rb:134
 msgid "  Module '%{module_name}' is not installed"
 msgstr ""
 
 #. TRANSLATORS `puppet module %{action} %{suggestion}` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:129
+#: ../lib/puppet/module_tool/errors/shared.rb:137
 msgid "    You may have meant `puppet module %{action} %{suggestion}`"
 msgstr ""
 
 #. TRANSLATORS `puppet module install` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:132
+#: ../lib/puppet/module_tool/errors/shared.rb:140
 msgid "    Use `puppet module install` to install this module"
 msgstr ""
 
 #. TRANSLATORS "module path" refers to a set of directories where modules may be installed
-#: ../lib/puppet/module_tool/errors/shared.rb:143
+#: ../lib/puppet/module_tool/errors/shared.rb:151
 msgid "Could not %{action} '%{module_name}'; module appears in multiple places in the module path"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:149
+#: ../lib/puppet/module_tool/errors/shared.rb:157
 msgid "  Module '%{module_name}' appears multiple places in the module path"
 msgstr ""
 
 #. TRANSLATORS This is repeats as separate lines as a list under "Module '%{module_name}' appears multiple places in the module path"
-#: ../lib/puppet/module_tool/errors/shared.rb:152
+#: ../lib/puppet/module_tool/errors/shared.rb:160
 msgid "    '%{module_name}' (%{version}) was found in %{path}"
 msgstr ""
 
 #. TRANSLATORS `--modulepath` is command line option and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:155
+#: ../lib/puppet/module_tool/errors/shared.rb:163
 msgid "    Use the `--modulepath` option to limit the search to specific directories"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:166
+#: ../lib/puppet/module_tool/errors/shared.rb:174
 msgid "Could not %{action} '%{module_name}'; module has had changes made locally"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:172
+#: ../lib/puppet/module_tool/errors/shared.rb:180
 msgid "  Installed module has had changes made locally"
 msgstr ""
 
 #. TRANSLATORS `puppet module %{action} --ignore-changes` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:174
+#: ../lib/puppet/module_tool/errors/shared.rb:182
 msgid "    Use `puppet module %{action} --ignore-changes` to %{action} this module anyway"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:184
+#: ../lib/puppet/module_tool/errors/shared.rb:192
 msgid "Could not %{action} '%{module_name}'; %{error}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:190
+#: ../lib/puppet/module_tool/errors/shared.rb:198
 msgid "  Failure trying to parse metadata"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:191
+#: ../lib/puppet/module_tool/errors/shared.rb:199
 msgid "    Original message was: %{message}"
 msgstr ""
 
@@ -4205,54 +4213,54 @@ msgstr ""
 
 #. TRANSLATORS: do not translate the variable names in this error message
 #. TRANSLATORS: do not translate the variable names in this error message
-#: ../lib/puppet/pal/pal_impl.rb:75 ../lib/puppet/pal/pal_impl.rb:173
+#: ../lib/puppet/pal/pal_impl.rb:75 ../lib/puppet/pal/pal_impl.rb:181
 msgid "manifest_file or code_string cannot be given when configured_by_env is true"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:221
+#: ../lib/puppet/pal/pal_impl.rb:237
 msgid "temporary environment name"
 msgstr ""
 
 #. TRANSLATORS: do not translate variable name string in these assertions
-#: ../lib/puppet/pal/pal_impl.rb:226
+#: ../lib/puppet/pal/pal_impl.rb:242
 msgid "A block must be given to 'in_tmp_environment'"
 msgstr ""
 
 #. TRANSLATORS terms in the assertions below are names of terms in code
-#: ../lib/puppet/pal/pal_impl.rb:280
+#: ../lib/puppet/pal/pal_impl.rb:296
 msgid "A block must be given to 'in_environment'"
 msgstr ""
 
 #. TRANSLATORS 'in_environment' is a name, do not translate
-#: ../lib/puppet/pal/pal_impl.rb:285
+#: ../lib/puppet/pal/pal_impl.rb:301
 msgid "The environment directory '%{env_dir}' does not exist"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:308
+#: ../lib/puppet/pal/pal_impl.rb:324
 msgid "No directory found for the environment '%{env_name}' on the path '%{envpath}'"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:362
+#: ../lib/puppet/pal/pal_impl.rb:378
 msgid "Given variables must be a hash, got %{type}"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:368
+#: ../lib/puppet/pal/pal_impl.rb:384
 msgid "Given variable '%{varname}' has illegal name"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:372
+#: ../lib/puppet/pal/pal_impl.rb:388
 msgid "Given value for '%{varname}' has illegal type - got: %{type}"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:509
+#: ../lib/puppet/pal/pal_impl.rb:562
 msgid "Puppet Pal: %{what}"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:523
+#: ../lib/puppet/pal/pal_impl.rb:576
 msgid "Cannot use '%{a_term}' and '%{b_term}' at the same time"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:530
+#: ../lib/puppet/pal/pal_impl.rb:583
 msgid "A block must be given"
 msgstr ""
 
@@ -4965,23 +4973,23 @@ msgstr ""
 msgid "multi var assignment from class"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:742
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:761
 msgid "break() from context where this is illegal"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1222
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1241
 msgid "Can only append Array or Hash to a Hash"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1226
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1245
 msgid "An URI can only be merged with an URI or String"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1229
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1248
 msgid "Can only append Binary to a Binary"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1262
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1281
 msgid "Can only delete from an Array or Hash."
 msgstr ""
 
@@ -6804,19 +6812,19 @@ msgstr ""
 msgid "Mac OS X packages must specify a package source"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:81
+#: ../lib/puppet/provider/package/apt.rb:85
 msgid "/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure."
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:163 ../lib/puppet/provider/package/fink.rb:55
+#: ../lib/puppet/provider/package/apt.rb:167 ../lib/puppet/provider/package/fink.rb:55
 msgid "Could not find latest version"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:174 ../lib/puppet/provider/package/fink.rb:66
+#: ../lib/puppet/provider/package/apt.rb:178 ../lib/puppet/provider/package/fink.rb:66
 msgid "Preseeding %{response} to debconf-set-selections"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:178 ../lib/puppet/provider/package/fink.rb:70
+#: ../lib/puppet/provider/package/apt.rb:182 ../lib/puppet/provider/package/fink.rb:70
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
@@ -7629,69 +7637,69 @@ msgstr ""
 msgid "Downloaded existing certificate request for %{name} from %{server}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:98
+#: ../lib/puppet/settings.rb:99
 msgid "New environment loaders generated from the requested section."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:300
+#: ../lib/puppet/settings.rb:301
 msgid "Attempting to initialize global default settings more than once!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:513
+#: ../lib/puppet/settings.rb:501
 msgid "Using --configprint is deprecated. Use 'puppet config <subcommand>' instead."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:655
+#: ../lib/puppet/settings.rb:643
 msgid "Could not load %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:761
+#: ../lib/puppet/settings.rb:750
 msgid "Invalid setting type '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:916
+#: ../lib/puppet/settings.rb:905
 msgid "Unknown searchpath case: %{source_type} for the %{source} settings path element."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:989
+#: ../lib/puppet/settings.rb:978
 msgid "setting definition for '%{name}' is not a hash!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:994
+#: ../lib/puppet/settings.rb:983
 msgid "Setting %{name} is already defined"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1000
+#: ../lib/puppet/settings.rb:989
 msgid "Setting %{name} is already using short name '%{short}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1264
+#: ../lib/puppet/settings.rb:1253
 msgid "Setting %{name} is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'puppet.conf' is a file name and should not be translated
-#: ../lib/puppet/settings.rb:1269
+#: ../lib/puppet/settings.rb:1258
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1440
+#: ../lib/puppet/settings.rb:1435
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1464
+#: ../lib/puppet/settings.rb:1459
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1474
+#: ../lib/puppet/settings.rb:1469
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1475
+#: ../lib/puppet/settings.rb:1470
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1506
+#: ../lib/puppet/settings.rb:1501
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
@@ -7704,38 +7712,38 @@ msgid "Invalid autosign value %{value}: must be 'true'/'false' or an absolute pa
 msgstr ""
 
 #. TRANSLATORS ':%{name}', ':call_hook', and ':on_write_only' should not be translated
-#: ../lib/puppet/settings/base_setting.rb:15
+#: ../lib/puppet/settings/base_setting.rb:37
 msgid "Setting :%{name} :call_hook is nil, defaulting to :on_write_only"
 msgstr ""
 
 #. TRANSLATORS 'call_hook' is a Puppet option name and should not be translated
-#: ../lib/puppet/settings/base_setting.rb:20
+#: ../lib/puppet/settings/base_setting.rb:42
 msgid "Invalid option %{value} for call_hook"
 msgstr ""
 
 #. TRANSLATORS ':call_hook' and ':hook' are specific setting names and should not be translated
-#: ../lib/puppet/settings/base_setting.rb:77
+#: ../lib/puppet/settings/base_setting.rb:101
 msgid "Cannot reference :call_hook for :%{name} if no :hook is defined"
 msgstr ""
 
-#: ../lib/puppet/settings/base_setting.rb:83
+#: ../lib/puppet/settings/base_setting.rb:107
 msgid "%{class_name} (setting '%{setting}') does not accept %{parameter}"
 msgstr ""
 
-#: ../lib/puppet/settings/base_setting.rb:90
+#: ../lib/puppet/settings/base_setting.rb:114
 msgid "You must provide a description for the %{class_name} config option"
 msgstr ""
 
-#: ../lib/puppet/settings/base_setting.rb:104
+#: ../lib/puppet/settings/base_setting.rb:128
 msgid "Short names can only be one character."
 msgstr ""
 
 #. TRANSLATORS 'deprecated' is a Puppet setting and ':completely' and ':allowed_on_commandline' are possible values and should not be translated
-#: ../lib/puppet/settings/base_setting.rb:173
+#: ../lib/puppet/settings/base_setting.rb:197
 msgid "Unsupported deprecated value '%{deprecation}'."
 msgstr ""
 
-#: ../lib/puppet/settings/base_setting.rb:174
+#: ../lib/puppet/settings/base_setting.rb:198
 msgid "Supported values for deprecated are ':completely' or ':allowed_on_commandline'"
 msgstr ""
 
@@ -9088,7 +9096,7 @@ msgstr ""
 msgid "Could not autoload %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/autoload.rb:184
+#: ../lib/puppet/util/autoload.rb:177
 msgid "Autoload paths cannot be fully qualified"
 msgstr ""
 
@@ -9672,19 +9680,19 @@ msgstr ""
 msgid "Unable to write the file %{file_path}. %{error}"
 msgstr ""
 
-#: ../lib/puppet/util/posix.rb:22
+#: ../lib/puppet/util/posix.rb:29
 msgid "Removing any duplicate group entries"
 msgstr ""
 
-#: ../lib/puppet/util/posix.rb:35
+#: ../lib/puppet/util/posix.rb:75
 msgid "Did not get id from caller"
 msgstr ""
 
-#: ../lib/puppet/util/posix.rb:39 ../lib/puppet/util/posix.rb:64
+#: ../lib/puppet/util/posix.rb:79 ../lib/puppet/util/posix.rb:104
 msgid "Tried to get %{field} field for silly id %{id}"
 msgstr ""
 
-#: ../lib/puppet/util/posix.rb:92 ../lib/puppet/util/posix.rb:102 ../lib/puppet/util/posix.rb:112
+#: ../lib/puppet/util/posix.rb:132 ../lib/puppet/util/posix.rb:142 ../lib/puppet/util/posix.rb:152
 msgid "Can only handle users and groups"
 msgstr ""
 
