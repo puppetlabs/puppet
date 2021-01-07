@@ -32,6 +32,7 @@ class Puppet::Settings
   require 'puppet/settings/server_list_setting'
   require 'puppet/settings/http_extra_headers_setting'
   require 'puppet/settings/certificate_revocation_setting'
+  require 'puppet/settings/alias_setting'
 
   # local reference for convenience
   PuppetOptionParser = Puppet::Util::CommandLine::PuppetOptionParser
@@ -385,19 +386,6 @@ class Puppet::Settings
     call_hooks_deferred_to_application_initialization
     issue_deprecations
 
-    run_mode = Puppet::Util::RunMode[self.preferred_run_mode]
-    if run_mode.agent? || run_mode.server?
-      if self.set_in_section?(:masterport, run_mode.name) && !self.set_in_section?(:serverport, run_mode.name)
-        self[:serverport] = self[:masterport]
-      elsif self.set_by_config?(:masterport) && !self.set_by_config?(:serverport)
-        self[:serverport] = self[:masterport]
-      elsif self.set_in_section?(:serverport, run_mode.name) && !self.set_in_section?(:masterport, run_mode.name)
-        self[:masterport] = self[:serverport]
-      elsif self.set_by_config?(:serverport) && !self.set_by_config?(:masterport)
-        self[:masterport] = self[:serverport]
-      end
-    end
-
     REQUIRED_APP_SETTINGS.each do |key|
       create_ancestors(Puppet[key])
     end
@@ -742,7 +730,8 @@ class Puppet::Settings
       :autosign   => AutosignSetting,
       :server_list => ServerListSetting,
       :http_extra_headers => HttpExtraHeadersSetting,
-      :certificate_revocation => CertificateRevocationSetting
+      :certificate_revocation => CertificateRevocationSetting,
+      :alias => AliasSetting
   }
 
   # Create a new setting.  The value is passed in because it's used to determine
@@ -1392,6 +1381,12 @@ Generated on #{Time.now}.
         if !value.nil?
           return value
         end
+      end
+
+      setting  = @defaults[name]
+      if setting.respond_to?(:alias_name)
+        val  = lookup(setting.alias_name)
+        return val if val
       end
 
       @defaults[name].default
