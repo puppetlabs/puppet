@@ -131,8 +131,21 @@ module Puppet::ModuleTool
           begin
             Puppet.info _("Resolving dependencies ...")
             releases = SemanticPuppet::Dependency.resolve(graph)
-          rescue SemanticPuppet::Dependency::UnsatisfiableGraph
-            raise NoVersionsSatisfyError, results.merge(:requested_name => name)
+          rescue SemanticPuppet::Dependency::UnsatisfiableGraph => e
+            unsatisfied = nil
+            if e.respond_to?(:unsatisfied)
+              unsatisfied = {
+                :name => e.unsatisfied,
+                :constraints => graph.dependencies[name].max.constraints[e.unsatisfied].first[1],
+                :current_version => @environment.module_by_forge_name(e.unsatisfied.tr('-', '/')).version
+              }
+            end
+
+            raise NoVersionsSatisfyError, results.merge(
+                    :requested_name => name,
+                    :requested_version => options[:version] || graph.dependencies[name].max.version.to_s,
+                    :unsatisfied => unsatisfied
+            )
           end
 
           unless forced?

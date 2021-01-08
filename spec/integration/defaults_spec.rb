@@ -36,13 +36,6 @@ describe "Puppet defaults" do
     end
   end
 
-  describe "when setting the :serverport" do
-    it "should also set the :masterport to the same value" do
-      Puppet.settings[:serverport] = 9000
-      expect(Puppet.settings[:masterport]).to eq(9000)
-    end
-  end
-
   describe "when setting the :factpath" do
     it "should add the :factpath to Facter's search paths" do
       expect(Facter).to receive(:search).with("/my/fact/path")
