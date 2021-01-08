@@ -1088,7 +1088,7 @@ describe Puppet::Settings do
       before(:each) do
         @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
         @settings.define_settings :server, :masterport => { :desc => "a", :default => 1000 }
-        @settings.define_settings :server, :serverport => { :desc => "a", :default => 1000 }
+        @settings.define_settings :server, :serverport => { :type => :alias, :alias_for => :masterport }
         @settings.define_settings :server, :ca_port => { :desc => "a", :default => "$serverport" }
         @settings.define_settings :server, :report_port => { :desc => "a", :default => "$serverport" }
 
@@ -1110,9 +1110,10 @@ describe Puppet::Settings do
       "
         end
 
-        it { expect(@settings[:serverport]).to eq(445) }
-        it { expect(@settings[:ca_port]).to eq("445") }
-        it { expect(@settings[:report_port]).to eq("445") }
+        it { expect(@settings[:serverport]).to eq(444) }
+        it { expect(@settings[:ca_port]).to eq("444") }
+        it { expect(@settings[:report_port]).to eq("444") }
+        it { expect(@settings[:masterport]).to eq(445) }
       end
 
       context 'with serverport and masterport in main' do
@@ -1126,6 +1127,7 @@ describe Puppet::Settings do
         it { expect(@settings[:serverport]).to eq(445) }
         it { expect(@settings[:ca_port]).to eq("445") }
         it { expect(@settings[:report_port]).to eq("445") }
+        it { expect(@settings[:masterport]).to eq(444) }
       end
 
       context 'with serverport and masterport in agent' do
@@ -1139,6 +1141,7 @@ describe Puppet::Settings do
         it { expect(@settings[:serverport]).to eq(445) }
         it { expect(@settings[:ca_port]).to eq("445") }
         it { expect(@settings[:report_port]).to eq("445") }
+        it { expect(@settings[:masterport]).to eq(444) }
       end
 
       context 'with both serverport and masterport in main and agent' do
@@ -1155,6 +1158,7 @@ describe Puppet::Settings do
         it { expect(@settings[:serverport]).to eq(445) }
         it { expect(@settings[:ca_port]).to eq("445") }
         it { expect(@settings[:report_port]).to eq("445") }
+        it { expect(@settings[:masterport]).to eq(444) }
       end
 
       context 'with serverport in agent and masterport in main' do
@@ -1169,6 +1173,7 @@ describe Puppet::Settings do
         it { expect(@settings[:serverport]).to eq(444) }
         it { expect(@settings[:ca_port]).to eq("444") }
         it { expect(@settings[:report_port]).to eq("444") }
+        it { expect(@settings[:masterport]).to eq(445) }
       end
 
       context 'with masterport in main' do
@@ -1181,6 +1186,7 @@ describe Puppet::Settings do
         it { expect(@settings[:serverport]).to eq(445) }
         it { expect(@settings[:ca_port]).to eq("445") }
         it { expect(@settings[:report_port]).to eq("445") }
+        it { expect(@settings[:masterport]).to eq(445) }
       end
 
       context 'with masterport in agent' do
@@ -1193,6 +1199,7 @@ describe Puppet::Settings do
         it { expect(@settings[:serverport]).to eq(445) }
         it { expect(@settings[:ca_port]).to eq("445") }
         it { expect(@settings[:report_port]).to eq("445") }
+        it { expect(@settings[:masterport]).to eq(445) }
       end
 
       context 'with serverport in agent' do
@@ -1203,7 +1210,7 @@ describe Puppet::Settings do
         end
 
         it { expect(@settings[:serverport]).to eq(445) }
-        it { expect(@settings[:masterport]).to eq(445) }
+        it { expect(@settings[:masterport]).to eq(1000) }
         it { expect(@settings[:ca_port]).to eq("445") }
         it { expect(@settings[:report_port]).to eq("445") }
       end
@@ -1216,7 +1223,7 @@ describe Puppet::Settings do
         end
 
         it { expect(@settings[:serverport]).to eq(445) }
-        it { expect(@settings[:masterport]).to eq(445) }
+        it { expect(@settings[:masterport]).to eq(1000) }
         it { expect(@settings[:ca_port]).to eq("445") }
         it { expect(@settings[:report_port]).to eq("445") }
       end

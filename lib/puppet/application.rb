@@ -475,12 +475,16 @@ class Application
   def handle_logdest_arg(arg)
     return if arg.nil?
 
-    begin
-      Puppet[:logdest] = arg
-      Puppet::Util::Log.newdestination(arg)
-      options[:setdest] = true
-    rescue => detail
-      Puppet.log_and_raise(detail, _("Could not set logdest to %{dest}.") % { dest: arg })
+    logdest = arg.split(',').map!(&:strip)
+    Puppet[:logdest] = arg
+
+    logdest.each do |dest|
+      begin
+        Puppet::Util::Log.newdestination(dest)
+        options[:setdest] = true
+      rescue => detail
+        Puppet.log_and_raise(detail, _("Could not set logdest to %{dest}.") % { dest: arg })
+      end
     end
   end
 
