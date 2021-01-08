@@ -513,4 +513,28 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       th.kill # kill thread so we don't wait too much
     end
   end
+
+  context 'when deffering 3.x functions' do
+    it 'raises error' do
+      catalog_handler = -> (req, res) {
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify {
+            "deferred": message => Deferred("sprintf", ["hello"])
+          }
+        MANIFEST
+
+        res.body = formatter.render(catalog)
+        res['Content-Type'] = formatter.mime
+      }
+
+      server.start_server(mounts: {catalog: catalog_handler}) do |port|
+        Puppet[:serverport] = port
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(1)
+         .and output(/Cannot load function: 'sprintf'. 3.x functions cannot be deffered./).to_stderr
+      end
+    end
+  end
 end

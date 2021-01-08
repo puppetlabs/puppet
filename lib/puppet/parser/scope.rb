@@ -1041,7 +1041,11 @@ class Puppet::Parser::Scope
     if respond_to? method
       send(method, *args)
     else
-      raise Puppet::DevError, _("Function %{name} not defined despite being loaded!") % { name: name }
+      if caller.any? { |line| line =~ /runtime3_support.rb/ }
+        raise Puppet::DevError, _("Cannot load function: '%{name}'. 3.x functions cannot be deffered.") % { name: name }
+      else
+        raise Puppet::DevError, _("Function %{name} not defined despite being loaded!") % { name: name }
+      end
     end
   end
 
