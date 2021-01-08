@@ -126,7 +126,7 @@ Disable can also take an optional message that will be reported by the \'puppet 
 \-\-job\-id: Attach the specified job id to the catalog request and the report used for this agent run\. This option only works when \'\-\-onetime\' is used\. When using Puppet Enterprise this flag should not be used as the orchestrator sets the job\-id for you and it must be unique\.
 .
 .IP "\(bu" 4
-\-\-logdest: Where to send log messages\. Choose between \'syslog\' (the POSIX syslog service), \'eventlog\' (the Windows Event Log), \'console\', or the path to a log file\. If debugging or verbosity is enabled, this defaults to \'console\'\. Otherwise, it defaults to \'syslog\' on POSIX systems and \'eventlog\' on Windows\.
+\-\-logdest: Where to send log messages\. Choose between \'syslog\' (the POSIX syslog service), \'eventlog\' (the Windows Event Log), \'console\', or the path to a log file\. If debugging or verbosity is enabled, this defaults to \'console\'\. Otherwise, it defaults to \'syslog\' on POSIX systems and \'eventlog\' on Windows\. Multiple destinations can be set using a comma separated list (eg: \fB/path/file1,console,/path/file2\fR)"
 .
 .IP
 A path ending with \'\.json\' will receive structured output in JSON format\. The log file will not have an ending \']\' automatically written to it due to the appending nature of logging\. It must be appended manually to make the content valid JSON\.
