@@ -35,13 +35,18 @@ class FactDif
   def compare(fact_path, old_value)
     new_value = @next_facter.dig(*fact_path)
     if different?(new_value, old_value) && !excluded?(fact_path.join('.'))
-      @diff[fact_path.join('.')] = { new_value: new_value.inspect, old_value: old_value.inspect }
+      @diff[fact_path.join('.')] = { new_value: new_value, old_value: old_value }
     end
   end
 
   def different?(new, old)
     if old.is_a?(String) && new.is_a?(String)
-      diff = old.split(',') - new.split(',')
+      old_values = old.split(',')
+      new_values = new.split(',')
+
+      diff = old_values - new_values
+      # also add new entries only available in Facter 4
+      diff.concat(new_values - old_values)
 
       return true if diff.any?
 
