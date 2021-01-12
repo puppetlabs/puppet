@@ -397,22 +397,32 @@ class Puppet::Configurer
       if !cached_catalog && options[:catalog]
         ral_catalog = options[:catalog]
       else
-        # If not noop, commit the cached resource catalog (not ral catalog). Ideally
-        # we'd just copy the downloaded response body, instead of serializing the
-        # in-memory catalog, but that's hard due to the indirector.
-        #
-        # Important to save the catalog before evaluating deferred functions, as we
-        # want to cache the deferred function, not its result.
-        indirection = Puppet::Resource::Catalog.indirection
-        if !Puppet[:noop] && indirection.cache?
-          request = indirection.request(:save, nil, catalog, environment: Puppet::Node::Environment.remote(catalog.environment))
-          Puppet.info("Caching catalog for #{request.key}")
-          indirection.cache.save(request)
+        # Ordering here matters. We have to resolve deferred resources in the
+        # resource catalog, convert the resource catalog to a RAL catalog (which
+        # triggers type/provider validation), and only if that is successful,
+        # should we cache the *original* resource catalog. However, deferred
+        # evaluation mutates the resource catalog, so we need to make a copy of
+        # it here. If PUP-9323 is ever implemented so that we resolve deferred
+        # resources in the RAL catalog as they are needed, then we could eliminate
+        # this step.
+        catalog_to_cache = Puppet.override(:rich_data => Puppet[:rich_data]) do
+          Puppet::Resource::Catalog.from_data_hash(catalog.to_data_hash)
         end
 
         # REMIND @duration is the time spent loading the last catalog, and doesn't
         # account for things like we failed to download and fell back to the cache
         ral_catalog = convert_catalog(catalog, @duration, facts, options)
+
+        # Validation succeeded, so commit the `catalog_to_cache` for non-noop runs. Don't
+        # commit `catalog` since it contains the result of deferred evaluation. Ideally
+        # we'd just copy the downloaded response body, instead of serializing the
+        # in-memory catalog, but that's hard due to the indirector.
+        indirection = Puppet::Resource::Catalog.indirection
+        if !Puppet[:noop] && indirection.cache?
+          request = indirection.request(:save, nil, catalog_to_cache, environment: Puppet::Node::Environment.remote(catalog_to_cache.environment))
+          Puppet.info("Caching catalog for #{request.key}")
+          indirection.cache.save(request)
+        end
       end
 
       execute_prerun_command or return nil
