@@ -273,6 +273,20 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => RUBY_PLATFORM =
           expect(subject).to include :result => :failure
         end
 
+        it 'prints a detailed error containing the modules that would not be satisfied' do
+          graph = double(SemanticPuppet::Dependency::Graph, :modules => ['pmtacceptance-mysql'])
+          exception = SemanticPuppet::Dependency::UnsatisfiableGraph.new(graph)
+          allow(exception).to receive(:respond_to?).and_return(true)
+          allow(exception).to receive(:unsatisfied).and_return('pmtacceptance-mysql')
+          allow(SemanticPuppet::Dependency).to receive(:resolve).and_raise(exception)
+
+          expect(subject[:error]).to include(:multiline)
+          expect(subject[:error][:multiline]).to include("Could not install module 'pmtacceptance-mysql' (> 1.0.0)")
+          expect(subject[:error][:multiline]).to include("The requested version cannot satisfy one or more of the following installed modules:")
+          expect(subject[:error][:multiline]).to include("pmtacceptance-keystone, expects 'pmtacceptance-mysql': >=0.6.1 <1.0.0")
+          expect(subject[:error][:multiline]).to include("Use `puppet module install 'pmtacceptance-mysql' --ignore-dependencies` to install only this module")
+        end
+
         context 'with --ignore-dependencies' do
           def options
             super.merge(:ignore_dependencies => true)
@@ -325,8 +339,8 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => RUBY_PLATFORM =
             expect(subject).to include :result => :failure
             expect(subject[:error]).to include(:multiline)
             expect(subject[:error][:multiline]).to include("Could not install module 'pmtacceptance-mysql' (v2.1.0)")
-            expect(subject[:error][:multiline]).to include("The requested version cannot satisfy the following dependency: pmtacceptance-stdlib")
-            expect(subject[:error][:multiline]).to include("Installed: 2.6.0, expected: >= 2.2.1")
+            expect(subject[:error][:multiline]).to include("The requested version cannot satisfy one or more of the following installed modules:")
+            expect(subject[:error][:multiline]).to include("pmtacceptance-stdlib, installed: 2.6.0, expected: >= 2.2.1")
             expect(subject[:error][:multiline]).to include("Use `puppet module install 'pmtacceptance-mysql' --ignore-dependencies` to install only this module")
           end
         end
