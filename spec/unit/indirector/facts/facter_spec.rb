@@ -153,7 +153,7 @@ describe Puppet::Node::Facts::Facter do
   end
 
   describe 'when :resolve_options is true' do
-    let(:options) { { resolve_options: true, user_query: ["os", "timezone"], show_legacy: true } }
+    let(:options) { { resolve_options: true, user_query: ["os", "timezone"] } }
     let(:facts) { Puppet::Node::Facts.new("foo") }
 
     before :each do
@@ -171,6 +171,15 @@ describe Puppet::Node::Facts::Facter do
       expect(facts).not_to receive(:add_local_facts)
 
       @facter.find(@request)
+    end
+
+    context 'when --no-legacy flag is present' do
+      let(:options) { { resolve_options: true, user_query: ["os", "timezone"], no_legacy: false } }
+
+      it 'should call Facter.resolve method with show-legacy false' do
+        expect(Facter).to receive(:resolve).with("os timezone --show-legacy false")
+        @facter.find(@request)
+      end
     end
 
     describe 'when Facter version is lower than 4.0.40' do

@@ -100,7 +100,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     options_for_facter = String.new
     options_for_facter += options[:user_query].join(' ')
     options_for_facter += " --config #{options[:config_file]}" if options[:config_file]
-    options_for_facter += " --show-legacy" if options[:show_legacy]
+    options_for_facter +=  options[:no_legacy] == false ? " --show-legacy false" : " --show-legacy"
     options_for_facter += " --no-block" if options[:no_block] == false
     options_for_facter += " --no-cache" if options[:no_cache] == false
 
