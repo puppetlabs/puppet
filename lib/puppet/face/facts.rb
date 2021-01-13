@@ -124,10 +124,6 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
       summary _("Disable fact caching mechanism.")
     end
 
-    option("--no-legacy") do
-      summary _("Disable legacy facts when querying all facts.")
-    end
-
     option("--show-legacy") do
       summary _("Show legacy facts when querying all facts.")
     end
