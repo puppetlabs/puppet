@@ -163,7 +163,7 @@ describe Puppet::Node::Facts::Facter do
     end
 
     it 'should call Facter.resolve method' do
-      expect(Facter).to receive(:resolve).with("os timezone --show-legacy")
+      expect(Facter).to receive(:resolve).with("os timezone")
       @facter.find(@request)
     end
 
@@ -173,11 +173,11 @@ describe Puppet::Node::Facts::Facter do
       @facter.find(@request)
     end
 
-    context 'when --no-legacy flag is present' do
-      let(:options) { { resolve_options: true, user_query: ["os", "timezone"], no_legacy: false } }
+    context 'when --show-legacy flag is present' do
+      let(:options) { { resolve_options: true, user_query: ["os", "timezone"], show_legacy: true } }
 
-      it 'should call Facter.resolve method with show-legacy false' do
-        expect(Facter).to receive(:resolve).with("os timezone --show-legacy false")
+      it 'should call Facter.resolve method with show-legacy' do
+        expect(Facter).to receive(:resolve).with("os timezone --show-legacy")
         @facter.find(@request)
       end
     end
