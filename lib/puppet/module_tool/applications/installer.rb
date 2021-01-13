@@ -133,11 +133,44 @@ module Puppet::ModuleTool
             releases = SemanticPuppet::Dependency.resolve(graph)
           rescue SemanticPuppet::Dependency::UnsatisfiableGraph => e
             unsatisfied = nil
+
             if e.respond_to?(:unsatisfied)
+              constraints = {}
+              # If the module we're installing satisfies all its
+              # dependencies, but would break an already installed
+              # module that depends on it, show what would break.
+              if name == e.unsatisfied
+                graph.constraints[name].each do |mod, range, _|
+                  next unless mod.split.include?('constraint')
+
+                  # If the user requested a specific version or range,
+                  # only show the modules with non-intersecting ranges
+                  if options[:version]
+                    requested_range = SemanticPuppet::VersionRange.parse(options[:version])
+                    constraint_range = SemanticPuppet::VersionRange.parse(range)
+
+                    if requested_range.intersection(constraint_range) == SemanticPuppet::VersionRange::EMPTY_RANGE
+                      constraints[mod.split.first] = range
+                    end
+                  else
+                    constraints[mod.split.first] = range
+                  end
+                end
+
+              # If the module fails to satisfy one of its
+              # dependencies, show the unsatisfiable module
+              else
+                unsatisfied_range = graph.dependencies[name].max.constraints[e.unsatisfied].first[1]
+                constraints[e.unsatisfied] = unsatisfied_range
+              end
+
+              installed_module = @environment.module_by_forge_name(e.unsatisfied.tr('-', '/'))
+              current_version = installed_module.version if installed_module
+
               unsatisfied = {
                 :name => e.unsatisfied,
-                :constraints => graph.dependencies[name].max.constraints[e.unsatisfied].first[1],
-                :current_version => @environment.module_by_forge_name(e.unsatisfied.tr('-', '/')).version
+                :constraints => constraints,
+                :current_version => current_version
               }
             end
 
