@@ -131,6 +131,10 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
     option("--show-legacy") do
       summary _("Show legacy facts when querying all facts.")
     end
+    
+    option("--value-only") do
+      summary _("Show only the value when the action is called with a single query")
+    end
 
     when_invoked do |*args|
       options = args.pop
@@ -138,12 +142,22 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
       Puppet.settings.preferred_run_mode = :agent
       Puppet::Node::Facts.indirection.terminus_class = :facter
 
+      if options[:value_only] && !args.count.eql?(1)
+        options[:value_only] = nil
+        Puppet.warning("Incorrect use of --value-only argument; it can only be used when querying for a single fact!")
+      end
 
       options[:user_query] = args
       options[:resolve_options] = true
       result = Puppet::Node::Facts.indirection.find(Puppet.settings[:certname], options)
 
-      result.values
+      facts = result.values
+
+      if options[:value_only]
+        facts.values.first
+      else
+        facts
+      end
     end
 
     when_rendering :console do |result|
