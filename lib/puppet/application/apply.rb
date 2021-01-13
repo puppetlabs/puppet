@@ -237,7 +237,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
         end
 
         # Resolve all deferred values and replace them / mutate the catalog
-        Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(node.facts, catalog)
+        Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(node.facts, catalog, apply_environment)
 
         # Translate it to a RAL catalog
         catalog = catalog.to_ral
@@ -331,7 +331,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
         raise Puppet::Error, _("Could not deserialize catalog from %{format}: %{detail}") % { format: format, detail: detail }, detail.backtrace
       end
       # Resolve all deferred values and replace them / mutate the catalog
-      Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(node.facts, catalog)
+      Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(node.facts, catalog, configured_environment)
 
       catalog.to_ral
     end
