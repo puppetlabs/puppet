@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 7.1.0-76-ga600c40f32\n"
+"Project-Id-Version: Puppet automation framework 7.1.0-84-g5e94a264f9\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-01-12 23:37+0000\n"
-"PO-Revision-Date: 2021-01-12 23:37+0000\n"
+"POT-Creation-Date: 2021-01-13 13:07+0000\n"
+"PO-Revision-Date: 2021-01-13 13:07+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -3194,11 +3194,11 @@ msgstr ""
 msgid "Resolving dependencies ..."
 msgstr ""
 
-#: ../lib/puppet/module_tool/applications/installer.rb:175
+#: ../lib/puppet/module_tool/applications/installer.rb:208
 msgid "Preparing to install ..."
 msgstr ""
 
-#: ../lib/puppet/module_tool/applications/installer.rb:178
+#: ../lib/puppet/module_tool/applications/installer.rb:211
 msgid "Installing -- do not interrupt ..."
 msgstr ""
 
@@ -3238,7 +3238,7 @@ msgstr ""
 msgid "'%{module_name}' (%{version}) requested; '%{module_name}' (%{installed_version}) already installed"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/installer.rb:16 ../lib/puppet/module_tool/errors/installer.rb:54 ../lib/puppet/module_tool/errors/installer.rb:72 ../lib/puppet/module_tool/errors/shared.rb:72 ../lib/puppet/module_tool/errors/shared.rb:114
+#: ../lib/puppet/module_tool/errors/installer.rb:16 ../lib/puppet/module_tool/errors/installer.rb:54 ../lib/puppet/module_tool/errors/installer.rb:72 ../lib/puppet/module_tool/errors/shared.rb:79 ../lib/puppet/module_tool/errors/shared.rb:121
 msgid "Could not install module '%{module_name}' (%{version})"
 msgstr ""
 
@@ -3268,7 +3268,7 @@ msgstr ""
 msgid "Could not install '%{requested_package}'"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/installer.rb:38 ../lib/puppet/module_tool/errors/shared.rb:51
+#: ../lib/puppet/module_tool/errors/installer.rb:38 ../lib/puppet/module_tool/errors/shared.rb:58
 msgid "  No releases are available from %{source}"
 msgstr ""
 
@@ -3317,154 +3317,158 @@ msgstr ""
 msgid "Could not %{action} '%{module_name}' (%{version}); no version satisfies all dependencies"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:17 ../lib/puppet/module_tool/errors/shared.rb:179 ../lib/puppet/module_tool/errors/upgrader.rb:58
+#: ../lib/puppet/module_tool/errors/shared.rb:17 ../lib/puppet/module_tool/errors/shared.rb:186 ../lib/puppet/module_tool/errors/upgrader.rb:58
 msgid "Could not %{action} module '%{module_name}' (%{version})"
 msgstr ""
 
 #: ../lib/puppet/module_tool/errors/shared.rb:20
-msgid "  The requested version cannot satisfy the following dependency: %{name}"
+msgid "  The requested version cannot satisfy one or more of the following installed modules:"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:21
-msgid "    Installed: %{current_version}, expected: %{constraints}"
+#: ../lib/puppet/module_tool/errors/shared.rb:22
+msgid "    %{name}, installed: %{current_version}, expected: %{constraints}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:23
+#: ../lib/puppet/module_tool/errors/shared.rb:25
+msgid "    %{mod}, expects '%{name}': %{range}"
+msgstr ""
+
+#: ../lib/puppet/module_tool/errors/shared.rb:30
 msgid "  The requested version cannot satisfy all dependencies"
 msgstr ""
 
 #. TRANSLATORS `puppet module %{action} --ignore-dependencies` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:27
-msgid "    Use `puppet module %{action} '%{module_name}' --ignore-dependencies` to %{action} only this module"
+#: ../lib/puppet/module_tool/errors/shared.rb:34
+msgid "  Use `puppet module %{action} '%{module_name}' --ignore-dependencies` to %{action} only this module"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:41
+#: ../lib/puppet/module_tool/errors/shared.rb:48
 msgid "Could not %{action} '%{module_name}'; no releases are available from %{source}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:43
+#: ../lib/puppet/module_tool/errors/shared.rb:50
 msgid "Could not %{action} '%{module_name}'; no releases matching '%{version}' are available from %{source}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:49
+#: ../lib/puppet/module_tool/errors/shared.rb:56
 msgid "Could not %{action} '%{module_name}' (%{version})"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:52
+#: ../lib/puppet/module_tool/errors/shared.rb:59
 msgid "    Does '%{module_name}' have at least one published release?"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:54
+#: ../lib/puppet/module_tool/errors/shared.rb:61
 msgid "  No releases matching '%{requested_version}' are available from %{source}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:67
+#: ../lib/puppet/module_tool/errors/shared.rb:74
 msgid "'%{module_name}' (%{version}) requested; installation conflict"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:75
+#: ../lib/puppet/module_tool/errors/shared.rb:82
 msgid "  Dependency '%{name}' (%{version}) would overwrite %{directory}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:77
+#: ../lib/puppet/module_tool/errors/shared.rb:84
 msgid "  Installation would overwrite %{directory}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:81
+#: ../lib/puppet/module_tool/errors/shared.rb:88
 msgid "    Currently, '%{current_name}' (%{current_version}) is installed to that directory"
 msgstr ""
 
 #. TRANSLATORS `puppet module install --ignore-dependencies` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:86
+#: ../lib/puppet/module_tool/errors/shared.rb:93
 msgid "    Use `puppet module install --ignore-dependencies` to install only this module"
 msgstr ""
 
 #. TRANSLATORS `puppet module install --force` is a command line and should not be translated
 #. TRANSLATORS `puppet module install --force` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:89 ../lib/puppet/module_tool/errors/shared.rb:118
+#: ../lib/puppet/module_tool/errors/shared.rb:96 ../lib/puppet/module_tool/errors/shared.rb:125
 msgid "    Use `puppet module install --force` to install this module anyway"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:103
+#: ../lib/puppet/module_tool/errors/shared.rb:110
 msgid "'%{module_name}' (%{version}) requested; Invalid dependency cycle"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:108
+#: ../lib/puppet/module_tool/errors/shared.rb:115
 msgid "You specified '%{name}' (%{version})"
 msgstr ""
 
 #. TRANSLATORS This message repeats as separate lines as a list under the heading "You specified '%{name}' (%{version})\n"
-#: ../lib/puppet/module_tool/errors/shared.rb:111
+#: ../lib/puppet/module_tool/errors/shared.rb:118
 msgid "This depends on '%{name}' (%{version})"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:115
+#: ../lib/puppet/module_tool/errors/shared.rb:122
 msgid "  No version of '%{module_name}' will satisfy dependencies"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:128
+#: ../lib/puppet/module_tool/errors/shared.rb:135
 msgid "Could not %{action} '%{module_name}'; module is not installed"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:133 ../lib/puppet/module_tool/errors/shared.rb:156 ../lib/puppet/module_tool/errors/shared.rb:197
+#: ../lib/puppet/module_tool/errors/shared.rb:140 ../lib/puppet/module_tool/errors/shared.rb:163 ../lib/puppet/module_tool/errors/shared.rb:204
 msgid "Could not %{action} module '%{module_name}'"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:134
+#: ../lib/puppet/module_tool/errors/shared.rb:141
 msgid "  Module '%{module_name}' is not installed"
 msgstr ""
 
 #. TRANSLATORS `puppet module %{action} %{suggestion}` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:137
+#: ../lib/puppet/module_tool/errors/shared.rb:144
 msgid "    You may have meant `puppet module %{action} %{suggestion}`"
 msgstr ""
 
 #. TRANSLATORS `puppet module install` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:140
+#: ../lib/puppet/module_tool/errors/shared.rb:147
 msgid "    Use `puppet module install` to install this module"
 msgstr ""
 
 #. TRANSLATORS "module path" refers to a set of directories where modules may be installed
-#: ../lib/puppet/module_tool/errors/shared.rb:151
+#: ../lib/puppet/module_tool/errors/shared.rb:158
 msgid "Could not %{action} '%{module_name}'; module appears in multiple places in the module path"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:157
+#: ../lib/puppet/module_tool/errors/shared.rb:164
 msgid "  Module '%{module_name}' appears multiple places in the module path"
 msgstr ""
 
 #. TRANSLATORS This is repeats as separate lines as a list under "Module '%{module_name}' appears multiple places in the module path"
-#: ../lib/puppet/module_tool/errors/shared.rb:160
+#: ../lib/puppet/module_tool/errors/shared.rb:167
 msgid "    '%{module_name}' (%{version}) was found in %{path}"
 msgstr ""
 
 #. TRANSLATORS `--modulepath` is command line option and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:163
+#: ../lib/puppet/module_tool/errors/shared.rb:170
 msgid "    Use the `--modulepath` option to limit the search to specific directories"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:174
+#: ../lib/puppet/module_tool/errors/shared.rb:181
 msgid "Could not %{action} '%{module_name}'; module has had changes made locally"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:180
+#: ../lib/puppet/module_tool/errors/shared.rb:187
 msgid "  Installed module has had changes made locally"
 msgstr ""
 
 #. TRANSLATORS `puppet module %{action} --ignore-changes` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:182
+#: ../lib/puppet/module_tool/errors/shared.rb:189
 msgid "    Use `puppet module %{action} --ignore-changes` to %{action} this module anyway"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:192
+#: ../lib/puppet/module_tool/errors/shared.rb:199
 msgid "Could not %{action} '%{module_name}'; %{error}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:198
+#: ../lib/puppet/module_tool/errors/shared.rb:205
 msgid "  Failure trying to parse metadata"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:199
+#: ../lib/puppet/module_tool/errors/shared.rb:206
 msgid "    Original message was: %{message}"
 msgstr ""
 
