@@ -121,6 +121,14 @@ describe Puppet::FileServing::Configuration::Parser do
       end
     }
 
+    it "should not generate an error when parsing 'allow *'" do
+      write_config_file "[one]\nallow *\n"
+
+      expect(Puppet).to receive(:err).never
+
+      @parser.parse
+    end
+
     it "should return comprehensible error message, if failed on invalid attribute" do
       write_config_file "[one]\ndo something\n"
 

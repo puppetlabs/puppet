@@ -33,8 +33,11 @@ class Puppet::FileServing::Configuration::Parser
           when "path"
             path(mount, value)
           when "allow", "deny"
-            error_location_str = Puppet::Util::Errors.error_location(@file.filename, @count)
-            Puppet.err("Entry '#{line.chomp}' is unsupported and will be ignored at #{error_location_str}")
+            # ignore `allow *`, otherwise report error
+            if var != 'allow' || value != '*'
+              error_location_str = Puppet::Util::Errors.error_location(@file.filename, @count)
+              Puppet.err("Entry '#{line.chomp}' is unsupported and will be ignored at #{error_location_str}")
+            end
           else
             error_location_str = Puppet::Util::Errors.error_location(@file.filename, @count)
             raise ArgumentError.new(_("Invalid argument '%{var}' at %{error_location}") %
