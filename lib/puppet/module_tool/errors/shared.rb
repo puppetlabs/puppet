@@ -17,14 +17,21 @@ module Puppet::ModuleTool::Errors
       message << _("Could not %{action} module '%{module_name}' (%{version})") % { action: @action, module_name: @requested_name, version: vstring }
 
       if @unsatisfied
-        message << _("  The requested version cannot satisfy the following dependency: %{name}") % { name: @unsatisfied[:name] }
-        message << _("    Installed: %{current_version}, expected: %{constraints}") % { current_version: @unsatisfied[:current_version], constraints: @unsatisfied[:constraints] }
+        message << _("  The requested version cannot satisfy one or more of the following installed modules:")
+        if @unsatisfied[:current_version]
+          message << _("    %{name}, installed: %{current_version}, expected: %{constraints}") % { name: @unsatisfied[:name], current_version: @unsatisfied[:current_version], constraints: @unsatisfied[:constraints][@unsatisfied[:name]] }
+        else
+          @unsatisfied[:constraints].each do |mod, range|
+            message << _("    %{mod}, expects '%{name}': %{range}") % { mod: mod, name: @requested_name, range: range }
+          end
+        end
+        message << _("")
       else
         message << _("  The requested version cannot satisfy all dependencies")
       end
 
       #TRANSLATORS `puppet module %{action} --ignore-dependencies` is a command line and should not be translated
-      message << _("    Use `puppet module %{action} '%{module_name}' --ignore-dependencies` to %{action} only this module") % { action: @action, module_name: @requested_name }
+      message << _("  Use `puppet module %{action} '%{module_name}' --ignore-dependencies` to %{action} only this module") % { action: @action, module_name: @requested_name }
       message.join("\n")
     end
   end
