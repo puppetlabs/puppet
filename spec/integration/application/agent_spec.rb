@@ -591,6 +591,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
           agent.command_line.args << '--test'
           agent.run
         }.to exit_with(1)
+         .and output(/Using configured environment/).to_stdout
          .and output(%r{Validation of Exec\[unqualified_command\] failed: 'unqualified_command' is not qualified and no path was specified}).to_stderr
       end
 
