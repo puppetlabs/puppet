@@ -47,6 +47,28 @@ The terminus for an action is often determined by context, but occasionally need
 .SH "ACTIONS"
 .
 .TP
+\fBdiff\fR \- Compare Facter 3 output with Facter 4 output
+\fBSYNOPSIS\fR
+.
+.IP
+puppet facts diff [\-\-terminus _TERMINUS] [\-\-extra HASH]
+.
+.IP
+\fBDESCRIPTION\fR
+.
+.IP
+Compares output from facter 3 with Facter 4 and prints the differences
+.
+.IP
+\fBRETURNS\fR
+.
+.IP
+Differences between Facter 3 and Facter 4 output as an array\.
+.
+.IP
+\fBNOTES\fR
+.
+.TP
 \fBfind\fR \- Retrieve a node\'s facts\.
 \fBSYNOPSIS\fR
 .
@@ -138,6 +160,12 @@ For legacy Rack\-based Puppet Masters, see:
 \fIhttps://puppet\.com/docs/puppet/latest/config_file_auth\.html\fR
 .
 .SH "EXAMPLES"
+\fBdiff\fR
+.
+.P
+get differences between facter versions: $ puppet facts diff
+.
+.P
 \fBfind\fR
 .
 .P
