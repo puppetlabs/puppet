@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.19.1-126-gbcf5e86818\n"
+"Project-Id-Version: Puppet automation framework 6.19.1-133-gcc65fe8151\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-01-13 10:03+0000\n"
-"PO-Revision-Date: 2021-01-13 10:03+0000\n"
+"POT-Creation-Date: 2021-01-14 12:33+0000\n"
+"PO-Revision-Date: 2021-01-14 12:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -778,7 +778,7 @@ msgstr ""
 msgid "no matching resources found"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:7 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:6 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
+#: ../lib/puppet/face/config.rb:7 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:30 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:6 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
 msgid "Apache 2 license; see COPYING"
 msgstr ""
 
@@ -1015,24 +1015,32 @@ msgstr ""
 msgid "--values option must evaluate to a Hash or undef, got: '%{values_class}'"
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:8
+#: ../lib/puppet/face/facts.rb:32
 msgid "Retrieve and store facts."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:16
+#: ../lib/puppet/face/facts.rb:40
 msgid "Retrieve a node's facts."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:17
+#: ../lib/puppet/face/facts.rb:41
 msgid "[<node_certname>]"
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:40
+#: ../lib/puppet/face/facts.rb:64
 msgid "Upload local facts to the puppet master."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:82
+#: ../lib/puppet/face/facts.rb:106
 msgid "Uploading facts for '%{node}' to '%{server}'"
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:116
+msgid "Compare Facter 3 output with Facter 4 output"
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:145
+msgid "Already using Facter 4. To use `puppet facts diff` remove facterng from the .conf file or run `puppet config set facterng false`."
 msgstr ""
 
 #: ../lib/puppet/face/generate.rb:9
