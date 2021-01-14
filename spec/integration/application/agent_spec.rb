@@ -97,10 +97,10 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
   end
 
   context 'rich data' do
-    it "applies deferred values" do
+    it "calls a deferred 4x function" do
       catalog_handler = -> (req, res) {
         catalog = compile_to_catalog(<<-MANIFEST, node)
-          notify { 'deferred':
+          notify { 'deferred4x':
             message => Deferred('join', [[1,2,3], ':'])
           }
         MANIFEST
@@ -115,7 +115,29 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
           agent.command_line.args << '--test'
           agent.run
         }.to exit_with(2)
-         .and output(%r{Notice: /Stage\[main\]/Main/Notify\[deferred\]/message: defined 'message' as '1:2:3'}).to_stdout
+         .and output(%r{Notice: /Stage\[main\]/Main/Notify\[deferred4x\]/message: defined 'message' as '1:2:3'}).to_stdout
+      end
+    end
+
+    it "calls a deferred 3x function" do
+      catalog_handler = -> (req, res) {
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'deferred3x':
+            message => Deferred('sprintf', ['%s', 'I am deferred'])
+          }
+        MANIFEST
+
+        res.body = formatter.render(catalog)
+        res['Content-Type'] = formatter.mime
+      }
+
+      server.start_server(mounts: {catalog: catalog_handler}) do |port|
+        Puppet[:serverport] = port
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(2)
+         .and output(%r{Notice: /Stage\[main\]/Main/Notify\[deferred3x\]/message: defined 'message' as 'I am deferred'}).to_stdout
       end
     end
 
