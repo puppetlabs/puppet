@@ -1,5 +1,29 @@
 require 'puppet/indirector/face'
 require 'puppet/node/facts'
+require 'puppet/util/fact_dif'
+
+EXCLUDE_LIST = %w[facterversion
+  swapfree_mb swapsize_mb
+  load_averages\.*
+  memory\.swap\.available_bytes memory\.swap\.capacity memory\.swap\.total_bytes
+  memory\.swap\.used_bytes memory\.swap\.available
+  memory\.system\.available memory\.system\.available_bytes memory\.system\.capacity memory\.swap\.used
+  memory\.system\.total_bytes memory\.system\.used memory\.system\.used_bytes
+  memoryfree memoryfree_mb memorysize_mb
+  mountpoints\..* mtu_.* mountpoints\..*\.capacity
+  networking\.interfaces\..*\.mtu networking\.mtu partitions\..*\.filesystem
+  partitions\..*\.size_bytes partitions\..*\.mount partitions\..*\.uuid
+  disks\..*\.size_bytes
+  hypervisors\.lpar\.partition_number hypervisors\.xen\.privileged hypervisors\.zone\..* hypervisors\.ldom\..*
+  processors\.speed
+  ldom_.*
+  boardassettag dmi\.board\.asset_tag
+  blockdevice_.*_vendor blockdevice_.*_size
+  system_uptime\.days system_uptime\.hours system_uptime\.seconds system_uptime\.uptime
+  uptime_days uptime_hours uptime_seconds
+  system_profiler\.uptime
+  sp_uptime
+  uptime]
 
 Puppet::Indirector::Face.define(:facts, '0.0.1') do
   copyright "Puppet Inc.", 2011
@@ -85,6 +109,42 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
 
       puppet.put_facts(Puppet[:node_name_value], facts: facts, environment: Puppet.lookup(:current_environment).name.to_s)
       nil
+    end
+  end
+
+  action(:diff) do
+    summary _("Compare Facter 3 output with Facter 4 output")
+    description <<-'EOT'
+    Compares output from facter 3 with Facter 4 and prints the differences
+    EOT
+    returns "Differences between Facter 3 and Facter 4 output as an array."
+    notes <<-'EOT'
+    EOT
+    examples <<-'EOT'
+    get differences between facter versions:
+    $ puppet facts diff
+    EOT
+
+    render_as :json
+
+    when_invoked do |*args|
+      Puppet.settings.preferred_run_mode = :agent
+      Puppet::Node::Facts.indirection.terminus_class = :facter
+
+      if Puppet::Util::Package.versioncmp(Facter.value('facterversion'), '4.0.0') < 0
+        facter3_result = Puppet::Node::Facts.indirection.find(Puppet.settings[:certname])
+        begin
+          require 'facter-ng'
+          facter4_result = Puppet::Node::Facts.indirection.find(Puppet.settings[:certname])
+        rescue LoadError
+          raise ArgumentError, 'facter-ng could not be loaded'
+        end
+        fact_diff = FactDif.new(facter3_result.to_json, facter4_result.to_json, EXCLUDE_LIST)
+        fact_diff.difs
+      else
+        Puppet.warning _("Already using Facter 4. To use `puppet facts diff` remove facterng from the .conf file or run `puppet config set facterng false`.")
+        exit 0
+      end
     end
   end
 end
