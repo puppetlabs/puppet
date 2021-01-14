@@ -16,10 +16,12 @@ class DeferredResolver
   #
   # @param facts [Puppet::Node::Facts] the facts object for the node
   # @param catalog [Puppet::Resource::Catalog] the catalog where all deferred values should be replaced
+  # @param environment [Puppet::Node::Environment] the environment whose anonymous module methods
+  #  are to be mixed into the scope
   # @return [nil] does not return anything - the catalog is modified as a side effect
   #
-  def self.resolve_and_replace(facts, catalog)
-    compiler = Puppet::Parser::ScriptCompiler.new(catalog.environment_instance, catalog.name, true)
+  def self.resolve_and_replace(facts, catalog, environment)
+    compiler = Puppet::Parser::ScriptCompiler.new(environment, catalog.name, true)
     resolver = new(compiler)
     resolver.set_facts_variable(facts)
     # TODO:
@@ -108,7 +110,7 @@ class DeferredResolver
     # If any of the arguments to a future is a future it needs to be resolved first
     func_name = f.name
     mapped_arguments = map_arguments(f.arguments)
-    # if name starts with $ then this is a call to dig 
+    # if name starts with $ then this is a call to dig
     if func_name[0] == DOLLAR
       var_name = func_name[1..-1]
       func_name = DIG

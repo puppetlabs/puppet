@@ -663,4 +663,23 @@ class amod::bad_type {
       end
     end
   end
+
+  context 'rich data' do
+    it "calls a deferred 4x function" do
+      apply.command_line.args = ['-e', 'notify { "deferred3x": message => Deferred("join", [[1,2,3], ":"]) }']
+
+      expect {
+        apply.run
+      }.to exit_with(0) # for some reason apply returns 0 instead of 2
+       .and output(%r{Notice: /Stage\[main\]/Main/Notify\[deferred3x\]/message: defined 'message' as '1:2:3'}).to_stdout
+    end
+
+    it "calls a deferred 3x function" do
+      apply.command_line.args = ['-e', 'notify { "deferred4x": message => Deferred("sprintf", ["%s", "I am deferred"]) }']
+      expect {
+        apply.run
+      }.to exit_with(0) # for some reason apply returns 0 instead of 2
+       .and output(%r{Notice: /Stage\[main\]/Main/Notify\[deferred4x\]/message: defined 'message' as 'I am deferred'}).to_stdout
+    end
+  end
 end
