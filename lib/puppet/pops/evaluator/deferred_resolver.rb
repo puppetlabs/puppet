@@ -20,7 +20,7 @@ class DeferredResolver
   #  are to be mixed into the scope
   # @return [nil] does not return anything - the catalog is modified as a side effect
   #
-  def self.resolve_and_replace(facts, catalog, environment)
+  def self.resolve_and_replace(facts, catalog, environment = catalog.environment_instance)
     compiler = Puppet::Parser::ScriptCompiler.new(environment, catalog.name, true)
     resolver = new(compiler)
     resolver.set_facts_variable(facts)

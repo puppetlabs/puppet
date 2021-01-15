@@ -548,4 +548,69 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       th.kill # kill thread so we don't wait too much
     end
   end
+
+  context 'cached catalogs' do
+    it 'falls back to a cached catalog' do
+      catalog_handler = -> (req, res) {
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          notify { 'a message': }
+        MANIFEST
+
+        res.body = formatter.render(catalog)
+        res['Content-Type'] = formatter.mime
+      }
+
+      server.start_server(mounts: {catalog: catalog_handler}) do |port|
+        Puppet[:serverport] = port
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(2)
+         .and output(%r{Caching catalog for #{Puppet[:certname]}}).to_stdout
+      end
+
+      # reset state so we can run again
+      Puppet::Application.clear!
+
+      # --test above turns off `usecacheonfailure` so re-enable here
+      Puppet[:usecacheonfailure] = true
+
+      # run agent without server
+      expect {
+        agent.command_line.args << '--no-daemonize' << '--onetime' << '--server' << '127.0.0.1'
+        agent.run
+      }.to exit_with(2)
+       .and output(a_string_matching(
+         /Using cached catalog from environment 'production'/
+       ).and matching(
+         /Notify\[a message\]\/message:/
+       )).to_stdout
+       .and output(/the agent run will continue/).to_stderr
+    end
+
+    it 'preserves the old cached catalog if validation fails with the old one' do
+      catalog_handler = -> (req, res) {
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          exec { 'unqualified_command': }
+        MANIFEST
+
+        res.body = formatter.render(catalog)
+        res['Content-Type'] = formatter.mime
+      }
+
+      server.start_server(mounts: {catalog: catalog_handler}) do |port|
+        Puppet[:serverport] = port
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(1)
+         .and output(/Using configured environment/).to_stdout
+         .and output(%r{Validation of Exec\[unqualified_command\] failed: 'unqualified_command' is not qualified and no path was specified}).to_stderr
+      end
+
+      # cached catalog should not be updated
+      cached_catalog = "#{File.join(Puppet[:client_datadir], 'catalog', Puppet[:certname])}.json"
+      expect(File).to_not be_exist(cached_catalog)
+    end
+  end
 end
