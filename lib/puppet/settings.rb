@@ -1274,24 +1274,34 @@ Generated on #{Time.now}.
   end
 
   def add_environment_resources(catalog, sections)
-    path = self[:environmentpath]
-    envdir = path.split(File::PATH_SEPARATOR).first if path
     configured_environment = self[:environment]
-    if configured_environment == "production" && envdir && Puppet::FileSystem.exist?(envdir)
-      configured_environment_path = File.join(envdir, configured_environment)
-      # If configured_environment_path is a symlink, assume the source path is being managed
-      # elsewhere, so don't do any of this configuration
-      if !Puppet::FileSystem.symlink?(configured_environment_path)
+
+    if configured_environment == "production" && !production_environment_exists?
+      environment_path = self[:environmentpath]
+      first_environment_path = environment_path.split(File::PATH_SEPARATOR).first
+
+      if Puppet::FileSystem.exist?(first_environment_path)
+        production_environment_path = File.join(first_environment_path, configured_environment)
         parameters = { :ensure => 'directory' }
-        unless Puppet::FileSystem.exist?(configured_environment_path)
-          parameters[:mode] = '0750'
-          if Puppet.features.root?
-            parameters[:owner] = Puppet[:user] if service_user_available?
-            parameters[:group] = Puppet[:group] if service_group_available?
-          end
+        parameters[:mode] = '0750'
+        if Puppet.features.root?
+          parameters[:owner] = Puppet[:user] if service_user_available?
+          parameters[:group] = Puppet[:group] if service_group_available?
         end
-        catalog.add_resource(Puppet::Resource.new(:file, configured_environment_path, :parameters => parameters))
+        catalog.add_resource(Puppet::Resource.new(:file, production_environment_path, :parameters => parameters))
       end
+    end
+  end
+
+  def production_environment_exists?
+    environment_path = self[:environmentpath]
+    paths = environment_path.split(File::PATH_SEPARATOR)
+
+    paths.any? do |path|
+      # If expected_path is a symlink, assume the source path is being managed
+      # elsewhere, so accept it also as a valid production environment path
+      expected_path = File.join(path, 'production')
+      Puppet::FileSystem.directory?(expected_path) || Puppet::FileSystem.symlink?(expected_path)
     end
   end
 
