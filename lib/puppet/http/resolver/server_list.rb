@@ -66,8 +66,14 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
       rescue Puppet::HTTP::ResponseError => detail
         Puppet.log_exception(detail, _("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
                              { host: service.url.host, port: service.url.port, code: detail.response.code, reason: detail.response.reason })
+
+        # clear cached server
+        @resolved_url = nil
       rescue Puppet::HTTP::HTTPError => detail
         Puppet.log_exception(detail, _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail})
+
+        # clear cached server
+        @resolved_url = nil
       end
     end
 
