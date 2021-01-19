@@ -433,6 +433,18 @@ class Puppet::Configurer
       apply_catalog(ral_catalog, options)
       true
     rescue => detail
+      # Puppet.log_exception(detail, _("Failed to apply catalog: %{detail}") % { detail: detail })
+      # return nil
+# binding.pry
+#       @transaction_uuid = SecureRandom.uuid
+#       server, port = find_functional_server_no_cache
+#       options[:report] ||= Puppet::Transaction::Report.new(nil, @environment, @transaction_uuid, @job_id, options[:start_time] || Time.now)
+#       report = options[:report]
+#       report.server_used = "#{server}:#{port}"
+#       init_storage
+#       completed = run_internal(options)
+#       return completed
+      # retry
       Puppet.log_exception(detail, _("Failed to apply catalog: %{detail}") % { detail: detail })
       return nil
     ensure

@@ -14,6 +14,7 @@ class Puppet::HTTP::Session
   # puppet version where JSON was enabled by default
   SUPPORTED_JSON_DEFAULT = Gem::Version.new("5.0.0")
 
+  attr_reader :server_failed
   #
   # @api private
   #
@@ -29,6 +30,7 @@ class Puppet::HTTP::Session
     @resolvers = resolvers
     @resolved_services = {}
     @server_versions = {}
+    @server_failed = false
   end
 
   #
@@ -62,17 +64,18 @@ class Puppet::HTTP::Session
     end
 
     cached = @resolved_services[name]
-    return cached if cached
+    return cached if cached && (@server_failed == false)
 
     canceled = false
     canceled_handler  = lambda { |cancel| canceled = cancel }
 
     @resolvers.each do |resolver|
       Puppet.debug("Resolving service '#{name}' using #{resolver.class}")
-      service = resolver.resolve(self, name, ssl_context: ssl_context, canceled_handler: canceled_handler)
+      service = resolver.resolve(self, name, ssl_context: ssl_context, canceled_handler: canceled_handler, server_failed: @server_failed)
       if service
         @resolved_services[name] = service
         Puppet.debug("Resolved service '#{name}' to #{service.url}")
+        @failed_server = false
         return service
       elsif canceled
         break
@@ -127,5 +130,9 @@ class Puppet::HTTP::Session
     else
       false
     end
+  end
+
+  def server_failed(server_failed)
+    @server_failed = server_failed
   end
 end

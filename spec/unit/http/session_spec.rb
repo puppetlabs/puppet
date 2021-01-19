@@ -26,7 +26,7 @@ describe Puppet::HTTP::Session do
       @count = 0
     end
 
-    def resolve(session, name, ssl_context: nil, canceled_handler: nil)
+    def resolve(session, name, ssl_context: nil, canceled_handler: nil, server_failed: false)
       @count += 1
       return @service if check_connection?(session, @service, ssl_context: ssl_context)
     end

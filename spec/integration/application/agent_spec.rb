@@ -39,7 +39,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
           agent.run
         }.to exit_with(0)
          .and output(%r{Notice: Applied catalog}).to_stdout
-         .and output(%r{Unable to connect to server from server_list setting: Request to https://puppet.example.com:#{port}/status/v1/simple/master failed}).to_stderr
+         .and output(%r{Warning: Could not connect to server puppet.example.com:#{port}. Trying next server in server_list.}).to_stderr
 
         report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
         expect(report.master_used).to eq("127.0.0.1:#{port}")

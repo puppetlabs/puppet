@@ -43,13 +43,13 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
   # @raise [Puppet::Error] raise if none of the servers defined in server_list
   #   are available
   #
-  def resolve(session, name, ssl_context: nil, canceled_handler: nil)
+  def resolve(session, name, ssl_context: nil, canceled_handler: nil, server_failed: false)
     # If we're configured to use an explicit service host, e.g. report_server
     # then don't use server_list to resolve the `:report` service.
     return nil unless @services.include?(name)
 
     # If we resolved the URL already, use its host & port for the service
-    if @resolved_url
+    if @resolved_url && (server_failed == false)
       return Puppet::HTTP::Service.create_service(@client, session, name, @resolved_url.host, @resolved_url.port)
     end
 
@@ -70,7 +70,11 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
         # clear cached server
         @resolved_url = nil
       rescue Puppet::HTTP::HTTPError => detail
-        Puppet.log_exception(detail, _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail})
+        if server.equal?(@server_list_setting.value.last)
+          Puppet.log_exception(detail, _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail})
+        else
+          Puppet.warning(_("Could not connect to server %{host}:%{port}. Trying next server in server_list.") % {host: service.url.host, port: service.url.port})
+        end
 
         # clear cached server
         @resolved_url = nil

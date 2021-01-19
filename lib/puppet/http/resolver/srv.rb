@@ -31,7 +31,7 @@ class Puppet::HTTP::Resolver::SRV < Puppet::HTTP::Resolver
   # @return [Puppet::HTTP::Service] if an available service is found, return
   #   it. Return nil otherwise.
   #
-  def resolve(session, name, ssl_context: nil, canceled_handler: nil)
+  def resolve(session, name, ssl_context: nil, canceled_handler: nil, server_failed: false)
     # Here we pass our HTTP service name as the DNS SRV service name
     # This is fine for :ca, but note that :puppet and :file are handled
     # specially in `each_srv_record`.

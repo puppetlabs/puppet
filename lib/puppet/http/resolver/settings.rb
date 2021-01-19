@@ -19,7 +19,7 @@ class Puppet::HTTP::Resolver::Settings < Puppet::HTTP::Resolver
   # @return [Puppet::HTTP::Service] if the service successfully connects,
   #   return it. Otherwise, return nil.
   #
-  def resolve(session, name, ssl_context: nil, canceled_handler: nil)
+  def resolve(session, name, ssl_context: nil, canceled_handler: nil, server_failed: false)
     service = Puppet::HTTP::Service.create_service(@client, session, name)
     check_connection?(session, service, ssl_context: ssl_context) ? service : nil
   end
