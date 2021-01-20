@@ -127,9 +127,13 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
     option("--show-legacy") do
       summary _("Show legacy facts when querying all facts.")
     end
-    
+
     option("--value-only") do
       summary _("Show only the value when the action is called with a single query")
+    end
+
+    option("--timing") do
+      summary _("Show how much time it took to resolve each fact.")
     end
 
     when_invoked do |*args|
