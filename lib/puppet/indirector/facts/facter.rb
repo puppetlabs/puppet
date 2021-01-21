@@ -103,6 +103,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     options_for_facter += " --show-legacy" if options[:show_legacy]
     options_for_facter += " --no-block" if options[:no_block] == false
     options_for_facter += " --no-cache" if options[:no_cache] == false
+    options_for_facter += " --timing" if options[:timing]
 
     Puppet::Node::Facts.new(request.key, Facter.resolve(options_for_facter))
   end

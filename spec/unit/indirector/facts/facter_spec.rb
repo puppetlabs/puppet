@@ -182,6 +182,15 @@ describe Puppet::Node::Facts::Facter do
       end
     end
 
+    context 'when --timing flag is present' do
+      let(:options) { { resolve_options: true, user_query: ["os", "timezone"], timing: true } }
+
+      it 'calls Facter.resolve with --timing' do
+        expect(Facter).to receive(:resolve).with("os timezone --timing")
+        @facter.find(@request)
+      end
+    end
+
     describe 'when Facter version is lower than 4.0.40' do
       before :each do
         allow(Facter).to receive(:respond_to?).and_return(false)
