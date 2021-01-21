@@ -105,7 +105,7 @@ API only: create or overwrite an object\. As the Faces framework does not curren
 \fBSYNOPSIS\fR
 .
 .IP
-puppet facts [\-\-terminus _TERMINUS] [\-\-extra HASH] [\-\-config\-file \fIpath\fR] [\-\-custom\-dir \fIpath\fR] [\-\-external\-dir \fIpath\fR] [\-\-no\-block] [\-\-no\-cache] [\-\-show\-legacy] [\-\-value\-only] [\fIfacts\fR]
+puppet facts [\-\-terminus _TERMINUS] [\-\-extra HASH] [\-\-config\-file \fIpath\fR] [\-\-custom\-dir \fIpath\fR] [\-\-external\-dir \fIpath\fR] [\-\-no\-block] [\-\-no\-cache] [\-\-show\-legacy] [\-\-value\-only] [\-\-timing] [\fIfacts\fR]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -130,6 +130,9 @@ Reads facts from the local system using \fBfacter\fR terminus\. A query can be p
 .
 .IP
 \fI\-\-show\-legacy\fR \- Show legacy facts when querying all facts\.
+.
+.IP
+\fI\-\-timing\fR \- Show how much time it took to resolve each fact\.
 .
 .IP
 \fI\-\-value\-only\fR \- Show only the value when the action is called with a single query
