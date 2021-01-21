@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 7.1.0-89-g309d69a162\n"
+"Project-Id-Version: Puppet automation framework 7.3.0-6-g7c55ccd544\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-01-13 14:37+0000\n"
-"PO-Revision-Date: 2021-01-13 14:37+0000\n"
+"POT-Creation-Date: 2021-01-21 13:07+0000\n"
+"PO-Revision-Date: 2021-01-21 13:07+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -583,44 +583,44 @@ msgstr ""
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:424
+#: ../lib/puppet/configurer.rb:434
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:453 ../lib/puppet/http/resolver/server_list.rb:63
+#: ../lib/puppet/configurer.rb:463 ../lib/puppet/http/resolver/server_list.rb:63
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:457 ../lib/puppet/http/resolver/server_list.rb:66
+#: ../lib/puppet/configurer.rb:467 ../lib/puppet/http/resolver/server_list.rb:66
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:468 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:478 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:477
+#: ../lib/puppet/configurer.rb:487
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:496
+#: ../lib/puppet/configurer.rb:506
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:504
+#: ../lib/puppet/configurer.rb:514
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:519
+#: ../lib/puppet/configurer.rb:529
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:537
+#: ../lib/puppet/configurer.rb:547
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:558
+#: ../lib/puppet/configurer.rb:568
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -1061,6 +1061,10 @@ msgstr ""
 
 #: ../lib/puppet/face/facts.rb:132
 msgid "Show only the value when the action is called with a single query"
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:136
+msgid "Show how much time it took to resolve each fact."
 msgstr ""
 
 #: ../lib/puppet/face/generate.rb:9
@@ -1609,23 +1613,23 @@ msgstr ""
 msgid "Fileserver configuration file does not use '=' as a separator"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration/parser.rb:40 ../lib/puppet/util/network_device/config.rb:101
+#: ../lib/puppet/file_serving/configuration/parser.rb:43 ../lib/puppet/util/network_device/config.rb:101
 msgid "Invalid argument '%{var}' at %{error_location}"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration/parser.rb:45
+#: ../lib/puppet/file_serving/configuration/parser.rb:48
 msgid "Invalid entry at %{error_location}: '%{file_text}'"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration/parser.rb:70
+#: ../lib/puppet/file_serving/configuration/parser.rb:73
 msgid "%{mount} is already mounted at %{name} at %{error_location}"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration/parser.rb:95
+#: ../lib/puppet/file_serving/configuration/parser.rb:98
 msgid "Removing mount \"%{mount}\": %{detail}"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration/parser.rb:99
+#: ../lib/puppet/file_serving/configuration/parser.rb:102
 msgid "The '%{mount}' module can not have a path. Ignoring attempt to set it"
 msgstr ""
 
@@ -7104,24 +7108,24 @@ msgstr ""
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1447
+#: ../lib/puppet/settings.rb:1457
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1471
+#: ../lib/puppet/settings.rb:1481
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1481
+#: ../lib/puppet/settings.rb:1491
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1482
+#: ../lib/puppet/settings.rb:1492
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1513
+#: ../lib/puppet/settings.rb:1523
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
