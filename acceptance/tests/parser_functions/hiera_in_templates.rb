@@ -271,7 +271,7 @@ end
 def find_osfamilies
   family_hash = {}
   agents.each do |agent|
-    res = on(agent, facter("osfamily"))
+    res = on(agent, facter('os.family'))
     osf = res.stdout.chomp
     family_hash[osf] = 1
   end

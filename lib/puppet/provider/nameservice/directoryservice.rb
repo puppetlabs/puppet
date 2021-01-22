@@ -18,9 +18,9 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   commands :dscl => "/usr/bin/dscl"
   commands :dseditgroup => "/usr/sbin/dseditgroup"
   commands :sw_vers => "/usr/bin/sw_vers"
-  confine :operatingsystem => :darwin
-  confine :feature         => :cfpropertylist
-  defaultfor :operatingsystem => :darwin
+  confine 'os.name' => :darwin
+  confine :feature => :cfpropertylist
+  defaultfor 'os.name' => :darwin
 
   # There is no generalized mechanism for provider cache management, but we can
   # use post_resource_eval, which will be run for each suitable provider at the

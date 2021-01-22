@@ -242,7 +242,7 @@ def prepare_installation
   # Otherwise facter won't be guaranteed to be present.
   if InstallOptions.check_prereqs
     check_prereqs
-    $operatingsystem = Facter.value :operatingsystem
+    $operatingsystem = Facter.value('os.name')
   end
 
   if not InstallOptions.configdir.nil?

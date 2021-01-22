@@ -222,20 +222,20 @@ describe Puppet::Provider do
       { :true => false } => false,
       { :false => false } => true,
       { :false => true } => false,
-      { :operatingsystem => Facter.value(:operatingsystem) } => true,
-      { :operatingsystem => :yayness } => false,
+      { 'os.name' => Facter.value('os.name') } => true,
+      { 'os.name' => :yayness } => false,
       { :nothing => :yayness } => false,
       { :exists => Puppet::Util.which(existing_command) } => true,
       { :exists => "/this/file/does/not/exist" } => false,
       { :true => true, :exists => Puppet::Util.which(existing_command) } => true,
       { :true => true, :exists => "/this/file/does/not/exist" } => false,
-      { :operatingsystem => Facter.value(:operatingsystem),
+      { 'os.name' => Facter.value('os.name'),
         :exists => Puppet::Util.which(existing_command) } => true,
-      { :operatingsystem => :yayness,
+      { 'os.name' => :yayness,
         :exists => Puppet::Util.which(existing_command) } => false,
-      { :operatingsystem => Facter.value(:operatingsystem),
+      { 'os.name' => Facter.value('os.name'),
         :exists => "/this/file/does/not/exist" } => false,
-      { :operatingsystem => :yayness,
+      { 'os.name' => :yayness,
         :exists => "/this/file/does/not/exist" } => false,
     }.each do |confines, result|
       it "should confine #{confines.inspect} to #{result}" do
@@ -269,32 +269,32 @@ describe Puppet::Provider do
   end
 
   context "default providers" do
-    let :os do Facter.value(:operatingsystem) end
+    let :os do Facter.value('os.name') end
 
     it { is_expected.to respond_to :specificity }
 
     it "should find the default provider" do
       type.provide(:nondefault) {}
-      subject.defaultfor :operatingsystem => os
+      subject.defaultfor 'os.name' => os
       expect(subject.name).to eq(type.defaultprovider.name)
     end
 
     describe "regex matches" do
       it "should match a singular regex" do
-        expect(Facter).to receive(:value).with(:osfamily).at_least(:once).and_return("solaris")
+        expect(Facter).to receive(:value).with('os.family').at_least(:once).and_return("solaris")
 
         one = type.provide(:one) do
-          defaultfor :osfamily => /solaris/
+          defaultfor 'os.family' => /solaris/
         end
 
         expect(one).to be_default
       end
 
       it "should not match a non-matching regex " do
-        expect(Facter).to receive(:value).with(:osfamily).at_least(:once).and_return("redhat")
+        expect(Facter).to receive(:value).with('os.family').at_least(:once).and_return("redhat")
 
         one = type.provide(:one) do
-          defaultfor :osfamily => /solaris/
+          defaultfor 'os.family' => /solaris/
         end
 
         expect(one).to_not be_default
@@ -302,15 +302,15 @@ describe Puppet::Provider do
 
       it "should allow a mix of regex and string" do
 
-        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return("fedora")
-        expect(Facter).to receive(:value).with(:operatingsystemmajrelease).at_least(:once).and_return("24")
+        expect(Facter).to receive(:value).with('os.name').at_least(:once).and_return("fedora")
+        expect(Facter).to receive(:value).with('os.release.major').at_least(:once).and_return("24")
 
         one = type.provide(:one) do
-          defaultfor :operatingsystem => "fedora", :operatingsystemmajrelease => /^2[2-9]$/
+          defaultfor 'os.name' => "fedora", 'os.release.major' => /^2[2-9]$/
         end
 
         two = type.provide(:two) do
-          defaultfor :operatingsystem => /fedora/, :operatingsystemmajrelease => '24'
+          defaultfor 'os.name' => /fedora/, 'os.release.major' => '24'
         end
 
         expect(one).to be_default
@@ -320,21 +320,21 @@ describe Puppet::Provider do
 
     describe "when there are multiple defaultfor's of equal specificity" do
       before :each do
-        subject.defaultfor :operatingsystem => :os1
-        subject.defaultfor :operatingsystem => :os2
+        subject.defaultfor 'os.name' => :os1
+        subject.defaultfor 'os.name' => :os2
       end
 
       let(:alternate) { type.provide(:alternate) {} }
 
       it "should be default for the first defaultfor" do
-        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os1)
+        expect(Facter).to receive(:value).with('os.name').at_least(:once).and_return(:os1)
 
         expect(provider).to be_default
         expect(alternate).not_to be_default
       end
 
       it "should be default for the last defaultfor" do
-        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os2)
+        expect(Facter).to receive(:value).with('os.name').at_least(:once).and_return(:os2)
 
         expect(provider).to be_default
         expect(alternate).not_to be_default
@@ -343,31 +343,31 @@ describe Puppet::Provider do
 
     describe "when there are multiple defaultfor's with different specificity" do
       before :each do
-        subject.defaultfor :operatingsystem => :os1
-        subject.defaultfor :operatingsystem => :os2, :operatingsystemmajrelease => "42"
-        subject.defaultfor :operatingsystem => :os3, :operatingsystemmajrelease => /^4[2-9]$/
+        subject.defaultfor 'os.name' => :os1
+        subject.defaultfor 'os.name' => :os2, 'os.release.major' => "42"
+        subject.defaultfor 'os.name' => :os3, 'os.release.major' => /^4[2-9]$/
       end
 
       let(:alternate) { type.provide(:alternate) {} }
 
       it "should be default for a more specific, but matching, defaultfor" do
-        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os2)
-        expect(Facter).to receive(:value).with(:operatingsystemmajrelease).at_least(:once).and_return("42")
+        expect(Facter).to receive(:value).with('os.name').at_least(:once).and_return(:os2)
+        expect(Facter).to receive(:value).with('os.release.major').at_least(:once).and_return("42")
 
         expect(provider).to be_default
         expect(alternate).not_to be_default
       end
 
       it "should be default for a more specific, but matching, defaultfor with regex" do
-        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os3)
-        expect(Facter).to receive(:value).with(:operatingsystemmajrelease).at_least(:once).and_return("42")
+        expect(Facter).to receive(:value).with('os.name').at_least(:once).and_return(:os3)
+        expect(Facter).to receive(:value).with('os.release.major').at_least(:once).and_return("42")
 
         expect(provider).to be_default
         expect(alternate).not_to be_default
       end
 
       it "should be default for a less specific, but matching, defaultfor" do
-        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os1)
+        expect(Facter).to receive(:value).with('os.name').at_least(:once).and_return(:os1)
 
         expect(provider).to be_default
         expect(alternate).not_to be_default
@@ -377,7 +377,7 @@ describe Puppet::Provider do
     it "should consider any true value enough to be default" do
       alternate = type.provide(:alternate) {}
 
-      subject.defaultfor :operatingsystem => [:one, :two, :three, os]
+      subject.defaultfor 'os.name' => [:one, :two, :three, os]
       expect(subject.name).to eq(type.defaultprovider.name)
 
       expect(subject).to be_default
@@ -386,29 +386,29 @@ describe Puppet::Provider do
 
     it "should not be default if the defaultfor doesn't match" do
       expect(subject).not_to be_default
-      subject.defaultfor :operatingsystem => :one
+      subject.defaultfor 'os.name' => :one
       expect(subject).not_to be_default
     end
 
     it "should not be default if the notdefaultfor does match" do
-      expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return("fedora")
-      expect(Facter).to receive(:value).with(:operatingsystemmajrelease).at_least(:once).and_return("24")
+      expect(Facter).to receive(:value).with('os.name').at_least(:once).and_return("fedora")
+      expect(Facter).to receive(:value).with('os.release.major').at_least(:once).and_return("24")
 
       one = type.provide(:one) do
-        defaultfor :operatingsystem => "fedora"
-        notdefaultfor :operatingsystem => "fedora", :operatingsystemmajrelease => 24
+        defaultfor 'os.name' => "fedora"
+        notdefaultfor 'os.name' => "fedora", 'os.release.major' => 24
       end
 
       expect(one).not_to be_default
     end
 
     it "should be default if the notdefaultfor doesn't match" do
-      expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return("fedora")
-      expect(Facter).to receive(:value).with(:operatingsystemmajrelease).at_least(:once).and_return("24")
+      expect(Facter).to receive(:value).with('os.name').at_least(:once).and_return("fedora")
+      expect(Facter).to receive(:value).with('os.release.major').at_least(:once).and_return("24")
 
       one = type.provide(:one) do
-        defaultfor :operatingsystem => "fedora"
-        notdefaultfor :operatingsystem => "fedora", :operatingsystemmajrelease => 42
+        defaultfor 'os.name' => "fedora"
+        notdefaultfor 'os.name' => "fedora", 'os.release.major' => 42
       end
 
       expect(one).to be_default
@@ -519,18 +519,18 @@ describe Puppet::Provider do
         end
 
         it "with the specification: %{spec}" % { spec: thisspec.join(', ') } do
-          allow(Facter).to receive(:value).with(:osfamily).and_return("redhat")
-          allow(Facter).to receive(:value).with(:operatingsystem).and_return("centos")
-          allow(Facter).to receive(:value).with(:operatingsystemrelease).and_return("27")
+          allow(Facter).to receive(:value).with('os.family').and_return("redhat")
+          allow(Facter).to receive(:value).with('os.name').and_return("centos")
+          allow(Facter).to receive(:value).with('os.release.full').and_return("27")
 
           one = type.provide(:one) do
             if defaultforspec[:one].key?(:defaultfor)
-              defaultfor    :osfamily               => "redhat" if  defaultforspec[:one][:defaultfor]
-              defaultfor    :osfamily               => "ubuntu" if !defaultforspec[:one][:defaultfor]
+              defaultfor    'os.family'       => "redhat" if  defaultforspec[:one][:defaultfor]
+              defaultfor    'os.family'       => "ubuntu" if !defaultforspec[:one][:defaultfor]
             end
             if defaultforspec[:one].key?(:notdefaultfor)
-              notdefaultfor :operatingsystem        => "centos" if  defaultforspec[:one][:notdefaultfor]
-              notdefaultfor :operatingsystem        => "ubuntu" if !defaultforspec[:one][:notdefaultfor]
+              notdefaultfor 'os.name'         => "centos" if  defaultforspec[:one][:notdefaultfor]
+              notdefaultfor 'os.name'         => "ubuntu" if !defaultforspec[:one][:notdefaultfor]
             end
           end
 
@@ -538,14 +538,14 @@ describe Puppet::Provider do
           provider_options[:parent] = one if defaultforspec[:two][:derived] # :two inherits from one, if spec'd
           two = type.provide(:two, provider_options) do
             if defaultforspec[:two].key?(:defaultfor) || defaultforspec[:two].key?(:extradefaultfor)
-              defaultfor    :osfamily               => "redhat" if  defaultforspec[:two][:defaultfor]
-              defaultfor    :osfamily               => "redhat",#   defaultforspec[:two][:extradefaultfor] has two parts
-                            :operatingsystem        => "centos" if  defaultforspec[:two][:extradefaultfor]
-              defaultfor    :osfamily               => "ubuntu" if !defaultforspec[:two][:defaultfor]
+              defaultfor    'os.family'       => "redhat" if  defaultforspec[:two][:defaultfor]
+              defaultfor    'os.family'       => "redhat",#   defaultforspec[:two][:extradefaultfor] has two parts
+                            'os.name'         => "centos" if  defaultforspec[:two][:extradefaultfor]
+              defaultfor    'os.family'       => "ubuntu" if !defaultforspec[:two][:defaultfor]
             end
             if defaultforspec[:two].key?(:notdefaultfor)
-              notdefaultfor :operatingsystemrelease => "27" if  defaultforspec[:two][:notdefaultfor]
-              notdefaultfor :operatingsystemrelease => "99" if !defaultforspec[:two][:notdefaultfor]
+              notdefaultfor 'os.release.full' => "27" if  defaultforspec[:two][:notdefaultfor]
+              notdefaultfor 'os.release.full' => "99" if !defaultforspec[:two][:notdefaultfor]
             end
           end
 
