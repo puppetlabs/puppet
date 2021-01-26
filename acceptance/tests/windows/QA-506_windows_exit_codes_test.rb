@@ -58,7 +58,7 @@ agents.each do |agent|
   native_modules_path = on(agent, puppet("config print #{module_path_config_property}")).stdout.gsub('C:', '/cygdrive/c').strip
 
   #Check to see if we are running on Windows 2003. Do a crazy hack to get around SCP issues.
-  if (on(agent, facter("find os.release.major")).stdout =~ /2003/)
+  if (on(agent, facter("os.release.major")).stdout =~ /2003/)
     on(agent, "ln -s #{native_modules_path.gsub(/ /, '\ ')} /tmp/puppet_etc")
     modules_path = '/tmp/puppet_etc'
   else

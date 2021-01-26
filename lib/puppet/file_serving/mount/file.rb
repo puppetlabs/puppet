@@ -3,12 +3,12 @@ require 'puppet/file_serving/mount'
 class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
   def self.localmap
     @localmap ||= {
-      "h" => Facter.value("hostname"),
+      "h" => Facter.value('networking.hostname'),
       "H" => [
-               Facter.value("hostname"),
-               Facter.value("domain")
+               Facter.value('networking.hostname'),
+               Facter.value('networking.domain')
              ].join("."),
-      "d" => Facter.value("domain")
+      "d" => Facter.value('networking.domain')
     }
   end
 

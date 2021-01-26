@@ -100,7 +100,7 @@ node default {
   \\$msgs = hiera_array('message')
   notify {\\$msgs:}
   class {'#{@module_name}':
-    result_dir => hiera('result_dir')[\\$::hostname],
+    result_dir => hiera('result_dir')[\\$facts['networking']['hostname']],
   }
 }
 ",
@@ -188,7 +188,7 @@ class #{@module_name} (
 file { "#{moduledir}/manifests/mod_default.pp":
   content => "
 class #{@module_name}::mod_default {
-  \\$result_dir = hiera('result_dir')[\\$::hostname]
+  \\$result_dir = hiera('result_dir')[\\$facts['networking']['hostname']]
   notify{\\"module mod_default invoked.\\\\n\\":}
   file {\\\"\\\${result_dir}/mod_default\\\":
     ensure  => 'file',
@@ -202,7 +202,7 @@ class #{@module_name}::mod_default {
 file { "#{moduledir}/manifests/mod_osfamily.pp":
   content => "
 class #{@module_name}::mod_osfamily {
-  \\$result_dir = hiera('result_dir')[\\$::hostname]
+  \\$result_dir = hiera('result_dir')[\\$facts['networking']['hostname']]
   notify{\\"module mod_osfamily invoked.\\\\n\\":}
   file {\\\"\\\${result_dir}/mod_osfamily\\\":
     ensure  => 'file',
@@ -216,7 +216,7 @@ class #{@module_name}::mod_osfamily {
 file { "#{moduledir}/manifests/mod_production.pp":
   content => "
 class #{@module_name}::mod_production {
-  \\$result_dir = hiera('result_dir')[\\$::hostname]
+  \\$result_dir = hiera('result_dir')[\\$facts['networking']['hostname']]
   notify{\\"module mod_production invoked.\\\\n\\":}
   file {\\\"\\\${result_dir}/mod_production\\\":
     ensure  => 'file',
@@ -230,7 +230,7 @@ class #{@module_name}::mod_production {
 file { "#{moduledir}/manifests/mod_fqdn.pp":
   content => "
 class #{@module_name}::mod_fqdn {
-  \\$result_dir = hiera('result_dir')[\\$::hostname]
+  \\$result_dir = hiera('result_dir')[\\$facts['networking']['hostname']]
   notify{\\"module mod_fqdn invoked.\\\\n\\":}
   file {\\\"\\\${result_dir}/mod_fqdn\\\":
     ensure  => 'file',
@@ -282,7 +282,7 @@ def find_tmp_dirs
   tmp_dirs = ""
   host_to_result_dir = {}
   agents.each do |agent|
-    h = on(agent, facter("hostname")).stdout.chomp
+    h = on(agent, facter('networking.hostname')).stdout.chomp
     t = agent.tmpdir("#{@module_name}_results")
     tmp_dirs += "  #{h}: '#{t}'\n"
     host_to_result_dir[h] = t
@@ -304,7 +304,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   env_manifest = create_environment(find_osfamilies, tmp_dirs)
   apply_manifest_on(master, env_manifest, :catch_failures => true)
   agents.each do |agent|
-    resultdir = host_to_result_dir[on(agent, facter("hostname")).stdout.chomp]
+    resultdir = host_to_result_dir[on(agent, facter('networking.hostname')).stdout.chomp]
     step "Applying catalog to agent: #{agent}. result files in #{resultdir}"
     on(
       agent,

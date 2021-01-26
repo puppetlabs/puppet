@@ -34,7 +34,7 @@ test_name "C100300: Catalog containing binary data is applied correctly" do
     manifest = <<-MANIFEST
       class #{test_num}(
       ) {
-        \$test_path = \$::fqdn ? #{agent_tmp_dirs}
+        \$test_path = \$facts['networking']['fqdn'] ? #{agent_tmp_dirs}
         file { '#{test_num}':
           path   => "\$test_path/#{test_num}",
           content => file('#{test_num}/binary_data'),

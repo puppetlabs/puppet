@@ -45,7 +45,7 @@ rescue LoadError
 end
 
 PREREQS = %w{openssl facter cgi hiera}
-MIN_FACTER_VERSION = 1.5
+MIN_FACTER_VERSION = 4.0
 
 InstallOptions = OpenStruct.new
 
