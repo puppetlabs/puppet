@@ -289,5 +289,26 @@ Version table:
 
       provider.install
     end
+
+    it "should install using the source attribute if present" do
+      resource[:ensure] = :installed
+      resource[:source] = '/my/local/package/file'
+
+      expect(provider).to receive(:aptget).with(any_args, :install, resource[:source])
+      expect(provider).to receive(:properties).and_return({:mark => :none})
+
+      provider.install
+    end
+
+    it "should install specific version using the source attribute if present" do
+      resource[:ensure] = '1.2.3'
+      resource[:source] = '/my/local/package/file'
+
+      expect(provider).to receive(:aptget).with(any_args, :install, resource[:source])
+      expect(provider).to receive(:properties).and_return({:mark => :none})
+      expect(provider).to receive(:query).and_return({:ensure => '1.2.3'})
+
+      provider.install
+    end
   end
 end
