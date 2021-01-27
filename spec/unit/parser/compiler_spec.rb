@@ -862,6 +862,19 @@ describe Puppet::Parser::Compiler do
 
           expect(catalog.resource('Class', 'Something')).not_to be_nil
         end
+
+        it "includes the class when its name is the same as the node definition" do
+          node.classes = [node.name]
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            class #{node.name} {}
+            node #{node.name} {
+              include #{node.name}
+            }
+          MANIFEST
+
+          expect(catalog.resource('Class', node.name.capitalize)).not_to be_nil
+        end
       end
 
       it "should fail if the class doesn't exist" do

@@ -471,7 +471,7 @@ class Puppet::Parser::Compiler
     newly_included = []
     hostclasses.each do |klass|
       class_scope = scope.class_scope(klass)
-      if class_scope
+      if class_scope && !class_scope.is_nodescope?
         already_included << class_scope.resource
       else
         newly_included << klass.ensure_in_catalog(scope)
