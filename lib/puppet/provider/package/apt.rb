@@ -42,7 +42,11 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
   def query
     hash = super
-    hash[:mark] = :manual if aptmark('showmanual').split("\n").include?(@resource[:name])
+
+    if !%i(absent purged).include?(hash[:ensure]) && aptmark('showmanual', @resource[:name]).strip == @resource[:name]
+      hash[:mark] = :manual
+    end
+
     hash
   end
 
