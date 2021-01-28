@@ -71,6 +71,47 @@ describe Puppet::Application::Facts do
       }.to exit_with(0)
        .and output(expected).to_stdout
     end
+
+    it 'displays a single fact value' do
+      app.command_line.args << 'filesystems' << '--value-only'
+      expect {
+        app.run
+      }.to exit_with(0)
+       .and output("apfs,autofs,devfs\n").to_stdout
+    end
+
+    it "warns and ignores value-only when multiple fact names are specified" do
+      app.command_line.args << 'filesystems' << 'macaddress' << '--value-only'
+      expect {
+        app.run
+      }.to exit_with(0)
+       .and output(expected).to_stdout
+       .and output(/it can only be used when querying for a single fact/).to_stderr
+    end
+
+    {
+      "type_hash" => [{'a' => 2}, "{\n  \"a\": 2\n}"],
+      "type_array" => [[], "[\n\n]"],
+      "type_string" => ["str", "str"],
+      "type_int" => [1, "1"],
+      "type_float" => [1.0, "1.0"],
+      "type_true" => [true, "true"],
+      "type_false" => [false, "false"],
+      "type_nil" => [nil, ""],
+      "type_sym" => [:sym, "sym"]
+    }.each_pair do |name, values|
+      it "renders '#{name}' as '#{values.last}'" do
+        fact_value = values.first
+        fact_output = values.last
+
+        allow(Facter).to receive(:resolve).and_return({name => fact_value})
+
+        app.command_line.args << name << '--value-only'
+        expect {
+          app.run
+        }.to exit_with(0)
+         .and output("#{fact_output}\n").to_stdout
+      end
     end
   end
 
