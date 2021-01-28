@@ -52,7 +52,12 @@ describe Puppet::Application::Facts do
   end
 
   context 'when show action is called' do
-    let(:expected) { "{\n  \"filesystems\": \"apfs,autofs,devfs\",\n  \"macaddress\": \"64:52:11:22:03:25\"\n}\n" }
+    let(:expected) { <<~END }
+      {
+        "filesystems": "apfs,autofs,devfs",
+        "macaddress": "64:52:11:22:03:25"
+      }
+    END
 
     before :each do
       Puppet::Node::Facts.indirection.terminus_class = :facter
@@ -64,12 +69,17 @@ describe Puppet::Application::Facts do
       expect {
         app.run
       }.to exit_with(0)
-               .and output(expected).to_stdout
+       .and output(expected).to_stdout
+    end
     end
   end
 
   context 'when default action is called' do
-    let(:expected) { "---\nfilesystems: apfs,autofs,devfs\nmacaddress: 64:52:11:22:03:25\n" }
+    let(:expected) { <<~END }
+      ---
+      filesystems: apfs,autofs,devfs
+      macaddress: 64:52:11:22:03:25
+    END
 
     before :each do
       Puppet::Node::Facts.indirection.terminus_class = :facter
@@ -81,7 +91,7 @@ describe Puppet::Application::Facts do
       expect {
         app.run
       }.to exit_with(0)
-               .and output(expected).to_stdout
+       .and output(expected).to_stdout
       expect(app.action.name).to eq(:show)
     end
   end
