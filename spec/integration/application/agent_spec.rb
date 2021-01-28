@@ -600,4 +600,37 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       expect(File).to_not be_exist(cached_catalog)
     end
   end
+
+  context "reporting" do
+    it "stores a finalized report" do
+      catalog_handler = -> (req, res) {
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+        notify { 'foo':
+          require => Notify['bar']
+        }
+
+        notify { 'bar':
+          require => Notify['foo']
+        }
+        MANIFEST
+
+        res.body = formatter.render(catalog)
+        res['Content-Type'] = formatter.mime
+      }
+
+      server.start_server(mounts: {catalog: catalog_handler}) do |port|
+        Puppet[:serverport] = port
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(1)
+         .and output(%r{Applying configuration}).to_stdout
+         .and output(%r{Found 1 dependency cycle}).to_stderr
+
+        report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
+        expect(report.status).to eq("failed")
+        expect(report.metrics).to_not be_empty
+      end
+    end
+  end
 end
