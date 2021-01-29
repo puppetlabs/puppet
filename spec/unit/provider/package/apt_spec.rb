@@ -115,24 +115,12 @@ Version table:
       allow(provider).to receive(:dpkgquery).and_return("name: #{resource.name}" )
     end
 
-    context "when package is manual marked" do
-      before do
-        allow(described_class).to receive(:aptmark).with('showmanual').and_return("#{resource.name}\n")
-      end
 
-      it 'sets mark to manual' do
-        result = provider.query
-        expect(result[:mark]).to eql(:manual)
-      end
-    end
-
-    context 'when package is not manual marked ' do
-      before do
-        allow(described_class).to receive(:aptmark).with('showmanual').and_return('')
-      end
-
+    context 'when package is not installed on the system' do
       it 'does not set mark to manual' do
         result = provider.query
+
+        expect(described_class).not_to receive(:aptmark)
         expect(result[:mark]).to be_nil
       end
     end
@@ -286,6 +274,27 @@ Version table:
       resource[:install_options] = ['--foo', { '--bar' => 'baz', '--baz' => 'foo' }]
       expect(provider).to receive(:aptget).with('-q', '-y', '-o', 'DPkg::Options::=--force-confold', '--foo', '--bar=baz', '--baz=foo', :install, name)
       expect(provider).to receive(:properties).and_return({:mark => :none})
+
+      provider.install
+    end
+
+    it "should install using the source attribute if present" do
+      resource[:ensure] = :installed
+      resource[:source] = '/my/local/package/file'
+
+      expect(provider).to receive(:aptget).with(any_args, :install, resource[:source])
+      expect(provider).to receive(:properties).and_return({:mark => :none})
+
+      provider.install
+    end
+
+    it "should install specific version using the source attribute if present" do
+      resource[:ensure] = '1.2.3'
+      resource[:source] = '/my/local/package/file'
+
+      expect(provider).to receive(:aptget).with(any_args, :install, resource[:source])
+      expect(provider).to receive(:properties).and_return({:mark => :none})
+      expect(provider).to receive(:query).and_return({:ensure => '1.2.3'})
 
       provider.install
     end
