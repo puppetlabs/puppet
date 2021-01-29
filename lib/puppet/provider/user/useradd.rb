@@ -59,6 +59,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
      get(:uid)
   end
 
+  def gid
+     return localgid if @resource.forcelocal?
+     get(:gid)
+  end
+
   def comment
      return localcomment if @resource.forcelocal?
      get(:comment)
@@ -85,6 +90,12 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   def localuid
     user = finduser(:account, resource[:name])
     return user[:uid] if user
+    false
+  end
+
+  def localgid
+    user = finduser(:account, resource[:name])
+    return user[:gid] if user
     false
   end
 
