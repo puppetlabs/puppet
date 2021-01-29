@@ -422,10 +422,10 @@ module Puppet
     end
 
     newparam(:source) do
-      desc "Where to find the package file. This is only used by providers that don't
+      desc "Where to find the package file. This is mostly used by providers that don't
         automatically download packages from a central repository. (For example:
-        the `yum` and `apt` providers ignore this attribute, but the `rpm` and
-        `dpkg` providers require it.)
+        the `yum` provider ignores this attribute, `apt` provider uses it if present
+        and the `rpm` and `dpkg` providers require it.)
 
         Different providers accept different values for `source`. Most providers
         accept paths to local files stored on the target system. Some providers

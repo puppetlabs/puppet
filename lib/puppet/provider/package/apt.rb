@@ -42,7 +42,11 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
   def query
     hash = super
-    hash[:mark] = :manual if aptmark('showmanual').split("\n").include?(@resource[:name])
+
+    if !%i(absent purged).include?(hash[:ensure]) && aptmark('showmanual', @resource[:name]).strip == @resource[:name]
+      hash[:mark] = :manual
+    end
+
     hash
   end
 
@@ -147,7 +151,13 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     end
 
     cmd += install_options if @resource[:install_options]
-    cmd << :install << str
+    cmd << :install
+
+    if source
+      cmd << source
+    else
+      cmd << str
+    end
 
     self.unhold if self.properties[:mark] == :hold
     begin
@@ -155,6 +165,18 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     ensure
       self.hold if @resource[:mark] == :hold
     end
+
+    # If a source file was specified, we must make sure the expected version was installed from specified file
+    if source && !%i(present installed).include?(should)
+      is = self.query
+      raise Puppet::Error, _("Could not find package %{name}") % { name: self.name } unless is
+
+      version = is[:ensure]
+
+      raise Puppet::Error, _("Failed to update to version %{should}, got version %{version} instead") % { should: should, version: version } unless
+        insync?(version)
+    end
+
   end
 
   # What's the latest package version available?
@@ -230,5 +252,11 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
       return false
     end
     should_range.include?(is_version)
+  end
+
+  private
+
+  def source
+    @source ||= @resource[:source]
   end
 end
