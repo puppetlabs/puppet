@@ -69,6 +69,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
      get(:comment)
   end
 
+  def groups
+     return localgroups if @resource.forcelocal?
+     get(:groups)
+  end
+
   def finduser(key, value)
     passwd_file = "/etc/passwd"
     passwd_keys = [:account, :password, :uid, :gid, :gecos, :directory, :shell]
@@ -104,9 +109,27 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     user[:gecos]
   end
 
+  def localgroups
+    member_of = []
+    group_file = "/etc/group"
+
+    @group_content ||= File.read(group_file)
+    @group_content.each_line do |line|
+      data = line.chomp.split(':')
+      if data.last.split(',').include?(resource[:name])
+        member_of.push(data.first)
+      end
+    end
+    member_of
+  end
+
   def shell=(value)
     check_valid_shell
     set(:shell, value)
+  end
+
+  def groups=(value)
+    set(:groups, value)
   end
 
   verify :gid, "GID must be an integer" do |value|
