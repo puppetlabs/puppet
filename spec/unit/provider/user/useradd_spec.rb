@@ -152,6 +152,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
       it "should not use -G for luseradd and should call usermod with -G after luseradd when groups property is set" do
         resource[:groups] = ['group1', 'group2']
+        allow(provider).to receive(:localgroups)
         expect(provider).to receive(:execute).with(include('/usr/sbin/luseradd').and(excluding('-G')), hash_including(custom_environment: hash_including('LIBUSER_CONF')))
         expect(provider).to receive(:execute).with(include('/usr/sbin/usermod').and(include('-G')), hash_including(custom_environment: hash_including('LIBUSER_CONF')))
         provider.create
@@ -337,7 +338,8 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
     it "should return the local comment string when forcelocal is true" do
       resource[:forcelocal] = true
-      allow(File).to receive(:read).with('/etc/passwd').and_return(content)
+      allow(Puppet::FileSystem).to receive(:exist?).with('/etc/passwd').and_return(true)
+      allow(Puppet::FileSystem).to receive(:each_line).with('/etc/passwd').and_yield(content)
       expect(provider.comment).to eq('local comment')
     end
 
@@ -349,8 +351,58 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
   end
 
+  describe "#gid" do
+    before { described_class.has_feature :manages_local_users_and_groups }
+
+    let(:content) { "myuser:x:x:999:x:x:x" }
+
+    it "should return the local GID when forcelocal is true" do
+      resource[:forcelocal] = true
+      allow(Puppet::FileSystem).to receive(:exist?).with('/etc/passwd').and_return(true)
+      allow(Puppet::FileSystem).to receive(:each_line).with('/etc/passwd').and_yield(content)
+      expect(provider.gid).to eq('999')
+    end
+
+    it "should fall back to nameservice GID when forcelocal is false" do
+      resource[:forcelocal] = false
+      allow(provider).to receive(:get).with(:gid).and_return('1234')
+      expect(provider).not_to receive(:localgid)
+      expect(provider.gid).to eq('1234')
+    end
+  end
+
+  describe "#groups" do
+    before { described_class.has_feature :manages_local_users_and_groups }
+
+    let(:content) do
+      <<~EOF
+      group1:x:0:myuser
+      group2:x:999:
+      group3:x:998:myuser
+      EOF
+    end
+
+    it "should return the local groups string when forcelocal is true" do
+      resource[:forcelocal] = true
+      group1, group2, group3 = content.split
+      allow(Puppet::FileSystem).to receive(:exist?).with('/etc/group').and_return(true)
+      allow(Puppet::FileSystem).to receive(:each_line).with('/etc/group').and_yield(group1).and_yield(group2).and_yield(group3)
+      expect(provider.groups).to eq(['group1', 'group3'])
+    end
+
+    it "should fall back to nameservice groups when forcelocal is false" do
+      resource[:forcelocal] = false
+      allow(provider).to receive(:get).with(:groups).and_return('remote groups')
+      expect(provider).not_to receive(:localgroups)
+      expect(provider.groups).to eq('remote groups')
+    end
+  end
+
   describe "#finduser" do
-    before { allow(File).to receive(:read).with('/etc/passwd').and_return(content) }
+    before do
+      allow(Puppet::FileSystem).to receive(:exist?).with('/etc/passwd').and_return(true)
+      allow(Puppet::FileSystem).to receive(:each_line).with('/etc/passwd').and_yield(content)
+    end
 
     let(:content) { "sample_account:sample_password:sample_uid:sample_gid:sample_gecos:sample_directory:sample_shell" }
     let(:output) do
@@ -376,7 +428,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
 
     it "reads the user file only once per resource" do
-      expect(File).to receive(:read).with('/etc/passwd').once
+      expect(Puppet::FileSystem).to receive(:each_line).with('/etc/passwd').once
       5.times { provider.finduser(:account, 'sample_account') }
     end
   end

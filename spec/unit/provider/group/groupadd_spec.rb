@@ -198,7 +198,10 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
   end
 
   describe "#findgroup" do
-    before { allow(File).to receive(:read).with('/etc/group').and_return(content) }
+    before do
+      allow(Puppet::FileSystem).to receive(:exist?).with('/etc/group').and_return(true)
+      allow(Puppet::FileSystem).to receive(:each_line).with('/etc/group').and_yield(content)
+    end
 
     let(:content) { "sample_group_name:sample_password:sample_gid:sample_user_list" }
     let(:output) do
@@ -221,7 +224,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
     end
 
     it "reads the group file only once per resource" do
-      expect(File).to receive(:read).with('/etc/group').once
+      expect(Puppet::FileSystem).to receive(:each_line).with('/etc/group').once
       5.times { provider.send(:findgroup, :group_name, 'sample_group_name') }
     end
   end

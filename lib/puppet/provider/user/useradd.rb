@@ -59,23 +59,37 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
      get(:uid)
   end
 
+  def gid
+     return localgid if @resource.forcelocal?
+     get(:gid)
+  end
+
   def comment
      return localcomment if @resource.forcelocal?
      get(:comment)
   end
 
+  def groups
+     return localgroups if @resource.forcelocal?
+     get(:groups)
+  end
+
   def finduser(key, value)
-    passwd_file = "/etc/passwd"
+    passwd_file = '/etc/passwd'
     passwd_keys = [:account, :password, :uid, :gid, :gecos, :directory, :shell]
-    index = passwd_keys.index(key)
-    @passwd_content ||= File.read(passwd_file)
-    @passwd_content.each_line do |line|
-      user = line.split(":")
-      if user[index] == value
-        return Hash[passwd_keys.zip(user)]
+
+    unless @users
+      unless Puppet::FileSystem.exist?(passwd_file)
+        raise Puppet::Error.new("Forcelocal set for user resource '#{resource[:name]}', but #{passwd_file} does not exist")
+      end
+
+      @users = []
+      Puppet::FileSystem.each_line(passwd_file) do |line|
+        user = line.chomp.split(':')
+        @users << Hash[passwd_keys.zip(user)]
       end
     end
-    false
+    @users.find { |param| param[key] == value } || false
   end
 
   def local_username
@@ -88,14 +102,47 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     false
   end
 
+  def localgid
+    user = finduser(:account, resource[:name])
+    return user[:gid] if user
+    false
+  end
+
   def localcomment
     user = finduser(:account, resource[:name])
     user[:gecos]
   end
 
+  def localgroups
+    @groups_of ||= {}
+    group_file = '/etc/group'
+    user = resource[:name]
+
+    return @groups_of[user] if @groups_of[user]
+
+    @groups_of[user] = []
+
+    unless Puppet::FileSystem.exist?(group_file)
+      raise Puppet::Error.new("Forcelocal set for user resource '#{user}', but #{group_file} does not exist")
+    end
+
+    Puppet::FileSystem.each_line(group_file) do |line|
+      data = line.chomp.split(':')
+      if data.last.split(',').include?(user)
+        @groups_of[user] << data.first
+      end
+    end
+
+    @groups_of[user]
+  end
+
   def shell=(value)
     check_valid_shell
     set(:shell, value)
+  end
+
+  def groups=(value)
+    set(:groups, value)
   end
 
   verify :gid, "GID must be an integer" do |value|
