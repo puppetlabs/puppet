@@ -151,17 +151,23 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
       options[:resolve_options] = true
       result = Puppet::Node::Facts.indirection.find(Puppet.settings[:certname], options)
 
-      facts = result.values
-
       if options[:value_only]
-        facts.values.first
+        result.values.values.first
       else
-        facts
+        result.values
       end
     end
 
     when_rendering :console do |result|
-      Puppet::Util::Json.dump(result, :pretty => true)
+      # VALID_TYPES = [Integer, Float, TrueClass, FalseClass, NilClass, Symbol, String, Array, Hash].freeze
+      # from https://github.com/puppetlabs/facter/blob/4.0.49/lib/facter/custom_facts/util/normalization.rb#L8
+
+      case result
+      when Array, Hash
+        Puppet::Util::Json.dump(result, :pretty => true)
+      else # one of VALID_TYPES above
+        result
+      end
     end
   end
 end
