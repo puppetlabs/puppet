@@ -71,7 +71,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def groups
      return localgroups if @resource.forcelocal?
-     get(:groups)
+     super
   end
 
   def finduser(key, value)
