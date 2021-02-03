@@ -392,7 +392,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
     it "should fall back to nameservice groups when forcelocal is false" do
       resource[:forcelocal] = false
-      allow(provider).to receive(:get).with(:groups).and_return('remote groups')
+      allow(Puppet::Util::POSIX).to receive(:groups_of).with('myuser').and_return(['remote groups'])
       expect(provider).not_to receive(:localgroups)
       expect(provider.groups).to eq('remote groups')
     end
