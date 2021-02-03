@@ -17,6 +17,8 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
   commands :invoke_rc => "/usr/sbin/invoke-rc.d"
   commands :service => "/usr/sbin/service"
 
+  confine :false => Puppet::FileSystem.exist?('/proc/1/comm') && Puppet::FileSystem.read('/proc/1/comm').include?('systemd')
+
   defaultfor :operatingsystem => :cumuluslinux, :operatingsystemmajrelease => ['1','2']
   defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ['5','6','7']
   defaultfor :operatingsystem => :devuan
