@@ -1085,6 +1085,14 @@ EOT
           certificate revocation checking and does not attempt to download the CRL.
         EOT
     },
+    :ciphers => {
+      :default => 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256',
+      :type => :string,
+      :desc => "The list of ciphersuites for TLS connections initiated by puppet. The
+                default value is chosen to support TLS 1.0 and up, but can be made
+                more restrictive if needed. The ciphersuites must be specified in OpenSSL
+                format, not IANA."
+    },
     :key_type => {
       :default => 'rsa',
       :type    => :enum,
