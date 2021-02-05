@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'puppet/face'
 require 'puppet_spec/puppetserver'
 
-describe "puppet plugin" do
+describe "puppet plugin", unless: Puppet::Util::Platform.jruby? do
   include_context "https client"
 
   let(:server) { PuppetSpec::Puppetserver.new }
