@@ -159,7 +159,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       https_server.start_server do |port|
         expect {
           client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: root_context})
-        }.to raise_error(Puppet::HTTP::ConnectionError, /no cipher match/)
+        }.to raise_error(Puppet::HTTP::ConnectionError, /no cipher match|sslv3 alert handshake failure/)
       end
     end
   end
