@@ -104,7 +104,14 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def localgid
     user = finduser(:account, resource[:name])
-    return user[:gid] if user
+    if user
+      begin
+        return Integer(user[:gid])
+      rescue ArgumentError
+        Puppet.debug("Non-numeric GID found in /etc/passwd for user #{resource[:name]}")
+        return user[:gid]
+      end
+    end
     false
   end
 

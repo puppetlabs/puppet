@@ -2,7 +2,7 @@ test_name "verify that we can modify the gid"
 confine :except, :platform => 'windows'
 confine :except, :platform => /aix/ # PUP-5358
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',  # Use block style `test_run`
     'audit:acceptance' # Could be done as integration tests, but would
                        # require changing the system running the test
