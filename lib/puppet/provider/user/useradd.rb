@@ -98,7 +98,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def localuid
     user = finduser(:account, resource[:name])
-    return user[:uid] if user
+    return user[:uid].to_i if user
     false
   end
 
