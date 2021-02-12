@@ -360,14 +360,14 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       resource[:forcelocal] = true
       allow(Puppet::FileSystem).to receive(:exist?).with('/etc/passwd').and_return(true)
       allow(Puppet::FileSystem).to receive(:each_line).with('/etc/passwd').and_yield(content)
-      expect(provider.gid).to eq('999')
+      expect(provider.gid).to eq(999)
     end
 
     it "should fall back to nameservice GID when forcelocal is false" do
       resource[:forcelocal] = false
-      allow(provider).to receive(:get).with(:gid).and_return('1234')
+      allow(provider).to receive(:get).with(:gid).and_return(1234)
       expect(provider).not_to receive(:localgid)
-      expect(provider.gid).to eq('1234')
+      expect(provider.gid).to eq(1234)
     end
   end
 
