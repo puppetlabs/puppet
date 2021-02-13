@@ -25,6 +25,7 @@ Gem::Specification.new do |s|
   s.email = "puppet@puppetlabs.com"
   s.executables = ["puppet"]
   s.files = ["bin/puppet"]
+  s.license = "Apache-2.0"
   s.homepage = "https://puppetlabs.com"
   s.rdoc_options = ["--title", "Puppet - Configuration Management", "--main", "README", "--line-numbers"]
   s.require_paths = ["lib"]
