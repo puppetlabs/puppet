@@ -147,4 +147,88 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
       end
     end
   end
+
+  action(:show) do
+    summary _("Retrieve current node's facts.")
+    arguments _("[<facts>]")
+    description <<-'EOT'
+    Reads facts from the local system using `facter` terminus.
+    A query can be provided to retrieve just a specific fact or a set of facts.
+    EOT
+    returns "The output of facter with added puppet specific facts."
+    notes <<-'EOT'
+
+    EOT
+    examples <<-'EOT'
+    retrieve facts:
+
+    $ puppet facts show os
+    EOT
+
+    option("--config-file " + _("<path>")) do
+      default_to { nil }
+      summary _("The location of the config file for Facter.")
+    end
+
+    option("--custom-dir " + _("<path>")) do
+      default_to { nil }
+      summary _("The path to a directory that contains custom facts.")
+    end
+
+    option("--external-dir " + _("<path>")) do
+      default_to { nil }
+      summary _("The path to a directory that contains external facts.")
+    end
+
+    option("--no-block") do
+      summary _("Disable fact blocking mechanism.")
+    end
+
+    option("--no-cache") do
+      summary _("Disable fact caching mechanism.")
+    end
+
+    option("--show-legacy") do
+      summary _("Show legacy facts when querying all facts.")
+    end
+
+    option("--value-only") do
+      summary _("Show only the value when the action is called with a single query")
+    end
+
+    when_invoked do |*args|
+      options = args.pop
+
+      Puppet.settings.preferred_run_mode = :agent
+      Puppet::Node::Facts.indirection.terminus_class = :facter
+
+      if options[:value_only] && !args.count.eql?(1)
+        options[:value_only] = nil
+        Puppet.warning("Incorrect use of --value-only argument; it can only be used when querying for a single fact!")
+      end
+
+      options[:user_query] = args
+      options[:resolve_options] = true
+      result = Puppet::Node::Facts.indirection.find(Puppet.settings[:certname], options)
+
+      if options[:value_only]
+        result.values.values.first
+      else
+        result.values
+      end
+    end
+
+    when_rendering :console do |result|
+      # VALID_TYPES = [Integer, Float, TrueClass, FalseClass, NilClass, Symbol, String, Array, Hash].freeze
+      # from https://github.com/puppetlabs/facter/blob/4.0.49/lib/facter/custom_facts/util/normalization.rb#L8
+
+      case result
+      when Array, Hash
+        Puppet::Util::Json.dump(result, :pretty => true)
+      else # one of VALID_TYPES above
+        result
+      end
+    end
+  end
 end
+

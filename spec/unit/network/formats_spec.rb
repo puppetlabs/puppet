@@ -534,4 +534,45 @@ EOT
       end
     end
   end
+
+  describe ":flat format" do
+    let(:flat) { Puppet::Network::FormatHandler.format(:flat) }
+
+    it "should include a flat format" do
+      expect(flat).to be_an_instance_of Puppet::Network::Format
+    end
+
+    [:intern, :intern_multiple].each do |method|
+      it "should not implement #{method}" do
+        expect { flat.send(method, String, 'blah') }.to raise_error NotImplementedError
+      end
+    end
+
+    context "when rendering arrays" do
+      {
+          []                           => "",
+          [1, 2]                       => "0=1\n1=2\n",
+          ["one"]                      => "0=one\n",
+          [{"one" => 1}, {"two" => 2}] => "0.one=1\n1.two=2\n",
+          [['something', 'for'], ['the', 'test']]  => "0=[\"something\", \"for\"]\n1=[\"the\", \"test\"]\n"
+      }.each_pair do |input, output|
+        it "should render #{input.inspect} as one item per line" do
+          expect(flat.render(input)).to eq(output)
+        end
+      end
+    end
+
+    context "when rendering hashes" do
+      {
+          {}                                   => "",
+          {1 => 2}                             => "1=2\n",
+          {"one" => "two"}                     => "one=two\n",
+          {[1,2] => 3, [2,3] => 5, [3,4] => 7} => "[1, 2]=3\n[2, 3]=5\n[3, 4]=7\n",
+      }.each_pair do |input, output|
+        it "should render #{input.inspect}" do
+          expect(flat.render(input)).to eq(output)
+        end
+      end
+    end
+  end
 end

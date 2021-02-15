@@ -183,6 +183,73 @@ Puppet::Network::FormatHandler.create(:console,
   end
 end
 
+Puppet::Network::FormatHandler.create(:flat,
+                                      :mime   => 'text/x-flat-text',
+                                      :weight => 0) do
+
+  def flatten_hash(hash)
+    hash.each_with_object({}) do |(k, v), h|
+      if v.is_a? Hash
+        flatten_hash(v).map do |h_k, h_v|
+          h["#{k}.#{h_k}"] = h_v
+        end
+      elsif v.is_a? Array
+        v.each_with_index do |el, i|
+          if el.is_a? Hash
+            flatten_hash(el).map do |el_k, el_v|
+              h["#{k}.#{i}.#{el_k}"] = el_v
+            end
+          else
+            h["#{k}.#{i}"] = el
+          end
+        end
+      else
+        h[k] = v
+      end
+    end
+  end
+
+  def flatten_array(array)
+    a={}
+    array.each_with_index do |el, i|
+      if el.is_a? Hash
+        flatten_hash(el).map do |el_k, el_v|
+          a["#{i}.#{el_k}"] = el_v
+        end
+      else
+        a["#{i}"] = el
+      end
+    end
+    a
+  end
+
+  def construct_output(data)
+    output = ''
+    data.each do |key, value|
+      output << "#{key}=#{value}"
+      output << "\n"
+    end
+    output
+  end
+
+  def render(datum)
+    return datum if datum.is_a?(String) || datum.is_a?(Numeric)
+    # Simple hash
+    if datum.is_a?(Hash)
+      data = flatten_hash(datum)
+      return construct_output(data)
+    elsif datum.is_a?(Array)
+      data = flatten_array(datum)
+      return construct_output(data)
+    end
+    Puppet::Util::Json.dump(datum, :pretty => true, :quirks_mode => true)
+  end
+  def render_multiple(data)
+    data.collect(&:render).join("\n")
+  end
+end
+
+
 Puppet::Network::FormatHandler.create(:rich_data_json, mime: 'application/vnd.puppet.rich+json', charset: Encoding::UTF_8, weight: 30) do
   def intern(klass, text)
     Puppet.override({:rich_data => true}) do

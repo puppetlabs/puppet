@@ -71,4 +71,8 @@ CONF
                                log.message =~ /Uploading facts for '.*' to 'puppet\.server\.test'/}
     end
   end
+
+  describe "#show" do
+    it { is_expected.to be_action :show }
+  end
 end
