@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.19.1-133-gcc65fe8151\n"
+"Project-Id-Version: Puppet automation framework 6.21.1-6-g5c227c9eb2\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-01-14 12:33+0000\n"
-"PO-Revision-Date: 2021-01-14 12:33+0000\n"
+"POT-Creation-Date: 2021-02-15 07:18+0000\n"
+"PO-Revision-Date: 2021-02-15 07:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -587,44 +587,44 @@ msgstr ""
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:426
+#: ../lib/puppet/configurer.rb:436
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:455 ../lib/puppet/http/resolver/server_list.rb:67
+#: ../lib/puppet/configurer.rb:465 ../lib/puppet/http/resolver/server_list.rb:67
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:459 ../lib/puppet/http/resolver/server_list.rb:70
+#: ../lib/puppet/configurer.rb:469 ../lib/puppet/http/resolver/server_list.rb:70
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:470 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:480 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:479
+#: ../lib/puppet/configurer.rb:489
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:498
+#: ../lib/puppet/configurer.rb:508
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:506
+#: ../lib/puppet/configurer.rb:516
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:521
+#: ../lib/puppet/configurer.rb:531
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:539
+#: ../lib/puppet/configurer.rb:549
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:560
+#: ../lib/puppet/configurer.rb:570
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -1043,6 +1043,46 @@ msgstr ""
 msgid "Already using Facter 4. To use `puppet facts diff` remove facterng from the .conf file or run `puppet config set facterng false`."
 msgstr ""
 
+#: ../lib/puppet/face/facts.rb:152
+msgid "Retrieve current node's facts."
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:153
+msgid "[<facts>]"
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:168 ../lib/puppet/face/facts.rb:173 ../lib/puppet/face/facts.rb:178 ../lib/puppet/face/module/changes.rb:21
+msgid "<path>"
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:170
+msgid "The location of the config file for Facter."
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:175
+msgid "The path to a directory that contains custom facts."
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:180
+msgid "The path to a directory that contains external facts."
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:184
+msgid "Disable fact blocking mechanism."
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:188
+msgid "Disable fact caching mechanism."
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:192
+msgid "Show legacy facts when querying all facts."
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:196
+msgid "Show only the value when the action is called with a single query"
+msgstr ""
+
 #: ../lib/puppet/face/generate.rb:9
 msgid "Generates Puppet code from Ruby definitions."
 msgstr ""
@@ -1204,10 +1244,6 @@ msgstr ""
 
 #: ../lib/puppet/face/module/changes.rb:11
 msgid "Array of strings representing paths of modified files."
-msgstr ""
-
-#: ../lib/puppet/face/module/changes.rb:21
-msgid "<path>"
 msgstr ""
 
 #: ../lib/puppet/face/module/changes.rb:27
@@ -2546,7 +2582,11 @@ msgstr ""
 msgid "You cannot save facts to the code store; it is only used for getting facts from Facter"
 msgstr ""
 
-#: ../lib/puppet/indirector/facts/facter.rb:56
+#: ../lib/puppet/indirector/facts/facter.rb:36
+msgid "puppet facts show requires version 4.0.40 or greater of Facter."
+msgstr ""
+
+#: ../lib/puppet/indirector/facts/facter.rb:62
 msgid "Loading facts"
 msgstr ""
 
@@ -6824,24 +6864,28 @@ msgstr ""
 msgid "Mac OS X packages must specify a package source"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:85
+#: ../lib/puppet/provider/package/apt.rb:89
 msgid "/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure."
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:167 ../lib/puppet/provider/package/fink.rb:55
+#: ../lib/puppet/provider/package/apt.rb:172 ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:94 ../lib/puppet/provider/package/portupgrade.rb:152 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:312 ../lib/puppet/provider/package/zypper.rb:146
+msgid "Could not find package %{name}"
+msgstr ""
+
+#: ../lib/puppet/provider/package/apt.rb:176 ../lib/puppet/provider/package/yum.rb:317
+msgid "Failed to update to version %{should}, got version %{version} instead"
+msgstr ""
+
+#: ../lib/puppet/provider/package/apt.rb:189 ../lib/puppet/provider/package/fink.rb:55
 msgid "Could not find latest version"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:178 ../lib/puppet/provider/package/fink.rb:66
+#: ../lib/puppet/provider/package/apt.rb:200 ../lib/puppet/provider/package/fink.rb:66
 msgid "Preseeding %{response} to debconf-set-selections"
 msgstr ""
 
-#: ../lib/puppet/provider/package/apt.rb:182 ../lib/puppet/provider/package/fink.rb:70
+#: ../lib/puppet/provider/package/apt.rb:204 ../lib/puppet/provider/package/fink.rb:70
 msgid "No responsefile specified or non existent, not preseeding anything"
-msgstr ""
-
-#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:94 ../lib/puppet/provider/package/portupgrade.rb:152 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:312 ../lib/puppet/provider/package/zypper.rb:146
-msgid "Could not find package %{name}"
 msgstr ""
 
 #: ../lib/puppet/provider/package/aptrpm.rb:53
@@ -7177,10 +7221,6 @@ msgstr ""
 
 #: ../lib/puppet/provider/package/yum.rb:306
 msgid "Could not find package %{wanted}"
-msgstr ""
-
-#: ../lib/puppet/provider/package/yum.rb:317
-msgid "Failed to update to version %{should}, got version %{version} instead"
 msgstr ""
 
 #: ../lib/puppet/provider/package_targetable.rb:56
@@ -7694,24 +7734,24 @@ msgstr ""
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1435
+#: ../lib/puppet/settings.rb:1445
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1459
+#: ../lib/puppet/settings.rb:1469
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1469
+#: ../lib/puppet/settings.rb:1479
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1470
+#: ../lib/puppet/settings.rb:1480
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1501
+#: ../lib/puppet/settings.rb:1511
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
