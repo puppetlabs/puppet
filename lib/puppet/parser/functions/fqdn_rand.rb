@@ -26,10 +26,12 @@ Puppet::Parser::Functions::newfunction(:fqdn_rand, :arity => -2, :type => :rvalu
     # Restoring previous fqdn_rand behavior of calculating its seed value using MD5
     # when running on a non-FIPS enabled platform and only using SHA256 on FIPS enabled
     # platforms.
+    # First convert to lowercase, as DNS hostnames are case-insensitive.
+    longstring = [self['::fqdn'].to_s.downcase,max,args].join(':')
     if Puppet::Util::Platform.fips_enabled?
-      seed = Digest::SHA256.hexdigest([self['::fqdn'],max,args].join(':')).hex
+      seed = Digest::SHA256.hexdigest(longstring).hex
     else
-      seed = Digest::MD5.hexdigest([self['::fqdn'],max,args].join(':')).hex
+      seed = Digest::MD5.hexdigest(longstring).hex
     end
 
     Puppet::Util.deterministic_rand_int(seed,max)
