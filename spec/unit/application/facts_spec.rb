@@ -3,7 +3,7 @@ require 'puppet/application/facts'
 
 describe Puppet::Application::Facts do
   let(:app) { Puppet::Application[:facts] }
-  let(:values) { {"filesystems" => "apfs,autofs,devfs", "macaddress" => "64:52:11:22:03:25"} }
+  let(:values) { {"filesystems" => "apfs,autofs,devfs", "macaddress" => "64:52:11:22:03:2e"} }
 
   before :each do
     Puppet::Node::Facts.indirection.terminus_class = :memory
@@ -21,7 +21,7 @@ describe Puppet::Application::Facts do
       name: whatever
       values:
         filesystems: apfs,autofs,devfs
-        macaddress: "64:52:11:22:03:25"
+        macaddress: "64:52:11:22:03:2e"
     END
 
     expect {
@@ -42,7 +42,7 @@ describe Puppet::Application::Facts do
       name: #{Puppet[:certname]}
       values:
         filesystems: apfs,autofs,devfs
-        macaddress: "64:52:11:22:03:25"
+        macaddress: "64:52:11:22:03:2e"
     END
 
     expect {
@@ -55,7 +55,7 @@ describe Puppet::Application::Facts do
     let(:expected) { <<~END }
       {
         "filesystems": "apfs,autofs,devfs",
-        "macaddress": "64:52:11:22:03:25"
+        "macaddress": "64:52:11:22:03:2e"
       }
     END
 
@@ -119,7 +119,7 @@ describe Puppet::Application::Facts do
     let(:expected) { <<~END }
       ---
       filesystems: apfs,autofs,devfs
-      macaddress: 64:52:11:22:03:25
+      macaddress: 64:52:11:22:03:2e
     END
 
     before :each do
