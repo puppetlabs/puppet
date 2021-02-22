@@ -44,7 +44,8 @@ module Puppet::Util::Windows::SID
     ERROR_INVALID_PARAMETER   = 87
     ERROR_INSUFFICIENT_BUFFER = 122
 
-    def self.lookup_account_name(system_name = nil, account_name)
+    def self.lookup_account_name(system_name = nil, sanitize = true, account_name)
+      account_name = sanitize_account_name(account_name) if sanitize
       system_name_ptr = FFI::Pointer::NULL
       begin
         if system_name
@@ -146,6 +147,13 @@ module Puppet::Util::Windows::SID
       end
     end
 
+    # Sanitize the given account name for lookup to avoid known issues
+    def self.sanitize_account_name(account_name)
+      return account_name unless account_name.start_with?('APPLICATION PACKAGE AUTHORITY\\')
+      account_name.split('\\').last
+    end
+    private_class_method :sanitize_account_name
+
     ffi_convention :stdcall
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379601(v=vs.85).aspx
@@ -191,4 +199,3 @@ module Puppet::Util::Windows::SID
       [:lpcwstr, :pointer, :lpwstr, :lpdword, :lpwstr, :lpdword, :pointer], :win32_bool
   end
 end
-
