@@ -74,11 +74,13 @@ module Puppet::Util::Windows
         string_to_sid_ptr(name) do |sid_ptr|
           raw_sid_bytes = sid_ptr.read_array_of_uchar(get_length_sid(sid_ptr))
         end
-      rescue
+      rescue => e
+        Puppet.debug("Could not retrieve raw SID bytes from '#{name}': #{e.message}")
       end
 
       raw_sid_bytes ? Principal.lookup_account_sid(raw_sid_bytes) : Principal.lookup_account_name(name)
-    rescue
+    rescue => e
+      Puppet.debug("#{e.message}")
       (allow_unresolved && raw_sid_bytes) ? unresolved_principal(name, raw_sid_bytes) : nil
     end
     module_function :name_to_principal
