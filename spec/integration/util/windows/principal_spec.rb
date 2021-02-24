@@ -7,6 +7,7 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet::Util::Platform.wi
   let (:system_bytes) { [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0] }
   let (:null_sid_bytes) { [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }
   let (:administrator_bytes) { [1, 2, 0, 0, 0, 0, 0, 5, 32, 0, 0, 0, 32, 2, 0, 0] }
+  let (:all_application_packages_bytes) { [1, 2, 0, 0, 0, 0, 0, 15, 2, 0, 0, 0, 1, 0, 0, 0] }
   let (:computer_sid) { Puppet::Util::Windows::SID.name_to_principal(Puppet::Util::Windows::ADSI.computer_name) }
   # BUILTIN is localized on German Windows, but not French
   # looking this up like this dilutes the values of the tests as we're comparing two mechanisms
@@ -121,6 +122,26 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet::Util::Platform.wi
       expect(principal.to_s).to eq(builtin_localized)
     end
 
+    it "should always sanitize the account name first" do
+      expect(Puppet::Util::Windows::SID::Principal).to receive(:sanitize_account_name).with('NT AUTHORITY\\SYSTEM').and_call_original
+      Puppet::Util::Windows::SID::Principal.lookup_account_name('NT AUTHORITY\\SYSTEM')
+    end
+
+    it "should be able to create an instance from an account name prefixed by APPLICATION PACKAGE AUTHORITY" do
+      principal = Puppet::Util::Windows::SID::Principal.lookup_account_name('APPLICATION PACKAGE AUTHORITY\\ALL APPLICATION PACKAGES')
+      expect(principal.account).to eq('ALL APPLICATION PACKAGES')
+      expect(principal.sid_bytes).to eq(all_application_packages_bytes)
+      expect(principal.sid).to eq('S-1-15-2-1')
+      expect(principal.domain).to eq('APPLICATION PACKAGE AUTHORITY')
+      expect(principal.domain_account).to eq('APPLICATION PACKAGE AUTHORITY\\ALL APPLICATION PACKAGES')
+      expect(principal.account_type).to eq(:SidTypeWellKnownGroup)
+      expect(principal.to_s).to eq('APPLICATION PACKAGE AUTHORITY\\ALL APPLICATION PACKAGES')
+    end
+
+    it "should fail without proper account name sanitization when it is prefixed by APPLICATION PACKAGE AUTHORITY" do
+      given_account_name = 'APPLICATION PACKAGE AUTHORITY\\ALL APPLICATION PACKAGES'
+      expect { Puppet::Util::Windows::SID::Principal.lookup_account_name(nil, false, given_account_name) }.to raise_error(Puppet::Util::Windows::Error, /No mapping between account names and security IDs was done./)
+    end
   end
 
   describe ".lookup_account_sid" do
