@@ -32,8 +32,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
   end
 
-defaultfor :operatingsystem => :amazon
-defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
+defaultfor 'os.name' => :amazon
+defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
 
   def insync?(is)
     return false if [:purged, :absent].include?(is)
@@ -298,7 +298,7 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
 
     # Yum on el-4 and el-5 returns exit status 0 when trying to install a package it doesn't recognize;
     # ensure we capture output to check for errors.
-    no_debug = if Facter.value(:operatingsystemmajrelease).to_i > 5 then ["-d", "0"] else [] end
+    no_debug = if Facter.value('os.release.major').to_i > 5 then ["-d", "0"] else [] end
     command = [command(:cmd)] + no_debug + ["-e", error_level, "-y", install_options, operation, wanted].compact
     output = execute(command)
 

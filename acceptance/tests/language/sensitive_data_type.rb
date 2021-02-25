@@ -58,7 +58,7 @@ tag 'audit:high',
     {:type => 'notify', :parameters => {:namevar => "C:meh", :message => '"C:${$mehC.unwrap |$unwrapped| { "blk_${unwrapped}_blk" } } nonblk_${mehC}_nonblk"'}, :pre_code => '$mehC=Sensitive.new("sekritC")',
        :assertions => {:assert_match => ["C:blk_sekritC_blk", "nonblk_#{notify_redacted}_nonblk"]}},
     # for --show_diff
-    {:type => 'file', :parameters => {:namevar => "$pup_tmp_filename", :content => "Sensitive.new('sekritD')"}, :pre_code => "$pup_tmp_filename = if $osfamily == 'windows' { '#{tmp_filename_win}' } else { '#{tmp_filename_else}' }",
+    {:type => 'file', :parameters => {:namevar => "$pup_tmp_filename", :content => "Sensitive.new('sekritD')"}, :pre_code => "$pup_tmp_filename = if $facts['os']['family'] == 'windows' { '#{tmp_filename_win}' } else { '#{tmp_filename_else}' }",
        :assertions => [{:refute_match => 'sekritD'}, {:assert_match => /#{tmp_environment}\.txt..content. #{file_redacted}/}]},
 
   ]

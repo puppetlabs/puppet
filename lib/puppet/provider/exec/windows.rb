@@ -2,8 +2,8 @@ require 'puppet/provider/exec'
 
 Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
 
-  confine    :operatingsystem => :windows
-  defaultfor :operatingsystem => :windows
+  confine    'os.name' => :windows
+  defaultfor 'os.name' => :windows
 
   desc <<-'EOT'
     Execute external binaries on Windows systems. As with the `posix`

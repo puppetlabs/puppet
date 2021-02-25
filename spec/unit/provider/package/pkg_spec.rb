@@ -31,20 +31,20 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
   context 'default' do
     [ 10 ].each do |ver|
       it "should not be the default provider on Solaris #{ver}" do
-        allow(Facter).to receive(:value).with(:osfamily).and_return(:Solaris)
+        allow(Facter).to receive(:value).with('os.family').and_return(:Solaris)
         allow(Facter).to receive(:value).with(:kernelrelease).and_return("5.#{ver}")
-        allow(Facter).to receive(:value).with(:operatingsystem).and_return(:Solaris)
-        allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("#{ver}")
+        allow(Facter).to receive(:value).with('os.name').and_return(:Solaris)
+        allow(Facter).to receive(:value).with('os.release.major').and_return("#{ver}")
         expect(described_class).to_not be_default
       end
     end
 
     [ 11, 12 ].each do |ver|
       it "should be the default provider on Solaris #{ver}" do
-        allow(Facter).to receive(:value).with(:osfamily).and_return(:Solaris)
+        allow(Facter).to receive(:value).with('os.family').and_return(:Solaris)
         allow(Facter).to receive(:value).with(:kernelrelease).and_return("5.#{ver}")
-        allow(Facter).to receive(:value).with(:operatingsystem).and_return(:Solaris)
-        allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("#{ver}")
+        allow(Facter).to receive(:value).with('os.name').and_return(:Solaris)
+        allow(Facter).to receive(:value).with('os.release.major').and_return("#{ver}")
         expect(described_class).to be_default
       end
     end
@@ -254,9 +254,9 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
         { :osrel => '11.0', :flags => ['--accept'] },
         { :osrel => '11.2', :flags => ['--accept', '--sync-actuators-timeout', '900'] },
       ].each do |hash|
-        context "with :operatingsystemrelease #{hash[:osrel]}" do
+        context "with 'os.release.full' #{hash[:osrel]}" do
           before :each do
-            allow(Facter).to receive(:value).with(:operatingsystemrelease).and_return(hash[:osrel])
+            allow(Facter).to receive(:value).with('os.release.full').and_return(hash[:osrel])
           end
 
           it "should support install options" do

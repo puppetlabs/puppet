@@ -39,7 +39,7 @@ test_name "C98094 - a resource changed via Puppet manifest will not be reported 
       file { '#{environmentpath}/#{environment_name}/manifests/site.pp':
         ensure => file,
         content => '
-      \$test_path = \$::fqdn ? #{file_resource}
+      \$test_path = \$facts['networking']['fqdn'] ? #{file_resource}
       file { \$test_path:
         content => @(UTF8)
           #{file_contents}

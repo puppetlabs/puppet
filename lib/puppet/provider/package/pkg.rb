@@ -28,9 +28,9 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
   commands :pkg => "/usr/bin/pkg"
 
-  confine :osfamily => :solaris
+  confine 'os.family' => :solaris
 
-  defaultfor :osfamily => :solaris, :kernelrelease => ['5.11', '5.12']
+  defaultfor 'os.family' => :solaris, :kernelrelease => ['5.11', '5.12']
 
   def self.instances
     pkg(:list, '-Hv').split("\n").map{|l| new(parse_line(l))}
@@ -221,7 +221,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       command = 'update'
     end
     args = ['--accept']
-    if Puppet::Util::Package.versioncmp(Facter.value(:operatingsystemrelease), '11.2') >= 0
+    if Puppet::Util::Package.versioncmp(Facter.value('os.release.full'), '11.2') >= 0
       args.push('--sync-actuators-timeout', '900')
     end
     args.concat(join_options(@resource[:install_options])) if @resource[:install_options]

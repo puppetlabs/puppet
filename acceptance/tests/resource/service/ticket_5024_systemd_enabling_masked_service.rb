@@ -43,7 +43,7 @@ agents.each do |agent|
     package { '#{package_name[platform]}':
       ensure => present,
     }
-    if ($::operatingsystem == 'Fedora') and ($::operatingsystemmajrelease == '23') {
+    if ($os['name'] == 'Fedora') and ($os['release']['major'] == '23') {
       package{'libnghttp2':
         ensure => latest,
         install_options => '--best',

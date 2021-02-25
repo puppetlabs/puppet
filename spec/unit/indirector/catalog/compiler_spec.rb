@@ -389,10 +389,10 @@ describe Puppet::Resource::Catalog::Compiler do
     before do
       allow(Puppet).to receive(:version).and_return(1)
       set_facts({
-        'fqdn'       => "my.server.com",
-        'ipaddress'  => "my.ip.address",
-        'ipaddress6' => nil
-        })
+        'networking.fqdn' => "my.server.com",
+        'networking.ip'   => "my.ip.address",
+        'networking.ip6'  => nil
+      })
       @request = Puppet::Indirector::Request.new(:catalog, :find, node_name, nil)
       allow(compiler).to receive(:compile)
       allow(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(node)
@@ -424,16 +424,16 @@ describe Puppet::Resource::Catalog::Compiler do
     before do |example|
       allow(Puppet).to receive(:version).and_return(1)
       set_facts({
-        'fqdn'       => "my.server.com",
-        'ipaddress'  => nil,
+        'networking.fqdn' => "my.server.com",
+        'networking.ip'   => nil,
       })
       if example.metadata[:nil_ipv6]
         set_facts({
-          'ipaddress6' => nil
+          'networking.ip6' => nil
         })
       else
         set_facts({
-          'ipaddress6' => "my.ipv6.address"
+          'networking.ip6' => "my.ipv6.address"
         })
       end
       @request = Puppet::Indirector::Request.new(:catalog, :find, node_name, nil)
