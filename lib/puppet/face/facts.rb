@@ -132,16 +132,18 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
       Puppet::Node::Facts.indirection.terminus_class = :facter
 
       if Puppet::Util::Package.versioncmp(Facter.value('facterversion'), '4.0.0') < 0
-        facter3_result = Puppet::Node::Facts.indirection.find(Puppet.settings[:certname])
+        cmd_flags = '--render-as json --show-legacy'
 
         # puppet/ruby are in PATH since it was updated in the wrapper script
-        puppet_cmd = 'puppet facts show --facterng --render-as json'
+        puppet_show_cmd  = "puppet facts show"
         if Puppet::Util::Platform.windows?
-          puppet_cmd = "ruby -S -- puppet facts show --render-as json"
+          puppet_show_cmd = "ruby -S -- #{puppet_show_cmd}"
         end
-        facter4_result = Puppet::Util::Execution.execute(puppet_cmd)
 
-        fact_diff = FactDif.new(facter3_result.to_json, facter4_result, EXCLUDE_LIST)
+        facter_3_result = Puppet::Util::Execution.execute("#{puppet_show_cmd} --no-facterng #{cmd_flags}")
+        facter_ng_result = Puppet::Util::Execution.execute("#{puppet_show_cmd} --facterng #{cmd_flags}")
+
+        fact_diff = FactDif.new(facter_3_result, facter_ng_result, EXCLUDE_LIST)
         fact_diff.difs
       else
         Puppet.warning _("Already using Facter 4. To use `puppet facts diff` remove facterng from the .conf file or run `puppet config set facterng false`.")
