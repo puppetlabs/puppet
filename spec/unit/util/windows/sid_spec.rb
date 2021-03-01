@@ -158,6 +158,12 @@ describe "Puppet::Util::Windows::SID", :if => Puppet::Util::Platform.windows? do
       # this works in French Windows, even though the account is really AUTORITE NT\\Syst\u00E8me
       expect(subject.name_to_principal('NT AUTHORITY\SYSTEM').sid).to eq(sid)
     end
+
+    it "should print a debug message on failures" do
+      expect(Puppet).to receive(:debug).with(/Could not retrieve raw SID bytes from 'NonExistingUser'/)
+      expect(Puppet).to receive(:debug).with(/No mapping between account names and security IDs was done/)
+      subject.name_to_principal('NonExistingUser')
+    end
   end
 
   context "#ads_to_principal" do
