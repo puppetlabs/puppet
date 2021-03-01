@@ -37,7 +37,7 @@ test_name "C98093 - a resource changed outside of Puppet will be reported as a c
       file { '#{environmentpath}/#{tmp_environment}/manifests/site.pp':
         ensure => file,
         content => '
-      \$test_path = \$facts['networking']['fqdn'] ? #{tmp_file}
+      \$test_path = \$facts["networking"]["fqdn"] ? #{tmp_file}
       file { \$test_path:
         content => @(UTF8)
           #{file_contents}
