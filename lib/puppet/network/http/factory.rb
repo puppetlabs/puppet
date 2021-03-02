@@ -27,6 +27,10 @@ class Puppet::Network::HTTP::Factory
 
     http = Puppet::Util::HttpProxy.proxy(URI(site.addr))
     http.use_ssl = site.use_ssl?
+    if site.use_ssl?
+      http.min_version = OpenSSL::SSL::TLS1_VERSION if http.respond_to?(:min_version)
+      http.ciphers = Puppet[:ciphers]
+    end
     http.read_timeout = Puppet[:http_read_timeout]
     http.open_timeout = Puppet[:http_connect_timeout]
     http.keep_alive_timeout = KEEP_ALIVE_TIMEOUT if http.respond_to?(:keep_alive_timeout=)

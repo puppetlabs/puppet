@@ -151,4 +151,16 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       end
     end
   end
+
+  context 'ciphersuites' do
+    it "does not connect when using an SSLv3 ciphersuite" do
+      Puppet[:ciphers] = "DES-CBC3-SHA"
+
+      https_server.start_server do |port|
+        expect {
+          client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: root_context})
+        }.to raise_error(Puppet::HTTP::ConnectionError, /no cipher match|sslv3 alert handshake failure/)
+      end
+    end
+  end
 end
