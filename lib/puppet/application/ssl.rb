@@ -74,6 +74,9 @@ ACTIONS
   `--localca` is specified, then also remove this host's local copy of the
   CA certificate(s) and CRL bundle. if `--target CERTNAME` is specified, then
   remove the files for the specified device on this host instead of this host.
+
+ * show:
+  Print the full-text version of this host's certificate.
 HELP
   end
 
@@ -142,9 +145,17 @@ HELP
       end
       @machine.ensure_client_certificate
       Puppet.notice(_("Completed SSL initialization"))
+    when 'show'
+      show(certname)
     else
       raise Puppet::Error, _("Unknown action '%{action}'") % { action: action }
     end
+  end
+
+  def show(certname)
+    password = @cert_provider.load_private_key_password
+    ssl_context = @ssl_provider.load_context(certname: certname, password: password)
+    puts ssl_context.client_cert.to_text
   end
 
   def submit_request(ssl_context)
