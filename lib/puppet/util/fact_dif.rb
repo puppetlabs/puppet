@@ -2,8 +2,8 @@ require 'json'
 
 class FactDif
   def initialize(old_output, new_output, exclude_list = [])
-    @c_facter = JSON.parse(old_output)['values']
-    @next_facter = JSON.parse(new_output)['values']
+    @c_facter = JSON.parse(old_output)
+    @next_facter = JSON.parse(new_output)
     @exclude_list = exclude_list
     @diff = {}
   end
