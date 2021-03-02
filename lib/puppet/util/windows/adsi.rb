@@ -504,6 +504,43 @@ module Puppet::Util::Windows::ADSI
       user_name
     end
 
+    # https://docs.microsoft.com/en-us/windows/win32/api/secext/ne-secext-extended_name_format
+    NameUnknown           = 0
+    NameFullyQualifiedDN  = 1
+    NameSamCompatible     = 2
+    NameDisplay           = 3
+    NameUniqueId          = 6
+    NameCanonical         = 7
+    NameUserPrincipal     = 8
+    NameCanonicalEx       = 9
+    NameServicePrincipal  = 10
+    NameDnsDomain         = 12
+    NameGivenName         = 13
+    NameSurname           = 14
+
+    def self.current_user_name_with_format(format)
+      user_name = ''
+      max_length = 1024
+
+      FFI::MemoryPointer.new(:lpwstr, max_length * 2 + 1) do |buffer|
+        FFI::MemoryPointer.new(:dword, 1) do |buffer_size|
+          buffer_size.write_dword(max_length + 1)
+
+          if GetUserNameExW(format.to_i, buffer, buffer_size) == FFI::WIN32_FALSE
+            raise Puppet::Util::Windows::Error.new(_("Failed to get user name"), FFI.errno)
+          end
+
+          user_name = buffer.read_wide_string(buffer_size.read_dword).chomp
+        end
+      end
+
+      user_name
+    end
+
+    def self.current_sam_compatible_user_name
+      current_user_name_with_format(NameSamCompatible)
+    end
+
     def self.current_user_sid
       Puppet::Util::Windows::SID.name_to_principal(current_user_name)
     end
@@ -518,6 +555,15 @@ module Puppet::Util::Windows::ADSI
     ffi_lib :advapi32
     attach_function_private :GetUserNameW,
       [:lpwstr, :lpdword], :win32_bool
+
+    # https://docs.microsoft.com/en-us/windows/win32/api/secext/nf-secext-getusernameexa
+    # BOOLEAN SEC_ENTRY GetUserNameExA(
+    #   EXTENDED_NAME_FORMAT NameFormat,
+    #   LPSTR                lpNameBuffer,
+    #   PULONG               nSize
+    # );type
+    ffi_lib :secur32
+    attach_function_private :GetUserNameExW, [:uint16, :lpwstr, :pointer], :win32_bool
   end
 
   class UserProfile

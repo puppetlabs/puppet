@@ -55,6 +55,24 @@ describe Puppet::Util::Windows::ADSI::User,
       end
     end
   end
+
+  describe '.current_user_name_with_format' do
+    context 'when desired format is NameSamCompatible' do
+      it 'should get the same user name as the current_user_name method but fully qualified' do
+        user_name = Puppet::Util::Windows::ADSI::User.current_user_name
+        fully_qualified_user_name = Puppet::Util::Windows::ADSI::User.current_sam_compatible_user_name
+
+        expect(fully_qualified_user_name).to match(/^.+\\#{user_name}$/)
+      end
+
+      it 'should have the same SID as with the current_user_name method' do
+        user_name = Puppet::Util::Windows::ADSI::User.current_user_name
+        fully_qualified_user_name = Puppet::Util::Windows::ADSI::User.current_sam_compatible_user_name
+
+        expect(Puppet::Util::Windows::SID.name_to_sid(user_name)).to eq(Puppet::Util::Windows::SID.name_to_sid(fully_qualified_user_name))
+      end
+    end
+  end
 end
 
 describe Puppet::Util::Windows::ADSI::Group,

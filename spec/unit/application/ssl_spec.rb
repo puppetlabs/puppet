@@ -432,4 +432,27 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       expects_command_to_pass
     end
   end
+
+  context 'when showing' do
+    before do
+      ssl.command_line.args << 'show'
+      File.write(Puppet[:hostcert], @host[:cert].to_pem)
+    end
+
+    it 'reports if the key is missing' do
+      File.delete(Puppet[:hostprivkey])
+
+      expects_command_to_fail(/The private key is missing from/)
+    end
+
+    it 'reports if the cert is missing' do
+      File.delete(Puppet[:hostcert])
+
+      expects_command_to_fail(/The client certificate is missing from/)
+    end
+
+    it 'prints certificate information' do
+      expects_command_to_pass(@host[:cert].to_text)
+    end
+  end
 end

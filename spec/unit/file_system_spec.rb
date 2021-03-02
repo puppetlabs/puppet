@@ -999,6 +999,15 @@ describe "Puppet::FileSystem" do
             Puppet::FileSystem.replace_file(dest, 0755) { |_| }
           }.to raise_error(ArgumentError, /Only modes 0644, 0640, 0660, and 0440 are allowed/)
         end
+
+        it 'falls back to fully qualified user name when sid retrieval fails' do
+          current_user_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          allow(Puppet::Util::Windows::SID).to receive(:name_to_sid).with(Puppet::Util::Windows::ADSI::User.current_user_name).and_return(nil, current_user_sid)
+          allow(Puppet::Util::Windows::SID).to receive(:name_to_sid).with(Puppet::Util::Windows::ADSI::User.current_sam_compatible_user_name).and_call_original
+
+          Puppet::FileSystem.replace_file(dest, 0644) { |f| f.write(content) }
+          expects_public_file(dest)
+        end
       end
     end
 
