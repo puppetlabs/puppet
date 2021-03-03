@@ -138,4 +138,23 @@ describe Puppet::HTTP::Factory do
       expect(conn.local_host).to eq('127.0.0.1')
     end
   end
+
+  context 'tls' do
+    it "sets the minimum version to TLS 1.0", if: RUBY_VERSION.to_f >= 2.5 do
+      conn = create_connection(site)
+      expect(conn.min_version).to eq(OpenSSL::SSL::TLS1_VERSION)
+    end
+
+    it "defaults to ciphersuites providing 128 bits of security or greater" do
+      conn = create_connection(site)
+      expect(conn.ciphers).to eq("ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256")
+    end
+
+    it "can be restricted to TLSv1.3 ciphers" do
+      tls13_ciphers = "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
+      Puppet[:ciphers] = tls13_ciphers
+      conn = create_connection(site)
+      expect(conn.ciphers).to eq(tls13_ciphers)
+    end
+  end
 end
