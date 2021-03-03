@@ -225,6 +225,9 @@ module Puppet::Environments
     private
 
     def create_environment(name)
+      # interpolated modulepaths may be cached from prior environment instances
+      Puppet.settings.clear_environment_settings(name)
+
       env_symbol = name.intern
       setting_values = Puppet.settings.values(env_symbol, Puppet.settings.preferred_run_mode)
       env = Puppet::Node::Environment.create(

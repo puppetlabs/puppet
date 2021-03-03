@@ -723,6 +723,30 @@ config_version=$vardir/random/scripts
 
     context '#clear_all' do
       let(:service) { ReplayExpirationService.new }
+      let(:envdir) { File.expand_path("envdir") }
+      let(:default_dir) { File.join(envdir, "cached_env", "modules") }
+      let(:expected_dir) { File.join(envdir, "cached_env", "site") }
+
+      let(:base_dir) do
+        FS::MemoryFile.a_directory(envdir, [
+          FS::MemoryFile.a_directory("cached_env", [
+            FS::MemoryFile.a_missing_file("environment.conf")
+          ])
+        ])
+      end
+
+      let(:updated_dir) do
+        FS::MemoryFile.a_directory(envdir, [
+          FS::MemoryFile.a_directory("cached_env", [
+            FS::MemoryFile.a_directory("site"),
+            FS::MemoryFile.a_missing_directory("modules"),
+            FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
+              modulepath=site
+              environment_timeout=unlimited
+            EOF
+          ])
+        ])
+      end
 
       it 'evicts all environments' do
         with_environment_loaded(service) do |cached|
@@ -734,48 +758,44 @@ config_version=$vardir/random/scripts
         end
       end
 
-      it 'clears cached environment settings' do
-        base_dir = File.expand_path("envdir")
-        original_envdir = FS::MemoryFile.a_directory(base_dir, [
-          FS::MemoryFile.a_directory("env3", [
-            FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
-              manifest=/manifest_orig
-              modulepath=/modules_orig
-              environment_timeout=60
-            EOF
-          ]),
-        ])
+      it "recomputes modulepath if 'get' is called before 'clear_all'" do
+        cached_loader_from(:filesystem => [base_dir], :directory => base_dir) do |loader|
+          loader.get(:cached_env)
 
-        FS.overlay(original_envdir) do
-          dir_loader = Puppet::Environments::Directories.new(original_envdir, [])
-          loader = Puppet::Environments::Cached.new(dir_loader)
-          Puppet.override(:environments => loader) do
-            original_env = loader.get("env3") # force the environment.conf to be read
+          expect(Puppet.settings.value(:modulepath, :cached_env)).to eq(default_dir)
 
-            changed_envdir = FS::MemoryFile.a_directory(base_dir, [
-              FS::MemoryFile.a_directory("env3", [
-                FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
-                  manifest=/manifest_changed
-                  modulepath=/modules_changed
-                  environment_timeout=60
-                EOF
-              ]),
-            ])
-
-            #Clear all cached environments
+          FS.overlay(updated_dir) do
             loader.clear_all
 
-            FS.overlay(changed_envdir) do
-              changed_env = loader.get("env3")
+            expect(loader.get(:cached_env).modulepath).to contain_exactly(expected_dir)
+          end
+        end
+      end
 
-              expect(original_env).to environment(:env3).
-                with_manifest(File.expand_path("/manifest_orig")).
-                with_full_modulepath([File.expand_path("/modules_orig")])
+      it "recomputes modulepath if 'list' is called before 'clear_all'"  do
+        cached_loader_from(:filesystem => [base_dir], :directory => base_dir) do |loader|
+          loader.list
 
-              expect(changed_env).to environment(:env3).
-                with_manifest(File.expand_path("/manifest_changed")).
-                with_full_modulepath([File.expand_path("/modules_changed")])
-            end
+          expect(Puppet.settings.value(:modulepath, :cached_env)).to eq(default_dir)
+
+          FS.overlay(updated_dir) do
+            loader.clear_all
+
+            expect(loader.get(:cached_env).modulepath).to contain_exactly(expected_dir)
+          end
+        end
+      end
+
+      it "recomputes modulepath if 'get_conf' is called before 'clear_all'" do
+        cached_loader_from(:filesystem => [base_dir], :directory => base_dir) do |loader|
+          loader.get_conf(:cached_env)
+
+          expect(Puppet.settings.value(:modulepath, :cached_env)).to eq(default_dir)
+
+          FS.overlay(updated_dir) do
+            loader.clear_all
+
+            expect(loader.get(:cached_env).modulepath).to contain_exactly(expected_dir)
           end
         end
       end
@@ -858,6 +878,20 @@ config_version=$vardir/random/scripts
 
     failure_message do |env_conf|
       "expected #{env_conf.inspect} to be #{description}"
+    end
+  end
+
+  def cached_loader_from(options, &block)
+    FS.overlay(*options[:filesystem]) do
+      environments = Puppet::Environments::Cached.new(
+        Puppet::Environments::Directories.new(
+          options[:directory],
+          options[:modulepath] || []
+        )
+      )
+      Puppet.override(:environments => environments) do
+        yield environments
+      end
     end
   end
 
