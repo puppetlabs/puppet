@@ -617,6 +617,33 @@ config_version=$vardir/random/scripts
       end
     end
 
+    context "#get_conf" do
+      it "loads environment.conf" do
+        cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+          expect(loader.get_conf(:an_environment)).to match_environment_conf(:an_environment).
+            with_env_path(directory_tree.children.first).
+            with_global_module_path([])
+        end
+      end
+
+      it "always reloads environment.conf" do
+        env = Puppet::Node::Environment.create(:cached, [])
+        mocked_loader = double('loader')
+        expect(mocked_loader).to receive(:get_conf).with(:cached).and_return(Puppet::Settings::EnvironmentConf.static_for(env, 20)).twice
+
+        cached = Puppet::Environments::Cached.new(mocked_loader)
+
+        cached.get_conf(:cached)
+        cached.get_conf(:cached)
+      end
+
+      it "returns nil if environment is not found" do
+        cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+          expect(loader.get_conf(:doesnotexist)).to be_nil
+        end
+      end
+    end
+
     context "expiration policies" do
       let(:service) { ReplayExpirationService.new }
 
@@ -691,14 +718,6 @@ config_version=$vardir/random/scripts
 
         expect(service.created_envs).to eq([:an_environment, :an_environment])
         expect(service.evicted_envs).to eq([:an_environment])
-      end
-    end
-
-    it "gets an environment.conf" do
-      loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
-        expect(Puppet::Environments::Cached.new(loader).get_conf(:an_environment)).to match_environment_conf(:an_environment).
-          with_env_path(directory_tree.children.first).
-          with_global_module_path([])
       end
     end
 
