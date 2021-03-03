@@ -1,13 +1,9 @@
 require 'spec_helper'
 require 'puppet/environments'
 require 'puppet/file_system'
-require 'matchers/include'
-require 'matchers/include_in_order'
 
 module PuppetEnvironments
 describe Puppet::Environments do
-  include Matchers::Include
-
   FS = Puppet::FileSystem
 
   before(:each) do
@@ -49,7 +45,7 @@ describe Puppet::Environments do
       loader_from(:filesystem => [directory_tree, global_path_1, global_path_2],
                   :directory => directory_tree.children.first,
                   :modulepath => [global_path_1_location, global_path_2_location]) do |loader|
-        expect(loader.list).to include_in_any_order(
+        expect(loader.list).to contain_exactly(
           environment(:an_environment).
             with_manifest("#{FS.path_string(directory_tree)}/envdir/an_environment/manifests").
             with_modulepath(["#{FS.path_string(directory_tree)}/envdir/an_environment/modules",
@@ -87,7 +83,7 @@ describe Puppet::Environments do
 
       loader_from(:filesystem => [envdir],
                   :directory => envdir) do |loader|
-        expect(loader.list).to include_in_any_order(environment(:env1), environment(:env2))
+        expect(loader.list).to contain_exactly(environment(:env1), environment(:env2))
       end
     end
 
@@ -559,7 +555,7 @@ config_version=$vardir/random/scripts
   describe "cached loaders" do
     it "lists environments" do
       loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
-        expect(Puppet::Environments::Cached.new(loader).list).to include_in_any_order(
+        expect(Puppet::Environments::Cached.new(loader).list).to contain_exactly(
           environment(:an_environment),
           environment(:another_environment),
           environment(:symlinked_environment))
