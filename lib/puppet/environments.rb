@@ -353,7 +353,19 @@ module Puppet::Environments
 
     # @!macro loader_list
     def list
-      @loader.list
+      # Evict all that have expired, in the same way as `get`
+      clear_all_expired
+
+      @loader.list.map do |env|
+        name = env.name
+        old_entry = @cache[name]
+        if old_entry
+          old_entry.value
+        else
+          add_entry(name, entry(env))
+          env
+        end
+      end
     end
 
     # @!macro loader_search_paths

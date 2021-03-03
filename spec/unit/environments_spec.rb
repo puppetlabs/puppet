@@ -557,6 +557,31 @@ config_version=$vardir/random/scripts
       end
     end
 
+    it "returns the same cached environment object for list and get methods" do
+      cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+        env = loader.list.find { |e| e.name == :an_environment }
+
+        expect(env).to equal(loader.get(:an_environment)) # same object
+      end
+    end
+
+    it "returns the same cached environment object for multiple list calls" do
+      cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+        expect(loader.list.first).to equal(loader.list.first) # same object
+      end
+    end
+
+    it "expires environments and returns a new environment object with the same value" do
+      Puppet[:environment_timeout] = "0"
+
+      cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+        a = loader.list.first
+        b = loader.list.first
+        expect(a).to eq(b)        # same value
+        expect(a).to_not equal(b) # not same object
+      end
+    end
+
     it "has search_paths" do
       cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
         expect(loader.search_paths).to eq(["file://#{directory_tree.children.first}"])
@@ -717,6 +742,16 @@ config_version=$vardir/random/scripts
         end
 
         expect(service.created_envs).to eq([:an_environment, :an_environment])
+        expect(service.evicted_envs).to eq([:an_environment])
+      end
+
+      it "evicts expired environments when listing" do
+        expect(service).to receive(:expired?).with(:an_environment).and_return(true)
+
+        with_environment_loaded(service) do |cached|
+          cached.list
+        end
+
         expect(service.evicted_envs).to eq([:an_environment])
       end
     end
