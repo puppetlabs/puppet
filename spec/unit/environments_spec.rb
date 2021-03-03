@@ -2,7 +2,6 @@ require 'spec_helper'
 require 'puppet/environments'
 require 'puppet/file_system'
 
-module PuppetEnvironments
 describe Puppet::Environments do
   FS = Puppet::FileSystem
 
@@ -402,33 +401,29 @@ config_version=$vardir/random/scripts
           ]),
         ])
 
-        FS.overlay(original_envdir) do
-          dir_loader = Puppet::Environments::Directories.new(original_envdir, [])
-          loader = Puppet::Environments::Cached.new(dir_loader)
-          Puppet.override(:environments => loader) do
-            original_env = loader.get("env3") # force the environment.conf to be read
+        cached_loader_from(:filesystem => [original_envdir], :directory => original_envdir) do |loader|
+          original_env = loader.get("env3") # force the environment.conf to be read
 
-            changed_envdir = FS::MemoryFile.a_directory(base_dir, [
-              FS::MemoryFile.a_directory("env3", [
-                FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
-                  manifest=/manifest_changed
-                  modulepath=/modules_changed
-                  environment_timeout=0
-                EOF
-              ]),
-            ])
+          changed_envdir = FS::MemoryFile.a_directory(base_dir, [
+            FS::MemoryFile.a_directory("env3", [
+              FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
+                manifest=/manifest_changed
+                modulepath=/modules_changed
+                environment_timeout=0
+              EOF
+            ]),
+          ])
 
-            FS.overlay(changed_envdir) do
-              changed_env = loader.get("env3")
+          FS.overlay(changed_envdir) do
+            changed_env = loader.get("env3")
 
-              expect(original_env).to environment(:env3).
-                with_manifest(File.expand_path("/manifest_orig")).
-                with_full_modulepath([File.expand_path("/modules_orig")])
+            expect(original_env).to environment(:env3).
+              with_manifest(File.expand_path("/manifest_orig")).
+              with_full_modulepath([File.expand_path("/modules_orig")])
 
-              expect(changed_env).to environment(:env3).
-                with_manifest(File.expand_path("/manifest_changed")).
-                with_full_modulepath([File.expand_path("/modules_changed")])
-            end
+            expect(changed_env).to environment(:env3).
+              with_manifest(File.expand_path("/manifest_changed")).
+              with_full_modulepath([File.expand_path("/modules_changed")])
           end
         end
       end
@@ -554,8 +549,8 @@ config_version=$vardir/random/scripts
 
   describe "cached loaders" do
     it "lists environments" do
-      loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
-        expect(Puppet::Environments::Cached.new(loader).list).to contain_exactly(
+      cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+        expect(loader.list).to contain_exactly(
           environment(:an_environment),
           environment(:another_environment),
           environment(:symlinked_environment))
@@ -563,15 +558,15 @@ config_version=$vardir/random/scripts
     end
 
     it "has search_paths" do
-      loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
-        expect(Puppet::Environments::Cached.new(loader).search_paths).to eq(["file://#{directory_tree.children.first}"])
+      cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+        expect(loader.search_paths).to eq(["file://#{directory_tree.children.first}"])
       end
     end
 
     context "#get" do
       it "gets an environment" do
-        loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
-          expect(Puppet::Environments::Cached.new(loader).get(:an_environment)).to environment(:an_environment)
+        cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+          expect(loader.get(:an_environment)).to environment(:an_environment)
         end
       end
 
@@ -588,16 +583,16 @@ config_version=$vardir/random/scripts
       end
 
       it "returns nil if env not found" do
-        loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
-          expect(Puppet::Environments::Cached.new(loader).get(:doesnotexist)).to be_nil
+        cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+          expect(loader.get(:doesnotexist)).to be_nil
         end
       end
     end
 
     context "#get!" do
       it "gets an environment" do
-        loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
-          expect(Puppet::Environments::Cached.new(loader).get!(:an_environment)).to environment(:an_environment)
+        cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+          expect(loader.get!(:an_environment)).to environment(:an_environment)
         end
       end
 
@@ -614,9 +609,9 @@ config_version=$vardir/random/scripts
       end
 
       it "raises error if environment is not found" do
-        loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+        cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
           expect do
-            Puppet::Environments::Cached.new(loader).get!(:doesnotexist)
+            loader.get!(:doesnotexist)
           end.to raise_error(Puppet::Environments::EnvironmentNotFound)
         end
       end
@@ -643,8 +638,6 @@ config_version=$vardir/random/scripts
       end
 
       it "evicts an expired environment" do
-        service = ReplayExpirationService.new
-
         expect(service).to receive(:expired?).and_return(true)
 
         with_environment_loaded(service) do |cached|
@@ -946,5 +939,4 @@ config_version=$vardir/random/scripts
       @evicted_envs << env_name
     end
   end
-end
 end
