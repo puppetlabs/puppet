@@ -247,6 +247,7 @@ class Loaders
     # module, it must be resolved (to provide this visibility).
     # See {#configure_loaders_for_modules}
     unless md.resolved?
+      Puppet.info "Resolving module loader for #{module_name}"
       @module_resolver.resolve(md)
     end
     md.private_loader
