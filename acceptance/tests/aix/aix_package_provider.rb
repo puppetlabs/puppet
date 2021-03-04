@@ -38,8 +38,8 @@ test_name "aix package provider should work correctly" do
 
   step "download packages to use for test" do
     on hosts, "mkdir -p #{dir}"
-    on hosts, "curl neptune.puppetlabs.lan/misc/sudo.#{version1}.aix51.lam.bff > #{dir}/sudo.#{version1}.aix51.lam.bff"
-    on hosts, "curl neptune.puppetlabs.lan/misc/sudo.#{version2}.aix51.lam.bff > #{dir}/sudo.#{version2}.aix51.lam.bff"
+    on hosts, "curl https://artifactory.delivery.puppetlabs.net/artifactory/generic_enterprise__local/misc/sudo.#{version1}.aix51.lam.bff > #{dir}/sudo.#{version1}.aix51.lam.bff"
+    on hosts, "curl https://artifactory.delivery.puppetlabs.net/artifactory/generic_enterprise__local/misc/sudo.#{version2}.aix51.lam.bff > #{dir}/sudo.#{version2}.aix51.lam.bff"
   end
 
   step "install the older version of package" do
