@@ -18,18 +18,22 @@ class Puppet::Network::HTTP::API
                                                                       "Note that Puppet 3 agents aren't compatible with this version; if you're " +
                                                                       "running Puppet 3, you must either upgrade your agents to match the server " +
                                                                       "or point them to a server running Puppet 3.\n\n" +
-                                                                      "Master Info:\n" +
+                                                                      "Server Info:\n" +
                                                                       "  Puppet version: #{Puppet.version}\n" +
-                                                                      "  Supported /puppet API versions: #{Puppet::Network::HTTP::MASTER_URL_VERSIONS}\n",
+                                                                      "  Supported /puppet API versions: #{Puppet::Network::HTTP::SERVER_URL_VERSIONS}\n",
                                                                   Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND)
       end)
   end
 
-  def self.master_routes
-    master_prefix = Regexp.new("^#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/")
-    Puppet::Network::HTTP::Route.path(master_prefix).
+  def self.server_routes
+    server_prefix = Regexp.new("^#{Puppet::Network::HTTP::SERVER_URL_PREFIX}/")
+    Puppet::Network::HTTP::Route.path(server_prefix).
       any.
-      chain(Puppet::Network::HTTP::API::Master::V3.routes,
+      chain(Puppet::Network::HTTP::API::Server::V3.routes,
             Puppet::Network::HTTP::API.not_found)
+  end
+
+  def self.master_routes
+    server_routes
   end
 end
