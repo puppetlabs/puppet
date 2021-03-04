@@ -4,12 +4,12 @@ require 'puppet/node/environment'
 require 'puppet/network/http'
 require 'matchers/json'
 
-describe Puppet::Network::HTTP::API::Master::V3::Environments do
+describe Puppet::Network::HTTP::API::Server::V3::Environments do
   include JSONMatchers
 
   let(:environment) { Puppet::Node::Environment.create(:production, ["/first", "/second"], '/manifests') }
   let(:loader) { Puppet::Environments::Static.new(environment) }
-  let(:handler) { Puppet::Network::HTTP::API::Master::V3::Environments.new(loader) }
+  let(:handler) { Puppet::Network::HTTP::API::Server::V3::Environments.new(loader) }
   let(:request) { Puppet::Network::HTTP::Request.from_hash(:headers => { 'accept' => 'application/json' }) }
   let(:response) { Puppet::Network::HTTP::MemoryResponse.new }
 
