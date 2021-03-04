@@ -3,7 +3,7 @@ extend Puppet::Acceptance::ServiceUtils
 
 test_name 'Systemd masked services are unmasked before attempting to start'
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',  # Use block style `test_run`
     'audit:acceptance' # Could be done at the integration (or unit) layer though
                        # actual changing of resources could irreparably damage a

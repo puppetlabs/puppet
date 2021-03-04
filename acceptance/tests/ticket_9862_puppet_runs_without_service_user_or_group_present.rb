@@ -1,6 +1,6 @@
 test_name "#9862: puppet runs without service user or group present"
 
-tag 'audit:medium',     # startup/configuration, high impact, low risk
+tag 'audit:high',     # startup/configuration, high impact, low risk
     'audit:refactor',    # Use block style `test_name`
     'audit:integration' # could easily be acceptance, not package dependant,
                         # but changing a person running the tests users and

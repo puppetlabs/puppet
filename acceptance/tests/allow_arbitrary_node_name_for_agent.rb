@@ -1,6 +1,6 @@
 test_name "node_name_value should be used as the node name for puppet agent"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration',  # Tests that the server properly overrides certname with node_name fact.
                           # Testing of passenger master is no longer needed.
     'server'

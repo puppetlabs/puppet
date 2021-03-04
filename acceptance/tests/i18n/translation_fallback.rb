@@ -1,7 +1,7 @@
 test_name 'C100560: puppet agent run output falls back to english when language not available' do
   # No confines because even on non-translation supported OS' we should still fall back to english
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   agents.each do |agent|

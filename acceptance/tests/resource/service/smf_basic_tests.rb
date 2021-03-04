@@ -1,7 +1,7 @@
 test_name "SMF: basic tests" do
   confine :to, :platform => 'solaris'
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance' # Could be done at the integration (or unit) layer though
                          # actual changing of resources could irreparably damage a
                          # host running this, or require special permissions.

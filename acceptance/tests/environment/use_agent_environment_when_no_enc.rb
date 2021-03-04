@@ -1,6 +1,6 @@
 test_name "Agent should use agent environment if there is no enc-specified environment" do
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration',
       'audit:refactor', # This can be combined with use_agent_environment_when_enc_doesnt_specify test
       'server'

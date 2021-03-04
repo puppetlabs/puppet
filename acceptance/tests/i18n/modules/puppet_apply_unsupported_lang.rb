@@ -1,6 +1,6 @@
 test_name 'C100568: puppet apply of module for an unsupported language should fall back to english' do
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   require 'puppet/acceptance/temp_file_utils'

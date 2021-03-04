@@ -1,7 +1,7 @@
 test_name 'PA-2191 - winruby fallsback to UTF8 for invalid CodePage' do
   confine :to, platform: 'windows'
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   agents.each do |host|

@@ -5,7 +5,7 @@ test_name 'C100561: verify that disable_i18n can be set to true and have transla
   confine :except, :platform => /^solaris/ # translation not supported
   confine :except, :platform => /^aix/ # QENG-5283 needed for this to work
 
-  tag 'risk:medium',
+  tag 'risk:high',
       'audit:acceptance'
 
   require 'puppet/acceptance/i18n_utils'

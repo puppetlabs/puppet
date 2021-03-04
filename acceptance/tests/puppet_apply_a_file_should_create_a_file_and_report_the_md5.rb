@@ -1,6 +1,6 @@
 test_name "puppet apply should create a file and report an MD5"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:unit'
 
 agents.each do |agent|

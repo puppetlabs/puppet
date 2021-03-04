@@ -1,6 +1,6 @@
 test_name 'AIX Service Provider Testing'
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',  # Use block style `test_name`
     'audit:acceptance' # Could be done at the integration (or unit) layer though
                        # actual changing of resources could irreparably damage a

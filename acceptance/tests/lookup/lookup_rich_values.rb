@@ -2,7 +2,7 @@ test_name 'C99044: lookup should allow rich data as values' do
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:acceptance',
     'audit:refactor',  # Master is not needed for this test. Refactor
                        # to use puppet apply with a local environment.

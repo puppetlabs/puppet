@@ -4,7 +4,7 @@ test_name 'C100565: puppet agent with module should translate messages' do
   confine :except, :platform => /^cumulus/ # translation not supported
   confine :except, :platform => /^solaris/ # translation not supported
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   require 'puppet/acceptance/environment_utils.rb'

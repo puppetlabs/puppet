@@ -1,5 +1,5 @@
 test_name 'C100303: Resource type statement triggered auto-loading works both with and without generated types' do
-  tag 'risk:medium'
+  tag 'risk:high'
 
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils

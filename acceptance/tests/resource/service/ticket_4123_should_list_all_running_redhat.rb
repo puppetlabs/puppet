@@ -1,6 +1,6 @@
 test_name "#4123: should list all running services on Redhat/CentOS" do
   confine :to, :platform => /(el|centos|oracle|redhat|scientific)-5/
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration' # Doesn't change the system it runs on
 
   step "Validate services running agreement ralsh vs. OS service count" do

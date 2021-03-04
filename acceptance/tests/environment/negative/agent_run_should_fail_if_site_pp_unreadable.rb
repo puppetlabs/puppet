@@ -1,6 +1,6 @@
 test_name "C98160 - Agent run should fail if an environment's site.pp is unreadable" do
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration',
       'audit:refactor', # use mk_temp_environment_with_teardown
       'server'

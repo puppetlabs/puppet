@@ -1,7 +1,7 @@
 test_name "should not modify the home directory of an user on OS X >= 10.14" do
   confine :to, :platform => /osx-10.1[4-9]/
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance' # Could be done as integration tests, but would
                          # require changing the system running the test
                        # in ways that might require special permissions

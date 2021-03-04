@@ -1,6 +1,6 @@
 test_name 'puppet module changes (on a module which is missing checksums.json)'
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:acceptance',
     'audit:refactor'   # Master is not required for this test. Replace with agents.each
                        # Wrap steps in blocks in accordance with Beaker style guide

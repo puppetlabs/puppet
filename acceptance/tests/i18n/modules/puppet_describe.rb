@@ -4,7 +4,7 @@ test_name 'C100576: puppet describe with module type translates message' do
   confine :except, :platform => /^cumulus/ # translation not supported
   confine :except, :platform => /^solaris/ # translation not supported
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   require 'puppet/acceptance/i18n_utils'

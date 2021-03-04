@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 test_name 'PUP-9719 Windows First Agent run as SYSTEM sets cache file permissions correctly' do
-  tag 'risk:medium',
+  tag 'risk:high',
       'audit:high',
       'audit:integration'
 

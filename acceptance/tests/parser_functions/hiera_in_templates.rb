@@ -1,6 +1,6 @@
 test_name "Calling Hiera function from inside templates"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration',
     'audit:refactor'    # Master is not required for this test. Replace with agents.each
 

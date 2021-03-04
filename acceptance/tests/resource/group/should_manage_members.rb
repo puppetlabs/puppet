@@ -3,7 +3,7 @@ test_name "should correctly manage the members property for the Group resource" 
   # property
   confine :to, :platform => /windows|osx|aix|^el-|fedora/
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance' # Could be done as integration tests, but would
                          # require changing the system running the test
                          # in ways that might require special permissions

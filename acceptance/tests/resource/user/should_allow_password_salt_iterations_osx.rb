@@ -2,7 +2,7 @@ test_name "should allow password, salt, and iteration attributes in OSX"
 
 confine :to, :platform => /osx/
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',  # Use block style `test_run`
     'audit:acceptance' # Could be done as integration tests, but would
                        # require changing the system running the test

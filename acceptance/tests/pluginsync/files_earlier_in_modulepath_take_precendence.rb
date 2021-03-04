@@ -1,6 +1,6 @@
 test_name "earlier modules take precendence over later modules in the modulepath"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration',
     'server'
 

@@ -4,7 +4,7 @@ require 'puppet/acceptance/temp_file_utils'
 
 extend Puppet::Acceptance::TempFileUtils
 
-tag 'audit:medium',      # tests basic custom module/pluginsync handling?
+tag 'audit:high',      # tests basic custom module/pluginsync handling?
     'audit:refactor',    # Use block style `test_namme`
     'audit:integration',
     'server'

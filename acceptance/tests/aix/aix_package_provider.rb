@@ -1,6 +1,6 @@
 test_name "aix package provider should work correctly" do
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'  # OS specific by definition.
 
   confine :to, :platform => /aix/

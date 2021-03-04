@@ -6,7 +6,7 @@ test_name 'C100567: puppet apply of module should translate messages' do
 
   skip_test "Localizations are unavailable"
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   require 'puppet/acceptance/temp_file_utils'
