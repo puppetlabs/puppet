@@ -177,14 +177,18 @@ module ModuleLoaders
     # @return [Loader::NamedEntry, nil found/created entry, or nil if not found
     #
     def find(typed_name)
+      Puppet.info "Called `find` on #{self} for #{typed_name}"
       # This loader is tailored to only find entries in the current runtime
-      return nil unless typed_name.name_authority == Pcore::RUNTIME_NAME_AUTHORITY
+      unless typed_name.name_authority == Pcore::RUNTIME_NAME_AUTHORITY
+        return nil
+      end
 
       # Assume it is a global name, and that all parts of the name should be used when looking up
       name_parts = typed_name.name_parts
 
       # Certain types and names can be disqualified up front
       if name_parts.size > 1
+        Puppet.info "We have name parts #{name_parts}"
         # The name is in a name space.
 
         # Then entity cannot possible be in this module unless the name starts with the module name.
@@ -193,10 +197,14 @@ module ModuleLoaders
         #   ok since such a "module" cannot have namespaced content).
         # * If this loader is allowed to have namespaced content, the module_name can be set to NAMESPACE_WILDCARD `*`
         #
-        return nil unless name_parts[0] == module_name || module_name == NAMESPACE_WILDCARD
+        unless name_parts[0] == module_name || module_name == NAMESPACE_WILDCARD
+          Puppet.info "First name part is #{name_parts[0]}, dipping"
+          return nil
+        end
       else
         # The name is in the global name space.
 
+        Puppet.info "Looking for a #{typed_name.type}"
         case typed_name.type
         when :function, :resource_type, :resource_type_pp
           # Can be defined in module using a global name. No action required
@@ -255,12 +263,19 @@ module ModuleLoaders
       # The result is an array (that may be empty).
       # Find the file to instantiate, and instantiate the entity if file is found
       origin, smart_path = find_existing_path(typed_name)
-      return instantiate(smart_path, typed_name, origin) unless smart_path.nil?
+      unless smart_path.nil?
+        Puppet.info "Using smart path"
+        return instantiate(smart_path, typed_name, origin)
+      end
 
-      return nil unless typed_name.type == :type && typed_name.qualified?
+      unless typed_name.type == :type && typed_name.qualified?
+        Puppet.info "Not looking for :type, bailing"
+        return nil
+      end
 
       # Search for TypeSet using parent name
       ts_name = typed_name.parent
+      Puppet.info "Searching for typeset #{ts_name}"
       while ts_name
         # Do not traverse parents here. This search must be confined to this loader
         tse = get_entry(ts_name)
@@ -273,11 +288,13 @@ module ModuleLoaders
           return te unless te.nil?
         end
         ts_name = ts_name.parent
+        Puppet.info "Not found, checking parent #{ts_name}"
       end
       nil
     end
 
     def instantiate(smart_path, typed_name, origin)
+      Puppet.info "Instantiating #{typed_name}"
       if origin.is_a?(Array)
         value = smart_path.instantiator.create(self, typed_name, origin)
       else

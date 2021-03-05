@@ -83,6 +83,7 @@ class BaseLoader < Loader
       end
     end
 
+    Puppet.info "Setting entry #{typed_name} on loader #{self}"
     @last_result = Loader::NamedEntry.new(typed_name, value, origin)
     @named_values[typed_name] = @last_result
   end
@@ -106,6 +107,7 @@ class BaseLoader < Loader
   # @api private
   #
   def promote_entry(named_entry)
+    Puppet.info "Promoting entry #{typed_name} to #{self}"
     typed_name = named_entry.typed_name
     entry = @named_values[typed_name]
     if entry then fail_redefine(entry); end
@@ -150,17 +152,30 @@ class BaseLoader < Loader
   def internal_load(typed_name)
     # avoid calling get_entry by looking it up
     te = @named_values[typed_name]
-    return te unless te.nil? || te.value.nil?
+    unless te.nil? || te.value.nil?
+      Puppet.info "Found #{typed_name} in #{self}"
+      return te
+    end
+    #return te unless te.nil? || te.value.nil?
 
     te = parent.load_typed(typed_name)
-    return te unless te.nil? || te.value.nil?
+    unless te.nil? || te.value.nil?
+      Puppet.info "Found #{typed_name} in parent #{parent} of #{self}"
+      return te
+    end
 
     # Under some circumstances, the call to the parent loader will have resulted in files being
     # parsed that in turn contained references to the requested entity and hence, caused a
     # recursive call into this loader. This means that the entry might be present now, so a new
     # check must be made.
     te = @named_values[typed_name]
-    te.nil? || te.value.nil? ? find(typed_name) : te
+    if te.nil? || te.value.nil?
+      Puppet.info "Finding #{typed_name} from #{self}"
+      find(typed_name)
+    else
+      Puppet.info "Found #{typed_name}"
+      te
+    end
   end
 end
 end
