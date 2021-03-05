@@ -731,6 +731,7 @@ class Puppet::Parser::Compiler
       # THE MAGIC STARTS HERE ! This triggers parsing, loading etc.
       @catalog.version = environment.known_resource_types.version
       @loaders.pre_load
+      @loaders.discover_all
     end
 
     @catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => @topscope))

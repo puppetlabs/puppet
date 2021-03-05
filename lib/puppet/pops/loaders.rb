@@ -35,6 +35,7 @@ class Loaders
     environment.loaders = self
     @environment = environment
     @loaders_by_name = {}
+    @discovered = false
 
     add_loader_by_name(self.class.static_loader)
 
@@ -327,6 +328,24 @@ class Loaders
     end
   end
 
+  def discover_all
+    unless @discovered
+      Puppet.info "Discovering all functions in #{@public_environment_loader}"
+      functions = @public_environment_loader.discover(:function)
+
+      Puppet.info "Discovering all functions in #{@private_environment_loader}"
+      functions = @private_environment_loader.discover(:function)
+
+      Puppet.info "Discovering all types in #{@public_environment_loader}"
+      functions = @public_environment_loader.discover(:type)
+
+      Puppet.info "Discovering all types in #{@private_environment_loader}"
+      functions = @private_environment_loader.discover(:type)
+
+      @discovered = true
+    end
+  end
+
   private
 
   def instantiate_PlanDefinition(plan_definition, loader)
@@ -421,10 +440,12 @@ class Loaders
     # TODO: The EnvironmentLoader could be a specialized loader instead of using a ModuleLoader to do the work.
     #       This is subject to future design - an Environment may move more in the direction of a Module.
     @public_environment_loader.private_loader = loader
+
     loader
   end
 
   def configure_loaders_for_modules(parent_loader, environment)
+    Puppet.info "Setting up module loaders for #{environment}"
     @module_resolver = mr = ModuleResolver.new(self)
     environment.modules.each do |puppet_module|
       # Create data about this module
