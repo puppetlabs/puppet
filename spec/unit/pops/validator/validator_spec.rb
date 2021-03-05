@@ -344,18 +344,6 @@ describe "validating 4x" do
       end
     end
 
-    it 'produces a syntax error for application' do
-      expect {
-        parse('application test {}')
-      }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'application'/)
-    end
-
-    it 'produces a syntax error for capability mapping' do
-      expect {
-        parse('Foo produces Sql {}')
-      }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'produces'/)
-    end
-
     it 'produces an error for collect expressions with virtual query' do
       acceptor = validate(parse("User <| title == 'admin' |>"))
       expect(acceptor.error_count).to eql(1)
@@ -410,12 +398,6 @@ describe "validating 4x" do
       expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
 
-    it 'produces a syntax error for site definitions' do
-      expect {
-        parse('site {}')
-      }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'site'/)
-    end
-
     context 'validating apply() blocks' do
       it 'allows empty apply() blocks' do
         acceptor = validate(parse('apply("foo.example.com") { }'))
@@ -468,18 +450,6 @@ describe "validating 4x" do
         expect(acceptor.error_count).to eql(0)
       end
 
-      it 'produces a syntax error for application' do
-        expect {
-          parse('apply("foo.example.com") { application test {} }')
-        }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'application'/)
-      end
-
-      it 'produces a syntax error for capability mapping' do
-        expect {
-          parse('apply("foo.example.com") { Foo produces Sql {} }')
-        }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'produces'/)
-      end
-
       it 'produces an error for class expressions' do
         acceptor = validate(parse('apply("foo.example.com") { class test {} }'))
         expect(acceptor.error_count).to eql(1)
@@ -501,12 +471,6 @@ describe "validating 4x" do
         acceptor = validate(parse('apply("foo.example.com") { define foo($a) {} }'))
         expect(acceptor.error_count).to eql(1)
         expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
-      end
-
-      it 'produces an error for site definitions' do
-        expect {
-          parse('apply("foo.example.com") { site {} }')
-        }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at 'site'/)
       end
 
       it 'produces an error for apply() inside apply()' do
@@ -1010,14 +974,27 @@ describe "validating 4x" do
         expect(acceptor.errors[2].source_pos.line).to eql(5)
       end
     end
-  end
+    [
+      "application",
+      "consumes",
+      "produces",
+      "site",
+    ].each do |kw|
+      it "allow usage of #{kw} keyword (it was reserved in puppet 6.x)" do
+        source = <<-SOURCE
+       class foo (
+         $#{kw},
+       ) {
+         notice $#{kw}
+       }
 
-  context "capability annotations" do
-    ['produces', 'consumes'].each do |word|
-      it "raises a syntax error in #{word} clauses" do
-        expect {
-          parse("foo #{word} Bar {}")
-        }.to raise_error(Puppet::ParseErrorWithIssue, /Syntax error at '#{word}'/)
+       class { foo:
+         #{kw} => 'bar'
+       }
+     SOURCE
+
+        acceptor = validate(parse(source, 'path/foo/manifests/init.pp'))
+        expect(acceptor.error_count).to eql(0)
       end
     end
   end
