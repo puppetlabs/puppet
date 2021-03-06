@@ -1,2 +1,3 @@
-module Puppet::Network::HTTP::API::Master
-end
+require 'puppet/network/http/api/server'
+
+Puppet::Network::HTTP::API::Master = Puppet::Network::HTTP::API::Server

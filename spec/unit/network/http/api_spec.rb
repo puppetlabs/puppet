@@ -36,12 +36,12 @@ describe Puppet::Network::HTTP::API do
   end
 
   describe "Puppet API" do
-    let(:handler) { PuppetSpec::Handler.new(Puppet::Network::HTTP::API.master_routes,
+    let(:handler) { PuppetSpec::Handler.new(Puppet::Network::HTTP::API.server_routes,
                                             Puppet::Network::HTTP::API.not_found_upgrade) }
 
-    let(:master_prefix) { Puppet::Network::HTTP::MASTER_URL_PREFIX }
+    let(:server_prefix) { Puppet::Network::HTTP::SERVER_URL_PREFIX }
 
-    it "raises a not-found error for non-CA or master routes and suggests an upgrade" do
+    it "raises a not-found error for non-CA or server routes and suggests an upgrade" do
       req = Puppet::Network::HTTP::Request.from_hash(:path => "/unknown")
       res = {}
       handler.process(req, res)
@@ -50,13 +50,13 @@ describe Puppet::Network::HTTP::API do
     end
 
     describe "when processing Puppet 3 routes" do
-      it "gives an upgrade message for master routes" do
+      it "gives an upgrade message for server routes" do
         req = Puppet::Network::HTTP::Request.from_hash(:path => "/production/node/foo")
         res = {}
         handler.process(req, res)
         expect(res[:status]).to eq(404)
         expect(res[:body]).to include("Puppet version: #{Puppet.version}")
-        expect(res[:body]).to include("Supported /puppet API versions: #{Puppet::Network::HTTP::MASTER_URL_VERSIONS}")
+        expect(res[:body]).to include("Supported /puppet API versions: #{Puppet::Network::HTTP::SERVER_URL_VERSIONS}")
       end
 
       it "gives an upgrade message for CA routes" do
@@ -65,11 +65,11 @@ describe Puppet::Network::HTTP::API do
         handler.process(req, res)
         expect(res[:status]).to eq(404)
         expect(res[:body]).to include("Puppet version: #{Puppet.version}")
-        expect(res[:body]).to include("Supported /puppet API versions: #{Puppet::Network::HTTP::MASTER_URL_VERSIONS}")
+        expect(res[:body]).to include("Supported /puppet API versions: #{Puppet::Network::HTTP::SERVER_URL_VERSIONS}")
       end
     end
 
-    describe "when processing master routes" do
+    describe "when processing server routes" do
       # simulate puppetserver registering its authconfigloader class
       around :each do |example|
         Puppet::Network::Authorization.authconfigloader_class = Object
@@ -81,7 +81,7 @@ describe Puppet::Network::HTTP::API do
       end
 
       it "responds to v3 indirector requests" do
-        req = Puppet::Network::HTTP::Request.from_hash(:path => "#{master_prefix}/v3/node/foo",
+        req = Puppet::Network::HTTP::Request.from_hash(:path => "#{server_prefix}/v3/node/foo",
                                                        :params => {:environment => "production"},
                                                        :headers => {'accept' => "application/json"})
         res = {}
@@ -90,18 +90,18 @@ describe Puppet::Network::HTTP::API do
       end
 
       it "responds to v3 environments requests" do
-        req = Puppet::Network::HTTP::Request.from_hash(:path => "#{master_prefix}/v3/environments")
+        req = Puppet::Network::HTTP::Request.from_hash(:path => "#{server_prefix}/v3/environments")
         res = {}
         handler.process(req, res)
         expect(res[:status]).to eq(200)
       end
 
       it "responds with a not found error to non-v3 requests and does not suggest an upgrade" do
-        req = Puppet::Network::HTTP::Request.from_hash(:path => "#{master_prefix}/unknown")
+        req = Puppet::Network::HTTP::Request.from_hash(:path => "#{server_prefix}/unknown")
         res = {}
         handler.process(req, res)
         expect(res[:status]).to eq(404)
-        expect(res[:body]).to include("No route for GET #{master_prefix}/unknown")
+        expect(res[:body]).to include("No route for GET #{server_prefix}/unknown")
         expect(res[:body]).not_to include("Puppet version: #{Puppet.version}")
       end
     end
