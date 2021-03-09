@@ -1,13 +1,8 @@
 require 'spec_helper'
 require 'puppet/environments'
 require 'puppet/file_system'
-require 'matchers/include'
-require 'matchers/include_in_order'
 
-module PuppetEnvironments
 describe Puppet::Environments do
-  include Matchers::Include
-
   FS = Puppet::FileSystem
 
   before(:each) do
@@ -49,7 +44,7 @@ describe Puppet::Environments do
       loader_from(:filesystem => [directory_tree, global_path_1, global_path_2],
                   :directory => directory_tree.children.first,
                   :modulepath => [global_path_1_location, global_path_2_location]) do |loader|
-        expect(loader.list).to include_in_any_order(
+        expect(loader.list).to contain_exactly(
           environment(:an_environment).
             with_manifest("#{FS.path_string(directory_tree)}/envdir/an_environment/manifests").
             with_modulepath(["#{FS.path_string(directory_tree)}/envdir/an_environment/modules",
@@ -87,7 +82,7 @@ describe Puppet::Environments do
 
       loader_from(:filesystem => [envdir],
                   :directory => envdir) do |loader|
-        expect(loader.list).to include_in_any_order(environment(:env1), environment(:env2))
+        expect(loader.list).to contain_exactly(environment(:env1), environment(:env2))
       end
     end
 
@@ -406,33 +401,29 @@ config_version=$vardir/random/scripts
           ]),
         ])
 
-        FS.overlay(original_envdir) do
-          dir_loader = Puppet::Environments::Directories.new(original_envdir, [])
-          loader = Puppet::Environments::Cached.new(dir_loader)
-          Puppet.override(:environments => loader) do
-            original_env = loader.get("env3") # force the environment.conf to be read
+        cached_loader_from(:filesystem => [original_envdir], :directory => original_envdir) do |loader|
+          original_env = loader.get("env3") # force the environment.conf to be read
 
-            changed_envdir = FS::MemoryFile.a_directory(base_dir, [
-              FS::MemoryFile.a_directory("env3", [
-                FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
-                  manifest=/manifest_changed
-                  modulepath=/modules_changed
-                  environment_timeout=0
-                EOF
-              ]),
-            ])
+          changed_envdir = FS::MemoryFile.a_directory(base_dir, [
+            FS::MemoryFile.a_directory("env3", [
+              FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
+                manifest=/manifest_changed
+                modulepath=/modules_changed
+                environment_timeout=0
+              EOF
+            ]),
+          ])
 
-            FS.overlay(changed_envdir) do
-              changed_env = loader.get("env3")
+          FS.overlay(changed_envdir) do
+            changed_env = loader.get("env3")
 
-              expect(original_env).to environment(:env3).
-                with_manifest(File.expand_path("/manifest_orig")).
-                with_full_modulepath([File.expand_path("/modules_orig")])
+            expect(original_env).to environment(:env3).
+              with_manifest(File.expand_path("/manifest_orig")).
+              with_full_modulepath([File.expand_path("/modules_orig")])
 
-              expect(changed_env).to environment(:env3).
-                with_manifest(File.expand_path("/manifest_changed")).
-                with_full_modulepath([File.expand_path("/modules_changed")])
-            end
+            expect(changed_env).to environment(:env3).
+              with_manifest(File.expand_path("/manifest_changed")).
+              with_full_modulepath([File.expand_path("/modules_changed")])
           end
         end
       end
@@ -558,24 +549,49 @@ config_version=$vardir/random/scripts
 
   describe "cached loaders" do
     it "lists environments" do
-      loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
-        expect(Puppet::Environments::Cached.new(loader).list).to include_in_any_order(
+      cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+        expect(loader.list).to contain_exactly(
           environment(:an_environment),
           environment(:another_environment),
           environment(:symlinked_environment))
       end
     end
 
+    it "returns the same cached environment object for list and get methods" do
+      cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+        env = loader.list.find { |e| e.name == :an_environment }
+
+        expect(env).to equal(loader.get(:an_environment)) # same object
+      end
+    end
+
+    it "returns the same cached environment object for multiple list calls" do
+      cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+        expect(loader.list.first).to equal(loader.list.first) # same object
+      end
+    end
+
+    it "expires environments and returns a new environment object with the same value" do
+      Puppet[:environment_timeout] = "0"
+
+      cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+        a = loader.list.first
+        b = loader.list.first
+        expect(a).to eq(b)        # same value
+        expect(a).to_not equal(b) # not same object
+      end
+    end
+
     it "has search_paths" do
-      loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
-        expect(Puppet::Environments::Cached.new(loader).search_paths).to eq(["file://#{directory_tree.children.first}"])
+      cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+        expect(loader.search_paths).to eq(["file://#{directory_tree.children.first}"])
       end
     end
 
     context "#get" do
       it "gets an environment" do
-        loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
-          expect(Puppet::Environments::Cached.new(loader).get(:an_environment)).to environment(:an_environment)
+        cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+          expect(loader.get(:an_environment)).to environment(:an_environment)
         end
       end
 
@@ -592,16 +608,16 @@ config_version=$vardir/random/scripts
       end
 
       it "returns nil if env not found" do
-        loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
-          expect(Puppet::Environments::Cached.new(loader).get(:doesnotexist)).to be_nil
+        cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+          expect(loader.get(:doesnotexist)).to be_nil
         end
       end
     end
 
     context "#get!" do
       it "gets an environment" do
-        loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
-          expect(Puppet::Environments::Cached.new(loader).get!(:an_environment)).to environment(:an_environment)
+        cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+          expect(loader.get!(:an_environment)).to environment(:an_environment)
         end
       end
 
@@ -618,10 +634,37 @@ config_version=$vardir/random/scripts
       end
 
       it "raises error if environment is not found" do
-        loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+        cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
           expect do
-            Puppet::Environments::Cached.new(loader).get!(:doesnotexist)
+            loader.get!(:doesnotexist)
           end.to raise_error(Puppet::Environments::EnvironmentNotFound)
+        end
+      end
+    end
+
+    context "#get_conf" do
+      it "loads environment.conf" do
+        cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+          expect(loader.get_conf(:an_environment)).to match_environment_conf(:an_environment).
+            with_env_path(directory_tree.children.first).
+            with_global_module_path([])
+        end
+      end
+
+      it "always reloads environment.conf" do
+        env = Puppet::Node::Environment.create(:cached, [])
+        mocked_loader = double('loader')
+        expect(mocked_loader).to receive(:get_conf).with(:cached).and_return(Puppet::Settings::EnvironmentConf.static_for(env, 20)).twice
+
+        cached = Puppet::Environments::Cached.new(mocked_loader)
+
+        cached.get_conf(:cached)
+        cached.get_conf(:cached)
+      end
+
+      it "returns nil if environment is not found" do
+        cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
+          expect(loader.get_conf(:doesnotexist)).to be_nil
         end
       end
     end
@@ -647,8 +690,6 @@ config_version=$vardir/random/scripts
       end
 
       it "evicts an expired environment" do
-        service = ReplayExpirationService.new
-
         expect(service).to receive(:expired?).and_return(true)
 
         with_environment_loaded(service) do |cached|
@@ -703,13 +744,15 @@ config_version=$vardir/random/scripts
         expect(service.created_envs).to eq([:an_environment, :an_environment])
         expect(service.evicted_envs).to eq([:an_environment])
       end
-    end
 
-    it "gets an environment.conf" do
-      loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
-        expect(Puppet::Environments::Cached.new(loader).get_conf(:an_environment)).to match_environment_conf(:an_environment).
-          with_env_path(directory_tree.children.first).
-          with_global_module_path([])
+      it "evicts expired environments when listing" do
+        expect(service).to receive(:expired?).with(:an_environment).and_return(true)
+
+        with_environment_loaded(service) do |cached|
+          cached.list
+        end
+
+        expect(service.evicted_envs).to eq([:an_environment])
       end
     end
 
@@ -727,6 +770,30 @@ config_version=$vardir/random/scripts
 
     context '#clear_all' do
       let(:service) { ReplayExpirationService.new }
+      let(:envdir) { File.expand_path("envdir") }
+      let(:default_dir) { File.join(envdir, "cached_env", "modules") }
+      let(:expected_dir) { File.join(envdir, "cached_env", "site") }
+
+      let(:base_dir) do
+        FS::MemoryFile.a_directory(envdir, [
+          FS::MemoryFile.a_directory("cached_env", [
+            FS::MemoryFile.a_missing_file("environment.conf")
+          ])
+        ])
+      end
+
+      let(:updated_dir) do
+        FS::MemoryFile.a_directory(envdir, [
+          FS::MemoryFile.a_directory("cached_env", [
+            FS::MemoryFile.a_directory("site"),
+            FS::MemoryFile.a_missing_directory("modules"),
+            FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
+              modulepath=site
+              environment_timeout=unlimited
+            EOF
+          ])
+        ])
+      end
 
       it 'evicts all environments' do
         with_environment_loaded(service) do |cached|
@@ -738,48 +805,44 @@ config_version=$vardir/random/scripts
         end
       end
 
-      it 'clears cached environment settings' do
-        base_dir = File.expand_path("envdir")
-        original_envdir = FS::MemoryFile.a_directory(base_dir, [
-          FS::MemoryFile.a_directory("env3", [
-            FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
-              manifest=/manifest_orig
-              modulepath=/modules_orig
-              environment_timeout=60
-            EOF
-          ]),
-        ])
+      it "recomputes modulepath if 'get' is called before 'clear_all'" do
+        cached_loader_from(:filesystem => [base_dir], :directory => base_dir) do |loader|
+          loader.get(:cached_env)
 
-        FS.overlay(original_envdir) do
-          dir_loader = Puppet::Environments::Directories.new(original_envdir, [])
-          loader = Puppet::Environments::Cached.new(dir_loader)
-          Puppet.override(:environments => loader) do
-            original_env = loader.get("env3") # force the environment.conf to be read
+          expect(Puppet.settings.value(:modulepath, :cached_env)).to eq(default_dir)
 
-            changed_envdir = FS::MemoryFile.a_directory(base_dir, [
-              FS::MemoryFile.a_directory("env3", [
-                FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
-                  manifest=/manifest_changed
-                  modulepath=/modules_changed
-                  environment_timeout=60
-                EOF
-              ]),
-            ])
-
-            #Clear all cached environments
+          FS.overlay(updated_dir) do
             loader.clear_all
 
-            FS.overlay(changed_envdir) do
-              changed_env = loader.get("env3")
+            expect(loader.get(:cached_env).modulepath).to contain_exactly(expected_dir)
+          end
+        end
+      end
 
-              expect(original_env).to environment(:env3).
-                with_manifest(File.expand_path("/manifest_orig")).
-                with_full_modulepath([File.expand_path("/modules_orig")])
+      it "recomputes modulepath if 'list' is called before 'clear_all'"  do
+        cached_loader_from(:filesystem => [base_dir], :directory => base_dir) do |loader|
+          loader.list
 
-              expect(changed_env).to environment(:env3).
-                with_manifest(File.expand_path("/manifest_changed")).
-                with_full_modulepath([File.expand_path("/modules_changed")])
-            end
+          expect(Puppet.settings.value(:modulepath, :cached_env)).to eq(default_dir)
+
+          FS.overlay(updated_dir) do
+            loader.clear_all
+
+            expect(loader.get(:cached_env).modulepath).to contain_exactly(expected_dir)
+          end
+        end
+      end
+
+      it "recomputes modulepath if 'get_conf' is called before 'clear_all'" do
+        cached_loader_from(:filesystem => [base_dir], :directory => base_dir) do |loader|
+          loader.get_conf(:cached_env)
+
+          expect(Puppet.settings.value(:modulepath, :cached_env)).to eq(default_dir)
+
+          FS.overlay(updated_dir) do
+            loader.clear_all
+
+            expect(loader.get(:cached_env).modulepath).to contain_exactly(expected_dir)
           end
         end
       end
@@ -865,6 +928,20 @@ config_version=$vardir/random/scripts
     end
   end
 
+  def cached_loader_from(options, &block)
+    FS.overlay(*options[:filesystem]) do
+      environments = Puppet::Environments::Cached.new(
+        Puppet::Environments::Directories.new(
+          options[:directory],
+          options[:modulepath] || []
+        )
+      )
+      Puppet.override(:environments => environments) do
+        yield environments
+      end
+    end
+  end
+
   def loader_from(options, &block)
     FS.overlay(*options[:filesystem]) do
       environments = Puppet::Environments::Directories.new(
@@ -916,5 +993,4 @@ config_version=$vardir/random/scripts
       @evicted_envs << env_name
     end
   end
-end
 end

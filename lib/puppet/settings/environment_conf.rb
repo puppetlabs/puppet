@@ -29,6 +29,7 @@ class Puppet::Settings::EnvironmentConf
       section = config.sections[:main]
     rescue Errno::ENOENT
       # environment.conf is an optional file
+      Puppet.debug { "Path to #{path_to_env} does not exist, using default environment.conf" }
     end
 
     new(path_to_env, section, global_module_path)
