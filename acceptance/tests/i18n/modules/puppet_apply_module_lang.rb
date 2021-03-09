@@ -3,7 +3,7 @@ test_name 'C100574: puppet apply using a module should translate messages in a l
   confine :except, :platform => /^cisco/ # translation not supported
   confine :except, :platform => /^windows/ # Can't print Finish on an English or Japanese code page
 
-  tag 'audit:high',
+  tag 'audit:medium',
       'audit:acceptance'
 
   require 'puppet/acceptance/temp_file_utils'

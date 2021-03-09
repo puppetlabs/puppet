@@ -1,7 +1,7 @@
 test_name "Package:IPS versionable"
 confine :to, :platform => 'solaris-11'
 
-tag 'audit:high',
+tag 'audit:medium',
     'audit:refactor',  # Use block style `test_name`
     'audit:acceptance' # Could be done at the integration (or unit) layer though
                        # actual changing of resources could irreparably damage a

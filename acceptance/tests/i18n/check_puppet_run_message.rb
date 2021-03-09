@@ -7,7 +7,7 @@ test_name 'C100559: puppet agent run output with a supported language should be 
 
   skip_test "Localization files are unavailable"
 
-  tag 'audit:high',
+  tag 'audit:medium',
       'audit:acceptance'
 
   require 'puppet/acceptance/i18n_utils'
