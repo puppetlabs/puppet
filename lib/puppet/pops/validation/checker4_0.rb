@@ -236,7 +236,6 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     case p
     when Model::AbstractResource
     when Model::CollectExpression
-      acceptor.accept(Issues::UNSUPPORTED_OPERATOR_IN_CONTEXT, p, :operator=>'* =>')
     else
       # protect against just testing a snippet that has no parent, error message will be a bit strange
       # but it is not for a real program.
