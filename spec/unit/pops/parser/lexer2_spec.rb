@@ -94,10 +94,6 @@ describe 'Lexer2' do
     "private"  => :PRIVATE,
     "type"     => :TYPE,
     "attr"     => :ATTR,
-    "application"  => :APPLICATION,
-    "consumes"     => :CONSUMES,
-    "produces"     => :PRODUCES,
-    "site"         => :SITE,
   }.each do |string, name|
     it "should lex a keyword from '#{string}'" do
       expect(tokens_scanned_from(string)).to match_tokens2(name)
