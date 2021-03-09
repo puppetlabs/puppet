@@ -235,6 +235,16 @@ describe 'collectors' do
         MANIFEST
       end
 
+      it "splats attributes from a hash" do
+        expect_the_message_to_be(["overridden message"], <<-MANIFEST)
+          @notify { "testing": message => "original message" }
+
+          Notify <| |> {
+            * => { message => "overridden message" }
+          }
+        MANIFEST
+      end
+
       it "collects with override when inside a class (#10963)" do
         expect_the_message_to_be(["overridden message"], <<-MANIFEST)
           @notify { "testing": message => "original message" }
