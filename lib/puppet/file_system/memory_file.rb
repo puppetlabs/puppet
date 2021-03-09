@@ -7,6 +7,13 @@ class Puppet::FileSystem::MemoryFile
     new(path, :exist? => false, :executable? => false)
   end
 
+  def self.a_missing_directory(path)
+    new(path,
+        :exist? => false,
+        :executable? => false,
+        :directory? => true)
+  end
+
   def self.a_regular_file_containing(path, content)
     new(path, :exist? => true, :executable? => false, :content => content)
   end
@@ -18,7 +25,7 @@ class Puppet::FileSystem::MemoryFile
   def self.a_directory(path, children = [])
     new(path,
         :exist? => true,
-        :excutable? => true,
+        :executable? => true,
         :directory? => true,
         :children => children)
   end

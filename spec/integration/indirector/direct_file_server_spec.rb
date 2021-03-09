@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'matchers/include'
 
 require 'puppet/indirector/file_content/file'
 require 'puppet/indirector/file_metadata/file'
@@ -30,7 +29,6 @@ end
 
 describe Puppet::Indirector::DirectFileServer, " when interacting with FileServing::Fileset and the model" do
   include PuppetSpec::Files
-  include Matchers::Include
 
   matcher :file_with_content do |name, content|
     match do |actual|
@@ -52,7 +50,7 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with FileServi
     terminus = Puppet::Indirector::FileContent::File.new
     request = terminus.indirection.request(:search, Puppet::Util.path_to_uri(path).to_s, nil, :recurse => true)
 
-    expect(terminus.search(request)).to include_in_any_order(
+    expect(terminus.search(request)).to contain_exactly(
       file_with_content(File.join(path, "one"), "one content"),
       file_with_content(File.join(path, "two"), "two content"),
       directory_named(path))
