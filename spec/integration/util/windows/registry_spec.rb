@@ -263,6 +263,12 @@ describe Puppet::Util::Windows::Registry do
           type: Win32::Registry::REG_EXPAND_SZ,
           value: "\0\0\0reg expand string",
           expected_value: ""
+        },
+        {
+          name: 'REG_EXPAND_SZ_2',
+          type: Win32::Registry::REG_EXPAND_SZ,
+          value: "1\x002\x003\x004\x00\x00\x00\x90\xD8UoY".force_encoding("UTF-16LE"),
+          expected_value: "1234"
         }
       ].each do |pair|
         it 'reads up to the first wide null' do
