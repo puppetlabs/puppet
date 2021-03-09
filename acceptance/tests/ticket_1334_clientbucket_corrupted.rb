@@ -7,11 +7,7 @@ test_name 'C99977 corrupted clientbucket' do
     tmpfile = agent.tmpfile('c99977file')
     unmanaged_content = "unmanaged\n"
     
-    if on(agent, facter("fips_enabled")).stdout =~ /true/
-      unmanaged_sha = Digest::SHA256.hexdigest(unmanaged_content)
-    else
-      unmanaged_sha = Digest::MD5.hexdigest(unmanaged_content)
-    end
+    unmanaged_sha = Digest::SHA256.hexdigest(unmanaged_content)
 
     managed_content = "managed\n"
     manifest = "file { '#{tmpfile}': content => '#{managed_content}', backup => 'puppet' }"
