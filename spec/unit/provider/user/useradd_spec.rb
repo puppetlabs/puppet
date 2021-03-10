@@ -75,8 +75,8 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
     context "when setting groups" do
       it "uses -G to set groups" do
-        allow(Facter).to receive(:value).with('os.family').and_return('Solaris')
-        allow(Facter).to receive(:value).with('os.release.major')
+        allow(Facter).to receive(:value).with(:osfamily).and_return('Solaris')
+        allow(Facter).to receive(:value).with(:operatingsystemmajrelease)
         resource[:ensure] = :present
         resource[:groups] = ['group1', 'group2']
         expect(provider).to receive(:execute).with(['/usr/sbin/useradd', '-G', 'group1,group2', 'myuser'], kind_of(Hash))
@@ -84,8 +84,8 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       end
 
       it "uses -G to set groups with -M on supported systems" do
-        allow(Facter).to receive(:value).with('os.family').and_return('RedHat')
-        allow(Facter).to receive(:value).with('os.release.major')
+        allow(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+        allow(Facter).to receive(:value).with(:operatingsystemmajrelease)
         resource[:ensure] = :present
         resource[:groups] = ['group1', 'group2']
         expect(provider).to receive(:execute).with(['/usr/sbin/useradd', '-G', 'group1,group2', '-M', 'myuser'], kind_of(Hash))
@@ -303,14 +303,14 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
   describe "#expiry=" do
     it "should pass expiry to usermod as MM/DD/YY when on Solaris" do
-      expect(Facter).to receive(:value).with('os.name').and_return('Solaris')
+      expect(Facter).to receive(:value).with(:operatingsystem).and_return('Solaris')
       resource[:expiry] = '2012-10-31'
       expect(provider).to receive(:execute).with(['/usr/sbin/usermod', '-e', '10/31/2012', 'myuser'], hash_including(custom_environment: {}))
       provider.expiry = '2012-10-31'
     end
 
     it "should pass expiry to usermod as YYYY-MM-DD when not on Solaris" do
-      expect(Facter).to receive(:value).with('os.name').and_return('not_solaris')
+      expect(Facter).to receive(:value).with(:operatingsystem).and_return('not_solaris')
       resource[:expiry] = '2012-10-31'
       expect(provider).to receive(:execute).with(['/usr/sbin/usermod', '-e', '2012-10-31', 'myuser'], hash_including(custom_environment: {}))
       provider.expiry = '2012-10-31'
@@ -323,8 +323,8 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
 
     it "should use -e with -1 when the expiry property is removed on SLES11" do
-      allow(Facter).to receive(:value).with('os.name').and_return('SLES')
-      allow(Facter).to receive(:value).with('os.release.major').and_return('11')
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('SLES')
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('11')
       resource[:expiry] = :absent
       expect(provider).to receive(:execute).with(['/usr/sbin/usermod', '-e', -1, 'myuser'], hash_including(custom_environment: {}))
       provider.expiry = :absent
@@ -487,16 +487,16 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
 
     it "should use -M flag if home is not managed on a supported system" do
-      allow(Facter).to receive(:value).with('os.family').and_return("RedHat")
-      allow(Facter).to receive(:value).with('os.release.major')
+      allow(Facter).to receive(:value).with(:osfamily).and_return("RedHat")
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease)
       resource[:managehome] = :false
       expect(provider).to receive(:execute).with(include('-M'), kind_of(Hash))
       provider.create
     end
 
     it "should not use -M flag if home is not managed on an unsupported system" do
-      allow(Facter).to receive(:value).with('os.family').and_return("Suse")
-      allow(Facter).to receive(:value).with('os.release.major').and_return("11")
+      allow(Facter).to receive(:value).with(:osfamily).and_return("Suse")
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("11")
       resource[:managehome] = :false
       expect(provider).to receive(:execute).with(excluding('-M'), kind_of(Hash))
       provider.create
@@ -557,14 +557,14 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
 
     it "should return an array with the full command and expiry as MM/DD/YY when on Solaris" do
-      allow(Facter).to receive(:value).with('os.name').and_return('Solaris')
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('Solaris')
       expect(described_class).to receive(:system_users?).and_return(true)
       resource[:expiry] = "2012-08-18"
       expect(provider.addcmd).to eq(['/usr/sbin/useradd', '-e', '08/18/2012', '-G', 'somegroup', '-o', '-m', '-r', 'myuser'])
     end
 
     it "should return an array with the full command and expiry as YYYY-MM-DD when not on Solaris" do
-      allow(Facter).to receive(:value).with('os.name').and_return('not_solaris')
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('not_solaris')
       expect(described_class).to receive(:system_users?).and_return(true)
       resource[:expiry] = "2012-08-18"
       expect(provider.addcmd).to eq(['/usr/sbin/useradd', '-e', '2012-08-18', '-G', 'somegroup', '-o', '-m', '-r', 'myuser'])

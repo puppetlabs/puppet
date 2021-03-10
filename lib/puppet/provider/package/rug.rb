@@ -5,7 +5,7 @@ Puppet::Type.type(:package).provide :rug, :parent => :rpm do
 
   commands :rug => "/usr/bin/rug"
   commands :rpm => "rpm"
-  confine  'os.name' => [:suse, :sles]
+  confine    :operatingsystem => [:suse, :sles]
 
   # Install a package using 'rug'.
   def install

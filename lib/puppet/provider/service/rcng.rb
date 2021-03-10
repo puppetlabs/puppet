@@ -3,8 +3,8 @@ Puppet::Type.type(:service).provide :rcng, :parent => :bsd do
     RCng service management with rc.d
   EOT
 
-  defaultfor 'os.name' => [:netbsd, :cargos]
-  confine 'os.name' => [:netbsd, :cargos]
+  defaultfor :operatingsystem => [:netbsd, :cargos]
+  confine :operatingsystem => [:netbsd, :cargos]
 
   def self.defpath
     "/etc/rc.d"

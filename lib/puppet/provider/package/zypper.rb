@@ -9,8 +9,8 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
 
   commands :zypper => "/usr/bin/zypper"
 
-  defaultfor 'os.name' => [:suse, :sles, :sled, :opensuse]
-  confine    'os.name' => [:suse, :sles, :sled, :opensuse]
+  defaultfor :operatingsystem => [:suse, :sles, :sled, :opensuse]
+  confine    :operatingsystem => [:suse, :sles, :sled, :opensuse]
 
   # @api private
   # Reset the latest version hash to nil

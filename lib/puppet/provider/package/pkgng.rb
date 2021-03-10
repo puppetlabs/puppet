@@ -5,9 +5,9 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
 
   commands :pkg => "/usr/local/sbin/pkg"
 
-  confine 'os.name' => [:freebsd, :dragonfly]
+  confine :operatingsystem => [:freebsd, :dragonfly]
 
-  defaultfor 'os.name' => [:freebsd, :dragonfly]
+  defaultfor :operatingsystem => [:freebsd, :dragonfly]
 
   has_feature :versionable
   has_feature :upgradeable

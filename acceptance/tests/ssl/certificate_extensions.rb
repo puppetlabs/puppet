@@ -11,17 +11,17 @@ test_name "certificate extensions available as trusted data" do
   initialize_temp_dirs
 
   agent_certnames = []
-  hostname = master.execute('facter networking.hostname')
-  fqdn = master.execute('facter networking.fqdn')
+  hostname = master.execute('facter hostname')
+  fqdn = master.execute('facter fqdn')
 
   teardown do
     step "Cleanup the test agent certs"
-    server_config = {
+    master_config = {
       'main' => { 'server' => fqdn },
-      'server' => { 'dns_alt_names' => "puppet,#{hostname},#{fqdn}" }
+      'master' => { 'dns_alt_names' => "puppet,#{hostname},#{fqdn}" }
     }
 
-    with_puppet_running_on(master, server_config) do
+    with_puppet_running_on(master, master_config) do
       on(master,
          "puppetserver ca clean --certname #{agent_certnames.join(',')}",
          :acceptable_exit_codes => [0,24])
@@ -29,11 +29,11 @@ test_name "certificate extensions available as trusted data" do
   end
 
   environments_dir = get_test_file_path(master, "environments")
-  server_config = {
+  master_config = {
     'main' => {
       'environmentpath' => environments_dir,
     },
-    'server' => {
+    'master' => {
       'autosign' => true,
       'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
     }
@@ -74,7 +74,7 @@ test_name "certificate extensions available as trusted data" do
     }
   MANIFEST
 
-  with_puppet_running_on(master, server_config) do
+  with_puppet_running_on(master, master_config) do
     agents.each do |agent|
       next if agent == master
 

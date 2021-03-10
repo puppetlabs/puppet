@@ -2,8 +2,8 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
 
   desc "Provider for FreeBSD and DragonFly BSD. Uses the `rcvar` argument of init scripts and parses/edits rc files."
 
-  confine 'os.name' => [:freebsd, :dragonfly]
-  defaultfor 'os.name' => [:freebsd, :dragonfly]
+  confine :operatingsystem => [:freebsd, :dragonfly]
+  defaultfor :operatingsystem => [:freebsd, :dragonfly]
 
   def rcconf()        '/etc/rc.conf' end
   def rcconf_local()  '/etc/rc.conf.local' end

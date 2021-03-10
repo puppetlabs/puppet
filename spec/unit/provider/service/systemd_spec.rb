@@ -27,149 +27,149 @@ describe 'Puppet::Type::Service::Provider::Systemd',
 
   osfamilies.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
-      allow(Facter).to receive(:value).with('os.family').and_return(osfamily)
-      allow(Facter).to receive(:value).with('os.name').and_return(osfamily)
-      allow(Facter).to receive(:value).with('os.release.major').and_return("1234")
+      allow(Facter).to receive(:value).with(:osfamily).and_return(osfamily)
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return(osfamily)
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("1234")
       expect(provider_class).to be_default
     end
   end
 
   [7, 8].each do |ver|
     it "should be the default provider on rhel#{ver}" do
-      allow(Facter).to receive(:value).with('os.family').and_return(:redhat)
-      allow(Facter).to receive(:value).with('os.name').and_return(:redhat)
-      allow(Facter).to receive(:value).with('os.release.major').and_return(ver.to_s)
+      allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return(:redhat)
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return(ver.to_s)
       expect(provider_class).to be_default
     end
   end
 
   [ 4, 5, 6 ].each do |ver|
     it "should not be the default provider on rhel#{ver}" do
-      allow(Facter).to receive(:value).with('os.family').and_return(:redhat)
-      allow(Facter).to receive(:value).with('os.name').and_return(:redhat)
-      allow(Facter).to receive(:value).with('os.release.major').and_return("#{ver}")
+      allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return(:redhat)
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("#{ver}")
       expect(provider_class).not_to be_default
     end
   end
 
   [ 17, 18, 19, 20, 21, 22, 23 ].each do |ver|
     it "should be the default provider on fedora#{ver}" do
-      allow(Facter).to receive(:value).with('os.family').and_return(:redhat)
-      allow(Facter).to receive(:value).with('os.name').and_return(:fedora)
-      allow(Facter).to receive(:value).with('os.release.major').and_return("#{ver}")
+      allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return(:fedora)
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("#{ver}")
       expect(provider_class).to be_default
     end
   end
 
   it "should be the default provider on Amazon Linux 2.0" do
-    allow(Facter).to receive(:value).with('os.family').and_return(:redhat)
-    allow(Facter).to receive(:value).with('os.name').and_return(:amazon)
-    allow(Facter).to receive(:value).with('os.release.major').and_return("2")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:amazon)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("2")
     expect(provider_class).to be_default
   end
 
   it "should not be the default provider on Amazon Linux 2017.09" do
-    allow(Facter).to receive(:value).with('os.family').and_return(:redhat)
-    allow(Facter).to receive(:value).with('os.name').and_return(:amazon)
-    allow(Facter).to receive(:value).with('os.release.major').and_return("2017")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:amazon)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("2017")
     expect(provider_class).not_to be_default
   end
 
   it "should be the default provider on cumulus3" do
-    allow(Facter).to receive(:value).with('os.family').and_return(:debian)
-    allow(Facter).to receive(:value).with('os.name').and_return('CumulusLinux')
-    allow(Facter).to receive(:value).with('os.release.major').and_return("3")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return('CumulusLinux')
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("3")
     expect(provider_class).to be_default
   end
 
   it "should be the default provider on sles12" do
-    allow(Facter).to receive(:value).with('os.family').and_return(:suse)
-    allow(Facter).to receive(:value).with('os.name').and_return(:suse)
-    allow(Facter).to receive(:value).with('os.release.major').and_return("12")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:suse)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:suse)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("12")
     expect(provider_class).to be_default
   end
 
   it "should be the default provider on opensuse13" do
-    allow(Facter).to receive(:value).with('os.family').and_return(:suse)
-    allow(Facter).to receive(:value).with('os.name').and_return(:suse)
-    allow(Facter).to receive(:value).with('os.release.major').and_return("13")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:suse)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:suse)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("13")
     expect(provider_class).to be_default
   end
 
   # tumbleweed is a rolling release with date-based major version numbers
   it "should be the default provider on tumbleweed" do
-    allow(Facter).to receive(:value).with('os.family').and_return(:suse)
-    allow(Facter).to receive(:value).with('os.name').and_return(:suse)
-    allow(Facter).to receive(:value).with('os.release.major').and_return("20150829")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:suse)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:suse)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("20150829")
     expect(provider_class).to be_default
   end
 
   # leap is the next generation suse release
   it "should be the default provider on leap" do
-    allow(Facter).to receive(:value).with('os.family').and_return(:suse)
-    allow(Facter).to receive(:value).with('os.name').and_return(:leap)
-    allow(Facter).to receive(:value).with('os.release.major').and_return("42")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:suse)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:leap)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("42")
     expect(provider_class).to be_default
   end
 
   it "should not be the default provider on debian7" do
-    allow(Facter).to receive(:value).with('os.family').and_return(:debian)
-    allow(Facter).to receive(:value).with('os.name').and_return(:debian)
-    allow(Facter).to receive(:value).with('os.release.major').and_return("7")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("7")
     expect(provider_class).not_to be_default
   end
 
   it "should be the default provider on debian8" do
-    allow(Facter).to receive(:value).with('os.family').and_return(:debian)
-    allow(Facter).to receive(:value).with('os.name').and_return(:debian)
-    allow(Facter).to receive(:value).with('os.release.major').and_return("8")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("8")
     expect(provider_class).to be_default
   end
 
   it "should be the default provider on debian11" do
-    allow(Facter).to receive(:value).with('os.family').and_return(:debian)
-    allow(Facter).to receive(:value).with('os.name').and_return(:debian)
-    allow(Facter).to receive(:value).with('os.release.major').and_return("11")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("11")
     expect(provider_class).to be_default
   end
 
   it "should be the default provider on debian bookworm/sid" do
-    allow(Facter).to receive(:value).with('os.family').and_return(:debian)
-    allow(Facter).to receive(:value).with('os.name').and_return(:debian)
-    allow(Facter).to receive(:value).with('os.release.major').and_return("bookworm/sid")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("bookworm/sid")
     expect(provider_class).to be_default
   end
 
   it "should not be the default provider on ubuntu14.04" do
-    allow(Facter).to receive(:value).with('os.family').and_return(:debian)
-    allow(Facter).to receive(:value).with('os.name').and_return(:ubuntu)
-    allow(Facter).to receive(:value).with('os.release.major').and_return("14.04")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:ubuntu)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("14.04")
     expect(provider_class).not_to be_default
   end
 
   [ '15.04', '15.10', '16.04', '16.10', '17.04', '17.10', '18.04' ].each do |ver|
     it "should be the default provider on ubuntu#{ver}" do
-      allow(Facter).to receive(:value).with('os.family').and_return(:debian)
-      allow(Facter).to receive(:value).with('os.name').and_return(:ubuntu)
-      allow(Facter).to receive(:value).with('os.release.major').and_return("#{ver}")
+      allow(Facter).to receive(:value).with(:osfamily).and_return(:debian)
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return(:ubuntu)
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("#{ver}")
       expect(provider_class).to be_default
     end
   end
 
   [ '10', '11', '12', '13', '14', '15', '16', '17' ].each do |ver|
     it "should not be the default provider on LinuxMint#{ver}" do
-      allow(Facter).to receive(:value).with('os.family').and_return(:debian)
-      allow(Facter).to receive(:value).with('os.name').and_return(:LinuxMint)
-      allow(Facter).to receive(:value).with('os.release.major').and_return("#{ver}")
+      allow(Facter).to receive(:value).with(:osfamily).and_return(:debian)
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return(:LinuxMint)
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("#{ver}")
       expect(provider_class).not_to be_default
     end
   end
 
   [ '18', '19' ].each do |ver|
     it "should be the default provider on LinuxMint#{ver}" do
-      allow(Facter).to receive(:value).with('os.family').and_return(:debian)
-      allow(Facter).to receive(:value).with('os.name').and_return(:LinuxMint)
-      allow(Facter).to receive(:value).with('os.release.major').and_return("#{ver}")
+      allow(Facter).to receive(:value).with(:osfamily).and_return(:debian)
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return(:LinuxMint)
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("#{ver}")
       expect(provider_class).to be_default
     end
   end

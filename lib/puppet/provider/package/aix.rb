@@ -24,8 +24,8 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
   # AIX supports versionable packages with and without a NIM server
   has_feature :versionable
 
-  confine  'os.name' => [ :aix ]
-  defaultfor 'os.name' => :aix
+  confine  :operatingsystem => [ :aix ]
+  defaultfor :operatingsystem => :aix
 
   attr_accessor   :latest_info
 

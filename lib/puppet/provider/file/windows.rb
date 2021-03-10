@@ -1,7 +1,7 @@
 Puppet::Type.type(:file).provide :windows do
   desc "Uses Microsoft Windows functionality to manage file ownership and permissions."
 
-  confine 'os.name' => :windows
+  confine :operatingsystem => :windows
   has_feature :manages_symlinks if Puppet.features.manages_symlinks?
 
   include Puppet::Util::Warnings

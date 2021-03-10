@@ -12,8 +12,8 @@ describe 'Puppet::Type::Service::Provider::Gentoo',
     allow(Puppet::Type.type(:service)).to receive(:defaultprovider).and_return(provider_class)
     allow(FileTest).to receive(:file?).with('/sbin/rc-update').and_return(true)
     allow(FileTest).to receive(:executable?).with('/sbin/rc-update').and_return(true)
-    allow(Facter).to receive(:value).with('os.name').and_return('Gentoo')
-    allow(Facter).to receive(:value).with('os.family').and_return('Gentoo')
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return('Gentoo')
+    allow(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
 
     # The initprovider (parent of the gentoo provider) does a stat call
     # before it even tries to execute an initscript. We use sshd in all the

@@ -36,7 +36,7 @@ test_name "C98092 - a new resource should not be reported as a corrective change
     file { '#{environmentpath}/#{tmp_environment}/manifests/site.pp':
       ensure => file,
       content => '
-    \$test_path = \$facts["networking"]["fqdn"] ? #{tmp_file}
+    \$test_path = \$::fqdn ? #{tmp_file}
     file { \$test_path:
       content => @(UTF8)
         #{file_contents}

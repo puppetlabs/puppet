@@ -14,8 +14,8 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     :pkgadd => "/usr/sbin/pkgadd",
     :pkgrm => "/usr/sbin/pkgrm"
 
-  confine 'os.family' => :solaris
-  defaultfor 'os.family' => :solaris
+  confine :osfamily => :solaris
+  defaultfor :osfamily => :solaris
 
   has_feature :install_options
 

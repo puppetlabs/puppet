@@ -6,8 +6,8 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
 
   before :each do
     allow(Puppet::Type.type(:service)).to receive(:defaultprovider).and_return(provider_class)
-    allow(Facter).to receive(:value).with('os.name').and_return(:openbsd)
-    allow(Facter).to receive(:value).with('os.family').and_return('OpenBSD')
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:openbsd)
+    allow(Facter).to receive(:value).with(:osfamily).and_return('OpenBSD')
     allow(FileTest).to receive(:file?).with('/usr/sbin/rcctl').and_return(true)
     allow(FileTest).to receive(:executable?).with('/usr/sbin/rcctl').and_return(true)
   end

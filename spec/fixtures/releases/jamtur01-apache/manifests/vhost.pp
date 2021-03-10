@@ -1,6 +1,6 @@
 define apache::vhost( $port, $docroot, $ssl=true, $template='apache/vhost-default.conf.erb', $priority, $serveraliases = '' ) {
   include apache
-  $vdir = $os['name']? {
+  $vdir = $operatingsystem? {
     'ubuntu' => '/etc/apache2/sites-enabled/',
     default => '/etc/httpd/conf.d',
   }

@@ -45,7 +45,7 @@ rescue LoadError
 end
 
 PREREQS = %w{openssl facter cgi hiera}
-MIN_FACTER_VERSION = 4.0
+MIN_FACTER_VERSION = 1.5
 
 InstallOptions = OpenStruct.new
 
@@ -242,7 +242,7 @@ def prepare_installation
   # Otherwise facter won't be guaranteed to be present.
   if InstallOptions.check_prereqs
     check_prereqs
-    $operatingsystem = Facter.value('os.name')
+    $operatingsystem = Facter.value :operatingsystem
   end
 
   if not InstallOptions.configdir.nil?

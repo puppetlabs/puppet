@@ -242,7 +242,7 @@ module Puppet
       conditionally:
 
           # In the 'openssl' class
-          $ssl = $os['name'] ? {
+          $ssl = $operatingsystem ? {
             solaris => SMCossl,
             default => openssl
           }
@@ -254,7 +254,7 @@ module Puppet
 
           ...
 
-          $ssh = $os['name'] ? {
+          $ssh = $operatingsystem ? {
             solaris => SMCossh,
             default => openssh
           }

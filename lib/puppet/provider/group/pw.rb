@@ -6,8 +6,8 @@ Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService:
   commands :pw => "pw"
   has_features :manages_members
 
-  defaultfor 'os.name' => [:freebsd, :dragonfly]
-  confine    'os.name' => [:freebsd, :dragonfly]
+  defaultfor :operatingsystem => [:freebsd, :dragonfly]
+  confine    :operatingsystem => [:freebsd, :dragonfly]
 
   options :members, :flag => "-M", :method => :mem
 

@@ -7,7 +7,7 @@ describe 'Puppet::Type::Service::Provider::Freebsd',
   before :each do
     @provider = provider_class.new
     allow(@provider).to receive(:initscript)
-    allow(Facter).to receive(:value).with('os.family').and_return('FreeBSD')
+    allow(Facter).to receive(:value).with(:osfamily).and_return('FreeBSD')
   end
 
   it "should correctly parse rcvar for FreeBSD < 7" do

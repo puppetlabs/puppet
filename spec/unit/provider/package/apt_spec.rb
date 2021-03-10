@@ -14,8 +14,8 @@ describe Puppet::Type.type(:package).provider(:apt) do
     resource.provider
   end
 
-  it "should be the default provider on 'os.family' => Debian" do
-    expect(Facter).to receive(:value).with('os.family').and_return("Debian")
+  it "should be the default provider on :osfamily => Debian" do
+    expect(Facter).to receive(:value).with(:osfamily).and_return("Debian")
     expect(described_class.default?).to be_truthy
   end
 

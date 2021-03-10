@@ -2,7 +2,7 @@ class apache::params{
   $user  = 'www-data'
   $group = 'www-data'
 
-  case $os['name'] {
+  case $operatingsystem {
     "centos": {
        $apache_name = httpd
        $ssl_package = mod_ssl

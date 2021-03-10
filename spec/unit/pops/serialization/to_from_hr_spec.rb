@@ -344,7 +344,7 @@ module Serialization
 
       it 'nested Expression' do
         expr = parse(<<-CODE)
-          $rootgroup = $os['family'] ? {
+          $rootgroup = $osfamily ? {
               'Solaris'          => 'wheel',
               /(Darwin|FreeBSD)/ => 'wheel',
               default            => 'root',

@@ -26,8 +26,8 @@ describe 'Puppet::Type::Service::Provider::Upstart',
   end
 
   it "should be the default provider on Ubuntu" do
-    expect(Facter).to receive(:value).with('os.name').and_return("Ubuntu")
-    expect(Facter).to receive(:value).with('os.release.major').and_return("12.04")
+    expect(Facter).to receive(:value).with(:operatingsystem).and_return("Ubuntu")
+    expect(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("12.04")
     expect(provider_class.default?).to be_truthy
   end
 
@@ -55,7 +55,7 @@ describe 'Puppet::Type::Service::Provider::Upstart',
 
   describe "excluding services" do
     it "ignores tty and serial on Redhat systems" do
-      allow(Facter).to receive(:value).with('os.family').and_return('RedHat')
+      allow(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
       expect(provider_class.excludes).to include 'serial'
       expect(provider_class.excludes).to include 'tty'
     end

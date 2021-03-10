@@ -8,8 +8,8 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
 
   commands :chkconfig => "/sbin/chkconfig", :service => "/sbin/service"
 
-  defaultfor 'os.family' => :redhat
-  defaultfor 'os.family' => :suse, 'os.release.major' => ["10", "11"]
+  defaultfor :osfamily => :redhat
+  defaultfor :osfamily => :suse, :operatingsystemmajrelease => ["10", "11"]
 
   # Remove the symlinks
   def disable
@@ -35,7 +35,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
     # For Suse OS family, chkconfig returns 0 even if the service is disabled or non-existent
     # Therefore, check the output for '<name>  on' (or '<name>  B for boot services)
     # to see if it is enabled
-    return :false unless Facter.value('os.family') != 'Suse' || output =~ /^#{name}\s+(on|B)$/
+    return :false unless Facter.value(:osfamily) != 'Suse' || output =~ /^#{name}\s+(on|B)$/
 
     :true
   end

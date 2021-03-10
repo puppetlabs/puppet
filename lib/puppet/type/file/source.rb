@@ -72,7 +72,7 @@ module Puppet
           file { '/etc/nfs.conf':
             source => [
               "puppet:///modules/nfs/conf.${host}",
-              "puppet:///modules/nfs/conf.${os['name']}",
+              "puppet:///modules/nfs/conf.${operatingsystem}",
               'puppet:///modules/nfs/conf'
             ]
           }

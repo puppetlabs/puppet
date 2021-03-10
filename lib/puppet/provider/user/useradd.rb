@@ -21,13 +21,13 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   options :expiry, :method => :sp_expire,
     :munge => proc { |value|
       if value == :absent
-        if Facter.value('os.name') == 'SLES' && Facter.value('os.release.major') == "11"
+        if Facter.value(:operatingsystem)=='SLES' && Facter.value(:operatingsystemmajrelease) == "11"
           -1
         else
           ''
         end
       else
-        case Facter.value('os.name')
+        case Facter.value(:operatingsystem)
         when 'Solaris'
           # Solaris uses %m/%d/%Y for useradd/usermod
           expiry_year, expiry_month, expiry_day = value.split('-')
@@ -161,7 +161,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   has_features :manages_homedir, :allows_duplicates, :manages_expiry
-  has_features :system_users unless %w{HP-UX Solaris}.include? Facter.value('os.name')
+  has_features :system_users unless %w{HP-UX Solaris}.include? Facter.value(:operatingsystem)
 
   has_features :manages_passwords, :manages_password_age if Puppet.features.libshadow?
   has_features :manages_shell
@@ -196,8 +196,8 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       # libuser does not implement the -m flag
       cmd << "-m" unless @resource.forcelocal?
     else
-      osfamily = Facter.value('os.family')
-      osversion = Facter.value('os.release.major').to_i
+      osfamily = Facter.value(:osfamily)
+      osversion = Facter.value(:operatingsystemmajrelease).to_i
       # SLES 11 uses pwdutils instead of shadow, which does not have -M
       # Solaris and OpenBSD use different useradd flavors
       unless osfamily =~ /Solaris|OpenBSD/ || osfamily == 'Suse' && osversion <= 11
@@ -293,7 +293,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       cmd = [command(:delete)]
     end
     # Solaris `userdel -r` will fail if the homedir does not exist.
-    if @resource.managehome? && (('Solaris' != Facter.value('os.name')) || Dir.exist?(Dir.home(@resource[:name])))
+    if @resource.managehome? && (('Solaris' != Facter.value(:operatingsystem)) || Dir.exist?(Dir.home(@resource[:name])))
       cmd << '-r'
     end
     cmd << @resource[:name]

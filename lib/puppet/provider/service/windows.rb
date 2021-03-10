@@ -11,8 +11,8 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
     services as a specific user.
   EOT
 
-  defaultfor 'os.name' => :windows
-  confine    'os.name' => :windows
+  defaultfor :operatingsystem => :windows
+  confine    :operatingsystem => :windows
 
   has_feature :refreshable, :configurable_timeout, :manages_logon_credentials
 
