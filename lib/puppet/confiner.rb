@@ -16,7 +16,7 @@ module Puppet::Confiner
   # * `:any` => an array of expressions that will be ORed together
   #
   # @example
-  #   confine 'os.name' => [:redhat, :fedora]
+  #   confine :operatingsystem => [:redhat, :fedora]
   #   confine :true { ... }
   #
   # @param hash [Hash<{Symbol => Object}>] hash of confines

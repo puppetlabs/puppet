@@ -34,20 +34,20 @@ describe 'Puppet::Type::Service::Provider::Debian',
 
   ['1','2'].each do |version|
     it "should be the default provider on CumulusLinux #{version}" do
-      expect(Facter).to receive(:value).with('os.name').at_least(:once).and_return('CumulusLinux')
-      expect(Facter).to receive(:value).with('os.release.major').and_return(version)
+      expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return('CumulusLinux')
+      expect(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return(version)
       expect(provider_class.default?).to be_truthy
     end
   end
 
   it "should be the default provider on Devuan" do
-    expect(Facter).to receive(:value).with('os.name').at_least(:once).and_return('Devuan')
+    expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return('Devuan')
     expect(provider_class.default?).to be_truthy
   end
 
   it "should be the default provider on Debian" do
-    expect(Facter).to receive(:value).with('os.name').at_least(:once).and_return('Debian')
-    expect(Facter).to receive(:value).with('os.release.major').and_return('7')
+    expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return('Debian')
+    expect(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('7')
     expect(provider_class.default?).to be_truthy
   end
 
@@ -151,8 +151,8 @@ describe 'Puppet::Type::Service::Provider::Debian',
 
   context "when checking service status" do
     it "should use the service command" do
-      allow(Facter).to receive(:value).with('os.name').and_return('Debian')
-      allow(Facter).to receive(:value).with('os.release.major').and_return('8')
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('Debian')
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('8')
       allow(@resource).to receive(:[]).with(:hasstatus).and_return(:true)
       expect(@provider.statuscmd).to eq(["service", @resource[:name], "status"])
     end

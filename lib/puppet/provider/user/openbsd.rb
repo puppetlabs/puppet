@@ -10,8 +10,8 @@ Puppet::Type.type(:user).provide :openbsd, :parent => :useradd do
            :modify   => "usermod",
            :password => "passwd"
 
-  defaultfor 'os.name' => :openbsd
-  confine    'os.name' => :openbsd
+  defaultfor :operatingsystem => :openbsd
+  confine    :operatingsystem => :openbsd
 
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos

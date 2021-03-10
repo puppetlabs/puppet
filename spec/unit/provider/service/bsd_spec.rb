@@ -10,8 +10,8 @@ describe 'Puppet::Type::Service::Provider::Bsd',
 
   before :each do
     allow(Puppet::Type.type(:service)).to receive(:defaultprovider).and_return(provider_class)
-    allow(Facter).to receive(:value).with('os.name').and_return(:netbsd)
-    allow(Facter).to receive(:value).with('os.family').and_return('NetBSD')
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:netbsd)
+    allow(Facter).to receive(:value).with(:osfamily).and_return('NetBSD')
     allow(provider_class).to receive(:defpath).and_return('/etc/rc.conf.d')
     @provider = provider_class.new
     allow(@provider).to receive(:initscript)

@@ -24,18 +24,18 @@ describe Puppet::Type.type(:package).provider(:dnfmodule) do
   before(:each) { allow(Puppet::Util).to receive(:which).with('/usr/bin/dnf').and_return(dnf_path) }
 
   it "should have lower specificity" do
-    allow(Facter).to receive(:value).with('os.family').and_return(:redhat)
-    allow(Facter).to receive(:value).with('os.name').and_return(:redhat)
-    allow(Facter).to receive(:value).with('os.release.major').and_return('8')
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:redhat)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('8')
     expect(described_class.specificity).to be < 200
   end
 
   describe "should be an opt-in provider" do
     Array(4..8).each do |ver|
       it "should not be default for redhat #{ver}" do
-        allow(Facter).to receive(:value).with('os.name').and_return('redhat')
-        allow(Facter).to receive(:value).with('os.family').and_return('redhat')
-        allow(Facter).to receive(:value).with('os.release.major').and_return(ver.to_s)
+        allow(Facter).to receive(:value).with(:operatingsystem).and_return('redhat')
+        allow(Facter).to receive(:value).with(:osfamily).and_return('redhat')
+        allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return(ver.to_s)
         expect(described_class).not_to be_default
       end
     end

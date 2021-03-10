@@ -401,7 +401,7 @@ else
       # Default group size in rspec examples
       DEFAULT_GROUP_SIZE = 1000
 
-      process_count = [(args[:process_count] || Facter.value('processors.count')).to_i, 1].max
+      process_count = [(args[:process_count] || Facter.value("processorcount")).to_i, 1].max
       group_size = [(args[:group_size] || DEFAULT_GROUP_SIZE).to_i, 1].max
 
       abort unless Parallel::RSpec::Parallelizer.new(process_count, group_size, color_output?, args.extras).run

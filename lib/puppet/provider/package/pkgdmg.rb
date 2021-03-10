@@ -35,9 +35,9 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
       whether a package has been installed. Thus, to install new a version of a
       package, you must create a new DMG with a different filename."
 
-  confine 'os.name' => :darwin
+  confine :operatingsystem => :darwin
   confine :feature         => :cfpropertylist
-  defaultfor 'os.name' => :darwin
+  defaultfor :operatingsystem => :darwin
   commands :installer => "/usr/sbin/installer"
   commands :hdiutil => "/usr/bin/hdiutil"
   commands :curl => "/usr/bin/curl"

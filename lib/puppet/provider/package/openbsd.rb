@@ -13,8 +13,8 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
            :pkgadd    => "pkg_add",
            :pkgdelete => "pkg_delete"
 
-  defaultfor 'os.name' => :openbsd
-  confine 'os.name' => :openbsd
+  defaultfor :operatingsystem => :openbsd
+  confine :operatingsystem => :openbsd
 
   has_feature :versionable
   has_feature :install_options

@@ -39,8 +39,8 @@ describe 'Puppet::Type::Service::Provider::Init',
 
   describe "when running on FreeBSD" do
     before :each do
-      allow(Facter).to receive(:value).with('os.name').and_return('FreeBSD')
-      allow(Facter).to receive(:value).with('os.family').and_return('FreeBSD')
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('FreeBSD')
+      allow(Facter).to receive(:value).with(:osfamily).and_return('FreeBSD')
     end
 
     it "should set its default path to include /etc/rc.d and /usr/local/etc/rc.d" do
@@ -50,7 +50,7 @@ describe 'Puppet::Type::Service::Provider::Init',
 
   describe "when running on HP-UX" do
     before :each do
-      allow(Facter).to receive(:value).with('os.name').and_return('HP-UX')
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('HP-UX')
     end
 
     it "should set its default path to include /sbin/init.d" do
@@ -60,7 +60,7 @@ describe 'Puppet::Type::Service::Provider::Init',
 
   describe "when running on Archlinux" do
     before :each do
-      allow(Facter).to receive(:value).with('os.name').and_return('Archlinux')
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('Archlinux')
     end
 
     it "should set its default path to include /etc/rc.d" do
@@ -70,7 +70,7 @@ describe 'Puppet::Type::Service::Provider::Init',
 
   describe "when not running on FreeBSD, HP-UX or Archlinux" do
     before :each do
-      allow(Facter).to receive(:value).with('os.name').and_return('RedHat')
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('RedHat')
     end
 
     it "should set its default path to include /etc/init.d" do
@@ -103,7 +103,7 @@ describe 'Puppet::Type::Service::Provider::Init',
     end
 
     it "should omit Yocto services on cisco-wrlinux" do
-      allow(Facter).to receive(:value).with('os.family').and_return('cisco-wrlinux')
+      allow(Facter).to receive(:value).with(:osfamily).and_return('cisco-wrlinux')
       exclude = 'umountfs'
       expect(provider_class.get_services(provider_class.defpath).map(&:name)).to eq(@services - [exclude])
     end
@@ -282,7 +282,7 @@ describe 'Puppet::Type::Service::Provider::Init',
 
     describe "when starting a service on Solaris" do
       it "should use ctrun" do
-        allow(Facter).to receive(:value).with('os.family').and_return('Solaris')
+        allow(Facter).to receive(:value).with(:osfamily).and_return('Solaris')
         expect(provider).to receive(:execute).with('/usr/bin/ctrun -l child /service/path/myservice start', {:failonfail => true, :override_locale => false, :squelch => false, :combine => true}).and_return("")
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         provider.start
@@ -291,7 +291,7 @@ describe 'Puppet::Type::Service::Provider::Init',
 
     describe "when starting a service on RedHat" do
       it "should not use ctrun" do
-        allow(Facter).to receive(:value).with('os.family').and_return('RedHat')
+        allow(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
         expect(provider).to receive(:execute).with(['/service/path/myservice', :start], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true}).and_return("")
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         provider.start

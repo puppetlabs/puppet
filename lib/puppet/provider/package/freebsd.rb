@@ -9,7 +9,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
     :pkgadd => "/usr/sbin/pkg_add",
     :pkgdelete => "/usr/sbin/pkg_delete"
 
-  confine 'os.name' => :freebsd
+  confine :operatingsystem => :freebsd
 
   def self.listcmd
     command(:pkginfo)

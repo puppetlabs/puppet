@@ -7,8 +7,8 @@ describe Puppet::Type.type(:package).provider(:tdnf) do
 
   context 'default' do
     it 'should be the default provider on PhotonOS' do
-      allow(Facter).to receive(:value).with('os.family').and_return(:redhat)
-      allow(Facter).to receive(:value).with('os.name').and_return("PhotonOS")
+      allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return("PhotonOS")
       expect(described_class).to be_default
     end
   end

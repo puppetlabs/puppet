@@ -17,8 +17,8 @@ require 'date'
 Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   desc "User management for AIX."
 
-  defaultfor 'os.name' => :aix
-  confine 'os.name' => :aix
+  defaultfor :operatingsystem => :aix
+  confine :operatingsystem => :aix
 
   # Commands that manage the element
   commands :list      => "/usr/sbin/lsuser"

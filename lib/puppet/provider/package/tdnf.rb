@@ -24,5 +24,5 @@ Puppet::Type.type(:package).provide :tdnf, :parent => :dnf do
       end
   end
 
-  defaultfor 'os.name' => "PhotonOS"
+  defaultfor :operatingsystem => "PhotonOS" 
 end

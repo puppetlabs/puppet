@@ -311,8 +311,8 @@ describe Puppet::Face[:epp, :current] do
 
     it "facts can be overridden" do
       expect(eppface.render({
-        :facts => {'os' => {'name' => 'Merwin'} },
-        :e     => '<%= $facts[os][name] %>', 
+        :facts => {'operatingsystem' => 'Merwin'},
+        :e     => '<%= $facts[operatingsystem] %>', 
       })).to eql("Merwin")
     end
 

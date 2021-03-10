@@ -6,7 +6,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
 
   commands :add => "groupadd", :delete => "groupdel", :modify => "groupmod"
 
-  has_feature :system_groups unless %w{HP-UX Solaris}.include? Facter.value('os.name')
+  has_feature :system_groups unless %w{HP-UX Solaris}.include? Facter.value(:operatingsystem)
 
   verify :gid, _("GID must be an integer") do |value|
     value.is_a? Integer

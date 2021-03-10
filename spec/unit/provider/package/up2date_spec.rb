@@ -13,8 +13,8 @@ describe 'up2date package provider' do
   osfamilies.each do |osfamily|
     releases.each do |release|
       it "should be the default provider on #{osfamily} #{release}" do
-        allow(Facter).to receive(:value).with('os.family').and_return(osfamily)
-        allow(Facter).to receive(:value).with('os.distro.release.full').and_return(release)
+        allow(Facter).to receive(:value).with(:osfamily).and_return(osfamily)
+        allow(Facter).to receive(:value).with(:lsbdistrelease).and_return(release)
         expect(subject.default?).to be_truthy
       end
     end

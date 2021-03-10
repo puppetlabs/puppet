@@ -6,8 +6,8 @@ Puppet::Type.type(:group).provide :directoryservice, :parent => Puppet::Provider
   "
 
   commands :dscl => "/usr/bin/dscl"
-  confine 'os.name' => :darwin
-  defaultfor 'os.name' => :darwin
+  confine :operatingsystem => :darwin
+  defaultfor :operatingsystem => :darwin
   has_feature :manages_members
 
   def members_insync?(current, should)

@@ -21,7 +21,7 @@ class apache {
    'headers' : ensure => present;
    'expires' : ensure => present;
   }
-  $vdir = $os['name'] ? {
+  $vdir = $operatingsystem? {
     'ubuntu' => '/etc/apache2/sites-enabled/',
     default => '/etc/httpd/conf.d',
   }

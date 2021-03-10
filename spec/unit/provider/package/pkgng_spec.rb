@@ -220,7 +220,7 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
   describe "confine" do
     context "on FreeBSD" do
       it "should be the default provider" do
-        expect(Facter).to receive(:value).with('os.name').at_least(:once).and_return(:freebsd)
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:freebsd)
         expect(described_class).to be_default
       end
     end

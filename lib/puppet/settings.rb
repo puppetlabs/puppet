@@ -66,7 +66,7 @@ class Puppet::Settings
     }
   end
 
-  def self.default_certname
+  def self.default_certname()
     hostname = hostname_fact
     domain = domain_fact
     if domain and domain != ""
@@ -77,12 +77,12 @@ class Puppet::Settings
     fqdn.to_s.gsub(/\.$/, '')
   end
 
-  def self.hostname_fact
-    Facter.value('networking.hostname')
+  def self.hostname_fact()
+    Facter.value :hostname
   end
 
-  def self.domain_fact
-    Facter.value('networking.domain')
+  def self.domain_fact()
+    Facter.value :domain
   end
 
   def self.default_config_file_name

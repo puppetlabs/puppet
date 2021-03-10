@@ -37,9 +37,9 @@ tag 'audit:medium',
   - "host"
   - "roles"
   - "profiles"
-  - "%{facts.os.name}"
-  - "%{facts.os.family}"
-  - "%{facts.kernel}"
+  - "%{::operatingsystem}"
+  - "%{::osfamily}"
+  - "%{::kernel}"
   - "common"
 :merge_behavior: deeper
 :deep_merge_options:

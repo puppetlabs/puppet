@@ -6,8 +6,8 @@ Puppet::Type.type(:service).provide :openwrt, :parent => :init, :source => :init
 
   EOT
 
-  defaultfor 'os.name' => :openwrt
-  confine 'os.name' => :openwrt
+  defaultfor :operatingsystem => :openwrt
+  confine :operatingsystem => :openwrt
 
   has_feature :enableable
 

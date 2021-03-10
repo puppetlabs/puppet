@@ -10,9 +10,9 @@ Puppet::Type.type(:package).provide :hpux, :parent => Puppet::Provider::Package 
     :swlist => "/usr/sbin/swlist",
     :swremove => "/usr/sbin/swremove"
 
-  confine 'os.name' => "hp-ux"
+  confine :operatingsystem => "hp-ux"
 
-  defaultfor 'os.name' => "hp-ux"
+  defaultfor :operatingsystem => "hp-ux"
 
   def self.instances
     # TODO:  This is very hard on HP-UX!

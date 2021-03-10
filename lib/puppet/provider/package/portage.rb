@@ -20,9 +20,9 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     end
   end
 
-  confine 'os.family' => :gentoo
+  confine :osfamily => :gentoo
 
-  defaultfor 'os.family' => :gentoo
+  defaultfor :osfamily => :gentoo
 
   def self.instances
     result_format = self.eix_result_format

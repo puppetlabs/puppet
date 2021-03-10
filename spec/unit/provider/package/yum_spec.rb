@@ -17,42 +17,42 @@ describe Puppet::Type.type(:package).provider(:yum) do
   it_behaves_like 'RHEL package provider', described_class, 'yum'
 
   it "should have lower specificity" do
-    allow(Facter).to receive(:value).with('os.family').and_return(:redhat)
-    allow(Facter).to receive(:value).with('os.name').and_return(:fedora)
-    allow(Facter).to receive(:value).with('os.release.major').and_return("22")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:fedora)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("22")
     expect(described_class.specificity).to be < 200
   end
 
   describe "should have logical defaults" do
     [2, 2018].each do |ver|
       it "should be the default provider on Amazon Linux #{ver}" do
-        allow(Facter).to receive(:value).with('os.name').and_return('amazon')
-        allow(Facter).to receive(:value).with('os.family').and_return('redhat')
-        allow(Facter).to receive(:value).with('os.release.major').and_return(ver)
+        allow(Facter).to receive(:value).with(:operatingsystem).and_return('amazon')
+        allow(Facter).to receive(:value).with(:osfamily).and_return('redhat')
+        allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return(ver)
         expect(described_class).to be_default
       end
     end
 
     Array(4..7).each do |ver|
       it "should be default for redhat #{ver}" do
-        allow(Facter).to receive(:value).with('os.name').and_return('redhat')
-        allow(Facter).to receive(:value).with('os.family').and_return('redhat')
-        allow(Facter).to receive(:value).with('os.release.major').and_return(ver.to_s)
+        allow(Facter).to receive(:value).with(:operatingsystem).and_return('redhat')
+        allow(Facter).to receive(:value).with(:osfamily).and_return('redhat')
+        allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return(ver.to_s)
         expect(described_class).to be_default
       end
     end
 
     it "should not be default for redhat 8" do
-      allow(Facter).to receive(:value).with('os.name').and_return('redhat')
-      allow(Facter).to receive(:value).with('os.family').and_return('redhat')
-      allow(Facter).to receive(:value).with('os.release.major').and_return('8')
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('redhat')
+      allow(Facter).to receive(:value).with(:osfamily).and_return('redhat')
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('8')
       expect(described_class).not_to be_default
     end
 
     it "should not be default for Ubuntu 16.04" do
-      allow(Facter).to receive(:value).with('os.name').and_return('ubuntu')
-      allow(Facter).to receive(:value).with('os.family').and_return('ubuntu')
-      allow(Facter).to receive(:value).with('os.release.major').and_return('16.04')
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('ubuntu')
+      allow(Facter).to receive(:value).with(:osfamily).and_return('ubuntu')
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('16.04')
       expect(described_class).not_to be_default
     end
   end
@@ -346,7 +346,7 @@ describe Puppet::Type.type(:package).provider(:yum) do
   describe 'install' do
     before do
       resource[:ensure] = ensure_value
-      allow(Facter).to receive(:value).with('os.release.major').and_return('7')
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('7')
       allow(described_class).to receive(:command).with(:cmd).and_return('/usr/bin/yum')
       allow(provider).to receive(:query).twice.and_return(nil, ensure: '18.3.2')
       allow(provider).to receive(:insync?).with('18.3.2').and_return(true)

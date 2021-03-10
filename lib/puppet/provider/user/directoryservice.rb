@@ -16,9 +16,9 @@ Puppet::Type.type(:user).provide :directoryservice do
   commands :dscacheutil  => '/usr/bin/dscacheutil'
 
   # Provider confines and defaults
-  confine    'os.name' => :darwin
-  confine    :feature  => :cfpropertylist
-  defaultfor 'os.name' => :darwin
+  confine    :operatingsystem => :darwin
+  confine    :feature         => :cfpropertylist
+  defaultfor :operatingsystem => :darwin
 
   # Need this to create getter/setter methods automagically
   # This command creates methods that return @property_hash[:value]
@@ -159,7 +159,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   end
 
   def self.get_os_version
-    @os_version ||= Facter.value('os.macosx.version.major')
+    @os_version ||= Facter.value(:macosx_productversion_major)
   end
 
   # Use dscl to retrieve an array of hashes containing attributes about all

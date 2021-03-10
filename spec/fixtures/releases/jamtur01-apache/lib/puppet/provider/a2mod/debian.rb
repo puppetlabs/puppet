@@ -4,7 +4,7 @@ Puppet::Type.type(:a2mod).provide(:debian) do
     commands :encmd => "a2enmod"
     commands :discmd => "a2dismod"
 
-    defaultfor 'os.name' => [:debian, :ubuntu]
+    defaultfor :operatingsystem => [:debian, :ubuntu]
 
     def create
         encmd resource[:name]

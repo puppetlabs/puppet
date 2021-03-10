@@ -4,7 +4,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   desc "Standard `init`-style service management."
 
   def self.defpath
-    case Facter.value('os.name')
+    case Facter.value(:operatingsystem)
     when "FreeBSD", "DragonFly"
       ["/etc/rc.d", "/usr/local/etc/rc.d"]
     when "HP-UX"
@@ -21,8 +21,8 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   # Debian and Ubuntu should use the Debian provider.
   # RedHat systems should use the RedHat provider.
   confine :true => begin
-      os = Facter.value('os.name').downcase
-      family = Facter.value('os.family').downcase
+      os = Facter.value(:operatingsystem).downcase
+      family = Facter.value(:osfamily).downcase
       !(os == 'debian' || os == 'ubuntu' || family == 'redhat')
   end
 
@@ -54,7 +54,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     # these excludes were found with grep -r -L start /etc/init.d
     excludes += %w{rcS module-init-tools}
     # Prevent puppet failing on unsafe scripts from Yocto Linux
-    if Facter.value('os.family') == "cisco-wrlinux"
+    if Facter.value(:osfamily) == "cisco-wrlinux"
       excludes += %w{banner.sh bootmisc.sh checkroot.sh devpts.sh dmesg.sh
                    hostname.sh mountall.sh mountnfs.sh populate-volatile.sh
                    rmnologin.sh save-rtc.sh sendsigs sysfs.sh umountfs
@@ -171,7 +171,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   end
 
   def texecute(type, command, fof = true, squelch = false, combine = true)
-    if type == :start && Facter.value('os.family') == "Solaris"
+    if type == :start && Facter.value(:osfamily) == "Solaris"
         command =  ["/usr/bin/ctrun -l child", command].flatten.join(" ")
     end
     super(type, command, fof, squelch, combine)

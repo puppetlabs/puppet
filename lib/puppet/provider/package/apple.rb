@@ -8,7 +8,7 @@ Puppet::Type.type(:package).provide :apple, :parent => Puppet::Provider::Package
     automatically add the `.pkg` extension, so leave that off when specifying
     the package name."
 
-  confine 'os.name' => :darwin
+  confine :operatingsystem => :darwin
   commands :installer => "/usr/sbin/installer"
 
   def self.instances

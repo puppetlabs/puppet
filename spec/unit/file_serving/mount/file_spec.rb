@@ -3,8 +3,8 @@ require 'puppet/file_serving/mount/file'
 
 module FileServingMountTesting
   def stub_facter(hostname)
-    allow(Facter).to receive(:value).with('networking.hostname').and_return(hostname.sub(/\..+/, ''))
-    allow(Facter).to receive(:value).with('networking.domain').and_return(hostname.sub(/^[^.]+\./, ''))
+    allow(Facter).to receive(:value).with("hostname").and_return(hostname.sub(/\..+/, ''))
+    allow(Facter).to receive(:value).with("domain").and_return(hostname.sub(/^[^.]+\./, ''))
   end
 end
 
