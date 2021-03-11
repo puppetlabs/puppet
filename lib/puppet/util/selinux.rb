@@ -13,6 +13,10 @@ require 'pathname'
 
 module Puppet::Util::SELinux
 
+  S_IFREG = 0100000
+  S_IFDIR = 0040000
+  S_IFLNK = 0120000
+
   def self.selinux_support?
     return false unless defined?(Selinux)
     if Selinux.is_selinux_enabled == 1
@@ -38,7 +42,7 @@ module Puppet::Util::SELinux
 
   # Retrieve and return the default context of the file.  If we don't have
   # SELinux support or if the SELinux call fails to file a default then return nil.
-  def get_selinux_default_context(file)
+  def get_selinux_default_context(file, resource_ensure=nil)
     return nil unless selinux_support?
     # If the filesystem has no support for SELinux labels, return a default of nil
     # instead of what matchpathcon would return
@@ -48,8 +52,14 @@ module Puppet::Util::SELinux
     begin
       filestat = file_lstat(file)
       mode = filestat.mode
-    rescue Errno::EACCES, Errno::ENOENT
+    rescue Errno::EACCES
       mode = 0
+    rescue Errno::ENOENT
+      if resource_ensure
+        mode = get_create_mode(resource_ensure)
+      else
+        mode = 0
+      end
     end
 
     retval = Selinux.matchpathcon(file, mode)
@@ -136,8 +146,8 @@ module Puppet::Util::SELinux
   # Puppet uses.  This will set the file's SELinux context to the policy's
   # default context (if any) if it differs from the context currently on
   # the file.
-  def set_selinux_default_context(file)
-    new_context = get_selinux_default_context(file)
+  def set_selinux_default_context(file, resource_ensure=nil)
+    new_context = get_selinux_default_context(file, resource_ensure)
     return nil unless new_context
     cur_context = get_selinux_current_context(file)
     if new_context != cur_context
@@ -196,6 +206,23 @@ module Puppet::Util::SELinux
     return false if fstype.nil?
     filesystems = ['ext2', 'ext3', 'ext4', 'gfs', 'gfs2', 'xfs', 'jfs', 'btrfs', 'tmpfs']
     filesystems.include?(fstype)
+  end
+
+  # Get mode file type bits set based on ensure on
+  # the file resource. This helps SELinux determine
+  # what context a new resource being created should have.
+  def get_create_mode(resource_ensure)
+    mode = 0
+    return mode if resource_ensure == 'absent'
+    case resource_ensure
+    when "present", "file"
+      mode = 0 | S_IFREG
+    when "directory"
+      mode = 0 | S_IFDIR
+    when "link"
+      mode = 0 | S_IFLNK
+    end
+    mode
   end
 
   # Internal helper function to read and parse /proc/mounts
