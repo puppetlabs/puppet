@@ -2,28 +2,20 @@ require 'puppet/indirector/face'
 require 'puppet/node/facts'
 require 'puppet/util/fact_dif'
 
-EXCLUDE_LIST = %w[facterversion
-  swapfree_mb swapsize_mb
-  load_averages\.*
-  memory\.swap\.available_bytes memory\.swap\.capacity memory\.swap\.total_bytes
-  memory\.swap\.used_bytes memory\.swap\.available
-  memory\.system\.available memory\.system\.available_bytes memory\.system\.capacity memory\.swap\.used
-  memory\.system\.total_bytes memory\.system\.used memory\.system\.used_bytes
-  memoryfree memoryfree_mb memorysize_mb
-  mountpoints\..* mtu_.* mountpoints\..*\.capacity
-  networking\.interfaces\..*\.mtu networking\.mtu partitions\..*\.filesystem
-  partitions\..*\.size_bytes partitions\..*\.mount partitions\..*\.uuid
-  disks\..*\.size_bytes
-  hypervisors\.lpar\.partition_number hypervisors\.xen\.privileged hypervisors\.zone\..* hypervisors\.ldom\..*
+EXCLUDE_LIST = %w[ facterversion
+  load_averages\..*
   processors\.speed
-  ldom_.*
-  boardassettag dmi\.board\.asset_tag
-  blockdevice_.*_vendor blockdevice_.*_size
-  system_uptime\.days system_uptime\.hours system_uptime\.seconds system_uptime\.uptime
-  uptime_days uptime_hours uptime_seconds
-  system_profiler\.uptime
-  sp_uptime
-  uptime]
+  swapfree swapfree_mb
+  memoryfree memoryfree_mb
+  memory\.swap\.available_bytes memory\.swap\.used_bytes
+  memory\.swap\.available memory\.swap\.capacity memory\.swap\.used
+  memory\.system\.available_bytes memory\.system\.used_bytes
+  memory\.system\.available memory\.system\.capacity memory\.system\.used
+  mountpoints\..*\.available* mountpoints\..*\.capacity mountpoints\..*\.used*
+  sp_uptime system_profiler\.uptime
+  uptime uptime_days uptime_hours uptime_seconds
+  system_uptime\.uptime system_uptime\.days system_uptime\.hours system_uptime\.seconds
+]
 
 Puppet::Indirector::Face.define(:facts, '0.0.1') do
   copyright "Puppet Inc.", 2011

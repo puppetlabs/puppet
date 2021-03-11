@@ -57,6 +57,6 @@ class FactDif
   end
 
   def excluded?(fact_name)
-    @exclude_list.any? {|excluded_fact| fact_name =~ /#{excluded_fact}/}
+    @exclude_list.any? {|excluded_fact| fact_name =~ /^#{excluded_fact}$/}
   end
 end
