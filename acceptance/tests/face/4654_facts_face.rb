@@ -1,6 +1,6 @@
 test_name "Puppet facts face should resolve custom and external facts"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration'   # The facter acceptance tests should be acceptance.
                           # However, the puppet face merely needs to interact with libfacter.
                           # So, this should be an integration test.

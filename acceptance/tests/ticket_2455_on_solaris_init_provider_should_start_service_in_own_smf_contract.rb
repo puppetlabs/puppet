@@ -1,6 +1,6 @@
 test_name "(PUP-2455) Service provider should start Solaris init service in its own SMF contract"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',  # Use block style `test_name`
                        # Use mk_temp_environment_with_teardown
                        # Combine with Service resource tests

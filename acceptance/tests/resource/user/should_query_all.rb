@@ -1,6 +1,6 @@
 test_name "should query all users"
 confine :except, :platform => /^cisco_/ # See PUP-5828
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',  # Use block style `test_run`
     'audit:integration'
 

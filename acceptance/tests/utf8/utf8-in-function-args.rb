@@ -1,6 +1,6 @@
 test_name 'utf-8 characters in function parameters' do
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration', # not package dependent but may want to vary platform by LOCALE/encoding
       'audit:refactor'     # if keeping, use mk_temp_environment_with_teardown
 

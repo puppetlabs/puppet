@@ -1,6 +1,6 @@
 test_name "The Puppet service should be manageable with Puppet"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',  # Use block style `test_name`
     'audit:acceptance' # uses services from a running puppet-agent install
 #

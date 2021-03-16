@@ -1,6 +1,6 @@
 test_name 'C98162 - Validate `return` immediately returns from a block of code' do
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:unit'
 
   agents.each do |agent|

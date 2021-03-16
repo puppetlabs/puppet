@@ -2,7 +2,7 @@ test_name "Master should produce error if enc specifies a nonexistent environmen
   require 'puppet/acceptance/classifier_utils.rb'
   extend Puppet::Acceptance::ClassifierUtils
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:unit',
       'server'
 

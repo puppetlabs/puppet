@@ -1,6 +1,6 @@
 test_name "C97899 - Agent run should fail if environment is unreadable" do
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration',
       'audit:refactor', # use mk_temp_environment_with_teardown
       'server'

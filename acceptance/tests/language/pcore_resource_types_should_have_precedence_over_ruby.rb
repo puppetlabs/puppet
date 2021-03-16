@@ -1,6 +1,6 @@
 test_name 'C98097 - generated pcore resource types should be loaded instead of ruby for custom types' do
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration',
     'audit:refactor',    # use `mk_temp_environment_with_teardown` helper to build environment
     'server'

@@ -1,6 +1,6 @@
 test_name "Tidying files by date"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',  # Use block style `test_run`
     'audit:integration'
 

@@ -2,7 +2,7 @@ test_name "Agent should use agent environment if there is an enc that does not s
   require 'puppet/acceptance/classifier_utils'
   extend Puppet::Acceptance::ClassifierUtils
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration',
       'server'
 

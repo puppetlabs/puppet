@@ -1,7 +1,7 @@
 test_name "tests that user resource will not add users that already exist." do
   confine :except, :platform => /^eos-/ # See ARISTA-37
   confine :except, :platform => /^cisco_/ # See PUP-5828
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance' # Could be done as integration tests, but would
                          # require changing the system running the test
                          # in ways that might require special permissions

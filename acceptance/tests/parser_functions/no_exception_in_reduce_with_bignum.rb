@@ -2,7 +2,7 @@ test_name 'C97760: Bignum in reduce() should not cause exception' do
   require 'puppet/acceptance/environment_utils'
   extend Puppet::Acceptance::EnvironmentUtils
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:unit'
 
   app_type = File.basename(__FILE__, '.*')

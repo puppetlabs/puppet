@@ -1,6 +1,6 @@
 test_name "`puppet resource service` should list running services without calling dangerous init scripts"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',   # Use block style `test_name`
     'audit:integration' # Doesn't change the system it runs on
 

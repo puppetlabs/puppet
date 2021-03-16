@@ -5,7 +5,7 @@ test_name "should purge a user" do
   confine :except, :platform => /^aix/
   confine :except, :platform => /^solaris/
   confine :except, :platform => /^osx/
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   agents.each do |agent|

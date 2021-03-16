@@ -1,5 +1,5 @@
 test_name 'Supports vendored modules' do
-  tag 'risk:medium'
+  tag 'risk:high'
 
   # beacon custom type emits a message so we can tell where the
   # type was loaded from, e.g. vendored, global, and whether the

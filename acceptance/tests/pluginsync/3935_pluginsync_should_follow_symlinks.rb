@@ -1,6 +1,6 @@
 test_name "pluginsync should not error when modulepath is a symlink and no modules have plugin directories"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration',
     'server'
 

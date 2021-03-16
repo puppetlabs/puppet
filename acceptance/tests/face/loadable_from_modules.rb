@@ -4,7 +4,7 @@ test_name "Exercise loading a face from a module"
 confine :except, :platform => 'windows'
 confine :except, :platform => /centos-4|el-4/ # PUP-5226
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:acceptance',    # This has been OS sensitive.
     'audit:refactor'       # Remove the confine against windows and refactor to
                            # accommodate the Windows platform.

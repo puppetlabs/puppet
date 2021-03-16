@@ -2,7 +2,7 @@
 test_name "Windows Service Provider With Mixed UTF-8 Service Names" do
   confine :to, :platform => 'windows'
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   require 'puppet/acceptance/windows_utils'

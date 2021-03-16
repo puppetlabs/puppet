@@ -1,7 +1,7 @@
 test_name "QA-760 - Windows Files Containing '-' and '.'"
 
-tag 'risk:medium',
-    'audit:medium',
+tag 'risk:high',
+    'audit:high',
     'audit:refactor',   # Use block style `test_name`
     'audit:integration'
 

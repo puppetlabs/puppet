@@ -1,6 +1,6 @@
 test_name "NIM package provider should work correctly"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:acceptance'  # OS specific by definition
 
 # nim test is slow, confine to only aix 7.2 and recent puppet versions

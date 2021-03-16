@@ -1,5 +1,5 @@
 test_name 'C100296: can auto-load defined types using a Resource statement' do
-  tag 'risk:medium'
+  tag 'risk:high'
 
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils

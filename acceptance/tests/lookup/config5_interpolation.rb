@@ -2,7 +2,7 @@ test_name 'C99578: hiera5 lookup config with interpolated scoped nested variable
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration',
     'audit:refactor',  # This test specifically tests interpolation on the master.
                        # Recommend adding an additonal test that validates

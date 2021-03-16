@@ -4,7 +4,7 @@
 
 test_name "Trivial puppet tests"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:unit'
 
 step "check that puppet apply displays notices"

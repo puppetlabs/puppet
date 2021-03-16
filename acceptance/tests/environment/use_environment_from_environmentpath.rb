@@ -2,7 +2,7 @@ test_name "Use environments from the environmentpath" do
   require 'puppet/acceptance/classifier_utils'
   extend Puppet::Acceptance::ClassifierUtils
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration',
       'server'
 
