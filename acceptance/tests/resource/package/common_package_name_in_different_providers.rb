@@ -84,7 +84,7 @@ test_name "ticket 1073: common package name in two different providers should be
   MANIFEST
 
   apply_manifest_on(agents, collide1_manifest, :acceptable_exit_codes => [1]) do |result|
-    assert_match(/Error while evaluating a Resource Statement, Cannot alias Package\[other-guid\] to \["guid", nil\]/, "#{result.host}: #{result.stderr}")
+    assert_match(/Error while evaluating a Resource Statement, Cannot alias Package\[other-guid\] to \[nil, "guid", nil\]/, "#{result.host}: #{result.stderr}")
   end
 
   verify_absent agents, 'guid'
@@ -96,7 +96,7 @@ test_name "ticket 1073: common package name in two different providers should be
   MANIFEST
 
   apply_manifest_on(agents, collide2_manifest, :acceptable_exit_codes => [1]) do |result|
-    assert_match(/Error while evaluating a Resource Statement, Cannot alias Package\[other-guid\] to \["guid", "#{gem_provider}"\]/, "#{result.host}: #{result.stderr}")
+    assert_match(/Error while evaluating a Resource Statement, Cannot alias Package\[other-guid\] to \[nil, "guid", "#{gem_provider}"\]/, "#{result.host}: #{result.stderr}")
   end
 
   verify_absent agents, 'guid'
