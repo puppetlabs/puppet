@@ -1,6 +1,6 @@
 test_name "fallback to the cached catalog"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration', # This test is not OS sensitive.
     'audit:refactor'     # A catalog fixture can be used for this test. Remove the usage of `with_puppet_running_on`.
 

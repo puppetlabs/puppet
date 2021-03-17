@@ -1,6 +1,6 @@
 test_name 'Mac OS X launchd Provider Testing'
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',  # Use block style `test_name`
     'audit:acceptance' # Could be done at the integration (or unit) layer though
                        # actual changing of resources could irreparably damage a
@@ -81,19 +81,16 @@ SCRIPT
   end
 
   # switching from stopped to running should output the correct status of the service and not 'absent'
-  step "Start the service on #{agent} when service is stopped, and check outoput" do
+  step "Start the service on #{agent} when service is stopped, and check output" do
     on agent, puppet_resource('service', svc, 'ensure=stopped')
-    on agent, puppet_resource('service', svc, 'ensure=running') do |result|
-      assert_match(/service { '#{svc}':\n  ensure.+=> 'running',\n}$/, stdout, 'Service status change failed')
-    end
-  end
-
-   # switching from running to stopped should output the correct status of the service and not 'absent'
-  step "Start the service on #{agent} when service is running, and check outoput" do
     on agent, puppet_resource('service', svc, 'ensure=running')
-    on agent, puppet_resource('service', svc, 'ensure=stopped') do |result|
-      assert_match(/service { '#{svc}':\n  ensure.+=> 'stopped',\n}$/, stdout, 'Service status change failed')
-    end
+    assert_service_status_on_host(agent, svc, {:ensure => 'running'})
   end
 
+  # switching from running to stopped should output the correct status of the service and not 'absent'
+  step "Stop the service on #{agent} when service is running, and check output" do
+    on agent, puppet_resource('service', svc, 'ensure=running')
+    on agent, puppet_resource('service', svc, 'ensure=stopped')
+    assert_service_status_on_host(agent, svc, {:ensure => 'stopped'})
+  end
 end

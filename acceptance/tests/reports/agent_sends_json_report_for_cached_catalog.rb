@@ -1,7 +1,7 @@
 test_name "C100533: Agent sends json report for cached catalog" do
 
-  tag 'risk:medium',
-      'audit:medium',
+  tag 'risk:high',
+      'audit:high',
       'audit:integration',
       'server'
 

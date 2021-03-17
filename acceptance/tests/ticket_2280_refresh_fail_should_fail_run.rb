@@ -1,6 +1,6 @@
 test_name 'C100297 - A resource triggered by a refresh that fails should be reported as a failure when using --detailed-exitcodes' do
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration' # Service type interaction with --detailed-exitcodes
 
   manifest =<<EOS

@@ -30,7 +30,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def self.instances
     i = []
     output = systemctl('list-unit-files', '--type', 'service', '--full', '--all',  '--no-pager')
-    output.scan(/^(\S+)\s+(disabled|enabled|masked|indirect|bad|static)\s*$/i).each do |m|
+    output.scan(/^(\S+)\s+(disabled|enabled|masked|indirect|bad|static)\s*([^-]\S+)?\s*$/i).each do |m|
       Puppet.debug("#{m[0]} marked as bad by `systemctl`. It is recommended to be further checked.") if m[1] == "bad"
       i << new(:name => m[0])
     end

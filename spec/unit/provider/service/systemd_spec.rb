@@ -200,6 +200,17 @@ describe 'Puppet::Type::Service::Provider::Systemd',
       })
     end
 
+    it "correctly parses services when list-unit-files has an additional column" do
+      expect(provider_class).to receive(:systemctl).with('list-unit-files', '--type', 'service', '--full', '--all', '--no-pager').and_return(File.read(my_fixture('list_unit_files_services_vendor_preset')))
+      expect(provider_class.instances.map(&:name)).to match_array(%w{
+        arp-ethers.service
+        auditd.service
+        dbus.service
+        umountnfs.service
+        urandom.service
+      })
+    end
+
     it "should print a debug message when a service with the state `bad` is found" do
       expect(provider_class).to receive(:systemctl).with('list-unit-files', '--type', 'service', '--full', '--all', '--no-pager').and_return(File.read(my_fixture('list_unit_files_services')))
       expect(Puppet).to receive(:debug).with("apparmor.service marked as bad by `systemctl`. It is recommended to be further checked.")

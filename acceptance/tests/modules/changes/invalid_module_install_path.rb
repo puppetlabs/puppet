@@ -1,6 +1,6 @@
 test_name 'puppet module changes (on an invalid module install path)'
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:acceptance',
     'audit:refactor'   # Master is not requiered for this test. Replace with agents.each
                        # Wrap steps in blocks in accordance with Beaker style guide

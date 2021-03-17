@@ -1,6 +1,6 @@
 test_name 'Calling all functions.. test in progress!'
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:acceptance'
 
 # create single manifest calling all functions

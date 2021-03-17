@@ -1,6 +1,6 @@
 test_name 'C99977 corrupted clientbucket' do
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration'
 
   agents.each do |agent|

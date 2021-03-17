@@ -1,7 +1,7 @@
 test_name 'puppet module list (with environment)'
 
 tag 'server',
-    'audit:medium',
+    'audit:high',
     'audit:acceptance',
     'audit:refactor'   # Master is not required for this test. Replace with agents.each
                        # Wrap steps in blocks in accordance with Beaker style guide

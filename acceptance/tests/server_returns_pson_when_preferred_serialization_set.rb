@@ -1,7 +1,7 @@
 test_name "C100532: Server returns expected format when --preferred_serialization_format is set" do
 
-  tag 'risk:medium',
-      'audit:medium',
+  tag 'risk:high',
+      'audit:high',
       'audit:integration',
       'server'
 

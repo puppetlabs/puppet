@@ -1,6 +1,6 @@
 test_name 'Puppet should change passwords for disabled, expired, or locked out Windows user accounts' do
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   require 'date'

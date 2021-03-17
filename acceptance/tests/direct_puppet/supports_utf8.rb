@@ -6,7 +6,7 @@ test_name "C97172: static catalogs support utf8" do
   require 'puppet/acceptance/agent_fqdn_utils'
   extend Puppet::Acceptance::AgentFqdnUtils
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance',
       'audit:refactor'  # Review for agent side UTF validation.
 

@@ -1,7 +1,7 @@
 test_name "Windows Package Provider" do
   confine :to, :platform => 'windows'
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance'
 
   require 'puppet/acceptance/windows_utils'

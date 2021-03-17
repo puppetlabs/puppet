@@ -2,7 +2,7 @@ test_name 'C98345: ensure puppet generate assures env. isolation' do
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration',
     'server'
 

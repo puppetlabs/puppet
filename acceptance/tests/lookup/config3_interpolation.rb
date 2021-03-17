@@ -2,7 +2,7 @@ test_name 'C99578: lookup should allow interpolation in hiera3 configs' do
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration',
     'audit:refactor',  # This test specifically tests interpolation on the master.
                        # Recommend adding an additonal test that validates

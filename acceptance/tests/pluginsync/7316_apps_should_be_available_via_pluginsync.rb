@@ -1,6 +1,6 @@
 test_name 'the pluginsync functionality should sync app definitions, and they should be runnable afterwards' do
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration'
 
   #

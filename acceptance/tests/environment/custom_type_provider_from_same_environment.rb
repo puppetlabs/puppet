@@ -2,7 +2,7 @@ test_name 'C59122: ensure provider from same env as custom type' do
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration',  # This behavior is specific to the master to 'do the right thing'
     'server'
 

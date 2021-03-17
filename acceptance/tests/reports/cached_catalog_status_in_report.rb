@@ -1,5 +1,5 @@
 test_name "PUP-5867: The report specifies whether a cached catalog was used, and if so, why" do
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration',
       'server'
 

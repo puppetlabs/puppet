@@ -1,6 +1,6 @@
 test_name 'SysV and Systemd Service Provider Validation'
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',  # Investigate merging with init_on_systemd.rb
                        # Use block style `test_name`
     'audit:acceptance' # Could be done at the integration (or unit) layer though

@@ -1,6 +1,6 @@
 test_name "Agent should use environment given by ENC for pluginsync" do
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration',
       'audit:refactor', # This test should be rolled into use_enc_environment
       'server'

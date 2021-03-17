@@ -2,7 +2,7 @@ test_name "C94788: exported resources using a yaml terminus for storeconfigs" do
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration',
     'audit:refactor',     # This could be a component of a larger workflow scenario.
     'server'

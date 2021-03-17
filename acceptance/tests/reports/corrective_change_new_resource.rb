@@ -7,7 +7,7 @@ test_name "C98092 - a new resource should not be reported as a corrective change
   require 'puppet/acceptance/agent_fqdn_utils'
   extend Puppet::Acceptance::AgentFqdnUtils
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration',
       'audit:refactor',    # Uses a server currently but is testing agent report
       'broken:images'

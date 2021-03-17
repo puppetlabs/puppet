@@ -1,7 +1,7 @@
 test_name "verifies that puppet resource creates a user and assigns the correct expiry date when absent" do
   confine :except, :platform => 'windows'
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance' # Could be done as integration tests, but would
                          # require changing the system running the test
                          # in ways that might require special permissions

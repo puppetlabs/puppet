@@ -1,6 +1,6 @@
 test_name "#15560: Manage home directories"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',  # Use block style `test_namme`
                        # refactor to be OS agnostic and added to the resource/user
                        # tests. managehome is currently not covered there.

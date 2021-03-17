@@ -3,7 +3,7 @@ test_name "Exercise loading a face from a module"
 # Because the module tool does not work on windows, we can't run this test there
 confine :except, :platform => 'windows'
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:acceptance',    # This has been OS sensitive.
     'audit:refactor'       # Remove the confine against windows and refactor to
                            # accommodate the Windows platform.
