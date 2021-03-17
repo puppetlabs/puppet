@@ -162,10 +162,20 @@ RSpec.configure do |config|
   PUPPET_FACTER_2_GCE_URL = %r{^http://metadata/computeMetadata/v1(beta1)?}.freeze
   PUPPET_FACTER_3_GCE_URL = "http://metadata.google.internal/computeMetadata/v1/?recursive=true&alt=json".freeze
 
+  # Facter azure metadata endpoint
+  PUPPET_FACTER_AZ_URL = "http://169.254.169.254/metadata/instance?api-version=2020-09-01"
+
+  # Facter EC2 endpoint
+  PUPPET_FACTER_EC2_METADATA = 'http://169.254.169.254/latest/meta-data/'
+  PUPPET_FACTER_EC2_USERDATA = 'http://169.254.169.254/latest/user-data/'
+
   config.around :each do |example|
-    # Ignore requests from Facter GCE fact in Travis
+    # Ignore requests from Facter to external services
     stub_request(:get, PUPPET_FACTER_2_GCE_URL)
     stub_request(:get, PUPPET_FACTER_3_GCE_URL)
+    stub_request(:get, PUPPET_FACTER_AZ_URL)
+    stub_request(:get, PUPPET_FACTER_EC2_METADATA)
+    stub_request(:get, PUPPET_FACTER_EC2_USERDATA)
 
     # Enable VCR if the example is tagged with `:vcr` metadata.
     if example.metadata[:vcr]
