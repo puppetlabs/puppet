@@ -1,6 +1,6 @@
 test_name 'parser validate' do
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:unit'   # Parser validation should be core to ruby
                    # and platform agnostic.
 

@@ -1,6 +1,6 @@
 test_name "should modify a user without changing home directory (pending #19542)"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',  # Use block style `test_run`
     'audit:acceptance' # Could be done as integration tests, but would
                        # require changing the system running the test

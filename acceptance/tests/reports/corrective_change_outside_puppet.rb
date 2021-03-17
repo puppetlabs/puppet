@@ -7,7 +7,7 @@ test_name "C98093 - a resource changed outside of Puppet will be reported as a c
   require 'puppet/acceptance/agent_fqdn_utils'
   extend Puppet::Acceptance::AgentFqdnUtils
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration',
       'audit:refactor',    # Uses a server currently, but is testing agent report
       'broken:images'

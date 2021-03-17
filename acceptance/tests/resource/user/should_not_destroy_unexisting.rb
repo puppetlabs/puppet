@@ -1,6 +1,6 @@
 test_name "ensure that puppet does not report removing a user that does not exist"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',  # Use block style `test_run`
     'audit:acceptance' # Could be done as integration tests, but would
                        # require changing the system running the test

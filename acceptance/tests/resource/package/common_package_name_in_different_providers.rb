@@ -6,7 +6,7 @@ test_name "ticket 1073: common package name in two different providers should be
     skip_test('Skipping EC2 Hosts') if fact_on(agent, 'ec2_metadata')
   end
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance' # Uses a provider that depends on AIO packaging
 
   require 'puppet/acceptance/rpm_util'

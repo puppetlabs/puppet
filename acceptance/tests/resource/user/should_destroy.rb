@@ -1,6 +1,6 @@
 test_name "should delete a user"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',  # Use block style `test_run`
     'audit:acceptance' # Could be done as integration tests, but would
                        # require changing the system running the test

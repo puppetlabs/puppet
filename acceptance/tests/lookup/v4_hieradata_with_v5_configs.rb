@@ -2,7 +2,7 @@ test_name 'C99572: v4 hieradata with v5 configs' do
   require 'puppet/acceptance/puppet_type_test_tools.rb'
   extend Puppet::Acceptance::PuppetTypeTestTools
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:acceptance',
     'audit:refactor',  # Master is not needed for this test. Refactor
                        # to use puppet apply with a local module tree.

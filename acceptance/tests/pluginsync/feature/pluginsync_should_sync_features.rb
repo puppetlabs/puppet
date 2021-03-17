@@ -1,6 +1,6 @@
 test_name "the pluginsync functionality should sync feature and function definitions" do
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration'
 
   #

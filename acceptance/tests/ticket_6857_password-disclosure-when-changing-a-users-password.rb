@@ -1,6 +1,6 @@
 test_name "#6857: redact password hashes when applying in noop mode"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',    # Use block style `test_name`
     'audit:integration'
 

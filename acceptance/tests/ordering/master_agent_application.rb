@@ -1,6 +1,6 @@
 test_name "Puppet applies resources without dependencies in file order over the network"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration',
     'server'
 

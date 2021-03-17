@@ -6,7 +6,7 @@ test_name "test the yum package provider" do
     skip_test('Skipping EC2 Hosts') if fact_on(agent, 'ec2_metadata')
   end
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance' # Could be done at the integration (or unit) layer though
                          # actual changing of resources could irreparably damage a
                          # host running this, or require special permissions.

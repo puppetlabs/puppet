@@ -1,7 +1,7 @@
 # This test is to verify multi tidy resources with same path but
 # different matches should not cause error as found in the bug PUP-6508
 test_name "PUP-6655 - C98145 tidy resources should be non-isomorphic" do
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration'
 
   agents. each do |agent|

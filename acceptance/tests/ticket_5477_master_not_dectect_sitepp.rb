@@ -5,7 +5,7 @@
 #
 test_name "Ticket 5477, Puppet Master does not detect newly created site.pp file"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration',
     'audit:refactor',     # Use block style `test_name`
     'server'

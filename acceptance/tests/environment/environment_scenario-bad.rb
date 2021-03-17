@@ -4,7 +4,7 @@ test_name 'Test behavior of directory environments when environmentpath is set t
   require 'puppet/acceptance/classifier_utils'
   extend Puppet::Acceptance::ClassifierUtils
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:unit', # The error responses for the agent should be covered by Ruby unit tests.
       # The server 404/400 response should be covered by server integration tests.
       'server'

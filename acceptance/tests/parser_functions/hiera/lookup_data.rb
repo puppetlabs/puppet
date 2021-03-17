@@ -1,6 +1,6 @@
 test_name "Lookup data using the hiera parser function"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:acceptance',
     'audit:refactor'    # Master is not required for this test. Replace with agents.each
 

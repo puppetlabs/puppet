@@ -2,7 +2,7 @@ test_name 'C99629: hiera v5 can use v3 config and data' do
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:acceptance',
     'audit:refactor',  # Master is not needed for this test. Refactor
                        # to use puppet apply with a local module tree.

@@ -1,6 +1,6 @@
 test_name "should query all services"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:refactor',   # Investigate combining with should_not_change_the_system.rb
                         # Use block style `test_name`
     'audit:integration' # Doesn't change the system it runs on

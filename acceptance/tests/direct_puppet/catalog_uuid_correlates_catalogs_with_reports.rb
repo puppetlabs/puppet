@@ -1,6 +1,6 @@
 test_name "PUP-5872: catalog_uuid correlates catalogs with reports" do
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:acceptance',
       'audit:refactor'    # remove dependence on server by adding a
                           # catalog and report fixture to validate against.

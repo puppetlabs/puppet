@@ -2,7 +2,7 @@ test_name "C4553 - agent --disable/--enable functionality should manage the agen
 tag 'audit:integration', # lockfile uses the standard `vardir` location to store/query lockfile.
                          # The validation of the `vardir` at the OS level
                          # should be accomplished in another test.
-    'audit:medium',
+    'audit:high',
     'audit:refactor'     # This test should not require a master. Remove the use of `with_puppet_running_on`.
 
 #

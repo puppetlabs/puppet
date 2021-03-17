@@ -1,6 +1,6 @@
 test_name 'ensure production environment created by master if missing'
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration',
     'server'
 

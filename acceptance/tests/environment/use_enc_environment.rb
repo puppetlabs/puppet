@@ -2,7 +2,7 @@ test_name 'Agent should use environment given by ENC and only compile a catalog 
   require 'puppet/acceptance/classifier_utils.rb'
   extend Puppet::Acceptance::ClassifierUtils
 
-  tag 'audit:medium',
+  tag 'audit:high',
       'audit:integration',
       'server'
 

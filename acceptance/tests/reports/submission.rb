@@ -1,6 +1,6 @@
 test_name "Report submission"
 
-tag 'audit:medium',
+tag 'audit:high',
     'audit:integration'
 
 if master.is_pe?
