@@ -30,7 +30,7 @@ test_name 'Starting the puppet service should successfully run puppet' do
       assert_service_status_on_host(agent, 'puppet', {'ensure' => 'running'})
     end
 
-    retry_params = {:max_retries => 15,
+    retry_params = {:max_retries => 30,
                     :retry_interval => 2}
 
     step 'Ensure last_run_report.yaml is created' do
