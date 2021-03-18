@@ -6,47 +6,47 @@ module Puppet::Util::Windows
     extend FFI::Library
 
     # missing from Windows::Error
-    ERROR_NONE_MAPPED           = 1332
-    ERROR_INVALID_SID_STRUCTURE = 1337
+    ERROR_NONE_MAPPED           = 1332 unless defined? ERROR_NONE_MAPPED
+    ERROR_INVALID_SID_STRUCTURE = 1337 unless defined? ERROR_INVALID_SID_STRUCTURE
 
     # Well Known SIDs
-    Null                        = 'S-1-0'
-    Nobody                      = 'S-1-0-0'
-    World                       = 'S-1-1'
-    Everyone                    = 'S-1-1-0'
-    Local                       = 'S-1-2'
-    Creator                     = 'S-1-3'
-    CreatorOwner                = 'S-1-3-0'
-    CreatorGroup                = 'S-1-3-1'
-    CreatorOwnerServer          = 'S-1-3-2'
-    CreatorGroupServer          = 'S-1-3-3'
-    NonUnique                   = 'S-1-4'
-    Nt                          = 'S-1-5'
-    Dialup                      = 'S-1-5-1'
-    Network                     = 'S-1-5-2'
-    Batch                       = 'S-1-5-3'
-    Interactive                 = 'S-1-5-4'
-    Service                     = 'S-1-5-6'
-    Anonymous                   = 'S-1-5-7'
-    Proxy                       = 'S-1-5-8'
-    EnterpriseDomainControllers = 'S-1-5-9'
-    PrincipalSelf               = 'S-1-5-10'
-    AuthenticatedUsers          = 'S-1-5-11'
-    RestrictedCode              = 'S-1-5-12'
-    TerminalServerUsers         = 'S-1-5-13'
-    LocalSystem                 = 'S-1-5-18'
-    NtLocal                     = 'S-1-5-19'
-    NtNetwork                   = 'S-1-5-20'
-    BuiltinAdministrators       = 'S-1-5-32-544'
-    BuiltinUsers                = 'S-1-5-32-545'
-    Guests                      = 'S-1-5-32-546'
-    PowerUsers                  = 'S-1-5-32-547'
-    AccountOperators            = 'S-1-5-32-548'
-    ServerOperators             = 'S-1-5-32-549'
-    PrintOperators              = 'S-1-5-32-550'
-    BackupOperators             = 'S-1-5-32-551'
-    Replicators                 = 'S-1-5-32-552'
-    AllAppPackages              = 'S-1-15-2-1'
+    Null                        = 'S-1-0'        unless defined? Null
+    Nobody                      = 'S-1-0-0'      unless defined? Nobody
+    World                       = 'S-1-1'        unless defined? World
+    Everyone                    = 'S-1-1-0'      unless defined? Everyone
+    Local                       = 'S-1-2'        unless defined? Local
+    Creator                     = 'S-1-3'        unless defined? Creator
+    CreatorOwner                = 'S-1-3-0'      unless defined? CreatorOwner
+    CreatorGroup                = 'S-1-3-1'      unless defined? CreatorGroup
+    CreatorOwnerServer          = 'S-1-3-2'      unless defined? CreatorOwnerServer
+    CreatorGroupServer          = 'S-1-3-3'      unless defined? CreatorGroupServer
+    NonUnique                   = 'S-1-4'        unless defined? NonUnique
+    Nt                          = 'S-1-5'        unless defined? Nt
+    Dialup                      = 'S-1-5-1'      unless defined? Dialup
+    Network                     = 'S-1-5-2'      unless defined? Network
+    Batch                       = 'S-1-5-3'      unless defined? Batch
+    Interactive                 = 'S-1-5-4'      unless defined? Interactive
+    Service                     = 'S-1-5-6'      unless defined? Service
+    Anonymous                   = 'S-1-5-7'      unless defined? Anonymous
+    Proxy                       = 'S-1-5-8'      unless defined? Proxy
+    EnterpriseDomainControllers = 'S-1-5-9'      unless defined? EnterpriseDomainControllers
+    PrincipalSelf               = 'S-1-5-10'     unless defined? PrincipalSelf
+    AuthenticatedUsers          = 'S-1-5-11'     unless defined? AuthenticatedUsers
+    RestrictedCode              = 'S-1-5-12'     unless defined? RestrictedCode
+    TerminalServerUsers         = 'S-1-5-13'     unless defined? TerminalServerUsers
+    LocalSystem                 = 'S-1-5-18'     unless defined? LocalSystem
+    NtLocal                     = 'S-1-5-19'     unless defined? NtLocal
+    NtNetwork                   = 'S-1-5-20'     unless defined? NtNetwork
+    BuiltinAdministrators       = 'S-1-5-32-544' unless defined? BuiltinAdministrators
+    BuiltinUsers                = 'S-1-5-32-545' unless defined? BuiltinUsers
+    Guests                      = 'S-1-5-32-546' unless defined? Guests
+    PowerUsers                  = 'S-1-5-32-547' unless defined? PowerUsers
+    AccountOperators            = 'S-1-5-32-548' unless defined? AccountOperators
+    ServerOperators             = 'S-1-5-32-549' unless defined? ServerOperators
+    PrintOperators              = 'S-1-5-32-550' unless defined? PrintOperators
+    BackupOperators             = 'S-1-5-32-551' unless defined? BackupOperators
+    Replicators                 = 'S-1-5-32-552' unless defined? Replicators
+    AllAppPackages              = 'S-1-15-2-1'   unless defined? AllAppPackages
 
     # Convert an account name, e.g. 'Administrators' into a SID string,
     # e.g. 'S-1-5-32-544'. The name can be specified as 'Administrators',
@@ -149,7 +149,7 @@ module Puppet::Util::Windows
     module_function :sid_to_name
 
     # https://stackoverflow.com/a/1792930 - 68 bytes, 184 characters in a string
-    MAXIMUM_SID_STRING_LENGTH = 184
+    MAXIMUM_SID_STRING_LENGTH = 184 unless defined? MAXIMUM_SID_STRING_LENGTH
 
     # Convert a SID pointer to a SID string, e.g. "S-1-5-32-544".
     def sid_ptr_to_string(psid)
