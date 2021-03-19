@@ -11,7 +11,7 @@ EXCLUDE_LIST = %w[ facterversion
   memory\.swap\.available memory\.swap\.capacity memory\.swap\.used
   memory\.system\.available_bytes memory\.system\.used_bytes
   memory\.system\.available memory\.system\.capacity memory\.system\.used
-  mountpoints\..*\.available* mountpoints\..*\.capacity mountpoints\..*\.used*
+  mountpoints\..*\.available.* mountpoints\..*\.capacity mountpoints\..*\.used.*
   sp_uptime system_profiler\.uptime
   uptime uptime_days uptime_hours uptime_seconds
   system_uptime\.uptime system_uptime\.days system_uptime\.hours system_uptime\.seconds
