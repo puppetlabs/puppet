@@ -153,7 +153,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
   end
 
   context 'ciphersuites' do
-    it "does not connect when using an SSLv3 ciphersuite" do
+    it "does not connect when using an SSLv3 ciphersuite", :if => Puppet::Util::Package.versioncmp(OpenSSL::OPENSSL_LIBRARY_VERSION.split[1], '1.1.1e') > 0 do
       Puppet[:ciphers] = "DES-CBC3-SHA"
 
       https_server.start_server do |port|
