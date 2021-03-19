@@ -2264,7 +2264,13 @@ EOT
       :type     => :boolean,
       :hook    => proc do |value|
         envs = Puppet.lookup(:environments) { nil }
-        envs.clear_all unless envs.nil?
+        unless envs.nil?
+          envs.list.each do |e|
+            if e.rich_data_config != value
+              envs.clear(e.name)
+            end
+          end
+        end
       end,
       :desc     => <<-'EOT'
         Enables having extended data in the catalog by storing them as a hash with the special key

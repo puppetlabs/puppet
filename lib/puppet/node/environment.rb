@@ -62,6 +62,8 @@ class Puppet::Node::Environment
     Remote.create(name, [], NO_MANIFEST)
   end
 
+  attr_accessor :rich_data_config
+
   # Instantiate a new environment
   #
   # @note {Puppet::Node::Environment.new} is private for historical reasons, as
@@ -77,6 +79,7 @@ class Puppet::Node::Environment
     @manifest = manifest == NO_MANIFEST ? manifest : Puppet::FileSystem.expand_path(manifest)
 
     @config_version = config_version
+    @rich_data_config = Puppet[:rich_data]
   end
 
   # Creates a new Puppet::Node::Environment instance, overriding any of the passed
