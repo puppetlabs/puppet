@@ -3,9 +3,9 @@ name: RSpec tests
 
 on:
   push:
-    branches: [main]
+    branches: [test_gh_actions]
   pull_request:
-    branches: [main]
+    branches: [test_gh_actions]
 
 jobs:
   rspec_tests:
@@ -13,10 +13,10 @@ jobs:
     strategy:
       matrix:
         cfg:
-          - {os: ubuntu-18.04, ruby: 2.5}
-          - {os: ubuntu-18.04, ruby: 2.6}
-          - {os: ubuntu-18.04, ruby: 2.7}
-          - {os: ubuntu-18.04, ruby: jruby-9.2.9.0}
+          - {os: ubuntu-20.04, ruby: 2.5}
+          - {os: ubuntu-20.04, ruby: 2.6}
+          - {os: ubuntu-20.04, ruby: 2.7}
+          - {os: ubuntu-20.04, ruby: jruby-9.2.9.0}
           - {os: windows-2016, ruby: 2.5}
           - {os: windows-2016, ruby: 2.6}
           - {os: windows-2016, ruby: 2.7}

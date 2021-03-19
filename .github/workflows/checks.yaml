@@ -3,9 +3,9 @@ name: Checks
 
 on:
   push:
-    branches: [main]
+    branches: [test_gh_actions]
   pull_request:
-    branches: [main]
+    branches: [test_gh_actions]
 
 jobs:
   checks:
@@ -13,9 +13,9 @@ jobs:
     strategy:
       matrix:
         cfg:
-          - {check: rubocop, os: ubuntu-18.04, ruby: 2.5}
-          - {check: commits, os: ubuntu-18.04, ruby: 2.5}
-          - {check: warnings, os: ubuntu-18.04, ruby: 2.5}
+          - {check: rubocop, os: ubuntu-20.04, ruby: 2.5}
+          - {check: commits, os: ubuntu-20.04, ruby: 2.5}
+          - {check: warnings, os: ubuntu-20.04, ruby: 2.5}
 
     runs-on: ${{ matrix.cfg.os }}
     steps:
