@@ -214,15 +214,22 @@ class Puppet::Node::Environment
     errors
   end
 
+  def rich_data_from_env_conf
+    unless @checked_conf_for_rich_data
+      environment_conf = Puppet.lookup(:environments).get_conf(name)
+      @rich_data_from_conf = environment_conf&.rich_data
+      @checked_conf_for_rich_data = true
+    end
+    @rich_data_from_conf
+  end
+
   # Checks if this environment permits use of rich data types in the catalog
+  # Checks the environment conf for an override on first query, then going forward
+  # either uses that, or if unset, uses the current value of the `rich_data` setting.
   # @return [Boolean] `true` if rich data is permitted.
   # @api private
   def rich_data?
-    if @rich_data.nil?
-      environment_conf = Puppet.lookup(:environments).get_conf(name)
-      @rich_data = (environment_conf.nil? ? Puppet[:rich_data] : environment_conf.rich_data)
-    end
-    @rich_data
+    @rich_data = rich_data_from_env_conf.nil? ? Puppet[:rich_data] : rich_data_from_env_conf
   end
 
   # Return an environment-specific Puppet setting.
