@@ -478,7 +478,7 @@ describe Puppet::Module do
     end
   end
 
-  [:plugins, :pluginfacts, :templates, :files, :manifests].each do |filetype|
+  [:plugins, :pluginfacts, :templates, :files, :manifests, :scripts].each do |filetype|
     case filetype
       when :plugins
         dirname = "lib"

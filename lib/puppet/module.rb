@@ -25,6 +25,7 @@ class Puppet::Module
     "plugins" => "lib",
     "pluginfacts" => "facts.d",
     "locales" => "locales",
+    "scripts" => "scripts",
   }
 
   # Find and return the +module+ that +path+ belongs to. If +path+ is
