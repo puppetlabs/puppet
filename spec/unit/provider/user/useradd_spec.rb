@@ -375,19 +375,34 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     before { described_class.has_feature :manages_local_users_and_groups }
 
     let(:content) do
-      <<~EOF
+      StringIO.new(<<~EOF)
       group1:x:0:myuser
       group2:x:999:
       group3:x:998:myuser
       EOF
     end
 
+    let(:content_with_empty_line) do
+      StringIO.new(<<~EOF)
+      group1:x:0:myuser
+      group2:x:999:
+      group3:x:998:myuser
+
+      EOF
+    end
+
     it "should return the local groups string when forcelocal is true" do
       resource[:forcelocal] = true
-      group1, group2, group3 = content.split
       allow(Puppet::FileSystem).to receive(:exist?).with('/etc/group').and_return(true)
-      allow(Puppet::FileSystem).to receive(:each_line).with('/etc/group').and_yield(group1).and_yield(group2).and_yield(group3)
+      allow(File).to receive(:open).with(Pathname.new('/etc/group')).and_yield(content)
       expect(provider.groups).to eq(['group1', 'group3'])
+    end
+
+    it "does not raise when parsing empty lines in /etc/group" do
+      resource[:forcelocal] = true
+      allow(Puppet::FileSystem).to receive(:exist?).with('/etc/group').and_return(true)
+      allow(File).to receive(:open).with(Pathname.new('/etc/group')).and_yield(content_with_empty_line)
+      expect { provider.groups }.not_to raise_error
     end
 
     it "should fall back to nameservice groups when forcelocal is false" do
