@@ -2,6 +2,7 @@ require:
   rubocop-i18n
 
 AllCops:
+  TargetRubyVersion: 2.4
   Include:
     - 'lib/**/*.rb'
     - 'ext/**/*.rb'
@@ -541,6 +542,9 @@ Style/ParallelAssignment:
   Enabled: false
 
 Performance/RedundantBlockCall:
+  Enabled: false
+
+Performance/RegexpMatch:
   Enabled: false
 
 Style/IdenticalConditionalBranches:

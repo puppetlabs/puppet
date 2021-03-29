@@ -2157,10 +2157,6 @@ EOT
     :rich_data => {
       :default  => true,
       :type     => :boolean,
-      :hook    => proc do |value|
-        envs = Puppet.lookup(:environments) { nil }
-        envs.clear_all unless envs.nil?
-      end,
       :desc     => <<-'EOT'
         Enables having extended data in the catalog by storing them as a hash with the special key
         `__ptype`. When enabled, resource containing values of the data types `Binary`, `Regexp`,
