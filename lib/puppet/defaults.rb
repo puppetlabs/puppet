@@ -1768,7 +1768,7 @@ EOT
     },
     :agent_disabled_lockfile => {
         :default    => "$statedir/agent_disabled.lock",
-        :type       => :file,
+        :type       => :string,
         :desc       => "A lock file to indicate that puppet agent runs have been administratively
           disabled.  File contains a JSON object with state information.",
     },
