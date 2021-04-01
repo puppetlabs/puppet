@@ -135,7 +135,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
     Puppet::FileSystem.each_line(group_file) do |line|
       data = line.chomp.split(':')
-      if data.last.split(',').include?(user)
+      if !data.empty? && data.last.split(',').include?(user)
         @groups_of[user] << data.first
       end
     end
