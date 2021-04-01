@@ -115,6 +115,73 @@ describe Puppet::Application::Facts do
     end
   end
 
+  context 'when diff action is called' do
+    let(:facter3_facts) { <<~END }
+      {
+        "macaddress": "64:52:11:22:03:2e",
+        "filesystems": "apfs,autofs"
+      }
+    END
+
+    let(:facter4_facts) { <<~END }
+      {
+        "macaddress": "64:52:11:22:03:2e",
+        "filesystems": "apfs,autofs,devfs"
+      }
+    END
+
+    before :each do
+      Puppet::Node::Facts.indirection.terminus_class = :facter
+      app.command_line.args = %w{diff}
+
+      allow(Facter).to receive(:value).with('facterversion').and_return('3.99.0')
+      allow(Puppet::Util::Execution).to receive(:execute).with(/puppet facts show --no-facterng/).and_return(facter3_facts)
+      allow(Puppet::Util::Execution).to receive(:execute).with(/puppet facts show --facterng/).and_return(facter4_facts)
+    end
+
+    shared_examples_for 'correctly rendering output' do |render_format|
+      it 'correctly displays output' do
+        app.command_line.args << '--render-as' << render_format if render_format
+        expect {
+          app.run
+        }.to exit_with(0)
+         .and output(expected_output).to_stdout
+      end
+    end
+
+    context 'when formatting is set to default' do
+      let(:expected_output) { <<~END }
+        {
+          "filesystems": {
+            "new_value": "apfs,autofs,devfs",
+            "old_value": "apfs,autofs"
+          }
+        }
+      END
+
+      it_behaves_like 'correctly rendering output'
+    end
+
+    context 'when formatting is set to yaml' do
+      let(:expected_output) { <<~END }
+        ---
+        filesystems:
+          :new_value: apfs,autofs,devfs
+          :old_value: apfs,autofs
+      END
+
+      it_behaves_like 'correctly rendering output', 'yaml'
+    end
+
+    context 'when formatting is set to json' do
+      let(:expected_output) { <<~END }
+        {"filesystems":{"new_value":"apfs,autofs,devfs","old_value":"apfs,autofs"}}
+      END
+
+      it_behaves_like 'correctly rendering output', 'json'
+    end
+  end
+
   context 'when default action is called' do
     before :each do
       Puppet::Node::Facts.indirection.terminus_class = :memory

@@ -117,8 +117,6 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
     $ puppet facts diff
     EOT
 
-    render_as :json
-
     when_invoked do |*args|
       Puppet.settings.preferred_run_mode = :agent
       Puppet::Node::Facts.indirection.terminus_class = :facter
@@ -140,6 +138,15 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
       else
         Puppet.warning _("Already using Facter 4. To use `puppet facts diff` remove facterng from the .conf file or run `puppet config set facterng false`.")
         exit 0
+      end
+    end
+
+    when_rendering :console do |result|
+      case result
+      when Array, Hash
+        Puppet::Util::Json.dump(result, :pretty => true)
+      else
+        result
       end
     end
   end
