@@ -70,9 +70,11 @@ class Loader
   # @api public
   #
   def load(type, name)
-    result = load_typed(TypedName.new(type, name.to_s))
-    if result
-      result.value
+    synchronize do
+      result = load_typed(TypedName.new(type, name.to_s))
+      if result
+        result.value
+      end
     end
   end
 
@@ -142,6 +144,13 @@ class Loader
   # @api private
   def private_loader
     self
+  end
+
+  # Lock around a block
+  # This exists so some subclasses that are set up statically and don't actually
+  # load can override it
+  def synchronize(&block)
+    @environment.lock.synchronize(&block)
   end
 
   # Binds a value to a name. The name should not start with '::', but may contain multiple segments.

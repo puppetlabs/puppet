@@ -122,6 +122,10 @@ class StaticLoader < Loader
   def create_resource_type_reference(name)
     add_type(name, Types::TypeFactory.resource(name))
   end
+
+  def synchronize(&block)
+    yield
+  end
 end
 end
 end

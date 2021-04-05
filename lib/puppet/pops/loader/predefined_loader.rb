@@ -19,6 +19,10 @@ class PredefinedLoader < BaseLoader
   def allow_shadowing?
     true
   end
+
+  def synchronize(&block)
+    yield
+  end
 end
 
 end
