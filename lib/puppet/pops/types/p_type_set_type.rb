@@ -15,7 +15,7 @@ class PTypeSetType < PMetaType
   # @api private
   class TypeSetLoader < Loader::BaseLoader
     def initialize(type_set, parent)
-      super(parent, "(TypeSetFirstLoader '#{type_set.name}')")
+      super(parent, "(TypeSetFirstLoader '#{type_set.name}')", parent.environment)
       @type_set = type_set
     end
 

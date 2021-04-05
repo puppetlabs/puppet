@@ -18,8 +18,8 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
   # @param name [String] the name of the dependency-loader (used for debugging and tracing only)
   # @param dependency_loaders [Array<Puppet::Pops::Loader>] array of loaders for modules this module depends on
   #
-  def initialize(parent_loader, name, dependency_loaders)
-    super parent_loader, name
+  def initialize(parent_loader, name, dependency_loaders, environment)
+    super(parent_loader, name, environment)
     @dependency_loaders = dependency_loaders
   end
 

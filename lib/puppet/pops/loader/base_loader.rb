@@ -13,8 +13,8 @@ class BaseLoader < Loader
   # The parent loader
   attr_reader :parent
 
-  def initialize(parent_loader, loader_name)
-    super(loader_name)
+  def initialize(parent_loader, loader_name, environment)
+    super(loader_name, environment)
     @parent = parent_loader # the higher priority loader to consult
     @named_values = {}      # hash name => NamedEntry
     @last_result = nil      # the value of the last name (optimization)

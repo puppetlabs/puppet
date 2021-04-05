@@ -10,7 +10,7 @@ class Runtime3TypeLoader < BaseLoader
   attr_reader :resource_3x_loader
 
   def initialize(parent_loader, loaders, environment, resource_3x_loader)
-    super(parent_loader, environment.name)
+    super(parent_loader, environment.name, environment)
     @environment = environment
     @resource_3x_loader = resource_3x_loader
   end

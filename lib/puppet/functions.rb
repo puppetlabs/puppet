@@ -606,7 +606,7 @@ module Puppet::Functions
     attr_reader :local_types, :parser, :loader
 
     def initialize(loader, name)
-      @loader = Puppet::Pops::Loader::PredefinedLoader.new(loader, :"local_function_#{name}")
+      @loader = Puppet::Pops::Loader::PredefinedLoader.new(loader, :"local_function_#{name}", loader.environment)
       @local_types = []
       # get the shared parser used by puppet's compiler
       @parser = Puppet::Pops::Parser::EvaluatingParser.singleton()
