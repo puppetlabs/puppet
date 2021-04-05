@@ -2,19 +2,19 @@ require 'puppet/indirector/face'
 require 'puppet/node/facts'
 require 'puppet/util/fact_dif'
 
-EXCLUDE_LIST = %w[ facterversion
-  load_averages\..*
-  processors\.speed
-  swapfree swapfree_mb
-  memoryfree memoryfree_mb
-  memory\.swap\.available_bytes memory\.swap\.used_bytes
-  memory\.swap\.available memory\.swap\.capacity memory\.swap\.used
-  memory\.system\.available_bytes memory\.system\.used_bytes
-  memory\.system\.available memory\.system\.capacity memory\.system\.used
-  mountpoints\..*\.available.* mountpoints\..*\.capacity mountpoints\..*\.used.*
-  sp_uptime system_profiler\.uptime
-  uptime uptime_days uptime_hours uptime_seconds
-  system_uptime\.uptime system_uptime\.days system_uptime\.hours system_uptime\.seconds
+EXCLUDE_LIST = %w[ ^facterversion$
+  ^load_averages\..*$
+  ^processors\.speed$
+  ^swapfree$ ^swapfree_mb$
+  ^memoryfree$ ^memoryfree_mb$
+  ^memory\.swap\.available_bytes$ ^memory\.swap\.used_bytes$
+  ^memory\.swap\.available$ ^memory\.swap\.capacity$ ^memory\.swap\.used$
+  ^memory\.system\.available_bytes$ ^memory\.system\.used_bytes$
+  ^memory\.system\.available$ ^memory\.system\.capacity$ ^memory\.system\.used$
+  ^mountpoints\..*\.available.*$ ^mountpoints\..*\.capacity$ ^mountpoints\..*\.used.*$
+  ^sp_uptime$ ^system_profiler\.uptime$
+  ^uptime$ ^uptime_days$ ^uptime_hours$ ^uptime_seconds$
+  ^system_uptime\.uptime$ ^system_uptime\.days$ ^system_uptime\.hours$ ^system_uptime\.seconds$
 ]
 
 Puppet::Indirector::Face.define(:facts, '0.0.1') do
@@ -117,7 +117,18 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
     $ puppet facts diff
     EOT
 
+    option("--structured") do
+      default_to { false }
+      summary _("Render the different facts as structured.")
+    end
+
+    option("--exclude " + _("<regex>")) do
+      summary _("Regex used to exclude specific facts from diff.")
+    end
+
     when_invoked do |*args|
+      options = args.pop
+
       Puppet.settings.preferred_run_mode = :agent
       Puppet::Node::Facts.indirection.terminus_class = :facter
 
@@ -133,7 +144,8 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
         facter_3_result = Puppet::Util::Execution.execute("#{puppet_show_cmd} --no-facterng #{cmd_flags}")
         facter_ng_result = Puppet::Util::Execution.execute("#{puppet_show_cmd} --facterng #{cmd_flags}")
 
-        fact_diff = FactDif.new(facter_3_result, facter_ng_result, EXCLUDE_LIST)
+        exclude_list = options[:exclude].nil? ? EXCLUDE_LIST : EXCLUDE_LIST + [ options[:exclude] ]
+        fact_diff = FactDif.new(facter_3_result, facter_ng_result, exclude_list, options[:structured])
         fact_diff.difs
       else
         Puppet.warning _("Already using Facter 4. To use `puppet facts diff` remove facterng from the .conf file or run `puppet config set facterng false`.")
@@ -234,4 +246,3 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
     end
   end
 end
-
