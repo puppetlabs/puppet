@@ -234,4 +234,20 @@ describe "Defaults" do
       Puppet.initialize_settings
     end
   end
+
+  describe "the default cadir", :unless => Puppet::Util::Platform.windows?  do
+    it 'defaults to inside the ssldir if not migrated' do
+      expect(File).to receive(:exist?).with('/etc/puppetlabs/puppetserver/ca/ca_crt.pem').and_return(false)
+      expect(Puppet.default_cadir).to eq("#{Puppet[:ssldir]}/ca")
+    end
+
+    it 'returns the new location if there is CA content there' do
+      expect(File).to receive(:exist?).with('/etc/puppetlabs/puppetserver/ca/ca_crt.pem').and_return(true)
+      expect(Puppet.default_cadir).to eq('/etc/puppetlabs/puppetserver/ca')
+    end
+
+    it 'returns an empty string for Windows platforms', :if => Puppet::Util::Platform.windows? do
+      expect(Puppet.default_cadir).to eq("")
+    end
+  end
 end

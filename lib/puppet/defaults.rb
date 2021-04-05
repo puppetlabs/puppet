@@ -58,6 +58,18 @@ module Puppet
     end
   end
 
+  def self.default_cadir
+    return "" if Puppet::Util::Platform.windows?
+    old_ca_dir = "#{Puppet[:ssldir]}/ca"
+    new_ca_dir = '/etc/puppetlabs/puppetserver/ca'
+
+    if File.exist?("#{new_ca_dir}/ca_crt.pem")
+      new_ca_dir
+    else
+      old_ca_dir
+    end
+  end
+
   ############################################################################################
   # NOTE: For information about the available values for the ":type" property of settings,
   #   see the docs for Settings.define_settings
@@ -1150,7 +1162,7 @@ EOT
       :desc    => "The name to use the Certificate Authority certificate.",
     },
     :cadir => {
-      :default => "$ssldir/ca",
+      :default => lambda { default_cadir },
       :type => :directory,
       :desc => "The root directory for the certificate authority.",
     },
