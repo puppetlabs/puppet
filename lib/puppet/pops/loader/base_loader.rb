@@ -38,22 +38,26 @@ class BaseLoader < Loader
     # These modules are typically parented by the same
     # loader as the one initiating the search. It is inefficient to again try to search the same loader for
     # the same name.
-    if @last_result.nil? || typed_name != @last_result.typed_name
-      @last_result = internal_load(typed_name)
-    else
-      @last_result
+    synchronize do
+      if @last_result.nil? || typed_name != @last_result.typed_name
+        @last_result = internal_load(typed_name)
+      else
+        @last_result
+      end
     end
   end
 
   # @api public
   #
   def loaded_entry(typed_name, check_dependencies = false)
-    if @named_values.has_key?(typed_name)
-      @named_values[typed_name]
-    elsif parent
-      parent.loaded_entry(typed_name, check_dependencies)
-    else
-      nil
+    synchronize do
+      if @named_values.has_key?(typed_name)
+        @named_values[typed_name]
+      elsif parent
+        parent.loaded_entry(typed_name, check_dependencies)
+      else
+        nil
+      end
     end
   end
 
@@ -68,23 +72,25 @@ class BaseLoader < Loader
   # @api private
   #
   def set_entry(typed_name, value, origin = nil)
-    # It is never ok to redefine in the very same loader unless redefining a 'not found'
-    entry = @named_values[typed_name]
-    if entry
-      fail_redefine(entry) unless entry.value.nil?
-    end
-
-    # Check if new entry shadows existing entry and fail
-    # (unless special loader allows shadowing)
-    if typed_name.type == :type && !allow_shadowing?
-      entry = loaded_entry(typed_name)
+    synchronize do
+      # It is never ok to redefine in the very same loader unless redefining a 'not found'
+      entry = @named_values[typed_name]
       if entry
-        fail_redefine(entry) unless entry.value.nil? #|| entry.value == value
+        fail_redefine(entry) unless entry.value.nil?
       end
-    end
 
-    @last_result = Loader::NamedEntry.new(typed_name, value, origin)
-    @named_values[typed_name] = @last_result
+      # Check if new entry shadows existing entry and fail
+      # (unless special loader allows shadowing)
+      if typed_name.type == :type && !allow_shadowing?
+        entry = loaded_entry(typed_name)
+        if entry
+          fail_redefine(entry) unless entry.value.nil? #|| entry.value == value
+        end
+      end
+
+      @last_result = Loader::NamedEntry.new(typed_name, value, origin)
+      @named_values[typed_name] = @last_result
+    end
   end
 
   # @api private
@@ -96,8 +102,10 @@ class BaseLoader < Loader
   # @api private
   #
   def remove_entry(typed_name)
-    unless @named_values.delete(typed_name).nil?
-      @last_result = nil unless @last_result.nil? || typed_name != @last_result.typed_name
+    synchronize do
+      unless @named_values.delete(typed_name).nil?
+        @last_result = nil unless @last_result.nil? || typed_name != @last_result.typed_name
+      end
     end
   end
 
@@ -106,10 +114,12 @@ class BaseLoader < Loader
   # @api private
   #
   def promote_entry(named_entry)
-    typed_name = named_entry.typed_name
-    entry = @named_values[typed_name]
-    if entry then fail_redefine(entry); end
-    @named_values[typed_name] = named_entry
+    synchronize do
+      typed_name = named_entry.typed_name
+      entry = @named_values[typed_name]
+      if entry then fail_redefine(entry); end
+      @named_values[typed_name] = named_entry
+    end
   end
 
   protected
