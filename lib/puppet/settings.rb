@@ -4,6 +4,7 @@ require 'puppet/util/watched_file'
 require 'puppet/util/command_line/puppet_option_parser'
 require 'forwardable'
 require 'fileutils'
+require 'concurrent'
 
 # The class for handling configuration files.
 class Puppet::Settings
@@ -146,8 +147,8 @@ class Puppet::Settings
     @configuration_file = nil
 
     # And keep a per-environment cache
-    @cache = Hash.new { |hash, key| hash[key] = {} }
-    @values = Hash.new { |hash, key| hash[key] = {} }
+    @cache = Concurrent::Hash.new { |hash, key| hash[key] = Concurrent::Hash.new }
+    @values = Concurrent::Hash.new { |hash, key| hash[key] = Concurrent::Hash.new }
 
     # The list of sections we've used.
     @used = []

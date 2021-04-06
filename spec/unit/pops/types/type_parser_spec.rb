@@ -210,7 +210,8 @@ describe TypeParser do
   end
 
   context 'with loader context' do
-    let(:loader) { Puppet::Pops::Loader::BaseLoader.new(nil, "type_parser_unit_test_loader") }
+    let(:environment) { Puppet::Node::Environment.create(:testing, []) }
+    let(:loader) { Puppet::Pops::Loader::BaseLoader.new(nil, "type_parser_unit_test_loader", environment) }
 
     it 'interprets anything that is not found by the loader to be a type reference' do
       expect(loader).to receive(:load).with(:type, 'nonesuch').and_return(nil)

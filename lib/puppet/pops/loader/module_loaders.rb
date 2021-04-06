@@ -45,17 +45,17 @@ module ModuleLoaders
     #
     puppet_lib = File.realpath(File.join(File.dirname(__FILE__), '../../..'))
     LibRootedFileBased.new(parent_loader,
-                                                       loaders,
-                                                       nil,
-                                                       puppet_lib,   # may or may not have a 'lib' above 'puppet'
-                                                       'puppet_system',
-                                                        [:func_4x, :func_3x, :datatype]   # only load ruby functions and types from "puppet"
-                                                       )
+                           loaders,
+                           nil,
+                           puppet_lib,   # may or may not have a 'lib' above 'puppet'
+                           'puppet_system',
+                           [:func_4x, :func_3x, :datatype]   # only load ruby functions and types from "puppet"
+                          )
   end
 
   def self.environment_loader_from(parent_loader, loaders, env_path)
     if env_path.nil? || env_path.empty?
-      EmptyLoader.new(parent_loader, ENVIRONMENT)
+      EmptyLoader.new(parent_loader, ENVIRONMENT, loaders.environment)
     else
       FileBased.new(parent_loader,
         loaders,
@@ -125,7 +125,7 @@ module ModuleLoaders
     # @param loader_name [String] a name that is used for human identification (useful when module_name is nil)
     #
     def initialize(parent_loader, loaders, module_name, path, loader_name, loadables)
-      super parent_loader, loader_name
+      super(parent_loader, loader_name, loaders.environment)
 
       raise ArgumentError, 'path based loader cannot be instantiated without a path' if path.nil? || path.empty?
 

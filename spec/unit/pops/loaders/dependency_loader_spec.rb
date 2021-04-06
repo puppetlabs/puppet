@@ -122,7 +122,7 @@ Puppet::Functions.create_function('testmodule::foo') {
 
   def loader_for(name, dir)
       module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, name, dir)
-      Puppet::Pops::Loader::DependencyLoader.new(static_loader, 'test-dep', [module_loader])
+      Puppet::Pops::Loader::DependencyLoader.new(static_loader, 'test-dep', [module_loader], loaders.environment)
   end
 
   def typed_name(type, name)

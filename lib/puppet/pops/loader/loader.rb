@@ -26,14 +26,15 @@ ENVIRONMENT = 'environment'.freeze
 ENVIRONMENT_PRIVATE = 'environment private'.freeze
 
 class Loader
-  attr_reader :loader_name
+  attr_reader :environment, :loader_name
 
   # Describes the kinds of things that loaders can load
   LOADABLE_KINDS = [:func_4x, :func_4xpp, :func_3x, :datatype, :type_pp, :resource_type_pp, :plan, :task].freeze
 
   # @param [String] name the name of the loader. Must be unique among all loaders maintained by a {Loader} instance
-  def initialize(loader_name)
+  def initialize(loader_name, environment)
     @loader_name = loader_name.freeze
+    @environment = environment
   end
 
   # Search all places where this loader would find values of a given type and return a list the
@@ -69,9 +70,11 @@ class Loader
   # @api public
   #
   def load(type, name)
-    result = load_typed(TypedName.new(type, name.to_s))
-    if result
-      result.value
+    synchronize do
+      result = load_typed(TypedName.new(type, name.to_s))
+      if result
+        result.value
+      end
     end
   end
 
@@ -141,6 +144,13 @@ class Loader
   # @api private
   def private_loader
     self
+  end
+
+  # Lock around a block
+  # This exists so some subclasses that are set up statically and don't actually
+  # load can override it
+  def synchronize(&block)
+    @environment.lock.synchronize(&block)
   end
 
   # Binds a value to a name. The name should not start with '::', but may contain multiple segments.

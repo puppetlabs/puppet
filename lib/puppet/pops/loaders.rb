@@ -398,7 +398,7 @@ class Loaders
 
       if env_path.nil?
         # Not a real directory environment, cannot work as a module TODO: Drop when legacy env are dropped?
-        loader = add_loader_by_name(Loader::SimpleEnvironmentLoader.new(@runtime3_type_loader, Loader::ENVIRONMENT))
+        loader = add_loader_by_name(Loader::SimpleEnvironmentLoader.new(@runtime3_type_loader, Loader::ENVIRONMENT, environment))
       else
         # View the environment as a module to allow loading from it - this module is always called 'environment'
         loader = Loader::ModuleLoaders.environment_loader_from(@runtime3_type_loader, self, env_path)
@@ -413,7 +413,7 @@ class Loaders
     # Code in the environment gets to see all modules (since there is no metadata for the environment)
     # but since this is not given to the module loaders, they can not load global code (since they can not
     # have prior knowledge about this
-    loader = add_loader_by_name(Loader::DependencyLoader.new(loader, Loader::ENVIRONMENT_PRIVATE, @module_resolver.all_module_loaders()))
+    loader = add_loader_by_name(Loader::DependencyLoader.new(loader, Loader::ENVIRONMENT_PRIVATE, @module_resolver.all_module_loaders(), environment))
 
     # The module loader gets the private loader via a lazy operation to look up the module's private loader.
     # This does not work for an environment since it is not resolved the same way.
@@ -529,13 +529,13 @@ class Loaders
     private
 
     def create_loader_with_all_modules_visible(from_module_data)
-      @loaders.add_loader_by_name(Loader::DependencyLoader.new(from_module_data.public_loader, "#{from_module_data.name} private", all_module_loaders()))
+      @loaders.add_loader_by_name(Loader::DependencyLoader.new(from_module_data.public_loader, "#{from_module_data.name} private", all_module_loaders(), @loaders.environment))
     end
 
     def create_loader_with_dependencies_first(from_module_data)
       dependency_loaders = from_module_data.dependency_names.collect { |name| @index[name].public_loader }
       visible_loaders = dependency_loaders + (all_module_loaders() - dependency_loaders)
-      @loaders.add_loader_by_name(Loader::DependencyLoader.new(from_module_data.public_loader, "#{from_module_data.name} private", visible_loaders))
+      @loaders.add_loader_by_name(Loader::DependencyLoader.new(from_module_data.public_loader, "#{from_module_data.name} private", visible_loaders, @loaders.environment))
     end
   end
 end
