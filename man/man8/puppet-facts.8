@@ -51,13 +51,19 @@ The terminus for an action is often determined by context, but occasionally need
 \fBSYNOPSIS\fR
 .
 .IP
-puppet facts diff [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet facts diff [\-\-terminus _TERMINUS] [\-\-extra HASH] [\-\-structured] [\-\-exclude \fIregex\fR]
 .
 .IP
 \fBDESCRIPTION\fR
 .
 .IP
 Compares output from facter 3 with Facter 4 and prints the differences
+.
+.IP
+\fBOPTIONS\fR \fI\-\-exclude <regex\fR> \- Regex used to exclude specific facts from diff\.
+.
+.IP
+\fI\-\-structured\fR \- Render the different facts as structured\.
 .
 .IP
 \fBRETURNS\fR
