@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.21.1-6-g5c227c9eb2\n"
+"Project-Id-Version: Puppet automation framework 6.21.1-62-g86a9c83c34\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-02-15 07:18+0000\n"
-"PO-Revision-Date: 2021-02-15 07:18+0000\n"
+"POT-Creation-Date: 2021-04-08 09:48+0000\n"
+"PO-Revision-Date: 2021-04-08 09:48+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -450,59 +450,59 @@ msgstr ""
 msgid "Manage SSL keys and certificates for puppet SSL clients"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:103
+#: ../lib/puppet/application/ssl.rb:106
 msgid "An action must be specified."
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:126 ../lib/puppet/application/ssl.rb:133
+#: ../lib/puppet/application/ssl.rb:129 ../lib/puppet/application/ssl.rb:136
 msgid "The certificate for '%{name}' has not yet been signed"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:144
+#: ../lib/puppet/application/ssl.rb:147
 msgid "Completed SSL initialization"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:146
+#: ../lib/puppet/application/ssl.rb:151
 msgid "Unknown action '%{action}'"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:154 ../lib/puppet/ssl/state_machine.rb:180
+#: ../lib/puppet/application/ssl.rb:165 ../lib/puppet/ssl/state_machine.rb:180
 msgid "Creating a new EC SSL key for %{name} using curve %{curve}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:157 ../lib/puppet/ssl/key.rb:26
+#: ../lib/puppet/application/ssl.rb:168 ../lib/puppet/ssl/key.rb:26
 msgid "Creating a new SSL key for %{name}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:167
+#: ../lib/puppet/application/ssl.rb:178
 msgid "Submitted certificate request for '%{name}' to %{url}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:170
+#: ../lib/puppet/application/ssl.rb:181
 msgid "Could not submit certificate request for '%{name}' to %{url} due to a conflict on the server"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:172 ../lib/puppet/application/ssl.rb:175
+#: ../lib/puppet/application/ssl.rb:183 ../lib/puppet/application/ssl.rb:186
 msgid "Failed to submit certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:183
+#: ../lib/puppet/application/ssl.rb:194
 msgid "Downloading certificate '%{name}' from %{url}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:187
+#: ../lib/puppet/application/ssl.rb:198
 msgid "Downloaded certificate '%{name}' with fingerprint %{fingerprint}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:200 ../lib/puppet/application/ssl.rb:203
+#: ../lib/puppet/application/ssl.rb:211 ../lib/puppet/application/ssl.rb:214
 msgid "Failed to download certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:232 ../lib/puppet/application/ssl.rb:235
+#: ../lib/puppet/application/ssl.rb:243 ../lib/puppet/application/ssl.rb:246
 msgid "Failed to connect to the CA to determine if certificate %{certname} has been cleaned"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:239
+#: ../lib/puppet/application/ssl.rb:250
 msgid ""
 "The certificate %{certname} must be cleaned from the CA first. To fix this,\n"
 "run the following commands on the CA:\n"
@@ -510,7 +510,7 @@ msgid ""
 "  puppet ssl clean\n"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:262
+#: ../lib/puppet/application/ssl.rb:273
 msgid "Removed %{label} %{path}"
 msgstr ""
 
@@ -692,47 +692,47 @@ msgstr ""
 msgid "a data type can only have one implementation"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:179
+#: ../lib/puppet/defaults.rb:191
 msgid "Cannot disable unrecognized warning types '%{invalid}'."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:180
+#: ../lib/puppet/defaults.rb:192
 msgid "Valid values are '%{values}'."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:547
+#: ../lib/puppet/defaults.rb:559
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:549
+#: ../lib/puppet/defaults.rb:561
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:762
+#: ../lib/puppet/defaults.rb:774
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:847
+#: ../lib/puppet/defaults.rb:859
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1042
+#: ../lib/puppet/defaults.rb:1054
 msgid "Setting 'ssl_client_ca_auth' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1121 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1141 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1995
+#: ../lib/puppet/defaults.rb:2015
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:2230
+#: ../lib/puppet/defaults.rb:2250
 msgid "The 'func3x_check' setting is deprecated and will be removed in a future release."
 msgstr ""
 
@@ -778,7 +778,7 @@ msgstr ""
 msgid "no matching resources found"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:7 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:30 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:6 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
+#: ../lib/puppet/face/config.rb:7 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:22 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:6 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
 msgid "Apache 2 license; see COPYING"
 msgstr ""
 
@@ -1015,71 +1015,83 @@ msgstr ""
 msgid "--values option must evaluate to a Hash or undef, got: '%{values_class}'"
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:32
+#: ../lib/puppet/face/facts.rb:24
 msgid "Retrieve and store facts."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:40
+#: ../lib/puppet/face/facts.rb:32
 msgid "Retrieve a node's facts."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:41
+#: ../lib/puppet/face/facts.rb:33
 msgid "[<node_certname>]"
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:64
+#: ../lib/puppet/face/facts.rb:56
 msgid "Upload local facts to the puppet master."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:106
+#: ../lib/puppet/face/facts.rb:98
 msgid "Uploading facts for '%{node}' to '%{server}'"
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:116
+#: ../lib/puppet/face/facts.rb:108
 msgid "Compare Facter 3 output with Facter 4 output"
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:145
+#: ../lib/puppet/face/facts.rb:122
+msgid "Render the different facts as structured."
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:125
+msgid "<regex>"
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:126
+msgid "Regex used to exclude specific facts from diff."
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:151
 msgid "Already using Facter 4. To use `puppet facts diff` remove facterng from the .conf file or run `puppet config set facterng false`."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:152
+#: ../lib/puppet/face/facts.rb:167
 msgid "Retrieve current node's facts."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:153
+#: ../lib/puppet/face/facts.rb:168
 msgid "[<facts>]"
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:168 ../lib/puppet/face/facts.rb:173 ../lib/puppet/face/facts.rb:178 ../lib/puppet/face/module/changes.rb:21
+#: ../lib/puppet/face/facts.rb:183 ../lib/puppet/face/facts.rb:188 ../lib/puppet/face/facts.rb:193 ../lib/puppet/face/module/changes.rb:21
 msgid "<path>"
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:170
+#: ../lib/puppet/face/facts.rb:185
 msgid "The location of the config file for Facter."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:175
+#: ../lib/puppet/face/facts.rb:190
 msgid "The path to a directory that contains custom facts."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:180
+#: ../lib/puppet/face/facts.rb:195
 msgid "The path to a directory that contains external facts."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:184
+#: ../lib/puppet/face/facts.rb:199
 msgid "Disable fact blocking mechanism."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:188
+#: ../lib/puppet/face/facts.rb:203
 msgid "Disable fact caching mechanism."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:192
+#: ../lib/puppet/face/facts.rb:207
 msgid "Show legacy facts when querying all facts."
 msgstr ""
 
-#: ../lib/puppet/face/facts.rb:196
+#: ../lib/puppet/face/facts.rb:211
 msgid "Show only the value when the action is called with a single query"
 msgstr ""
 
@@ -1880,11 +1892,11 @@ msgstr ""
 msgid "%{dest} already exists and the :force option was not specified"
 msgstr ""
 
-#: ../lib/puppet/file_system/windows.rb:202
+#: ../lib/puppet/file_system/windows.rb:204
 msgid "This version of Windows does not support symlinks.  Windows Vista / 2008 or higher is required."
 msgstr ""
 
-#: ../lib/puppet/file_system/windows.rb:207
+#: ../lib/puppet/file_system/windows.rb:209
 msgid "The current user does not have the necessary permission to manage symlinks."
 msgstr ""
 
@@ -3039,8 +3051,8 @@ msgstr ""
 msgid "Option %{option} conflicts with existing option %{conflict} on %{face}"
 msgstr ""
 
-#. TRANSLATORS 'Puppet.settings' references to the Puppet settings options and should not be translated
 #. TRANSLATORS 'Puppet.settings' should not be translated
+#. TRANSLATORS 'Puppet.settings' references to the Puppet settings options and should not be translated
 #: ../lib/puppet/interface/action.rb:315 ../lib/puppet/interface/option_manager.rb:14
 msgid "Global option %{option} does not exist in Puppet.settings"
 msgstr ""
@@ -7845,19 +7857,19 @@ msgid "Invalid duration format '%{value}' for parameter: %{name}"
 msgstr ""
 
 #. TRANSLATORS 'disable_per_environment_manifest' is a setting and 'environment.conf' is a file name and should not be translated
-#: ../lib/puppet/settings/environment_conf.rb:69
+#: ../lib/puppet/settings/environment_conf.rb:70
 msgid "The 'disable_per_environment_manifest' setting is true, but the environment located at %{path_to_env} has a manifest setting in its environment.conf of '%{environment_conf}' which does not match the default_manifest setting '%{puppet_conf}'."
 msgstr ""
 
-#: ../lib/puppet/settings/environment_conf.rb:71
+#: ../lib/puppet/settings/environment_conf.rb:72
 msgid "If this environment is expecting to find modules in '%{environment_conf}', they will not be available!"
 msgstr ""
 
-#: ../lib/puppet/settings/environment_conf.rb:141
+#: ../lib/puppet/settings/environment_conf.rb:142
 msgid "Invalid sections in environment.conf at '%{path_to_conf_file}'. Environment conf may not have sections. The following sections are being ignored: '%{sections}'"
 msgstr ""
 
-#: ../lib/puppet/settings/environment_conf.rb:153
+#: ../lib/puppet/settings/environment_conf.rb:154
 msgid "Invalid settings in environment.conf at '%{path_to_conf_file}'. The following unknown setting(s) are being ignored: %{ignored_settings}"
 msgstr ""
 
@@ -9952,15 +9964,15 @@ msgstr ""
 msgid "Unrecognized ADS UserFlags: %{unrecognized_flags}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:497
+#: ../lib/puppet/util/windows/adsi.rb:497 ../lib/puppet/util/windows/adsi.rb:530
 msgid "Failed to get user name"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:534
+#: ../lib/puppet/util/windows/adsi.rb:580
 msgid "Cannot delete user profile for '%{sid}' prior to Vista SP1"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:552
+#: ../lib/puppet/util/windows/adsi.rb:598
 msgid "Cannot create group if user '%{name}' exists."
 msgstr ""
 
@@ -10023,20 +10035,20 @@ msgstr ""
 msgid "Failed to call GetLongPathName"
 msgstr ""
 
-#: ../lib/puppet/util/windows/principal.rb:67 ../lib/puppet/util/windows/principal.rb:74
+#: ../lib/puppet/util/windows/principal.rb:68 ../lib/puppet/util/windows/principal.rb:75
 msgid "Failed to call LookupAccountNameW with account: %{account_name}"
 msgstr ""
 
 #. TRANSLATORS `lookup_account_sid` is a variable name and should not be translated
-#: ../lib/puppet/util/windows/principal.rb:97
+#: ../lib/puppet/util/windows/principal.rb:98
 msgid "Byte array for lookup_account_sid must not be nil and must be at least 1 byte long"
 msgstr ""
 
-#: ../lib/puppet/util/windows/principal.rb:114
+#: ../lib/puppet/util/windows/principal.rb:115
 msgid "Byte array for lookup_account_sid is invalid: %{sid_bytes}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/principal.rb:122 ../lib/puppet/util/windows/principal.rb:129
+#: ../lib/puppet/util/windows/principal.rb:123 ../lib/puppet/util/windows/principal.rb:130
 msgid "Failed to call LookupAccountSidW with bytes: %{sid_bytes}"
 msgstr ""
 
@@ -10146,7 +10158,7 @@ msgstr ""
 msgid "An attempt to set mode %{mode} on item %{path} would result in the group, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:433 ../lib/puppet/util/windows/security.rb:450 ../lib/puppet/util/windows/sid.rb:155 ../lib/puppet/util/windows/sid.rb:217 ../lib/puppet/util/windows/user.rb:59
+#: ../lib/puppet/util/windows/security.rb:433 ../lib/puppet/util/windows/security.rb:450 ../lib/puppet/util/windows/sid.rb:157 ../lib/puppet/util/windows/sid.rb:219 ../lib/puppet/util/windows/user.rb:59
 msgid "Invalid SID"
 msgstr ""
 
@@ -10302,19 +10314,19 @@ msgstr ""
 msgid "Timed out while waiting for the pending transition from %{pending_state} to %{final_state} to finish. The current state is %{current_state}."
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:94
+#: ../lib/puppet/util/windows/sid.rb:96
 msgid "Octet string must be an array of bytes"
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:161
+#: ../lib/puppet/util/windows/sid.rb:163
 msgid "Failed to convert binary SID"
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:166
+#: ../lib/puppet/util/windows/sid.rb:168
 msgid "ConvertSidToStringSidW failed to allocate buffer for sid"
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:186
+#: ../lib/puppet/util/windows/sid.rb:188
 msgid "Failed to convert string SID: %{string_sid}"
 msgstr ""
 
