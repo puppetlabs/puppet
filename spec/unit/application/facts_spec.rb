@@ -191,8 +191,8 @@ END
       app.command_line.args = %w{diff}
 
       allow(Facter).to receive(:value).with('facterversion').and_return('3.99.0')
-      allow(Puppet::Util::Execution).to receive(:execute).with(/puppet facts show --no-facterng/).and_return(facter3_facts)
-      allow(Puppet::Util::Execution).to receive(:execute).with(/puppet facts show --facterng/).and_return(facter4_facts)
+      allow(Puppet::Util::Execution).to receive(:execute).with(/puppet facts show --no-facterng/, combine:false).and_return(facter3_facts)
+      allow(Puppet::Util::Execution).to receive(:execute).with(/puppet facts show --facterng/, combine:false).and_return(facter4_facts)
     end
 
     # Workaround for YAML issue on Ubuntu where null values get space as key

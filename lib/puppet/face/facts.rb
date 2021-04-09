@@ -141,8 +141,8 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
           puppet_show_cmd = "ruby -S -- #{puppet_show_cmd}"
         end
 
-        facter_3_result = Puppet::Util::Execution.execute("#{puppet_show_cmd} --no-facterng #{cmd_flags}")
-        facter_ng_result = Puppet::Util::Execution.execute("#{puppet_show_cmd} --facterng #{cmd_flags}")
+        facter_3_result = Puppet::Util::Execution.execute("#{puppet_show_cmd} --no-facterng #{cmd_flags}", combine: false)
+        facter_ng_result = Puppet::Util::Execution.execute("#{puppet_show_cmd} --facterng #{cmd_flags}", combine: false)
 
         exclude_list = options[:exclude].nil? ? EXCLUDE_LIST : EXCLUDE_LIST + [ options[:exclude] ]
         fact_diff = FactDif.new(facter_3_result, facter_ng_result, exclude_list, options[:structured])
