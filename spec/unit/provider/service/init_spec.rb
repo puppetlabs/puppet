@@ -83,6 +83,7 @@ describe 'Puppet::Type::Service::Provider::Init',
       allow(provider_class).to receive(:defpath).and_return('tmp')
 
       @services = ['one', 'two', 'three', 'four', 'umountfs']
+      allow(Dir).to receive(:entries).and_call_original
       allow(Dir).to receive(:entries).with('tmp').and_return(@services)
       expect(FileTest).to receive(:directory?).with('tmp').and_return(true)
       allow(FileTest).to receive(:executable?).and_return(true)
