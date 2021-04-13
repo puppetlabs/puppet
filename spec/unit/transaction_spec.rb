@@ -793,16 +793,8 @@ describe Puppet::Transaction do
     end
 
     it "should call Selinux.matchpathcon_fini in case Selinux is enabled ", :if => Puppet.features.posix? do
-      unless defined?(Selinux)
-        module Selinux
-          def self.is_selinux_enabled
-            true
-          end
-
-          def self.matchpathcon_fini
-          end
-        end
-      end
+      selinux = double('selinux', is_selinux_enabled: true, matchpathcon_fini: nil)
+      stub_const('Selinux', selinux)
 
       resource = Puppet::Type.type(:file).new(:path => make_absolute("/tmp/foo"))
       transaction = transaction_with_resource(resource)
