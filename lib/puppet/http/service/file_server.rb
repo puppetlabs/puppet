@@ -106,7 +106,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   #   An array with the request response and an array of the deserialized
   #   metadata for each file returned from the server
   #
-  def get_file_metadatas(path: nil, environment:, recurse: :false, recurselimit: nil, ignore: nil, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore)
+  def get_file_metadatas(path: nil, environment:, recurse: :false, recurselimit: nil, max_files: nil, ignore: nil, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore)
     validate_path(path)
 
     headers = add_puppet_headers('Accept' => get_mime_types(Puppet::FileServing::Metadata).join(', '))
@@ -117,6 +117,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
       params: {
         recurse: recurse,
         recurselimit: recurselimit,
+        max_files: max_files,
         ignore: ignore,
         links: links,
         checksum_type: checksum_type,
