@@ -271,4 +271,206 @@ describe 'Puppet::Type::Service::Provider::Windows',
       }.to raise_error(Puppet::Error, /Cannot enable #{name}/)
     end
   end
+
+  describe "when managing logon credentials" do
+    before do
+      allow(Puppet::Util::Windows::ADSI).to receive(:computer_name).and_return(computer_name)
+      allow(Puppet::Util::Windows::SID).to receive(:name_to_principal).and_return(principal)
+      allow(Puppet::Util::Windows::Service).to receive(:set_startup_configuration).and_return(nil)
+    end
+
+    let(:computer_name) { 'myPC' }
+
+    describe "#logonaccount=" do
+      before do
+        allow(Puppet::Util::Windows::User).to receive(:password_is?).and_return(true)
+        resource[:logonaccount] = user_input
+        provider.logonaccount_insync?(user_input)
+      end
+
+      let(:user_input) { principal.account }
+      let(:principal) do
+        Puppet::Util::Windows::SID::Principal.new("myUser", nil, nil, computer_name, :SidTypeUser)
+      end
+
+      context "when given user is 'myUser'" do
+        it "should fail when the `Log On As A Service` right is missing from given user" do
+          allow(Puppet::Util::Windows::User).to receive(:get_rights).with(principal.domain_account).and_return("")
+          expect { provider.logonaccount=(user_input) }.to raise_error(Puppet::Error, /".\\#{principal.account}" is missing the 'Log On As A Service' right./)
+        end
+
+        it "should fail when the `Log On As A Service` right is set to denied for given user" do
+          allow(Puppet::Util::Windows::User).to receive(:get_rights).with(principal.domain_account).and_return("SeDenyServiceLogonRight")
+          expect { provider.logonaccount=(user_input) }.to raise_error(Puppet::Error, /".\\#{principal.account}" has the 'Log On As A Service' right set to denied./)
+        end
+
+        it "should not fail when given user has the `Log On As A Service` right" do
+          allow(Puppet::Util::Windows::User).to receive(:get_rights).with(principal.domain_account).and_return("SeServiceLogonRight")
+          expect { provider.logonaccount=(user_input) }.not_to raise_error
+        end
+
+        ['myUser', 'myPC\\myUser', ".\\myUser", "MYPC\\mYuseR"].each do |user_input_variant|
+          let(:user_input) { user_input_variant }
+
+          it "should succesfully munge #{user_input_variant} to '.\\myUser'" do
+            allow(Puppet::Util::Windows::User).to receive(:get_rights).with(principal.domain_account).and_return("SeServiceLogonRight")
+            expect { provider.logonaccount=(user_input) }.not_to raise_error
+            expect(resource[:logonaccount]).to eq(".\\myUser")
+          end
+        end
+      end
+
+      context "when given user is a system account" do
+        before do
+          allow(Puppet::Util::Windows::User).to receive(:default_system_account?).and_return(true)
+        end
+
+        let(:user_input) { principal.account }
+        let(:principal) do
+          Puppet::Util::Windows::SID::Principal.new("LOCAL SERVICE", nil, nil, "NT AUTHORITY", :SidTypeUser)
+        end
+
+        it "should not fail when given user is a default system account even if the `Log On As A Service` right is missing" do
+          expect(Puppet::Util::Windows::User).not_to receive(:get_rights)
+          expect { provider.logonaccount=(user_input) }.not_to raise_error
+        end
+
+        ['LocalSystem', '.\LocalSystem', 'myPC\LocalSystem', 'lOcALsysTem'].each do |user_input_variant|
+          let(:user_input) { user_input_variant }
+
+          it "should succesfully munge #{user_input_variant} to 'LocalSystem'" do
+            expect { provider.logonaccount=(user_input) }.not_to raise_error
+            expect(resource[:logonaccount]).to eq('LocalSystem')
+          end
+        end
+      end
+
+      context "when domain is different from computer name" do
+        before do
+          allow(Puppet::Util::Windows::User).to receive(:get_rights).and_return("SeServiceLogonRight")
+        end
+
+        context "when given user is from AD" do
+          let(:user_input) { 'myRemoteUser' }
+          let(:principal) do
+            Puppet::Util::Windows::SID::Principal.new("myRemoteUser", nil, nil, "AD", :SidTypeUser)
+          end
+
+          it "should not raise any error" do
+            expect { provider.logonaccount=(user_input) }.not_to raise_error
+          end
+
+          it "should succesfully be munged" do
+            expect { provider.logonaccount=(user_input) }.not_to raise_error
+            expect(resource[:logonaccount]).to eq('AD\myRemoteUser')
+          end
+        end
+
+        context "when given user is LocalService" do
+          let(:user_input) { 'LocalService' }
+          let(:principal) do
+            Puppet::Util::Windows::SID::Principal.new("LOCAL SERVICE", nil, nil, "NT AUTHORITY", :SidTypeWellKnownGroup)
+          end
+
+          it "should succesfully munge well known user" do
+            expect { provider.logonaccount=(user_input) }.not_to raise_error
+            expect(resource[:logonaccount]).to eq('NT AUTHORITY\LOCAL SERVICE')
+          end
+        end
+
+        context "when given user is in SID form" do
+          let(:user_input) { 'S-1-5-20' }
+          let(:principal) do
+            Puppet::Util::Windows::SID::Principal.new("NETWORK SERVICE", nil, nil, "NT AUTHORITY", :SidTypeUser)
+          end
+
+          it "should succesfully munge" do
+            expect { provider.logonaccount=(user_input) }.not_to raise_error
+            expect(resource[:logonaccount]).to eq('NT AUTHORITY\NETWORK SERVICE')
+          end
+        end
+
+        context "when given user is actually a group" do
+          let(:principal) do
+            Puppet::Util::Windows::SID::Principal.new("Administrators", nil, nil, "BUILTIN", :SidTypeAlias)
+          end
+          let(:user_input) { 'Administrators' }
+
+          it "should fail when sid type is not user or well known user" do
+            expect { provider.logonaccount=(user_input) }.to raise_error(Puppet::Error, /"BUILTIN\\#{user_input}" is not a valid account/)
+          end
+        end
+      end
+    end
+
+    describe "#logonpassword=" do
+      before do
+        allow(Puppet::Util::Windows::User).to receive(:get_rights).and_return('SeServiceLogonRight')
+        resource[:logonaccount] = account
+        resource[:logonpassword] = user_input
+        provider.logonaccount_insync?(account)
+      end
+
+      let(:account) { 'LocalSystem' }
+
+      describe "when given logonaccount is a predefined_local_account" do
+        let(:user_input) { 'pass' }
+        let(:principal) { nil }
+
+        it "should pass validation when given account is 'LocalSystem'" do
+          allow(Puppet::Util::Windows::User).to receive(:localsystem?).with('LocalSystem').and_return(true)
+          allow(Puppet::Util::Windows::User).to receive(:default_system_account?).with('LocalSystem').and_return(true)
+
+          expect(Puppet::Util::Windows::User).not_to receive(:password_is?)
+          expect { provider.logonpassword=(user_input) }.not_to raise_error
+        end
+
+        ['LOCAL SERVICE', 'NETWORK SERVICE', 'SYSTEM'].each do |predefined_local_account|
+          describe "when given account is #{predefined_local_account}" do
+            let(:account) { 'predefined_local_account' }
+            let(:principal) do
+              Puppet::Util::Windows::SID::Principal.new(account, nil, nil, "NT AUTHORITY", :SidTypeUser)
+            end
+
+            it "should pass validation" do
+              allow(Puppet::Util::Windows::User).to receive(:localsystem?).with(principal.account).and_return(false)
+              allow(Puppet::Util::Windows::User).to receive(:localsystem?).with(principal.domain_account).and_return(false)
+              expect(Puppet::Util::Windows::User).to receive(:default_system_account?).with(principal.domain_account).and_return(true).twice
+
+              expect(Puppet::Util::Windows::User).not_to receive(:password_is?)
+              expect { provider.logonpassword=(user_input) }.not_to raise_error
+            end
+          end
+        end
+      end
+
+      describe "when given logonaccount is not a predefined local account" do
+        before do
+          allow(Puppet::Util::Windows::User).to receive(:localsystem?).with(".\\#{principal.account}").and_return(false)
+          allow(Puppet::Util::Windows::User).to receive(:default_system_account?).with(".\\#{principal.account}").and_return(false)
+        end
+
+        let(:account) { 'myUser' }
+        let(:principal) do
+          Puppet::Util::Windows::SID::Principal.new(account, nil, nil, computer_name, :SidTypeUser)
+        end
+
+        describe "when password is proven correct" do
+          let(:user_input) { 'myPass' }
+          it "should pass validation" do
+            allow(Puppet::Util::Windows::User).to receive(:password_is?).with('myUser', 'myPass', '.').and_return(true)
+            expect { provider.logonpassword=(user_input) }.not_to raise_error
+          end
+        end
+
+        describe "when password is not proven correct" do
+          let(:user_input) { 'myWrongPass' }
+          it "should not pass validation" do
+            allow(Puppet::Util::Windows::User).to receive(:password_is?).with('myUser', 'myWrongPass', '.').and_return(false)
+            expect { provider.logonpassword=(user_input) }.to raise_error(Puppet::Error, /The given password is invalid for user '.\\myUser'/)
+          end
+        end
+      end
+    end
+  end
 end

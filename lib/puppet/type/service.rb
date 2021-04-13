@@ -139,23 +139,9 @@ module Puppet
     newproperty(:logonaccount, :required_features => :manages_logon_credentials) do
       desc "Specify an account for service logon"
 
-      munge do |value|
-        return value unless Puppet::Util::Platform.windows?
-        return 'LocalSystem' if Puppet::Util::Windows::User::localsystem?(value)
-
-        value.sub!(/^\.\\/, "#{Puppet::Util::Windows::ADSI.computer_name}\\")
-        user_information = Puppet::Util::Windows::SID.name_to_principal(value)
-        raise Puppet::Error.new("\"#{value}\" is not a valid account") unless user_information && [:SidTypeUser, :SidTypeWellKnownGroup].include?(user_information.account_type)
-
-        user_rights = Puppet::Util::Windows::User::get_rights(user_information.domain_account) unless Puppet::Util::Windows::User::default_system_account?(value)
-        raise Puppet::Error.new("\"#{user_information.domain_account}\" has the 'Log On As A Service' right set to denied.") if user_rights =~ /SeDenyServiceLogonRight/
-        raise Puppet::Error.new("\"#{user_information.domain_account}\" is missing the 'Log On As A Service' right.") unless user_rights.nil? || user_rights =~ /SeServiceLogonRight/
-
-        if user_information.domain == Puppet::Util::Windows::ADSI.computer_name
-          ".\\#{user_information.account}"
-        else
-          user_information.domain_account
-        end
+      def insync?(current)
+        return provider.logonaccount_insync?(current) if provider.respond_to?(:logonaccount_insync?)
+        super(current)
       end
     end
 
@@ -163,18 +149,7 @@ module Puppet
       desc "Specify a password for service logon. Default value is an empty string (when logonaccount is specified)."
 
       validate do |value|
-        raise Puppet::Error.new(_"The 'logonaccount' parameter is mandatory when setting 'logonpassword'.") unless @resource[:logonaccount]
-        raise ArgumentError, _("Passwords cannot include ':'") if value.is_a?(String) and value.include?(":")
-        return unless Puppet::Util::Platform.windows?
-
-        is_a_predefined_local_account = Puppet::Util::Windows::User::default_system_account?(@resource[:logonaccount]) || @resource[:logonaccount] == 'LocalSystem'
-
-        account_info = @resource[:logonaccount].split("\\")
-        able_to_logon = Puppet::Util::Windows::User.password_is?(account_info[1], value, account_info[0]) unless is_a_predefined_local_account
-
-        raise Puppet::Error.new("The given password is invalid for user '#{@resource[:logonaccount]}'.") unless is_a_predefined_local_account || able_to_logon
-
-        provider.logonpassword=(value)
+        raise ArgumentError, _("Passwords cannot include ':'") if value.is_a?(String) && value.include?(":")
       end
 
       sensitive true
@@ -319,6 +294,12 @@ module Puppet
 
     def self.needs_ensure_retrieved
       false
+    end
+
+    validate do
+      if @parameters[:logonpassword] && @parameters[:logonaccount].nil?
+        raise Puppet::Error.new(_"The 'logonaccount' parameter is mandatory when setting 'logonpassword'.")
+      end
     end
   end
 end
