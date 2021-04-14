@@ -5,13 +5,6 @@ require 'puppet_spec/compiler'
 require 'puppet/transaction'
 require 'fileutils'
 
-Puppet::Type.newtype(:generator) do
-  newparam(:name) { isnamevar }
-
-  def generate
-  end
-end
-
 describe Puppet::Transaction do
   include PuppetSpec::Files
   include PuppetSpec::Compiler
@@ -25,6 +18,19 @@ describe Puppet::Transaction do
   def transaction_with_resource(resource)
     transaction = Puppet::Transaction.new(catalog_with_resource(resource), nil, Puppet::Graph::SequentialPrioritizer.new)
     transaction
+  end
+
+  before(:all) do
+    Puppet::Type.newtype(:transaction_generator) do
+      newparam(:name) { isnamevar }
+
+      def generate
+      end
+    end
+  end
+
+  after(:all) do
+    Puppet::Type.rmtype(:transaction_generator)
   end
 
   before do
@@ -330,9 +336,9 @@ describe Puppet::Transaction do
   describe "when generating resources before traversal" do
     let(:catalog) { Puppet::Resource::Catalog.new }
     let(:transaction) { Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new) }
-    let(:generator) { Puppet::Type.type(:generator).new :title => "generator" }
+    let(:generator) { Puppet::Type.type(:transaction_generator).new :title => "generator" }
     let(:generated) do
-      %w[a b c].map { |name| Puppet::Type.type(:generator).new(:name => name) }
+      %w[a b c].map { |name| Puppet::Type.type(:transaction_generator).new(:name => name) }
     end
 
     before :each do
@@ -673,7 +679,7 @@ describe Puppet::Transaction do
         end
 
         describe "and new resources are generated" do
-          let(:generator) { Puppet::Type.type(:generator).new :title => "generator" }
+          let(:generator) { Puppet::Type.type(:transaction_generator).new :title => "generator" }
           let(:generated) do
             %w[a b c].map { |name| Puppet::Type.type(:package).new :title => "foo", :name => name, :provider => :apt }
           end
@@ -787,16 +793,8 @@ describe Puppet::Transaction do
     end
 
     it "should call Selinux.matchpathcon_fini in case Selinux is enabled ", :if => Puppet.features.posix? do
-      unless defined?(Selinux)
-        module Selinux
-          def self.is_selinux_enabled
-            true
-          end
-
-          def self.matchpathcon_fini
-          end
-        end
-      end
+      selinux = double('selinux', is_selinux_enabled: true, matchpathcon_fini: nil)
+      stub_const('Selinux', selinux)
 
       resource = Puppet::Type.type(:file).new(:path => make_absolute("/tmp/foo"))
       transaction = transaction_with_resource(resource)

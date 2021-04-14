@@ -27,6 +27,18 @@ describe Puppet::GettextConfig do
     Puppet::GettextConfig.delete_all_text_domains
   end
 
+  # These tests assume gettext is enabled, but it will be disabled when the
+  # first time the `Puppet[:disable_i18n]` setting is resolved
+  around(:each) do |example|
+    disabled = Puppet::GettextConfig.instance_variable_get(:@gettext_disabled)
+    Puppet::GettextConfig.instance_variable_set(:@gettext_disabled, false)
+    begin
+      example.run
+    ensure
+      Puppet::GettextConfig.instance_variable_set(:@gettext_disabled, disabled)
+    end
+  end
+
   describe 'setting and getting the locale' do
     it 'should return "en" when gettext is unavailable' do
       allow(Puppet::GettextConfig).to receive(:gettext_loaded?).and_return(false)
