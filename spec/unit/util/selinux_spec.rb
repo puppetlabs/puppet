@@ -3,26 +3,29 @@ require 'spec_helper'
 require 'pathname'
 require 'puppet/util/selinux'
 
-unless defined?(Selinux)
-  module Selinux
-    def self.is_selinux_enabled
-      false
-    end
-  end
-end
-
 describe Puppet::Util::SELinux do
   include Puppet::Util::SELinux
 
+  let(:selinux) { double('selinux', is_selinux_enabled: false) }
+
+  before :each do
+    stub_const('Selinux', selinux)
+  end
+
   describe "selinux_support?" do
-    it "should return :true if this system has SELinux enabled" do
+    it "should return true if this system has SELinux enabled" do
       expect(Selinux).to receive(:is_selinux_enabled).and_return(1)
-      expect(selinux_support?).to be_truthy
+      expect(selinux_support?).to eq(true)
     end
 
-    it "should return :false if this system lacks SELinux" do
+    it "should return false if this system has SELinux disabled" do
       expect(Selinux).to receive(:is_selinux_enabled).and_return(0)
-      expect(selinux_support?).to be_falsey
+      expect(selinux_support?).to eq(false)
+    end
+
+    it "should return false if this system lacks SELinux" do
+      hide_const('Selinux')
+      expect(selinux_support?).to eq(false)
     end
 
     it "should return nil if /proc/mounts does not exist" do
