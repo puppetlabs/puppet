@@ -123,8 +123,17 @@ describe Puppet::Type.type(:package).provider(:dnfmodule) do
         provider.install
       end
 
-      it "should just enable the module if it has no default profile" do
+      it "should just enable the module if it has no default profile(missing groups or modules)" do
         dnf_exception = Puppet::ExecutionFailure.new("Error: Problems in request:\nmissing groups or modules: #{resource[:name]}")
+        allow(provider).to receive(:execute).with(array_including('install')).and_raise(dnf_exception)
+        resource[:ensure] = :present
+        expect(provider).to receive(:execute).with(array_including('install')).ordered
+        expect(provider).to receive(:execute).with(array_including('enable')).ordered
+        provider.install
+      end
+
+      it "should just enable the module if it has no default profile(broken groups or modules)" do
+        dnf_exception = Puppet::ExecutionFailure.new("Error: Problems in request:\nbroken groups or modules: #{resource[:name]}")
         allow(provider).to receive(:execute).with(array_including('install')).and_raise(dnf_exception)
         resource[:ensure] = :present
         expect(provider).to receive(:execute).with(array_including('install')).ordered
