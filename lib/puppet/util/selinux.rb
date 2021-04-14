@@ -213,14 +213,13 @@ module Puppet::Util::SELinux
   # what context a new resource being created should have.
   def get_create_mode(resource_ensure)
     mode = 0
-    return mode if resource_ensure == 'absent'
     case resource_ensure
-    when "present", "file"
-      mode = 0 | S_IFREG
-    when "directory"
-      mode = 0 | S_IFDIR
-    when "link"
-      mode = 0 | S_IFLNK
+    when :present, :file
+      mode |= S_IFREG
+    when :directory
+      mode |= S_IFDIR
+    when :link
+      mode |= S_IFLNK
     end
     mode
   end

@@ -7,7 +7,7 @@ require 'spec_helper'
 
     before do
       @path = make_absolute("/my/file")
-      @resource = Puppet::Type.type(:file).new :path => @path
+      @resource = Puppet::Type.type(:file).new(:path => @path, :ensure => :file)
       @sel = property.new :resource => @resource
     end
 
@@ -50,13 +50,13 @@ require 'spec_helper'
     end
 
     it "should handle no default gracefully" do
-      expect(@sel).to receive(:get_selinux_default_context).with(@path, @resource[:ensure].to_s).and_return(nil)
+      expect(@sel).to receive(:get_selinux_default_context).with(@path, :file).and_return(nil)
       expect(@sel.default).to be_nil
     end
 
     it "should be able to detect matchpathcon defaults" do
       allow(@sel).to receive(:debug)
-      expect(@sel).to receive(:get_selinux_default_context).with(@path, @resource[:ensure].to_s).and_return("user_u:role_r:type_t:s0")
+      expect(@sel).to receive(:get_selinux_default_context).with(@path, :file).and_return("user_u:role_r:type_t:s0")
       expectedresult = case param
         when :seluser; "user_u"
         when :selrole; "role_r"

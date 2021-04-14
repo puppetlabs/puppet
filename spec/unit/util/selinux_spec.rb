@@ -177,8 +177,8 @@ describe Puppet::Util::SELinux do
         allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 32768).and_return(-1)
         allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
 
-        expect(get_selinux_default_context("/root/chuj", "present")).to be_nil
-        expect(get_selinux_default_context("/root/chuj", "file")).to be_nil
+        expect(get_selinux_default_context("/root/chuj", :present)).to be_nil
+        expect(get_selinux_default_context("/root/chuj", :file)).to be_nil
       end
     end
 
@@ -189,7 +189,7 @@ describe Puppet::Util::SELinux do
         allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 16384).and_return(-1)
         allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
 
-        expect(get_selinux_default_context("/root/chuj", "directory")).to be_nil
+        expect(get_selinux_default_context("/root/chuj", :directory)).to be_nil
       end
     end
 
@@ -200,7 +200,7 @@ describe Puppet::Util::SELinux do
         allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 40960).and_return(-1)
         allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
 
-        expect(get_selinux_default_context("/root/chuj", "link")).to be_nil
+        expect(get_selinux_default_context("/root/chuj", :link)).to be_nil
       end
     end
 
@@ -394,20 +394,20 @@ describe Puppet::Util::SELinux do
 
   describe "get_create_mode" do
     it "should return 0 if the resource is absent" do
-      expect(get_create_mode("absent")).to eq(0)
+      expect(get_create_mode(:absent)).to eq(0)
     end
 
     it "should return mode with file type set to S_IFREG when resource is file" do
-      expect(get_create_mode("present")).to eq(32768)
-      expect(get_create_mode("file")).to eq(32768)
+      expect(get_create_mode(:present)).to eq(32768)
+      expect(get_create_mode(:file)).to eq(32768)
     end
 
     it "should return mode with file type set to S_IFDIR when resource is dir" do
-      expect(get_create_mode("directory")).to eq(16384)
+      expect(get_create_mode(:directory)).to eq(16384)
     end
 
     it "should return mode with file type set to S_IFLNK when resource is link" do
-      expect(get_create_mode("link")).to eq(40960)
+      expect(get_create_mode(:link)).to eq(40960)
     end
 
     it "should return 0 for everything else" do
