@@ -1,6 +1,6 @@
 test_name "should modify the home directory of an user on OS X < 10.14" do
   confine :to, :platform => /osx/
-  confine :except, :platform => /osx-10.1[4-9]/
+  confine :except, :platform => /(osx-10.1[4-9]|osx-11-)/
 
   tag 'audit:high',
       'audit:acceptance' # Could be done as integration tests, but would
