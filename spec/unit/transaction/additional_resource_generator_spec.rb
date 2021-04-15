@@ -93,8 +93,6 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
     end
   end
 
-
-
   after(:each) do
     Puppet::Type.rmtype(:gen_empty)
     Puppet::Type.rmtype(:eval_after)
