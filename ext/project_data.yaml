@@ -41,7 +41,7 @@ gem_platform_dependencies:
     gem_runtime_dependencies:
       ffi: ['> 1.9.24', '< 2']
       # win32-xxxx gems are pinned due to PUP-6445
-      win32-dir: '= 0.4.9'
+      win32-dir: ['>= 0.4.9', '<= 0.7.2']
       win32-process: '= 0.7.5'
       # Use of win32-security is deprecated
       win32-security: '= 0.2.5'
@@ -51,7 +51,7 @@ gem_platform_dependencies:
     gem_runtime_dependencies:
       ffi: ['> 1.9.24', '< 2']
       # win32-xxxx gems are pinned due to PUP-6445
-      win32-dir: '= 0.4.9'
+      win32-dir: ['>= 0.4.9', '<= 0.7.2']
       win32-process: '= 0.7.5'
       # Use of win32-security is deprecated
       win32-security: '= 0.2.5'
