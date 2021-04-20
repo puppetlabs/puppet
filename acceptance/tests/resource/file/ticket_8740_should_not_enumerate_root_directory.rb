@@ -1,7 +1,7 @@
 test_name "#8740: should not enumerate root directory"
 
 confine :except, :platform => 'windows'
-confine :except, :platform => /osx-10.1[5-9]/
+confine :except, :platform => /(osx-10.1[5-9]|osx-11-)/
 
 tag 'audit:high',
     'audit:refactor',   # Use block style `test_name`

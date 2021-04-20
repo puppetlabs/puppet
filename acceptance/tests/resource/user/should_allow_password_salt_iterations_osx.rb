@@ -1,6 +1,8 @@
 test_name "should allow password, salt, and iteration attributes in OSX"
 
 confine :to, :platform => /osx/
+#TODO Fix Big Sur password manager PUP-11026
+confine :except, :platform => /osx-11-/
 
 tag 'audit:high',
     'audit:refactor',  # Use block style `test_run`

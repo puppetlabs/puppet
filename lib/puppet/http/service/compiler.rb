@@ -119,7 +119,79 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
     [response, deserialize(response, Puppet::Resource::Catalog)]
   end
 
-  # Submit a GET request to retrieve the facts for the named node.
+  #
+  # @api private
+  #
+  # Submit a POST request to request a catalog to the server using v4 endpoint
+  #
+  # @param [String] certname The name of the node for which to compile the catalog.
+  # @param [Hash] persistent A hash containing two required keys, facts and catalog,
+  #   which when set to true will cause the facts and reports to be stored in
+  #   PuppetDB, or discarded if set to false.
+  # @param [String] environment The name of the environment for which to compile the catalog.
+  # @param [Hash] facts A hash with a required values key, containing a hash of all the
+  #    facts for the node. If not provided, Puppet will attempt to fetch facts for the node
+  #    from PuppetDB.
+  # @param [Hash] trusted_facts A hash with a required values key containing a hash of
+  #    the trusted facts for a node
+  # @param [String] transaction_uuid The id for tracking the catalog compilation and
+  #    report submission.
+  # @param [String] job_id The id of the orchestrator job that triggered this run.
+  # @param [Hash] options A hash of options beyond direct input to catalogs. Options:
+  #    - prefer_requested_environment Whether to always override a node's classified 
+  #      environment with the one supplied in the request. If this is true and no environment
+  #      is supplied, fall back to the classified environment, or finally, 'production'.
+  #    - capture_logs Whether to return the errors and warnings that occurred during
+  #      compilation alongside the catalog in the response body.
+  #    - log_level The logging level to use during the compile when capture_logs is true.
+  #      Options are 'err', 'warning', 'info', and 'debug'.
+  #
+  # @return [Array<Puppet::HTTP::Response, Puppet::Resource::Catalog, Array<String>>] An array
+  #   containing the request response, the deserialized catalog returned by
+  #   the server and array containing logs (log array will be empty if capture_logs is false)
+  #
+  def post_catalog4(certname, persistence:, environment:, facts: nil, trusted_facts: nil, transaction_uuid: nil, job_id: nil, options: nil)
+    unless persistence.is_a?(Hash) && (missing = [:facts, :catalog] - persistence.keys.map(&:to_sym)).empty?
+      raise ArgumentError.new("The 'persistence' hash is missing the keys: #{missing.join(', ')}")
+    end
+    raise ArgumentError.new("Facts must be a Hash not a #{facts.class}") unless facts.nil? || facts.is_a?(Hash)
+    body = {
+      certname: certname,
+      persistence: persistence,
+      environment: environment,
+      transaction_uuid: transaction_uuid,
+      job_id: job_id,
+      options: options
+    }
+    body[:facts] = { values: facts } unless facts.nil?
+    body[:trusted_facts] = { values: trusted_facts } unless trusted_facts.nil?
+    headers = add_puppet_headers(
+      'Accept' => get_mime_types(Puppet::Resource::Catalog).join(', '),
+      'Content-Type' => 'application/json'
+    )
+
+    url = URI::HTTPS.build(host: @url.host, port: @url.port, path: Puppet::Util.uri_encode("/puppet/v4/catalog"))
+    response = @client.post(
+      url,
+      body.to_json,
+      headers: headers
+    )
+    process_response(response)
+    begin
+      response_body = JSON.parse(response.body)
+      catalog = Puppet::Resource::Catalog.from_data_hash(response_body['catalog'])
+    rescue => err
+      raise Puppet::HTTP::SerializationError.new("Failed to deserialize catalog from puppetserver response: #{err.message}", err)
+    end
+    
+    logs = response_body['logs'] || []
+    [response, catalog, logs]
+  end
+
+  #
+  # @api private
+  #
+  # Submit a GET request to retrieve the facts for the named node
   #
   # @param [String] name Name of the node to retrieve facts for
   # @param [String] environment Name of the environment we are operating in
