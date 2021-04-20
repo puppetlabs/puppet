@@ -1,3 +1,4 @@
+
 # coding: utf-8
 require 'spec_helper'
 require 'puppet/http'
@@ -253,6 +254,128 @@ describe Puppet::HTTP::Service::Compiler do
 
           subject.post_catalog(certname, environment: environment, facts: facts)
         end
+      end
+    end
+  end
+
+  context 'when posting for a v4 catalog' do
+    let(:uri) {"https://compiler.example.com:8140/puppet/v4/catalog"}
+    let(:persistence) {{ facts: true, catalog: true }}
+    let(:facts) {{ 'foo' => 'bar' }}
+    let(:trusted_facts) {{}}
+    let(:uuid) { "ec3d2844-b236-4287-b0ad-632fbb4d1ff0" }
+    let(:job_id) { "1" }
+    let(:payload) {{
+      environment: environment,
+      persistence: persistence,
+      facts: facts,
+      trusted_facts: trusted_facts,
+      transaction_uuid: uuid,
+      job_id: job_id,
+      options: {
+        prefer_requested_environment: false,
+        capture_logs: false
+      }
+    }}
+    let(:serialized_catalog) {{ 'catalog' => catalog.to_data_hash }.to_json}
+    let(:catalog_response) {{ body: serialized_catalog, headers: {'Content-Type' => formatter.mime }}}
+
+    it 'includes default HTTP headers' do
+      stub_request(:post, uri).with do |request|
+        expect(request.headers).to include({'X-Puppet-Version' => /./, 'User-Agent' => /./})
+        expect(request.headers).to_not include('X-Puppet-Profiling')
+      end.to_return(**catalog_response)
+
+      subject.post_catalog4(certname, payload)
+    end
+
+    it 'defaults the server and port based on settings' do
+      Puppet[:server] = 'compiler2.example.com'
+      Puppet[:serverport] = 8141
+
+      stub_request(:post, "https://compiler2.example.com:8141/puppet/v4/catalog")
+        .to_return(**catalog_response)
+
+      subject.post_catalog4(certname, payload)
+    end
+
+    it 'includes puppet headers set via the :http_extra_headers and :profile settings' do
+      stub_request(:post, uri).with(headers: {'Example-Header' => 'real-thing', 'another' => 'thing', 'X-Puppet-Profiling' => 'true'}).
+        to_return(**catalog_response)
+
+      Puppet[:http_extra_headers] = 'Example-Header:real-thing,another:thing'
+      Puppet[:profile] = true
+
+      subject.post_catalog4(certname, payload)
+    end
+
+    it 'returns a deserialized catalog' do
+      stub_request(:post, uri)
+        .to_return(**catalog_response)
+
+      _, cat, _ = subject.post_catalog4(certname, payload)
+      expect(cat).to be_a(Puppet::Resource::Catalog)
+      expect(cat.name).to eq(certname)
+    end
+
+    it 'returns the request response' do
+      stub_request(:post, uri)
+        .to_return(**catalog_response)
+
+      resp, _, _ = subject.post_catalog4(certname, payload)
+      expect(resp).to be_a(Puppet::HTTP::Response)
+    end
+
+    it 'raises a response error if unsuccessful' do
+      stub_request(:post, uri)
+        .to_return(status: [500, "Server Error"])
+
+      expect {
+        subject.post_catalog4(certname, payload)
+      }.to raise_error do |err|
+        expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
+        expect(err.message).to eq('Server Error')
+        expect(err.response.code).to eq(500)
+      end
+    end
+
+    it 'raises a response error when server response is not JSON' do
+      stub_request(:post, uri)
+        .to_return(body: "this isn't valid JSON", headers: {'Content-Type' => 'application/json'})
+
+      expect {
+        subject.post_catalog4(certname, payload)
+      }.to raise_error do |err|
+        expect(err).to be_an_instance_of(Puppet::HTTP::SerializationError)
+        expect(err.message).to match(/Failed to deserialize catalog from puppetserver response/)
+      end
+    end
+
+    it 'raises a response error when server response a JSON serialized catalog' do
+      stub_request(:post, uri)
+        .to_return(body: {oops: 'bad response data'}.to_json, headers: {'Content-Type' => 'application/json'})
+
+      expect {
+        subject.post_catalog4(certname, payload)
+      }.to raise_error do |err|
+        expect(err).to be_an_instance_of(Puppet::HTTP::SerializationError)
+        expect(err.message).to match(/Failed to deserialize catalog from puppetserver response/)
+      end
+    end
+
+    it 'raises ArgumentError when the `persistence` hash does not contain required keys' do
+      payload[:persistence].delete(:facts)
+      expect { subject.post_catalog4(certname, payload) }.to raise_error do |err|
+        expect(err).to be_an_instance_of(ArgumentError)
+        expect(err.message).to match(/The 'persistence' hash is missing the keys: facts/)
+      end
+    end
+
+    it 'raises ArgumentError when `facts` are not a Hash' do
+      payload[:facts] = Puppet::Node::Facts.new(certname)
+      expect { subject.post_catalog4(certname, payload) }.to raise_error do |err|
+        expect(err).to be_an_instance_of(ArgumentError)
+        expect(err.message).to match(/Facts must be a Hash not a Puppet::Node::Facts/)
       end
     end
   end
