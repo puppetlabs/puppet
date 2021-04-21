@@ -205,7 +205,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should set itself as the catalog for each converted resource" do
-      @catalog.vertices.each { |v| expect(v.catalog.object_id).to equal(@catalog.object_id) }
+      @catalog.vertices.each { |v| expect(v.catalog.object_id).to eql(@catalog.object_id) }
     end
 
     # This tests #931.
