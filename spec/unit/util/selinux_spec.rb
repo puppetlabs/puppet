@@ -159,7 +159,7 @@ describe Puppet::Util::SELinux do
       end
     end
 
-    it "handles no such file or directory errors by issuing a warning" do
+    it "backward compatibly handles no such file or directory errors by issuing a warning when resource_ensure not set" do
       without_partial_double_verification do
         allow(self).to receive(:selinux_support?).and_return(true)
         allow(self).to receive(:selinux_label_support?).and_return(true)
@@ -167,6 +167,51 @@ describe Puppet::Util::SELinux do
         allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
 
         expect(get_selinux_default_context("/root/chuj")).to be_nil
+      end
+    end
+
+    it "should determine mode based on resource ensure when set to file" do
+      without_partial_double_verification do
+        allow(self).to receive(:selinux_support?).and_return(true)
+        allow(self).to receive(:selinux_label_support?).and_return(true)
+        allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 32768).and_return(-1)
+        allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
+
+        expect(get_selinux_default_context("/root/chuj", :present)).to be_nil
+        expect(get_selinux_default_context("/root/chuj", :file)).to be_nil
+      end
+    end
+
+    it "should determine mode based on resource ensure when set to dir" do
+      without_partial_double_verification do
+        allow(self).to receive(:selinux_support?).and_return(true)
+        allow(self).to receive(:selinux_label_support?).and_return(true)
+        allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 16384).and_return(-1)
+        allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
+
+        expect(get_selinux_default_context("/root/chuj", :directory)).to be_nil
+      end
+    end
+
+    it "should determine mode based on resource ensure when set to link" do
+      without_partial_double_verification do
+        allow(self).to receive(:selinux_support?).and_return(true)
+        allow(self).to receive(:selinux_label_support?).and_return(true)
+        allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 40960).and_return(-1)
+        allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
+
+        expect(get_selinux_default_context("/root/chuj", :link)).to be_nil
+      end
+    end
+
+    it "should determine mode based on resource ensure when set to unknown" do
+      without_partial_double_verification do
+        allow(self).to receive(:selinux_support?).and_return(true)
+        allow(self).to receive(:selinux_label_support?).and_return(true)
+        allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 0).and_return(-1)
+        allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
+
+        expect(get_selinux_default_context("/root/chuj", "unknown")).to be_nil
       end
     end
 
@@ -329,21 +374,44 @@ describe Puppet::Util::SELinux do
     end
 
     it "should return nil if no default context exists" do
-      expect(self).to receive(:get_selinux_default_context).with("/foo").and_return(nil)
+      expect(self).to receive(:get_selinux_default_context).with("/foo", nil).and_return(nil)
       expect(set_selinux_default_context("/foo")).to be_nil
     end
 
     it "should do nothing and return nil if the current context matches the default context" do
-      expect(self).to receive(:get_selinux_default_context).with("/foo").and_return("user_u:role_r:type_t")
+      expect(self).to receive(:get_selinux_default_context).with("/foo", nil).and_return("user_u:role_r:type_t")
       expect(self).to receive(:get_selinux_current_context).with("/foo").and_return("user_u:role_r:type_t")
       expect(set_selinux_default_context("/foo")).to be_nil
     end
 
     it "should set and return the default context if current and default do not match" do
-      expect(self).to receive(:get_selinux_default_context).with("/foo").and_return("user_u:role_r:type_t")
+      expect(self).to receive(:get_selinux_default_context).with("/foo", nil).and_return("user_u:role_r:type_t")
       expect(self).to receive(:get_selinux_current_context).with("/foo").and_return("olduser_u:role_r:type_t")
       expect(self).to receive(:set_selinux_context).with("/foo", "user_u:role_r:type_t").and_return(true)
       expect(set_selinux_default_context("/foo")).to eq("user_u:role_r:type_t")
+    end
+  end
+
+  describe "get_create_mode" do
+    it "should return 0 if the resource is absent" do
+      expect(get_create_mode(:absent)).to eq(0)
+    end
+
+    it "should return mode with file type set to S_IFREG when resource is file" do
+      expect(get_create_mode(:present)).to eq(32768)
+      expect(get_create_mode(:file)).to eq(32768)
+    end
+
+    it "should return mode with file type set to S_IFDIR when resource is dir" do
+      expect(get_create_mode(:directory)).to eq(16384)
+    end
+
+    it "should return mode with file type set to S_IFLNK when resource is link" do
+      expect(get_create_mode(:link)).to eq(40960)
+    end
+
+    it "should return 0 for everything else" do
+      expect(get_create_mode("unknown")).to eq(0)
     end
   end
 end
