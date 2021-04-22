@@ -546,11 +546,16 @@ describe Puppet::Application::Agent do
         @puppetd.options[:digest] = :MD5
       end
 
+      def expected_fingerprint(name, x509)
+        digest = OpenSSL::Digest.new(name).hexdigest(x509.to_der)
+        digest.scan(/../).join(':').upcase
+      end
+
       it "should fingerprint the certificate if it exists" do
         cert = cert_fixture('signed.pem')
         allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_return(cert)
 
-        expect(@puppetd).to receive(:puts).with('(MD5) E2:BA:9A:EF:20:A8:7D:10:8D:82:9A:61:5D:FD:5B:33')
+        expect(@puppetd).to receive(:puts).with("(MD5) #{expected_fingerprint('md5', cert)}")
 
         @puppetd.fingerprint
       end
@@ -560,7 +565,7 @@ describe Puppet::Application::Agent do
         allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_return(nil)
         allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_request).and_return(request)
 
-        expect(@puppetd).to receive(:puts).with('(MD5) B8:4C:FB:31:AE:17:86:E3:AD:53:97:CA:F6:3C:4A:CB')
+        expect(@puppetd).to receive(:puts).with("(MD5) #{expected_fingerprint('md5', request)}")
 
         @puppetd.fingerprint
       end

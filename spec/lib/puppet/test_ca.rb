@@ -30,7 +30,7 @@ module Puppet
     end
 
     def create_request(name)
-      key = OpenSSL::PKey::RSA.new(1024)
+      key = OpenSSL::PKey::RSA.new(2048)
       csr = OpenSSL::X509::Request.new
       csr.public_key = key.public_key
       csr.subject = OpenSSL::X509::Name.new([["CN", name]])
@@ -127,7 +127,7 @@ module Puppet
       key = if opts[:key_type] == :ec
               key = OpenSSL::PKey::EC.generate('prime256v1')
             else
-              key = OpenSSL::PKey::RSA.new(1024)
+              key = OpenSSL::PKey::RSA.new(2048)
             end
       cert = OpenSSL::X509::Certificate.new
       cert.public_key = if key.is_a?(OpenSSL::PKey::EC)
