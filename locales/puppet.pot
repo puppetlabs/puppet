@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.21.1-62-g86a9c83c34\n"
+"Project-Id-Version: Puppet automation framework 6.22.1-24-gcd615a0abb\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-04-08 09:48+0000\n"
-"PO-Revision-Date: 2021-04-08 09:48+0000\n"
+"POT-Creation-Date: 2021-04-23 17:03+0000\n"
+"PO-Revision-Date: 2021-04-23 17:03+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -591,12 +591,12 @@ msgstr ""
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:465 ../lib/puppet/http/resolver/server_list.rb:67
+#: ../lib/puppet/configurer.rb:465 ../lib/puppet/http/resolver/server_list.rb:68 ../lib/puppet/http/resolver/server_list.rb:72
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:469 ../lib/puppet/http/resolver/server_list.rb:70
+#: ../lib/puppet/configurer.rb:469 ../lib/puppet/http/resolver/server_list.rb:77 ../lib/puppet/http/resolver/server_list.rb:80
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
@@ -2334,6 +2334,10 @@ msgstr ""
 
 #: ../lib/puppet/http/redirector.rb:82
 msgid "Location URI is invalid: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/http/resolver/server_list.rb:70 ../lib/puppet/http/resolver/server_list.rb:78
+msgid "Trying with next server from server_list."
 msgstr ""
 
 #: ../lib/puppet/http/retry_after_handler.rb:83
@@ -9816,31 +9820,31 @@ msgstr ""
 msgid "Caught exception %{klass}:%{error} retrying"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:71
+#: ../lib/puppet/util/selinux.rb:81
 msgid "Invalid context to parse: %{context}"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:83
+#: ../lib/puppet/util/selinux.rb:93
 msgid "Invalid SELinux parameter type"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:104
+#: ../lib/puppet/util/selinux.rb:114
 msgid "Can't set SELinux context on file unless the file already has some kind of context"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:118
+#: ../lib/puppet/util/selinux.rb:128
 msgid "set_selinux_context component must be one of :seluser, :selrole, :seltype, or :selrange"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:129
+#: ../lib/puppet/util/selinux.rb:139
 msgid "Failed to set SELinux context %{context} on %{file}"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:180
+#: ../lib/puppet/util/selinux.rb:190
 msgid "Could not open SELinux category translation file %{path}."
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:250
+#: ../lib/puppet/util/selinux.rb:276
 msgid "got a relative path in SELinux find_fs: %{path}"
 msgstr ""
 
