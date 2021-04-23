@@ -61,6 +61,20 @@ describe "the fqdn_rand function" do
     expect(fqdn_rand(5000, :extra_identifier => ['expensive job 33'])).to eql(2389)
   end
 
+  it "returns the same value if only host differs by case" do
+    val1 = fqdn_rand(1000000000, :host => "host.example.com", :extra_identifier => [nil, true])
+    val2 = fqdn_rand(1000000000, :host => "HOST.example.com", :extra_identifier => [nil, true])
+
+    expect(val1).to eql(val2)
+  end
+
+  it "returns the same value if only host differs by case and an initial seed is given" do
+    val1 = fqdn_rand(1000000000, :host => "host.example.com", :extra_identifier => ['a seed', true])
+    val2 = fqdn_rand(1000000000, :host => "HOST.example.com", :extra_identifier => ['a seed', true])
+
+    expect(val1).to eql(val2)
+  end
+
   def fqdn_rand(max, args = {})
     host = args[:host] || '127.0.0.1'
     extra = args[:extra_identifier] || []
