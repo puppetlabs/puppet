@@ -24,7 +24,7 @@ Puppet::Parser::Functions::newfunction(:fqdn_rand, :arity => -2, :type => :rvalu
     downcase = !!args.shift
 
     fqdn = self['::fqdn']
-    fqdn.downcase! if downcase
+    fqdn = fqdn.downcase if downcase
 
     # Puppet 5.4's fqdn_rand function produces a different value than earlier versions
     # for the same set of inputs.

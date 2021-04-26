@@ -80,7 +80,7 @@ describe "the fqdn_rand function" do
     extra = args[:extra_identifier] || []
 
     scope = create_test_scope_for_node('localhost')
-    allow(scope).to receive(:[]).with("::fqdn").and_return(host)
+    scope.compiler.topscope['fqdn'] = host.freeze
 
     scope.function_fqdn_rand([max] + extra)
   end
