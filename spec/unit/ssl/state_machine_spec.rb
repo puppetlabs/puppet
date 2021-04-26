@@ -31,6 +31,14 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     allow(Kernel).to receive(:sleep)
   end
 
+  def expected_digest(name, content)
+    OpenSSL::Digest.new(name).hexdigest(content)
+  end
+
+  def to_fingerprint(digest)
+    digest.scan(/../).join(':').upcase
+  end
+
   context 'when passing keyword arguments' do
     it "accepts digest" do
       expect(described_class.new(digest: 'SHA512').digest).to eq('SHA512')
@@ -395,29 +403,35 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
       it 'verifies CA cert bundle if a ca_fingerprint is given case-insensitively' do
         Puppet[:log_level] = :info
-        machine = described_class.new(digest: 'SHA256', ca_fingerprint: 'caacf69bbbcdad9dbcda92dd2da3608b639d1aea4c314d6cc6823cdb32d8e0f8')
+
+        digest = expected_digest('SHA256', cacert_pem)
+        fingerprint = to_fingerprint(digest)
+        machine = described_class.new(digest: 'SHA256', ca_fingerprint: digest.downcase)
         state = Puppet::SSL::StateMachine::NeedCACerts.new(machine)
         state.next_state
 
-        expect(@logs).to include(an_object_having_attributes(message: "Verified CA bundle with digest (SHA256) CA:AC:F6:9B:BB:CD:AD:9D:BC:DA:92:DD:2D:A3:60:8B:63:9D:1A:EA:4C:31:4D:6C:C6:82:3C:DB:32:D8:E0:F8"))
+        expect(@logs).to include(an_object_having_attributes(message: "Verified CA bundle with digest (SHA256) #{fingerprint}"))
       end
 
       it 'verifies CA cert bundle using non-default fingerprint' do
         Puppet[:log_level] = :info
-        machine = described_class.new(digest: 'SHA512', ca_fingerprint: '3c9d1482b878913ad95c9631feac5090cb05c6eab9496178d6fd5c14a023da3b1a8650a3cbaac516d9a48caf0b0742e1ed7eebf55105c024c74834a45056a9d9')
+
+        digest = expected_digest('SHA512', cacert_pem)
+        machine = described_class.new(digest: 'SHA512', ca_fingerprint: digest)
         state = Puppet::SSL::StateMachine::NeedCACerts.new(machine)
         state.next_state
 
-        expect(@logs).to include(an_object_having_attributes(message: "Verified CA bundle with digest (SHA512) 3C:9D:14:82:B8:78:91:3A:D9:5C:96:31:FE:AC:50:90:CB:05:C6:EA:B9:49:61:78:D6:FD:5C:14:A0:23:DA:3B:1A:86:50:A3:CB:AA:C5:16:D9:A4:8C:AF:0B:07:42:E1:ED:7E:EB:F5:51:05:C0:24:C7:48:34:A4:50:56:A9:D9"))
+        expect(@logs).to include(an_object_having_attributes(message: "Verified CA bundle with digest (SHA512) #{to_fingerprint(digest)}"))
       end
 
       it 'returns an error if verification fails' do
         machine = described_class.new(digest: 'SHA256', ca_fingerprint: 'wrong!')
         state = Puppet::SSL::StateMachine::NeedCACerts.new(machine)
 
+        fingerprint = to_fingerprint(expected_digest('SHA256', cacert_pem))
         st = state.next_state
         expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
-        expect(st.message).to eq("CA bundle with digest (SHA256) CA:AC:F6:9B:BB:CD:AD:9D:BC:DA:92:DD:2D:A3:60:8B:63:9D:1A:EA:4C:31:4D:6C:C6:82:3C:DB:32:D8:E0:F8 did not match expected digest WR:ON:G!")
+        expect(st.message).to eq("CA bundle with digest (SHA256) #{fingerprint} did not match expected digest WR:ON:G!")
       end
     end
   end

@@ -173,12 +173,12 @@ task(:gen_cert_fixtures) do
 
   # Create a request, but replace its public key after it's signed
   tampered_csr = ca.create_request('signed')[:csr]
-  tampered_csr.public_key = OpenSSL::PKey::RSA.new(1024).public_key
+  tampered_csr.public_key = OpenSSL::PKey::RSA.new(2048).public_key
   save(dir, 'tampered-csr.pem', tampered_csr)
 
   # Create a cert issued from the real intermediate CA, but replace its
   # public key
   tampered_cert = ca.create_cert('signed', inter[:cert], inter[:private_key])[:cert]
-  tampered_cert.public_key = OpenSSL::PKey::RSA.new(1024).public_key
+  tampered_cert.public_key = OpenSSL::PKey::RSA.new(2048).public_key
   save(dir, 'tampered-cert.pem', tampered_cert)
 end
