@@ -50,7 +50,7 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
     end
 
     # Return the first simple service status endpoint we can connect to
-    @server_list_setting.value.each do |server|
+    @server_list_setting.value.each_with_index do |server, index|
       host = server[0]
       port = server[1] || @default_port
 
@@ -60,10 +60,21 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
         @resolved_url = service.url
         return Puppet::HTTP::Service.create_service(@client, session, name, @resolved_url.host, @resolved_url.port)
       rescue Puppet::HTTP::ResponseError => detail
-        Puppet.log_exception(detail, _("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
-                             { host: service.url.host, port: service.url.port, code: detail.response.code, reason: detail.response.reason })
+        if index < @server_list_setting.value.length - 1
+          Puppet.warning(_("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
+                              { host: service.url.host, port: service.url.port, code: detail.response.code, reason: detail.response.reason } +
+                              ' ' + _("Trying with next server from server_list."))
+        else
+          Puppet.log_exception(detail, _("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
+                               { host: service.url.host, port: service.url.port, code: detail.response.code, reason: detail.response.reason })
+        end
       rescue Puppet::HTTP::HTTPError => detail
-        Puppet.log_exception(detail, _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail})
+        if index < @server_list_setting.value.length - 1
+          Puppet.warning(_("Unable to connect to server from server_list setting: %{detail}") % {detail: detail} +
+                             ' ' + _("Trying with next server from server_list."))
+        else
+          Puppet.log_exception(detail, _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail})
+        end
       end
     end
 

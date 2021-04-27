@@ -1075,6 +1075,29 @@ describe Puppet::Configurer do
       }.to raise_error(Puppet::Error, /Could not select a functional puppet server from server_list: 'myserver:123,someotherservername'/)
     end
 
+    it "should warn when servers in 'server_list' are unreachable" do
+      Puppet.settings[:server_list] = "mybadserver1:123,mybadserver2:123,mygoodserver"
+      Puppet[:usecacheonfailure] = false
+
+      stub_request(:get, 'https://mybadserver1:123/status/v1/simple/master').and_raise(Puppet::HTTP::HTTPError)
+      stub_request(:get, 'https://mybadserver2:123/status/v1/simple/master').and_raise(Puppet::HTTP::HTTPError)
+      stub_request(:get, 'https://mygoodserver:8140/status/v1/simple/master').to_return(status: 200)
+      
+      expect(Puppet).to receive(:warning).with(/^Unable to connect to server from server_list setting:.*Trying with next server from server_list.$/).twice
+      configurer.run
+    end
+
+    it "should warn when servers in 'server_list' respond with error" do
+      Puppet.settings[:server_list] = "mybadserver:123,someotherservername"
+      Puppet[:usecacheonfailure] = false
+
+      stub_request(:get, 'https://mybadserver:123/status/v1/simple/master').to_return(status: 400)
+      stub_request(:get, 'https://someotherservername:8140/status/v1/simple/master').to_return(status: 200)
+
+      expect(Puppet).to receive(:warning).with(/^Puppet server mybadserver:123 is unavailable: 400  Trying with next server from server_list.$/)
+      configurer.run
+    end
+
     it "should not error when usecacheonfailure is true and no servers in 'server_list' are reachable" do
       Puppet.settings[:server_list] = "myserver:123,someotherservername"
       Puppet[:usecacheonfailure] = true
