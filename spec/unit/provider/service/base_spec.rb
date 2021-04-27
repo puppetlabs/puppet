@@ -14,10 +14,6 @@ describe "base service provider" do
 
   subject { provider }
 
-  before(:all) do
-    `exit 0`
-  end
-
   context "basic operations" do
     subject do
       type.new(

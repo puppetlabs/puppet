@@ -12,10 +12,6 @@ describe 'Puppet::Type::Service::Provider::Launchd',
 
   subject { resource.provider }
 
-  before :all do
-    `exit 0`
-  end
-
   after :each do
     provider.instance_variable_set(:@job_list, nil)
   end
