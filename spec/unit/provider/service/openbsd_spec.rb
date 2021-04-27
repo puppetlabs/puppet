@@ -12,15 +12,6 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
     allow(FileTest).to receive(:executable?).with('/usr/sbin/rcctl').and_return(true)
   end
 
-  # `execute` and `texecute` start a new process, consequently setting $CHILD_STATUS to a Process::Status instance,
-  # but because they are mocked, an external process is never executed and $CHILD_STATUS remain nil.
-  # In order to execute some parts of the code under test and to mock $CHILD_STATUS, we need this variable to be a
-  # Process::Status instance. We can achieve this by starting a process that does nothing (exit 0). By doing this,
-  # $CHILD_STATUS will be initialised with a instance of Process::Status and we will be able to mock it.
-  before(:all) do
-    `exit 0`
-  end
-
   context "#instances" do
     it "should have an instances method" do
       expect(provider_class).to respond_to :instances

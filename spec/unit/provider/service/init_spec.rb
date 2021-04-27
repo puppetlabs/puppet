@@ -4,10 +4,6 @@ describe 'Puppet::Type::Service::Provider::Init',
          unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:init) }
 
-  before :all do
-    `exit 0`
-  end
-
   before do
     Puppet::Type.type(:service).defaultprovider = provider_class
   end

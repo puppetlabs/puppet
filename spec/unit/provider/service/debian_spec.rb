@@ -4,10 +4,6 @@ describe 'Puppet::Type::Service::Provider::Debian',
          unless: Puppet::Util::Platform.jruby? || Puppet::Util::Platform.windows? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:debian) }
 
-  before(:all) do
-    `exit 0`
-  end
-
   before(:each) do
     # Create a mock resource
     @resource = double('resource')

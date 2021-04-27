@@ -4,10 +4,6 @@ describe 'Puppet::Type::Service::Provider::Src',
          unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:src) }
 
-  before :all do
-    `exit 0`
-  end
-
   before :each do
     @resource = double('resource')
     allow(@resource).to receive(:[]).and_return(nil)

@@ -4,16 +4,6 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
   let (:resource) { Puppet::Resource.new(:package, 'dummy', :parameters => {:name => 'dummy', :ensure => :latest}) }
   let (:provider) { described_class.new(resource) }
 
-  before(:all) do
-    if Puppet::Util::Platform.windows?
-      # Get a pid for $CHILD_STATUS to latch on to
-      command = "cmd.exe /c \"exit 0\""
-      Puppet::Util::Execution.execute(command, {:failonfail => false})
-    else
-      Puppet::Util::Execution.execute('exit 0', {:failonfail => false})
-    end
-  end
-
   before :each do
     allow(described_class).to receive(:command).with(:pkg).and_return('/bin/pkg')
   end
