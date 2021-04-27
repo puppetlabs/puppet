@@ -4,10 +4,6 @@ describe 'Puppet::Type::Service::Provider::Smf',
          unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:smf) }
 
-  before(:all) do
-    `exit 0`
-  end
-
   def set_resource_params(params = {})
     params.each do |param, value|
       if value.nil?

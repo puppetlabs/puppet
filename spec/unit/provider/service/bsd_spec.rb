@@ -4,10 +4,6 @@ describe 'Puppet::Type::Service::Provider::Bsd',
          unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:bsd) }
 
-  before(:all) do
-    `exit 0`
-  end
-
   before :each do
     allow(Puppet::Type.type(:service)).to receive(:defaultprovider).and_return(provider_class)
     allow(Facter).to receive(:value).with(:operatingsystem).and_return(:netbsd)

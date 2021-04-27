@@ -7,10 +7,6 @@ describe 'Puppet::Type::Service::Provider::Upstart',
   let!(:provider_class) { Puppet::Type.type(:service).provider(:upstart) }
   let(:process_output) { Puppet::Util::Execution::ProcessOutput.new('', 0) }
 
-  before :each do
-    `exit 0`
-  end
-
   def given_contents_of(file, content)
     File.open(file, 'w') do |f|
       f.write(content)
