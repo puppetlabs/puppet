@@ -101,6 +101,7 @@ describe "base service provider" do
     end
 
     it "retrieves a PID from the process table" do
+      allow(Facter).to receive(:value).and_call_original
       allow(Facter).to receive(:value).with(:operatingsystem).and_return("CentOS")
       ps_output = File.binread(my_fixture("ps_ef.mixed_encoding")).force_encoding(Encoding::UTF_8)
 
