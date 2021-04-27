@@ -466,17 +466,7 @@ module Util
     # URI::parse and URI::Generic.build don't like paths encoded with CGI.escape
     # URI.escape does not change / to %2F and : to %3A like CGI.escape
     #
-    # URI.escape is obsolete in Ruby 2.7. Ignore this error until we're able to
-    # switch to a different escape mechanism. If this is JRuby, we can't mask
-    # the error message, because this isn't thread safe. JRuby shouldn't be
-    # using Ruby 2.7 or raising the warning anyway.
-    orig_verbose = $VERBOSE
-    $VERBOSE = nil unless Puppet::Util::Platform.jruby?
-    begin
-      encoded += URI.escape(parts[:path]) unless parts[:path].nil?
-    ensure
-      $VERBOSE = orig_verbose unless Puppet::Util::Platform.jruby?
-    end
+    encoded += rfc2396_escape(parts[:path]) unless parts[:path].nil?
 
     # each query parameter
     if !parts[:query].nil?
@@ -495,12 +485,31 @@ module Util
   end
   module_function :uri_encode
 
-  def uri_unescape(path)
-    orig_verbose = $VERBOSE
-    $VERBOSE = nil unless Puppet::Util::Platform.jruby?
-    return URI.unescape(path)
-  ensure
-    $VERBOSE = orig_verbose unless Puppet::Util::Platform.jruby?
+  # From https://github.com/ruby/ruby/blob/v2_7_3/lib/uri/rfc2396_parser.rb#L24-L46
+  ALPHA = "a-zA-Z".freeze
+  ALNUM = "#{ALPHA}\\d".freeze
+  UNRESERVED = "\\-_.!~*'()#{ALNUM}".freeze
+  RESERVED = ";/?:@&=+$,\\[\\]".freeze
+  UNSAFE = Regexp.new("[^#{UNRESERVED}#{RESERVED}]").freeze
+
+  HEX = "a-fA-F\\d".freeze
+  ESCAPED = Regexp.new("%[#{HEX}]{2}").freeze
+
+  def rfc2396_escape(str)
+    str.gsub(UNSAFE) do |match|
+      tmp = ''
+      match.each_byte do |uc|
+        tmp << sprintf('%%%02X', uc)
+      end
+      tmp
+    end.force_encoding(Encoding::US_ASCII)
+  end
+  module_function :rfc2396_escape
+
+  def uri_unescape(str)
+    enc = str.encoding
+    enc = Encoding::UTF_8 if enc == Encoding::US_ASCII
+    str.gsub(ESCAPED) { [$&[1, 2]].pack('H2').force_encoding(enc) }
   end
   module_function :uri_unescape
 
