@@ -16,6 +16,10 @@ describe 'Puppet::Type::Service::Provider::Launchd',
     `exit 0`
   end
 
+  after :each do
+    provider.instance_variable_set(:@job_list, nil)
+  end
+
   describe "the type interface" do
     %w{ start stop enabled? enable disable status}.each do |method|
       it { is_expected.to respond_to method.to_sym }
@@ -39,10 +43,6 @@ describe 'Puppet::Type::Service::Provider::Launchd',
       expect(provider).to receive(:launchctl).with(:list).and_return('com.bar.is_running')
       expect(provider).to receive(:jobsearch).and_return({'com.bar.is_running' => "/Library/LaunchDaemons/com.bar.is_running"})
       expect(provider.prefetch({}).last.status).to eq(:running)
-    end
-
-    after :each do
-      provider.instance_variable_set(:@job_list, nil)
     end
 
     describe "when hasstatus is set to false" do
