@@ -43,6 +43,7 @@ group(:test) do
   gem "rspec-its", "~> 1.1", require: false
   gem 'vcr', '~> 5.0', require: false
   gem 'webmock', '~> 3.0', require: false
+  gem 'webrick', '~> 1.7', require: false if RUBY_VERSION.to_f >= 3.0
   gem 'yard', require: false
 
   gem 'rubocop', '~> 0.49', require: false, platforms: [:ruby]
