@@ -117,6 +117,10 @@ class Puppet::SSL::Verifier
         return false
       end
 
+    when OpenSSL::X509::V_ERR_HOSTNAME_MISMATCH # new in ruby-openssl 2.2.0/ruby 3.0
+      @last_error = Puppet::SSL::CertMismatchError.new(peer_cert, @hostname)
+      return false
+
     when OpenSSL::X509::V_ERR_CRL_NOT_YET_VALID
       crl = store_context.current_crl
       if crl && crl.last_update && crl.last_update < Time.now + FIVE_MINUTES_AS_SECONDS
