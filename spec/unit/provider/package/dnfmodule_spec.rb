@@ -45,11 +45,13 @@ describe Puppet::Type.type(:package).provider(:dnfmodule) do
     before(:each) do
       expect(Puppet::Type::Package::ProviderDnfmodule).to receive(:execute)
           .with(["/usr/bin/dnf", "--version"])
-          .and_return(dnf_version).at_most(:once)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new(dnf_version, 0)).at_most(:once)
       expect(Puppet::Util::Execution).to receive(:execute)
           .with(["/usr/bin/dnf", "--version"], execute_options)
           .and_return(Puppet::Util::Execution::ProcessOutput.new(dnf_version, 0))
     end
+
+    before(:each) { described_class.instance_variable_set("@current_version", nil) }
 
     describe "with a supported dnf version" do
       it "correctly parses the version" do
@@ -68,8 +70,6 @@ describe Puppet::Type.type(:package).provider(:dnfmodule) do
           Built    : Fedora Project at Mon 19 Feb 2018 09:29:01 AM GMT
         DNF_OUTPUT
       end
-
-      before(:each) { described_class.instance_variable_set("@current_version", nil) }
 
       it "correctly parses the version" do
         expect(described_class.current_version).to eq('2.7.5')
