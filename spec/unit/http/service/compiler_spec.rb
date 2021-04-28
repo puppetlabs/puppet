@@ -286,7 +286,7 @@ describe Puppet::HTTP::Service::Compiler do
         expect(request.headers).to_not include('X-Puppet-Profiling')
       end.to_return(**catalog_response)
 
-      subject.post_catalog4(certname, payload)
+      subject.post_catalog4(certname, **payload)
     end
 
     it 'defaults the server and port based on settings' do
@@ -296,7 +296,7 @@ describe Puppet::HTTP::Service::Compiler do
       stub_request(:post, "https://compiler2.example.com:8141/puppet/v4/catalog")
         .to_return(**catalog_response)
 
-      subject.post_catalog4(certname, payload)
+      subject.post_catalog4(certname, **payload)
     end
 
     it 'includes puppet headers set via the :http_extra_headers and :profile settings' do
@@ -306,14 +306,14 @@ describe Puppet::HTTP::Service::Compiler do
       Puppet[:http_extra_headers] = 'Example-Header:real-thing,another:thing'
       Puppet[:profile] = true
 
-      subject.post_catalog4(certname, payload)
+      subject.post_catalog4(certname, **payload)
     end
 
     it 'returns a deserialized catalog' do
       stub_request(:post, uri)
         .to_return(**catalog_response)
 
-      _, cat, _ = subject.post_catalog4(certname, payload)
+      _, cat, _ = subject.post_catalog4(certname, **payload)
       expect(cat).to be_a(Puppet::Resource::Catalog)
       expect(cat.name).to eq(certname)
     end
@@ -322,7 +322,7 @@ describe Puppet::HTTP::Service::Compiler do
       stub_request(:post, uri)
         .to_return(**catalog_response)
 
-      resp, _, _ = subject.post_catalog4(certname, payload)
+      resp, _, _ = subject.post_catalog4(certname, **payload)
       expect(resp).to be_a(Puppet::HTTP::Response)
     end
 
@@ -331,7 +331,7 @@ describe Puppet::HTTP::Service::Compiler do
         .to_return(status: [500, "Server Error"])
 
       expect {
-        subject.post_catalog4(certname, payload)
+        subject.post_catalog4(certname, **payload)
       }.to raise_error do |err|
         expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
         expect(err.message).to eq('Server Error')
@@ -344,7 +344,7 @@ describe Puppet::HTTP::Service::Compiler do
         .to_return(body: "this isn't valid JSON", headers: {'Content-Type' => 'application/json'})
 
       expect {
-        subject.post_catalog4(certname, payload)
+        subject.post_catalog4(certname, **payload)
       }.to raise_error do |err|
         expect(err).to be_an_instance_of(Puppet::HTTP::SerializationError)
         expect(err.message).to match(/Failed to deserialize catalog from puppetserver response/)
@@ -356,7 +356,7 @@ describe Puppet::HTTP::Service::Compiler do
         .to_return(body: {oops: 'bad response data'}.to_json, headers: {'Content-Type' => 'application/json'})
 
       expect {
-        subject.post_catalog4(certname, payload)
+        subject.post_catalog4(certname, **payload)
       }.to raise_error do |err|
         expect(err).to be_an_instance_of(Puppet::HTTP::SerializationError)
         expect(err.message).to match(/Failed to deserialize catalog from puppetserver response/)
@@ -365,7 +365,7 @@ describe Puppet::HTTP::Service::Compiler do
 
     it 'raises ArgumentError when the `persistence` hash does not contain required keys' do
       payload[:persistence].delete(:facts)
-      expect { subject.post_catalog4(certname, payload) }.to raise_error do |err|
+      expect { subject.post_catalog4(certname, **payload) }.to raise_error do |err|
         expect(err).to be_an_instance_of(ArgumentError)
         expect(err.message).to match(/The 'persistence' hash is missing the keys: facts/)
       end
@@ -373,7 +373,7 @@ describe Puppet::HTTP::Service::Compiler do
 
     it 'raises ArgumentError when `facts` are not a Hash' do
       payload[:facts] = Puppet::Node::Facts.new(certname)
-      expect { subject.post_catalog4(certname, payload) }.to raise_error do |err|
+      expect { subject.post_catalog4(certname, **payload) }.to raise_error do |err|
         expect(err).to be_an_instance_of(ArgumentError)
         expect(err.message).to match(/Facts must be a Hash not a Puppet::Node::Facts/)
       end
