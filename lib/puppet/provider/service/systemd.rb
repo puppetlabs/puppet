@@ -45,8 +45,13 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def enabled_insync?(current)
     case cached_enabled?[:output]
     when 'static'
-      Puppet.debug("Unable to enable or disable static service #{@resource[:name]}")
-      return true
+      # masking static services is OK, but enabling/disabling them is not
+      if @resource[:enable] == :mask
+        current == @resource[:enable]
+      else
+        Puppet.debug("Unable to enable or disable static service #{@resource[:name]}")
+        return true
+      end
     when 'indirect'
       Puppet.debug("Service #{@resource[:name]} is in 'indirect' state and cannot be enabled/disabled")
       return true
