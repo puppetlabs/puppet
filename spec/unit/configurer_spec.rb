@@ -1079,10 +1079,10 @@ describe Puppet::Configurer do
       Puppet.settings[:server_list] = "mybadserver1:123,mybadserver2:123,mygoodserver"
       Puppet[:usecacheonfailure] = false
 
-      stub_request(:get, 'https://mybadserver1:123/status/v1/simple/master').and_raise(Puppet::HTTP::HTTPError)
-      stub_request(:get, 'https://mybadserver2:123/status/v1/simple/master').and_raise(Puppet::HTTP::HTTPError)
-      stub_request(:get, 'https://mygoodserver:8140/status/v1/simple/master').to_return(status: 200)
-      
+      stub_request(:get, 'https://mybadserver1:123/status/v1/simple/server').and_raise(Puppet::HTTP::HTTPError)
+      stub_request(:get, 'https://mybadserver2:123/status/v1/simple/server').and_raise(Puppet::HTTP::HTTPError)
+      stub_request(:get, 'https://mygoodserver:8140/status/v1/simple/server').to_return(status: 200)
+
       expect(Puppet).to receive(:warning).with(/^Unable to connect to server from server_list setting:.*Trying with next server from server_list.$/).twice
       configurer.run
     end
@@ -1091,8 +1091,8 @@ describe Puppet::Configurer do
       Puppet.settings[:server_list] = "mybadserver:123,someotherservername"
       Puppet[:usecacheonfailure] = false
 
-      stub_request(:get, 'https://mybadserver:123/status/v1/simple/master').to_return(status: 400)
-      stub_request(:get, 'https://someotherservername:8140/status/v1/simple/master').to_return(status: 200)
+      stub_request(:get, 'https://mybadserver:123/status/v1/simple/server').to_return(status: 400)
+      stub_request(:get, 'https://someotherservername:8140/status/v1/simple/server').to_return(status: 200)
 
       expect(Puppet).to receive(:warning).with(/^Puppet server mybadserver:123 is unavailable: 400  Trying with next server from server_list.$/)
       configurer.run
