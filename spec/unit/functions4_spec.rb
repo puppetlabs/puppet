@@ -39,6 +39,15 @@ describe 'the 4x function api' do
 
   let(:loader) { FunctionAPISpecModule::TestFunctionLoader.new }
 
+  def parse_eval(code, here)
+    if here.respond_to?(:source_location)
+      eval(code, here, here.source_location[0], here.source_location[1])
+    else
+      # this can be removed when ruby < 2.6 is dropped
+      eval(code, here)
+    end
+  end
+
   it 'allows a simple function to be created without dispatch declaration' do
     f = Puppet::Functions.create_function('min') do
       def min(x,y)
@@ -484,7 +493,7 @@ describe 'the 4x function api' do
         the_loader = loader()
         here = get_binding(the_loader)
         expect do
-          eval(<<-CODE, here)
+          parse_eval(<<-CODE, here)
             Puppet::Functions.create_function('testing::test') do
               local_types do
                 type 'MyType += Array[Integer]'
@@ -505,7 +514,7 @@ describe 'the 4x function api' do
         the_loader = loader()
         here = get_binding(the_loader)
         expect do
-          eval(<<-CODE, here)
+          parse_eval(<<-CODE, here)
             Puppet::Functions.create_function('testing::test') do
               dispatch :test do
                 param 'Array[1+=1]', :x
@@ -525,7 +534,7 @@ describe 'the 4x function api' do
       it 'uses return_type to validate returned value' do
         the_loader = loader()
         here = get_binding(the_loader)
-        fc = eval(<<-CODE, here)
+        fc = parse_eval(<<-CODE, here)
           Puppet::Functions.create_function('testing::test') do
             dispatch :test do
               param 'Integer', :x
@@ -547,7 +556,7 @@ describe 'the 4x function api' do
         the_loader = loader()
         the_loader.add_type('myalias', type_alias_t('MyAlias', 'Integer'))
         here = get_binding(the_loader)
-        fc = eval(<<-CODE, here)
+        fc = parse_eval(<<-CODE, here)
           Puppet::Functions.create_function('testing::test') do
             dispatch :test do
               param 'MyAlias', :x
@@ -567,7 +576,7 @@ describe 'the 4x function api' do
       it 'reports a reference to an unresolved type' do
         the_loader = loader()
         here = get_binding(the_loader)
-        fc = eval(<<-CODE, here)
+        fc = parse_eval(<<-CODE, here)
           Puppet::Functions.create_function('testing::test') do
             dispatch :test do
               param 'MyAlias', :x
@@ -586,7 +595,7 @@ describe 'the 4x function api' do
       it 'create local Type aliases' do
         the_loader = loader()
         here = get_binding(the_loader)
-        fc = eval(<<-CODE, here)
+        fc = parse_eval(<<-CODE, here)
           Puppet::Functions.create_function('testing::test') do
             local_types do
               type 'MyType = Array[Integer]'
@@ -608,7 +617,7 @@ describe 'the 4x function api' do
       it 'create nested local Type aliases' do
         the_loader = loader()
         here = get_binding(the_loader)
-        fc = eval(<<-CODE, here)
+        fc = parse_eval(<<-CODE, here)
           Puppet::Functions.create_function('testing::test') do
             local_types do
               type 'InnerType = Array[Integer]'
@@ -631,7 +640,7 @@ describe 'the 4x function api' do
       it 'create self referencing local Type aliases' do
         the_loader = loader()
         here = get_binding(the_loader)
-        fc = eval(<<-CODE, here)
+        fc = parse_eval(<<-CODE, here)
           Puppet::Functions.create_function('testing::test') do
             local_types do
               type 'Tree = Hash[String,Variant[String,Tree]]'
