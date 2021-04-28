@@ -34,16 +34,14 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
   end
 
   def enabled?
-    # TODO: Replace system call when Puppet::Util::Execution.execute gives us a way
-    # to determine exit status.  https://projects.puppetlabs.com/issues/2538
-    system("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start")
+    status = execute("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start")
 
     # 104 is the exit status when you query start an enabled service.
     # 106 is the exit status when the policy layer supplies a fallback action
     # See x-man-page://invoke-rc.d
-    if [104, 106].include?($CHILD_STATUS.exitstatus)
+    if [104, 106].include?(status.exitstatus)
       return :true
-    elsif [101, 105].include?($CHILD_STATUS.exitstatus)
+    elsif [101, 105].include?(status.exitstatus)
       # 101 is action not allowed, which means we have to do the check manually.
       # 105 is unknown, which generally means the initscript does not support query
       # The debian policy states that the initscript should support methods of query

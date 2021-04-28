@@ -119,10 +119,10 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   # whether it is enabled or not. See PUP-5016 for more details.
   #
   def debian_enabled?
-    system("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start")
-    if [104, 106].include?($CHILD_STATUS.exitstatus)
+    status = execute("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start")
+    if [104, 106].include?(status.exitstatus)
       return :true
-    elsif [101, 105].include?($CHILD_STATUS.exitstatus)
+    elsif [101, 105].include?(status.exitstatus)
       # 101 is action not allowed, which means we have to do the check manually.
       # 105 is unknown, which generally means the initscript does not support query
       # The debian policy states that the initscript should support methods of query
