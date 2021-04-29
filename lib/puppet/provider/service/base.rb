@@ -71,7 +71,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
       status = service_command(:status, false)
 
       # Explicitly calling exitstatus to facilitate testing
-      if $CHILD_STATUS.exitstatus == 0
+      if status.exitstatus == 0
         return :running
       else
         return :stopped

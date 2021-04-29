@@ -65,7 +65,9 @@ describe 'Puppet::Type::Service::Provider::Redhat',
     it "should call service status when initialized from provider" do
       allow(@resource).to receive(:[]).with(:status).and_return(nil)
       allow(@provider).to receive(:get).with(:hasstatus).and_return(true)
-      expect(@provider).to receive(:execute).with(['/sbin/service', 'myservice', 'status'], any_args)
+      expect(@provider).to receive(:execute)
+        .with(['/sbin/service', 'myservice', 'status'], any_args)
+        .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
       @provider.send(:status)
     end
   end
@@ -127,13 +129,17 @@ describe 'Puppet::Type::Service::Provider::Redhat',
     describe "when running #{method}" do
       it "should use any provided explicit command" do
         allow(@resource).to receive(:[]).with(method).and_return("/user/specified/command")
-        expect(@provider).to receive(:execute).with(["/user/specified/command"], any_args)
+        expect(@provider).to receive(:execute)
+          .with(["/user/specified/command"], any_args)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
         @provider.send(method)
       end
 
       it "should execute the service script with #{method} when no explicit command is provided" do
         allow(@resource).to receive(:[]).with("has#{method}".intern).and_return(:true)
-        expect(@provider).to receive(:execute).with(['/sbin/service', 'myservice', method.to_s], any_args)
+        expect(@provider).to receive(:execute)
+          .with(['/sbin/service', 'myservice', method.to_s], any_args)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
         @provider.send(method)
       end
     end
@@ -146,20 +152,24 @@ describe 'Puppet::Type::Service::Provider::Redhat',
       end
 
       it "should execute the service script with fail_on_failure false" do
-        expect(@provider).to receive(:execute).with(['/sbin/service', 'myservice', 'status'], any_args)
+        expect(@provider).to receive(:execute)
+          .with(['/sbin/service', 'myservice', 'status'], any_args)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
         @provider.status
       end
 
       it "should consider the process running if the command returns 0" do
-        expect(@provider).to receive(:execute).with(['/sbin/service', 'myservice', 'status'], hash_including(failonfail: false))
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+        expect(@provider).to receive(:execute)
+          .with(['/sbin/service', 'myservice', 'status'], hash_including(failonfail: false))
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
         expect(@provider.status).to eq(:running)
       end
 
       [-10,-1,1,10].each { |ec|
         it "should consider the process stopped if the command returns something non-0" do
-          expect(@provider).to receive(:execute).with(['/sbin/service', 'myservice', 'status'], hash_including(failonfail: false))
-          allow($CHILD_STATUS).to receive(:exitstatus).and_return(ec)
+          expect(@provider).to receive(:execute)
+            .with(['/sbin/service', 'myservice', 'status'], hash_including(failonfail: false))
+            .and_return(Puppet::Util::Execution::ProcessOutput.new('', ec))
           expect(@provider.status).to eq(:stopped)
         end
       }
