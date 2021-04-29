@@ -119,15 +119,13 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
   context "#enabled?" do
     it "should return :true if the service is enabled" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      allow(provider_class).to receive(:rcctl).with(:get, 'sshd', :status)
       expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', 'get', 'sshd', 'status'], :failonfail => false, :combine => false, :squelch => false).and_return(double(:exitstatus => 0))
       expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :false if the service is disabled" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      allow(provider_class).to receive(:rcctl).with(:get, 'sshd', :status).and_return('NO')
-      expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', 'get', 'sshd', 'status'], :failonfail => false, :combine => false, :squelch => false).and_return(double(:exitstatus => 1))
+      expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', 'get', 'sshd', 'status'], :failonfail => false, :combine => false, :squelch => false).and_return(Puppet::Util::Execution::ProcessOutput.new('NO', 1))
       expect(provider.enabled?).to eq(:false)
     end
   end
@@ -135,15 +133,12 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
   context "#enable" do
     it "should run rcctl enable to enable the service" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      allow(provider_class).to receive(:rcctl).with(:enable, 'sshd').and_return('')
       expect(provider).to receive(:rcctl).with(:enable, 'sshd')
       provider.enable
     end
 
     it "should run rcctl enable with flags if provided" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :flags => '-6'))
-      allow(provider_class).to receive(:rcctl).with(:enable, 'sshd').and_return('')
-      allow(provider_class).to receive(:rcctl).with(:set, 'sshd', :flags, '-6').and_return('')
       expect(provider).to receive(:rcctl).with(:enable, 'sshd')
       expect(provider).to receive(:rcctl).with(:set, 'sshd', :flags, '-6')
       provider.enable
@@ -153,7 +148,6 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
   context "#disable" do
     it "should run rcctl disable to disable the service" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      allow(provider_class).to receive(:rcctl).with(:disable, 'sshd').and_return('')
       expect(provider).to receive(:rcctl).with(:disable, 'sshd')
       provider.disable
     end
@@ -162,21 +156,18 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
   context "#running?" do
     it "should run rcctl check to check the service" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      allow(provider_class).to receive(:rcctl).with(:check, 'sshd').and_return('sshd(ok)')
       expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', 'check', 'sshd'], :failonfail => false, :combine => false, :squelch => false).and_return('sshd(ok)')
       expect(provider.running?).to be_truthy
     end
 
     it "should return true if the service is running" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      allow(provider_class).to receive(:rcctl).with(:check, 'sshd').and_return('sshd(ok)')
       expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', 'check', 'sshd'], :failonfail => false, :combine => false, :squelch => false).and_return('sshd(ok)')
       expect(provider.running?).to be_truthy
     end
 
     it "should return nil if the service is not running" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      allow(provider_class).to receive(:rcctl).with(:check, 'sshd').and_return('sshd(failed)')
       expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', 'check', 'sshd'], :failonfail => false, :combine => false, :squelch => false).and_return('sshd(failed)')
       expect(provider.running?).to be_nil
     end
@@ -185,21 +176,18 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
   context "#flags" do
     it "should return flags when set" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :flags => '-6'))
-      allow(provider_class).to receive(:rcctl).with('get', 'sshd', 'flags').and_return('-6')
       expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', 'get', 'sshd', 'flags'], :failonfail => false, :combine => false, :squelch => false).and_return('-6')
       provider.flags
     end
 
     it "should return empty flags" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      allow(provider_class).to receive(:rcctl).with('get', 'sshd', 'flags').and_return('')
       expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', 'get', 'sshd', 'flags'], :failonfail => false, :combine => false, :squelch => false).and_return('')
       provider.flags
     end
 
     it "should return flags for special services" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'pf'))
-      allow(provider_class).to receive(:rcctl).with('get', 'pf', 'flags').and_return('YES')
       expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', 'get', 'pf', 'flags'], :failonfail => false, :combine => false, :squelch => false).and_return('YES')
       provider.flags
     end
@@ -208,8 +196,9 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
   context "#flags=" do
     it "should run rcctl to set flags", unless: Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      allow(provider_class).to receive(:rcctl).with(:set, 'sshd', :flags, '-4').and_return('')
+      expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', 'get', 'sshd', 'flags'], any_args).and_return('')
       expect(provider).to receive(:rcctl).with(:set, 'sshd', :flags, '-4')
+      expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', 'check', 'sshd'], any_args).and_return('')
       provider.flags = '-4'
     end
   end
