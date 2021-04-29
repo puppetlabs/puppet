@@ -52,14 +52,14 @@ describe 'Puppet::Type::Service::Provider::Launchd',
 
       it "should use the user-provided status command if present and return running if true" do
         resource[:status] = '/bin/true'
-        expect(subject).to receive(:texecute).with(:status, ["/bin/true"], false).and_return(0)
+        expect(subject).to receive(:execute).with(["/bin/true"], hash_including(failonfail: false)).and_return("")
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         expect(subject.status).to eq(:running)
       end
 
       it "should use the user-provided status command if present and return stopped if false" do
         resource[:status] = '/bin/false'
-        expect(subject).to receive(:texecute).with(:status, ["/bin/false"], false).and_return(nil)
+        expect(subject).to receive(:execute).with(["/bin/false"], hash_including(failonfail: false)).and_return("")
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(1)
         expect(subject.status).to eq(:stopped)
       end
@@ -130,7 +130,7 @@ describe 'Puppet::Type::Service::Provider::Launchd',
 
     it "should call any explicit 'start' command" do
       resource[:start] = "/bin/false"
-      expect(subject).to receive(:texecute).with(:start, ["/bin/false"], true)
+      expect(subject).to receive(:execute).with(["/bin/false"], hash_including(failonfail: true))
       subject.start
     end
 
@@ -184,7 +184,7 @@ describe 'Puppet::Type::Service::Provider::Launchd',
   describe "when stopping the service" do
     it "should call any explicit 'stop' command" do
       resource[:stop] = "/bin/false"
-      expect(subject).to receive(:texecute).with(:stop, ["/bin/false"], true)
+      expect(subject).to receive(:execute).with(["/bin/false"], hash_including(failonfail: true))
       subject.stop
     end
 

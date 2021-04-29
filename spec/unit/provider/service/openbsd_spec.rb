@@ -43,7 +43,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
 
     it "should start the service otherwise" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      expect(provider).to receive(:texecute).with(:start, ['/usr/sbin/rcctl', '-f', :start, 'sshd'], true)
+      expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', '-f', :start, 'sshd'], hash_including(failonfail: true))
       provider.start
     end
   end
@@ -57,7 +57,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
 
     it "should stop the service otherwise" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      expect(provider).to receive(:texecute).with(:stop, ['/usr/sbin/rcctl', :stop, 'sshd'], true)
+      expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', :stop, 'sshd'], hash_including(failonfail: true))
       provider.stop
     end
   end
@@ -97,15 +97,15 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
 
     it "should restart the service with rcctl restart if hasrestart is true" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasrestart => true))
-      expect(provider).to receive(:texecute).with(:restart, ['/usr/sbin/rcctl', '-f', :restart, 'sshd'], true)
+      expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', '-f', :restart, 'sshd'], hash_including(failonfail: true))
       provider.restart
     end
 
     it "should restart the service with rcctl stop/start if hasrestart is false" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasrestart => false))
-      expect(provider).not_to receive(:texecute).with(:restart, ['/usr/sbin/rcctl', '-f', :restart, 'sshd'], true)
-      expect(provider).to receive(:texecute).with(:stop, ['/usr/sbin/rcctl', :stop, 'sshd'], true)
-      expect(provider).to receive(:texecute).with(:start, ['/usr/sbin/rcctl', '-f', :start, 'sshd'], true)
+      expect(provider).not_to receive(:execute).with(['/usr/sbin/rcctl', '-f', :restart, 'sshd'], any_args)
+      expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', :stop, 'sshd'], hash_including(failonfail: true))
+      expect(provider).to receive(:execute).with(['/usr/sbin/rcctl', '-f', :start, 'sshd'], hash_including(failonfail: true))
       provider.restart
     end
   end
