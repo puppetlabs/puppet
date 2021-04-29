@@ -81,30 +81,6 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   # @resource[:name].
   #
   # If the service does not exist or we fail to get any FMRIs from svcs,
-  # this method will raise a Puppet::ExecutionFailure
-  def service_fmri
-    return @fmri if @fmri
-
-    # `svcs -l` is better to use because we can detect service instances
-    # that have not yet been activated or enabled (i.e. it lets us detect
-    # services that svcadm has not yet touched). `svcs -H -o fmri` is a bit
-    # more limited.
-    lines = svcs("-l", @resource[:name]).chomp.lines.to_a
-    lines.select! { |line| line =~ /^fmri/ }
-    fmris = lines.map! { |line| line.split(' ')[-1].chomp }
-    unless fmris.length == 1
-      raise Puppet::Error.new(
-        "Failed to get #{@resource[:name]}'s FMRI: The pattern '#{@resource[:name]}' matches multiple FMRIs! These are the FMRIs it matches: #{fmris.join(', ')}"
-      )
-    end
-
-    @fmri = fmris.first
-  end
-
-  # Returns the service's FMRI. We fail if multiple FMRIs correspond to
-  # @resource[:name].
-  #
-  # If the service does not exist or we fail to get any FMRIs from svcs,
   # this method will raise a Puppet::Error
   def service_fmri
     return @fmri if @fmri
