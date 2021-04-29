@@ -170,7 +170,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     (@resource[:hasrestart] == :true) && [initscript, :restart]
   end
 
-  def texecute(type, command, fof = true, squelch = false, combine = true)
+  def service_execute(type, command, fof = true, squelch = false, combine = true)
     if type == :start && Facter.value(:osfamily) == "Solaris"
         command =  ["/usr/bin/ctrun -l child", command].flatten.join(" ")
     end
