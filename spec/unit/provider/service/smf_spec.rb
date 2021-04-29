@@ -4,6 +4,10 @@ describe 'Puppet::Type::Service::Provider::Smf',
          unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:smf) }
 
+  before(:all) do
+    `exit 0`
+  end
+
   def set_resource_params(params = {})
     params.each do |param, value|
       if value.nil?
@@ -255,12 +259,12 @@ describe 'Puppet::Type::Service::Provider::Smf',
 
     before(:each) do
       allow(@provider).to receive(:service_fmri).and_return(fmri)
-      allow(@provider).to receive(:texecute)
+      allow(@provider).to receive(:execute)
       allow(@provider).to receive(:wait)
     end
 
     it 'should restart the service' do
-      expect(@provider).to receive(:texecute)
+      expect(@provider).to receive(:execute)
       @provider.restart
     end
 
@@ -286,9 +290,8 @@ describe 'Puppet::Type::Service::Provider::Smf',
 
     it "should run the status command if it's passed in" do
       set_resource_params({ :status => 'status_cmd' })
-      expect(@provider).to receive(:ucommand).with(:status, false) do |_, _|
-        expect($CHILD_STATUS).to receive(:exitstatus).and_return(0)
-      end
+      expect(@provider).to receive(:execute).with(["status_cmd"], hash_including(failonfail: false))
+      expect($CHILD_STATUS).to receive(:exitstatus).and_return(0)
       expect(@provider).not_to receive(:service_states)
 
       expect(@provider.status).to eql(:running)

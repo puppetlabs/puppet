@@ -146,19 +146,19 @@ describe 'Puppet::Type::Service::Provider::Redhat',
       end
 
       it "should execute the service script with fail_on_failure false" do
-        expect(@provider).to receive(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
+        expect(@provider).to receive(:execute).with(['/sbin/service', 'myservice', 'status'], any_args)
         @provider.status
       end
 
       it "should consider the process running if the command returns 0" do
-        expect(@provider).to receive(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
+        expect(@provider).to receive(:execute).with(['/sbin/service', 'myservice', 'status'], hash_including(failonfail: false))
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         expect(@provider.status).to eq(:running)
       end
 
       [-10,-1,1,10].each { |ec|
         it "should consider the process stopped if the command returns something non-0" do
-          expect(@provider).to receive(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
+          expect(@provider).to receive(:execute).with(['/sbin/service', 'myservice', 'status'], hash_including(failonfail: false))
           allow($CHILD_STATUS).to receive(:exitstatus).and_return(ec)
           expect(@provider.status).to eq(:stopped)
         end
@@ -180,8 +180,8 @@ describe 'Puppet::Type::Service::Provider::Redhat',
 
   context "when restarting and hasrestart is not :true" do
     it "should stop and restart the process with the server script" do
-      expect(@provider).to receive(:texecute).with(:stop,  ['/sbin/service', 'myservice', 'stop'],  true)
-      expect(@provider).to receive(:texecute).with(:start, ['/sbin/service', 'myservice', 'start'], true)
+      expect(@provider).to receive(:execute).with(['/sbin/service', 'myservice', 'stop'], hash_including(failonfail: true))
+      expect(@provider).to receive(:execute).with(['/sbin/service', 'myservice', 'start'], hash_including(failonfail: true))
       @provider.restart
     end
   end

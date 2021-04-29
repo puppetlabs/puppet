@@ -231,20 +231,20 @@ describe 'Puppet::Type::Service::Provider::Init',
         end
 
         it "should execute the command" do
-          expect(provider).to receive(:texecute).with(:status, ['/service/path/myservice', :status], false).and_return("")
+          expect(provider).to receive(:execute).with(['/service/path/myservice', :status], hash_including(failonfail: false)).and_return("")
           allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
           provider.status
         end
 
         it "should consider the process running if the command returns 0" do
-          expect(provider).to receive(:texecute).with(:status, ['/service/path/myservice', :status], false).and_return("")
+          expect(provider).to receive(:execute).with(['/service/path/myservice', :status], hash_including(failonfail: false)).and_return("")
           allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
           expect(provider.status).to eq(:running)
         end
 
         [-10,-1,1,10].each { |ec|
           it "should consider the process stopped if the command returns something non-0" do
-            expect(provider).to receive(:texecute).with(:status, ['/service/path/myservice', :status], false).and_return("")
+            expect(provider).to receive(:execute).with(['/service/path/myservice', :status], hash_including(failonfail: false)).and_return("")
             allow($CHILD_STATUS).to receive(:exitstatus).and_return(ec)
             expect(provider.status).to eq(:stopped)
           end
@@ -274,8 +274,8 @@ describe 'Puppet::Type::Service::Provider::Init',
       end
 
       it "should stop and restart the process" do
-        expect(provider).to receive(:texecute).with(:stop,  ['/service/path/myservice', :stop ], true).and_return("")
-        expect(provider).to receive(:texecute).with(:start, ['/service/path/myservice', :start], true).and_return("")
+        expect(provider).to receive(:execute).with(['/service/path/myservice', :stop], hash_including(failonfail: true)).and_return("")
+        expect(provider).to receive(:execute).with(['/service/path/myservice', :start], hash_including(failonfail: true)).and_return("")
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         provider.restart
       end
