@@ -387,8 +387,6 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
         expect(provider).to receive(:execute)
           .with(['/bin/systemctl','is-active', '--', 'sshd.service'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
           .and_return(Puppet::Util::Execution::ProcessOutput.new("inactive\n", ec))
-        # Base#status still uses CHILD_STATUS
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(ec)
         expect(provider.status).to eq(:stopped)
       end
     }
