@@ -22,6 +22,7 @@ jobs:
           - {os: windows-2016, ruby: 2.6}
           - {os: windows-2016, ruby: 2.7}
           - {os: windows-2016, ruby: 3.0}
+      fail-fast: false
 
     runs-on: ${{ matrix.cfg.os }}
     steps:
