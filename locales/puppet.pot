@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.22.1-24-gcd615a0abb\n"
+"Project-Id-Version: Puppet automation framework 6.22.1-32-gecb85e4f65\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-04-23 17:03+0000\n"
-"PO-Revision-Date: 2021-04-23 17:03+0000\n"
+"POT-Creation-Date: 2021-04-29 23:48+0000\n"
+"PO-Revision-Date: 2021-04-29 23:48+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -1750,21 +1750,29 @@ msgstr ""
 msgid "Fileset paths must be fully qualified: %{path}"
 msgstr ""
 
-#: ../lib/puppet/file_serving/fileset.rb:50
+#: ../lib/puppet/file_serving/fileset.rb:51
 msgid "Fileset paths must exist"
 msgstr ""
 
 #. TRANSLATORS "recurse" and "recurselimit" are parameter names and should not be translated
-#: ../lib/puppet/file_serving/fileset.rb:52
+#: ../lib/puppet/file_serving/fileset.rb:53
 msgid "Fileset recurse parameter must not be a number anymore, please use recurselimit"
 msgstr ""
 
+#: ../lib/puppet/file_serving/fileset.rb:65
+msgid "The directory '%{path}' contains %{entries} entries, which exceeds the limit of %{max_files} specified by the max_files parameter for this resource. The limit may be increased, but be aware that large number of file resources can result in excessive resource consumption and degraded performance. Consider using an alternate method to manage large directory trees"
+msgstr ""
+
+#: ../lib/puppet/file_serving/fileset.rb:67
+msgid "The directory '%{path}' contains %{entries} entries, which exceeds the default soft limit %{max_files} and may cause excessive resource consumption and degraded performance. To remove this warning set a value for `max_files` parameter or consider using an alternate method to manage large directory trees"
+msgstr ""
+
 #. TRANSLATORS ":links" is a parameter name and should not be translated
-#: ../lib/puppet/file_serving/fileset.rb:80
+#: ../lib/puppet/file_serving/fileset.rb:88
 msgid "Invalid :links value '%{links}'"
 msgstr ""
 
-#: ../lib/puppet/file_serving/fileset.rb:93
+#: ../lib/puppet/file_serving/fileset.rb:101
 msgid "Invalid option '%{option}'"
 msgstr ""
 
@@ -2414,87 +2422,87 @@ msgstr ""
 msgid "Inlining file metadata"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:259
+#: ../lib/puppet/indirector/catalog/compiler.rb:260
 msgid "Could not get metadata for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:280
+#: ../lib/puppet/indirector/catalog/compiler.rb:281
 msgid "Unable to find a common checksum type between agent '%{agent_type}' and master '%{master_type}'."
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:287
+#: ../lib/puppet/indirector/catalog/compiler.rb:288
 msgid "Compiled static catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:288
+#: ../lib/puppet/indirector/catalog/compiler.rb:289
 msgid "Compiled static catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:290
+#: ../lib/puppet/indirector/catalog/compiler.rb:291
 msgid "Compiled static catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:291
+#: ../lib/puppet/indirector/catalog/compiler.rb:292
 msgid "Compiled static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:296
+#: ../lib/puppet/indirector/catalog/compiler.rb:297
 msgid "Compiled catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:297
+#: ../lib/puppet/indirector/catalog/compiler.rb:298
 msgid "Compiled catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:299
+#: ../lib/puppet/indirector/catalog/compiler.rb:300
 msgid "Compiled catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:300
+#: ../lib/puppet/indirector/catalog/compiler.rb:301
 msgid "Compiled catalog for %{node}"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:322
+#: ../lib/puppet/indirector/catalog/compiler.rb:323
 msgid "Inlined resource metadata into static catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:324
+#: ../lib/puppet/indirector/catalog/compiler.rb:325
 msgid "Inlined resource metadata into static catalog for %{node} in environment %{environment}"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:327
+#: ../lib/puppet/indirector/catalog/compiler.rb:328
 msgid "Inlined resource metadata into static catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:329
+#: ../lib/puppet/indirector/catalog/compiler.rb:330
 msgid "Inlined resource metadata into static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:346
+#: ../lib/puppet/indirector/catalog/compiler.rb:347
 msgid "Found node information"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:354
+#: ../lib/puppet/indirector/catalog/compiler.rb:355
 msgid "Failed when searching for node %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:374
+#: ../lib/puppet/indirector/catalog/compiler.rb:375
 msgid "Invalid option use_node for a remote request"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:393
+#: ../lib/puppet/indirector/catalog/compiler.rb:394
 msgid "Could not find node '%{name}'; cannot compile"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:426
+#: ../lib/puppet/indirector/catalog/compiler.rb:427
 msgid "Could not retrieve fact servername"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:435
+#: ../lib/puppet/indirector/catalog/compiler.rb:436
 msgid "Could not retrieve either serverip or serverip6 fact"
 msgstr ""
 
@@ -3055,8 +3063,8 @@ msgstr ""
 msgid "Option %{option} conflicts with existing option %{conflict} on %{face}"
 msgstr ""
 
-#. TRANSLATORS 'Puppet.settings' should not be translated
 #. TRANSLATORS 'Puppet.settings' references to the Puppet settings options and should not be translated
+#. TRANSLATORS 'Puppet.settings' should not be translated
 #: ../lib/puppet/interface/action.rb:315 ../lib/puppet/interface/option_manager.rb:14
 msgid "Global option %{option} does not exist in Puppet.settings"
 msgstr ""
@@ -8723,74 +8731,74 @@ msgstr ""
 msgid "Invalid recurselimit value %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:418
+#: ../lib/puppet/type/file.rb:434
 msgid "You cannot specify more than one of %{creators}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:420
+#: ../lib/puppet/type/file.rb:436
 msgid "You cannot specify a remote recursion without a source"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:422
+#: ../lib/puppet/type/file.rb:438
 msgid "You cannot specify source when using checksum 'none'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:425
+#: ../lib/puppet/type/file.rb:441
 msgid "You cannot specify content when using checksum '%{checksum_type}'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:428
+#: ../lib/puppet/type/file.rb:444
 msgid "Possible error: recurselimit is set but not recurse, no recursion will happen"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:436
+#: ../lib/puppet/type/file.rb:452
 msgid "Checksum value '%{value}' is not a valid checksum type %{checksum}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:439
+#: ../lib/puppet/type/file.rb:455
 msgid "Checksum value is ignored unless content or source are specified"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:477
+#: ../lib/puppet/type/file.rb:493
 msgid "Can not find filebucket for backups without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:482
+#: ../lib/puppet/type/file.rb:498
 msgid "Could not find filebucket %{backup} specified in backup"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:780
+#: ../lib/puppet/type/file.rb:797
 msgid "Could not back up file of type %{current_type}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:795
+#: ../lib/puppet/type/file.rb:812
 msgid "Could not remove files of type %{current_type}"
 msgstr ""
 
 #. TRANSLATORS "source_permissions => ignore" should not be translated
-#: ../lib/puppet/type/file.rb:806
+#: ../lib/puppet/type/file.rb:823
 msgid "Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore."
 msgstr ""
 
 #. TRANSLATORS "stat" is a program name and should not be translated
-#: ../lib/puppet/type/file.rb:887 ../lib/puppet/type/tidy.rb:352
+#: ../lib/puppet/type/file.rb:904 ../lib/puppet/type/tidy.rb:371
 msgid "Could not stat; permission denied"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:890
+#: ../lib/puppet/type/file.rb:907
 msgid "Could not stat; invalid pathname"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:1018
+#: ../lib/puppet/type/file.rb:1035
 msgid "Not removing directory; use 'force' to override"
 msgstr ""
 
 #. TRANSLATORS refers to a file which could not be backed up
-#: ../lib/puppet/type/file.rb:1043
+#: ../lib/puppet/type/file.rb:1060
 msgid "Could not back up; will not remove"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:1058
+#: ../lib/puppet/type/file.rb:1075
 msgid "File written to disk did not match desired checksum; discarding changes (%{content_checksum} vs %{desired_checksum})"
 msgstr ""
 
@@ -8956,34 +8964,34 @@ msgstr ""
 msgid "\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer"
 msgstr ""
 
-#: ../lib/puppet/type/tidy.rb:85
+#: ../lib/puppet/type/tidy.rb:101
 msgid "Tidy can't use matches with recurse 0, false, or undef"
 msgstr ""
 
-#: ../lib/puppet/type/tidy.rb:125
+#: ../lib/puppet/type/tidy.rb:141
 msgid "Invalid age unit '%{unit}'"
 msgstr ""
 
 #. TRANSLATORS tidy is the name of a program and should not be translated
-#: ../lib/puppet/type/tidy.rb:145
+#: ../lib/puppet/type/tidy.rb:161
 msgid "Invalid tidy age %{age}"
 msgstr ""
 
-#: ../lib/puppet/type/tidy.rb:167
+#: ../lib/puppet/type/tidy.rb:183
 msgid "Invalid size unit '%{unit}'"
 msgstr ""
 
 #. TRANSLATORS tidy is the name of a program and should not be translated
-#: ../lib/puppet/type/tidy.rb:185
+#: ../lib/puppet/type/tidy.rb:201
 msgid "Invalid tidy size %{age}"
 msgstr ""
 
 #. TRANSLATORS "Tidy" is a program name and should not be translated
-#: ../lib/puppet/type/tidy.rb:275
+#: ../lib/puppet/type/tidy.rb:294
 msgid "Tidying %{count} files"
 msgstr ""
 
-#: ../lib/puppet/type/tidy.rb:348
+#: ../lib/puppet/type/tidy.rb:367
 msgid "File does not exist"
 msgstr ""
 
