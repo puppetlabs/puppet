@@ -128,7 +128,6 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
       if resource[:manifest]
         Puppet.notice "Configuring #{resource[:name]}"
         command = [ resource[:manifest], resource[:name] ]
-        #texecute("setupservice", command)
         system("#{command}")
       end
   rescue Puppet::ExecutionFailure => detail
