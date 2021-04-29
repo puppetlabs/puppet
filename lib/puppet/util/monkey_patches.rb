@@ -3,6 +3,10 @@ require 'puppet/util/platform'
 module Puppet::Util::MonkeyPatches
 end
 
+require 'sorted_set'
+# https://bugs.ruby-lang.org/issues/17841
+SortedSet.setup if SortedSet.respond_to?(:setup)
+
 begin
   Process.maxgroups = 1024
 rescue NotImplementedError
