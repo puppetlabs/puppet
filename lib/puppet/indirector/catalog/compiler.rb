@@ -194,6 +194,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
           :source_permissions => resource[:source_permissions] ? resource[:source_permissions].to_sym : :ignore,
           :recurse            => true,
           :recurselimit       => resource[:recurselimit],
+          :max_files          => resource[:max_files],
           :ignore             => resource[:ignore],
         }
 

@@ -220,6 +220,22 @@ Puppet::Type.newtype(:file) do
     end
   end
 
+  newparam(:max_files) do
+    desc "In case the resource is a directory and the recursion is enabled, puppet will
+      generate a new resource for each file file found, possible leading to
+      an excessive number of resources generated without any control.
+
+      Setting `max_files` will check the number of file resources that
+      will eventually be created and will raise a resource argument error if the
+      limit will be exceeded.
+
+      Use value `0` to disable the check. In this case, a warning is logged if
+      the number of files exceeds 1000."
+
+    defaultto 0
+    newvalues(/^[0-9]+$/)
+  end
+
   newparam(:replace, :boolean => true, :parent => Puppet::Parameter::Boolean) do
     desc "Whether to replace a file or symlink that already exists on the local system but
       whose content doesn't match what the `source` or `content` attribute
@@ -576,7 +592,7 @@ Puppet::Type.newtype(:file) do
     options = @original_parameters.merge(:path => full_path).reject { |param, value| value.nil? }
 
     # These should never be passed to our children.
-    [:parent, :ensure, :recurse, :recurselimit, :target, :alias, :source].each do |param|
+    [:parent, :ensure, :recurse, :recurselimit, :max_files, :target, :alias, :source].each do |param|
       options.delete(param) if options.include?(param)
     end
 
@@ -753,6 +769,7 @@ Puppet::Type.newtype(:file) do
       :links => self[:links],
       :recurse => (self[:recurse] == :remote ? true : self[:recurse]),
       :recurselimit => self[:recurselimit],
+      :max_files => self[:max_files],
       :source_permissions => self[:source_permissions],
       :ignore => self[:ignore],
       :checksum_type => (self[:source] || self[:content]) ? self[:checksum] : :none,
