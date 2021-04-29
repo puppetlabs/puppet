@@ -53,8 +53,8 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
   end
 
   def enabled?
-    execute([command(:lsitab), @resource[:name]], {:failonfail => false, :combine => true})
-    $CHILD_STATUS.exitstatus == 0 ? :true : :false
+    output = execute([command(:lsitab), @resource[:name]], {:failonfail => false, :combine => true})
+    output.exitstatus == 0 ? :true : :false
   end
 
   def enable

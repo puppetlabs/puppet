@@ -52,15 +52,17 @@ describe 'Puppet::Type::Service::Provider::Launchd',
 
       it "should use the user-provided status command if present and return running if true" do
         resource[:status] = '/bin/true'
-        expect(subject).to receive(:execute).with(["/bin/true"], hash_including(failonfail: false)).and_return("")
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+        expect(subject).to receive(:execute)
+          .with(["/bin/true"], hash_including(failonfail: false))
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
         expect(subject.status).to eq(:running)
       end
 
       it "should use the user-provided status command if present and return stopped if false" do
         resource[:status] = '/bin/false'
-        expect(subject).to receive(:execute).with(["/bin/false"], hash_including(failonfail: false)).and_return("")
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(1)
+        expect(subject).to receive(:execute)
+          .with(["/bin/false"], hash_including(failonfail: false))
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 1))
         expect(subject.status).to eq(:stopped)
       end
 

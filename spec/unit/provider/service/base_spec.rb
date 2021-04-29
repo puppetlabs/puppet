@@ -35,16 +35,19 @@ describe "base service provider" do
         expect(options[:failonfail]).to eq(true)
         raise(Puppet::ExecutionFailure, 'failed to start') if @running
         @running = true
-        return 'started'
+        Puppet::Util::Execution::ProcessOutput.new('started', 0)
       when status_command
         expect(options[:failonfail]).to eq(false)
-        allow($CHILD_STATUS).to receive(:exitstatus) {@running ? 0 : 1}
-        return @running ? 'running' : 'not running'
+        if @running
+          Puppet::Util::Execution::ProcessOutput.new('running', 0)
+        else
+          Puppet::Util::Execution::ProcessOutput.new('not running', 1)
+        end
       when stop_command
         expect(options[:failonfail]).to eq(true)
         raise(Puppet::ExecutionFailure, 'failed to stop') unless @running
         @running = false
-        return 'stopped'
+        Puppet::Util::Execution::ProcessOutput.new('stopped', 0)
       else
         raise "unexpected command execution: #{command}"
       end

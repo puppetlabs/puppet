@@ -37,6 +37,10 @@ describe 'Puppet::Type::Service::Provider::Init',
     %w{functions.sh reboot.sh shutdown.sh functions halt killall single linuxconf reboot boot wait-for-state rcS module-init-tools}
   end
 
+  let :process_output do
+    Puppet::Util::Execution::ProcessOutput.new('', 0)
+  end
+
   describe "when running on FreeBSD" do
     before :each do
       allow(Facter).to receive(:value).with(:operatingsystem).and_return('FreeBSD')
@@ -204,12 +208,12 @@ describe 'Puppet::Type::Service::Provider::Init',
 
       describe "when running #{method}" do
         before :each do
-          allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+          allow(provider).to receive(:execute).and_return(process_output)
         end
 
         it "should use any provided explicit command" do
           resource[method] = "/user/specified/command"
-          expect(provider).to receive(:execute).with(["/user/specified/command"], any_args)
+          expect(provider).to receive(:execute).with(["/user/specified/command"], any_args).and_return(process_output)
 
           provider.send(method)
         end
@@ -217,7 +221,7 @@ describe 'Puppet::Type::Service::Provider::Init',
         it "should pass #{method} to the init script when no explicit command is provided" do
           resource[:hasrestart] = :true
           resource[:hasstatus] = :true
-          expect(provider).to receive(:execute).with(["/service/path/myservice", method], any_args)
+          expect(provider).to receive(:execute).with(["/service/path/myservice", method], any_args).and_return(process_output)
 
           provider.send(method)
         end
@@ -231,21 +235,24 @@ describe 'Puppet::Type::Service::Provider::Init',
         end
 
         it "should execute the command" do
-          expect(provider).to receive(:execute).with(['/service/path/myservice', :status], hash_including(failonfail: false)).and_return("")
-          allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+          expect(provider).to receive(:execute)
+            .with(['/service/path/myservice', :status], hash_including(failonfail: false))
+            .and_return(process_output)
           provider.status
         end
 
         it "should consider the process running if the command returns 0" do
-          expect(provider).to receive(:execute).with(['/service/path/myservice', :status], hash_including(failonfail: false)).and_return("")
-          allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+          expect(provider).to receive(:execute)
+            .with(['/service/path/myservice', :status], hash_including(failonfail: false))
+            .and_return(process_output)
           expect(provider.status).to eq(:running)
         end
 
         [-10,-1,1,10].each { |ec|
           it "should consider the process stopped if the command returns something non-0" do
-            expect(provider).to receive(:execute).with(['/service/path/myservice', :status], hash_including(failonfail: false)).and_return("")
-            allow($CHILD_STATUS).to receive(:exitstatus).and_return(ec)
+            expect(provider).to receive(:execute)
+              .with(['/service/path/myservice', :status], hash_including(failonfail: false))
+              .and_return(Puppet::Util::Execution::ProcessOutput.new('', ec))
             expect(provider.status).to eq(:stopped)
           end
         }
@@ -274,9 +281,12 @@ describe 'Puppet::Type::Service::Provider::Init',
       end
 
       it "should stop and restart the process" do
-        expect(provider).to receive(:execute).with(['/service/path/myservice', :stop], hash_including(failonfail: true)).and_return("")
-        expect(provider).to receive(:execute).with(['/service/path/myservice', :start], hash_including(failonfail: true)).and_return("")
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+        expect(provider).to receive(:execute)
+          .with(['/service/path/myservice', :stop], hash_including(failonfail: true))
+          .and_return(process_output)
+        expect(provider).to receive(:execute)
+          .with(['/service/path/myservice', :start], hash_including(failonfail: true))
+          .and_return(process_output)
         provider.restart
       end
     end
@@ -284,8 +294,9 @@ describe 'Puppet::Type::Service::Provider::Init',
     describe "when starting a service on Solaris" do
       it "should use ctrun" do
         allow(Facter).to receive(:value).with(:osfamily).and_return('Solaris')
-        expect(provider).to receive(:execute).with('/usr/bin/ctrun -l child /service/path/myservice start', {:failonfail => true, :override_locale => false, :squelch => false, :combine => true}).and_return("")
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+        expect(provider).to receive(:execute)
+          .with('/usr/bin/ctrun -l child /service/path/myservice start', {:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
+          .and_return(process_output)
         provider.start
       end
     end
@@ -293,8 +304,9 @@ describe 'Puppet::Type::Service::Provider::Init',
     describe "when starting a service on RedHat" do
       it "should not use ctrun" do
         allow(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
-        expect(provider).to receive(:execute).with(['/service/path/myservice', :start], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true}).and_return("")
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+        expect(provider).to receive(:execute)
+          .with(['/service/path/myservice', :start], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
+          .and_return(process_output)
         provider.start
       end
     end

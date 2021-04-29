@@ -290,8 +290,9 @@ describe 'Puppet::Type::Service::Provider::Smf',
 
     it "should run the status command if it's passed in" do
       set_resource_params({ :status => 'status_cmd' })
-      expect(@provider).to receive(:execute).with(["status_cmd"], hash_including(failonfail: false))
-      expect($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+      expect(@provider).to receive(:execute)
+        .with(["status_cmd"], hash_including(failonfail: false))
+        .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
       expect(@provider).not_to receive(:service_states)
 
       expect(@provider.status).to eql(:running)
