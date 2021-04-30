@@ -243,7 +243,7 @@ describe 'Puppet::Pops::Lookup::Context' do
             File.write(data_path, "a: value b\n")
 
             # Ensure mtime is at least 1 second ahead
-            FileUtils.touch(data_path, :mtime => old_mtime + 1)
+            FileUtils.touch(data_path, mtime: old_mtime + 1)
 
             Puppet::Parser::Compiler.compile(node)
           end

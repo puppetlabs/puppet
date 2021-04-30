@@ -225,7 +225,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         # Modify mtime of the second file to be an hour ago
         onehourago = Time.now - onehour
         bucketed_paths_file = Dir.glob("#{file_bucket}/**/#{checksum}/paths")
-        FileUtils.touch(bucketed_paths_file, :mtime => onehourago)
+        FileUtils.touch(bucketed_paths_file, mtime: onehourago)
         expected_list2 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{real_path}\n/
 
         now = Time.now

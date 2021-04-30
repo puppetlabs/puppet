@@ -60,7 +60,7 @@ def do_configs(configs, target, strip = 'conf/')
   Dir.mkdir(target) unless File.directory? target
   configs.each do |cf|
     ocf = File.join(InstallOptions.config_dir, cf.gsub(/#{strip}/, ''))
-    FileUtils.install(cf, ocf, {:mode => 0644, :preserve => true, :verbose => true})
+    FileUtils.install(cf, ocf, mode: 0644, preserve: true, verbose: true)
   end
 end
 
@@ -77,9 +77,9 @@ def do_libs(libs, strip = 'lib/')
     next if File.directory? lf
     olf = File.join(InstallOptions.site_dir, lf.sub(/^#{strip}/, ''))
     op = File.dirname(olf)
-    FileUtils.makedirs(op, {:mode => 0755, :verbose => true})
+    FileUtils.makedirs(op, mode: 0755, verbose: true)
     FileUtils.chmod(0755, op)
-    FileUtils.install(lf, olf, {:mode => 0644, :preserve => true, :verbose => true})
+    FileUtils.install(lf, olf, mode: 0644, preserve: true, verbose: true)
   end
 end
 
@@ -87,9 +87,9 @@ def do_man(man, strip = 'man/')
   man.each do |mf|
     omf = File.join(InstallOptions.man_dir, mf.gsub(/#{strip}/, ''))
     om = File.dirname(omf)
-    FileUtils.makedirs(om, {:mode => 0755, :verbose => true})
+    FileUtils.makedirs(om, mode: 0755, verbose: true)
     FileUtils.chmod(0755, om)
-    FileUtils.install(mf, omf, {:mode => 0644, :preserve => true, :verbose => true})
+    FileUtils.install(mf, omf, mode: 0644, preserve: true, verbose: true)
     # Solaris does not support gzipped man pages. When called with
     # --no-check-prereqs/without facter the default gzip behavior still applies
     unless $operatingsystem == "Solaris"
@@ -105,9 +105,9 @@ def do_locales(locale, strip = 'locales/')
     next if File.directory? lf
     olf = File.join(InstallOptions.locale_dir, lf.sub(/^#{strip}/, ''))
     op = File.dirname(olf)
-    FileUtils.makedirs(op, {:mode => 0755, :verbose => true})
+    FileUtils.makedirs(op, mode: 0755, verbose: true)
     FileUtils.chmod(0755, op)
-    FileUtils.install(lf, olf, {:mode => 0644, :preserve => true, :verbose => true})
+    FileUtils.install(lf, olf, mode: 0644, preserve: true, verbose: true)
   end
 end
 
@@ -443,12 +443,12 @@ def install_binfile(from, op_file, target)
 
     unless File.extname(from) =~ /\.(cmd|bat)/
       if File.exist?("#{from}.bat")
-        FileUtils.install("#{from}.bat", File.join(target, "#{op_file}.bat"), :mode => 0755, :preserve => true, :verbose => true)
+        FileUtils.install("#{from}.bat", File.join(target, "#{op_file}.bat"), mode: 0755, preserve: true, verbose: true)
         installed_wrapper = true
       end
 
       if File.exist?("#{from}.cmd")
-        FileUtils.install("#{from}.cmd", File.join(target, "#{op_file}.cmd"), :mode => 0755, :preserve => true, :verbose => true)
+        FileUtils.install("#{from}.cmd", File.join(target, "#{op_file}.cmd"), mode: 0755, preserve: true, verbose: true)
         installed_wrapper = true
       end
 
@@ -465,13 +465,13 @@ if exist "%~dp0environment.bat" (
 ruby.exe -S -- puppet %*
 EOS
         File.open(tmp_file2.path, "w") { |cw| cw.puts cwv }
-        FileUtils.install(tmp_file2.path, File.join(target, "#{op_file}.bat"), :mode => 0755, :preserve => true, :verbose => true)
+        FileUtils.install(tmp_file2.path, File.join(target, "#{op_file}.bat"), mode: 0755, preserve: true, verbose: true)
 
         tmp_file2.unlink
       end
     end
   end
-  FileUtils.install(tmp_file.path, File.join(target, op_file), :mode => 0755, :preserve => true, :verbose => true)
+  FileUtils.install(tmp_file.path, File.join(target, op_file), mode: 0755, preserve: true, verbose: true)
   tmp_file.unlink
 end
 
