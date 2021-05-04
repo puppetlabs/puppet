@@ -895,7 +895,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
             # Change the source file.
             File.open(checksum_file, "wb") { |f| f.write "some content" }
-            FileUtils.touch target_file, :mtime => Time.now - 20
+            FileUtils.touch target_file, mtime: Time.now - 20
 
             # The 2nd time should update the resource.
             second_catalog.add_resource Puppet::Type.send(:newfile, @options)
@@ -1399,7 +1399,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         it "should fetch if no header specified" do
           File.open(httppath, "wb") { |f| f.puts "Content originally on disk\n" }
           # make sure the mtime is not "right now", lest we get a race
-          FileUtils.touch httppath, :mtime => Time.parse("Sun, 22 Mar 2015 22:57:43 GMT")
+          FileUtils.touch httppath, mtime: Time.parse("Sun, 22 Mar 2015 22:57:43 GMT")
           catalog.add_resource resource
           catalog.apply
           expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
@@ -1409,7 +1409,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         it "should fetch if mtime is older on disk" do
           File.open(httppath, "wb") { |f| f.puts "Content originally on disk\n" }
           # fixture has Last-Modified: Sun, 22 Mar 2015 22:25:34 GMT
-          FileUtils.touch httppath, :mtime => Time.parse("Sun, 22 Mar 2015 22:22:34 GMT")
+          FileUtils.touch httppath, mtime: Time.parse("Sun, 22 Mar 2015 22:22:34 GMT")
           catalog.add_resource resource
           catalog.apply
           expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
@@ -1455,7 +1455,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         it "should not update if content on disk is up-to-date" do
           File.open(httppath, "wb") { |f| f.puts "Content via HTTP\n" }
           disk_mtime = Time.parse("Sun, 22 Mar 2015 22:22:34 GMT")
-          FileUtils.touch httppath, :mtime => disk_mtime
+          FileUtils.touch httppath, mtime: disk_mtime
           catalog.add_resource resource
           catalog.apply
           expect(Puppet::FileSystem.exist?(httppath)).to be_truthy
@@ -2002,7 +2002,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     it "should not update mtime on an old directory" do
       disk_mtime = Time.parse("Sun, 22 Mar 2015 22:22:34 GMT")
       FileUtils.mkdir_p path
-      FileUtils.touch path, :mtime => disk_mtime
+      FileUtils.touch path, mtime: disk_mtime
       status = catalog.apply.report.resource_statuses["File[#{path}]"]
       expect(status).to be_nil
       expect(Puppet::FileSystem).to be_directory(path)
