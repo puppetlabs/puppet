@@ -1,4 +1,4 @@
-require 'puppet/util/feature'
+require_relative '../../puppet/util/feature'
 
 Puppet.features.add :telnet do
   begin

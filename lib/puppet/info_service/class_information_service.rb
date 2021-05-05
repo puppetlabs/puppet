@@ -1,6 +1,6 @@
-require 'puppet'
-require 'puppet/pops'
-require 'puppet/pops/evaluator/json_strict_literal_evaluator'
+require_relative '../../puppet'
+require_relative '../../puppet/pops'
+require_relative '../../puppet/pops/evaluator/json_strict_literal_evaluator'
 
 class Puppet::InfoService::ClassInformationService
 

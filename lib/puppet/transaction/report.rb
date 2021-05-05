@@ -1,5 +1,5 @@
-require 'puppet'
-require 'puppet/indirector'
+require_relative '../../puppet'
+require_relative '../../puppet/indirector'
 
 # This class is used to report what happens on a client.
 # There are two types of data in a report; _Logs_ and _Metrics_.

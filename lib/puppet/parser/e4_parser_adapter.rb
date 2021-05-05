@@ -1,4 +1,4 @@
-require 'puppet/pops'
+require_relative '../../puppet/pops'
 
 module Puppet
 module Parser

@@ -1,8 +1,8 @@
-require 'puppet/provider'
+require_relative '../../puppet/provider'
 
 # The base class for LDAP providers.
 class Puppet::Provider::Ldap < Puppet::Provider
-  require 'puppet/util/ldap/manager'
+  require_relative '../../puppet/util/ldap/manager'
 
   class << self
     attr_reader :manager

@@ -1,4 +1,4 @@
-require 'puppet/application'
+require_relative '../../puppet/application'
 
 class Puppet::Application::Filebucket < Puppet::Application
 
@@ -298,7 +298,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
-    require 'puppet/file_bucket/dipper'
+    require_relative '../../puppet/file_bucket/dipper'
     begin
       if options[:local] or options[:bucket]
         path = options[:bucket] || Puppet[:clientbucketdir]

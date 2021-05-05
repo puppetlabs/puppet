@@ -1,4 +1,4 @@
-require 'puppet/trusted_external'
+require_relative '../../puppet/trusted_external'
 
 # @api private
 class Puppet::Context::TrustedInformation

@@ -1,9 +1,9 @@
 require 'yaml'
 
-require 'puppet'
-require 'puppet/node/environment'
-require 'puppet/file_system'
-require 'puppet/indirector'
+require_relative '../puppet'
+require_relative '../puppet/node/environment'
+require_relative '../puppet/file_system'
+require_relative '../puppet/indirector'
 
 module Puppet
   module ApplicationSupport

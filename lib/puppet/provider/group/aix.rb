@@ -1,6 +1,6 @@
 # Group Puppet provider for AIX. It uses standard commands to manage groups:
 #  mkgroup, rmgroup, lsgroup, chgroup
-require 'puppet/provider/aix_object'
+require_relative '../../../puppet/provider/aix_object'
 
 Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject do
   desc "Group management for AIX."

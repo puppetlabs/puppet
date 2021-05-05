@@ -1,8 +1,8 @@
 # The virtual base class for properties, which are the self-contained building
 # blocks for actually doing work on the system.
 
-require 'puppet'
-require 'puppet/parameter'
+require_relative '../puppet'
+require_relative '../puppet/parameter'
 
 # The Property class is the implementation of a resource's attributes of _property_ kind.
 # A Property is a specialized Resource Type Parameter that has both an 'is' (current) state, and
@@ -39,7 +39,7 @@ require 'puppet/parameter'
 # @api public
 #
 class Puppet::Property < Puppet::Parameter
-  require 'puppet/property/ensure'
+  require_relative 'property/ensure'
 
   # Returns the original wanted value(s) _(should)_ unprocessed by munging/unmunging.
   # The original values are set by {#value=} or {#should=}.

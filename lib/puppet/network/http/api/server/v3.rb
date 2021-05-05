@@ -1,5 +1,5 @@
-require 'puppet/network/http/api/server/v3/environments'
-require 'puppet/network/http/api/indirected_routes'
+require_relative 'v3/environments'
+require_relative '../../../../../puppet/network/http/api/indirected_routes'
 
 module Puppet
   module Network

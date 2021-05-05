@@ -1,4 +1,4 @@
-require 'puppet/util'
+require_relative '../../puppet/util'
 module Puppet::Util::RDoc
   module_function
 
@@ -11,7 +11,7 @@ module Puppet::Util::RDoc
     require 'rdoc/options'
 
     # load our parser
-    require 'puppet/util/rdoc/parser'
+    require_relative 'rdoc/parser'
 
     r = RDoc::RDoc.new
 

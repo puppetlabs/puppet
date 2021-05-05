@@ -1,4 +1,4 @@
-require 'puppet/ffi/windows'
+require_relative '../../../puppet/ffi/windows'
 
 module Puppet::FFI::Windows
   module Functions

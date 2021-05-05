@@ -1,4 +1,4 @@
-require 'puppet/property'
+require_relative '../../puppet/property'
 
 # This property is automatically added to any {Puppet::Type} that responds
 # to the methods 'exists?', 'create', and 'destroy'.

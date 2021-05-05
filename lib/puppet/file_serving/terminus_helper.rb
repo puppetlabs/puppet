@@ -1,5 +1,5 @@
-require 'puppet/file_serving'
-require 'puppet/file_serving/fileset'
+require_relative '../../puppet/file_serving'
+require_relative '../../puppet/file_serving/fileset'
 
 # Define some common methods for FileServing termini.
 

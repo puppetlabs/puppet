@@ -1,8 +1,8 @@
 require 'pathname'
-require 'puppet/file_bucket'
-require 'puppet/file_bucket/file'
-require 'puppet/indirector/request'
-require 'puppet/util/diff'
+require_relative '../../puppet/file_bucket'
+require_relative '../../puppet/file_bucket/file'
+require_relative '../../puppet/indirector/request'
+require_relative '../../puppet/util/diff'
 require 'tempfile'
 
 class Puppet::FileBucket::Dipper

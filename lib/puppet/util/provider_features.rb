@@ -1,6 +1,6 @@
 # Provides feature definitions.
-require 'puppet/util/docs'
-require 'puppet/util'
+require_relative '../../puppet/util/docs'
+require_relative '../../puppet/util'
 # This module models provider features and handles checking whether the features
 # are present.
 # @todo Unclear what is api and what is private in this module.

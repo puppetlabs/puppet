@@ -1,4 +1,4 @@
-require 'puppet/x509'
+require_relative '../../puppet/x509'
 
 # Methods for managing PEM encoded files. While PEM encoded strings are
 # always ASCII, the files may contain user specified comments, so they are

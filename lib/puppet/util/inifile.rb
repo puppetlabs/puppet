@@ -8,8 +8,8 @@
 #
 # The parsing tries to stay close to python's ConfigParser
 
-require 'puppet/util/filetype'
-require 'puppet/error'
+require_relative '../../puppet/util/filetype'
+require_relative '../../puppet/error'
 
 module Puppet::Util::IniConfig
   # A section in a .ini file

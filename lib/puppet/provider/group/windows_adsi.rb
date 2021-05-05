@@ -1,4 +1,4 @@
-require 'puppet/util/windows'
+require_relative '../../../puppet/util/windows'
 
 Puppet::Type.type(:group).provide :windows_adsi do
   desc "Local group management for Windows. Group members can be both users and groups.

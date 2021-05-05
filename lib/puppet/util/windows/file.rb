@@ -1,4 +1,4 @@
-require 'puppet/ffi/windows'
+require_relative '../../../puppet/ffi/windows'
 
 module Puppet::Util::Windows::File
   extend Puppet::Util::Windows::String

@@ -1,19 +1,19 @@
-require 'puppet'
-require 'puppet/util/autoload'
+require_relative '../puppet'
+require_relative '../puppet/util/autoload'
 require 'prettyprint'
 
 # @api public
 class Puppet::Interface
-  require 'puppet/interface/documentation'
-  require 'puppet/interface/face_collection'
+  require_relative 'interface/documentation'
+  require_relative 'interface/face_collection'
 
-  require 'puppet/interface/action'
-  require 'puppet/interface/action_builder'
-  require 'puppet/interface/action_manager'
+  require_relative 'interface/action'
+  require_relative 'interface/action_builder'
+  require_relative 'interface/action_manager'
 
-  require 'puppet/interface/option'
-  require 'puppet/interface/option_builder'
-  require 'puppet/interface/option_manager'
+  require_relative 'interface/option'
+  require_relative 'interface/option_builder'
+  require_relative 'interface/option_manager'
 
 
   include FullDocs

@@ -9,8 +9,8 @@
 #
 # See https://puppet.com/docs/puppet/latest/provider_development.html
 # for more information
-require 'puppet/provider/aix_object'
-require 'puppet/util/posix'
+require_relative '../../../puppet/provider/aix_object'
+require_relative '../../../puppet/util/posix'
 require 'tempfile'
 require 'date'
 

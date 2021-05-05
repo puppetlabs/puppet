@@ -1,4 +1,4 @@
-require 'puppet/network/format_handler'
+require_relative '../../puppet/network/format_handler'
 
 # Provides network serialization support when included
 # @api public

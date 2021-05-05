@@ -1,6 +1,6 @@
-require 'puppet/node/facts'
-require 'puppet/indirector/json'
-require 'puppet/indirector/fact_search'
+require_relative '../../../puppet/node/facts'
+require_relative '../../../puppet/indirector/json'
+require_relative '../../../puppet/indirector/fact_search'
 
 class Puppet::Node::Facts::Json < Puppet::Indirector::JSON
   desc "Store client facts as flat files, serialized using JSON, or

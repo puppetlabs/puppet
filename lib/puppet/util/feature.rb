@@ -1,5 +1,5 @@
-require 'puppet'
-require 'puppet/util/warnings'
+require_relative '../../puppet'
+require_relative '../../puppet/util/warnings'
 
 class Puppet::Util::Feature
   include Puppet::Util::Warnings

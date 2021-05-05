@@ -1,4 +1,4 @@
-require 'puppet/util/package'
+require_relative '../../puppet/util/package'
 
 # Compares two version numbers.
 #

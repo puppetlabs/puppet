@@ -1,4 +1,4 @@
-require 'puppet/util/watcher'
+require_relative '../../puppet/util/watcher'
 
 # Monitor a given file for changes on a periodic interval. Changes are detected
 # by looking for a change in the file ctime.

@@ -1,4 +1,4 @@
-require 'puppet/ffi/posix'
+require_relative '../../../puppet/ffi/posix'
 
 module Puppet::FFI::POSIX
   module Constants

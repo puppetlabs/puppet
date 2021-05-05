@@ -1,9 +1,9 @@
 # Puppet package provider for Python's `pip` package management frontend.
 # <http://pip.pypa.io/>
 
-require 'puppet/util/package/version/pip'
-require 'puppet/util/package/version/range'
-require 'puppet/provider/package_targetable'
+require_relative '../../../puppet/util/package/version/pip'
+require_relative '../../../puppet/util/package/version/range'
+require_relative '../../../puppet/provider/package_targetable'
 
 Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package::Targetable do
 

@@ -1,5 +1,5 @@
-require 'puppet/indirector/rest'
-require 'puppet/file_bucket/file'
+require_relative '../../../puppet/indirector/rest'
+require_relative '../../../puppet/file_bucket/file'
 
 module Puppet::FileBucketFile
   class Rest < Puppet::Indirector::REST

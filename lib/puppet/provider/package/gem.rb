@@ -1,6 +1,6 @@
-require 'puppet/util/package/version/gem'
-require 'puppet/util/package/version/range'
-require 'puppet/provider/package_targetable'
+require_relative '../../../puppet/util/package/version/gem'
+require_relative '../../../puppet/util/package/version/range'
+require_relative '../../../puppet/provider/package_targetable'
 require 'uri'
 
 # Ruby gems support.

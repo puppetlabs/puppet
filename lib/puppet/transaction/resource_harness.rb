@@ -1,4 +1,4 @@
-require 'puppet/resource/status'
+require_relative '../../puppet/resource/status'
 
 class Puppet::Transaction::ResourceHarness
   NO_ACTION = Object.new

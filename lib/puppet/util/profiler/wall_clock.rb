@@ -1,4 +1,4 @@
-require 'puppet/util/profiler/logging'
+require_relative '../../../puppet/util/profiler/logging'
 
 # A profiler implementation that measures the number of seconds a segment of
 # code takes to execute and provides a callback with a string representation of

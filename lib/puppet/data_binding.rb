@@ -1,4 +1,4 @@
-require 'puppet/indirector'
+require_relative '../puppet/indirector'
 
 # A class for managing data lookups
 class Puppet::DataBinding

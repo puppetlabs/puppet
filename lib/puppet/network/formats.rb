@@ -1,5 +1,5 @@
-require 'puppet/network/format_handler'
-require 'puppet/util/json'
+require_relative '../../puppet/network/format_handler'
+require_relative '../../puppet/util/json'
 
 Puppet::Network::FormatHandler.create_serialized_formats(:msgpack, :weight => 20, :mime => "application/x-msgpack", :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
 

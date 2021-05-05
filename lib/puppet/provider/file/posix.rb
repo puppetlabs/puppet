@@ -8,7 +8,7 @@ Puppet::Type.type(:file).provide :posix do
   include Puppet::Util::Warnings
 
   require 'etc'
-  require 'puppet/util/selinux'
+  require_relative '../../../puppet/util/selinux'
 
   def self.post_resource_eval
     Selinux.matchpathcon_fini if Puppet::Util::SELinux.selinux_support?

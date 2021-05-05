@@ -1,9 +1,9 @@
-require 'puppet/ssl/openssl_loader'
+require_relative '../../puppet/ssl/openssl_loader'
 require 'digest/sha1'
 require 'uri'
-require 'puppet/forge'
-require 'puppet/forge/errors'
-require 'puppet/network/http'
+require_relative '../../puppet/forge'
+require_relative '../../puppet/forge/errors'
+require_relative '../../puppet/network/http'
 
 class Puppet::Forge
   # = Repository

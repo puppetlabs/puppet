@@ -1,7 +1,7 @@
-require 'puppet/util/logging'
-require 'puppet/file_serving'
-require 'puppet/file_serving/metadata'
-require 'puppet/file_serving/content'
+require_relative '../../puppet/util/logging'
+require_relative '../../puppet/file_serving'
+require_relative '../../puppet/file_serving/metadata'
+require_relative '../../puppet/file_serving/content'
 
 # Broker access to the filesystem, converting local URIs into metadata
 # or content objects.

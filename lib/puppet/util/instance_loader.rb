@@ -1,6 +1,6 @@
-require 'puppet/util/autoload'
-require 'puppet/util'
-require 'puppet/concurrent/lock'
+require_relative '../../puppet/util/autoload'
+require_relative '../../puppet/util'
+require_relative '../../puppet/concurrent/lock'
 
 # A module that can easily autoload things for us.  Uses an instance
 # of Puppet::Util::Autoload

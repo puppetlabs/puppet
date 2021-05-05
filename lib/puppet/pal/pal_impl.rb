@@ -1,9 +1,9 @@
 # Puppet as a Library "PAL"
 
 # Yes, this requires all of puppet for now because 'settings' and many other things...
-require 'puppet'
-require 'puppet/parser/script_compiler'
-require 'puppet/parser/catalog_compiler'
+require_relative '../../puppet'
+require_relative '../../puppet/parser/script_compiler'
+require_relative '../../puppet/parser/catalog_compiler'
 
 module Puppet
 # This is the main entry point for "Puppet As a Library" PAL.

@@ -1,5 +1,5 @@
-require 'puppet/util/pidlock'
-require 'puppet/error'
+require_relative '../../puppet/util/pidlock'
+require_relative '../../puppet/error'
 
 # This module is responsible for encapsulating the logic for "locking" the
 # puppet agent during a catalog run; in other words, keeping track of enough

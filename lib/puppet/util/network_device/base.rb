@@ -1,7 +1,7 @@
-require 'puppet/util/autoload'
+require_relative '../../../puppet/util/autoload'
 require 'uri'
-require 'puppet/util/network_device/transport'
-require 'puppet/util/network_device/transport/base'
+require_relative '../../../puppet/util/network_device/transport'
+require_relative '../../../puppet/util/network_device/transport/base'
 
 class Puppet::Util::NetworkDevice::Base
 

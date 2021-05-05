@@ -15,7 +15,7 @@ Puppet::DataTypes.create_type('Error') do
     }
     PUPPET
 
-  require 'puppet/datatypes/impl/error'
+  require_relative '../../puppet/datatypes/impl/error'
 
   implementation_class Puppet::DataTypes::Error
 end

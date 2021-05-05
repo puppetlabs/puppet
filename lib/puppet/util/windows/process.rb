@@ -1,5 +1,5 @@
-require 'puppet/util/windows/monkey_patches/process'
-require 'puppet/ffi/windows'
+require_relative '../../../puppet/util/windows/monkey_patches/process'
+require_relative '../../../puppet/ffi/windows'
 
 module Puppet::Util::Windows::Process
   extend Puppet::FFI::Windows::Functions

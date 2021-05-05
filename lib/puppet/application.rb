@@ -1,8 +1,8 @@
 require 'optparse'
-require 'puppet/util/command_line'
-require 'puppet/util/constant_inflector'
-require 'puppet/error'
-require 'puppet/application_support'
+require_relative '../puppet/util/command_line'
+require_relative '../puppet/util/constant_inflector'
+require_relative '../puppet/error'
+require_relative '../puppet/application_support'
 
 module Puppet
 
@@ -105,7 +105,7 @@ module Puppet
 # @abstract
 # @api public
 class Application
-  require 'puppet/util'
+  require_relative '../puppet/util'
   include Puppet::Util
 
   DOCPATTERN = ::File.expand_path(::File.dirname(__FILE__) + "/util/command_line/*" )
@@ -284,7 +284,7 @@ class Application
 
       return @run_mode if @run_mode and not mode_name
 
-      require 'puppet/util/run_mode'
+      require_relative '../puppet/util/run_mode'
       @run_mode = Puppet::Util::RunMode[ mode_name || Puppet.settings.preferred_run_mode ]
     end
 

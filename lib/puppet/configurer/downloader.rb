@@ -1,5 +1,5 @@
-require 'puppet/configurer'
-require 'puppet/resource/catalog'
+require_relative '../../puppet/configurer'
+require_relative '../../puppet/resource/catalog'
 
 class Puppet::Configurer::Downloader
   attr_reader :name, :path, :source, :ignore

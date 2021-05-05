@@ -1,4 +1,4 @@
-require 'puppet/parameter'
+require_relative '../../puppet/parameter'
 
 # This specialized {Puppet::Parameter} handles validation and munging of paths.
 # By default, a single path is accepted, and by calling {accept_arrays} it is possible to

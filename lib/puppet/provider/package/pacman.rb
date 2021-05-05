@@ -1,4 +1,4 @@
-require 'puppet/provider/package'
+require_relative '../../../puppet/provider/package'
 require 'set'
 require 'uri'
 

@@ -1,4 +1,4 @@
-require 'puppet/parameter/value_collection'
+require_relative '../../puppet/parameter/value_collection'
 
 # Describes an acceptable value for a parameter or property.
 # An acceptable value is either specified as a literal value or a regular expression.

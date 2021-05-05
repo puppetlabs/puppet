@@ -1,8 +1,8 @@
 require 'time'
 
-require 'puppet/node'
-require 'puppet/indirector'
-require 'puppet/util/psych_support'
+require_relative '../../puppet/node'
+require_relative '../../puppet/indirector'
+require_relative '../../puppet/util/psych_support'
 
 
 # Manage a given node's facts.  This either accepts facts and stores them, or

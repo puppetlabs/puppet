@@ -1,4 +1,4 @@
-require 'puppet/provider/package'
+require_relative '../../../puppet/provider/package'
 
 Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::Provider::Package do
   desc "Opkg packaging support. Common on OpenWrt and OpenEmbedded platforms"

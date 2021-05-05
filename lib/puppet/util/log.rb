@@ -1,7 +1,7 @@
-require 'puppet/util/tagging'
-require 'puppet/util/classgen'
-require 'puppet/util/psych_support'
-require 'puppet/network/format_support'
+require_relative '../../puppet/util/tagging'
+require_relative '../../puppet/util/classgen'
+require_relative '../../puppet/util/psych_support'
+require_relative '../../puppet/network/format_support'
 require 'facter'
 
 # Pass feedback to the user.  Log levels are modeled after syslog's, and it is
@@ -35,8 +35,8 @@ class Puppet::Util::Log
     dest
   end
 
-  require 'puppet/util/log/destination'
-  require 'puppet/util/log/destinations'
+  require_relative 'log/destination'
+  require_relative 'log/destinations'
 
   @destinations = {}
 

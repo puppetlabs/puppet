@@ -1,9 +1,9 @@
-require 'puppet/util/package/version/range/lt'
-require 'puppet/util/package/version/range/lt_eq'
-require 'puppet/util/package/version/range/gt'
-require 'puppet/util/package/version/range/gt_eq'
-require 'puppet/util/package/version/range/eq'
-require 'puppet/util/package/version/range/min_max'
+require_relative 'range/lt'
+require_relative 'range/lt_eq'
+require_relative 'range/gt'
+require_relative 'range/gt_eq'
+require_relative 'range/eq'
+require_relative 'range/min_max'
 
 module Puppet::Util::Package::Version
   class Range

@@ -1,4 +1,4 @@
-require 'puppet/util/windows'
+require_relative '../../../puppet/util/windows'
 
 require 'facter'
 require 'ffi'

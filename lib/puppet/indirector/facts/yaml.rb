@@ -1,6 +1,6 @@
-require 'puppet/node/facts'
-require 'puppet/indirector/yaml'
-require 'puppet/indirector/fact_search'
+require_relative '../../../puppet/node/facts'
+require_relative '../../../puppet/indirector/yaml'
+require_relative '../../../puppet/indirector/fact_search'
 
 class Puppet::Node::Facts::Yaml < Puppet::Indirector::Yaml
   desc "Store client facts as flat files, serialized using YAML, or

@@ -1,5 +1,5 @@
 require 'set'
-require 'puppet/network/format_support'
+require_relative '../../puppet/network/format_support'
 
 class Puppet::Util::TagSet < Set
   include Puppet::Network::FormatSupport

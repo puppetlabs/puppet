@@ -1,6 +1,6 @@
-require 'puppet/external/pson/common'
-require 'puppet/external/pson/pure/parser'
-require 'puppet/external/pson/pure/generator'
+require_relative '../../../puppet/external/pson/common'
+require_relative 'pure/parser'
+require_relative 'pure/generator'
 
 module PSON
   # This module holds all the modules/classes that implement PSON's

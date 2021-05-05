@@ -1,4 +1,4 @@
-require 'puppet/property/list'
+require_relative '../../puppet/property/list'
 
 module Puppet
   class Property

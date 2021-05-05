@@ -17,8 +17,8 @@ module Puppet::Parser
     #
     def self.evaluating_parser
       unless defined?(Puppet::Parser::E4ParserAdapter)
-        require 'puppet/parser/e4_parser_adapter'
-        require 'puppet/pops/parser/code_merger'
+        require_relative '../../puppet/parser/e4_parser_adapter'
+        require_relative '../../puppet/pops/parser/code_merger'
       end
       E4ParserAdapter.new
     end

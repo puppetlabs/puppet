@@ -8,7 +8,7 @@
 # @see https://msdn.microsoft.com/en-us/library/windows/desktop/aa379563(v=vs.85).aspx
 # @api private
 class Puppet::Util::Windows::SecurityDescriptor
-  require 'puppet/util/windows/security'
+  require_relative '../../../puppet/util/windows/security'
   include Puppet::Util::Windows::SID
 
   attr_reader :owner, :group, :dacl

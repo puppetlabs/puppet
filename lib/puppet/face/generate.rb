@@ -1,5 +1,5 @@
-require 'puppet/face'
-require 'puppet/generate/type'
+require_relative '../../puppet/face'
+require_relative '../../puppet/generate/type'
 
 # Create the Generate face
 Puppet::Face.define(:generate, '0.1.0') do

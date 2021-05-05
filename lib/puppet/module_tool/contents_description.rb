@@ -1,4 +1,4 @@
-require 'puppet/module_tool'
+require_relative '../../puppet/module_tool'
 
 module Puppet::ModuleTool
 

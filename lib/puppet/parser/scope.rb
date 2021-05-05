@@ -2,9 +2,9 @@
 # such.
 require 'forwardable'
 
-require 'puppet/parser'
-require 'puppet/parser/templatewrapper'
-require 'puppet/parser/resource'
+require_relative '../../puppet/parser'
+require_relative '../../puppet/parser/templatewrapper'
+require_relative '../../puppet/parser/resource'
 
 # This class is part of the internal parser/evaluator/compiler functionality of Puppet.
 # It is passed between the various classes that participate in evaluation.

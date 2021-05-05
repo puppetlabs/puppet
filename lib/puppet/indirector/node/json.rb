@@ -1,5 +1,5 @@
-require 'puppet/node'
-require 'puppet/indirector/json'
+require_relative '../../../puppet/node'
+require_relative '../../../puppet/indirector/json'
 
 class Puppet::Node::Json < Puppet::Indirector::JSON
   desc "Store node information as flat files, serialized using JSON,

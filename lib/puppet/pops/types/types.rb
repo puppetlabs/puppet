@@ -3610,7 +3610,7 @@ end
 end
 end
 
-require 'puppet/pops/pcore'
+require_relative '../../../puppet/pops/pcore'
 
 require_relative 'annotatable'
 require_relative 'p_meta_type'

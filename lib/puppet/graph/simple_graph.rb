@@ -1,5 +1,5 @@
-require 'puppet/external/dot'
-require 'puppet/relationship'
+require_relative '../../puppet/external/dot'
+require_relative '../../puppet/relationship'
 require 'set'
 
 # A hopefully-faster graph class to replace the use of GRATR.

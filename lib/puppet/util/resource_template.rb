@@ -1,5 +1,5 @@
-require 'puppet/util'
-require 'puppet/util/logging'
+require_relative '../../puppet/util'
+require_relative '../../puppet/util/logging'
 require 'erb'
 
 # A template wrapper that evaluates a template in the

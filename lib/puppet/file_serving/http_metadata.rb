@@ -1,4 +1,4 @@
-require 'puppet/file_serving/metadata'
+require_relative '../../puppet/file_serving/metadata'
 
 # Simplified metadata representation, suitable for the information
 # that is available from HTTP headers.

@@ -1,6 +1,6 @@
-require 'puppet'
-require 'puppet/util/tagging'
-require 'puppet/parameter'
+require_relative '../puppet'
+require_relative '../puppet/util/tagging'
+require_relative '../puppet/parameter'
 
 # The simplest resource class.  Eventually it will function as the
 # base class for all resource-like behaviour.
@@ -22,7 +22,7 @@ class Puppet::Resource
   # @deprecated
   attr_accessor :validate_parameters
 
-  require 'puppet/indirector'
+  require_relative '../puppet/indirector'
   extend Puppet::Indirector
   indirects :resource, :terminus_class => :ral
 

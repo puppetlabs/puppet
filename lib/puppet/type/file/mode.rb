@@ -5,7 +5,7 @@
 
 module Puppet
   Puppet::Type.type(:file).newproperty(:mode) do
-    require 'puppet/util/symbolic_file_mode'
+    require_relative '../../../puppet/util/symbolic_file_mode'
     include Puppet::Util::SymbolicFileMode
 
     desc <<-'EOT'

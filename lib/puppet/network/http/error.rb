@@ -1,4 +1,4 @@
-require 'puppet/util/json'
+require_relative '../../../puppet/util/json'
 
 module Puppet::Network::HTTP::Error
   Issues = Puppet::Network::HTTP::Issues

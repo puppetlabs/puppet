@@ -1,6 +1,6 @@
-require 'puppet/face'
-require 'puppet/application/face_base'
-require 'puppet/util/constant_inflector'
+require_relative '../../puppet/face'
+require_relative '../../puppet/application/face_base'
+require_relative '../../puppet/util/constant_inflector'
 require 'pathname'
 require 'erb'
 

@@ -1,7 +1,7 @@
 require 'etc'
 require 'facter'
-require 'puppet/property/keyvalue'
-require 'puppet/parameter/boolean'
+require_relative '../../puppet/property/keyvalue'
+require_relative '../../puppet/parameter/boolean'
 
 module Puppet
   Type.newtype(:group) do

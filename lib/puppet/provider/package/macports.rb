@@ -1,5 +1,5 @@
-require 'puppet/provider/package'
-require 'puppet/provider/command'
+require_relative '../../../puppet/provider/package'
+require_relative '../../../puppet/provider/command'
 
 Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Package do
   desc "Package management using MacPorts on OS X.

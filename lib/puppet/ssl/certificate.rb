@@ -1,4 +1,4 @@
-require 'puppet/ssl/base'
+require_relative '../../puppet/ssl/base'
 
 # Manage certificates themselves.  This class has no
 # 'generate' method because the CA is responsible

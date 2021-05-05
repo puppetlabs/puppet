@@ -1,6 +1,6 @@
-require 'puppet/ssl/openssl_loader'
-require 'puppet/ssl'
-require 'puppet/ssl/digest'
+require_relative '../../puppet/ssl/openssl_loader'
+require_relative '../../puppet/ssl'
+require_relative '../../puppet/ssl/digest'
 
 # The base class for wrapping SSL instances.
 class Puppet::SSL::Base

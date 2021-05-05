@@ -1,7 +1,7 @@
-require 'puppet/indirector/code'
-require 'puppet/file_bucket/file'
-require 'puppet/util/checksums'
-require 'puppet/util/diff'
+require_relative '../../../puppet/indirector/code'
+require_relative '../../../puppet/file_bucket/file'
+require_relative '../../../puppet/util/checksums'
+require_relative '../../../puppet/util/diff'
 require 'fileutils'
 
 module Puppet::FileBucketFile

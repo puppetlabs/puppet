@@ -1,4 +1,4 @@
-require 'puppet/settings/base_setting'
+require_relative '../../puppet/settings/base_setting'
 
 # A specialization of the file setting to allow boolean values.
 #

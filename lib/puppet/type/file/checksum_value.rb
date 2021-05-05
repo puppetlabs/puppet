@@ -1,5 +1,5 @@
-require 'puppet/util/checksums'
-require 'puppet/type/file/data_sync'
+require_relative '../../../puppet/util/checksums'
+require_relative '../../../puppet/type/file/data_sync'
 
 module Puppet
   Puppet::Type.type(:file).newproperty(:checksum_value) do

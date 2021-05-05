@@ -1,7 +1,7 @@
-require 'puppet/parser'
-require 'puppet/util/warnings'
-require 'puppet/util/errors'
-require 'puppet/parser/ast/leaf'
+require_relative '../../puppet/parser'
+require_relative '../../puppet/util/warnings'
+require_relative '../../puppet/util/errors'
+require_relative '../../puppet/parser/ast/leaf'
 
 # Puppet::Resource::Type represents nodes, classes and defined types.
 #

@@ -1,4 +1,4 @@
-require 'puppet/util/platform'
+require_relative '../../puppet/util/platform'
 
 # This file should be required instead of writing `require 'openssl'`
 # or any library that loads openssl like `net/https`. This allows the

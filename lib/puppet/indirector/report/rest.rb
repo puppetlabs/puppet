@@ -1,4 +1,4 @@
-require 'puppet/indirector/rest'
+require_relative '../../../puppet/indirector/rest'
 require 'semantic_puppet'
 
 class Puppet::Transaction::Report::Rest < Puppet::Indirector::REST

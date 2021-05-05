@@ -1,5 +1,5 @@
-require 'puppet/application'
-require 'puppet/ssl/oids'
+require_relative '../../puppet/application'
+require_relative '../../puppet/ssl/oids'
 
 class Puppet::Application::Ssl < Puppet::Application
 

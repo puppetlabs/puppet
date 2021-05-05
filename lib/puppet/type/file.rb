@@ -6,11 +6,11 @@ require 'uri'
 require 'fileutils'
 require 'enumerator'
 require 'pathname'
-require 'puppet/parameter/boolean'
-require 'puppet/util/diff'
-require 'puppet/util/checksums'
-require 'puppet/util/backups'
-require 'puppet/util/symbolic_file_mode'
+require_relative '../../puppet/parameter/boolean'
+require_relative '../../puppet/util/diff'
+require_relative '../../puppet/util/checksums'
+require_relative '../../puppet/util/backups'
+require_relative '../../puppet/util/symbolic_file_mode'
 
 Puppet::Type.newtype(:file) do
   include Puppet::Util::Checksums
@@ -1100,16 +1100,16 @@ end
 # We put all of the properties in separate files, because there are so many
 # of them.  The order these are loaded is important, because it determines
 # the order they are in the property lit.
-require 'puppet/type/file/checksum'
-require 'puppet/type/file/content'     # can create the file
-require 'puppet/type/file/source'      # can create the file
-require 'puppet/type/file/checksum_value' # can create the file, in place of content
-require 'puppet/type/file/target'      # creates a different type of file
-require 'puppet/type/file/ensure'      # can create the file
-require 'puppet/type/file/owner'
-require 'puppet/type/file/group'
-require 'puppet/type/file/mode'
-require 'puppet/type/file/type'
-require 'puppet/type/file/selcontext'  # SELinux file context
-require 'puppet/type/file/ctime'
-require 'puppet/type/file/mtime'
+require_relative 'file/checksum'
+require_relative 'file/content'     # can create the file
+require_relative 'file/source'      # can create the file
+require_relative 'file/checksum_value' # can create the file, in place of content
+require_relative 'file/target'      # creates a different type of file
+require_relative 'file/ensure'      # can create the file
+require_relative 'file/owner'
+require_relative 'file/group'
+require_relative 'file/mode'
+require_relative 'file/type'
+require_relative 'file/selcontext'  # SELinux file context
+require_relative 'file/ctime'
+require_relative 'file/mtime'

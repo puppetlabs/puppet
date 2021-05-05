@@ -1,10 +1,10 @@
 require 'timeout'
-require 'puppet/file_system/uniquefile'
+require_relative '../../puppet/file_system/uniquefile'
 
 module Puppet
   require 'rbconfig'
 
-  require 'puppet/error'
+  require_relative '../../puppet/error'
   # A command failed to execute.
   # @api public
   class ExecutionFailure < Puppet::Error

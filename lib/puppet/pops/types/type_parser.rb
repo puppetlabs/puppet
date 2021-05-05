@@ -1,4 +1,4 @@
-require 'puppet/concurrent/thread_local_singleton'
+require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 # This class provides parsing of Type Specification from a string into the Type
 # Model that is produced by the TypeFactory.

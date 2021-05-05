@@ -1,5 +1,5 @@
-require 'puppet/indirector/store_configs'
-require 'puppet/node'
+require_relative '../../../puppet/indirector/store_configs'
+require_relative '../../../puppet/node'
 
 class Puppet::Node::StoreConfigs < Puppet::Indirector::StoreConfigs
 

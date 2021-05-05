@@ -1,10 +1,10 @@
-require 'puppet/parser/scope'
-require 'puppet/pops/evaluator/compare_operator'
-require 'puppet/pops/evaluator/relationship_operator'
-require 'puppet/pops/evaluator/access_operator'
-require 'puppet/pops/evaluator/closure'
-require 'puppet/pops/evaluator/external_syntax_support'
-require 'puppet/pops/types/iterable'
+require_relative '../../../puppet/parser/scope'
+require_relative '../../../puppet/pops/evaluator/compare_operator'
+require_relative '../../../puppet/pops/evaluator/relationship_operator'
+require_relative '../../../puppet/pops/evaluator/access_operator'
+require_relative '../../../puppet/pops/evaluator/closure'
+require_relative '../../../puppet/pops/evaluator/external_syntax_support'
+require_relative '../../../puppet/pops/types/iterable'
 
 module Puppet::Pops
 module Evaluator

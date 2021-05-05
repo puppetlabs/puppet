@@ -135,7 +135,7 @@ Puppet::Util::Log.newdesttype :logstash_event do
 end
 
 Puppet::Util::Log.newdesttype :console do
-  require 'puppet/util/colors'
+  require_relative '../../../puppet/util/colors'
   include Puppet::Util::Colors
 
   def initialize

@@ -1,6 +1,6 @@
 require 'ostruct'
-require 'puppet/util/watched_file'
-require 'puppet/util/network_device'
+require_relative '../../../puppet/util/watched_file'
+require_relative '../../../puppet/util/network_device'
 
 class Puppet::Util::NetworkDevice::Config
 

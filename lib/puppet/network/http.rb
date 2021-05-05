@@ -12,17 +12,17 @@ module Puppet::Network::HTTP
   CA_URL_PREFIX = "/puppet-ca"
   CA_URL_VERSIONS = "v1"
 
-  require 'puppet/network/authconfig'
-  require 'puppet/network/authorization'
+  require_relative '../../puppet/network/authconfig'
+  require_relative '../../puppet/network/authorization'
 
-  require 'puppet/network/http/issues'
-  require 'puppet/network/http/error'
-  require 'puppet/network/http/route'
-  require 'puppet/network/http/api'
-  require 'puppet/network/http/api/master'
-  require 'puppet/network/http/api/master/v3'
-  require 'puppet/network/http/handler'
-  require 'puppet/network/http/response'
-  require 'puppet/network/http/request'
-  require 'puppet/network/http/memory_response'
+  require_relative 'http/issues'
+  require_relative 'http/error'
+  require_relative 'http/route'
+  require_relative 'http/api'
+  require_relative 'http/api/master'
+  require_relative 'http/api/master/v3'
+  require_relative 'http/handler'
+  require_relative 'http/response'
+  require_relative 'http/request'
+  require_relative 'http/memory_response'
 end

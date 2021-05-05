@@ -1,6 +1,6 @@
-require 'puppet/file_bucket'
-require 'puppet/indirector'
-require 'puppet/util/checksums'
+require_relative '../../puppet/file_bucket'
+require_relative '../../puppet/indirector'
+require_relative '../../puppet/util/checksums'
 require 'digest/md5'
 require 'stringio'
 

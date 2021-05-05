@@ -1,4 +1,4 @@
-require 'puppet/file_serving/mount'
+require_relative '../../../puppet/file_serving/mount'
 
 # This is the modules-specific mount: it knows how to search through
 # modules for files.  Yay.

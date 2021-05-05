@@ -1,4 +1,4 @@
-require 'puppet/util/checksums'
+require_relative '../../../puppet/util/checksums'
 
 # Specify which checksum algorithm to use when checksumming
 # files.

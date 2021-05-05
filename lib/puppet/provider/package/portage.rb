@@ -1,4 +1,4 @@
-require 'puppet/provider/package'
+require_relative '../../../puppet/provider/package'
 require 'fileutils'
 
 Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Package do

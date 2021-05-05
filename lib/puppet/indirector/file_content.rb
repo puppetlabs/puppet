@@ -2,4 +2,4 @@
 class Puppet::Indirector::FileContent # :nodoc:
 end
 
-require 'puppet/file_serving/content'
+require_relative '../../puppet/file_serving/content'

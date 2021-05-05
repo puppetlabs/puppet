@@ -6,11 +6,11 @@
 # or Token.new([token], locator) with the same API x[0] = token_symbol, x[1] = self, x[:key] = (:value, :file, :line, :pos) etc
 
 require 'strscan'
-require 'puppet/pops/parser/lexer_support'
-require 'puppet/pops/parser/heredoc_support'
-require 'puppet/pops/parser/interpolation_support'
-require 'puppet/pops/parser/epp_support'
-require 'puppet/pops/parser/slurp_support'
+require_relative '../../../puppet/pops/parser/lexer_support'
+require_relative '../../../puppet/pops/parser/heredoc_support'
+require_relative '../../../puppet/pops/parser/interpolation_support'
+require_relative '../../../puppet/pops/parser/epp_support'
+require_relative '../../../puppet/pops/parser/slurp_support'
 
 module Puppet::Pops
 module Parser

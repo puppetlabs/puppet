@@ -1,5 +1,5 @@
-require 'puppet/util/profiler'
-require 'puppet/util/profiler/wall_clock'
+require_relative '../../../puppet/util/profiler'
+require_relative '../../../puppet/util/profiler/wall_clock'
 
 class Puppet::Util::Profiler::Aggregate < Puppet::Util::Profiler::WallClock
   def initialize(logger, identifier)

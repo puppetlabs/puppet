@@ -1,4 +1,4 @@
-require 'puppet/util'
+require_relative '../../puppet/util'
 
 module Puppet::Util::RubyGems
 

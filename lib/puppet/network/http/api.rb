@@ -1,5 +1,5 @@
 class Puppet::Network::HTTP::API
-  require 'puppet/version'
+  require_relative '../../../puppet/version'
 
   def self.not_found
     Puppet::Network::HTTP::Route.
