@@ -50,6 +50,22 @@ Puppet::Type.newtype(:tidy) do
     end
   end
 
+  newparam(:max_files) do
+    desc "In case the resource is a directory and the recursion is enabled, puppet will
+      generate a new resource for each file file found, possible leading to
+      an excessive number of resources generated without any control.
+
+      Setting `max_files` will check the number of file resources that
+      will eventually be created and will raise a resource argument error if the
+      limit will be exceeded.
+
+      Use value `0` to disable the check. In this case, a warning is logged if
+      the number of files exceeds 1000."
+
+    defaultto 0
+    newvalues(/^[0-9]+$/)
+  end
+
   newparam(:matches) do
     desc <<-'EOT'
       One or more (shell type) file glob patterns, which restrict
@@ -256,9 +272,12 @@ Puppet::Type.newtype(:tidy) do
 
     case self[:recurse]
     when Integer, /^\d+$/
-      parameter = { :recurse => true, :recurselimit => self[:recurse] }
+      parameter = { :max_files => self[:max_files],
+                    :recurse => true,
+                    :recurselimit => self[:recurse] }
     when true, :true, :inf
-      parameter = { :recurse => true }
+      parameter = { :max_files => self[:max_files],
+                    :recurse => true }
     end
 
     if parameter

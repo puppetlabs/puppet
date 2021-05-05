@@ -909,9 +909,10 @@ describe Puppet::Resource::Catalog::Compiler do
         it "inlines child metadata" do
           catalog = compile_to_catalog(<<-MANIFEST, node)
             file { '#{path}':
-              ensure  => directory,
-              recurse => true,
-              source  => '#{source_dir}'
+              ensure    => directory,
+              recurse   => true,
+              source    => '#{source_dir}',
+              max_files => 1234,
             }
           MANIFEST
 
@@ -925,6 +926,7 @@ describe Puppet::Resource::Catalog::Compiler do
             :source_permissions => :ignore,
             :recurse            => true,
             :recurselimit       => nil,
+            :max_files          => 1234,
             :ignore             => nil,
           }
           expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(source_dir, options).and_return([metadata, child_metadata])
@@ -938,14 +940,15 @@ describe Puppet::Resource::Catalog::Compiler do
         it "uses resource parameters when inlining metadata" do
           catalog = compile_to_catalog(<<-MANIFEST, node)
             file { '#{path}':
-              ensure  => directory,
-              recurse => true,
-              source  => '#{source_dir}',
-              checksum => sha256,
+              ensure             => directory,
+              recurse            => true,
+              source             => '#{source_dir}',
+              checksum           => sha256,
               source_permissions => use_when_creating,
-              recurselimit => 2,
-              ignore => 'foo.+',
-              links => follow,
+              recurselimit       => 2,
+              max_files          => 4321,
+              ignore             => 'foo.+',
+              links              => follow,
             }
           MANIFEST
 
@@ -956,6 +959,7 @@ describe Puppet::Resource::Catalog::Compiler do
             :source_permissions => :use_when_creating,
             :recurse            => true,
             :recurselimit       => 2,
+            :max_files          => 4321,
             :ignore             => 'foo.+',
           }
           expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(source_dir, options).and_return([metadata, child_metadata])
