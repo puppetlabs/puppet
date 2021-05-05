@@ -1,4 +1,4 @@
-require 'puppet'
+require_relative '../../puppet'
 
 # A module for building AtFork handlers. These handlers are objects providing
 # pre/post fork callbacks modeled after those registered by the `pthread_atfork`
@@ -15,7 +15,7 @@ module Puppet::Util::AtFork
   @handler_class = loop do
     if Puppet::Util::Platform.solaris?
       begin
-        require 'puppet/util/at_fork/solaris'
+        require_relative 'at_fork/solaris'
         # using break to return a value from the loop block
         break Puppet::Util::AtFork::Solaris
       rescue LoadError => detail
@@ -24,7 +24,7 @@ module Puppet::Util::AtFork
       end
     end
 
-    require 'puppet/util/at_fork/noop'
+    require_relative 'at_fork/noop'
     # using break to return a value from the loop block
     break Puppet::Util::AtFork::Noop
   end
