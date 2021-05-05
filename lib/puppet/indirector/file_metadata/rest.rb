@@ -40,6 +40,7 @@ class Puppet::Indirector::FileMetadata::Rest < Puppet::Indirector::REST
       environment: request.environment.to_s,
       recurse: request.options[:recurse],
       recurselimit: request.options[:recurselimit],
+      max_files: request.options[:max_files],
       ignore: request.options[:ignore],
       links: request.options[:links],
       checksum_type: request.options[:checksum_type],

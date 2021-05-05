@@ -46,6 +46,13 @@ describe Puppet::FileServing::Fileset do
       expect(set.recurselimit).to eq(3)
     end
 
+    it "accepts a 'max_files' option" do
+      expect(Puppet::FileSystem).to receive(:lstat).with(somefile).and_return(double('stat'))
+      set = Puppet::FileServing::Fileset.new(somefile, :recurselimit => 3, :max_files => 100)
+      expect(set.recurselimit).to eq(3)
+      expect(set.max_files).to eq(100)
+    end
+
     it "accepts an 'ignore' option" do
       expect(Puppet::FileSystem).to receive(:lstat).with(somefile).and_return(double('stat'))
       set = Puppet::FileServing::Fileset.new(somefile, :ignore => ".svn")
@@ -160,6 +167,29 @@ describe Puppet::FileServing::Fileset do
       end
     end
 
+    def mock_big_dir_structure(path, stat_method = :lstat)
+      allow(Puppet::FileSystem).to receive(stat_method).with(path).and_return(@dirstat)
+
+      # Keep track of the files we're stubbing.
+      @files = %w{.}
+
+      top_names = (1..10).map {|i| "dir_#{i}" }
+      sub_names = (1..100).map {|i| "file__#{i}" }
+
+      allow(Dir).to receive(:entries).with(path, encoding: Encoding::UTF_8).and_return(top_names)
+      top_names.each do |subdir|
+        @files << subdir # relative path
+        subpath = File.join(path, subdir)
+        allow(Puppet::FileSystem).to receive(stat_method).with(subpath).and_return(@dirstat)
+        allow(Dir).to receive(:entries).with(subpath, encoding: Encoding::UTF_8).and_return(sub_names)
+        sub_names.each do |file|
+          @files << File.join(subdir, file) # relative path
+          subfile_path = File.join(subpath, file)
+          allow(Puppet::FileSystem).to receive(stat_method).with(subfile_path).and_return(@filestat)
+        end
+      end
+    end
+
     def setup_mocks_for_dir(mock_dir, base_path)
       path = File.join(base_path, mock_dir.name)
       allow(Puppet::FileSystem).to receive(:lstat).with(path).and_return(MockStat.new(path, true))
@@ -256,6 +286,20 @@ describe Puppet::FileServing::Fileset do
       @fileset.recurse = true
       @fileset.ignore = [0]
       expect(@fileset.files.find { |file| file.include?("0") }).to be_nil
+    end
+
+    it "raises exception if number of files is greater than :max_files" do
+      mock_dir_structure(@path)
+      @fileset.recurse = true
+      @fileset.max_files = 22
+      expect { @fileset.files }.to raise_error(Puppet::Error, "The directory '#{@path}' contains 28 entries, which exceeds the limit of 22 specified by the max_files parameter for this resource. The limit may be increased, but be aware that large number of file resources can result in excessive resource consumption and degraded performance. Consider using an alternate method to manage large directory trees")
+    end
+
+    it "logs a warning if number of files is greater than soft max_files limit of 1000" do
+      mock_big_dir_structure(@path)
+      @fileset.recurse = true
+      expect(Puppet).to receive(:warning).with("The directory '#{@path}' contains 1010 entries, which exceeds the default soft limit 1000 and may cause excessive resource consumption and degraded performance. To remove this warning set a value for `max_files` parameter or consider using an alternate method to manage large directory trees")
+      expect { @fileset.files }.to_not raise_error
     end
 
     it "ignores files that match a pattern given as a boolean" do

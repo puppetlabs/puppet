@@ -5,7 +5,7 @@ require 'puppet/file_serving/metadata'
 # Operate recursively on a path, returning a set of file paths.
 class Puppet::FileServing::Fileset
   attr_reader :path, :ignore, :links
-  attr_accessor :recurse, :recurselimit, :checksum_type
+  attr_accessor :recurse, :recurselimit, :max_files, :checksum_type
 
   # Produce a hash of files, with merged so that earlier files
   # with the same postfix win.  E.g., /dir1/subfile beats /dir2/subfile.
@@ -40,6 +40,7 @@ class Puppet::FileServing::Fileset
     self.links = :manage
     @recurse = false
     @recurselimit = :infinite
+    @max_files = 0
 
     if options.is_a?(Puppet::Indirector::Request)
       initialize_from_request(options)
@@ -58,6 +59,13 @@ class Puppet::FileServing::Fileset
   # level deep, which Find doesn't do.
   def files
     files = perform_recursion
+    soft_max_files = 1000
+
+    if max_files != 0  && files.size > max_files
+      raise Puppet::Error.new _("The directory '%{path}' contains %{entries} entries, which exceeds the limit of %{max_files} specified by the max_files parameter for this resource. The limit may be increased, but be aware that large number of file resources can result in excessive resource consumption and degraded performance. Consider using an alternate method to manage large directory trees") % { path: path, entries: files.size, max_files: max_files }
+    elsif max_files == 0 && files.size > soft_max_files
+      Puppet.warning _("The directory '%{path}' contains %{entries} entries, which exceeds the default soft limit %{max_files} and may cause excessive resource consumption and degraded performance. To remove this warning set a value for `max_files` parameter or consider using an alternate method to manage large directory trees") % { path: path, entries: files.size, max_files: soft_max_files }
+    end
 
     # Now strip off the leading path, so each file becomes relative, and remove
     # any slashes that might end up at the beginning of the path.
@@ -96,7 +104,7 @@ class Puppet::FileServing::Fileset
   end
 
   def initialize_from_request(request)
-    [:links, :ignore, :recurse, :recurselimit, :checksum_type].each do |param|
+    [:links, :ignore, :recurse, :recurselimit, :max_files, :checksum_type].each do |param|
       if request.options.include?(param) # use 'include?' so the values can be false
         value = request.options[param]
       elsif request.options.include?(param.to_s)
