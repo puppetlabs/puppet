@@ -3,7 +3,7 @@
 # This function is compatible with the stdlib function with the same name.
 #
 # The function does the following:
-# * For a `String` the conversion replaces all combinations of *_<char>* with an upcased version of the
+# * For a `String` the conversion replaces all combinations of `*_<char>*` with an upcased version of the
 #   character following the _.  This is done using Ruby system locale which handles some, but not all
 #   special international up-casing rules (for example German double-s ß is upcased to "Ss").
 # * For an `Iterable[Variant[String, Numeric]]` (for example an `Array`) each value is capitalized and the conversion is not recursive.
