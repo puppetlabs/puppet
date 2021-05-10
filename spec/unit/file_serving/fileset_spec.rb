@@ -302,6 +302,14 @@ describe Puppet::FileServing::Fileset do
       expect { @fileset.files }.to_not raise_error
     end
 
+    it "does not emit a warning if max_files is -1" do
+      mock_big_dir_structure(@path)
+      @fileset.recurse = true
+      @fileset.max_files = -1
+      expect(Puppet).to receive(:warning).never
+      @fileset.files
+    end
+
     it "ignores files that match a pattern given as a boolean" do
       mock_dir_structure(@path)
       @fileset.recurse = true
