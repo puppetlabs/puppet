@@ -128,17 +128,55 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
     services
   end
 
+  def logonaccount_insync?(current)
+    @normalized_logon_account ||= normalize_logonaccount
+    @resource[:logonaccount] = @normalized_logon_account
+
+    insync = @resource[:logonaccount] == current
+    self.logonpassword = @resource[:logonpassword] if insync
+    insync
+  end
+
   def logonaccount
     return unless Puppet::Util::Windows::Service.exists?(@resource[:name])
     Puppet::Util::Windows::Service.logon_account(@resource[:name])
   end
 
   def logonaccount=(value)
+    validate_logon_credentials
     Puppet::Util::Windows::Service.set_startup_configuration(@resource[:name], options: {logon_account: value, logon_password: @resource[:logonpassword]})
     restart if @resource[:ensure] == :running && [:running, :paused].include?(status)
   end
 
   def logonpassword=(value)
+    validate_logon_credentials
     Puppet::Util::Windows::Service.set_startup_configuration(@resource[:name], options: {logon_password: value})
+  end
+
+  private
+
+  def normalize_logonaccount
+    logon_account = @resource[:logonaccount].sub(/^\.\\/, "#{Puppet::Util::Windows::ADSI.computer_name}\\")
+    return 'LocalSystem' if Puppet::Util::Windows::User::localsystem?(logon_account)
+
+    @logonaccount_information ||= Puppet::Util::Windows::SID.name_to_principal(logon_account)
+    return logon_account unless @logonaccount_information
+    return ".\\#{@logonaccount_information.account}" if @logonaccount_information.domain == Puppet::Util::Windows::ADSI.computer_name
+    @logonaccount_information.domain_account
+  end
+
+  def validate_logon_credentials
+    unless Puppet::Util::Windows::User::localsystem?(@normalized_logon_account)
+      raise Puppet::Error.new("\"#{@normalized_logon_account}\" is not a valid account") unless @logonaccount_information && [:SidTypeUser, :SidTypeWellKnownGroup].include?(@logonaccount_information.account_type)
+
+      user_rights = Puppet::Util::Windows::User::get_rights(@logonaccount_information.domain_account) unless Puppet::Util::Windows::User::default_system_account?(@normalized_logon_account)
+      raise Puppet::Error.new("\"#{@normalized_logon_account}\" has the 'Log On As A Service' right set to denied.") if user_rights =~ /SeDenyServiceLogonRight/
+      raise Puppet::Error.new("\"#{@normalized_logon_account}\" is missing the 'Log On As A Service' right.") unless user_rights.nil? || user_rights =~ /SeServiceLogonRight/
+    end
+
+    is_a_predefined_local_account = Puppet::Util::Windows::User::default_system_account?(@normalized_logon_account) || @normalized_logon_account == 'LocalSystem'
+    account_info = @normalized_logon_account.split("\\")
+    able_to_logon = Puppet::Util::Windows::User.password_is?(account_info[1], @resource[:logonpassword], account_info[0]) unless is_a_predefined_local_account
+    raise Puppet::Error.new("The given password is invalid for user '#{@normalized_logon_account}'.") unless is_a_predefined_local_account || able_to_logon
   end
 end

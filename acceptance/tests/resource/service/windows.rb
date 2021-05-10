@@ -45,10 +45,27 @@ MANIFEST
   }
 
   new_user = "tempUser#{rand(999999).to_i}"
+  fresh_user = "freshUser#{rand(999999).to_i}"
+
+  fresh_user_manifest = <<-MANIFEST
+    user { '#{fresh_user}':
+      ensure => present,
+      password => 'freshUserPassword',
+      roles => 'SeServiceLogonRight'
+    }
+
+    service { '#{mock_service_nofail[:name]}':
+      logonaccount => '#{fresh_user}',
+      logonpassword => 'freshUserPassword',
+      require => User['#{fresh_user}']
+    }
+  MANIFEST
 
   teardown do
+    delete_service(agent, mock_service_nofail[:name])
     delete_service(agent, mock_service_long_start_stop[:name])
     on(agent, puppet("resource user #{new_user} ensure=absent"))
+    on(agent, puppet("resource user #{fresh_user} ensure=absent"))
   end
 
   agents.each do |agent|
@@ -87,10 +104,22 @@ MANIFEST
       assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Running')
     end
 
-    step 'Verify that we can change logonaccount, for an already running service, using SID' do
+    step 'Verify that we can change logonaccount, for an already running service, using user created in the same manifest' do
       assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
+      apply_manifest_on(agent, fresh_user_manifest, expect_changes: true)
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: fresh_user)
+    end
+
+    step 'Verify that running the same manifest twice causes no more changes' do
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: fresh_user)
+      apply_manifest_on(agent, fresh_user_manifest, catch_changes: true)
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: fresh_user)
+    end
+
+    step 'Verify that we can change logonaccount, for an already running service, using SID' do
+      assert_service_properties_on(agent, mock_service_nofail[:name], StartName: fresh_user)
       on(agent, puppet("resource service #{mock_service_nofail[:name]} logonaccount=S-1-5-19")) do |result|
-        assert_match(/Service\[#{mock_service_nofail[:name]}\]\/logonaccount: logonaccount changed 'LocalSystem' to '#{Regexp.escape(local_service_locale_name)}'/, result.stdout)
+        assert_match(/Service\[#{mock_service_nofail[:name]}\]\/logonaccount: logonaccount changed '.\\#{fresh_user}' to '#{Regexp.escape(local_service_locale_name)}'/, result.stdout)
         assert_no_match(/Transitioning the #{mock_service_nofail[:name]} service from SERVICE_RUNNING to SERVICE_STOPPED/, result.stdout, 
           "Expected no service restarts since ensure isn't being managed as 'running'.")
         assert_no_match(/Successfully started the #{mock_service_nofail[:name]} service/, result.stdout)
@@ -218,7 +247,7 @@ MANIFEST
     end
 
     step 'Verify that a user with `Logon As A Service` right denied will raise error when managing it as logonaccount for a service' do
-      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], logonaccount: new_user), :acceptable_exit_codes => [1], catch_changes: true) do |result|
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], logonaccount: new_user), :acceptable_exit_codes => [1, 4]) do |result|
         assert_match(/#{new_user}\" has the 'Log On As A Service' right set to denied./, result.stderr)
       end
       assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Stopped')
