@@ -81,6 +81,12 @@ describe Puppet::Configurer::Downloader do
       expect(file[:source_permissions]).to eq(:ignore)
     end
 
+    it "should ignore the max file limit" do
+      file = generate_file_resource
+
+      expect(file[:max_files]).to eq(-1)
+    end
+
     describe "on POSIX", :if => Puppet.features.posix? do
       it "should allow source_permissions to be overridden" do
         file = generate_file_resource(:source_permissions => :use)
