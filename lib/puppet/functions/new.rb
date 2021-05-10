@@ -661,12 +661,12 @@
 # | Format    | Default formats
 # | ------    | ---------------
 # | s         | binary as unquoted UTF-8 characters (errors if byte sequence is invalid UTF-8). Alternate form escapes non ascii bytes.
-# | p         | 'Binary("<base64strict>")'
-# | b         | '<base64>' - base64 string with newlines inserted
-# | B         | '<base64strict>' - base64 strict string (without newlines inserted)
-# | u         | '<base64urlsafe>' - base64 urlsafe string
-# | t         | 'Binary' - outputs the name of the type only
-# | T         | 'BINARY' - output the name of the type in all caps only
+# | p         | `'Binary("<base64strict>")'`
+# | b         | `'<base64>'` - base64 string with newlines inserted
+# | B         | `'<base64strict>'` - base64 strict string (without newlines inserted)
+# | u         | `'<base64urlsafe>'` - base64 urlsafe string
+# | t         | `'Binary'` - outputs the name of the type only
+# | T         | `'BINARY'` - output the name of the type in all caps only
 #
 # * The alternate form flag `#` will quote the binary or base64 text output.
 # * The format `%#s` allows invalid UTF-8 characters and outputs all non ascii bytes
