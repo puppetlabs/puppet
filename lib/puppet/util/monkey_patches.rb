@@ -90,6 +90,10 @@ if Puppet::Util::Platform.windows?
 end
 
 unless Puppet::Util::Platform.jruby_fips?
+  unless OpenSSL::X509.const_defined?(:V_ERR_HOSTNAME_MISMATCH)
+    OpenSSL::X509.const_set(:V_ERR_HOSTNAME_MISMATCH, 62)
+  end
+
   unless OpenSSL::X509::Name.instance_methods.include?(:to_utf8)
     class OpenSSL::X509::Name
       # https://github.com/openssl/openssl/blob/OpenSSL_1_1_0j/include/openssl/asn1.h#L362
