@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 7.6.1-59-g0ccaccd84e\n"
+"Project-Id-Version: Puppet automation framework 7.6.1-91-g3f8691353f\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-05-05 08:07+0000\n"
-"PO-Revision-Date: 2021-05-05 08:07+0000\n"
+"POT-Creation-Date: 2021-05-12 16:37+0000\n"
+"PO-Revision-Date: 2021-05-12 16:37+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -1650,20 +1650,20 @@ msgstr ""
 msgid "Fileset recurse parameter must not be a number anymore, please use recurselimit"
 msgstr ""
 
-#: ../lib/puppet/file_serving/fileset.rb:65
-msgid "The directory '%{path}' contains %{entries} entries, which exceeds the limit of %{max_files} specified by the max_files parameter for this resource. The limit may be increased, but be aware that large number of file resources can result in excessive resource consumption and degraded performance. Consider using an alternate method to manage large directory trees"
+#: ../lib/puppet/file_serving/fileset.rb:69
+msgid "The directory '%{path}' contains %{entries} entries, which exceeds the limit of %{munged_max_files} specified by the max_files parameter for this resource. The limit may be increased, but be aware that large number of file resources can result in excessive resource consumption and degraded performance. Consider using an alternate method to manage large directory trees"
 msgstr ""
 
-#: ../lib/puppet/file_serving/fileset.rb:67
-msgid "The directory '%{path}' contains %{entries} entries, which exceeds the default soft limit %{max_files} and may cause excessive resource consumption and degraded performance. To remove this warning set a value for `max_files` parameter or consider using an alternate method to manage large directory trees"
+#: ../lib/puppet/file_serving/fileset.rb:71
+msgid "The directory '%{path}' contains %{entries} entries, which exceeds the default soft limit %{soft_max_files} and may cause excessive resource consumption and degraded performance. To remove this warning set a value for `max_files` parameter or consider using an alternate method to manage large directory trees"
 msgstr ""
 
 #. TRANSLATORS ":links" is a parameter name and should not be translated
-#: ../lib/puppet/file_serving/fileset.rb:88
+#: ../lib/puppet/file_serving/fileset.rb:92
 msgid "Invalid :links value '%{links}'"
 msgstr ""
 
-#: ../lib/puppet/file_serving/fileset.rb:101
+#: ../lib/puppet/file_serving/fileset.rb:105
 msgid "Invalid option '%{option}'"
 msgstr ""
 
@@ -1747,7 +1747,7 @@ msgstr ""
 msgid "Timeout waiting for exclusive lock on %{path}"
 msgstr ""
 
-#: ../lib/puppet/file_system/jruby.rb:18 ../lib/puppet/file_system/windows.rb:127 ../lib/puppet/util.rb:706
+#: ../lib/puppet/file_system/jruby.rb:18 ../lib/puppet/file_system/windows.rb:127 ../lib/puppet/util.rb:715
 msgid "Is a directory: %{directory}"
 msgstr ""
 
@@ -2853,8 +2853,8 @@ msgstr ""
 msgid "Option %{option} conflicts with existing option %{conflict} on %{face}"
 msgstr ""
 
-#. TRANSLATORS 'Puppet.settings' references to the Puppet settings options and should not be translated
 #. TRANSLATORS 'Puppet.settings' should not be translated
+#. TRANSLATORS 'Puppet.settings' references to the Puppet settings options and should not be translated
 #: ../lib/puppet/interface/action.rb:315 ../lib/puppet/interface/option_manager.rb:14
 msgid "Global option %{option} does not exist in Puppet.settings"
 msgstr ""
@@ -6749,7 +6749,7 @@ msgstr ""
 msgid "Somehow got told to prefetch with no resource set"
 msgstr ""
 
-#: ../lib/puppet/provider/service/base.rb:121
+#: ../lib/puppet/provider/service/base.rb:123
 msgid "%{name} is not running"
 msgstr ""
 
@@ -6775,15 +6775,15 @@ msgstr ""
 msgid "Waiting 5 seconds for runsvdir to discover service %{service}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/smf.rb:120
+#: ../lib/puppet/provider/service/smf.rb:96
 msgid "Failed to get the FMRI of the %{service} service: The pattern '%{service}' matches multiple FMRIs! These are the FMRIs it matches: %{all_fmris}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/smf.rb:135
+#: ../lib/puppet/provider/service/smf.rb:111
 msgid "Cannot query if the %{service} service is complete: The concept of complete/incomplete services was introduced in Solaris 11.1. You are on a Solaris %{release} machine."
 msgstr ""
 
-#: ../lib/puppet/provider/service/smf.rb:221
+#: ../lib/puppet/provider/service/smf.rb:197
 msgid "The %{service} service is incomplete so its status will be reported as :stopped. See `svcs -xv %{fmri}` for more details."
 msgstr ""
 
@@ -7600,7 +7600,7 @@ msgid "Verified CA certificate '%{subject}' fingerprint %{digest}"
 msgstr ""
 
 #. TRANSLATORS: `error` is an untranslated message from openssl describing why a certificate in the server's chain is invalid, and `subject` is the identity/name of the failed certificate
-#: ../lib/puppet/ssl/verifier.rb:130
+#: ../lib/puppet/ssl/verifier.rb:134
 msgid "certificate verify failed [%{error} for %{subject}]"
 msgstr ""
 
@@ -8017,74 +8017,74 @@ msgstr ""
 msgid "Invalid recurselimit value %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:432
+#: ../lib/puppet/type/file.rb:433
 msgid "You cannot specify more than one of %{creators}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:434
+#: ../lib/puppet/type/file.rb:435
 msgid "You cannot specify a remote recursion without a source"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:436
+#: ../lib/puppet/type/file.rb:437
 msgid "You cannot specify source when using checksum 'none'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:439
+#: ../lib/puppet/type/file.rb:440
 msgid "You cannot specify content when using checksum '%{checksum_type}'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:442
+#: ../lib/puppet/type/file.rb:443
 msgid "Possible error: recurselimit is set but not recurse, no recursion will happen"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:450
+#: ../lib/puppet/type/file.rb:451
 msgid "Checksum value '%{value}' is not a valid checksum type %{checksum}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:453
+#: ../lib/puppet/type/file.rb:454
 msgid "Checksum value is ignored unless content or source are specified"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:491
+#: ../lib/puppet/type/file.rb:492
 msgid "Can not find filebucket for backups without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:496
+#: ../lib/puppet/type/file.rb:497
 msgid "Could not find filebucket %{backup} specified in backup"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:795
+#: ../lib/puppet/type/file.rb:796
 msgid "Could not back up file of type %{current_type}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:810
+#: ../lib/puppet/type/file.rb:811
 msgid "Could not remove files of type %{current_type}"
 msgstr ""
 
 #. TRANSLATORS "source_permissions => ignore" should not be translated
-#: ../lib/puppet/type/file.rb:821
+#: ../lib/puppet/type/file.rb:822
 msgid "Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore."
 msgstr ""
 
 #. TRANSLATORS "stat" is a program name and should not be translated
-#: ../lib/puppet/type/file.rb:902 ../lib/puppet/type/tidy.rb:371
+#: ../lib/puppet/type/file.rb:903 ../lib/puppet/type/tidy.rb:371
 msgid "Could not stat; permission denied"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:905
+#: ../lib/puppet/type/file.rb:906
 msgid "Could not stat; invalid pathname"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:1033
+#: ../lib/puppet/type/file.rb:1034
 msgid "Not removing directory; use 'force' to override"
 msgstr ""
 
 #. TRANSLATORS refers to a file which could not be backed up
-#: ../lib/puppet/type/file.rb:1058
+#: ../lib/puppet/type/file.rb:1059
 msgid "Could not back up; will not remove"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:1073
+#: ../lib/puppet/type/file.rb:1074
 msgid "File written to disk did not match desired checksum; discarding changes (%{content_checksum} vs %{desired_checksum})"
 msgstr ""
 
@@ -8238,16 +8238,16 @@ msgstr ""
 msgid "Setting enable to %{value} is only supported on Microsoft Windows."
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:166
-msgid "The 'logonaccount' parameter is mandatory when setting 'logonpassword'."
-msgstr ""
-
-#: ../lib/puppet/type/service.rb:167 ../lib/puppet/type/user.rb:271
+#: ../lib/puppet/type/service.rb:152 ../lib/puppet/type/user.rb:271
 msgid "Passwords cannot include ':'"
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:304
+#: ../lib/puppet/type/service.rb:279
 msgid "\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer"
+msgstr ""
+
+#: ../lib/puppet/type/service.rb:301
+msgid "The 'logonaccount' parameter is mandatory when setting 'logonpassword'."
 msgstr ""
 
 #: ../lib/puppet/type/tidy.rb:101
@@ -8418,11 +8418,11 @@ msgstr ""
 msgid "path may not be nil"
 msgstr ""
 
-#: ../lib/puppet/util.rb:621
+#: ../lib/puppet/util.rb:630
 msgid "replace_file requires a block"
 msgstr ""
 
-#: ../lib/puppet/util.rb:625
+#: ../lib/puppet/util.rb:634
 msgid "replace_file default_mode: %{default_mode} is invalid"
 msgstr ""
 
