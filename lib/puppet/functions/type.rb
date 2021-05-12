@@ -35,10 +35,10 @@
 #
 # Would notice the four values:
 #
-# 1. 'Array[Numeric]'
-# 2. 'Array[Numeric, 2, 2]'
-# 3. 'Tuple[Float[3.14], Integer[42,42]]]'
-# 4. 'Tuple[Float[3.14], Integer[42,42]]]'
+# 1. `Array[Numeric]`
+# 2. `Array[Numeric, 2, 2]`
+# 3. `Tuple[Float[3.14], Integer[42,42]]]`
+# 4. `Tuple[Float[3.14], Integer[42,42]]]`
 #
 # @since 4.4.0
 #

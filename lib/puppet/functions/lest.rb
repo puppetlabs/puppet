@@ -23,7 +23,7 @@
 #  .lest || { fail("no value for $data[a][b][c]" }
 # ```
 #
-# Would fail the operation because $data[a][b][c] results in `undef`
+# Would fail the operation because `$data[a][b][c]` results in `undef`
 # (there is no `b` key in `a`).
 #
 # In contrast - this example:

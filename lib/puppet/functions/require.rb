@@ -9,8 +9,8 @@
 #
 # Warning: using require in place of include can lead to unwanted dependency cycles.
 #
-# For instance the following manifest, with 'require' instead of 'include' would produce a nasty
-# dependence cycle, because notify imposes a before between File[/foo] and Service[foo]:
+# For instance the following manifest, with `require` instead of `include` would produce a nasty
+# dependence cycle, because notify imposes a before between `File[/foo]` and `Service[foo]`:
 #
 # ```puppet
 # class myservice {
@@ -32,7 +32,7 @@
 # resource and relationship expressions.
 #
 # - Since 4.0.0 Class and Resource types, absolute names
-# - Since 4.7.0 Returns an Array[Type[Class]] with references to the required classes
+# - Since 4.7.0 Returns an `Array[Type[Class]]` with references to the required classes
 #
 Puppet::Functions.create_function(:require, Puppet::Functions::InternalFunction) do
   dispatch :require_impl do

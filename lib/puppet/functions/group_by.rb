@@ -4,14 +4,22 @@
 # and the values are arrays of elements in the collection that correspond to the key.
 Puppet::Functions.create_function(:group_by) do
   # @param collection A collection of things to group.
-  # @example Group array of strings by length, results in e.g. { 1 => [a, b], 2 => [ab] }
+  # @example Group array of strings by length, results in e.g. `{ 1 => [a, b], 2 => [ab] }`
+  #   ```puppet
   #   [a, b, ab].group_by |$s| { $s.length }
-  # @example Group array of strings by length and index, results in e.g. {1 => ['a'], 2 => ['b', 'ab']}
+  #   ```
+  # @example Group array of strings by length and index, results in e.g. `{1 => ['a'], 2 => ['b', 'ab']}`
+  #   ```puppet
   #   [a, b, ab].group_by |$i, $s| { $i%2 + $s.length }
-  # @example Group hash iterating by key-value pair, results in e.g. { 2 => [['a', [1, 2]]], 1 => [['b', [1]]] }
+  #   ```
+  # @example Group hash iterating by key-value pair, results in e.g. `{ 2 => [['a', [1, 2]]], 1 => [['b', [1]]] }`
+  #   ```puppet
   #   { a => [1, 2], b => [1] }.group_by |$kv| { $kv[1].length }
-  # @example Group hash iterating by key and value, results in e.g. { 2 => [['a', [1, 2]]], 1 => [['b', [1]]] }
-  #   { a => [1, 2], b => [1] }.group_by |$k, $v| { $v.length }
+  #   ```
+  # @example Group hash iterating by key and value, results in e.g. `{ 2 => [['a', [1, 2]]], 1 => [['b', [1]]] }`
+  #   ```puppet
+  #    { a => [1, 2], b => [1] }.group_by |$k, $v| { $v.length }
+  #   ```
   dispatch :group_by_1 do
     required_param 'Collection', :collection
     block_param 'Callable[1,1]', :block

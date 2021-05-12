@@ -23,20 +23,20 @@
 # #get($facts, 'os.family')
 # $facts.get('os.family')
 # ```
-# Would both result in the value of $facts['os']['family']
+# Would both result in the value of `$facts['os']['family']`
 #
 # @example Getting the value from an expression
 # ```puppet
 # get([1,2,[{'name' =>'waldo'}]], '2.0.name')
 # ```
-# Would result in 'waldo'
+# Would result in `'waldo'`
 #
 # @example Using a default value
 # ```puppet
 # get([1,2,[{'name' =>'waldo'}]], '2.1.name', 'not waldo')
 #
 # ```
-# Would result in 'not waldo'
+# Would result in `'not waldo'`
 #
 # @example Quoting a key with period
 # ```puppet
@@ -102,7 +102,7 @@
 #   notice("Walked path is ${error.details['walked_path']}")
 # }
 # ```
-# Would notice `Walked path is [2, color]`
+# Would notice ``Walked path is [2, color]``
 #
 # Also see:
 # * `getvar()` that takes the first segment to be the name of a variable
@@ -128,8 +128,8 @@ Puppet::Functions.create_function(:get, Puppet::Functions::InternalFunction) do
 
     # Note: split_key always processes the initial segment as a string even if it could be an integer.
     # This since it is designed for lookup keys. For a numeric first segment
-    # like '0.1' the wanted result is [0,1], not ["0", 1]. The workaround here is to
-    # prefix the navigation with "x." thus giving split_key a first segment that is a string.
+    # like '0.1' the wanted result is `[0,1]`, not `["0", 1]`. The workaround here is to
+    # prefix the navigation with `"x."` thus giving split_key a first segment that is a string.
     # The fake segment is then dropped.
     segments = split_key("x." + navigation) {|err| _("Syntax error in dotted-navigation string")}
     segments.shift
