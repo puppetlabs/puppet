@@ -34,7 +34,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
   end
 
   def enabled?
-    status = execute("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start")
+    status = execute(["/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start"], :failonfail => false)
 
     # 104 is the exit status when you query start an enabled service.
     # 106 is the exit status when the policy layer supplies a fallback action
