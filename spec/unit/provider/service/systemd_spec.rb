@@ -10,17 +10,12 @@ describe 'Puppet::Type::Service::Provider::Systemd',
     allow(provider_class).to receive(:which).with('systemctl').and_return('/bin/systemctl')
   end
 
-  # `execute` and `texecute` start a new process, consequently setting $CHILD_STATUS to a Process::Status instance,
-  # but because they are mocked, an external process is never executed and $CHILD_STATUS remain nil.
-  # In order to execute some parts of the code under test and to mock $CHILD_STATUS, we need this variable to be a
-  # Process::Status instance. We can achieve this by starting a process that does nothing (exit 0). By doing this,
-  # $CHILD_STATUS will be initialised with a instance of Process::Status and we will be able to mock it.
-  before(:all) do
-    `exit 0`
-  end
-
   let :provider do
     provider_class.new(:name => 'sshd.service')
+  end
+
+  let :process_output do
+    Puppet::Util::Execution::ProcessOutput.new('', 0)
   end
 
   osfamilies = [ 'archlinux', 'coreos' ]
@@ -369,25 +364,29 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
   # Note: systemd provider does not care about hasstatus or a custom status
   # command. I just assume that it does not make sense for systemd.
   describe "#status" do
-    it "should return running if if the command returns 0" do
+    it "should return running if the command returns 0" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-active', '--', 'sshd.service'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).and_return("active\n")
-      allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+      expect(provider).to receive(:execute)
+        .with(['/bin/systemctl','is-active', '--', 'sshd.service'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        .and_return(Puppet::Util::Execution::ProcessOutput.new("active\n", 0))
       expect(provider.status).to eq(:running)
     end
 
     [-10,-1,3,10].each { |ec|
       it "should return stopped if the command returns something non-0" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-        expect(provider).to receive(:execute).with(['/bin/systemctl','is-active', '--', 'sshd.service'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).and_return("inactive\n")
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(ec)
+        expect(provider).to receive(:execute)
+          .with(['/bin/systemctl','is-active', '--', 'sshd.service'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new("inactive\n", ec))
         expect(provider.status).to eq(:stopped)
       end
     }
 
     it "should use the supplied status command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :status => '/bin/foo'))
-      expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+      expect(provider).to receive(:execute)
+        .with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        .and_return(process_output)
       provider.status
     end
   end
@@ -430,8 +429,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
     [104, 106].each do |status|
       it "should return true when invoke-rc.d returns #{status}" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-        allow(provider).to receive(:system)
-        expect($CHILD_STATUS).to receive(:exitstatus).and_return(status)
+        allow(provider).to receive(:execute).and_return(Puppet::Util::Execution::ProcessOutput.new('', status))
         expect(provider.debian_enabled?).to eq(:true)
       end
     end
@@ -439,17 +437,15 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
     [101, 105].each do |status|
       it "should return true when status is #{status} and there are at least 4 start links" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-        allow(provider).to receive(:system)
+        allow(provider).to receive(:execute).and_return(Puppet::Util::Execution::ProcessOutput.new('', status))
         expect(provider).to receive(:get_start_link_count).and_return(4)
-        expect($CHILD_STATUS).to receive(:exitstatus).twice.and_return(status)
         expect(provider.debian_enabled?).to eq(:true)
       end
 
       it "should return false when status is #{status} and there are less than 4 start links" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-        allow(provider).to receive(:system)
+        allow(provider).to receive(:execute).and_return(Puppet::Util::Execution::ProcessOutput.new('', status))
         expect(provider).to receive(:get_start_link_count).and_return(1)
-        expect($CHILD_STATUS).to receive(:exitstatus).twice.and_return(status)
         expect(provider.debian_enabled?).to eq(:false)
       end
     end

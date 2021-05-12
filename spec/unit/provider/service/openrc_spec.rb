@@ -4,10 +4,6 @@ describe 'Puppet::Type::Service::Provider::Openrc',
          unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:openrc) }
 
-  before :all do
-    `exit 0`
-  end
-
   before :each do
     allow(Puppet::Type.type(:service)).to receive(:defaultprovider).and_return(provider_class)
     ['/sbin/rc-service', '/bin/rc-status', '/sbin/rc-update'].each do |command|
@@ -150,24 +146,27 @@ describe 'Puppet::Type::Service::Provider::Openrc',
       it "should use the status command from the resource" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
         expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+        expect(provider).to receive(:execute)
+          .with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
         provider.status
       end
 
       it "should return :stopped when status command returns with a non-zero exitcode" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
         expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(3)
+        expect(provider).to receive(:execute)
+          .with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 3))
         expect(provider.status).to eq(:stopped)
       end
 
       it "should return :running when status command returns with a zero exitcode" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
         expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+        expect(provider).to receive(:execute)
+          .with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
         expect(provider.status).to eq(:running)
       end
     end
@@ -191,15 +190,17 @@ describe 'Puppet::Type::Service::Provider::Openrc',
     describe "when hasstatus is true" do
       it "should return running if rc-service status exits with a zero exitcode" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => true))
-        expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+        expect(provider).to receive(:execute)
+          .with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
         expect(provider.status).to eq(:running)
       end
 
       it "should return stopped if rc-service status exits with a non-zero exitcode" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => true))
-        expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(3)
+        expect(provider).to receive(:execute)
+          .with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 3))
         expect(provider.status).to eq(:stopped)
       end
     end

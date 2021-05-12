@@ -5,10 +5,7 @@ describe 'Puppet::Type::Service::Provider::Upstart',
   let(:manual) { "\nmanual" }
   let(:start_on_default_runlevels) {  "\nstart on runlevel [2,3,4,5]" }
   let!(:provider_class) { Puppet::Type.type(:service).provider(:upstart) }
-
-  before :each do
-    `exit 0`
-  end
+  let(:process_output) { Puppet::Util::Execution::ProcessOutput.new('', 0) }
 
   def given_contents_of(file, content)
     File.open(file, 'w') do |f|
@@ -121,8 +118,9 @@ describe 'Puppet::Type::Service::Provider::Upstart',
       provider = provider_class.new(resource)
       allow(provider).to receive(:is_upstart?).and_return(true)
 
-      expect(provider).to receive(:status_exec).with(["foo"]).and_return("foo start/running, process 1000")
-      allow_any_instance_of(Process::Status).to receive(:exitstatus).and_return(0)
+      expect(provider).to receive(:status_exec)
+        .with(["foo"])
+        .and_return(Puppet::Util::Execution::ProcessOutput.new("foo start/running, process 1000", 0))
       expect(provider.status).to eq(:running)
     end
 
@@ -133,8 +131,9 @@ describe 'Puppet::Type::Service::Provider::Upstart',
         allow(provider).to receive(:is_upstart?).and_return(true)
 
         expect(provider).not_to receive(:status_exec).with(['foo'])
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow_any_instance_of(Process::Status).to receive(:exitstatus).and_return(0)
+        expect(provider).to receive(:execute)
+          .with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(process_output)
         provider.status
       end
 
@@ -144,8 +143,9 @@ describe 'Puppet::Type::Service::Provider::Upstart',
         allow(provider).to receive(:is_upstart?).and_return(true)
 
         expect(provider).not_to receive(:status_exec).with(['foo'])
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(1)
+        expect(provider).to receive(:execute)
+          .with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 1))
         expect(provider.status).to eq(:stopped)
       end
 
@@ -155,8 +155,9 @@ describe 'Puppet::Type::Service::Provider::Upstart',
         allow(provider).to receive(:is_upstart?).and_return(true)
 
         expect(provider).not_to receive(:status_exec).with(['foo'])
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+        expect(provider).to receive(:execute)
+          .with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(process_output)
         expect(provider.status).to eq(:running)
       end
     end
@@ -190,8 +191,9 @@ describe 'Puppet::Type::Service::Provider::Upstart',
         allow(provider).to receive(:is_upstart?).and_return(true)
 
         expect(provider).not_to receive(:status_exec).with(['foo'])
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow_any_instance_of(Process::Status).to receive(:exitstatus).and_return(0)
+        expect(provider).to receive(:execute)
+          .with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(process_output)
         provider.status
       end
 
@@ -201,8 +203,9 @@ describe 'Puppet::Type::Service::Provider::Upstart',
         allow(provider).to receive(:is_upstart?).and_return(true)
 
         expect(provider).not_to receive(:status_exec).with(['foo'])
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(1)
+        expect(provider).to receive(:execute)
+          .with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 1))
         expect(provider.status).to eq(:stopped)
       end
 
@@ -212,8 +215,9 @@ describe 'Puppet::Type::Service::Provider::Upstart',
         allow(provider).to receive(:is_upstart?).and_return(true)
 
         expect(provider).not_to receive(:status_exec).with(['foo'])
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+        expect(provider).to receive(:execute)
+          .with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(process_output)
         expect(provider.status).to eq(:running)
       end
     end
@@ -245,8 +249,9 @@ describe 'Puppet::Type::Service::Provider::Upstart',
       provider = provider_class.new(resource)
       allow(provider).to receive(:is_upstart?).and_return(true)
 
-      expect(provider).to receive(:status_exec).with(["foostartbar"]).and_return("foostartbar stop/waiting")
-      allow_any_instance_of(Process::Status).to receive(:exitstatus).and_return(0)
+      expect(provider).to receive(:status_exec)
+        .with(["foostartbar"]).and_return("foostartbar stop/waiting")
+        .and_return(process_output)
       expect(provider.status).to eq(:stopped)
     end
   end

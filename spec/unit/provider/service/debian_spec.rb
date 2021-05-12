@@ -4,10 +4,6 @@ describe 'Puppet::Type::Service::Provider::Debian',
          unless: Puppet::Util::Platform.jruby? || Puppet::Util::Platform.windows? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:debian) }
 
-  before(:all) do
-    `exit 0`
-  end
-
   before(:each) do
     # Create a mock resource
     @resource = double('resource')
@@ -90,34 +86,29 @@ describe 'Puppet::Type::Service::Provider::Debian',
   end
 
   context "when checking whether it is enabled" do
-    it "should call Kernel.system() with the appropriate parameters" do
-      expect(@provider).to receive(:system).with("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start").once
-      allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+    it "should execute the query command" do
+      expect(@provider).to receive(:execute).with("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start").and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
       @provider.enabled?
     end
 
     it "should return true when invoke-rc.d exits with 104 status" do
-      allow(@provider).to receive(:system)
-      allow($CHILD_STATUS).to receive(:exitstatus).and_return(104)
+      expect(@provider).to receive(:execute).and_return(Puppet::Util::Execution::ProcessOutput.new('', 104))
       expect(@provider.enabled?).to eq(:true)
     end
 
     it "should return true when invoke-rc.d exits with 106 status" do
-      allow(@provider).to receive(:system)
-      allow($CHILD_STATUS).to receive(:exitstatus).and_return(106)
+      expect(@provider).to receive(:execute).and_return(Puppet::Util::Execution::ProcessOutput.new('', 106))
       expect(@provider.enabled?).to eq(:true)
     end
 
     shared_examples "manually queries service status" do |status|
       it "links count is 4" do
-        allow(@provider).to receive(:system)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(status)
+        allow(@provider).to receive(:execute).and_return(Puppet::Util::Execution::ProcessOutput.new('', status))
         allow(@provider).to receive(:get_start_link_count).and_return(4)
         expect(@provider.enabled?).to eq(:true)
       end
       it "links count is less than 4" do
-        allow(@provider).to receive(:system)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(status)
+        allow(@provider).to receive(:execute).and_return(Puppet::Util::Execution::ProcessOutput.new('', status))
         allow(@provider).to receive(:get_start_link_count).and_return(3)
         expect(@provider.enabled?).to eq(:false)
       end
@@ -142,8 +133,7 @@ describe 'Puppet::Type::Service::Provider::Debian',
     # pick a range of non-[104.106] numbers, strings and booleans to test with.
     [-100, -1, 0, 1, 100, "foo", "", :true, :false].each do |exitstatus|
       it "should return false when invoke-rc.d exits with #{exitstatus} status" do
-        allow(@provider).to receive(:system)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(exitstatus)
+        allow(@provider).to receive(:execute).and_return(Puppet::Util::Execution::ProcessOutput.new('', exitstatus))
         expect(@provider.enabled?).to eq(:false)
       end
     end

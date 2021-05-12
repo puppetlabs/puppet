@@ -4,10 +4,6 @@ describe 'Puppet::Type::Service::Provider::Src',
          unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:src) }
 
-  before :all do
-    `exit 0`
-  end
-
   before :each do
     @resource = double('resource')
     allow(@resource).to receive(:[]).and_return(nil)
@@ -110,20 +106,19 @@ _EOF_
 
   context "when checking if it is enabled" do
     it "should execute the lsitab command" do
-      expect(@provider).to receive(:execute).with(['/usr/sbin/lsitab', 'myservice'], {:combine => true, :failonfail => false})
-      allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+      expect(@provider).to receive(:execute)
+        .with(['/usr/sbin/lsitab', 'myservice'], {:combine => true, :failonfail => false})
+        .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
       @provider.enabled?
     end
 
     it "should return false when lsitab returns non-zero" do
-      allow(@provider).to receive(:execute)
-      allow($CHILD_STATUS).to receive(:exitstatus).and_return(1)
+      expect(@provider).to receive(:execute).and_return(Puppet::Util::Execution::ProcessOutput.new('', 1))
       expect(@provider.enabled?).to eq(:false)
     end
 
     it "should return true when lsitab returns zero" do
-      allow(@provider).to receive(:execute)
-      allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+      allow(@provider).to receive(:execute).and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
       expect(@provider.enabled?).to eq(:true)
     end
   end

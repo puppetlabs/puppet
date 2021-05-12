@@ -4,10 +4,6 @@ describe 'Puppet::Type::Service::Provider::Gentoo',
          unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:gentoo) }
 
-  before(:all) do
-    `exit 0`
-  end
-
   before :each do
     allow(Puppet::Type.type(:service)).to receive(:defaultprovider).and_return(provider_class)
     allow(FileTest).to receive(:file?).with('/sbin/rc-update').and_return(true)
@@ -44,6 +40,10 @@ describe 'Puppet::Type::Service::Provider::Gentoo',
       'reboot.sh',
       'shutdown.sh'
     ]
+  end
+
+  let :process_output do
+    Puppet::Util::Execution::ProcessOutput.new('', 0)
   end
 
   describe ".instances" do
@@ -160,24 +160,27 @@ describe 'Puppet::Type::Service::Provider::Gentoo',
       it "should use the status command from the resource" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
         expect(provider).not_to receive(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+        expect(provider).to receive(:execute)
+          .with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(process_output)
         provider.status
       end
 
       it "should return :stopped when the status command returns with a non-zero exitcode" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
         expect(provider).not_to receive(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(3)
+        expect(provider).to receive(:execute)
+          .with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 3))
         expect(provider.status).to eq(:stopped)
       end
 
       it "should return :running when the status command returns with a zero exitcode" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
         expect(provider).not_to receive(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+        expect(provider).to receive(:execute)
+          .with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(process_output)
         expect(provider.status).to eq(:running)
       end
     end
@@ -202,16 +205,18 @@ describe 'Puppet::Type::Service::Provider::Gentoo',
       it "should return running if <initscript> status exits with a zero exitcode" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => true))
         expect(provider).to receive(:search).with('sshd').and_return('/etc/init.d/sshd')
-        expect(provider).to receive(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+        expect(provider).to receive(:execute)
+          .with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(process_output)
         expect(provider.status).to eq(:running)
       end
 
       it "should return stopped if <initscript> status exits with a non-zero exitcode" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => true))
         expect(provider).to receive(:search).with('sshd').and_return('/etc/init.d/sshd')
-        expect(provider).to receive(:execute).with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(3)
+        expect(provider).to receive(:execute)
+          .with(['/etc/init.d/sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 3))
         expect(provider.status).to eq(:stopped)
       end
     end

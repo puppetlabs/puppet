@@ -255,12 +255,12 @@ describe 'Puppet::Type::Service::Provider::Smf',
 
     before(:each) do
       allow(@provider).to receive(:service_fmri).and_return(fmri)
-      allow(@provider).to receive(:texecute)
+      allow(@provider).to receive(:execute)
       allow(@provider).to receive(:wait)
     end
 
     it 'should restart the service' do
-      expect(@provider).to receive(:texecute)
+      expect(@provider).to receive(:execute)
       @provider.restart
     end
 
@@ -286,9 +286,9 @@ describe 'Puppet::Type::Service::Provider::Smf',
 
     it "should run the status command if it's passed in" do
       set_resource_params({ :status => 'status_cmd' })
-      expect(@provider).to receive(:ucommand).with(:status, false) do |_, _|
-        expect($CHILD_STATUS).to receive(:exitstatus).and_return(0)
-      end
+      expect(@provider).to receive(:execute)
+        .with(["status_cmd"], hash_including(failonfail: false))
+        .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
       expect(@provider).not_to receive(:service_states)
 
       expect(@provider.status).to eql(:running)
@@ -338,6 +338,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     it "should return stopped for an incomplete service on Solaris 11" do
       allow(Facter).to receive(:value).with(:operatingsystemrelease).and_return('11.3')
       allow(@provider).to receive(:complete_service?).and_return(false)
+      allow(@provider).to receive(:svcs).with('-l', @provider.resource[:name]).and_return(File.read(my_fixture('svcs_fmri.out')))
       expect(@provider.status).to eq(:stopped)
     end
   end

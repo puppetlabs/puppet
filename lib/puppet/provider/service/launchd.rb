@@ -262,7 +262,10 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # conditionally enable at load, then disable by modifying the plist file
   # directly.
   def start
-    return ucommand(:start) if resource[:start]
+    if resource[:start]
+      service_command(:start)
+      return nil
+    end
     job_path, _ = plist_from_label(resource[:name])
     did_enable_job = false
     cmds = []
@@ -285,7 +288,10 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
 
   def stop
-    return ucommand(:stop) if resource[:stop]
+    if resource[:stop]
+      service_command(:stop)
+      return nil
+    end
     job_path, _ = plist_from_label(resource[:name])
     did_disable_job = false
     cmds = []

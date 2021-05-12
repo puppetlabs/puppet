@@ -119,6 +119,8 @@ describe Puppet::Type.type(:package).provider(:puppetserver_gem) do
   end
 
   context 'calculated specificity' do
+    include_context 'provider specificity'
+
     context 'when is not defaultfor' do
       subject { described_class.specificity }
       it { is_expected.to eql 1 }

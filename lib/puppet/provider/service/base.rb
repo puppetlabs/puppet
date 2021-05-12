@@ -68,10 +68,10 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
   def status
     if @resource[:status] or statuscmd
       # Don't fail when the exit status is not 0.
-      ucommand(:status, false)
+      status = service_command(:status, false)
 
       # Explicitly calling exitstatus to facilitate testing
-      if $CHILD_STATUS.exitstatus == 0
+      if status.exitstatus == 0
         return :running
       else
         return :stopped
@@ -93,7 +93,8 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
 
   # Run the 'start' parameter command, or the specified 'startcmd'.
   def start
-    ucommand(:start)
+    service_command(:start)
+    nil
   end
 
   # The command used to start.  Generated if the 'binary' argument
@@ -114,7 +115,8 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
   # This method will generally not be overridden by submodules.
   def stop
     if @resource[:stop] or stopcmd
-      ucommand(:stop)
+      service_command(:stop)
+      nil
     else
       pid = getpid
       unless pid

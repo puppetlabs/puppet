@@ -14,10 +14,6 @@ describe "base service provider" do
 
   subject { provider }
 
-  before(:all) do
-    `exit 0`
-  end
-
   context "basic operations" do
     subject do
       type.new(
@@ -35,16 +31,19 @@ describe "base service provider" do
         expect(options[:failonfail]).to eq(true)
         raise(Puppet::ExecutionFailure, 'failed to start') if @running
         @running = true
-        return 'started'
+        Puppet::Util::Execution::ProcessOutput.new('started', 0)
       when status_command
         expect(options[:failonfail]).to eq(false)
-        allow($CHILD_STATUS).to receive(:exitstatus) {@running ? 0 : 1}
-        return @running ? 'running' : 'not running'
+        if @running
+          Puppet::Util::Execution::ProcessOutput.new('running', 0)
+        else
+          Puppet::Util::Execution::ProcessOutput.new('not running', 1)
+        end
       when stop_command
         expect(options[:failonfail]).to eq(true)
         raise(Puppet::ExecutionFailure, 'failed to stop') unless @running
         @running = false
-        return 'stopped'
+        Puppet::Util::Execution::ProcessOutput.new('stopped', 0)
       else
         raise "unexpected command execution: #{command}"
       end
@@ -98,6 +97,7 @@ describe "base service provider" do
     end
 
     it "retrieves a PID from the process table" do
+      allow(Facter).to receive(:value).and_call_original
       allow(Facter).to receive(:value).with(:operatingsystem).and_return("CentOS")
       ps_output = File.binread(my_fixture("ps_ef.mixed_encoding")).force_encoding(Encoding::UTF_8)
 

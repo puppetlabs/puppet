@@ -4,16 +4,6 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
   let (:resource) { Puppet::Resource.new(:package, 'dummy', :parameters => {:name => 'dummy', :ensure => :latest}) }
   let (:provider) { described_class.new(resource) }
 
-  before(:all) do
-    if Puppet::Util::Platform.windows?
-      # Get a pid for $CHILD_STATUS to latch on to
-      command = "cmd.exe /c \"exit 0\""
-      Puppet::Util::Execution.execute(command, {:failonfail => false})
-    else
-      Puppet::Util::Execution.execute('exit 0', {:failonfail => false})
-    end
-  end
-
   before :each do
     allow(described_class).to receive(:command).with(:pkg).and_return('/bin/pkg')
   end
@@ -120,7 +110,6 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
         expect(Puppet::Util::Execution).to receive(:execute)
           .with(['/bin/pkg', 'update', '-n', 'dummy'], {:failonfail => false, :combine => true})
           .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
 
         expect(described_class).to receive(:pkg).with(:list,'-Hvn','dummy').and_return(File.read(my_fixture('dummy_solaris11.known')))
         expect(provider.latest).to eq('1.0.6,5.11-0.175.0.0.0.2.537:20131230T130000Z')
@@ -132,8 +121,9 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
       end
 
       it "should work correctly for ensure latest on solaris 11(known IFO)" do
-        expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'update', '-n', 'dummy'], {:failonfail => false, :combine => true}).and_return('')
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(['/bin/pkg', 'update', '-n', 'dummy'], {:failonfail => false, :combine => true})
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
 
         expect(described_class).to receive(:pkg).with(:list,'-Hvn','dummy').and_return(File.read(my_fixture('dummy_solaris11.ifo.known')))
         expect(provider.latest).to eq('1.0.6,5.11-0.175.0.0.0.2.537:20131230T130000Z')
@@ -158,7 +148,8 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
         resource[:install_options] = ['--foo', {'--bar' => 'baz'}]
         expect(described_class).to receive(:pkg).with(:list,'-Hvn','dummy').and_return(File.read(my_fixture('dummy_solaris11.known')))
         expect(Puppet::Util::Execution).to receive(:execute)
-            .with(['/bin/pkg', 'update', '-n', '--foo', '--bar=baz', 'dummy'], {failonfail: false, combine: true})
+          .with(['/bin/pkg', 'update', '-n', '--foo', '--bar=baz', 'dummy'], {failonfail: false, combine: true})
+          .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
         provider.latest
       end
     end
@@ -195,7 +186,6 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
           expect(Puppet::Util::Execution).to receive(:execute)
             .with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true})
             .and_return(Puppet::Util::Execution::ProcessOutput.new(File.read(my_fixture('dummy_solaris10')), 0))
-          allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
           expect(provider.query).to eq({
             :name      => 'dummy',
             :ensure    => '2.5.5,5.10-0.111:20131230T130000Z',
@@ -208,15 +198,13 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
         it "should return :absent when the package is not found" do
           expect(Puppet::Util::Execution).to receive(:execute)
             .with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true})
-            .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
-          allow($CHILD_STATUS).to receive(:exitstatus).and_return(1)
+            .and_return(Puppet::Util::Execution::ProcessOutput.new('', 1))
           expect(provider.query).to eq({:ensure => :absent, :name => "dummy"})
         end
       end
 
       context "on solaris 11" do
         it "should find the package" do
-          allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
           expect(Puppet::Util::Execution).to receive(:execute)
             .with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true})
             .and_return(Puppet::Util::Execution::ProcessOutput.new(File.read(my_fixture('dummy_solaris11.installed')), 0))
@@ -232,8 +220,7 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
         it "should return :absent when the package is not found" do
           expect(Puppet::Util::Execution).to receive(:execute)
             .with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true})
-            .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
-          allow($CHILD_STATUS).to receive(:exitstatus).and_return(1)
+            .and_return(Puppet::Util::Execution::ProcessOutput.new('', 1))
           expect(provider.query).to eq({:ensure => :absent, :name => "dummy"})
         end
       end
@@ -242,7 +229,6 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
         expect(Puppet::Util::Execution).to receive(:execute)
           .with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true})
           .and_return(Puppet::Util::Execution::ProcessOutput.new(File.read(my_fixture('incomplete')), 0))
-        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         expect {
           provider.query
         }.to raise_error(ArgumentError, /Unknown line format/)
@@ -266,7 +252,7 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
             expect(provider).to receive(:unhold)
             expect(Puppet::Util::Execution).to receive(:execute)
               .with(['/bin/pkg', 'install', *hash[:flags], '--foo', '--bar=baz', 'dummy'], {:failonfail => false, :combine => true})
-            allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+              .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
             provider.install
           end
 
@@ -279,16 +265,16 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
             expect(Puppet::Util::Execution).to receive(:execute)
               .with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
               .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
-            allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
             provider.install
           end
 
           it "should install specific version(1)" do
             # Should install also check if the version installed is the same version we are asked to install? or should we rely on puppet for that?
             resource[:ensure] = '0.0.7,5.11-0.151006:20131230T130000Z'
-            allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
             expect(provider).to receive(:properties).and_return({:mark => :hold})
-            expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
+            expect(Puppet::Util::Execution).to receive(:execute)
+              .with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
+              .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
             expect(Puppet::Util::Execution).to receive(:execute)
               .with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true})
               .and_return(Puppet::Util::Execution::ProcessOutput.new('pkg://foo/dummy@0.0.6,5.11-0.151006:20131230T130000Z  installed -----', 0))
@@ -301,14 +287,15 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
           it "should install specific version(2)" do
             resource[:ensure] = '0.0.8'
             expect(provider).to receive(:properties).and_return({:mark => :hold})
-            expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
+            expect(Puppet::Util::Execution).to receive(:execute)
+              .with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
+              .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
             expect(Puppet::Util::Execution).to receive(:execute)
               .with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true})
               .and_return(Puppet::Util::Execution::ProcessOutput.new('pkg://foo/dummy@0.0.7,5.11-0.151006:20131230T130000Z  installed -----', 0))
             expect(Puppet::Util::Execution).to receive(:execute)
               .with(['/bin/pkg', 'update', *hash[:flags], 'dummy@0.0.8'], {:failonfail => false, :combine => true})
               .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
-            allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
             provider.install
           end
 
@@ -316,8 +303,9 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
             resource[:ensure] = '0.0.7'
             expect(provider).to receive(:properties).and_return({:mark => :hold})
             expect(provider).to receive(:query).with(no_args).and_return({:ensure => '0.0.8,5.11-0.151106:20131230T130000Z'})
-            allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
-            expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
+            expect(Puppet::Util::Execution).to receive(:execute)
+              .with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
+              .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
             expect(Puppet::Util::Execution).to receive(:execute)
               .with(['/bin/pkg', 'update', *hash[:flags], 'dummy@0.0.7'], {:failonfail => false, :combine => true})
               .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
@@ -331,8 +319,9 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
             expect(Puppet::Util::Execution).to receive(:execute)
               .with(['/bin/pkg', 'install', *hash[:flags], 'dummy'], {:failonfail => false, :combine => true})
               .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
-            expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
-            allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+            expect(Puppet::Util::Execution).to receive(:execute)
+              .with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
+              .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
             provider.install
           end
 
@@ -340,11 +329,12 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
             resource[:ensure] = '0.0.7'
             expect(provider).to receive(:properties).and_return({:mark => :hold})
             expect(provider).to receive(:query).with(no_args).and_return({:ensure => :absent})
-            expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
+            expect(Puppet::Util::Execution).to receive(:execute)
+              .with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
+              .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
             expect(Puppet::Util::Execution).to receive(:execute)
               .with(['/bin/pkg', 'install', *hash[:flags], 'dummy@0.0.7'], {:failonfail => false, :combine => true})
               .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
-            allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
             provider.install
           end
 
@@ -356,10 +346,13 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
             expect(described_class).to receive(:pkg)
               .with(:list, '-Hvfa', 'dummy@1.0-0.151006')
               .and_return(Puppet::Util::Execution::ProcessOutput.new(File.read(my_fixture('dummy_implicit_version')), 0))
-            expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'install', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
+            expect(Puppet::Util::Execution).to receive(:execute)
+              .with(['/bin/pkg', 'install', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
+              .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
             expect(provider).to receive(:unhold).with(no_args)
-            expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'install', *hash[:flags], 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
-            allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+            expect(Puppet::Util::Execution).to receive(:execute)
+              .with(['/bin/pkg', 'install', *hash[:flags], 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
+              .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
             provider.insync?(is)
             provider.install
           end
@@ -370,10 +363,13 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
             expect(provider).to receive(:query).with(no_args).and_return({:ensure => is})
             expect(provider).to receive(:properties).and_return({:mark => :hold})
             expect(described_class).to receive(:pkg).with(:list, '-Hvfa', 'dummy@1.0-0.151006').and_return(File.read(my_fixture('dummy_implicit_version')))
-            expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'update', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
+            expect(Puppet::Util::Execution).to receive(:execute)
+              .with(['/bin/pkg', 'update', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
+              .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
             expect(provider).to receive(:unhold).with(no_args)
-            expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'update', *hash[:flags], 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
-            allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+            expect(Puppet::Util::Execution).to receive(:execute)
+              .with(['/bin/pkg', 'update', *hash[:flags], 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
+              .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
             provider.insync?(is)
             provider.install
           end
@@ -385,8 +381,9 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
             expect(described_class).to receive(:pkg)
               .with(:list, '-Hvfa', 'dummy@1.0-0.151006')
               .and_return(Puppet::Util::Execution::ProcessOutput.new(File.read(my_fixture('dummy_implicit_version')), 0))
-            expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'update', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
-            allow($CHILD_STATUS).to receive(:exitstatus).and_return(4)
+            expect(Puppet::Util::Execution).to receive(:execute)
+              .with(['/bin/pkg', 'update', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
+              .and_return(Puppet::Util::Execution::ProcessOutput.new('', 4))
             provider.insync?(is)
           end
 
@@ -395,9 +392,12 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
             is = :absent
             expect(provider).to receive(:warning).with("Implicit version 1.0-0.151006 has 3 possible matches")
             expect(provider).to receive(:warning).with("Selecting version '1.0,5.11-0.151006:20140220T084443Z' for implicit '1.0-0.151006'")
-            expect(described_class).to receive(:pkg).with(:list, '-Hvfa', 'dummy@1.0-0.151006').and_return(File.read(my_fixture('dummy_implicit_version')))
-            expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'install', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
-            allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
+            expect(described_class).to receive(:pkg)
+              .with(:list, '-Hvfa', 'dummy@1.0-0.151006')
+              .and_return(Puppet::Util::Execution::ProcessOutput.new(File.read(my_fixture('dummy_implicit_version')), 0))
+            expect(Puppet::Util::Execution).to receive(:execute)
+              .with(['/bin/pkg', 'install', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
+              .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
             provider.insync?(is)
           end
         end

@@ -109,7 +109,7 @@ describe 'Puppet::Type::Service::Provider::Daemontools',
       path = File.join(@servicedir,"myservice")
       expect(Puppet::FileSystem).to receive(:symlink?).with(path).and_return(true)
       expect(Puppet::FileSystem).to receive(:unlink).with(path)
-      allow(@provider).to receive(:texecute).and_return("")
+      allow(@provider).to receive(:execute).and_return("")
       @provider.disable
     end
 
