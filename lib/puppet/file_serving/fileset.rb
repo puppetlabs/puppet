@@ -61,10 +61,14 @@ class Puppet::FileServing::Fileset
     files = perform_recursion
     soft_max_files = 1000
 
-    if max_files != 0  && files.size > max_files
-      raise Puppet::Error.new _("The directory '%{path}' contains %{entries} entries, which exceeds the limit of %{max_files} specified by the max_files parameter for this resource. The limit may be increased, but be aware that large number of file resources can result in excessive resource consumption and degraded performance. Consider using an alternate method to manage large directory trees") % { path: path, entries: files.size, max_files: max_files }
-    elsif max_files == 0 && files.size > soft_max_files
-      Puppet.warning _("The directory '%{path}' contains %{entries} entries, which exceeds the default soft limit %{max_files} and may cause excessive resource consumption and degraded performance. To remove this warning set a value for `max_files` parameter or consider using an alternate method to manage large directory trees") % { path: path, entries: files.size, max_files: soft_max_files }
+    # munged_max_files is needed since puppet http handler is keeping negative numbers as strings
+    # https://github.com/puppetlabs/puppet/blob/main/lib/puppet/network/http/handler.rb#L196-L197
+    munged_max_files = max_files == '-1' ? -1 : max_files
+
+    if munged_max_files > 0 && files.size > munged_max_files
+      raise Puppet::Error.new _("The directory '%{path}' contains %{entries} entries, which exceeds the limit of %{munged_max_files} specified by the max_files parameter for this resource. The limit may be increased, but be aware that large number of file resources can result in excessive resource consumption and degraded performance. Consider using an alternate method to manage large directory trees") % { path: path, entries: files.size, munged_max_files: munged_max_files }
+    elsif munged_max_files == 0 && files.size > soft_max_files
+      Puppet.warning _("The directory '%{path}' contains %{entries} entries, which exceeds the default soft limit %{soft_max_files} and may cause excessive resource consumption and degraded performance. To remove this warning set a value for `max_files` parameter or consider using an alternate method to manage large directory trees") % { path: path, entries: files.size, soft_max_files: soft_max_files }
     end
 
     # Now strip off the leading path, so each file becomes relative, and remove

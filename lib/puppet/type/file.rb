@@ -227,11 +227,12 @@ Puppet::Type.newtype(:file) do
       will eventually be created and will raise a resource argument error if the
       limit will be exceeded.
 
-      Use value `0` to disable the check. In this case, a warning is logged if
-      the number of files exceeds 1000."
+      Use value `0` to log a warning instead of raising an error.
+
+      Use value `-1` to disable errors and warnings due to max files."
 
     defaultto 0
-    newvalues(/^[0-9]+$/)
+    newvalues(/^[0-9]+$/, /^-1$/)
   end
 
   newparam(:replace, :boolean => true, :parent => Puppet::Parameter::Boolean) do

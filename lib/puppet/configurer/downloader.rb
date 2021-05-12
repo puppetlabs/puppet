@@ -73,7 +73,8 @@ class Puppet::Configurer::Downloader
       :purge => true,
       :force => true,
       :backup => false,
-      :noop => false
+      :noop => false,
+      :max_files => -1
     }
     if !Puppet::Util::Platform.windows?
       defargs[:owner] = Process.uid
