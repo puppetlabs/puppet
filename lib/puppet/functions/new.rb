@@ -51,7 +51,7 @@
 # The following sections show the arguments and conversion rules
 # per data type built into the Puppet Type System.
 #
-# ### Conversion to Optional[T] and NotUndef[T]
+# ### Conversion to `Optional[T]` and `NotUndef[T]`
 #
 # Conversion to these data types is the same as a conversion to the type argument `T`.
 # In the case of `Optional[T]` it is accepted that the argument to convert may be `undef`.
@@ -85,13 +85,13 @@
 #   * `0` as radix 8.
 #   * All others are decimal.
 # * Conversion from `String` accepts an optional sign in the string.
-# * For hexadecimal (radix 16) conversion an optional leading "0x", or "0X" is accepted.
-# * For octal (radix 8) an optional leading "0" is accepted.
-# * For binary (radix 2) an optional leading "0b" or "0B" is accepted.
+# * For hexadecimal (radix 16) conversion an optional leading `"0x"`, or `"0X"` is accepted.
+# * For octal (radix 8) an optional leading `"0"` is accepted.
+# * For binary (radix 2) an optional leading `"0b"` or `"0B"` is accepted.
 # * When `radix` is set to `default`, the conversion is based on the leading.
-#   characters in the string. A leading "0" for radix 8, a leading "0x", or "0X" for
-#   radix 16, and leading "0b" or "0B" for binary.
-# * Conversion from `Boolean` results in 0 for `false` and 1 for `true`.
+#   characters in the string. A leading `"0"` for radix 8, a leading `"0x"`, or `"0X"` for
+#   radix 16, and leading `"0b"` or `"0B"` for binary.
+# * Conversion from `Boolean` results in `0` for `false` and `1` for `true`.
 # * Conversion from `Integer`, `Float`, and `Boolean` ignores the radix.
 # * `Float` value fractions are truncated (no rounding).
 # * When `abs` is set to `true`, the result will be an absolute integer.
@@ -119,9 +119,9 @@
 # ```
 #
 # * For an integer, the floating point fraction of `.0` is added to the value.
-# * A `Boolean` `true` is converted to 1.0, and a `false` to 0.0
+# * A `Boolean` `true` is converted to `1.0`, and a `false` to `0.0`.
 # * In `String` format, integer prefixes for hex and binary are understood (but not octal since
-#   floating point in string format may start with a '0').
+#   floating point in string format may start with a `'0'`).
 # * When `abs` is set to `true`, the result will be an absolute floating point value.
 #
 # ### Conversion to Numeric
@@ -139,7 +139,7 @@
 # * If the value has a decimal period, or if given in scientific notation
 #   (e/E), the result is a `Float`, otherwise the value is an `Integer`. The
 #   conversion from `String` always uses a radix based on the prefix of the string.
-# * Conversion from `Boolean` results in 0 for `false` and 1 for `true`.
+# * Conversion from `Boolean` results in `0` for `false` and `1` for `true`.
 # * When `abs` is set to `true`, the result will be an absolute `Float`or `Integer` value.
 #
 # @example Converting to Numeric in different ways
@@ -225,7 +225,7 @@
 # )
 # ```
 #
-# The directive consists of a percent (%) character, zero or more flags, optional minimum field width and
+# The directive consists of a percent (`%`) character, zero or more flags, optional minimum field width and
 # a conversion specifier as follows:
 # ```
 # %[Flags][Width]Conversion
@@ -291,7 +291,7 @@
 # argument is omitted, an array of default formats will be used.
 #
 # A third optional timezone argument can be provided. The first argument will then be parsed as if it represents a local time in that
-# timezone. The timezone can be any timezone that is recognized when using the '%z' or '%Z' formats, or the word 'current', in which
+# timezone. The timezone can be any timezone that is recognized when using the `'%z'` or `'%Z'` formats, or the word `'current'`, in which
 # case the current timezone of the evaluating process will be used. The timezone argument is case insensitive.
 #
 # The default timezone, when no argument is provided, or when using the keyword `default`, is 'UTC'.
@@ -336,7 +336,7 @@
 # | 0     | Use zeros for padding
 # | #     | Change names to upper-case or change case of am/pm
 # | ^     | Use uppercase
-# | :     | Use colons for %z
+# | :     | Use colons for `%z`
 #
 # ##### Format directives (names and padding can be altered using flags):
 #
@@ -345,48 +345,48 @@
 # | Format | Meaning |
 # | ------ | ------- |
 # | Y | Year with century, zero-padded to at least 4 digits |
-# | C | year / 100 (rounded down such as 20 in 2009) |
-# | y | year % 100 (00..99) |
-# | m | Month of the year, zero-padded (01..12) |
-# | B | The full month name ("January") |
-# | b | The abbreviated month name ("Jan") |
-# | h | Equivalent to %b |
-# | d | Day of the month, zero-padded (01..31) |
-# | e | Day of the month, blank-padded ( 1..31) |
-# | j | Day of the year (001..366) |
+# | C | year / 100 (rounded down such as `20` in `2009`) |
+# | y | year % 100 (`00..99`) |
+# | m | Month of the year, zero-padded (`01..12`) |
+# | B | The full month name (`"January"`) |
+# | b | The abbreviated month name (`"Jan"`) |
+# | h | Equivalent to `%b` |
+# | d | Day of the month, zero-padded (`01..31`) |
+# | e | Day of the month, blank-padded (`1..31`) |
+# | j | Day of the year (`001..366`) |
 #
 # **Time (Hour, Minute, Second, Subsecond):**
 #
 # | Format | Meaning |
 # | ------ | ------- |
-# | H | Hour of the day, 24-hour clock, zero-padded (00..23) |
-# | k | Hour of the day, 24-hour clock, blank-padded ( 0..23) |
-# | I | Hour of the day, 12-hour clock, zero-padded (01..12) |
-# | l | Hour of the day, 12-hour clock, blank-padded ( 1..12) |
-# | P | Meridian indicator, lowercase ("am" or "pm") |
-# | p | Meridian indicator, uppercase ("AM" or "PM") |
-# | M | Minute of the hour (00..59) |
-# | S | Second of the minute (00..60) |
-# | L | Millisecond of the second (000..999). Digits under millisecond are truncated to not produce 1000 |
+# | H | Hour of the day, 24-hour clock, zero-padded (`00..23`) |
+# | k | Hour of the day, 24-hour clock, blank-padded (`0..23`) |
+# | I | Hour of the day, 12-hour clock, zero-padded (`01..12`) |
+# | l | Hour of the day, 12-hour clock, blank-padded (`1..12`) |
+# | P | Meridian indicator, lowercase (`"am"` or `"pm"`) |
+# | p | Meridian indicator, uppercase (`"AM"` or `"PM"`) |
+# | M | Minute of the hour (`00..59`) |
+# | S | Second of the minute (`00..60`) |
+# | L | Millisecond of the second (`000..999`). Digits under millisecond are truncated to not produce 1000 |
 # | N | Fractional seconds digits, default is 9 digits (nanosecond). Digits under a specified width are truncated to avoid carry up |
 #
 # **Time (Hour, Minute, Second, Subsecond):**
 #
 # | Format | Meaning |
 # | ------ | ------- |
-# | z   | Time zone as hour and minute offset from UTC (e.g. +0900) |
-# | :z  | hour and minute offset from UTC with a colon (e.g. +09:00) |
-# | ::z | hour, minute and second offset from UTC (e.g. +09:00:00) |
+# | z   | Time zone as hour and minute offset from UTC (e.g. `+0900`) |
+# | :z  | hour and minute offset from UTC with a colon (e.g. `+09:00`) |
+# | ::z | hour, minute and second offset from UTC (e.g. `+09:00:00`) |
 # | Z   | Abbreviated time zone name or similar information.  (OS dependent) |
 #
 # **Weekday:**
 #
 # | Format | Meaning |
 # | ------ | ------- |
-# | A | The full weekday name ("Sunday") |
-# | a | The abbreviated name ("Sun") |
-# | u | Day of the week (Monday is 1, 1..7) |
-# | w | Day of the week (Sunday is 0, 0..6) |
+# | A | The full weekday name (`"Sunday"`) |
+# | a | The abbreviated name (`"Sun"`) |
+# | u | Day of the week (Monday is `1`, `1..7`) |
+# | w | Day of the week (Sunday is `0`, `0..6`) |
 #
 # **ISO 8601 week-based year and week number:**
 #
@@ -397,8 +397,8 @@
 # | Format | Meaning |
 # | ------ | ------- |
 # | G | The week-based year |
-# | g | The last 2 digits of the week-based year (00..99) |
-# | V | Week number of the week-based year (01..53) |
+# | g | The last 2 digits of the week-based year (`00..99`) |
+# | V | Week number of the week-based year (`01..53`) |
 #
 # **Week number:**
 #
@@ -407,8 +407,8 @@
 #
 # | Format | Meaning |
 # | ------ | ------- |
-# | U | Week number of the year. The week starts with Sunday. (00..53) |
-# | W | Week number of the year. The week starts with Monday. (00..53) |
+# | U | Week number of the year. The week starts with Sunday. (`00..53`) |
+# | W | Week number of the year. The week starts with Monday. (`00..53`) |
 #
 # **Seconds since the Epoch:**
 #
@@ -419,23 +419,23 @@
 #
 # | Format | Meaning |
 # | ------ | ------- |
-# | n | Newline character (\n) |
-# | t | Tab character (\t) |
-# | % | Literal "%" character |
+# | n | Newline character (`\n`) |
+# | t | Tab character (`\t`) |
+# | % | Literal `%` character |
 #
 # **Combination:**
 #
 # | Format | Meaning |
 # | ------ | ------- |
-# | c | date and time (%a %b %e %T %Y) |
-# | D | Date (%m/%d/%y) |
-# | F | The ISO 8601 date format (%Y-%m-%d) |
-# | v | VMS date (%e-%^b-%4Y) |
-# | x | Same as %D |
-# | X | Same as %T |
-# | r | 12-hour time (%I:%M:%S %p) |
-# | R | 24-hour time (%H:%M) |
-# | T | 24-hour time (%H:%M:%S) |
+# | c | date and time (`%a %b %e %T %Y`) |
+# | D | Date (`%m/%d/%y`) |
+# | F | The ISO 8601 date format (`%Y-%m-%d`) |
+# | v | VMS date (`%e-%^b-%4Y`) |
+# | x | Same as `%D` |
+# | X | Same as `%T` |
+# | r | 12-hour time (`%I:%M:%S %p`) |
+# | R | 24-hour time (`%H:%M`) |
+# | T | 24-hour time (`%H:%M:%S`) |
 #
 # The default array contains the following patterns:
 #
@@ -489,7 +489,7 @@
 # The mapping from data type to format is referred to as the *format map*. This map
 # allows different formatting depending on type.
 #
-# @example Positive Integers in Hexadecimal prefixed with '0x', negative in Decimal
+# @example Positive Integers in Hexadecimal prefixed with `'0x'`, negative in Decimal
 #
 # ```puppet
 # $format_map = {
@@ -578,13 +578,13 @@
 #
 # | Format  | Integer Formats
 # | ------  | ---------------
-# | d       | Decimal, negative values produces leading '-'.
-# | x X     | Hexadecimal in lower or upper case. Uses ..f/..F for negative values unless + is also used. A `#` adds prefix 0x/0X.
-# | o       | Octal. Uses ..0 for negative values unless `+` is also used. A `#` adds prefix 0.
-# | b B     | Binary with prefix 'b' or 'B'. Uses ..1/..1 for negative values unless `+` is also used.
-# | c       | Numeric value representing a Unicode value, result is a one unicode character string, quoted if alternative flag # is used
-# | s       | Same as d, or d in quotes if alternative flag # is used.
-# | p       | Same as d.
+# | d       | Decimal, negative values produces leading `-`.
+# | x X     | Hexadecimal in lower or upper case. Uses `..f/..F` for negative values unless `+` is also used. A `#` adds prefix `0x/0X`.
+# | o       | Octal. Uses `..0` for negative values unless `+` is also used. A `#` adds prefix `0`.
+# | b B     | Binary with prefix `b` or `B`. Uses `..1/..1` for negative values unless `+` is also used.
+# | c       | Numeric value representing a Unicode value, result is a one unicode character string, quoted if alternative flag `#` is used
+# | s       | Same as `d`, or `d` in quotes if alternative flag `#` is used.
+# | p       | Same as `d`.
 # | eEfgGaA | Converts integer to float and formats using the floating point rules.
 #
 # Defaults to `d`.
@@ -594,11 +594,11 @@
 # | Format  | Float formats
 # | ------  | -------------
 # | f       | Floating point in non exponential notation.
-# | e E     | Exponential notation with 'e' or 'E'.
-# | g G     | Conditional exponential with 'e' or 'E' if exponent < -4 or >= the precision.
-# | a A     | Hexadecimal exponential form, using 'x'/'X' as prefix and 'p'/'P' before exponent.
-# | s       | Converted to string using format p, then applying string formatting rule, alternate form # quotes result.
-# | p       | Same as f format with minimum significant number of fractional digits, prec has no effect.
+# | e E     | Exponential notation with `e` or `E`.
+# | g G     | Conditional exponential with `e` or `E` if exponent `< -4` or `>=` the precision.
+# | a A     | Hexadecimal exponential form, using `x`/`X` as prefix and `p`/`P` before exponent.
+# | s       | Converted to string using format `p`, then applying string formatting rule, alternate form `#`` quotes result.
+# | p       | Same as `f` format with minimum significant number of fractional digits, prec has no effect.
 # | dxXobBc | Converts float to integer and formats using the integer rules.
 #
 # Defaults to `p`.
@@ -621,12 +621,12 @@
 #
 # | Format    | Boolean Formats
 # | ----      | -------------------
-# | t T       | String 'true'/'false' or 'True'/'False', first char if alternate form is used (i.e. 't'/'f' or 'T'/'F').
-# | y Y       | String 'yes'/'no', 'Yes'/'No', 'y'/'n' or 'Y'/'N' if alternative flag `#` is used.
-# | dxXobB    | Numeric value 0/1 in accordance with the given format which must be valid integer format.
-# | eEfgGaA   | Numeric value 0.0/1.0 in accordance with the given float format and flags.
-# | s         | String 'true' / 'false'.
-# | p         | String 'true' / 'false'.
+# | t T       | String `'true'/'false'` or `'True'/'False'`, first char if alternate form is used (i.e. `'t'/'f'` or `'T'/'F'`).
+# | y Y       | String `'yes'/'no'`, `'Yes'/'No'`, `'y'/'n'` or `'Y'/'N'` if alternative flag `#` is used.
+# | dxXobB    | Numeric value `0/1` in accordance with the given format which must be valid integer format.
+# | eEfgGaA   | Numeric value `0.0/1.0` in accordance with the given float format and flags.
+# | s         | String `'true'` / `'false'`.
+# | p         | String `'true'` / `'false'`.
 #
 # **Regexp to String**
 #
@@ -640,21 +640,21 @@
 # | Format    | Undef formats
 # | ------    | -------------
 # | s         | Empty string, or quoted empty string if alternative flag `#` is used.
-# | p         | String 'undef', or quoted '"undef"' if alternative flag `#` is used.
-# | n         | String 'nil', or 'null' if alternative flag `#` is used.
-# | dxXobB    | String 'NaN'.
-# | eEfgGaA   | String 'NaN'.
-# | v         | String 'n/a'.
-# | V         | String 'N/A'.
-# | u         | String 'undef', or 'undefined' if alternative `#` flag is used.
+# | p         | String `'undef'`, or quoted `'"undef"'` if alternative flag `#` is used.
+# | n         | String `'nil'`, or `'null'` if alternative flag `#` is used.
+# | dxXobB    | String `'NaN'`.
+# | eEfgGaA   | String `'NaN'`.
+# | v         | String `'n/a'`.
+# | V         | String `'N/A'`.
+# | u         | String `'undef'`, or `'undefined'` if alternative `#` flag is used.
 #
 # **Default value to String**
 #
 # | Format    | Default formats
 # | ------    | ---------------
-# | d D       | String 'default' or 'Default', alternative form `#` causes value to be quoted.
-# | s         | Same as d.
-# | p         | Same as d.
+# | d D       | String `'default'` or `'Default'`, alternative form `#` causes value to be quoted.
+# | s         | Same as `d`.
+# | p         | Same as `d`.
 #
 # **Binary value to String**
 #
@@ -678,8 +678,8 @@
 # | Format    | Array/Tuple Formats
 # | ------    | -------------
 # | a         | Formats with `[ ]` delimiters and `,`, alternate form `#` indents nested arrays/hashes.
-# | s         | Same as a.
-# | p         | Same as a.
+# | s         | Same as `a`.
+# | p         | Same as `a`.
 #
 # See "Flags" `<[({\|` for formatting of delimiters, and "Additional parameters for containers; Array and Hash" for
 # more information about options.
@@ -695,7 +695,7 @@
 # | h         | Formats with `{ }` delimiters, `,` element separator and ` => ` inner element separator unless overridden by flags.
 # | s         | Same as h.
 # | p         | Same as h.
-# | a         | Converts the hash to an array of [k,v] tuples and formats it using array rule(s).
+# | a         | Converts the hash to an array of `[k,v]` tuples and formats it using array rule(s).
 #
 # See "Flags" `<[({\|` for formatting of delimiters, and "Additional parameters for containers; Array and Hash" for
 # more information about options.
@@ -714,18 +714,18 @@
 # | Flag     | Effect
 # | ------   | ------
 # | (space)  | A space instead of `+` for numeric output (`-` is shown), for containers skips delimiters.
-# | #        | Alternate format; prefix 0x/0x, 0 (octal) and 0b/0B for binary, Floats force decimal '.'. For g/G keep trailing 0.
-# | +        | Show sign +/- depending on value's sign, changes x, X, o, b, B format to not use 2's complement form.
+# | #        | Alternate format; prefix `0x/0x`, `0` (octal) and `0b/0B` for binary, Floats force decimal '.'. For g/G keep trailing `0`.
+# | +        | Show sign `+/-` depending on value's sign, changes `x`, `X`, `o`, `b`, `B` format to not use 2's complement form.
 # | -        | Left justify the value in the given width.
-# | 0        | Pad with 0 instead of space for widths larger than value.
-# | <[({\|   | Defines an enclosing pair <> [] () {} or \| \| when used with a container type.
+# | 0        | Pad with `0` instead of space for widths larger than value.
+# | <[({\|   | Defines an enclosing pair `<> [] () {} or \| \|` when used with a container type.
 #
 # ### Conversion to Boolean
 #
 # Accepts a single value as argument:
 #
-# * Float 0.0 is `false`, all other float values are `true`
-# * Integer 0 is `false`, all other integer values are `true`
+# * Float `0.0` is `false`, all other float values are `true`
+# * Integer `0` is `false`, all other integer values are `true`
 # * Strings
 #   * `true` if 'true', 'yes', 'y' (case independent compare)
 #   * `false` if 'false', 'no', 'n' (case independent compare)
@@ -840,7 +840,7 @@
 # function SemVer.new(SemVerHash $hash_args)
 # ```
 #
-# @example SemVer and SemVerRange usage
+# @example `SemVer` and `SemVerRange` usage
 #
 # ```puppet
 # # As a type, SemVer can describe disjunct ranges which versions can be
@@ -856,7 +856,7 @@
 # notice(SemVer('3.4.5') =~ $t) # true
 # ```
 #
-# ### Creating a SemVerRange
+# ### Creating a `SemVerRange`
 #
 # A `SemVerRange` object represents a range of `SemVer`. It can be created from
 # a `String`, or from two `SemVer` instances, where either end can be given as

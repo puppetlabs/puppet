@@ -51,7 +51,7 @@
 # notice $data.all |$key, $value| { $value % 10 == 0  and $key =~ /^abc/ }
 # ```
 #
-# Would notice true.
+# Would notice `true`.
 #
 # For an general examples that demonstrates iteration, see the Puppet
 # [iteration](https://puppet.com/docs/puppet/latest/lang_iteration.html)
