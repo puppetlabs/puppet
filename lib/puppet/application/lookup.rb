@@ -1,7 +1,7 @@
-require 'puppet/application'
-require 'puppet/pops'
-require 'puppet/node'
-require 'puppet/parser/compiler'
+require_relative '../../puppet/application'
+require_relative '../../puppet/pops'
+require_relative '../../puppet/node'
+require_relative '../../puppet/parser/compiler'
 
 class Puppet::Application::Lookup < Puppet::Application
 
@@ -76,8 +76,8 @@ class Puppet::Application::Lookup < Puppet::Application
   end
 
   def setup_terminuses
-    require 'puppet/file_serving/content'
-    require 'puppet/file_serving/metadata'
+    require_relative '../../puppet/file_serving/content'
+    require_relative '../../puppet/file_serving/metadata'
 
     Puppet::FileServing::Content.indirection.terminus_class = :file_server
     Puppet::FileServing::Metadata.indirection.terminus_class = :file_server

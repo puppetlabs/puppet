@@ -1,9 +1,9 @@
 require 'etc'
 require 'facter'
-require 'puppet/parameter/boolean'
-require 'puppet/property/list'
-require 'puppet/property/ordered_list'
-require 'puppet/property/keyvalue'
+require_relative '../../puppet/parameter/boolean'
+require_relative '../../puppet/property/list'
+require_relative '../../puppet/property/ordered_list'
+require_relative '../../puppet/property/keyvalue'
 
 module Puppet
   Type.newtype(:user) do

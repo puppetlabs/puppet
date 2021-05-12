@@ -1,4 +1,4 @@
-require 'puppet/application'
+require_relative '../../puppet/application'
 
 class Formatter
 

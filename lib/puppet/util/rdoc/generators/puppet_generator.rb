@@ -1,5 +1,5 @@
 require 'rdoc/generators/html_generator'
-require 'puppet/util/rdoc/code_objects'
+require_relative '../../../../puppet/util/rdoc/code_objects'
 require 'digest/md5'
 
 module Generators
@@ -70,7 +70,7 @@ module Generators
 
     # loads our own html template file
     def load_html_template
-        require 'puppet/util/rdoc/generators/template/puppet/puppet'
+        require_relative '../../../../puppet/util/rdoc/generators/template/puppet/puppet'
         extend RDoc::Page
     rescue LoadError
         $stderr.puts "Could not find Puppet template '#{template}'"

@@ -1,4 +1,4 @@
-require 'puppet/file_serving/mount'
+require_relative '../../../puppet/file_serving/mount'
 
 class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
   def self.localmap

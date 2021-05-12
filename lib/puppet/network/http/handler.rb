@@ -1,9 +1,9 @@
 module Puppet::Network::HTTP
 end
 
-require 'puppet/network/http'
-require 'puppet/util/profiler'
-require 'puppet/util/profiler/aggregate'
+require_relative '../../../puppet/network/http'
+require_relative '../../../puppet/util/profiler'
+require_relative '../../../puppet/util/profiler/aggregate'
 require 'resolv'
 
 module Puppet::Network::HTTP::Handler

@@ -7,7 +7,7 @@
 # possibly via a `prefetchV2` method that could take a better data structure.)
 #
 # In addition, `Puppet::Provider::Package::properties` calls `query` in the provider.
-require 'puppet/provider/package'
+require_relative '../../puppet/provider/package'
 
 # But `query` in the provider depends upon whether a `command` attribute is defined for the resource.
 # This is a Catch-22.

@@ -1,5 +1,5 @@
-require 'puppet/util/feature'
-require 'puppet/util/libuser'
+require_relative '../../puppet/util/feature'
+require_relative '../../puppet/util/libuser'
 
 Puppet.features.add(:libuser) {
    File.executable?("/usr/sbin/lgroupadd") and

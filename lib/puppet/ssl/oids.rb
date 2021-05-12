@@ -1,4 +1,4 @@
-require 'puppet/ssl'
+require_relative '../../puppet/ssl'
 
 # This module defines OIDs for use within Puppet.
 #

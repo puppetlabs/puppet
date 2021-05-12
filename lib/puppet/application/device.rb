@@ -1,7 +1,7 @@
-require 'puppet/application'
-require 'puppet/configurer'
-require 'puppet/util/network_device'
-require 'puppet/ssl/oids'
+require_relative '../../puppet/application'
+require_relative '../../puppet/configurer'
+require_relative '../../puppet/util/network_device'
+require_relative '../../puppet/ssl/oids'
 
 class Puppet::Application::Device < Puppet::Application
 
@@ -246,7 +246,7 @@ Licensed under the Apache 2.0 License
     env = Puppet::Node::Environment.remote(Puppet[:environment])
     returns = Puppet.override(:current_environment => env, :loaders => Puppet::Pops::Loaders.new(env)) do
       # find device list
-      require 'puppet/util/network_device/config'
+      require_relative '../../puppet/util/network_device/config'
       devices = Puppet::Util::NetworkDevice::Config.devices.dup
       if options[:target]
         devices.select! { |key, value| key == options[:target] }
@@ -339,7 +339,7 @@ Licensed under the Apache 2.0 License
             Puppet::Transaction::Report.indirection.terminus_class = :yaml
             Puppet::Resource::Catalog.indirection.cache_class = nil
 
-            require 'puppet/application/apply'
+            require_relative '../../puppet/application/apply'
             begin
               Puppet[:node_terminus] = :plain
               Puppet[:catalog_terminus] = :compiler

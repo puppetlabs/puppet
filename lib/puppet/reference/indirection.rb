@@ -1,7 +1,7 @@
-require 'puppet/indirector/indirection'
-require 'puppet/util/checksums'
-require 'puppet/file_serving/content'
-require 'puppet/file_serving/metadata'
+require_relative '../../puppet/indirector/indirection'
+require_relative '../../puppet/util/checksums'
+require_relative '../../puppet/file_serving/content'
+require_relative '../../puppet/file_serving/metadata'
 
 reference = Puppet::Util::Reference.newreference :indirection, :doc => "Indirection types and their terminus classes" do
   text = ""

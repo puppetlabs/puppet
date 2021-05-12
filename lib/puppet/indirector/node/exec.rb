@@ -1,5 +1,5 @@
-require 'puppet/node'
-require 'puppet/indirector/exec'
+require_relative '../../../puppet/node'
+require_relative '../../../puppet/indirector/exec'
 
 class Puppet::Node::Exec < Puppet::Indirector::Exec
   desc "Call an external program to get node information.  See

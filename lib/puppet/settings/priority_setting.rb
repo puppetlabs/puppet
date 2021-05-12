@@ -1,12 +1,12 @@
-require 'puppet/settings/base_setting'
+require_relative '../../puppet/settings/base_setting'
 
 # A setting that represents a scheduling priority, and evaluates to an
 # OS-specific priority level.
 class Puppet::Settings::PrioritySetting < Puppet::Settings::BaseSetting
   PRIORITY_MAP =
     if Puppet::Util::Platform.windows?
-      require 'puppet/util/windows/process'
-      require 'puppet/ffi/windows/constants'
+      require_relative '../../puppet/util/windows/process'
+      require_relative '../../puppet/ffi/windows/constants'
       {
         :high    => Puppet::FFI::Windows::Constants::HIGH_PRIORITY_CLASS,
         :normal  => Puppet::FFI::Windows::Constants::NORMAL_PRIORITY_CLASS,

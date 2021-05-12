@@ -1,4 +1,4 @@
-require 'puppet/util/profiler/logging'
+require_relative '../../../puppet/util/profiler/logging'
 
 class Puppet::Util::Profiler::ObjectCounts < Puppet::Util::Profiler::Logging
   def start

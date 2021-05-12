@@ -1,5 +1,5 @@
 # Whole new package, so include pack stuff
-require 'puppet/provider/package'
+require_relative '../../../puppet/provider/package'
 
 Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::Package do
   include Puppet::Util::Execution

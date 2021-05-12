@@ -1,19 +1,19 @@
-require 'puppet/application'
-require 'puppet/error'
-require 'puppet/util/at_fork'
+require_relative '../puppet/application'
+require_relative '../puppet/error'
+require_relative '../puppet/util/at_fork'
 
 require 'timeout'
 
 # A general class for triggering a run of another
 # class.
 class Puppet::Agent
-  require 'puppet/agent/locker'
+  require_relative 'agent/locker'
   include Puppet::Agent::Locker
 
-  require 'puppet/agent/disabler'
+  require_relative 'agent/disabler'
   include Puppet::Agent::Disabler
 
-  require 'puppet/util/splayer'
+  require_relative '../puppet/util/splayer'
   include Puppet::Util::Splayer
 
   # Special exception class used to signal an agent run has timed out.

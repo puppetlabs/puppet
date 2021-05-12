@@ -1,4 +1,4 @@
-require 'puppet/util/character_encoding'
+require_relative '../puppet/util/character_encoding'
 # Wrapper around Ruby Etc module allowing us to manage encoding in a single
 # place.
 # This represents a subset of Ruby's Etc module, only the methods required by Puppet.

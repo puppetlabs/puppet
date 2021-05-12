@@ -1,4 +1,4 @@
-require 'puppet/util/logging'
+require_relative '../../puppet/util/logging'
 
 class Puppet::Module
   class Plan

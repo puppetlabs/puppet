@@ -1,4 +1,4 @@
-require 'puppet/ssl'
+require_relative '../../puppet/ssl'
 
 # SSL Provider creates `SSLContext` objects that can be used to create
 # secure connections.

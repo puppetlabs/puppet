@@ -1,5 +1,5 @@
 require 'fileutils'
-require 'puppet/util/lockfile'
+require_relative '../../puppet/util/lockfile'
 
 class Puppet::Util::Pidlock
 

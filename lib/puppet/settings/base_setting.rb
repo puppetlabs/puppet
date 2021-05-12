@@ -1,5 +1,5 @@
 require 'set'
-require 'puppet/settings/errors'
+require_relative '../../puppet/settings/errors'
 
 # The base setting type
 class Puppet::Settings::BaseSetting
@@ -145,7 +145,7 @@ class Puppet::Settings::BaseSetting
 
   # Convert the object to a config statement.
   def to_config
-    require 'puppet/util/docs'
+    require_relative '../../puppet/util/docs'
     # Scrub any funky indentation; comment out description.
     str = Puppet::Util::Docs.scrub(@desc).gsub(/^/, "# ") + "\n"
 

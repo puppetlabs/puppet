@@ -1,17 +1,17 @@
-require 'puppet/vendor'
+require_relative '../puppet/vendor'
 Puppet::Vendor.load_vendored
 
 require 'net/http'
 require 'tempfile'
 require 'uri'
 require 'pathname'
-require 'puppet/util/json'
+require_relative '../puppet/util/json'
 require 'semantic_puppet'
 
 class Puppet::Forge < SemanticPuppet::Dependency::Source
-  require 'puppet/forge/cache'
-  require 'puppet/forge/repository'
-  require 'puppet/forge/errors'
+  require_relative 'forge/cache'
+  require_relative 'forge/repository'
+  require_relative 'forge/errors'
 
   include Puppet::Forge::Errors
 

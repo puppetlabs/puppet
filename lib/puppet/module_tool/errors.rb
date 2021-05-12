@@ -1,11 +1,11 @@
-require 'puppet/module_tool'
+require_relative '../../puppet/module_tool'
 
 module Puppet::ModuleTool
   module Errors
-    require 'puppet/module_tool/errors/base'
-    require 'puppet/module_tool/errors/installer'
-    require 'puppet/module_tool/errors/uninstaller'
-    require 'puppet/module_tool/errors/upgrader'
-    require 'puppet/module_tool/errors/shared'
+    require_relative 'errors/base'
+    require_relative 'errors/installer'
+    require_relative 'errors/uninstaller'
+    require_relative 'errors/upgrader'
+    require_relative 'errors/shared'
   end
 end

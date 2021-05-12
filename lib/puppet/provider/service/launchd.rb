@@ -1,4 +1,4 @@
-require 'puppet/util/plist'
+require_relative '../../../puppet/util/plist'
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
   desc <<-'EOT'
     This provider manages jobs with `launchd`, which is the default service

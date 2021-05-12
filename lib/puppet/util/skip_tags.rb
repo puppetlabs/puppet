@@ -1,4 +1,4 @@
-require 'puppet/util/tagging'
+require_relative '../../puppet/util/tagging'
 
 class Puppet::Util::SkipTags
   include Puppet::Util::Tagging

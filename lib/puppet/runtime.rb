@@ -1,4 +1,4 @@
-require 'puppet/http'
+require_relative '../puppet/http'
 require 'singleton'
 
 # Provides access to runtime implementations.

@@ -1,7 +1,7 @@
-require 'puppet/indirector/facts/facter'
+require_relative '../../puppet/indirector/facts/facter'
 
-require 'puppet/configurer'
-require 'puppet/configurer/downloader'
+require_relative '../../puppet/configurer'
+require_relative '../../puppet/configurer/downloader'
 
 # Break out the code related to facts.  This module is
 # just included into the agent, but having it here makes it

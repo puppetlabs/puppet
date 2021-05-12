@@ -1,4 +1,4 @@
-require 'puppet/util/lockfile'
+require_relative '../../puppet/util/lockfile'
 
 # This class provides a simple API for managing a lock file
 # whose contents are a serialized JSON object.  In addition

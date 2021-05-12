@@ -6,7 +6,7 @@
 # @see https://msdn.microsoft.com/en-us/library/windows/desktop/aa374868(v=vs.85).aspx
 # @api private
 class Puppet::Util::Windows::AccessControlEntry
-  require 'puppet/util/windows/security'
+  require_relative '../../../puppet/util/windows/security'
   include Puppet::Util::Windows::SID
 
   attr_accessor :sid

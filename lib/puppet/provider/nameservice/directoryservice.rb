@@ -1,6 +1,6 @@
-require 'puppet'
-require 'puppet/provider/nameservice'
-require 'puppet/util/plist' if Puppet.features.cfpropertylist?
+require_relative '../../../puppet'
+require_relative '../../../puppet/provider/nameservice'
+require_relative '../../../puppet/util/plist' if Puppet.features.cfpropertylist?
 require 'fileutils'
 
 class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameService

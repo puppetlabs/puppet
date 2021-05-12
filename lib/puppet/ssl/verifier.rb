@@ -1,4 +1,4 @@
-require 'puppet/ssl'
+require_relative '../../puppet/ssl'
 
 # Verify an SSL connection.
 #

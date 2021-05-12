@@ -1,4 +1,4 @@
-require 'puppet/util/json'
+require_relative '../../../puppet/util/json'
 
 module Puppet::Pops
 module Serialization

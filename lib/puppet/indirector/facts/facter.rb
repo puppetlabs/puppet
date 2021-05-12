@@ -1,5 +1,5 @@
-require 'puppet/node/facts'
-require 'puppet/indirector/code'
+require_relative '../../../puppet/node/facts'
+require_relative '../../../puppet/indirector/code'
 
 class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
   desc "Retrieve facts from Facter.  This provides a somewhat abstract interface

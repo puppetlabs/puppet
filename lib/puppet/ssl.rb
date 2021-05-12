@@ -1,6 +1,6 @@
 # Just to make the constants work out.
-require 'puppet'
-require 'puppet/ssl/openssl_loader'
+require_relative '../puppet'
+require_relative 'ssl/openssl_loader'
 
 # Responsible for bootstrapping an agent's certificate and private key, generating
 # SSLContexts for use in making HTTPS connections, and handling CSR attributes and
@@ -11,13 +11,13 @@ require 'puppet/ssl/openssl_loader'
 module Puppet::SSL
   CA_NAME = "ca".freeze
 
-  require 'puppet/ssl/oids'
-  require 'puppet/ssl/error'
-  require 'puppet/ssl/ssl_context'
-  require 'puppet/ssl/verifier'
-  require 'puppet/ssl/ssl_provider'
-  require 'puppet/ssl/state_machine'
-  require 'puppet/ssl/certificate'
-  require 'puppet/ssl/certificate_request'
-  require 'puppet/ssl/certificate_request_attributes'
+  require_relative 'ssl/oids'
+  require_relative 'ssl/error'
+  require_relative 'ssl/ssl_context'
+  require_relative 'ssl/verifier'
+  require_relative 'ssl/ssl_provider'
+  require_relative 'ssl/state_machine'
+  require_relative 'ssl/certificate'
+  require_relative 'ssl/certificate_request'
+  require_relative 'ssl/certificate_request_attributes'
 end

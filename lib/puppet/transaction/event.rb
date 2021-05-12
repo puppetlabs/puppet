@@ -1,7 +1,7 @@
-require 'puppet/transaction'
-require 'puppet/util/tagging'
-require 'puppet/util/logging'
-require 'puppet/network/format_support'
+require_relative '../../puppet/transaction'
+require_relative '../../puppet/util/tagging'
+require_relative '../../puppet/util/logging'
+require_relative '../../puppet/network/format_support'
 
 # A simple struct for storing what happens on the system.
 class Puppet::Transaction::Event

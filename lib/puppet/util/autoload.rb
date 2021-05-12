@@ -1,8 +1,8 @@
 require 'pathname'
-require 'puppet/util/rubygems'
-require 'puppet/util/warnings'
-require 'puppet/pops/adaptable'
-require 'puppet/concurrent/synchronized'
+require_relative '../../puppet/util/rubygems'
+require_relative '../../puppet/util/warnings'
+require_relative '../../puppet/pops/adaptable'
+require_relative '../../puppet/concurrent/synchronized'
 
 # An adapter that ties the module_directories cache to the environment where the modules are parsed. This
 # adapter ensures that the life-cycle of this cache doesn't exceed  the life-cycle of the environment.

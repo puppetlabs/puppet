@@ -1,4 +1,4 @@
-require 'puppet/network/http/api/indirection_type'
+require_relative '../../../../puppet/network/http/api/indirection_type'
 
 class Puppet::Network::HTTP::API::IndirectedRoutes
 

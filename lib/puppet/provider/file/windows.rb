@@ -7,7 +7,7 @@ Puppet::Type.type(:file).provide :windows do
   include Puppet::Util::Warnings
 
   if Puppet::Util::Platform.windows?
-    require 'puppet/util/windows'
+    require_relative '../../../puppet/util/windows'
     include Puppet::Util::Windows::Security
   end
 

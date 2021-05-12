@@ -1,4 +1,4 @@
-require 'puppet/application'
+require_relative '../../puppet/application'
 
 class Puppet::Application::Doc < Puppet::Application
   run_mode :server
@@ -21,7 +21,7 @@ class Puppet::Application::Doc < Puppet::Application
 
   option("--format FORMAT", "-f") do |arg|
     method = "to_#{arg}"
-    require 'puppet/util/reference'
+    require_relative '../../puppet/util/reference'
     if Puppet::Util::Reference.method_defined?(method)
       options[:format] = method
     else
@@ -30,7 +30,7 @@ class Puppet::Application::Doc < Puppet::Application
   end
 
   option("--mode MODE", "-m") do |arg|
-    require 'puppet/util/reference'
+    require_relative '../../puppet/util/reference'
     if Puppet::Util::Reference.modes.include?(arg) or arg.intern==:rdoc
       options[:mode] = arg.intern
     else
@@ -39,7 +39,7 @@ class Puppet::Application::Doc < Puppet::Application
   end
 
   option("--list", "-l") do |arg|
-    require 'puppet/util/reference'
+    require_relative '../../puppet/util/reference'
     refs = Puppet::Util::Reference.references(Puppet.lookup(:current_environment))
     puts refs.collect { |r| Puppet::Util::Reference.reference(r).doc }.join("\n")
     exit(0)
@@ -136,7 +136,7 @@ HELP
 
     Puppet.settings[:document_all] = options[:all] || false
     begin
-      require 'puppet/util/rdoc'
+      require_relative '../../puppet/util/rdoc'
       if @manifest
         Puppet::Util::RDoc.manifestdoc(files)
       else
@@ -154,7 +154,7 @@ HELP
     text = ""
     with_contents = options[:references].length <= 1
     exit_code = 0
-    require 'puppet/util/reference'
+    require_relative '../../puppet/util/reference'
     options[:references].sort_by(&:to_s).each do |name|
       section = Puppet::Util::Reference.reference(name)
       raise _("Could not find reference %{name}") % { name: name } unless section
@@ -199,7 +199,7 @@ HELP
   def setup_reference
     if options[:all]
       # Don't add dynamic references to the "all" list.
-      require 'puppet/util/reference'
+      require_relative '../../puppet/util/reference'
       refs = Puppet::Util::Reference.references(Puppet.lookup(:current_environment))
       options[:references] = refs.reject do |ref|
         Puppet::Util::Reference.reference(ref).dynamic?

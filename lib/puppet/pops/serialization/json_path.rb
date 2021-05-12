@@ -1,4 +1,4 @@
-require 'puppet/concurrent/thread_local_singleton'
+require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 module Puppet::Pops
 module Serialization

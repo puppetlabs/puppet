@@ -1,4 +1,4 @@
-require 'puppet/provider/nameservice/pw'
+require_relative '../../../puppet/provider/nameservice/pw'
 require 'open3'
 
 Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::PW do

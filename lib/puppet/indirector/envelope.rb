@@ -1,4 +1,4 @@
-require 'puppet/indirector'
+require_relative '../../puppet/indirector'
 
 # Provide any attributes or functionality needed for indirected
 # instances.

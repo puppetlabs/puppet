@@ -1,4 +1,4 @@
-require 'puppet/transaction'
+require_relative '../../puppet/transaction'
 
 # This class stores, routes, and responds to events generated while evaluating
 # a transaction.

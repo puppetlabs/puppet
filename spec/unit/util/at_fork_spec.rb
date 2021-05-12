@@ -29,11 +29,11 @@ describe 'Puppet::Util::AtFork' do
       end
 
       def stub_solaris_handler(stub_noop_too = false)
-        allow(Puppet::Util::AtFork).to receive(:require).with(anything) do |lib|
-          if lib == 'puppet/util/at_fork/solaris'
-            load lib + '.rb'
+        allow(Puppet::Util::AtFork).to receive(:require_relative).with(anything) do |lib|
+          if lib == 'at_fork/solaris'
+            load 'puppet/util/at_fork/solaris.rb'
             true
-          elsif stub_noop_too && lib == 'puppet/util/at_fork/noop'
+          elsif stub_noop_too && lib == 'at_fork/noop'
             Puppet::Util::AtFork.class_exec do
               const_set(:Noop, Class.new)
             end
@@ -67,8 +67,8 @@ describe 'Puppet::Util::AtFork' do
       end
 
       it %q(should return the Solaris specific AtFork handler) do
-        allow(Puppet::Util::AtFork).to receive(:require).with(anything) do |lib|
-          if lib == 'puppet/util/at_fork/solaris'
+        allow(Puppet::Util::AtFork).to receive(:require_relative).with(anything) do |lib|
+          if lib == 'at_fork/solaris'
             Puppet::Util::AtFork.class_exec do
               const_set(:Solaris, Class.new)
             end
@@ -118,14 +118,14 @@ describe 'Puppet::Util::AtFork' do
       end
 
       def stub_noop_handler(namespace_only = false)
-        allow(Puppet::Util::AtFork).to receive(:require).with(anything) do |lib|
-          if lib == 'puppet/util/at_fork/noop'
+        allow(Puppet::Util::AtFork).to receive(:require_relative).with(anything) do |lib|
+          if lib == 'at_fork/noop'
             if namespace_only
               Puppet::Util::AtFork.class_exec do
                 const_set(:Noop, Class.new)
               end
             else
-              load lib + '.rb'
+              load 'puppet/util/at_fork/noop.rb'
             end
             true
           else

@@ -1,5 +1,5 @@
-require 'puppet/util/json'
-require 'puppet/module_tool/checksums'
+require_relative '../../../puppet/util/json'
+require_relative '../../../puppet/module_tool/checksums'
 
 module Puppet::ModuleTool
   module Applications

@@ -1,6 +1,6 @@
 # encoding: UTF-8
-require 'puppet/forge'
-require 'puppet/module_tool/install_directory'
+require_relative '../../../puppet/forge'
+require_relative '../../../puppet/module_tool/install_directory'
 require 'pathname'
 
 Puppet::Face.define(:module, '1.0.0') do

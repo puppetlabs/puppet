@@ -1,4 +1,4 @@
-require 'puppet/file_serving/mount'
+require_relative '../../../puppet/file_serving/mount'
 
 # Find files in the modules' plugins directories.
 # This is a very strange mount because it merges

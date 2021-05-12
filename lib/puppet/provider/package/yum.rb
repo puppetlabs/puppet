@@ -1,6 +1,6 @@
-require 'puppet/util/package/version/range'
-require 'puppet/util/package/version/rpm'
-require 'puppet/util/rpm_compare'
+require_relative '../../../puppet/util/package/version/range'
+require_relative '../../../puppet/util/package/version/rpm'
+require_relative '../../../puppet/util/rpm_compare'
 
 Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   # provides Rpm parsing and comparison

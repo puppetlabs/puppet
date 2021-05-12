@@ -1,6 +1,6 @@
 
-require 'puppet/util/network_device'
-require 'puppet/util/network_device/transport'
+require_relative '../../../../puppet/util/network_device'
+require_relative '../../../../puppet/util/network_device/transport'
 
 class Puppet::Util::NetworkDevice::Transport::Base
   attr_accessor :user, :password, :host, :port

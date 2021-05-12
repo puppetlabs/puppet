@@ -1,9 +1,9 @@
-require 'puppet/application'
-require 'puppet/configurer'
-require 'puppet/util/profiler/aggregate'
+require_relative '../../puppet/application'
+require_relative '../../puppet/configurer'
+require_relative '../../puppet/util/profiler/aggregate'
 
 class Puppet::Application::Apply < Puppet::Application
-  require 'puppet/util/splayer'
+  require_relative '../../puppet/util/splayer'
   include Puppet::Util::Splayer
 
   option("--debug","-d")

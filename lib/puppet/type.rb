@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-require 'puppet'
-require 'puppet/util/log'
-require 'puppet/util/metric'
-require 'puppet/property'
-require 'puppet/parameter'
-require 'puppet/util'
-require 'puppet/util/autoload'
-require 'puppet/metatype/manager'
-require 'puppet/util/errors'
-require 'puppet/util/logging'
-require 'puppet/util/tagging'
-require 'puppet/concurrent/lock'
+require_relative '../puppet'
+require_relative '../puppet/util/log'
+require_relative '../puppet/util/metric'
+require_relative '../puppet/property'
+require_relative '../puppet/parameter'
+require_relative '../puppet/util'
+require_relative '../puppet/util/autoload'
+require_relative '../puppet/metatype/manager'
+require_relative '../puppet/util/errors'
+require_relative '../puppet/util/logging'
+require_relative '../puppet/util/tagging'
+require_relative '../puppet/concurrent/lock'
 
 # see the bottom of the file for the rest of the inclusions
 
@@ -1699,8 +1699,8 @@ class Type
 
   ###############################
   # All of the provider plumbing for the resource types.
-  require 'puppet/provider'
-  require 'puppet/util/provider_features'
+  require_relative '../puppet/provider'
+  require_relative '../puppet/util/provider_features'
 
   # Add the feature handling module.
   extend Puppet::Util::ProviderFeatures

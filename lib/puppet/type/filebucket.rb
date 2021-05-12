@@ -1,5 +1,5 @@
 module Puppet
-  require 'puppet/file_bucket/dipper'
+  require_relative '../../puppet/file_bucket/dipper'
 
   Type.newtype(:filebucket) do
     @doc = <<-EOT

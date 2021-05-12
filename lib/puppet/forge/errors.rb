@@ -1,6 +1,6 @@
-require 'puppet/util/json'
-require 'puppet/error'
-require 'puppet/forge'
+require_relative '../../puppet/util/json'
+require_relative '../../puppet/error'
+require_relative '../../puppet/forge'
 
 # Puppet::Forge specific exceptions
 module Puppet::Forge::Errors

@@ -1,5 +1,5 @@
-require 'puppet/util/checksums'
-require 'puppet/util/diff'
+require_relative '../../../puppet/util/checksums'
+require_relative '../../../puppet/util/diff'
 require 'date'
 require 'tempfile'
 

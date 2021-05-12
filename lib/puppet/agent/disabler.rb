@@ -1,4 +1,4 @@
-require 'puppet/util/json_lockfile'
+require_relative '../../puppet/util/json_lockfile'
 
 # This module is responsible for encapsulating the logic for
 #  "disabling" the puppet agent during a run; in other words,

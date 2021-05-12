@@ -1,5 +1,5 @@
-require 'puppet/face'
-require 'puppet/configurer/plugin_handler'
+require_relative '../../puppet/face'
+require_relative '../../puppet/configurer/plugin_handler'
 
 Puppet::Face.define(:plugin, '0.0.1') do
   copyright "Puppet Inc.", 2011

@@ -9,12 +9,12 @@ if not defined? ::Bundler
   end
 end
 
-require 'puppet'
-require 'puppet/util'
-require "puppet/util/rubygems"
-require "puppet/util/limits"
-require 'puppet/util/colors'
-require 'puppet/gettext/module_translations'
+require_relative '../../puppet'
+require_relative '../../puppet/util'
+require_relative '../../puppet/util/rubygems'
+require_relative '../../puppet/util/limits'
+require_relative '../../puppet/util/colors'
+require_relative '../../puppet/gettext/module_translations'
 
 module Puppet
   module Util

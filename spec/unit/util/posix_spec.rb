@@ -338,7 +338,7 @@ describe Puppet::Util::POSIX do
         let(:expected_groups) { ['group1', 'group3'] }
 
         before(:each) do
-          allow(Puppet::Util::POSIX).to receive(:require).with('puppet/ffi/posix').and_raise(LoadError, 'cannot load such file -- ffi')
+          allow(Puppet::Util::POSIX).to receive(:require_relative).with('../../puppet/ffi/posix').and_raise(LoadError, 'cannot load such file -- ffi')
         end
 
         it "should return the groups" do

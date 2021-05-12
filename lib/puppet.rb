@@ -1,5 +1,5 @@
-require 'puppet/version'
-require 'puppet/concurrent/synchronized'
+require_relative 'puppet/version'
+require_relative 'puppet/concurrent/synchronized'
 
 if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new("2.5.0")
   raise LoadError, "Puppet #{Puppet.version} requires Ruby 2.5.0 or greater, found Ruby #{RUBY_VERSION.dup}."
@@ -13,19 +13,19 @@ $LOAD_PATH.extend(Puppet::Concurrent::Synchronized)
 # Also see the new Vendor support - towards the end
 #
 require 'facter'
-require 'puppet/error'
-require 'puppet/util'
-require 'puppet/util/autoload'
-require 'puppet/settings'
-require 'puppet/util/feature'
-require 'puppet/util/suidmanager'
-require 'puppet/util/run_mode'
+require_relative 'puppet/error'
+require_relative 'puppet/util'
+require_relative 'puppet/util/autoload'
+require_relative 'puppet/settings'
+require_relative 'puppet/util/feature'
+require_relative 'puppet/util/suidmanager'
+require_relative 'puppet/util/run_mode'
 # PSON is deprecated, use JSON instead
-require 'puppet/external/pson/common'
-require 'puppet/external/pson/version'
-require 'puppet/external/pson/pure'
-require 'puppet/gettext/config'
-require 'puppet/defaults'
+require_relative 'puppet/external/pson/common'
+require_relative 'puppet/external/pson/version'
+require_relative 'puppet/external/pson/pure'
+require_relative 'puppet/gettext/config'
+require_relative 'puppet/defaults'
 
 # Defines the `Puppet` module. There are different entry points into Puppet
 # depending on your use case.
@@ -40,10 +40,10 @@ require 'puppet/defaults'
 #
 # @api public
 module Puppet
-  require 'puppet/file_system'
-  require 'puppet/etc'
-  require 'puppet/context'
-  require 'puppet/environments'
+  require_relative 'puppet/file_system'
+  require_relative 'puppet/etc'
+  require_relative 'puppet/context'
+  require_relative 'puppet/environments'
 
   class << self
     Puppet::GettextConfig.setup_locale
@@ -85,7 +85,7 @@ module Puppet
     end
   end
 
-  require 'puppet/util/logging'
+  require_relative 'puppet/util/logging'
   extend Puppet::Util::Logging
 
   # Setup facter's logging
@@ -95,7 +95,7 @@ module Puppet
   @features = Puppet::Util::Feature.new('puppet/feature')
 
   # Load the base features.
-  require 'puppet/feature/base'
+  require_relative 'puppet/feature/base'
 
   # setting access and stuff
   def self.[]=(param,value)
@@ -208,7 +208,7 @@ module Puppet
 
   # Load vendored (setup paths, and load what is needed upfront).
   # See the Vendor class for how to add additional vendored gems/code
-  require "puppet/vendor"
+  require_relative 'puppet/vendor'
   Puppet::Vendor.load_vendored
 
   # The bindings used for initialization of puppet
@@ -332,12 +332,12 @@ module Puppet
     @runtime
   end
 
-  require 'puppet/node'
+  require_relative 'puppet/node'
 
   # The single instance used for normal operation
   @context = Puppet::Context.new(bootstrap_context)
 
-  require 'puppet/runtime'
+  require_relative 'puppet/runtime'
   @runtime = Puppet::Runtime.instance
 end
 
@@ -345,17 +345,17 @@ end
 #  anywhere besides the very top of a file.  That would not be possible at the moment without a great deal of
 #  effort, but I think we should strive for it and revisit this at some point.  --cprice 2012-03-16
 
-require 'puppet/indirector'
-require 'puppet/compilable_resource_type'
-require 'puppet/type'
-require 'puppet/resource'
-require 'puppet/parser'
-require 'puppet/network'
-require 'puppet/x509'
-require 'puppet/ssl'
-require 'puppet/module'
-require 'puppet/data_binding'
-require 'puppet/util/storage'
-require 'puppet/file_bucket/file'
-require 'puppet/plugins/configuration'
-require 'puppet/pal/pal_api'
+require_relative 'puppet/indirector'
+require_relative 'puppet/compilable_resource_type'
+require_relative 'puppet/type'
+require_relative 'puppet/resource'
+require_relative 'puppet/parser'
+require_relative 'puppet/network'
+require_relative 'puppet/x509'
+require_relative 'puppet/ssl'
+require_relative 'puppet/module'
+require_relative 'puppet/data_binding'
+require_relative 'puppet/util/storage'
+require_relative 'puppet/file_bucket/file'
+require_relative 'puppet/plugins/configuration'
+require_relative 'puppet/pal/pal_api'

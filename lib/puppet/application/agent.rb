@@ -1,9 +1,9 @@
-require 'puppet/application'
-require 'puppet/daemon'
-require 'puppet/util/pidlock'
-require 'puppet/agent'
-require 'puppet/configurer'
-require 'puppet/ssl/oids'
+require_relative '../../puppet/application'
+require_relative '../../puppet/daemon'
+require_relative '../../puppet/util/pidlock'
+require_relative '../../puppet/agent'
+require_relative '../../puppet/configurer'
+require_relative '../../puppet/ssl/oids'
 
 class Puppet::Application::Agent < Puppet::Application
 

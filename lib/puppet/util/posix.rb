@@ -13,7 +13,7 @@ module Puppet::Util::POSIX
     # Returns an array of all the groups that the user's a member of.
     def groups_of(user)
       begin
-        require 'puppet/ffi/posix'
+        require_relative '../../puppet/ffi/posix'
         groups = get_groups_list(user)
       rescue StandardError, LoadError => e
         Puppet.debug("Falling back to Puppet::Etc.group: #{e.message}")

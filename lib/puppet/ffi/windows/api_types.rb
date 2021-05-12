@@ -1,5 +1,5 @@
-require 'puppet/ffi/windows'
-require 'puppet/util/windows/string'
+require_relative '../../../puppet/ffi/windows'
+require_relative '../../../puppet/util/windows/string'
 
 module Puppet::FFI::Windows
   module APITypes

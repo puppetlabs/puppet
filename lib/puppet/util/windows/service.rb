@@ -1,5 +1,5 @@
 # coding: utf-8
-require 'puppet/ffi/windows'
+require_relative '../../../puppet/ffi/windows'
 
 module Puppet::Util::Windows
   # This module is designed to provide an API between the windows system and puppet for

@@ -1,5 +1,5 @@
-require 'puppet/ssl/base'
-require 'puppet/ssl/certificate_signer'
+require_relative '../../puppet/ssl/base'
+require_relative '../../puppet/ssl/certificate_signer'
 
 # This class creates and manages X509 certificate signing requests.
 #

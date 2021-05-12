@@ -1,6 +1,6 @@
 # Sun packaging.
 
-require 'puppet/provider/package'
+require_relative '../../../puppet/provider/package'
 
 Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package do
   desc "Sun's packaging system.  Requires that you specify the source for

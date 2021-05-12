@@ -1,6 +1,6 @@
 # The TypeDefinitionInstantiator instantiates a type alias or a type definition
 #
-require 'puppet/module/task'
+require_relative '../../../puppet/module/task'
 module Puppet::Pops
 module Loader
 class TaskInstantiator

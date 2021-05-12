@@ -51,11 +51,11 @@ class Puppet::Parser::AST
 end
 
 # And include all of the AST subclasses.
-require 'puppet/parser/ast/branch'
-require 'puppet/parser/ast/leaf'
-require 'puppet/parser/ast/block_expression'
-require 'puppet/parser/ast/hostclass'
-require 'puppet/parser/ast/node'
-require 'puppet/parser/ast/resource'
-require 'puppet/parser/ast/resource_instance'
-require 'puppet/parser/ast/resourceparam'
+require_relative 'ast/branch'
+require_relative 'ast/leaf'
+require_relative 'ast/block_expression'
+require_relative 'ast/hostclass'
+require_relative 'ast/node'
+require_relative 'ast/resource'
+require_relative 'ast/resource_instance'
+require_relative 'ast/resourceparam'

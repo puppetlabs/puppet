@@ -8,5 +8,5 @@
 #
 # It isn't hidden to gratuitously hide things, just to make it easier to
 # separate out the interests people will have.  --daniel 2011-04-07
-require 'puppet/interface'
+require_relative '../puppet/interface'
 Puppet::Face = Puppet::Interface

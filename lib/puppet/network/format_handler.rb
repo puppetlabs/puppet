@@ -1,6 +1,6 @@
 require 'yaml'
-require 'puppet/network'
-require 'puppet/network/format'
+require_relative '../../puppet/network'
+require_relative '../../puppet/network/format'
 
 module Puppet::Network::FormatHandler
   class FormatError < Puppet::Error; end
@@ -105,4 +105,4 @@ module Puppet::Network::FormatHandler
   end
 end
 
-require 'puppet/network/formats'
+require_relative '../../puppet/network/formats'

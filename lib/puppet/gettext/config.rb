@@ -1,5 +1,5 @@
-require 'puppet/util/platform'
-require 'puppet/file_system'
+require_relative '../../puppet/util/platform'
+require_relative '../../puppet/file_system'
 
 module Puppet::GettextConfig
   LOCAL_PATH = File.absolute_path('../../../locales', File.dirname(__FILE__))
@@ -24,7 +24,7 @@ module Puppet::GettextConfig
   rescue LoadError
     # Stub out gettext's `_` and `n_()` methods, which attempt to load translations,
     # with versions that do nothing
-    require 'puppet/gettext/stubs'
+    require_relative '../../puppet/gettext/stubs'
     @gettext_loaded = false
   end
 

@@ -1,4 +1,4 @@
-require 'puppet/util/platform'
+require_relative '../../puppet/util/platform'
 
 module Puppet::Util::MonkeyPatches
 end
@@ -30,7 +30,7 @@ class Object
 end
 
 # (#19151) Reject all SSLv2 ciphers and handshakes
-require 'puppet/ssl/openssl_loader'
+require_relative '../../puppet/ssl/openssl_loader'
 unless Puppet::Util::Platform.jruby_fips?
   unless defined?(OpenSSL::SSL::TLS1_VERSION)
     module OpenSSL::SSL
@@ -64,7 +64,7 @@ unless Puppet::Util::Platform.jruby_fips?
 end
 
 if Puppet::Util::Platform.windows?
-  require 'puppet/util/windows'
+  require_relative '../../puppet/util/windows'
 
   class OpenSSL::X509::Store
     @puppet_certs_loaded = false

@@ -1,4 +1,4 @@
-require 'puppet/application/indirection_base'
+require_relative '../../puppet/application/indirection_base'
 
 class Puppet::Application::Facts < Puppet::Application::IndirectionBase
   # Allows `puppet facts` actions to be run against environments that

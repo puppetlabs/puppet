@@ -7,11 +7,11 @@ module Puppet::Indirector
   # LAK:FIXME We need to figure out how to handle documentation for the
   # different indirection types.
 
-  require 'puppet/indirector/indirection'
-  require 'puppet/indirector/terminus'
-  require 'puppet/indirector/code'
-  require 'puppet/indirector/envelope'
-  require 'puppet/network/format_support'
+  require_relative 'indirector/indirection'
+  require_relative 'indirector/terminus'
+  require_relative 'indirector/code'
+  require_relative 'indirector/envelope'
+  require_relative '../puppet/network/format_support'
 
   def self.configure_routes(application_routes)
     application_routes.each do |indirection_name, termini|

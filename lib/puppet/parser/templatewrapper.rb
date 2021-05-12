@@ -1,6 +1,6 @@
-require 'puppet/parser/files'
+require_relative '../../puppet/parser/files'
 require 'erb'
-require 'puppet/file_system'
+require_relative '../../puppet/file_system'
 
 # A simple wrapper for templates, so they don't have full access to
 # the scope objects.

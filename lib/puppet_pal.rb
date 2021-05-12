@@ -4,5 +4,5 @@
 # This requires all of puppet because 'settings' and many other things are still required in PAL.
 # Eventually that will not be the case.
 #
-require 'puppet'
-require 'puppet/pal/pal_api'
+require_relative 'puppet'
+require_relative 'puppet/pal/pal_api'

@@ -1,7 +1,7 @@
-require 'puppet/application'
-require 'puppet/configurer'
-require 'puppet/util/profiler/aggregate'
-require 'puppet/parser/script_compiler'
+require_relative '../../puppet/application'
+require_relative '../../puppet/configurer'
+require_relative '../../puppet/util/profiler/aggregate'
+require_relative '../../puppet/parser/script_compiler'
 
 class Puppet::Application::Script < Puppet::Application
 

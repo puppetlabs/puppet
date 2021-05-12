@@ -1,4 +1,4 @@
-require 'puppet/thread_local'
+require_relative '../puppet/thread_local'
 
 # Puppet::Context is a system for tracking services and contextual information
 # that puppet needs to be able to run. Values are "bound" in a context when it is created
@@ -11,7 +11,7 @@ require 'puppet/thread_local'
 #
 # @api private
 class Puppet::Context
-  require 'puppet/context/trusted_information'
+  require_relative 'context/trusted_information'
 
   class UndefinedBindingError < Puppet::Error; end
   class StackUnderflow < Puppet::Error; end

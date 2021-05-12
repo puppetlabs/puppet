@@ -37,7 +37,7 @@ module Puppet
 
       # @api private
       def require_libs
-        require 'puppet/vendor/require_vendored'
+        require_relative 'vendor/require_vendored'
       end
 
       # Configures the path for all vendored libraries and loads required libraries.

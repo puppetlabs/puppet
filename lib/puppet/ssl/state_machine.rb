@@ -1,5 +1,5 @@
-require 'puppet/ssl'
-require 'puppet/util/pidlock'
+require_relative '../../puppet/ssl'
+require_relative '../../puppet/util/pidlock'
 
 # This class implements a state machine for bootstrapping a host's CA and CRL
 # bundles, private key and signed client certificate. Each state has a frozen

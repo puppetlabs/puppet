@@ -1,4 +1,4 @@
-require 'puppet/confiner'
+require_relative '../../puppet/confiner'
 
 # A simple class for modeling encoding formats for moving
 # instances around the network.

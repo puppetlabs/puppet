@@ -1,5 +1,5 @@
-require 'puppet/util/windows'
-require 'puppet/error'
+require_relative '../../../puppet/util/windows'
+require_relative '../../../puppet/error'
 
 # represents an error resulting from a Win32 error code
 class Puppet::Util::Windows::Error < Puppet::Error

@@ -1,4 +1,4 @@
-require 'puppet/indirector/code'
+require_relative '../../../puppet/indirector/code'
 
 module Puppet::FileBucketFile
   class Selector < Puppet::Indirector::Code

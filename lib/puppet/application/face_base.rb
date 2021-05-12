@@ -1,5 +1,5 @@
-require 'puppet/application'
-require 'puppet/face'
+require_relative '../../puppet/application'
+require_relative '../../puppet/face'
 require 'optparse'
 require 'pp'
 

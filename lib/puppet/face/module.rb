@@ -1,6 +1,6 @@
-require 'puppet/face'
-require 'puppet/module_tool'
-require 'puppet/util/colors'
+require_relative '../../puppet/face'
+require_relative '../../puppet/module_tool'
+require_relative '../../puppet/util/colors'
 
 Puppet::Face.define(:module, '1.0.0') do
   extend Puppet::Util::Colors

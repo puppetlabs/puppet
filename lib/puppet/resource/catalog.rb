@@ -1,8 +1,8 @@
-require 'puppet/node'
-require 'puppet/indirector'
-require 'puppet/transaction'
-require 'puppet/util/tagging'
-require 'puppet/graph'
+require_relative '../../puppet/node'
+require_relative '../../puppet/indirector'
+require_relative '../../puppet/transaction'
+require_relative '../../puppet/util/tagging'
+require_relative '../../puppet/graph'
 require 'securerandom'
 
 # This class models a node catalog.  It is the thing meant to be passed

@@ -1,4 +1,4 @@
-require 'puppet/file_system'
+require_relative '../../puppet/file_system'
 require 'delegate'
 require 'tmpdir'
 

@@ -1,5 +1,5 @@
-require 'puppet'
-require 'puppet/parameter/boolean'
+require_relative '../../puppet'
+require_relative '../../puppet/parameter/boolean'
 
 Puppet::Type.newtype(:resources) do
   @doc = "This is a metatype that can manage other resource types.  Any

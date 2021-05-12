@@ -21,7 +21,7 @@
 
 
 module Puppet
-  require 'puppet/util/selinux'
+  require_relative '../../../puppet/util/selinux'
 
   class SELFileContext < Puppet::Property
     include Puppet::Util::SELinux

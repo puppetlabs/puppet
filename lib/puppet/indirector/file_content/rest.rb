@@ -1,6 +1,6 @@
-require 'puppet/file_serving/content'
-require 'puppet/indirector/file_content'
-require 'puppet/indirector/rest'
+require_relative '../../../puppet/file_serving/content'
+require_relative '../../../puppet/indirector/file_content'
+require_relative '../../../puppet/indirector/rest'
 
 class Puppet::Indirector::FileContent::Rest < Puppet::Indirector::REST
   desc "Retrieve file contents via a REST HTTP interface."

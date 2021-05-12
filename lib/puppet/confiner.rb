@@ -1,4 +1,4 @@
-require 'puppet/confine_collection'
+require_relative '../puppet/confine_collection'
 
 # The Confiner module contains methods for managing a Provider's confinement (suitability under given
 # conditions). The intent is to include this module in an object where confinement management is wanted.

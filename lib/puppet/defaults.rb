@@ -1,4 +1,4 @@
-require 'puppet/util/platform'
+require_relative '../puppet/util/platform'
 
 module Puppet
 
@@ -219,7 +219,7 @@ module Puppet
         as well as any translations in the report and CLI.",
       :hook    => proc do |value|
         if value
-          require 'puppet/gettext/stubs'
+          require_relative '../puppet/gettext/stubs'
           Puppet::GettextConfig.disable_gettext
         end
       end
@@ -2082,8 +2082,8 @@ EOT
       # Call our hook with the default value, so we always get the libdir set.
       :call_hook => :on_initialize_and_write,
       :hook => proc do |value|
-        require 'puppet/node'
-        require 'puppet/node/facts'
+        require_relative '../puppet/node'
+        require_relative '../puppet/node/facts'
         if value
           Puppet::Resource::Catalog.indirection.set_global_setting(:cache_class, :store_configs)
           settings.override_default(:catalog_cache_terminus, :store_configs)

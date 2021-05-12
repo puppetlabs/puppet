@@ -1,4 +1,4 @@
-require 'puppet/provider/ldap'
+require_relative '../../../puppet/provider/ldap'
 
 Puppet::Type.type(:group).provide :ldap, :parent => Puppet::Provider::Ldap do
   desc "Group management via LDAP.

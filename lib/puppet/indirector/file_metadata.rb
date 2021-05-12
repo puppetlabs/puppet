@@ -2,4 +2,4 @@
 class Puppet::Indirector::FileMetadata # :nodoc:
 end
 
-require 'puppet/file_serving/metadata'
+require_relative '../../puppet/file_serving/metadata'

@@ -1,4 +1,4 @@
-require 'puppet/util/feature'
+require_relative '../../puppet/util/feature'
 
 # Add the simple features, all in one file.
 
@@ -29,7 +29,7 @@ Puppet.features.add(:libshadow, :libs => ["shadow"])
 
 # We're running as root.
 Puppet.features.add(:root) do
-  require 'puppet/util/suidmanager'
+  require_relative '../../puppet/util/suidmanager'
   Puppet::Util::SUIDManager.root?
 end
 

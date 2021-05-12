@@ -1,5 +1,5 @@
-require 'puppet/provider/package'
-require 'puppet/util/rpm_compare'
+require_relative '../../../puppet/provider/package'
+require_relative '../../../puppet/util/rpm_compare'
 
 # RPM packaging.  Should work anywhere that has rpm installed.
 Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Provider::Package do

@@ -1,6 +1,6 @@
 # A syntax checker for JSON.
 # @api public
-require 'puppet/syntax_checkers'
+require_relative '../../puppet/syntax_checkers'
 class Puppet::SyntaxCheckers::Json < Puppet::Plugins::SyntaxCheckers::SyntaxChecker
 
   # Checks the text for JSON syntax issues and reports them to the given acceptor.

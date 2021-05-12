@@ -1,5 +1,5 @@
-require 'puppet/indirector/terminus'
-require 'puppet/util/yaml'
+require_relative '../../puppet/indirector/terminus'
+require_relative '../../puppet/util/yaml'
 
 # The base class for YAML indirection termini.
 class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus

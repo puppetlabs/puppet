@@ -1,11 +1,11 @@
 require 'forwardable'
 
-require 'puppet/node'
-require 'puppet/resource/catalog'
-require 'puppet/util/errors'
+require_relative '../../puppet/node'
+require_relative '../../puppet/resource/catalog'
+require_relative '../../puppet/util/errors'
 
-require 'puppet/loaders'
-require 'puppet/pops'
+require_relative '../../puppet/loaders'
+require_relative '../../puppet/pops'
 
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.

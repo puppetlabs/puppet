@@ -1,4 +1,4 @@
-require 'puppet/generate/models/type/property'
+require_relative '../../../../puppet/generate/models/type/property'
 
 module Puppet
   module Generate

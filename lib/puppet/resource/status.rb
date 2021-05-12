@@ -1,6 +1,6 @@
 require 'time'
-require 'puppet/network/format_support'
-require 'puppet/util/psych_support'
+require_relative '../../puppet/network/format_support'
+require_relative '../../puppet/util/psych_support'
 
 module Puppet
   class Resource

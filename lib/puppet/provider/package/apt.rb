@@ -1,5 +1,5 @@
-require 'puppet/util/package/version/range'
-require 'puppet/util/package/version/debian'
+require_relative '../../../puppet/util/package/version/range'
+require_relative '../../../puppet/util/package/version/debian'
 
 Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # Provide sorting functionality

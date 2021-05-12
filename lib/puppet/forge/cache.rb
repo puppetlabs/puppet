@@ -1,6 +1,6 @@
 require 'uri'
 
-require 'puppet/forge'
+require_relative '../../puppet/forge'
 
 class Puppet::Forge
   # = Cache

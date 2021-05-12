@@ -1,8 +1,8 @@
-require 'puppet/provider/nameservice/objectadd'
+require_relative '../../../puppet/provider/nameservice/objectadd'
 require 'date'
-require 'puppet/util/libuser'
+require_relative '../../../puppet/util/libuser'
 require 'time'
-require 'puppet/error'
+require_relative '../../../puppet/error'
 
 Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameService::ObjectAdd do
   desc "User management via `useradd` and its ilk.  Note that you will need to

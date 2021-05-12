@@ -1,5 +1,5 @@
 class Puppet::InfoService::PlanInformationService
-  require 'puppet/module'
+  require_relative '../../puppet/module'
 
   def self.plans_per_environment(environment_name)
     # get the actual environment object, raise error if the named env doesn't exist

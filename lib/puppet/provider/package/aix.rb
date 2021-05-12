@@ -1,5 +1,5 @@
-require 'puppet/provider/package'
-require 'puppet/util/package'
+require_relative '../../../puppet/provider/package'
+require_relative '../../../puppet/util/package'
 
 Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package do
   desc "Installation from an AIX software directory, using the AIX `installp`

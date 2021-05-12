@@ -7,11 +7,11 @@
 #
 module Puppet::Plugins
   module Configuration
-    require 'puppet/plugins/syntax_checkers'
-    require 'puppet/syntax_checkers/base64'
-    require 'puppet/syntax_checkers/json'
-    require 'puppet/syntax_checkers/pp'
-    require 'puppet/syntax_checkers/epp'
+    require_relative '../../puppet/plugins/syntax_checkers'
+    require_relative '../../puppet/syntax_checkers/base64'
+    require_relative '../../puppet/syntax_checkers/json'
+    require_relative '../../puppet/syntax_checkers/pp'
+    require_relative '../../puppet/syntax_checkers/epp'
 
     def self.load_plugins
       # Register extensions

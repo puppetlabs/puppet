@@ -1,5 +1,5 @@
-require 'puppet/module_tool'
-require 'puppet/module_tool/errors'
+require_relative '../../puppet/module_tool'
+require_relative '../../puppet/module_tool/errors'
 
 module Puppet
   module ModuleTool

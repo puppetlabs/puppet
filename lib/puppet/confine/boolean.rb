@@ -1,4 +1,4 @@
-require 'puppet/confine'
+require_relative '../../puppet/confine'
 
 # Common module for the Boolean confines. It currently
 # contains just enough code to implement PUP-9336.

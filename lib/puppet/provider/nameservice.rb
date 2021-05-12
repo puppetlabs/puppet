@@ -1,4 +1,4 @@
-require 'puppet'
+require_relative '../../puppet'
 
 # This is the parent class of all NSS classes.  They're very different in
 # their backend, but they're pretty similar on the front-end.  This class

@@ -1,5 +1,5 @@
-require 'puppet/provider/package'
-require 'puppet/util/package'
+require_relative '../../../puppet/provider/package'
+require_relative '../../../puppet/util/package'
 
 Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
   desc "Installation from an AIX NIM LPP source.  The `source` parameter is required

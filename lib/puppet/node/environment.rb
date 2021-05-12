@@ -1,7 +1,7 @@
-require 'puppet/util'
+require_relative '../../puppet/util'
 require 'monitor'
-require 'puppet/parser/parser_factory'
-require 'puppet/concurrent/lock'
+require_relative '../../puppet/parser/parser_factory'
+require_relative '../../puppet/concurrent/lock'
 
 # Just define it, so this class has fewer load dependencies.
 class Puppet::Node

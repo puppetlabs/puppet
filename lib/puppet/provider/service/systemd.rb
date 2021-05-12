@@ -1,6 +1,6 @@
 # Manage systemd services using systemctl
 
-require 'puppet/file_system'
+require_relative '../../../puppet/file_system'
 
 Puppet::Type.type(:service).provide :systemd, :parent => :base do
   desc "Manages `systemd` services using `systemctl`.

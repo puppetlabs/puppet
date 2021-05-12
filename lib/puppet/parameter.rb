@@ -1,5 +1,5 @@
-require 'puppet/util/logging'
-require 'puppet/util/docs'
+require_relative '../puppet/util/logging'
+require_relative '../puppet/util/docs'
 
 # The Parameter class is the implementation of a resource's attributes of _parameter_ kind.
 # The Parameter class is also the base class for {Puppet::Property}, and is used to describe meta-parameters
@@ -22,7 +22,7 @@ class Puppet::Parameter
   include Puppet::Util::Errors
   include Puppet::Util::Logging
 
-  require 'puppet/parameter/value_collection'
+  require_relative 'parameter/value_collection'
 
   class << self
     include Puppet::Util
@@ -571,4 +571,4 @@ class Puppet::Parameter
   #   @see Puppet::Parser::Compiler#finish
 end
 
-require 'puppet/parameter/path'
+require_relative 'parameter/path'

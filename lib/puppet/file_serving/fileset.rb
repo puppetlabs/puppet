@@ -1,6 +1,6 @@
 require 'find'
-require 'puppet/file_serving'
-require 'puppet/file_serving/metadata'
+require_relative '../../puppet/file_serving'
+require_relative '../../puppet/file_serving/metadata'
 
 # Operate recursively on a path, returning a set of file paths.
 class Puppet::FileServing::Fileset

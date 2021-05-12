@@ -1,7 +1,7 @@
-require 'puppet/parser/type_loader'
-require 'puppet/util/file_watcher'
-require 'puppet/util/warnings'
-require 'puppet/concurrent/lock'
+require_relative '../../puppet/parser/type_loader'
+require_relative '../../puppet/util/file_watcher'
+require_relative '../../puppet/util/warnings'
+require_relative '../../puppet/concurrent/lock'
 
 # @api private
 class Puppet::Resource::TypeCollection

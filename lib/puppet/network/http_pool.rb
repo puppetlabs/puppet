@@ -1,4 +1,4 @@
-require 'puppet/network/http/connection'
+require_relative '../../puppet/network/http/connection'
 
 module Puppet::Network; end
 

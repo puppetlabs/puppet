@@ -1,4 +1,4 @@
-require 'puppet/thread_local'
+require_relative '../../puppet/thread_local'
 
 module Puppet
   module Pops

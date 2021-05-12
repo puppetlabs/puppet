@@ -1,4 +1,4 @@
-require 'puppet/confine/boolean'
+require_relative '../../puppet/confine/boolean'
 
 class Puppet::Confine::True < Puppet::Confine
   include Puppet::Confine::Boolean

@@ -1,4 +1,4 @@
-require 'puppet/util/command_line/trollop'
+require_relative '../../../puppet/util/command_line/trollop'
 
 module Puppet
   module Util
@@ -16,7 +16,7 @@ module Puppet
 
       class PuppetOptionParser
         def initialize(usage_msg = nil)
-          require "puppet/util/command_line/trollop"
+          require_relative '../../../puppet/util/command_line/trollop'
 
           @create_default_short_options = false
 

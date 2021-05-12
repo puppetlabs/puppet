@@ -1,5 +1,5 @@
-require 'puppet/face'
-require 'puppet/settings/ini_file'
+require_relative '../../puppet/face'
+require_relative '../../puppet/settings/ini_file'
 
 Puppet::Face.define(:config, '0.0.1') do
   extend Puppet::Util::Colors
