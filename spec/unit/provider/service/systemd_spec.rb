@@ -330,6 +330,16 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
                             and_return(Puppet::Util::Execution::ProcessOutput.new("masked\n", 1))
       expect(provider.enabled?).to eq(:mask)
     end
+
+    it "should consider nonexistent services to be disabled" do
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'doesnotexist'))
+      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'doesnotexist'], :failonfail => false)
+                            .and_return(Puppet::Util::Execution::ProcessOutput.new("", 1))
+      expect(provider).to receive(:execute).with(["/usr/sbin/invoke-rc.d", "--quiet", "--query", "doesnotexist", "start"], :failonfail => false)
+                            .and_return(Puppet::Util::Execution::ProcessOutput.new("", 1))
+
+      expect(provider.enabled?).to be(:false)
+    end
   end
 
   describe "#enable" do

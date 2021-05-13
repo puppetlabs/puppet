@@ -87,7 +87,8 @@ describe 'Puppet::Type::Service::Provider::Debian',
 
   context "when checking whether it is enabled" do
     it "should execute the query command" do
-      expect(@provider).to receive(:execute).with("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start").and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
+      expect(@provider).to receive(:execute).with(["/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start"], :failonfail => false)
+                             .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
       @provider.enabled?
     end
 
@@ -99,6 +100,13 @@ describe 'Puppet::Type::Service::Provider::Debian',
     it "should return true when invoke-rc.d exits with 106 status" do
       expect(@provider).to receive(:execute).and_return(Puppet::Util::Execution::ProcessOutput.new('', 106))
       expect(@provider.enabled?).to eq(:true)
+    end
+
+    it "should consider nonexistent services to be disabled" do
+      @provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'doesnotexist'))
+      expect(@provider).to receive(:execute).with(["/usr/sbin/invoke-rc.d", "--quiet", "--query", "doesnotexist", "start"], :failonfail => false)
+                             .and_return(Puppet::Util::Execution::ProcessOutput.new("", 1))
+      expect(@provider.enabled?).to be(:false)
     end
 
     shared_examples "manually queries service status" do |status|

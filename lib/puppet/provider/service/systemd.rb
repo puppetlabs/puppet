@@ -119,7 +119,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   # whether it is enabled or not. See PUP-5016 for more details.
   #
   def debian_enabled?
-    status = execute("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start")
+    status = execute(["/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start"], :failonfail => false)
     if [104, 106].include?(status.exitstatus)
       return :true
     elsif [101, 105].include?(status.exitstatus)
