@@ -18,14 +18,14 @@
 # 'hello'.capitalize()
 # upcase('hello')
 # ```
-# Would both result in "Hello"
+# Would both result in `"Hello"`
 #
 # @example Capitalizing strings in an Array
 # ```puppet
 # ['abc', 'bcd'].capitalize()
 # capitalize(['abc', 'bcd'])
 # ```
-# Would both result in ['Abc', 'Bcd']
+# Would both result in `['Abc', 'Bcd']`
 #
 Puppet::Functions.create_function(:capitalize) do
 

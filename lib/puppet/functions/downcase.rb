@@ -22,14 +22,14 @@
 # 'HELLO'.downcase()
 # downcase('HEllO')
 # ```
-# Would both result in "hello"
+# Would both result in `"hello"`
 #
 # @example Converting an Array to lower case
 # ```puppet
 # ['A', 'B'].downcase()
 # downcase(['A', 'B'])
 # ```
-# Would both result in ['a', 'b']
+# Would both result in `['a', 'b']`
 #
 # @example Converting a Hash to lower case
 # ```puppet

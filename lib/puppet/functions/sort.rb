@@ -2,9 +2,9 @@
 # Please note: This function is based on Ruby String comparison and as such may not be entirely UTF8 compatible.
 # To ensure compatibility please use this function with Ruby 2.4.0 or greater - https://bugs.ruby-lang.org/issues/10085.
 #
-# This function is compatible with the function sort() in stdlib.
+# This function is compatible with the function `sort()` in `stdlib`.
 # * Comparison of characters in a string always uses a system locale and may not be what is expected for a particular locale
-# * Sorting is based on Ruby's <=> operator unless a lambda is given that performs the comparison.
+# * Sorting is based on Ruby's `<=>` operator unless a lambda is given that performs the comparison.
 #   * comparison of strings is case dependent (use lambda with `compare($a,$b)` to ignore case)
 #   * comparison of mixed data types raises an error (if there is the need to sort mixed data types use a lambda)
 #
@@ -49,7 +49,7 @@
 #   }
 # })
 # ```
-# Would notice [2,3,'a','b']
+# Would notice `[2,3,'a','b']`
 #
 # @since 6.0.0 - supporting a lambda to do compare
 #
