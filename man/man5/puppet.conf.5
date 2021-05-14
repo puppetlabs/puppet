@@ -42,7 +42,7 @@ See the configuration guide \fIhttps://puppet\.com/docs/puppet/latest/config_abo
 A lock file to indicate that a puppet agent catalog run is currently in progress\. The file contains the pid of the process that holds the lock on the catalog run\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $statedir/agent_catalog_run\.lock
+\fIDefault\fR: \fB$statedir/agent_catalog_run\.lock\fR
 .
 .IP "" 0
 .
@@ -50,7 +50,7 @@ A lock file to indicate that a puppet agent catalog run is currently in progress
 A lock file to indicate that puppet agent runs have been administratively disabled\. File contains a JSON object with state information\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $statedir/agent_disabled\.lock
+\fIDefault\fR: \fB$statedir/agent_disabled\.lock\fR
 .
 .IP "" 0
 .
@@ -58,7 +58,7 @@ A lock file to indicate that puppet agent runs have been administratively disabl
 Whether to allow a new certificate request to overwrite an existing certificate request\. If true, then the old certificate must be cleaned using \fBpuppetserver ca clean\fR, and the new request signed using \fBpuppetserver ca sign\fR\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -69,7 +69,7 @@ Affects how we cache attempts to load Puppet resource types and features\. If tr
 If this setting is set to false, then types and features will only be checked once, and if they are not available, the negative result is cached and returned for all subsequent attempts to load the type or feature\. This behavior is almost always appropriate for the server, and can result in a significant performance improvement for types and features that are checked frequently\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: true
+\fIDefault\fR: \fBtrue\fR
 .
 .IP "" 0
 .
@@ -77,7 +77,7 @@ If this setting is set to false, then types and features will only be checked on
 Whether log files should always flush to disk\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: true
+\fIDefault\fR: \fBtrue\fR
 .
 .IP "" 0
 .
@@ -100,7 +100,7 @@ If a certificate request is not autosigned, it will persist for review\. An admi
 For info on autosign configuration files, see the guide to Puppet\'s config files \fIhttps://puppet\.com/docs/puppet/latest/config_file_autosign\.html\fR\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $confdir/autosign\.conf
+\fIDefault\fR: \fB$confdir/autosign\.conf\fR
 .
 .IP "" 0
 .
@@ -111,37 +111,39 @@ The search path for \fBglobal\fR modules\. Should be specified as a list of dire
 These are the modules that will be used by \fIall\fR environments\. Note that the \fBmodules\fR directory of the active environment will have priority over any global directories\. For more info, see \fIhttps://puppet\.com/docs/puppet/latest/environments_about\.html\fR
 .
 .IP "\(bu" 4
-\fIDefault\fR: $codedir/modules:/opt/puppetlabs/puppet/modules
+\fIDefault\fR: \fB$codedir/modules:/opt/puppetlabs/puppet/modules\fR
 .
 .IP "" 0
 .
 .SS "binder_config"
 The binder configuration file\. Puppet reads this file on each request to configure the bindings system\. If set to nil (the default), a $confdir/binder_config\.yaml is optionally loaded\. If it does not exists, a default configuration is used\. If the setting :binding_config is specified, it must reference a valid and existing yaml file\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "bucketdir"
 Where FileBucket files are stored\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/bucket
+\fIDefault\fR: \fB$vardir/bucket\fR
 .
 .IP "" 0
 .
 .SS "ca_fingerprint"
 The expected fingerprint of the CA certificate\. If specified, the agent will compare the CA certificate fingerprint that it downloads against this value and reject the CA certificate if the values do not match\. This only applies during the first download of the CA certificate\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "ca_name"
 The name to use the Certificate Authority certificate\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: Puppet CA: $certname
+\fIDefault\fR: \fBPuppet CA: $certname\fR
 .
 .IP "" 0
 .
@@ -149,7 +151,7 @@ The name to use the Certificate Authority certificate\.
 The port to use for the certificate authority\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $serverport
+\fIDefault\fR: \fB$serverport\fR
 .
 .IP "" 0
 .
@@ -157,7 +159,7 @@ The port to use for the certificate authority\.
 The server to use for certificate authority requests\. It\'s a separate server because it cannot and does not need to horizontally scale\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $server
+\fIDefault\fR: \fB$server\fR
 .
 .IP "" 0
 .
@@ -165,7 +167,7 @@ The server to use for certificate authority requests\. It\'s a separate server b
 The default TTL for new certificates\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 5y
+\fIDefault\fR: \fB5y\fR
 .
 .IP "" 0
 .
@@ -173,7 +175,7 @@ The default TTL for new certificates\. This setting can be a time interval in se
 The CA certificate\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $cadir/ca_crt\.pem
+\fIDefault\fR: \fB$cadir/ca_crt\.pem\fR
 .
 .IP "" 0
 .
@@ -181,7 +183,7 @@ The CA certificate\.
 The certificate revocation list (CRL) for the CA\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $cadir/ca_crl\.pem
+\fIDefault\fR: \fB$cadir/ca_crl\.pem\fR
 .
 .IP "" 0
 .
@@ -189,7 +191,7 @@ The certificate revocation list (CRL) for the CA\.
 The root directory for the certificate authority\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: /var/lib/jenkins/\.puppetlabs/etc/puppet/ssl/ca
+\fIDefault\fR: \fB/var/lib/jenkins/\.puppetlabs/etc/puppet/ssl/ca\fR
 .
 .IP "" 0
 .
@@ -197,7 +199,7 @@ The root directory for the certificate authority\.
 The CA private key\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $cadir/ca_key\.pem
+\fIDefault\fR: \fB$cadir/ca_key\.pem\fR
 .
 .IP "" 0
 .
@@ -205,22 +207,23 @@ The CA private key\.
 The CA public key\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $cadir/ca_pub\.pem
+\fIDefault\fR: \fB$cadir/ca_pub\.pem\fR
 .
 .IP "" 0
 .
 .SS "catalog_cache_terminus"
 How to store cached catalogs\. Valid values are \'json\', \'msgpack\' and \'yaml\'\. The agent application defaults to \'json\'\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "catalog_terminus"
 Where to get node catalogs\. This is useful to change if, for instance, you\'d like to pre\-compile catalogs and store them in memcached or some other easily\-accessed store\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: compiler
+\fIDefault\fR: \fBcompiler\fR
 .
 .IP "" 0
 .
@@ -228,7 +231,7 @@ Where to get node catalogs\. This is useful to change if, for instance, you\'d l
 The inventory file\. This is a text file to which the CA writes a complete listing of all certificates\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $cadir/inventory\.txt
+\fIDefault\fR: \fB$cadir/inventory\.txt\fR
 .
 .IP "" 0
 .
@@ -236,7 +239,7 @@ The inventory file\. This is a text file to which the CA writes a complete listi
 The certificate directory\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $ssldir/certs
+\fIDefault\fR: \fB$ssldir/certs\fR
 .
 .IP "" 0
 .
@@ -256,7 +259,7 @@ When certificate_revocation is set to \'leaf\', Puppet verifies certs against th
 When certificate_revocation is set to \'false\', Puppet disables all certificate revocation checking and does not attempt to download the CRL\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: chain
+\fIDefault\fR: \fBchain\fR
 .
 .IP "" 0
 .
@@ -284,7 +287,7 @@ The special value \fBca\fR is reserved, and can\'t be used as the certname for a
 Defaults to the node\'s fully qualified domain name\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: the Host\'s fully qualified domain name, as determined by Facter
+\fIDefault\fR: \fBthe Host\'s fully qualified domain name, as determined by Facter\fR
 .
 .IP "" 0
 .
@@ -292,7 +295,7 @@ Defaults to the node\'s fully qualified domain name\.
 The list of ciphersuites for TLS connections initiated by puppet\. The default value is chosen to support TLS 1\.0 and up, but can be made more restrictive if needed\. The ciphersuites must be specified in OpenSSL format, not IANA\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: ECDHE\-ECDSA\-AES128\-GCM\-SHA256:ECDHE\-RSA\-AES128\-GCM\-SHA256:ECDHE\-ECDSA\-AES256\-GCM\-SHA384:ECDHE\-RSA\-AES256\-GCM\-SHA384:ECDHE\-ECDSA\-CHACHA20\-POLY1305:ECDHE\-RSA\-CHACHA20\-POLY1305:DHE\-RSA\-AES128\-GCM\-SHA256:DHE\-RSA\-AES256\-GCM\-SHA384:DHE\-RSA\-CHACHA20\-POLY1305:ECDHE\-ECDSA\-AES128\-SHA256:ECDHE\-RSA\-AES128\-SHA256:ECDHE\-ECDSA\-AES128\-SHA:ECDHE\-RSA\-AES128\-SHA:ECDHE\-ECDSA\-AES256\-SHA384:ECDHE\-RSA\-AES256\-SHA384:ECDHE\-ECDSA\-AES256\-SHA:ECDHE\-RSA\-AES256\-SHA:DHE\-RSA\-AES128\-SHA256:DHE\-RSA\-AES256\-SHA256:AES128\-GCM\-SHA256:AES256\-GCM\-SHA384:AES128\-SHA256:AES256\-SHA256
+\fIDefault\fR: \fBECDHE\-ECDSA\-AES128\-GCM\-SHA256:ECDHE\-RSA\-AES128\-GCM\-SHA256:ECDHE\-ECDSA\-AES256\-GCM\-SHA384:ECDHE\-RSA\-AES256\-GCM\-SHA384:ECDHE\-ECDSA\-CHACHA20\-POLY1305:ECDHE\-RSA\-CHACHA20\-POLY1305:DHE\-RSA\-AES128\-GCM\-SHA256:DHE\-RSA\-AES256\-GCM\-SHA384:DHE\-RSA\-CHACHA20\-POLY1305:ECDHE\-ECDSA\-AES128\-SHA256:ECDHE\-RSA\-AES128\-SHA256:ECDHE\-ECDSA\-AES128\-SHA:ECDHE\-RSA\-AES128\-SHA:ECDHE\-ECDSA\-AES256\-SHA384:ECDHE\-RSA\-AES256\-SHA384:ECDHE\-ECDSA\-AES256\-SHA:ECDHE\-RSA\-AES256\-SHA:DHE\-RSA\-AES128\-SHA256:DHE\-RSA\-AES256\-SHA256:AES128\-GCM\-SHA256:AES256\-GCM\-SHA384:AES128\-SHA256:AES256\-SHA256\fR
 .
 .IP "" 0
 .
@@ -300,7 +303,7 @@ The list of ciphersuites for TLS connections initiated by puppet\. The default v
 The file in which puppet agent stores a list of the classes associated with the retrieved configuration\. Can be loaded in the separate \fBpuppet\fR executable using the \fB\-\-loadclasses\fR option\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $statedir/classes\.txt
+\fIDefault\fR: \fB$statedir/classes\.txt\fR
 .
 .IP "" 0
 .
@@ -308,7 +311,7 @@ The file in which puppet agent stores a list of the classes associated with the 
 The directory in which serialized data is stored on the client\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/client_data
+\fIDefault\fR: \fB$vardir/client_data\fR
 .
 .IP "" 0
 .
@@ -316,7 +319,7 @@ The directory in which serialized data is stored on the client\.
 Where FileBucket files are stored locally\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/clientbucket
+\fIDefault\fR: \fB$vardir/clientbucket\fR
 .
 .IP "" 0
 .
@@ -324,7 +327,7 @@ Where FileBucket files are stored locally\.
 The directory in which client\-side YAML data is stored\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/client_yaml
+\fIDefault\fR: \fB$vardir/client_yaml\fR
 .
 .IP "" 0
 .
@@ -335,7 +338,7 @@ Code to parse directly\. This is essentially only used by \fBpuppet\fR, and shou
 The main Puppet code directory\. The default for this setting is calculated based on the user\. If the process is running as root or the user that Puppet is supposed to run as, it defaults to a system directory, but if it\'s running as any other user, it defaults to being in the user\'s home directory\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: Unix/Linux: /etc/puppetlabs/code \-\- Windows: C:\eProgramData\ePuppetLabs\ecode \-\- Non\-root user: ~/\.puppetlabs/etc/code
+\fIDefault\fR: \fBUnix/Linux: /etc/puppetlabs/code \-\- Windows: C:\eProgramData\ePuppetLabs\ecode \-\- Non\-root user: ~/\.puppetlabs/etc/code\fR
 .
 .IP "" 0
 .
@@ -343,7 +346,7 @@ The main Puppet code directory\. The default for this setting is calculated base
 Whether to use colors when logging to the console\. Valid values are \fBansi\fR (equivalent to \fBtrue\fR), \fBhtml\fR, and \fBfalse\fR, which produces no color\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: ansi
+\fIDefault\fR: \fBansi\fR
 .
 .IP "" 0
 .
@@ -351,7 +354,7 @@ Whether to use colors when logging to the console\. Valid values are \fBansi\fR 
 The main Puppet configuration directory\. The default for this setting is calculated based on the user\. If the process is running as root or the user that Puppet is supposed to run as, it defaults to a system directory, but if it\'s running as any other user, it defaults to being in the user\'s home directory\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: Unix/Linux: /etc/puppetlabs/puppet \-\- Windows: C:\eProgramData\ePuppetLabs\epuppet\eetc \-\- Non\-root user: ~/\.puppetlabs/etc/puppet
+\fIDefault\fR: \fBUnix/Linux: /etc/puppetlabs/puppet \-\- Windows: C:\eProgramData\ePuppetLabs\epuppet\eetc \-\- Non\-root user: ~/\.puppetlabs/etc/puppet\fR
 .
 .IP "" 0
 .
@@ -359,7 +362,7 @@ The main Puppet configuration directory\. The default for this setting is calcul
 The configuration file for the current puppet application\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $confdir/${config_file_name}
+\fIDefault\fR: \fB$confdir/${config_file_name}\fR
 .
 .IP "" 0
 .
@@ -367,7 +370,7 @@ The configuration file for the current puppet application\.
 The name of the puppet config file\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: puppet\.conf
+\fIDefault\fR: \fBpuppet\.conf\fR
 .
 .IP "" 0
 .
@@ -389,9 +392,10 @@ In general, the duration should be greater than the \fBruninterval\fR\. Setting 
 .P
 If the agent downloads a new CRL, the agent will use it for subsequent network requests\. If the refresh request fails or if the CRL is unchanged on the server, then the agent run will continue using the local CRL it already has\.This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "csr_attributes"
 An optional file containing custom attributes to add to certificate signing requests (CSRs)\. You should ensure that this file does not exist on your CA puppet master; if it does, unwanted certificate extensions may leak into certificates created with the \fBpuppetserver ca generate\fR command\.
@@ -406,7 +410,7 @@ Custom attributes can be used by the CA when deciding whether to sign the certif
 Extension requests will be permanently embedded in the final certificate\. Extension OIDs must be in the "ppRegCertExt" (\fB1\.3\.6\.1\.4\.1\.34380\.1\.1\fR), "ppPrivCertExt" (\fB1\.3\.6\.1\.4\.1\.34380\.1\.2\fR), or "ppAuthCertExt" (\fB1\.3\.6\.1\.4\.1\.34380\.1\.3\fR) OID arcs\. The ppRegCertExt arc is reserved for four of the most common pieces of data to embed: \fBpp_uuid\fR (\fB\.1\fR), \fBpp_instance_id\fR (\fB\.2\fR), \fBpp_image_name\fR (\fB\.3\fR), and \fBpp_preshared_key\fR (\fB\.4\fR) \-\-\- in the YAML file, these can be referred to by their short descriptive names instead of their full OID\. The ppPrivCertExt arc is unregulated, and can be used for site\-specific extensions\. The ppAuthCert arc is reserved for two pieces of data to embed: \fBpp_authorization\fR (\fB\.1\fR) and \fBpp_auth_role\fR (\fB\.13\fR)\. As with ppRegCertExt, in the YAML file, these can be referred to by their short descriptive name instead of their full OID\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $confdir/csr_attributes\.yaml
+\fIDefault\fR: \fB$confdir/csr_attributes\.yaml\fR
 .
 .IP "" 0
 .
@@ -414,7 +418,7 @@ Extension requests will be permanently embedded in the final certificate\. Exten
 Where the CA stores certificate requests\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $cadir/requests
+\fIDefault\fR: \fB$cadir/requests\fR
 .
 .IP "" 0
 .
@@ -422,7 +426,7 @@ Where the CA stores certificate requests\.
 Whether to send the process into the background\. This defaults to true on POSIX systems, and to false on Windows (where Puppet currently cannot daemonize)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: true
+\fIDefault\fR: \fBtrue\fR
 .
 .IP "" 0
 .
@@ -430,7 +434,7 @@ Whether to send the process into the background\. This defaults to true on POSIX
 This setting has been deprecated\. Use of any value other than \'hiera\' should instead be configured in a version 5 hiera\.yaml\. Until this setting is removed, it controls which data binding terminus to use for global automatic data binding (across all environments)\. By default this value is \'hiera\'\. A value of \'none\' turns off the global binding\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: hiera
+\fIDefault\fR: \fBhiera\fR
 .
 .IP "" 0
 .
@@ -438,7 +442,7 @@ This setting has been deprecated\. Use of any value other than \'hiera\' should 
 The default source for files if no server is given in a uri, e\.g\. puppet:///file\. The default of \fBrest\fR causes the file to be retrieved using the \fBserver\fR setting\. When running \fBapply\fR the default is \fBfile_server\fR, causing requests to be filled locally\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: rest
+\fIDefault\fR: \fBrest\fR
 .
 .IP "" 0
 .
@@ -452,7 +456,7 @@ This setting\'s value can be an absolute or relative path\. An absolute path wil
 In either case, the path can point to a single file or to a directory of manifests to be evaluated in alphabetical order\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: \./manifests
+\fIDefault\fR: \fB\./manifests\fR
 .
 .IP "" 0
 .
@@ -460,7 +464,7 @@ In either case, the path can point to a single file or to a directory of manifes
 Boolean; whether to generate the default schedule resources\. Setting this to false is useful for keeping external report processors clean of skipped schedule resources\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: true
+\fIDefault\fR: \fBtrue\fR
 .
 .IP "" 0
 .
@@ -468,7 +472,7 @@ Boolean; whether to generate the default schedule resources\. Setting this to fa
 The root directory of devices\' $confdir\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $confdir/devices
+\fIDefault\fR: \fB$confdir/devices\fR
 .
 .IP "" 0
 .
@@ -476,7 +480,7 @@ The root directory of devices\' $confdir\.
 Path to the device config file for puppet device\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $confdir/device\.conf
+\fIDefault\fR: \fB$confdir/device\.conf\fR
 .
 .IP "" 0
 .
@@ -484,7 +488,7 @@ Path to the device config file for puppet device\.
 The root directory of devices\' $vardir\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/devices
+\fIDefault\fR: \fB$vardir/devices\fR
 .
 .IP "" 0
 .
@@ -492,7 +496,7 @@ The root directory of devices\' $vardir\.
 Which diff command to use when printing differences between files\. This setting has no default value on Windows, as standard \fBdiff\fR is not available, but Puppet can use many third\-party diff tools\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: diff
+\fIDefault\fR: \fBdiff\fR
 .
 .IP "" 0
 .
@@ -500,7 +504,7 @@ Which diff command to use when printing differences between files\. This setting
 Which arguments to pass to the diff command when printing differences between files\. The command to use can be chosen with the \fBdiff\fR setting\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: \-u
+\fIDefault\fR: \fB\-u\fR
 .
 .IP "" 0
 .
@@ -508,7 +512,7 @@ Which arguments to pass to the diff command when printing differences between fi
 Which digest algorithm to use for file resources and the filebucket\. Valid values are md5, sha256, sha384, sha512, sha224\. Default is md5\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: md5
+\fIDefault\fR: \fBmd5\fR
 .
 .IP "" 0
 .
@@ -516,7 +520,7 @@ Which digest algorithm to use for file resources and the filebucket\. Valid valu
 If true, turns off all translations of Puppet and module log messages, which affects error, warning, and info log messages, as well as any translations in the report and CLI\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -527,7 +531,7 @@ Whether to disallow an environment\-specific main manifest\. When set to \fBtrue
 This setting requires \fBdefault_manifest\fR to be set to an absolute path\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -550,7 +554,7 @@ Valid values for this setting are:
 \fBundefined_resources\fR \-\-\- disables warnings about non existing resources\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: []
+\fIDefault\fR: \fB[]\fR
 .
 .IP "" 0
 .
@@ -561,7 +565,7 @@ A comma\-separated list of alternate DNS names for Puppet Server\. These are ext
 In order to handle agent requests at a given hostname (like "puppet\.example\.com"), Puppet Server needs a certificate that proves it\'s allowed to use that name; if a server shows a certificate that doesn\'t include its hostname, Puppet agents will refuse to trust it\. If you use a single hostname for Puppet traffic but load\-balance it to multiple Puppet Servers, each of those servers needs to include the official hostname in its list of extra names\.
 .
 .P
-\fBNote:\fR The list of alternate names is locked in when the server\'s certificate is signed\. If you need to change the list later, you can\'t just change this setting; you also need to regenerate the certificate\. For more information on that process, see the [cert regen docs] (https://puppet\.com/docs/puppet/latest/ssl_regenerate_certificates\.html)\.
+\fBNote:\fR The list of alternate names is locked in when the server\'s certificate is signed\. If you need to change the list later, you can\'t just change this setting; you also need to regenerate the certificate\. For more information on that process, see the cert regen docs \fIhttps://puppet\.com/docs/puppet/latest/ssl_regenerate_certificates\.html\fR\.
 .
 .P
 To see all the alternate names your servers are using, log into your CA server and run \fBpuppetserver ca list \-\-all\fR, then check the output for \fB(alt names: \.\.\.)\fR\. Most agent nodes should NOT have alternate names; the only certs that should have them are Puppet Server nodes that you want other agents to trust\.
@@ -570,7 +574,7 @@ To see all the alternate names your servers are using, log into your CA server a
 Whether to document all resources when using \fBpuppet doc\fR to generate manifest documentation\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -587,16 +591,17 @@ When defined in the \fB[user]\fR section, the environment refers to the path tha
 Given that the context and effects vary depending on the config section \fIhttps://puppet\.com/docs/puppet/latest/config_file_main\.html#config\-sections\fR in which the \fBenvironment\fR setting is defined, do not set it globally\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: production
+\fIDefault\fR: \fBproduction\fR
 .
 .IP "" 0
 .
 .SS "environment_data_provider"
 The name of a registered environment data provider used when obtaining environment specific data\. The three built in and registered providers are \'none\' (no data), \'function\' (data obtained by calling the function \'environment::data()\') and \'hiera\' (data obtained using a data provider configured using a hiera\.yaml file in root of the environment)\. Other environment data providers may be registered in modules on the module path\. For such custom data providers see the respective module documentation\. This setting is deprecated\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "environment_timeout"
 How long the Puppet server should cache data it loads from an environment\.
@@ -619,7 +624,7 @@ Setting this to a number that will keep your most actively used environments cac
 Once you set \fBenvironment_timeout\fR to a non\-zero value, you need to tell Puppet server to read new code from disk using the \fBenvironment\-cache\fR API endpoint after you deploy new code\. See the docs for the Puppet Server administrative API \fIhttps://puppet\.com/docs/puppetserver/latest/admin\-api/v1/environment\-cache\.html\fR\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 0
+\fIDefault\fR: \fB0\fR
 .
 .IP "" 0
 .
@@ -627,7 +632,7 @@ Once you set \fBenvironment_timeout\fR to a non\-zero value, you need to tell Pu
 How Puppet interprets the \fBenvironment_timeout\fR setting when \fBenvironment_timeout\fR is neither \fB0\fR nor \fBunlimited\fR\. If set to \fBfrom_created\fR, then the environment will be evicted \fBenvironment_timeout\fR seconds from when it was created\. If set to \fBfrom_last_used\fR then the environment will be evicted \fBenvironment_timeout\fR seconds from when it was last used\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: from_created
+\fIDefault\fR: \fBfrom_created\fR
 .
 .IP "" 0
 .
@@ -638,7 +643,7 @@ A search path for directory environments, as a list of directories separated by 
 This setting must have a value set to enable \fBdirectory environments\.\fR The recommended value is \fB$codedir/environments\fR\. For more details, see \fIhttps://puppet\.com/docs/puppet/latest/environments_about\.html\fR
 .
 .IP "\(bu" 4
-\fIDefault\fR: $codedir/environments
+\fIDefault\fR: \fB$codedir/environments\fR
 .
 .IP "" 0
 .
@@ -646,7 +651,7 @@ This setting must have a value set to enable \fBdirectory environments\.\fR The 
 Whether each resource should log when it is being evaluated\. This allows you to interactively see exactly what is being done\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -688,7 +693,7 @@ Generally, an ENC script makes requests to an external data source\.
 For more info, see the ENC documentation \fIhttps://puppet\.com/docs/puppet/latest/nodes_external\.html\fR\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: none
+\fIDefault\fR: \fBnone\fR
 .
 .IP "" 0
 .
@@ -696,7 +701,7 @@ For more info, see the ENC documentation \fIhttps://puppet\.com/docs/puppet/late
 Whether to enable a pre\-Facter 4\.0 release of Facter (distributed as the "facter\-ng" gem)\. This is not necessary if Facter 3\.x or later is installed\. This setting is still experimental\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -704,7 +709,7 @@ Whether to enable a pre\-Facter 4\.0 release of Facter (distributed as the "fact
 Where Puppet should look for facts\. Multiple directories should be separated by the system path separator character\. (The POSIX path separator is \':\', and the Windows path separator is \';\'\.)
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/lib/facter:$vardir/facts
+\fIDefault\fR: \fB$vardir/lib/facter:$vardir/facts\fR
 .
 .IP "" 0
 .
@@ -712,7 +717,7 @@ Where Puppet should look for facts\. Multiple directories should be separated by
 The node facts terminus\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: facter
+\fIDefault\fR: \fBfacter\fR
 .
 .IP "" 0
 .
@@ -720,7 +725,7 @@ The node facts terminus\.
 Where the fileserver configuration is stored\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $confdir/fileserver\.conf
+\fIDefault\fR: \fB$confdir/fileserver\.conf\fR
 .
 .IP "" 0
 .
@@ -728,22 +733,23 @@ Where the fileserver configuration is stored\.
 The minimum time to wait between checking for updates in configuration files\. This timeout determines how quickly Puppet checks whether a file (such as manifests or puppet\.conf) has changed on disk\. The default will change in a future release to be \'unlimited\', requiring a reload of the Puppet service to pick up changes to its internal configuration\. Currently we do not accept a value of \'unlimited\'\. To reparse files within an environment in Puppet Server please use the environment_cache endpoint
 .
 .IP "\(bu" 4
-\fIDefault\fR: 15s
+\fIDefault\fR: \fB15s\fR
 .
 .IP "" 0
 .
 .SS "forge_authorization"
 The authorization key to connect to the Puppet Forge\. Leave blank for unauthorized or license based connections
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "freeze_main"
 Freezes the \'main\' class, disallowing any code to be added to it\. This essentially means that you can\'t have any code outside of a node, class, or definition other than in the site manifest\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -751,7 +757,7 @@ Freezes the \'main\' class, disallowing any code to be added to it\. This essent
 Causes validation of loaded legacy Ruby functions (3x API) to raise errors about illegal constructs that could cause harm or that simply does not work\. This flag is on by default\. This flag is made available so that the validation can be turned off in case the method of validation is faulty \- if encountered, please file a bug report\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: true
+\fIDefault\fR: \fBtrue\fR
 .
 .IP "" 0
 .
@@ -759,7 +765,7 @@ Causes validation of loaded legacy Ruby functions (3x API) to raise errors about
 Whether or not to enable all features currently being developed for future major releases of Puppet\. Should be used with caution, as in development features are experimental and can have unexpected effects\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -767,7 +773,7 @@ Whether or not to enable all features currently being developed for future major
 When true, causes Puppet applications to print an example config file to stdout and exit\. The example will include descriptions of each setting, and the current (or default) value of each setting, incorporating any settings overridden on the CLI (with the exception of \fBgenconfig\fR itself)\. This setting only makes sense when specified on the command line as \fB\-\-genconfig\fR\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -775,7 +781,7 @@ When true, causes Puppet applications to print an example config file to stdout 
 Whether to just print a manifest to stdout and exit\. Only makes sense when specified on the command line as \fB\-\-genmanifest\fR\. Takes into account arguments specified on the CLI\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -792,7 +798,7 @@ The \fBgraphdir\fR setting determines where Puppet will save graphs\. Note that 
 See your graphing software\'s documentation for details on opening \.dot files\. If you\'re using GraphViz\'s \fBdot\fR command, you can do a quick PNG render with \fBdot \-Tpng <DOT FILE> \-o <OUTPUT FILE>\fR\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -800,7 +806,7 @@ See your graphing software\'s documentation for details on opening \.dot files\.
 Where to save \.dot\-format graphs (when the \fBgraph\fR setting is enabled)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $statedir/graphs
+\fIDefault\fR: \fB$statedir/graphs\fR
 .
 .IP "" 0
 .
@@ -808,7 +814,7 @@ Where to save \.dot\-format graphs (when the \fBgraph\fR setting is enabled)\.
 The group Puppet Server will run as\. Used to ensure the agent side processes (agent, apply, etc) create files and directories readable by Puppet Server when necessary\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: puppet
+\fIDefault\fR: \fBpuppet\fR
 .
 .IP "" 0
 .
@@ -816,7 +822,7 @@ The group Puppet Server will run as\. Used to ensure the agent side processes (a
 The hiera configuration file\. Puppet only reads this file on startup, so you must restart the puppet server every time you edit it\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $confdir/hiera\.yaml\. However, for backwards compatibility, if a file exists at $codedir/hiera\.yaml, Puppet uses that instead\.
+\fIDefault\fR: \fB$confdir/hiera\.yaml\. However, for backwards compatibility, if a file exists at $codedir/hiera\.yaml, Puppet uses that instead\.\fR
 .
 .IP "" 0
 .
@@ -824,7 +830,7 @@ The hiera configuration file\. Puppet only reads this file on startup, so you mu
 Where individual hosts store and look for their certificates\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $certdir/$certname\.pem
+\fIDefault\fR: \fB$certdir/$certname\.pem\fR
 .
 .IP "" 0
 .
@@ -832,7 +838,7 @@ Where individual hosts store and look for their certificates\.
 Where the host\'s certificate revocation list can be found\. This is distinct from the certificate authority\'s CRL\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $ssldir/crl\.pem
+\fIDefault\fR: \fB$ssldir/crl\.pem\fR
 .
 .IP "" 0
 .
@@ -840,7 +846,7 @@ Where the host\'s certificate revocation list can be found\. This is distinct fr
 This setting is deprecated\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $ssldir/csr_$certname\.pem
+\fIDefault\fR: \fB$ssldir/csr_$certname\.pem\fR
 .
 .IP "" 0
 .
@@ -848,7 +854,7 @@ This setting is deprecated\.
 Where individual hosts store and look for their private key\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $privatekeydir/$certname\.pem
+\fIDefault\fR: \fB$privatekeydir/$certname\.pem\fR
 .
 .IP "" 0
 .
@@ -856,7 +862,7 @@ Where individual hosts store and look for their private key\.
 Where individual hosts store and look for their public key\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $publickeydir/$certname\.pem
+\fIDefault\fR: \fB$publickeydir/$certname\.pem\fR
 .
 .IP "" 0
 .
@@ -864,7 +870,7 @@ Where individual hosts store and look for their public key\.
 The maximum amount of time to wait when establishing an HTTP connection\. The default value is 2 minutes\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 2m
+\fIDefault\fR: \fB2m\fR
 .
 .IP "" 0
 .
@@ -872,7 +878,7 @@ The maximum amount of time to wait when establishing an HTTP connection\. The de
 Whether to write HTTP request and responses to stderr\. This should never be used in a production environment\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -880,7 +886,7 @@ Whether to write HTTP request and responses to stderr\. This should never be use
 The list of extra headers that will be sent with http requests to the master\. The header definition consists of a name and a value separated by a colon\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: []
+\fIDefault\fR: \fB[]\fR
 .
 .IP "" 0
 .
@@ -888,7 +894,7 @@ The list of extra headers that will be sent with http requests to the master\. T
 The maximum amount of time a persistent HTTP connection can remain idle in the connection pool, before it is closed\. This timeout should be shorter than the keepalive timeout used on the HTTP server, e\.g\. Apache KeepAliveTimeout directive\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 4s
+\fIDefault\fR: \fB4s\fR
 .
 .IP "" 0
 .
@@ -896,7 +902,7 @@ The maximum amount of time a persistent HTTP connection can remain idle in the c
 The HTTP proxy host to use for outgoing connections\. The proxy will be bypassed if the server\'s hostname matches the NO_PROXY environment variable or \fBno_proxy\fR setting\. Note: You may need to use a FQDN for the server hostname when using a proxy\. Environment variable http_proxy or HTTP_PROXY will override this value\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: none
+\fIDefault\fR: \fBnone\fR
 .
 .IP "" 0
 .
@@ -907,7 +913,7 @@ The password for the user of an authenticated HTTP proxy\. Requires the \fBhttp_
 Note that passwords must be valid when used as part of a URL\. If a password contains any characters with special meanings in URLs (as specified by RFC 3986 section 2\.2), they must be URL\-encoded\. (For example, \fB#\fR would become \fB%23\fR\.)
 .
 .IP "\(bu" 4
-\fIDefault\fR: none
+\fIDefault\fR: \fBnone\fR
 .
 .IP "" 0
 .
@@ -915,7 +921,7 @@ Note that passwords must be valid when used as part of a URL\. If a password con
 The HTTP proxy port to use for outgoing connections
 .
 .IP "\(bu" 4
-\fIDefault\fR: 3128
+\fIDefault\fR: \fB3128\fR
 .
 .IP "" 0
 .
@@ -923,7 +929,7 @@ The HTTP proxy port to use for outgoing connections
 The user name for an authenticated HTTP proxy\. Requires the \fBhttp_proxy_host\fR setting\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: none
+\fIDefault\fR: \fBnone\fR
 .
 .IP "" 0
 .
@@ -931,7 +937,7 @@ The user name for an authenticated HTTP proxy\. Requires the \fBhttp_proxy_host\
 The time to wait for data to be read from an HTTP connection\. If nothing is read after the elapsed interval then the connection will be closed\. The default value is 10 minutes\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 10m
+\fIDefault\fR: \fB10m\fR
 .
 .IP "" 0
 .
@@ -939,7 +945,7 @@ The time to wait for data to be read from an HTTP connection\. If nothing is rea
 The HTTP User\-Agent string to send when making network requests\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: Puppet/6\.23\.0 Ruby/2\.5\.1\-p57 (x86_64\-linux)
+\fIDefault\fR: \fBPuppet/6\.23\.0 Ruby/2\.5\.1\-p57 (x86_64\-linux)\fR
 .
 .IP "" 0
 .
@@ -947,7 +953,7 @@ The HTTP User\-Agent string to send when making network requests\.
 Whether the puppet run should ignore errors during pluginsync\. If the setting is false and there are errors during pluginsync, then the agent will abort the run and submit a report containing information about the failed run\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: true
+\fIDefault\fR: \fBtrue\fR
 .
 .IP "" 0
 .
@@ -955,7 +961,7 @@ Whether the puppet run should ignore errors during pluginsync\. If the setting i
 Skip searching for classes and definitions that were missing during a prior compilation\. The list of missing objects is maintained per\-environment and persists until the environment is cleared or the master is restarted\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -963,7 +969,7 @@ Skip searching for classes and definitions that were missing during a prior comp
 Boolean; whether puppet agent should ignore schedules\. This is useful for initial puppet agent runs\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -971,7 +977,7 @@ Boolean; whether puppet agent should ignore schedules\. This is useful for initi
 The type of private key\. Valid values are \fBrsa\fR and \fBec\fR\. Default is \fBrsa\fR\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: rsa
+\fIDefault\fR: \fBrsa\fR
 .
 .IP "" 0
 .
@@ -979,7 +985,7 @@ The type of private key\. Valid values are \fBrsa\fR and \fBec\fR\. Default is \
 The bit length of keys\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 4096
+\fIDefault\fR: \fB4096\fR
 .
 .IP "" 0
 .
@@ -987,7 +993,7 @@ The bit length of keys\.
 Where puppet agent stores the last run report summary in yaml format\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $statedir/last_run_summary\.yaml
+\fIDefault\fR: \fB$statedir/last_run_summary\.yaml\fR
 .
 .IP "" 0
 .
@@ -995,7 +1001,7 @@ Where puppet agent stores the last run report summary in yaml format\.
 Where Puppet Agent stores the last run report, by default, in yaml format\. The format of the report can be changed by setting the \fBcache\fR key of the \fBreport\fR terminus in the routes\.yaml \fIhttps://puppet\.com/docs/puppet/latest/config_file_routes\.html\fR file\. To avoid mismatches between content and file extension, this setting needs to be manually updated to reflect the terminus changes\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $statedir/last_run_report\.yaml
+\fIDefault\fR: \fB$statedir/last_run_report\.yaml\fR
 .
 .IP "" 0
 .
@@ -1003,7 +1009,7 @@ Where Puppet Agent stores the last run report, by default, in yaml format\. The 
 The LDAP attributes to include when querying LDAP for nodes\. All returned attributes are set as variables in the top\-level scope\. Multiple values should be comma\-separated\. The value \'all\' returns all attributes\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: all
+\fIDefault\fR: \fBall\fR
 .
 .IP "" 0
 .
@@ -1014,7 +1020,7 @@ The search base for LDAP searches\. It\'s impossible to provide a meaningful def
 The LDAP attributes to use to define Puppet classes\. Values should be comma\-separated\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: puppetclass
+\fIDefault\fR: \fBpuppetclass\fR
 .
 .IP "" 0
 .
@@ -1022,7 +1028,7 @@ The LDAP attributes to use to define Puppet classes\. Values should be comma\-se
 The attribute to use to define the parent node\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: parentnode
+\fIDefault\fR: \fBparentnode\fR
 .
 .IP "" 0
 .
@@ -1033,7 +1039,7 @@ The password to use to connect to LDAP\.
 The LDAP port\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 389
+\fIDefault\fR: \fB389\fR
 .
 .IP "" 0
 .
@@ -1041,7 +1047,7 @@ The LDAP port\.
 The LDAP server\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: ldap
+\fIDefault\fR: \fBldap\fR
 .
 .IP "" 0
 .
@@ -1049,7 +1055,7 @@ The LDAP server\.
 Whether SSL should be used when searching for nodes\. Defaults to false because SSL usually requires certificates to be set up on the client side\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1057,7 +1063,7 @@ Whether SSL should be used when searching for nodes\. Defaults to false because 
 The LDAP attributes that should be stacked to arrays by adding the values in all hierarchy elements of the tree\. Values should be comma\-separated\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: puppetvar
+\fIDefault\fR: \fBpuppetvar\fR
 .
 .IP "" 0
 .
@@ -1065,7 +1071,7 @@ The LDAP attributes that should be stacked to arrays by adding the values in all
 The search string used to find an LDAP node\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: (&(objectclass=puppetClient)(cn=%s))
+\fIDefault\fR: \fB(&(objectclass=puppetClient)(cn=%s))\fR
 .
 .IP "" 0
 .
@@ -1073,7 +1079,7 @@ The search string used to find an LDAP node\.
 Whether TLS should be used when searching for nodes\. Defaults to false because TLS usually requires certificates to be set up on the client side\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1084,7 +1090,7 @@ The user to use to connect to LDAP\. Must be specified as a full DN\.
 An extra search path for Puppet\. This is only useful for those files that Puppet will load on demand, and is only guaranteed to work for those cases\. In fact, the autoload mechanism is responsible for making sure this directory is in Ruby\'s search path
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/lib
+\fIDefault\fR: \fB$vardir/lib\fR
 .
 .IP "" 0
 .
@@ -1092,7 +1098,7 @@ An extra search path for Puppet\. This is only useful for those files that Puppe
 Where each client stores the CA certificate\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $certdir/ca\.pem
+\fIDefault\fR: \fB$certdir/ca\.pem\fR
 .
 .IP "" 0
 .
@@ -1100,7 +1106,7 @@ Where each client stores the CA certificate\.
 Where Puppet should store translation files that it pulls down from the central server\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/locales
+\fIDefault\fR: \fB$vardir/locales\fR
 .
 .IP "" 0
 .
@@ -1108,7 +1114,7 @@ Where Puppet should store translation files that it pulls down from the central 
 From where to retrieve translation files\. The standard Puppet \fBfile\fR type is used for retrieval, so anything that is a valid file source can be used here\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: puppet:///locales
+\fIDefault\fR: \fBpuppet:///locales\fR
 .
 .IP "" 0
 .
@@ -1140,22 +1146,23 @@ emerg
 crit
 .
 .IP "\(bu" 4
-\fIDefault\fR: notice
+\fIDefault\fR: \fBnotice\fR
 .
 .IP "" 0
 .
 .SS "logdest"
 Where to send log messages\. Choose between \'syslog\' (the POSIX syslog service), \'eventlog\' (the Windows Event Log), \'console\', or the path to a log file\. Multiple destinations can be set using a comma separated list (eg: \fB/path/file1,console,/path/file2\fR)
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "logdir"
 The directory in which to store log files
 .
 .IP "\(bu" 4
-\fIDefault\fR: Unix/Linux: /var/log/puppetlabs/puppet \-\- Windows: C:\eProgramData\ePuppetLabs\epuppet\evar\elog \-\- Non\-root user: ~/\.puppetlabs/var/log
+\fIDefault\fR: \fBUnix/Linux: /var/log/puppetlabs/puppet \-\- Windows: C:\eProgramData\ePuppetLabs\epuppet\evar\elog \-\- Non\-root user: ~/\.puppetlabs/var/log\fR
 .
 .IP "" 0
 .
@@ -1163,7 +1170,7 @@ The directory in which to store log files
 Whether Puppet should manage the owner, group, and mode of files it uses internally\. \fBNote\fR: For Windows agents, the default is \fBfalse\fR for versions 4\.10\.13 and greater, versions 5\.5\.6 and greater, and versions 6\.0 and greater\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: true
+\fIDefault\fR: \fBtrue\fR
 .
 .IP "" 0
 .
@@ -1173,15 +1180,16 @@ The entry\-point manifest for puppet master\. This can be one file or a director
 .P
 Setting a global value for \fBmanifest\fR in puppet\.conf is not allowed (but it can be overridden from the commandline)\. Please use directory environments instead\. If you need to use something other than the environment\'s \fBmanifests\fR directory as the main manifest, you can set \fBmanifest\fR in environment\.conf\. For more info, see \fIhttps://puppet\.com/docs/puppet/latest/environments_about\.html\fR
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "masterport"
 The default port puppet subcommands use to communicate with Puppet Server\. (eg \fBpuppet facts upload\fR, \fBpuppet agent\fR)\. May be overridden by more specific settings (see \fBca_port\fR, \fBreport_port\fR)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 8140
+\fIDefault\fR: \fB8140\fR
 .
 .IP "" 0
 .
@@ -1189,7 +1197,7 @@ The default port puppet subcommands use to communicate with Puppet Server\. (eg 
 Sets the max number of logged/displayed parser validation deprecation warnings in case multiple deprecation warnings have been detected\. A value of 0 blocks the logging of deprecation warnings\. The count is per manifest\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 10
+\fIDefault\fR: \fB10\fR
 .
 .IP "" 0
 .
@@ -1197,7 +1205,7 @@ Sets the max number of logged/displayed parser validation deprecation warnings i
 Sets the max number of logged/displayed parser validation errors in case multiple errors have been detected\. A value of 0 is the same as a value of 1; a minimum of one error is always raised\. The count is per manifest\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 10
+\fIDefault\fR: \fB10\fR
 .
 .IP "" 0
 .
@@ -1205,7 +1213,7 @@ Sets the max number of logged/displayed parser validation errors in case multipl
 Sets the max number of logged/displayed parser validation warnings in case multiple warnings have been detected\. A value of 0 blocks logging of warnings\. The count is per manifest\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 10
+\fIDefault\fR: \fB10\fR
 .
 .IP "" 0
 .
@@ -1213,7 +1221,7 @@ Sets the max number of logged/displayed parser validation warnings in case multi
 The maximum allowed UID\. Some platforms use negative UIDs but then ship with tools that do not know how to handle signed ints, so the UIDs show up as huge numbers that can then not be fed back into the system\. This is a hackish way to fail in a slightly more useful way when that happens\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 4294967290
+\fIDefault\fR: \fB4294967290\fR
 .
 .IP "" 0
 .
@@ -1221,7 +1229,7 @@ The maximum allowed UID\. Some platforms use negative UIDs but then ship with to
 The maximum amount of time the Puppet agent should wait for its certificate request to be signed\. A value of \fBunlimited\fR will cause puppet agent to ask for a signed certificate indefinitely\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: unlimited
+\fIDefault\fR: \fBunlimited\fR
 .
 .IP "" 0
 .
@@ -1229,7 +1237,7 @@ The maximum amount of time the Puppet agent should wait for its certificate requ
 The maximum amount of time the puppet agent should wait for an already running puppet agent to finish before starting a new one\. This is set by default to 1 minute\. A value of \fBunlimited\fR will cause puppet agent to wait indefinitely\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 1m
+\fIDefault\fR: \fB1m\fR
 .
 .IP "" 0
 .
@@ -1243,7 +1251,7 @@ When a class has a failed dependency, every resource in the class generates a no
 If true, all messages caused by a class dependency failure are merged into one message associated with the class\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1251,22 +1259,23 @@ If true, all messages caused by a class dependency failure are merged into one m
 Whether to create the necessary user and group that puppet agent will run as\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
 .SS "module_groups"
 Extra module groups to request from the Puppet Forge\. This is an internal setting, and users should never change it\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "module_repository"
 The module repository
 .
 .IP "\(bu" 4
-\fIDefault\fR: https://forgeapi\.puppet\.com
+\fIDefault\fR: \fBhttps://forgeapi\.puppet\.com\fR
 .
 .IP "" 0
 .
@@ -1274,7 +1283,7 @@ The module repository
 The directory into which module tool data is stored
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/puppet\-module
+\fIDefault\fR: \fB$vardir/puppet\-module\fR
 .
 .IP "" 0
 .
@@ -1287,15 +1296,16 @@ Setting a global value for \fBmodulepath\fR in puppet\.conf is not allowed (but 
 .SS "name"
 The name of the application, if we are running as one\. The default is essentially $0 without the path or \fB\.rb\fR\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "named_curve"
 The short name for the EC curve used to generate the EC private key\. Valid values must be one of the curves in \fBOpenSSL::PKey::EC\.builtin_curves\fR\. Default is \fBprime256v1\fR\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: prime256v1
+\fIDefault\fR: \fBprime256v1\fR
 .
 .IP "" 0
 .
@@ -1303,16 +1313,17 @@ The short name for the EC curve used to generate the EC private key\. Valid valu
 List of host or domain names that should not go through \fBhttp_proxy_host\fR\. Environment variable no_proxy or NO_PROXY will override this value\. Names can be specified as an FQDN \fBhost\.example\.com\fR, wildcard \fB*\.example\.com\fR, dotted domain \fB\.example\.com\fR, or suffix \fBexample\.com\fR\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: localhost, 127\.0\.0\.1
+\fIDefault\fR: \fBlocalhost, 127\.0\.0\.1\fR
 .
 .IP "" 0
 .
 .SS "node_cache_terminus"
 How to store cached nodes\. Valid values are (none), \'json\', \'msgpack\', or \'yaml\'\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "node_name"
 How the puppet master determines the client\'s identity and sets the \'hostname\', \'fqdn\' and \'domain\' facts for use in the manifest, in particular for determining which \'node\' statement applies to the client\. Possible values are \'cert\' (use the subject\'s CN in the client\'s certificate) and \'facter\' (use the hostname that the client reported in its facts)\.
@@ -1321,7 +1332,7 @@ How the puppet master determines the client\'s identity and sets the \'hostname\
 This setting is deprecated, please use explicit fact matching for classification\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: cert
+\fIDefault\fR: \fBcert\fR
 .
 .IP "" 0
 .
@@ -1332,7 +1343,7 @@ The fact name used to determine the node name used for all requests the agent ma
 The explicit value used for the node name for all requests the agent makes to the master\. WARNING: This setting is mutually exclusive with node_name_fact\. Changing this setting also requires changes to the default auth\.conf configuration on the Puppet Master\. Please see http://links\.puppet\.com/node_name_value for more information\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $certname
+\fIDefault\fR: \fB$certname\fR
 .
 .IP "" 0
 .
@@ -1366,7 +1377,7 @@ The three main node data plugins are:
 \fBclassifier\fR (formerly \fBconsole\fR) \-\-\- Specific to Puppet Enterprise\. Uses the PE console for node data\."
 .
 .IP "\(bu" 4
-\fIDefault\fR: plain
+\fIDefault\fR: \fBplain\fR
 .
 .IP "" 0
 .
@@ -1380,7 +1391,7 @@ When running in noop mode, Puppet will check whether each resource is in sync, l
 \fBImportant note:\fR The \fBnoop\fR metaparameter \fIhttps://puppet\.com/docs/puppet/latest/metaparameter\.html#noop\fR allows you to apply individual resources in noop mode, and will override the global value of the \fBnoop\fR setting\. This means a resource with \fBnoop => false\fR \fIwill\fR be changed if necessary, even when running puppet agent with \fBnoop = true\fR or \fB\-\-noop\fR\. (Conversely, a resource with \fBnoop => true\fR will only be simulated, even when noop mode is globally disabled\.)
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1388,7 +1399,7 @@ When running in noop mode, Puppet will check whether each resource is in sync, l
 Perform one configuration run and exit, rather than spawning a long\-running daemon\. This is useful for interactively running puppet agent, or running puppet agent from cron\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1396,7 +1407,7 @@ Perform one configuration run and exit, rather than spawning a long\-running dae
 Where puppet agent stores the password for its private key\. Generally unused\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $privatedir/password
+\fIDefault\fR: \fB$privatedir/password\fR
 .
 .IP "" 0
 .
@@ -1407,7 +1418,7 @@ The shell search path\. Defaults to whatever is inherited from the parent proces
 This setting can only be set in the \fB[main]\fR section of puppet\.conf; it cannot be set in \fB[server]\fR, \fB[agent]\fR, or an environment config section\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: none
+\fIDefault\fR: \fBnone\fR
 .
 .IP "" 0
 .
@@ -1415,7 +1426,7 @@ This setting can only be set in the \fB[main]\fR section of puppet\.conf; it can
 The file containing the PID of a running process\. This file is intended to be used by service management frameworks and monitoring systems to determine if a puppet process is still in the process table\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $rundir/${run_mode}\.pid
+\fIDefault\fR: \fB$rundir/${run_mode}\.pid\fR
 .
 .IP "" 0
 .
@@ -1423,7 +1434,7 @@ The file containing the PID of a running process\. This file is intended to be u
 Where Puppet should store plugins that it pulls down from the central server\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $libdir
+\fIDefault\fR: \fB$libdir\fR
 .
 .IP "" 0
 .
@@ -1431,7 +1442,7 @@ Where Puppet should store plugins that it pulls down from the central server\.
 Where Puppet should store external facts that are being handled by pluginsync
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/facts\.d
+\fIDefault\fR: \fB$vardir/facts\.d\fR
 .
 .IP "" 0
 .
@@ -1439,7 +1450,7 @@ Where Puppet should store external facts that are being handled by pluginsync
 Where to retrieve external facts for pluginsync
 .
 .IP "\(bu" 4
-\fIDefault\fR: puppet:///pluginfacts
+\fIDefault\fR: \fBpuppet:///pluginfacts\fR
 .
 .IP "" 0
 .
@@ -1447,7 +1458,7 @@ Where to retrieve external facts for pluginsync
 What files to ignore when pulling down plugins\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: \.svn CVS \.git \.hg
+\fIDefault\fR: \fB\.svn CVS \.git \.hg\fR
 .
 .IP "" 0
 .
@@ -1455,7 +1466,7 @@ What files to ignore when pulling down plugins\.
 From where to retrieve plugins\. The standard Puppet \fBfile\fR type is used for retrieval, so anything that is a valid file source can be used here\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: puppet:///plugins
+\fIDefault\fR: \fBpuppet:///plugins\fR
 .
 .IP "" 0
 .
@@ -1463,7 +1474,7 @@ From where to retrieve plugins\. The standard Puppet \fBfile\fR type is used for
 Whether plugins should be synced with the central server\. This setting is deprecated\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: true
+\fIDefault\fR: \fBtrue\fR
 .
 .IP "" 0
 .
@@ -1474,7 +1485,7 @@ A command to run after every agent run\. If this command returns a non\-zero ret
 The preferred means of serializing ruby instances for passing over the wire\. This won\'t guarantee that all instances will be serialized using this method, since not all classes can be guaranteed to support this format, but it will be used for all classes that support it\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: json
+\fIDefault\fR: \fBjson\fR
 .
 .IP "" 0
 .
@@ -1485,22 +1496,23 @@ A command to run before every agent run\. If this command returns a non\-zero re
 The directory where catalog previews per node are generated\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/preview
+\fIDefault\fR: \fB$vardir/preview\fR
 .
 .IP "" 0
 .
 .SS "priority"
 The scheduling priority of the process\. Valid values are \'high\', \'normal\', \'low\', or \'idle\', which are mapped to platform\-specific values\. The priority can also be specified as an integer value and will be passed as is, e\.g\. \-5\. Puppet must be running as a privileged user in order to increase scheduling priority\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "privatedir"
 Where the client stores private certificate information\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $ssldir/private
+\fIDefault\fR: \fB$ssldir/private\fR
 .
 .IP "" 0
 .
@@ -1508,7 +1520,7 @@ Where the client stores private certificate information\.
 The private key directory\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $ssldir/private_keys
+\fIDefault\fR: \fB$ssldir/private_keys\fR
 .
 .IP "" 0
 .
@@ -1516,7 +1528,7 @@ The private key directory\.
 Whether to enable experimental performance profiling
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1524,7 +1536,7 @@ Whether to enable experimental performance profiling
 The public key directory\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $ssldir/public_keys
+\fIDefault\fR: \fB$ssldir/public_keys\fR
 .
 .IP "" 0
 .
@@ -1532,7 +1544,7 @@ The public key directory\.
 Whether to print the Puppet stack trace on some errors\. This is a noop if \fBtrace\fR is also set\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1546,7 +1558,7 @@ Despite the name, both puppet agent and puppet master will use this file as the 
 For control over logging destinations, see the \fB\-\-logdest\fR command line option in the manual pages for puppet master, puppet agent, and puppet apply\. You can see man pages by running \fBpuppet <SUBCOMMAND> \-\-help\fR, or read them online at https://puppet\.com/docs/puppet/latest/man/\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $logdir/puppetd\.log
+\fIDefault\fR: \fB$logdir/puppetd\.log\fR
 .
 .IP "" 0
 .
@@ -1554,7 +1566,7 @@ For control over logging destinations, see the \fB\-\-logdest\fR command line op
 Whether to send reports after every transaction\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: true
+\fIDefault\fR: \fBtrue\fR
 .
 .IP "" 0
 .
@@ -1562,7 +1574,7 @@ Whether to send reports after every transaction\.
 Whether the \'http\' report processor should include the system certificate store when submitting reports to HTTPS URLs\. If false, then the \'http\' processor will only trust HTTPS report servers whose certificates are issued by the puppet CA or one of its intermediate CAs\. If true, the processor will additionally trust CA certificates in the system\'s certificate store\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1570,7 +1582,7 @@ Whether the \'http\' report processor should include the system certificate stor
 The port to communicate with the report_server\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $serverport
+\fIDefault\fR: \fB$serverport\fR
 .
 .IP "" 0
 .
@@ -1578,7 +1590,7 @@ The port to communicate with the report_server\.
 The server to send transaction reports to\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $server
+\fIDefault\fR: \fB$server\fR
 .
 .IP "" 0
 .
@@ -1586,7 +1598,7 @@ The server to send transaction reports to\.
 The directory in which to store reports\. Each node gets a separate subdirectory in this directory\. This setting is only used when the \fBstore\fR report processor is enabled (see the \fBreports\fR setting)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/reports
+\fIDefault\fR: \fB$vardir/reports\fR
 .
 .IP "" 0
 .
@@ -1600,7 +1612,7 @@ This setting is relevant to puppet master and puppet apply\. The puppet master w
 See the report reference for information on the built\-in report handlers; custom report handlers can also be loaded from modules\. (Report handlers are loaded from the lib directory, at \fBpuppet/reports/NAME\.rb\fR\.)
 .
 .IP "\(bu" 4
-\fIDefault\fR: store
+\fIDefault\fR: \fBstore\fR
 .
 .IP "" 0
 .
@@ -1608,7 +1620,7 @@ See the report reference for information on the built\-in report handlers; custo
 The URL that reports should be forwarded to\. This setting is only used when the \fBhttp\fR report processor is enabled (see the \fBreports\fR setting)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: http://localhost:3000/reports/upload
+\fIDefault\fR: \fBhttp://localhost:3000/reports/upload\fR
 .
 .IP "" 0
 .
@@ -1616,7 +1628,7 @@ The URL that reports should be forwarded to\. This setting is only used when the
 Where host certificate requests are stored\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $ssldir/certificate_requests
+\fIDefault\fR: \fB$ssldir/certificate_requests\fR
 .
 .IP "" 0
 .
@@ -1624,7 +1636,7 @@ Where host certificate requests are stored\.
 The file in which puppet agent stores a list of the resources associated with the retrieved configuration\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $statedir/resources\.txt
+\fIDefault\fR: \fB$statedir/resources\.txt\fR
 .
 .IP "" 0
 .
@@ -1632,7 +1644,7 @@ The file in which puppet agent stores a list of the resources associated with th
 The configuration file that defines the rights to the different rest indirections\. This can be used as a fine\-grained authorization system for \fBpuppet master\fR\. The \fBpuppet master\fR command is deprecated and Puppet Server uses its own auth\.conf that must be placed within its configuration directory\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $confdir/auth\.conf
+\fIDefault\fR: \fB$confdir/auth\.conf\fR
 .
 .IP "" 0
 .
@@ -1640,7 +1652,7 @@ The configuration file that defines the rights to the different rest indirection
 Whether to send updated facts after every transaction\. By default puppet only submits facts at the beginning of the transaction before applying a catalog\. Since puppet can modify the state of the system, the value of the facts may change after puppet finishes\. Therefore, any facts stored in puppetdb may not be consistent until the agent next runs, typically in 30 minutes\. If this feature is enabled, puppet will resubmit facts after applying its catalog, ensuring facts for the node stored in puppetdb are current\. However, this will double the fact submission load on puppetdb, so it is disabled by default\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1648,7 +1660,7 @@ Whether to send updated facts after every transaction\. By default puppet only s
 Enables having extended data in the catalog by storing them as a hash with the special key \fB__ptype\fR\. When enabled, resource containing values of the data types \fBBinary\fR, \fBRegexp\fR, \fBSemVer\fR, \fBSemVerRange\fR, \fBTimespan\fR and \fBTimestamp\fR, as well as instances of types derived from \fBObject\fR retain their data type\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: true
+\fIDefault\fR: \fBtrue\fR
 .
 .IP "" 0
 .
@@ -1656,7 +1668,7 @@ Enables having extended data in the catalog by storing them as a hash with the s
 The YAML file containing indirector route configuration\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $confdir/routes\.yaml
+\fIDefault\fR: \fB$confdir/routes\.yaml\fR
 .
 .IP "" 0
 .
@@ -1664,7 +1676,7 @@ The YAML file containing indirector route configuration\.
 Where Puppet PID files are kept\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: Unix/Linux: /var/run/puppetlabs \-\- Windows: C:\eProgramData\ePuppetLabs\epuppet\evar\erun \-\- Non\-root user: ~/\.puppetlabs/var/run
+\fIDefault\fR: \fBUnix/Linux: /var/run/puppetlabs \-\- Windows: C:\eProgramData\ePuppetLabs\epuppet\evar\erun \-\- Non\-root user: ~/\.puppetlabs/var/run\fR
 .
 .IP "" 0
 .
@@ -1672,7 +1684,7 @@ Where Puppet PID files are kept\.
 How often puppet agent applies the catalog\. Note that a runinterval of 0 means "run continuously" rather than "never run\." This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 30m
+\fIDefault\fR: \fB30m\fR
 .
 .IP "" 0
 .
@@ -1680,7 +1692,7 @@ How often puppet agent applies the catalog\. Note that a runinterval of 0 means 
 The maximum amount of time an agent run is allowed to take\. A Puppet agent run that exceeds this timeout will be aborted\. A value of 0 disables the timeout\. Defaults to 1 hour\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 1h
+\fIDefault\fR: \fB1h\fR
 .
 .IP "" 0
 .
@@ -1688,7 +1700,7 @@ The maximum amount of time an agent run is allowed to take\. A Puppet agent run 
 Where the serial number for certificates is stored\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $cadir/serial
+\fIDefault\fR: \fB$cadir/serial\fR
 .
 .IP "" 0
 .
@@ -1696,7 +1708,7 @@ Where the serial number for certificates is stored\.
 The puppet master server to which the puppet agent should connect\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: puppet
+\fIDefault\fR: \fBpuppet\fR
 .
 .IP "" 0
 .
@@ -1704,7 +1716,7 @@ The puppet master server to which the puppet agent should connect\.
 The directory in which serialized data is stored, usually in a subdirectory\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/server_data
+\fIDefault\fR: \fB$vardir/server_data\fR
 .
 .IP "" 0
 .
@@ -1712,7 +1724,7 @@ The directory in which serialized data is stored, usually in a subdirectory\.
 The list of puppet master servers to which the puppet agent should connect, in the order that they will be tried\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: []
+\fIDefault\fR: \fB[]\fR
 .
 .IP "" 0
 .
@@ -1720,7 +1732,7 @@ The list of puppet master servers to which the puppet agent should connect, in t
 The default port puppet subcommands use to communicate with Puppet Server\. (eg \fBpuppet facts upload\fR, \fBpuppet agent\fR)\. May be overridden by more specific settings (see \fBca_port\fR, \fBreport_port\fR)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 8140
+\fIDefault\fR: \fB8140\fR
 .
 .IP "" 0
 .
@@ -1728,7 +1740,7 @@ The default port puppet subcommands use to communicate with Puppet Server\. (eg 
 Whether to log and report a contextual diff when files are being replaced\. This causes partial file contents to pass through Puppet\'s normal logging and reporting system, so this setting should be used with caution if you are sending Puppet\'s reports to an insecure destination\. This feature currently requires the \fBdiff/lcs\fR Ruby library\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1736,7 +1748,7 @@ Whether to log and report a contextual diff when files are being replaced\. This
 Where the CA stores signed certificates\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $cadir/signed
+\fIDefault\fR: \fB$cadir/signed\fR
 .
 .IP "" 0
 .
@@ -1746,9 +1758,10 @@ Tags to use to filter resources\. If this is set, then only resources not tagged
 .SS "sourceaddress"
 The address the agent should use to initiate requests\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "splay"
 Whether to sleep for a random amount of time, ranging from immediately up to its \fB$splaylimit\fR, before performing its first agent run after a service restart\. After this period, the agent runs periodically on its \fB$runinterval\fR\.
@@ -1763,7 +1776,7 @@ With \fBsplay\fR enabled, it waits any amount of time up to its \fB$splaylimit\f
 If you restart an agent\'s puppet service with \fBsplay\fR enabled, it recalculates its splay period and delays its first agent run after restarting for this new period\. If you simultaneously restart a group of puppet agents with \fBsplay\fR enabled, their checkins to your puppet masters can be distributed more evenly\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1771,7 +1784,7 @@ If you restart an agent\'s puppet service with \fBsplay\fR enabled, it recalcula
 The maximum time to delay before an agent\'s first run when \fBsplay\fR is enabled\. Defaults to the agent\'s \fB$runinterval\fR\. The \fBsplay\fR interval is random and recalculated each time the agent is started or restarted\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $runinterval
+\fIDefault\fR: \fB$runinterval\fR
 .
 .IP "" 0
 .
@@ -1779,16 +1792,17 @@ The maximum time to delay before an agent\'s first run when \fBsplay\fR is enabl
 The domain which will be queried to find the SRV records of servers to use\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: ci\-jenkins\-setup\-platform\.svc\.cluster\.local
+\fIDefault\fR: \fBci\-jenkins\-setup\-platform\.svc\.cluster\.local\fR
 .
 .IP "" 0
 .
 .SS "ssl_client_ca_auth"
 Certificate authorities who issue server certificates\. SSL servers will not be considered authentic unless they possess a certificate issued by an authority listed in this file\. If this setting has no value then the Puppet master\'s CA certificate (localcacert) will be used\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "ssl_client_header"
 The header containing an authenticated client\'s SSL DN\. This header must be set by the proxy to the authenticated client\'s SSL DN (e\.g\., \fB/CN=puppet\.puppetlabs\.com\fR)\. Puppet will parse out the Common Name (CN) from the Distinguished Name (DN) and use the value of the CN field for authorization\.
@@ -1797,7 +1811,7 @@ The header containing an authenticated client\'s SSL DN\. This header must be se
 Note that the name of the HTTP header gets munged by the web server common gateway interface: an \fBHTTP_\fR prefix is added, dashes are converted to underscores, and all letters are uppercased\. Thus, to use the \fBX\-Client\-DN\fR header, this setting should be \fBHTTP_X_CLIENT_DN\fR\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: HTTP_X_CLIENT_DN
+\fIDefault\fR: \fBHTTP_X_CLIENT_DN\fR
 .
 .IP "" 0
 .
@@ -1808,7 +1822,7 @@ The header containing the status message of the client verification\. This heade
 Note that the name of the HTTP header gets munged by the web server common gateway interface: an \fBHTTP_\fR prefix is added, dashes are converted to underscores, and all letters are uppercased\. Thus, to use the \fBX\-Client\-Verify\fR header, this setting should be \fBHTTP_X_CLIENT_VERIFY\fR\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: HTTP_X_CLIENT_VERIFY
+\fIDefault\fR: \fBHTTP_X_CLIENT_VERIFY\fR
 .
 .IP "" 0
 .
@@ -1816,29 +1830,31 @@ Note that the name of the HTTP header gets munged by the web server common gatew
 A lock file to indicate that the ssl bootstrap process is currently in progress\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $ssldir/ssl\.lock
+\fIDefault\fR: \fB$ssldir/ssl\.lock\fR
 .
 .IP "" 0
 .
 .SS "ssl_server_ca_auth"
 The setting is deprecated and has no effect\. Ensure all root and intermediate certificate authorities used to issue client certificates are contained in the server\'s \fBcacert\fR file on the server\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "ssl_trust_store"
 A file containing CA certificates in PEM format that puppet should trust when making HTTPS requests\. This \fBonly\fR applies to https requests to non\-puppet infrastructure, such as retrieving file metadata and content from https file sources, puppet module tool and the \'http\' report processor\. This setting is ignored when making requests to puppet:// URLs such as catalog and report requests\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "ssldir"
 Where SSL certificates are kept\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $confdir/ssl
+\fIDefault\fR: \fB$confdir/ssl\fR
 .
 .IP "" 0
 .
@@ -1846,7 +1862,7 @@ Where SSL certificates are kept\.
 The directory where Puppet state is stored\. Generally, this directory can be removed without causing harm (although it might result in spurious service restarts)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/state
+\fIDefault\fR: \fB$vardir/state\fR
 .
 .IP "" 0
 .
@@ -1854,7 +1870,7 @@ The directory where Puppet state is stored\. Generally, this directory can be re
 Where puppet agent and puppet master store state associated with the running configuration\. In the case of puppet master, this file reflects the state discovered through interacting with clients\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $statedir/state\.yaml
+\fIDefault\fR: \fB$statedir/state\.yaml\fR
 .
 .IP "" 0
 .
@@ -1865,7 +1881,7 @@ How long the Puppet agent should cache when a resource was last checked or synce
 This setting affects the usage of \fBschedule\fR resources, as the information about when a resource was last checked (and therefore when it needs to be checked again) is stored in the \fBstatefile\fR\. The \fBstatettl\fR needs to be large enough to ensure that a resource will not trigger multiple times during a schedule due to its entry expiring from the cache\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 32d
+\fIDefault\fR: \fB32d\fR
 .
 .IP "" 0
 .
@@ -1873,7 +1889,7 @@ This setting affects the usage of \fBschedule\fR resources, as the information a
 Whether to compile a static catalog \fIhttps://puppet\.com/docs/puppet/latest/static_catalogs\.html#enabling\-or\-disabling\-static\-catalogs\fR, which occurs only on a Puppet Server master when the \fBcode\-id\-command\fR and \fBcode\-content\-command\fR settings are configured in its \fBpuppetserver\.conf\fR file\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: true
+\fIDefault\fR: \fBtrue\fR
 .
 .IP "" 0
 .
@@ -1887,7 +1903,7 @@ By default this uses the \'puppetdb\' backend\.
 You can adjust the backend using the storeconfigs_backend setting\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1895,7 +1911,7 @@ You can adjust the backend using the storeconfigs_backend setting\.
 Configure the backend terminus used for StoreConfigs\. By default, this uses the PuppetDB store, which must be installed and configured before turning on StoreConfigs\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: puppetdb
+\fIDefault\fR: \fBpuppetdb\fR
 .
 .IP "" 0
 .
@@ -1920,7 +1936,7 @@ The strictness level is for both language semantics and runtime evaluation valid
 No new validations will be added to a micro (x\.y\.z) release, but may be added in minor releases (x\.y\.0)\. In major releases it expected that most (if not all) strictness validation become standard behavior\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: warning
+\fIDefault\fR: \fBwarning\fR
 .
 .IP "" 0
 .
@@ -1928,7 +1944,7 @@ No new validations will be added to a micro (x\.y\.z) release, but may be added 
 Whether the agent specified environment should be considered authoritative, causing the run to fail if the retrieved catalog does not match it\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1939,7 +1955,7 @@ Whether to only search for the complete hostname as it is in the certificate whe
 This setting is deprecated and will be removed in a future release\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: true
+\fIDefault\fR: \fBtrue\fR
 .
 .IP "" 0
 .
@@ -1947,7 +1963,7 @@ This setting is deprecated and will be removed in a future release\.
 Causes an evaluation error when referencing unknown variables\. (This does not affect referencing variables that are explicitly set to undef)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1955,7 +1971,7 @@ Causes an evaluation error when referencing unknown variables\. (This does not a
 Whether to print a transaction summary\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1963,7 +1979,7 @@ Whether to print a transaction summary\.
 Checksum types supported by this agent for use in file resources of a static catalog\. Values must be comma\-separated\. Valid types are md5, md5lite, sha256, sha256lite, sha384, sha512, sha224, sha1, sha1lite, mtime, ctime\. Default is md5, sha256, sha384, sha512, sha224\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: ["md5", "sha256", "sha384", "sha512", "sha224"]
+\fIDefault\fR: \fB["md5", "sha256", "sha384", "sha512", "sha224"]\fR
 .
 .IP "" 0
 .
@@ -1971,7 +1987,7 @@ Checksum types supported by this agent for use in file resources of a static cat
 What syslog facility to use when logging to syslog\. Syslog has a fixed list of valid facilities, and you must choose one of those; you cannot just make one up\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: daemon
+\fIDefault\fR: \fBdaemon\fR
 .
 .IP "" 0
 .
@@ -1982,7 +1998,7 @@ Tags to use to find resources\. If this is set, then only resources tagged with 
 Turns on experimental support for tasks and plans in the puppet language\. This is for internal API use only\. Do not change this setting\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1990,7 +2006,7 @@ Turns on experimental support for tasks and plans in the puppet language\. This 
 Whether to print stack traces on some errors\. Will print internal Ruby stack trace interleaved with Puppet function frames\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -1998,7 +2014,7 @@ Whether to print stack traces on some errors\. Will print internal Ruby stack tr
 Transactional storage file for persisting data between transactions for the purposes of infering information (such as corrective_change) on new data received\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $statedir/transactionstore\.yaml
+\fIDefault\fR: \fB$statedir/transactionstore\.yaml\fR
 .
 .IP "" 0
 .
@@ -2019,15 +2035,16 @@ For unknown or invalid nodes, exit with a non\-zero exit code\.
 .P
 If the setting points to an executable command, then the external trusted facts will be stored in the \'external\' key of the trusted facts hash\. Otherwise for each executable file in the directory, the external trusted facts will be stored in the \fB<basename>\fR key of the \fBtrusted[\'external\']\fR hash\. For example, if the files foo\.rb and bar\.sh are in the directory, then \fBtrusted[\'external\']\fR will be the hash \fB{ \'foo\' => <foo\.rb output>, \'bar\' => <bar\.sh output> }\fR\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: ``
+.
+.IP "" 0
 .
 .SS "trusted_oid_mapping_file"
 File that provides mapping between custom SSL oids and user\-friendly names
 .
 .IP "\(bu" 4
-\fIDefault\fR: $confdir/custom_trusted_oid_mapping\.yaml
+\fIDefault\fR: \fB$confdir/custom_trusted_oid_mapping\.yaml\fR
 .
 .IP "" 0
 .
@@ -2035,7 +2052,7 @@ File that provides mapping between custom SSL oids and user\-friendly names
 Whether to only use the cached catalog rather than compiling a new catalog on every run\. Puppet can be run with this enabled by default and then selectively disabled when a recompile is desired\. Because a Puppet agent using cached catalogs does not contact the master for a new catalog, it also does not upload facts at the beginning of the Puppet run\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -2043,7 +2060,7 @@ Whether to only use the cached catalog rather than compiling a new catalog on ev
 Whether the server will search for SRV records in DNS for the current domain\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -2051,7 +2068,7 @@ Whether the server will search for SRV records in DNS for the current domain\.
 Whether to use the cached configuration when the remote configuration will not compile\. This option is useful for testing new configurations, where you want to fix the broken configuration rather than reverting to a known\-good one\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: true
+\fIDefault\fR: \fBtrue\fR
 .
 .IP "" 0
 .
@@ -2059,7 +2076,7 @@ Whether to use the cached configuration when the remote configuration will not c
 The user Puppet Server will run as\. Used to ensure the agent side processes (agent, apply, etc) create files and directories readable by Puppet Server when necessary\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: puppet
+\fIDefault\fR: \fBpuppet\fR
 .
 .IP "" 0
 .
@@ -2067,7 +2084,7 @@ The user Puppet Server will run as\. Used to ensure the agent side processes (ag
 Where Puppet stores dynamic and growing data\. The default for this setting is calculated specially, like \fBconfdir\fR_\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: Unix/Linux: /opt/puppetlabs/puppet/cache \-\- Windows: C:\eProgramData\ePuppetLabs\epuppet\ecache \-\- Non\-root user: ~/\.puppetlabs/opt/puppet/cache
+\fIDefault\fR: \fBUnix/Linux: /opt/puppetlabs/puppet/cache \-\- Windows: C:\eProgramData\ePuppetLabs\epuppet\ecache \-\- Non\-root user: ~/\.puppetlabs/opt/puppet/cache\fR
 .
 .IP "" 0
 .
@@ -2075,7 +2092,7 @@ Where Puppet stores dynamic and growing data\. The default for this setting is c
 The directory containing \fBvendored\fR modules\. These modules will be used by \fIall\fR environments like those in the \fBbasemodulepath\fR\. The only difference is that modules in the \fBbasemodulepath\fR are pluginsynced, while vendored modules are not
 .
 .IP "\(bu" 4
-\fIDefault\fR: /opt/puppetlabs/puppet/vendor_modules
+\fIDefault\fR: \fB/opt/puppetlabs/puppet/vendor_modules\fR
 .
 .IP "" 0
 .
@@ -2083,7 +2100,7 @@ The directory containing \fBvendored\fR modules\. These modules will be used by 
 Whether or not to look for versioned environment directories, symlinked from \fB$environmentpath/<environment>\fR\. This is an experimental feature and should be used with caution\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: false
+\fIDefault\fR: \fBfalse\fR
 .
 .IP "" 0
 .
@@ -2097,7 +2114,7 @@ When starting for the first time, puppet agent will submit a certificate signing
 Puppet agent cannot apply configurations until its approved certificate is available\. Since the certificate may or may not be available immediately, puppet agent will repeatedly try to fetch it at this interval\. You can turn off waiting for certificates by specifying a time of 0, or a maximum amount of time to wait in the \fBmaxwaitforcert\fR setting, in which case puppet agent will exit if it cannot get a cert\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 2m
+\fIDefault\fR: \fB2m\fR
 .
 .IP "" 0
 .
@@ -2108,7 +2125,7 @@ How frequently puppet agent should try running when there is an already ongoing 
 This argument is by default disabled (value set to 0)\. In this case puppet agent will immediately exit if it cannot run at that moment\. When a value other than 0 is set, this can also be used in combination with the \fBmaxwaitforlock\fR argument\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 0
+\fIDefault\fR: \fB0\fR
 .
 .IP "" 0
 .
@@ -2116,7 +2133,7 @@ This argument is by default disabled (value set to 0)\. In this case puppet agen
 The directory in which YAML data is stored, usually in a subdirectory\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $vardir/yaml
+\fIDefault\fR: \fB$vardir/yaml\fR
 .
 .IP "" 0
 
