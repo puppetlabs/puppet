@@ -837,8 +837,8 @@ names.
 **Note:** The list of alternate names is locked in when the server's
 certificate is signed. If you need to change the list later, you can't just
 change this setting; you also need to regenerate the certificate. For more
-information on that process, see the [cert regen docs]
-(https://puppet.com/docs/puppet/latest/ssl_regenerate_certificates.html).
+information on that process, see the 
+[cert regen docs](https://puppet.com/docs/puppet/latest/ssl_regenerate_certificates.html).
 
 To see all the alternate names your servers are using, log into your CA server
 and run `puppetserver ca list --all`, then check the output for `(alt names: ...)`.

@@ -6,13 +6,13 @@
 #
 # 1. An `Array`, `Hash`, `Iterator`, or `Object` that the function will iterate over.
 # 2. An optional hash with the options:
-#    * `include_containers` => `Optional[Boolean]` # default true - if containers should be given to the lambda
-#    * `include_values` => `Optional[Boolean]` # default true - if non containers should be given to the lambda
-#    * `include_root` => `Optional[Boolean]` # default true - if the root container should be given to the lambda
+#    * `include_containers` => `Optional[Boolean]` # default `true` - if containers should be given to the lambda
+#    * `include_values` => `Optional[Boolean]` # default `true` - if non containers should be given to the lambda
+#    * `include_root` => `Optional[Boolean]` # default `true` - if the root container should be given to the lambda
 #    * `container_type` => `Optional[Type[Variant[Array, Hash, Object]]]` # a type that determines what a container is - can only
 #       be set to a type that matches the default `Variant[Array, Hash, Object]`.
 #    * `order` => `Enum[depth_first, breadth_first]` # default ´depth_first`, the order in which elements are visited
-#    * `include_refs` => Optional[Boolean] # default `false`, if attributes in objects marked as bing of `reference` kind
+#    * `include_refs` => `Optional[Boolean]` # default `false`, if attributes in objects marked as bing of `reference` kind
 #       should be included.
 # 3. An optional lambda, which the function calls for each element in the first argument. It must
 #    accept one or two arguments; either `$path`, and `$value`, or just `$value`.
@@ -46,14 +46,12 @@
 # [1, [2, 3], 4]
 # ```
 #
-# Results in:
-#
-# If containers are skipped:
+# If containers are skipped, results in:
 #
 # * `depth_first` order `1`, `2`, `3`, `4`
 # * `breadth_first` order `1`, `4`,`2`, `3`
 #
-# If containers and root, are included:
+# If containers and root are included, results in:
 #
 # * `depth_first` order `[1, [2, 3], 4]`, `1`, `[2, 3]`, `2`, `3`, `4`
 # * `breadth_first` order `[1, [2, 3], 4]`, `1`, `[2, 3]`, `4`, `2`, `3`
@@ -96,7 +94,7 @@
 #
 # Any Puppet Type system data type can be used to filter what is
 # considered to be a container, but it must be a narrower type than one of
-# the default Array, Hash, Object types - for example it is not possible to make a
+# the default `Array`, `Hash`, `Object` types - for example it is not possible to make a
 # `String` be a container type.
 #
 # @example Only `Array` as container type

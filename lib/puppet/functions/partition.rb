@@ -4,19 +4,19 @@
 # the second containing the rest.
 Puppet::Functions.create_function(:partition) do
   # @param collection A collection of things to partition.
-  # @example Partition array of empty strings, results in e.g. [[''], [b, c]]
+  # @example Partition array of empty strings, results in e.g. `[[''], [b, c]]`
   #   ```puppet
   #   ['', b, c].partition |$s| { $s.empty }
   #   ```
-  # @example Partition array of strings using index, results in e.g. [['', 'ab'], ['b']]
+  # @example Partition array of strings using index, results in e.g. `[['', 'ab'], ['b']]`
   #   ```puppet
   #   ['', b, ab].partition |$i, $s| { $i == 2 or $s.empty }
   #   ```
-  # @example Partition hash of strings by key-value pair, results in e.g. [[['b', []]], [['a', [1, 2]]]]
+  # @example Partition hash of strings by key-value pair, results in e.g. `[[['b', []]], [['a', [1, 2]]]]`
   #   ```puppet
   #   { a => [1, 2], b => [] }.partition |$kv| { $kv[1].empty }
   #   ```
-  # @example Partition hash of strings by key and value, results in e.g. [[['b', []]], [['a', [1, 2]]]]
+  # @example Partition hash of strings by key and value, results in e.g. `[[['b', []]], [['a', [1, 2]]]]`
   #   ```puppet
   #   { a => [1, 2], b => [] }.partition |$k, $v| { $v.empty }
   #   ```

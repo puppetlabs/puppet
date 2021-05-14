@@ -22,14 +22,14 @@
 # 'hello'.upcase()
 # upcase('hello')
 # ```
-# Would both result in "HELLO"
+# Would both result in `"HELLO"`
 #
 # @example Converting an Array to upper case
 # ```puppet
 # ['a', 'b'].upcase()
 # upcase(['a', 'b'])
 # ```
-# Would both result in ['A', 'B']
+# Would both result in `['A', 'B']`
 #
 # @example Converting a Hash to upper case
 # ```puppet
