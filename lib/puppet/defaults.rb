@@ -1428,7 +1428,7 @@ EOT
         (Report handlers are loaded from the lib directory, at
         `puppet/reports/NAME.rb`.)
 
-        To turn of reports entirely, set this to 'none'",
+        To turn off reports entirely, set this to `none`",
     },
     :reportdir => {
       :default => "$vardir/reports",
