@@ -435,7 +435,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   ['home', 'uid', 'gid', 'comment', 'shell'].each do |setter_method|
     define_method("#{setter_method}=") do |value|
       if @property_hash[setter_method.intern]
-        if self.class.get_os_version.split('.').last.to_i >= 14 && %w(home uid).include?(setter_method)
+        if %w(home uid).include?(setter_method)
           raise Puppet::Error, "OS X version #{self.class.get_os_version} does not allow changing #{setter_method} using puppet"
         end
         begin
@@ -536,6 +536,14 @@ Puppet::Type.type(:user).provide :directoryservice do
       if (shadow_hash_data.class == Hash) && (shadow_hash_data.has_key?('SALTED-SHA512'))
         shadow_hash_data.delete('SALTED-SHA512')
       end
+
+      # Starting with macOS 11 Big Sur, the AuthenticationAuthority field
+      # could be missing entirely and without it the managed user cannot log in
+      if needs_sha512_pbkdf2_authentication_authority_to_be_added?(users_plist)
+        Puppet.debug("Adding 'SALTED-SHA512-PBKDF2' AuthenticationAuthority key for ShadowHash to user '#{@resource.name}'")
+        merge_attribute_with_dscl('Users', @resource.name, 'AuthenticationAuthority', ERB::Util.html_escape(SHA512_PBKDF2_AUTHENTICATION_AUTHORITY))
+      end
+
       set_salted_pbkdf2(users_plist, shadow_hash_data, 'entropy', value)
     end
   end
@@ -560,6 +568,17 @@ Puppet::Type.type(:user).provide :directoryservice do
     else
       false
     end
+  end
+
+  # This method will check if authentication_authority key of a user's plist
+  # needs SALTED_SHA512_PBKDF2 to be added. This is a valid case for macOS 11 (Big Sur)
+  # where users created with `dscl` started to have this field missing
+  def needs_sha512_pbkdf2_authentication_authority_to_be_added?(users_plist)
+    authority = users_plist['authentication_authority']
+    return false if Puppet::Util::Package.versioncmp(self.class.get_os_version, '11.0.0') < 0 && authority && authority.include?(SHA512_PBKDF2_AUTHENTICATION_AUTHORITY)
+
+    Puppet.debug("User '#{@resource.name}' is missing the 'SALTED-SHA512-PBKDF2' AuthenticationAuthority key for ShadowHash")
+    true
   end
 
   # This method will embed the binary plist data comprising the user's
@@ -667,4 +686,8 @@ Puppet::Type.type(:user).provide :directoryservice do
       raise Puppet::Error, "Could not write to file #{filename}: #{detail}", detail.backtrace
     end
   end
+
+  private
+
+  SHA512_PBKDF2_AUTHENTICATION_AUTHORITY = ';ShadowHash;HASHLIST:<SALTED-SHA512-PBKDF2,SRP-RFC5054-4096-SHA512-PBKDF2>'
 end

@@ -23,7 +23,7 @@ test_name "should not modify the home directory of an user on OS X >= 10.14" do
     end
 
     step "verify the error message is correct" do
-      expected_error = /OS X version 10\.1[4-9] does not allow changing home using puppet/
+      expected_error = /OS X version [0-9\.]+ does not allow changing home using puppet/
       user_manifest = resource_manifest('user', user, ensure: 'present', home: "/opt/#{user}")
 
       apply_manifest_on(agent, user_manifest) do |result|
