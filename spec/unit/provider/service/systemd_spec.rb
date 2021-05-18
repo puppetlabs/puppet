@@ -473,17 +473,39 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
     context 'when service state is static' do
       let(:service_state) { 'static' }
 
-      it 'is always enabled_insync even if current value is the same as expected' do
-        expect(provider).to be_enabled_insync(:false)
+      context 'when enable is not mask' do
+        it 'is always enabled_insync even if current value is the same as expected' do
+          expect(provider).to be_enabled_insync(:false)
+        end
+
+        it 'is always enabled_insync even if current value is not the same as expected' do
+          expect(provider).to be_enabled_insync(:true)
+        end
+
+        it 'logs a debug messsage' do
+          expect(Puppet).to receive(:debug).with("Unable to enable or disable static service sshd.service")
+          provider.enabled_insync?(:true)
+        end
       end
 
-      it 'is always enabled_insync even if current value is not the same as expected' do
-        expect(provider).to be_enabled_insync(:true)
-      end
+      context 'when enable is mask' do
+        let(:provider) do
+          provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service',
+                                                             :enable => 'mask'))
+        end
 
-      it 'logs a debug messsage' do
-        expect(Puppet).to receive(:debug).with("Unable to enable or disable static service sshd.service")
-        provider.enabled_insync?(:true)
+        it 'is enabled_insync if current value is the same as expected' do
+          expect(provider).to be_enabled_insync(:mask)
+        end
+
+        it 'is not enabled_insync if current value is not the same as expected' do
+          expect(provider).not_to be_enabled_insync(:true)
+        end
+
+        it 'logs no debug messsage' do
+          expect(Puppet).not_to receive(:debug)
+          provider.enabled_insync?(:true)
+        end
       end
     end
 
