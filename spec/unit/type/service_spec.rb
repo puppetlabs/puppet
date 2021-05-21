@@ -93,12 +93,10 @@ describe test_title, "when validating attribute values" do
         )
       end
 
-      it "should not support :delayed as a value when not on Windows" do
-        allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
-
+      it "should not support :mask as a value" do
         expect { Puppet::Type.type(:service).new(:name => "yay", :enable => :delayed) }.to raise_error(
-          Puppet::Error,
-          /Setting enable to delayed is only supported on Microsoft Windows\./
+          Puppet::ResourceError,
+          /Provider .+ must have features 'delayed_startable' to set 'enable' to 'delayed'/
         )
       end
     end
