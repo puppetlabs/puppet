@@ -92,6 +92,7 @@ module Puppet
       end
 
       validate do |value|
+        super(value)
         if (value == :manual || value == :delayed) && !Puppet::Util::Platform.windows?
           raise Puppet::Error.new(_("Setting enable to %{value} is only supported on Microsoft Windows.") % { value: value.to_s} )
         end
