@@ -84,12 +84,10 @@ describe test_title, "when validating attribute values" do
         )
       end
 
-      it "should not support :manual as a value when not on Windows" do
-        allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
-
+      it "should not support :manual as a value" do
         expect { Puppet::Type.type(:service).new(:name => "yay", :enable => :manual) }.to raise_error(
-          Puppet::Error,
-          /Setting enable to manual is only supported on Microsoft Windows\./
+          Puppet::ResourceError,
+          /Provider .+ must have features 'manual_startable' to set 'enable' to 'manual'/
         )
       end
 
