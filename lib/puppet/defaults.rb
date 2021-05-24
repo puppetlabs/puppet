@@ -1426,7 +1426,9 @@ EOT
         See the report reference for information on the built-in report
         handlers; custom report handlers can also be loaded from modules.
         (Report handlers are loaded from the lib directory, at
-        `puppet/reports/NAME.rb`.)",
+        `puppet/reports/NAME.rb`.)
+
+        To turn off reports entirely, set this to `none`",
     },
     :reportdir => {
       :default => "$vardir/reports",
