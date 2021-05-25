@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.22.1-43-gda174a2232\n"
+"Project-Id-Version: Puppet automation framework 6.22.1-63-ga15932f0d4\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-05-12 12:03+0000\n"
-"PO-Revision-Date: 2021-05-12 12:03+0000\n"
+"POT-Creation-Date: 2021-05-25 15:33+0000\n"
+"PO-Revision-Date: 2021-05-25 15:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -184,19 +184,19 @@ msgstr ""
 msgid "The puppet agent daemon"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:415
+#: ../lib/puppet/application/agent.rb:422
 msgid "Fingerprint asked but neither the certificate, nor the certificate request have been issued"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:420
+#: ../lib/puppet/application/agent.rb:427
 msgid "Failed to generate fingerprint: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:443
+#: ../lib/puppet/application/agent.rb:450
 msgid "Starting Puppet client version %{version}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:459
+#: ../lib/puppet/application/agent.rb:466
 msgid "The puppet agent command does not take parameters"
 msgstr ""
 
@@ -206,35 +206,35 @@ msgstr ""
 
 #. TRANSLATORS "puppet apply" is a program command and should not be translated
 #. TRANSLATORS "puppet apply" is a program command and should not be translated
-#: ../lib/puppet/application/apply.rb:208 ../lib/puppet/application/apply.rb:321
+#: ../lib/puppet/application/apply.rb:209 ../lib/puppet/application/apply.rb:322
 msgid "For puppet apply"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:216
+#: ../lib/puppet/application/apply.rb:217
 msgid "%{file} is not readable"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:287 ../lib/puppet/application/script.rb:240
+#: ../lib/puppet/application/apply.rb:288 ../lib/puppet/application/script.rb:241
 msgid "Exiting"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:331
+#: ../lib/puppet/application/apply.rb:332
 msgid "Could not deserialize catalog from %{format}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:352 ../lib/puppet/application/script.rb:145
+#: ../lib/puppet/application/apply.rb:353 ../lib/puppet/application/script.rb:146
 msgid "Could not find facts for %{node}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:364 ../lib/puppet/application/script.rb:153
+#: ../lib/puppet/application/apply.rb:365 ../lib/puppet/application/script.rb:154
 msgid "Could not find node %{node}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:377 ../lib/puppet/application/script.rb:138
+#: ../lib/puppet/application/apply.rb:378 ../lib/puppet/application/script.rb:139
 msgid "Could not find file %{manifest}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:378
+#: ../lib/puppet/application/apply.rb:379
 msgid "Only one file can be applied per run.  Skipping %{files}"
 msgstr ""
 
@@ -250,47 +250,47 @@ msgstr ""
 msgid "Manage remote network devices"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:231
+#: ../lib/puppet/application/device.rb:232
 msgid "resource command requires target"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:234
+#: ../lib/puppet/application/device.rb:235
 msgid "facts command requires target"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:237
+#: ../lib/puppet/application/device.rb:238
 msgid "missing argument: --target is required when using --apply"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:238
+#: ../lib/puppet/application/device.rb:239
 msgid "%{file} does not exist, cannot apply"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:256
+#: ../lib/puppet/application/device.rb:257
 msgid "Target device / certificate '%{target}' not found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:258
+#: ../lib/puppet/application/device.rb:259
 msgid "No device found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:317
+#: ../lib/puppet/application/device.rb:318
 msgid "retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:332
+#: ../lib/puppet/application/device.rb:333
 msgid "retrieving facts from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:355
+#: ../lib/puppet/application/device.rb:356
 msgid "starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:393 ../lib/puppet/application/resource.rb:196
+#: ../lib/puppet/application/device.rb:394 ../lib/puppet/application/resource.rb:197
 msgid "You must specify the type to display"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:394 ../lib/puppet/application/resource.rb:197
+#: ../lib/puppet/application/device.rb:395 ../lib/puppet/application/resource.rb:198
 msgid "Could not find type %{type}"
 msgstr ""
 
@@ -422,15 +422,15 @@ msgstr ""
 msgid "The resource abstraction layer shell"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:140
+#: ../lib/puppet/application/resource.rb:141
 msgid "Editing with Yaml output is not supported"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:204
+#: ../lib/puppet/application/resource.rb:205
 msgid "Invalid parameter setting %{setting}"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:226
+#: ../lib/puppet/application/resource.rb:227
 msgid "Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc"
 msgstr ""
 
@@ -438,11 +438,11 @@ msgstr ""
 msgid "Run a puppet manifests as a script without compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/application/script.rb:125
+#: ../lib/puppet/application/script.rb:126
 msgid "Bolt must be installed to use the script application"
 msgstr ""
 
-#: ../lib/puppet/application/script.rb:139
+#: ../lib/puppet/application/script.rb:140
 msgid "Only one file can be used per run. Skipping %{files}"
 msgstr ""
 
@@ -728,11 +728,11 @@ msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{all
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:2015
+#: ../lib/puppet/defaults.rb:2017
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:2250
+#: ../lib/puppet/defaults.rb:2252
 msgid "The 'func3x_check' setting is deprecated and will be removed in a future release."
 msgstr ""
 
@@ -3063,8 +3063,8 @@ msgstr ""
 msgid "Option %{option} conflicts with existing option %{conflict} on %{face}"
 msgstr ""
 
-#. TRANSLATORS 'Puppet.settings' should not be translated
 #. TRANSLATORS 'Puppet.settings' references to the Puppet settings options and should not be translated
+#. TRANSLATORS 'Puppet.settings' should not be translated
 #: ../lib/puppet/interface/action.rb:315 ../lib/puppet/interface/option_manager.rb:14
 msgid "Global option %{option} does not exist in Puppet.settings"
 msgstr ""
@@ -8948,19 +8948,15 @@ msgstr ""
 msgid "%{value} is not a valid day of the week"
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:96
-msgid "Setting enable to %{value} is only supported on Microsoft Windows."
-msgstr ""
-
-#: ../lib/puppet/type/service.rb:152 ../lib/puppet/type/user.rb:271
+#: ../lib/puppet/type/service.rb:151 ../lib/puppet/type/user.rb:271
 msgid "Passwords cannot include ':'"
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:279
+#: ../lib/puppet/type/service.rb:278
 msgid "\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer"
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:301
+#: ../lib/puppet/type/service.rb:300
 msgid "The 'logonaccount' parameter is mandatory when setting 'logonpassword'."
 msgstr ""
 
