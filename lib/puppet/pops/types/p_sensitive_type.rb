@@ -24,6 +24,16 @@ class PSensitiveType < PTypeWithContainedType
     def inspect
       "#<#{self}>"
     end
+
+    def hash
+      @value.hash
+    end
+
+    def ==(other)
+      other.is_a?(Sensitive) &&
+        other.hash == hash
+    end
+    alias eql? ==
   end
 
   def self.register_ptype(loader, ir)

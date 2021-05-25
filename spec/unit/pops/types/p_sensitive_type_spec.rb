@@ -113,6 +113,24 @@ describe 'Sensitive Type' do
       expect(eval_and_collect_notices(code)).to eq(['Sensitive[Integer] != Sensitive[String]'])
     end
 
+    it 'equals another instance with the same value' do
+      code =<<-CODE
+        $i = Sensitive('secret')
+        $o = Sensitive('secret')
+        notice($i == $o)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true'])
+    end
+
+    it 'has equal hash keys for same values' do
+      code =<<-CODE
+        $i = Sensitive('secret')
+        $o = Sensitive('secret')
+        notice({$i => 1} == {$o => 1})
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true'])
+    end
+
     it 'can be created from another sensitive instance ' do
       code =<<-CODE
         $o = Sensitive("hunter2")
