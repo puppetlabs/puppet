@@ -72,50 +72,65 @@ describe test_title, "when validating attribute values" do
       allow(@provider.class).to receive(:supports_parameter?).and_return(true)
     end
 
-    it "should support :true as a value" do
-      srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :true)
-      expect(srv.should(:enable)).to eq(:true)
+    describe "for value without required features" do
+      before :each do
+        allow(@provider).to receive(:satisfies?)
+      end
+
+      it "should not support :mask as a value" do
+        expect { Puppet::Type.type(:service).new(:name => "yay", :enable => :mask) }.to raise_error(
+          Puppet::ResourceError,
+          /Provider .+ must have features 'maskable' to set 'enable' to 'mask'/
+        )
+      end
+
+      it "should not support :manual as a value" do
+        expect { Puppet::Type.type(:service).new(:name => "yay", :enable => :manual) }.to raise_error(
+          Puppet::ResourceError,
+          /Provider .+ must have features 'manual_startable' to set 'enable' to 'manual'/
+        )
+      end
+
+      it "should not support :mask as a value" do
+        expect { Puppet::Type.type(:service).new(:name => "yay", :enable => :delayed) }.to raise_error(
+          Puppet::ResourceError,
+          /Provider .+ must have features 'delayed_startable' to set 'enable' to 'delayed'/
+        )
+      end
     end
 
-    it "should support :false as a value" do
-      srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :false)
-      expect(srv.should(:enable)).to eq(:false)
-    end
+    describe "for value with required features" do
+      before :each do
+        allow(@provider).to receive(:satisfies?).and_return(:true)
+      end
 
-    it "should support :mask as a value" do
-      srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :mask)
-      expect(srv.should(:enable)).to eq(:mask)
-    end
+      it "should support :true as a value" do
+        srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :true)
+        expect(srv.should(:enable)).to eq(:true)
+      end
 
-    it "should support :manual as a value on Windows" do
-      allow(Puppet::Util::Platform).to receive(:windows?).and_return(true)
-      srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :manual)
-      expect(srv.should(:enable)).to eq(:manual)
-    end
+      it "should support :false as a value" do
+        srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :false)
+        expect(srv.should(:enable)).to eq(:false)
+      end
 
-    it "should support :delayed as a value on Windows" do
-      allow(Puppet::Util::Platform).to receive(:windows?).and_return(true)
+      it "should support :mask as a value" do
+        srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :mask)
+        expect(srv.should(:enable)).to eq(:mask)
+      end
 
-      srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :delayed)
-      expect(srv.should(:enable)).to eq(:delayed)
-    end
+      it "should support :manual as a value on Windows" do
+        allow(Puppet::Util::Platform).to receive(:windows?).and_return(true)
+        srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :manual)
+        expect(srv.should(:enable)).to eq(:manual)
+      end
 
-    it "should not support :manual as a value when not on Windows" do
-      allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
+      it "should support :delayed as a value on Windows" do
+        allow(Puppet::Util::Platform).to receive(:windows?).and_return(true)
 
-      expect { Puppet::Type.type(:service).new(:name => "yay", :enable => :manual) }.to raise_error(
-        Puppet::Error,
-        /Setting enable to manual is only supported on Microsoft Windows\./
-      )
-    end
-
-    it "should not support :delayed as a value when not on Windows" do
-      allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
-
-      expect { Puppet::Type.type(:service).new(:name => "yay", :enable => :delayed) }.to raise_error(
-        Puppet::Error,
-        /Setting enable to delayed is only supported on Microsoft Windows\./
-      )
+        srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :delayed)
+        expect(srv.should(:enable)).to eq(:delayed)
+      end
     end
   end
 
