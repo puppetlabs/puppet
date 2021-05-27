@@ -63,7 +63,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
         return should
       end
 
-      sorted_versions = SortedSet.new
+      versions = []
 
       output = zypper('search', '--match-exact', '--type', 'package', '--uninstalled-only', '-s', @resource[:name])
       output.lines.each do |line|
@@ -72,13 +72,13 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
         begin
           rpm_version = Puppet::Util::Package::Version::Rpm.parse(pkg_ver[3])
 
-          sorted_versions << rpm_version if should_range.include?(rpm_version)
+          versions << rpm_version if should_range.include?(rpm_version)
         rescue Puppet::Util::Package::Version::Rpm::ValidationFailure
           Puppet.debug("Cannot parse #{pkg_ver[3]} as a RPM version")
         end
       end
 
-      return sorted_versions.entries.last if sorted_versions.any?
+      return versions.sort.last if versions.any?
 
       Puppet.debug("No available version for package #{@resource[:name]} is included in range #{should_range}")
       should

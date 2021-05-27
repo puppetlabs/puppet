@@ -203,17 +203,17 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
         Puppet.debug("Cannot parse #{should} as a RPM version range")
         return should
       end
-      sorted_versions = SortedSet.new
+      versions = []
       available_versions(@resource[:name]).each do |version|
         begin
           rpm_version = RPM_VERSION.parse(version)
-          sorted_versions << rpm_version if should_range.include?(rpm_version)
+          versions << rpm_version if should_range.include?(rpm_version)
         rescue RPM_VERSION::ValidationFailure
           Puppet.debug("Cannot parse #{version} as a RPM version")
         end
       end
 
-      version = sorted_versions.entries.last
+      version = versions.sort.last if versions.any?
 
       if version
         version = version.to_s.sub(/^\d+:/, '')

@@ -91,20 +91,20 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   end
 
   def best_version(should_range)
-    available_versions = SortedSet.new
+    versions = []
 
     output = aptcache :madison, @resource[:name]
     output.each_line do |line|
       is = line.split('|')[1].strip
       begin
         is_version = DebianVersion.parse(is)
-        available_versions << is_version if should_range.include?(is_version)
+        versions << is_version if should_range.include?(is_version)
       rescue DebianVersion::ValidationFailure
         Puppet.debug("Cannot parse #{is} as a debian version")
       end
     end
 
-    return available_versions.to_a.last unless available_versions.empty?
+    return versions.sort.last if versions.any?
 
     Puppet.debug("No available version for package #{@resource[:name]} is included in range #{should_range}")
     should_range
