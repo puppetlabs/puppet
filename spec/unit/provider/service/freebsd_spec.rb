@@ -82,7 +82,7 @@ OUTPUT
     allow(Puppet::FileSystem).to receive(:exist?).with('/etc/rc.conf').and_return(true)
     allow(File).to receive(:read).with('/etc/rc.conf').and_return("openntpd_enable=\"NO\"\nntpd_enable=\"NO\"\n")
     fh = double('fh')
-    allow(File).to receive(:open).with('/etc/rc.conf', File::WRONLY | File::TRUNC).and_yield(fh)
+    allow(Puppet::FileSystem).to receive(:replace_file).with('/etc/rc.conf').and_yield(fh)
     expect(fh).to receive(:<<).with("openntpd_enable=\"NO\"\nntpd_enable=\"YES\"\n")
     allow(Puppet::FileSystem).to receive(:exist?).with('/etc/rc.conf.local').and_return(false)
     allow(Puppet::FileSystem).to receive(:exist?).with('/etc/rc.conf.d/ntpd').and_return(false)
