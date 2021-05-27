@@ -925,28 +925,75 @@ end
       }
     end
 
-    it 'should call set_salted_sha512 on 10.7 when given a salted-SHA512 password hash' do
-      expect(provider).to receive(:get_users_plist).and_return(sample_users_plist)
-      expect(provider).to receive(:get_shadow_hash_data).with(sample_users_plist).and_return(sha512_shadowhashdata)
-      expect(provider.class).to receive(:get_os_version).and_return('10.7')
-      expect(provider).to receive(:set_salted_sha512).with(sample_users_plist, sha512_shadowhashdata, sha512_password_hash)
-      provider.write_password_to_users_plist(sha512_password_hash)
+    before do
+      allow(provider).to receive(:merge_attribute_with_dscl).with('Users', username, 'AuthenticationAuthority', any_args)
     end
 
-    it 'should call set_salted_pbkdf2 on 10.8 when given a PBKDF2 password hash' do
-      expect(provider).to receive(:get_users_plist).and_return(sample_users_plist)
-      expect(provider).to receive(:get_shadow_hash_data).with(sample_users_plist).and_return(pbkdf2_shadowhashdata)
-      expect(provider.class).to receive(:get_os_version).and_return('10.8')
-      expect(provider).to receive(:set_salted_pbkdf2).with(sample_users_plist, pbkdf2_shadowhashdata, 'entropy', pbkdf2_password_hash)
-      provider.write_password_to_users_plist(pbkdf2_password_hash)
+    describe 'when on macOS 11 (Big Sur) or greater' do
+      before do
+        allow(provider.class).to receive(:get_os_version).and_return('11.0.0')
+      end
+
+      it 'should add salted_sha512_pbkdf2 AuthenticationAuthority key if missing' do
+        expect(provider).to receive(:get_users_plist).and_return(sample_users_plist)
+        expect(provider).to receive(:get_shadow_hash_data).with(sample_users_plist).and_return(pbkdf2_shadowhashdata)
+        expect(provider).to receive(:set_salted_pbkdf2).with(sample_users_plist, pbkdf2_shadowhashdata, 'entropy', pbkdf2_password_hash)
+        expect(provider).to receive(:needs_sha512_pbkdf2_authentication_authority_to_be_added?).and_return(true)
+
+        expect(Puppet).to receive(:debug).with("Adding 'SALTED-SHA512-PBKDF2' AuthenticationAuthority key for ShadowHash to user 'nonexistent_user'")
+        provider.write_password_to_users_plist(pbkdf2_password_hash)
+      end
+
+      it 'should not add salted_sha512_pbkdf2 AuthenticationAuthority key if not missing' do
+        expect(provider).to receive(:get_users_plist).and_return(sample_users_plist)
+        expect(provider).to receive(:get_shadow_hash_data).with(sample_users_plist).and_return(pbkdf2_shadowhashdata)
+        expect(provider).to receive(:set_salted_pbkdf2).with(sample_users_plist, pbkdf2_shadowhashdata, 'entropy', pbkdf2_password_hash)
+        expect(provider).to receive(:needs_sha512_pbkdf2_authentication_authority_to_be_added?).and_return(false)
+
+        expect(Puppet).not_to receive(:debug).with("Adding 'SALTED-SHA512-PBKDF2' AuthenticationAuthority key for ShadowHash to user 'nonexistent_user'")
+        provider.write_password_to_users_plist(pbkdf2_password_hash)
+      end
     end
 
-    it "should delete the SALTED-SHA512 key in the shadow_hash_data hash if it exists on a 10.8 system and write_password_to_users_plist has been called to set the user's password" do
-      expect(provider).to receive(:get_users_plist).and_return('users_plist')
-      expect(provider).to receive(:get_shadow_hash_data).with('users_plist').and_return(sha512_shadowhashdata)
-      expect(provider.class).to receive(:get_os_version).and_return('10.8')
-      expect(provider).to receive(:set_salted_pbkdf2).with('users_plist', {}, 'entropy', pbkdf2_password_hash)
-      provider.write_password_to_users_plist(pbkdf2_password_hash)
+    describe 'when on macOS version lower than 11' do
+      before do
+        allow(provider.class).to receive(:get_os_version)
+        allow(provider).to receive(:needs_sha512_pbkdf2_authentication_authority_to_be_added?).and_return(false)
+      end
+
+      it 'should not add salted_sha512_pbkdf2 AuthenticationAuthority' do
+        expect(provider).to receive(:get_users_plist).and_return(sample_users_plist)
+        expect(provider).to receive(:get_shadow_hash_data).with(sample_users_plist).and_return(pbkdf2_shadowhashdata)
+        expect(provider).to receive(:set_salted_pbkdf2).with(sample_users_plist, pbkdf2_shadowhashdata, 'entropy', pbkdf2_password_hash)
+        expect(provider).to receive(:needs_sha512_pbkdf2_authentication_authority_to_be_added?).and_return(false)
+
+        expect(Puppet).not_to receive(:debug).with("Adding 'SALTED-SHA512-PBKDF2' AuthenticationAuthority key for ShadowHash to user 'nonexistent_user'")
+        provider.write_password_to_users_plist(pbkdf2_password_hash)
+      end
+
+      it 'should call set_salted_sha512 on 10.7 when given a salted-SHA512 password hash' do
+        expect(provider).to receive(:get_users_plist).and_return(sample_users_plist)
+        expect(provider).to receive(:get_shadow_hash_data).with(sample_users_plist).and_return(sha512_shadowhashdata)
+        expect(provider.class).to receive(:get_os_version).and_return('10.7')
+        expect(provider).to receive(:set_salted_sha512).with(sample_users_plist, sha512_shadowhashdata, sha512_password_hash)
+        provider.write_password_to_users_plist(sha512_password_hash)
+      end
+
+      it 'should call set_salted_pbkdf2 on 10.8 when given a PBKDF2 password hash' do
+        expect(provider).to receive(:get_users_plist).and_return(sample_users_plist)
+        expect(provider).to receive(:get_shadow_hash_data).with(sample_users_plist).and_return(pbkdf2_shadowhashdata)
+        expect(provider.class).to receive(:get_os_version).and_return('10.8')
+        expect(provider).to receive(:set_salted_pbkdf2).with(sample_users_plist, pbkdf2_shadowhashdata, 'entropy', pbkdf2_password_hash)
+        provider.write_password_to_users_plist(pbkdf2_password_hash)
+      end
+
+      it "should delete the SALTED-SHA512 key in the shadow_hash_data hash if it exists on a 10.8 system and write_password_to_users_plist has been called to set the user's password" do
+        expect(provider).to receive(:get_users_plist).and_return('users_plist')
+        expect(provider).to receive(:get_shadow_hash_data).with('users_plist').and_return(sha512_shadowhashdata)
+        expect(provider.class).to receive(:get_os_version).and_return('10.8')
+        expect(provider).to receive(:set_salted_pbkdf2).with('users_plist', {}, 'entropy', pbkdf2_password_hash)
+        provider.write_password_to_users_plist(pbkdf2_password_hash)
+      end
     end
   end
 
@@ -1203,6 +1250,7 @@ end
     before :each do
       allow(provider.class).to receive(:get_all_users).and_return(all_users_hash)
       allow(provider.class).to receive(:get_list_of_groups).and_return(group_plist_hash_guid)
+      allow(provider).to receive(:merge_attribute_with_dscl).with('Users', username, 'AuthenticationAuthority', any_args)
       provider.class.prefetch({})
     end
 
