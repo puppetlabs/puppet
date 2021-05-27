@@ -38,6 +38,12 @@ module Puppet
     feature :enableable, "The provider can enable and disable the service.",
       :methods => [:disable, :enable, :enabled?]
 
+    feature :delayed_startable, "The provider can set service to delayed start",
+      :methods => [:delayed_start]
+
+    feature :manual_startable, "The provider can set service to manual start",
+      :methods => [:manual_start]
+
     feature :controllable, "The provider uses a control variable."
 
     feature :flaggable, "The provider can pass flags to the service."
@@ -67,7 +73,7 @@ module Puppet
         provider.disable
       end
 
-      newvalue(:manual, :event => :service_manual_start) do
+      newvalue(:manual, :event => :service_manual_start, :required_features => :manual_startable) do
         provider.manual_start
       end
 
@@ -81,20 +87,13 @@ module Puppet
         provider.enabled?
       end
 
-      # This only works on Windows systems.
-      newvalue(:delayed, :event => :service_delayed_start) do
+      newvalue(:delayed, :event => :service_delayed_start, :required_features => :delayed_startable) do
         provider.delayed_start
       end
 
       def insync?(current)
         return provider.enabled_insync?(current) if provider.respond_to?(:enabled_insync?)
         super(current)
-      end
-
-      validate do |value|
-        if (value == :manual || value == :delayed) && !Puppet::Util::Platform.windows?
-          raise Puppet::Error.new(_("Setting enable to %{value} is only supported on Microsoft Windows.") % { value: value.to_s} )
-        end
       end
     end
 
