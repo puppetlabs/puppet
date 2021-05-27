@@ -53,6 +53,14 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
 
     if node.environment
+      # If requested environment doesn't match the server specified environment,
+      # determined by the node temrinus and the requestor wants us to check the
+      # environment mismatch, then return an empty catalog with the server
+      # specified environment. The agent will switch and retry.
+      if request.remote? && request.options[:check_environment] && node.environment != request.environment
+        return Puppet::Resource::Catalog.new(node.name, node.environment)
+      end
+
       node.environment.with_text_domain do
         compile(node, request.options)
       end
