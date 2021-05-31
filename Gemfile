@@ -37,12 +37,13 @@ end
 group(:test) do
   gem "ffi", require: false
   gem "json-schema", "~> 2.0", require: false
-  gem "rake", *location_for(ENV['RAKE_LOCATION'] || '~> 12.2')
+  gem "rake", *location_for(ENV['RAKE_LOCATION'] || '~> 13.0')
   gem "rspec", "~> 3.1", require: false
   gem "rspec-expectations", ["~> 3.9", "!= 3.9.3"]
   gem "rspec-its", "~> 1.1", require: false
   gem 'vcr', '~> 5.0', require: false
   gem 'webmock', '~> 3.0', require: false
+  gem 'webrick', '~> 1.7', require: false if RUBY_VERSION.to_f >= 3.0
   gem 'yard', require: false
 
   gem 'rubocop', '~> 0.49', require: false, platforms: [:ruby]
