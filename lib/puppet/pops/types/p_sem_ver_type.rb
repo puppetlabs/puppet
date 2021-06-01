@@ -95,15 +95,21 @@ class PSemVerType < PScalarType
       end
 
       def from_args(major, minor, patch, prerelease = nil, build = nil)
-        SemanticPuppet::Version.new(major, minor, patch, prerelease, build)
+        SemanticPuppet::Version.new(major, minor, patch, to_array(prerelease), to_array(build))
       end
 
       def from_hash(hash)
-        SemanticPuppet::Version.new(hash['major'], hash['minor'], hash['patch'], hash['prerelease'], hash['build'])
+        SemanticPuppet::Version.new(hash['major'], hash['minor'], hash['patch'], to_array(hash['prerelease']), to_array(hash['build']))
       end
 
       def on_error(str)
         _("The string '%{str}' cannot be converted to a SemVer") % { str: str }
+      end
+
+      private
+
+      def to_array(component)
+        component ? [component] : nil
       end
     end
   end
