@@ -26,5 +26,7 @@
         <string>/var/log/puppetlabs/puppet/puppet.log</string>
         <key>StandardOutPath</key>
         <string>/var/log/puppetlabs/puppet/puppet.log</string>
+        <key>SessionCreate</key>
+        <true />
 </dict>
 </plist>
