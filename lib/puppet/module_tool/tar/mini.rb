@@ -103,7 +103,7 @@ class Puppet::ModuleTool::Tar::Mini
   end
 
   def validate_entry(destdir, path)
-    if Pathname.new(path).absolute?
+    if Puppet::FileSystem.absolute?(path)
       raise Puppet::ModuleTool::Errors::InvalidPathInPackageError, :entry_path => path, :directory => destdir
     end
 

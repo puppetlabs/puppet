@@ -1315,7 +1315,7 @@ EOT
 
         This setting requires `default_manifest` to be set to an absolute path.",
       :hook       => proc do |value|
-        if value && !Pathname.new(Puppet[:default_manifest]).absolute?
+        if value && !Puppet::FileSystem.absolute?(Puppet[:default_manifest])
           raise(Puppet::Settings::ValidationError,
                 "The 'default_manifest' setting must be set to an absolute path when 'disable_per_environment_manifest' is true")
         end
