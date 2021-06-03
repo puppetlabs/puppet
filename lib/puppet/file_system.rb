@@ -416,4 +416,15 @@ module Puppet::FileSystem
   def self.replace_file(path, mode = nil, &block)
     @impl.replace_file(assert_path(path), mode, &block)
   end
+
+  # Return true if the file is an absolute path, false if it is not, raises
+  # the path is invalid.
+  #
+  # @param path [String] The path to the file, can also accept [PathName]
+  # @return [Boolean] whether the path is absolute
+  # @raise [ArgumentError] if path is invalid
+  # @api public
+  def self.absolute?(path)
+    !!path && @impl.absolute?(assert_path(path))
+  end
 end
