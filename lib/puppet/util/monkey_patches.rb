@@ -113,3 +113,22 @@ unless Puppet::Util::Platform.jruby_fips?
     end
   end
 end
+
+unless File.singleton_methods.include?(:absolute_file?)
+  class File
+    # https://github.com/ruby/ruby/blob/v2_7_3/file.c#L6112-L6120
+    # On windows, check if path starts with 'C:<sep>' case-insensitively or
+    # '<sep><sep>' where <sep> is either \ or /. Otherwise check if first
+    # char is /
+    if Puppet::Util::Platform.windows?
+      AbsolutePathWindows = %r{^(?:[A-Za-z]:[\\\/]|[\\\/][\\\/])}.freeze
+      def self.absolute_path?(path)
+        !!(path.to_s =~ AbsolutePathWindows)
+      end
+    else
+      def self.absolute_path?(path)
+        path.to_s[0] == '/'
+      end
+    end
+  end
+end

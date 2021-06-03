@@ -291,10 +291,10 @@ module Util
   # defaults to the local platform if none is specified.
   #
   # Escape once for the string literal, and once for the regex.
-  slash = '[\\\\/]'
-  label = '[^\\\\/]+'
-  AbsolutePathWindows = %r!^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))!io
-  AbsolutePathPosix   = %r!^/!
+  slash = '[\\\\/]'.freeze
+  label = '[^\\\\/]+'.freeze
+  AbsolutePathWindows = %r!^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))!io.freeze
+  AbsolutePathPosix   = %r!^/!.freeze
   def absolute_path?(path, platform=nil)
     unless path.is_a?(String)
       Puppet.warning("Cannot check if #{path} is an absolute path because it is a '#{path.class}' and not a String'")
