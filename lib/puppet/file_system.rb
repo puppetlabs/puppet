@@ -389,7 +389,7 @@ module Puppet::FileSystem
   # by mode.
   #
   # @param mode [Integer] The mode to apply to the file if it is created
-  # @param path [String] The path to the file, can also accept [PathName]
+  # @param path [String,Pathname] The path to the file
   #
   # @raise [Errno::ENOENT]: path doesn't exist
   #
@@ -405,7 +405,7 @@ module Puppet::FileSystem
   # If the file doesn't exist, the mode will be set to a platform-specific
   # default.
   #
-  # @param path [String] The path to the file, can also accept [PathName]
+  # @param path [String,Pathname] The path to the file
   # @param mode [Integer] Optional mode for the file.
   #
   # @raise [Errno::EISDIR]: path is a directory
@@ -414,5 +414,14 @@ module Puppet::FileSystem
   #
   def self.replace_file(path, mode = nil, &block)
     @impl.replace_file(assert_path(path), mode, &block)
+  end
+
+  # Return true if the file is an absolute path, false otherwise.
+  #
+  # @param path [String,Pathname] The path to the file
+  # @return [Boolean] whether the path is absolute
+  # @api public
+  def self.absolute?(path)
+    path && @impl.absolute?(assert_path(path))
   end
 end

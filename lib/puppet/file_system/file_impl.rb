@@ -183,4 +183,8 @@ class Puppet::FileSystem::FileImpl
       tempfile.close!
     end
   end
+
+  def absolute?(path)
+    ::File.absolute_path?(path)
+  end
 end

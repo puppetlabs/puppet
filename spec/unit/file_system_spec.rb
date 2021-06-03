@@ -1150,4 +1150,52 @@ describe "Puppet::FileSystem" do
       expect(File.mtime(dest)).to be_within(1).of(tomorrow)
     end
   end
+
+  context '#absolute?' do
+    let(:dest) { tmpfile('abs_file') }
+
+    it "returns true for an absolute string" do
+      expect(Puppet::FileSystem).to be_absolute(dest)
+    end
+
+    it "returns true if given an absolute pathname" do
+      expect(Puppet::FileSystem).to be_absolute(Pathname.new(dest))
+    end
+
+    it "returns false if given nil" do
+      expect(Puppet::FileSystem).to_not be_absolute(nil)
+    end
+
+    it "raises if given a float" do
+      expect { Puppet::FileSystem.absolute?(1.0) }.to raise_error(ArgumentError, /FileSystem implementation expected Pathname/)
+    end
+
+    context 'on Windows', if: Puppet::Util::Platform.windows? do
+      %w[C:/foo C:\foo \\\\Server\Foo\Bar \\\\?\C:\foo\bar //foo //Server/Foo/Bar //?/C:/foo/bar /\?\C:/foo\bar \/Server\Foo/Bar c:/foo//bar//baz].each do |path|
+        it "should return true for #{path}" do
+          expect(Puppet::FileSystem).to be_absolute(path)
+        end
+      end
+
+      %w[/ . ./foo \foo /foo /foo/../bar C:foo/bar foo//bar/baz].each do |path|
+        it "should return false for #{path}" do
+          expect(Puppet::FileSystem).not_to be_absolute(path)
+        end
+      end
+    end
+
+    context 'on POSIX', unless: Puppet::Util::Platform.windows? do
+      %w[/ /foo /foo/../bar //foo //Server/Foo/Bar //?/C:/foo/bar /\Server/Foo /foo//bar/baz].each do |path|
+        it "should return true for #{path}" do
+          expect(Puppet::FileSystem).to be_absolute(path)
+        end
+      end
+
+      %w[. ./foo \foo C:/foo \\Server\Foo\Bar \\?\C:\foo\bar \/?/foo\bar \/Server/foo foo//bar/baz].each do |path|
+        it "should return false for #{path}" do
+          expect(Puppet::FileSystem).not_to be_absolute(path)
+        end
+      end
+    end
+  end
 end
