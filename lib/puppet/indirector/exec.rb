@@ -11,7 +11,7 @@ class Puppet::Indirector::Exec < Puppet::Indirector::Terminus
     raise Puppet::DevError, _("Exec commands must be an array") unless external_command.is_a?(Array)
 
     # Make sure it's fully qualified.
-    raise ArgumentError, _("You must set the exec parameter to a fully qualified command") unless Puppet::Util.absolute_path?(external_command[0])
+    raise ArgumentError, _("You must set the exec parameter to a fully qualified command") unless Puppet::FileSystem.absolute?(external_command[0])
 
     # Add our name to it.
     external_command << name

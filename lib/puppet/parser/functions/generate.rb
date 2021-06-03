@@ -13,7 +13,7 @@ Puppet::Parser::Functions::newfunction(:generate, :arity => -2, :type => :rvalue
     Consider cleaning white space from any string generated.") do |args|
 
       #TRANSLATORS "fully qualified" refers to a fully qualified file system path
-      raise Puppet::ParseError, _("Generators must be fully qualified") unless Puppet::Util.absolute_path?(args[0])
+      raise Puppet::ParseError, _("Generators must be fully qualified") unless Puppet::FileSystem.absolute?(args[0])
 
       if Puppet::Util::Platform.windows?
         valid = args[0] =~ /^[a-z]:(?:[\/\\][-.~\w]+)+$/i

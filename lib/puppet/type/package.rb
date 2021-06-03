@@ -602,7 +602,7 @@ module Puppet
       }
 
       source = self[:source]
-      if source && absolute_path?(source)
+      if Puppet::FileSystem.absolute?(source)
         autos << source
       end
       autos

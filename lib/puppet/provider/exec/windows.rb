@@ -35,7 +35,7 @@ Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
   def checkexe(command)
     exe = extractexe(command)
 
-    if absolute_path?(exe)
+    if Puppet::FileSystem.absolute?(exe)
       if !Puppet::FileSystem.exist?(exe)
         raise ArgumentError, _("Could not find command '%{exe}'") % { exe: exe }
       elsif !File.file?(exe)

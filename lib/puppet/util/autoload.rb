@@ -174,7 +174,7 @@ class Puppet::Util::Autoload
 
   def initialize(obj, path)
     @path = path.to_s
-    raise ArgumentError, _("Autoload paths cannot be fully qualified") if Puppet::Util.absolute_path?(@path)
+    raise ArgumentError, _("Autoload paths cannot be fully qualified") if Puppet::FileSystem.absolute?(@path)
     @object = obj
   end
 

@@ -13,7 +13,7 @@ class Puppet::Settings::AutosignSetting < Puppet::Settings::FileSetting
       true
     elsif ['false', false, nil].include? value
       false
-    elsif Puppet::Util.absolute_path?(value)
+    elsif value.is_a?(String) && Puppet::FileSystem.absolute?(value)
       value
     else
       raise Puppet::Settings::ValidationError, _("Invalid autosign value %{value}: must be 'true'/'false' or an absolute path") % { value: value }
