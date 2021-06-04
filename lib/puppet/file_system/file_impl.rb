@@ -33,15 +33,15 @@ class Puppet::FileSystem::FileImpl
   end
 
   def dir(path)
-    path.dirname
+    ::File.dirname(path)
   end
 
   def basename(path)
-    path.basename.to_s
+    ::File.basename(path)
   end
 
   def size(path)
-    path.size
+    ::File.size(path)
   end
 
   def exclusive_create(path, mode, &block)
@@ -81,7 +81,7 @@ class Puppet::FileSystem::FileImpl
   end
 
   def read(path, opts = {})
-    path.read(**opts)
+    ::File.read(path, **opts)
   end
 
   def read_preserve_line_endings(path)
@@ -109,7 +109,7 @@ class Puppet::FileSystem::FileImpl
   end
 
   def writable?(path)
-    path.writable?
+    ::File.writable?(path)
   end
 
   def touch(path, mtime: nil)
@@ -117,7 +117,7 @@ class Puppet::FileSystem::FileImpl
   end
 
   def mkpath(path)
-    path.mkpath
+    ::FileUtils.mkpath(path)
   end
 
   def children(path)
