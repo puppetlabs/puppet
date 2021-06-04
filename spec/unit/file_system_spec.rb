@@ -973,7 +973,7 @@ describe "Puppet::FileSystem" do
         it 'preserves file ownership' do
           FileUtils.touch(dest)
           allow(File).to receive(:lstat).and_call_original
-          allow(File).to receive(:lstat).with(Pathname.new(dest)).and_return(double(uid: 1, gid: 2, 'directory?': false))
+          allow(File).to receive(:lstat).with(dest).and_return(double(uid: 1, gid: 2, 'directory?': false))
 
           allow(File).to receive(:chown).and_call_original
           expect(FileUtils).to receive(:chown).with(1, 2, any_args)

@@ -8,12 +8,12 @@ class Puppet::FileSystem::FileImpl
   end
 
   def assert_path(path)
-    return path if path.is_a?(Pathname)
+    return path if path.is_a?(String) || path.is_a?(Pathname)
 
     # Some paths are string, or in the case of WatchedFile, it pretends to be
     # one by implementing to_str.
     if path.respond_to?(:to_str)
-      Pathname.new(path)
+      path.to_str
     else
       raise ArgumentError, _("FileSystem implementation expected Pathname, got: '%{klass}'") % { klass: path.class }
     end
