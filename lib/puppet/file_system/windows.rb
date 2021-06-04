@@ -159,7 +159,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
       end
 
       set_dacl(tempfile.path, dacl) if dacl
-      File.rename(tempfile.path, path_string(path))
+      ::File.rename(tempfile.path, path_string(path))
     ensure
       tempfile.close!
     end
