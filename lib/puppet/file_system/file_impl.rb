@@ -128,23 +128,23 @@ class Puppet::FileSystem::FileImpl
   end
 
   def symlink?(path)
-    File.symlink?(path)
+    ::File.symlink?(path)
   end
 
   def readlink(path)
-    File.readlink(path)
+    ::File.readlink(path)
   end
 
   def unlink(*paths)
-    File.unlink(*paths)
+    ::File.unlink(*paths)
   end
 
   def stat(path)
-    File.stat(path)
+    ::File.stat(path)
   end
 
   def lstat(path)
-    File.lstat(path)
+    ::File.lstat(path)
   end
 
   def compare_stream(path, stream)
