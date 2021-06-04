@@ -123,7 +123,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
   LOCK_VIOLATION = 33
 
   def replace_file(path, mode = nil)
-    if Puppet::FileSystem.directory?(path)
+    if directory?(path)
       raise Errno::EISDIR, _("Is a directory: %{directory}") % { directory: path }
     end
 
@@ -159,14 +159,14 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
       end
 
       set_dacl(tempfile.path, dacl) if dacl
-      File.rename(tempfile.path, Puppet::FileSystem.path_string(path))
+      File.rename(tempfile.path, path_string(path))
     ensure
       tempfile.close!
     end
   rescue Puppet::Util::Windows::Error => e
     case e.code
     when ACCESS_DENIED, SHARING_VIOLATION, LOCK_VIOLATION
-      raise Errno::EACCES.new(Puppet::FileSystem.path_string(path), e)
+      raise Errno::EACCES.new(path_string(path), e)
     else
       raise SystemCallError.new(e.message)
     end
@@ -193,7 +193,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
   end
 
   def get_dacl_from_file(path)
-    sd = Puppet::Util::Windows::Security.get_security_descriptor(Puppet::FileSystem.path_string(path))
+    sd = Puppet::Util::Windows::Security.get_security_descriptor(path_string(path))
     sd.dacl
   rescue Puppet::Util::Windows::Error => e
     raise e unless e.code == FILE_NOT_FOUND
