@@ -156,7 +156,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
   # do so.
   self::HEADER_LINE_REGEX      = /^([^\s]+)\s+[^@]+@@(I|R|S):(\1)\s+[^\s]+$/
   self::PACKAGE_LINE_REGEX     = /^.*@@(I|R|S):(.*)$/
-  self::RPM_PACKAGE_REGEX      = /^(.*)-(.*-\d+) \2$/
+  self::RPM_PACKAGE_REGEX      = /^(.*)-(.*-\d+\w*) \2$/
   self::INSTALLP_PACKAGE_REGEX = /^(.*) (.*)$/
 
   # Here is some sample output that shows what the above regexes will be up

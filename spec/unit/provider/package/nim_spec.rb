@@ -191,6 +191,27 @@ OUTPUT
           expect(versions[version]).to eq(:rpm)
         end
       end
+
+      it "should be able to parse RPM package listings with letters in version" do
+        showres_output = <<END
+cairo                                                              ALL  @@R:cairo _all_filesets
+   @@R:cairo-1.14.6-2waixX11 1.14.6-2waixX11
+END
+        packages = subject.send(:parse_showres_output, showres_output)
+        expect(Set.new(packages.keys)).to eq(Set.new(['cairo']))
+        versions = packages['cairo']
+        expect(versions.has_key?('1.14.6-2waixX11')).to eq(true)
+        expect(versions['1.14.6-2waixX11']).to eq(:rpm)
+      end
+
+      it "should raise error when parsing invalid RPM package listings" do
+              showres_output = <<END
+cairo                                                              ALL  @@R:cairo _all_filesets
+   @@R:cairo-invalid_version invalid_version
+END
+        expect{ subject.send(:parse_showres_output, showres_output) }.to raise_error(Puppet::Error,
+          /Unable to parse output from nimclient showres: package string does not match expected rpm package string format/)
+      end
     end
 
     context "#determine_latest_version" do
