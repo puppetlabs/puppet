@@ -1021,16 +1021,7 @@ end
   describe '#set_shadow_hash_data' do
     let(:users_plist) { {'ShadowHashData' => ['string_data'] } }
 
-    it 'should flush the plist data to disk on OS X < 10.15' do
-      allow(provider.class).to receive(:get_os_version).and_return('10.12')
-
-      expect(provider).to receive(:write_users_plist_to_disk)
-      provider.set_shadow_hash_data(users_plist, pbkdf2_embedded_plist)
-    end
-
-    it 'should flush the plist data a temporary file on OS X >= 10.15' do
-      allow(provider.class).to receive(:get_os_version).and_return('10.15')
-
+    it 'should flush the plist data to a temporary file' do
       expect(provider).to receive(:write_and_import_shadow_hash_data)
       provider.set_shadow_hash_data(users_plist, pbkdf2_embedded_plist)
     end
@@ -1077,13 +1068,6 @@ end
       expect(provider).to receive(:set_shadow_hash_data).with(users_plist, pbkdf2_embedded_plist)
       expect(users_plist).to receive(:[]=).with('passwd', '********')
       provider.set_salted_pbkdf2(users_plist, pbkdf2_embedded_bplist_hash, 'iterations', pbkdf2_iterations_value)
-    end
-  end
-
-  describe '#write_users_plist_to_disk' do
-    it 'should save the passed plist to disk and convert it to a binary plist' do
-      expect(Puppet::Util::Plist).to receive(:write_plist_file).with(user_plist_xml, "#{users_plist_dir}/nonexistent_user.plist", :binary)
-      provider.write_users_plist_to_disk(user_plist_xml)
     end
   end
 
