@@ -357,11 +357,23 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
   describe "#mask" do
     it "should run systemctl to disable and mask a service" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      expect(provider).to receive(:execute).
+                            with(['/bin/systemctl','cat', '--', 'sshd.service'], :failonfail => false).
+                            and_return(Puppet::Util::Execution::ProcessOutput.new("# /lib/systemd/system/sshd.service\n...", 0))
       # :disable is the only call in the provider that uses a symbol instead of
       # a string.
       # This should be made consistent in the future and all tests updated.
       expect(provider).to receive(:systemctl).with(:disable, '--', 'sshd.service')
       expect(provider).to receive(:systemctl).with(:mask, '--', 'sshd.service')
+      provider.mask
+    end
+
+    it "masks a service that doesn't exist" do
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'doesnotexist.service'))
+      expect(provider).to receive(:execute).
+                            with(['/bin/systemctl','cat', '--', 'doesnotexist.service'], :failonfail => false).
+                            and_return(Puppet::Util::Execution::ProcessOutput.new("No files found for doesnotexist.service.\n", 1))
+      expect(provider).to receive(:systemctl).with(:mask, '--', 'doesnotexist.service')
       provider.mask
     end
   end
