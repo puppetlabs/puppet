@@ -164,8 +164,13 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   end
 
   def mask
-    self.disable
+    disable if exist?
     systemctl_change_enable(:mask)
+  end
+
+  def exist?
+    result = execute([command(:systemctl), 'cat', '--', @resource[:name]], :failonfail => false)
+    result.exitstatus == 0
   end
 
   def unmask
