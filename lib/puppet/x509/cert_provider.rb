@@ -207,10 +207,7 @@ class Puppet::X509::CertProvider
   # @api private
   def load_private_key_from_pem(pem, password: nil)
     # set a non-nil password to ensure openssl doesn't prompt
-    # but ruby 2.4.0 & 2.4.1 require at least 4 bytes due to
-    # https://github.com/ruby/openssl/commit/f38501249f33bff7ca9d208670b8cde695ea8b7b
-    # and corrected in https://github.com/ruby/openssl/commit/a896c3d1dfa090e92dec1abf8ac12843af6af721
-    password ||= '    '
+    password ||= ''
 
     # Can't use OpenSSL::PKey.read, because it's broken in MRI 2.3, doesn't exist
     # in JRuby 9.1, and is broken in JRuby 9.2
