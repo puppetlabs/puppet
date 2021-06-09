@@ -16,6 +16,7 @@ end
 teardown do
   on master, 'cp /etc/puppetlabs/puppetserver/conf.d/auth.bak /etc/puppetlabs/puppetserver/conf.d/auth.conf'
   modify_tk_config(master, options['puppetserver-config'], {'jruby-puppet' => {'use-legacy-auth-conf' => true}})
+  on master, "service #{master['puppetservice']} reload"
 end
 
 step "Setup tk-auth rules" do

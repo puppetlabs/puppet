@@ -137,7 +137,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
       else
         @catalog.add_resource_after(parent_resource, res)
       end
-      @catalog.add_edge(@catalog.container_of(parent_resource), res)
+      @catalog.add_edge(@catalog.container_of(parent_resource), res) if @catalog.container_of(parent_resource)
       if @relationship_graph && priority
         # If we have a relationship_graph we should add the resource
         # to it (this is an eval_generate). If we don't, then the

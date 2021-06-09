@@ -125,6 +125,24 @@ describe 'Semantic Versions' do
         expect(eval_and_collect_notices(code)).to eql(['true', 'false'])
       end
 
+      it 'can be compared to another instance created from arguments' do
+        code = <<-CODE
+          $x = SemVer('1.2.3-rc4+5')
+          $y = SemVer(1, 2, 3, 'rc4', '5')
+          notice($x == $y)
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['true'])
+      end
+
+      it 'can be compared to another instance created from a hash' do
+        code = <<-CODE
+          $x = SemVer('1.2.3-rc4+5')
+          $y = SemVer(major => 1, minor => 2, patch => 3, prerelease => 'rc4', build => '5')
+          notice($x == $y)
+        CODE
+        expect(eval_and_collect_notices(code)).to eql(['true'])
+      end
+
       it 'can be compared to another instance for magnitude' do
         code = <<-CODE
           $x = SemVer('1.1.1')

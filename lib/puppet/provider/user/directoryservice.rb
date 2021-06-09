@@ -591,11 +591,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     else
       users_plist['ShadowHashData'] = [binary_plist]
     end
-    if Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.15') < 0
-      write_users_plist_to_disk(users_plist)
-    else
-      write_and_import_shadow_hash_data(users_plist['ShadowHashData'].first)
-    end
+    write_and_import_shadow_hash_data(users_plist['ShadowHashData'].first)
   end
 
   # This method writes the ShadowHashData plist in a temporary file,
@@ -669,12 +665,6 @@ Puppet::Type.type(:user).provide :directoryservice do
     # back to the user's plist.
     binary_plist = self.class.convert_hash_to_binary(shadow_hash_data)
     set_shadow_hash_data(users_plist, binary_plist)
-  end
-
-  # This method will accept a plist in XML format, save it to disk, convert
-  # the plist to a binary format, and flush the dscl cache.
-  def write_users_plist_to_disk(users_plist)
-    Puppet::Util::Plist.write_plist_file(users_plist, "#{users_plist_dir}/#{@resource.name}.plist", :binary)
   end
 
   private

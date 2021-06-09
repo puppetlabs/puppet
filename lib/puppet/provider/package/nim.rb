@@ -154,19 +154,24 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
   # I spent a lot of time trying to figure out a solution that didn't
   # require parsing the `nimclient -o showres` output and was unable to
   # do so.
-  self::HEADER_LINE_REGEX      = /^([^\s]+)\s+[^@]+@@(I|R):(\1)\s+[^\s]+$/
-  self::PACKAGE_LINE_REGEX     = /^.*@@(I|R):(.*)$/
-  self::RPM_PACKAGE_REGEX      = /^(.*)-(.*-\d+) \2$/
+  self::HEADER_LINE_REGEX      = /^([^\s]+)\s+[^@]+@@(I|R|S):(\1)\s+[^\s]+$/
+  self::PACKAGE_LINE_REGEX     = /^.*@@(I|R|S):(.*)$/
+  self::RPM_PACKAGE_REGEX      = /^(.*)-(.*-\d+\w*) \2$/
   self::INSTALLP_PACKAGE_REGEX = /^(.*) (.*)$/
 
   # Here is some sample output that shows what the above regexes will be up
   # against:
-  # FOR AN INSTALLP PACKAGE:
+  # FOR AN INSTALLP(bff) PACKAGE:
   #
   #    mypackage.foo                                                           ALL  @@I:mypackage.foo _all_filesets
-  #    @ 1.2.3.1  MyPackage Runtime Environment                       @@I:mypackage.foo 1.2.3.1
   #    + 1.2.3.4  MyPackage Runtime Environment                       @@I:mypackage.foo 1.2.3.4
   #    + 1.2.3.8  MyPackage Runtime Environment                       @@I:mypackage.foo 1.2.3.8
+  #
+  # FOR AN INSTALLP(bff) PACKAGE with security update:
+  #
+  #    bos.net                                                                 ALL  @@S:bos.net _all_filesets
+  #    + 7.2.0.1  TCP/IP ntp Applications                             @@S:bos.net.tcp.ntp 7.2.0.1
+  #    + 7.2.0.2  TCP/IP ntp Applications                             @@S:bos.net.tcp.ntp 7.2.0.2
   #
   # FOR AN RPM PACKAGE:
   #
@@ -243,7 +248,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     package_string = match.captures[1]
 
     case package_type_flag
-      when "I"
+      when "I","S"
         parse_installp_package_string(package_string)
       when "R"
         parse_rpm_package_string(package_string)

@@ -191,6 +191,27 @@ OUTPUT
           expect(versions[version]).to eq(:rpm)
         end
       end
+
+      it "should be able to parse RPM package listings with letters in version" do
+        showres_output = <<END
+cairo                                                              ALL  @@R:cairo _all_filesets
+   @@R:cairo-1.14.6-2waixX11 1.14.6-2waixX11
+END
+        packages = subject.send(:parse_showres_output, showres_output)
+        expect(Set.new(packages.keys)).to eq(Set.new(['cairo']))
+        versions = packages['cairo']
+        expect(versions.has_key?('1.14.6-2waixX11')).to eq(true)
+        expect(versions['1.14.6-2waixX11']).to eq(:rpm)
+      end
+
+      it "should raise error when parsing invalid RPM package listings" do
+              showres_output = <<END
+cairo                                                              ALL  @@R:cairo _all_filesets
+   @@R:cairo-invalid_version invalid_version
+END
+        expect{ subject.send(:parse_showres_output, showres_output) }.to raise_error(Puppet::Error,
+          /Unable to parse output from nimclient showres: package string does not match expected rpm package string format/)
+      end
     end
 
     context "#determine_latest_version" do
@@ -219,6 +240,27 @@ END
 
       it "should return :installp for installp/bff packages" do
         expect(subject.send(:determine_package_type, bff_showres_output, 'mypackage.foo', '1.2.3.4')).to eq(:installp)
+      end
+
+      it "should return :installp for security updates" do
+        nimclient_showres_output = <<END
+bos.net                                                            ALL  @@S:bos.net _all_filesets
+ + 7.2.0.1  TCP/IP ntp Applications                                     @@S:bos.net.tcp.ntp 7.2.0.1
+ + 7.2.0.2  TCP/IP ntp Applications                                     @@S:bos.net.tcp.ntp 7.2.0.2
+
+END
+        expect(subject.send(:determine_package_type, nimclient_showres_output, 'bos.net.tcp.ntp', '7.2.0.2')).to eq(:installp)
+      end
+
+      it "should raise error when invalid header format is given" do
+        nimclient_showres_output = <<END
+bos.net                                                            ALL  @@INVALID_TYPE:bos.net _all_filesets
+ + 7.2.0.1  TCP/IP ntp Applications                                     @@INVALID_TYPE:bos.net.tcp.ntp 7.2.0.1
+ + 7.2.0.2  TCP/IP ntp Applications                                     @@INVALID_TYPE:bos.net.tcp.ntp 7.2.0.2
+
+END
+        expect{ subject.send(:determine_package_type, nimclient_showres_output, 'bos.net.tcp.ntp', '7.2.0.2') }.to raise_error(
+          Puppet::Error, /Unable to parse output from nimclient showres: line does not match expected package header format/)
       end
     end
   end
