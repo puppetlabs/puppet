@@ -32,13 +32,6 @@ end
 # (#19151) Reject all SSLv2 ciphers and handshakes
 require_relative '../../puppet/ssl/openssl_loader'
 unless Puppet::Util::Platform.jruby_fips?
-  unless defined?(OpenSSL::SSL::TLS1_VERSION)
-    module OpenSSL::SSL
-      # see https://github.com/ruby/ruby/commit/609103dbb5fb182eec12f052226c43e39b907682#diff-09f822c26289f5347111795ca22ed7ed1cfadd6ebd28f987991d1d414eef565aR2755-R2759
-      OpenSSL::SSL::TLS1_VERSION = 0x301
-    end
-  end
-
   class OpenSSL::SSL::SSLContext
     if DEFAULT_PARAMS[:options]
       DEFAULT_PARAMS[:options] |= OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
