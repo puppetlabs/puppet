@@ -43,6 +43,14 @@ describe Puppet::Resource::TypeCollection do
     end.to raise_error(Puppet::ParseError, /cannot redefine/)
   end
 
+  it "should fail if a hostclass duplicates a node" do
+    @code.add(Puppet::Resource::Type.new(:node, "foo"))
+
+    expect do
+      @code.add(Puppet::Resource::Type.new(:hostclass, "foo"))
+    end.to raise_error(Puppet::ParseError, /Node 'foo' is already defined; cannot be redefined as a class/)
+  end
+
   it "should store hostclasses as hostclasses" do
     klass = Puppet::Resource::Type.new(:hostclass, "foo")
 
@@ -58,6 +66,14 @@ describe Puppet::Resource::TypeCollection do
       @code.add(klass1)
       @code.add(klass2)
     }.to raise_error(/.*is already defined; cannot redefine/)
+  end
+
+  it "should fail if a node duplicates a hostclass" do
+    @code.add(Puppet::Resource::Type.new(:hostclass, "foo"))
+
+    expect do
+      @code.add(Puppet::Resource::Type.new(:node, "foo"))
+    end.to raise_error(Puppet::ParseError, /Class 'foo' is already defined; cannot be redefined as a node/)
   end
 
   it "should store definitions as definitions" do
