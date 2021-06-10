@@ -3303,6 +3303,29 @@ describe "The lookup function" do
           end
         end
 
+        context 'using options containing intepolated paths to the key pair' do
+          let(:scope_additions) { { 'priv_path' => private_key_path, 'pub_path' => public_key_path } }
+
+          let(:hiera_yaml) do
+            <<-YAML.unindent
+          version: 5
+          defaults:
+            datadir: #{code_dir}/hieradata
+          hierarchy:
+            - name: "secret data"
+              lookup_key: eyaml_lookup_key
+              path: common.eyaml
+              options:
+                pkcs7_private_key: "%{priv_path}"
+                pkcs7_public_key: "%{pub_path}"
+            YAML
+          end
+
+          it 'finds data in the global layer' do
+            expect(lookup('a')).to eql("Encrypted value 'a' (from global)")
+          end
+        end
+
         context 'with special extension declared in options' do
           let(:environment_files) { {} }
           let(:hiera_yaml) do
