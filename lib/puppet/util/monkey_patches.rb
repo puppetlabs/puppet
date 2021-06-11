@@ -32,13 +32,6 @@ end
 # (#19151) Reject all SSLv2 ciphers and handshakes
 require_relative '../../puppet/ssl/openssl_loader'
 unless Puppet::Util::Platform.jruby_fips?
-  unless defined?(OpenSSL::SSL::TLS1_VERSION)
-    module OpenSSL::SSL
-      # see https://github.com/ruby/ruby/commit/609103dbb5fb182eec12f052226c43e39b907682#diff-09f822c26289f5347111795ca22ed7ed1cfadd6ebd28f987991d1d414eef565aR2755-R2759
-      OpenSSL::SSL::TLS1_VERSION = 0x301
-    end
-  end
-
   class OpenSSL::SSL::SSLContext
     if DEFAULT_PARAMS[:options]
       DEFAULT_PARAMS[:options] |= OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
@@ -94,20 +87,12 @@ unless Puppet::Util::Platform.jruby_fips?
     OpenSSL::X509.const_set(:V_ERR_HOSTNAME_MISMATCH, 62)
   end
 
+  # jruby-openssl doesn't support this
   unless OpenSSL::X509::Name.instance_methods.include?(:to_utf8)
     class OpenSSL::X509::Name
-      # https://github.com/openssl/openssl/blob/OpenSSL_1_1_0j/include/openssl/asn1.h#L362
-      ASN1_STRFLGS_ESC_MSB = 4
-
-      FLAGS = if RUBY_PLATFORM == 'java'
-                OpenSSL::X509::Name::RFC2253
-              else
-                OpenSSL::X509::Name::RFC2253 & ~ASN1_STRFLGS_ESC_MSB
-              end
-
       def to_utf8
         # https://github.com/ruby/ruby/blob/v2_5_5/ext/openssl/ossl_x509name.c#L317
-        str = to_s(FLAGS)
+        str = to_s(OpenSSL::X509::Name::RFC2253)
         str.force_encoding(Encoding::UTF_8)
       end
     end
