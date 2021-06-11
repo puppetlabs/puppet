@@ -34,8 +34,7 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => RUBY_PLATFORM =
 
   if Puppet::Util::Platform.windows?
     before :each do
-      allow(Puppet.settings).to receive(:[])
-      allow(Puppet.settings).to receive(:[]).with(:module_working_dir).and_return(Dir.mktmpdir('installertmp'))
+      Puppet[:module_working_dir] = tmpdir('module_tool_install').gsub('/', '\\')
     end
   end
 
