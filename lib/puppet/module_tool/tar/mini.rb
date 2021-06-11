@@ -107,7 +107,7 @@ class Puppet::ModuleTool::Tar::Mini
       raise Puppet::ModuleTool::Errors::InvalidPathInPackageError, :entry_path => path, :directory => destdir
     end
 
-    path = File.expand_path File.join(destdir, path)
+    path = Pathname.new(File.join(destdir, path)).cleanpath.to_path
 
     if path !~ /\A#{Regexp.escape destdir}/
       raise Puppet::ModuleTool::Errors::InvalidPathInPackageError, :entry_path => path, :directory => destdir
