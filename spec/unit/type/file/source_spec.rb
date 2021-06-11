@@ -264,7 +264,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
           expect(@resource[:owner]).to eq(100)
           expect(@resource[:group]).to eq(200)
-          expect(@resource[:mode]).to eq("173")
+          expect(@resource[:mode]).to eq("0173")
 
           # Metadata calls it checksum and checksum_type, we call it content and checksum.
           expect(@resource[:content]).to eq(@metadata.checksum)
@@ -281,7 +281,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
           expect(@resource[:owner]).to eq(1)
           expect(@resource[:group]).to eq(2)
-          expect(@resource[:mode]).to eq('173')
+          expect(@resource[:mode]).to eq('0173')
           expect(@resource[:content]).not_to eq(@metadata.checksum)
           expect(@resource[:checksum]).not_to eq(@metadata.checksum_type.to_sym)
         end
@@ -318,7 +318,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
             expect(@resource[:owner]).to eq(100)
             expect(@resource[:group]).to eq(200)
-            expect(@resource[:mode]).to eq("173")
+            expect(@resource[:mode]).to eq("0173")
           end
 
           it "copies the remote owner" do
@@ -336,7 +336,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
           it "copies the remote mode" do
             @source.copy_source_values
 
-            expect(@resource[:mode]).to eq("173")
+            expect(@resource[:mode]).to eq("0173")
           end
         end
 

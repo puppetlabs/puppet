@@ -19,16 +19,28 @@ module SymbolicFileMode
     return false
   end
 
+  def display_mode(value)
+    if value =~ /^0?[0-7]{1,4}$/
+      value.rjust(4, "0")
+    else
+      value
+    end
+  end
+
   def normalize_symbolic_mode(value)
     return nil if value.nil?
 
     # We need to treat integers as octal numbers.
+    #
+    # "A numeric mode is from one to four octal digits (0-7), derived by adding
+    # up the bits with values 4, 2, and 1. Omitted digits are assumed to be
+    # leading zeros."
     if value.is_a? Numeric then
-      return value.to_s(8)
-    elsif value =~ /^0?[0-7]{1,4}$/ then
-      return value.to_i(8).to_s(8)
+      value.to_s(8)
+    elsif value =~ /^0?[0-7]{1,4}$/
+      value.to_i(8).to_s(8) # strip leading 0's
     else
-      return value
+      value
     end
   end
 
