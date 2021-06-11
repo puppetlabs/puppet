@@ -918,10 +918,6 @@ describe Puppet::Pops::Parser::Lexer2 do
 
   context 'when lexing files from disk' do
     it 'should always read files as UTF-8' do
-      if Puppet::Util::Platform.windows? && Encoding.default_external == Encoding::UTF_8
-        raise 'This test must be run in a codepage other than 65001 to validate behavior'
-      end
-
       manifest_code = "notify { '#{rune_utf8}': }"
       manifest = file_containing('manifest.pp', manifest_code)
       lexed_file = described_class.new.lex_file(manifest)

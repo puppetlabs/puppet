@@ -142,9 +142,7 @@ describe Puppet::Util do
 
     # In 2.3, the behavior is mostly correct when external codepage is 65001 / UTF-8
     it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV) (Ruby >= 2.3.x) ",
-      :if => Puppet::Util::Platform.windows? do
-
-      raise 'This test requires a non-UTF8 codepage' if Encoding.default_external == Encoding::UTF_8
+      :if => Puppet::Util::Platform.windows? && RUBY_VERSION.to_f < 3 do
 
       withenv_utf8 do |utf_8_key, utf_8_value, codepage_key|
         # Ruby 2.3 fixes access by the original UTF-8 key, and behaves differently than 2.1

@@ -84,10 +84,6 @@ Puppet::Functions.create_function('testmodule::foo') {
 
       context 'when loading files from disk' do
         it 'should always read files as UTF-8' do
-          if Puppet::Util::Platform.windows? && Encoding.default_external == Encoding::UTF_8
-            raise 'This test must be run in a codepage other than 65001 to validate behavior'
-          end
-
           module_dir = dir_containing('testmodule', {
           'lib' => { 'puppet' => { 'functions' => { 'testmodule' => {
             'foo.rb' => code_utf8
@@ -101,11 +97,6 @@ Puppet::Functions.create_function('testmodule::foo') {
 
         it 'currently ignores the UTF-8 BOM (Byte Order Mark) when loading module files' do
           bom = "\uFEFF"
-
-          if Puppet::Util::Platform.windows? && Encoding.default_external == Encoding::UTF_8
-            raise 'This test must be run in a codepage other than 65001 to validate behavior'
-          end
-
           module_dir = dir_containing('testmodule', {
           'lib' => { 'puppet' => { 'functions' => { 'testmodule' => {
             'foo.rb' => "#{bom}#{code_utf8}"
