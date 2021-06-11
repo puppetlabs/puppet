@@ -52,7 +52,6 @@ describe Puppet::Resource::Ral do
     end
 
     it "should filter results by name if there's a name in the key" do
-      pending('to_resource')
       allow(Puppet::Type.type(:user)).to receive(:instances).and_return([ my_instance, wrong_instance ])
 
       actual = described_class.indirection.search('user/root')
@@ -60,7 +59,6 @@ describe Puppet::Resource::Ral do
     end
 
     it "should filter results by query parameters" do
-      pending('to_resource')
       allow(Puppet::Type.type(:user)).to receive(:instances).and_return([ my_instance, wrong_instance ])
 
       actual = described_class.indirection.search('user', name: 'bob')
