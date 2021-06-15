@@ -42,32 +42,6 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
     allow(File).to receive(:file?).with(provider_gem_cmd).and_return(true)
   end
 
-  describe '.windows_gemcmd' do
-    context 'when PUPPET_DIR is not set' do
-      before do
-        # allow(ENV).to receive(:fetch, anything).and_call_original
-        allow(ENV).to receive(:fetch).with('PUPPET_DIR', anything).and_return(nil)
-        allow(Gem).to receive(:default_bindir).and_return('default_gem_bin')
-      end
-
-      it 'uses Gem.default_bindir' do
-        expected_path = File.join('default_gem_bin', 'gem.bat')
-        expect(described_class.windows_gemcmd).to eql(expected_path)
-      end
-    end
-
-    context 'when PUPPET_DIR is set' do
-      before do
-        allow(ENV).to receive(:fetch).with('PUPPET_DIR', anything).and_return('puppet_dir')
-      end
-
-      it 'uses Gem.default_bindir' do
-        expected_path = File.join('puppet_dir', 'bin', 'gem.bat')
-        expect(described_class.windows_gemcmd).to eql(expected_path)
-      end
-    end
-  end
-
   context "when installing" do
     before :each do
       allow(provider).to receive(:rubygem_version).and_return('1.9.9')
@@ -133,5 +107,4 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
       it { is_expected.to be > 100 }
     end
   end
-
 end

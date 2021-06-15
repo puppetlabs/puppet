@@ -97,6 +97,22 @@ describe Puppet::Util::RunMode do
         end
       end
     end
+
+    describe "#pkg_config_path" do
+      it { expect(@run_mode.pkg_config_path).to eq('/opt/puppetlabs/puppet/lib/pkgconfig') }
+    end
+
+    describe "#gem_cmd" do
+      it { expect(@run_mode.gem_cmd).to eq('/opt/puppetlabs/puppet/bin/gem') }
+    end
+
+    describe "#common_module_dir" do
+      it { expect(@run_mode.common_module_dir).to eq('/opt/puppetlabs/puppet/modules') }
+    end
+
+    describe "#vendor_module_dir" do
+      it { expect(@run_mode.vendor_module_dir).to eq('/opt/puppetlabs/puppet/vendor_modules') }
+    end
   end
 
   describe Puppet::Util::WindowsRunMode, :if => Puppet::Util::Platform.windows? do
@@ -168,6 +184,81 @@ describe Puppet::Util::RunMode do
       describe "when run as non-root" do
         it "has default rundir ~/.puppetlabs/var/run" do
           as_non_root { expect(@run_mode.run_dir).to eq(File.expand_path('~/.puppetlabs/var/run')) }
+        end
+      end
+    end
+
+    describe '#gem_cmd' do
+      before do
+        allow(ENV).to receive(:fetch).and_call_original
+        allow(ENV).to receive(:fetch).with('PUPPET_DIR', nil).and_return(puppetdir)
+      end
+
+      context 'when PUPPET_DIR is not set' do
+        let(:puppetdir) { nil }
+
+        before do
+          allow(Gem).to receive(:default_bindir).and_return('default_gem_bin')
+        end
+
+        it 'uses Gem.default_bindir' do
+          expected_path = File.join('default_gem_bin', 'gem.bat')
+          expect(@run_mode.gem_cmd).to eql(expected_path)
+        end
+      end
+
+      context 'when PUPPET_DIR is set' do
+        let(:puppetdir) { 'puppet_dir' }
+
+        it 'uses Gem.default_bindir' do
+          expected_path = File.join('puppet_dir', 'bin', 'gem.bat')
+          expect(@run_mode.gem_cmd).to eql(expected_path)
+        end
+      end
+    end
+
+    describe '#common_module_dir' do
+      before do
+        allow(ENV).to receive(:fetch).and_call_original
+        allow(ENV).to receive(:fetch).with('FACTER_env_windows_installdir', nil).and_return(installdir)
+      end
+
+      context 'when installdir is not set' do
+        let(:installdir) { nil }
+
+        it 'returns nil' do
+          expect(@run_mode.common_module_dir).to be(nil)
+        end
+      end
+
+      context 'with installdir' do
+        let(:installdir) { 'C:\Program Files\Puppet Labs\Puppet' }
+
+        it 'returns INSTALLDIR/puppet/modules' do
+          expect(@run_mode.common_module_dir).to eq('C:\Program Files\Puppet Labs\Puppet/puppet/modules')
+        end
+      end
+    end
+
+    describe '#vendor_module_dir' do
+      before do
+        allow(ENV).to receive(:fetch).and_call_original
+        allow(ENV).to receive(:fetch).with('FACTER_env_windows_installdir', nil).and_return(installdir)
+      end
+
+      context 'when installdir is not set' do
+        let(:installdir) { nil }
+
+        it 'returns nil' do
+          expect(@run_mode.vendor_module_dir).to be(nil)
+        end
+      end
+
+      context 'with installdir' do
+        let(:installdir) { 'C:\Program Files\Puppet Labs\Puppet' }
+
+        it 'returns INSTALLDIR\puppet\vendor_modules' do
+          expect(@run_mode.vendor_module_dir).to eq('C:\Program Files\Puppet Labs\Puppet\puppet\vendor_modules')
         end
       end
     end
