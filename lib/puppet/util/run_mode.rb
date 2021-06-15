@@ -85,6 +85,22 @@ module Puppet
       def log_dir
         which_dir("/var/log/puppetlabs/puppet", "~/.puppetlabs/var/log")
       end
+
+      def pkg_config_path
+        '/opt/puppetlabs/puppet/lib/pkgconfig'
+      end
+
+      def gem_cmd
+        '/opt/puppetlabs/puppet/bin/gem'
+      end
+
+      def common_module_dir
+        '/opt/puppetlabs/puppet/modules'
+      end
+
+      def vendor_module_dir
+        '/opt/puppetlabs/puppet/vendor_modules'
+      end
     end
 
     class WindowsRunMode < RunMode
@@ -112,7 +128,32 @@ module Puppet
         which_dir(File.join(windows_common_base("puppet/var/log")), "~/.puppetlabs/var/log")
       end
 
+      def pkg_config_path
+        nil
+      end
+
+      def gem_cmd
+        if (puppet_dir = Puppet::Util.get_env('PUPPET_DIR'))
+          File.join(puppet_dir.to_s, 'bin', 'gem.bat')
+        else
+          File.join(Gem.default_bindir, 'gem.bat')
+        end
+      end
+
+      def common_module_dir
+        # TODO: use File.join?
+        "#{installdir}/puppet/modules" if installdir
+      end
+
+      def vendor_module_dir
+        File.join(installdir, 'puppet', 'vendor_modules') if installdir
+      end
+
     private
+
+      def installdir
+        ENV['FACTER_env_windows_installdir']
+      end
 
       def windows_common_base(*extra)
         [ENV['ALLUSERSPROFILE'], "PuppetLabs"] + extra

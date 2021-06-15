@@ -45,29 +45,11 @@ module Puppet
   end
 
   def self.default_basemodulepath
-    if Puppet::Util::Platform.windows?
-      path = ['$codedir/modules']
-      installdir = ENV["FACTER_env_windows_installdir"]
-      if installdir
-        path << "#{installdir}/puppet/modules"
-      end
-      path.join(File::PATH_SEPARATOR)
-    else
-      '$codedir/modules:/opt/puppetlabs/puppet/modules'
+    path = ['$codedir/modules']
+    if (run_mode_dir = Puppet.run_mode.common_module_dir)
+      path << run_mode_dir
     end
-  end
-
-  def self.default_vendormoduledir
-    if Puppet::Util::Platform.windows?
-      installdir = ENV["FACTER_env_windows_installdir"]
-      if installdir
-        "#{installdir}\\puppet\\vendor_modules"
-      else
-        nil
-      end
-    else
-      '/opt/puppetlabs/puppet/vendor_modules'
-    end
+    path.join(File::PATH_SEPARATOR)
   end
 
   ############################################################################################
@@ -1393,7 +1375,7 @@ EOT
         <https://puppet.com/docs/puppet/latest/environments_about.html>",
     },
     :vendormoduledir => {
-      :default => lambda { default_vendormoduledir },
+      :default => lambda { Puppet.run_mode.vendor_module_dir },
       :type => :string,
       :desc => "The directory containing **vendored** modules. These modules will
       be used by _all_ environments like those in the `basemodulepath`. The only

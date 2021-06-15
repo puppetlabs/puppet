@@ -27,37 +27,10 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
 
   before :each do
     resource.provider = provider
-    allow(described_class).to receive(:command).with(:gemcmd).and_return(provider_gem_cmd)
+    allow(Puppet.run_mode).to receive(:gem_cmd).and_return(provider_gem_cmd)
     allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
   end
 
-
-  describe '.windows_gemcmd' do
-    context 'when PUPPET_DIR is not set' do
-      before do
-        allow(Puppet::Util).to receive(:get_env).and_call_original
-        allow(Puppet::Util).to receive(:get_env).with('PUPPET_DIR').and_return(nil)
-        allow(Gem).to receive(:default_bindir).and_return('default_gem_bin')
-      end
-
-      it 'uses Gem.default_bindir' do
-        expected_path = File.join('default_gem_bin', 'gem.bat')
-        expect(described_class.windows_gemcmd).to eql(expected_path)
-      end
-    end
-
-    context 'when PUPPET_DIR is set' do
-      before do
-        allow(Puppet::Util).to receive(:get_env).and_call_original
-        allow(Puppet::Util).to receive(:get_env).with('PUPPET_DIR').and_return('puppet_dir')
-      end
-
-      it 'uses Gem.default_bindir' do
-        expected_path = File.join('puppet_dir', 'bin', 'gem.bat')
-        expect(described_class.windows_gemcmd).to eql(expected_path)
-      end
-    end
-  end
 
   context "when installing" do
     before :each do

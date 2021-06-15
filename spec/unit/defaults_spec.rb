@@ -132,14 +132,14 @@ describe "Defaults" do
         allow(ENV).to receive(:[]).with("FACTER_env_windows_installdir").and_return(installdir)
 
         expect(
-          Puppet.default_vendormoduledir
+          Puppet[:vendormoduledir]
         ).to eq('C:\Program Files\Puppet Labs\Puppet\puppet\vendor_modules')
       end
 
       it 'is nil if installdir fact is missing' do
         allow(ENV).to receive(:[]).with("FACTER_env_windows_installdir").and_return(nil)
 
-        expect(Puppet.default_vendormoduledir).to be_nil
+        expect(Puppet[:vendormoduledir]).to be_nil
       end
     end
   end
