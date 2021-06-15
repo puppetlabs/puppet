@@ -280,6 +280,9 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   def self.prefetch_target(target)
     begin
       target_records = retrieve(target)
+      unless target_records
+        raise Puppet::DevError, _("Prefetching %{target} for provider %{name} returned nil") % { target: target, name: self.name }
+      end
     rescue Puppet::Util::FileType::FileReadError => detail
       if @raise_prefetch_errors
         # We will raise an error later in flush_target. This way,
