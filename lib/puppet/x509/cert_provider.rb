@@ -15,7 +15,6 @@ class Puppet::X509::CertProvider
   VALID_CERTNAME = /\A[ -.0-~]+\Z/
   CERT_DELIMITERS = /-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/m
   CRL_DELIMITERS = /-----BEGIN X509 CRL-----.*?-----END X509 CRL-----/m
-  EC_HEADER = /-----BEGIN EC PRIVATE KEY-----/
 
   def initialize(capath: Puppet[:localcacert],
                  crlpath: Puppet[:hostcrl],
@@ -209,21 +208,7 @@ class Puppet::X509::CertProvider
     # set a non-nil password to ensure openssl doesn't prompt
     password ||= ''
 
-    # Can't use OpenSSL::PKey.read, because it's broken in MRI 2.3, doesn't exist
-    # in JRuby 9.1, and is broken in JRuby 9.2
-    begin
-      if pem =~ EC_HEADER
-        OpenSSL::PKey::EC.new(pem, password)
-      else
-        OpenSSL::PKey::RSA.new(pem, password)
-      end
-    rescue OpenSSL::PKey::PKeyError => e
-      if e.message =~ /Neither PUB key nor PRIV key/
-        raise OpenSSL::PKey::PKeyError, "Could not parse PKey: no start line"
-      else
-        raise e
-      end
-    end
+    OpenSSL::PKey.read(pem, password)
   end
 
   # Load the private key password.

@@ -505,28 +505,30 @@ describe Puppet::SSL::SSLProvider do
       }.to raise_error(Puppet::Error, /The client certificate is missing from/)
     end
 
-    it 'loads the private key and client cert' do
-      ssl_context = subject.load_context
+    context 'loading private keys', unless: RUBY_PLATFORM == 'java' do
+      it 'loads the private key and client cert' do
+        ssl_context = subject.load_context
 
-      expect(ssl_context.private_key).to be_an(OpenSSL::PKey::RSA)
-      expect(ssl_context.client_cert).to be_an(OpenSSL::X509::Certificate)
-    end
+        expect(ssl_context.private_key).to be_an(OpenSSL::PKey::RSA)
+        expect(ssl_context.client_cert).to be_an(OpenSSL::X509::Certificate)
+      end
 
-    it 'loads a password protected key and client cert' do
-      FileUtils.cp(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'encrypted-key.pem'), File.join(Puppet[:privatekeydir], 'signed.pem'))
+      it 'loads a password protected key and client cert' do
+        FileUtils.cp(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'encrypted-key.pem'), File.join(Puppet[:privatekeydir], 'signed.pem'))
 
-      ssl_context = subject.load_context(password: '74695716c8b6')
+        ssl_context = subject.load_context(password: '74695716c8b6')
 
-      expect(ssl_context.private_key).to be_an(OpenSSL::PKey::RSA)
-      expect(ssl_context.client_cert).to be_an(OpenSSL::X509::Certificate)
-    end
+        expect(ssl_context.private_key).to be_an(OpenSSL::PKey::RSA)
+        expect(ssl_context.client_cert).to be_an(OpenSSL::X509::Certificate)
+      end
 
-    it 'raises if the password is incorrect' do
-      FileUtils.cp(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'encrypted-key.pem'), File.join(Puppet[:privatekeydir], 'signed.pem'))
+      it 'raises if the password is incorrect' do
+        FileUtils.cp(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'encrypted-key.pem'), File.join(Puppet[:privatekeydir], 'signed.pem'))
 
-      expect {
-        subject.load_context(password: 'wrongpassword')
-      }.to raise_error(Puppet::SSL::SSLError, /Failed to load private key for host 'signed': Could not parse PKey/)
+        expect {
+          subject.load_context(password: 'wrongpassword')
+        }.to raise_error(Puppet::SSL::SSLError, /Failed to load private key for host 'signed': Could not parse PKey/)
+      end
     end
   end
 
