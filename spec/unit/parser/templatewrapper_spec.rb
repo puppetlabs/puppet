@@ -43,6 +43,13 @@ describe Puppet::Parser::TemplateWrapper do
     expect(tw.result).to eq(full_file_name)
   end
 
+  it "ignores a leading BOM" do
+    full_file_name = given_a_template_file("bom_template", "\uFEFF<%= file %>")
+
+    tw.file = "bom_template"
+    expect(tw.result).to eq(full_file_name)
+  end
+
   it "evaluates a given string as a template" do
     expect(tw.result("template contents")).to eql("template contents")
   end

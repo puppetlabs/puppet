@@ -84,7 +84,7 @@ class Puppet::FileSystem::FileImpl
   end
 
   def read_preserve_line_endings(path)
-    read(path)
+    read(path, encoding: "bom|#{Encoding.default_external.name}")
   end
 
   def binread(path)
