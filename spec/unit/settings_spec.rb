@@ -2120,7 +2120,7 @@ describe Puppet::Settings do
     end
 
     def a_user_type_for(username)
-      user = double('user')
+      user = double('user', 'suitable?': true, to_s: "User[#{username}]")
       expect(Puppet::Type.type(:user)).to receive(:new).with(hash_including(name: username)).and_return(user)
       user
     end
@@ -2153,6 +2153,16 @@ describe Puppet::Settings do
 
       expect(settings).to be_service_user_available
     end
+
+    it "raises if the user is not suitable" do
+      settings[:user] = "foo"
+
+      expect(a_user_type_for("foo")).to receive(:suitable?).and_return(false)
+
+      expect {
+        settings.service_user_available?
+      }.to raise_error(Puppet::Error, /Cannot manage owner permissions, because the provider for 'User\[foo\]' is not functional/)
+    end
   end
 
   describe "when determining if the service group is available" do
@@ -2163,7 +2173,7 @@ describe Puppet::Settings do
     end
 
     def a_group_type_for(groupname)
-      group = double('group')
+      group = double('group', 'suitable?': true, to_s: "Group[#{groupname}]")
       expect(Puppet::Type.type(:group)).to receive(:new).with(hash_including(name: groupname)).and_return(group)
       group
     end
@@ -2195,6 +2205,16 @@ describe Puppet::Settings do
       expect(settings).to be_service_group_available
 
       expect(settings).to be_service_group_available
+    end
+
+    it "raises if the group is not suitable" do
+      settings[:group] = "foo"
+
+      expect(a_group_type_for("foo")).to receive(:suitable?).and_return(false)
+
+      expect {
+        settings.service_group_available?
+      }.to raise_error(Puppet::Error, /Cannot manage group permissions, because the provider for 'Group\[foo\]' is not functional/)
     end
   end
 
