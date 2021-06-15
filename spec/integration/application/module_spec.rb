@@ -65,4 +65,25 @@ describe 'puppet module', unless: Puppet::Util::Platform.jruby? do
        .and output(%r{Unable to verify the SSL certificate}).to_stderr
     end
   end
+
+  it 'prints the complete URL it tried to connect to' do
+    response_proc = -> (req, res) { res.status = 404 }
+
+    # create a temp cacert bundle
+    ssl_file = tmpfile('systemstore')
+    File.write(ssl_file, server.ca_cert)
+
+    Puppet::Util.withenv("SSL_CERT_FILE" => ssl_file) do
+      server.start_server(response_proc: response_proc) do |port|
+        Puppet[:module_repository] = "https://127.0.0.1:#{port}/bogus_test/puppet"
+
+        expect {
+          app.command_line.args = ['install', 'puppetlabs-bacula']
+          app.run
+        }.to exit_with(1)
+         .and output(%r{Notice: Downloading from https://127.0.0.1:#{port}}).to_stdout
+         .and output(%r{https://127.0.0.1:#{port}/bogus_test/puppet/v3/releases}).to_stderr
+      end
+    end
+  end
 end

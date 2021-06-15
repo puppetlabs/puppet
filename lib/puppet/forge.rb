@@ -70,7 +70,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
         uri = decode_uri(result['pagination']['next'])
         matches.concat result['results']
       else
-        raise ResponseError.new(:uri => URI.parse(@host).merge(uri), :response => response)
+        raise ResponseError.new(:uri => response.url, :response => response)
       end
     end
 
@@ -105,7 +105,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       if response.code == 200
         response = Puppet::Util::Json.load(response.body)
       else
-        raise ResponseError.new(:uri => URI.parse(@host).merge(uri), :response => response)
+        raise ResponseError.new(:uri => response.url, :response => response)
       end
 
       releases.concat(process(response['results']))
@@ -208,7 +208,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       response = @source.make_http_request(uri, destination)
       destination.flush and destination.close
       unless response.code == 200
-        raise Puppet::Forge::Errors::ResponseError.new(:uri => uri, :response => response)
+        raise Puppet::Forge::Errors::ResponseError.new(:uri => response.url, :response => response)
       end
     end
 

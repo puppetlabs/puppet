@@ -24,7 +24,12 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
     type(request).instances.map do |res|
       res.to_resource
     end.find_all do |res|
-      conditions.all? {|property, value| res.to_resource[property].to_s == value.to_s}
+      conditions.all? do |property, value|
+        # even though `res` is an instance of Puppet::Resource, calling
+        # `res[:name]` on it returns nil, and for some reason it is necessary
+        # to invoke the Puppet::Resource#copy_as_resource copy constructor...
+        res.copy_as_resource[property].to_s == value.to_s
+      end
     end.sort_by(&:title)
   end
 
