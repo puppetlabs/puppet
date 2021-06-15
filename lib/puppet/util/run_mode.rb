@@ -103,6 +103,53 @@ module Puppet
       end
     end
 
+    class LinuxFHSRunMode < RunMode
+      def conf_dir
+        # TODO: ENV['XDG_CONFIG_HOME']
+        which_dir("/etc/puppet", "~/.config/puppet")
+      end
+
+      def code_dir
+        File.join(conf_dir, 'code')
+      end
+
+      def var_dir
+        # TODO: ENV['XDG_DATA_HOME']
+        which_dir("/var/lib/puppet", "~/.local/share/puppet")
+      end
+
+      def public_dir
+        # TODO: ENV['XDG_CACHE_HOME']
+        which_dir("/var/cache/puppet/public", "~/.cache/puppet/public")
+      end
+
+      def run_dir
+        # TODO ENV['XDG_RUNTIME_DIR']
+        which_dir("/run/puppet", "/run/user/#{Etc.getpwuid.uid}")
+      end
+
+      def log_dir
+        # TODO ENV['XDG_STATE_HOME']
+        which_dir("/var/log/puppet", "~/.local/state/puppet/logs")
+      end
+
+      def pkg_config_path
+        # automatically picked up
+      end
+
+      def gem_cmd
+        '/usr/bin/gem'
+      end
+
+      def common_module_dir
+        '/usr/share/puppet/modules'
+      end
+
+      def vendor_module_dir
+        '/usr/share/puppet/vendor_modules'
+      end
+    end
+
     class WindowsRunMode < RunMode
       def conf_dir
         which_dir(File.join(windows_common_base("puppet/etc")), "~/.puppetlabs/etc/puppet")
