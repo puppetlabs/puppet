@@ -1024,7 +1024,7 @@ describe Puppet::Settings do
       expect(@settings[:two]).to eq(false)
     end
 
-    it "should convert integers in the configuration file into Ruby Integers" do
+    it "doesn't convert integers in the configuration file" do
       File.write(@file, <<~CONF)
         [main]
         one = 65
@@ -1032,7 +1032,7 @@ describe Puppet::Settings do
 
       @settings.initialize_global_settings
 
-      expect(@settings[:one]).to eq(65)
+      expect(@settings[:one]).to eq('65')
     end
 
     it "should support specifying all metadata (owner, group, mode) in the configuration file" do

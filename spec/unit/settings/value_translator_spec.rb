@@ -25,13 +25,12 @@ describe Puppet::Settings::ValueTranslator do
   end
 
   context "numbers" do
-    it "translates integer strings to integers" do
-      expect(translator["1"]).to eq(1)
-      expect(translator["2"]).to eq(2)
+    it "leaves integer strings" do
+      expect(translator["1"]).to eq("1")
     end
 
-    it "translates numbers starting with a 0 as octal" do
-      expect(translator["011"]).to eq(9)
+    it "leaves octal numbers as strings" do
+      expect(translator["011"]).to eq("011")
     end
 
     it "leaves hex numbers as strings" do
