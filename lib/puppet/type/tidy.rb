@@ -144,7 +144,7 @@ Puppet::Type.newtype(:tidy) do
 
     def tidy?(path, stat)
       # If the file's older than we allow, we should get rid of it.
-      (Time.now.to_i - stat.send(resource[:type]).to_i) > value
+      (Time.now.to_i - stat.send(resource[:type]).to_i) >= value
     end
 
     munge do |age|

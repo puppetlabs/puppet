@@ -280,6 +280,13 @@ describe tidy do
         @ager.tidy?(@basepath, @stat)
       end
 
+      it "should return true if the specified age is 0" do
+        @tidy[:age] = "0"
+        expect(@stat).to receive(:mtime).and_return(Time.now)
+
+        expect(@ager).to be_tidy(@basepath, @stat)
+      end
+
       it "should return false if the file is more recent than the specified age" do
         expect(@stat).to receive(:mtime).and_return(Time.now)
 
