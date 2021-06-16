@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 7.7.0-19-gf6adbd522b\n"
+"Project-Id-Version: Puppet automation framework 7.8.0-32-gdd314abb53\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-05-27 07:22+0000\n"
-"PO-Revision-Date: 2021-05-27 07:22+0000\n"
+"POT-Creation-Date: 2021-06-16 12:52+0000\n"
+"PO-Revision-Date: 2021-06-16 12:52+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2752,7 +2752,7 @@ msgstr ""
 msgid "Could not understand URL %{key}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/resource/ral.rb:59
+#: ../lib/puppet/indirector/resource/ral.rb:64
 msgid "Could not find type %{request_type}"
 msgstr ""
 
@@ -6474,31 +6474,31 @@ msgstr ""
 msgid "NIM package provider is unable to downgrade packages"
 msgstr ""
 
-#: ../lib/puppet/provider/package/nim.rb:212
+#: ../lib/puppet/provider/package/nim.rb:217
 msgid ""
 "Unable to parse output from nimclient showres: line does not match expected package header format:\n"
 "'%{line}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/nim.rb:219
+#: ../lib/puppet/provider/package/nim.rb:224
 msgid ""
 "Unable to parse output from nimclient showres: package string does not match expected installp package string format:\n"
 "'%{package_string}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/nim.rb:229
+#: ../lib/puppet/provider/package/nim.rb:234
 msgid ""
 "Unable to parse output from nimclient showres: package string does not match expected rpm package string format:\n"
 "'%{package_string}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/nim.rb:239
+#: ../lib/puppet/provider/package/nim.rb:244
 msgid ""
 "Unable to parse output from nimclient showres: line does not match expected package line format:\n"
 "'%{line}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/nim.rb:251
+#: ../lib/puppet/provider/package/nim.rb:256
 msgid ""
 "Unrecognized package type specifier: '%{package_type_flag}' in package line:\n"
 "'%{line}'"
@@ -6733,19 +6733,19 @@ msgstr ""
 msgid "Failed to read %{target}'s records when prefetching them. Reason: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/parsedfile.rb:291
-msgid "Could not prefetch %{resource} provider '%{name}' target '%{target}': %{detail}. Treating as empty"
-msgstr ""
-
-#: ../lib/puppet/provider/parsedfile.rb:305
+#: ../lib/puppet/provider/parsedfile.rb:284 ../lib/puppet/provider/parsedfile.rb:308
 msgid "Prefetching %{target} for provider %{name} returned nil"
 msgstr ""
 
-#: ../lib/puppet/provider/parsedfile.rb:378
+#: ../lib/puppet/provider/parsedfile.rb:294
+msgid "Could not prefetch %{resource} provider '%{name}' target '%{target}': %{detail}. Treating as empty"
+msgstr ""
+
+#: ../lib/puppet/provider/parsedfile.rb:381
 msgid "Parsed Providers must define a default target"
 msgstr ""
 
-#: ../lib/puppet/provider/parsedfile.rb:469
+#: ../lib/puppet/provider/parsedfile.rb:472
 msgid "Somehow got told to prefetch with no resource set"
 msgstr ""
 
@@ -7095,49 +7095,57 @@ msgstr ""
 msgid "Invalid setting type '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:911
+#: ../lib/puppet/settings.rb:874
+msgid "Cannot manage owner permissions, because the provider for '%{name}' is not functional"
+msgstr ""
+
+#: ../lib/puppet/settings.rb:890
+msgid "Cannot manage group permissions, because the provider for '%{name}' is not functional"
+msgstr ""
+
+#: ../lib/puppet/settings.rb:919
 msgid "Unknown searchpath case: %{source_type} for the %{source} settings path element."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:984
+#: ../lib/puppet/settings.rb:992
 msgid "setting definition for '%{name}' is not a hash!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:989
+#: ../lib/puppet/settings.rb:997
 msgid "Setting %{name} is already defined"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:995
+#: ../lib/puppet/settings.rb:1003
 msgid "Setting %{name} is already using short name '%{short}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1266
+#: ../lib/puppet/settings.rb:1274
 msgid "Setting %{name} is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'puppet.conf' is a file name and should not be translated
-#: ../lib/puppet/settings.rb:1271
+#: ../lib/puppet/settings.rb:1279
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1458
+#: ../lib/puppet/settings.rb:1466
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1482
+#: ../lib/puppet/settings.rb:1490
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1492
+#: ../lib/puppet/settings.rb:1500
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1493
+#: ../lib/puppet/settings.rb:1501
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1524
+#: ../lib/puppet/settings.rb:1532
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
@@ -7291,7 +7299,7 @@ msgstr ""
 msgid "%{name} has not declared what class it wraps"
 msgstr ""
 
-#: ../lib/puppet/ssl/base.rb:31 ../lib/puppet/x509/cert_provider.rb:370
+#: ../lib/puppet/ssl/base.rb:31 ../lib/puppet/x509/cert_provider.rb:367
 msgid "Certname %{name} must not contain unprintable or non-ASCII characters"
 msgstr ""
 
@@ -8121,7 +8129,7 @@ msgstr ""
 msgid "Ensure set to :present but file type is %{file_type} so no content will be synced"
 msgstr ""
 
-#: ../lib/puppet/type/file/mode.rb:126
+#: ../lib/puppet/type/file/mode.rb:132
 msgid "Not managing symlink mode"
 msgstr ""
 
@@ -8234,7 +8242,7 @@ msgstr ""
 msgid "%{value} is not a valid day of the week"
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:151 ../lib/puppet/type/user.rb:271
+#: ../lib/puppet/type/service.rb:151 ../lib/puppet/type/user.rb:272
 msgid "Passwords cannot include ':'"
 msgstr ""
 
@@ -8277,81 +8285,81 @@ msgstr ""
 msgid "File does not exist"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:182
+#: ../lib/puppet/type/user.rb:183
 msgid "Could not find group(s) %{groups}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:291
+#: ../lib/puppet/type/user.rb:292
 msgid "Password minimum age must be provided as a number."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:310
+#: ../lib/puppet/type/user.rb:311
 msgid "Password maximum age must be provided as a number."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:341
+#: ../lib/puppet/type/user.rb:342
 msgid "Group names must be provided, not GID numbers."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:343
+#: ../lib/puppet/type/user.rb:344
 msgid "Group names must be provided as an array, not a comma-separated list."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:344
+#: ../lib/puppet/type/user.rb:345
 msgid "Group names must not be empty. If you want to specify \"no groups\" pass an empty array"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:437
+#: ../lib/puppet/type/user.rb:438
 msgid "User provider %{name} can not manage home directories"
 msgstr ""
 
 #. TRANSLATORS YYYY-MM-DD represents a date with a four-digit year, a two-digit month, and a two-digit day,
 #. TRANSLATORS separated by dashes.
-#: ../lib/puppet/type/user.rb:454
+#: ../lib/puppet/type/user.rb:455
 msgid "Expiry dates must be YYYY-MM-DD or the string \"absent\""
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:521
+#: ../lib/puppet/type/user.rb:522
 msgid "Role names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:523
+#: ../lib/puppet/type/user.rb:524
 msgid "Role names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:560
+#: ../lib/puppet/type/user.rb:561
 msgid "Auth names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:562
+#: ../lib/puppet/type/user.rb:563
 msgid "Auth names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:586
+#: ../lib/puppet/type/user.rb:587
 msgid "Profile names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:588
+#: ../lib/puppet/type/user.rb:589
 msgid "Profile names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:699
+#: ../lib/puppet/type/user.rb:701
 msgid "Ssh_authorized_key type is not available. Cannot purge SSH keys."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:737
+#: ../lib/puppet/type/user.rb:739
 msgid "Each entry for purge_ssh_keys must be a string, not a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:740
+#: ../lib/puppet/type/user.rb:742
 msgid "Paths to keyfiles must be absolute, not %{entry}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:744
+#: ../lib/puppet/type/user.rb:746
 msgid "purge_ssh_keys must be true, false, or an array of file names, not %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:772
+#: ../lib/puppet/type/user.rb:755
 msgid "Class name must be provided."
 msgstr ""
 
@@ -9147,39 +9155,39 @@ msgstr ""
 msgid "Invalid %{klass}: %{id}"
 msgstr ""
 
-#: ../lib/puppet/util/symbolic_file_mode.rb:37
+#: ../lib/puppet/util/symbolic_file_mode.rb:49
 msgid "An empty mode string is illegal"
 msgstr ""
 
-#: ../lib/puppet/util/symbolic_file_mode.rb:41
+#: ../lib/puppet/util/symbolic_file_mode.rb:53
 msgid "Numeric modes must be in octal, not decimal!"
 msgstr ""
 
-#: ../lib/puppet/util/symbolic_file_mode.rb:44
+#: ../lib/puppet/util/symbolic_file_mode.rb:56
 msgid "non-numeric current mode (%{mode})"
 msgstr ""
 
-#: ../lib/puppet/util/symbolic_file_mode.rb:64
+#: ../lib/puppet/util/symbolic_file_mode.rb:76
 msgid "Missing action"
 msgstr ""
 
-#: ../lib/puppet/util/symbolic_file_mode.rb:79
+#: ../lib/puppet/util/symbolic_file_mode.rb:91
 msgid "Missing operation (-, =, or +)"
 msgstr ""
 
-#: ../lib/puppet/util/symbolic_file_mode.rb:101
+#: ../lib/puppet/util/symbolic_file_mode.rb:113
 msgid "X only works with the '+' operator"
 msgstr ""
 
-#: ../lib/puppet/util/symbolic_file_mode.rb:112
+#: ../lib/puppet/util/symbolic_file_mode.rb:124
 msgid "internal error"
 msgstr ""
 
-#: ../lib/puppet/util/symbolic_file_mode.rb:116
+#: ../lib/puppet/util/symbolic_file_mode.rb:128
 msgid "Unknown operation"
 msgstr ""
 
-#: ../lib/puppet/util/symbolic_file_mode.rb:131
+#: ../lib/puppet/util/symbolic_file_mode.rb:143
 msgid "%{error}%{rest} in symbolic mode %{modification}"
 msgstr ""
 
@@ -9651,26 +9659,26 @@ msgstr ""
 msgid "Failed to load private key for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:255
+#: ../lib/puppet/x509/cert_provider.rb:252
 msgid "Failed to save client certificate for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:271
+#: ../lib/puppet/x509/cert_provider.rb:268
 msgid "The client certificate is missing from '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:275
+#: ../lib/puppet/x509/cert_provider.rb:272
 msgid "Failed to load client certificate for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:324
+#: ../lib/puppet/x509/cert_provider.rb:321
 msgid "Failed to save certificate request for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:340
+#: ../lib/puppet/x509/cert_provider.rb:337
 msgid "Failed to load certificate request for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:353
+#: ../lib/puppet/x509/cert_provider.rb:350
 msgid "Failed to delete certificate request for '%{name}'"
 msgstr ""
