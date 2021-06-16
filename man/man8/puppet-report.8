@@ -7,7 +7,7 @@
 \fBpuppet\-report\fR \- Create, display, and submit reports\.
 .
 .SH "SYNOPSIS"
-puppet report \fIaction\fR [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet report \fIaction\fR [\-\-terminus _TERMINUS]
 .
 .SH "OPTIONS"
 Note that any setting that\'s valid in the configuration file is also a valid long argument, although it may or may not be relevant to the present action\. For example, \fBserver\fR and \fBrun_mode\fR are valid settings, so you can specify \fB\-\-server <servername>\fR, or \fB\-\-run_mode <runmode>\fR as an argument\.
@@ -48,7 +48,7 @@ The terminus for an action is often determined by context, but occasionally need
 \fBSYNOPSIS\fR
 .
 .IP
-puppet report info [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet report info [\-\-terminus _TERMINUS]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -61,7 +61,7 @@ Prints the default terminus class for this subcommand\. Note that different run 
 \fBSYNOPSIS\fR
 .
 .IP
-puppet report save [\-\-terminus _TERMINUS] [\-\-extra HASH] \fIreport\fR
+puppet report save [\-\-terminus _TERMINUS] \fIreport\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -80,7 +80,7 @@ Nothing\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet report submit [\-\-terminus _TERMINUS] [\-\-extra HASH] \fIreport\fR
+puppet report submit [\-\-terminus _TERMINUS] \fIreport\fR
 .
 .IP
 \fBDESCRIPTION\fR

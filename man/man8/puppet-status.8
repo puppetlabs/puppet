@@ -7,7 +7,7 @@
 \fBpuppet\-status\fR \- View puppet server status\.
 .
 .SH "SYNOPSIS"
-puppet status \fIaction\fR [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet status \fIaction\fR [\-\-terminus _TERMINUS]
 .
 .SH "OPTIONS"
 Note that any setting that\'s valid in the configuration file is also a valid long argument, although it may or may not be relevant to the present action\. For example, \fBserver\fR and \fBrun_mode\fR are valid settings, so you can specify \fB\-\-server <servername>\fR, or \fB\-\-run_mode <runmode>\fR as an argument\.
@@ -48,7 +48,7 @@ The terminus for an action is often determined by context, but occasionally need
 \fBSYNOPSIS\fR
 .
 .IP
-puppet status [\-\-terminus _TERMINUS] [\-\-extra HASH] [\fIkey\fR]
+puppet status [\-\-terminus _TERMINUS] [\fIkey\fR]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -76,7 +76,7 @@ This action requires that the server\'s \fBauth\.conf\fR file allow find access 
 \fBSYNOPSIS\fR
 .
 .IP
-puppet status info [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet status info [\-\-terminus _TERMINUS]
 .
 .IP
 \fBDESCRIPTION\fR

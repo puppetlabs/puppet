@@ -7,7 +7,7 @@
 \fBpuppet\-catalog\fR \- Compile, save, view, and convert catalogs\.
 .
 .SH "SYNOPSIS"
-puppet catalog \fIaction\fR [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet catalog \fIaction\fR [\-\-terminus _TERMINUS]
 .
 .SH "DESCRIPTION"
 This subcommand deals with catalogs, which are compiled per\-node artifacts generated from a set of Puppet manifests\. By default, it interacts with the compiling subsystem and compiles a catalog using the default manifest and \fBcertname\fR, but you can change the source of the catalog with the \fB\-\-terminus\fR option\. You can also choose to print any catalog in \'dot\' format (for easy graph viewing with OmniGraffle or Graphviz) with \'\-\-render\-as dot\'\.
@@ -51,7 +51,7 @@ The terminus for an action is often determined by context, but occasionally need
 \fBSYNOPSIS\fR
 .
 .IP
-puppet catalog apply [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet catalog apply [\-\-terminus _TERMINUS]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -70,7 +70,7 @@ Nothing\. When used from the Ruby API, returns a Puppet::Transaction::Report obj
 \fBSYNOPSIS\fR
 .
 .IP
-puppet catalog compile [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet catalog compile [\-\-terminus _TERMINUS]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -89,7 +89,7 @@ A serialized catalog\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet catalog download [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet catalog download [\-\-terminus _TERMINUS]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -117,7 +117,7 @@ When used from the Ruby API, this action has a side effect of leaving Puppet::Re
 \fBSYNOPSIS\fR
 .
 .IP
-puppet catalog find [\-\-terminus _TERMINUS] [\-\-extra HASH] \fIcertname\fR
+puppet catalog find [\-\-terminus _TERMINUS] \fIcertname\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -136,7 +136,7 @@ A serialized catalog\. When used from the Ruby API, returns a Puppet::Resource::
 \fBSYNOPSIS\fR
 .
 .IP
-puppet catalog info [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet catalog info [\-\-terminus _TERMINUS]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -149,7 +149,7 @@ Prints the default terminus class for this subcommand\. Note that different run 
 \fBSYNOPSIS\fR
 .
 .IP
-puppet catalog save [\-\-terminus _TERMINUS] [\-\-extra HASH] \fIkey\fR
+puppet catalog save [\-\-terminus _TERMINUS] \fIkey\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -162,7 +162,7 @@ API only: create or overwrite an object\. As the Faces framework does not curren
 \fBSYNOPSIS\fR
 .
 .IP
-puppet catalog select [\-\-terminus _TERMINUS] [\-\-extra HASH] \fIhost\fR \fIresource_type\fR
+puppet catalog select [\-\-terminus _TERMINUS] \fIhost\fR \fIresource_type\fR
 .
 .IP
 \fBDESCRIPTION\fR

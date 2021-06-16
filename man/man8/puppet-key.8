@@ -7,7 +7,7 @@
 \fBpuppet\-key\fR \- Create, save, and remove certificate keys\.
 .
 .SH "SYNOPSIS"
-puppet key \fIaction\fR [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet key \fIaction\fR [\-\-terminus _TERMINUS]
 .
 .SH "DESCRIPTION"
 This subcommand manages certificate private keys\. Keys are created automatically by puppet agent and when certificate requests are generated with \'puppet ssl submit_request\'; it should not be necessary to use this subcommand directly\.
@@ -51,7 +51,7 @@ The terminus for an action is often determined by context, but occasionally need
 \fBSYNOPSIS\fR
 .
 .IP
-puppet key destroy [\-\-terminus _TERMINUS] [\-\-extra HASH] \fIkey\fR
+puppet key destroy [\-\-terminus _TERMINUS] \fIkey\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -64,7 +64,7 @@ Delete an object\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet key find [\-\-terminus _TERMINUS] [\-\-extra HASH] [\fIkey\fR]
+puppet key find [\-\-terminus _TERMINUS] [\fIkey\fR]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -77,7 +77,7 @@ Retrieve an object by name\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet key info [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet key info [\-\-terminus _TERMINUS]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -90,7 +90,7 @@ Prints the default terminus class for this subcommand\. Note that different run 
 \fBSYNOPSIS\fR
 .
 .IP
-puppet key save [\-\-terminus _TERMINUS] [\-\-extra HASH] \fIkey\fR
+puppet key save [\-\-terminus _TERMINUS] \fIkey\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -103,7 +103,7 @@ API only: create or overwrite an object\. As the Faces framework does not curren
 \fBSYNOPSIS\fR
 .
 .IP
-puppet key search [\-\-terminus _TERMINUS] [\-\-extra HASH] \fIquery\fR
+puppet key search [\-\-terminus _TERMINUS] \fIquery\fR
 .
 .IP
 \fBDESCRIPTION\fR
