@@ -160,7 +160,7 @@ describe 'the 4x function api' do
       expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
       expect do
         func.call({}, 3, 10, 3, "4")
-      end.to raise_error(ArgumentError, "'min' expects one of:
+      end.to raise_error(ArgumentError, "The function 'min' was called with arguments it does not accept. It expects one of:
   (Numeric x, Numeric y, Numeric a?, Numeric b?, Numeric c*)
     rejected: parameter 'b' expects a Numeric value, got String
   (String x, String y, String a+)
@@ -231,7 +231,7 @@ describe 'the 4x function api' do
       expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
       expect do
         func.call({}, 10, '20')
-      end.to raise_error(ArgumentError, "'min' expects one of:
+      end.to raise_error(ArgumentError, "The function 'min' was called with arguments it does not accept. It expects one of:
   (Numeric a, Numeric b)
     rejected: parameter 'b' expects a Numeric value, got String
   (String s1, String s2)
