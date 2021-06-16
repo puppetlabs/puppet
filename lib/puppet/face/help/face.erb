@@ -49,6 +49,7 @@ undocumented option
 	end
  	unless face.options.empty?
       face.options.sort.each do |name|
+        next if name == :extra
         option = face.get_option name -%>
 <%= "  " + option.optparse.join(" | ")[0,(optionroom - 1)].ljust(optionroom) + ' - ' -%>
 <%     if !(option.summary) -%>
