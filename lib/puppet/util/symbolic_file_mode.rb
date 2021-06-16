@@ -19,25 +19,37 @@ module SymbolicFileMode
     return false
   end
 
+  def display_mode(value)
+    if value =~ /^0?[0-7]{1,4}$/
+      value.rjust(4, "0")
+    else
+      value
+    end
+  end
+
   def normalize_symbolic_mode(value)
     return nil if value.nil?
 
     # We need to treat integers as octal numbers.
-    if value.is_a? Numeric then
-      return value.to_s(8)
-    elsif value =~ /^0?[0-7]{1,4}$/ then
-      return value.to_i(8).to_s(8)
+    #
+    # "A numeric mode is from one to four octal digits (0-7), derived by adding
+    # up the bits with values 4, 2, and 1. Omitted digits are assumed to be
+    # leading zeros."
+    if value.is_a? Numeric
+      value.to_s(8)
+    elsif value =~ /^0?[0-7]{1,4}$/
+      value.to_i(8).to_s(8) # strip leading 0's
     else
-      return value
+      value
     end
   end
 
   def symbolic_mode_to_int(modification, to_mode = 0, is_a_directory = false)
-    if modification.nil? or modification == '' then
+    if modification.nil? or modification == ''
       raise Puppet::Error, _("An empty mode string is illegal")
-    end
-    if modification =~ /^[0-7]+$/ then return modification.to_i(8) end
-    if modification =~ /^\d+$/ then
+    elsif modification =~ /^[0-7]+$/
+      return modification.to_i(8)
+    elsif modification =~ /^\d+$/
       raise Puppet::Error, _("Numeric modes must be in octal, not decimal!")
     end
 
@@ -84,31 +96,31 @@ module SymbolicFileMode
 
           dsl.split('').each do |op|
             case op
-            when /[-+=]/ then
+            when /[-+=]/
               action = op
               # Clear all bits, if this is assignment
               value  = 0 if op == '='
 
-            when /[ugo]/ then
+            when /[ugo]/
               value = actions[action].call(value, snapshot_mode[op])
 
-            when /[rwx]/ then
+            when /[rwx]/
               value = actions[action].call(value, SymbolicMode[op])
 
-            when 'X' then
+            when 'X'
               # Only meaningful in combination with "set" actions.
-              if action != '+' then
+              if action != '+'
                 raise Puppet::Error, _("X only works with the '+' operator")
               end
 
               # As per the BSD manual page, set if this is a directory, or if
               # any execute bit is set on the original (unmodified) mode.
               # Ignored otherwise; it is "add if", not "add or clear".
-              if is_a_directory or original_mode['any x?'] then
+              if is_a_directory or original_mode['any x?']
                 value = actions[action].call(value, ExecBit)
               end
 
-            when /[st]/ then
+            when /[st]/
               bit = SymbolicSpecialToBit[op][who] or fail _("internal error")
               final_mode['s'] = actions[action].call(final_mode['s'], bit)
 
@@ -122,7 +134,7 @@ module SymbolicFileMode
         end
 
       rescue Puppet::Error => e
-        if part.inspect != modification.inspect then
+        if part.inspect != modification.inspect
           rest = " at #{part.inspect}"
         else
           rest = ''

@@ -868,7 +868,11 @@ class Puppet::Settings
     if self[:user]
       user = Puppet::Type.type(:user).new :name => self[:user], :audit => :ensure
 
-      @service_user_available = user.exists?
+      if user.suitable?
+        @service_user_available = user.exists?
+      else
+        raise Puppet::Error, (_("Cannot manage owner permissions, because the provider for '%{name}' is not functional") % { name: user })
+      end
     else
       @service_user_available = false
     end
@@ -880,7 +884,11 @@ class Puppet::Settings
     if self[:group]
       group = Puppet::Type.type(:group).new :name => self[:group], :audit => :ensure
 
-      @service_group_available = group.exists?
+      if group.suitable?
+        @service_group_available = group.exists?
+      else
+        raise Puppet::Error, (_("Cannot manage group permissions, because the provider for '%{name}' is not functional") % { name: group })
+      end
     else
       @service_group_available = false
     end

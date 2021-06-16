@@ -90,7 +90,13 @@ module Puppet
         raise Puppet::Error, "The file mode specification is invalid: #{value.inspect}"
       end
 
+      # normalizes to symbolic form, e.g. u+a, an octal string without leading 0
       normalize_symbolic_mode(value)
+    end
+
+    unmunge do |value|
+      # return symbolic form or octal string *with* leading 0's
+      display_mode(value) if value
     end
 
     def desired_mode_from_current(desired, current)

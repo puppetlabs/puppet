@@ -79,6 +79,16 @@ describe Puppet::Provider::ParsedFile do
 
       provider.instances
     end
+
+    it "should raise if parsing returns nil" do
+      expect(provider).to receive(:targets).and_return(%w{/one})
+      expect_any_instance_of(Puppet::Util::FileType::FileTypeFlat).to receive(:read).and_return('a=b')
+      expect(provider).to receive(:parse).and_return(nil)
+
+      expect {
+        provider.instances
+      }.to raise_error(Puppet::DevError, %r{Prefetching /one for provider parsedfile_provider returned nil})
+    end
   end
 
   describe "when matching resources to existing records" do
