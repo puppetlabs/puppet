@@ -98,14 +98,7 @@ private
 
   def parse_setting(setting, section)
     var = setting.name.intern
-
-    # We don't want to munge modes, because they're specified in octal, so we'll
-    # just leave them as a String, since Puppet handles that case correctly.
-    if var == :mode
-      value = setting.value
-    else
-      value = @value_converter[setting.value]
-    end
+    value = @value_converter[setting.value]
 
     # Check to see if this is a file argument and it has extra options
     begin

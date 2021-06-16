@@ -48,6 +48,11 @@ describe "Puppet defaults" do
     it "should fail if the certname is not downcased" do
       expect { Puppet.settings[:certname] = "Host.Domain.Com" }.to raise_error(ArgumentError)
     end
+
+    it 'can set it to a value containing all digits' do
+      Puppet.settings[:certname] = "000000000180"
+      expect(Puppet.settings[:certname]).to eq("000000000180")
+    end
   end
 
   describe "when setting :node_name_value" do

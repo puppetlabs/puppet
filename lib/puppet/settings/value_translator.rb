@@ -5,7 +5,6 @@ class Puppet::Settings::ValueTranslator
     return case value
       when /^false$/i; false
       when /^true$/i; true
-      when /^\d+$/i; Integer(value)
       when true; true
       when false; false
       else
