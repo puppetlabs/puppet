@@ -1,6 +1,7 @@
 require_relative '../../puppet/application'
 
 class Puppet::Application::Filebucket < Puppet::Application
+  environment_mode :not_required
 
   option("--bucket BUCKET","-b")
   option("--debug","-d")

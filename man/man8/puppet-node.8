@@ -7,7 +7,7 @@
 \fBpuppet\-node\fR \- View and manage node definitions\.
 .
 .SH "SYNOPSIS"
-puppet node \fIaction\fR [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet node \fIaction\fR [\-\-terminus _TERMINUS]
 .
 .SH "DESCRIPTION"
 This subcommand interacts with node objects, which are used by Puppet to build a catalog\. A node object consists of the node\'s facts, environment, node parameters (exposed in the parser as top\-scope variables), and classes\.
@@ -51,7 +51,7 @@ The terminus for an action is often determined by context, but occasionally need
 \fBSYNOPSIS\fR
 .
 .IP
-puppet node clean [\-\-terminus _TERMINUS] [\-\-extra HASH] \fIhost1\fR [\fIhost2\fR \.\.\.]
+puppet node clean [\-\-terminus _TERMINUS] \fIhost1\fR [\fIhost2\fR \.\.\.]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -79,7 +79,7 @@ NOTE: this action now cleans up certs via Puppet Server\'s CA API\. A running se
 \fBSYNOPSIS\fR
 .
 .IP
-puppet node find [\-\-terminus _TERMINUS] [\-\-extra HASH] \fIhost\fR
+puppet node find [\-\-terminus _TERMINUS] \fIhost\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -101,7 +101,7 @@ RENDERING ISSUES: Rendering as string and json are currently broken; node object
 \fBSYNOPSIS\fR
 .
 .IP
-puppet node info [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet node info [\-\-terminus _TERMINUS]
 .
 .IP
 \fBDESCRIPTION\fR

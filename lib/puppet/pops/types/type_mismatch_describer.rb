@@ -640,7 +640,7 @@ module Types
           result = ["#{label} expects (#{signature_string(sig)})"]
           result.concat(error_arrays[0].map { |e| "  rejected:#{e.chop_path(0).format}" })
         else
-          result = ["#{label} expects one of:"]
+          result = ["The function #{label} was called with arguments it does not accept. It expects one of:"]
           signatures.each_with_index do |sg, index|
             result << "  (#{signature_string(sg)})"
             result.concat(error_arrays[index].map { |e| "    rejected:#{e.chop_path(0).format}" })

@@ -126,6 +126,17 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
     end
   end
 
+  it "lists the local filebucket even if the environment doesn't exist locally" do
+    Puppet[:environment] = 'doesnotexist'
+    Puppet::FileSystem.mkpath(Puppet[:clientbucketdir])
+
+    filebucket.command_line.args = ['backup', '--local', backup_file]
+    expect {
+      result = filebucket.run
+      expect(result).to eq([backup_file])
+    }.to output(/Computing checksum on file/).to_stdout
+  end
+
   context 'diff', unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
     context 'using a remote bucket' do
       it 'outputs a diff between a local and remote file' do
