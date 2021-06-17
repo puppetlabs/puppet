@@ -2,6 +2,8 @@ require 'spec_helper'
 require 'puppet/parser/templatewrapper'
 
 describe Puppet::Parser::TemplateWrapper do
+  include PuppetSpec::Files
+
   let(:known_resource_types) { Puppet::Resource::TypeCollection.new("env") }
   let(:scope) do
     compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
@@ -38,6 +40,13 @@ describe Puppet::Parser::TemplateWrapper do
     full_file_name = given_a_template_file("fake_template", "<%= file %>")
 
     tw.file = "fake_template"
+    expect(tw.result).to eq(full_file_name)
+  end
+
+  it "ignores a leading BOM" do
+    full_file_name = given_a_template_file("bom_template", "\uFEFF<%= file %>")
+
+    tw.file = "bom_template"
     expect(tw.result).to eq(full_file_name)
   end
 
@@ -90,11 +99,12 @@ describe Puppet::Parser::TemplateWrapper do
   end
 
   def given_a_template_file(name, contents)
-    full_name = "/full/path/to/#{name}"
+    full_name = tmpfile("template_#{name}")
+    File.binwrite(full_name, contents)
+
     allow(Puppet::Parser::Files).to receive(:find_template).
       with(name, anything()).
       and_return(full_name)
-    allow(Puppet::FileSystem).to receive(:read_preserve_line_endings).with(full_name).and_return(contents)
 
     full_name
   end
