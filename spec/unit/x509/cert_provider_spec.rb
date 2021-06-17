@@ -223,7 +223,7 @@ describe Puppet::X509::CertProvider do
   end
 
   context 'when loading' do
-    context 'private keys' do
+    context 'private keys', unless: RUBY_PLATFORM == 'java' do
       let(:provider) { create_provider(privatekeydir: fixture_dir) }
       let(:password) { '74695716c8b6' }
 
@@ -296,6 +296,14 @@ describe Puppet::X509::CertProvider do
       context 'using EC' do
         it 'returns an EC key' do
           expect(provider.load_private_key('ec-key')).to be_a(OpenSSL::PKey::EC)
+        end
+
+        it 'returns an EC key from PKCS#8 format' do
+          expect(provider.load_private_key('ec-key-pk8')).to be_a(OpenSSL::PKey::EC)
+        end
+
+        it 'returns an EC key from openssl format' do
+          expect(provider.load_private_key('ec-key-openssl')).to be_a(OpenSSL::PKey::EC)
         end
 
         it 'decrypts an EC key using the password' do
