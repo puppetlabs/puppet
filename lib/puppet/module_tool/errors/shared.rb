@@ -127,6 +127,23 @@ module Puppet::ModuleTool::Errors
     end
   end
 
+  class InvalidModuleNameError < ModuleToolError
+    def initialize(options)
+      @module_name = options[:module_name]
+      @suggestion = options[:suggestion]
+      @action = options[:action]
+      super _("Could not %{action} '%{module_name}', did you mean '%{suggestion}'?") % { action: @action, module_name: @module_name, suggestion: @suggestion }
+    end
+
+    def multiline
+      message = []
+      message << _("Could not %{action} module '%{module_name}'") % { action: @action, module_name: @module_name }
+      message << _("  The name '%{module_name}' is invalid") % { module_name: @module_name }
+      message << _("    Did you mean `puppet module %{action} %{suggestion}`?") % { action: @action, suggestion: @suggestion }
+      message.join("\n")
+    end
+  end
+
   class NotInstalledError < ModuleToolError
     def initialize(options)
       @module_name = options[:module_name]
