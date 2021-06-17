@@ -7,7 +7,7 @@
 \fBpuppet\-facts\fR \- Retrieve and store facts\.
 .
 .SH "SYNOPSIS"
-puppet facts \fIaction\fR [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet facts \fIaction\fR [\-\-terminus _TERMINUS]
 .
 .SH "DESCRIPTION"
 This subcommand manages facts, which are collections of normalized system information used by Puppet\. It can read facts directly from the local system (with the default \fBfacter\fR terminus)\.
@@ -51,7 +51,7 @@ The terminus for an action is often determined by context, but occasionally need
 \fBSYNOPSIS\fR
 .
 .IP
-puppet facts find [\-\-terminus _TERMINUS] [\-\-extra HASH] [\fInode_certname\fR]
+puppet facts find [\-\-terminus _TERMINUS] [\fInode_certname\fR]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -79,7 +79,7 @@ When using the \fBfacter\fR terminus, the host argument is ignored\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet facts info [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet facts info [\-\-terminus _TERMINUS]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -92,7 +92,7 @@ Prints the default terminus class for this subcommand\. Note that different run 
 \fBSYNOPSIS\fR
 .
 .IP
-puppet facts save [\-\-terminus _TERMINUS] [\-\-extra HASH] \fIkey\fR
+puppet facts save [\-\-terminus _TERMINUS] \fIkey\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -105,7 +105,7 @@ API only: create or overwrite an object\. As the Faces framework does not curren
 \fBSYNOPSIS\fR
 .
 .IP
-puppet facts [\-\-terminus _TERMINUS] [\-\-extra HASH] [\-\-config\-file \fIpath\fR] [\-\-custom\-dir \fIpath\fR] [\-\-external\-dir \fIpath\fR] [\-\-no\-block] [\-\-no\-cache] [\-\-show\-legacy] [\-\-value\-only] [\-\-timing] [\fIfacts\fR]
+puppet facts [\-\-terminus _TERMINUS] [\-\-config\-file \fIpath\fR] [\-\-custom\-dir \fIpath\fR] [\-\-external\-dir \fIpath\fR] [\-\-no\-block] [\-\-no\-cache] [\-\-show\-legacy] [\-\-value\-only] [\-\-timing] [\fIfacts\fR]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -151,7 +151,7 @@ The output of facter with added puppet specific facts\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet facts upload [\-\-terminus _TERMINUS] [\-\-extra HASH]
+puppet facts upload [\-\-terminus _TERMINUS]
 .
 .IP
 \fBDESCRIPTION\fR
