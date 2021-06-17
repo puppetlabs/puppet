@@ -40,6 +40,7 @@ task(:gen_cert_fixtures) do
   # 127.0.0.1.pem                     |   +- /CN=127.0.0.1 (with dns alt names)
   # tampered-cert.pem                 |   +- /CN=signed (with different public key)
   # ec.pem                            |   +- /CN=ec (with EC private key)
+  # oid.pem                           |   +- /CN=oid (with custom oid)
   #                                   |
   #                                   + /CN=Test CA Agent Subauthority
   #                                   |  |
@@ -49,7 +50,7 @@ task(:gen_cert_fixtures) do
   #
   # bad-basic-constraints.pem        /CN=Test CA (bad isCA constraint)
   #
-  # unknown-ca.pemm                  /CN=Unknown CA
+  # unknown-ca.pem                   /CN=Unknown CA
   #                                   |
   # unknown-127.0.0.1.pem             +- /CN=127.0.0.1
   #
@@ -102,6 +103,14 @@ task(:gen_cert_fixtures) do
   signed = ca.create_cert('127.0.0.1', ca.ca_cert, ca.key, subject_alt_names: 'DNS:127.0.0.1,DNS:127.0.0.2')
   save(dir, '127.0.0.1.pem', signed[:cert])
   save(dir, '127.0.0.1-key.pem', signed[:private_key])
+
+  # Create an SSL cert with extensions containing custom oids
+  extensions = [
+    ['1.3.6.1.4.1.34380.1.2.1.1', OpenSSL::ASN1::UTF8String.new('somevalue'), false],
+  ]
+  oid = ca.create_cert('oid', inter[:cert], inter[:private_key], extensions: extensions)
+  save(dir, 'oid.pem', oid[:cert])
+  save(dir, 'oid-key.pem', oid[:private_key])
 
   # Create a leaf/entity key and cert for host "revoked", issued by "Test CA Subauthority"
   # and revoke the cert
