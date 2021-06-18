@@ -1,3 +1,5 @@
+require_relative '../../puppet/parameter/boolean'
+
 module Puppet
   Type.newtype(:exec) do
     include Puppet::Util::Execution
@@ -64,6 +66,8 @@ module Puppet
       file used in an exec's command, the exec resource autorequires those
       files. If Puppet is managing the user that an exec should run as, the
       exec resource autorequires that user."
+
+    feature :supports_pass_through_shell, "The provider can execute external binaries through the standard shell"
 
     # Create a new check mechanism.  It's basically a parameter that
     # provides one extra 'check' method.
@@ -203,6 +207,12 @@ module Puppet
       validate do |command|
         raise ArgumentError, _("Command must be a String, got value of class %{klass}") % { klass: command.class } unless command.is_a? String
       end
+    end
+
+    newparam(:pass_through_shell, :boolean => true, :parent => Puppet::Parameter::Boolean, :required_features => :supports_pass_through_shell) do
+      defaultto(:true)
+
+      newvalues(:true, :false)
     end
 
     newparam(:path) do
