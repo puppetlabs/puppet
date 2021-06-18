@@ -290,6 +290,12 @@ describe "Puppet::FileSystem" do
         expect(Puppet::FileSystem.read_preserve_line_endings(file)).to eq("file content \r\nsecond line \n")
       end
     end
+
+    it "should ignore leading BOM" do
+      with_file_content("\uFEFFfile content \n") do |file|
+        expect(Puppet::FileSystem.read_preserve_line_endings(file)).to eq("file content \n")
+      end
+    end
   end
 
   context "read without an encoding specified" do
