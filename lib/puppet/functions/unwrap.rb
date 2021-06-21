@@ -1,4 +1,5 @@
 # Unwraps a Sensitive value and returns the wrapped object.
+# Returns the Value itself, if it is not Sensitive.
 #
 # @example Usage of unwrap
 #
@@ -28,13 +29,27 @@
 # @since 4.0.0
 #
 Puppet::Functions.create_function(:unwrap) do
-  dispatch :unwrap do
+  dispatch :from_sensitive do
     param 'Sensitive', :arg
     optional_block_param
   end
 
-  def unwrap(arg)
+  dispatch :from_any do
+    param 'Any', :arg
+    optional_block_param
+  end
+
+  def from_sensitive(arg)
     unwrapped = arg.unwrap
+    if block_given?
+      yield(unwrapped)
+    else
+      unwrapped
+    end
+  end
+
+  def from_any(arg)
+    unwrapped = arg
     if block_given?
       yield(unwrapped)
     else
