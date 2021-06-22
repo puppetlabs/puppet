@@ -98,15 +98,17 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       provider.run("#{command} bar --sillyarg=true --blah")
     end
 
-    it 'splits the command when pass_trough_shell is false' do
-      provider.resource[:path] = ['/bogus/bin']
-      provider.resource[:pass_through_shell] = false
-      command = make_exe
-      split_command = command.split
+    context 'when use_shell is false' do
+      it 'splits the command' do
+        provider.resource[:path] = ['/bogus/bin']
+        provider.resource[:use_shell] = false
+        command = make_exe
+        split_command = command.split
 
-      expect(Puppet::Util::Execution).to receive(:execute).with([*split_command, 'bar', '--sillyarg=true', '--blah'], instance_of(Hash)).and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
+        expect(Puppet::Util::Execution).to receive(:execute).with([*split_command, 'bar', '--sillyarg=true', '--blah'], instance_of(Hash)).and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
 
-      provider.run("#{command} bar --sillyarg=true --blah")
+        provider.run("#{command} bar --sillyarg=true --blah")
+      end
     end
 
     it "should fail if quoted command doesn't exist" do

@@ -2,14 +2,13 @@ require 'puppet/provider/exec'
 
 Puppet::Type.type(:exec).provide :posix, :parent => Puppet::Provider::Exec do
   has_feature :umask
-  has_feature :supports_pass_through_shell
 
   confine :feature => :posix
   defaultfor :feature => :posix
 
   desc <<-EOT
     Executes the command through the standard shell.
-    Use `pass_through_shell => false` to execute external binaries directly,
+    Use `use_shell => false` to execute external binaries directly,
     without passing through a shell or performing any interpolation.
     This is a safer and more predictable way to execute most commands,
     but prevents the use of globbing and shell built-ins
@@ -43,7 +42,7 @@ Puppet::Type.type(:exec).provide :posix, :parent => Puppet::Provider::Exec do
   end
 
   def run(command, check = false)
-   command = command.split if command.respond_to?(:split) && !resource[:pass_through_shell]
+    command = splitcmd(command) unless resource[:use_shell]
 
     if resource[:umask]
       Puppet::Util::withumask(resource[:umask]) { super(command, check) }

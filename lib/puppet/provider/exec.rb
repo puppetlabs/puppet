@@ -97,6 +97,20 @@ class Puppet::Provider::Exec < Puppet::Provider
     end
   end
 
+  # Splits a string into an array of tokens
+  # Tokens are delimited by a space and can be wrapped around quoutes
+  #
+  # splitcmd("ls -al \"b c\"")
+  # => ["ls", "-al", "b c"]
+  #
+  # splitcmd("ls -al bc")
+  # => ["ls", "-al", "bc"]
+  def splitcmd(command)
+    return command unless command.respond_to?(:split)
+
+    command.split(/\G\s*(?>([^\s'"]+)|'([^']*)'|"((?:[^"])*)")(\s|\z)?/m) - ['', ' ']
+  end
+
   def validatecmd(command)
     exe = extractexe(command)
     # if we're not fully qualified, require a path

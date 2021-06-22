@@ -13,64 +13,86 @@ describe Puppet::Type.type(:exec), unless: Puppet::Util::Platform.jruby? do
     catalog.host_config = false
   end
 
-  it "should execute the command" do
-    exec = described_class.new :command => command, :path => ENV['PATH']
+  shared_examples "a valid exec resource" do
+    it "should execute the command" do
+      exec = described_class.new(
+        :command => command,
+        :path => ENV['PATH'],
+        :use_shell => use_shell
+      )
 
-    catalog.add_resource exec
-    catalog.apply
+      catalog.add_resource exec
+      catalog.apply
 
-    expect(File.read(path)).to eq('foo')
+      expect(File.read(path)).to eq('foo')
+    end
+
+    it "should not execute the command if onlyif returns non-zero" do
+      exec = described_class.new(
+        :command => command,
+        :onlyif => "ruby -e 'exit 44'",
+        :path => ENV['PATH'],
+        :use_shell => use_shell
+      )
+
+      catalog.add_resource exec
+      catalog.apply
+
+      expect(Puppet::FileSystem.exist?(path)).to be_falsey
+    end
+
+    it "should execute the command if onlyif returns zero" do
+      exec = described_class.new(
+        :command => command,
+        :onlyif => "ruby -e 'exit 0'",
+        :path => ENV['PATH'],
+        :use_shell => use_shell
+      )
+
+      catalog.add_resource exec
+      catalog.apply
+
+      expect(File.read(path)).to eq('foo')
+    end
+
+    it "should execute the command if unless returns non-zero" do
+      exec = described_class.new(
+        :command => command,
+        :unless => "ruby -e 'exit 45'",
+        :path => ENV['PATH'],
+        :use_shell => use_shell
+      )
+
+      catalog.add_resource exec
+      catalog.apply
+
+      expect(File.read(path)).to eq('foo')
+    end
+
+    it "should not execute the command if unless returns zero" do
+      exec = described_class.new(
+        :command => command,
+        :unless => "ruby -e 'exit 0'",
+        :path => ENV['PATH'],
+        :use_shell => use_shell
+      )
+
+      catalog.add_resource exec
+      catalog.apply
+
+      expect(Puppet::FileSystem.exist?(path)).to be_falsey
+    end
   end
 
-  it "should not execute the command if onlyif returns non-zero" do
-    exec = described_class.new(
-      :command => command,
-      :onlyif => "ruby -e 'exit 44'",
-      :path => ENV['PATH']
-    )
+  context 'when passing through sehll' do
+    let(:use_shell) { false }
 
-    catalog.add_resource exec
-    catalog.apply
-
-    expect(Puppet::FileSystem.exist?(path)).to be_falsey
+    it_behaves_like 'a valid exec resource'
   end
 
-  it "should execute the command if onlyif returns zero" do
-    exec = described_class.new(
-      :command => command,
-      :onlyif => "ruby -e 'exit 0'",
-      :path => ENV['PATH']
-    )
+  context 'when executing directly' do
+    let(:use_shell) { true }
 
-    catalog.add_resource exec
-    catalog.apply
-
-    expect(File.read(path)).to eq('foo')
-  end
-
-  it "should execute the command if unless returns non-zero" do
-    exec = described_class.new(
-      :command => command,
-      :unless => "ruby -e 'exit 45'",
-      :path => ENV['PATH']
-    )
-
-    catalog.add_resource exec
-    catalog.apply
-
-    expect(File.read(path)).to eq('foo')
-  end
-
-  it "should not execute the command if unless returns zero" do
-    exec = described_class.new(
-      :command => command,
-      :unless => "ruby -e 'exit 0'",
-      :path => ENV['PATH']
-    )
-
-    catalog.add_resource exec
-    catalog.apply
-
-    expect(Puppet::FileSystem.exist?(path)).to be_falsey
+    it_behaves_like 'a valid exec resource'
   end
 end

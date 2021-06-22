@@ -67,8 +67,6 @@ module Puppet
       files. If Puppet is managing the user that an exec should run as, the
       exec resource autorequires that user."
 
-    feature :supports_pass_through_shell, "The provider can execute external binaries through the standard shell"
-
     # Create a new check mechanism.  It's basically a parameter that
     # provides one extra 'check' method.
     def self.newcheck(name, options = {}, &block)
@@ -209,7 +207,11 @@ module Puppet
       end
     end
 
-    newparam(:pass_through_shell, :boolean => true, :parent => Puppet::Parameter::Boolean, :required_features => :supports_pass_through_shell) do
+    newparam(:use_shell, :boolean => true, :parent => Puppet::Parameter::Boolean) do
+      desc "A boolean flag that controls shell invocation.
+      By default, the provider executes commands through the standard shell.
+      It is recommended to set this parameter to `false` to execute external binaries directly"
+
       defaultto(:true)
 
       newvalues(:true, :false)

@@ -241,4 +241,20 @@ describe Puppet::Provider::Exec do
       end
     end
   end
+
+  describe "#splitcmd" do
+    {
+      'ls -a dir'                   => ['ls', '-a', 'dir'],
+      'ls -a "dir wrapped"'         => ['ls', '-a', 'dir wrapped'],
+      'ls -a          "dir spaced"' => ['ls', '-a', 'dir spaced'],
+      'ls -a $special'              => ['ls', '-a', '$special'],
+      'ls -a | pipe'                => ['ls', '-a', '|', 'pipe'],
+      'ls -a \escaped'              => ['ls', '-a', '\escaped'],
+      'ls -a \ escaped'             => ['ls', '-a', '\\', 'escaped']
+    }.each do |command, result|
+      it "splits command: #{command} correctly" do
+        expect(subject.splitcmd(command)).to eql(result)
+      end
+    end
+  end
 end
