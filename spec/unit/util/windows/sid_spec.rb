@@ -131,8 +131,25 @@ describe "Puppet::Util::Windows::SID", :if => Puppet::Util::Platform.windows? do
       expect(subject.name_to_principal(unknown_name)).to be_nil
     end
 
+    it "should print a debug message if the account does not exist" do
+      expect(Puppet).to receive(:debug).with(/No mapping between account names and security IDs was done/)
+      subject.name_to_principal(unknown_name)
+    end
+
     it "should return a Puppet::Util::Windows::SID::Principal instance for any valid sid" do
       expect(subject.name_to_principal(sid)).to be_an_instance_of(Puppet::Util::Windows::SID::Principal)
+    end
+
+    it "should not print debug messages for valid sid" do
+      expect(Puppet).not_to receive(:debug).with(/Could not retrieve raw SID bytes from/)
+      expect(Puppet).not_to receive(:debug).with(/No mapping between account names and security IDs was done/)
+      subject.name_to_principal(sid)
+    end
+
+    it "should print a debug message for invalid sid" do
+      expect(Puppet).not_to receive(:debug).with(/Could not retrieve raw SID bytes from/)
+      expect(Puppet).to receive(:debug).with(/No mapping between account names and security IDs was done/)
+      subject.name_to_principal('S-1-5-21-INVALID-SID')
     end
 
     it "should accept unqualified account name" do
@@ -141,10 +158,22 @@ describe "Puppet::Util::Windows::SID", :if => Puppet::Util::Platform.windows? do
       expect(subject.name_to_principal('SYSTEM').sid).to eq(sid)
     end
 
+    it "should not print debug messages for unqualified account name" do
+      expect(Puppet).not_to receive(:debug).with(/Could not retrieve raw SID bytes from/)
+      expect(Puppet).not_to receive(:debug).with(/No mapping between account names and security IDs was done/)
+      subject.name_to_principal('SYSTEM')
+    end
+
     it "should be case-insensitive" do
       # NOTE: lookup by name works in localized environments only for a few instances
       # this works in French Windows, even though the account is really Syst\u00E8me
       expect(subject.name_to_principal('SYSTEM')).to eq(subject.name_to_principal('system'))
+    end
+
+    it "should not print debug messages for wrongly cased account name" do
+      expect(Puppet).not_to receive(:debug).with(/Could not retrieve raw SID bytes from/)
+      expect(Puppet).not_to receive(:debug).with(/No mapping between account names and security IDs was done/)
+      subject.name_to_principal('system')
     end
 
     it "should be leading and trailing whitespace-insensitive" do
@@ -153,16 +182,22 @@ describe "Puppet::Util::Windows::SID", :if => Puppet::Util::Platform.windows? do
       expect(subject.name_to_principal('SYSTEM')).to eq(subject.name_to_principal(' SYSTEM '))
     end
 
+    it "should not print debug messages for account name with leading and trailing whitespace" do
+      expect(Puppet).not_to receive(:debug).with(/Could not retrieve raw SID bytes from/)
+      expect(Puppet).not_to receive(:debug).with(/No mapping between account names and security IDs was done/)
+      subject.name_to_principal(' SYSTEM ')
+    end
+
     it "should accept domain qualified account names" do
       # NOTE: lookup by name works in localized environments only for a few instances
       # this works in French Windows, even though the account is really AUTORITE NT\\Syst\u00E8me
       expect(subject.name_to_principal('NT AUTHORITY\SYSTEM').sid).to eq(sid)
     end
 
-    it "should print a debug message on failures" do
-      expect(Puppet).to receive(:debug).with(/Could not retrieve raw SID bytes from 'NonExistingUser'/)
-      expect(Puppet).to receive(:debug).with(/No mapping between account names and security IDs was done/)
-      subject.name_to_principal('NonExistingUser')
+    it "should not print debug messages for domain qualified account names" do
+      expect(Puppet).not_to receive(:debug).with(/Could not retrieve raw SID bytes from/)
+      expect(Puppet).not_to receive(:debug).with(/No mapping between account names and security IDs was done/)
+      subject.name_to_principal('NT AUTHORITY\SYSTEM')
     end
   end
 

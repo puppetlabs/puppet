@@ -75,7 +75,9 @@ module Puppet::Util::Windows
           raw_sid_bytes = sid_ptr.read_array_of_uchar(get_length_sid(sid_ptr))
         end
       rescue => e
-        Puppet.debug("Could not retrieve raw SID bytes from '#{name}': #{e.message}")
+        # Avoid debug logs pollution with valid account names
+        # https://docs.microsoft.com/en-us/windows/win32/api/sddl/nf-sddl-convertstringsidtosidw#return-value
+        Puppet.debug("Could not retrieve raw SID bytes from '#{name}': #{e.message}") unless e.code == ERROR_INVALID_SID_STRUCTURE
       end
 
       raw_sid_bytes ? Principal.lookup_account_sid(raw_sid_bytes) : Principal.lookup_account_name(name)
