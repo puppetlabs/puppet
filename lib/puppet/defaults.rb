@@ -1197,6 +1197,7 @@ EOT
     },
     :keylength => {
       :default    => 4096,
+      :type       => :integer,
       :desc       => "The bit length of keys.",
     },
     :cert_inventory => {
