@@ -340,6 +340,14 @@ class Puppet::Configurer
         rescue StandardError => detail
           Puppet.warning(_("Unable to fetch my node definition, but the agent run will continue:"))
           Puppet.warning(detail)
+
+          unless configured_environment
+            Puppet.debug(_("Failed to fetch node definition, attempting to find out the last used environment"))
+            if (env = last_used_environment)
+              @environment = env
+              report.environment = @environment
+            end
+          end
         end
       end
 
@@ -471,6 +479,22 @@ class Puppet::Configurer
     [nil, nil]
   end
   private :find_functional_server
+
+  def last_used_environment
+    if Puppet::FileSystem.exist?(Puppet[:lastrunfile])
+      last_run_environment = Puppet::Util::Yaml.safe_load_file(Puppet[:lastrunfile]).dig('version', 'environment') rescue nil
+    end
+
+    if !last_run_environment && Puppet::FileSystem.exist?(Puppet[:lastrunreport])
+      last_run_environment = Puppet::Util::Yaml.safe_load_file(Puppet[:lastrunreport], [Puppet::Transaction::Report]).environment
+    end
+    Puppet.debug(_("Found last used environment: %{environment}") % { environment: last_run_environment }) if last_run_environment
+    last_run_environment
+  rescue => detail
+    Puppet.debug(_("Unable to get last used environment: %{detail}") % { detail: detail })
+    nil
+  end
+  private :last_used_environment
 
   def send_report(report)
     puts report.summary if Puppet[:summarize]
