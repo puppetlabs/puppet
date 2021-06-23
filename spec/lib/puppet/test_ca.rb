@@ -46,6 +46,11 @@ module Puppet
         ext = ef.create_extension(["subjectAltName", opts[:subject_alt_names], false])
         cert.add_extension(ext)
       end
+      if exts = opts[:extensions]
+        exts.each do |e|
+          cert.add_extension(OpenSSL::X509::Extension.new(*e))
+        end
+      end
       cert.sign(issuer_key, @digest)
       { private_key: key, cert: cert }
     end

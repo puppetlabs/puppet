@@ -1,0 +1,5 @@
+---
+oid_mapping:
+  '1.3.6.1.4.1.34380.1.2.1.1':
+    shortname : 'myshortname'
+    longname  : 'Long name'
