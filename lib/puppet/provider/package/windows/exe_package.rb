@@ -17,6 +17,11 @@ class Puppet::Provider::Package::Windows
       'WindowsInstaller',
     ]
 
+    def self.register(path)
+      Puppet::Type::Package::ProviderWindows.paths ||= []
+      Puppet::Type::Package::ProviderWindows.paths << path
+    end
+
     # Return an instance of the package from the registry, or nil
     def self.from_registry(name, values)
       if valid?(name, values)
@@ -55,7 +60,31 @@ class Puppet::Provider::Package::Windows
     end
 
     def self.install_command(resource)
-      munge(resource[:source])
+      file_location = resource[:source]
+      if file_location.start_with?('http://', 'https://')
+        tempfile = Tempfile.new(['','.exe'])
+        begin
+          uri = URI(Puppet::Util.uri_encode(file_location))
+          client = Puppet.runtime[:http]
+          client.get(uri, options: { include_system_store: true }) do |response|
+            raise Puppet::HTTP::ResponseError.new(response) unless response.success?
+
+            File.open(tempfile.path, 'wb') do |file|
+              response.read_body do |data|
+                file.write(data)
+              end
+            end
+          end
+        rescue => detail
+          raise Puppet::Error.new(_("Error when installing %{package}: %{detail}") % { package: resource[:name] ,detail: detail.message}, detail)
+        ensure
+          self.register(tempfile.path)
+          tempfile.close()
+          file_location = tempfile.path
+        end
+      end
+
+      munge(file_location)
     end
 
     def uninstall_command

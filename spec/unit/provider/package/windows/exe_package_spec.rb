@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'puppet/provider/package/windows/exe_package'
+require 'puppet/provider/package/windows'
 
 describe Puppet::Provider::Package::Windows::ExePackage do
   let (:name)        { 'Git version 1.7.11' }
@@ -71,9 +72,25 @@ describe Puppet::Provider::Package::Windows::ExePackage do
 
   context '#install_command' do
     it 'should install using the source' do
+      allow(Puppet::FileSystem).to receive(:exist?).with(source).and_return(true)
       cmd = described_class.install_command({:source => source})
 
       expect(cmd).to eq(source)
+    end
+
+    it 'should raise error when URI is invalid' do
+      web_source = 'https://www.t e s t.test/test.exe'
+
+      expect do
+        described_class.install_command({:source => web_source, :name => name})
+      end.to raise_error(Puppet::Error, /Error when installing #{name}:/)
+    end
+
+    it 'should download package from source file before installing', if: Puppet::Util::Platform.windows? do
+      web_source = 'https://www.test.test/test.exe'
+      stub_request(:get, web_source).to_return(status: 200, body: 'package binaries')
+      cmd = described_class.install_command({:source => web_source})
+      expect(File.read(cmd)).to eq('package binaries')
     end
   end
 
