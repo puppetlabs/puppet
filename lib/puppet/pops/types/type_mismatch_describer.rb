@@ -363,6 +363,9 @@ module Types
     def always_fully_detailed?(e, a)
       if e.is_a?(Array)
         e.any? { |t| always_fully_detailed?(t, a) }
+
+      elsif e.is_a?(Puppet::Pops::Types::PObjectType) && a.is_a?(Puppet::Pops::Types::PObjectType)
+        e.implementation_class(false) == a.implementation_class(false)
       else
         e.class == a.class || e.is_a?(PTypeAliasType) || a.is_a?(PTypeAliasType) || specialization(e, a)
       end
@@ -385,7 +388,11 @@ module Types
         e.any? { |t| assignable_to_default?(t, a) }
       else
         e = e.resolved_type if e.is_a?(PTypeAliasType)
-        e.class::DEFAULT.assignable?(a)
+        if e.is_a?(Puppet::Pops::Types::PObjectType) && a.is_a?(Puppet::Pops::Types::PObjectType)
+          e.implementation_class == a.implementation_class
+        else
+          e.class::DEFAULT.assignable?(a)
+        end
       end
     end
 
