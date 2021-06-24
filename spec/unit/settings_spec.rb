@@ -29,6 +29,17 @@ describe Puppet::Settings do
     end
   end
 
+  def stub_config_with(content)
+    allow(Puppet.features).to receive(:root?).and_return(false)
+    expect(Puppet::FileSystem).to receive(:exist?).
+      with(user_config_file_default_location).
+      and_return(true).ordered
+    expect(@settings).to receive(:read_file).
+      with(user_config_file_default_location).
+      and_return(content).ordered
+    @settings.send(:parse_config_files)
+  end
+
   describe "when specifying defaults" do
     before do
       @settings = Puppet::Settings.new
@@ -264,23 +275,31 @@ describe Puppet::Settings do
       expect(@settings[:myval]).to eq("")
     end
 
-    it "should flag string settings from the CLI" do
+    it "should retrieve numeric settings from the CLI" do
       @settings.handlearg("--myval", "12")
-      expect(@settings.set_by_cli?(:myval)).to be_truthy
+      expect(@settings.set_by_cli(:myval)).to eq(12)
+      expect(@settings.set_by_cli?(:myval)).to be true
     end
 
-    it "should flag bool settings from the CLI" do
+    it "should retrieve string settings from the CLI" do
+      @settings.handlearg("--myval", "something")
+      expect(@settings.set_by_cli(:myval)).to eq("something")
+      expect(@settings.set_by_cli?(:myval)).to be true
+    end
+
+    it "should retrieve bool settings from the CLI" do
       @settings.handlearg("--bool")
-      expect(@settings.set_by_cli?(:bool)).to be_truthy
+      expect(@settings.set_by_cli(:bool)).to be true
+      expect(@settings.set_by_cli?(:bool)).to be true
     end
 
-    it "should not flag settings memory as from CLI" do
+    it "should not retrieve settings set in memory as from CLI" do
       @settings[:myval] = "12"
-      expect(@settings.set_by_cli?(:myval)).to be_falsey
+      expect(@settings.set_by_cli?(:myval)).to be false
     end
 
     it "should find no configured settings by default" do
-      expect(@settings.set_by_config?(:myval)).to be_falsey
+      expect(@settings.set_by_config?(:myval)).to be false
     end
 
     it "should identify configured settings in memory" do
@@ -304,64 +323,66 @@ describe Puppet::Settings do
       expect(@settings.set_by_config?(:manifest, Puppet[:environment])).to be_truthy
     end
 
-    it "should identify configured settings from the preferred run mode" do
-      user_config_text = "[#{@settings.preferred_run_mode}]\nmyval = foo"
+    context "when handling puppet.conf" do
+      describe "#set_by_config?" do
+        it "should identify configured settings from the preferred run mode" do
+          stub_config_with(<<~CONFIG)
+          [#{@settings.preferred_run_mode}]
+          myval = foo
+          CONFIG
 
-      allow(Puppet.features).to receive(:root?).and_return(false)
-      expect(Puppet::FileSystem).to receive(:exist?).
-        with(user_config_file_default_location).
-        and_return(true).ordered
-      expect(@settings).to receive(:read_file).
-        with(user_config_file_default_location).
-        and_return(user_config_text).ordered
+          expect(@settings.set_by_config?(:myval)).to be_truthy
+        end
 
-      @settings.send(:parse_config_files)
-      expect(@settings.set_by_config?(:myval)).to be_truthy
-    end
+        it "should identify configured settings from the specified run mode" do
+          stub_config_with(<<~CONFIG)
+          [server]
+          myval = foo
+          CONFIG
 
-    it "should identify configured settings from the specified run mode" do
-      user_config_text = "[server]\nmyval = foo"
+          expect(@settings.set_by_config?(:myval, nil, :server)).to be_truthy
+        end
 
-      allow(Puppet.features).to receive(:root?).and_return(false)
-      expect(Puppet::FileSystem).to receive(:exist?).
-        with(user_config_file_default_location).
-        and_return(true).ordered
-      expect(@settings).to receive(:read_file).
-        with(user_config_file_default_location).
-        and_return(user_config_text).ordered
+        it "should not identify configured settings from an unspecified run mode" do
+          stub_config_with(<<~CONFIG)
+          [zaz]
+          myval = foo
+          CONFIG
 
-      @settings.send(:parse_config_files)
-      expect(@settings.set_by_config?(:myval, nil, :server)).to be_truthy
-    end
+          expect(@settings.set_by_config?(:myval)).to be_falsey
+        end
 
-    it "should not identify configured settings from an unspecified run mode" do
-      user_config_text = "[zaz]\nmyval = foo"
+        it "should identify configured settings from the main section" do
+          stub_config_with(<<~CONFIG)
+          [main]
+          myval = foo
+          CONFIG
 
-      allow(Puppet.features).to receive(:root?).and_return(false)
-      expect(Puppet::FileSystem).to receive(:exist?).
-        with(user_config_file_default_location).
-        and_return(true).ordered
-      expect(@settings).to receive(:read_file).
-        with(user_config_file_default_location).
-        and_return(user_config_text).ordered
+          expect(@settings.set_by_config?(:myval)).to be_truthy
+        end
+      end
 
-      @settings.send(:parse_config_files)
-      expect(@settings.set_by_config?(:myval)).to be_falsey
-    end
+      describe "#set_in_section" do
+        it "should retrieve configured settings from the specified section" do
+          stub_config_with(<<~CONFIG)
+          [agent]
+          myval = foo
+          CONFIG
 
-    it "should identify configured settings from the main section" do
-      user_config_text = "[main]\nmyval = foo"
+          expect(@settings.set_in_section(:myval, :agent)).to eq("foo")
+          expect(@settings.set_in_section?(:myval, :agent)).to be true
+        end
 
-      allow(Puppet.features).to receive(:root?).and_return(false)
-      expect(Puppet::FileSystem).to receive(:exist?).
-        with(user_config_file_default_location).
-        and_return(true).ordered
-      expect(@settings).to receive(:read_file).
-        with(user_config_file_default_location).
-        and_return(user_config_text).ordered
+        it "should not retrieve configured settings from a different section" do
+          stub_config_with(<<~CONFIG)
+          [main]
+          myval = foo
+          CONFIG
 
-      @settings.send(:parse_config_files)
-      expect(@settings.set_by_config?(:myval)).to be_truthy
+          expect(@settings.set_in_section(:myval, :agent)).to be nil
+          expect(@settings.set_in_section?(:myval, :agent)).to be false
+        end
+      end
     end
 
     it "should clear the cache when setting getopt-specific values" do

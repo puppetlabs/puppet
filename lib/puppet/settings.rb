@@ -891,9 +891,16 @@ class Puppet::Settings
   # Allow later inspection to determine if the setting was set on the
   # command line, or through some other code path.  Used for the
   # `dns_alt_names` option during cert generate. --daniel 2011-10-18
-  def set_by_cli?(param)
+  #
+  # @param param [String, Symbol] the setting to look up
+  # @return [Object, nil] the value of the setting or nil if unset
+  def set_by_cli(param)
     param = param.to_sym
-    !@value_sets[:cli].lookup(param).nil?
+    @value_sets[:cli].lookup(param)
+  end
+
+  def set_by_cli?(param)
+    !!set_by_cli(param)
   end
 
   # Get values from a search path entry.
@@ -926,14 +933,22 @@ class Puppet::Settings
     end
   end
 
-  # Allow later inspection to determine if the setting was set by user
-  # config, rather than a default setting.
-  def set_in_section?(param, section)
+  # Allow later inspection to determine if the setting was set in a specific
+  # section
+  #
+  # @param param [String, Symbol] the setting to look up
+  # @param section [Symbol] the section in which to look up the setting
+  # @return [Object, nil] the value of the setting or nil if unset
+  def set_in_section(param, section)
     param = param.to_sym
     vals = searchpath_values(SearchPathElement.new(section, :section))
     if vals
       vals.lookup(param)
     end
+  end
+
+  def set_in_section?(param, section)
+    !!set_in_section(param, section)
   end
 
   # Patches the value for a param in a section.
