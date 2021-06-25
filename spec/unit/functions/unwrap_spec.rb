@@ -15,6 +15,14 @@ describe 'the unwrap function' do
     expect(eval_and_collect_notices(code)).to eq(['unwrapped value is 12345'])
   end
 
+  it 'just returns a non-sensitive value' do
+    code = <<-CODE
+      $non_sensitive = "12345"
+      notice("value is still ${non_sensitive.unwrap}")
+    CODE
+    expect(eval_and_collect_notices(code)).to eq(['value is still 12345'])
+  end
+
   it 'unwraps a sensitive value when given a code block' do
     code = <<-CODE
       $sensitive = Sensitive.new("12345")
