@@ -59,6 +59,10 @@ module Puppet::ModuleTool
         results = { :action => :install, :module_name => name, :module_version => version }
 
         begin
+          if !@local_tarball && name !~ /-/
+            raise InvalidModuleNameError.new(module_name: @name, suggestion: "puppetlabs-#{@name}", action: :install)
+          end
+
           installed_module = installed_modules[name]
           if installed_module
             unless forced?
