@@ -478,6 +478,7 @@ module Puppet
     },
     :maximum_uid => {
         :default  => 4294967290,
+        :type     => :integer,
         :desc     => "The maximum allowed UID.  Some platforms use negative UIDs
           but then ship with tools that do not know how to handle signed ints,
           so the UIDs show up as huge numbers that can then not be fed back into
@@ -615,6 +616,7 @@ module Puppet
     },
     :http_proxy_port => {
       :default    => 3128,
+      :type       => :port,
       :desc       => "The HTTP proxy port to use for outgoing connections",
     },
     :http_proxy_user => {
@@ -2024,6 +2026,7 @@ EOT
     },
     :ldapport => {
       :default  => 389,
+      :type     => :port,
       :desc     => "The LDAP port.",
     },
 
@@ -2107,6 +2110,7 @@ EOT
   settings.define_settings(:parser,
    :max_errors => {
      :default => 10,
+     :type => :integer,
      :desc => <<-'EOT'
        Sets the max number of logged/displayed parser validation errors in case
        multiple errors have been detected. A value of 0 is the same as a value of 1; a
@@ -2115,6 +2119,7 @@ EOT
    },
    :max_warnings => {
      :default => 10,
+     :type => :integer,
      :desc => <<-'EOT'
        Sets the max number of logged/displayed parser validation warnings in
        case multiple warnings have been detected. A value of 0 blocks logging of
@@ -2123,6 +2128,7 @@ EOT
      },
   :max_deprecations => {
     :default => 10,
+    :type => :integer,
     :desc => <<-'EOT'
       Sets the max number of logged/displayed parser validation deprecation
       warnings in case multiple deprecation warnings have been detected. A value of 0
