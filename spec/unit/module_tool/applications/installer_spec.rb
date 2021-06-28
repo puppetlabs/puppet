@@ -65,6 +65,18 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => RUBY_PLATFORM =
       graph_should_include 'pmtacceptance-stdlib', nil => v('4.1.0')
     end
 
+    it 'reports a meaningful error if the name is invalid' do
+      app = installer('ntp', install_dir, options)
+      results = app.run
+      expect(results).to include :result => :failure
+      expect(results[:error][:oneline]).to eq("Could not install 'ntp', did you mean 'puppetlabs-ntp'?")
+      expect(results[:error][:multiline]).to eq(<<~END.chomp)
+        Could not install module 'ntp'
+          The name 'ntp' is invalid
+            Did you mean `puppet module install puppetlabs-ntp`?
+      END
+    end
+
     context 'with a tarball file' do
       let(:module) { fixtures('stdlib.tgz') }
 
