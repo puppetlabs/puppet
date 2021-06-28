@@ -201,7 +201,9 @@ module Puppet
         only uses the resource title to ensure `exec`s are unique."
 
       validate do |command|
-        raise ArgumentError, _("Command must be a String, got value of class %{klass}") % { klass: command.class } unless command.is_a? String
+        unless command.is_a?(String) || command.is_a?(Array)
+          raise ArgumentError, _("Command must be a String or Array<String>, got value of class %{klass}") % { klass: command.class }
+        end
       end
     end
 
@@ -458,6 +460,10 @@ module Puppet
 
             unless => ['test -f /tmp/file1', 'test -f /tmp/file2'],
 
+        or an array of arrays. For example:
+
+            unless => [['test', '-f', '/tmp/file1'], 'test -f /tmp/file2']
+
         This `exec` would only run if every command in the array has a
         non-zero exit code.
       EOT
@@ -514,6 +520,10 @@ module Puppet
 
             onlyif => ['test -f /tmp/file1', 'test -f /tmp/file2'],
 
+        or an array of arrays. For example:
+
+            onlyif => [['test', '-f', '/tmp/file1'], 'test -f /tmp/file2']
+
         This `exec` would only run if every command in the array has an
         exit code of 0 (success).
       EOT
@@ -562,12 +572,14 @@ module Puppet
       reqs << self[:cwd] if self[:cwd]
 
       file_regex = Puppet::Util::Platform.windows? ? %r{^([a-zA-Z]:[\\/]\S+)} : %r{^(/\S+)}
+      cmd = self[:command]
+      cmd = cmd[0] if cmd.is_a? Array
 
-      self[:command].scan(file_regex) { |str|
+      cmd.scan(file_regex) { |str|
         reqs << str
       }
 
-      self[:command].scan(/^"([^"]+)"/) { |str|
+      cmd.scan(/^"([^"]+)"/) { |str|
         reqs << str
       }
 
@@ -583,6 +595,7 @@ module Puppet
           # fully qualified.  It might not be a bad idea to add
           # unqualified files, but, well, that's a bit more annoying
           # to do.
+          line = line[0] if line.is_a? Array
           reqs += line.scan(file_regex)
         end
       }
