@@ -2025,7 +2025,8 @@ EOT
       :desc     => "The LDAP server.",
     },
     :ldapport => {
-      :default  => "389",
+      :default  => 389,
+      :type     => :port,
       :desc     => "The LDAP port.",
     },
 

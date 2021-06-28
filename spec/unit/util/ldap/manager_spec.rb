@@ -245,8 +245,8 @@ describe Puppet::Util::Ldap::Manager, :if => Puppet.features.ldap? do
     end
 
     it "should open the connection with its port set to the :ldapport" do
-      Puppet[:ldapport] = "28"
-      expect(Puppet::Util::Ldap::Connection).to receive(:new).with(anything, "28", anything).and_return(@conn)
+      Puppet[:ldapport] = 28
+      expect(Puppet::Util::Ldap::Connection).to receive(:new).with(anything, 28, anything).and_return(@conn)
 
       @manager.connect { |c| }
     end

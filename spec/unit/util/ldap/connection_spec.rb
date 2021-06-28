@@ -29,7 +29,7 @@ describe Puppet::Util::Ldap::Connection do
     allow(LDAP::Conn).to receive(:new).and_return(@ldapconn)
     allow(LDAP::SSLConn).to receive(:new).and_return(@ldapconn)
 
-    @connection = Puppet::Util::Ldap::Connection.new("host", "port")
+    @connection = Puppet::Util::Ldap::Connection.new("host", 1234)
   end
 
 
@@ -39,31 +39,31 @@ describe Puppet::Util::Ldap::Connection do
     end
 
     it "should allow specification of a user and password" do
-      expect { Puppet::Util::Ldap::Connection.new("myhost", "myport", :user => "blah", :password => "boo") }.not_to raise_error
+      expect { Puppet::Util::Ldap::Connection.new("myhost", 1234, :user => "blah", :password => "boo") }.not_to raise_error
     end
 
     it "should allow specification of ssl" do
-      expect { Puppet::Util::Ldap::Connection.new("myhost", "myport", :ssl => :tsl) }.not_to raise_error
+      expect { Puppet::Util::Ldap::Connection.new("myhost", 1234, :ssl => :tsl) }.not_to raise_error
     end
 
     it "should support requiring a new connection" do
-      expect { Puppet::Util::Ldap::Connection.new("myhost", "myport", :reset => true) }.not_to raise_error
+      expect { Puppet::Util::Ldap::Connection.new("myhost", 1234, :reset => true) }.not_to raise_error
     end
 
     it "should fail if ldap is unavailable" do
       expect(Puppet.features).to receive(:ldap?).and_return(false)
 
-      expect { Puppet::Util::Ldap::Connection.new("host", "port") }.to raise_error(Puppet::Error)
+      expect { Puppet::Util::Ldap::Connection.new("host", 1234) }.to raise_error(Puppet::Error)
     end
 
     it "should use neither ssl nor tls by default" do
-      expect(LDAP::Conn).to receive(:new).with("host", "port").and_return(@ldapconn)
+      expect(LDAP::Conn).to receive(:new).with("host", 1234).and_return(@ldapconn)
 
       @connection.start
     end
 
     it "should use LDAP::SSLConn if ssl is requested" do
-      expect(LDAP::SSLConn).to receive(:new).with("host", "port").and_return(@ldapconn)
+      expect(LDAP::SSLConn).to receive(:new).with("host", 1234).and_return(@ldapconn)
 
       @connection.ssl = true
 
@@ -71,7 +71,7 @@ describe Puppet::Util::Ldap::Connection do
     end
 
     it "should use LDAP::SSLConn and tls if tls is requested" do
-      expect(LDAP::SSLConn).to receive(:new).with("host", "port", true).and_return(@ldapconn)
+      expect(LDAP::SSLConn).to receive(:new).with("host", 1234, true).and_return(@ldapconn)
 
       @connection.ssl = :tls
 
@@ -121,8 +121,8 @@ describe Puppet::Util::Ldap::Connection do
     end
 
     it "should use the :ldapport setting to determine the port" do
-      Puppet[:ldapport] = "456"
-      expect(Puppet::Util::Ldap::Connection).to receive(:new).with(anything, "456", anything)
+      Puppet[:ldapport] = 456
+      expect(Puppet::Util::Ldap::Connection).to receive(:new).with(anything, 456, anything)
       Puppet::Util::Ldap::Connection.instance
     end
 
