@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 7.8.0-32-gdd314abb53\n"
+"Project-Id-Version: Puppet automation framework 7.8.0-73-gd8c14c22bc\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-06-16 12:52+0000\n"
-"PO-Revision-Date: 2021-06-16 12:52+0000\n"
+"POT-Creation-Date: 2021-06-28 08:22+0000\n"
+"PO-Revision-Date: 2021-06-28 08:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -348,31 +348,31 @@ msgstr ""
 msgid "Try 'puppet help %{face} %{action}' for usage"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:16
+#: ../lib/puppet/application/filebucket.rb:17
 msgid "Store and retrieve files in a filebucket"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:225
+#: ../lib/puppet/application/filebucket.rb:226
 msgid "You must specify a file to back up"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:229
+#: ../lib/puppet/application/filebucket.rb:230
 msgid "%{file}: no such file"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:233
+#: ../lib/puppet/application/filebucket.rb:234
 msgid "%{file}: cannot read file"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:255 ../lib/puppet/application/filebucket.rb:278
+#: ../lib/puppet/application/filebucket.rb:256 ../lib/puppet/application/filebucket.rb:279
 msgid "Need exactly two arguments: filebucket diff <file_a> <file_b>"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:275
+#: ../lib/puppet/application/filebucket.rb:276
 msgid "Comparing %{checksum_a} %{checksum_b} %{file_a} %{file_b}"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:289
+#: ../lib/puppet/application/filebucket.rb:290
 msgid "Cancelling"
 msgstr ""
 
@@ -450,55 +450,55 @@ msgstr ""
 msgid "An action must be specified."
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:129 ../lib/puppet/application/ssl.rb:136
+#: ../lib/puppet/application/ssl.rb:130 ../lib/puppet/application/ssl.rb:137
 msgid "The certificate for '%{name}' has not yet been signed"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:147
+#: ../lib/puppet/application/ssl.rb:148
 msgid "Completed SSL initialization"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:151
+#: ../lib/puppet/application/ssl.rb:152
 msgid "Unknown action '%{action}'"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:165 ../lib/puppet/ssl/state_machine.rb:180
+#: ../lib/puppet/application/ssl.rb:166 ../lib/puppet/ssl/state_machine.rb:180
 msgid "Creating a new EC SSL key for %{name} using curve %{curve}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:168
+#: ../lib/puppet/application/ssl.rb:169
 msgid "Creating a new SSL key for %{name}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:178
+#: ../lib/puppet/application/ssl.rb:179
 msgid "Submitted certificate request for '%{name}' to %{url}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:181
+#: ../lib/puppet/application/ssl.rb:182
 msgid "Could not submit certificate request for '%{name}' to %{url} due to a conflict on the server"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:183 ../lib/puppet/application/ssl.rb:186
+#: ../lib/puppet/application/ssl.rb:184 ../lib/puppet/application/ssl.rb:187
 msgid "Failed to submit certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:194
+#: ../lib/puppet/application/ssl.rb:195
 msgid "Downloading certificate '%{name}' from %{url}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:198
+#: ../lib/puppet/application/ssl.rb:199
 msgid "Downloaded certificate '%{name}' with fingerprint %{fingerprint}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:211 ../lib/puppet/application/ssl.rb:214
+#: ../lib/puppet/application/ssl.rb:212 ../lib/puppet/application/ssl.rb:215
 msgid "Failed to download certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:243 ../lib/puppet/application/ssl.rb:246
+#: ../lib/puppet/application/ssl.rb:244 ../lib/puppet/application/ssl.rb:247
 msgid "Failed to connect to the CA to determine if certificate %{certname} has been cleaned"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:250
+#: ../lib/puppet/application/ssl.rb:251
 msgid ""
 "The certificate %{certname} must be cleaned from the CA first. To fix this,\n"
 "run the following commands on the CA:\n"
@@ -506,7 +506,7 @@ msgid ""
 "  puppet ssl clean\n"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:273
+#: ../lib/puppet/application/ssl.rb:274
 msgid "Removed %{label} %{path}"
 msgstr ""
 
@@ -720,7 +720,7 @@ msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{all
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1916
+#: ../lib/puppet/defaults.rb:1917
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -2905,43 +2905,43 @@ msgid "Face summary should be a single line; put the long text in 'description' 
 msgstr ""
 
 #. TRANSLATORS 'author' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:205
+#: ../lib/puppet/interface/documentation.rb:206
 msgid "author must be a string; use multiple statements for multiple authors"
 msgstr ""
 
 #. TRANSLATORS 'author' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:210
+#: ../lib/puppet/interface/documentation.rb:211
 msgid "author should be a single line; use multiple statements for multiple authors"
 msgstr ""
 
 #. TRANSLATORS 'author' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:230
+#: ../lib/puppet/interface/documentation.rb:231
 msgid "author should be a single line; use multiple statements"
 msgstr ""
 
 #. TRANSLATORS 'copyright' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:251
+#: ../lib/puppet/interface/documentation.rb:252
 msgid "copyright takes the owners names, then the years covered"
 msgstr ""
 
 #. TRANSLATORS 'copyright' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:275
+#: ../lib/puppet/interface/documentation.rb:276
 msgid "copyright owner must be a string or an array of strings"
 msgstr ""
 
 #. TRANSLATORS 'copyright' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:312
+#: ../lib/puppet/interface/documentation.rb:313
 msgid "copyright with a year %{value} is very strange; did you accidentally add or subtract two years?"
 msgstr ""
 
 #. TRANSLATORS 'copyright' is an attribute name and should not be translated
 #. TRANSLATORS 'copyright' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:328 ../lib/puppet/interface/documentation.rb:333
+#: ../lib/puppet/interface/documentation.rb:329 ../lib/puppet/interface/documentation.rb:334
 msgid "%{value} is not a good copyright year or range"
 msgstr ""
 
 #. TRANSLATORS 'copyright' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:352
+#: ../lib/puppet/interface/documentation.rb:353
 msgid "%{value} is not a good copyright year, set, or range"
 msgstr ""
 
@@ -3202,19 +3202,19 @@ msgstr ""
 msgid "No file containing checksums found."
 msgstr ""
 
-#: ../lib/puppet/module_tool/applications/installer.rb:84 ../lib/puppet/module_tool/applications/upgrader.rb:102
+#: ../lib/puppet/module_tool/applications/installer.rb:88 ../lib/puppet/module_tool/applications/upgrader.rb:102
 msgid "Downloading from %{host} ..."
 msgstr ""
 
-#: ../lib/puppet/module_tool/applications/installer.rb:132 ../lib/puppet/module_tool/applications/upgrader.rb:140
+#: ../lib/puppet/module_tool/applications/installer.rb:136 ../lib/puppet/module_tool/applications/upgrader.rb:140
 msgid "Resolving dependencies ..."
 msgstr ""
 
-#: ../lib/puppet/module_tool/applications/installer.rb:208
+#: ../lib/puppet/module_tool/applications/installer.rb:212
 msgid "Preparing to install ..."
 msgstr ""
 
-#: ../lib/puppet/module_tool/applications/installer.rb:211
+#: ../lib/puppet/module_tool/applications/installer.rb:215
 msgid "Installing -- do not interrupt ..."
 msgstr ""
 
@@ -3333,7 +3333,7 @@ msgstr ""
 msgid "Could not %{action} '%{module_name}' (%{version}); no version satisfies all dependencies"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:17 ../lib/puppet/module_tool/errors/shared.rb:186 ../lib/puppet/module_tool/errors/upgrader.rb:58
+#: ../lib/puppet/module_tool/errors/shared.rb:17 ../lib/puppet/module_tool/errors/shared.rb:203 ../lib/puppet/module_tool/errors/upgrader.rb:58
 msgid "Could not %{action} module '%{module_name}' (%{version})"
 msgstr ""
 
@@ -3423,68 +3423,80 @@ msgid "  No version of '%{module_name}' will satisfy dependencies"
 msgstr ""
 
 #: ../lib/puppet/module_tool/errors/shared.rb:135
-msgid "Could not %{action} '%{module_name}'; module is not installed"
+msgid "Could not %{action} '%{module_name}', did you mean '%{suggestion}'?"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:140 ../lib/puppet/module_tool/errors/shared.rb:163 ../lib/puppet/module_tool/errors/shared.rb:204
+#: ../lib/puppet/module_tool/errors/shared.rb:140 ../lib/puppet/module_tool/errors/shared.rb:157 ../lib/puppet/module_tool/errors/shared.rb:180 ../lib/puppet/module_tool/errors/shared.rb:221
 msgid "Could not %{action} module '%{module_name}'"
 msgstr ""
 
 #: ../lib/puppet/module_tool/errors/shared.rb:141
+msgid "  The name '%{module_name}' is invalid"
+msgstr ""
+
+#: ../lib/puppet/module_tool/errors/shared.rb:142
+msgid "    Did you mean `puppet module %{action} %{suggestion}`?"
+msgstr ""
+
+#: ../lib/puppet/module_tool/errors/shared.rb:152
+msgid "Could not %{action} '%{module_name}'; module is not installed"
+msgstr ""
+
+#: ../lib/puppet/module_tool/errors/shared.rb:158
 msgid "  Module '%{module_name}' is not installed"
 msgstr ""
 
 #. TRANSLATORS `puppet module %{action} %{suggestion}` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:144
+#: ../lib/puppet/module_tool/errors/shared.rb:161
 msgid "    You may have meant `puppet module %{action} %{suggestion}`"
 msgstr ""
 
 #. TRANSLATORS `puppet module install` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:147
+#: ../lib/puppet/module_tool/errors/shared.rb:164
 msgid "    Use `puppet module install` to install this module"
 msgstr ""
 
 #. TRANSLATORS "module path" refers to a set of directories where modules may be installed
-#: ../lib/puppet/module_tool/errors/shared.rb:158
+#: ../lib/puppet/module_tool/errors/shared.rb:175
 msgid "Could not %{action} '%{module_name}'; module appears in multiple places in the module path"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:164
+#: ../lib/puppet/module_tool/errors/shared.rb:181
 msgid "  Module '%{module_name}' appears multiple places in the module path"
 msgstr ""
 
 #. TRANSLATORS This is repeats as separate lines as a list under "Module '%{module_name}' appears multiple places in the module path"
-#: ../lib/puppet/module_tool/errors/shared.rb:167
+#: ../lib/puppet/module_tool/errors/shared.rb:184
 msgid "    '%{module_name}' (%{version}) was found in %{path}"
 msgstr ""
 
 #. TRANSLATORS `--modulepath` is command line option and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:170
+#: ../lib/puppet/module_tool/errors/shared.rb:187
 msgid "    Use the `--modulepath` option to limit the search to specific directories"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:181
+#: ../lib/puppet/module_tool/errors/shared.rb:198
 msgid "Could not %{action} '%{module_name}'; module has had changes made locally"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:187
+#: ../lib/puppet/module_tool/errors/shared.rb:204
 msgid "  Installed module has had changes made locally"
 msgstr ""
 
 #. TRANSLATORS `puppet module %{action} --ignore-changes` is a command line and should not be translated
-#: ../lib/puppet/module_tool/errors/shared.rb:189
+#: ../lib/puppet/module_tool/errors/shared.rb:206
 msgid "    Use `puppet module %{action} --ignore-changes` to %{action} this module anyway"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:199
+#: ../lib/puppet/module_tool/errors/shared.rb:216
 msgid "Could not %{action} '%{module_name}'; %{error}"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:205
+#: ../lib/puppet/module_tool/errors/shared.rb:222
 msgid "  Failure trying to parse metadata"
 msgstr ""
 
-#: ../lib/puppet/module_tool/errors/shared.rb:206
+#: ../lib/puppet/module_tool/errors/shared.rb:223
 msgid "    Original message was: %{message}"
 msgstr ""
 
@@ -7222,15 +7234,15 @@ msgstr ""
 msgid "(See https://puppet.com/docs/puppet/latest/environments_about.html)"
 msgstr ""
 
-#: ../lib/puppet/settings/config_file.rb:138
+#: ../lib/puppet/settings/config_file.rb:131
 msgid "Invalid file option '%{parameter}'"
 msgstr ""
 
-#: ../lib/puppet/settings/config_file.rb:142
+#: ../lib/puppet/settings/config_file.rb:135
 msgid "File modes must be numbers"
 msgstr ""
 
-#: ../lib/puppet/settings/config_file.rb:145
+#: ../lib/puppet/settings/config_file.rb:138
 msgid "Could not parse '%{string}'"
 msgstr ""
 
@@ -7299,7 +7311,7 @@ msgstr ""
 msgid "%{name} has not declared what class it wraps"
 msgstr ""
 
-#: ../lib/puppet/ssl/base.rb:31 ../lib/puppet/x509/cert_provider.rb:367
+#: ../lib/puppet/ssl/base.rb:31 ../lib/puppet/x509/cert_provider.rb:352
 msgid "Certname %{name} must not contain unprintable or non-ASCII characters"
 msgstr ""
 
@@ -9421,7 +9433,7 @@ msgstr ""
 msgid "An attempt to set mode %{mode} on item %{path} would result in the group, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:433 ../lib/puppet/util/windows/security.rb:450 ../lib/puppet/util/windows/sid.rb:157 ../lib/puppet/util/windows/sid.rb:219 ../lib/puppet/util/windows/user.rb:59
+#: ../lib/puppet/util/windows/security.rb:433 ../lib/puppet/util/windows/security.rb:450 ../lib/puppet/util/windows/sid.rb:159 ../lib/puppet/util/windows/sid.rb:221 ../lib/puppet/util/windows/user.rb:59
 msgid "Invalid SID"
 msgstr ""
 
@@ -9577,19 +9589,19 @@ msgstr ""
 msgid "Timed out while waiting for the pending transition from %{pending_state} to %{final_state} to finish. The current state is %{current_state}."
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:96
+#: ../lib/puppet/util/windows/sid.rb:98
 msgid "Octet string must be an array of bytes"
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:163
+#: ../lib/puppet/util/windows/sid.rb:165
 msgid "Failed to convert binary SID"
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:168
+#: ../lib/puppet/util/windows/sid.rb:170
 msgid "ConvertSidToStringSidW failed to allocate buffer for sid"
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:188
+#: ../lib/puppet/util/windows/sid.rb:190
 msgid "Failed to convert string SID: %{string_sid}"
 msgstr ""
 
@@ -9613,72 +9625,72 @@ msgstr ""
 msgid "Failed to unload user profile %{user}"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:45
+#: ../lib/puppet/x509/cert_provider.rb:44
 msgid "Failed to save CA certificates to '%{capath}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:59
+#: ../lib/puppet/x509/cert_provider.rb:58
 msgid "The CA certificates are missing from '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:63
+#: ../lib/puppet/x509/cert_provider.rb:62
 msgid "Failed to load CA certificates from '%{capath}'"
 msgstr ""
 
 #. TRANSLATORS 'PEM' is an acronym and shouldn't be translated
-#: ../lib/puppet/x509/cert_provider.rb:75
+#: ../lib/puppet/x509/cert_provider.rb:74
 msgid "Failed to parse CA certificates as PEM"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:91
+#: ../lib/puppet/x509/cert_provider.rb:90
 msgid "Failed to save CRLs to '%{crlpath}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:105
+#: ../lib/puppet/x509/cert_provider.rb:104
 msgid "The CRL is missing from '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:109
+#: ../lib/puppet/x509/cert_provider.rb:108
 msgid "Failed to load CRLs from '%{crlpath}'"
 msgstr ""
 
 #. TRANSLATORS 'PEM' is an acronym and shouldn't be translated
-#: ../lib/puppet/x509/cert_provider.rb:121
+#: ../lib/puppet/x509/cert_provider.rb:120
 msgid "Failed to parse CRLs as PEM"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:171
+#: ../lib/puppet/x509/cert_provider.rb:170
 msgid "Failed to save private key for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:191
+#: ../lib/puppet/x509/cert_provider.rb:190
 msgid "The private key is missing from '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:195
+#: ../lib/puppet/x509/cert_provider.rb:194
 msgid "Failed to load private key for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:252
+#: ../lib/puppet/x509/cert_provider.rb:237
 msgid "Failed to save client certificate for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:268
+#: ../lib/puppet/x509/cert_provider.rb:253
 msgid "The client certificate is missing from '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:272
+#: ../lib/puppet/x509/cert_provider.rb:257
 msgid "Failed to load client certificate for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:321
+#: ../lib/puppet/x509/cert_provider.rb:306
 msgid "Failed to save certificate request for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:337
+#: ../lib/puppet/x509/cert_provider.rb:322
 msgid "Failed to load certificate request for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/x509/cert_provider.rb:350
+#: ../lib/puppet/x509/cert_provider.rb:335
 msgid "Failed to delete certificate request for '%{name}'"
 msgstr ""
