@@ -151,6 +151,126 @@ describe Puppet::Configurer do
       expect(report.host).to eq('node_name_from_fact')
     end
 
+    it "should warn the user when the fact value length limits are exceeded" do
+      Puppet[:fact_name_length_soft_limit] = 0
+      Puppet[:fact_value_length_soft_limit] = 1
+      Puppet[:top_level_facts_soft_limit] = 0
+      Puppet[:number_of_facts_soft_limit] = 0
+      Puppet[:payload_soft_limit] = 0
+
+      facts.values = { 'processors' => {
+        'cores' => 1,
+        'count' => 2,
+        'isa' => "i386",
+        'models' => [
+          "CPU1 @ 2.80GHz"
+        ],
+        'physicalcount' => 4 }
+      }
+      Puppet::Node::Facts.indirection.save(facts)
+
+      expect(Puppet).to receive(:warning).with(/Fact value '.+' with the value length: '[1-9]*' exceeds the value length limit: [1-9]*/).twice
+      configurer.run
+    end
+
+    it "should warn the user when the payload limits are exceeded" do
+      Puppet[:fact_name_length_soft_limit] = 0
+      Puppet[:fact_value_length_soft_limit] = 0
+      Puppet[:top_level_facts_soft_limit] = 0
+      Puppet[:number_of_facts_soft_limit] = 0
+      Puppet[:payload_soft_limit] = 1
+
+      facts.values = { 'processors' => {
+        'cores' => 1,
+        'count' => 2,
+        'isa' => "i386",
+        'models' => [
+          "CPU1 @ 2.80GHz"
+        ],
+        'physicalcount' => 4 }
+      }
+      Puppet::Node::Facts.indirection.save(facts)
+
+      expect(Puppet).to receive(:warning).with(/Payload with the current size of: '[1-9]*' exceeds the payload size limit: [1-9]*/)
+      configurer.run
+    end
+
+    it "should warn the user when the total number of facts limit is exceeded" do
+      Puppet[:fact_name_length_soft_limit] = 0
+      Puppet[:fact_value_length_soft_limit] = 0
+      Puppet[:top_level_facts_soft_limit] = 0
+      Puppet[:number_of_facts_soft_limit] = 1
+      Puppet[:payload_soft_limit] = 0
+
+      facts.values = { 
+        'processors' => {
+          'cores' => 1,
+          'count' => 2,
+          'isa' => "i386",
+          'models' => [
+            "CPU1 @ 2.80GHz",
+            "CPU1 @ 2.80GHz",
+            "CPU1 @ 2.80GHz",
+            "CPU1 @ 2.80GHz",
+            "CPU1 @ 2.80GHz",
+            { 
+              'processors' => {
+                'cores' => [1,2]
+              }
+            }
+          ],
+          'physicalcount' => 4 
+        }
+      }
+      Puppet::Node::Facts.indirection.save(facts)
+
+      expect(Puppet).to receive(:warning).with(/The current total number of facts: [1-9]* exceeds the number of facts limit: [1-9]*/)
+      configurer.run
+    end
+
+    it "should warn the user when the top level facts size limits are exceeded" do
+      Puppet[:fact_name_length_soft_limit] = 0
+      Puppet[:fact_value_length_soft_limit] = 0
+      Puppet[:top_level_facts_soft_limit] = 1
+      Puppet[:number_of_facts_soft_limit] = 0
+      Puppet[:payload_soft_limit] = 0
+
+      facts.values = {'my_new_fact_name' => 'my_new_fact_value',
+                      'my_new_fact_name2' => 'my_new_fact_value2'}
+      Puppet::Node::Facts.indirection.save(facts)
+
+      expect(Puppet).to receive(:warning).with(/The current number of top level facts: [1-9]* exceeds the top facts limit: [1-9]*/)
+      configurer.run
+    end
+
+    it "should warn the user when the fact name length limits are exceeded" do
+      Puppet[:fact_name_length_soft_limit] = 1
+      Puppet[:fact_value_length_soft_limit] = 0
+      Puppet[:top_level_facts_soft_limit] = 0
+      Puppet[:number_of_facts_soft_limit] = 0
+      Puppet[:payload_soft_limit] = 0
+
+      facts.values = {'my_new_fact_name' => 'my_new_fact_value'}
+      Puppet::Node::Facts.indirection.save(facts)
+
+      expect(Puppet).to receive(:warning).with(/Fact .+ with length: '[1-9]*' exceeds the length limit: [1-9]*/)
+      configurer.run
+    end
+
+    it "shouldn't warn the user when the fact limit settings are set to 0" do
+      Puppet[:fact_name_length_soft_limit] = 0
+      Puppet[:fact_value_length_soft_limit] = 0
+      Puppet[:top_level_facts_soft_limit] = 0
+      Puppet[:number_of_facts_soft_limit] = 0
+      Puppet[:payload_soft_limit] = 0
+
+      facts.values = {'my_new_fact_name' => 'my_new_fact_value'}
+      Puppet::Node::Facts.indirection.save(facts)
+
+      expect(Puppet).not_to receive(:warning)
+      configurer.run
+    end
+
     it "creates a new report when applying the catalog" do
       options = {}
       configurer.run(options)
