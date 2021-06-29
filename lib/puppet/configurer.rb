@@ -91,7 +91,7 @@ class Puppet::Configurer
 
         if result
           # don't use use cached catalog if it doesn't match server specified environment
-          if @node_environment && result.environment != @environment
+          if result.environment != @environment
             Puppet.err _("Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'") % { catalog_env: result.environment, local_env: @environment }
             return nil
           end
@@ -296,58 +296,11 @@ class Puppet::Configurer
       configured_environment = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
 
       # We only need to find out the environment to run in if we don't already have a catalog
-      unless (cached_catalog || options[:catalog] || Puppet[:strict_environment_mode])
-        begin
-          node = nil
-          node_retr_time = thinmark do
-            node = Puppet::Node.indirection.find(Puppet[:node_name_value],
-              :environment => Puppet::Node::Environment.remote(@environment),
-              :configured_environment => configured_environment,
-              :ignore_cache => true,
-              :transaction_uuid => @transaction_uuid,
-              :fail_on_404 => true)
-          end
-          options[:report].add_times(:node_retrieval, node_retr_time)
-
-          if node
-            # If we have deserialized a node from a rest call, we want to set
-            # an environment instance as a simple 'remote' environment reference.
-            if !node.has_environment_instance? && node.environment_name
-              node.environment = Puppet::Node::Environment.remote(node.environment_name)
-            end
-
-            @node_environment = node.environment.to_s
-
-            if node.environment.to_s != @environment
-              Puppet.notice _("Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'.") % { local_env: @environment, node_env: node.environment }
-              @environment = node.environment.to_s
-              report.environment = @environment
-              query_options = nil
-              facts = nil
-
-              new_env = Puppet::Node::Environment.remote(@environment)
-              Puppet.push_context(
-                {
-                  current_environment: new_env,
-                  loaders: Puppet::Pops::Loaders.new(new_env, true)
-                },
-                "Local node environment #{@environment} for configurer transaction"
-              )
-            else
-              Puppet.info _("Using configured environment '%{env}'") % { env: @environment }
-            end
-          end
-        rescue StandardError => detail
-          Puppet.warning(_("Unable to fetch my node definition, but the agent run will continue:"))
-          Puppet.warning(detail)
-
-          unless configured_environment
-            Puppet.debug(_("Failed to fetch node definition, attempting to find out the last used environment"))
-            if (env = last_used_environment)
-              @environment = env
-              report.environment = @environment
-            end
-          end
+      unless (cached_catalog || options[:catalog] || configured_environment)
+        Puppet.debug(_("No environment configured, attempting to find out the last used environment"))
+        if (env = last_used_environment)
+          @environment = env
+          report.environment = env
         end
       end
 
@@ -366,7 +319,6 @@ class Puppet::Configurer
 
       query_options, facts = get_facts(options) unless query_options
       query_options[:configured_environment] = configured_environment
-      options[:convert_for_node] = node
 
       catalog = prepare_and_retrieve_catalog(cached_catalog, facts, options, query_options)
       unless catalog
