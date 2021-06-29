@@ -56,6 +56,16 @@ describe 'the empty function' do
     end
   end
 
+  context 'for a sensitive string it' do
+    it 'returns true when empty' do
+      expect(compile_to_catalog("notify { String(empty(Sensitive(''))): }")).to have_resource('Notify[true]')
+    end
+
+    it 'returns false when not empty' do
+      expect(compile_to_catalog("notify { String(empty(Sensitive(' '))): }")).to have_resource('Notify[false]')
+    end
+  end
+
   context 'for a binary it' do
     it 'returns true when empty' do
       expect(compile_to_catalog("notify { String(empty(Binary(''))): }")).to have_resource('Notify[true]')

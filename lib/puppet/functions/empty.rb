@@ -26,6 +26,10 @@ Puppet::Functions.create_function(:empty) do
     param 'Collection', :coll
   end
 
+  dispatch :sensitive_string_empty do
+    param 'Sensitive[String]', :str
+  end
+
   dispatch :string_empty do
     param 'String', :str
   end
@@ -44,6 +48,10 @@ Puppet::Functions.create_function(:empty) do
 
   def collection_empty(coll)
     coll.empty?
+  end
+
+  def sensitive_string_empty(str)
+    str.unwrap.empty?
   end
 
   def string_empty(str)
