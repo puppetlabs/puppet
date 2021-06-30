@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.23.0-36-g61f5aa9894\n"
+"Project-Id-Version: Puppet automation framework 6.23.0-49-gb64a83b28c\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-06-25 07:18+0000\n"
-"PO-Revision-Date: 2021-06-25 07:18+0000\n"
+"POT-Creation-Date: 2021-06-30 07:33+0000\n"
+"PO-Revision-Date: 2021-06-30 07:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -286,11 +286,11 @@ msgstr ""
 msgid "starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:394 ../lib/puppet/application/resource.rb:197
+#: ../lib/puppet/application/device.rb:394 ../lib/puppet/application/resource.rb:201
 msgid "You must specify the type to display"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:395 ../lib/puppet/application/resource.rb:198
+#: ../lib/puppet/application/device.rb:395 ../lib/puppet/application/resource.rb:202
 msgid "Could not find type %{type}"
 msgstr ""
 
@@ -418,19 +418,19 @@ msgstr ""
 msgid "Incorrect formatted data in %{fact_file} given via the --facts flag"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:32
+#: ../lib/puppet/application/resource.rb:34
 msgid "The resource abstraction layer shell"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:141
+#: ../lib/puppet/application/resource.rb:145
 msgid "Editing with Yaml output is not supported"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:205
+#: ../lib/puppet/application/resource.rb:209
 msgid "Invalid parameter setting %{setting}"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:227
+#: ../lib/puppet/application/resource.rb:240
 msgid "Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc"
 msgstr ""
 
@@ -2136,7 +2136,7 @@ msgstr ""
 msgid "The given data requires an Integer index at %{walked_path}, got '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/functions/empty.rb:74
+#: ../lib/puppet/functions/empty.rb:82
 msgid "Calling function empty() with %{arg_type} value is deprecated."
 msgstr ""
 
@@ -6728,15 +6728,15 @@ msgstr ""
 msgid "'%{exe}' is not qualified and no path was specified. Please qualify the command or specify a path."
 msgstr ""
 
-#: ../lib/puppet/provider/exec/posix.rb:21 ../lib/puppet/provider/exec/posix.rb:38 ../lib/puppet/provider/exec/windows.rb:40 ../lib/puppet/provider/exec/windows.rb:53
+#: ../lib/puppet/provider/exec/posix.rb:33 ../lib/puppet/provider/exec/posix.rb:50 ../lib/puppet/provider/exec/windows.rb:40 ../lib/puppet/provider/exec/windows.rb:53
 msgid "Could not find command '%{exe}'"
 msgstr ""
 
-#: ../lib/puppet/provider/exec/posix.rb:23 ../lib/puppet/provider/exec/windows.rb:42
+#: ../lib/puppet/provider/exec/posix.rb:35 ../lib/puppet/provider/exec/windows.rb:42
 msgid "'%{exe}' is a %{klass}, not a file"
 msgstr ""
 
-#: ../lib/puppet/provider/exec/posix.rb:25
+#: ../lib/puppet/provider/exec/posix.rb:37
 msgid "'%{exe}' is not executable"
 msgstr ""
 
@@ -7753,49 +7753,49 @@ msgstr ""
 msgid "Cannot manage group permissions, because the provider for '%{name}' is not functional"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:913
+#: ../lib/puppet/settings.rb:920
 msgid "Unknown searchpath case: %{source_type} for the %{source} settings path element."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:986
+#: ../lib/puppet/settings.rb:1001
 msgid "setting definition for '%{name}' is not a hash!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:991
+#: ../lib/puppet/settings.rb:1006
 msgid "Setting %{name} is already defined"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:997
+#: ../lib/puppet/settings.rb:1012
 msgid "Setting %{name} is already using short name '%{short}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1261
+#: ../lib/puppet/settings.rb:1276
 msgid "Setting %{name} is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'puppet.conf' is a file name and should not be translated
-#: ../lib/puppet/settings.rb:1266
+#: ../lib/puppet/settings.rb:1281
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1453
+#: ../lib/puppet/settings.rb:1468
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1477
+#: ../lib/puppet/settings.rb:1492
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1487
+#: ../lib/puppet/settings.rb:1502
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1488
+#: ../lib/puppet/settings.rb:1503
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1519
+#: ../lib/puppet/settings.rb:1534
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
@@ -8682,56 +8682,56 @@ msgstr ""
 msgid "'%{cmd}' returned %{status} instead of one of [%{expected}]"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:204
-msgid "Command must be a String, got value of class %{klass}"
-msgstr ""
-
-#: ../lib/puppet/type/exec.rb:236
-msgid "Unable to execute commands as other users on Windows"
+#: ../lib/puppet/type/exec.rb:205
+msgid "Command must be a String or Array<String>, got value of class %{klass}"
 msgstr ""
 
 #: ../lib/puppet/type/exec.rb:238
+msgid "Unable to execute commands as other users on Windows"
+msgstr ""
+
+#: ../lib/puppet/type/exec.rb:240
 msgid "Only root can execute commands as other users"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:294
+#: ../lib/puppet/type/exec.rb:296
 msgid "Invalid environment setting '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:307
+#: ../lib/puppet/type/exec.rb:309
 msgid "The umask specification is invalid: %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:323
+#: ../lib/puppet/type/exec.rb:325
 msgid "The timeout must be a number."
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:340
+#: ../lib/puppet/type/exec.rb:342
 msgid "Tries must be an integer"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:344
+#: ../lib/puppet/type/exec.rb:346
 msgid "Tries must be an integer >= 1"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:357
+#: ../lib/puppet/type/exec.rb:359
 msgid "try_sleep must be a number"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:361
+#: ../lib/puppet/type/exec.rb:363
 msgid "try_sleep cannot be a negative number"
 msgstr ""
 
 #. TRANSLATORS 'creates' is a parameter name and should not be translated
-#: ../lib/puppet/type/exec.rb:433
+#: ../lib/puppet/type/exec.rb:435
 msgid "Checking that 'creates' path '%{creates_path}' exists"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:478 ../lib/puppet/type/exec.rb:534
+#: ../lib/puppet/type/exec.rb:484 ../lib/puppet/type/exec.rb:544
 msgid "Check %{value} exceeded timeout"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:623
+#: ../lib/puppet/type/exec.rb:636
 msgid "'%{cmd}' won't be executed because of failed check '%{check}'"
 msgstr ""
 
