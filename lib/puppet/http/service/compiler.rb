@@ -69,6 +69,9 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   # @param [String] environment The name of the environment we are operating in
   # @param [String] configured_environment Optional, the name of the configured
   #   environment. If unset, `environment` is used.
+  # @param [Boolean] if true, request that the server check if our `environment`
+  #   matches the server specified environment. If they are mismatched, it will
+  #   return an empty catalog with the server specified environment.
   # @param [String] transaction_uuid An agent generated transaction uuid, used
   #   for connecting catalogs and reports.
   # @param [String] job_uuid A unique job identifier defined when the orchestrator
@@ -85,7 +88,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   #   containing the request response and the deserialized catalog returned by
   #   the server
   #
-  def post_catalog(name, facts:, environment:, configured_environment: nil, transaction_uuid: nil, job_uuid: nil, static_catalog: true, checksum_type: Puppet[:supported_checksum_types])
+  def post_catalog(name, facts:, environment:, configured_environment: nil, transaction_uuid: nil, job_uuid: nil, static_catalog: true, checksum_type: Puppet[:supported_checksum_types], check_environment: true)
     if Puppet[:preferred_serialization_format] == "pson"
       formatter = Puppet::Network::FormatHandler.format_for(:pson)
       # must use 'pson' instead of 'text/pson'
@@ -103,6 +106,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       facts: Puppet::Util.uri_query_encode(facts_as_string),
       environment: environment,
       configured_environment: configured_environment || environment,
+      check_environment: check_environment,
       transaction_uuid: transaction_uuid,
       job_uuid: job_uuid,
       static_catalog: static_catalog,
