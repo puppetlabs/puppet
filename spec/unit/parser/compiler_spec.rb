@@ -862,6 +862,35 @@ describe Puppet::Parser::Compiler do
 
           expect(catalog.resource('Class', 'Something')).not_to be_nil
         end
+
+        it "raises if the class name is the same as the node definition" do
+          name = node.name
+          node.classes = [name]
+
+          expect {
+            compile_to_catalog(<<-MANIFEST, node)
+            class #{name} {}
+            node #{name} {
+              include #{name}
+            }
+          MANIFEST
+          }.to raise_error(Puppet::Error, /Class '#{name}' is already defined \(line: 1\); cannot be redefined as a node \(line: 2\) on node #{name}/)
+        end
+
+        it "evaluates the class if the node definition uses a regexp" do
+          name = node.name
+          node.classes = [name]
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            class #{name} {}
+            node /#{name}/ {
+              include #{name}
+            }
+          MANIFEST
+
+          expect(@logs).to be_empty
+          expect(catalog.resource('Class', node.name.capitalize)).to_not be_nil
+        end
       end
 
       it "should fail if the class doesn't exist" do

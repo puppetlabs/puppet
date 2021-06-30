@@ -462,9 +462,9 @@ describe Puppet::Resource::Type do
     end
 
     it "should be able to find parent nodes" do
-      parent = Puppet::Resource::Type.new(:node, "bar")
+      parent = Puppet::Resource::Type.new(:node, "node_bar")
       @krt.add parent
-      child = Puppet::Resource::Type.new(:node, "foo", :parent => "bar")
+      child = Puppet::Resource::Type.new(:node, "node_foo", :parent => "node_bar")
       @krt.add child
 
       expect(child.parent_type(@scope)).to equal(parent)

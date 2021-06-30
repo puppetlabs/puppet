@@ -61,6 +61,7 @@ class Puppet::Resource::TypeCollection
   def add_hostclass(instance)
     handle_hostclass_merge(instance)
     dupe_check(instance, @hostclasses) { |dupe| _("Class '%{klass}' is already defined%{error}; cannot redefine") % { klass: instance.name, error: dupe.error_context } }
+    dupe_check(instance, @nodes)       { |dupe| _("Node '%{klass}' is already defined%{error}; cannot be redefined as a class") % { klass: instance.name, error: dupe.error_context } }
     dupe_check(instance, @definitions) { |dupe| _("Definition '%{klass}' is already defined%{error}; cannot be redefined as a class") % { klass: instance.name, error: dupe.error_context } }
 
     @hostclasses[instance.name] = instance
@@ -93,6 +94,7 @@ class Puppet::Resource::TypeCollection
 
   def add_node(instance)
     dupe_check(instance, @nodes) { |dupe| _("Node '%{name}' is already defined%{error}; cannot redefine") % { name: instance.name, error: dupe.error_context } }
+    dupe_check(instance, @hostclasses) { |dupe| _("Class '%{klass}' is already defined%{error}; cannot be redefined as a node") % { klass: instance.name, error: dupe.error_context } }
 
     @node_list << instance
     @nodes[instance.name] = instance
