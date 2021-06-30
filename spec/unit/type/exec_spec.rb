@@ -239,6 +239,19 @@ RSpec.describe Puppet::Type.type(:exec) do
     expect(dependencies.collect(&:to_s)).to eq([Puppet::Relationship.new(tmp, execer).to_s])
   end
 
+  it "should be able to autorequire files mentioned in the array command" do
+    foo = make_absolute('/bin/foo')
+    catalog = Puppet::Resource::Catalog.new
+    tmp = Puppet::Type.type(:file).new(:name => foo)
+    execer = Puppet::Type.type(:exec).new(:name => 'test array', :command => [foo, 'bar'])
+
+    catalog.add_resource tmp
+    catalog.add_resource execer
+    dependencies = execer.autorequire(catalog)
+
+    expect(dependencies.collect(&:to_s)).to eq([Puppet::Relationship.new(tmp, execer).to_s])
+  end
+
   describe "when handling the path parameter" do
     expect = %w{one two three four}
     { "an array"                                      => expect,
@@ -346,7 +359,13 @@ RSpec.describe Puppet::Type.type(:exec) do
   end
 
   shared_examples_for "all exec command parameters" do |param|
-    { "relative" => "example", "absolute" => "/bin/example" }.sort.each do |name, command|
+    array_cmd = ["/bin/example", "*"]
+    array_cmd = [["/bin/example", "*"]] if [:onlyif, :unless].include?(param)
+
+    commands = { "relative" => "example", "absolute" => "/bin/example" }
+    commands["array"] = array_cmd
+
+    commands.sort.each do |name, command|
       describe "if command is #{name}" do
         before :each do
           @param = param
@@ -379,45 +398,44 @@ RSpec.describe Puppet::Type.type(:exec) do
   end
 
   shared_examples_for "all exec command parameters that take arrays" do |param|
-    describe "when given an array of inputs" do
-      before :each do
-        @test = Puppet::Type.type(:exec).new(:name => @executable)
-      end
+    [
+      %w{one two three},
+      [%w{one -a}, %w{two, -b}, 'three']
+    ].each do |input|
+      context "when given #{input.inspect} as input" do
+        let(:resource) { Puppet::Type.type(:exec).new(:name => @executable) }
 
-      it "should accept the array when all commands return valid" do
-        input = %w{one two three}
-        expect(@test.provider).to receive(:validatecmd).exactly(input.length).times.and_return(true)
-        @test[param] = input
-        expect(@test[param]).to eq(input)
-      end
-
-      it "should reject the array when any commands return invalid" do
-        input = %w{one two three}
-        expect(@test.provider).to receive(:validatecmd).with(input.first).and_return(false)
-        input[1..-1].each do |cmd|
-          expect(@test.provider).to receive(:validatecmd).with(cmd).and_return(true)
+        it "accepts the array when all commands return valid" do
+          input = %w{one two three}
+          allow(resource.provider).to receive(:validatecmd).exactly(input.length).times.and_return(true)
+          resource[param] = input
+          expect(resource[param]).to eq(input)
         end
-        @test[param] = input
-        expect(@test[param]).to eq(input)
-      end
 
-      it "should reject the array when all commands return invalid" do
-        input = %w{one two three}
-        expect(@test.provider).to receive(:validatecmd).exactly(input.length).times.and_return(false)
-        @test[param] = input
-        expect(@test[param]).to eq(input)
+        it "rejects the array when any commands return invalid" do
+          input = %w{one two three}
+          allow(resource.provider).to receive(:validatecmd).with(input[0]).and_return(true)
+          allow(resource.provider).to receive(:validatecmd).with(input[1]).and_raise(Puppet::Error)
+
+          expect { resource[param] = input }.to raise_error(Puppet::ResourceError, /Parameter #{param} failed/)
+        end
+
+        it "stops at the first invalid command" do
+          input = %w{one two three}
+          allow(resource.provider).to receive(:validatecmd).with(input[0]).and_raise(Puppet::Error)
+
+          expect(resource.provider).not_to receive(:validatecmd).with(input[1])
+          expect(resource.provider).not_to receive(:validatecmd).with(input[2])
+          expect { resource[param] = input }.to raise_error(Puppet::ResourceError, /Parameter #{param} failed/)
+        end
       end
     end
   end
 
   describe "when setting command" do
     subject { described_class.new(:name => @command) }
-    it "fails when passed an Array" do
-      expect { subject[:command] = [] }.to raise_error Puppet::Error, /Command must be a String/
-    end
-
     it "fails when passed a Hash" do
-      expect { subject[:command] = {} }.to raise_error Puppet::Error, /Command must be a String/
+      expect { subject[:command] = {} }.to raise_error Puppet::Error, /Command must be a String or Array<String>/
     end
   end
 
@@ -755,6 +773,35 @@ RSpec.describe Puppet::Type.type(:exec) do
 
           it "should not run if all command exits zero" do
             @test[param] = [@pass] * 3
+            expect(@test.check_all_attributes).to eq(false)
+          end
+        end
+
+        context 'with an array of arrays with multiple items' do
+          before do
+            [true, false].each do |check|
+              allow(@test.provider).to receive(:run).with([@pass, '--flag'], check).
+                and_return(['test output', @pass_status])
+              allow(@test.provider).to receive(:run).with([@fail, '--flag'], check).
+                and_return(['test output', @fail_status])
+              allow(@test.provider).to receive(:run).with([@pass], check).
+                and_return(['test output', @pass_status])
+              allow(@test.provider).to receive(:run).with([@fail], check).
+                and_return(['test output', @fail_status])
+            end
+          end
+          it "runs if all the commands exits non-zero" do
+            @test[param] = [[@fail, '--flag'], [@fail], [@fail, '--flag']]
+            expect(@test.check_all_attributes).to eq(true)
+          end
+
+          it "does not run if one command exits zero" do
+            @test[param] = [[@pass, '--flag'], [@pass], [@fail, '--flag']]
+            expect(@test.check_all_attributes).to eq(false)
+          end
+
+          it "does not run if all command exits zero" do
+            @test[param] = [[@pass, '--flag'], [@pass], [@pass, '--flag']]
             expect(@test.check_all_attributes).to eq(false)
           end
         end

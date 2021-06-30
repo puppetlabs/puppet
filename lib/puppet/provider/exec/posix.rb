@@ -6,10 +6,22 @@ Puppet::Type.type(:exec).provide :posix, :parent => Puppet::Provider::Exec do
   defaultfor :feature => :posix
 
   desc <<-EOT
-    Executes external binaries directly, without passing through a shell or
-    performing any interpolation. This is a safer and more predictable way
-    to execute most commands, but prevents the use of globbing and shell
-    built-ins (including control logic like "for" and "if" statements).
+    Executes external binaries by invoking Ruby's `Kernel.exec`.
+    When the command is a string, it will be executed directly,
+    without a shell, if it follows these rules:
+     - no meta characters
+     - no shell reserved word and no special built-in
+
+    When the command is an Array of Strings, passed as `[cmdname, arg1, ...]`
+    it will be executed directly(the first element is taken as a command name
+    and the rest are passed as parameters to command with no shell expansion)
+    This is a safer and more predictable way to execute most commands,
+    but prevents the use of globbing and shell built-ins (including control
+    logic like "for" and "if" statements).
+
+    If the use of globbing and shell built-ins is desired, please check
+    the `shell` provider
+
   EOT
 
   # Verify that we have the executable

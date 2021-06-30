@@ -9,10 +9,6 @@ describe "interpolating $environment" do
   let(:confdir) { Puppet[:confdir] }
   let(:cmdline_args) { ['--confdir', confdir, '--vardir', Puppet[:vardir], '--hiera_config', Puppet[:hiera_config]] }
 
-  before(:each) do
-    FileUtils.mkdir_p(confdir)
-  end
-
   shared_examples_for "a setting that does not interpolate $environment" do
 
     before(:each) do

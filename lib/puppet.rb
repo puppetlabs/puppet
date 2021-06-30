@@ -199,9 +199,9 @@ module Puppet
 
     Facter.add(:agent_specified_environment) do
       setcode do
-        if Puppet.settings.set_by_config?(:environment)
-          Puppet[:environment]
-        end
+        Puppet.settings.set_by_cli(:environment) ||
+          Puppet.settings.set_in_section(:environment, :agent) ||
+          Puppet.settings.set_in_section(:environment, :main)
       end
     end
   end

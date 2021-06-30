@@ -1,6 +1,7 @@
 require_relative '../../puppet/application'
 
 class Puppet::Application::Resource < Puppet::Application
+  environment_mode :not_required
 
   attr_accessor :host, :extra_params
 
@@ -14,8 +15,9 @@ class Puppet::Application::Resource < Puppet::Application
   option("--to_yaml","-y")
 
   option("--types", "-t") do |arg|
+    env = Puppet.lookup(:environments).get(Puppet[:environment]) || create_default_environment
     types = []
-    Puppet::Type.loadall
+    Puppet::Type.typeloader.loadall(env)
     Puppet::Type.eachtype do |t|
       next if t.name == :component
       types << t.name.to_s
@@ -134,7 +136,9 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def main
-    env = Puppet.lookup(:environments).get(Puppet[:environment])
+    # If the specified environment does not exist locally, fall back to the default (production) environment
+    env = Puppet.lookup(:environments).get(Puppet[:environment]) || create_default_environment
+
     Puppet.override(:current_environment => env, :loaders => Puppet::Pops::Loaders.new(env)) do
       type, name, params = parse_args(command_line.args)
 
@@ -207,6 +211,15 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
     end
 
     [type, name, params]
+  end
+
+  def create_default_environment
+    Puppet.debug("Specified environment '#{Puppet[:environment]}' does not exist on the filesystem, defaulting to 'production'")
+    Puppet[:environment] = :production
+    basemodulepath = Puppet::Node::Environment.split_path(Puppet[:basemodulepath])
+    modulepath = Puppet[:modulepath]
+    modulepath = (modulepath.nil? || modulepath.empty?) ? basemodulepath : Puppet::Node::Environment.split_path(modulepath)
+    Puppet::Node::Environment.create(Puppet[:environment], modulepath, Puppet::Node::Environment::NO_MANIFEST)
   end
 
   def find_or_save_resources(type, name, params)

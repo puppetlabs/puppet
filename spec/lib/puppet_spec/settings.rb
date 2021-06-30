@@ -21,6 +21,7 @@ module PuppetSpec::Settings
   end.freeze
 
   def set_puppet_conf(confdir, settings)
+    FileUtils.mkdir_p(confdir)
     write_file(File.join(confdir, "puppet.conf"), settings)
   end
 
