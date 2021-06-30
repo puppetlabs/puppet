@@ -5,6 +5,14 @@ require 'puppet/file_system'
 describe Puppet::Environments do
   FS = Puppet::FileSystem
 
+  module FsRemove
+    def remove
+      @properties[:directory?] = false
+      @properties[:exist?] = false
+      @properties[:executable?] = false
+    end
+  end
+
   before(:each) do
     Puppet.settings.initialize_global_settings
     Puppet[:environment_timeout] = "unlimited"
@@ -605,6 +613,33 @@ config_version=$vardir/random/scripts
 
         cached.get(:cached)
         cached.get(:cached)
+      end
+
+      it "does not list deleted environments" do
+        env3 = FS::MemoryFile.a_directory("env3", [
+          FS::MemoryFile.a_regular_file_containing("environment.conf", '')
+        ])
+
+        envdir = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
+          FS::MemoryFile.a_directory("env1", [
+            FS::MemoryFile.a_regular_file_containing("environment.conf", '')
+          ]),
+          FS::MemoryFile.a_directory("env2", [
+            FS::MemoryFile.a_regular_file_containing("environment.conf", '')
+          ]),
+          env3
+        ])
+
+        loader_from(:filesystem => [envdir], :directory => envdir) do |loader|
+         cached = Puppet::Environments::Cached.new(loader)
+          cached.get(:env1)
+          cached.get(:env2)
+          cached.get(:env3)
+          env3.extend(FsRemove).remove
+
+          expect(cached.list).to contain_exactly(environment(:env1),environment(:env2))
+          expect(cached.get(:env3)).to be_nil
+        end
       end
 
       it "returns nil if env not found" do
