@@ -277,7 +277,7 @@ describe Puppet::Settings do
 
     it "should retrieve numeric settings from the CLI" do
       @settings.handlearg("--myval", "12")
-      expect(@settings.set_by_cli(:myval)).to eq(12)
+      expect(@settings.set_by_cli(:myval)).to eq("12")
       expect(@settings.set_by_cli?(:myval)).to be true
     end
 
