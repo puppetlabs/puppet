@@ -465,7 +465,6 @@ module Puppet::Environments
     # @!macro loader_get_conf
     def get_conf(name)
       name = name.to_sym
-      clear_if_expired(name, @cache[name])
       @loader.get_conf(name)
     end
 
