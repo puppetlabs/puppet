@@ -607,51 +607,6 @@ config_version=$vardir/random/scripts
         cached.get(:cached)
       end
 
-      it "normalizes environment name to symbol" do
-        env = Puppet::Node::Environment.create(:cached, [])
-        mocked_loader = double('loader')
-
-        expect(mocked_loader).not_to receive(:get).with('cached')
-        expect(mocked_loader).to receive(:get).with(:cached).and_return(env).once
-        expect(mocked_loader).to receive(:get_conf).with(:cached).and_return(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
-
-        cached = Puppet::Environments::Cached.new(mocked_loader)
-        cached.get('cached')
-        cached.get(:cached)
-      end
-
-      it "caches environment name as symbol and only once" do
-        mocked_loader = double('loader')
-
-        env = Puppet::Node::Environment.create(:cached, [])
-        allow(mocked_loader).to receive(:get).with(:cached).and_return(env)
-        allow(mocked_loader).to receive(:get_conf).with(:cached).and_return(Puppet::Settings::EnvironmentConf.static_for(env, 20))
-
-        cached = Puppet::Environments::Cached.new(mocked_loader)
-        cached.get(:cached)
-        cached.get('cached')
-
-        expect(cached.instance_variable_get(:@cache).keys).to eq([:cached])
-      end
-
-      it "is able to cache multiple environments" do
-        mocked_loader = double('loader')
-
-        env1 = Puppet::Node::Environment.create(:env1, [])
-        allow(mocked_loader).to receive(:get).with(:env1).and_return(env1)
-        allow(mocked_loader).to receive(:get_conf).with(:env1).and_return(Puppet::Settings::EnvironmentConf.static_for(env1, 20))
-
-        env2 = Puppet::Node::Environment.create(:env2, [])
-        allow(mocked_loader).to receive(:get).with(:env2).and_return(env2)
-        allow(mocked_loader).to receive(:get_conf).with(:env2).and_return(Puppet::Settings::EnvironmentConf.static_for(env2, 20))
-
-        cached = Puppet::Environments::Cached.new(mocked_loader)
-        cached.get('env1')
-        cached.get('env2')
-
-        expect(cached.instance_variable_get(:@cache).keys).to eq([:env1, :env2])
-      end
-
       it "returns nil if env not found" do
         cached_loader_from(:filesystem => [directory_tree], :directory => directory_tree.children.first) do |loader|
           expect(loader.get(:doesnotexist)).to be_nil
@@ -704,17 +659,6 @@ config_version=$vardir/random/scripts
         cached = Puppet::Environments::Cached.new(mocked_loader)
 
         cached.get_conf(:cached)
-        cached.get_conf(:cached)
-      end
-
-      it "normalizes environment name to symbol" do
-        env = Puppet::Node::Environment.create(:cached, [])
-        mocked_loader = double('loader')
-        expect(mocked_loader).to receive(:get_conf).with(:cached).and_return(Puppet::Settings::EnvironmentConf.static_for(env, 20)).twice
-
-        cached = Puppet::Environments::Cached.new(mocked_loader)
-
-        cached.get_conf('cached')
         cached.get_conf(:cached)
       end
 
@@ -815,14 +759,6 @@ config_version=$vardir/random/scripts
       it "evicts an environment" do
         with_environment_loaded(service) do |cached|
           cached.clear(:an_environment)
-        end
-
-        expect(service.evicted_envs).to eq([:an_environment])
-      end
-
-      it "normalizes environment name to symbol" do
-        with_environment_loaded(service) do |cached|
-          cached.clear('an_environment')
         end
 
         expect(service.evicted_envs).to eq([:an_environment])

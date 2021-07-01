@@ -6,7 +6,6 @@ describe 'the log function' do
 
   def collect_logs(code)
     Puppet[:code] = code
-    Puppet[:environment_timeout] = 10
     node = Puppet::Node.new('logtest')
     compiler = Puppet::Parser::Compiler.new(node)
     node.environment.check_for_reparse
