@@ -96,6 +96,14 @@ describe Puppet::HTTP::Service::Compiler do
       subject.post_catalog(certname, environment: 'production', facts: facts, configured_environment: 'agent_specified')
     end
 
+    it 'includes check_environment' do
+      stub_request(:post, uri)
+        .with(body: hash_including('check_environment' => 'false'))
+        .to_return(**catalog_response)
+
+      subject.post_catalog(certname, environment: 'production', facts: facts)
+    end
+
     it 'includes transaction_uuid' do
       uuid = "ec3d2844-b236-4287-b0ad-632fbb4d1ff0"
 
