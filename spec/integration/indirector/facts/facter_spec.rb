@@ -127,7 +127,7 @@ describe Puppet::Node::Facts::Facter do
       it "prefers agent_specified_environment from agent if set in multiple sections" do
         set_puppet_conf(Puppet[:confdir], <<~CONF)
         [main]
-        serverport=baz
+        environment=baz
 
         [agent]
         environment=bar
