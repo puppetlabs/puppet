@@ -48,6 +48,13 @@ module Puppet::Environments
         root.instance_variable_set(:@rich_data, nil)
       end
     end
+
+    # The base implementation is a noop, because `get` returns a new environment
+    # each time.
+    #
+    # @see Puppet::Environments::Cached#guard
+    def guard(name); end
+    def unguard(name); end
   end
 
   # @!macro [new] loader_search_paths
@@ -391,11 +398,11 @@ module Puppet::Environments
 
     # Get a cache entry for an envionment. It returns nil if the
     # environment doesn't exist.
-    def get_entry(name)
+    def get_entry(name, check_expired = true)
       # Aggressively evict all that has expired
       # This strategy favors smaller memory footprint over environment
       # retrieval time.
-      clear_all_expired
+      clear_all_expired if check_expired
       entry = @cache[name]
       if entry
         Puppet.debug {"Found in cache #{name.inspect} #{entry.label}"}
@@ -463,6 +470,7 @@ module Puppet::Environments
     #
     def clear_if_expired(name, entry, t = Time.now)
       return unless entry
+      return if entry.guarded?
 
       if entry.expired?(t) || @cache_expiration_service.expired?(name.to_sym)
         clear_entry(name, entry)
@@ -481,6 +489,20 @@ module Puppet::Environments
     def get_conf(name)
       clear_if_expired(name, @cache[name])
       @loader.get_conf(name)
+    end
+
+    # Guard an environment so it can't be evicted while it's in use. The method
+    # may be called multiple times, provided it is unguarded the same number of
+    # times. If you call this method, you must call `unguard` in an ensure block.
+    def guard(name)
+      entry = get_entry(name, false)
+      entry.guard if entry
+    end
+
+    # Unguard an environment.
+    def unguard(name)
+      entry = get_entry(name, false)
+      entry.unguard if entry
     end
 
     # Creates a suitable cache entry given the time to live for one environment
@@ -512,6 +534,7 @@ module Puppet::Environments
 
       def initialize(value)
         @value = value
+        @guards = 0
       end
 
       def touch
@@ -523,6 +546,20 @@ module Puppet::Environments
 
       def label
         ""
+      end
+
+      # These are not protected with a lock, because all of the Cached
+      # methods are protected.
+      def guarded?
+        @guards > 0
+      end
+
+      def guard
+        @guards += 1
+      end
+
+      def unguard
+        @guards -= 1
       end
     end
 
