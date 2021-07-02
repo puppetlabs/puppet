@@ -1,4 +1,5 @@
 require 'puppet/concurrent/synchronized'
+require 'puppet/gettext/text_domain_service'
 
 # @api private
 module Puppet::Environments
@@ -348,6 +349,7 @@ module Puppet::Environments
     def initialize(loader)
       @loader = loader
       @cache_expiration_service = Puppet::Environments::Cached.cache_expiration_service
+      @cache_textdomain_service = Puppet::TextDomainService.create
       @cache = {}
     end
 
@@ -408,6 +410,7 @@ module Puppet::Environments
       Puppet.debug {"Caching environment #{name.inspect} #{cache_entry.label}"}
       @cache[name] = cache_entry
       @cache_expiration_service.created(cache_entry.value)
+      # REMIND: notify text domain service
     end
     private :add_entry
 
@@ -415,7 +418,7 @@ module Puppet::Environments
       @cache.delete(name)
       Puppet.debug {"Evicting cache entry for environment #{name.inspect}"}
       @cache_expiration_service.evicted(name.to_sym)
-      Puppet::GettextConfig.delete_text_domain(name)
+      @cache_textdomain_service.evicted(entry.value)
       Puppet.settings.clear_environment_settings(name)
     end
     private :clear_entry
