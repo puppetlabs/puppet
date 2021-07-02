@@ -393,6 +393,8 @@ module Types
     # @param a [PAnyType] the actual type
     # @return [Boolean] `true` when either #always_fully_detailed or #assignable_to_default returns `true`
     def report_detailed?(e, a)
+      # Always print shortened type names when running in a Bolt context.
+      return false if Puppet[:tasks]
       always_fully_detailed?(e, a) || assignable_to_default?(e, a)
     end
 
@@ -1042,7 +1044,11 @@ module Types
           indicator = '?'
           type = type.optional_type if type.is_a?(POptionalType)
         end
-        "#{type} #{name}#{indicator}"
+        if Puppet[:tasks]
+          "#{type.name} #{name}#{indicator}"
+        else
+          "#{type} #{name}#{indicator}"
+        end
       end.join(', ')
 
       # If there is a block, include it
