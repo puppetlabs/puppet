@@ -391,7 +391,7 @@ module Puppet::Environments
       clear_all_expired
       result = @cache[name]
       if result
-        Puppet.debug {"Found in cache '#{name}' #{result.label}"}
+        Puppet.debug {"Found in cache #{name.inspect} #{result.label}"}
         # found in cache
         result.touch
         return result.value
@@ -405,7 +405,7 @@ module Puppet::Environments
 
     # Adds a cache entry to the cache
     def add_entry(name, cache_entry)
-      Puppet.debug {"Caching environment '#{name}' #{cache_entry.label}"}
+      Puppet.debug {"Caching environment #{name.inspect} #{cache_entry.label}"}
       @cache[name] = cache_entry
       @cache_expiration_service.created(cache_entry.value)
     end
@@ -413,7 +413,7 @@ module Puppet::Environments
 
     def clear_entry(name, entry)
       @cache.delete(name)
-      Puppet.debug {"Evicting cache entry for environment '#{name}'"}
+      Puppet.debug {"Evicting cache entry for environment #{name.inspect}"}
       @cache_expiration_service.evicted(name.to_sym)
       Puppet::GettextConfig.delete_text_domain(name)
       Puppet.settings.clear_environment_settings(name)
