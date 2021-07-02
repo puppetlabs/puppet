@@ -789,6 +789,69 @@ config_version=$vardir/random/scripts
 
         expect(service.evicted_envs).to eq([:an_environment])
       end
+
+      context "when guarding an environment" do
+        before :each do
+          Puppet[:environment_timeout] = 0
+        end
+
+        let(:name) { :an_environment }
+
+        it "evicts an expired and unguarded environment" do
+          with_environment_loaded(service) do |cached|
+            cached.get!(name)
+          end
+
+          expect(service.created_envs).to eq([name, name])
+          expect(service.evicted_envs).to eq([name])
+        end
+
+        it "does not evict an expired, but guarded environment" do
+          with_environment_loaded(service) do |cached|
+            cached.guard(name) # this reloads the environment
+            begin
+              cached.get!(name) # these don't
+              cached.get!(name)
+            ensure
+              cached.unguard(name)
+            end
+          end
+
+          expect(service.created_envs).to eq([name, name])
+          expect(service.evicted_envs).to eq([name])
+        end
+
+        it "evicts an environment that is no longer guarded" do
+          with_environment_loaded(service) do |cached|
+            cached.guard(name) # this reloads the environment
+            cached.unguard(name)
+
+            cached.get!(name) # this reloads
+          end
+
+          expect(service.created_envs).to eq([name, name, name])
+          expect(service.evicted_envs).to eq([name, name])
+        end
+
+        it "can nest guards" do
+          with_environment_loaded(service) do |cached|
+            cached.guard(name) # this reloads
+            begin
+              cached.guard(name) # this doesn't
+              begin
+                cached.get!(name) # this doesn't
+              ensure
+                cached.unguard(name)
+              end
+            ensure
+              cached.unguard(name)
+            end
+          end
+
+          expect(service.created_envs).to eq([name, name])
+          expect(service.evicted_envs).to eq([name])
+        end
+      end
     end
 
     context '#clear' do

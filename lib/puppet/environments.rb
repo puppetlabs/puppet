@@ -388,7 +388,7 @@ module Puppet::Environments
     # @!macro loader_get
     def get(name)
       entry = get_entry(name)
-      entry&.value
+      entry ? entry.value : nil
     end
 
     # Get a cache entry for an envionment. It returns nil if the
@@ -486,6 +486,20 @@ module Puppet::Environments
       @loader.get_conf(name)
     end
 
+    # Guard an environment so it can't be evicted while it's in use. The method
+    # may be called multiple times, provided it is unguarded the same number of
+    # times. If you call this method, you must call `unguard` in an ensure block.
+    def guard(name)
+      entry = get_entry(name)
+      entry.guard if entry
+    end
+
+    # Unguard an environment.
+    def unguard(name)
+      entry = get_entry(name)
+      entry.unguard if entry
+    end
+
     # Creates a suitable cache entry given the time to live for one environment
     #
     def entry(env)
@@ -515,6 +529,7 @@ module Puppet::Environments
 
       def initialize(value)
         @value = value
+        @guards = 0
       end
 
       def touch
@@ -527,12 +542,26 @@ module Puppet::Environments
       def label
         ""
       end
+
+      # These are not protected with a lock, because all of the Cached
+      # methods are protected.
+      def guarded?
+        @guards > 0
+      end
+
+      def guard
+        @guards += 1
+      end
+
+      def unguard
+        @guards -= 1
+      end
     end
 
     # Always evicting entry
     class NotCachedEntry < Entry
       def expired?(now)
-        true
+        !guarded?
       end
 
       def label
@@ -549,7 +578,7 @@ module Puppet::Environments
       end
 
       def expired?(now)
-        now > @ttl
+        !guarded? && now > @ttl
       end
 
       def label
