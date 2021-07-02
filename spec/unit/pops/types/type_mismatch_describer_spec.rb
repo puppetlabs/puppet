@@ -1,14 +1,12 @@
 require 'spec_helper'
 require 'puppet/pops'
 require 'puppet_spec/compiler'
-require 'puppet_spec/files'
 
 module Puppet::Pops
 module Types
 
 describe 'the type mismatch describer' do
   include PuppetSpec::Compiler
-  include PuppetSpec::Files
 
   it 'will report a mismatch between a hash and a struct with details' do
     code = <<-CODE
@@ -132,7 +130,6 @@ describe 'the type mismatch describer' do
       /parameter 'arg' expects a match for Enum\['a', 'b'\], got Sensitive/))
   end
 
-
   it "reports errors on the first failing parameter when that parameter is not the first in order" do
     code = <<-CODE
       type Abc = Enum['a', 'b', 'c']
@@ -184,59 +181,6 @@ describe 'the type mismatch describer' do
     let(:parser) { TypeParser.singleton }
     let(:subject) { TypeMismatchDescriber.singleton }
 
-    context "short message" do
-      let(:unresolved_type_finder)    { double('unresolved_type_finder', visit: nil, unresolved: "Custom") }
-      let(:modules) { { 'mytest' => mytest } }
-      let(:datatypes) { {} }
-      let(:environments_dir) { Puppet[:environmentpath] }
-    
-      let(:mytest) {{
-        'lib' => {
-          'puppet' => {
-            'datatypes' => mytest_datatypes,
-            'functions' => mytest_functions },
-          'puppetx' => { 'mytest' => mytest_classes },
-        }
-      }}
-    
-      let(:mytest_datatypes) { {
-        'custom.rb' => <<~PUP
-            Puppet::DataTypes.create_type('Custom') do
-            interface
-            end
-            PUP
-      } }
-    
-      let(:testing_env_dir) do
-        dir_contained_in(environments_dir, testing_env)
-        env_dir = File.join(environments_dir, 'testing')
-        PuppetSpec::Files.record_tmp(env_dir)
-        env_dir
-      end
-    
-      let(:modules_dir) { File.join(testing_env_dir, 'modules') }
-      let(:env) { Puppet::Node::Environment.create(:testing, [modules_dir]) }
-      let(:node) { Puppet::Node.new('test', :environment => env) }
-    
-      let(:testing_env) do
-        {
-          'testing' => {
-            'lib' => { 'puppet' => { 'datatypes' => datatypes } },
-            'modules' => modules,
-          }
-        }
-      end
-    
-      before(:each) do
-        Puppet[:environment] = 'testing'
-      end
-      it "prints the short message when expected value is a PObject type" do
-        expected = parser.parse('Custom')
-        actual = parser.parse('Hash[String,Integer]')
-        expect(Puppet::Pops::Types::TypeMismatchDescriber::UnresolveTypeFinder).to receive(:new).and_return(unresolved_type_finder)
-        expect(subject.describe_mismatch('', expected, actual)).to eq('expected Custom, got Hash')
-      end
-    end
     context 'hash and struct' do
       it 'reports a size mismatch when hash has unlimited size' do
         expected = parser.parse('Struct[{a=>Integer,b=>Integer}]')
