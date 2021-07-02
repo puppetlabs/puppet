@@ -30,6 +30,7 @@ describe Puppet::Environments do
         ]),
         FS::MemoryFile.a_directory("another_environment", [
           FS::MemoryFile.a_missing_file("environment.conf"),
+          FS::MemoryFile.a_missing_directory("modules"),
         ]),
         FS::MemoryFile.a_missing_file("doesnotexist"),
         FS::MemoryFile.a_symlink("symlinked_environment", File.expand_path(File.join("top_level_dir", "versioned_env")))]),
@@ -401,11 +402,12 @@ config_version=$vardir/random/scripts
         base_dir = File.expand_path("envdir")
         original_envdir = FS::MemoryFile.a_directory(base_dir, [
           FS::MemoryFile.a_directory("env3", [
-            FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
+            FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF),
               manifest=/manifest_orig
-              modulepath=/modules_orig
+              modulepath=modules_orig
               environment_timeout=0
             EOF
+            FS::MemoryFile.a_directory('modules_orig', [])
           ]),
         ])
 
@@ -414,11 +416,12 @@ config_version=$vardir/random/scripts
 
           changed_envdir = FS::MemoryFile.a_directory(base_dir, [
             FS::MemoryFile.a_directory("env3", [
-              FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
+              FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF),
                 manifest=/manifest_changed
-                modulepath=/modules_changed
+                modulepath=modules_changed
                 environment_timeout=0
               EOF
+              FS::MemoryFile.a_directory('modules_changed', [])
             ]),
           ])
 
@@ -427,11 +430,11 @@ config_version=$vardir/random/scripts
 
             expect(original_env).to environment(:env3).
               with_manifest(File.expand_path("/manifest_orig")).
-              with_full_modulepath([File.expand_path("/modules_orig")])
+              with_full_modulepath([File.join(base_dir, "env3/modules_orig")])
 
             expect(changed_env).to environment(:env3).
               with_manifest(File.expand_path("/manifest_changed")).
-              with_full_modulepath([File.expand_path("/modules_changed")])
+              with_full_modulepath([File.join(base_dir, "env3/modules_changed")])
           end
         end
       end
@@ -617,15 +620,18 @@ config_version=$vardir/random/scripts
 
       it "does not list deleted environments" do
         env3 = FS::MemoryFile.a_directory("env3", [
-          FS::MemoryFile.a_regular_file_containing("environment.conf", '')
+          FS::MemoryFile.a_regular_file_containing("environment.conf", ''),
+          FS::MemoryFile.a_missing_directory("modules")
         ])
 
         envdir = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
           FS::MemoryFile.a_directory("env1", [
-            FS::MemoryFile.a_regular_file_containing("environment.conf", '')
+            FS::MemoryFile.a_regular_file_containing("environment.conf", ''),
+            FS::MemoryFile.a_missing_directory("modules")
           ]),
           FS::MemoryFile.a_directory("env2", [
-            FS::MemoryFile.a_regular_file_containing("environment.conf", '')
+            FS::MemoryFile.a_regular_file_containing("environment.conf", ''),
+            FS::MemoryFile.a_missing_directory("modules")
           ]),
           env3
         ])
@@ -875,7 +881,8 @@ config_version=$vardir/random/scripts
       let(:base_dir) do
         FS::MemoryFile.a_directory(envdir, [
           FS::MemoryFile.a_directory("cached_env", [
-            FS::MemoryFile.a_missing_file("environment.conf")
+            FS::MemoryFile.a_missing_file("environment.conf"),
+            FS::MemoryFile.a_missing_directory("modules")
           ])
         ])
       end

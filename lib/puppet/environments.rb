@@ -417,7 +417,7 @@ module Puppet::Environments
       Puppet.debug {"Caching environment #{name.inspect} #{cache_entry.label}"}
       @cache[name] = cache_entry
       @cache_expiration_service.created(cache_entry.value)
-      # REMIND: notify text domain service
+      @cache_textdomain_service.created(cache_entry.value)
     end
     private :add_entry
 
