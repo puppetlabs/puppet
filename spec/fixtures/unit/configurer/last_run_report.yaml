@@ -1,0 +1,56 @@
+--- !ruby/object:Puppet::Transaction::Report
+host: fuzzed-referee.delivery.puppetlabs.net
+time: '2021-06-28T12:17:48.799293293+00:00'
+configuration_version: 1624882680
+transaction_uuid: 2c3a3b4a-4aca-4b6f-b242-5e1cde7bf322
+report_format: 11
+puppet_version: 6.24.0
+status: unchanged
+transaction_completed: true
+noop: false
+noop_pending: false
+environment: development
+logs:
+- level: info
+  message: Retrieving pluginfacts
+  source: Puppet
+  tags:
+  - info
+  time: '2021-06-28T12:48:33.306045786+00:00'
+  file:
+  line:
+metrics:
+  resources:
+    name: resources
+    label: Resources
+    values:
+    - - total
+      - Total
+      - 7
+resource_statuses:
+  Filebucket[puppet]:
+    title: puppet
+    file:
+    line:
+    resource: Filebucket[puppet]
+    resource_type: Filebucket
+    provider_used:
+    containment_path:
+    - Filebucket[puppet]
+    evaluation_time: 4.2461e-05
+    tags:
+    - filebucket
+    - puppet
+    time: '2021-06-28T12:18:00.563990984+00:00'
+    failed: false
+    failed_to_restart: false
+    changed: false
+    out_of_sync: false
+    skipped: false
+    change_count: 0
+    out_of_sync_count: 0
+    events: []
+    corrective_change: false
+corrective_change: false
+catalog_uuid: cb51f984-0dac-4e7b-bffe-666415521198
+cached_catalog_status: not_used
