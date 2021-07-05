@@ -33,16 +33,16 @@ see the [Quick Start to Developing on Puppet](docs/quickstart.md) guide.
 
 We'd love to get contributions from you! For a quick guide to getting your
 system setup for developing, take a look at our [Quickstart
-Guide](https://github.com/puppetlabs/puppet/blob/master/docs/quickstart.md). Once you are up and running, take a look at the
-[Contribution Documents](https://github.com/puppetlabs/puppet/blob/master/CONTRIBUTING.md) to see how to get your changes merged
+Guide](https://github.com/puppetlabs/puppet/blob/main/docs/quickstart.md). Once you are up and running, take a look at the
+[Contribution Documents](https://github.com/puppetlabs/puppet/blob/main/CONTRIBUTING.md) to see how to get your changes merged
 in.
 
 For more complete docs on developing with Puppet, take a look at the
-rest of the [developer documents](https://github.com/puppetlabs/puppet/blob/master/docs/index.md).
+rest of the [developer documents](https://github.com/puppetlabs/puppet/blob/main/docs/index.md).
 
 ## Licensing
 
-See [LICENSE](https://github.com/puppetlabs/puppet/blob/master/LICENSE) file. Puppet is licensed by Puppet, Inc. under the Apache license. Puppet, Inc. can be contacted at: info@puppet.com
+See [LICENSE](https://github.com/puppetlabs/puppet/blob/main/LICENSE) file. Puppet is licensed by Puppet, Inc. under the Apache license. Puppet, Inc. can be contacted at: info@puppet.com
 
 ## Support
 
