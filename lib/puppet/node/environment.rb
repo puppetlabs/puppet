@@ -305,7 +305,9 @@ class Puppet::Node::Environment
                        {}
                      end
       modulepath.each do |path|
-        Dir.entries(path).each do |name|
+        Puppet::FileSystem.children(path).map do |p|
+          Puppet::FileSystem.basename_string(p)
+        end.each do |name|
           next unless Puppet::Module.is_module_directory?(name, path)
           warn_about_mistaken_path(path, name)
           if not seen_modules[name]
@@ -358,7 +360,9 @@ class Puppet::Node::Environment
     modules_by_path = {}
     modulepath.each do |path|
       if Puppet::FileSystem.exist?(path)
-        module_names = Dir.entries(path).select do |name|
+        module_names = Puppet::FileSystem.children(path).map do |p|
+          Puppet::FileSystem.basename_string(p)
+        end.select do |name|
           Puppet::Module.is_module_directory?(name, path)
         end
         modules_by_path[path] = module_names.sort.map do |name|
