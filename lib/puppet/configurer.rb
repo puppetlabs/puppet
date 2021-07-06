@@ -571,6 +571,7 @@ class Puppet::Configurer
           # don't update cache until after environment converges
           :ignore_cache_save => true,
           :environment       => Puppet::Node::Environment.remote(@environment),
+          :check_environment => true,
           :fail_on_404       => true,
           :facts_for_catalog => facts
         )

@@ -565,7 +565,7 @@ describe Puppet::Configurer do
   end
 
   def expects_new_catalog_only(catalog)
-    expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_return(catalog)
+    expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true, check_environment: true)).and_return(catalog)
     expect(Puppet::Resource::Catalog.indirection).not_to receive(:find).with(anything, hash_including(ignore_terminus: true))
   end
 
@@ -582,7 +582,7 @@ describe Puppet::Configurer do
   def expects_fallback_to_new_catalog(catalog)
     expects_pluginsync
     expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_terminus: true)).and_return(nil)
-    expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true)).and_return(catalog)
+    expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(ignore_cache: true, check_environment: true)).and_return(catalog)
   end
 
   def expects_neither_new_or_cached_catalog
