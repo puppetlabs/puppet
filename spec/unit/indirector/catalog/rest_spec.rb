@@ -33,6 +33,14 @@ describe Puppet::Resource::Catalog::Rest do
     described_class.indirection.find(certname, environment: Puppet::Node::Environment.remote('outerspace'))
   end
 
+  it "passes 'check_environment'" do
+    stub_request(:post, uri)
+      .with(body: hash_including('check_environment' => 'true'))
+      .to_return(**catalog_response(catalog))
+
+    described_class.indirection.find(certname, check_environment: true)
+  end
+
   it 'constructs a catalog environment_instance' do
     env = Puppet::Node::Environment.remote('outerspace')
     catalog = Puppet::Resource::Catalog.new(certname, env)
