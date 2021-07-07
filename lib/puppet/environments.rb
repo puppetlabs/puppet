@@ -356,6 +356,16 @@ module Puppet::Environments
       # Evict all that have expired, in the same way as `get`
       clear_all_expired
 
+      # Evict all that was removed from diks
+      cached_envs = @cache.keys.map!(&:to_sym)
+      loader_envs = @loader.list.map!(&:name)
+      removed_envs = cached_envs - loader_envs
+
+      removed_envs.each do |env_name|
+        Puppet.debug { "Environment no longer exists '#{env_name}'"}
+        clear(env_name)
+      end
+
       @loader.list.map do |env|
         name = env.name
         old_entry = @cache[name]

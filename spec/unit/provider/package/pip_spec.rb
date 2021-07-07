@@ -266,6 +266,43 @@ describe Puppet::Type.type(:package).provider(:pip) do
       let(:pip_version) { '1.5.4' }
       let(:pip_path) { '/fake/bin/pip' }
 
+      context "with pip version >= 20.3 and < 21.1" do
+        let(:pip_version) { '20.3.1' }
+        let(:pip_path) { '/fake/bin/pip' }
+
+        it "should use legacy-resolver argument" do
+          p = StringIO.new(
+            <<-EOS
+            Collecting real-package==versionplease
+              Could not find a version that satisfies the requirement real-package==versionplease (from versions: 1.1.3, 1.0, 1.9b1)
+            No matching distribution found for real-package==versionplease
+            EOS
+          )
+          expect(Puppet::Util::Execution).to receive(:execpipe).with(["/fake/bin/pip", "install", "real_package==versionplease",
+            "--use-deprecated=legacy-resolver"]).and_yield(p).once
+          @resource[:name] = "real_package"
+          @provider.latest
+        end
+      end
+
+      context "with pip version >= 21.1" do
+        let(:pip_version) { '21.1' }
+        let(:pip_path) { '/fake/bin/pip' }
+
+        it "should not use legacy-resolver argument" do
+          p = StringIO.new(
+            <<-EOS
+            Collecting real-package==versionplease
+              Could not find a version that satisfies the requirement real-package==versionplease (from versions: 1.1.3, 1.0, 1.9b1)
+            No matching distribution found for real-package==versionplease
+            EOS
+          )
+          expect(Puppet::Util::Execution).to receive(:execpipe).with(["/fake/bin/pip", "install", "real_package==versionplease"]).and_yield(p).once
+          @resource[:name] = "real_package"
+          @provider.latest
+        end
+      end
+
       it "should find a version number for real_package" do
         p = StringIO.new(
           <<-EOS

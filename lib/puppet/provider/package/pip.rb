@@ -126,7 +126,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     if self.class.compare_pip_versions(command_version, '1.5.4') == -1
       available_versions_with_old_pip.last
     else
-      available_versions_with_new_pip.last
+      available_versions_with_new_pip(command_version).last
     end
   end
 
@@ -149,15 +149,17 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     if self.class.compare_pip_versions(command_version, '1.5.4') == -1
       available_versions_with_old_pip
     else
-      available_versions_with_new_pip
+      available_versions_with_new_pip(command_version)
     end
   end
 
-  def available_versions_with_new_pip
+  def available_versions_with_new_pip(command_version)
     command = resource_or_provider_command
     self.class.validate_command(command)
 
     command_and_options = [self.class.quote(command), 'install', "#{@resource[:name]}==versionplease"]
+    extra_arg = list_extra_flags(command_version)
+    command_and_options << extra_arg if extra_arg
     command_and_options << install_options if @resource[:install_options]
     execpipe command_and_options do |process|
       process.collect do |line|
@@ -326,6 +328,16 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
       "\"#{path}\""
     else
       path
+    end
+  end
+
+  private
+
+  def list_extra_flags(command_version)
+    klass = self.class
+    if klass.compare_pip_versions(command_version, '20.2.4') == 1 &&
+      klass.compare_pip_versions(command_version, '21.1') == -1
+      '--use-deprecated=legacy-resolver'
     end
   end
 end
