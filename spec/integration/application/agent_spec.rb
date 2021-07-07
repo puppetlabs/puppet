@@ -572,7 +572,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
        ).and matching(
          /Notify\[a message\]\/message:/
        )).to_stdout
-       .and output(/the agent run will continue/).to_stderr
+       .and output(/Could not retrieve catalog from remote server/).to_stderr
     end
 
     it 'preserves the old cached catalog if validation fails with the old one' do
@@ -591,7 +591,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
           agent.command_line.args << '--test'
           agent.run
         }.to exit_with(1)
-         .and output(/Using configured environment/).to_stdout
+         .and output(%r{Retrieving plugin}).to_stdout
          .and output(%r{Validation of Exec\[unqualified_command\] failed: 'unqualified_command' is not qualified and no path was specified}).to_stderr
       end
 

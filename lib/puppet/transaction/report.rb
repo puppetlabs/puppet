@@ -377,7 +377,16 @@ class Puppet::Transaction::Report
   # @api public
   #
   def raw_summary
-    report = { "version" => { "config" => configuration_version, "puppet" => Puppet.version  } }
+    report = {
+      "version" => {
+        "config" => configuration_version,
+        "puppet" => Puppet.version
+      },
+      "application" => {
+        "run_mode" => Puppet.run_mode.name.to_s,
+        "environment" => environment
+      }
+    }
 
     @metrics.each do |name, metric|
       key = metric.name.to_s

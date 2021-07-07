@@ -78,12 +78,6 @@ describe Puppet::Configurer do
       configurer.run(:pluginsync => false)
     end
 
-    it "should carry on when it can't fetch its node definition" do
-      error = Net::HTTPError.new(400, 'dummy server communication error')
-      expect(Puppet::Node.indirection).to receive(:find).and_raise(error)
-      expect(configurer.run).to eq(0)
-    end
-
     it "fails the run if pluginsync fails when usecacheonfailure is false" do
       Puppet[:ignore_plugin_errors] = false
 
@@ -125,7 +119,6 @@ describe Puppet::Configurer do
     it "applies a cached catalog when it can't connect to the master" do
       error = Errno::ECONNREFUSED.new('Connection refused - connect(2)')
 
-      expect(Puppet::Node.indirection).to receive(:find).and_raise(error)
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(:ignore_cache => true)).and_raise(error)
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).with(anything, hash_including(:ignore_terminus => true)).and_return(catalog)
 
@@ -553,24 +546,6 @@ describe Puppet::Configurer do
     end
   end
 
-  describe "when requesting a node" do
-    it "uses the transaction uuid in the request" do
-      expect(Puppet::Node.indirection).to receive(:find).with(anything, hash_including(transaction_uuid: anything)).twice
-      configurer.run
-    end
-
-    it "sends an explicitly configured environment request" do
-      expect(Puppet.settings).to receive(:set_by_config?).with(:environment).and_return(true)
-      expect(Puppet::Node.indirection).to receive(:find).with(anything, hash_including(configured_environment: Puppet[:environment])).twice
-      configurer.run
-    end
-
-    it "does not send a configured_environment when using the default" do
-      expect(Puppet::Node.indirection).to receive(:find).with(anything, hash_including(configured_environment: nil)).twice
-      configurer.run
-    end
-  end
-
   def expects_pluginsync
     metadata = "[{\"path\":\"/etc/puppetlabs/code\",\"relative_path\":\".\",\"links\":\"follow\",\"owner\":0,\"group\":0,\"mode\":420,\"checksum\":{\"type\":\"ctime\",\"value\":\"{ctime}2020-07-10 14:00:00 -0700\"},\"type\":\"directory\",\"destination\":null}]"
     stub_request(:get, %r{/puppet/v3/file_metadatas/(plugins|locales)}).to_return(status: 200, body: metadata, headers: {'Content-Type' => 'application/json'})
@@ -622,17 +597,9 @@ describe Puppet::Configurer do
         configurer.run
       end
 
-      it "should not make a node request or pluginsync when a cached catalog is successfully retrieved" do
-        expect(Puppet::Node.indirection).not_to receive(:find)
+      it "should not pluginsync when a cached catalog is successfully retrieved" do
         expects_cached_catalog_only(catalog)
         expect(configurer).not_to receive(:download_plugins)
-
-        configurer.run
-      end
-
-      it "should make a node request and pluginsync when a cached catalog cannot be retrieved" do
-        expect(Puppet::Node.indirection).to receive(:find).and_return(nil)
-        expects_fallback_to_new_catalog(catalog)
 
         configurer.run
       end
@@ -668,7 +635,6 @@ describe Puppet::Configurer do
       end
 
       it "should not attempt to retrieve a cached catalog again if the first attempt failed" do
-        expect(Puppet::Node.indirection).to receive(:find).and_return(nil)
         expects_neither_new_or_cached_catalog
         expects_pluginsync
 
@@ -722,16 +688,6 @@ describe Puppet::Configurer do
     describe "and strict environment mode is set" do
       before do
         Puppet.settings[:strict_environment_mode] = true
-      end
-
-      it "should not make a node request" do
-        stub_request(:get, %r{/puppet/v3/file_metadatas?/plugins}).to_return(:status => 404)
-        stub_request(:get, %r{/puppet/v3/file_metadatas?/pluginfacts}).to_return(:status => 404)
-        expects_new_catalog_only(catalog)
-
-        expect(Puppet::Node.indirection).not_to receive(:find)
-
-        configurer.run
       end
 
       it "should return nil when the catalog's environment doesn't match the agent specified environment" do
@@ -1121,20 +1077,108 @@ describe Puppet::Configurer do
       expect(configurer.run(options)).to eq(0)
       expect(options[:report].server_used).to be_nil
     end
+  end
 
-    it "should not make multiple node requests when the server is found" do
-      Puppet.settings[:server_list] = ["myserver:123"]
+  describe "when selecting an environment" do
+    include PuppetSpec::Files
+    include PuppetSpec::Settings
 
-      Puppet::Node.indirection.terminus_class = :rest
-      Puppet::Resource::Catalog.indirection.terminus_class = :rest
+    describe "when the last used environment is available" do
+      let(:last_used_environment) { 'development' }
+      let(:default_environment) { 'production' }
 
-      stub_request(:get, 'https://myserver:123/status/v1/simple/master').to_return(status: 200)
-      stub_request(:post, %r{https://myserver:123/puppet/v3/catalog}).to_return(status: 200)
-      node_request = stub_request(:get, %r{https://myserver:123/puppet/v3/node/}).to_return(status: 200)
+      before do
+        Puppet[:lastrunfile] = file_containing('last_run_summary.yaml', <<~SUMMARY)
+        ---
+        version:
+          config: 1624882680
+          puppet: 6.24.0
+        application:
+          environment: development
+          run_mode: agent
+        SUMMARY
+      end
 
-      configurer.run
+      it "prefers the environment set via cli" do
+        Puppet.settings.handlearg('--environment', 'usethis')
+        configurer.run
 
-      expect(node_request).to have_been_requested.once
+        expect(configurer.environment).to eq('usethis')
+      end
+
+      it "prefers the environment set via config" do
+        FileUtils.mkdir_p(Puppet[:confdir])
+        set_puppet_conf(Puppet[:confdir], <<~CONF)
+        [main]
+        environment = usethis
+        CONF
+
+        Puppet.initialize_settings
+        configurer.run
+
+        expect(configurer.environment).to eq('usethis')
+      end
+
+      it "uses the default environment if given a catalog" do
+        configurer.run(catalog: catalog)
+
+        expect(configurer.environment).to eq(default_environment)
+      end
+
+      it "uses the default environment if use_cached_catalog = true" do
+        Puppet[:use_cached_catalog] = true
+        expects_cached_catalog_only(catalog)
+        configurer.run
+
+        expect(configurer.environment).to eq(default_environment)
+      end
+
+      describe "when the environment is not configured" do
+        it "uses the environment found in lastrunfile if the key exists" do
+          configurer.run
+
+          expect(configurer.environment).to eq(last_used_environment)
+        end
+
+        it "uses the default environment if the run mode doesn't match" do
+          Puppet[:lastrunfile] = file_containing('last_run_summary.yaml', <<~SUMMARY)
+          ---
+          version:
+            config: 1624882680
+            puppet: 6.24.0
+          application:
+            environment: development
+            run_mode: user
+          SUMMARY
+          configurer.run
+
+          expect(configurer.environment).to eq(default_environment)
+        end
+
+        it "uses the default environment if lastrunfile is invalid YAML" do
+          Puppet[:lastrunfile] = file_containing('last_run_summary.yaml', <<~SUMMARY)
+          Key: 'this is my very very very ' +
+               'long string'
+          SUMMARY
+          configurer.run
+
+          expect(configurer.environment).to eq(default_environment)
+        end
+
+        it "uses the default environment if lastrunfile exists but is empty" do
+          Puppet[:lastrunfile] = file_containing('last_run_summary.yaml', '')
+          configurer.run
+
+          expect(configurer.environment).to eq(default_environment)
+        end
+
+        it "uses the default environment if the last used one cannot be found" do
+          Puppet[:lastrunfile] = tmpfile('last_run_summary.yaml')
+          configurer.run
+
+          expect(configurer.environment).to eq(default_environment)
+        end
+      end
     end
   end
 end
