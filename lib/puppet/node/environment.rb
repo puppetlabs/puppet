@@ -350,9 +350,6 @@ class Puppet::Node::Environment
 
   # Modules broken out by directory in the modulepath
   #
-  # @note This method _changes_ the current working directory while enumerating
-  #   the modules. This seems rather dangerous.
-  #
   # @api public
   #
   # @return [Hash<String, Array<Puppet::Module>>] A hash whose keys are file
@@ -361,13 +358,11 @@ class Puppet::Node::Environment
     modules_by_path = {}
     modulepath.each do |path|
       if Puppet::FileSystem.exist?(path)
-        Dir.chdir(path) do
-          module_names = Dir.entries(path).select do |name|
-            Puppet::Module.is_module_directory?(name, path)
-          end
-          modules_by_path[path] = module_names.sort.map do |name|
-            Puppet::Module.new(name, File.join(path, name), self)
-          end
+        module_names = Dir.entries(path).select do |name|
+          Puppet::Module.is_module_directory?(name, path)
+        end
+        modules_by_path[path] = module_names.sort.map do |name|
+          Puppet::Module.new(name, File.join(path, name), self)
         end
       else
         modules_by_path[path] = []
