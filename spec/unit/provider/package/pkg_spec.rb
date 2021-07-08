@@ -352,12 +352,15 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
             resource[:ensure] = '1.0-0.151006'
             is = :absent
             expect(provider).to receive(:query).with(no_args).and_return({:ensure => is})
-            expect(provider).to receive(:properties).and_return({:mark => :hold})
+            expect(provider).to receive(:properties).and_return({:mark => :hold}).exactly(3).times
+
             expect(described_class).to receive(:pkg)
               .with(:list, '-Hvfa', 'dummy@1.0-0.151006')
               .and_return(Puppet::Util::Execution::ProcessOutput.new(File.read(my_fixture('dummy_implicit_version')), 0))
             expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'install', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
-            expect(provider).to receive(:unhold).with(no_args)
+            expect(provider).to receive(:unhold).with(no_args).twice
+            expect(described_class).to receive(:pkg)
+              .with(:freeze, 'dummy')
             expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'install', *hash[:flags], 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
             allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
             provider.insync?(is)
@@ -368,10 +371,14 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
             resource[:ensure] = '1.0-0.151006'
             is = '1.0,5.11-0.151006:20140219T191204Z'
             expect(provider).to receive(:query).with(no_args).and_return({:ensure => is})
-            expect(provider).to receive(:properties).and_return({:mark => :hold})
+            expect(provider).to receive(:properties).and_return({:mark => :hold}).exactly(3).times
+
             expect(described_class).to receive(:pkg).with(:list, '-Hvfa', 'dummy@1.0-0.151006').and_return(File.read(my_fixture('dummy_implicit_version')))
+            expect(described_class).to receive(:pkg)
+              .with(:freeze, 'dummy')
             expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'update', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
-            expect(provider).to receive(:unhold).with(no_args)
+              .and_return(File.read(my_fixture('dummy_implicit_version')))
+            expect(provider).to receive(:unhold).with(no_args).twice
             expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'update', *hash[:flags], 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
             allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
             provider.insync?(is)
@@ -385,6 +392,8 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
             expect(described_class).to receive(:pkg)
               .with(:list, '-Hvfa', 'dummy@1.0-0.151006')
               .and_return(Puppet::Util::Execution::ProcessOutput.new(File.read(my_fixture('dummy_implicit_version')), 0))
+            expect(Puppet::Util::Execution).to receive(:execute).with(["/bin/pkg", "list", "-Hv", "dummy"], {:failonfail => false, :combine => true})
+              .and_return(File.read(my_fixture('dummy_implicit_version')))
             expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'update', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
             allow($CHILD_STATUS).to receive(:exitstatus).and_return(4)
             provider.insync?(is)
@@ -396,6 +405,8 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
             expect(provider).to receive(:warning).with("Implicit version 1.0-0.151006 has 3 possible matches")
             expect(provider).to receive(:warning).with("Selecting version '1.0,5.11-0.151006:20140220T084443Z' for implicit '1.0-0.151006'")
             expect(described_class).to receive(:pkg).with(:list, '-Hvfa', 'dummy@1.0-0.151006').and_return(File.read(my_fixture('dummy_implicit_version')))
+            expect(Puppet::Util::Execution).to receive(:execute).with(["/bin/pkg", "list", "-Hv", "dummy"], {:failonfail => false, :combine => true})
+              .and_return(File.read(my_fixture('dummy_implicit_version')))
             expect(Puppet::Util::Execution).to receive(:execute).with(['/bin/pkg', 'install', '-n', 'dummy@1.0,5.11-0.151006:20140220T084443Z'], {:failonfail => false, :combine => true})
             allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
             provider.insync?(is)
