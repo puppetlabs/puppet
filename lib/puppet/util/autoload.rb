@@ -157,9 +157,9 @@ class Puppet::Util::Autoload
       # "app_defaults_initialized?" method on the main puppet Settings object.
       # --cprice 2012-03-16
       if Puppet.settings.app_defaults_initialized?
-        gem_directories + module_directories(env) + $LOAD_PATH
+        module_directories(env) + $LOAD_PATH + gem_directories
       else
-        gem_directories + $LOAD_PATH
+        $LOAD_PATH + gem_directories
       end
     end
 
