@@ -47,6 +47,17 @@ Puppet::Face.define(:node, '0.0.1') do
   end
 
   class LoggerIO
+    def debug(message)
+      Puppet.debug(message)
+    end
+
+    # Notice: For Puppet 6.x, the function below does not matter as it
+    # does not have any functionality.  But we decided to keep it here
+    # for the ease of merge up to 7.x and having the same code base.
+    def warn(message)
+      Puppet.warning(message) unless message =~ /cadir is currently configured to be inside/
+    end
+
     def err(message)
       Puppet.err(message) unless message =~ /^\s*Error:\s*/
     end
