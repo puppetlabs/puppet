@@ -9,7 +9,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     install Ruby's shadow password library (often known as `ruby-libshadow`)
     if you wish to manage user passwords."
 
-  commands :add => "useradd", :delete => "userdel", :modify => "usermod", :password => "chage"
+  commands :add => "useradd", :delete => "userdel", :modify => "usermod", :password => "chage", :chpasswd  => "chpasswd"
 
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos
@@ -152,6 +152,38 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     set(:groups, value)
   end
 
+  def password=(value)
+    user = @resource[:name]
+    tempfile = Tempfile.new('puppet', :encoding => Encoding::UTF_8)
+    begin
+      # Puppet execute does not support strings as input, only files.
+      # The password is expected to be in an encrypted format given -e is specified:
+      tempfile << "#{user}:#{value}\n"
+      tempfile.flush
+
+      # Options '-e' use encrypted password
+      # Must receive "user:enc_password" as input
+      # command, arguments = {:failonfail => true, :combine => true}
+      cmd = [command(:chpasswd), '-e']
+      execute_options = {
+        :failonfail => false,
+        :combine => true,
+        :stdinfile => tempfile.path,
+        :sensitive => has_sensitive_data?
+      }
+      output = execute(cmd, execute_options)
+
+    rescue => detail
+      tempfile.close
+      tempfile.delete
+      raise Puppet::Error, "Could not set password on #{@resource.class.name}[#{@resource.name}]: #{detail}", detail.backtrace
+    end
+
+    # chpasswd can return 1, even on success (at least on AIX 6.1); empty output
+    # indicates success
+    raise Puppet::ExecutionFailure, "chpasswd said #{output}" if output != ''
+  end
+
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
   end
@@ -215,13 +247,15 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     end
   end
 
+  # Add properties and flags but skipping password related properties due to
+  # security risks
   def add_properties
     cmd = []
     # validproperties is a list of properties in undefined order
     # sort them to have a predictable command line in tests
     Puppet::Type.type(:user).validproperties.sort.each do |property|
       value = get_value_for_property(property)
-      next if value.nil?
+      next if value.nil? || property == :password
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
       cmd << flag(property) << munge(property, value)
@@ -331,13 +365,12 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     if @resource[:shell]
       check_valid_shell
     end
-     super
-     if @resource.forcelocal? && self.groups?
-       set(:groups, @resource[:groups])
-     end
-     if @resource.forcelocal? && @resource[:expiry]
-       set(:expiry, @resource[:expiry])
-     end
+    super
+    if @resource.forcelocal?
+      set(:groups, @resource[:groups]) if self.groups?
+      set(:expiry, @resource[:expiry]) if @resource[:expiry]
+    end
+    set(:password, @resource[:password]) if @resource[:password]
   end
 
   def groups?
