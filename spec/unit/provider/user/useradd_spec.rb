@@ -13,6 +13,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     allow(described_class).to receive(:command).with(:localmodify).and_return('/usr/sbin/lusermod')
     allow(described_class).to receive(:command).with(:delete).and_return('/usr/sbin/userdel')
     allow(described_class).to receive(:command).with(:localdelete).and_return('/usr/sbin/luserdel')
+    allow(described_class).to receive(:command).with(:chpasswd).and_return('/usr/sbin/chpasswd')
   end
 
   let(:resource) do
@@ -62,7 +63,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         :provider   => provider,
       )
       resource2[:ensure] = :present
-      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: true))
+      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: true)).twice
       provider.create
     end
 
@@ -208,7 +209,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
 
     it "should call execute with sensitive if sensitive data is changed" do
-      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: true))
+      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: true)).and_return('')
       provider.password = 'bird bird bird'
     end
   end
