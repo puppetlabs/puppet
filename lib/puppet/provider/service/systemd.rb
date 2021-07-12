@@ -14,7 +14,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   confine :true => Puppet::FileSystem.exist?('/proc/1/comm') && Puppet::FileSystem.read('/proc/1/comm').include?('systemd')
 
   defaultfor :osfamily => [:archlinux]
-  defaultfor :osfamily => :redhat, :operatingsystemmajrelease => ["7", "8"]
+  defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (7..9).to_a
   defaultfor :osfamily => :redhat, :operatingsystem => :fedora
   defaultfor :osfamily => :suse
   defaultfor :osfamily => :coreos
