@@ -11,8 +11,8 @@ class CheckPuppet
 
   # default options
   OPTIONS = {
-    :statefile => "/var/lib/puppet/state/state.yaml",
-    :process   => "puppetd",
+    :statefile => "/opt/puppetlabs/puppet/cache/state/state.yaml",
+    :process   => "puppet",
     :interval  => 30,
   }
 

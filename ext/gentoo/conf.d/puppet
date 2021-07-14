@@ -1,5 +1,0 @@
-# Location of PID files
-PUPPET_PID_DIR="/var/run/puppetlabs"
-
-# You may specify other parameters to the puppet client here
-#PUPPET_EXTRA_OPTS=""
