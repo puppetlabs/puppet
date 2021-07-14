@@ -188,7 +188,7 @@ module Puppet::Environments
 
     def self.real_path(dir)
       if Puppet::FileSystem.symlink?(dir) && Puppet[:versioned_environment_dirs]
-        dir = Puppet::FileSystem.expand_path(Puppet::FileSystem.readlink(dir))
+        dir = Pathname.new Puppet::FileSystem.expand_path(Puppet::FileSystem.readlink(dir))
       end
       return dir
     end
@@ -241,7 +241,7 @@ module Puppet::Environments
 
     def validated_directory(envdir)
       env_name = Puppet::FileSystem.basename_string(envdir)
-      envdir = Puppet::Environments::Directories.real_path(envdir)
+      envdir = Puppet::Environments::Directories.real_path(envdir).to_s
       if Puppet::FileSystem.directory?(envdir) && Puppet::Node::Environment.valid_name?(env_name)
         envdir
       else
