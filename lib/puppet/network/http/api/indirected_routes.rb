@@ -93,7 +93,11 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     end
 
     configured_environment = Puppet.lookup(:environments).get(environment)
-    unless configured_environment.nil?
+    if configured_environment.nil?
+      Puppet.warning("Environment #{environment} does not exist, falling back to #{Puppet[:default_agent_environment]}")
+      configured_environment = Puppet.lookup(:environments).get(Puppet[:default_agent_environment])
+      params[:environment] = configured_environment if configured_environment
+    else
       configured_environment = configured_environment.override_from_commandline(Puppet.settings)
       params[:environment] = configured_environment
     end

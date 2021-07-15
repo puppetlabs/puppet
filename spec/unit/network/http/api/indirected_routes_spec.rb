@@ -74,6 +74,11 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)[3][:environment]).to be_a(Puppet::Node::Environment)
     end
 
+    it "should fallback to the configured default_agent_environment setting and return the environment as a Puppet::Node::Environment" do
+      Puppet[:default_agent_environment] = "env"
+      expect(handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", { :environment => "unavailable" })[3][:environment].to_s).to eq("env")
+    end
+
     it "should use the first field of the URI as the indirection name" do
       expect(handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)[0].name).to eq(:node)
     end

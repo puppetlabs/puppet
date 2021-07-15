@@ -161,7 +161,14 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
         command = is == :absent ? 'install' : 'update'
         options = ['-n']
         options.concat(join_options(@resource[:install_options])) if @resource[:install_options]
-        status = exec_cmd(command(:pkg), command, *options, "#{name}@#{p[:ensure]}")[:exit]
+
+        begin
+          unhold if properties[:mark] == :hold
+          status = exec_cmd(command(:pkg), command, *options, "#{name}@#{p[:ensure]}")[:exit]
+        ensure
+          hold if properties[:mark] == :hold
+        end
+
         case status
         when 4
           # if the first installable match would cause no changes, we're in sync
