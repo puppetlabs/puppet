@@ -317,7 +317,14 @@ class Puppet::Configurer
         )
       end
 
+      temp_value = options[:pluginsync]
+
+      # only validate server environment if pluginsync is requested
+      options[:pluginsync] = valid_server_environment? if options[:pluginsync] == true
+
       query_options, facts = get_facts(options) unless query_options
+      options[:pluginsync] = temp_value
+
       query_options[:configured_environment] = configured_environment
 
       catalog = prepare_and_retrieve_catalog(cached_catalog, facts, options, query_options)
@@ -424,6 +431,25 @@ class Puppet::Configurer
     Puppet.pop_context
   end
   private :run_internal
+
+  def valid_server_environment?
+    session = Puppet.lookup(:http_session)
+    begin
+      fs = session.route_to(:fileserver)
+      fs.get_file_metadatas(path: URI(Puppet[:pluginsource]).path, recurse: :false, environment: @environment)
+      true
+    rescue Puppet::HTTP::ResponseError => detail
+      if detail.response.code == 404
+        Puppet.notice(_("Environment '%{environment}' not found on server, skipping initial pluginsync.") % { environment: @environment })
+      else
+        Puppet.log_exception(detail, detail.message)
+      end
+      false
+    rescue => detail
+      Puppet.log_exception(detail, detail.message)
+      false
+    end
+  end
 
   def find_functional_server
     begin
