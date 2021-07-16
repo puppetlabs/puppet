@@ -438,14 +438,6 @@ This setting has been deprecated\. Use of any value other than \'hiera\' should 
 .
 .IP "" 0
 .
-.SS "default_agent_environment"
-The default environment for puppet agent\. Set by default to \'production\', and is the fallback environment in case the agent runs in an environment not available on the server\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: \fBproduction\fR
-.
-.IP "" 0
-.
 .SS "default_file_terminus"
 The default source for files if no server is given in a uri, e\.g\. puppet:///file\. The default of \fBrest\fR causes the file to be retrieved using the \fBserver\fR setting\. When running \fBapply\fR the default is \fBfile_server\fR, causing requests to be filled locally\.
 .
