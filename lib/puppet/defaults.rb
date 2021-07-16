@@ -1369,12 +1369,6 @@ EOT
         In either case, the path can point to a single file or to a directory of
         manifests to be evaluated in alphabetical order.",
     },
-    :default_agent_environment => {
-      :default  => "production",
-      :type     => :string,
-      :desc     => "The default environment for puppet agent. Set by default to 'production', and
-      is the fallback environment in case the agent runs in an environment not available on the server.",
-    },
     :disable_per_environment_manifest => {
       :default    => false,
       :type       => :boolean,
