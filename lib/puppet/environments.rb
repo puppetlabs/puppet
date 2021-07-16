@@ -385,23 +385,30 @@ module Puppet::Environments
 
     # @!macro loader_get
     def get(name)
+      entry = get_entry(name)
+      entry ? entry.value : nil
+    end
+
+    # Get a cache entry for an envionment. It returns nil if the
+    # environment doesn't exist.
+    def get_entry(name)
       # Aggressively evict all that has expired
       # This strategy favors smaller memory footprint over environment
       # retrieval time.
       clear_all_expired
-      result = @cache[name]
-      if result
-        Puppet.debug {"Found in cache #{name.inspect} #{result.label}"}
+      entry = @cache[name]
+      if entry
+        Puppet.debug {"Found in cache #{name.inspect} #{entry.label}"}
         # found in cache
-        result.touch
-        return result.value
+        entry.touch
       elsif (result = @loader.get(name))
         # environment loaded, cache it
-        cache_entry = entry(result)
-        add_entry(name, cache_entry)
-        result
+        entry = entry(result)
+        add_entry(name, entry)
       end
+      entry
     end
+    private :get_entry
 
     # Adds a cache entry to the cache
     def add_entry(name, cache_entry)
