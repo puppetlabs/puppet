@@ -564,6 +564,50 @@ describe Puppet::Resource::Catalog::Compiler do
       metadata
     end
 
+    describe "and the environment is a symlink and versioned_environment_dirs is true" do
+
+      let(:tmpdir) { Dir.mktmpdir }
+
+      before(:each) do
+        Puppet[:versioned_environment_dirs] = true
+        prod_path = File.join(Puppet[:environmentpath], 'production')
+        FileUtils.rm_rf(prod_path)
+        FileUtils.symlink(tmpdir, prod_path)
+      end
+
+      it "inlines metadata for a file" do
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+        file { '#{path}':
+          ensure => file,
+          source => '#{source}'
+        }
+      MANIFEST
+
+        module_relative_path = 'modules/mymodule/files/config_file.txt'
+        metadata = stubs_file_metadata(checksum_type,
+                                       checksum_value,
+                                       module_relative_path,
+                                       File.join(tmpdir, module_relative_path) )
+        expect(metadata).to receive(:source=).with(source)
+        expect(metadata).to receive(:content_uri=).with("puppet:///#{module_relative_path}")
+
+        options = {
+          :environment => catalog.environment_instance,
+          :links => :manage,
+          :checksum_type => checksum_type.to_sym,
+          :source_permissions => :ignore
+        }
+        expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, options).and_return(metadata)
+
+        compiler.send(:inline_metadata, catalog, checksum_type)
+
+
+        expect(catalog.metadata[path]).to eq(metadata)
+        expect(catalog.recursive_metadata).to be_empty
+
+      end
+    end
+
     it "inlines metadata for a file" do
       catalog = compile_to_catalog(<<-MANIFEST, node)
         file { '#{path}':
