@@ -154,7 +154,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     location = Puppet::Module::FILETYPES['files']
 
     !!(source_as_uri.path =~ /^\/modules\// &&
-       metadata.full_path =~ /#{environment_path}[^\/]+\/[^\/]+\/#{location}\/.+/)
+       metadata.full_path =~ /#{environment_path}\/[^\/]+\/[^\/]+\/#{location}\/.+/)
   end
 
   # Helper method to log file resources that could not be inlined because they
@@ -173,7 +173,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # Inline file metadata for static catalogs
   # Initially restricted to files sourced from codedir via puppet:/// uri.
   def inline_metadata(catalog, checksum_type)
-    environment_path = Pathname.new File.join(Puppet[:environmentpath], catalog.environment, "")
+    environment_path = Pathname.new File.join(Puppet[:environmentpath], catalog.environment)
     environment_path = Puppet::Environments::Directories.real_path(environment_path)
     list_of_resources = catalog.resources.find_all { |res| res.type == "File" }
 
