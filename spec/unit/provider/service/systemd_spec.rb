@@ -34,7 +34,7 @@ describe 'Puppet::Type::Service::Provider::Systemd',
     end
   end
 
-  [7, 8].each do |ver|
+  [7, 8, 9].each do |ver|
     it "should be the default provider on rhel#{ver}" do
       allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
       allow(Facter).to receive(:value).with(:operatingsystem).and_return(:redhat)
