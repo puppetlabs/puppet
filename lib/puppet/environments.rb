@@ -1,4 +1,5 @@
 require 'puppet/concurrent/synchronized'
+require 'puppet/gettext/text_domain_service'
 
 # @api private
 module Puppet::Environments
@@ -348,6 +349,7 @@ module Puppet::Environments
     def initialize(loader)
       @loader = loader
       @cache_expiration_service = Puppet::Environments::Cached.cache_expiration_service
+      @cache_textdomain_service = Puppet::TextDomainService.create
       @cache = {}
     end
 
@@ -385,37 +387,45 @@ module Puppet::Environments
 
     # @!macro loader_get
     def get(name)
+      entry = get_entry(name)
+      entry ? entry.value : nil
+    end
+
+    # Get a cache entry for an envionment. It returns nil if the
+    # environment doesn't exist.
+    def get_entry(name)
       # Aggressively evict all that has expired
       # This strategy favors smaller memory footprint over environment
       # retrieval time.
       clear_all_expired
-      result = @cache[name]
-      if result
-        Puppet.debug {"Found in cache '#{name}' #{result.label}"}
+      entry = @cache[name]
+      if entry
+        Puppet.debug {"Found in cache #{name.inspect} #{entry.label}"}
         # found in cache
-        result.touch
-        return result.value
+        entry.touch
       elsif (result = @loader.get(name))
         # environment loaded, cache it
-        cache_entry = entry(result)
-        add_entry(name, cache_entry)
-        result
+        entry = entry(result)
+        add_entry(name, entry)
       end
+      entry
     end
+    private :get_entry
 
     # Adds a cache entry to the cache
     def add_entry(name, cache_entry)
-      Puppet.debug {"Caching environment '#{name}' #{cache_entry.label}"}
+      Puppet.debug {"Caching environment #{name.inspect} #{cache_entry.label}"}
       @cache[name] = cache_entry
       @cache_expiration_service.created(cache_entry.value)
+      @cache_textdomain_service.created(cache_entry.value)
     end
     private :add_entry
 
     def clear_entry(name, entry)
       @cache.delete(name)
-      Puppet.debug {"Evicting cache entry for environment '#{name}'"}
+      Puppet.debug {"Evicting cache entry for environment #{name.inspect}"}
       @cache_expiration_service.evicted(name.to_sym)
-      Puppet::GettextConfig.delete_text_domain(name)
+      @cache_textdomain_service.evicted(entry.value)
       Puppet.settings.clear_environment_settings(name)
     end
     private :clear_entry
@@ -476,6 +486,20 @@ module Puppet::Environments
       @loader.get_conf(name)
     end
 
+    # Guard an environment so it can't be evicted while it's in use. The method
+    # may be called multiple times, provided it is unguarded the same number of
+    # times. If you call this method, you must call `unguard` in an ensure block.
+    def guard(name)
+      entry = get_entry(name)
+      entry.guard if entry
+    end
+
+    # Unguard an environment.
+    def unguard(name)
+      entry = get_entry(name)
+      entry.unguard if entry
+    end
+
     # Creates a suitable cache entry given the time to live for one environment
     #
     def entry(env)
@@ -505,6 +529,7 @@ module Puppet::Environments
 
       def initialize(value)
         @value = value
+        @guards = 0
       end
 
       def touch
@@ -517,12 +542,26 @@ module Puppet::Environments
       def label
         ""
       end
+
+      # These are not protected with a lock, because all of the Cached
+      # methods are protected.
+      def guarded?
+        @guards > 0
+      end
+
+      def guard
+        @guards += 1
+      end
+
+      def unguard
+        @guards -= 1
+      end
     end
 
     # Always evicting entry
     class NotCachedEntry < Entry
       def expired?(now)
-        true
+        !guarded?
       end
 
       def label
@@ -539,7 +578,7 @@ module Puppet::Environments
       end
 
       def expired?(now)
-        now > @ttl
+        !guarded? && now > @ttl
       end
 
       def label

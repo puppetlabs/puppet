@@ -30,6 +30,7 @@ describe Puppet::Environments do
         ]),
         FS::MemoryFile.a_directory("another_environment", [
           FS::MemoryFile.a_missing_file("environment.conf"),
+          FS::MemoryFile.a_missing_directory("modules"),
         ]),
         FS::MemoryFile.a_missing_file("doesnotexist"),
         FS::MemoryFile.a_symlink("symlinked_environment", File.expand_path(File.join("top_level_dir", "versioned_env")))]),
@@ -401,11 +402,12 @@ config_version=$vardir/random/scripts
         base_dir = File.expand_path("envdir")
         original_envdir = FS::MemoryFile.a_directory(base_dir, [
           FS::MemoryFile.a_directory("env3", [
-            FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
+            FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF),
               manifest=/manifest_orig
-              modulepath=/modules_orig
+              modulepath=modules_orig
               environment_timeout=0
             EOF
+            FS::MemoryFile.a_directory('modules_orig', [])
           ]),
         ])
 
@@ -414,11 +416,12 @@ config_version=$vardir/random/scripts
 
           changed_envdir = FS::MemoryFile.a_directory(base_dir, [
             FS::MemoryFile.a_directory("env3", [
-              FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF)
+              FS::MemoryFile.a_regular_file_containing("environment.conf", <<-EOF),
                 manifest=/manifest_changed
-                modulepath=/modules_changed
+                modulepath=modules_changed
                 environment_timeout=0
               EOF
+              FS::MemoryFile.a_directory('modules_changed', [])
             ]),
           ])
 
@@ -427,11 +430,11 @@ config_version=$vardir/random/scripts
 
             expect(original_env).to environment(:env3).
               with_manifest(File.expand_path("/manifest_orig")).
-              with_full_modulepath([File.expand_path("/modules_orig")])
+              with_full_modulepath([File.join(base_dir, "env3/modules_orig")])
 
             expect(changed_env).to environment(:env3).
               with_manifest(File.expand_path("/manifest_changed")).
-              with_full_modulepath([File.expand_path("/modules_changed")])
+              with_full_modulepath([File.join(base_dir, "env3/modules_changed")])
           end
         end
       end
@@ -617,15 +620,18 @@ config_version=$vardir/random/scripts
 
       it "does not list deleted environments" do
         env3 = FS::MemoryFile.a_directory("env3", [
-          FS::MemoryFile.a_regular_file_containing("environment.conf", '')
+          FS::MemoryFile.a_regular_file_containing("environment.conf", ''),
+          FS::MemoryFile.a_missing_directory("modules")
         ])
 
         envdir = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
           FS::MemoryFile.a_directory("env1", [
-            FS::MemoryFile.a_regular_file_containing("environment.conf", '')
+            FS::MemoryFile.a_regular_file_containing("environment.conf", ''),
+            FS::MemoryFile.a_missing_directory("modules")
           ]),
           FS::MemoryFile.a_directory("env2", [
-            FS::MemoryFile.a_regular_file_containing("environment.conf", '')
+            FS::MemoryFile.a_regular_file_containing("environment.conf", ''),
+            FS::MemoryFile.a_missing_directory("modules")
           ]),
           env3
         ])
@@ -789,6 +795,69 @@ config_version=$vardir/random/scripts
 
         expect(service.evicted_envs).to eq([:an_environment])
       end
+
+      context "when guarding an environment" do
+        before :each do
+          Puppet[:environment_timeout] = 0
+        end
+
+        let(:name) { :an_environment }
+
+        it "evicts an expired and unguarded environment" do
+          with_environment_loaded(service) do |cached|
+            cached.get!(name)
+          end
+
+          expect(service.created_envs).to eq([name, name])
+          expect(service.evicted_envs).to eq([name])
+        end
+
+        it "does not evict an expired, but guarded environment" do
+          with_environment_loaded(service) do |cached|
+            cached.guard(name) # this reloads the environment
+            begin
+              cached.get!(name) # these don't
+              cached.get!(name)
+            ensure
+              cached.unguard(name)
+            end
+          end
+
+          expect(service.created_envs).to eq([name, name])
+          expect(service.evicted_envs).to eq([name])
+        end
+
+        it "evicts an environment that is no longer guarded" do
+          with_environment_loaded(service) do |cached|
+            cached.guard(name) # this reloads the environment
+            cached.unguard(name)
+
+            cached.get!(name) # this reloads
+          end
+
+          expect(service.created_envs).to eq([name, name, name])
+          expect(service.evicted_envs).to eq([name, name])
+        end
+
+        it "can nest guards" do
+          with_environment_loaded(service) do |cached|
+            cached.guard(name) # this reloads
+            begin
+              cached.guard(name) # this doesn't
+              begin
+                cached.get!(name) # this doesn't
+              ensure
+                cached.unguard(name)
+              end
+            ensure
+              cached.unguard(name)
+            end
+          end
+
+          expect(service.created_envs).to eq([name, name])
+          expect(service.evicted_envs).to eq([name])
+        end
+      end
     end
 
     context '#clear' do
@@ -812,7 +881,8 @@ config_version=$vardir/random/scripts
       let(:base_dir) do
         FS::MemoryFile.a_directory(envdir, [
           FS::MemoryFile.a_directory("cached_env", [
-            FS::MemoryFile.a_missing_file("environment.conf")
+            FS::MemoryFile.a_missing_file("environment.conf"),
+            FS::MemoryFile.a_missing_directory("modules")
           ])
         ])
       end
