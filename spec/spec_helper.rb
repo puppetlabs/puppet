@@ -68,16 +68,7 @@ VCR.turn_off!
 RSpec.configure do |config|
   include PuppetSpec::Fixtures
 
-  # Examples or groups can selectively tag themselves as broken.
-  # For example;
-  #
-  # rbv = "#{RUBY_VERSION}-p#{RbConfig::CONFIG['PATCHLEVEL']}"
-  # describe "mostly working", :broken => false unless rbv == "1.9.3-p327" do
-  #  it "parses a valid IP" do
-  #    IPAddr.new("::2:3:4:5:6:7:8")
-  #  end
-  # end
-  exclude_filters = {:broken => true}
+  exclude_filters = {}
   exclude_filters[:benchmark] = true unless ENV['BENCHMARK']
   config.filter_run_excluding exclude_filters
 
