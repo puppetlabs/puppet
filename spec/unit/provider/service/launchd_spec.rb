@@ -325,6 +325,7 @@ describe 'Puppet::Type::Service::Provider::Launchd',
           'LimitLoadToSessionType' => 'Aqua'
         }
       end
+      let(:plist_without_label_not_hash) { 'just a string' }
       let(:busted_plist_path) { '/Library/LaunchAgents/org.busted.plist' }
       let(:binary_plist_path) { '/Library/LaunchAgents/org.binary.plist' }
 
@@ -336,6 +337,16 @@ describe 'Puppet::Type::Service::Provider::Launchd',
         expect(Puppet).to receive(:debug).with("The #{busted_plist_path} plist does not contain a 'label' key; Puppet is skipping it")
         provider.make_label_to_path_map
       end
+
+      it "it should warn that the malformed plist in question is being skipped" do
+        expect(provider).to receive(:launchd_paths).and_return(['/Library/LaunchAgents'])
+        expect(provider).to receive(:return_globbed_list_of_file_paths).with('/Library/LaunchAgents').and_return([busted_plist_path])
+        expect(plistlib).to receive(:read_plist_file).with(busted_plist_path).and_return(plist_without_label_not_hash)
+        expect(Puppet).to receive(:debug).with("Reading launchd plist #{busted_plist_path}")
+        expect(Puppet).to receive(:debug).with("The #{busted_plist_path} plist does not contain a 'label' key; Puppet is skipping it")
+        provider.make_label_to_path_map
+      end
+
     end
 
     it "should return the cached value when available" do

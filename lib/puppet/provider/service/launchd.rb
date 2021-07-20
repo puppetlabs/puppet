@@ -138,7 +138,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         Puppet.debug("Reading launchd plist #{filepath}")
         job = read_plist(filepath)
         next if job.nil?
-        if job.has_key?("Label")
+        if job.respond_to?(:key) && job.key?("Label")
           @label_to_path_map[job["Label"]] = filepath
         else
           #TRANSLATORS 'plist' and label' should not be translated
