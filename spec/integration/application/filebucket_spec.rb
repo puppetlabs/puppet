@@ -18,6 +18,11 @@ describe "puppet filebucket", unless: Puppet::Util::Platform.jruby? do
     File.binwrite(backup_file, text)
   end
 
+  after :each do
+    # mute debug messages generated during `after :each` blocks
+    Puppet::Util::Log.close_all
+  end
+
   it "backs up to and restores from the local filebucket" do
     filebucket.command_line.args = ['backup', backup_file, '--local']
     expect {
