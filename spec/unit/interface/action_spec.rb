@@ -537,15 +537,6 @@ describe Puppet::Interface::Action do
     end
   end
 
-  context "#when_rendering" do
-    it "should fail if no type is given when_rendering"
-    it "should accept a when_rendering block"
-    it "should accept multiple when_rendering blocks"
-    it "should fail if when_rendering gets a non-symbol identifier"
-    it "should fail if a second block is given for the same type"
-    it "should return the block if asked"
-  end
-
   context "#validate_and_clean" do
     subject do
       Puppet::Interface.new(:validate_args, '1.0.0') do
