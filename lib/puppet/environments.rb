@@ -49,6 +49,13 @@ module Puppet::Environments
         root.instance_variable_set(:@rich_data, nil)
       end
     end
+
+    # The base implementation is a noop, because `get` returns a new environment
+    # each time and does not load or evict text domains.
+    #
+    # @see Puppet::Environments::Cached#guard
+    def guard(name); end
+    def unguard(name); end
   end
 
   # @!macro [new] loader_search_paths
