@@ -101,21 +101,6 @@ describe Puppet::Network::AuthStore::Declaration do
     }
   }
 
-  describe "when the pattern is a numeric IP with a back reference" do
-    pending("implementation of backreferences for IP") do
-      before :each do
-        @ip = '100.101.$1'
-        @declaration = Puppet::Network::AuthStore::Declaration.new(:allow_ip,@ip).interpolate('12.34'.match(/(.*)/))
-      end
-      it "should match an IP with the appropriate interpolation" do
-        @declaration.should be_match('www.testsite.org',@ip.sub(/\$1/,'12.34'))
-      end
-      it "should not match other IPs" do
-        @declaration.should_not be_match('www.testsite.org',@ip.sub(/\$1/,'66.34'))
-      end
-    end
-  end
-
   [
     "02001:0000:1234:0000:0000:C1C0:ABCD:0876",
     "2001:0000:1234:0000:00001:C1C0:ABCD:0876",
