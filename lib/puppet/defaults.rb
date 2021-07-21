@@ -218,7 +218,7 @@ module Puppet
 
         The strictness level is for both language semantics and runtime
         evaluation validation. In addition to controlling the behavior with
-        this master switch some individual warnings may also be controlled
+        this primary server switch some individual warnings may also be controlled
         by the disable_warnings setting.
 
         No new validations will be added to a micro (x.y.z) release,
@@ -294,7 +294,7 @@ module Puppet
       :default    => true,
       :type       => :boolean,
       :desc       => "Whether to compile a [static catalog](https://puppet.com/docs/puppet/latest/static_catalogs.html#enabling-or-disabling-static-catalogs),
-        which occurs only on a Puppet Server master when the `code-id-command` and
+        which occurs only on Puppet Server when the `code-id-command` and
         `code-content-command` settings are configured in its `puppetserver.conf` file.",
     },
     :strict_environment_mode => {
@@ -412,13 +412,13 @@ module Puppet
         :default  => "production",
         :desc     => "The environment in which Puppet is running. For clients,
           such as `puppet agent`, this determines the environment itself, which
-          Puppet uses to find modules and much more. For servers, such as `puppet master`,
+          Puppet uses to find modules and much more. For servers, such as `puppet server`,
           this provides the default environment for nodes that Puppet knows nothing about.
 
           When defining an environment in the `[agent]` section, this refers to the
-          environment that the agent requests from the master. The environment doesn't
+          environment that the agent requests from the primary server. The environment doesn't
           have to exist on the local filesystem because the agent fetches it from the
-          master. This definition is used when running `puppet agent`.
+          primary server. This definition is used when running `puppet agent`.
 
           When defined in the `[user]` section, the environment refers to the path that
           Puppet uses to search for code and modules related to its execution. This
@@ -830,7 +830,7 @@ Valid values are 0 (never cache) and 15 (15 second minimum wait time).
     :certname => {
       :default => lambda { Puppet::Settings.default_certname.downcase },
       :desc => "The name to use when handling certificates. When a node
-        requests a certificate from the CA puppet master, it uses the value of the
+        requests a certificate from the CA Puppet Server, it uses the value of the
         `certname` setting as its requested Subject CN.
 
         This is the name used when managing a node's permissions in
@@ -893,7 +893,7 @@ EOT
       :desc => <<EOT
 An optional file containing custom attributes to add to certificate signing
 requests (CSRs). You should ensure that this file does not exist on your CA
-puppet master; if it does, unwanted certificate extensions may leak into
+Puppet Server; if it does, unwanted certificate extensions may leak into
 certificates created with the `puppetserver ca generate` command.
 
 If present, this file must be a YAML hash containing a `custom_attributes` key
@@ -1205,7 +1205,7 @@ EOT
       :default => "$confdir/autosign.conf",
       :type => :autosign,
       :desc => "Whether (and how) to autosign certificate requests. This setting
-        is only relevant on a puppet master acting as a certificate authority (CA).
+        is only relevant on a Puppet Server acting as a certificate authority (CA).
 
         Valid values are true (autosigns all certificate requests; not recommended),
         false (disables autosigning certificates), or the absolute path to a file.
@@ -1216,7 +1216,7 @@ EOT
         file, it will be treated as a policy executable; otherwise, it will be
         treated as a config file.
 
-        If a custom policy executable is configured, the CA puppet master will run it
+        If a custom policy executable is configured, the CA Puppet Server will run it
         every time it receives a CSR. The executable will be passed the subject CN of the
         request _as a command line argument,_ and the contents of the CSR in PEM format
         _on stdin._ It should exit with a status of 0 if the cert should be autosigned
@@ -1302,7 +1302,7 @@ EOT
     :manifest => {
       :default    => nil,
       :type       => :file_or_directory,
-      :desc       => "The entry-point manifest for puppet master. This can be one file
+      :desc       => "The entry-point manifest for the primary server. This can be one file
         or a directory of manifests to be evaluated in alphabetical order. Puppet manages
         this path as a directory if one exists or if the path ends with a / or \\.
 
@@ -1509,8 +1509,8 @@ EOT
         their names should be comma-separated, with whitespace allowed. (For example,
         `reports = http, store`.)
 
-        This setting is relevant to puppet master and puppet apply. The puppet
-        master will call these report handlers with the reports it receives from
+        This setting is relevant to puppet server and puppet apply. The primary Puppet
+        server will call these report handlers with the reports it receives from
         agent nodes, and puppet apply will call them with its own report. (In
         all cases, the node applying the catalog must have `report = true`.)
 
@@ -1578,7 +1578,7 @@ EOT
     :node_name_value => {
       :default => "$certname",
       :desc => "The explicit value used for the node name for all requests the agent
-        makes to the master. WARNING: This setting is mutually exclusive with
+        makes to the primary server. WARNING: This setting is mutually exclusive with
         node_name_fact.  Changing this setting also requires changes to the default
         auth.conf configuration on the Puppet Master.  Please see
         http://links.puppet.com/node_name_value for more information."
@@ -1586,7 +1586,7 @@ EOT
     :node_name_fact => {
       :default => "",
       :desc => "The fact name used to determine the node name used for all requests the agent
-        makes to the master. WARNING: This setting is mutually exclusive with
+        makes to the primary server. WARNING: This setting is mutually exclusive with
         node_name_value.  Changing this setting also requires changes to the default
         auth.conf configuration on the Puppet Master.  Please see
         http://links.puppet.com/node_name_fact for more information.",
@@ -1600,8 +1600,8 @@ EOT
       :default => "$statedir/state.yaml",
       :type => :file,
       :mode => "0640",
-      :desc => "Where puppet agent and puppet master store state associated
-        with the running configuration.  In the case of puppet master,
+      :desc => "Where Puppet agent and Puppet Server store state associated
+        with the running configuration.  In the case of Puppet Server,
         this file reflects the state discovered through interacting
         with clients."
     },
@@ -1664,11 +1664,11 @@ EOT
         the POSIX syslog service and the Windows Event Log are unavailable. (Currently,
         no supported operating systems match that description.)
 
-        Despite the name, both puppet agent and puppet master will use this file
+        Despite the name, both puppet agent and puppet server will use this file
         as the fallback logging destination.
 
         For control over logging destinations, see the `--logdest` command line
-        option in the manual pages for puppet master, puppet agent, and puppet
+        option in the manual pages for puppet server, puppet agent, and puppet
         apply. You can see man pages by running `puppet <SUBCOMMAND> --help`,
         or read them online at https://puppet.com/docs/puppet/latest/man/."
     },
@@ -1682,12 +1682,12 @@ EOT
     },
     :server => {
       :default => "puppet",
-      :desc => "The puppet master server to which the puppet agent should connect.",
+      :desc => "The primary Puppet server to which the Puppet agent should connect.",
     },
     :server_list => {
       :default => [],
       :type => :server_list,
-      :desc => "The list of puppet master servers to which the puppet agent should connect,
+      :desc => "The list of primary Puppet servers to which the Puppet agent should connect,
         in the order that they will be tried.",
     },
     :use_srv_records => {
@@ -1702,7 +1702,7 @@ EOT
     :http_extra_headers => {
       :default => [],
       :type => :http_extra_headers,
-      :desc => "The list of extra headers that will be sent with http requests to the master.
+      :desc => "The list of extra headers that will be sent with http requests to the primary server.
       The header definition consists of a name and a value separated by a colon."
     },
     :ignoreschedules => {
@@ -1728,7 +1728,7 @@ EOT
         like it does when running normally. However, if a resource attribute is not in
         the desired state (as declared in the catalog), Puppet will take no
         action, and will instead report the changes it _would_ have made. These
-        simulated changes will appear in the report sent to the puppet master, or
+        simulated changes will appear in the report sent to the primary Puppet server, or
         be shown on the console if running puppet agent or puppet apply in the
         foreground. The simulated changes will not send refresh events to any
         subscribing or notified resources, although Puppet will log that a refresh
@@ -1800,7 +1800,7 @@ EOT
       :desc       => "Whether to only use the cached catalog rather than compiling a new catalog
         on every run.  Puppet can be run with this enabled by default and then selectively
         disabled when a recompile is desired. Because a Puppet agent using cached catalogs
-        does not contact the master for a new catalog, it also does not upload facts at
+        does not contact the primary server for a new catalog, it also does not upload facts at
         the beginning of the Puppet run.",
     },
     :ignoremissingtypes => {
@@ -1808,7 +1808,7 @@ EOT
       :type       => :boolean,
       :desc       => "Skip searching for classes and definitions that were missing during a
         prior compilation. The list of missing objects is maintained per-environment and
-        persists until the environment is cleared or the master is restarted.",
+        persists until the environment is cleared or the primary server is restarted.",
     },
     :splaylimit => {
       :default    => "$runinterval",
@@ -1838,7 +1838,7 @@ EOT
         If you restart an agent's puppet service with `splay` enabled, it
         recalculates its splay period and delays its first agent run after
         restarting for this new period. If you simultaneously restart a group of
-        puppet agents with `splay` enabled, their checkins to your puppet masters
+        puppet agents with `splay` enabled, their checkins to your primary servers
         can be distributed more evenly.",
     },
     :clientbucketdir => {
@@ -1930,7 +1930,7 @@ EOT
 
       When starting for the first time, puppet agent will submit a certificate
       signing request (CSR) to the server named in the `ca_server` setting
-      (usually the puppet master); this may be autosigned, or may need to be
+      (usually the primary Puppet server); this may be autosigned, or may need to be
       approved by a human, depending on the CA server's configuration.
 
       Puppet agent cannot apply configurations until its approved certificate is

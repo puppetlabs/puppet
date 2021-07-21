@@ -4,8 +4,8 @@ module Puppet
   Type.newtype(:filebucket) do
     @doc = <<-EOT
       A repository for storing and retrieving file content by MD5 checksum. Can
-      be local to each agent node, or centralized on a puppet master server. All
-      puppet masters provide a filebucket service that agent nodes can access
+      be local to each agent node, or centralized on a primary Puppet server. All
+      puppet servers provide a filebucket service that agent nodes can access
       via HTTP, but you must declare a filebucket resource before any agents
       will do so.
 
@@ -25,7 +25,7 @@ module Puppet
           # /etc/puppetlabs/puppet/manifests/site.pp
           filebucket { 'main':
             path   => false,                # This is required for remote filebuckets.
-            server => 'puppet.example.com', # Optional; defaults to the configured puppet master.
+            server => 'puppet.example.com', # Optional; defaults to the configured primary server.
           }
 
           File { backup => main, }
