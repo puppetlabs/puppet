@@ -405,14 +405,15 @@ module Puppet::Environments
       # This strategy favors smaller memory footprint over environment
       # retrieval time.
       clear_all_expired
+      name = name.to_sym
       entry = @cache[name]
       if entry
         Puppet.debug {"Found in cache #{name.inspect} #{entry.label}"}
         # found in cache
         entry.touch
-      elsif (result = @loader.get(name))
+      elsif (env = @loader.get(name))
         # environment loaded, cache it
-        entry = entry(result)
+        entry = entry(env)
         add_entry(name, entry)
       end
       entry
@@ -440,6 +441,7 @@ module Puppet::Environments
     # Clears the cache of the environment with the given name.
     # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
     def clear(name)
+      name = name.to_sym
       entry = @cache[name]
       clear_entry(name, entry) if entry
     end
@@ -489,6 +491,7 @@ module Puppet::Environments
     #
     # @!macro loader_get_conf
     def get_conf(name)
+      name = name.to_sym
       clear_if_expired(name, @cache[name])
       @loader.get_conf(name)
     end
