@@ -383,6 +383,15 @@ class Puppet::Configurer
         @environment = catalog.environment
         report.environment = @environment
 
+        new_env = Puppet::Node::Environment.remote(@environment)
+        Puppet.push_context(
+          {
+            :current_environment => new_env,
+            :loaders => Puppet::Pops::Loaders.new(new_env, true)
+          },
+          "Local node environment #{@environment} for configurer transaction"
+        )
+
         query_options, facts = get_facts(options)
         query_options[:configured_environment] = configured_environment
 

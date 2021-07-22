@@ -947,8 +947,22 @@ describe Puppet::Configurer do
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(apple, banana, banana)
 
       allow(Puppet).to receive(:notice)
+      allow(Puppet).to receive(:push_context)
       expect(Puppet).to receive(:notice).with("Local environment: 'production' doesn't match server specified environment 'apple', restarting agent run with environment 'apple'")
       expect(Puppet).to receive(:notice).with("Local environment: 'apple' doesn't match server specified environment 'banana', restarting agent run with environment 'banana'")
+
+      expect(Puppet).to receive(:push_context).with(
+        hash_including(current_environment: an_object_having_attributes(name: :production)),
+        'Local node environment production for configurer transaction'
+      )
+      expect(Puppet).to receive(:push_context).with(
+        hash_including(current_environment: an_object_having_attributes(name: :apple)),
+        'Local node environment apple for configurer transaction'
+      )
+      expect(Puppet).to receive(:push_context).with(
+        hash_including(current_environment: an_object_having_attributes(name: :banana)),
+        'Local node environment banana for configurer transaction'
+      )
 
       configurer.run
     end
