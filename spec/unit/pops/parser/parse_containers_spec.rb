@@ -95,18 +95,7 @@ describe "egrammar parsing containers" do
         expect(dump(parse("class foo::default {}"))).to eq("(class foo::default ())")
       end
 
-      it "class class inherits default {} # inherits default", :broken => true do
-        expect {
-          parse("class class inherits default {}")
-        }.to raise_error(/not a valid classname/)
-      end
-
       it "class class inherits default {} # inherits default" do
-        # TODO: See previous test marked as :broken=>true, it is actually this test (result) that is wacky,
-        # this because a class is named at parse time (since class evaluation is lazy, the model must have the
-        # full class name for nested classes - only, it gets this wrong when a class is named "class" - or at least
-        # I think it is wrong.)
-        #
         expect { parse("class class inherits default {}") }.to raise_error(/'class' keyword not allowed at this location/)
       end
 

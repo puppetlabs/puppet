@@ -176,8 +176,6 @@ shared_examples_for "documentation on faces" do
       subject.license = "foo"
       expect(subject.license).to eq("foo")
     end
-
-    it "should accept symbols to specify existing licenses..."
   end
 
   describe "#copyright" do
