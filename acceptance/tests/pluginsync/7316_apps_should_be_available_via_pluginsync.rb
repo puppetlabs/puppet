@@ -19,6 +19,13 @@ test_name 'the pluginsync functionality should sync app definitions, and they sh
 
   teardown do
     on(master, "rm -rf '#{master_module_dir}'")
+
+    # Remove all traces of the last used environment
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
   end
 
   app_name   = "superbogus"

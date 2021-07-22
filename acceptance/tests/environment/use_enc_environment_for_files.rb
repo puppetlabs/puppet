@@ -5,6 +5,15 @@ test_name "Agent should use environment given by ENC for fetching remote files" 
       'audit:refactor', # This test should be rolled into use_enc_environment
       'server'
 
+  # Remove all traces of the last used environment
+  teardown do
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+  end
+
   testdir = create_tmpdir_for_user(master, 'respect_enc_test')
 
   create_remote_file(master, "#{testdir}/enc.rb", <<END)

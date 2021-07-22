@@ -5,6 +5,15 @@ test_name "Agent should use agent environment if there is no enc-specified envir
       'audit:refactor', # This can be combined with use_agent_environment_when_enc_doesnt_specify test
       'server'
 
+  # Remove all traces of the last used environment
+  teardown do
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+  end
+
   testdir = create_tmpdir_for_user(master, 'use_agent_env')
 
   apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)

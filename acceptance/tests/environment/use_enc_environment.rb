@@ -6,6 +6,15 @@ test_name 'Agent should use environment given by ENC and only compile a catalog 
       'audit:integration',
       'server'
 
+  # Remove all traces of the last used environment
+  teardown do
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+  end
+
   testdir = create_tmpdir_for_user(master, 'use_enc_env')
 
   if master.is_pe?
