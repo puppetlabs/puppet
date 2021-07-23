@@ -155,6 +155,29 @@ describe Puppet::FileServing::Configuration::Parser do
     end
   end
 
+  describe Puppet::FileServing::Configuration::Parser, " when parsing the scripts mount" do
+    include FSConfigurationParserTesting
+
+    before do
+      @mount = double('scriptsmount', :name => "scripts", :validate => true)
+    end
+
+    it "should create an instance of the Scripts Mount class" do
+      write_config_file "[scripts]\n"
+
+      expect(Puppet::FileServing::Mount::Scripts).to receive(:new).with("scripts").and_return(@mount)
+      @parser.parse
+    end
+
+    it "should warn if a path is set" do
+      write_config_file "[scripts]\npath /some/path\n"
+      expect(Puppet::FileServing::Mount::Scripts).to receive(:new).with("scripts").and_return(@mount)
+
+      expect(Puppet).to receive(:warning)
+      @parser.parse
+    end
+  end
+
   describe Puppet::FileServing::Configuration::Parser, " when parsing the plugins mount" do
     include FSConfigurationParserTesting
 

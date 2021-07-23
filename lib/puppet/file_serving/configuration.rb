@@ -6,6 +6,7 @@ require 'puppet/file_serving/mount/modules'
 require 'puppet/file_serving/mount/plugins'
 require 'puppet/file_serving/mount/locales'
 require 'puppet/file_serving/mount/pluginfacts'
+require 'puppet/file_serving/mount/scripts'
 require 'puppet/file_serving/mount/tasks'
 
 class Puppet::FileServing::Configuration
@@ -87,6 +88,8 @@ class Puppet::FileServing::Configuration
     @mounts["locales"].allow('*') if @mounts["locales"].empty?
     @mounts["pluginfacts"] ||= Mount::PluginFacts.new("pluginfacts")
     @mounts["pluginfacts"].allow('*') if @mounts["pluginfacts"].empty?
+    @mounts["scripts"] ||= Mount::Scripts.new("scripts")
+    @mounts["scripts"].allow('*') if @mounts["scripts"].empty?
     @mounts["tasks"] ||= Mount::Tasks.new("tasks")
     @mounts["tasks"].allow('*') if @mounts["tasks"].empty?
   end
