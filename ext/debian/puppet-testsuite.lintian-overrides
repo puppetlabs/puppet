@@ -1,4 +1,0 @@
-# Upstream distributes it like this
-puppet-testsuite binary: executable-not-elf-or-script
-puppet-testsuite binary: script-not-executable
-puppet-testsuite binary: unusual-interpreter
