@@ -140,14 +140,6 @@ describe Puppet::Environments do
       end
     end
 
-    it "implements guard and unguard" do
-      loader_from(:filesystem => [directory_tree],
-                  :directory => directory_tree.children.first) do |loader|
-        expect(loader.guard('env1')).to be_nil
-        expect(loader.unguard('env1')).to be_nil
-      end
-    end
-
     context "with an environment.conf" do
       let(:envdir) do
         FS::MemoryFile.a_directory(File.expand_path("envdir"), [
