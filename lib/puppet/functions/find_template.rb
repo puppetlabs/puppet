@@ -2,11 +2,11 @@
 #
 # This function accepts an argument that is a String as a `<MODULE NAME>/<TEMPLATE>`
 # reference, which searches for `<TEMPLATE>` relative to a module's `templates`
-# directory on the master. (For example, the reference `mymod/secret.conf.epp`
+# directory on the primary server. (For example, the reference `mymod/secret.conf.epp`
 # will search for the file `<MODULES DIRECTORY>/mymod/templates/secret.conf.epp`.)
 #
 # The primary use case is for agent-side template rendering with late-bound variables
-# resolved, such as from secret stores inaccessible to the master, such as
+# resolved, such as from secret stores inaccessible to the primary server, such as
 #
 # ```
 # $variables = {
