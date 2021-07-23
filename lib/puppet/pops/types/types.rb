@@ -815,6 +815,30 @@ class PEnumType < PScalarDataType
     end
   end
 
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_enum, type.loader) do
+      local_types do
+        type 'Selector = Variant[Boolean, Integer]'
+        type 'Format   = String[1]'
+      end
+
+      dispatch :from_args do
+        param          'Selector', :selector      # selects one of the Enum's strings
+        optional_param 'Format',   :string_format # how should the string being formatted?
+      end
+
+      def from_args(selector, format = :default)
+        string = case selector
+          when true then @values[1]
+          when false then @values[0]
+          when Integer then @values[selector]
+          end
+
+        StringConverter.singleton.convert(string, format)
+      end
+    end
+  end
+
   DEFAULT = PEnumType.new(EMPTY_ARRAY)
 
   protected
