@@ -91,23 +91,23 @@ Puppet::Type.newtype(:file) do
 
       Backing up to a local filebucket isn't particularly useful. If you want
       to make organized use of backups, you will generally want to use the
-      puppet master server's filebucket service. This requires declaring a
+      primary Puppet server's filebucket service. This requires declaring a
       filebucket resource and a resource default for the `backup` attribute
       in site.pp:
 
           # /etc/puppetlabs/puppet/manifests/site.pp
           filebucket { 'main':
             path   => false,                # This is required for remote filebuckets.
-            server => 'puppet.example.com', # Optional; defaults to the configured puppet master.
+            server => 'puppet.example.com', # Optional; defaults to the configured primary Puppet server.
           }
 
           File { backup => main, }
 
-      If you are using multiple puppet master servers, you will want to
+      If you are using multiple primary servers, you will want to
       centralize the contents of the filebucket. Either configure your load
-      balancer to direct all filebucket traffic to a single master, or use
+      balancer to direct all filebucket traffic to a single primary server, or use
       something like an out-of-band rsync task to synchronize the content on all
-      masters.
+      primary servers.
 
       > **Note**: Enabling and using the backup option, and by extension the 
         filebucket resource, requires appropriate planning and management to ensure 
@@ -359,7 +359,7 @@ Puppet::Type.newtype(:file) do
       This command must have a fully qualified path, and should contain a
       percent (`%`) token where it would expect an input file. It must exit `0`
       if the syntax is correct, and non-zero otherwise. The command will be
-      run on the target system while applying the catalog, not on the puppet master.
+      run on the target system while applying the catalog, not on the primary Puppet server.
 
       Example:
 

@@ -1272,7 +1272,7 @@ class Type
       like it does when running normally. However, if a resource attribute is not in
       the desired state (as declared in the catalog), Puppet will take no
       action, and will instead report the changes it _would_ have made. These
-      simulated changes will appear in the report sent to the puppet master, or
+      simulated changes will appear in the report sent to the primary Puppet server, or
       be shown on the console if running puppet agent or puppet apply in the
       foreground. The simulated changes will not send refresh events to any
       subscribing or notified resources, although Puppet will log that a refresh
