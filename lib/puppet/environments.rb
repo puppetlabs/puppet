@@ -337,11 +337,11 @@ module Puppet::Environments
     end
 
     def self.cache_expiration_service=(service)
-      @cache_expiration_service = service
+      @cache_expiration_service_singleton = service
     end
 
     def self.cache_expiration_service
-      @cache_expiration_service || DefaultCacheExpirationService.new
+      @cache_expiration_service_singleton || DefaultCacheExpirationService.new
     end
 
     # Returns the end of time (the next Mesoamerican Long Count cycle-end after 2012 (5125+2012) = 7137
