@@ -32,10 +32,10 @@ Whether to log debug information\.
 .
 .TP
 \-\-environment production
-The environment in which Puppet is running\. For clients, such as \fBpuppet agent\fR, this determines the environment itself, which Puppet uses to find modules and much more\. For servers, such as \fBpuppet master\fR, this provides the default environment for nodes that Puppet knows nothing about\.
+The environment in which Puppet is running\. For clients, such as \fBpuppet agent\fR, this determines the environment itself, which Puppet uses to find modules and much more\. For servers, such as \fBpuppet server\fR, this provides the default environment for nodes that Puppet knows nothing about\.
 .
 .IP
-When defining an environment in the \fB[agent]\fR section, this refers to the environment that the agent requests from the master\. The environment doesn\'t have to exist on the local filesystem because the agent fetches it from the master\. This definition is used when running \fBpuppet agent\fR\.
+When defining an environment in the \fB[agent]\fR section, this refers to the environment that the agent requests from the primary server\. The environment doesn\'t have to exist on the local filesystem because the agent fetches it from the primary server\. This definition is used when running \fBpuppet agent\fR\.
 .
 .IP
 When defined in the \fB[user]\fR section, the environment refers to the path that Puppet uses to search for code and modules related to its execution\. This requires the environment to exist locally on the filesystem where puppet is being executed\. Puppet subcommands, including \fBpuppet module\fR and \fBpuppet apply\fR, use this definition\.

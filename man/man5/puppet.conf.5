@@ -82,7 +82,7 @@ Whether log files should always flush to disk\.
 .IP "" 0
 .
 .SS "autosign"
-Whether (and how) to autosign certificate requests\. This setting is only relevant on a puppet master acting as a certificate authority (CA)\.
+Whether (and how) to autosign certificate requests\. This setting is only relevant on a Puppet Server acting as a certificate authority (CA)\.
 .
 .P
 Valid values are true (autosigns all certificate requests; not recommended), false (disables autosigning certificates), or the absolute path to a file\.
@@ -91,7 +91,7 @@ Valid values are true (autosigns all certificate requests; not recommended), fal
 The file specified in this setting may be either a \fBconfiguration file\fR or a \fBcustom policy executable\.\fR Puppet will automatically determine what it is: If the Puppet user (see the \fBuser\fR setting) can execute the file, it will be treated as a policy executable; otherwise, it will be treated as a config file\.
 .
 .P
-If a custom policy executable is configured, the CA puppet master will run it every time it receives a CSR\. The executable will be passed the subject CN of the request \fIas a command line argument,\fR and the contents of the CSR in PEM format \fIon stdin\.\fR It should exit with a status of 0 if the cert should be autosigned and non\-zero if the cert should not be autosigned\.
+If a custom policy executable is configured, the CA Puppet Server will run it every time it receives a CSR\. The executable will be passed the subject CN of the request \fIas a command line argument,\fR and the contents of the CSR in PEM format \fIon stdin\.\fR It should exit with a status of 0 if the cert should be autosigned and non\-zero if the cert should not be autosigned\.
 .
 .P
 If a certificate request is not autosigned, it will persist for review\. An admin user can use the \fBpuppetserver ca sign\fR command to manually sign it, or can delete the request\.
@@ -264,7 +264,7 @@ When certificate_revocation is set to \'false\', Puppet disables all certificate
 .IP "" 0
 .
 .SS "certname"
-The name to use when handling certificates\. When a node requests a certificate from the CA puppet master, it uses the value of the \fBcertname\fR setting as its requested Subject CN\.
+The name to use when handling certificates\. When a node requests a certificate from the CA Puppet Server, it uses the value of the \fBcertname\fR setting as its requested Subject CN\.
 .
 .P
 This is the name used when managing a node\'s permissions in Puppet Server\'s auth\.conf \fIhttps://puppet\.com/docs/puppetserver/latest/config_file_auth\.html\fR\. In most cases, it is also used as the node\'s name when matching node definitions \fIhttps://puppet\.com/docs/puppet/latest/lang_node_definitions\.html\fR and requesting data from an ENC\. (This can be changed with the \fBnode_name_value\fR and \fBnode_name_fact\fR settings, although you should only do so if you have a compelling reason\.)
@@ -398,7 +398,7 @@ If the agent downloads a new CRL, the agent will use it for subsequent network r
 .IP "" 0
 .
 .SS "csr_attributes"
-An optional file containing custom attributes to add to certificate signing requests (CSRs)\. You should ensure that this file does not exist on your CA puppet master; if it does, unwanted certificate extensions may leak into certificates created with the \fBpuppetserver ca generate\fR command\.
+An optional file containing custom attributes to add to certificate signing requests (CSRs)\. You should ensure that this file does not exist on your CA Puppet Server; if it does, unwanted certificate extensions may leak into certificates created with the \fBpuppetserver ca generate\fR command\.
 .
 .P
 If present, this file must be a YAML hash containing a \fBcustom_attributes\fR key and/or an \fBextension_requests\fR key\. The value of each key must be a hash, where each key is a valid OID and each value is an object that can be cast to a string\.
@@ -579,10 +579,10 @@ Whether to document all resources when using \fBpuppet doc\fR to generate manife
 .IP "" 0
 .
 .SS "environment"
-The environment in which Puppet is running\. For clients, such as \fBpuppet agent\fR, this determines the environment itself, which Puppet uses to find modules and much more\. For servers, such as \fBpuppet master\fR, this provides the default environment for nodes that Puppet knows nothing about\.
+The environment in which Puppet is running\. For clients, such as \fBpuppet agent\fR, this determines the environment itself, which Puppet uses to find modules and much more\. For servers, such as \fBpuppet server\fR, this provides the default environment for nodes that Puppet knows nothing about\.
 .
 .P
-When defining an environment in the \fB[agent]\fR section, this refers to the environment that the agent requests from the master\. The environment doesn\'t have to exist on the local filesystem because the agent fetches it from the master\. This definition is used when running \fBpuppet agent\fR\.
+When defining an environment in the \fB[agent]\fR section, this refers to the environment that the agent requests from the primary server\. The environment doesn\'t have to exist on the local filesystem because the agent fetches it from the primary server\. This definition is used when running \fBpuppet agent\fR\.
 .
 .P
 When defined in the \fB[user]\fR section, the environment refers to the path that Puppet uses to search for code and modules related to its execution\. This requires the environment to exist locally on the filesystem where puppet is being executed\. Puppet subcommands, including \fBpuppet module\fR and \fBpuppet apply\fR, use this definition\.
@@ -851,7 +851,7 @@ Whether to write HTTP request and responses to stderr\. This should never be use
 .IP "" 0
 .
 .SS "http_extra_headers"
-The list of extra headers that will be sent with http requests to the master\. The header definition consists of a name and a value separated by a colon\.
+The list of extra headers that will be sent with http requests to the primary server\. The header definition consists of a name and a value separated by a colon\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fB[]\fR
@@ -926,7 +926,7 @@ Whether the puppet run should ignore errors during pluginsync\. If the setting i
 .IP "" 0
 .
 .SS "ignoremissingtypes"
-Skip searching for classes and definitions that were missing during a prior compilation\. The list of missing objects is maintained per\-environment and persists until the environment is cleared or the master is restarted\.
+Skip searching for classes and definitions that were missing during a prior compilation\. The list of missing objects is maintained per\-environment and persists until the environment is cleared or the primary server is restarted\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fBfalse\fR
@@ -1143,7 +1143,7 @@ Whether Puppet should manage the owner, group, and mode of files it uses interna
 .IP "" 0
 .
 .SS "manifest"
-The entry\-point manifest for puppet master\. This can be one file or a directory of manifests to be evaluated in alphabetical order\. Puppet manages this path as a directory if one exists or if the path ends with a / or \.
+The entry\-point manifest for the primary server\. This can be one file or a directory of manifests to be evaluated in alphabetical order\. Puppet manages this path as a directory if one exists or if the path ends with a / or \.
 .
 .P
 Setting a global value for \fBmanifest\fR in puppet\.conf is not allowed (but it can be overridden from the commandline)\. Please use directory environments instead\. If you need to use something other than the environment\'s \fBmanifests\fR directory as the main manifest, you can set \fBmanifest\fR in environment\.conf\. For more info, see \fIhttps://puppet\.com/docs/puppet/latest/environments_about\.html\fR
@@ -1294,10 +1294,10 @@ How to store cached nodes\. Valid values are (none), \'json\', \'msgpack\', or \
 .IP "" 0
 .
 .SS "node_name_fact"
-The fact name used to determine the node name used for all requests the agent makes to the master\. WARNING: This setting is mutually exclusive with node_name_value\. Changing this setting also requires changes to Puppet Server\'s default auth\.conf \fIhttps://puppet\.com/docs/puppetserver/latest/config_file_auth\.html\fR\.
+The fact name used to determine the node name used for all requests the agent makes to the primary server\. WARNING: This setting is mutually exclusive with node_name_value\. Changing this setting also requires changes to Puppet Server\'s default auth\.conf \fIhttps://puppet\.com/docs/puppetserver/latest/config_file_auth\.html\fR\.
 .
 .SS "node_name_value"
-The explicit value used for the node name for all requests the agent makes to the master\. WARNING: This setting is mutually exclusive with node_name_fact\. Changing this setting also requires changes to Puppet Server\'s default auth\.conf \fIhttps://puppet\.com/docs/puppetserver/latest/config_file_auth\.html\fR\.
+The explicit value used for the node name for all requests the agent makes to the primary server\. WARNING: This setting is mutually exclusive with node_name_fact\. Changing this setting also requires changes to Puppet Server\'s default auth\.conf \fIhttps://puppet\.com/docs/puppetserver/latest/config_file_auth\.html\fR\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fB$certname\fR
@@ -1342,7 +1342,7 @@ The three main node data plugins are:
 Whether to apply catalogs in noop mode, which allows Puppet to partially simulate a normal run\. This setting affects puppet agent and puppet apply\.
 .
 .P
-When running in noop mode, Puppet will check whether each resource is in sync, like it does when running normally\. However, if a resource attribute is not in the desired state (as declared in the catalog), Puppet will take no action, and will instead report the changes it \fIwould\fR have made\. These simulated changes will appear in the report sent to the puppet master, or be shown on the console if running puppet agent or puppet apply in the foreground\. The simulated changes will not send refresh events to any subscribing or notified resources, although Puppet will log that a refresh event \fIwould\fR have been sent\.
+When running in noop mode, Puppet will check whether each resource is in sync, like it does when running normally\. However, if a resource attribute is not in the desired state (as declared in the catalog), Puppet will take no action, and will instead report the changes it \fIwould\fR have made\. These simulated changes will appear in the report sent to the primary Puppet server, or be shown on the console if running puppet agent or puppet apply in the foreground\. The simulated changes will not send refresh events to any subscribing or notified resources, although Puppet will log that a refresh event \fIwould\fR have been sent\.
 .
 .P
 \fBImportant note:\fR The \fBnoop\fR metaparameter \fIhttps://puppet\.com/docs/puppet/latest/metaparameter\.html#noop\fR allows you to apply individual resources in noop mode, and will override the global value of the \fBnoop\fR setting\. This means a resource with \fBnoop => false\fR \fIwill\fR be changed if necessary, even when running puppet agent with \fBnoop = true\fR or \fB\-\-noop\fR\. (Conversely, a resource with \fBnoop => true\fR will only be simulated, even when noop mode is globally disabled\.)
@@ -1517,10 +1517,10 @@ Whether to print the Puppet stack trace on some errors\. This is a noop if \fBtr
 The fallback log file\. This is only used when the \fB\-\-logdest\fR option is not specified AND Puppet is running on an operating system where both the POSIX syslog service and the Windows Event Log are unavailable\. (Currently, no supported operating systems match that description\.)
 .
 .P
-Despite the name, both puppet agent and puppet master will use this file as the fallback logging destination\.
+Despite the name, both puppet agent and puppet server will use this file as the fallback logging destination\.
 .
 .P
-For control over logging destinations, see the \fB\-\-logdest\fR command line option in the manual pages for puppet master, puppet agent, and puppet apply\. You can see man pages by running \fBpuppet <SUBCOMMAND> \-\-help\fR, or read them online at https://puppet\.com/docs/puppet/latest/man/\.
+For control over logging destinations, see the \fB\-\-logdest\fR command line option in the manual pages for puppet server, puppet agent, and puppet apply\. You can see man pages by running \fBpuppet <SUBCOMMAND> \-\-help\fR, or read them online at https://puppet\.com/docs/puppet/latest/man/\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fB$logdir/puppetd\.log\fR
@@ -1571,7 +1571,7 @@ The directory in which to store reports\. Each node gets a separate subdirectory
 The list of report handlers to use\. When using multiple report handlers, their names should be comma\-separated, with whitespace allowed\. (For example, \fBreports = http, store\fR\.)
 .
 .P
-This setting is relevant to puppet master and puppet apply\. The puppet master will call these report handlers with the reports it receives from agent nodes, and puppet apply will call them with its own report\. (In all cases, the node applying the catalog must have \fBreport = true\fR\.)
+This setting is relevant to puppet server and puppet apply\. The primary Puppet server will call these report handlers with the reports it receives from agent nodes, and puppet apply will call them with its own report\. (In all cases, the node applying the catalog must have \fBreport = true\fR\.)
 .
 .P
 See the report reference for information on the built\-in report handlers; custom report handlers can also be loaded from modules\. (Report handlers are loaded from the lib directory, at \fBpuppet/reports/NAME\.rb\fR\.)
@@ -1665,7 +1665,7 @@ Where the serial number for certificates is stored\.
 .IP "" 0
 .
 .SS "server"
-The puppet master server to which the puppet agent should connect\.
+The primary Puppet server to which the Puppet agent should connect\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fBpuppet\fR
@@ -1681,7 +1681,7 @@ The directory in which serialized data is stored, usually in a subdirectory\.
 .IP "" 0
 .
 .SS "server_list"
-The list of Puppet master servers to which the Puppet agent should connect, in the order that they will be tried\. Each value should be a fully qualified domain name, followed by an optional \':\' and port number\. If a port is omitted, Puppet uses masterport for that host\.
+The list of primary Puppet servers to which the Puppet agent should connect, in the order that they will be tried\. Each value should be a fully qualified domain name, followed by an optional \':\' and port number\. If a port is omitted, Puppet uses masterport for that host\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fB[]\fR
@@ -1741,7 +1741,7 @@ For example, assume a default 30\-minute \fB$runinterval\fR, \fBsplay\fR set to 
 With \fBsplay\fR enabled, it waits any amount of time up to its \fB$splaylimit\fR before its first run\. For example, it might randomly wait 8 minutes, then start its first run at :08 past the hour\. With the \fB$runinterval\fR at its default 30 minutes, its next run will be at :38 past the hour\.
 .
 .P
-If you restart an agent\'s puppet service with \fBsplay\fR enabled, it recalculates its splay period and delays its first agent run after restarting for this new period\. If you simultaneously restart a group of puppet agents with \fBsplay\fR enabled, their checkins to your puppet masters can be distributed more evenly\.
+If you restart an agent\'s puppet service with \fBsplay\fR enabled, it recalculates its splay period and delays its first agent run after restarting for this new period\. If you simultaneously restart a group of puppet agents with \fBsplay\fR enabled, their checkins to your primary servers can be distributed more evenly\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fBfalse\fR
@@ -1819,7 +1819,7 @@ The directory where Puppet state is stored\. Generally, this directory can be re
 .IP "" 0
 .
 .SS "statefile"
-Where puppet agent and puppet master store state associated with the running configuration\. In the case of puppet master, this file reflects the state discovered through interacting with clients\.
+Where Puppet agent and Puppet Server store state associated with the running configuration\. In the case of Puppet Server, this file reflects the state discovered through interacting with clients\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fB$statedir/state\.yaml\fR
@@ -1838,7 +1838,7 @@ This setting affects the usage of \fBschedule\fR resources, as the information a
 .IP "" 0
 .
 .SS "static_catalogs"
-Whether to compile a static catalog \fIhttps://puppet\.com/docs/puppet/latest/static_catalogs\.html#enabling\-or\-disabling\-static\-catalogs\fR, which occurs only on a Puppet Server master when the \fBcode\-id\-command\fR and \fBcode\-content\-command\fR settings are configured in its \fBpuppetserver\.conf\fR file\.
+Whether to compile a static catalog \fIhttps://puppet\.com/docs/puppet/latest/static_catalogs\.html#enabling\-or\-disabling\-static\-catalogs\fR, which occurs only on Puppet Server when the \fBcode\-id\-command\fR and \fBcode\-content\-command\fR settings are configured in its \fBpuppetserver\.conf\fR file\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fBtrue\fR
@@ -1882,7 +1882,7 @@ error \- perform extra validation, fail with error
 .IP "" 0
 .
 .P
-The strictness level is for both language semantics and runtime evaluation validation\. In addition to controlling the behavior with this master switch some individual warnings may also be controlled by the disable_warnings setting\.
+The strictness level is for both language semantics and runtime evaluation validation\. In addition to controlling the behavior with this primary server switch some individual warnings may also be controlled by the disable_warnings setting\.
 .
 .P
 No new validations will be added to a micro (x\.y\.z) release, but may be added in minor releases (x\.y\.0)\. In major releases it expected that most (if not all) strictness validation become standard behavior\.
@@ -1990,7 +1990,7 @@ File that provides mapping between custom SSL oids and user\-friendly names
 .IP "" 0
 .
 .SS "use_cached_catalog"
-Whether to only use the cached catalog rather than compiling a new catalog on every run\. Puppet can be run with this enabled by default and then selectively disabled when a recompile is desired\. Because a Puppet agent using cached catalogs does not contact the master for a new catalog, it also does not upload facts at the beginning of the Puppet run\.
+Whether to only use the cached catalog rather than compiling a new catalog on every run\. Puppet can be run with this enabled by default and then selectively disabled when a recompile is desired\. Because a Puppet agent using cached catalogs does not contact the primary server for a new catalog, it also does not upload facts at the beginning of the Puppet run\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fBfalse\fR
@@ -2049,7 +2049,7 @@ Whether or not to look for versioned environment directories, symlinked from \fB
 How frequently puppet agent should ask for a signed certificate\.
 .
 .P
-When starting for the first time, puppet agent will submit a certificate signing request (CSR) to the server named in the \fBca_server\fR setting (usually the puppet master); this may be autosigned, or may need to be approved by a human, depending on the CA server\'s configuration\.
+When starting for the first time, puppet agent will submit a certificate signing request (CSR) to the server named in the \fBca_server\fR setting (usually the primary Puppet server); this may be autosigned, or may need to be approved by a human, depending on the CA server\'s configuration\.
 .
 .P
 Puppet agent cannot apply configurations until its approved certificate is available\. Since the certificate may or may not be available immediately, puppet agent will repeatedly try to fetch it at this interval\. You can turn off waiting for certificates by specifying a time of 0, or a maximum amount of time to wait in the \fBmaxwaitforcert\fR setting, in which case puppet agent will exit if it cannot get a cert\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
