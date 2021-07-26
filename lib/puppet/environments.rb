@@ -344,14 +344,6 @@ module Puppet::Environments
       @cache_expiration_service_singleton || DefaultCacheExpirationService.new
     end
 
-    # Returns the end of time (the next Mesoamerican Long Count cycle-end after 2012 (5125+2012) = 7137
-    def self.end_of_time
-      Time.gm(7137)
-    end
-
-    END_OF_TIME = end_of_time
-    START_OF_TIME = Time.gm(1)
-
     def initialize(loader)
       @loader = loader
       @cache_expiration_service = Puppet::Environments::Cached.cache_expiration_service
@@ -363,7 +355,7 @@ module Puppet::Environments
       # Evict all that have expired, in the same way as `get`
       clear_all_expired
 
-      # Evict all that was removed from diks
+      # Evict all that was removed from disk
       cached_envs = @cache.keys.map!(&:to_sym)
       loader_envs = @loader.list.map!(&:name)
       removed_envs = cached_envs - loader_envs
@@ -457,13 +449,14 @@ module Puppet::Environments
     # Clears all environments that have expired, either by exceeding their time to live, or
     # through an explicit eviction determined by the cache expiration service.
     #
-    def clear_all_expired()
+    def clear_all_expired
       t = Time.now
 
       @cache.each_pair do |name, entry|
         clear_if_expired(name, entry, t)
       end
     end
+    private :clear_all_expired
 
     # Clear an environment if it is expired, either by exceeding its time to live, or
     # through an explicit eviction determined by the cache expiration service.
