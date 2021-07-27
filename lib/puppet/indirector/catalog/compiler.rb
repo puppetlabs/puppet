@@ -54,13 +54,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     if node.environment
       node.environment.with_text_domain do
-        envs = Puppet.lookup(:environments)
-        envs.guard(node.environment.name)
-        begin
-          compile(node, request.options)
-        ensure
-          envs.unguard(node.environment.name)
-        end
+        compile(node, request.options)
       end
     else
       compile(node, request.options)
