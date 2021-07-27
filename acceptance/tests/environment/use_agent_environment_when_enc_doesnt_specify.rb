@@ -6,6 +6,15 @@ test_name "Agent should use agent environment if there is an enc that does not s
       'audit:integration',
       'server'
 
+  # Remove all traces of the last used environment
+  teardown do
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+  end
+
   classify_nodes_as_agent_specified_if_classifer_present
 
   testdir = create_tmpdir_for_user(master, 'use_agent_env')

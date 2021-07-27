@@ -20,6 +20,14 @@ test_name "C100300: Catalog containing binary data is applied correctly" do
     step 'remove all test files on agents' do
       agents.each {|agent| on(agent, "rm -r '#{agent_tmp_dirs[agent_to_fqdn(agent)]}'", :accept_all_exit_codes => true)}
     end
+
+    # Remove all traces of the last used environment
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+
     # note - master teardown is registered by #mk_tmp_environment_with_teardown
   end
 
