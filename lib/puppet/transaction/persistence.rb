@@ -93,7 +93,7 @@ class Puppet::Transaction::Persistence
         local_reference: false,
         type_by_reference: true,
         force_symbol: true,
-        silences_warnings: true,
+        silence_warnings: true,
         message_prefix: to_s
       }
     )
