@@ -46,6 +46,11 @@ test_name 'C100575: puppet agent with different modules in different environment
     step 'resetting the server locale' do
       reset_master_system_locale
     end
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
   end
 
   agents.each do |agent|

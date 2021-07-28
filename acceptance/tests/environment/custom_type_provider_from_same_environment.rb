@@ -21,6 +21,12 @@ tag 'audit:high',
     step 'clean out file resources' do
       on(hosts, "rm #{file_correct} #{file_wrong}", :accept_all_exit_codes => true)
     end
+
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
   end
 
   step "create a custom type and provider in each of production and #{tmp_environment}" do

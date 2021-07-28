@@ -18,10 +18,15 @@ test_name 'Ensure a file resource can have a UTF-8 source attribute, content, an
   end
 
   teardown do
-    step 'remove all test files on agents' do
-      agents.each {|agent| on(agent, "rm -r '#{agent_tmp_dirs[agent_to_fqdn(agent)]}'", :accept_all_exit_codes => true)}
-    end
     # note - master teardown is registered by #mk_tmp_environment_with_teardown
+    step 'remove all test files on agents' do
+      agents.each do |agent|
+        on(agent, "rm -r '#{agent_tmp_dirs[agent_to_fqdn(agent)]}'", :accept_all_exit_codes => true)
+        on(agent, puppet('config print lastrunfile')) do |command_result|
+          agent.rm_rf(command_result.stdout)
+        end
+      end
+    end
   end
 
   step 'create unicode source file served via module on master' do

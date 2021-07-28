@@ -38,6 +38,11 @@ test_name 'C100565: puppet agent with module should translate messages' do
       end
       uninstall_i18n_demo_module(master)
     end
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
   end
 
   agents.each do |agent|

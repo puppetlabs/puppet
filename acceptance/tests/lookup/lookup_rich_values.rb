@@ -21,6 +21,14 @@ tag 'audit:high',
   sensitive_value_pp = 'toe, no step'
   sensitive_value_pp2 = 'toe, no module'
 
+  teardown do
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+  end
+
   step "create ruby lookup function in #{tmp_environment}" do
     on(master, "mkdir -p #{fq_tmp_environmentpath}/lib/puppet/functions/environment")
     create_remote_file(master, "#{fq_tmp_environmentpath}/hiera.yaml", <<-HIERA)
