@@ -25,6 +25,13 @@ test_name "C98094 - a resource changed via Puppet manifest will not be reported 
   end
 
   teardown do
+    # Remove all traces of the last used environment
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+
     step 'clean out produced resources' do
       agents.each do |agent|
         if tmp_file.has_key?(agent_to_fqdn(agent)) && tmp_file[agent_to_fqdn(agent)] != ''

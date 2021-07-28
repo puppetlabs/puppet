@@ -78,6 +78,8 @@ class Puppet::FileServing::Configuration::Parser
       mount = Mount::Modules.new(name)
     when "plugins"
       mount = Mount::Plugins.new(name)
+    when "scripts"
+      mount = Mount::Scripts.new(name)
     when "tasks"
       mount = Mount::Tasks.new(name)
     when "locales"

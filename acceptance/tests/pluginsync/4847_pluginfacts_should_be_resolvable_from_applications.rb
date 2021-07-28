@@ -20,8 +20,16 @@ test_name "Pluginsync'ed custom facts should be resolvable during application ru
   master_facter_dir       = "#{master_module_dir}/lib/facter"
   master_facter_file      = "#{master_facter_dir}/foo.rb"
   on(master, "mkdir -p '#{master_type_dir}' '#{master_provider_dir}' '#{master_facter_dir}'")
+
   teardown do
     on(master, "rm -rf '#{master_module_dir}'")
+
+    # Remove all traces of the last used environment
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
   end
 
   test_type = <<-TYPE

@@ -62,6 +62,7 @@ file {
        '#{fq_tmp_environmentpath}/modules/simple_type/lib/puppet/type/':;
        '#{fq_tmp_environmentpath}/modules/simple_type/lib/puppet/provider/':;
        '#{fq_tmp_environmentpath}/modules/simple_type/lib/puppet/provider/#{type_name}':;
+       '#{fq_prod_environmentpath}/modules':;
        '#{fq_prod_environmentpath}/modules/simple_type':;
        '#{fq_prod_environmentpath}/modules/simple_type/lib':;
        '#{fq_prod_environmentpath}/modules/simple_type/lib/puppet':;
@@ -89,6 +90,7 @@ file { '#{fq_tmp_environmentpath}/manifests/site.pp':
   ensure => file,
     content => 'node default { #{type_name}{"#{file_correct}": ensure=>present} }',
 }
+file { '#{fq_prod_environmentpath}/manifests': }
 file { '#{fq_prod_environmentpath}/manifests/site.pp':
   ensure => file,
     content => 'node default { #{type_name}{"#{file_wrong}": ensure=>present} }',
