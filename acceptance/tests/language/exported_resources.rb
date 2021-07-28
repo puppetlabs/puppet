@@ -26,6 +26,11 @@ tag 'audit:high',
     step 'clean out collected resources' do
       on(hosts, puppet_resource("user #{exported_username} ensure=absent"), :accept_all_exit_codes => true)
     end
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
   end
 
   storeconfigs_backend_name = 'pson_storeconfigs'

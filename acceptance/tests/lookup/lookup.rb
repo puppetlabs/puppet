@@ -111,6 +111,14 @@ PPmetadata
     end
   end
 
+  teardown do
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+  end
+
   module_manifest1 = mod_manifest_entry(module_name, testdir, module_data_implied_key,
                          module_data_implied_value, module_data_key, module_data_value,
                          hash_name, module_hash_key, module_hash_value, array_key,

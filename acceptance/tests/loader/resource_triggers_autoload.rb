@@ -8,6 +8,14 @@ test_name 'C100296: can auto-load defined types using a Resource statement' do
   tmp_environment        = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath = "#{environmentpath}/#{tmp_environment}"
 
+  teardown do
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+  end
+
   relative_define_type_dir    = 'modules/one/manifests'
   relative_define_type_1_path = "#{relative_define_type_dir}/tst1.pp"
   relative_define_type_2_path = "#{relative_define_type_dir}/tst2.pp"

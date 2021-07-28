@@ -17,6 +17,14 @@ test_name "the pluginsync functionality should sync feature and function definit
   require 'puppet/acceptance/temp_file_utils'
   extend Puppet::Acceptance::TempFileUtils
 
+  teardown do
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+  end
+
   module_name = 'superbogus'
   tmp_environment = mk_tmp_environment_with_teardown(master, 'sync')
   master_module_dir = "#{environmentpath}/#{tmp_environment}/modules"
