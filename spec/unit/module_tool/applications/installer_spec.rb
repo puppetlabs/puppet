@@ -285,18 +285,45 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => RUBY_PLATFORM =
           expect(subject).to include :result => :failure
         end
 
-        it 'prints a detailed error containing the modules that would not be satisfied' do
-          graph = double(SemanticPuppet::Dependency::Graph, :modules => ['pmtacceptance-mysql'])
-          exception = SemanticPuppet::Dependency::UnsatisfiableGraph.new(graph)
-          allow(exception).to receive(:respond_to?).and_return(true)
-          allow(exception).to receive(:unsatisfied).and_return('pmtacceptance-mysql')
-          allow(SemanticPuppet::Dependency).to receive(:resolve).and_raise(exception)
+        context 'with unsatisfiable dependencies' do
+          let(:graph) { double(SemanticPuppet::Dependency::Graph, :modules => ['pmtacceptance-mysql']) }
+          let(:exception) { SemanticPuppet::Dependency::UnsatisfiableGraph.new(graph, constraint) }
 
-          expect(subject[:error]).to include(:multiline)
-          expect(subject[:error][:multiline]).to include("Could not install module 'pmtacceptance-mysql' (> 1.0.0)")
-          expect(subject[:error][:multiline]).to include("The requested version cannot satisfy one or more of the following installed modules:")
-          expect(subject[:error][:multiline]).to include("pmtacceptance-keystone, expects 'pmtacceptance-mysql': >=0.6.1 <1.0.0")
-          expect(subject[:error][:multiline]).to include("Use `puppet module install 'pmtacceptance-mysql' --ignore-dependencies` to install only this module")
+          before do
+            allow(SemanticPuppet::Dependency).to receive(:resolve).and_raise(exception)
+          end
+
+          context 'with known constraint' do
+            let(:constraint) { 'pmtacceptance-mysql' }
+
+            it 'prints a detailed error containing the modules that would not be satisfied' do
+              expect(subject[:error]).to include(:multiline)
+              expect(subject[:error][:multiline]).to include("Could not install module 'pmtacceptance-mysql' (> 1.0.0)")
+              expect(subject[:error][:multiline]).to include("The requested version cannot satisfy one or more of the following installed modules:")
+              expect(subject[:error][:multiline]).to include("pmtacceptance-keystone, expects 'pmtacceptance-mysql': >=0.6.1 <1.0.0")
+              expect(subject[:error][:multiline]).to include("Use `puppet module install 'pmtacceptance-mysql' --ignore-dependencies` to install only this module")
+            end
+          end
+
+          context 'with missing constraint' do
+            let(:constraint) { nil }
+
+            it 'prints the generic error message' do
+              expect(subject[:error]).to include(:multiline)
+              expect(subject[:error][:multiline]).to include("Could not install module 'pmtacceptance-mysql' (> 1.0.0)")
+              expect(subject[:error][:multiline]).to include("The requested version cannot satisfy all dependencies")
+            end
+          end
+
+          context 'with unknown constraint' do
+            let(:constraint) { 'another' }
+
+            it 'prints the generic error message' do
+              expect(subject[:error]).to include(:multiline)
+              expect(subject[:error][:multiline]).to include("Could not install module 'pmtacceptance-mysql' (> 1.0.0)")
+              expect(subject[:error][:multiline]).to include("The requested version cannot satisfy all dependencies")
+            end
+          end
         end
 
         context 'with --ignore-dependencies' do
