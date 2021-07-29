@@ -1,0 +1,4 @@
+source ENV['GEM_SOURCE'] || "https://rubygems.org"
+
+gem 'gettext-setup', '~> 0.28', require: false, platforms: [:ruby]
+gem "rake"
