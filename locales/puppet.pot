@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 7.8.0-115-g2e290b736f\n"
+"Project-Id-Version: Puppet automation framework 7.8.0-228-g8ae36471c0\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-07-06 12:22+0000\n"
-"PO-Revision-Date: 2021-07-06 12:22+0000\n"
+"POT-Creation-Date: 2021-07-29 10:21+0000\n"
+"PO-Revision-Date: 2021-07-29 10:21+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -559,68 +559,68 @@ msgstr ""
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:320
-msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
+#: ../lib/puppet/configurer.rb:298
+msgid "No environment configured, attempting to find out the last used environment"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:335
-msgid "Using configured environment '%{env}'"
-msgstr ""
-
-#: ../lib/puppet/configurer.rb:339
-msgid "Unable to fetch my node definition, but the agent run will continue:"
-msgstr ""
-
-#: ../lib/puppet/configurer.rb:367
+#: ../lib/puppet/configurer.rb:327
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:378
+#: ../lib/puppet/configurer.rb:338
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:380
+#: ../lib/puppet/configurer.rb:340
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:434
+#: ../lib/puppet/configurer.rb:403
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:463 ../lib/puppet/http/resolver/server_list.rb:64 ../lib/puppet/http/resolver/server_list.rb:68
+#: ../lib/puppet/configurer.rb:432 ../lib/puppet/http/resolver/server_list.rb:64 ../lib/puppet/http/resolver/server_list.rb:68
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:467 ../lib/puppet/http/resolver/server_list.rb:73 ../lib/puppet/http/resolver/server_list.rb:76
+#: ../lib/puppet/configurer.rb:436 ../lib/puppet/http/resolver/server_list.rb:73 ../lib/puppet/http/resolver/server_list.rb:76
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:478 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:450
+msgid "Found last used environment: %{environment}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:453
+msgid "Unable to get last used environment: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:463 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:487
+#: ../lib/puppet/configurer.rb:472
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:506
+#: ../lib/puppet/configurer.rb:491
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:514
+#: ../lib/puppet/configurer.rb:499
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:529
+#: ../lib/puppet/configurer.rb:514
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:547
+#: ../lib/puppet/configurer.rb:532
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:568
+#: ../lib/puppet/configurer.rb:553
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -1589,15 +1589,15 @@ msgstr ""
 msgid "Relative paths must not be fully qualified"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration.rb:55
+#: ../lib/puppet/file_serving/configuration.rb:56
 msgid "Cannot find file: Invalid mount '%{mount_name}'"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration.rb:56
+#: ../lib/puppet/file_serving/configuration.rb:57
 msgid "Cannot find file: Invalid relative path '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration.rb:104
+#: ../lib/puppet/file_serving/configuration.rb:106
 msgid "Error parsing fileserver configuration: %{detail}; using old configuration"
 msgstr ""
 
@@ -1625,11 +1625,11 @@ msgstr ""
 msgid "%{mount} is already mounted at %{name} at %{error_location}"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration/parser.rb:98
+#: ../lib/puppet/file_serving/configuration/parser.rb:100
 msgid "Removing mount \"%{mount}\": %{detail}"
 msgstr ""
 
-#: ../lib/puppet/file_serving/configuration/parser.rb:102
+#: ../lib/puppet/file_serving/configuration/parser.rb:104
 msgid "The '%{mount}' module can not have a path. Ignoring attempt to set it"
 msgstr ""
 
@@ -1719,7 +1719,7 @@ msgstr ""
 msgid "No client; expanding '%{path}' with local host"
 msgstr ""
 
-#: ../lib/puppet/file_serving/mount/modules.rb:8
+#: ../lib/puppet/file_serving/mount/modules.rb:8 ../lib/puppet/file_serving/mount/scripts.rb:6
 msgid "No module specified"
 msgstr ""
 
@@ -3884,7 +3884,7 @@ msgstr ""
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:575 ../lib/puppet/pops/loaders.rb:301
+#: ../lib/puppet/node/environment.rb:570 ../lib/puppet/pops/loaders.rb:301
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -6592,19 +6592,19 @@ msgstr ""
 msgid "Implicit version %{should} has %{n} possible matches"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:170
+#: ../lib/puppet/provider/package/pkg.rb:177
 msgid "Selecting version '%{version}' for implicit '%{should}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:175
+#: ../lib/puppet/provider/package/pkg.rb:182
 msgid "No version of %{name} matching %{should} is installable, even though the package is currently installed"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:194
+#: ../lib/puppet/provider/package/pkg.rb:201
 msgid "pkg warning: %{warnings}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:238 ../lib/puppet/provider/package/pkg.rb:264
+#: ../lib/puppet/provider/package/pkg.rb:245 ../lib/puppet/provider/package/pkg.rb:271
 msgid "Unable to update %{package}"
 msgstr ""
 
