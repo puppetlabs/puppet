@@ -30,6 +30,10 @@ test_name 'C100303: Resource type statement triggered auto-loading works both wi
     on(master, "rm -f '#{execution_log[agent_to_fqdn(master)]}'")
     agents.each do |agent|
       on(agent, "rm -f '#{execution_log[agent_to_fqdn(agent)]}'")
+
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
     end
   end
 

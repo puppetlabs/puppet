@@ -169,6 +169,11 @@ MANIFEST
 teardown do
   on(master, "mv #{@confdir}/puppetserver.conf.bak #{@confdir}/puppetserver.conf")
   on(master, "rm -rf #{@testroot}")
+  agents.each do |agent|
+    on(agent, puppet('config print lastrunfile')) do |command_result|
+      agent.rm_rf(command_result.stdout)
+    end
+  end
 end
 
 step 'apply main manifest, static_catalogs unspecified in global scope, unspecified in production environment, disabled in canary environment'

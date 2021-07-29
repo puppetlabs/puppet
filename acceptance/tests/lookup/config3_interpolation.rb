@@ -22,6 +22,11 @@ tag 'audit:high',
 
   teardown do
     on(master, "mv #{hiera_conf_backup} #{master_confdir}/hiera.yaml", :acceptable_exit_codes => [0,1])
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
   end
 
   step "create hiera configs in #{tmp_environment} and global" do

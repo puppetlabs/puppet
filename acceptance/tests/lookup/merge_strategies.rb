@@ -20,6 +20,12 @@ tag 'audit:high',
     step "restore default global hiera.yaml" do
       on(master, "mv #{hiera_conf_backup} #{master_confdir}/hiera.yaml", :acceptable_exit_codes => [0,1])
     end
+
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
   end
 
   step "create global hiera.yaml and environment data" do
