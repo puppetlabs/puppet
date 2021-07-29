@@ -139,6 +139,14 @@ describe Puppet::Environments do
       end
     end
 
+    it "implements guard and unguard" do
+      loader_from(:filesystem => [directory_tree],
+                  :directory => directory_tree.children.first) do |loader|
+        expect(loader.guard('env1')).to be_nil
+        expect(loader.unguard('env1')).to be_nil
+      end
+    end
+
     context "with an environment.conf" do
       let(:envdir) do
         FS::MemoryFile.a_directory(File.expand_path("envdir"), [
@@ -788,6 +796,83 @@ config_version=$vardir/random/scripts
         end
 
         expect(service.evicted_envs).to eq([:an_environment])
+      end
+
+      context "when guarding an environment" do
+        before :each do
+          Puppet[:environment_timeout] = 0
+        end
+
+        let(:name) { :an_environment }
+
+        def with_guard(cached, name, &block)
+          cached.guard(name)
+          begin
+            yield
+          ensure
+            cached.unguard(name)
+          end
+        end
+
+        it "evicts an expired and unguarded environment" do
+          with_environment_loaded(service) do |cached|
+            cached.get!(name)
+          end
+
+          expect(service.created_envs).to eq([name, name])
+          expect(service.evicted_envs).to eq([name])
+        end
+
+        it "does not evict an expired, but guarded environment" do
+          with_environment_loaded(service) do |cached|
+            with_guard(cached, name) do
+              cached.get!(name) # these shouldn't reload
+              cached.get!(name)
+            end
+          end
+
+          expect(service.created_envs).to eq([name])
+          expect(service.evicted_envs).to eq([])
+        end
+
+        it "does not evict an environment marked for expiration, but is guarded" do
+          Puppet[:environment_timeout] = 'unlimited'
+
+          expect(service).to receive(:expired?).never
+
+          with_environment_loaded(service) do |cached|
+            with_guard(cached, name) do
+              cached.get!(name)
+            end
+          end
+
+          expect(service.created_envs).to eq([name])
+          expect(service.evicted_envs).to eq([])
+        end
+
+        it "evicts an environment that is no longer guarded" do
+          with_environment_loaded(service) do |cached|
+            with_guard(cached, name) {}
+
+            cached.get!(name) # this reloads
+          end
+
+          expect(service.created_envs).to eq([name, name])
+          expect(service.evicted_envs).to eq([name])
+        end
+
+        it "can nest guards" do
+          with_environment_loaded(service) do |cached|
+            with_guard(cached, name) do
+              with_guard(cached, name) do
+                cached.get!(name) # doesn't reload
+              end
+            end
+          end
+
+          expect(service.created_envs).to eq([name])
+          expect(service.evicted_envs).to eq([])
+        end
       end
     end
 

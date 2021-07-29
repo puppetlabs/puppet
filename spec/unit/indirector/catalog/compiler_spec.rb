@@ -236,6 +236,19 @@ describe Puppet::Resource::Catalog::Compiler do
       expect { compiler.find(@request) }.to raise_error Puppet::Error,
         "Unable to find a common checksum type between agent '' and master '[:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :sha512, :sha384, :sha224, :mtime, :ctime, :none]'."
     end
+
+    it "prevents the environment from being evicted during compilation" do
+      Puppet[:environment_timeout] = 0
+
+      envs = Puppet.lookup(:environments)
+
+      expect(compiler).to receive(:compile) do
+        # we should get the same object
+        expect(envs.get!(:production)).to equal(envs.get!(:production))
+      end
+
+      compiler.find(@request)
+    end
   end
 
   describe "when handling a request with facts" do
