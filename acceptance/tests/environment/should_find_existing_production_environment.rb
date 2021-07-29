@@ -30,6 +30,10 @@ agents.each do |agent|
     step 'Reset environment settings' do
       on(agent, puppet("config set environmentpath #{initial_environment_paths.join(path_separator)}"))
 
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+
       if initial_environment == 'production'
         on(agent, puppet("config delete environment"))
       else
@@ -41,6 +45,12 @@ agents.each do |agent|
   end
 
   step 'Ensure a clean environment with default settings' do
+    step 'Remove the lastrunfile which contains the last used agent environment' do
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+
     step 'Change to the default environment setting' do
       on(agent, puppet("config delete environment"))
       on(agent, puppet("config print environment")) do |result|

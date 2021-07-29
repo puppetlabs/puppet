@@ -59,7 +59,7 @@ test_name 'Test behavior of directory environments when environmentpath is set t
 
     agents.each do |host|
       if host['locale'] != 'ja'
-        expectations[:puppet_agent][:matches] = [%r{(Warning|Error).*(404|400).*Could not find environment '#{env}'},
+        expectations[:puppet_agent][:matches] = [%r{Could not evaluate: Could not retrieve information from environment #{env}},
                                                  %r{Error: Failed to apply catalog: Failed to retrieve}]
       end
     end

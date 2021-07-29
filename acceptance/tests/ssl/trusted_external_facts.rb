@@ -28,6 +28,13 @@ test_name "trusted external fact test" do
 
   teardown do
     on(master, "rm -r '#{testdir}'", :accept_all_exit_codes => true)
+
+    # Remove all traces of the last used environment
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
   end
 
   step "create 'external' module referencing trusted hash" do

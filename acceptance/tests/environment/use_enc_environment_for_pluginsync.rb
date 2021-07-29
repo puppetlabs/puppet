@@ -5,6 +5,15 @@ test_name "Agent should use environment given by ENC for pluginsync" do
       'audit:refactor', # This test should be rolled into use_enc_environment
       'server'
 
+  # Remove all traces of the last used environment
+  teardown do
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+  end
+
   testdir = create_tmpdir_for_user(master, 'respect_enc_test')
 
   create_remote_file(master, "#{testdir}/enc.rb", <<END)
@@ -57,7 +66,7 @@ END
         on(agent, "rm -rf '#{agent_vardir}/lib'")
       end
 
-      run_agent_on(agent, "--no-daemonize --onetime")
+      run_agent_on(agent, "-t --no-daemonize --onetime")
       on(agent, "cat '#{agent_vardir}/lib/puppet/foo.rb'") do |result|
         assert_match(/#special_version/, result.stdout, "The plugin from environment 'special' was not synced")
       end
