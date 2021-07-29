@@ -26,6 +26,11 @@ test_name "C98092 - a new resource should not be reported as a corrective change
         if tmp_file.has_key?(agent_to_fqdn(agent)) && tmp_file[agent_to_fqdn(agent)] != ''
           on(agent, "rm '#{tmp_file[agent_to_fqdn(agent)]}'", :accept_all_exit_codes => true)
         end
+
+
+        on(agent, puppet('config print lastrunfile')) do |command_result|
+          agent.rm_rf(command_result.stdout)
+        end
       end
     end
   end

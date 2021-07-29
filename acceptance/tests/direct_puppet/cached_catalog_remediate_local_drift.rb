@@ -27,6 +27,12 @@ test_name "PUP-5122: Puppet remediates local drift using code_id and content_uri
   teardown do
     cleanup_puppetserver_code_id_scripts(master, basedir)
     on master, "rm -rf #{basedir}"
+
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
   end
 
   step "Create a module and a file with content representing the first code_id version" do

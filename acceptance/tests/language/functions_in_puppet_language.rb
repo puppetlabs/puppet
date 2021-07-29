@@ -10,6 +10,12 @@ teardown do
   on master, 'rm -rf /etc/puppetlabs/code/environments/tommy'
   on master, 'rm -rf /etc/puppetlabs/code/environments/production/modules/one'
   on master, 'rm -rf /etc/puppetlabs/code/environments/production/modules/three'
+
+  agents.each do |agent|
+    on(agent, puppet('config print lastrunfile')) do |command_result|
+      agent.rm_rf(command_result.stdout)
+    end
+  end
 end
 
 step 'Create some functions' do

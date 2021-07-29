@@ -13,6 +13,14 @@ tag 'audit:high',
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type + '1')
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
 
+  teardown do
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+  end
+
   step "create environment hiera5.yaml and environment data" do
 
     create_remote_file(master, "#{fq_tmp_environmentpath}/hiera.yaml", <<-HIERA)

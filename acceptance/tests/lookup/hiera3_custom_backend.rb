@@ -27,6 +27,12 @@ tag 'audit:high',
       on(master, "rm #{existing_loadpath}/hiera/backend/custom_backend.rb", :acceptable_exit_codes => [0,1])
       on(master, "mv #{hiera_conf_backup} #{confdir}/hiera.yaml", :acceptable_exit_codes => [0,1])
     end
+
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
   end
 
   step "create hiera v5 config and v3 custom backend" do
