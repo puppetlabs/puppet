@@ -48,6 +48,13 @@ module Puppet::Environments
         root.instance_variable_set(:@rich_data, nil)
       end
     end
+
+    # The base implementation is a noop, because `get` returns a new environment
+    # each time.
+    #
+    # @see Puppet::Environments::Cached#guard
+    def guard(name); end
+    def unguard(name); end
   end
 
   # @!macro [new] loader_search_paths
@@ -330,20 +337,12 @@ module Puppet::Environments
     end
 
     def self.cache_expiration_service=(service)
-      @cache_expiration_service = service
+      @cache_expiration_service_singleton = service
     end
 
     def self.cache_expiration_service
-      @cache_expiration_service || DefaultCacheExpirationService.new
+      @cache_expiration_service_singleton || DefaultCacheExpirationService.new
     end
-
-    # Returns the end of time (the next Mesoamerican Long Count cycle-end after 2012 (5125+2012) = 7137
-    def self.end_of_time
-      Time.gm(7137)
-    end
-
-    END_OF_TIME = end_of_time
-    START_OF_TIME = Time.gm(1)
 
     def initialize(loader)
       @loader = loader
@@ -356,7 +355,7 @@ module Puppet::Environments
       # Evict all that have expired, in the same way as `get`
       clear_all_expired
 
-      # Evict all that was removed from diks
+      # Evict all that was removed from disk
       cached_envs = @cache.keys.map!(&:to_sym)
       loader_envs = @loader.list.map!(&:name)
       removed_envs = cached_envs - loader_envs
@@ -385,27 +384,34 @@ module Puppet::Environments
 
     # @!macro loader_get
     def get(name)
+      entry = get_entry(name)
+      entry ? entry.value : nil
+    end
+
+    # Get a cache entry for an envionment. It returns nil if the
+    # environment doesn't exist.
+    def get_entry(name, check_expired = true)
       # Aggressively evict all that has expired
       # This strategy favors smaller memory footprint over environment
       # retrieval time.
-      clear_all_expired
-      result = @cache[name]
-      if result
-        Puppet.debug {"Found in cache '#{name}' #{result.label}"}
+      clear_all_expired if check_expired
+      entry = @cache[name]
+      if entry
+        Puppet.debug {"Found in cache #{name.inspect} #{entry.label}"}
         # found in cache
-        result.touch
-        return result.value
+        entry.touch
       elsif (result = @loader.get(name))
         # environment loaded, cache it
-        cache_entry = entry(result)
-        add_entry(name, cache_entry)
-        result
+        entry = entry(result)
+        add_entry(name, entry)
       end
+      entry
     end
+    private :get_entry
 
     # Adds a cache entry to the cache
     def add_entry(name, cache_entry)
-      Puppet.debug {"Caching environment '#{name}' #{cache_entry.label}"}
+      Puppet.debug {"Caching environment #{name.inspect} #{cache_entry.label}"}
       @cache[name] = cache_entry
       @cache_expiration_service.created(cache_entry.value)
     end
@@ -413,7 +419,7 @@ module Puppet::Environments
 
     def clear_entry(name, entry)
       @cache.delete(name)
-      Puppet.debug {"Evicting cache entry for environment '#{name}'"}
+      Puppet.debug {"Evicting cache entry for environment #{name.inspect}"}
       @cache_expiration_service.evicted(name.to_sym)
       Puppet::GettextConfig.delete_text_domain(name)
       Puppet.settings.clear_environment_settings(name)
@@ -443,19 +449,21 @@ module Puppet::Environments
     # Clears all environments that have expired, either by exceeding their time to live, or
     # through an explicit eviction determined by the cache expiration service.
     #
-    def clear_all_expired()
+    def clear_all_expired
       t = Time.now
 
       @cache.each_pair do |name, entry|
         clear_if_expired(name, entry, t)
       end
     end
+    private :clear_all_expired
 
     # Clear an environment if it is expired, either by exceeding its time to live, or
     # through an explicit eviction determined by the cache expiration service.
     #
     def clear_if_expired(name, entry, t = Time.now)
       return unless entry
+      return if entry.guarded?
 
       if entry.expired?(t) || @cache_expiration_service.expired?(name.to_sym)
         clear_entry(name, entry)
@@ -474,6 +482,20 @@ module Puppet::Environments
     def get_conf(name)
       clear_if_expired(name, @cache[name])
       @loader.get_conf(name)
+    end
+
+    # Guard an environment so it can't be evicted while it's in use. The method
+    # may be called multiple times, provided it is unguarded the same number of
+    # times. If you call this method, you must call `unguard` in an ensure block.
+    def guard(name)
+      entry = get_entry(name, false)
+      entry.guard if entry
+    end
+
+    # Unguard an environment.
+    def unguard(name)
+      entry = get_entry(name, false)
+      entry.unguard if entry
     end
 
     # Creates a suitable cache entry given the time to live for one environment
@@ -501,6 +523,7 @@ module Puppet::Environments
 
       def initialize(value)
         @value = value
+        @guards = 0
       end
 
       def touch
@@ -512,6 +535,20 @@ module Puppet::Environments
 
       def label
         ""
+      end
+
+      # These are not protected with a lock, because all of the Cached
+      # methods are protected.
+      def guarded?
+        @guards > 0
+      end
+
+      def guard
+        @guards += 1
+      end
+
+      def unguard
+        @guards -= 1
       end
     end
 

@@ -1,0 +1,8 @@
+{
+    "name": "puppet-l10n",
+    "version": "0.0.1",
+    "author": "puppet",
+    "source": "",
+    "license": "Apache-2.0",
+    "dependencies": []
+}
