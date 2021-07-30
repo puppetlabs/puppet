@@ -9,6 +9,13 @@ test_name 'Test behavior of directory environments when environmentpath is set t
       # The server 404/400 response should be covered by server integration tests.
       'server'
 
+  teardown do
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+  end
 
   classify_nodes_as_agent_specified_if_classifer_present
 

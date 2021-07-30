@@ -2,7 +2,7 @@ test_name 'utf-8 characters in module doc string, puppet describe' do
 
   tag 'audit:high',      # utf-8 is high impact in general, puppet describe low risk?
       'audit:integration', # not package dependent but may want to vary platform by LOCALE/encoding
-      'audit:refactor'     # if keeping, use mk_temp_environment_with_teardown
+      'audit:refactor'     # if keeping, use mk_tmp_environment_with_teardown
                            # remove with_puppet_running_on unless pluginsync is absolutely necessary
                            # (if it is, add 'server' tag
 
@@ -18,6 +18,12 @@ test_name 'utf-8 characters in module doc string, puppet describe' do
   on(master, "chmod -R 755 #{master_mod_dir}");
   teardown do
     on(master, "rm -rf #{master_mod_dir}")
+
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
   end
   master_manifest = 
 <<MASTER_MANIFEST

@@ -2,7 +2,7 @@ test_name 'utf-8 characters in cached catalog' do
 
   tag 'audit:high', # utf-8 is high impact in general
       'audit:integration', # not package dependent but may want to vary platform by LOCALE/encoding
-      'audit:refactor', # use mk_temp_environment_with_teardown
+      'audit:refactor', # use mk_tmp_environment_with_teardown
       'server'
 
   utf8chars     = "\u20ac\u2030\u3118\u4e07\u7af9\u00dc\u00d6"
@@ -17,6 +17,10 @@ test_name 'utf-8 characters in cached catalog' do
     agent_file   = agent.tmpfile("file" + utf8chars)
     teardown do
       on(agent, "rm -rf '#{agent_vardir}' '#{agent_file}'")
+
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
     end
 
     step "Apply manifest" do
