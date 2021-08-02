@@ -279,7 +279,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
         name = object[:name]
         id = object[:attributes].delete(:id)
 
-        Hash[[[:name, name,],[:id, id]]]
+        { name: name, id: id }
       end
     end
 

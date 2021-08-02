@@ -217,4 +217,93 @@ describe 'Puppet::Type::User::Provider::Aix' do
       provider.create
     end
   end
+
+  describe '#list_all_homes' do
+    it "should return empty array and output debug on failure" do
+      allow(Puppet::Util::Execution).to receive(:execute).and_raise(Puppet::ExecutionFailure, 'Execution failed')
+      expect(Puppet).to receive(:debug).with('Could not list home of all users: Execution failed')
+      expect(provider.list_all_homes).to eql({})
+    end
+  end
+
+  describe '#delete' do
+    before(:each) do
+      allow(File).to receive(:realpath).and_call_original
+      allow(FileUtils).to receive(:remove_entry_secure).and_call_original
+
+      allow(provider.resource).to receive(:should).with(anything).and_return(nil)
+      allow(provider).to receive(:home).and_return(Dir.tmpdir)
+      allow(provider).to receive(:execute).and_return(nil)
+      allow(provider).to receive(:object_info).and_return(nil)
+      allow(FileUtils).to receive(:remove_entry_secure).with(Dir.tmpdir, true).and_return(nil)
+    end
+
+    context 'with managehome true' do
+      before(:each) do
+        allow(provider.resource).to receive(:managehome?).and_return(true)
+        allow(provider).to receive(:list_all_homes).and_return([])
+      end
+
+      it 'should delete the user without error' do
+        expect{ provider.delete }.not_to raise_error
+      end
+
+      it "should not remove home when relative" do
+        allow(provider).to receive(:home).and_return('relative_path')
+
+        expect(Puppet).to receive(:debug).with(/Please make sure the path is not relative, symlink or '\/'./)
+        provider.delete
+      end
+
+      it "should not remove home when '/'" do
+        allow(provider).to receive(:home).and_return('/')
+
+        expect(Puppet).to receive(:debug).with(/Please make sure the path is not relative, symlink or '\/'./)
+        provider.delete
+      end
+
+      it "should not remove home when symlink" do
+        allow(Puppet::FileSystem).to receive(:symlink?).with(Dir.tmpdir).and_return(true)
+
+        expect(Puppet).to receive(:debug).with(/Please make sure the path is not relative, symlink or '\/'./)
+        provider.delete
+      end
+
+      it "should not remove home when other users would be affected" do
+        allow(provider).to receive(:home).and_return('/special')
+        allow(File).to receive(:realpath).with('/special').and_return('/special')
+        allow(Puppet::Util).to receive(:absolute_path?).with('/special').and_return(true)
+        allow(provider).to receive(:list_all_homes).and_return([{:name => 'other_user', :home => '/special/other_user'}])
+
+        expect(Puppet).to receive(:debug).with(/it would remove the home directory '\/special\/other_user' of user 'other_user' also./)
+        provider.delete
+      end
+
+      it 'should remove homedir' do
+        expect(FileUtils).to receive(:remove_entry_secure).with(Dir.tmpdir, true)
+        provider.delete
+      end
+    end
+
+    context 'with managehome false' do
+      before(:each) do
+        allow(provider.resource).to receive(:managehome?).and_return(false)
+      end
+
+      it 'should delete the user without error' do
+        expect{ provider.delete }.not_to raise_error
+      end
+
+      it 'should not remove homedir' do
+        expect(FileUtils).not_to receive(:remove_entry_secure).with(Dir.tmpdir, true)
+      end
+
+      it 'should not print manage home debug messages' do
+        expect(Puppet).not_to receive(:debug).with(/Please make sure the path is not relative, symlink or '\/'./)
+        expect(Puppet).not_to receive(:debug).with(/it would remove the home directory '\/special\/other_user' of user 'other_user' also./)
+
+        provider.delete
+      end
+    end
+  end
 end
