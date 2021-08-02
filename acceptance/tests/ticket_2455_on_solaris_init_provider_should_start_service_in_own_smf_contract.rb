@@ -2,11 +2,19 @@ test_name "(PUP-2455) Service provider should start Solaris init service in its 
 
 tag 'audit:high',
     'audit:refactor',  # Use block style `test_name`
-                       # Use mk_temp_environment_with_teardown
+                       # Use mk_tmp_environment_with_teardown
                        # Combine with Service resource tests
     'audit:acceptance' # Service provider functionality
 
 skip_test unless agents.any? {|agent| agent['platform'] =~ /solaris/ }
+
+teardown do
+  agents.each do |agent|
+    on(agent, puppet('config print lastrunfile')) do |command_result|
+      agent.rm_rf(command_result.stdout)
+    end
+  end
+end
 
 sleepy_daemon_initscript = <<INITSCRIPT
 #!/usr/bin/bash

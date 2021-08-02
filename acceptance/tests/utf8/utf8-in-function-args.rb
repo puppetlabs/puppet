@@ -2,7 +2,7 @@ test_name 'utf-8 characters in function parameters' do
 
   tag 'audit:high',
       'audit:integration', # not package dependent but may want to vary platform by LOCALE/encoding
-      'audit:refactor'     # if keeping, use mk_temp_environment_with_teardown
+      'audit:refactor'     # if keeping, use mk_tmp_environment_with_teardown
 
   confine :except, :platform => [
     'windows',      # PUP-6983
@@ -12,6 +12,14 @@ test_name 'utf-8 characters in function parameters' do
     'aix',          # PUP-7194
     'huawei',       # PUP-7195
   ]
+
+  teardown do
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+  end
 
   # utf8chars = "€‰ㄘ万竹ÜÖ"
   utf8chars = "\u20ac\u2030\u3118\u4e07\u7af9\u00dc\u00d6"
