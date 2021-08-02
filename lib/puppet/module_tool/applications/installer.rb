@@ -138,7 +138,7 @@ module Puppet::ModuleTool
           rescue SemanticPuppet::Dependency::UnsatisfiableGraph => e
             unsatisfied = nil
 
-            if e.respond_to?(:unsatisfied)
+            if e.respond_to?(:unsatisfied) && e.unsatisfied
               constraints = {}
               # If the module we're installing satisfies all its
               # dependencies, but would break an already installed
@@ -164,8 +164,12 @@ module Puppet::ModuleTool
               # If the module fails to satisfy one of its
               # dependencies, show the unsatisfiable module
               else
-                unsatisfied_range = graph.dependencies[name].max.constraints[e.unsatisfied].first[1]
-                constraints[e.unsatisfied] = unsatisfied_range
+                dep_constraints = graph.dependencies[name].max.constraints
+
+                if dep_constraints.key?(e.unsatisfied)
+                  unsatisfied_range = dep_constraints[e.unsatisfied].first[1]
+                  constraints[e.unsatisfied] = unsatisfied_range
+                end
               end
 
               installed_module = @environment.module_by_forge_name(e.unsatisfied.tr('-', '/'))
@@ -175,7 +179,7 @@ module Puppet::ModuleTool
                 :name => e.unsatisfied,
                 :constraints => constraints,
                 :current_version => current_version
-              }
+              } if constraints.any?
             end
 
             raise NoVersionsSatisfyError, results.merge(
