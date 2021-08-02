@@ -105,7 +105,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       raise Puppet::Network::HTTP::Error::HTTPNotAuthorizedError.new(e.message)
     end
 
-    if configured_environment.nil?
+    if configured_environment.nil? && indirection.terminus.require_environment?
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
         _("Could not find environment '%{environment}'") % { environment: environment })
     end

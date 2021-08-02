@@ -60,7 +60,8 @@ describe Puppet::Configurer do
       expect(summary["time"]["last_run"]).to be_between(t1, t2)
     end
 
-    it "applies a cached catalog if pluginsync fails when usecacheonfailure is true" do
+    it "applies a cached catalog if pluginsync fails when usecacheonfailure is true and environment is valid" do
+      expect(@configurer).to receive(:valid_server_environment?).and_return(true)
       Puppet[:ignore_plugin_errors] = false
 
       Puppet[:use_cached_catalog] = false
@@ -68,6 +69,21 @@ describe Puppet::Configurer do
 
       report = Puppet::Transaction::Report.new
       expect_any_instance_of(Puppet::Configurer::Downloader).to receive(:evaluate).and_raise(Puppet::Error, 'Failed to retrieve: some file')
+      expect(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(@catalog)
+
+      @configurer.run(pluginsync: true, report: report)
+      expect(report.cached_catalog_status).to eq('on_failure')
+    end
+
+    it "applies a cached catalog if pluginsync fails when usecacheonfailure is true and environment is invalid" do
+      expect(@configurer).to receive(:valid_server_environment?).and_return(false)
+      Puppet[:ignore_plugin_errors] = false
+
+      Puppet[:use_cached_catalog] = false
+      Puppet[:usecacheonfailure] = true
+
+      report = Puppet::Transaction::Report.new
+      expect(Puppet::Resource::Catalog.indirection).to receive(:find).and_raise(Puppet::Error, 'Cannot compile remote catalog')
       expect(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(@catalog)
 
       @configurer.run(pluginsync: true, report: report)

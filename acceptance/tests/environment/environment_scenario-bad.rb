@@ -53,14 +53,14 @@ test_name 'Test behavior of directory environments when environmentpath is set t
             :matches   => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{env_path}}],
         },
         :puppet_agent            => {
-            :exit_code => 1,
+            :exit_code => 0,
         },
     }
 
     agents.each do |host|
       unless host['locale'] == 'ja'
-        expectations[:puppet_agent][:matches] = [%r{(Warning|Error).*(404|400).*Could not find environment '#{env}'},
-                                                 %r{Could not retrieve catalog; skipping run}]
+        expectations[:puppet_agent][:matches] = [%r{Environment '#{env}' not found on server, skipping initial pluginsync.},
+                                                 %r{Local environment: '#{env}' doesn't match server specified environment 'production', restarting agent run with environment 'production'}]
       end
     end
 
