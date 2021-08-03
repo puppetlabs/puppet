@@ -476,7 +476,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       path = Puppet[:agent_catalog_run_lockfile]
 
       th = Thread.new {
-        %x{ruby -e "$0 = 'puppet'; File.write('#{path}', Process.pid); sleep(2)"}
+        %x{ruby -e "$0 = 'puppet'; File.write('#{path}', Process.pid); sleep(5)"}
       }
 
       # ensure file is written before yielding
