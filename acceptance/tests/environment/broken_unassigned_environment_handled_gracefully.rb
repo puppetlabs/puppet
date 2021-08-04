@@ -2,9 +2,16 @@ test_name 'PUP-3755 Test an un-assigned broken environment'
 
 tag 'audit:high',
     'audit:integration',
-    'audit:refactor',     # Use mk_temp_environment_with_teardown helper
+    'audit:refactor',     # Use mk_tmp_environment_with_teardown helper
     'server'
 
+teardown do
+  agents.each do |agent|
+    on(agent, puppet('config print lastrunfile')) do |command_result|
+      agent.rm_rf(command_result.stdout)
+    end
+  end
+end
 
 step 'setup environments'
 

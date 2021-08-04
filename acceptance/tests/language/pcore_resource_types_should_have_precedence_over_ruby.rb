@@ -2,7 +2,7 @@ test_name 'C98097 - generated pcore resource types should be loaded instead of r
 
 tag 'audit:high',
     'audit:integration',
-    'audit:refactor',    # use `mk_temp_environment_with_teardown` helper to build environment
+    'audit:refactor',    # use `mk_tmp_environment_with_teardown` helper to build environment
     'server'
 
   environment = 'production'
@@ -76,6 +76,12 @@ MANIFEST
       restore_puppet_conf_from_backup( master, backup_file )
       # See PUP-6995
       on(master, "rm -f #{puppet_config(master, 'yamldir', section: 'master')}/node/*.yaml")
+
+      agents.each do |agent|
+        on(agent, puppet('config print lastrunfile')) do |command_result|
+          agent.rm_rf(command_result.stdout)
+        end
+      end
     end
     #}}}
 

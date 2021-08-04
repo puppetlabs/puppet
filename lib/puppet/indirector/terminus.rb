@@ -143,6 +143,10 @@ class Puppet::Indirector::Terminus
     self.class.name
   end
 
+  def require_environment?
+    true
+  end
+
   def allow_remote_requests?
     true
   end

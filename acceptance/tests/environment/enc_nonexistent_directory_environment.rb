@@ -6,6 +6,14 @@ test_name "Master should produce error if enc specifies a nonexistent environmen
       'audit:unit',
       'server'
 
+  teardown do
+    agents.each do |agent|
+      on(agent, puppet('config print lastrunfile')) do |command_result|
+        agent.rm_rf(command_result.stdout)
+      end
+    end
+  end
+
   testdir = create_tmpdir_for_user(master, 'nonexistent_env')
 
   apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
