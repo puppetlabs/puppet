@@ -689,6 +689,22 @@ For more info, see the ENC documentation \fIhttps://puppet\.com/docs/puppet/late
 .
 .IP "" 0
 .
+.SS "fact_name_length_soft_limit"
+The soft limit for the length of a fact name\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: \fB2560\fR
+.
+.IP "" 0
+.
+.SS "fact_value_length_soft_limit"
+The soft limit for the length of a fact value\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: \fB4096\fR
+.
+.IP "" 0
+.
 .SS "factpath"
 Where Puppet should look for facts\. Multiple directories should be separated by the system path separator character\. (The POSIX path separator is \':\', and the Windows path separator is \';\'\.)
 .
@@ -1352,6 +1368,14 @@ When running in noop mode, Puppet will check whether each resource is in sync, l
 .
 .IP "" 0
 .
+.SS "number_of_facts_soft_limit"
+The soft limit for the total number of facts\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: \fB2048\fR
+.
+.IP "" 0
+.
 .SS "onetime"
 Perform one configuration run and exit, rather than spawning a long\-running daemon\. This is useful for interactively running puppet agent, or running puppet agent from cron\.
 .
@@ -1376,6 +1400,14 @@ This setting can only be set in the \fB[main]\fR section of puppet\.conf; it can
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fBnone\fR
+.
+.IP "" 0
+.
+.SS "payload_soft_limit"
+The soft limit for the size of the payload\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: \fB16777216\fR
 .
 .IP "" 0
 .
@@ -1940,6 +1972,14 @@ Turns on experimental support for tasks and plans in the puppet language\. This 
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fBfalse\fR
+.
+.IP "" 0
+.
+.SS "top_level_facts_soft_limit"
+The soft limit for the number of top level facts\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: \fB512\fR
 .
 .IP "" 0
 .
