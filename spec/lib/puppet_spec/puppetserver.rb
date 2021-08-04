@@ -31,6 +31,13 @@ class PuppetSpec::Puppetserver
     end
   end
 
+  class FileMetadataServlet < WEBrick::HTTPServlet::AbstractServlet
+    def do_GET request, response
+      response['Content-Type'] = 'application/json'
+      response.body = "{\"path\":\"/etc/puppetlabs/code/environments/production/modules\",\"relative_path\":\".\",\"links\":\"follow\",\"owner\":0,\"group\":0,\"mode\":493,\"checksum\":{\"type\":\"ctime\",\"value\":\"{ctime}2020-03-06 20:14:25 UTC\"},\"type\":\"directory\",\"destination\":null}"
+    end
+  end
+
   class ReportServlet < WEBrick::HTTPServlet::AbstractServlet
     def do_PUT request, response
       response['Content-Type'] = 'application/json'
@@ -106,6 +113,7 @@ class PuppetSpec::Puppetserver
     register_mount('/status/v1/simple/server', proc { |req, res|  }, nil)
     register_mount('/puppet/v3/node', mounts[:node], NodeServlet)
     register_mount('/puppet/v3/catalog', mounts[:catalog], CatalogServlet)
+    register_mount('/puppet/v3/file_metadata', mounts[:file_metadata], FileMetadataServlet)
     register_mount('/puppet/v3/file_metadatas', mounts[:file_metadatas], FileMetadatasServlet)
     register_mount('/puppet/v3/static_file_content', mounts[:static_file_content], StaticFileContentServlet)
     register_mount('/puppet/v3/report', mounts[:report], ReportServlet)

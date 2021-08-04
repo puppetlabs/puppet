@@ -84,6 +84,10 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     Puppet.run_mode.server?
   end
 
+  def require_environment?
+    false
+  end
+
   private
 
   # @param facts [String] facts in a wire format for decoding

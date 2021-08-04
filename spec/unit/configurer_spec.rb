@@ -7,6 +7,9 @@ describe Puppet::Configurer do
     Puppet[:report] = true
 
     catalog.add_resource(resource)
+    allow_any_instance_of(described_class).to(
+      receive(:valid_server_environment?).and_return(true)
+    )
   end
 
   let(:node_name) { Puppet[:node_name_value] }
@@ -76,6 +79,12 @@ describe Puppet::Configurer do
     it "does not download plugins when told" do
       expect(configurer).not_to receive(:download_plugins)
       configurer.run(:pluginsync => false)
+    end
+
+    it "does not download plugins when specified environment is not vaild on server" do
+      expect(configurer).to receive(:valid_server_environment?).and_return(false)
+      expect(configurer).not_to receive(:download_plugins)
+      configurer.run(:pluginsync => true)
     end
 
     it "fails the run if pluginsync fails when usecacheonfailure is false" do
