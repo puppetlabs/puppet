@@ -1689,6 +1689,31 @@ EOT
         new configurations, where you want to fix the broken configuration
         rather than reverting to a known-good one.",
     },
+    :fact_name_length_soft_limit => {
+      :default    => 2560,
+      :type       => :integer,
+      :desc       => "The soft limit for the length of a fact name.",
+    },
+    :fact_value_length_soft_limit => {
+      :default    => 4096,
+      :type       => :integer,
+      :desc       => "The soft limit for the length of a fact value.",
+    },
+    :top_level_facts_soft_limit => {
+      :default    => 512,
+      :type       => :integer,
+      :desc       => "The soft limit for the number of top level facts.",
+    },
+    :number_of_facts_soft_limit => {
+      :default    => 2048,
+      :type       => :integer,
+      :desc       => "The soft limit for the total number of facts.",
+    },
+    :payload_soft_limit => {
+      :default    => 16 * 1024 * 1024,
+      :type       => :integer,
+      :desc       => "The soft limit for the size of the payload.",
+    },
     :use_cached_catalog => {
       :default    => false,
       :type       => :boolean,

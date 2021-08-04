@@ -126,6 +126,94 @@ class Puppet::Configurer
     catalog
   end
 
+  def warn_number_of_facts(size, max_number)
+    Puppet.warning _("The current total number of facts: %{size} exceeds the number of facts limit: %{max_size}") % { size: size, max_size: max_number }
+  end
+
+  def warn_fact_name_length(name, max_length)
+    Puppet.warning _("Fact %{name} with length: '%{length}' exceeds the length limit: %{limit}") % { name: name, length: name.to_s.bytesize, limit: max_length }
+  end
+
+  def warn_number_of_top_level_facts(size, max_number)
+    Puppet.warning _("The current number of top level facts: %{size} exceeds the top facts limit: %{max_size}") % { size: size, max_size: max_number }
+  end
+
+  def warn_fact_value_length(value, max_length)
+    Puppet.warning _("Fact value '%{value}' with the value length: '%{length}' exceeds the value length limit: %{max_length}") % { value: value, length:value.to_s.bytesize, max_length: max_length }
+  end
+
+  def warn_fact_payload_size(payload, max_size)
+    Puppet.warning _("Payload with the current size of: '%{payload}' exceeds the payload size limit: %{max_size}") % { payload: payload, max_size: max_size }
+  end
+
+  def check_fact_name_length(name, number_of_dots)
+    max_length = Puppet[:fact_name_length_soft_limit]
+    return if max_length.zero?
+
+    # rough byte size estimations of fact path as a postgresql btree index 
+    size_as_btree_index = 8 + (number_of_dots * 2) + name.to_s.bytesize
+    warn_fact_name_length(name, max_length) if size_as_btree_index > max_length
+  end
+
+  def check_fact_values_length(values)
+    max_length = Puppet[:fact_value_length_soft_limit]
+    return if max_length.zero?
+
+    warn_fact_value_length(values, max_length) if values.to_s.bytesize > max_length
+  end
+
+  def check_top_level_number_limit(size)
+    max_size = Puppet[:top_level_facts_soft_limit]
+    return if max_size.zero?
+
+    warn_number_of_top_level_facts(size, max_size) if size > max_size
+  end
+
+  def check_total_number_limit(size)
+    max_size = Puppet[:number_of_facts_soft_limit]
+    return if max_size.zero?
+
+    warn_number_of_facts(size, max_size) if size > max_size
+  end
+
+  def check_payload_size(payload)
+    max_size = Puppet[:payload_soft_limit]
+    return if max_size.zero?
+
+    warn_fact_payload_size(payload, max_size) if payload > max_size
+    Puppet.debug _("The size of the payload is %{payload}") % {payload: payload}
+  end
+
+  def parse_fact_name_and_value_limits(object, path = [])
+    case object
+    when Hash
+      object.each do |key, value|
+        path.push(key)
+        parse_fact_name_and_value_limits(value, path)
+        path.pop
+        @number_of_facts += 1
+      end
+    when Array
+      object.each_with_index do |e, idx|
+        path.push(idx)
+        parse_fact_name_and_value_limits(e, path)
+        path.pop
+      end
+    else
+      check_fact_name_length(path.join(), path.size)
+      check_fact_values_length(object)
+    end
+  end
+
+  def check_facts_limits(facts)
+    @number_of_facts = 0
+    check_top_level_number_limit(facts.size)
+
+    parse_fact_name_and_value_limits(facts)
+    check_total_number_limit(@number_of_facts)
+    Puppet.debug _("The total number of facts registered is %{number_of_facts}") % {number_of_facts: @number_of_facts}
+  end
+
   def get_facts(options)
     if options[:pluginsync]
       plugin_sync_time = thinmark do
@@ -148,7 +236,9 @@ class Puppet::Configurer
       # facts_for_uploading may set Puppet[:node_name_value] as a side effect
       facter_time = thinmark do
         facts = find_facts
+        check_facts_limits(facts.to_data_hash['values'])
         facts_hash = encode_facts(facts) # encode for uploading # was: facts_for_uploading
+        check_payload_size(facts_hash[:facts].bytesize)
       end
       options[:report].add_times(:fact_generation, facter_time) if options[:report]
     end
