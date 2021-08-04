@@ -624,4 +624,73 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       end
     end
   end
+
+  context "environment convergence" do
+    it "switches to 'newenv' environment and retries the run" do
+      first_run = true
+      libdir = File.join(my_fixture_dir, 'lib')
+
+      # we have to use the :facter terminus to reliably test that pluginsynced
+      # facts are included in the catalog request
+      Puppet::Node::Facts.indirection.terminus_class = :facter
+
+      mounts = {}
+
+      # During the first run, only return metadata for the top-level directory.
+      # During the second run, include metadata for all of the 'lib' fixtures
+      # due to the `recurse` option.
+      mounts[:file_metadatas] = -> (req, res) {
+        request = Puppet::FileServing::Metadata.indirection.request(
+          :search, libdir, nil, recurse: !first_run
+        )
+        data = Puppet::FileServing::Metadata.indirection.terminus(:file).search(request)
+        res.body = formatter.render(data)
+        res['Content-Type'] = formatter.mime
+      }
+
+      mounts[:file_content] = -> (req, res) {
+        request = Puppet::FileServing::Content.indirection.request(
+          :find, File.join(libdir, 'facter', 'agent_spec_role.rb'), nil
+        )
+        content = Puppet::FileServing::Content.indirection.terminus(:file).find(request)
+        res.body = content.content
+        res['Content-Length'] = content.content.length
+        res['Content-Type'] = 'application/octet-stream'
+      }
+
+      # During the first run, return an empty catalog referring to the newenv.
+      # During the second run, compile a catalog that depends on a fact that
+      # only exists in the second environment. If the fact is missing/empty,
+      # then compilation will fail since resources can't have an empty title.
+      mounts[:catalog] = -> (req, res) {
+        node = Puppet::Node.new('test')
+
+        code = if first_run
+                 first_run = false
+                 ''
+               else
+                 data = CGI.unescape(req.query['facts'])
+                 facts = Puppet::Node::Facts.convert_from('json', data)
+                 node.fact_merge(facts)
+                 'notify { $facts["agent_spec_role"]: }'
+               end
+
+        catalog = compile_to_catalog(code, node)
+        catalog.environment = 'newenv'
+
+        res.body = formatter.render(catalog)
+        res['Content-Type'] = formatter.mime
+      }
+
+      server.start_server(mounts: mounts) do |port|
+        Puppet[:serverport] = port
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(2)
+         .and output(a_string_matching(%r{Notice: Local environment: 'production' doesn't match server specified environment 'newenv', restarting agent run with environment 'newenv'})
+         .and matching(%r{defined 'message' as 'web'})).to_stdout
+      end
+    end
+  end
 end
