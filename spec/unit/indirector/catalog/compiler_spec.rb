@@ -11,6 +11,9 @@ def set_facts(fact_hash)
 end
 
 describe Puppet::Resource::Catalog::Compiler do
+  include Matchers::Resource
+  include PuppetSpec::Files
+
   let(:compiler) { described_class.new }
   let(:node_name) { "foo" }
   let(:node) { Puppet::Node.new(node_name)}
@@ -248,6 +251,33 @@ describe Puppet::Resource::Catalog::Compiler do
       end
 
       compiler.find(@request)
+    end
+
+    context 'when checking agent and server specified environments' do
+      before :each do
+        FileUtils.mkdir_p(File.join(Puppet[:environmentpath], 'env_server'))
+        FileUtils.mkdir_p(File.join(Puppet[:environmentpath], 'env_agent'))
+
+        node.environment = 'env_server'
+        allow(Puppet::Node.indirection).to receive(:find).and_return(node)
+
+        @request.environment = 'env_agent'
+      end
+
+      it 'ignores mismatched environments by default' do
+        catalog = compiler.find(@request)
+
+        expect(catalog.environment).to eq('env_server')
+        expect(catalog).to have_resource('Stage[main]')
+      end
+
+      it 'returns an empty catalog if asked to check the environment and they are mismatched' do
+        @request.options[:check_environment] = "true"
+        catalog = compiler.find(@request)
+
+        expect(catalog.environment).to eq('env_server')
+        expect(catalog.resources).to be_empty
+      end
     end
   end
 
