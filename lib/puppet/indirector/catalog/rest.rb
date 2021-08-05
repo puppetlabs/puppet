@@ -18,6 +18,7 @@ class Puppet::Resource::Catalog::Rest < Puppet::Indirector::REST
       facts: request.options[:facts_for_catalog],
       environment: request.environment.to_s,
       configured_environment: request.options[:configured_environment],
+      check_environment: request.options[:check_environment],
       transaction_uuid: request.options[:transaction_uuid],
       job_uuid: request.options[:job_id],
       static_catalog: request.options[:static_catalog],
