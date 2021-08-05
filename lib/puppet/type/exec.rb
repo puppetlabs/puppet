@@ -11,7 +11,10 @@ module Puppet
 
       * The command itself is already idempotent. (For example, `apt-get update`.)
       * The exec has an `onlyif`, `unless`, or `creates` attribute, which prevents
-        Puppet from running the command unless some condition is met.
+        Puppet from running the command unless some condition is met. The
+        `onlyif` and `unless` commands of an `exec` are used in the process of
+        determining whether the `exec` is already in sync, therefore they must be run
+        during a noop Puppet run.
       * The exec has `refreshonly => true`, which allows Puppet to run the
         command only when some other resource is changed. (See the notes on refreshing
         below.) 
@@ -456,6 +459,9 @@ module Puppet
         `user`, `cwd`, and `group` as the main command. If the `path` isn't set, you
         must fully qualify the command's name.
 
+        Since this command is used in the process of determining whether the
+        `exec` is already in sync, it must be run during a noop Puppet run.
+
         This parameter can also take an array of commands. For example:
 
             unless => ['test -f /tmp/file1', 'test -f /tmp/file2'],
@@ -515,6 +521,9 @@ module Puppet
         Note that this test command runs with the same `provider`, `path`,
         `user`, `cwd`, and `group` as the main command. If the `path` isn't set, you
         must fully qualify the command's name.
+
+        Since this command is used in the process of determining whether the
+        `exec` is already in sync, it must be run during a noop Puppet run.
 
         This parameter can also take an array of commands. For example:
 
