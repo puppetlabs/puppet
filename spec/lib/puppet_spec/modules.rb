@@ -36,7 +36,7 @@ module PuppetSpec::Modules
         end
       end
 
-      if plans = options[:plans]
+      if (plans = options[:plans])
         plans_dir = File.join(module_dir, 'plans')
         FileUtils.mkdir_p(plans_dir)
         plans.each do |plan_file|
@@ -45,6 +45,17 @@ module PuppetSpec::Modules
             plan_file = { :name => plan_file, :content => "{}" }
           end
           File.write(File.join(plans_dir, plan_file[:name]), plan_file[:content])
+        end
+      end
+
+      if (scripts = options[:scripts])
+        scripts_dir = File.join(module_dir, 'scripts')
+        FileUtils.mkdir_p(scripts_dir)
+        scripts.each do |script_file|
+          if script_file.is_a?(String)
+            script_file = { :name => script_file, :content => "" }
+          end
+          File.write(File.join(scripts_dir, script_file[:name]), script_file[:content])
         end
       end
 
@@ -61,7 +72,7 @@ module PuppetSpec::Modules
       module_dir = File.join(dir, name)
       FileUtils.mkdir_p(module_dir)
 
-      if metadata = options[:metadata]
+      if (metadata = options[:metadata])
         File.open(File.join(module_dir, 'metadata.json'), 'w') do |f|
           f.write(metadata.to_json)
         end
