@@ -567,6 +567,20 @@ describe Puppet::Module do
       expect(mod.task_file(task_exe)).to eq("#{mod.path}/tasks/#{task_exe}")
     end
 
+    it "should list files from the scripts directory if required by the task" do
+      mod         = 'loads_scripts'
+      task_dep    = 'myscript.sh'
+      script_ref  = "#{mod}/scripts/#{task_dep}"
+      task_json   = JSON.generate({'files' => [script_ref]})
+      task        = [['task', { name: 'task.json', content: task_json }]]
+      mod         = PuppetSpec::Modules.create(mod, @modpath, {:environment => env,
+                                                       :scripts     => [task_dep],
+                                                       :tasks       => task})
+
+      expect(mod.tasks.first.files).to include({'name' => script_ref,
+                                                'path' => /#{script_ref}/})
+    end
+
     it "should return nil when asked for an individual task file if it does not exist" do
       mod = PuppetSpec::Modules.create('task_file_neg', @modpath, {:environment => env,
                                                                    :tasks => []})

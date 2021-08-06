@@ -50,7 +50,6 @@ class Puppet::Module
     RESERVED_DATA_TYPES = %w{any array boolean catalogentry class collection
         callable data default enum float hash integer numeric optional pattern
         resource runtime scalar string struct tuple type undef variant}
-    MOUNTS = %w[lib files plans]
 
     def self.is_plan_name?(name)
       return true if name =~ /^[a-z][a-z0-9_]*$/
