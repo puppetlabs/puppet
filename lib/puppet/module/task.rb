@@ -45,7 +45,7 @@ class Puppet::Module
     end
 
     FORBIDDEN_EXTENSIONS = %w{.conf .md}
-    MOUNTS = %w[lib files tasks]
+    MOUNTS = %w[files lib scripts tasks]
 
     def self.is_task_name?(name)
       return true if name =~ /^[a-z][a-z0-9_]*$/
