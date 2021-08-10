@@ -136,7 +136,7 @@ class PBinaryType < PAnyType
   # Only instances of Binary are instances of the PBinaryType
   #
   def instance?(o, guard = nil)
-    o.is_a?(Binary)
+    o.instance_of?(Binary)
   end
 
   def eql?(o)

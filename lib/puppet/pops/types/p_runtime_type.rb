@@ -99,7 +99,7 @@ class PRuntimeType < PAnyType
 
     onp = o.name_or_pattern
     return true if @name_or_pattern == onp
-    return false unless @name_or_pattern.is_a?(String) && onp.is_a?(String)
+    return false unless @name_or_pattern.instance_of?(String) && onp.instance_of?(String)
 
     # NOTE: This only supports Ruby, must change when/if the set of runtimes is expanded
     begin

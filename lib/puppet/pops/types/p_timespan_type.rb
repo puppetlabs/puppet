@@ -183,7 +183,7 @@ module Types
     end
 
     def instance?(o, guard = nil)
-      o.is_a?(Time::Timespan) && o >= @from && o <= @to
+      o.instance_of?(Time::Timespan) && o >= @from && o <= @to
     end
 
     DEFAULT = PTimespanType.new(nil, nil)

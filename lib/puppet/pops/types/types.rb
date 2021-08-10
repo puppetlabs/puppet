@@ -738,7 +738,7 @@ class PScalarDataType < PScalarType
     create_ptype(loader, ir, 'ScalarType')
   end
 
-  def instance?(o, guard = nil) 
+  def instance?(o, guard = nil)
     return o.instance_of?(String) || o.is_a?(Integer) || o.is_a?(Float) || o.instance_of?(TrueClass) || o.instance_of?(FalseClass)
   end
 
@@ -812,7 +812,7 @@ class PEnumType < PScalarDataType
   end
 
   def instance?(o, guard = nil)
-    if o.is_a?(String)
+    if o.instance_of?(String)
       @case_insensitive ? @values.any? { |p| p.casecmp(o) == 0 } : @values.any? { |p| p == o }
     else
       false
@@ -1549,7 +1549,7 @@ class PStringType < PScalarDataType
 
   def instance?(o, guard = nil)
     # true if size compliant
-    if o.is_a?(String)
+    if o.instance_of?(String)
       if @size_type_or_value.is_a?(PIntegerType)
         @size_type_or_value.instance?(o.size, guard)
       else
@@ -1753,7 +1753,7 @@ class PRegexpType < PScalarType
   end
 
   def instance?(o, guard=nil)
-    o.is_a?(Regexp) && @pattern.nil? || regexp == o
+    o.instance_of?(Regexp) && @pattern.nil? || regexp == o
   end
 
   DEFAULT = PRegexpType.new(nil)
@@ -1797,7 +1797,7 @@ class PPatternType < PScalarDataType
   end
 
   def instance?(o, guard = nil)
-    o.is_a?(String) && (@patterns.empty? || @patterns.any? { |p| p.regexp.match(o) })
+    o.instance_of?(String) && (@patterns.empty? || @patterns.any? { |p| p.regexp.match(o) })
   end
 
   DEFAULT = PPatternType.new(EMPTY_ARRAY)

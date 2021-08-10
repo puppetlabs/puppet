@@ -350,7 +350,7 @@ class PTypeSetType < PMetaType
   end
 
   def instance?(o, guard = nil)
-    o.is_a?(PTypeSetType)
+    o.instance_of?(PTypeSetType)
   end
 
   DEFAULT = self.new({

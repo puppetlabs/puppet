@@ -95,7 +95,7 @@ class PSemVerRangeType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    o.is_a?(SemanticPuppet::VersionRange)
+    o.instance_of?(SemanticPuppet::VersionRange)
   end
 
   def eql?(o)
