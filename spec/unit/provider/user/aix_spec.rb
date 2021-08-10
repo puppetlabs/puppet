@@ -306,4 +306,15 @@ describe 'Puppet::Type::User::Provider::Aix' do
       end
     end
   end
+
+  describe '#deletecmd' do
+    it 'uses the -p flag when removing the user' do
+      allow(provider.class).to receive(:command).with(:delete).and_return('delete')
+      allow(provider).to receive(:ia_module_args).and_return(['ia_module_args'])
+
+      expect(provider.deletecmd).to eql(
+        ['delete', '-p', 'ia_module_args', provider.resource.name]
+      )
+    end
+  end
 end

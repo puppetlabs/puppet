@@ -305,6 +305,10 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     FileUtils.remove_entry_secure(homedir, true)
   end
 
+  def deletecmd
+    [self.class.command(:delete), '-p'] + ia_module_args + [@resource[:name]]
+  end
+
   # UNSUPPORTED
   #- **profile_membership**
   #    Whether specified roles should be treated as the only roles
