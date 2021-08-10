@@ -695,7 +695,10 @@ class PScalarType < PAnyType
   end
 
   def instance?(o, guard = nil)
-    if o.is_a?(String) || o.is_a?(Numeric) || o.is_a?(TrueClass) || o.is_a?(FalseClass) || o.is_a?(Regexp)
+    # Numeric is the base class for several different number related classes such as Integer, Float, Fixnum and Bignum.
+    # The latter 2 are subclasses of Integer, so in this specific case we should use is_a? instead of instance_of? since we
+    # want to check child classes aswell.
+    if o.instance_of?(String) || o.is_a?(Numeric) || o.instance_of?(TrueClass) || o.instance_of?(FalseClass) || o.instance_of?(Regexp)
       true
     elsif o.instance_of?(Array) || o.instance_of?(Hash) || o.is_a?(PAnyType) || o.is_a?(NilClass)
       false
@@ -735,8 +738,8 @@ class PScalarDataType < PScalarType
     create_ptype(loader, ir, 'ScalarType')
   end
 
-  def instance?(o, guard = nil)
-    return o.is_a?(String) || o.is_a?(Integer) || o.is_a?(Float) || o.is_a?(TrueClass) || o.is_a?(FalseClass)
+  def instance?(o, guard = nil) 
+    return o.instance_of?(String) || o.is_a?(Integer) || o.is_a?(Float) || o.instance_of?(TrueClass) || o.instance_of?(FalseClass)
   end
 
   DEFAULT = PScalarDataType.new

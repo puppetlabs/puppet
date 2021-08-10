@@ -224,7 +224,8 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
   def find_or_save_resources(type, name, params)
     key = local_key(type, name)
-
+    
+    Puppet.push_context({:stringify_rich => true})
     if name
       if params.empty?
         [ Puppet::Resource.indirection.find( key ) ]
