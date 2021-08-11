@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 7.8.0-256-gdfafa3442e\n"
+"Project-Id-Version: Puppet automation framework 7.9.0-154-gc8aa8b2175\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-08-04 13:22+0000\n"
-"PO-Revision-Date: 2021-08-04 13:22+0000\n"
+"POT-Creation-Date: 2021-08-11 13:52+0000\n"
+"PO-Revision-Date: 2021-08-11 13:52+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -583,76 +583,84 @@ msgstr ""
 msgid "Selected puppet server from the `server_list` setting: %{server}:%{port}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:365
+#: ../lib/puppet/configurer.rb:366
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:388
-msgid "No environment configured, attempting to find out the last used environment"
+#: ../lib/puppet/configurer.rb:389
+msgid "Environment not passed via CLI and no catalog was given, attempting to find out the last server-specified environment"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:424
+#: ../lib/puppet/configurer.rb:394
+msgid "Could not find a usable environment in the lastrunfile. Either the file does not exist, does not have the required keys, or the values of 'initial_environment' and 'converged_environment' are identical."
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:398
+msgid "Using environment '%{env}'"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:429
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:435
+#: ../lib/puppet/configurer.rb:440
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:437
+#: ../lib/puppet/configurer.rb:442
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:500
+#: ../lib/puppet/configurer.rb:505
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:531
+#: ../lib/puppet/configurer.rb:536
 msgid "Environment '%{environment}' not found on server, skipping initial pluginsync."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:548 ../lib/puppet/http/resolver/server_list.rb:64 ../lib/puppet/http/resolver/server_list.rb:68
+#: ../lib/puppet/configurer.rb:553 ../lib/puppet/http/resolver/server_list.rb:64 ../lib/puppet/http/resolver/server_list.rb:68
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:552 ../lib/puppet/http/resolver/server_list.rb:73 ../lib/puppet/http/resolver/server_list.rb:76
+#: ../lib/puppet/configurer.rb:557 ../lib/puppet/http/resolver/server_list.rb:73 ../lib/puppet/http/resolver/server_list.rb:76
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:566
-msgid "Found last used environment: %{environment}"
+#: ../lib/puppet/configurer.rb:573
+msgid "Found last server-specified environment: %{environment}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:569
-msgid "Unable to get last used environment: %{detail}"
+#: ../lib/puppet/configurer.rb:576
+msgid "Could not find last server-specified environment: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:579 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:586 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:588
+#: ../lib/puppet/configurer.rb:595
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:607
+#: ../lib/puppet/configurer.rb:614
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:615
+#: ../lib/puppet/configurer.rb:622
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:630
+#: ../lib/puppet/configurer.rb:637
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:648
+#: ../lib/puppet/configurer.rb:655
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:669
+#: ../lib/puppet/configurer.rb:677
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -2316,120 +2324,120 @@ msgstr ""
 msgid "Catalog for %{request} was requested with fact definition for the wrong node (%{fact_name})."
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:77
+#: ../lib/puppet/indirector/catalog/compiler.rb:85
 msgid "Setup server facts for compiling"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:105
+#: ../lib/puppet/indirector/catalog/compiler.rb:113
 msgid "Unsupported facts format"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:146
+#: ../lib/puppet/indirector/catalog/compiler.rb:154
 msgid "Not inlining absent resource"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:149
+#: ../lib/puppet/indirector/catalog/compiler.rb:157
 msgid "Not inlining resource without sources"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:152
+#: ../lib/puppet/indirector/catalog/compiler.rb:160
 msgid "Not inlining unsupported source scheme"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:174
+#: ../lib/puppet/indirector/catalog/compiler.rb:182
 msgid "Not inlining file outside environment"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:180
+#: ../lib/puppet/indirector/catalog/compiler.rb:188
 msgid "Inlining file metadata"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:270
+#: ../lib/puppet/indirector/catalog/compiler.rb:278
 msgid "Could not get metadata for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:291
+#: ../lib/puppet/indirector/catalog/compiler.rb:299
 msgid "Unable to find a common checksum type between agent '%{agent_type}' and master '%{master_type}'."
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:298
+#: ../lib/puppet/indirector/catalog/compiler.rb:306
 msgid "Compiled static catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:299
+#: ../lib/puppet/indirector/catalog/compiler.rb:307
 msgid "Compiled static catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:301
+#: ../lib/puppet/indirector/catalog/compiler.rb:309
 msgid "Compiled static catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:302
+#: ../lib/puppet/indirector/catalog/compiler.rb:310
 msgid "Compiled static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:307
+#: ../lib/puppet/indirector/catalog/compiler.rb:315
 msgid "Compiled catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:308
+#: ../lib/puppet/indirector/catalog/compiler.rb:316
 msgid "Compiled catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:310
+#: ../lib/puppet/indirector/catalog/compiler.rb:318
 msgid "Compiled catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:311
+#: ../lib/puppet/indirector/catalog/compiler.rb:319
 msgid "Compiled catalog for %{node}"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:333
+#: ../lib/puppet/indirector/catalog/compiler.rb:341
 msgid "Inlined resource metadata into static catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:335
+#: ../lib/puppet/indirector/catalog/compiler.rb:343
 msgid "Inlined resource metadata into static catalog for %{node} in environment %{environment}"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:338
+#: ../lib/puppet/indirector/catalog/compiler.rb:346
 msgid "Inlined resource metadata into static catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:340
+#: ../lib/puppet/indirector/catalog/compiler.rb:348
 msgid "Inlined resource metadata into static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:357
+#: ../lib/puppet/indirector/catalog/compiler.rb:365
 msgid "Found node information"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:365
+#: ../lib/puppet/indirector/catalog/compiler.rb:373
 msgid "Failed when searching for node %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:385
+#: ../lib/puppet/indirector/catalog/compiler.rb:393
 msgid "Invalid option use_node for a remote request"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:404
+#: ../lib/puppet/indirector/catalog/compiler.rb:412
 msgid "Could not find node '%{name}'; cannot compile"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:437
+#: ../lib/puppet/indirector/catalog/compiler.rb:445
 msgid "Could not retrieve fact servername"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:446
+#: ../lib/puppet/indirector/catalog/compiler.rb:454
 msgid "Could not retrieve either serverip or serverip6 fact"
 msgstr ""
 
@@ -2441,7 +2449,7 @@ msgstr ""
 msgid "Unable to serialize catalog to json, retrying with pson"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/rest.rb:32 ../lib/puppet/indirector/facts/rest.rb:20 ../lib/puppet/indirector/file_content/rest.rb:29 ../lib/puppet/indirector/file_metadata/rest.rb:26 ../lib/puppet/indirector/node/rest.rb:23
+#: ../lib/puppet/indirector/catalog/rest.rb:33 ../lib/puppet/indirector/facts/rest.rb:20 ../lib/puppet/indirector/file_content/rest.rb:29 ../lib/puppet/indirector/file_metadata/rest.rb:26 ../lib/puppet/indirector/node/rest.rb:23
 msgid "Find %{uri} resulted in 404 with the message: %{body}"
 msgstr ""
 
@@ -2885,8 +2893,8 @@ msgstr ""
 msgid "Option %{option} conflicts with existing option %{conflict} on %{face}"
 msgstr ""
 
-#. TRANSLATORS 'Puppet.settings' references to the Puppet settings options and should not be translated
 #. TRANSLATORS 'Puppet.settings' should not be translated
+#. TRANSLATORS 'Puppet.settings' references to the Puppet settings options and should not be translated
 #: ../lib/puppet/interface/action.rb:315 ../lib/puppet/interface/option_manager.rb:14
 msgid "Global option %{option} does not exist in Puppet.settings"
 msgstr ""
@@ -3126,19 +3134,19 @@ msgstr ""
 msgid "Plan %{plan_name} not found in module %{module_name}."
 msgstr ""
 
-#: ../lib/puppet/module/plan.rb:64
+#: ../lib/puppet/module/plan.rb:63
 msgid "Plan names must start with a lowercase letter and be composed of only lowercase letters, numbers, and underscores"
 msgstr ""
 
-#: ../lib/puppet/module/plan.rb:66
+#: ../lib/puppet/module/plan.rb:65
 msgid "Plan name cannot have extension %{ext}, must be .pp or .yaml"
 msgstr ""
 
-#: ../lib/puppet/module/plan.rb:69
+#: ../lib/puppet/module/plan.rb:68
 msgid "Plan name cannot be a reserved word, but was '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/module/plan.rb:72
+#: ../lib/puppet/module/plan.rb:71
 msgid "Plan name cannot be a Puppet data type, but was '%{name}'"
 msgstr ""
 
@@ -8000,72 +8008,72 @@ msgstr ""
 msgid "Could not set %{attribute} on %{class_name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:118
+#: ../lib/puppet/type/exec.rb:121
 msgid "executed successfully"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:152
+#: ../lib/puppet/type/exec.rb:155
 msgid "Command exceeded timeout"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:181
+#: ../lib/puppet/type/exec.rb:184
 msgid "[command redacted] returned %{status} instead of one of [%{expected}]"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:183
+#: ../lib/puppet/type/exec.rb:186
 msgid "'%{cmd}' returned %{status} instead of one of [%{expected}]"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:205
+#: ../lib/puppet/type/exec.rb:208
 msgid "Command must be a String or Array<String>, got value of class %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:238
+#: ../lib/puppet/type/exec.rb:241
 msgid "Unable to execute commands as other users on Windows"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:240
+#: ../lib/puppet/type/exec.rb:243
 msgid "Only root can execute commands as other users"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:296
+#: ../lib/puppet/type/exec.rb:299
 msgid "Invalid environment setting '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:309
+#: ../lib/puppet/type/exec.rb:312
 msgid "The umask specification is invalid: %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:325
+#: ../lib/puppet/type/exec.rb:328
 msgid "The timeout must be a number."
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:342
+#: ../lib/puppet/type/exec.rb:345
 msgid "Tries must be an integer"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:346
+#: ../lib/puppet/type/exec.rb:349
 msgid "Tries must be an integer >= 1"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:359
+#: ../lib/puppet/type/exec.rb:362
 msgid "try_sleep must be a number"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:363
+#: ../lib/puppet/type/exec.rb:366
 msgid "try_sleep cannot be a negative number"
 msgstr ""
 
 #. TRANSLATORS 'creates' is a parameter name and should not be translated
-#: ../lib/puppet/type/exec.rb:435
+#: ../lib/puppet/type/exec.rb:438
 msgid "Checking that 'creates' path '%{creates_path}' exists"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:484 ../lib/puppet/type/exec.rb:544
+#: ../lib/puppet/type/exec.rb:490 ../lib/puppet/type/exec.rb:553
 msgid "Check %{value} exceeded timeout"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:636
+#: ../lib/puppet/type/exec.rb:645
 msgid "'%{cmd}' won't be executed because of failed check '%{check}'"
 msgstr ""
 
