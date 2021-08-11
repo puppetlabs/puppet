@@ -1216,8 +1216,7 @@ describe Puppet::Configurer do
     include PuppetSpec::Settings
 
     describe "when the last used environment is available" do
-      let(:last_used_environment) { 'development' }
-      let(:default_environment) { 'production' }
+      let(:last_server_specified_environment) { 'development' }
 
       before do
         Puppet[:lastrunfile] = file_containing('last_run_summary.yaml', <<~SUMMARY)
@@ -1226,7 +1225,8 @@ describe Puppet::Configurer do
           config: 1624882680
           puppet: 6.24.0
         application:
-          environment: development
+          initial_environment: #{Puppet[:environment]}
+          converged_environment: #{last_server_specified_environment}
           run_mode: agent
         SUMMARY
       end
@@ -1251,64 +1251,88 @@ describe Puppet::Configurer do
         expect(configurer.environment).to eq('usethis')
       end
 
-      it "uses the default environment if given a catalog" do
+      it "uses environment from Puppet[:environment] if given a catalog" do
         configurer.run(catalog: catalog)
 
-        expect(configurer.environment).to eq(default_environment)
+        expect(configurer.environment).to eq(Puppet[:environment])
       end
 
-      it "uses the default environment if use_cached_catalog = true" do
+      it "uses environment from Puppet[:environment] if use_cached_catalog = true" do
         Puppet[:use_cached_catalog] = true
         expects_cached_catalog_only(catalog)
         configurer.run
 
-        expect(configurer.environment).to eq(default_environment)
+        expect(configurer.environment).to eq(Puppet[:environment])
       end
 
-      describe "when the environment is not configured" do
+      describe "when the environment is not set via CLI" do
         it "uses the environment found in lastrunfile if the key exists" do
           configurer.run
 
-          expect(configurer.environment).to eq(last_used_environment)
+          expect(configurer.environment).to eq(last_server_specified_environment)
         end
 
-        it "uses the default environment if the run mode doesn't match" do
+        it "uses environment from Puppet[:environment] if strict_environment_mode is set" do
+          Puppet[:strict_environment_mode] = true
+          configurer.run
+
+          expect(configurer.environment).to eq(Puppet[:environment])
+        end
+
+        it "uses environment from Puppet[:environment] if initial_environment is the same as converged_environment" do
           Puppet[:lastrunfile] = file_containing('last_run_summary.yaml', <<~SUMMARY)
           ---
           version:
             config: 1624882680
             puppet: 6.24.0
           application:
-            environment: development
+            initial_environment: development
+            converged_environment: development
+            run_mode: agent
+          SUMMARY
+          configurer.run
+
+          expect(configurer.environment).to eq(Puppet[:environment])
+        end
+
+        it "uses environment from Puppet[:environment] if the run mode doesn't match" do
+          Puppet[:lastrunfile] = file_containing('last_run_summary.yaml', <<~SUMMARY)
+          ---
+          version:
+            config: 1624882680
+            puppet: 6.24.0
+          application:
+            initial_environment: #{Puppet[:environment]}
+            converged_environment: #{last_server_specified_environment}
             run_mode: user
           SUMMARY
           configurer.run
 
-          expect(configurer.environment).to eq(default_environment)
+          expect(configurer.environment).to eq(Puppet[:environment])
         end
 
-        it "uses the default environment if lastrunfile is invalid YAML" do
+        it "uses environment from Puppet[:environment] if lastrunfile is invalid YAML" do
           Puppet[:lastrunfile] = file_containing('last_run_summary.yaml', <<~SUMMARY)
           Key: 'this is my very very very ' +
                'long string'
           SUMMARY
           configurer.run
 
-          expect(configurer.environment).to eq(default_environment)
+          expect(configurer.environment).to eq(Puppet[:environment])
         end
 
-        it "uses the default environment if lastrunfile exists but is empty" do
+        it "uses environment from Puppet[:environment] if lastrunfile exists but is empty" do
           Puppet[:lastrunfile] = file_containing('last_run_summary.yaml', '')
           configurer.run
 
-          expect(configurer.environment).to eq(default_environment)
+          expect(configurer.environment).to eq(Puppet[:environment])
         end
 
-        it "uses the default environment if the last used one cannot be found" do
+        it "uses environment from Puppet[:environment] if the last used one cannot be found" do
           Puppet[:lastrunfile] = tmpfile('last_run_summary.yaml')
           configurer.run
 
-          expect(configurer.environment).to eq(default_environment)
+          expect(configurer.environment).to eq(Puppet[:environment])
         end
       end
     end

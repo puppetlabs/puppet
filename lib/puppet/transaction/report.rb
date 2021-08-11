@@ -75,6 +75,10 @@ class Puppet::Transaction::Report
   # @return [String] the environment name
   attr_accessor :environment
 
+  # The name of the environment the agent initially started in
+  # @return [String] the environment name
+  attr_accessor :initial_environment
+
   # Whether there are changes that we decided not to apply because of noop
   # @return [Boolean]
   #
@@ -382,7 +386,8 @@ class Puppet::Transaction::Report
       },
       "application" => {
         "run_mode" => Puppet.run_mode.name.to_s,
-        "environment" => environment
+        "initial_environment" => initial_environment,
+        "converged_environment" => environment
       }
     }
 

@@ -345,6 +345,7 @@ class Puppet::Configurer
 
   def run_internal(options)
     report = options[:report]
+    report.initial_environment = Puppet[:environment]
 
     if options[:start_time]
       startup_time = Time.now - options[:start_time]
@@ -384,13 +385,17 @@ class Puppet::Configurer
       configured_environment = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
 
       # We only need to find out the environment to run in if we don't already have a catalog
-      unless (cached_catalog || options[:catalog] || configured_environment)
-        Puppet.debug(_("No environment configured, attempting to find out the last used environment"))
-        if last_agent_environment
-          @environment = last_agent_environment
-          report.environment = last_agent_environment
+      unless (cached_catalog || options[:catalog] || Puppet.settings.set_by_cli?(:environment) || Puppet[:strict_environment_mode])
+        Puppet.debug(_("Environment not passed via CLI and no catalog was given, attempting to find out the last server-specified environment"))
+        if last_server_specified_environment
+          @environment = last_server_specified_environment
+          report.environment = last_server_specified_environment
+        else
+          Puppet.debug(_("Could not find a usable environment in the lastrunfile. Either the file does not exist, does not have the required keys, or the values of 'initial_environment' and 'converged_environment' are identical."))
         end
       end
+
+      Puppet.info _("Using environment '%{env}'") % { env: @environment }
 
       # This is to maintain compatibility with anyone using this class
       # aside from agent, apply, device.
@@ -555,21 +560,23 @@ class Puppet::Configurer
   end
   private :find_functional_server
 
-  def last_agent_environment
-    return @last_agent_environment if @last_agent_environment
+  def last_server_specified_environment
+    return @last_server_specified_environment if @last_server_specified_environment
     if Puppet::FileSystem.exist?(Puppet[:lastrunfile])
       summary = Puppet::Util::Yaml.safe_load_file(Puppet[:lastrunfile])
       return unless summary.dig('application', 'run_mode') == 'agent'
-      @last_agent_environment = summary.dig('application', 'environment')
+      initial_environment = summary.dig('application', 'initial_environment')
+      converged_environment = summary.dig('application', 'converged_environment')
+      @last_server_specified_environment = converged_environment if initial_environment != converged_environment
     end
 
-    Puppet.debug(_("Found last used environment: %{environment}") % { environment: @last_agent_environment }) if @last_agent_environment
-    @last_agent_environment
+    Puppet.debug(_("Found last server-specified environment: %{environment}") % { environment: @last_server_specified_environment }) if @last_server_specified_environment
+    @last_server_specified_environment
   rescue => detail
-    Puppet.debug(_("Unable to get last used environment: %{detail}") % { detail: detail })
+    Puppet.debug(_("Could not find last server-specified environment: %{detail}") % { detail: detail })
     nil
   end
-  private :last_agent_environment
+  private :last_server_specified_environment
 
   def send_report(report)
     puts report.summary if Puppet[:summarize]
