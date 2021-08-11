@@ -16,11 +16,11 @@ test_name "Agent should use set environment after running with specified environ
 
   tmp_environment = mk_tmp_environment_with_teardown(master, 'special')
   agents.each do |agent|
-    on(agent, "puppet agent -t --environment #{tmp_environment}") do |result|
+    on(agent, puppet("agent -t --environment #{tmp_environment}")) do |result|
       assert_match(/Info: Using environment 'special_\w+'/, result.stdout)
     end
 
-    on(agent, "puppet agent -t") do |result|
+    on(agent, puppet('agent -t')) do |result|
       assert_match(/Info: Using environment 'production'/, result.stdout)
     end
   end
