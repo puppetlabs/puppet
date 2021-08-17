@@ -265,6 +265,50 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     end
   end
 
+  # Lists all instances of the given object, taking in an optional set
+  # of ia_module arguments. Returns an array of hashes, each hash
+  # having the schema
+  #   {
+  #     :name => <object_name>
+  #     :home => <object_home>
+  #   }
+  def list_all_homes(ia_module_args = [])
+    cmd = [command(:list), '-c', *ia_module_args, '-a', 'home', 'ALL']
+    parse_aix_objects(execute(cmd)).to_a.map do |object|
+      name = object[:name]
+      home = object[:attributes].delete(:home)
+
+      { name: name, home: home }
+    end
+  rescue => e
+    Puppet.debug("Could not list home of all users: #{e.message}")
+    {}
+  end
+
+  # Deletes this instance resource
+  def delete
+    homedir = home
+    super
+    return unless @resource.managehome?
+
+    if !Puppet::Util.absolute_path?(homedir) || File.realpath(homedir) == '/' || Puppet::FileSystem.symlink?(homedir)
+      Puppet.debug("Can not remove home directory '#{homedir}' of user '#{@resource[:name]}'. Please make sure the path is not relative, symlink or '/'.")
+      return
+    end
+
+    affected_home = list_all_homes.find { |info| info[:home].start_with?(File.realpath(homedir)) }
+    if affected_home
+      Puppet.debug("Can not remove home directory '#{homedir}' of user '#{@resource[:name]}' as it would remove the home directory '#{affected_home[:home]}' of user '#{affected_home[:name]}' also.")
+      return
+    end
+
+    FileUtils.remove_entry_secure(homedir, true)
+  end
+
+  def deletecmd
+    [self.class.command(:delete), '-p'] + ia_module_args + [@resource[:name]]
+  end
+
   # UNSUPPORTED
   #- **profile_membership**
   #    Whether specified roles should be treated as the only roles
@@ -314,5 +358,4 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   #    be treated as the minimum membership list.  Valid values are
   #    `inclusive`, `minimum`.
   # UNSUPPORTED
-
 end
