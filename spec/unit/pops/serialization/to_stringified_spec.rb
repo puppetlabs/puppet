@@ -154,4 +154,9 @@ describe 'ToStringifiedConverter' do
     unassigned = [243, 176, 128, 128].pack("C*").force_encoding(Encoding::UTF_8) 
     expect(transform(unassigned)).to eq("󰀀")
   end
+
+  it 'converts ProcessOutput objects to string' do
+    object = Puppet::Util::Execution::ProcessOutput.new('object', 0)
+    expect(transform(object)).to be_instance_of(String)
+  end
 end
