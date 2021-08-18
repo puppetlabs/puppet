@@ -870,6 +870,46 @@ describe "The lookup function" do
       end
     end
 
+    context 'with lookup_options' do
+      let(:environment_files) do
+        {
+          env_name => {
+            'hiera.yaml' => <<-YAML.unindent,
+              ---
+              version: 5
+              YAML
+            'data' => {
+              'common.yaml' => common_yaml
+            }
+          }
+        }
+      end
+
+      context 'that are empty' do
+        let(:common_yaml) { <<-YAML.unindent }
+          lookup_options:
+          a: b
+          YAML
+
+        it 'ignores empty options' do
+          expect(lookup('a')).to eq("b")
+        end
+      end
+
+      context 'that contains a legal yaml hash with unexpected types' do
+        let(:common_yaml) { <<-YAML.unindent }
+          lookup_options:
+            :invalid_symbol
+          YAML
+
+        it 'fails lookup and reports a type mismatch' do
+          expect {
+            lookup('a')
+          }.to raise_error(Puppet::DataBinding::LookupError, /has wrong type, expects Puppet::LookupValue, got Runtime\[ruby, 'Symbol'\]/)
+        end
+      end
+    end
+
     context 'with lookup_options configured using patterns' do
       let(:mod_common) {
         <<-YAML.unindent
@@ -1017,6 +1057,31 @@ describe "The lookup function" do
             'bca' => 'bca (from environment)'
           }
         })
+      end
+
+      context 'and lookup_options is empty' do
+        let(:mod_common) { <<-YAML.unindent }
+          lookup_options:
+          mod::a: b
+          YAML
+
+        it 'ignores empty options' do
+          pending
+          expect(lookup('mod::a')).to eq("b")
+        end
+      end
+
+      context 'and lookup_options contains a legal hash with unexpected types' do
+        let(:mod_common) { <<-YAML.unindent }
+          lookup_options:
+            :invalid_symbol
+          YAML
+
+        it 'fails lookup and reports a type mismatch' do
+          expect {
+            lookup('mod::a')
+          }.to raise_error(Puppet::DataBinding::LookupError, /has wrong type, expects Puppet::LookupValue, got Runtime\[ruby, 'Symbol'\]/)
+        end
       end
 
       context 'and patterns in module are not limited to module keys' do
