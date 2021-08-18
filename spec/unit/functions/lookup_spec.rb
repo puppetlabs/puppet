@@ -1066,7 +1066,6 @@ describe "The lookup function" do
           YAML
 
         it 'ignores empty options' do
-          pending
           expect(lookup('mod::a')).to eq("b")
         end
       end
