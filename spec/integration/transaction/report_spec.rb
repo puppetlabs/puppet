@@ -48,7 +48,7 @@ describe Puppet::Transaction::Report do
       expect(Puppet::Transaction::Report.indirection).to receive(:save) do |report, x|
         last_run_report = report
         true
-      end.twice
+      end.exactly(4)
 
       Puppet[:report] = true
       Puppet[:noop] = noop1
