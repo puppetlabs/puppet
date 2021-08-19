@@ -463,7 +463,7 @@ describe Puppet::Configurer do
     it "should save the report if reporting is enabled" do
       Puppet.settings[:report] = true
 
-      expect(Puppet::Transaction::Report.indirection).to receive(:save).with(report, nil, instance_of(Hash))
+      expect(Puppet::Transaction::Report.indirection).to receive(:save).with(report, nil, instance_of(Hash)).twice
       configurer.send_report(report)
     end
 
@@ -491,11 +491,21 @@ describe Puppet::Configurer do
     it "should log but not fail if saving the report fails" do
       Puppet.settings[:report] = true
 
-      expect(Puppet::Transaction::Report.indirection).to receive(:save).and_raise("whatever")
+      expect(Puppet::Transaction::Report.indirection).to receive(:save).with(report, nil, hash_including(ignore_cache: true)).and_raise("whatever")
+      expect(Puppet::Transaction::Report.indirection).to receive(:save).with(report, nil, hash_including(ignore_terminus: true))
 
       configurer.send_report(report)
 
       expect(@logs).to include(an_object_having_attributes(level: :err, message: 'Could not send report: whatever'))
+    end
+
+    it "should save the cached report if fails to send the report" do
+      allow(Puppet::Transaction::Report.indirection).to receive(:save).with(report, nil, hash_including(ignore_terminus: true)).and_call_original
+      allow(Puppet::Transaction::Report.indirection).to receive(:save).with(report, nil, hash_including(ignore_cache: true)).and_raise("whatever")
+
+      expect(File).to_not be_exist(Puppet[:lastrunfile])
+      configurer.send_report(report)
+      expect(File.read(Puppet[:lastrunfile])).to match(/puppet: #{Puppet::PUPPETVERSION}/)
     end
   end
 

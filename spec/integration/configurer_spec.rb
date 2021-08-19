@@ -23,7 +23,7 @@ describe Puppet::Configurer do
       expect(Puppet::Transaction::Report.indirection).to receive(:save) do |report, x|
         expect(report.time).to be_a(Time)
         expect(report.logs.length).to be > 0
-      end
+      end.twice
 
       Puppet[:report] = true
 
