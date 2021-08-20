@@ -292,7 +292,8 @@ class LookupAdapter < DataAdapter
   PROVIDER_STACK = [:lookup_global, :lookup_in_environment, :lookup_in_module].freeze
 
   def validate_lookup_options(options, module_name)
-    raise Puppet::DataBinding::LookupError.new(_("value of %{opts} must be a hash") % { opts: LOOKUP_OPTIONS }) unless options.is_a?(Hash) unless options.nil?
+    return nil if options.nil?
+    raise Puppet::DataBinding::LookupError.new(_("value of %{opts} must be a hash") % { opts: LOOKUP_OPTIONS }) unless options.is_a?(Hash)
     return options if module_name.nil?
 
     pfx = "#{module_name}::"
@@ -352,7 +353,7 @@ class LookupAdapter < DataAdapter
               module_opts = validate_lookup_options(lookup_in_module(LookupKey::LOOKUP_OPTIONS, meta_invocation, merge_strategy), module_name)
               opts = if opts.nil?
                 module_opts
-              else
+              elsif module_opts
                 merge_strategy.lookup([GLOBAL_ENV_MERGE, "Module #{lookup_invocation.module_name}"], meta_invocation) do |n|
                   meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS,  n == GLOBAL_ENV_MERGE ? opts : module_opts) }
                 end
