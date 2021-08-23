@@ -62,7 +62,7 @@ module Serialization
     end
 
     def to_data(value)
-      if value.is_a?(String)
+      if value.instance_of?(String)
         to_string_or_binary(value)
       elsif value.nil? || Types::PScalarDataType::DEFAULT.instance?(value)
         value

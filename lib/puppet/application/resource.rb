@@ -225,21 +225,23 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   def find_or_save_resources(type, name, params)
     key = local_key(type, name)
 
-    if name
-      if params.empty?
-        [ Puppet::Resource.indirection.find( key ) ]
-      else
-        resource = Puppet::Resource.new( type, name, :parameters => params )
+    Puppet.override(stringify_rich: true) do
+      if name
+        if params.empty?
+          [ Puppet::Resource.indirection.find( key ) ]
+        else
+          resource = Puppet::Resource.new( type, name, :parameters => params )
 
-        # save returns [resource that was saved, transaction log from applying the resource]
-        save_result = Puppet::Resource.indirection.save(resource, key)
-        [ save_result.first ]
+          # save returns [resource that was saved, transaction log from applying the resource]
+          save_result = Puppet::Resource.indirection.save(resource, key)
+          [ save_result.first ]
+        end
+      else
+        if type == "file"
+          raise _("Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc")
+        end
+        Puppet::Resource.indirection.search( key, {} )
       end
-    else
-      if type == "file"
-        raise _("Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc")
-      end
-      Puppet::Resource.indirection.search( key, {} )
     end
   end
 end

@@ -313,7 +313,7 @@ class Puppet::Indirector::Indirection
     request = request(:save, key, instance, options)
     terminus = prepare(request)
 
-    result = terminus.save(request)
+    result = terminus.save(request) if !request.ignore_terminus?
 
     # If caching is enabled, save our document there
     cache.save(request) if cache? && !request.ignore_cache_save?

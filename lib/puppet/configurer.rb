@@ -581,7 +581,14 @@ class Puppet::Configurer
   def send_report(report)
     puts report.summary if Puppet[:summarize]
     save_last_run_summary(report)
-    Puppet::Transaction::Report.indirection.save(report, nil, :environment => Puppet::Node::Environment.remote(@environment)) if Puppet[:report]
+    if Puppet[:report]
+      remote = Puppet::Node::Environment.remote(@environment)
+      begin
+        Puppet::Transaction::Report.indirection.save(report, nil, ignore_cache: true, environment: remote)
+      ensure
+        Puppet::Transaction::Report.indirection.save(report, nil, ignore_terminus: true, environment: remote)
+      end
+    end
   rescue => detail
     Puppet.log_exception(detail, _("Could not send report: %{detail}") % { detail: detail })
   end

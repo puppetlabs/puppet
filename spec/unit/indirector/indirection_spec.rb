@@ -499,7 +499,7 @@ describe Puppet::Indirector::Indirection do
         end
 
         it "should return the result of saving to the terminus" do
-          request = double('request', :instance => @instance, :node => nil, :ignore_cache_save? => false)
+          request = double('request', :instance => @instance, :node => nil, :ignore_cache_save? => false, :ignore_terminus? => false)
 
           expect(@indirection).to receive(:request).and_return(request)
 
@@ -509,7 +509,7 @@ describe Puppet::Indirector::Indirection do
         end
 
         it "should use a request to save the object to the cache" do
-          request = double('request', :instance => @instance, :node => nil, :ignore_cache_save? => false)
+          request = double('request', :instance => @instance, :node => nil, :ignore_cache_save? => false, :ignore_terminus? => false)
 
           expect(@indirection).to receive(:request).and_return(request)
 
@@ -519,7 +519,7 @@ describe Puppet::Indirector::Indirection do
         end
 
         it "should not save to the cache if the normal save fails" do
-          request = double('request', :instance => @instance, :node => nil)
+          request = double('request', :instance => @instance, :node => nil, :ignore_terminus? => false)
 
           expect(@indirection).to receive(:request).and_return(request)
 
@@ -533,6 +533,13 @@ describe Puppet::Indirector::Indirection do
           expect(@cache).not_to receive(:save)
 
           @indirection.save(@instance, '/my/key', :ignore_cache_save => true)
+        end
+
+        it "should only save to the cache if the request specifies not to use the terminus" do
+          expect(@terminus).not_to receive(:save)
+          expect(@cache).to receive(:save)
+
+          @indirection.save(@instance, "/my/key", :ignore_terminus => true)
         end
       end
     end

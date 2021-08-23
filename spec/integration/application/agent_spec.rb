@@ -626,6 +626,22 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         expect(report.metrics).to_not be_empty
       end
     end
+
+    it "caches a report even if the REST request fails" do
+      server.start_server do |port|
+        Puppet[:serverport] = port
+        Puppet[:report_port] = "-1"
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(0)
+         .and output(%r{Applied catalog}).to_stdout
+         .and output(%r{Could not send report}).to_stderr
+
+        report = Puppet::Transaction::Report.convert_from(:yaml, File.read(Puppet[:lastrunreport]))
+        expect(report).to be
+      end
+    end
   end
 
   context "environment convergence" do

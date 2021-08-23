@@ -1980,6 +1980,12 @@ describe 'The type calculator' do
       expect(calculator.instance?(tuple, [1, 'a', 1])).to          eq(false)
     end
 
+    it 'should not consider ProcessOutput objects as instanceof PScalarDataType' do
+      object = Puppet::Util::Execution::ProcessOutput.new('object', 0)
+      
+      expect(calculator.instance?(PScalarDataType::DEFAULT, object)).to eq(false)
+    end
+
     context 'and t is Struct' do
       it 'should consider hash[cont] as instance of Struct[cont-t]' do
         struct = struct_t({'a'=>Integer, 'b'=>String, 'c'=>Float})

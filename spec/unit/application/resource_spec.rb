@@ -129,6 +129,35 @@ describe Puppet::Application::Resource do
   end
 
   describe "when printing output" do
+    it "should not emit puppet class tags when printing yaml" do
+      Puppet::Type.newtype(:stringify) do
+        ensurable
+        newparam(:name, isnamevar: true)
+        newproperty(:string)
+      end
+
+      Puppet::Type.type(:stringify).provide(:stringify) do
+        def exists?
+          true
+        end
+
+        def string
+          Puppet::Util::Execution::ProcessOutput.new('test', 0)
+        end
+      end
+
+      @resource_app.options[:to_yaml] = true
+      allow(@resource_app.command_line).to receive(:args).and_return(['stringify', 'hello', 'ensure=present', 'string=asd'])
+      expect(@resource_app).to receive(:puts).with(<<~YAML)
+      ---
+      stringify:
+        hello:
+          ensure: present
+          string: test
+      YAML
+      expect { @resource_app.main }.not_to raise_error
+    end
+
     it "should ensure all values to be printed are in the external encoding" do
       resources = [
         Puppet::Type.type(:user).new(:name => "\u2603".force_encoding(Encoding::UTF_8)).to_resource,
