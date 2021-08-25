@@ -201,7 +201,15 @@ module Puppet
         any output is logged at the `err` log level.
 
         Multiple `exec` resources can use the same `command` value; Puppet
-        only uses the resource title to ensure `exec`s are unique."
+        only uses the resource title to ensure `exec`s are unique.
+
+        On *nix platforms, the command can be specified as an array of
+        strings and Puppet will invoke it using the more secure method of
+        parameterized system calls. For example, rather than executing the
+        malicious injected code, this command will echo it out:
+
+            command => ['/bin/echo', 'hello world; rm -rf /']
+      "
 
       validate do |command|
         unless command.is_a?(String) || command.is_a?(Array)
