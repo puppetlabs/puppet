@@ -91,12 +91,20 @@ describe Puppet do
       expect(Puppet.runtime[:http]).to be_an_instance_of(Puppet::HTTP::Client)
     end
 
-    it 'allows an implementation to be registered' do
-      impl = double('http')
-      Puppet.initialize_settings([], true, true, http: impl)
+    it 'allows a http implementation to be registered' do
+      http_impl = double('http')
+      Puppet.initialize_settings([], true, true, http: http_impl)
 
 
-      expect(Puppet.runtime[:http]).to eq(impl)
+      expect(Puppet.runtime[:http]).to eq(http_impl)
+    end
+
+    it 'allows a facter implementation to be registered' do
+      facter_impl = double('facter')
+      Puppet.initialize_settings([], true, true, facter: facter_impl)
+
+
+      expect(Puppet.runtime[:facter]).to eq(facter_impl)
     end
   end
 

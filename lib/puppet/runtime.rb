@@ -1,4 +1,5 @@
 require 'puppet/http'
+require 'puppet/facter_impl'
 require 'singleton'
 
 # Provides access to runtime implementations.
@@ -17,7 +18,8 @@ class Puppet::Runtime
         else
           Puppet::HTTP::ExternalClient.new(klass)
         end
-      end
+      end,
+      facter: proc { Puppet::FacterImpl.new }
     }
   end
   private :initialize
