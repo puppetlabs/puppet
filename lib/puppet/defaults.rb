@@ -800,6 +800,12 @@ Valid values are 0 (never cache) and 15 (15 second minimum wait time).
       :owner    => "service",
       :group    => "service",
       :desc    => "The directory where catalog previews per node are generated."
+    },
+    :location_trusted => {
+      :default => false,
+      :type     => :boolean,
+      :desc    => "This will allow sending the name + password and the cookie header to all hosts that puppet may redirect to.
+        This may or may not introduce a security breach if puppet redirects you to a site to which you'll send your authentication info and cookies."
     }
   )
 
