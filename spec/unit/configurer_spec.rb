@@ -191,7 +191,7 @@ describe Puppet::Configurer do
       }
       Puppet::Node::Facts.indirection.save(facts)
 
-      expect(Puppet).to receive(:warning).with(/Payload with the current size of: '[1-9]*' exceeds the payload size limit: [1-9]*/)
+      expect(Puppet).to receive(:warning).with(/Payload with the current size of: '\d*' exceeds the payload size limit: \d*/)
       configurer.run
     end
 
