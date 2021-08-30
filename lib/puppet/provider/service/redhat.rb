@@ -35,7 +35,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
     # For Suse OS family, chkconfig returns 0 even if the service is disabled or non-existent
     # Therefore, check the output for '<name>  on' (or '<name>  B for boot services)
     # to see if it is enabled
-    return :false unless Facter.value(:osfamily) != 'Suse' || output =~ /^#{name}\s+(on|B)$/
+    return :false unless Puppet.runtime[:facter].value(:osfamily) != 'Suse' || output =~ /^#{name}\s+(on|B)$/
 
     :true
   end

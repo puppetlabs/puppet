@@ -2,8 +2,6 @@
 require 'puppet/util/log'
 require 'puppet/error'
 
-require 'facter'
-
 module Puppet::Util
 module Logging
 
@@ -254,29 +252,7 @@ module Logging
   # Sets up Facter logging.
   # This method causes Facter output to be forwarded to Puppet.
   def self.setup_facter_logging!
-    # Only recent versions of Facter support this feature
-    return false unless Facter.respond_to? :on_message
-
-    # The current Facter log levels are: :trace, :debug, :info, :warn, :error, and :fatal.
-    # Convert to the corresponding levels in Puppet
-    Facter.on_message do |level, message|
-      case level
-      when :trace, :debug
-        level = :debug
-      when :info
-        # Same as Puppet
-      when :warn
-        level = :warning
-      when :error
-        level = :err
-      when :fatal
-        level = :crit
-      else
-        next
-      end
-      Puppet::Util::Log.create({:level => level, :source => 'Facter', :message => message})
-      nil
-    end
+    Puppet.runtime[:facter]
     true
   end
 

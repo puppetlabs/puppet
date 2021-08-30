@@ -18,7 +18,7 @@ class Puppet::Confine::Variable < Puppet::Confine
 
   # Retrieve the value from facter
   def facter_value
-    @facter_value ||= ::Facter.value(name).to_s.downcase
+    @facter_value ||= Puppet.runtime[:facter].value(name).to_s.downcase
   end
 
   def initialize(values)

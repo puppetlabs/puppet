@@ -1,5 +1,4 @@
 require 'etc'
-require 'facter'
 require 'puppet/parameter/boolean'
 require 'puppet/property/list'
 require 'puppet/property/ordered_list'

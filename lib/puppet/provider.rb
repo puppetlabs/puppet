@@ -302,7 +302,7 @@ class Puppet::Provider
   #   values. Given one or more Regexp instances, fact is compared via the basic
   #   pattern-matching operator.
   def self.fact_match(fact, values)
-    fact_val = Facter.value(fact).to_s.downcase
+    fact_val = Puppet.runtime[:facter].value(fact).to_s.downcase
     if fact_val.empty?
       return false
     else

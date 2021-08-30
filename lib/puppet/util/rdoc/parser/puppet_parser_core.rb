@@ -154,7 +154,7 @@ module RDoc::PuppetParserCore
         # fetch comments
         if line =~ /^[ \t]*# ?(.*)$/
           comments += $1 + "\n"
-        elsif line =~ /^[ \t]*Facter.add\(['"](.*?)['"]\)/
+        elsif line =~ /^[ \t]*(Facter.add|Puppet\.runtime\[:facter\].add)\(['"](.*?)['"]\)/
           current_fact = RDoc::Fact.new($1,{})
           look_for_directives_in(container, comments) unless comments.empty?
           current_fact.comment = comments

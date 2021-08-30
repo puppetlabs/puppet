@@ -159,7 +159,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   end
 
   def self.get_os_version
-    @os_version ||= Facter.value(:macosx_productversion_major)
+    @os_version ||= Puppet.runtime[:facter].value(:macosx_productversion_major)
   end
 
   # Use dscl to retrieve an array of hashes containing attributes about all

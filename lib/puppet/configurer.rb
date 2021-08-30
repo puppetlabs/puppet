@@ -523,7 +523,7 @@ class Puppet::Configurer
   # @return [false] If an exception is raised during fact generation or
   #   submission.
   def resubmit_facts
-    ::Facter.clear
+    Puppet.runtime[:facter].clear
     facts = find_facts
 
     client = Puppet.runtime[:http]

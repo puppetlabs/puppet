@@ -70,7 +70,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   #
   # @api private
   def self.get_os_version
-    @os_version ||= Facter.value(:operatingsystemmajrelease).to_i
+    @os_version ||= Puppet.runtime[:facter].value(:operatingsystemmajrelease).to_i
   end
 
   # Defines the path to the overrides plist file where service enabling

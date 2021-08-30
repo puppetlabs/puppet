@@ -433,17 +433,17 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       "serverip"  => "ipaddress",
       "serverip6" => "ipaddress6"
     }.each do |var, fact|
-      value = Facter.value(fact)
+      value = Puppet.runtime[:facter].value(fact)
       if !value.nil?
         @server_facts[var] = value
       end
     end
 
     if @server_facts["servername"].nil?
-      host = Facter.value(:hostname)
+      host = Puppet.runtime[:facter].value(:hostname)
       if host.nil?
         Puppet.warning _("Could not retrieve fact servername")
-      elsif domain = Facter.value(:domain) #rubocop:disable Lint/AssignmentInCondition
+      elsif domain = Puppet.runtime[:facter].value(:domain) #rubocop:disable Lint/AssignmentInCondition
         @server_facts["servername"] = [host, domain].join(".")
       else
         @server_facts["servername"] = host

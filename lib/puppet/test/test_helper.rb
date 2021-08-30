@@ -142,7 +142,6 @@ module Puppet::Test
         },
         "Context for specs")
 
-      Puppet.runtime.clear
       Puppet::Parser::Functions.reset
       Puppet::Application.clear!
       Puppet::Util::Profiler.clear
@@ -169,6 +168,7 @@ module Puppet::Test
 
       Puppet::Util::Storage.clear
       Puppet::Util::ExecutionStub.reset
+      Puppet.runtime.clear
 
       Puppet.clear_deprecation_warnings
 

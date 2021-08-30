@@ -213,7 +213,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     end
 
     def validate_checksum(file, checksum, digest_class)
-      if Facter.value(:fips_enabled) && digest_class == Digest::MD5
+      if Puppet.runtime[:facter].value(:fips_enabled) && digest_class == Digest::MD5
         raise _("Module install using MD5 is prohibited in FIPS mode.")
       end
 

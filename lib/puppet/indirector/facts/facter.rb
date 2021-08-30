@@ -20,10 +20,10 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
 
   # Lookup a host's facts up in Facter.
   def find(request)
-    Facter.reset
+    Puppet.runtime[:facter].reset
 
     # Note: we need to setup puppet's external search paths before adding the puppetversion
-    # fact. This is because in Facter 2.x, the first `Facter.add` causes Facter to create
+    # fact. This is because in Facter 2.x, the first `Puppet.runtime[:facter].add` causes Facter to create
     # its directory loaders which cannot be changed, meaning other external facts won't
     # be resolved. (PUP-4607)
     self.class.setup_external_search_paths(request)
@@ -36,7 +36,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
                raise(Puppet::Error, _("puppet facts show requires version 4.0.40 or greater of Facter.")) unless Facter.respond_to?(:resolve)
                find_with_options(request)
              else
-               Puppet::Node::Facts.new(request.key, Facter.to_hash)
+               Puppet::Node::Facts.new(request.key, Puppet.runtime[:facter].to_hash)
              end
 
     result.add_local_facts unless request.options[:resolve_options]
@@ -68,7 +68,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
       true
     end
     dirs << request.options[:custom_dir] if request.options[:custom_dir]
-    Facter.search(*dirs)
+    Puppet.runtime[:facter].search(*dirs)
   end
 
   def self.setup_external_search_paths(request)
@@ -90,7 +90,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     end
 
     dirs << request.options[:external_dir] if request.options[:external_dir]
-    Facter.search_external dirs
+    Puppet.runtime[:facter].search_external dirs
   end
 
   private
@@ -104,6 +104,6 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     options_for_facter += " --no-block" if options[:no_block] == false
     options_for_facter += " --no-cache" if options[:no_cache] == false
 
-    Puppet::Node::Facts.new(request.key, Facter.resolve(options_for_facter))
+    Puppet::Node::Facts.new(request.key, Puppet.runtime[:facter].resolve(options_for_facter))
   end
 end
