@@ -53,17 +53,12 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     end
   end
 
-  attr_accessor :mode, :create
+  attr_accessor :mode
 
   def initialize(args)
     @group = Unspecified.new
     @owner = Unspecified.new
     super(args)
-  end
-
-  # Should we create files, rather than just directories?
-  def create_files?
-    create
   end
 
   # @param value [String] the group to use on the created file (can only be "root" or "service")
@@ -135,8 +130,8 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     # Make sure the paths are fully qualified.
     path = File.expand_path(path)
 
-    return nil unless type == :directory or create_files? or Puppet::FileSystem.exist?(path)
-    return nil if path =~ /^\/dev/ or path =~ /^[A-Z]:\/dev/i
+    return nil unless type == :directory || Puppet::FileSystem.exist?(path)
+    return nil if path =~ /^\/dev/ || path =~ /^[A-Z]:\/dev/i
 
     resource = Puppet::Resource.new(:file, path)
 
