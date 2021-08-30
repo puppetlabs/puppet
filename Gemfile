@@ -65,7 +65,7 @@ group(:packaging) do
   gem 'packaging', *location_for(ENV['PACKAGING_LOCATION'] || '~> 0.99')
 end
 
-group(:documentation) do
+group(:documentation, optional: true) do
   gem 'gettext-setup', '~> 0.28', require: false, platforms: [:ruby]
   gem 'ronn', '~> 0.7.3', require: false, platforms: [:ruby]
 end
