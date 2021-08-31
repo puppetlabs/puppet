@@ -13,15 +13,17 @@ describe Puppet::Application::Apply do
     Puppet[:reports] = "none"
   end
 
-  [:debug,:loadclasses,:test,:verbose,:use_nodes,:detailed_exitcodes,:catalog, :write_catalog_summary].each do |option|
-    it "should declare handle_#{option} method" do
-      expect(@apply).to respond_to("handle_#{option}".to_sym)
-    end
-
+  [:debug,:loadclasses,:test,:verbose,:use_nodes,:detailed_exitcodes,:catalog].each do |option|
     it "should store argument value when calling handle_#{option}" do
       expect(@apply.options).to receive(:[]=).with(option, 'arg')
       @apply.send("handle_#{option}".to_sym, 'arg')
     end
+  end
+
+  it "should handle write_catalog_summary" do
+    @apply.send(:handle_write_catalog_summary, true)
+
+    expect(Puppet[:write_catalog_summary]).to eq(true)
   end
 
   it "should set the code to the provided code when :execute is used" do
@@ -306,8 +308,27 @@ describe Puppet::Application::Apply do
         expect { @apply.run }.to exit_with(0).and output(anything).to_stdout
       end
 
-      it "should save the classes and resources files when requested" do
-        @apply.options[:write_catalog_summary] = true
+      it "should save the classes and resources files when requested on the command line using dashes" do
+        expect(@catalog).to receive(:write_class_file).once
+        expect(@catalog).to receive(:write_resource_file).once
+
+        # dashes are parsed by the application's OptionParser
+        @apply.command_line.args = ['--write-catalog-summary']
+        expect { @apply.run }.to exit_with(0).and output(anything).to_stdout
+      end
+
+      it "should save the classes and resources files when requested on the command line using underscores" do
+        expect(@catalog).to receive(:write_class_file).once
+        expect(@catalog).to receive(:write_resource_file).once
+
+        # underscores are parsed by the settings PuppetOptionParser
+        @apply.command_line.args = ['--write_catalog_summary']
+        Puppet.initialize_settings(['--write_catalog_summary'])
+        expect { @apply.run }.to exit_with(0).and output(anything).to_stdout
+      end
+
+      it "should save the classes and resources files when specified as a setting" do
+        Puppet[:write_catalog_summary] = true
 
         expect(@catalog).to receive(:write_class_file).once
         expect(@catalog).to receive(:write_resource_file).once
@@ -503,8 +524,7 @@ describe Puppet::Application::Apply do
         }
       CODE
 
-      @apply.options[:write_catalog_summary] = true
-
+      Puppet.settings[:write_catalog_summary] = true
       Puppet.settings[:resourcefile] = resourcefile
       Puppet.settings[:classfile] = classfile
 
