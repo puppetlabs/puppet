@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The Lexer is responsible for turning source text into tokens.
 # This version is a performance enhanced lexer (in comparison to the 3.x and earlier "future parser" lexer.
 #

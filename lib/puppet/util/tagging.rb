@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'puppet/util/tag_set'
 
 module Puppet::Util::Tagging
