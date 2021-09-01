@@ -2,7 +2,10 @@ require 'puppet/provider/nameservice/objectadd'
 require 'puppet/util/libuser'
 
 Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameService::ObjectAdd do
-  desc "Group management via `groupadd` and its ilk. The default for most platforms."
+  desc "Group management via `groupadd` and its ilk. The default for most platforms.
+
+ To use the `forcelocal` parameter, you need to install the `libuser` package (providing
+  `/usr/sbin/lgroupadd` and `/usr/sbin/luseradd`)."
 
   commands :add => "groupadd", :delete => "groupdel", :modify => "groupmod"
 
