@@ -296,6 +296,13 @@ describe "Puppet::FileSystem" do
         expect(Puppet::FileSystem.read_preserve_line_endings(file)).to eq("file content \n")
       end
     end
+
+    it "should not warn about misusage of BOM with non-UTF encoding" do
+      allow(Encoding).to receive(:default_external).and_return(Encoding::US_ASCII)
+      with_file_content("file content \n") do |file|
+        expect{ Puppet::FileSystem.read_preserve_line_endings(file) }.not_to output(/BOM with non-UTF encoding US-ASCII is nonsense/).to_stderr
+      end
+    end
   end
 
   context "read without an encoding specified" do
