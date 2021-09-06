@@ -142,6 +142,8 @@ module Puppet::Test
         },
         "Context for specs")
 
+      Puppet.runtime.load_services
+
       Puppet::Parser::Functions.reset
       Puppet::Application.clear!
       Puppet::Util::Profiler.clear
