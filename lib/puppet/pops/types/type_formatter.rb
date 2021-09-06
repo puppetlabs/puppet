@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 module Puppet::Pops
@@ -22,7 +23,7 @@ class TypeFormatter
   end
 
   def initialize
-    @string_visitor = Visitor.new(nil, 'string',0,0)
+    @string_visitor = Visitor.new(nil, 'string', 0, 0)
   end
 
   def expanded
@@ -49,7 +50,7 @@ class TypeFormatter
   # @api public
   #
   def string(t)
-    @bld = ''
+    @bld = ''.dup
     append_string(t)
     @bld
   end
@@ -63,7 +64,7 @@ class TypeFormatter
   #
   # @api public
   def indented_string(t, indent = 0, indent_width = 2)
-    @bld = ''
+    @bld = ''.dup
     append_indented_string(t, indent, indent_width)
     @bld
   end
@@ -634,7 +635,7 @@ class TypeFormatter
     '[a TypeFormatter]'
   end
 
-  NAME_SEGMENT_SEPARATOR = '::'.freeze
+  NAME_SEGMENT_SEPARATOR = '::'
   STARTS_WITH_ASCII_CAPITAL = /^[A-Z]/
 
   # Capitalizes each segment in a name separated with the {NAME_SEPARATOR} conditionally. The name
@@ -661,9 +662,9 @@ class TypeFormatter
 
   private
 
-  COMMA_SEP = ', '.freeze
+  COMMA_SEP = ', '
 
-  HASH_ENTRY_OP = ' => '.freeze
+  HASH_ENTRY_OP = ' => '
 
   def is_short_array?(t)
     t.empty? || 100 - @indent * @indent_width > t.inject(0) do |sum, elem|

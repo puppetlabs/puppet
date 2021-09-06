@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/parser/files'
 require 'erb'
 require_relative '../../puppet/file_system'
