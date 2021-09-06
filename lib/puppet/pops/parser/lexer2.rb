@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The Lexer is responsible for turning source text into tokens.
 # This version is a performance enhanced lexer (in comparison to the 3.x and earlier "future parser" lexer.
 #
@@ -30,85 +31,85 @@ class Lexer2
   # The length is pre-calculated for all singleton tokens. The length is used both to signal the length of
   # the token, and to advance the scanner position (without having to advance it with a scan(regexp)).
   #
-  TOKEN_LBRACK       = [:LBRACK,       '['.freeze,   1].freeze
-  TOKEN_LISTSTART    = [:LISTSTART,    '['.freeze,   1].freeze
-  TOKEN_RBRACK       = [:RBRACK,       ']'.freeze,   1].freeze
-  TOKEN_LBRACE       = [:LBRACE,       '{'.freeze,   1].freeze
-  TOKEN_RBRACE       = [:RBRACE,       '}'.freeze,   1].freeze
-  TOKEN_SELBRACE     = [:SELBRACE,     '{'.freeze,   1].freeze
-  TOKEN_LPAREN       = [:LPAREN,       '('.freeze,   1].freeze
-  TOKEN_WSLPAREN     = [:WSLPAREN,     '('.freeze,   1].freeze
-  TOKEN_RPAREN       = [:RPAREN,       ')'.freeze,   1].freeze
+  TOKEN_LBRACK       = [:LBRACK,       '[',   1].freeze
+  TOKEN_LISTSTART    = [:LISTSTART,    '[',   1].freeze
+  TOKEN_RBRACK       = [:RBRACK,       ']',   1].freeze
+  TOKEN_LBRACE       = [:LBRACE,       '{',   1].freeze
+  TOKEN_RBRACE       = [:RBRACE,       '}',   1].freeze
+  TOKEN_SELBRACE     = [:SELBRACE,     '{',   1].freeze
+  TOKEN_LPAREN       = [:LPAREN,       '(',   1].freeze
+  TOKEN_WSLPAREN     = [:WSLPAREN,     '(',   1].freeze
+  TOKEN_RPAREN       = [:RPAREN,       ')',   1].freeze
 
-  TOKEN_EQUALS       = [:EQUALS,       '='.freeze,   1].freeze
-  TOKEN_APPENDS      = [:APPENDS,      '+='.freeze,  2].freeze
-  TOKEN_DELETES      = [:DELETES,      '-='.freeze,  2].freeze
+  TOKEN_EQUALS       = [:EQUALS,       '=',   1].freeze
+  TOKEN_APPENDS      = [:APPENDS,      '+=',  2].freeze
+  TOKEN_DELETES      = [:DELETES,      '-=',  2].freeze
 
-  TOKEN_ISEQUAL      = [:ISEQUAL,      '=='.freeze,  2].freeze
-  TOKEN_NOTEQUAL     = [:NOTEQUAL,     '!='.freeze,  2].freeze
-  TOKEN_MATCH        = [:MATCH,        '=~'.freeze,  2].freeze
-  TOKEN_NOMATCH      = [:NOMATCH,      '!~'.freeze,  2].freeze
-  TOKEN_GREATEREQUAL = [:GREATEREQUAL, '>='.freeze,  2].freeze
-  TOKEN_GREATERTHAN  = [:GREATERTHAN,  '>'.freeze,   1].freeze
-  TOKEN_LESSEQUAL    = [:LESSEQUAL,    '<='.freeze,  2].freeze
-  TOKEN_LESSTHAN     = [:LESSTHAN,     '<'.freeze,   1].freeze
+  TOKEN_ISEQUAL      = [:ISEQUAL,      '==',  2].freeze
+  TOKEN_NOTEQUAL     = [:NOTEQUAL,     '!=',  2].freeze
+  TOKEN_MATCH        = [:MATCH,        '=~',  2].freeze
+  TOKEN_NOMATCH      = [:NOMATCH,      '!~',  2].freeze
+  TOKEN_GREATEREQUAL = [:GREATEREQUAL, '>=',  2].freeze
+  TOKEN_GREATERTHAN  = [:GREATERTHAN,  '>',   1].freeze
+  TOKEN_LESSEQUAL    = [:LESSEQUAL,    '<=',  2].freeze
+  TOKEN_LESSTHAN     = [:LESSTHAN,     '<',   1].freeze
 
-  TOKEN_FARROW       = [:FARROW,       '=>'.freeze,  2].freeze
-  TOKEN_PARROW       = [:PARROW,       '+>'.freeze,  2].freeze
+  TOKEN_FARROW       = [:FARROW,       '=>',  2].freeze
+  TOKEN_PARROW       = [:PARROW,       '+>',  2].freeze
 
-  TOKEN_LSHIFT       = [:LSHIFT,       '<<'.freeze,  2].freeze
-  TOKEN_LLCOLLECT    = [:LLCOLLECT,    '<<|'.freeze, 3].freeze
-  TOKEN_LCOLLECT     = [:LCOLLECT,     '<|'.freeze,  2].freeze
+  TOKEN_LSHIFT       = [:LSHIFT,       '<<',  2].freeze
+  TOKEN_LLCOLLECT    = [:LLCOLLECT,    '<<|', 3].freeze
+  TOKEN_LCOLLECT     = [:LCOLLECT,     '<|',  2].freeze
 
-  TOKEN_RSHIFT       = [:RSHIFT,       '>>'.freeze,  2].freeze
-  TOKEN_RRCOLLECT    = [:RRCOLLECT,    '|>>'.freeze, 3].freeze
-  TOKEN_RCOLLECT     = [:RCOLLECT,     '|>'.freeze,  2].freeze
+  TOKEN_RSHIFT       = [:RSHIFT,       '>>',  2].freeze
+  TOKEN_RRCOLLECT    = [:RRCOLLECT,    '|>>', 3].freeze
+  TOKEN_RCOLLECT     = [:RCOLLECT,     '|>',  2].freeze
 
-  TOKEN_PLUS         = [:PLUS,         '+'.freeze,   1].freeze
-  TOKEN_MINUS        = [:MINUS,        '-'.freeze,   1].freeze
-  TOKEN_DIV          = [:DIV,          '/'.freeze,   1].freeze
-  TOKEN_TIMES        = [:TIMES,        '*'.freeze,   1].freeze
-  TOKEN_MODULO       = [:MODULO,       '%'.freeze,   1].freeze
+  TOKEN_PLUS         = [:PLUS,         '+',   1].freeze
+  TOKEN_MINUS        = [:MINUS,        '-',   1].freeze
+  TOKEN_DIV          = [:DIV,          '/',   1].freeze
+  TOKEN_TIMES        = [:TIMES,        '*',   1].freeze
+  TOKEN_MODULO       = [:MODULO,       '%',   1].freeze
 
-  TOKEN_NOT          = [:NOT,          '!'.freeze,   1].freeze
-  TOKEN_DOT          = [:DOT,          '.'.freeze,   1].freeze
-  TOKEN_PIPE         = [:PIPE,         '|'.freeze,   1].freeze
-  TOKEN_AT           = [:AT ,          '@'.freeze,   1].freeze
-  TOKEN_ATAT         = [:ATAT ,        '@@'.freeze,  2].freeze
-  TOKEN_COLON        = [:COLON,        ':'.freeze,   1].freeze
-  TOKEN_COMMA        = [:COMMA,        ','.freeze,   1].freeze
-  TOKEN_SEMIC        = [:SEMIC,        ';'.freeze,   1].freeze
-  TOKEN_QMARK        = [:QMARK,        '?'.freeze,   1].freeze
-  TOKEN_TILDE        = [:TILDE,        '~'.freeze,   1].freeze # lexed but not an operator in Puppet
+  TOKEN_NOT          = [:NOT,          '!',   1].freeze
+  TOKEN_DOT          = [:DOT,          '.',   1].freeze
+  TOKEN_PIPE         = [:PIPE,         '|',   1].freeze
+  TOKEN_AT           = [:AT ,          '@',   1].freeze
+  TOKEN_ATAT         = [:ATAT ,        '@@',  2].freeze
+  TOKEN_COLON        = [:COLON,        ':',   1].freeze
+  TOKEN_COMMA        = [:COMMA,        ',',   1].freeze
+  TOKEN_SEMIC        = [:SEMIC,        ';',   1].freeze
+  TOKEN_QMARK        = [:QMARK,        '?',   1].freeze
+  TOKEN_TILDE        = [:TILDE,        '~',   1].freeze # lexed but not an operator in Puppet
 
   TOKEN_REGEXP       = [:REGEXP,       nil,   0].freeze
 
-  TOKEN_IN_EDGE      = [:IN_EDGE,      '->'.freeze,  2].freeze
-  TOKEN_IN_EDGE_SUB  = [:IN_EDGE_SUB,  '~>'.freeze,  2].freeze
-  TOKEN_OUT_EDGE     = [:OUT_EDGE,     '<-'.freeze,  2].freeze
-  TOKEN_OUT_EDGE_SUB = [:OUT_EDGE_SUB, '<~'.freeze,  2].freeze
+  TOKEN_IN_EDGE      = [:IN_EDGE,      '->',  2].freeze
+  TOKEN_IN_EDGE_SUB  = [:IN_EDGE_SUB,  '~>',  2].freeze
+  TOKEN_OUT_EDGE     = [:OUT_EDGE,     '<-',  2].freeze
+  TOKEN_OUT_EDGE_SUB = [:OUT_EDGE_SUB, '<~',  2].freeze
 
   # Tokens that are always unique to what has been lexed
-  TOKEN_STRING         =  [:STRING, nil,          0].freeze
-  TOKEN_WORD           =  [:WORD, nil,            0].freeze
-  TOKEN_DQPRE          =  [:DQPRE,  nil,          0].freeze
-  TOKEN_DQMID          =  [:DQPRE,  nil,          0].freeze
-  TOKEN_DQPOS          =  [:DQPRE,  nil,          0].freeze
-  TOKEN_NUMBER         =  [:NUMBER, nil,          0].freeze
-  TOKEN_VARIABLE       =  [:VARIABLE, nil,        1].freeze
-  TOKEN_VARIABLE_EMPTY =  [:VARIABLE, ''.freeze,  1].freeze
+  TOKEN_STRING         = [:STRING,      nil,  0].freeze
+  TOKEN_WORD           = [:WORD,        nil,  0].freeze
+  TOKEN_DQPRE          = [:DQPRE,       nil,  0].freeze
+  TOKEN_DQMID          = [:DQPRE,       nil,  0].freeze
+  TOKEN_DQPOS          = [:DQPRE,       nil,  0].freeze
+  TOKEN_NUMBER         = [:NUMBER,      nil,  0].freeze
+  TOKEN_VARIABLE       = [:VARIABLE,    nil,  1].freeze
+  TOKEN_VARIABLE_EMPTY = [:VARIABLE,    '',   1].freeze
 
   # HEREDOC has syntax as an argument.
-  TOKEN_HEREDOC        =  [:HEREDOC, nil, 0].freeze
+  TOKEN_HEREDOC        = [:HEREDOC,     nil,  0].freeze
 
   # EPP_START is currently a marker token, may later get syntax
-  TOKEN_EPPSTART       =  [:EPP_START, nil, 0].freeze
-  TOKEN_EPPEND         =  [:EPP_END, '%>', 2].freeze
-  TOKEN_EPPEND_TRIM    =  [:EPP_END_TRIM, '-%>', 3].freeze
+  TOKEN_EPPSTART    = [:EPP_START,      nil,  0].freeze
+  TOKEN_EPPEND      = [:EPP_END,       '%>',  2].freeze
+  TOKEN_EPPEND_TRIM = [:EPP_END_TRIM, '-%>',  3].freeze
 
   # This is used for unrecognized tokens, will always be a single character. This particular instance
   # is not used, but is kept here for documentation purposes.
-  TOKEN_OTHER        = [:OTHER,  nil,  0]
+  TOKEN_OTHER = [:OTHER, nil, 0]
 
   # Keywords are all singleton tokens with pre calculated lengths.
   # Booleans are pre-calculated (rather than evaluating the strings "false" "true" repeatedly.

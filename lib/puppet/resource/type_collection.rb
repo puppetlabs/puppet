@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/parser/type_loader'
 require_relative '../../puppet/util/file_watcher'
 require_relative '../../puppet/util/warnings'

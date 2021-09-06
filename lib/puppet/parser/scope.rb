@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The scope class, which handles storing and retrieving variables and types and
 # such.
 require 'forwardable'
