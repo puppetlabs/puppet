@@ -635,7 +635,7 @@ class TypeFormatter
     '[a TypeFormatter]'
   end
 
-  NAME_SEGMENT_SEPARATOR = '::'.freeze
+  NAME_SEGMENT_SEPARATOR = '::'
   STARTS_WITH_ASCII_CAPITAL = /^[A-Z]/
 
   # Capitalizes each segment in a name separated with the {NAME_SEPARATOR} conditionally. The name
@@ -662,9 +662,9 @@ class TypeFormatter
 
   private
 
-  COMMA_SEP = ', '.freeze
+  COMMA_SEP = ', '
 
-  HASH_ENTRY_OP = ' => '.freeze
+  HASH_ENTRY_OP = ' => '
 
   def is_short_array?(t)
     t.empty? || 100 - @indent * @indent_width > t.inject(0) do |sum, elem|

@@ -12,19 +12,19 @@ module Model
 class Factory
   # Shared build_visitor, since there are many instances of Factory being used
 
-  KEY_LENGTH = 'length'.freeze
-  KEY_OFFSET = 'offset'.freeze
-  KEY_LOCATOR = 'locator'.freeze
-  KEY_OPERATOR = 'operator'.freeze
+  KEY_LENGTH = 'length'
+  KEY_OFFSET = 'offset'
+  KEY_LOCATOR = 'locator'
+  KEY_OPERATOR = 'operator'
 
-  KEY_VALUE = 'value'.freeze
-  KEY_KEYS = 'keys'.freeze
-  KEY_NAME = 'name'.freeze
-  KEY_BODY = 'body'.freeze
-  KEY_EXPR = 'expr'.freeze
-  KEY_LEFT_EXPR = 'left_expr'.freeze
-  KEY_RIGHT_EXPR = 'right_expr'.freeze
-  KEY_PARAMETERS = 'parameters'.freeze
+  KEY_VALUE = 'value'
+  KEY_KEYS = 'keys'
+  KEY_NAME = 'name'
+  KEY_BODY = 'body'
+  KEY_EXPR = 'expr'
+  KEY_LEFT_EXPR = 'left_expr'
+  KEY_RIGHT_EXPR = 'right_expr'
+  KEY_PARAMETERS = 'parameters'
 
   BUILD_VISITOR = Visitor.new(self, 'build')
   INFER_VISITOR = Visitor.new(self, 'infer')

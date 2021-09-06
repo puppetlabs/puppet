@@ -176,7 +176,7 @@ class Lexer2
   # PERFORMANCE NOTE:
   # Comparison against a frozen string is faster (than unfrozen).
   #
-  STRING_BSLASH_SLASH = '\/'.freeze
+  STRING_BSLASH_SLASH = '\/'
 
   attr_reader :locator
 

@@ -16,7 +16,7 @@ class Puppet::Parser::Scope
   extend Forwardable
 
   # Variables that always exist with nil value even if not set
-  BUILT_IN_VARS = ['module_name'.freeze, 'caller_module_name'.freeze].freeze
+  BUILT_IN_VARS = ['module_name', 'caller_module_name'].freeze
   EMPTY_HASH = {}.freeze
 
   Puppet::Util.logmethods(self)
@@ -513,7 +513,7 @@ class Puppet::Parser::Scope
     end
   end
 
-  UNDEFINED_VARIABLES_KIND = 'undefined_variables'.freeze
+  UNDEFINED_VARIABLES_KIND = 'undefined_variables'
 
   # The exception raised when a throw is uncaught is different in different versions
   # of ruby. In >=2.2.0 it is UncaughtThrowError (which did not exist prior to this)
@@ -747,12 +747,12 @@ class Puppet::Parser::Scope
   end
   private :transform_setting
 
-  VARNAME_TRUSTED = 'trusted'.freeze
-  VARNAME_FACTS = 'facts'.freeze
-  VARNAME_SERVER_FACTS = 'server_facts'.freeze
+  VARNAME_TRUSTED = 'trusted'
+  VARNAME_FACTS = 'facts'
+  VARNAME_SERVER_FACTS = 'server_facts'
   RESERVED_VARIABLE_NAMES = [VARNAME_TRUSTED, VARNAME_FACTS].freeze
-  TYPENAME_CLASS = 'Class'.freeze
-  TYPENAME_NODE = 'Node'.freeze
+  TYPENAME_CLASS = 'Class'
+  TYPENAME_NODE = 'Node'
 
   # Set a variable in the current scope.  This will override settings
   # in scopes above, but will not allow variables in the current scope

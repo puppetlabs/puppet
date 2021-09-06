@@ -180,7 +180,7 @@ class Puppet::Resource::TypeCollection
 
   private
 
-  COLON_COLON = "::".freeze
+  COLON_COLON = "::"
 
   # Resolve namespaces and find the given object.  Autoload it if
   # necessary.
