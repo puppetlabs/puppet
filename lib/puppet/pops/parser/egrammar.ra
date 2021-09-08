@@ -870,8 +870,8 @@ nil
 end
 
 ---- header ----
-require 'puppet'
-require 'puppet/pops'
+require_relative '../../../puppet'
+require_relative '../../../puppet/pops'
 
 module Puppet
   class ParseError < Puppet::Error; end
