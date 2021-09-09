@@ -118,8 +118,11 @@ class Puppet::Configurer
       catalog = result.to_ral
       catalog.finalize
       catalog.retrieval_duration = duration
-      catalog.write_class_file
-      catalog.write_resource_file
+
+      if Puppet[:write_catalog_summary]
+        catalog.write_class_file
+        catalog.write_resource_file
+      end
     end
     options[:report].add_times(:convert_catalog, catalog_conversion_time) if options[:report]
 
