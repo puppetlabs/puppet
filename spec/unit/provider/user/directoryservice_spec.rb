@@ -1142,7 +1142,7 @@ end
       provider.class.instance_variable_set(:@os_version, nil) if provider.class.instance_variable_defined? :@os_version
     end
 
-    it 'should call Facter.value(:macosx_productversion_major) ONLY ONCE no matter how ' +
+    it 'should call Puppet.runtime[:facter].value(:macosx_productversion_major) ONLY ONCE no matter how ' +
        'many times get_os_version() is called' do
       expect(Facter).to receive(:value).with(:macosx_productversion_major).once.and_return('10.8')
       expect(provider.class.get_os_version).to eq('10.8')

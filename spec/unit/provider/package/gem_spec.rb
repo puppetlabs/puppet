@@ -476,7 +476,7 @@ context Puppet::Type.type(:package).provider(:gem) do
     end
 
     context 'when is defaultfor' do
-      let(:os) { Facter.value(:operatingsystem) }
+      let(:os) { Puppet.runtime[:facter].value(:operatingsystem) }
       subject do
         described_class.defaultfor(operatingsystem: os)
         described_class.specificity

@@ -1,4 +1,5 @@
 require_relative '../puppet/http'
+require_relative '../puppet/facter_impl'
 require 'singleton'
 
 # Provides access to runtime implementations.
@@ -16,10 +17,19 @@ class Puppet::Runtime
         else
           Puppet::HTTP::ExternalClient.new(klass)
         end
-      end
+      end,
+      facter: proc { Puppet::FacterImpl.new }
     }
   end
   private :initialize
+
+  # Loads all runtime implementations.
+  #
+  # @return Array[Symbol] the names of loaded implementations
+  # @api private
+  def load_services
+    @runtime_services.keys.each { |key| self[key] }
+  end
 
   # Get a runtime implementation.
   #

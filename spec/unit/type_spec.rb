@@ -1142,7 +1142,7 @@ describe Puppet::Type, :unless => Puppet::Util::Platform.windows? do
 
       before :each do
         type.provide(:default) do
-          defaultfor :operatingsystem => Facter.value(:operatingsystem)
+          defaultfor :operatingsystem => Puppet.runtime[:facter].value(:operatingsystem)
           mk_resource_methods
           class << self
             attr_accessor :params
@@ -1172,7 +1172,7 @@ describe Puppet::Type, :unless => Puppet::Util::Platform.windows? do
     context "with a default provider" do
       before :each do
         type.provide(:default) do
-          defaultfor :operatingsystem => Facter.value(:operatingsystem)
+          defaultfor :operatingsystem => Puppet.runtime[:facter].value(:operatingsystem)
           mk_resource_methods
           class << self
             attr_accessor :names

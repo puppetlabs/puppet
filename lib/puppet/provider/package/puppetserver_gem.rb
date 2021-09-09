@@ -145,7 +145,7 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
 
     pe_puppetserver_conf_file = '/etc/puppetlabs/puppetserver/conf.d/pe-puppet-server.conf'
     os_puppetserver_conf_file = '/etc/puppetlabs/puppetserver/puppetserver.conf'
-    puppetserver_conf_file = Facter.value(:pe_server_version) ? pe_puppetserver_conf_file : os_puppetserver_conf_file
+    puppetserver_conf_file = Puppet.runtime[:facter].value(:pe_server_version) ? pe_puppetserver_conf_file : os_puppetserver_conf_file
     puppetserver_conf = Hocon.load(puppetserver_conf_file)
 
     gem_env = {}

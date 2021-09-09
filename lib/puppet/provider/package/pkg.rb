@@ -228,7 +228,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       command = 'update'
     end
     args = ['--accept']
-    if Puppet::Util::Package.versioncmp(Facter.value(:operatingsystemrelease), '11.2') >= 0
+    if Puppet::Util::Package.versioncmp(Puppet.runtime[:facter].value(:operatingsystemrelease), '11.2') >= 0
       args.push('--sync-actuators-timeout', '900')
     end
     args.concat(join_options(@resource[:install_options])) if @resource[:install_options]

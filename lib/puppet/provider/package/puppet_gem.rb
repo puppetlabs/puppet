@@ -4,7 +4,7 @@ Puppet::Type.type(:package).provide :puppet_gem, :parent => :gem do
 
   has_feature :versionable, :install_options, :uninstall_options
 
-  confine :true => Facter.value(:aio_agent_version)
+  confine :true => Puppet.runtime[:facter].value(:aio_agent_version)
 
   def self.windows_gemcmd
     puppet_dir = Puppet::Util.get_env('PUPPET_DIR')

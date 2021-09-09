@@ -415,7 +415,7 @@ module Pal
 
     # Puppet requires Facter, which initializes its lookup paths. Reset Facter to
     # pickup the new $LOAD_PATH.
-    Facter.reset
+    Puppet.runtime[:facter].reset
 
     node = Puppet.lookup(:pal_current_node)
     pal_facts = Puppet.lookup(:pal_facts)

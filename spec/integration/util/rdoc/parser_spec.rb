@@ -91,7 +91,7 @@ end
         File.join(modules_dir, 'a_module', 'lib', 'facter', 'a_fact.rb'),
         <<-EOF
 # The a_fact fact comment
-Facter.add("a_fact") do
+Puppet.runtime[:facter].add("a_fact") do
 end
         EOF
       ],

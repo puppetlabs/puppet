@@ -1,6 +1,5 @@
 require_relative '../../../puppet/util/windows'
 
-require 'facter'
 require 'ffi'
 
 module Puppet::Util::Windows::User

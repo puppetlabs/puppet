@@ -15,7 +15,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
   # Throw some facts in there, so we know where the report is from.
   ["Ruby Version", "Puppet Version", "Operating System", "Operating System Release"].each do |label|
     name = label.gsub(/\s+/, '')
-    value = Facter.value(name)
+    value = Puppet.runtime[:facter].value(name)
     ret << option(label, value)
   end
   ret << "\n"
@@ -61,7 +61,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
               if Puppet.settings.valid?(name)
                 details << _("  - Setting %{name} (currently %{value}) not in list %{facts}\n") % { name: name, value: Puppet.settings.value(name).inspect, facts: facts.join(", ") }
               else
-                details << _("  - Fact %{name} (currently %{value}) not in list %{facts}\n") % { name: name, value: Facter.value(name).inspect, facts: facts.join(", ") }
+                details << _("  - Fact %{name} (currently %{value}) not in list %{facts}\n") % { name: name, value: Puppet.runtime[:facter].value(name).inspect, facts: facts.join(", ") }
               end
             end
           when :true

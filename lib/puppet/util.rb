@@ -772,12 +772,13 @@ module Util
   # Executes a block of code, wrapped around Facter.load_external(false) and
   # Facter.load_external(true) which will cause Facter to not evaluate external facts.
   def skip_external_facts
-    return yield unless Facter.respond_to? :load_external
+    return yield unless Puppet.runtime[:facter].load_external?
+
     begin
-      Facter.load_external(false)
+      Puppet.runtime[:facter].load_external(false)
       yield
     ensure
-      Facter.load_external(true)
+      Puppet.runtime[:facter].load_external(true)
     end
   end
   module_function :skip_external_facts

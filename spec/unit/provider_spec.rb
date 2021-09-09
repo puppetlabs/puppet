@@ -222,18 +222,18 @@ describe Puppet::Provider do
       { :true => false } => false,
       { :false => false } => true,
       { :false => true } => false,
-      { :operatingsystem => Facter.value(:operatingsystem) } => true,
+      { :operatingsystem => Puppet.runtime[:facter].value(:operatingsystem) } => true,
       { :operatingsystem => :yayness } => false,
       { :nothing => :yayness } => false,
       { :exists => Puppet::Util.which(existing_command) } => true,
       { :exists => "/this/file/does/not/exist" } => false,
       { :true => true, :exists => Puppet::Util.which(existing_command) } => true,
       { :true => true, :exists => "/this/file/does/not/exist" } => false,
-      { :operatingsystem => Facter.value(:operatingsystem),
+      { :operatingsystem => Puppet.runtime[:facter].value(:operatingsystem),
         :exists => Puppet::Util.which(existing_command) } => true,
       { :operatingsystem => :yayness,
         :exists => Puppet::Util.which(existing_command) } => false,
-      { :operatingsystem => Facter.value(:operatingsystem),
+      { :operatingsystem => Puppet.runtime[:facter].value(:operatingsystem),
         :exists => "/this/file/does/not/exist" } => false,
       { :operatingsystem => :yayness,
         :exists => "/this/file/does/not/exist" } => false,
@@ -269,7 +269,7 @@ describe Puppet::Provider do
   end
 
   context "default providers" do
-    let :os do Facter.value(:operatingsystem) end
+    let :os do Puppet.runtime[:facter].value(:operatingsystem) end
 
     it { is_expected.to respond_to :specificity }
 
