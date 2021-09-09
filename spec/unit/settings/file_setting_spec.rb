@@ -125,9 +125,10 @@ describe Puppet::Settings::FileSetting do
   describe "when being converted to a resource" do
     before do
       @basepath = make_absolute("/somepath")
+      allow(Puppet::FileSystem).to receive(:exist?).and_call_original
+      allow(Puppet::FileSystem).to receive(:exist?).with(@basepath).and_return(true)
       @settings = double('settings')
       @file = Puppet::Settings::FileSetting.new(:settings => @settings, :desc => "eh", :name => :myfile, :section => "mysect")
-      allow(@file).to receive(:create_files?).and_return(true)
       allow(@settings).to receive(:value).with(:myfile, nil, false).and_return(@basepath)
     end
 
@@ -135,18 +136,19 @@ describe Puppet::Settings::FileSetting do
       expect(@file.type).to eq(:file)
     end
 
-    it "should skip non-existent files if 'create_files' is not enabled" do
-      expect(@file).to receive(:create_files?).and_return(false)
+    it "skips non-existent files" do
       expect(@file).to receive(:type).and_return(:file)
       expect(Puppet::FileSystem).to receive(:exist?).with(@basepath).and_return(false)
       expect(@file.to_resource).to be_nil
     end
 
-    it "should manage existent files even if 'create_files' is not enabled" do
-      expect(@file).to receive(:create_files?).and_return(false)
+    it "manages existing files" do
       expect(@file).to receive(:type).and_return(:file)
-      allow(Puppet::FileSystem).to receive(:exist?)
-      expect(Puppet::FileSystem).to receive(:exist?).with(@basepath).and_return(true)
+      expect(@file.to_resource).to be_instance_of(Puppet::Resource)
+    end
+
+    it "always manages directories" do
+      expect(@file).to receive(:type).and_return(:directory)
       expect(@file.to_resource).to be_instance_of(Puppet::Resource)
     end
 
@@ -177,6 +179,7 @@ describe Puppet::Settings::FileSetting do
     it "should fully qualified returned files if necessary (#795)" do
       allow(@settings).to receive(:value).with(:myfile, nil, false).and_return("myfile")
       path = File.expand_path('myfile')
+      allow(Puppet::FileSystem).to receive(:exist?).with(path).and_return(true)
       expect(@file.to_resource.title).to eq(path)
     end
 
