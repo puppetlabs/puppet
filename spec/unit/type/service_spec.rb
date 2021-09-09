@@ -176,6 +176,15 @@ describe test_title, "when validating attribute values" do
       srv = Puppet::Type.type(:service).new(:name => "yay")
       expect(srv[:timeout]).to eq(30)
     end
+
+    it "should accept string as value" do
+      srv = Puppet::Type.type(:service).new(:name => "yay", :timeout => "25")
+      expect(srv[:timeout]).to eq(25)
+    end
+
+    it "should not support values that cannot be converted to Integer such as Array" do
+      expect { Puppet::Type.type(:service).new(:name => "yay", :timeout => [25]) }.to raise_error(Puppet::Error)
+    end
   end
 
   describe "the service logon credentials" do 
