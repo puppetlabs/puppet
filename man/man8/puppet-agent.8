@@ -164,6 +164,9 @@ A path ending with \'\.jsonl\' will receive structured output in JSON Lines form
 .IP "\(bu" 4
 \-\-waitforcert: This option only matters for daemons that do not yet have certificates and it is enabled by default, with a value of 120 (seconds)\. This causes \'puppet agent\' to connect to the server every 2 minutes and ask it to sign a certificate request\. This is useful for the initial setup of a puppet client\. You can turn off waiting for certificates by specifying a time of 0\. (This is a Puppet setting, and can go in puppet\.conf\.)
 .
+.IP "\(bu" 4
+\-\-write_catalog_summary After compiling the catalog saves the resource list and classes list to the node in the state directory named classes\.txt and resources\.txt (This is a Puppet setting, and can go in puppet\.conf\.)
+.
 .IP "" 0
 .
 .SH "EXAMPLE"
