@@ -1,20 +1,12 @@
 require 'spec_helper'
-require 'facter'
 
 describe "Puppet::Util::Windows::Process", :if => Puppet::Util::Platform.windows?  do
   describe "as an admin" do
-    it "should have the SeCreateSymbolicLinkPrivilege necessary to create symlinks on Vista / 2008+",
-      :if => Facter.value(:kernelmajversion).to_f >= 6.0 && Puppet::Util::Platform.windows? do
+    it "should have the SeCreateSymbolicLinkPrivilege necessary to create symlinks" do
       # this is a bit of a lame duck test since it requires running user to be admin
       # a better integration test would create a new user with the privilege and verify
       expect(Puppet::Util::Windows::User).to be_admin
       expect(Puppet::Util::Windows::Process.process_privilege_symlink?).to be_truthy
-    end
-
-    it "should not have the SeCreateSymbolicLinkPrivilege necessary to create symlinks on 2003 and earlier",
-      :if => Facter.value(:kernelmajversion).to_f < 6.0 && Puppet::Util::Platform.windows? do
-      expect(Puppet::Util::Windows::User).to be_admin
-      expect(Puppet::Util::Windows::Process.process_privilege_symlink?).to be_falsey
     end
 
     it "should be able to lookup a standard Windows process privilege" do

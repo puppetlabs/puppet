@@ -27,7 +27,7 @@ module Puppet::ModuleTool
 
       def run
         # Disallow anything that invokes md5 to avoid un-friendly termination due to FIPS
-        raise _("Module upgrade is prohibited in FIPS mode.") if Facter.value(:fips_enabled)
+        raise _("Module upgrade is prohibited in FIPS mode.") if Puppet.runtime[:facter].value(:fips_enabled)
 
         name = @name.tr('/', '-')
         version = options[:version] || '>= 0.0.0'

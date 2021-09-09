@@ -13,7 +13,7 @@ describe Puppet::Node::Facts::Facter do
   end
 
   it "preserves case in fact values" do
-    Facter.add(:downcase_test) do
+    Puppet.runtime[:facter].add(:downcase_test) do
       setcode do
         "AaBbCc"
       end
@@ -34,9 +34,9 @@ describe Puppet::Node::Facts::Facter do
       FileUtils.mkdir_p(test_module)
 
       File.open(File.join(test_module, 'custom.rb'), 'wb') { |file| file.write(<<-EOF)}
-      Facter.add(:custom) do
+      Puppet.runtime[:facter].add(:custom) do
         setcode do
-          Facter.value('puppetversion')
+          Puppet.runtime[:facter].value('puppetversion')
         end
       end
       EOF

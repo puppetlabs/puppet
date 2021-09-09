@@ -552,6 +552,7 @@ original
 
     describe 'does support debugging' do
       before :each do
+        allow(Facter).to receive(:respond_to?).with(:on_message).and_return(true)
         allow(Facter).to receive(:respond_to?).with(:debugging, any_args).and_return(true)
       end
 
@@ -568,6 +569,7 @@ original
 
     describe 'does support trace' do
       before :each do
+        allow(Facter).to receive(:respond_to?).with(:on_message)
         allow(Facter).to receive(:respond_to?).with(:trace, any_args).and_return(true)
       end
 

@@ -89,7 +89,7 @@ module Puppet::ModuleTool
         mod = @installed.first
 
         unless @ignore_changes
-          raise _("Either the `--ignore_changes` or `--force` argument must be specified to uninstall modules when running in FIPS mode.") if Facter.value(:fips_enabled)
+          raise _("Either the `--ignore_changes` or `--force` argument must be specified to uninstall modules when running in FIPS mode.") if Puppet.runtime[:facter].value(:fips_enabled)
 
           changes = begin
             Puppet::ModuleTool::Applications::Checksummer.run(mod.path)

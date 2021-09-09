@@ -10,10 +10,10 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   "
 
   confine :any => [
-    Facter.value(:operatingsystem) == 'Ubuntu',
-    (Facter.value(:osfamily) == 'RedHat' and Facter.value(:operatingsystemrelease) =~ /^6\./),
-    (Facter.value(:operatingsystem) == 'Amazon' and Facter.value(:operatingsystemmajrelease) =~ /\d{4}/),
-    Facter.value(:operatingsystem) == 'LinuxMint',
+    Puppet.runtime[:facter].value(:operatingsystem) == 'Ubuntu',
+    (Puppet.runtime[:facter].value(:osfamily) == 'RedHat' and Puppet.runtime[:facter].value(:operatingsystemrelease) =~ /^6\./),
+    (Puppet.runtime[:facter].value(:operatingsystem) == 'Amazon' and Puppet.runtime[:facter].value(:operatingsystemmajrelease) =~ /\d{4}/),
+    Puppet.runtime[:facter].value(:operatingsystem) == 'LinuxMint',
   ]
 
   defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["10.04", "12.04", "14.04", "14.10"]
@@ -57,7 +57,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   def self.excludes
     excludes = super
-    if Facter.value(:osfamily) == 'RedHat'
+    if Puppet.runtime[:facter].value(:osfamily) == 'RedHat'
       # Puppet cannot deal with services that have instances, so we have to
       # ignore these services using instances on redhat based systems.
       excludes += %w[serial tty]

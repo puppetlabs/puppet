@@ -135,7 +135,7 @@ module Puppet
 
               # Puppet requires Facter, which initializes its lookup paths. Reset Facter to
               # pickup the new $LOAD_PATH.
-              Facter.reset
+              Puppet.runtime[:facter].reset
             end
           end
 

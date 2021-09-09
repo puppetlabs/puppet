@@ -5,9 +5,9 @@ require 'thread'
 begin
   require 'rspec'
   require 'rspec/core/formatters/helpers'
-  require 'facter'
+  require 'etc'
 rescue LoadError
-  # Don't define the task if we don't have rspec or facter present
+  # Don't define the task if we don't have rspec present
 else
   module Parallel
     module RSpec
@@ -401,7 +401,7 @@ else
       # Default group size in rspec examples
       DEFAULT_GROUP_SIZE = 1000
 
-      process_count = [(args[:process_count] || Facter.value("processorcount")).to_i, 1].max
+      process_count = [(args[:process_count] || Etc.nprocessors).to_i, 1].max
       group_size = [(args[:group_size] || DEFAULT_GROUP_SIZE).to_i, 1].max
 
       abort unless Parallel::RSpec::Parallelizer.new(process_count, group_size, color_output?, args.extras).run

@@ -1,4 +1,3 @@
-require 'facter'
 require_relative '../../puppet/util/warnings'
 require 'forwardable'
 require 'etc'
@@ -18,7 +17,7 @@ module Puppet::Util::SUIDManager
 
   def osx_maj_ver
     return @osx_maj_ver unless @osx_maj_ver.nil?
-    @osx_maj_ver = Facter.value('macosx_productversion_major') || false
+    @osx_maj_ver = Puppet.runtime[:facter].value('macosx_productversion_major') || false
   end
   module_function :osx_maj_ver
 

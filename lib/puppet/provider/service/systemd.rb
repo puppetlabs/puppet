@@ -110,7 +110,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     # The indirect state indicates that the unit is not enabled.
     return :false if output == 'indirect'
     return :true if (code == 0)
-    if (output.empty?) && (code > 0) && (Facter.value(:osfamily).casecmp('debian').zero?)
+    if (output.empty?) && (code > 0) && (Puppet.runtime[:facter].value(:osfamily).casecmp('debian').zero?)
       ret = debian_enabled?
       return ret if ret
     end
