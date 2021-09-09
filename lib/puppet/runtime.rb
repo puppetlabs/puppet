@@ -24,6 +24,14 @@ class Puppet::Runtime
   end
   private :initialize
 
+  # Loads all runtime implementations.
+  #
+  # @return Array[Symbol] the names of loaded implementations
+  # @api private
+  def load_services
+    @runtime_services.keys.each { |key| self[key] }
+  end
+
   # Get a runtime implementation.
   #
   # @param name [Symbol] the name of the implementation

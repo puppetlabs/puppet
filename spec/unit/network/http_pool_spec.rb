@@ -37,6 +37,7 @@ describe Puppet::Network::HttpPool do
     end
 
     it "switches to the external client implementation" do
+      Puppet.runtime.clear
       Puppet::Network::HttpPool.http_client_class = http_impl
 
       expect(Puppet.runtime[:http]).to be_an_instance_of(Puppet::HTTP::ExternalClient)

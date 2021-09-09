@@ -12,7 +12,6 @@ $LOAD_PATH.extend(Puppet::Concurrent::Synchronized)
 # see the bottom of the file for further inclusions
 # Also see the new Vendor support - towards the end
 #
-require 'facter'
 require 'puppet/error'
 require 'puppet/util'
 require 'puppet/util/autoload'
@@ -87,9 +86,6 @@ module Puppet
 
   require 'puppet/util/logging'
   extend Puppet::Util::Logging
-
-  # Setup facter's logging
-  Puppet::Util::Logging.setup_facter_logging!
 
   # The feature collection
   @features = Puppet::Util::Feature.new('puppet/feature')
@@ -199,11 +195,11 @@ module Puppet
   def self.initialize_facts
     # Add the puppetversion fact; this is done before generating the hash so it is
     # accessible to custom facts.
-    Facter.add(:puppetversion) do
+    Puppet.runtime[:facter].add(:puppetversion) do
       setcode { Puppet.version.to_s }
     end
 
-    Facter.add(:agent_specified_environment) do
+    Puppet.runtime[:facter].add(:agent_specified_environment) do
       setcode do
         Puppet.settings.set_by_cli(:environment) ||
           Puppet.settings.set_in_section(:environment, :agent) ||

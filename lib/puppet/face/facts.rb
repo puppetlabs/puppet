@@ -132,7 +132,7 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
       Puppet.settings.preferred_run_mode = :agent
       Puppet::Node::Facts.indirection.terminus_class = :facter
 
-      if Puppet::Util::Package.versioncmp(Facter.value('facterversion'), '4.0.0') < 0
+      if Puppet::Util::Package.versioncmp(Puppet.runtime[:facter].value('facterversion'), '4.0.0') < 0
         cmd_flags = '--render-as json --show-legacy'
 
         # puppet/ruby are in PATH since it was updated in the wrapper script

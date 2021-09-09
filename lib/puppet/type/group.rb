@@ -1,5 +1,4 @@
 require 'etc'
-require 'facter'
 require 'puppet/property/keyvalue'
 require 'puppet/parameter/boolean'
 

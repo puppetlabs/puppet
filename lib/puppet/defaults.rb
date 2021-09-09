@@ -3,7 +3,7 @@ require 'puppet/util/platform'
 module Puppet
 
   def self.default_diffargs
-    if (Facter.value(:kernel) == "AIX" && Facter.value(:kernelmajversion) == "5300")
+    if (Puppet.runtime[:facter].value(:kernel) == "AIX" && Puppet.runtime[:facter].value(:kernelmajversion) == "5300")
       ""
     else
       "-u"
@@ -90,7 +90,7 @@ module Puppet
           This setting is still experimental.',
         :hook    => proc do |value|
           value = munge(value)
-          if value && Puppet::Util::Package.versioncmp(Facter.value('facterversion'), '4.0.0') < 0
+          if value && Puppet::Util::Package.versioncmp(Puppet.runtime[:facter].value('facterversion'), '4.0.0') < 0
             begin
               original_facter = Object.const_get(:Facter)
               Object.send(:remove_const, :Facter)
@@ -262,7 +262,7 @@ module Puppet
           internal Ruby stack trace interleaved with Puppet function frames.",
         :hook     => proc do |value|
           # Enable or disable Facter's trace option too
-          Facter.trace(value) if Facter.respond_to? :trace
+          Puppet.runtime[:facter].trace(value)
         end
     },
     :puppet_trace => {
@@ -2044,7 +2044,7 @@ EOT
       :call_hook => :on_initialize_and_write, # Call our hook with the default value, so we always get the value added to facter.
       :hook => proc do |value|
         paths = value.split(File::PATH_SEPARATOR)
-        Facter.search(*paths)
+        Puppet.runtime[:facter].search(*paths)
       end
     }
   )

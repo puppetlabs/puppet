@@ -1709,11 +1709,11 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
   describe "when using validate_cmd" do
     test_cmd = '/bin/test'
-    if Facter.value(:osfamily) == 'Debian'
+    if Puppet.runtime[:facter].value(:osfamily) == 'Debian'
       test_cmd = '/usr/bin/test'
     end
 
-    if Facter.value(:operatingsystem) == 'Darwin'
+    if Puppet.runtime[:facter].value(:operatingsystem) == 'Darwin'
       stat_cmd = "stat -f '%Lp'"
     else
       stat_cmd = "stat --format=%a"

@@ -200,6 +200,7 @@ describe "Defaults" do
 
         Object.send(:remove_const, :Facter)
         facter = double('facter')
+        allow(facter).to receive(:on_message)
         allow(facter).to receive(:value).with('facterversion').and_return('3.11.4')
         Object.const_set(:Facter, facter)
 
