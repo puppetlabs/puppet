@@ -60,6 +60,9 @@ module Puppet::Util
     def self.dump(object, options = {})
       if defined? MultiJson
         MultiJson.dump(object, options)
+      elsif options.is_a?(JSON::State)
+        # we're being called recursively
+        object.to_json(options)
       else
         options.merge!(::JSON::PRETTY_STATE_PROTOTYPE.to_h) if options.delete(:pretty)
         object.to_json(options)
