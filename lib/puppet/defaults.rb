@@ -1532,6 +1532,12 @@ EOT
       :mode => "0750",
       :desc => "The directory in which serialized data is stored on the client."
     },
+    :write_catalog_summary => {
+      :default => true,
+      :type => :boolean,
+      :desc => "Whether to write the `classfile` and `resourcefile` after applying
+        the catalog. It is enabled by default, except when running `puppet apply`.",
+    },
     :classfile => {
       :default => "$statedir/classes.txt",
       :type => :file,

@@ -16,7 +16,9 @@ class Puppet::Application::Apply < Puppet::Application
   option("--use-nodes")
   option("--detailed-exitcodes")
 
-  option("--write-catalog-summary")
+  option("--write-catalog-summary") do |arg|
+    Puppet[:write_catalog_summary] = arg
+  end
 
   option("--catalog catalog",  "-c catalog") do |arg|
     options[:catalog] = arg
@@ -169,6 +171,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   def app_defaults
     super.merge({
       :default_file_terminus => :file_server,
+      :write_catalog_summary => false
     })
   end
 
@@ -247,7 +250,22 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
         catalog.retrieval_duration = Time.now - starttime
 
-        if options[:write_catalog_summary]
+        # We accept either the global option `--write_catalog_summary`
+        # corresponding to the new setting, or the application option
+        # `--write-catalog-summary`. The latter is needed to maintain backwards
+        # compatibility.
+        #
+        # Puppet settings parse global options using PuppetOptionParser, but it
+        # only recognizes underscores, not dashes.
+        # The base application parses app specific options using ruby's builtin
+        # OptionParser. As of ruby 2.4, it will accept either underscores or
+        # dashes, but prefer dashes.
+        #
+        # So if underscores are used, the PuppetOptionParser will parse it and
+        # store that in Puppet[:write_catalog_summary]. If dashes are used,
+        # OptionParser will parse it, and set Puppet[:write_catalog_summary]. In
+        # either case, settings will contain the correct value.
+        if Puppet[:write_catalog_summary]
           catalog.write_class_file
           catalog.write_resource_file
         end
