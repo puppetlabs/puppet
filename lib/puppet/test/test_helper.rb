@@ -142,7 +142,8 @@ module Puppet::Test
         },
         "Context for specs")
 
-      Puppet.runtime.load_services
+      # trigger `require 'facter'`
+      Puppet.runtime[:facter]
 
       Puppet::Parser::Functions.reset
       Puppet::Application.clear!
