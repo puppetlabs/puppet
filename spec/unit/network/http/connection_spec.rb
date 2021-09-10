@@ -543,7 +543,6 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "should sleep for no more than the Puppet runinterval" do
-        Puppet.runtime.clear
         retry_after('60')
 
         Puppet[:runinterval] = 30
