@@ -368,6 +368,12 @@ describe "Puppet Network Format" do
       expect(json.render_multiple(instances)).to eq([{"string" => "foo"}].to_json)
     end
 
+    it "should render multiple instances as a JSON array of hashes when multi_json is not present" do
+      hide_const("MultiJson") if defined?(MultiJson)
+      instances = [FormatsTest.new("foo")]
+      expect(json.render_multiple(instances)).to eq([{"string" => "foo"}].to_json)
+    end
+
     it "should intern an instance from a JSON hash" do
       text = Puppet::Util::Json.dump({"string" => "parsed_json"})
       instance = json.intern(FormatsTest, text)
