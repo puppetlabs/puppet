@@ -272,9 +272,14 @@ module Puppet
 
     newparam(:timeout, :required_features => :configurable_timeout) do
       desc "Specify an optional minimum timeout (in seconds) for puppet to wait when syncing service properties"
-      defaultto { provider.class.respond_to?(:default_timeout) ? provider.default_timeout : 10 }
-      validate do |value|
-        if (not value.is_a? Integer) || value < 1
+      defaultto { provider.respond_to?(:default_timeout) ? provider.default_timeout : 10 }
+
+      munge do |value|
+        begin
+          value = value.to_i
+          raise if value < 1
+          value
+        rescue
           raise Puppet::Error.new(_("\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer") % { value: value })
         end
       end
