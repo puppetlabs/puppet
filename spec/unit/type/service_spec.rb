@@ -158,6 +158,33 @@ describe test_title, "when validating attribute values" do
         expect(srv[:timeout]).to eq(int)
       end
     end
+
+    it "should default :timeout to 10 when provider has no default value" do
+      srv = Puppet::Type.type(:service).new(:name => "yay")
+      expect(srv[:timeout]).to eq(10)
+    end
+
+    it "should default :timeout to provider given default time when it has one" do
+      provider_class_with_timeout = Puppet::Type.type(:service).provide(:simple) do
+        has_features :configurable_timeout
+        def default_timeout
+          30
+        end
+      end
+      allow(Puppet::Type.type(:service)).to receive(:defaultprovider).and_return(provider_class_with_timeout)
+
+      srv = Puppet::Type.type(:service).new(:name => "yay")
+      expect(srv[:timeout]).to eq(30)
+    end
+
+    it "should accept string as value" do
+      srv = Puppet::Type.type(:service).new(:name => "yay", :timeout => "25")
+      expect(srv[:timeout]).to eq(25)
+    end
+
+    it "should not support values that cannot be converted to Integer such as Array" do
+      expect { Puppet::Type.type(:service).new(:name => "yay", :timeout => [25]) }.to raise_error(Puppet::Error)
+    end
   end
 
   describe "the service logon credentials" do 
