@@ -372,6 +372,26 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
   end
 
+  describe "#home" do
+    before { described_class.has_feature :manages_local_users_and_groups }
+
+    let(:content) { "myuser:x:x:x:x:/opt/local_home:x" }
+
+    it "should return the local home string when forcelocal is true" do
+      resource[:forcelocal] = true
+      allow(Puppet::FileSystem).to receive(:exist?).with('/etc/passwd').and_return(true)
+      allow(Puppet::FileSystem).to receive(:each_line).with('/etc/passwd').and_yield(content)
+      expect(provider.home).to eq('/opt/local_home')
+    end
+
+    it "should fall back to nameservice home string when forcelocal is false" do
+      resource[:forcelocal] = false
+      allow(provider).to receive(:get).with(:home).and_return('/opt/remote_home')
+      expect(provider).not_to receive(:localhome)
+      expect(provider.home).to eq('/opt/remote_home')
+    end
+  end
+
   describe "#gid" do
     before { described_class.has_feature :manages_local_users_and_groups }
 
