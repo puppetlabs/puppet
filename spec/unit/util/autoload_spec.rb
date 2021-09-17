@@ -201,6 +201,24 @@ describe Puppet::Util::Autoload do
 
       @autoload.loadall(env)
     end
+
+    it "autoloads from a directory whose ancestor is Windows 8.3", if: Puppet::Util::Platform.windows? do
+      # File.expand_path will expand ~ in the last directory component only(!)
+      # so create an ancestor directory with a long path
+      dir = File.join(tmpdir('longpath'), 'short')
+      path = File.join(dir, @autoload.path, 'file.rb')
+
+      FileUtils.mkdir_p(File.dirname(path))
+      FileUtils.touch(path)
+
+      dir83 = File.join(File.dirname(basedir), 'longpa~1', 'short')
+      path83 = File.join(dir83, @autoload.path, 'file.rb')
+
+      allow(@autoload.class).to receive(:search_directories).and_return([dir83])
+      expect(Kernel).to receive(:load).with(path83, any_args)
+
+      @autoload.loadall(env)
+    end
   end
 
   describe "when reloading files" do
