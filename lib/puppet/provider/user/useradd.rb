@@ -72,6 +72,16 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
      get(:comment)
   end
 
+  def shell
+    return localshell if @resource.forcelocal?
+    get(:shell)
+  end
+
+  def home
+    return localhome if @resource.forcelocal?
+    get(:home)
+  end
+
   def groups
      return localgroups if @resource.forcelocal?
      super
@@ -121,6 +131,16 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   def localcomment
     user = finduser(:account, resource[:name])
     user[:gecos]
+  end
+
+  def localshell
+    user = finduser(:account, resource[:name])
+    user[:shell]
+  end
+
+  def localhome
+    user = finduser(:account, resource[:name])
+    user[:directory]
   end
 
   def localgroups
