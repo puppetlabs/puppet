@@ -1159,6 +1159,20 @@ describe Puppet::Configurer do
           expect(configurer.environment).to eq(last_server_specified_environment)
         end
 
+        it "pushes the converged environment found in lastrunfile over the existing context" do
+          initial_env = Puppet::Node::Environment.remote('production')
+          Puppet.push_context(
+            current_environment: initial_env,
+            loaders: Puppet::Pops::Loaders.new(initial_env, true))
+
+          expect(Puppet).to receive(:push_context).with(
+            hash_including(:current_environment, :loaders),
+            "Local node environment #{last_server_specified_environment} for configurer transaction"
+          ).once.and_call_original
+
+          configurer.run
+        end
+
         it "uses environment from Puppet[:environment] if strict_environment_mode is set" do
           Puppet[:strict_environment_mode] = true
           configurer.run
