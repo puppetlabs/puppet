@@ -411,6 +411,20 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
             allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
             provider.insync?(is)
           end
+          
+          it "should try 5 times to install and fail when all tries failed" do
+            allow_any_instance_of(Kernel).to receive(:sleep)
+              
+            expect(provider).to receive(:query).and_return({:ensure => :absent})
+            expect(provider).to receive(:properties).and_return({:mark => :hold})
+            expect(provider).to receive(:unhold)
+            expect(Puppet::Util::Execution).to receive(:execute)
+              .with(['/bin/pkg', 'install', *hash[:flags], 'dummy'], {:failonfail => false, :combine => true}).exactly(5).times
+            allow($CHILD_STATUS).to receive(:exitstatus).and_return(7)
+            expect {
+              provider.update
+            }.to raise_error(Puppet::Error, /Pkg could not install dummy after 5 tries. Aborting run/)
+          end
         end
       end
     end
