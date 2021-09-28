@@ -219,16 +219,15 @@ class Closure < CallableSignature
   def call_with_scope(scope, args)
     variable_bindings = combine_values_with_parameters(scope, args)
 
-    tc = Types::TypeCalculator.singleton
-    final_args = tc.infer_set(parameters.reduce([]) do |tmp_args, param|
+    final_args = parameters.reduce([]) do |tmp_args, param|
       if param.captures_rest
         tmp_args.concat(variable_bindings[param.name])
       else
         tmp_args << variable_bindings[param.name]
       end
-    end)
+    end
 
-    if type.callable?(final_args)
+    if type.callable_with?(final_args, block_type)
       result = catch(:next) do
         @evaluator.evaluate_block_with_bindings(scope, variable_bindings, @model.body)
       end
@@ -236,7 +235,9 @@ class Closure < CallableSignature
         "value returned from #{closure_name}"
       end
     else
-      raise ArgumentError, Types::TypeMismatchDescriber.describe_signatures(closure_name, [self], final_args)
+      tc = Types::TypeCalculator.singleton
+      args_type = tc.infer_set(final_args)
+      raise ArgumentError, Types::TypeMismatchDescriber.describe_signatures(closure_name, [self], args_type)
     end
   end
 
@@ -309,6 +310,7 @@ class Closure < CallableSignature
       to += param_range[1]
     end
     param_types = Types::PTupleType.new(types, Types::PIntegerType.new(from, to))
+    # The block_type for a Closure is always nil for now, see comment in block_name above
     Types::PCallableType.new(param_types, nil, return_type)
   end
 
