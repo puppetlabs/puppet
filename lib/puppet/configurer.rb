@@ -305,6 +305,8 @@ class Puppet::Configurer
         if last_server_specified_environment
           @environment = last_server_specified_environment
           report.environment = last_server_specified_environment
+
+          push_current_environment_and_loaders
         else
           Puppet.debug(_("Could not find a usable environment in the lastrunfile. Either the file does not exist, does not have the required keys, or the values of 'initial_environment' and 'converged_environment' are identical."))
         end
@@ -315,14 +317,7 @@ class Puppet::Configurer
       # This is to maintain compatibility with anyone using this class
       # aside from agent, apply, device.
       unless Puppet.lookup(:loaders) { nil }
-        new_env = Puppet::Node::Environment.remote(@environment)
-        Puppet.push_context(
-          {
-            current_environment: new_env,
-            loaders: Puppet::Pops::Loaders.new(new_env, true)
-          },
-          "Local node environment #{@environment} for configurer transaction"
-        )
+        push_current_environment_and_loaders
       end
 
       temp_value = options[:pluginsync]
@@ -358,14 +353,7 @@ class Puppet::Configurer
         @environment = catalog.environment
         report.environment = @environment
 
-        new_env = Puppet::Node::Environment.remote(@environment)
-        Puppet.push_context(
-          {
-            :current_environment => new_env,
-            :loaders => Puppet::Pops::Loaders.new(new_env, true)
-          },
-          "Local node environment #{@environment} for configurer transaction"
-        )
+        push_current_environment_and_loaders
 
         query_options, facts = get_facts(options)
         query_options[:configured_environment] = configured_environment
@@ -559,6 +547,17 @@ class Puppet::Configurer
       Puppet.log_exception(detail, _("Could not run command from %{setting}: %{detail}") % { setting: setting, detail: detail })
       false
     end
+  end
+
+  def push_current_environment_and_loaders
+    new_env = Puppet::Node::Environment.remote(@environment)
+    Puppet.push_context(
+      {
+        :current_environment => new_env,
+        :loaders => Puppet::Pops::Loaders.new(new_env, true)
+      },
+      "Local node environment #{@environment} for configurer transaction"
+    )
   end
 
   def retrieve_catalog_from_cache(query_options)
