@@ -1,6 +1,13 @@
+# frozen_string_literal: true
 module Puppet::Util::Package
-  def versioncmp(version_a, version_b)
+  def versioncmp(version_a, version_b, ignore_trailing_zeroes = false)
     vre = /[-.]|\d+|[^-.\d]+/
+
+    if ignore_trailing_zeroes
+      version_a = normalize(version_a)
+      version_b = normalize(version_b)
+    end
+
     ax = version_a.scan(vre)
     bx = version_b.scan(vre)
 
@@ -26,6 +33,13 @@ module Puppet::Util::Package
     end
     version_a <=> version_b;
   end
-
   module_function :versioncmp
+
+  def self.normalize(version)
+    version = version.split('-')
+    version.first.sub!(/([\.0]+)$/, '')
+
+    version.join('-')
+  end
+  private_class_method :normalize
 end
