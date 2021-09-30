@@ -70,13 +70,24 @@ class Benchmarker
           )
       end
 
+      roles = 0.upto(10).to_a
+
       render(File.join(templates, 'module', 'init.pp.erb'),
              File.join(manifests, 'init.pp'),
-             :name => module_name)
+             :name => module_name,
+             :roles => roles
+            )
 
       render(File.join(templates, 'module', 'internal.pp.erb'),
              File.join(manifests, 'internal.pp'),
              :name => module_name)
+
+      roles.each do |j|
+        render(File.join(templates, 'module', 'role.pp.erb'),
+               File.join(manifests, "role#{i}.pp"),
+               :name => module_name,
+               :index => j)
+      end
     end
 
     render(File.join(templates, 'puppet.conf.erb'),

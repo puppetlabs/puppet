@@ -1,3 +1,6 @@
 class <%= name %> {
   class { "<%= name %>::internal": }
+  <% roles.each do |role| %>
+    class { "<%= name %>::role<%= role %>": }
+  <% end %>
 }
