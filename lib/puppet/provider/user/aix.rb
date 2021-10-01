@@ -292,7 +292,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     return if Puppet::Util::Platform.windows?
     return unless @resource.managehome?
 
-    if !Puppet::Util.absolute_path?(homedir) || File.realpath(homedir) == '/' || Puppet::FileSystem.symlink?(homedir)
+    if !Puppet::FileSystem.absolute?(homedir) || File.realpath(homedir) == '/' || Puppet::FileSystem.symlink?(homedir)
       Puppet.debug("Can not remove home directory '#{homedir}' of user '#{@resource[:name]}'. Please make sure the path is not relative, symlink or '/'.")
       return
     end

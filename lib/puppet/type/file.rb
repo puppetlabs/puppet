@@ -57,7 +57,7 @@ Puppet::Type.newtype(:file) do
     isnamevar
 
     validate do |value|
-      unless Puppet::Util.absolute_path?(value)
+      unless Puppet::FileSystem.absolute?(value)
         fail Puppet::Error, _("File paths must be fully qualified, not '%{path}'") % { path: value }
       end
     end
@@ -335,7 +335,7 @@ Puppet::Type.newtype(:file) do
          location is on the same filesystem as the final location."
 
     validate do |value|
-      unless Puppet::Util.absolute_path?(value)
+      unless Puppet::FileSystem.absolute?(value)
         fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
       end
     end

@@ -737,7 +737,7 @@ module Puppet
 
             raise ArgumentError, _("Each entry for purge_ssh_keys must be a string, not a %{klass}") % { klass: entry.class } unless entry.is_a?(String)
 
-            valid_home = Puppet::Util.absolute_path?(entry) || entry =~ %r{^~/|^%h/}
+            valid_home = Puppet::FileSystem.absolute?(entry) || entry =~ %r{^~/|^%h/}
             raise ArgumentError, _("Paths to keyfiles must be absolute, not %{entry}") % { entry: entry } unless valid_home
           end
           return

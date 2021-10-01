@@ -84,7 +84,7 @@ module Puppet
     validate do |sources|
       sources = [sources] unless sources.is_a?(Array)
       sources.each do |source|
-        next if Puppet::Util.absolute_path?(source)
+        next if Puppet::FileSystem.absolute?(source)
 
         begin
           uri = URI.parse(Puppet::Util.uri_encode(source))
@@ -107,7 +107,7 @@ module Puppet
       sources.map do |source|
         source = self.class.normalize(source)
 
-        if Puppet::Util.absolute_path?(source)
+        if Puppet::FileSystem.absolute?(source)
           # CGI.unescape will butcher properly escaped URIs
           uri_string = Puppet::Util.path_to_uri(source).to_s
           # Ruby 1.9.3 and earlier have a URI bug in URI
