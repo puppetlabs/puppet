@@ -178,15 +178,14 @@ describe Puppet::Util::Autoload do
   end
 
   describe "when loading all files" do
-    before do
-      allow(@autoload.class).to receive(:search_directories).and_return([make_absolute("/a")])
-      allow(FileTest).to receive(:directory?).and_return(true)
-      allow(Dir).to receive(:glob).and_return([make_absolute("/a/foo/file.rb")])
-      allow(Puppet::FileSystem).to receive(:exist?).and_return(true)
-      @time_a = Time.utc(2010, 'jan', 1, 6, 30)
-      allow(File).to receive(:mtime).and_return(@time_a)
+    let(:basedir) { tmpdir('autoloader') }
+    let(:path) { File.join(basedir, @autoload.path, 'file.rb') }
 
-      allow(@autoload.class).to receive(:loaded?).and_return(false)
+    before do
+      FileUtils.mkdir_p(File.dirname(path))
+      FileUtils.touch(path)
+
+      allow(@autoload.class).to receive(:search_directories).and_return([basedir])
     end
 
     [RuntimeError, LoadError, SyntaxError].each do |error|
@@ -198,7 +197,25 @@ describe Puppet::Util::Autoload do
     end
 
     it "should require the full path to the file" do
-      expect(Kernel).to receive(:load).with(make_absolute("/a/foo/file.rb"), any_args)
+      expect(Kernel).to receive(:load).with(path, any_args)
+
+      @autoload.loadall(env)
+    end
+
+    it "autoloads from a directory whose ancestor is Windows 8.3", if: Puppet::Util::Platform.windows? do
+      # File.expand_path will expand ~ in the last directory component only(!)
+      # so create an ancestor directory with a long path
+      dir = File.join(tmpdir('longpath'), 'short')
+      path = File.join(dir, @autoload.path, 'file.rb')
+
+      FileUtils.mkdir_p(File.dirname(path))
+      FileUtils.touch(path)
+
+      dir83 = File.join(File.dirname(basedir), 'longpa~1', 'short')
+      path83 = File.join(dir83, @autoload.path, 'file.rb')
+
+      allow(@autoload.class).to receive(:search_directories).and_return([dir83])
+      expect(Kernel).to receive(:load).with(path83, any_args)
 
       @autoload.loadall(env)
     end

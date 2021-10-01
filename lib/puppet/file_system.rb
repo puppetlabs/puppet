@@ -345,7 +345,8 @@ module Puppet::FileSystem
   # value ~ will be expanded to something like /Users/Foo
   #
   # This method exists primarlily to resolve a Ruby deficiency where
-  # File.expand_path doesn't handle ~ in each segment on a Windows path
+  # File.expand_path doesn't convert short paths to long paths, which is
+  # important when resolving the path to load.
   #
   # @param path [Object] a path handle produced by {#pathname}
   # @return [String] a string representation of the path

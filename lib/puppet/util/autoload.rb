@@ -117,7 +117,7 @@ class Puppet::Util::Autoload
 
     # @api private
     def files_in_dir(dir, path)
-      dir = Pathname.new(File.expand_path(dir))
+      dir = Pathname.new(Puppet::FileSystem.expand_path(dir))
       Dir.glob(File.join(dir, path, "*.rb")).collect do |file|
         Pathname.new(file).relative_path_from(dir).to_s
       end
