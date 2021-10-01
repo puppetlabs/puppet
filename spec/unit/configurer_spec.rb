@@ -742,7 +742,7 @@ describe Puppet::Configurer do
           expect(configurer.run).to be_nil
         end
 
-        it "should proceed with the cached catalog if its environment matchs the local environment" do
+        it "should proceed with the cached catalog if its environment matches the local environment" do
           expects_cached_catalog_only(catalog)
 
           expect(configurer.run).to eq(0)
