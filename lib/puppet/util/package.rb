@@ -15,23 +15,18 @@ module Puppet::Util::Package
       a = ax.shift
       b = bx.shift
 
-      if( a == b )                 then next
-      elsif (a == '-' && b == '-') then next
-      elsif (a == '-')             then return -1
-      elsif (b == '-')             then return 1
-      elsif (a == '.' && b == '.') then next
-      elsif (a == '.' )            then return -1
-      elsif (b == '.' )            then return 1
-      elsif (a =~ /^\d+$/ && b =~ /^\d+$/) then
-        if( a =~ /^0/ or b =~ /^0/ ) then
-          return a.to_s.upcase <=> b.to_s.upcase
-        end
+      next      if a == b
+      return -1 if a == '-'
+      return 1  if b == '-'
+      return -1 if a == '.'
+      return 1  if b == '.'
+      if a =~ /^\d+$/ && b =~ /^\d+$/
+        return a.to_s.upcase <=> b.to_s.upcase if a =~ /^0/ || b =~ /^0/
         return a.to_i <=> b.to_i
-      else
-        return a.upcase <=> b.upcase
       end
+      return a.upcase <=> b.upcase
     end
-    version_a <=> version_b;
+    version_a <=> version_b
   end
   module_function :versioncmp
 
