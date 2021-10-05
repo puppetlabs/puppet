@@ -919,6 +919,8 @@ keyword
   | CONSUMES
   | PRODUCES
   | SITE
+  | PLAN
+  | APPLY
 
 nil
   : { result = nil}
