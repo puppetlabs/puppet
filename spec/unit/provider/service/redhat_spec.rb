@@ -50,7 +50,8 @@ describe 'Puppet::Type::Service::Provider::Redhat',
       @services = ['one', 'two', 'three', 'four', 'kudzu', 'functions', 'halt', 'killall', 'single', 'linuxconf', 'boot', 'reboot']
       @not_services = ['functions', 'halt', 'killall', 'single', 'linuxconf', 'reboot', 'boot']
       allow(Dir).to receive(:entries).and_return(@services)
-      allow(FileTest).to receive(:directory?).and_return(true)
+      allow(FileTest).to receive(:directory?).and_call_original
+      allow(FileTest).to receive(:directory?).with('/etc/init.d').and_return(true)
       allow(FileTest).to receive(:executable?).and_return(true)
     end
 

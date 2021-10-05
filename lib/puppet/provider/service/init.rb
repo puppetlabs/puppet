@@ -97,6 +97,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
         fullpath = File.join(path, name)
         next if name =~ /^\./
         next if exclude.include? name
+        next if FileTest.directory?(fullpath)
         next if not FileTest.executable?(fullpath)
         next if not is_init?(fullpath)
         instances << new(:name => name, :path => path, :hasstatus => true)

@@ -52,7 +52,8 @@ describe 'Puppet::Type::Service::Provider::Gentoo',
     end
 
     it "should get a list of services from /etc/init.d but exclude helper scripts" do
-      expect(FileTest).to receive(:directory?).with('/etc/init.d').and_return(true)
+      allow(FileTest).to receive(:directory?).and_call_original
+      allow(FileTest).to receive(:directory?).with('/etc/init.d').and_return(true)
       expect(Dir).to receive(:entries).with('/etc/init.d').and_return(initscripts)
       (initscripts - helperscripts).each do |script|
         expect(FileTest).to receive(:executable?).with("/etc/init.d/#{script}").and_return(true)

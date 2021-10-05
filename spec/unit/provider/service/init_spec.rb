@@ -85,12 +85,18 @@ describe 'Puppet::Type::Service::Provider::Init',
       @services = ['one', 'two', 'three', 'four', 'umountfs']
       allow(Dir).to receive(:entries).and_call_original
       allow(Dir).to receive(:entries).with('tmp').and_return(@services)
-      expect(FileTest).to receive(:directory?).with('tmp').and_return(true)
+      allow(FileTest).to receive(:directory?).and_call_original
+      allow(FileTest).to receive(:directory?).with('tmp').and_return(true)
       allow(FileTest).to receive(:executable?).and_return(true)
     end
 
     it "should return instances for all services" do
       expect(provider_class.instances.map(&:name)).to eq(@services)
+    end
+
+    it "should omit directories from the service list" do
+      expect(FileTest).to receive(:directory?).with('tmp/four').and_return(true)
+      expect(provider_class.instances.map(&:name)).to eq(@services - ['four'])
     end
 
     it "should omit an array of services from exclude list" do

@@ -50,7 +50,8 @@ describe 'Puppet::Type::Service::Provider::Openwrt',
     before :each do
       allow(Dir).to receive(:entries).and_call_original
       allow(Dir).to receive(:entries).with('/etc/init.d').and_return(services)
-      allow(FileTest).to receive(:directory?).and_return(true)
+      allow(FileTest).to receive(:directory?).and_call_original
+      allow(FileTest).to receive(:directory?).with('/etc/init.d').and_return(true)
       allow(FileTest).to receive(:executable?).and_return(true)
     end
 
