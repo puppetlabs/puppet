@@ -2119,9 +2119,9 @@ EOT
       # Call our hook with the default value, so we always get the libdir set.
       :call_hook => :on_initialize_and_write,
       :hook => proc do |value|
-        require_relative '../puppet/node'
-        require_relative '../puppet/node/facts'
         if value
+          $stderr.puts "REQUIRING STORECONFIGS!!"
+
           Puppet::Resource::Catalog.indirection.set_global_setting(:cache_class, :store_configs)
           settings.override_default(:catalog_cache_terminus, :store_configs)
           Puppet::Node::Facts.indirection.set_global_setting(:cache_class, :store_configs)
