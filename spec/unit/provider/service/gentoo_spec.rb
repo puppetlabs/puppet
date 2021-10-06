@@ -10,8 +10,8 @@ describe 'Puppet::Type::Service::Provider::Gentoo',
 
   before :each do
     allow(Puppet::Type.type(:service)).to receive(:defaultprovider).and_return(provider_class)
-    allow(FileTest).to receive(:file?).with('/sbin/rc-update').and_return(true)
-    allow(FileTest).to receive(:executable?).with('/sbin/rc-update').and_return(true)
+    allow(Puppet::FileSystem).to receive(:file?).with('/sbin/rc-update').and_return(true)
+    allow(Puppet::FileSystem).to receive(:executable?).with('/sbin/rc-update').and_return(true)
     allow(Facter).to receive(:value).with(:operatingsystem).and_return('Gentoo')
     allow(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
 
@@ -52,14 +52,14 @@ describe 'Puppet::Type::Service::Provider::Gentoo',
     end
 
     it "should get a list of services from /etc/init.d but exclude helper scripts" do
-      allow(FileTest).to receive(:directory?).and_call_original
-      allow(FileTest).to receive(:directory?).with('/etc/init.d').and_return(true)
+      allow(Puppet::FileSystem).to receive(:directory?).and_call_original
+      allow(Puppet::FileSystem).to receive(:directory?).with('/etc/init.d').and_return(true)
       expect(Dir).to receive(:entries).with('/etc/init.d').and_return(initscripts)
       (initscripts - helperscripts).each do |script|
-        expect(FileTest).to receive(:executable?).with("/etc/init.d/#{script}").and_return(true)
+        expect(Puppet::FileSystem).to receive(:executable?).with("/etc/init.d/#{script}").and_return(true)
       end
       helperscripts.each do |script|
-        expect(FileTest).not_to receive(:executable?).with("/etc/init.d/#{script}")
+        expect(Puppet::FileSystem).not_to receive(:executable?).with("/etc/init.d/#{script}")
       end
 
       allow(Puppet::FileSystem).to receive(:symlink?).and_return(false)

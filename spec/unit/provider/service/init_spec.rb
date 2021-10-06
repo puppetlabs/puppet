@@ -85,9 +85,9 @@ describe 'Puppet::Type::Service::Provider::Init',
       @services = ['one', 'two', 'three', 'four', 'umountfs']
       allow(Dir).to receive(:entries).and_call_original
       allow(Dir).to receive(:entries).with('tmp').and_return(@services)
-      allow(FileTest).to receive(:directory?).and_call_original
-      allow(FileTest).to receive(:directory?).with('tmp').and_return(true)
-      allow(FileTest).to receive(:executable?).and_return(true)
+      allow(Puppet::FileSystem).to receive(:directory?).and_call_original
+      allow(Puppet::FileSystem).to receive(:directory?).with('tmp').and_return(true)
+      allow(Puppet::FileSystem).to receive(:executable?).and_return(true)
     end
 
     it "should return instances for all services" do
@@ -95,7 +95,7 @@ describe 'Puppet::Type::Service::Provider::Init',
     end
 
     it "should omit directories from the service list" do
-      expect(FileTest).to receive(:directory?).with('tmp/four').and_return(true)
+      expect(Puppet::FileSystem).to receive(:directory?).with('tmp/four').and_return(true)
       expect(provider_class.instances.map(&:name)).to eq(@services - ['four'])
     end
 
@@ -146,9 +146,9 @@ describe 'Puppet::Type::Service::Provider::Init',
 
   describe "when checking valid paths" do
     it "should discard paths that do not exist" do
-      expect(File).to receive(:directory?).with(paths[0]).and_return(false)
+      expect(Puppet::FileSystem).to receive(:directory?).with(paths[0]).and_return(false)
       expect(Puppet::FileSystem).to receive(:exist?).with(paths[0]).and_return(false)
-      expect(File).to receive(:directory?).with(paths[1]).and_return(true)
+      expect(Puppet::FileSystem).to receive(:directory?).with(paths[1]).and_return(true)
 
       expect(provider.paths).to eq([paths[1]])
     end
@@ -156,7 +156,7 @@ describe 'Puppet::Type::Service::Provider::Init',
     it "should discard paths that are not directories" do
       paths.each do |path|
         expect(Puppet::FileSystem).to receive(:exist?).with(path).and_return(true)
-        expect(File).to receive(:directory?).with(path).and_return(false)
+        expect(Puppet::FileSystem).to receive(:directory?).with(path).and_return(false)
       end
       expect(provider.paths).to be_empty
     end
@@ -164,7 +164,7 @@ describe 'Puppet::Type::Service::Provider::Init',
 
   describe "when searching for the init script" do
     before :each do
-      paths.each {|path| expect(File).to receive(:directory?).with(path).and_return(true) }
+      paths.each {|path| expect(Puppet::FileSystem).to receive(:directory?).with(path).and_return(true) }
     end
 
     it "should be able to find the init script in the service path" do
@@ -197,9 +197,9 @@ describe 'Puppet::Type::Service::Provider::Init',
 
   describe "if the init script is present" do
     before :each do
-      allow(File).to receive(:directory?).and_call_original
-      allow(File).to receive(:directory?).with("/service/path").and_return(true)
-      allow(File).to receive(:directory?).with("/alt/service/path").and_return(true)
+      allow(Puppet::FileSystem).to receive(:directory?).and_call_original
+      allow(Puppet::FileSystem).to receive(:directory?).with("/service/path").and_return(true)
+      allow(Puppet::FileSystem).to receive(:directory?).with("/alt/service/path").and_return(true)
       allow(Puppet::FileSystem).to receive(:exist?).with("/service/path/myservice").and_return(true)
     end
 

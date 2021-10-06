@@ -84,7 +84,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     defpath = [defpath] unless defpath.is_a? Array
     instances = []
     defpath.each do |path|
-      unless FileTest.directory?(path)
+      unless Puppet::FileSystem.directory?(path)
         Puppet.debug "Service path #{path} does not exist"
         next
       end
@@ -97,9 +97,9 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
         fullpath = File.join(path, name)
         next if name =~ /^\./
         next if exclude.include? name
-        next if FileTest.directory?(fullpath)
-        next if not FileTest.executable?(fullpath)
-        next if not is_init?(fullpath)
+        next if Puppet::FileSystem.directory?(fullpath)
+        next unless Puppet::FileSystem.executable?(fullpath)
+        next unless is_init?(fullpath)
         instances << new(:name => name, :path => path, :hasstatus => true)
       end
     end
@@ -123,7 +123,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
   def paths
     @paths ||= @resource[:path].find_all do |path|
-      if File.directory?(path)
+      if Puppet::FileSystem.directory?(path)
         true
       else
         if Puppet::FileSystem.exist?(path)
