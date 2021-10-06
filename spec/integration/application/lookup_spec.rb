@@ -7,7 +7,6 @@ describe 'lookup' do
   include PuppetSpec::Files
 
   context 'with an environment' do
-    let(:facts) { Puppet::Node::Facts.new("facts", {}) }
     let(:env_name) { 'spec' }
     let(:env_dir) { tmpdir('environments') }
     let(:environment_files) do
@@ -45,6 +44,11 @@ describe 'lookup' do
     let(:app) { Puppet::Application[:lookup] }
     let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, env_name, 'modules')]) }
     let(:environments) { Puppet::Environments::Directories.new(populated_env_dir, []) }
+    let(:facts) { Puppet::Node::Facts.new("facts", {'my_fact' => 'my_fact_value'}) }
+
+    before do
+      allow(Puppet::Node::Facts.indirection).to receive(:find).and_return(facts)
+    end
 
     let(:populated_env_dir) do
       dir_contained_in(env_dir, environment_files)
@@ -110,7 +114,7 @@ describe 'lookup' do
       require 'puppet/indirector/node/exec'
       require 'puppet/indirector/node/plain'
 
-      let(:node) { Puppet::Node.new('testnode', :environment => env) }
+      let(:node) { Puppet::Node.new('testnode', :facts => facts, :environment => env) }
 
       it ':plain without --compile' do
         Puppet.settings[:node_terminus] = 'exec'
