@@ -289,6 +289,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   def delete
     homedir = home
     super
+    return if Puppet::Util::Platform.windows?
     return unless @resource.managehome?
 
     if !Puppet::Util.absolute_path?(homedir) || File.realpath(homedir) == '/' || Puppet::FileSystem.symlink?(homedir)

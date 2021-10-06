@@ -238,7 +238,7 @@ describe 'Puppet::Type::User::Provider::Aix' do
       allow(FileUtils).to receive(:remove_entry_secure).with(Dir.tmpdir, true).and_return(nil)
     end
 
-    context 'with managehome true' do
+    context 'with managehome true', unless: Puppet::Util::Platform.windows? do
       before(:each) do
         allow(provider.resource).to receive(:managehome?).and_return(true)
         allow(provider).to receive(:list_all_homes).and_return([])
