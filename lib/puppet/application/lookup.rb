@@ -54,11 +54,7 @@ class Puppet::Application::Lookup < Puppet::Application
   end
 
   option('--facts FACT_FILE') do |arg|
-    if %w{.yaml .yml .json}.include?(arg.match(/\.[^.]*$/)[0])
-      options[:fact_file] = arg
-    else
-      raise _("The --fact file only accepts yaml and json files.\n%{run_help}") % { run_help: RUN_HELP }
-    end
+    options[:fact_file] = arg
   end
 
   def app_defaults
@@ -356,14 +352,17 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
     fact_file = options[:fact_file]
 
     if fact_file
-      if fact_file.end_with?("json")
-        given_facts = Puppet::Util::Json.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
-      else
+      if fact_file.end_with?('.json')
+        given_facts = Puppet::Util::Json.load_file(fact_file)
+      elsif fact_file.end_with?('.yml', '.yaml')
         given_facts = Puppet::Util::Yaml.safe_load_file(fact_file)
+      else
+        given_facts = Puppet::Util::Json.load_file_if_valid(fact_file)
+        given_facts = Puppet::Util::Yaml.safe_load_file_if_valid(fact_file) unless given_facts
       end
 
       unless given_facts.instance_of?(Hash)
-        raise _("Incorrect formatted data in %{fact_file} given via the --facts flag") % { fact_file: fact_file }
+        raise _("Incorrectly formatted data in %{fact_file} given via the --facts flag (only accepts yaml and json files)") % { fact_file: fact_file }
       end
       node.add_extra_facts(given_facts)
     end

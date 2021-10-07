@@ -1,6 +1,5 @@
 # coding: utf-8
 require 'spec_helper'
-
 require 'puppet/util/yaml'
 
 describe Puppet::Util::Yaml do
@@ -10,21 +9,21 @@ describe Puppet::Util::Yaml do
 
   shared_examples_for 'yaml file loader' do |load_method|
     it 'returns false when the file is empty' do
-      Puppet::FileSystem.touch(filename)
+      file_path = file_containing('input', '')
 
-      expect(load_method.call(filename)).to eq(false)
+      expect(load_method.call(file_path)).to eq(false)
     end
 
     it 'reads a YAML file from disk' do
-      write_file(filename, YAML.dump({ "my" => "data" }))
+      file_path = file_containing('input', YAML.dump({ "my" => "data" }))
 
-      expect(load_method.call(filename)).to eq({ "my" => "data" })
+      expect(load_method.call(file_path)).to eq({ "my" => "data" })
     end
 
     it 'reads YAML as UTF-8' do
-      write_file(filename, YAML.dump({ "my" => "𠜎" }))
+      file_path = file_containing('input', YAML.dump({ "my" => "𠜎" }))
 
-      expect(load_method.call(filename)).to eq({ "my" => "𠜎" })
+      expect(load_method.call(file_path)).to eq({ "my" => "𠜎" })
     end
   end
 
@@ -119,11 +118,11 @@ FACTS
     it_should_behave_like 'yaml file loader', Puppet::Util::Yaml.method(:safe_load_file)
 
     it 'raises an error when the file is invalid YAML' do
-      write_file(filename, '{ invalid')
+      file_path = file_containing('input', '{ invalid')
 
       expect {
-        Puppet::Util::Yaml.safe_load_file(filename)
-      }.to raise_error(Puppet::Util::Yaml::YamlLoadError, %r[\(#{filename}\): .* at line \d+ column \d+])
+        Puppet::Util::Yaml.safe_load_file(file_path)
+      }.to raise_error(Puppet::Util::Yaml::YamlLoadError, %r[\(#{file_path}\): .* at line \d+ column \d+])
     end
 
     it 'raises an error when the filename is illegal' do
@@ -139,15 +138,46 @@ FACTS
     end
   end
 
+  context "#safe_load_file_if_valid" do
+    before do
+      Puppet[:log_level] = 'debug'
+    end
+
+    it_should_behave_like 'yaml file loader', Puppet::Util::Yaml.method(:safe_load_file_if_valid)
+
+    it 'returns nil when the file is invalid YAML and debug logs about it' do
+      file_path = file_containing('input', '{ invalid')
+
+      expect(Puppet).to receive(:debug)
+        .with(/Could not retrieve YAML content .+ expected ',' or '}'/).and_call_original
+
+      expect(Puppet::Util::Yaml.safe_load_file_if_valid(file_path)).to eql(nil)
+    end
+
+    it 'returns nil when the filename is illegal and debug logs about it' do
+      expect(Puppet).to receive(:debug)
+        .with(/Could not retrieve YAML content .+: pathname contains null byte/).and_call_original
+
+      expect(Puppet::Util::Yaml.safe_load_file_if_valid("not\0allowed")).to eql(nil)
+    end
+
+    it 'returns nil when the file does not exist and debug logs about it' do
+      expect(Puppet).to receive(:debug)
+        .with(/Could not retrieve YAML content .+: No such file or directory/).and_call_original
+
+      expect(Puppet::Util::Yaml.safe_load_file_if_valid('does/not/exist.yaml')).to eql(nil)
+    end
+  end
+
   context '#load_file' do
     it_should_behave_like 'yaml file loader', Puppet::Util::Yaml.method(:load_file)
 
     it 'raises an error when the file is invalid YAML' do
-      write_file(filename, '{ invalid')
+      file_path = file_containing('input', '{ invalid')
 
       expect {
-        Puppet::Util::Yaml.load_file(filename)
-      }.to raise_error(Puppet::Util::Yaml::YamlLoadError, %r{\(#{filename}\): .* at line \d+ column \d+})
+        Puppet::Util::Yaml.load_file(file_path)
+      }.to raise_error(Puppet::Util::Yaml::YamlLoadError, %r{\(#{file_path}\): .* at line \d+ column \d+})
     end
 
     it 'raises an error when the filename is illegal' do
@@ -163,39 +193,34 @@ FACTS
     end
 
     it 'allows return value to be overridden' do
-      Puppet::FileSystem.touch(filename)
+      file_path = file_containing('input', '')
 
-      expect(Puppet::Util::Yaml.load_file(filename, {})).to eq({})
+      expect(Puppet::Util::Yaml.load_file(file_path, {})).to eq({})
     end
 
     it 'loads arbitrary objects' do
-      write_file(filename, "--- !ruby/object {}\n")
+      file_path = file_containing('input', "--- !ruby/object {}\n")
 
-      expect(Puppet::Util::Yaml.load_file(filename, {})).to be_instance_of(Object)
+      expect(Puppet::Util::Yaml.load_file(file_path, {})).to be_instance_of(Object)
     end
 
     it 'should allow one to strip ruby tags that would otherwise not parse' do
-      write_file(filename, "---\nweirddata: !ruby/hash:Not::A::Valid::Class {}")
+     file_path = file_containing('input', "---\nweirddata: !ruby/hash:Not::A::Valid::Class {}")
 
-      expect(Puppet::Util::Yaml.load_file(filename, {}, true)).to eq({"weirddata" => {}})
+      expect(Puppet::Util::Yaml.load_file(file_path, {}, true)).to eq({"weirddata" => {}})
     end
 
     it 'should not strip non-ruby tags' do
-      write_file(filename, "---\nweirddata: !binary |-\n          e21kNX04MTE4ZGY2NmM5MTc3OTg4ZWE4Y2JiOWEzMjMyNzFkYg==")
+      file_path = file_containing('input', "---\nweirddata: !binary |-\n          e21kNX04MTE4ZGY2NmM5MTc3OTg4ZWE4Y2JiOWEzMjMyNzFkYg==")
 
-      expect(Puppet::Util::Yaml.load_file(filename, {}, true)).to eq({"weirddata" => "{md5}8118df66c9177988ea8cbb9a323271db"})
+      expect(Puppet::Util::Yaml.load_file(file_path, {}, true)).to eq({"weirddata" => "{md5}8118df66c9177988ea8cbb9a323271db"})
     end
 
     it 'writes data formatted as YAML to disk' do
-      Puppet::Util::Yaml.dump({ "my" => "data" }, filename)
+      file_path = file_containing('input', '')
+      Puppet::Util::Yaml.dump({ "my" => "data" }, file_path)
 
-      expect(Puppet::Util::Yaml.load_file(filename)).to eq({ "my" => "data" })
-    end
-  end
-
-  def write_file(name, contents)
-    File.open(name, "w:UTF-8") do |fh|
-      fh.write(contents)
+      expect(Puppet::Util::Yaml.load_file(file_path)).to eq({ "my" => "data" })
     end
   end
 end
