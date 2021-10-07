@@ -2050,7 +2050,9 @@ EOT
       :call_hook => :on_initialize_and_write, # Call our hook with the default value, so we always get the value added to facter.
       :hook => proc do |value|
         paths = value.split(File::PATH_SEPARATOR)
-        Puppet.runtime[:facter].search(*paths)
+        facter = Puppet.runtime[:facter]
+        facter.reset
+        facter.search(*paths)
       end
     }
   )
@@ -2191,8 +2193,6 @@ EOT
       # Call our hook with the default value, so we always get the libdir set.
       :call_hook => :on_initialize_and_write,
       :hook => proc do |value|
-        require 'puppet/node'
-        require 'puppet/node/facts'
         if value
           Puppet::Resource::Catalog.indirection.set_global_setting(:cache_class, :store_configs)
           settings.override_default(:catalog_cache_terminus, :store_configs)
