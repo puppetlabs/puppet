@@ -105,9 +105,14 @@ class Puppet::Util::Log
   def Log.level=(level)
     level = level.intern unless level.is_a?(Symbol)
 
-    raise Puppet::DevError, _("Invalid loglevel %{level}") % { level: level } unless @levels.include?(level)
+    # loglevel is a 0-based index
+    loglevel = @levels.index(level)
+    raise Puppet::DevError, _("Invalid loglevel %{level}") % { level: level } unless loglevel
 
-    @loglevel = @levels.index(level)
+    return if @loglevel == loglevel
+
+    # loglevel changed
+    @loglevel = loglevel
 
     # Enable or disable Facter debugging
     Puppet.runtime[:facter].debugging(level == :debug)

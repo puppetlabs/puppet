@@ -4,7 +4,11 @@ RSpec.shared_context('l10n') do |locale|
   before :all do
     @old_locale = Locale.current
     Locale.current = locale
+
+    @old_gettext_disabled = Puppet::GettextConfig.instance_variable_get(:@gettext_disabled)
+    Puppet::GettextConfig.instance_variable_set(:@gettext_disabled, false)
     Puppet::GettextConfig.setup_locale
+    Puppet::GettextConfig.create_default_text_domain
 
     # overwrite stubs with real implementation
     ::Object.send(:remove_method, :_)
@@ -17,6 +21,7 @@ RSpec.shared_context('l10n') do |locale|
   after :all do
     Locale.current = @old_locale
 
+    Puppet::GettextConfig.instance_variable_set(:@gettext_disabled, @old_gettext_disabled)
     # restore stubs
     load File.expand_path(File.join(__dir__, '../../lib/puppet/gettext/stubs.rb'))
   end

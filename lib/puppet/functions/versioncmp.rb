@@ -8,6 +8,9 @@ require_relative '../../puppet/util/package'
 #
 # Where a and b are arbitrary version strings.
 #
+# Optional parameter ignore_trailing_zeroes is used to ignore unnecessary
+# trailing version numbers like .0 or .0.00
+#
 # This function returns:
 #
 # * `1` if version a is greater than version b
@@ -28,9 +31,10 @@ Puppet::Functions.create_function(:versioncmp) do
   dispatch :versioncmp do
     param 'String', :a
     param 'String', :b
+    optional_param 'Boolean', :ignore_trailing_zeroes
   end
 
-  def versioncmp(a, b)
-    Puppet::Util::Package.versioncmp(a, b)
+  def versioncmp(a, b, ignore_trailing_zeroes = false)
+    Puppet::Util::Package.versioncmp(a, b, ignore_trailing_zeroes)
   end
 end
