@@ -1977,7 +1977,9 @@ EOT
       :call_hook => :on_initialize_and_write, # Call our hook with the default value, so we always get the value added to facter.
       :hook => proc do |value|
         paths = value.split(File::PATH_SEPARATOR)
-        Puppet.runtime[:facter].search(*paths)
+        facter = Puppet.runtime[:facter]
+        facter.reset
+        facter.search(*paths)
       end
     }
   )
