@@ -84,7 +84,7 @@ class Benchmarker
 
       roles.each do |j|
         render(File.join(templates, 'module', 'role.pp.erb'),
-               File.join(manifests, "role#{i}.pp"),
+               File.join(manifests, "role#{j}.pp"),
                :name => module_name,
                :index => j)
       end
