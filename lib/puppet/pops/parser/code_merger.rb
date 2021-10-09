@@ -11,17 +11,17 @@ class Puppet::Pops::Parser::CodeMerger
     # PUP-5299, some sites have thousands of entries, and run out of stack when evaluating - the logic
     # below maps the logic as flatly as possible.
     #
-    children = parse_results.select {|x| !x.nil? && x.code}.reduce([]) do |memo, parsed_class|
+    children = parse_results.select {|x| !x.nil? && x.code}.flat_map do |parsed_class|
       case parsed_class.code
       when Puppet::Parser::AST::BlockExpression
         # the BlockExpression wraps a single 4x instruction that is most likely wrapped in a Factory
-        memo + parsed_class.code.children.map {|c| c.is_a?(Puppet::Pops::Model::Factory) ? c.model : c }
+        parsed_class.code.children.map {|c| c.is_a?(Puppet::Pops::Model::Factory) ? c.model : c }
       when Puppet::Pops::Model::Factory
         # If it is a 4x instruction wrapped in a Factory
-        memo + parsed_class.code.model
+        parsed_class.code.model
       else
         # It is the instruction directly
-        memo << parsed_class.code
+        parsed_class.code
       end
     end
     Puppet::Parser::AST::BlockExpression.new(:children => children)
