@@ -2075,6 +2075,7 @@ codedir = #{@coderoot}
 environmentpath = #{@coderoot}/environments
 hiera_config = #{@coderoot}/hiera.yaml
 environment = env1
+server = #{master.connection.hostname}
 ",
 }
 MANI1
@@ -2094,6 +2095,7 @@ codedir = #{@coderoot}
 environmentpath = #{@coderoot}/environments
 hiera_config = #{@coderoot}/hiera.yaml
 environment = env2
+server = #{master.connection.hostname}
 ",
 }
 MANI2
@@ -2113,6 +2115,7 @@ codedir = #{@coderoot}
 environmentpath = #{@coderoot}/environments
 hiera_config = #{@coderoot}/hiera.yaml
 environment = env3
+server = #{master.connection.hostname}
 ",
 }
 MANI3
@@ -2132,6 +2135,7 @@ codedir = #{@coderoot}
 environmentpath = #{@coderoot}/environments
 hiera_config = #{@coderoot}/hiera.yaml
 environment = env4
+server = #{master.connection.hostname}
 ",
 }
 MANI4
@@ -2167,15 +2171,37 @@ external_nodes = #{@coderoot}/enc.rb
 [main]
 environmentpath = #{@coderoot}/environments
 hiera_config = #{@coderoot}/hiera.yaml
+server = #{master.connection.hostname}
 ",
 }
 MANIENC
+
+teardown do
+  on(master, "rm -f /etc/puppetlabs/puppet/ssl/certs/#{@node1}.pem")
+  on(master, "rm -f /etc/puppetlabs/puppet/ssl/certs/#{@node2}.pem")
+  on(master, "rm -f /etc/puppetlabs/puppet/ssl/ca/signed/#{@node1}.pem")
+  on(master, "rm -f /etc/puppetlabs/puppet/ssl/ca/signed/#{@node2}.pem")
+  on(master, "rm -f /etc/puppetlabs/puppet/ssl/private_keys/#{@node1}.pem")
+  on(master, "rm -f /etc/puppetlabs/puppet/ssl/private_keys/#{@node2}.pem")
+  on(master, "rm -f /etc/puppetlabs/puppet/ssl/public_keys/#{@node1}.pem")
+  on(master, "rm -f /etc/puppetlabs/puppet/ssl/public_keys/#{@node2}.pem")
+end
 
 step 'apply main manifest'
 apply_manifest_on(master, @manifest, :catch_failures => true)
 
 step 'start puppet server'
 with_puppet_running_on master, @master_opts, @coderoot do
+
+  step "handle certificate"
+  on(master, "puppetserver ca generate --certname #{@node1}")
+  on(master, "puppetserver ca generate --certname #{@node2}")
+  on(master, "mkdir -p #{@testroot}/puppet/ssl/certs")
+  on(master, "mkdir -p #{@testroot}/puppet/ssl/private_keys")
+  on(master, "cp -a /etc/puppetlabs/puppet/ssl/certs/ca.pem #{@testroot}/puppet/ssl/certs")
+  on(master, "cp -a /etc/puppetlabs/puppet/ssl/crl.pem #{@testroot}/puppet/ssl")
+  on(master, "cp -a /etc/puppetlabs/puppet/ssl/private_keys/#{master.connection.hostname}.pem #{@testroot}/puppet/ssl/private_keys")
+  on(master, "cp -a /etc/puppetlabs/puppet/ssl/certs/#{master.connection.hostname}.pem #{@testroot}/puppet/ssl/certs")
 
   step "global_key"
   rg = on(master, puppet('lookup', 'global_key'))

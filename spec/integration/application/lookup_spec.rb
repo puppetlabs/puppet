@@ -7,6 +7,7 @@ describe 'lookup' do
   include PuppetSpec::Files
 
   context 'with an environment' do
+    let(:fqdn) { Puppet.runtime[:facter].value(:fqdn) }
     let(:env_name) { 'spec' }
     let(:env_dir) { tmpdir('environments') }
     let(:environment_files) do
@@ -46,13 +47,14 @@ describe 'lookup' do
     let(:environments) { Puppet::Environments::Directories.new(populated_env_dir, []) }
     let(:facts) { Puppet::Node::Facts.new("facts", {'my_fact' => 'my_fact_value'}) }
 
-    before do
-      allow(Puppet::Node::Facts.indirection).to receive(:find).and_return(facts)
-    end
-
     let(:populated_env_dir) do
       dir_contained_in(env_dir, environment_files)
       env_dir
+    end
+
+    before do
+      stub_request(:get, "https://puppet:8140/puppet-ca/v1/certificate/#{fqdn}")
+      allow(Puppet::Node::Facts.indirection).to receive(:find).and_return(facts)
     end
 
     def lookup(key, options = {}, explain = false)
@@ -101,13 +103,17 @@ describe 'lookup' do
       lookup('a')
     end
 
-    it 'skip loading of external facts when run with --node' do
-      app.options[:node] = "random_node"
+    describe 'when using --node' do
+      let(:fqdn) { 'random_node' }
 
-      expect(Puppet::Node::Facts.indirection).to receive(:find).and_return(facts)
-      expect(Facter).to receive(:load_external).once.with(false)
-      expect(Facter).to receive(:load_external).once.with(true)
-      lookup('a')
+      it 'skip loading of external facts' do
+        app.options[:node] = fqdn
+
+        expect(Puppet::Node::Facts.indirection).to receive(:find).and_return(facts)
+        expect(Facter).to receive(:load_external).once.with(false)
+        expect(Facter).to receive(:load_external).once.with(true)
+        lookup('a')
+      end
     end
 
     context 'uses node_terminus' do
