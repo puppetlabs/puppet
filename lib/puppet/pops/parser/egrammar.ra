@@ -863,6 +863,8 @@ keyword
   | ATTR
   | FUNCTION
   | PRIVATE
+  | PLAN
+  | APPLY
 
 nil
   : { result = nil}

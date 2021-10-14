@@ -414,6 +414,11 @@ describe "validating 4x" do
         expect(acceptor.error_count).to eql(0)
       end
 
+      it 'allows apply to be used as a resource attribute name' do
+        acceptor = validate(parse('apply("foo.example.com") { sometype { "resourcetitle": apply => "applyvalue" } }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+
       it 'accepts multiple arguments' do
         acceptor = validate(parse('apply(["foo.example.com"], { "other" => "args" }) { }'))
         expect(acceptor.error_count).to eql(0)
