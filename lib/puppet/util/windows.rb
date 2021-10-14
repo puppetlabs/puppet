@@ -9,6 +9,9 @@ module Puppet::Util::Windows
   module File; end
   module Registry
   end
+  module Service
+    DEFAULT_TIMEOUT = 30
+  end
   module SID
     class Principal; end
   end
