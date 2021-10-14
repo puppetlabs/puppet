@@ -13,11 +13,6 @@ module Puppet::Util::Windows
 
     FILE = Puppet::Util::Windows::File
 
-    # integer value of the floor for timeouts when waiting for service pending states.
-    # puppet will wait the length of dwWaitHint if it is longer than this value, but
-    # no shorter
-    DEFAULT_TIMEOUT = 30
-
     # Service error codes
     # https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes--1000-1299-
     ERROR_SERVICE_DOES_NOT_EXIST = 0x00000424
