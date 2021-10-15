@@ -106,7 +106,7 @@ describe "egrammar parsing containers" do
 
     context 'it should allow keywords as attribute names' do
       ['and', 'case', 'class', 'default', 'define', 'else', 'elsif', 'if', 'in', 'inherits', 'node', 'or',
-        'undef', 'unless', 'type', 'attr', 'function', 'private'].each do |keyword|
+        'undef', 'unless', 'type', 'attr', 'function', 'private', 'plan', 'apply'].each do |keyword|
         it "such as #{keyword}" do
           expect { parse("class x ($#{keyword}){} class { x: #{keyword} => 1 }") }.to_not raise_error
         end
@@ -178,7 +178,7 @@ describe "egrammar parsing containers" do
 
     context 'it should allow keywords as attribute names' do
       ['and', 'case', 'class', 'default', 'define', 'else', 'elsif', 'if', 'in', 'inherits', 'node', 'or',
-        'undef', 'unless', 'type', 'attr', 'function', 'private'].each do |keyword|
+        'undef', 'unless', 'type', 'attr', 'function', 'private', 'plan', 'apply'].each do |keyword|
         it "such as #{keyword}" do
           expect {parse("define x ($#{keyword}){} x { y: #{keyword} => 1 }")}.to_not raise_error
         end
