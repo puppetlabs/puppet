@@ -18,11 +18,6 @@ module Puppet::Util::Windows
     include Puppet::FFI::Windows::Functions
     extend Puppet::FFI::Windows::Functions
 
-    # integer value of the floor for timeouts when waiting for service pending states.
-    # puppet will wait the length of dwWaitHint if it is longer than this value, but
-    # no shorter
-    DEFAULT_TIMEOUT = 30
-
     # Returns true if the service exists, false otherwise.
     #
     # @param [String] service_name name of the service
