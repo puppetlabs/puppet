@@ -5,10 +5,9 @@ module Puppet::FileSystem
   class PathPattern
     class InvalidPattern < Puppet::Error; end
 
-    TRAVERSAL = /^\.\.$/
+    DOTDOT = '..'.freeze
     ABSOLUTE_UNIX = /^\//
     ABSOLUTE_WINDOWS = /^[a-z]:/i
-    #ABSOLUT_VODKA #notappearinginthisclass
     CURRENT_DRIVE_RELATIVE_WINDOWS = /^\\/
 
     def self.relative(pattern)
@@ -46,12 +45,9 @@ module Puppet::FileSystem
     private
 
     def validate
-      @pathname.each_filename do |e|
-        if e =~ TRAVERSAL
-          raise(InvalidPattern, _("PathPatterns cannot be created with directory traversals."))
-        end
-      end
-      if @pathstr.match?(CURRENT_DRIVE_RELATIVE_WINDOWS)
+      if @pathstr.split(Pathname::SEPARATOR_PAT).any? { |f| f == DOTDOT }
+        raise(InvalidPattern, _("PathPatterns cannot be created with directory traversals."))
+      elsif @pathstr.match?(CURRENT_DRIVE_RELATIVE_WINDOWS)
         raise(InvalidPattern, _("A PathPattern cannot be a Windows current drive relative path."))
       end
     end
