@@ -38,11 +38,12 @@ class Puppet::Graph::SimpleGraph
     @downstream_from.clear
   end
 
-  # Which resources depend upon the given resource.
+  # Which resources the given resource depends on.
   def dependencies(resource)
     vertex?(resource) ? upstream_from_vertex(resource).keys : []
   end
 
+  # Which resources depend upon the given resource.
   def dependents(resource)
     vertex?(resource) ? downstream_from_vertex(resource).keys : []
   end
@@ -351,7 +352,7 @@ class Puppet::Graph::SimpleGraph
 
   # Just walk the tree and pass each edge.
   def walk(source, direction)
-    # Use an iterative, breadth-first traversal of the graph. One could do
+    # Use an iterative, depth-first traversal of the graph. One could do
     # this recursively, but Ruby's slow function calls and even slower
     # recursion make the shorter, recursive algorithm cost-prohibitive.
     stack = [source]
