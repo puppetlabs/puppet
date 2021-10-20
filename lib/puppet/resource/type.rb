@@ -225,7 +225,7 @@ class Puppet::Resource::Type
       return
     end
 
-    self.code = Puppet::Parser::ParserFactory.code_merger.concatenate([self, other])
+    Puppet::Parser::ParserFactory.code_merger.append(self, other)
   end
 
   # Make an instance of the resource type, and place it in the catalog

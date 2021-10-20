@@ -857,7 +857,7 @@ describe Puppet::Resource::Type do
       expect(dest.code.value).to eq("bar")
     end
 
-    it "should append the other class's code to its code if it has any" do
+    it "concatenates the source and destination class's code" do
       # PUP-3274, the code merging at the top still uses AST::BlockExpression
       # But does not do mutating changes to code blocks, instead a new block is created
       # with references to the two original blocks.
@@ -871,6 +871,20 @@ describe Puppet::Resource::Type do
 
       dest.merge(source)
       expect(dest.code.children.map { |c| c.value }).to eq(%w{dest source})
+    end
+
+    it "appends the source's code to the already flattened destination's code" do
+      flattened_code = code("dest").model
+      dcode = Puppet::Parser::AST::BlockExpression.new(:children => [flattened_code])
+      dest = Puppet::Resource::Type.new(:hostclass, "bar", :code => dcode)
+
+      scode = Puppet::Parser::AST::BlockExpression.new(:children => [code("source")])
+      source = Puppet::Resource::Type.new(:hostclass, "foo", :code => scode)
+
+      dest_code = dest.code
+      dest.merge(source)
+      # check it's the same object
+      expect(dest_code).to equal(dest.code)
     end
   end
 end

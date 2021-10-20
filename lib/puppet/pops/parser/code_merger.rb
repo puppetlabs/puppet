@@ -17,6 +17,27 @@ class Puppet::Pops::Parser::CodeMerger
     Puppet::Parser::AST::BlockExpression.new(:children => children)
   end
 
+  # Append new parse results on the +right+ with existing results on the +left+.
+  # @return Puppet::Parser::AST::BlockExpression
+  def append(left, right)
+    # if the left hasn't been flattened yet, then fall back to concatenate
+    can_append = left &&
+                 left.code.instance_of?(Puppet::Parser::AST::BlockExpression) &&
+                 !left.code.children.any? { |c| c.instance_of?(Puppet::Pops::Model::Factory) }
+
+    if can_append
+      child = flatten(right)
+      if child.instance_of?(Array)
+        left.code.children.concat(child)
+      else
+        left.code.children << child
+      end
+    else
+      left.code = concatenate([left, right])
+      left
+    end
+  end
+
   private
 
   def flatten(parsed_class)
