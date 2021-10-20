@@ -12,18 +12,24 @@ class Puppet::Pops::Parser::CodeMerger
     # below maps the logic as flatly as possible.
     #
     children = parse_results.select {|x| !x.nil? && x.code}.flat_map do |parsed_class|
-      case parsed_class.code
-      when Puppet::Parser::AST::BlockExpression
-        # the BlockExpression wraps a single 4x instruction that is most likely wrapped in a Factory
-        parsed_class.code.children.map {|c| c.is_a?(Puppet::Pops::Model::Factory) ? c.model : c }
-      when Puppet::Pops::Model::Factory
-        # If it is a 4x instruction wrapped in a Factory
-        parsed_class.code.model
-      else
-        # It is the instruction directly
-        parsed_class.code
-      end
+      flatten(parsed_class)
     end
     Puppet::Parser::AST::BlockExpression.new(:children => children)
+  end
+
+  private
+
+  def flatten(parsed_class)
+    case parsed_class.code
+    when Puppet::Parser::AST::BlockExpression
+      # the BlockExpression wraps a single 4x instruction that is most likely wrapped in a Factory
+      parsed_class.code.children.map {|c| c.is_a?(Puppet::Pops::Model::Factory) ? c.model : c }
+    when Puppet::Pops::Model::Factory
+      # If it is a 4x instruction wrapped in a Factory
+      parsed_class.code.model
+    else
+      # It is the instruction directly
+      parsed_class.code
+    end
   end
 end
