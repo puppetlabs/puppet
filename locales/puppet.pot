@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.24.0-169-g88eaa4c1dd\n"
+"Project-Id-Version: Puppet automation framework 6.25.0-32-g88905a5505\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-09-28 10:51+0000\n"
-"PO-Revision-Date: 2021-09-28 10:51+0000\n"
+"POT-Creation-Date: 2021-10-25 13:03+0000\n"
+"PO-Revision-Date: 2021-10-25 13:03+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -384,38 +384,32 @@ msgstr ""
 msgid "Run 'puppet lookup --help' for more details"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:60
-msgid ""
-"The --fact file only accepts yaml and json files.\n"
-"%{run_help}"
-msgstr ""
-
-#: ../lib/puppet/application/lookup.rb:105
+#: ../lib/puppet/application/lookup.rb:101
 msgid "Interactive Hiera lookup"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:272
+#: ../lib/puppet/application/lookup.rb:268
 msgid ""
 "The options %{deep_merge_opts} are only available with '--merge deep'\n"
 "%{run_help}"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:283
+#: ../lib/puppet/application/lookup.rb:279
 msgid ""
 "The --merge option only accepts %{strategies}, or %{last_strategy}\n"
 "%{run_help}"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:308
+#: ../lib/puppet/application/lookup.rb:304
 msgid "No keys were given to lookup."
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:316
+#: ../lib/puppet/application/lookup.rb:312
 msgid "Unknown rendering format '%{format}'"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:366 ../lib/puppet/face/epp.rb:530
-msgid "Incorrect formatted data in %{fact_file} given via the --facts flag"
+#: ../lib/puppet/application/lookup.rb:365
+msgid "Incorrectly formatted data in %{fact_file} given via the --facts flag (only accepts yaml and json files)"
 msgstr ""
 
 #: ../lib/puppet/application/resource.rb:34
@@ -567,76 +561,76 @@ msgstr ""
 msgid "Environment not passed via CLI and no catalog was given, attempting to find out the last server-specified environment"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:309
+#: ../lib/puppet/configurer.rb:311
 msgid "Could not find a usable environment in the lastrunfile. Either the file does not exist, does not have the required keys, or the values of 'initial_environment' and 'converged_environment' are identical."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:313
+#: ../lib/puppet/configurer.rb:315
 msgid "Using environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:344
+#: ../lib/puppet/configurer.rb:339
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:355
+#: ../lib/puppet/configurer.rb:350
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:357
+#: ../lib/puppet/configurer.rb:352
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:420
+#: ../lib/puppet/configurer.rb:408
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:451
+#: ../lib/puppet/configurer.rb:439
 msgid "Environment '%{environment}' not found on server, skipping initial pluginsync."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:468 ../lib/puppet/http/resolver/server_list.rb:68 ../lib/puppet/http/resolver/server_list.rb:72
+#: ../lib/puppet/configurer.rb:456 ../lib/puppet/http/resolver/server_list.rb:68 ../lib/puppet/http/resolver/server_list.rb:72
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:472 ../lib/puppet/http/resolver/server_list.rb:77 ../lib/puppet/http/resolver/server_list.rb:80
+#: ../lib/puppet/configurer.rb:460 ../lib/puppet/http/resolver/server_list.rb:77 ../lib/puppet/http/resolver/server_list.rb:80
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:488
+#: ../lib/puppet/configurer.rb:476
 msgid "Found last server-specified environment: %{environment}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:491
+#: ../lib/puppet/configurer.rb:479
 msgid "Could not find last server-specified environment: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:508 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:496 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:517
+#: ../lib/puppet/configurer.rb:505
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:536
+#: ../lib/puppet/configurer.rb:524
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:544
+#: ../lib/puppet/configurer.rb:532
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:559
+#: ../lib/puppet/configurer.rb:547
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:577
+#: ../lib/puppet/configurer.rb:576
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:599
+#: ../lib/puppet/configurer.rb:598
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -1025,6 +1019,10 @@ msgstr ""
 
 #: ../lib/puppet/face/epp.rb:434
 msgid "--values option must evaluate to a Hash or undef, got: '%{values_class}'"
+msgstr ""
+
+#: ../lib/puppet/face/epp.rb:530
+msgid "Incorrect formatted data in %{fact_file} given via the --facts flag"
 msgstr ""
 
 #: ../lib/puppet/face/facts.rb:24
@@ -9678,52 +9676,52 @@ msgstr ""
 msgid "Logs require a level"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:86 ../lib/puppet/util/log.rb:377 ../lib/puppet/util/windows/eventlog.rb:99
+#: ../lib/puppet/util/log.rb:86 ../lib/puppet/util/log.rb:382 ../lib/puppet/util/windows/eventlog.rb:99
 msgid "Invalid log level %{level}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:108
+#: ../lib/puppet/util/log.rb:110
 msgid "Invalid loglevel %{level}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:135
+#: ../lib/puppet/util/log.rb:140
 msgid "Unknown destination type %{dest}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:175
+#: ../lib/puppet/util/log.rb:180
 msgid "Received a Log attribute with invalid encoding:%{log_message}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:177
+#: ../lib/puppet/util/log.rb:182
 msgid ""
 "Backtrace:\n"
 "%{backtrace}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:231
+#: ../lib/puppet/util/log.rb:236
 msgid "Reopening log files"
 msgstr ""
 
 #. TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
-#: ../lib/puppet/util/log.rb:367
+#: ../lib/puppet/util/log.rb:372
 msgid "Puppet::Util::Log requires a message"
 msgstr ""
 
 #. TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
-#: ../lib/puppet/util/log.rb:373
+#: ../lib/puppet/util/log.rb:378
 msgid "Puppet::Util::Log requires a log level"
 msgstr ""
 
 #. TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
-#: ../lib/puppet/util/log.rb:375
+#: ../lib/puppet/util/log.rb:380
 msgid "Puppet::Util::Log requires a symbol or string"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:406
+#: ../lib/puppet/util/log.rb:411
 msgid "Could not parse for environment %{environment}: %{msg}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:408
+#: ../lib/puppet/util/log.rb:413
 msgid "%{msg} on node %{node}"
 msgstr ""
 
@@ -10242,119 +10240,119 @@ msgstr ""
 msgid "Failed to set security information"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:338
+#: ../lib/puppet/util/windows/service.rb:333
 msgid "Starting the %{service_name} service. Timeout set to: %{timeout} seconds"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:348
+#: ../lib/puppet/util/windows/service.rb:343
 msgid "Failed to start the service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:352
+#: ../lib/puppet/util/windows/service.rb:347
 msgid "Successfully started the %{service_name} service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:361
+#: ../lib/puppet/util/windows/service.rb:356
 msgid "Stopping the %{service_name} service. Timeout set to: %{timeout} seconds"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:369
+#: ../lib/puppet/util/windows/service.rb:364
 msgid "Successfully stopped the %{service_name} service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:378
+#: ../lib/puppet/util/windows/service.rb:373
 msgid "Resuming the %{service_name} service. Timeout set to: %{timeout} seconds"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:394
+#: ../lib/puppet/util/windows/service.rb:389
 msgid "Successfully resumed the %{service_name} service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:410
+#: ../lib/puppet/util/windows/service.rb:405
 msgid "Unknown Service state '%{current_state}' for '%{service_name}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:437
+#: ../lib/puppet/util/windows/service.rb:432
 msgid "Unknown start type '%{start_type}' for '%{service_name}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:487
+#: ../lib/puppet/util/windows/service.rb:482
 msgid "Failed to update service configuration"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:552
+#: ../lib/puppet/util/windows/service.rb:547
 msgid "Failed to fetch services"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:601
+#: ../lib/puppet/util/windows/service.rb:596
 msgid "Failed to open a handle to the service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:618
+#: ../lib/puppet/util/windows/service.rb:613
 msgid "Failed to open a handle to the service control manager"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:641
+#: ../lib/puppet/util/windows/service.rb:636
 msgid "The service is already in the %{final_state} state. No further work needs to be done."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:653
+#: ../lib/puppet/util/windows/service.rb:648
 msgid "The service must be in one of the %{valid_initial_states} states to perform this transition. It is currently in the %{current_state} state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:664
+#: ../lib/puppet/util/windows/service.rb:659
 msgid "There is already a pending transition to the %{final_state} state for the %{service_name} service."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:680
+#: ../lib/puppet/util/windows/service.rb:675
 msgid "The service is in the %{pending_state} state, which is an unsafe pending state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:685
+#: ../lib/puppet/util/windows/service.rb:680
 msgid "Transitioning the %{service_name} service from %{initial_state} to %{final_state}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:689
+#: ../lib/puppet/util/windows/service.rb:684
 msgid "Waiting for the transition to finish"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:694
+#: ../lib/puppet/util/windows/service.rb:689
 msgid "Failed to transition the %{service_name} service to the %{final_state} state. Detail: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:733 ../lib/puppet/util/windows/service.rb:769
+#: ../lib/puppet/util/windows/service.rb:728 ../lib/puppet/util/windows/service.rb:764
 msgid "Service query failed"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:812
+#: ../lib/puppet/util/windows/service.rb:807
 msgid "Service query for %{parameter_name} failed"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:835
+#: ../lib/puppet/util/windows/service.rb:830
 msgid "Failed to update service %{change} configuration"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:862
+#: ../lib/puppet/util/windows/service.rb:857
 msgid "Failed to send the %{control_signal} signal to the service. Its current state is %{current_state}. Reason for failure:"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:897
+#: ../lib/puppet/util/windows/service.rb:892
 msgid "The service transitioned to the %{pending_state} state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:911
+#: ../lib/puppet/util/windows/service.rb:906
 msgid "Timed out while waiting for the service to transition from %{initial_state} to %{final_state} OR from %{initial_state} to %{pending_state} to %{final_state}. The service's current state is %{current_state}."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:926
+#: ../lib/puppet/util/windows/service.rb:921
 msgid "Waiting for the pending transition to the %{final_state} state to finish."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:940
+#: ../lib/puppet/util/windows/service.rb:935
 msgid "Unexpected transition to the %{current_state} state while waiting for the pending transition from %{pending_state} to %{final_state} to finish."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:954
+#: ../lib/puppet/util/windows/service.rb:949
 msgid "Timed out while waiting for the pending transition from %{pending_state} to %{final_state} to finish. The current state is %{current_state}."
 msgstr ""
 
@@ -10394,7 +10392,7 @@ msgstr ""
 msgid "Failed to unload user profile %{user}"
 msgstr ""
 
-#: ../lib/puppet/util/yaml.rb:47
+#: ../lib/puppet/util/yaml.rb:58
 msgid "Puppet::Util::Yaml.load_file is deprecated. Use safe_load_file instead."
 msgstr ""
 
