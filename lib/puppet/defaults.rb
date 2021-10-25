@@ -1096,7 +1096,7 @@ EOT
     settings.define_settings(
     :ca,
     :ca_name => {
-      :default => "Puppet CA: $certname",
+      :default => "Puppet-CA.$certname",
       :desc    => "The name to use the Certificate Authority certificate.",
     },
     :cadir => {
