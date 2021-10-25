@@ -302,9 +302,16 @@ class Puppet::Configurer
       # We only need to find out the environment to run in if we don't already have a catalog
       unless (cached_catalog || options[:catalog] || Puppet.settings.set_by_cli?(:environment) || Puppet[:strict_environment_mode])
         Puppet.debug(_("Environment not passed via CLI and no catalog was given, attempting to find out the last server-specified environment"))
-        if last_server_specified_environment
-          @environment = last_server_specified_environment
-          report.environment = last_server_specified_environment
+        initial_environment, loaded_last_environment = last_server_specified_environment
+
+        unless loaded_last_environment
+          Puppet.debug(_("Requesting environment from the server"))
+          initial_environment = current_server_specified_environment(@environment, configured_environment, options)
+        end
+
+        if initial_environment
+          @environment = initial_environment
+          report.environment = initial_environment
 
           push_current_environment_and_loaders
         else
@@ -463,23 +470,66 @@ class Puppet::Configurer
   end
   private :find_functional_server
 
+  #
+  # @api private
+  #
+  # Read the last server-specified environment from the lastrunfile. The
+  # environment is considered to be server-specified if the values of
+  # `initial_environment` and `converged_environment` are different.
+  #
+  # @return [String, Boolean] An array containing a string with the environment
+  #   read from the lastrunfile in case the server is authoritative, and a
+  #   boolean marking whether the last environment was correctly loaded.
   def last_server_specified_environment
-    return @last_server_specified_environment if @last_server_specified_environment
+    return @last_server_specified_environment, @loaded_last_environment if @last_server_specified_environment
+
     if Puppet::FileSystem.exist?(Puppet[:lastrunfile])
       summary = Puppet::Util::Yaml.safe_load_file(Puppet[:lastrunfile])
-      return unless summary.dig('application', 'run_mode') == 'agent'
-      initial_environment = summary.dig('application', 'initial_environment')
-      converged_environment = summary.dig('application', 'converged_environment')
+      return [nil, nil] unless summary['application']['run_mode'] == 'agent'
+      initial_environment = summary['application']['initial_environment']
+      converged_environment = summary['application']['converged_environment']
       @last_server_specified_environment = converged_environment if initial_environment != converged_environment
+      Puppet.debug(_("Successfully loaded last environment from the lastrunfile"))
+      @loaded_last_environment = true
     end
 
     Puppet.debug(_("Found last server-specified environment: %{environment}") % { environment: @last_server_specified_environment }) if @last_server_specified_environment
-    @last_server_specified_environment
+    [@last_server_specified_environment, @loaded_last_environment]
   rescue => detail
     Puppet.debug(_("Could not find last server-specified environment: %{detail}") % { detail: detail })
-    nil
+    [nil, nil]
   end
   private :last_server_specified_environment
+
+  def current_server_specified_environment(current_environment, configured_environment, options)
+    return @server_specified_environment if @server_specified_environment
+
+    begin
+      node_retr_time = thinmark do
+        node = Puppet::Node.indirection.find(Puppet[:node_name_value],
+                                             :environment => Puppet::Node::Environment.remote(current_environment),
+                                             :configured_environment => configured_environment,
+                                             :ignore_cache => true,
+                                             :transaction_uuid => @transaction_uuid,
+                                             :fail_on_404 => true)
+
+        @server_specified_environment = node.environment.name.to_s
+
+        if @server_specified_environment != @environment
+          Puppet.notice _("Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'.") % { local_env: @environment, node_env: @server_specified_environment }
+        end
+      end
+
+      options[:report].add_times(:node_retrieval, node_retr_time)
+
+      @server_specified_environment
+    rescue => detail
+      Puppet.warning(_("Unable to fetch my node definition, but the agent run will continue:"))
+      Puppet.warning(detail)
+      nil
+    end
+  end
+  private :current_server_specified_environment
 
   def send_report(report)
     puts report.summary if Puppet[:summarize]
