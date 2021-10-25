@@ -518,33 +518,119 @@ Searching for "a"
       end
 
       it 'receives extra facts in top scope' do
-        file_path = tmpdir('lookup_spec')
-        filename = File.join(file_path, "facts.yaml")
-        File.open(filename, "w+") { |f| f.write(<<-YAML.unindent) }
+        file_path = file_containing('facts.yaml', <<~CONTENT)
           ---
           cx: ' C from facts'
-          YAML
+        CONTENT
 
         lookup.options[:node] = node
-        lookup.options[:fact_file] = filename
+        lookup.options[:fact_file] = file_path
         lookup.options[:render_as] = :s
         allow(lookup.command_line).to receive(:args).and_return(['c'])
         expect(run_lookup(lookup)).to eql("This is C from facts")
       end
 
       it 'receives extra facts in the facts hash' do
-        file_path = tmpdir('lookup_spec')
-        filename = File.join(file_path, "facts.yaml")
-        File.open(filename, "w+") { |f| f.write(<<-YAML.unindent) }
+        file_path = file_containing('facts.yaml', <<~CONTENT)
           ---
           cx: ' G from facts'
-        YAML
+        CONTENT
 
         lookup.options[:node] = node
-        lookup.options[:fact_file] = filename
+        lookup.options[:fact_file] = file_path
         lookup.options[:render_as] = :s
         allow(lookup.command_line).to receive(:args).and_return(['g'])
         expect(run_lookup(lookup)).to eql("This is G from facts in facts hash")
+      end
+
+      describe 'when retrieving given facts' do
+        before do
+          lookup.options[:node] = node
+          allow(lookup.command_line).to receive(:args).and_return(['g'])
+        end
+
+        it 'loads files with yaml extension as yaml on first try' do
+          file_path = file_containing('facts.yaml', <<~CONTENT)
+            ---
+            cx: ' G from facts'
+          CONTENT
+          lookup.options[:fact_file] = file_path
+
+          expect(Puppet::Util::Yaml).to receive(:safe_load_file).with(file_path, []).and_call_original
+          run_lookup(lookup)
+        end
+
+        it 'loads files with yml extension as yaml on first try' do
+          file_path = file_containing('facts.yml', <<~CONTENT)
+            ---
+            cx: ' G from facts'
+          CONTENT
+          lookup.options[:fact_file] = file_path
+
+          expect(Puppet::Util::Yaml).to receive(:safe_load_file).with(file_path, []).and_call_original
+          run_lookup(lookup)
+        end
+
+        it 'loads files with json extension as json on first try' do
+          file_path = file_containing('facts.json', <<~CONTENT)
+            {
+              "cx": " G from facts"
+            }
+          CONTENT
+          lookup.options[:fact_file] = file_path
+
+          expect(Puppet::Util::Json).to receive(:load_file).with(file_path, {}).and_call_original
+          run_lookup(lookup)
+        end
+
+        it 'detects file format accordingly even with random file extension' do
+          file_path = file_containing('facts.txt', <<~CONTENT)
+            {
+              "cx": " G from facts"
+            }
+          CONTENT
+          lookup.options[:fact_file] = file_path
+
+          expect(Puppet::Util::Json).to receive(:load_file_if_valid).with(file_path).and_call_original
+          expect(Puppet::Util::Yaml).not_to receive(:safe_load_file_if_valid).with(file_path)
+          run_lookup(lookup)
+        end
+
+        it 'detects file without extension as json due to valid contents' do
+          file_path = file_containing('facts', <<~CONTENT)
+            {
+              "cx": " G from facts"
+            }
+          CONTENT
+          lookup.options[:fact_file] = file_path
+
+          expect(Puppet::Util::Json).to receive(:load_file_if_valid).with(file_path).and_call_original
+          expect(Puppet::Util::Yaml).not_to receive(:safe_load_file_if_valid).with(file_path)
+          run_lookup(lookup)
+        end
+
+        it 'detects file without extension as yaml due to valid contents' do
+          file_path = file_containing('facts', <<~CONTENT)
+            ---
+            cx: ' G from facts'
+          CONTENT
+          lookup.options[:fact_file] = file_path
+
+          expect(Puppet::Util::Json.load_file_if_valid(file_path)).to be_nil
+          expect(Puppet::Util::Yaml).to receive(:safe_load_file_if_valid).with(file_path).and_call_original
+          run_lookup(lookup)
+        end
+
+        it 'raises error due to invalid contents' do
+          file_path = file_containing('facts.yml', <<~CONTENT)
+            INVALID CONTENT
+          CONTENT
+          lookup.options[:fact_file] = file_path
+
+          expect {
+            lookup.run_command
+          }.to raise_error(/Incorrectly formatted data in .+ given via the --facts flag \(only accepts yaml and json files\)/)
+        end
       end
     end
 

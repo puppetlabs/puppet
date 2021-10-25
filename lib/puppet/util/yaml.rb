@@ -42,6 +42,17 @@ module Puppet::Util::Yaml
     safe_load(yaml, allowed_classes, filename)
   end
 
+  # Safely load the content from a file as YAML if
+  # contents are in valid format. This method does not
+  # raise error but returns `nil` when invalid file is
+  # given.
+  def self.safe_load_file_if_valid(filename, allowed_classes = [])
+    safe_load_file(filename, allowed_classes)
+  rescue YamlLoadError, ArgumentError, Errno::ENOENT => detail
+    Puppet.debug("Could not retrieve YAML content from '#{filename}': #{detail.message}")
+    nil
+  end
+
   # @deprecated Use {#safe_load_file} instead.
   def self.load_file(filename, default_value = false, strip_classes = false)
     Puppet.deprecation_warning(_("Puppet::Util::Yaml.load_file is deprecated. Use safe_load_file instead."))
