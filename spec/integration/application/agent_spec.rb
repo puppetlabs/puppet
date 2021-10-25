@@ -642,6 +642,27 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
   end
 
   context "environment convergence" do
+    it "falls back to making a node request if the last server-specified environment cannot be loaded" do
+      server.start_server do |port|
+        Puppet[:serverport] = port
+        Puppet[:log_level] = 'debug'
+
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(0)
+         .and output(a_string_matching(%r{Debug: Requesting environment from the server})).to_stdout
+
+        Puppet::Application.clear!
+
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(0)
+         .and output(a_string_matching(%r{Debug: Successfully loaded last environment from the lastrunfile})).to_stdout
+      end
+    end
+
     it "switches to 'newenv' environment and retries the run" do
       first_run = true
       libdir = File.join(my_fixture_dir, 'lib')
