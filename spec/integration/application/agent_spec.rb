@@ -643,7 +643,14 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
 
   context "environment convergence" do
     it "falls back to making a node request if the last server-specified environment cannot be loaded" do
-      server.start_server do |port|
+      mounts = {}
+      mounts[:node] = -> (req, res) {
+        node = Puppet::Node.new('test', environment: Puppet::Node::Environment.remote('doesnotexistonagent'))
+        res.body = formatter.render(node)
+        res['Content-Type'] = formatter.mime
+      }
+
+      server.start_server(mounts: mounts) do |port|
         Puppet[:serverport] = port
         Puppet[:log_level] = 'debug'
 
