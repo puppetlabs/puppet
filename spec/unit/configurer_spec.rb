@@ -2,6 +2,8 @@ require 'spec_helper'
 require 'puppet/configurer'
 
 describe Puppet::Configurer do
+  include PuppetSpec::Files
+
   before do
     Puppet[:server] = "puppetmaster"
     Puppet[:report] = true
@@ -10,6 +12,17 @@ describe Puppet::Configurer do
     allow_any_instance_of(described_class).to(
       receive(:valid_server_environment?).and_return(true)
     )
+
+    Puppet[:lastrunfile] = file_containing('last_run_summary.yaml', <<~SUMMARY)
+    ---
+    version:
+      config: 1624882680
+      puppet: #{Puppet.version}
+    application:
+      initial_environment: #{Puppet[:environment]}
+      converged_environment: #{Puppet[:environment]}
+      run_mode: agent
+    SUMMARY
   end
 
   let(:node_name) { Puppet[:node_name_value] }
@@ -1099,7 +1112,6 @@ describe Puppet::Configurer do
   end
 
   describe "when selecting an environment" do
-    include PuppetSpec::Files
     include PuppetSpec::Settings
 
     describe "when the last used environment is available" do
@@ -1205,10 +1217,12 @@ describe Puppet::Configurer do
     describe "when the last used environment is not available" do
       describe "when the node request succeeds" do
         let(:node_environment) { Puppet::Node::Environment.remote(:salam) }
-        let(:node) { double(Puppet::Node, :environment => node_environment) }
+        let(:node) { Puppet::Node.new(Puppet[:node_name_value]) }
         let(:last_server_specified_environment) { 'development' }
 
         before do
+          node.environment = node_environment
+
           allow(Puppet::Node.indirection).to receive(:find)
           allow(Puppet::Node.indirection).to receive(:find)
             .with(anything, hash_including(:ignore_cache => true, :fail_on_404 => true))
