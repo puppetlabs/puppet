@@ -26,6 +26,23 @@ module Puppet::Util
       require 'json'
     end
 
+    # Load the content from a file as JSON if
+    # contents are in valid format. This method does not
+    # raise error but returns `nil` when invalid file is
+    # given.
+    def self.load_file_if_valid(filename, options = {})
+      load_file(filename, options)
+    rescue Puppet::Util::Json::ParseError, ArgumentError, Errno::ENOENT => detail
+      Puppet.debug("Could not retrieve JSON content from '#{filename}': #{detail.message}")
+      nil
+    end
+
+    # Load the content from a file as JSON.
+    def self.load_file(filename, options = {})
+      json = Puppet::FileSystem.read(filename, :encoding => 'utf-8')
+      load(json, options)
+    end
+
     # These methods do similar processing to the fallback implemented by MultiJson
     # when using the built-in JSON backend, to ensure consistent behavior
     # whether or not MultiJson can be loaded.
