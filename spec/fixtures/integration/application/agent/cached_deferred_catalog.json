@@ -6,7 +6,7 @@
   "version": 1607629733,
   "code_id": null,
   "catalog_uuid": "afc8472a-306b-4b24-b060-e956dffb79b8",
-  "catalog_format": 1,
+  "catalog_format": 2,
   "environment": "production",
   "resources": [
     {
@@ -50,6 +50,7 @@
       ],
       "file": "",
       "line": 1,
+      "kind": "compilable_type",
       "exported": false,
       "parameters": {
         "message": {
