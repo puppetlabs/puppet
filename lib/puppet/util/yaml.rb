@@ -42,6 +42,17 @@ module Puppet::Util::Yaml
     safe_load(yaml, allowed_classes, filename)
   end
 
+  # Safely load the content from a file as YAML if
+  # contents are in valid format. This method does not
+  # raise error but returns `nil` when invalid file is
+  # given.
+  def self.safe_load_file_if_valid(filename, allowed_classes = [])
+    safe_load_file(filename, allowed_classes)
+  rescue YamlLoadError, ArgumentError, Errno::ENOENT => detail
+    Puppet.debug("Could not retrieve YAML content from '#{filename}': #{detail.message}")
+    nil
+  end
+
   def self.dump(structure, filename)
     Puppet::FileSystem.replace_file(filename, 0660) do |fh|
       YAML.dump(structure, fh)
