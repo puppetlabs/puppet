@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.25.0-32-g88905a5505\n"
+"Project-Id-Version: Puppet automation framework 6.25.0-36-gbb1017f923\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2021-10-25 13:03+0000\n"
-"PO-Revision-Date: 2021-10-25 13:03+0000\n"
+"POT-Creation-Date: 2021-10-27 01:18+0000\n"
+"PO-Revision-Date: 2021-10-27 01:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -561,76 +561,92 @@ msgstr ""
 msgid "Environment not passed via CLI and no catalog was given, attempting to find out the last server-specified environment"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:311
+#: ../lib/puppet/configurer.rb:308
+msgid "Requesting environment from the server"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:318
 msgid "Could not find a usable environment in the lastrunfile. Either the file does not exist, does not have the required keys, or the values of 'initial_environment' and 'converged_environment' are identical."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:315
+#: ../lib/puppet/configurer.rb:322
 msgid "Using environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:339
+#: ../lib/puppet/configurer.rb:346
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:350
+#: ../lib/puppet/configurer.rb:357
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:352
+#: ../lib/puppet/configurer.rb:359
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:408
+#: ../lib/puppet/configurer.rb:415
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:439
+#: ../lib/puppet/configurer.rb:446
 msgid "Environment '%{environment}' not found on server, skipping initial pluginsync."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:456 ../lib/puppet/http/resolver/server_list.rb:68 ../lib/puppet/http/resolver/server_list.rb:72
+#: ../lib/puppet/configurer.rb:463 ../lib/puppet/http/resolver/server_list.rb:68 ../lib/puppet/http/resolver/server_list.rb:72
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:460 ../lib/puppet/http/resolver/server_list.rb:77 ../lib/puppet/http/resolver/server_list.rb:80
+#: ../lib/puppet/configurer.rb:467 ../lib/puppet/http/resolver/server_list.rb:77 ../lib/puppet/http/resolver/server_list.rb:80
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:476
+#: ../lib/puppet/configurer.rb:492
+msgid "Successfully loaded last environment from the lastrunfile"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:496
 msgid "Found last server-specified environment: %{environment}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:479
+#: ../lib/puppet/configurer.rb:499
 msgid "Could not find last server-specified environment: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:496 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:529
+msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:537
+msgid "Unable to fetch my node definition, but the agent run will continue:"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:556 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:505
+#: ../lib/puppet/configurer.rb:565
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:524
+#: ../lib/puppet/configurer.rb:584
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:532
+#: ../lib/puppet/configurer.rb:592
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:547
+#: ../lib/puppet/configurer.rb:607
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:576
+#: ../lib/puppet/configurer.rb:636
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:598
+#: ../lib/puppet/configurer.rb:658
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
