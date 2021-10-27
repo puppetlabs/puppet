@@ -1102,6 +1102,14 @@ From where to retrieve translation files\. The standard Puppet \fBfile\fR type i
 .
 .IP "" 0
 .
+.SS "location_trusted"
+This will allow sending the name + password and the cookie header to all hosts that puppet may redirect to\. This may or may not introduce a security breach if puppet redirects you to a site to which you\'ll send your authentication info and cookies\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: \fBfalse\fR
+.
+.IP "" 0
+.
 .SS "log_level"
 Default logging level for messages from Puppet\. Allowed values are:
 .
