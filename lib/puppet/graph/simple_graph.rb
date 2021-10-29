@@ -352,7 +352,7 @@ class Puppet::Graph::SimpleGraph
 
   # Just walk the tree and pass each edge.
   def walk(source, direction)
-    # Use an iterative, depth-first traversal of the graph. One could do
+    # Use an iterative, breadth-first traversal of the graph. One could do
     # this recursively, but Ruby's slow function calls and even slower
     # recursion make the shorter, recursive algorithm cost-prohibitive.
     stack = [source]
