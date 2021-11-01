@@ -7,6 +7,7 @@ describe 'lookup' do
   include PuppetSpec::Files
 
   context 'with an environment' do
+    let(:facts) { Puppet::Node::Facts.new("facts", {}) }
     let(:env_name) { 'spec' }
     let(:env_dir) { tmpdir('environments') }
     let(:environment_files) do
@@ -98,6 +99,8 @@ describe 'lookup' do
 
     it 'skip loading of external facts when run with --node' do
       app.options[:node] = "random_node"
+
+      expect(Puppet::Node::Facts.indirection).to receive(:find).and_return(facts)
       expect(Facter).to receive(:load_external).once.with(false)
       expect(Facter).to receive(:load_external).once.with(true)
       lookup('a')
