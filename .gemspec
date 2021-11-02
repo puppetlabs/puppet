@@ -4,8 +4,8 @@
 # This gemspec is not intended to be used for building the Puppet gem.  This
 # gemspec is intended for use with bundler when Puppet is a dependency of
 # another project.  For example, the stdlib project is able to integrate with
-# the master branch of Puppet by using a Gemfile path of
-# git://github.com/puppetlabs/puppet.git
+# the main branch of Puppet by using a Gemfile path of
+# https://github.com/puppetlabs/puppet
 #
 # Please see the [packaging
 # repository](https://github.com/puppetlabs/packaging) for information on how

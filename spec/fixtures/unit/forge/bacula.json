@@ -37,7 +37,7 @@
           "license": "Apache 2.0",
           "checksums": { },
           "version": "0.0.2",
-          "source": "git://github.com/puppetlabs/puppetlabs-bacula.git",
+          "source": "https://github.com/puppetlabs/puppetlabs-bacula",
           "project_page": "https://github.com/puppetlabs/puppetlabs-bacula",
           "summary": "bacula",
           "dependencies": [ ],
