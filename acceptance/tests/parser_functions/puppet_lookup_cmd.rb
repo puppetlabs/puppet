@@ -318,6 +318,15 @@ file { '#{@coderoot}/hiera.yaml':
 ',
 }
 
+## facts file
+file { '#{@coderoot}/facts.yaml':
+  ensure => file,
+  mode => "0644",
+  content => '---
+  my_data_key: "my_data_value"
+',
+}
+
 file { '#{@coderoot}/hieradata/global.yaml':
   ensure => file,
   mode => "0644",
@@ -2553,7 +2562,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   apply_manifest_on(master, @encmanifest, :catch_failures => true)
 
   step "--compile uses environment specified in ENC"
-  r = on(master, puppet('lookup', '--compile', "--node #{@node1}", "--confdir #{@confdir}", 'environment_key'))
+  r = on(master, puppet('lookup', '--compile', "--node #{@node1}", "--confdir #{@confdir}", "--facts #{@coderoot}/facts.yaml", 'environment_key'))
   result = r.stdout
   assert_match(
     /env-env2-ruby-function/,
@@ -2562,7 +2571,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   )
 
   step "without --compile does not use environment specified in ENC"
-  r = on(master, puppet('lookup', "--node #{@node1}", "--confdir #{@confdir}", 'environment_key'))
+  r = on(master, puppet('lookup', "--node #{@node1}", "--confdir #{@confdir}", "--facts #{@coderoot}/facts.yaml", 'environment_key'))
   result = r.stdout
   assert_match(
     /env-production hiera provided value/,
@@ -2570,4 +2579,12 @@ with_puppet_running_on master, @master_opts, @coderoot do
     "lookup in production environment failed"
   )
 
+  step "lookup fails when there are no facts available"
+  r = on(master, puppet('lookup', '--compile', "--node #{@node1}", "--confdir #{@confdir}", 'environment_key'), :acceptable_exit_codes => [1])
+  result = r.stderr
+  assert_match(
+    /No facts available/,
+    result,
+    "Expected to raise when there were no facts available."
+  )
 end

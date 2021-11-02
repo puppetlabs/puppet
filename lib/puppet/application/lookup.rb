@@ -360,6 +360,10 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       facts = Puppet::Node::Facts.new(node, {}) if facts.nil?
       facts.add_extra_values(given_facts) if given_facts
 
+      if facts.values.empty?
+        raise _("No facts available for target node: %{node}") % { node: node}
+      end
+
       ni = Puppet::Node.indirection
       tc = ni.terminus_class
 
