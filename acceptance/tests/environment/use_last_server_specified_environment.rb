@@ -63,15 +63,25 @@ END
 
   with_puppet_running_on(master, master_opts, testdir) do
     agents.each do |agent|
-      run_agent_on(agent, '--no-daemonize --onetime --verbose') do |result|
-        assert_match(/Info: Using environment 'production'/, result.stdout)
-        assert_match(/Local environment: 'production' doesn't match server specified environment 'special', restarting agent run with environment 'special'/, result.stdout)
-        assert_match(/Notice: special environment/, result.stdout)
+      step 'ensure the lastrunfile is absent for the first run' do
+        on(agent, puppet('config print lastrunfile')) do |command_result|
+          agent.rm_rf(command_result.stdout)
+        end
       end
 
-      run_agent_on(agent, '--no-daemonize --onetime --verbose') do |result|
-        assert_match(/Info: Using environment 'special'/, result.stdout)
-        assert_match(/Notice: special environment/, result.stdout)
+      step 'first run: agent makes a node request to get the environment' do
+        run_agent_on(agent, '--no-daemonize --onetime --debug') do |result|
+          assert_match(/Local environment: 'production' doesn't match server specified node environment 'special', switching agent to 'special'/, result.stdout)
+          assert_match(/Debug: HTTP GET .*\/puppet\/v3\/node/, result.stdout)
+          assert_match(/Notice: special environment/, result.stdout)
+        end
+      end
+
+      step 'second run: agent uses the environment from lastrunfile' do
+        run_agent_on(agent, '--no-daemonize --onetime --debug') do |result|
+          assert_match(/Debug: Successfully loaded last environment from the lastrunfile/, result.stdout)
+          assert_match(/Notice: special environment/, result.stdout)
+        end
       end
     end
   end
