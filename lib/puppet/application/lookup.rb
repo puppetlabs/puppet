@@ -337,18 +337,6 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       Puppet.settings[:facts_terminus] = 'facter'
     end
 
-    unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
-      ni = Puppet::Node.indirection
-      tc = ni.terminus_class
-      if tc == :plain || options[:compile]
-        node = ni.find(node)
-      else
-        ni.terminus_class = :plain
-        node = ni.find(node)
-        ni.terminus_class = tc
-      end
-    end
-
     fact_file = options[:fact_file]
 
     if fact_file
@@ -364,7 +352,30 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       unless given_facts.instance_of?(Hash)
         raise _("Incorrectly formatted data in %{fact_file} given via the --facts flag (only accepts yaml and json files)") % { fact_file: fact_file }
       end
-      node.add_extra_facts(given_facts)
+    end
+
+    unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
+      facts = Puppet::Node::Facts.indirection.find(node, :environment => Puppet.lookup(:current_environment))
+
+      facts = Puppet::Node::Facts.new(node, {}) if facts.nil?
+      facts.add_extra_values(given_facts) if given_facts
+
+      if facts.values.empty?
+        raise _("No facts available for target node: %{node}") % { node: node}
+      end
+
+      ni = Puppet::Node.indirection
+      tc = ni.terminus_class
+
+      if tc == :plain || options[:compile]
+        node = ni.find(node, facts: facts)
+      else
+        ni.terminus_class = :plain
+        node = ni.find(node, facts: facts)
+        ni.terminus_class = tc
+      end
+    else
+      node.add_extra_facts(given_facts) if given_facts
     end
 
     Puppet[:code] = 'undef' unless options[:compile]

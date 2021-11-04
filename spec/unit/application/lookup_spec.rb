@@ -631,6 +631,14 @@ Searching for "a"
             lookup.run_command
           }.to raise_error(/Incorrectly formatted data in .+ given via the --facts flag \(only accepts yaml and json files\)/)
         end
+
+        it "fails when a node doesn't have facts" do
+          lookup.options[:node] = "bad.node"
+          allow(lookup.command_line).to receive(:args).and_return(['c'])
+
+          expected_error = "No facts available for target node: #{lookup.options[:node]}"
+          expect { lookup.run_command }.to raise_error(RuntimeError, expected_error)
+        end
       end
     end
 
