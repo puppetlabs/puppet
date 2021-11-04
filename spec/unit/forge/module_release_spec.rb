@@ -90,7 +90,7 @@ describe Puppet::Forge::ModuleRelease do
         "checksums": { },
         "version": "#{module_version}",
         "description": "Standard Library for Puppet Modules",
-        "source": "git://github.com/puppetlabs/puppetlabs-stdlib.git",
+        "source": "https://github.com/puppetlabs/puppetlabs-stdlib",
         "project_page": "https://github.com/puppetlabs/puppetlabs-stdlib",
         "summary": "Puppet Module Standard Library",
         "dependencies": [
@@ -204,7 +204,7 @@ describe Puppet::Forge::ModuleRelease do
         "checksums": { },
         "version": "#{module_version}",
         "description": "Standard Library for Puppet Modules",
-        "source": "git://github.com/puppetlabs/puppetlabs-stdlib.git",
+        "source": "https://github.com/puppetlabs/puppetlabs-stdlib",
         "project_page": "https://github.com/puppetlabs/puppetlabs-stdlib",
         "summary": "Puppet Module Standard Library",
         "author": "#{module_author}",
@@ -279,7 +279,7 @@ describe Puppet::Forge::ModuleRelease do
         "checksums": { },
         "version": "#{module_version}",
         "description": "Standard Library for Puppet Modules",
-        "source": "git://github.com/puppetlabs/puppetlabs-stdlib.git",
+        "source": "https://github.com/puppetlabs/puppetlabs-stdlib",
         "project_page": "https://github.com/puppetlabs/puppetlabs-stdlib",
         "summary": "Puppet Module Standard Library",
         "dependencies": [

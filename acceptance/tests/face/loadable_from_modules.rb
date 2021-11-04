@@ -19,7 +19,7 @@ metadata_json_file = <<-FILE
   "author": "Puppet Labs",
   "summary": "Nginx Module",
   "license": "Apache Version 2.0",
-  "source": "git://github.com/puppetlabs/puppetlabs-nginx.git",
+  "source": "https://github.com/puppetlabs/puppetlabs-nginx",
   "project_page": "https://github.com/puppetlabs/puppetlabs-nginx",
   "issues_url": "https://github.com/puppetlabs/puppetlabs-nginx",
   "dependencies": [
