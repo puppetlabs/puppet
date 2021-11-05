@@ -313,7 +313,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     super()
     @name = name
     @catalog_uuid = SecureRandom.uuid
-    @catalog_format = 2
+    @catalog_format = 1
     @metadata = {}
     @recursive_metadata = {}
     @classes = []

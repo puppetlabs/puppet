@@ -638,68 +638,19 @@ describe Puppet::Resource do
     it "should use the resource type's :new method to create the resource if the resource is of a builtin type" do
       resource = Puppet::Resource.new("file", basepath+"/my/file")
       result = resource.to_ral
-
       expect(result).to be_instance_of(Puppet::Type.type(:file))
       expect(result[:path]).to eq(basepath+"/my/file")
     end
 
-    it "should convert to a component instance if the resource is not a compilable_type" do
+    it "should convert to a component instance if the resource type is not of a builtin type" do
       resource = Puppet::Resource.new("foobar", "somename")
       result = resource.to_ral
 
       expect(result).to be_instance_of(Puppet::Type.type(:component))
       expect(result.title).to eq("Foobar[somename]")
     end
-
-    it "should convert to a component instance if the resource is a class" do
-      resource = Puppet::Resource.new("Class", "somename")
-      result = resource.to_ral
-
-      expect(result).to be_instance_of(Puppet::Type.type(:component))
-      expect(result.title).to eq("Class[Somename]")
-    end
-
-    it "should convert to component when the resource is a defined_type" do
-      resource = Puppet::Resource.new("Unknown", "type", :kind => 'defined_type')
-
-      result = resource.to_ral
-      expect(result).to be_instance_of(Puppet::Type.type(:component))
-    end
-
-    it "should raise if a resource type is a compilable_type and it wasn't found" do
-      resource = Puppet::Resource.new("Unknown", "type", :kind => 'compilable_type')
-
-      expect { resource.to_ral }.to raise_error(Puppet::Error, "Resource type 'Unknown' was not found")
-    end
-
-    it "should use the old behaviour when the catalog_format is equal to 1" do
-      resource = Puppet::Resource.new("Unknown", "type")
-      catalog = Puppet::Resource::Catalog.new("mynode")
-
-      resource.catalog = catalog
-      resource.catalog.catalog_format = 1
-
-      result = resource.to_ral
-      expect(result).to be_instance_of(Puppet::Type.type(:component))
-    end
-
-    it "should use the new behaviour and fail when the catalog_format is greater than 1" do
-      resource = Puppet::Resource.new("Unknown", "type", :kind => 'compilable_type')
-      catalog = Puppet::Resource::Catalog.new("mynode")
-
-      resource.catalog = catalog
-      resource.catalog.catalog_format = 2
-
-      expect { resource.to_ral }.to raise_error(Puppet::Error, "Resource type 'Unknown' was not found")
-    end
-
-    it "should use the resource type when the resource doesn't respond to kind and the resource type can be found" do
-      resource = Puppet::Resource.new("file", basepath+"/my/file")
-
-      result = resource.to_ral
-      expect(result).to be_instance_of(Puppet::Type.type(:file))
-    end
   end
+
   describe "when converting to puppet code" do
     before do
       @resource = Puppet::Resource.new("one::two", "/my/file",
@@ -813,13 +764,6 @@ describe Puppet::Resource do
       resource.line = 50
 
       expect(Puppet::Resource.from_data_hash(JSON.parse(resource.to_json)).line).to eq(50)
-    end
-
-    it "should include the kind if one is set" do
-      resource = Puppet::Resource.new("File", "/foo")
-      resource.kind = 'im_a_file'
-
-      expect(Puppet::Resource.from_data_hash(JSON.parse(resource.to_json)).kind).to eq('im_a_file')
     end
 
     it "should include the 'exported' value if one is set" do
