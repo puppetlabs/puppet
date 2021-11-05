@@ -118,7 +118,7 @@
   "version": 1492108311,
   "code_id": null,
   "catalog_uuid": "c85cdf7e-f56d-4fc7-b513-3a00532cee91",
-  "catalog_format": 2,
+  "catalog_format": 1,
   "environment": "production",
   "resources": [
     {

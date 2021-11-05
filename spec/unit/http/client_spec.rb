@@ -597,68 +597,11 @@ describe Puppet::HTTP::Client do
       expect(response).to be_success
     end
 
-    it "does not preserve basic authorization when redirecting to different hosts" do
-      stub_request(:get, start_url).with(basic_auth: credentials).to_return(redirect_to(url: other_host))
-      stub_request(:get, other_host).to_return(status: 200)
-
-      client.get(start_url, options: {basic_auth: {user: 'user', password: 'pass'}})
-      expect(a_request(:get, other_host).
-      with{ |req| !req.headers.key?('Authorization')}).to have_been_made
-    end
-
-    it "does preserve basic authorization when redirecting to the same hosts" do
+    it "preserves basic authorization" do
       stub_request(:get, start_url).with(basic_auth: credentials).to_return(redirect_to(url: bar_url))
       stub_request(:get, bar_url).with(basic_auth: credentials).to_return(status: 200)
 
       client.get(start_url, options: {basic_auth: {user: 'user', password: 'pass'}})
-      expect(a_request(:get, bar_url).
-      with{ |req| req.headers.key?('Authorization')}).to have_been_made
-    end
-
-    it "does not preserve cookie header when redirecting to different hosts" do
-      headers = { 'Cookie' => 'TEST_COOKIE'}
-
-      stub_request(:get, start_url).with(headers: headers).to_return(redirect_to(url: other_host))
-      stub_request(:get, other_host).to_return(status: 200)
-
-      client.get(start_url, headers: headers)
-      expect(a_request(:get, other_host).
-      with{ |req| !req.headers.key?('Cookie')}).to have_been_made
-    end
-
-    it "does preserve cookie header when redirecting to the same hosts" do
-      headers = { 'Cookie' => 'TEST_COOKIE'}
-
-      stub_request(:get, start_url).with(headers: headers).to_return(redirect_to(url: bar_url))
-      stub_request(:get, bar_url).with(headers: headers).to_return(status: 200)
-
-      client.get(start_url, headers: headers)
-      expect(a_request(:get, bar_url).
-      with{ |req| req.headers.key?('Cookie')}).to have_been_made
-    end
-
-    it "does preserves cookie header and basic authentication when Puppet[:location_trusted] is true redirecting to different hosts" do
-      headers = { 'cookie' => 'TEST_COOKIE'}
-      Puppet[:location_trusted] = true
-
-      stub_request(:get, start_url).with(headers: headers, basic_auth: credentials).to_return(redirect_to(url: other_host))
-      stub_request(:get, other_host).with(headers: headers, basic_auth: credentials).to_return(status: 200)
-
-      client.get(start_url, headers: headers, options: {basic_auth: {user: 'user', password: 'pass'}})
-      expect(a_request(:get, other_host).
-      with{ |req| req.headers.key?('Authorization') && req.headers.key?('Cookie')}).to have_been_made
-    end
-
-    it "treats hosts as case-insensitive" do
-      start_url = URI("https://www.EXAmple.com:8140/Start")
-      bar_url = "https://www.example.com:8140/bar"
-
-      stub_request(:get, start_url).with(basic_auth: credentials).to_return(redirect_to(url: bar_url))
-      stub_request(:get, bar_url).with(basic_auth: credentials).to_return(status: 200)
-
-      client.get(start_url, options: {basic_auth: {user: 'user', password: 'pass'}})
-      expect(a_request(:get, bar_url).
-      with{ |req| req.headers.key?('Authorization')}).to have_been_made
     end
 
     it "redirects given a relative location" do
