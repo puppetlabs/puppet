@@ -136,6 +136,16 @@ describe 'when pcore described resources types are in use' do
       expect(catalog.resource(:cap, "c")['message']).to eq('c works')
     end
 
+    it 'considers Pcore types to be builtin ' do
+      genface.types
+      catalog = compile_to_catalog(<<-MANIFEST)
+        test1 { 'a':
+          message => 'a works'
+        }
+      MANIFEST
+      expect(catalog.resource(:test1, "a").kind).to eq('compilable_type')
+    end
+
     it 'the validity of attribute names are checked' do
       genface.types
       expect do
