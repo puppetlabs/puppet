@@ -346,7 +346,7 @@ class Puppet::HTTP::Client
 
     while !done do
       connect(request.uri, options: options) do |http|
-        apply_auth(request, basic_auth)
+        apply_auth(request, basic_auth) if redirects.zero?
 
         # don't call return within the `request` block
         http.request(request) do |nethttp|

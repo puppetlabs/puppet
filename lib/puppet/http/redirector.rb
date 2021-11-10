@@ -49,6 +49,11 @@ class Puppet::HTTP::Redirector
     new_request = request.class.new(url)
     new_request.body = request.body
     request.each do |header, value|
+      unless Puppet[:location_trusted]
+        # skip adding potentially sensitive header to other hosts
+        next if header.casecmp('Authorization').zero? && request.uri.host.casecmp(location.host) != 0
+        next if header.casecmp('Cookie').zero? && request.uri.host.casecmp(location.host) != 0
+      end
       new_request[header] = value
     end
 

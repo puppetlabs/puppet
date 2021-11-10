@@ -40,6 +40,7 @@ module Runtime3ResourceSupport
           :parameters => evaluated_parameters,
           :file => file,
           :line => line,
+          :kind => Puppet::Resource.to_kind(resolved_type),
           :exported => exported,
           :virtual => virtual,
           # WTF is this? Which source is this? The file? The name of the context ?
