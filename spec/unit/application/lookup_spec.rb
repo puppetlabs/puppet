@@ -639,6 +639,33 @@ Searching for "a"
           expected_error = "No facts available for target node: #{lookup.options[:node]}"
           expect { lookup.run_command }.to raise_error(RuntimeError, expected_error)
         end
+
+        it 'raises error due to missing trusted information facts in --facts file' do
+          file_path = file_containing('facts.yaml', <<~CONTENT)
+            ---
+            fqdn: some.fqdn.com
+          CONTENT
+          lookup.options[:fact_file] = file_path
+
+          expect {
+            lookup.run_command
+          }.to raise_error(/When overriding any of the hostname,domain,fqdn,clientcert facts with #{file_path} given via the --facts flag, they must all be overridden./)
+        end
+
+        it 'does not fail when all trusted information facts are provided via --facts file' do
+          file_path = file_containing('facts.yaml', <<~CONTENT)
+            ---
+            fqdn: some.fqdn.com
+            hostname: some.hostname
+            domain: some.domain
+            clientcert: some.clientcert
+          CONTENT
+          lookup.options[:fact_file] = file_path
+
+          expect {
+            lookup.run_command
+          }.to exit_with(0)
+        end
       end
     end
 
