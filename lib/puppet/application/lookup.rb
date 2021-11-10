@@ -367,12 +367,21 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       ni = Puppet::Node.indirection
       tc = ni.terminus_class
 
-      if tc == :plain || options[:compile]
-        node = ni.find(node, facts: facts)
-      else
-        ni.terminus_class = :plain
-        node = ni.find(node, facts: facts)
-        ni.terminus_class = tc
+      service = Puppet.runtime[:http]
+      session = service.create_session
+      cert = session.route_to(:ca)
+
+      cert = cert.get_certificate(node)
+      trusted = Puppet::Context::TrustedInformation.new(true, node, cert)
+
+      Puppet.override(trusted_information: trusted) do
+        if tc == :plain || options[:compile]
+          node = ni.find(node, facts: facts)
+        else
+          ni.terminus_class = :plain
+          node = ni.find(node, facts: facts)
+          ni.terminus_class = tc
+        end
       end
     else
       node.add_extra_facts(given_facts) if given_facts
