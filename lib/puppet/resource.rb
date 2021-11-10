@@ -11,7 +11,7 @@ class Puppet::Resource
   include Puppet::Util::PsychSupport
 
   include Enumerable
-  attr_accessor :file, :line, :catalog, :exported, :virtual, :strict
+  attr_accessor :file, :line, :catalog, :exported, :virtual, :strict, :kind
   attr_reader :type, :title, :parameters
 
   # @!attribute [rw] sensitive_parameters
@@ -29,9 +29,14 @@ class Puppet::Resource
   EMPTY_ARRAY = [].freeze
   EMPTY_HASH = {}.freeze
 
-  ATTRIBUTES = [:file, :line, :exported].freeze
+  ATTRIBUTES = [:file, :line, :exported, :kind].freeze
   TYPE_CLASS = 'Class'.freeze
   TYPE_NODE  = 'Node'.freeze
+
+  CLASS_STRING = 'class'.freeze
+  DEFINED_TYPE_STRING = 'defined_type'.freeze
+  COMPILABLE_TYPE_STRING = 'compilable_type'.freeze
+  UNKNOWN_TYPE_STRING  = 'unknown'.freeze
 
   PCORE_TYPE_KEY = '__ptype'.freeze
   VALUE_KEY = 'value'.freeze
@@ -193,6 +198,18 @@ class Puppet::Resource
     resource_type.is_a?(Puppet::CompilableResourceType)
   end
 
+  def self.to_kind(resource_type)
+    if resource_type == CLASS_STRING
+      CLASS_STRING
+    elsif resource_type.is_a?(Puppet::Resource::Type) && resource_type.type == :definition
+      DEFINED_TYPE_STRING
+    elsif resource_type.is_a?(Puppet::CompilableResourceType)
+      COMPILABLE_TYPE_STRING
+    else
+      UNKNOWN_TYPE_STRING
+    end
+  end
+
   # Iterate over each param/value pair, as required for Enumerable.
   def each
     parameters.each { |p,v| yield p, v }
@@ -247,6 +264,7 @@ class Puppet::Resource
       src = type
       self.file = src.file
       self.line = src.line
+      self.kind = src.kind
       self.exported = src.exported
       self.virtual = src.virtual
       self.set_tags(src)
@@ -309,6 +327,7 @@ class Puppet::Resource
 
       rt = resource_type
 
+      self.kind = self.class.to_kind(rt) unless kind
       if strict? && rt.nil?
         if self.class?
           raise ArgumentError, _("Could not find declared class %{title}") % { title: title }
@@ -468,10 +487,24 @@ class Puppet::Resource
     ref
   end
 
-  # Convert our resource to a RAL resource instance.  Creates component
-  # instances for resource types that don't exist.
+  # Convert our resource to a RAL resource instance. Creates component
+  # instances for resource types that are not of a compilable_type kind. In case
+  # the resource doesn’t exist and it’s compilable_type kind, raise an error.
+  # There are certain cases where a resource won't be in a catalog, such as 
+  # when we create a resource directly by using Puppet::Resource.new(...), so we 
+  # must check its kind before deciding whether the catalog format is of an older
+  # version or not.
   def to_ral
-    typeklass = Puppet::Type.type(self.type) || Puppet::Type.type(:component)
+    if self.kind == COMPILABLE_TYPE_STRING
+      typeklass = Puppet::Type.type(self.type)
+    elsif self.catalog && self.catalog.catalog_format >= 2
+      typeklass = Puppet::Type.type(:component)
+    else
+      typeklass =  Puppet::Type.type(self.type) || Puppet::Type.type(:component)
+    end
+
+    raise(Puppet::Error, "Resource type '#{self.type}' was not found") unless typeklass
+
     typeklass.new(self)
   end
 
