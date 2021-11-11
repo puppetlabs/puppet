@@ -28,7 +28,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
   def initialize(basename, tmpdir=nil, mode: 0, **options)
     @unlinked = false
     @mode = mode|File::RDWR|File::CREAT|File::EXCL
-    create_tmpname(basename, tmpdir, mode, options) do |tmpname, n, opts|
+    ::Dir::Tmpname.create(basename, tmpdir, options) do |tmpname, n, opts|
       opts[:perm] = 0600
       self.class.locking(tmpname) do
         @tmpfile = File.open(tmpname, @mode, **opts)
@@ -81,73 +81,6 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
   end
 
   private
-
-  def make_tmpname(prefix_suffix, n)
-    case prefix_suffix
-      when String
-        prefix = prefix_suffix
-        suffix = ""
-      when Array
-        prefix = prefix_suffix[0]
-        suffix = prefix_suffix[1]
-      else
-        raise ArgumentError, _("unexpected prefix_suffix: %{value}") % { value: prefix_suffix.inspect }
-    end
-    t = Time.now.strftime("%Y%m%d")
-    path = "#{prefix}#{t}-#{$$}-#{rand(0x100000000).to_s(36)}"
-    path << "-#{n}" if n
-    path << suffix
-  end
-
-  def create_tmpname(basename, *rest)
-    opts = try_convert_to_hash(rest[-1])
-    if opts
-      opts = opts.dup if rest.pop.equal?(opts)
-      max_try = opts.delete(:max_try)
-      opts = [opts]
-    else
-      opts = []
-    end
-    tmpdir, = *rest
-    tmpdir ||= tmpdir()
-    n = nil
-    begin
-      path = File.expand_path(make_tmpname(basename, n), tmpdir)
-      yield(path, n, *opts)
-    rescue Errno::EEXIST
-      n ||= 0
-      n += 1
-      retry if !max_try or n < max_try
-      raise _("cannot generate temporary name using `%{basename}' under `%{tmpdir}'") % { basename: basename, tmpdir: tmpdir }
-    end
-    path
-  end
-
-  def try_convert_to_hash(h)
-    begin
-      h.to_hash
-    rescue NoMethodError
-      nil
-    end
-  end
-
-  @@systmpdir ||= defined?(Etc.systmpdir) ? Etc.systmpdir : '/tmp'
-
-  def tmpdir
-    tmp = nil
-    [Puppet::Util.get_env('TMPDIR'), Puppet::Util.get_env('TMP'), Puppet::Util.get_env('TEMP'), @@systmpdir, '/tmp'].each do |dir|
-      next if !dir
-      dir = File.expand_path(dir)
-      stat = File.stat(dir)
-      if stat && stat.directory? && stat.writable? &&
-         (!stat.world_writable? || stat.sticky?)
-        tmp = dir
-        break
-      end rescue nil
-    end
-    raise ArgumentError, "could not find a temporary directory" unless tmp
-    tmp
-  end
 
   class << self
     # yields with locking for +tmpname+ and returns the result of the
