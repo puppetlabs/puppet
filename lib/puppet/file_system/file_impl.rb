@@ -130,23 +130,23 @@ class Puppet::FileSystem::FileImpl
   end
 
   def symlink?(path)
-    File.symlink?(path)
+    ::File.symlink?(path)
   end
 
   def readlink(path)
-    File.readlink(path)
+    ::File.readlink(path)
   end
 
   def unlink(*paths)
-    File.unlink(*paths)
+    ::File.unlink(*paths)
   end
 
   def stat(path)
-    File.stat(path)
+    ::File.stat(path)
   end
 
   def lstat(path)
-    File.lstat(path)
+    ::File.lstat(path)
   end
 
   def compare_stream(path, stream)
@@ -159,7 +159,7 @@ class Puppet::FileSystem::FileImpl
 
   def replace_file(path, mode = nil)
     begin
-      stat = Puppet::FileSystem.lstat(path)
+      stat = lstat(path)
       gid = stat.gid
       uid = stat.uid
       mode ||= stat.mode & 07777
@@ -180,7 +180,7 @@ class Puppet::FileSystem::FileImpl
       tempfile_path = tempfile.path
       FileUtils.chown(uid, gid, tempfile_path) if uid && gid
       chmod(mode, tempfile_path)
-      File.rename(tempfile_path, Puppet::FileSystem.path_string(path))
+      ::File.rename(tempfile_path, path_string(path))
     ensure
       tempfile.close!
     end
