@@ -51,6 +51,28 @@ if RUBY_VERSION.to_f < 3.0
   end
 end
 
+if Puppet::Util::Platform.windows? && RUBY_VERSION.to_f < 3.0
+  # from https://github.com/ruby/ruby/blob/v2_7_3/lib/tmpdir.rb#L21-L34
+  require 'tmpdir'
+  class Dir
+    def self.tmpdir
+      tmp = nil
+      # can't use ENV['TMPDIR'], see PUP-11348
+      [Puppet::Util.get_env('TMPDIR'), Puppet::Util.get_env('TMP'), Puppet::Util.get_env('TEMP'), @@systmpdir, '/tmp'].each do |dir|
+        next if !dir
+        dir = File.expand_path(dir)
+        if stat = File.stat(dir) and stat.directory? and stat.writable? and # rubocop:disable Lint/AssignmentInCondition
+          (!stat.world_writable? or stat.sticky?)
+          tmp = dir
+          break
+        end rescue nil
+      end
+      raise ArgumentError, "could not find a temporary directory" unless tmp
+      tmp
+    end
+  end
+end
+
 # (#19151) Reject all SSLv2 ciphers and handshakes
 require_relative '../../puppet/ssl/openssl_loader'
 unless Puppet::Util::Platform.jruby_fips?
