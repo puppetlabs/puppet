@@ -27,6 +27,13 @@ describe Puppet::Type.type(:file).attrclass(:group) do
       expect { group.insync?(5) }.to raise_error(/Could not find group foos/)
     end
 
+    it "should return false if a group's id can't be found by name in noop" do
+      Puppet[:noop] = true
+      allow(resource.provider).to receive(:name2gid).and_return(nil)
+
+      expect(group.insync?('notcreatedyet')).to eq(false)
+    end
+
     it "should use the id for comparisons, not the name" do
       expect(group.insync?('foos')).to be_falsey
     end

@@ -25,6 +25,13 @@ describe Puppet::Type.type(:file).attrclass(:owner) do
       expect { owner.insync?(5) }.to raise_error(/Could not find user foo/)
     end
 
+    it "should return false if an owner's id can't be found by name in noop" do
+      Puppet[:noop] = true
+      allow(resource.provider).to receive(:name2uid).and_return(nil)
+
+      expect(owner.insync?('notcreatedyet')).to eq(false)
+    end
+
     it "should use the id for comparisons, not the name" do
       expect(owner.insync?('foo')).to be_falsey
     end

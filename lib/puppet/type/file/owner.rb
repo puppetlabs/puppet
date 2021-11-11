@@ -18,7 +18,14 @@ module Puppet
       # evaluate this property, because they might be added during the catalog
       # apply.
       @should.map! do |val|
-        provider.name2uid(val) or raise "Could not find user #{val}"
+        uid = provider.name2uid(val)
+        if uid
+          uid
+        elsif provider.resource.noop?
+          return false
+        else
+          raise "Could not find user #{val}"
+        end
       end
 
       return true if @should.include?(current)
