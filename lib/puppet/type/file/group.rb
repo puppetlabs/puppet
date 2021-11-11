@@ -23,7 +23,14 @@ module Puppet
       # evaluate this property, because they might be added during the catalog
       # apply.
       @should.map! do |val|
-        provider.name2gid(val) or raise "Could not find group #{val}"
+        gid = provider.name2gid(val)
+        if gid
+          gid
+        elsif provider.resource.noop?
+          return false
+        else
+          raise "Could not find group #{val}"
+        end
       end
 
       @should.include?(current)
