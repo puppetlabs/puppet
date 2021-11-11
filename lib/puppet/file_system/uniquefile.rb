@@ -24,24 +24,16 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
     end
   end
 
-  def initialize(basename, *rest)
-    create_tmpname(basename, *rest) do |tmpname, n, opts|
-      mode = File::RDWR|File::CREAT|File::EXCL
-      perm = 0600
-      if opts
-        mode |= opts.delete(:mode) || 0
-        opts[:perm] = perm
-        perm = nil
-      else
-        opts = perm
-      end
+  # we require a basename unlike Tempfile
+  def initialize(basename, tmpdir=nil, mode: 0, **options)
+    @unlinked = false
+    @mode = mode|File::RDWR|File::CREAT|File::EXCL
+    create_tmpname(basename, tmpdir, mode, options) do |tmpname, n, opts|
+      opts[:perm] = 0600
       self.class.locking(tmpname) do
-        @tmpfile = File.open(tmpname, mode, opts)
-        @tmpname = tmpname
+        @tmpfile = File.open(tmpname, @mode, **opts)
       end
-      @mode = mode & ~(File::CREAT|File::EXCL)
-      perm or opts.freeze
-      @opts = opts
+      @opts = opts.freeze
     end
 
     super(@tmpfile)
@@ -49,50 +41,43 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
 
   # Opens or reopens the file with mode "r+".
   def open
-    @tmpfile.close if @tmpfile
-    @tmpfile = File.open(@tmpname, @mode, @opts)
+    _close
+    mode = @mode & ~(File::CREAT|File::EXCL)
+    @tmpfile = File.open(@tmpfile.path, mode, @opts)
     __setobj__(@tmpfile)
   end
 
   def _close
-    begin
-      @tmpfile.close if @tmpfile
-    ensure
-      @tmpfile = nil
-    end
+    @tmpfile.close
   end
   protected :_close
 
   def close(unlink_now=false)
-    if unlink_now
-      close!
-    else
-      _close
-    end
+    _close
+    unlink if unlink_now
   end
 
   def close!
-    _close
-    unlink
+    close(true)
   end
 
   def unlink
-    return unless @tmpname
+    return if @unlinked
     begin
-      File.unlink(@tmpname)
+      File.unlink(@tmpfile.path)
     rescue Errno::ENOENT
     rescue Errno::EACCES
       # may not be able to unlink on Windows; just ignore
       return
     end
-    @tmpname = nil
+    @unlinked = true
   end
   alias delete unlink
 
   # Returns the full path name of the temporary file.
   # This will be nil if #unlink has been called.
   def path
-    @tmpname
+    @unlinked ? nil : @tmpfile.path
   end
 
   private
@@ -149,17 +134,20 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
   @@systmpdir ||= defined?(Etc.systmpdir) ? Etc.systmpdir : '/tmp'
 
   def tmpdir
-    tmp = '.'
-    for dir in [ Puppet::Util.get_env('TMPDIR'), Puppet::Util.get_env('TMP'), Puppet::Util.get_env('TEMP'), @@systmpdir, '/tmp']
-      stat = File.stat(dir) if dir
-      if stat && stat.directory? && stat.writable?
+    tmp = nil
+    [Puppet::Util.get_env('TMPDIR'), Puppet::Util.get_env('TMP'), Puppet::Util.get_env('TEMP'), @@systmpdir, '/tmp'].each do |dir|
+      next if !dir
+      dir = File.expand_path(dir)
+      stat = File.stat(dir)
+      if stat && stat.directory? && stat.writable? &&
+         (!stat.world_writable? || stat.sticky?)
         tmp = dir
         break
       end rescue nil
     end
-    File.expand_path(tmp)
+    raise ArgumentError, "could not find a temporary directory" unless tmp
+    tmp
   end
-
 
   class << self
     # yields with locking for +tmpname+ and returns the result of the
