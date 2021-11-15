@@ -378,7 +378,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
         cert = OpenSSL::X509::Certificate.new(x509)
 
         Puppet::SSL::Oids.register_puppet_oids
-        trusted = Puppet::Context::TrustedInformation.remote(true, node, Puppet::SSL::Certificate.from_instance(cert))
+        trusted = Puppet::Context::TrustedInformation.remote(true, facts.values['certname'] || node, Puppet::SSL::Certificate.from_instance(cert))
 
         Puppet.override(trusted_information: trusted) do
           if tc == :plain || options[:compile]
