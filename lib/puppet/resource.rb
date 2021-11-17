@@ -38,6 +38,11 @@ class Puppet::Resource
   COMPILABLE_TYPE_STRING = 'compilable_type'.freeze
   UNKNOWN_TYPE_STRING  = 'unknown'.freeze
 
+  CLASS_STRING = 'class'.freeze
+  DEFINED_TYPE_STRING = 'defined_type'.freeze
+  COMPILABLE_TYPE_STRING = 'compilable_type'.freeze
+  UNKNOWN_TYPE_STRING  = 'unknown'.freeze
+
   PCORE_TYPE_KEY = '__ptype'.freeze
   VALUE_KEY = 'value'.freeze
 

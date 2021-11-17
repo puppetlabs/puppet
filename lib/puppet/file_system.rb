@@ -397,7 +397,7 @@ module Puppet::FileSystem
   # @api public
   #
   def self.chmod(mode, path)
-    @impl.chmod(mode, path)
+    @impl.chmod(mode, assert_path(path))
   end
 
   # Replace the contents of a file atomically, creating the file if necessary.

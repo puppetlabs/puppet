@@ -7,6 +7,7 @@ class Puppet::Application::Lookup < Puppet::Application
 
   RUN_HELP = _("Run 'puppet lookup --help' for more details").freeze
   DEEP_MERGE_OPTIONS = '--knock-out-prefix, --sort-merged-arrays, and --merge-hash-arrays'.freeze
+  TRUSTED_INFORMATION_FACTS = ["hostname", "domain", "fqdn", "clientcert"].freeze
 
   run_mode :server
 
@@ -352,6 +353,13 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       unless given_facts.instance_of?(Hash)
         raise _("Incorrectly formatted data in %{fact_file} given via the --facts flag (only accepts yaml and json files)") % { fact_file: fact_file }
       end
+
+      if TRUSTED_INFORMATION_FACTS.any? { |key| given_facts.key? key }
+        unless TRUSTED_INFORMATION_FACTS.all? { |key| given_facts.key? key }
+          raise _("When overriding any of the %{trusted_facts_list} facts with %{fact_file} "\
+            "given via the --facts flag, they must all be overridden.") % { fact_file: fact_file ,trusted_facts_list: TRUSTED_INFORMATION_FACTS.join(',')}
+        end
+      end
     end
 
     unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
@@ -367,12 +375,21 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       ni = Puppet::Node.indirection
       tc = ni.terminus_class
 
-      if tc == :plain || options[:compile]
-        node = ni.find(node, facts: facts)
-      else
-        ni.terminus_class = :plain
-        node = ni.find(node, facts: facts)
-        ni.terminus_class = tc
+      service = Puppet.runtime[:http]
+      session = service.create_session
+      cert = session.route_to(:ca)
+
+      cert = cert.get_certificate(node)
+      trusted = Puppet::Context::TrustedInformation.new(true, node, cert)
+
+      Puppet.override(trusted_information: trusted) do
+        if tc == :plain || options[:compile]
+          node = ni.find(node, facts: facts)
+        else
+          ni.terminus_class = :plain
+          node = ni.find(node, facts: facts)
+          ni.terminus_class = tc
+        end
       end
     else
       node.add_extra_facts(given_facts) if given_facts
