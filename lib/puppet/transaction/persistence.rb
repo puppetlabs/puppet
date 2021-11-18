@@ -87,17 +87,7 @@ class Puppet::Transaction::Persistence
 
   # Save data from internal class to persistence store on disk.
   def save
-    converted_data = Puppet::Pops::Serialization::ToDataConverter.convert(
-      @new_data, {
-        symbol_as_string: false,
-        local_reference: false,
-        type_by_reference: true,
-        force_symbol: true,
-        silence_warnings: true,
-        message_prefix: to_s
-      }
-    )
-    Puppet::Util::Yaml.dump(converted_data, Puppet[:transactionstorefile])
+    Puppet::Util::Yaml.dump(@new_data, Puppet[:transactionstorefile])
   end
 
   # Use the catalog and run_mode to determine if persistence should be enabled or not
