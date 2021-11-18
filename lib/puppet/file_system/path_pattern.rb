@@ -5,10 +5,9 @@ module Puppet::FileSystem
   class PathPattern
     class InvalidPattern < Puppet::Error; end
 
-    TRAVERSAL = /^\.\.$/
+    DOTDOT = '..'.freeze
     ABSOLUTE_UNIX = /^\//
     ABSOLUTE_WINDOWS = /^[a-z]:/i
-    #ABSOLUT_VODKA #notappearinginthisclass
     CURRENT_DRIVE_RELATIVE_WINDOWS = /^\\/
 
     def self.relative(pattern)
@@ -32,11 +31,11 @@ module Puppet::FileSystem
     end
 
     def glob
-      Dir.glob(pathname.to_s)
+      Dir.glob(@pathstr)
     end
 
     def to_s
-      pathname.to_s
+      @pathstr
     end
 
     protected
@@ -46,13 +45,9 @@ module Puppet::FileSystem
     private
 
     def validate
-      @pathname.each_filename do |e|
-        if e =~ TRAVERSAL
-          raise(InvalidPattern, _("PathPatterns cannot be created with directory traversals."))
-        end
-      end
-      case @pathname.to_s
-      when CURRENT_DRIVE_RELATIVE_WINDOWS
+      if @pathstr.split(Pathname::SEPARATOR_PAT).any? { |f| f == DOTDOT }
+        raise(InvalidPattern, _("PathPatterns cannot be created with directory traversals."))
+      elsif @pathstr.match?(CURRENT_DRIVE_RELATIVE_WINDOWS)
         raise(InvalidPattern, _("A PathPattern cannot be a Windows current drive relative path."))
       end
     end
@@ -60,6 +55,7 @@ module Puppet::FileSystem
     def initialize(pattern)
       begin
         @pathname = Pathname.new(pattern.strip)
+        @pathstr = @pathname.to_s
       rescue ArgumentError => error
         raise InvalidPattern.new(_("PathPatterns cannot be created with a zero byte."), error)
       end
@@ -74,10 +70,9 @@ module Puppet::FileSystem
 
     def validate
       super
-      case @pathname.to_s
-      when ABSOLUTE_WINDOWS
+      if @pathstr.match?(ABSOLUTE_WINDOWS)
         raise(InvalidPattern, _("A relative PathPattern cannot be prefixed with a drive."))
-      when ABSOLUTE_UNIX
+      elsif @pathstr.match?(ABSOLUTE_UNIX)
         raise(InvalidPattern, _("A relative PathPattern cannot be an absolute path."))
       end
     end
@@ -90,7 +85,7 @@ module Puppet::FileSystem
 
     def validate
       super
-      if @pathname.to_s !~ ABSOLUTE_UNIX and @pathname.to_s !~ ABSOLUTE_WINDOWS
+      if !@pathstr.match?(ABSOLUTE_UNIX) && !@pathstr.match?(ABSOLUTE_WINDOWS)
         raise(InvalidPattern, _("An absolute PathPattern cannot be a relative path."))
       end
     end
