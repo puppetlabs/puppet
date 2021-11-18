@@ -363,32 +363,28 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
     end
 
     unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
-      facts = Puppet::Node::Facts.indirection.find(node, :environment => Puppet.lookup(:current_environment))
+      facts = retrieve_node_facts(node, given_facts) 
+      if Puppet.settings.set_by_cli?('environment')
+        node = Puppet::Node.new(node, :classes => nil, :parameters => nil, :facts => facts, :environment => Puppet.settings.value('environment'))
+      else
+        ni = Puppet::Node.indirection
+        tc = ni.terminus_class
 
-      facts = Puppet::Node::Facts.new(node, {}) if facts.nil?
-      facts.add_extra_values(given_facts) if given_facts
+        service = Puppet.runtime[:http]
+        session = service.create_session
+        cert = session.route_to(:ca)
 
-      if facts.values.empty?
-        raise _("No facts available for target node: %{node}") % { node: node}
-      end
+        cert = cert.get_certificate(node)
+        trusted = Puppet::Context::TrustedInformation.new(true, node, cert)
 
-      ni = Puppet::Node.indirection
-      tc = ni.terminus_class
-
-      service = Puppet.runtime[:http]
-      session = service.create_session
-      cert = session.route_to(:ca)
-
-      cert = cert.get_certificate(node)
-      trusted = Puppet::Context::TrustedInformation.new(true, node, cert)
-
-      Puppet.override(trusted_information: trusted) do
-        if tc == :plain || options[:compile]
-          node = ni.find(node, facts: facts)
-        else
-          ni.terminus_class = :plain
-          node = ni.find(node, facts: facts)
-          ni.terminus_class = tc
+        Puppet.override(trusted_information: trusted) do
+          if tc == :plain || options[:compile]
+            node = ni.find(node, facts: facts)
+          else
+            ni.terminus_class = :plain
+            node = ni.find(node, facts: facts)
+            ni.terminus_class = tc
+          end
         end
       end
     else
@@ -404,5 +400,17 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
     else
       compiler.compile { |catalog| yield(compiler.topscope); catalog }
     end
+  end
+
+  def retrieve_node_facts(node, given_facts)
+    facts = Puppet::Node::Facts.indirection.find(node, :environment => Puppet.lookup(:current_environment))
+
+    facts = Puppet::Node::Facts.new(node, {}) if facts.nil?
+    facts.add_extra_values(given_facts) if given_facts
+
+    if facts.values.empty?
+      raise _("No facts available for target node: %{node}") % { node: node}
+    end
+    facts
   end
 end

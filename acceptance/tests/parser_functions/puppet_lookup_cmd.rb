@@ -2596,6 +2596,15 @@ with_puppet_running_on master, @master_opts, @coderoot do
     "lookup in ENC specified environment failed"
   )
 
+  step "--compile uses environment specified in --envrionment flag"
+  r = on(master, puppet('lookup', '--compile', "--node #{@node1}", "--confdir #{@confdir}", "--facts #{@coderoot}/facts.yaml", "--environment env1", 'environment_key'))
+  result = r.stdout
+  assert_match(
+    /env-env1 hiera provided value/,
+    result,
+    "env1 environment_key lookup failed, expected 'env-env1 hiera"
+  )
+
   step "without --compile does not use environment specified in ENC"
   r = on(master, puppet('lookup', "--node #{@node1}", "--confdir #{@confdir}", "--facts #{@coderoot}/facts.yaml", 'environment_key'))
   result = r.stdout
