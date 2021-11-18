@@ -80,7 +80,7 @@ describe Puppet::FileSystem::Uniquefile do
     lock = File.join(dir, 'path', 'to', 'lock')
 
     expect {
-      Puppet::FileSystem::Uniquefile.open_tmp(lock) { |tmp| }
+      Puppet::FileSystem::Uniquefile.new('foo', lock) { |tmp| }
     }.to raise_error(Errno::ENOENT, %r{No such file or directory - A directory component in .* does not exist or is a dangling symbolic link})
   end
 
