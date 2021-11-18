@@ -94,6 +94,15 @@ class PBinaryType < PAnyType
       @binary_buffer = (bin.encoding.name == "ASCII-8BIT" ? bin : bin.b).freeze
     end
 
+    #
+    # This method is called from the Psych Yaml serializer
+    # The serializer will call this method to create a value that will be serialized to YAML.
+    # For this specific class we can save the base64 encoded value
+    #
+    def encode_with(psych_encoder)
+      psych_encoder.represent_scalar(nil,to_s)
+    end
+
     # Presents the binary content as a string base64 encoded string (without line breaks).
     #
     def to_s
