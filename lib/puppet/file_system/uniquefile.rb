@@ -127,7 +127,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
     tmpdir ||= tmpdir()
     n = nil
     begin
-      path = File.expand_path(make_tmpname(basename, n), tmpdir)
+      path = File.join(tmpdir, make_tmpname(basename, n))
       yield(path, n, *opts)
     rescue Errno::EEXIST
       n ||= 0

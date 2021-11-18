@@ -102,6 +102,12 @@ describe Puppet::FileSystem::Uniquefile do
     expect(filename).to eq(temp_rune_utf8)
   end
 
+  it "preserves tilde characters" do
+    Puppet::FileSystem::Uniquefile.open_tmp('~foo') do |file|
+      expect(File.basename(file.path)).to start_with('~foo')
+    end
+  end
+
   context "Ruby 1.9.3 Tempfile tests" do
     # the remaining tests in this file are ported directly from the ruby 1.9.3 source,
     # since most of this file was ported from there
