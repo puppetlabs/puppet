@@ -80,7 +80,7 @@ describe Puppet::FileSystem::Uniquefile do
     lock = File.join(dir, 'path', 'to', 'lock')
 
     expect {
-      Puppet::FileSystem::Uniquefile.open_tmp(lock) { |tmp| }
+      Puppet::FileSystem::Uniquefile.new('foo', lock) { |tmp| }
     }.to raise_error(Errno::ENOENT, %r{No such file or directory - A directory component in .* does not exist or is a dangling symbolic link})
   end
 
@@ -100,6 +100,12 @@ describe Puppet::FileSystem::Uniquefile do
     end
 
     expect(filename).to eq(temp_rune_utf8)
+  end
+
+  it "preserves tilde characters" do
+    Puppet::FileSystem::Uniquefile.open_tmp('~foo') do |file|
+      expect(File.basename(file.path)).to start_with('~foo')
+    end
   end
 
   context "Ruby 1.9.3 Tempfile tests" do
