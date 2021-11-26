@@ -22,10 +22,7 @@ The most common version of this command is:
 puppet lookup [\-\-help] [\-\-type \fITYPESTRING\fR] [\-\-merge first|unique|hash|deep] [\-\-knock\-out\-prefix \fIPREFIX\-STRING\fR] [\-\-sort\-merged\-arrays] [\-\-merge\-hash\-arrays] [\-\-explain] [\-\-environment \fIENV\fR] [\-\-default \fIVALUE\fR] [\-\-node \fINODE\-NAME\fR] [\-\-facts \fIFILE\fR] [\-\-compile] [\-\-render\-as s|json|yaml|binary|msgpack] \fIkeys\fR
 .
 .SH "DESCRIPTION"
-The lookup command is a CLI for Puppet\'s \'lookup()\' function\. It searches your Hiera data and returns a value for the requested lookup key, so you can test and explore your data\. It is a modern replacement for the \'hiera\' command\.
-.
-.P
-Hiera usually relies on a node\'s facts to locate the relevant data sources\. By default, \'puppet lookup\' uses facts from the node you run the command on, but you can get data for any other node with the \'\-\-node \fINAME\fR\' option\. If possible, the lookup command will use the requested node\'s real stored facts from PuppetDB; if PuppetDB isn\'t configured or you want to provide arbitrary fact values, you can pass alternate facts as a JSON or YAML file with \'\-\-facts \fIFILE\fR\'\.
+The lookup command is a CLI for Puppet\'s \'lookup()\' function\. It searches your Hiera data and returns a value for the requested lookup key, so you can test and explore your data\. It is a modern replacement for the \'hiera\' command\. Lookup uses the setting for global hiera\.yaml from puppet\'s config, and the environment to find the environment level hiera\.yaml as well as the resulting modulepath for the environment (for hiera\.yaml files in modules)\. Hiera usually relies on a node\'s facts to locate the relevant data sources\. By default, \'puppet lookup\' uses facts from the node you run the command on, but you can get data for any other node with the \'\-\-node \fINAME\fR\' option\. If possible, the lookup command will use the requested node\'s real stored facts from PuppetDB; if PuppetDB isn\'t configured or you want to provide arbitrary fact values, you can pass alternate facts as a JSON or YAML file with \'\-\-facts \fIFILE\fR\'\.
 .
 .P
 If you\'re debugging your Hiera data and want to see where values are coming from, use the \'\-\-explain\' option\.
@@ -54,7 +51,7 @@ For more details about how Hiera works, see the Hiera documentation: https://pup
 \-\-facts \fIFILE\fR Specify a \.json or \.yaml file of key => value mappings to override the facts for this lookup\. Any facts not specified in this file maintain their original value\.
 .
 .IP "\(bu" 4
-\-\-environment \fIENV\fR Like with most Puppet commands, you can specify an environment on the command line\. This is important for lookup because different environments can have different Hiera data\.
+\-\-environment \fIENV\fR Like with most Puppet commands, you can specify an environment on the command line\. This is important for lookup because different environments can have different Hiera data\. This environment will be always be the one used regardless of any other factors\.
 .
 .IP "\(bu" 4
 \-\-merge first|unique|hash|deep: Specify the merge behavior, overriding any merge behavior from the data\'s lookup_options\. \'first\' returns the first value found\. \'unique\' appends everything to a merged, deduplicated array\. \'hash\' performs a simple hash merge by overwriting keys of lower lookup priority\. \'deep\' performs a deep merge on values of Array and Hash type\. There are additional options that can be used with \'deep\'\.
@@ -87,6 +84,12 @@ For more details about how Hiera works, see the Hiera documentation: https://pup
 .
 .SH "EXAMPLE"
 To look up \'key_name\' using the Puppet Server node\'s facts: $ puppet lookup key_name
+.
+.P
+To look up \'key_name\' using the Puppet Server node\'s arbitrary variables from a manifest, and classify the node if applicable: $ puppet lookup key_name \-\-compile
+.
+.P
+To look up \'key_name\' using the Puppet Server node\'s facts, overridden by facts given in a file: $ puppet lookup key_name \-\-facts fact_file\.yaml
 .
 .P
 To look up \'key_name\' with agent\.local\'s facts: $ puppet lookup \-\-node agent\.local key_name
