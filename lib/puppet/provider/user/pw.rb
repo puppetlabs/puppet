@@ -5,7 +5,7 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
   desc "User management via `pw` on FreeBSD and DragonFly BSD."
 
   commands :pw => "pw"
-  has_features :manages_homedir, :allows_duplicates, :manages_passwords, :manages_expiry, :manages_shell
+  has_features :manages_homedir, :allows_duplicates, :manages_passwords, :manages_expiry, :manages_shell, :system_users
 
   defaultfor :operatingsystem => [:freebsd, :dragonfly]
   confine    :operatingsystem => [:freebsd, :dragonfly]
@@ -18,6 +18,8 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     value.split("-").reverse.join("-")
   }
 
+  MAX_SYSTEM_UID = 999
+  MIN_SYSTEM_UID = 100
 
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
@@ -36,10 +38,22 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
         cmd << flag(property) << munge(property,value)
       end
     end
+    cmd << flag(:uid) << next_system_uid if @resource.system? && !@resource.should(:uid)
 
     cmd << "-o" if @resource.allowdupe?
     cmd << "-m" if @resource.managehome?
     cmd
+  end
+
+  def next_system_uid
+    used_uid = []
+    Etc.passwd { |user| used_uid << user.uid if (MIN_SYSTEM_UID..MAX_SYSTEM_UID).cover?(user.uid) }
+
+    uid = MAX_SYSTEM_UID
+    uid -= 1 while used_uid.include?(uid) && uid >= MIN_SYSTEM_UID
+    raise Puppet::Error.new("No free uid available for user resource '#{resource[:name]}'") if uid < MIN_SYSTEM_UID
+
+    return uid
   end
 
   def modifycmd(param, value)

@@ -45,6 +45,13 @@ describe Puppet::Type.type(:group).provider(:pw) do
       expect(provider).to receive(:execute).with(include("-M") & include("user1,user2"), kind_of(Hash))
       provider.create
     end
+
+    it "should use -g when creating system users" do
+      allow(provider).to receive(:next_system_gid).and_return(123)
+      resource[:system] = true
+      expect(provider).to receive(:execute).with([described_class.command(:pw), "groupadd", "testgroup", "-g", 123], kind_of(Hash))
+      provider.create
+    end
   end
 
   describe "when deleting groups" do

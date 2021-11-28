@@ -77,6 +77,13 @@ describe Puppet::Type.type(:user).provider(:pw) do
       provider.create
     end
 
+    it "should use -u when creating system users" do
+      allow(provider).to receive(:next_system_uid).and_return(123)
+      resource[:system] = true
+      expect(provider).to receive(:execute).with([described_class.command(:pw), "useradd", "testuser", "-u", 123], kind_of(Hash))
+      provider.create
+    end
+
     it "should call the password set function with the correct argument when the password property is set" do
       resource[:password] = "*"
       expect(provider).to receive(:execute)
