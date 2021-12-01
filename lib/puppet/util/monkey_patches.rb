@@ -39,6 +39,12 @@ unless Puppet::Util::Platform.jruby_fips?
     end
   end
 
+  unless defined?(OpenSSL::X509::V_ERR_HOSTNAME_MISMATCH)
+    module OpenSSL::X509
+      OpenSSL::X509::V_ERR_HOSTNAME_MISMATCH = 0x3E
+    end
+  end
+
   class OpenSSL::SSL::SSLContext
     if DEFAULT_PARAMS[:options]
       DEFAULT_PARAMS[:options] |= OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
