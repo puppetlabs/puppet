@@ -6,6 +6,26 @@ require 'puppet/util/yaml'
 # as calculating corrective_change).
 # @api private
 class Puppet::Transaction::Persistence
+
+  def self.allowed_classes
+    @allowed_classes ||= [
+      Symbol,
+      Time,
+      Regexp,
+      # URI is excluded, because it serializes all instance variables including the
+      # URI parser. Better to serialize the URL encoded representation.
+      SemanticPuppet::Version,
+      # SemanticPuppet::VersionRange has many nested classes and is unlikely to be
+      # used directly, so ignore it
+      Puppet::Pops::Time::Timestamp,
+      Puppet::Pops::Time::TimeData,
+      Puppet::Pops::Time::Timespan,
+      Puppet::Pops::Types::PBinaryType::Binary,
+      # Puppet::Pops::Types::PSensitiveType::Sensitive values are excluded from
+      # the persistence store, ignore it.
+    ].freeze
+  end
+
   def initialize
     @old_data = {}
     @new_data = {"resources" => {}}
@@ -62,7 +82,7 @@ class Puppet::Transaction::Persistence
     result = nil
     Puppet::Util.benchmark(:debug, _("Loaded transaction store file in %{seconds} seconds")) do
       begin
-        result = Puppet::Util::Yaml.safe_load_file(filename, [Symbol, Time])
+        result = Puppet::Util::Yaml.safe_load_file(filename, self.class.allowed_classes)
       rescue Puppet::Util::Yaml::YamlLoadError => detail
         Puppet.log_exception(detail, _("Transaction store file %{filename} is corrupt (%{detail}); replacing") % { filename: filename, detail: detail })
 
@@ -87,17 +107,7 @@ class Puppet::Transaction::Persistence
 
   # Save data from internal class to persistence store on disk.
   def save
-    converted_data = Puppet::Pops::Serialization::ToDataConverter.convert(
-      @new_data, {
-        symbol_as_string: false,
-        local_reference: false,
-        type_by_reference: true,
-        force_symbol: true,
-        silence_warnings: true,
-        message_prefix: to_s
-      }
-    )
-    Puppet::Util::Yaml.dump(converted_data, Puppet[:transactionstorefile])
+    Puppet::Util::Yaml.dump(@new_data, Puppet[:transactionstorefile])
   end
 
   # Use the catalog and run_mode to determine if persistence should be enabled or not
