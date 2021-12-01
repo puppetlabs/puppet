@@ -138,6 +138,57 @@ describe Puppet::Transaction::Persistence do
         persistence = Puppet::Transaction::Persistence.new
         expect(persistence.load.dig("File[/tmp/audit]", "parameters", "mtime", "system_value")).to contain_exactly(be_a(Time))
       end
+
+      it 'should load Regexp' do
+        write_state_file(<<~END)
+          system_value:
+            - !ruby/regexp /regexp/
+        END
+
+        persistence = Puppet::Transaction::Persistence.new
+        expect(persistence.load.dig("system_value")).to contain_exactly(be_a(Regexp))
+      end
+
+      it 'should load semantic puppet version' do
+        write_state_file(<<~END)
+          system_value:
+            - !ruby/object:SemanticPuppet::Version
+              major: 1
+              minor: 0
+              patch: 0
+              prerelease: 
+              build: 
+        END
+
+        persistence = Puppet::Transaction::Persistence.new
+        expect(persistence.load.dig("system_value")).to contain_exactly(be_a(SemanticPuppet::Version))
+      end
+
+      it 'should load puppet time related objects' do
+        write_state_file(<<~END)
+          system_value:
+            - !ruby/object:Puppet::Pops::Time::Timestamp
+              nsecs: 1638316135955087259
+            - !ruby/object:Puppet::Pops::Time::TimeData
+              nsecs: 1495789430910161286
+            - !ruby/object:Puppet::Pops::Time::Timespan
+              nsecs: 1495789430910161286
+        END
+
+        persistence = Puppet::Transaction::Persistence.new
+        expect(persistence.load.dig("system_value")).to contain_exactly(be_a(Puppet::Pops::Time::Timestamp), be_a(Puppet::Pops::Time::TimeData), be_a(Puppet::Pops::Time::Timespan))
+      end
+
+      it 'should load binary objects' do
+        write_state_file(<<~END)
+          system_value:
+            - !ruby/object:Puppet::Pops::Types::PBinaryType::Binary
+              binary_buffer: ''
+        END
+
+        persistence = Puppet::Transaction::Persistence.new
+        expect(persistence.load.dig("system_value")).to contain_exactly(be_a(Puppet::Pops::Types::PBinaryType::Binary))
+      end
     end
   end
 
