@@ -117,7 +117,9 @@ class Puppet::SSL::Verifier
         return false
       end
 
-    when OpenSSL::X509::V_ERR_HOSTNAME_MISMATCH # new in ruby-openssl 2.2.0/ruby 3.0
+    # ruby-openssl#74ef8c0cc56b840b772240f2ee2b0fc0aafa2743 now sets the
+    # store_context error when the cert is mismatched
+    when OpenSSL::X509::V_ERR_HOSTNAME_MISMATCH
       @last_error = Puppet::SSL::CertMismatchError.new(peer_cert, @hostname)
       return false
 
