@@ -46,6 +46,7 @@ describe 'lookup' do
     let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, env_name, 'modules')]) }
     let(:environments) { Puppet::Environments::Directories.new(populated_env_dir, []) }
     let(:facts) { Puppet::Node::Facts.new("facts", {'my_fact' => 'my_fact_value'}) }
+    let(:cert) { pem_content('oid.pem') }
 
     let(:populated_env_dir) do
       dir_contained_in(env_dir, environment_files)
@@ -53,7 +54,7 @@ describe 'lookup' do
     end
 
     before do
-      stub_request(:get, "https://puppet:8140/puppet-ca/v1/certificate/#{fqdn}")
+      stub_request(:get, "https://puppet:8140/puppet-ca/v1/certificate/#{fqdn}").to_return(body: cert)
       allow(Puppet::Node::Facts.indirection).to receive(:find).and_return(facts)
     end
 
@@ -97,6 +98,15 @@ describe 'lookup' do
       expect(lookup('a')).to eql('value a')
     end
 
+    it 'loads trusted information from the node certificate' do
+      allow(Puppet).to receive(:override).and_call_original
+      expect(Puppet).to receive(:override).with(trusted_information: an_object_having_attributes(
+        certname: fqdn,
+        extensions: { "1.3.6.1.4.1.34380.1.2.1.1" => "somevalue" }))
+
+      lookup('a')
+    end
+
     it 'loads external facts when running without --node' do
       expect(Puppet::Util).not_to receive(:skip_external_facts)
       expect(Facter).not_to receive(:load_external)
@@ -106,7 +116,7 @@ describe 'lookup' do
     describe 'when using --node' do
       let(:fqdn) { 'random_node' }
 
-      it 'skip loading of external facts' do
+      it 'skips loading of external facts' do
         app.options[:node] = fqdn
 
         expect(Puppet::Node::Facts.indirection).to receive(:find).and_return(facts)
