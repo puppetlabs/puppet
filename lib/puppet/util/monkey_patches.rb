@@ -105,8 +105,10 @@ if Puppet::Util::Platform.windows?
 end
 
 unless Puppet::Util::Platform.jruby_fips?
-  unless OpenSSL::X509.const_defined?(:V_ERR_HOSTNAME_MISMATCH)
-    OpenSSL::X509.const_set(:V_ERR_HOSTNAME_MISMATCH, 62)
+  unless defined?(OpenSSL::X509::V_ERR_HOSTNAME_MISMATCH)
+    module OpenSSL::X509
+      OpenSSL::X509::V_ERR_HOSTNAME_MISMATCH = 0x3E
+    end
   end
 
   # jruby-openssl doesn't support this
