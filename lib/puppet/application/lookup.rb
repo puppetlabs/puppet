@@ -384,8 +384,11 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
         session = service.create_session
         cert = session.route_to(:ca)
 
-        cert = cert.get_certificate(node)
-        trusted = Puppet::Context::TrustedInformation.new(true, node, cert)
+        _, x509 = cert.get_certificate(node)
+        cert = OpenSSL::X509::Certificate.new(x509)
+
+        Puppet::SSL::Oids.register_puppet_oids
+        trusted = Puppet::Context::TrustedInformation.remote(true, facts.values['certname'] || node, Puppet::SSL::Certificate.from_instance(cert))
 
         Puppet.override(trusted_information: trusted) do
           if tc == :plain || options[:compile]
