@@ -66,7 +66,6 @@ module Puppet
     newproperty(:ensure, :parent => Puppet::Property::Ensure) do
       newvalue(:present, :event => :user_created) do
         provider.create
-        @resource.generate
       end
 
       newvalue(:absent, :event => :user_removed) do
@@ -693,9 +692,8 @@ module Puppet
       defaultto false
     end
 
-    def generate
+    def eval_generate
       if !self[:purge_ssh_keys].empty? && self[:purge_ssh_keys] != :false
-        return [] if self[:ensure] == :present && !provider.exists? 
         if Puppet::Type.type(:ssh_authorized_key).nil?
           warning _("Ssh_authorized_key type is not available. Cannot purge SSH keys.")
         else

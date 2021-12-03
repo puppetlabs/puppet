@@ -118,6 +118,9 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     when "link"
       @destination = Puppet::FileSystem.readlink(real_path)
       @checksum = ("{#{@checksum_type}}") + send("#{@checksum_type}_file", real_path).to_s rescue nil
+    when "fifo", "socket"
+      @checksum_type = "none"
+      @checksum = ("{#{@checksum_type}}") + send("#{@checksum_type}_file", real_path).to_s
     else
       raise ArgumentError, _("Cannot manage files of type %{file_type}") % { file_type: stat.ftype }
     end
