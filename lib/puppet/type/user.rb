@@ -746,20 +746,40 @@ module Puppet
       munge do |value|
         # Resolve string, boolean and symbol forms of true and false to a
         # single representation.
-        test_sym = value.to_s.intern
-        value = test_sym if [:true, :false].include? test_sym
-
-        return [] if value == :false
-        home = resource[:home] || Dir.home(resource[:name])
-
-        return [ "#{home}/.ssh/authorized_keys" ] if value == :true
-        # value is an array - munge each value
-        [ value ].flatten.map do |entry|
-          # make sure frozen value is duplicated by using a gsub, second mutating gsub! is then ok
-          entry = entry.gsub(/^~\//, "#{home}/")
-          entry.gsub!(/^%h\//, "#{home}/")
-          entry
+        case value
+        when :false, false, "false"
+          []
+        when :true, true, "true"
+          home = homedir
+          home ? [ "#{home}/.ssh/authorized_keys" ] : []
+        else
+          # value can be a string or array - munge each value
+          [ value ].flatten.map do |entry|
+            authorized_keys_path(entry)
+          end.compact
         end
+      end
+
+      private
+
+      def homedir
+        resource[:home] || Dir.home(resource[:name])
+      rescue ArgumentError
+        Puppet.debug("User '#{resource[:name]}' does not exist")
+        nil
+      end
+
+      def authorized_keys_path(entry)
+        return entry unless entry.match?(%r{^(?:~|%h)/})
+
+        # if user doesn't exist (yet), ignore nonexistent homedir
+        home = homedir
+        return nil unless home
+
+        # compiler freezes "value" so duplicate using a gsub, second mutating gsub! is then ok
+        entry = entry.gsub(%r{^~/}, "#{home}/")
+        entry.gsub!(%r{^%h/}, "#{home}/")
+        entry
       end
     end
 
