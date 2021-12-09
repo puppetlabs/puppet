@@ -289,6 +289,73 @@ describe Puppet::Type.type(:user) do
     end
   end
 
+  describe "when managing the purge_ssh_keys property" do
+    context "with valid input" do
+      ['true', :true, true].each do |input|
+        it "should support #{input} as value" do
+          expect { described_class.new(:name => 'foo', :purge_ssh_keys => input) }.to_not raise_error
+        end
+      end
+
+      ['false', :false, false].each do |input|
+        it "should support #{input} as value" do
+          expect { described_class.new(:name => 'foo', :purge_ssh_keys => input) }.to_not raise_error
+        end
+      end
+
+      it "should support a String value" do
+        expect { described_class.new(:name => 'foo', :purge_ssh_keys => File.expand_path('home/foo/.ssh/authorized_keys')) }.to_not raise_error
+      end
+
+      it "should support an Array value" do
+        expect { described_class.new(:name => 'foo', :purge_ssh_keys => [File.expand_path('home/foo/.ssh/authorized_keys'),
+          File.expand_path('custom/authorized_keys')]) }.to_not raise_error
+      end
+    end
+
+    context "with faulty input" do
+      it "should raise error for relative path" do
+        expect { described_class.new(:name => 'foo', :purge_ssh_keys => 'home/foo/.ssh/authorized_keys') }.to raise_error(Puppet::ResourceError,
+          /Paths to keyfiles must be absolute/ )
+      end
+
+      it "should raise error for invalid type" do
+        expect { described_class.new(:name => 'foo', :purge_ssh_keys => :invalid) }.to raise_error(Puppet::ResourceError,
+          /purge_ssh_keys must be true, false, or an array of file names/ )
+      end
+
+      it "should raise error for array with relative path" do
+        expect { described_class.new(:name => 'foo', :purge_ssh_keys => ['home/foo/.ssh/authorized_keys',
+          File.expand_path('custom/authorized_keys')]) }.to raise_error(Puppet::ResourceError,
+          /Paths to keyfiles must be absolute/ )
+      end
+
+      it "should raise error for array with invalid type" do
+        expect { described_class.new(:name => 'foo', :purge_ssh_keys => [:invalid,
+          File.expand_path('custom/authorized_keys')]) }.to raise_error(Puppet::ResourceError,
+          /Each entry for purge_ssh_keys must be a string/ )
+      end
+    end
+
+    context "homedir retrieval" do
+      it "should accept the home provided" do
+        expect(Puppet).not_to receive(:debug).with("User 'foo' does not exist")
+        described_class.new(:name => 'foo', :purge_ssh_keys => true, :home => '/my_home')
+      end
+
+      it "should accept the home provided" do
+        expect(Dir).to receive(:home).with('foo').and_return('/my_home')
+        expect(Puppet).not_to receive(:debug).with("User 'foo' does not exist")
+        described_class.new(:name => 'foo', :purge_ssh_keys => true)
+      end
+
+      it "should output debug message when home directory cannot be retrieved" do
+        allow(Dir).to receive(:home).with('foo').and_raise(ArgumentError)
+        expect(Puppet).to receive(:debug).with("User 'foo' does not exist")
+        described_class.new(:name => 'foo', :purge_ssh_keys => true)
+      end
+    end
+  end
 
   describe "when managing expiry" do
     it "should fail if given an invalid date" do
