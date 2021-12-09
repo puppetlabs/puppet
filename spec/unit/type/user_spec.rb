@@ -174,51 +174,6 @@ describe Puppet::Type.type(:user) do
     end
   end
 
-  describe "when managing the purge_ssh_keys property" do
-    context "with valid input" do
-      it "should support a :true value" do
-        expect { described_class.new(:name => 'foo', :purge_ssh_keys => :true) }.to_not raise_error
-      end
-
-      it "should support a :false value" do
-        expect { described_class.new(:name => 'foo', :purge_ssh_keys => :false) }.to_not raise_error
-      end
-
-      it "should support a String value" do
-        expect { described_class.new(:name => 'foo', :purge_ssh_keys => File.expand_path('home/foo/.ssh/authorized_keys')) }.to_not raise_error
-      end
-
-      it "should support an Array value" do
-        expect { described_class.new(:name => 'foo', :purge_ssh_keys => [File.expand_path('home/foo/.ssh/authorized_keys'),
-          File.expand_path('custom/authorized_keys')]) }.to_not raise_error
-      end
-    end
-
-    context "with faulty input" do
-      it "should raise error for relative path" do
-        expect { described_class.new(:name => 'foo', :purge_ssh_keys => 'home/foo/.ssh/authorized_keys') }.to raise_error(Puppet::ResourceError,
-          /Paths to keyfiles must be absolute/ )
-      end
-
-      it "should raise error for invalid type" do
-        expect { described_class.new(:name => 'foo', :purge_ssh_keys => :invalid) }.to raise_error(Puppet::ResourceError,
-          /purge_ssh_keys must be true, false, or an array of file names/ )
-      end
-
-      it "should raise error for array with relative path" do
-        expect { described_class.new(:name => 'foo', :purge_ssh_keys => ['home/foo/.ssh/authorized_keys',
-          File.expand_path('custom/authorized_keys')]) }.to raise_error(Puppet::ResourceError,
-          /Paths to keyfiles must be absolute/ )
-      end
-
-      it "should raise error for array with invalid type" do
-        expect { described_class.new(:name => 'foo', :purge_ssh_keys => [:invalid,
-          File.expand_path('custom/authorized_keys')]) }.to raise_error(Puppet::ResourceError,
-          /Each entry for purge_ssh_keys must be a string/ )
-      end
-    end
-  end
-
   describe "when managing the uid property" do
     it "should convert number-looking strings into actual numbers" do
       expect(described_class.new(:name => 'foo', :uid => '50')[:uid]).to eq(50)
