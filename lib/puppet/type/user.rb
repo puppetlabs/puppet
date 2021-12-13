@@ -692,7 +692,7 @@ module Puppet
       defaultto false
     end
 
-    def eval_generate
+    def generate
       if !self[:purge_ssh_keys].empty? && self[:purge_ssh_keys] != :false
         if Puppet::Type.type(:ssh_authorized_key).nil?
           warning _("Ssh_authorized_key type is not available. Cannot purge SSH keys.")
@@ -742,6 +742,45 @@ module Puppet
         end
         raise ArgumentError, _("purge_ssh_keys must be true, false, or an array of file names, not %{value}") % { value: value.inspect }
       end
+
+      munge do |value|
+        # Resolve string, boolean and symbol forms of true and false to a
+        # single representation.
+        case value
+        when :false, false, "false"
+          []
+        when :true, true, "true"
+          home = homedir
+          home ? [ "#{home}/.ssh/authorized_keys" ] : []
+        else
+          # value can be a string or array - munge each value
+          [ value ].flatten.map do |entry|
+            authorized_keys_path(entry)
+          end.compact
+        end
+      end
+
+      private
+
+      def homedir
+        resource[:home] || Dir.home(resource[:name])
+      rescue ArgumentError
+        Puppet.debug("User '#{resource[:name]}' does not exist")
+        nil
+      end
+
+      def authorized_keys_path(entry)
+        return entry unless entry.match?(%r{^(?:~|%h)/})
+
+        # if user doesn't exist (yet), ignore nonexistent homedir
+        home = homedir
+        return nil unless home
+
+        # compiler freezes "value" so duplicate using a gsub, second mutating gsub! is then ok
+        entry = entry.gsub(%r{^~/}, "#{home}/")
+        entry.gsub!(%r{^%h/}, "#{home}/")
+        entry
+      end
     end
 
     newproperty(:loginclass, :required_features => :manages_loginclass) do
@@ -763,7 +802,7 @@ module Puppet
     # @see generate
     # @api private
     def find_unmanaged_keys
-      munged_unmanaged_keys.
+      self[:purge_ssh_keys].
         select { |f| File.readable?(f) }.
         map { |f| unknown_keys_in_file(f) }.
         flatten.each do |res|
@@ -773,41 +812,6 @@ module Puppet
             res[name] = param.value if param.metaparam?
           end
         end
-    end
-
-    def munged_unmanaged_keys
-      value = self[:purge_ssh_keys]
-
-      # Resolve string, boolean and symbol forms of true and false to a
-      # single representation.
-      test_sym = value.to_s.intern
-      value = test_sym if [:true, :false].include? test_sym
-
-      return [] if value == :false
-
-      home = self[:home]
-      begin
-        home ||= provider.home
-      rescue
-        Puppet.debug("User '#{self[:name]}' does not exist")
-      end
-
-      if home.to_s.empty? || !Dir.exist?(home.to_s)
-        if value == :true || [ value ].flatten.any? { |v| v.start_with?('~/', '%h/') }
-          Puppet.debug("User '#{self[:name]}' has no home directory set to purge ssh keys from.")
-          return []
-        end
-      end
-
-      return [ "#{home}/.ssh/authorized_keys" ] if value == :true
-
-      # value is an array - munge each value
-      [ value ].flatten.map do |entry|
-        # make sure frozen value is duplicated by using a gsub, second mutating gsub! is then ok
-        entry = entry.gsub(/^~\//, "#{home}/")
-        entry.gsub!(/^%h\//, "#{home}/")
-        entry
-      end
     end
 
     # Parse an ssh authorized keys file superficially, extract the comments
