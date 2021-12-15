@@ -1,7 +1,7 @@
 Report
 ======
 This document describes the Puppet master's report endpoint and the schema for
-Report Format 6 in technical term. Also see the
+Report Format 11 in technical terms. Also see the
 [documentation](https://puppet.com/docs/puppet/latest/format_report.html).
 
 The `report` endpoint allows clients to send reports to the master via `http`
