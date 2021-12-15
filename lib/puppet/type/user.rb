@@ -66,7 +66,6 @@ module Puppet
     newproperty(:ensure, :parent => Puppet::Property::Ensure) do
       newvalue(:present, :event => :user_created) do
         provider.create
-        @resource.generate
       end
 
       newvalue(:absent, :event => :user_removed) do
@@ -695,7 +694,6 @@ module Puppet
 
     def generate
       if !self[:purge_ssh_keys].empty?
-        return [] if self[:ensure] == :present && !provider.exists? 
         if Puppet::Type.type(:ssh_authorized_key).nil?
           warning _("Ssh_authorized_key type is not available. Cannot purge SSH keys.")
         else
@@ -744,6 +742,25 @@ module Puppet
         end
         raise ArgumentError, _("purge_ssh_keys must be true, false, or an array of file names, not %{value}") % { value: value.inspect }
       end
+
+      munge do |value|
+        # Resolve string, boolean and symbol forms of true and false to a
+        # single representation.
+        test_sym = value.to_s.intern
+        value = test_sym if [:true, :false].include? test_sym
+
+        return [] if value == :false
+        home = resource[:home] || Dir.home(resource[:name])
+
+        return [ "#{home}/.ssh/authorized_keys" ] if value == :true
+        # value is an array - munge each value
+        [ value ].flatten.map do |entry|
+          # make sure frozen value is duplicated by using a gsub, second mutating gsub! is then ok
+          entry = entry.gsub(/^~\//, "#{home}/")
+          entry.gsub!(/^%h\//, "#{home}/")
+          entry
+        end
+      end
     end
 
     newproperty(:loginclass, :required_features => :manages_loginclass) do
@@ -765,7 +782,7 @@ module Puppet
     # @see generate
     # @api private
     def find_unmanaged_keys
-      munged_unmanaged_keys.
+      self[:purge_ssh_keys].
         select { |f| File.readable?(f) }.
         map { |f| unknown_keys_in_file(f) }.
         flatten.each do |res|
@@ -775,41 +792,6 @@ module Puppet
             res[name] = param.value if param.metaparam?
           end
         end
-    end
-
-    def munged_unmanaged_keys
-      value = self[:purge_ssh_keys]
-
-      # Resolve string, boolean and symbol forms of true and false to a
-      # single representation.
-      test_sym = value.to_s.intern
-      value = test_sym if [:true, :false].include? test_sym
-
-      return [] if value == :false
-
-      home = self[:home]
-      begin
-        home ||= provider.home
-      rescue
-        Puppet.debug("User '#{self[:name]}' does not exist")
-      end
-
-      if home.to_s.empty? || !Dir.exist?(home.to_s)
-        if value == :true || [ value ].flatten.any? { |v| v.start_with?('~/', '%h/') }
-          Puppet.debug("User '#{self[:name]}' has no home directory set to purge ssh keys from.")
-          return []
-        end
-      end
-
-      return [ "#{home}/.ssh/authorized_keys" ] if value == :true
-
-      # value is an array - munge each value
-      [ value ].flatten.map do |entry|
-        # make sure frozen value is duplicated by using a gsub, second mutating gsub! is then ok
-        entry = entry.gsub(/^~\//, "#{home}/")
-        entry.gsub!(/^%h\//, "#{home}/")
-        entry
-      end
     end
 
     # Parse an ssh authorized keys file superficially, extract the comments
