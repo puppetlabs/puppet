@@ -513,17 +513,7 @@ class Puppet::Configurer
                                              :transaction_uuid => @transaction_uuid,
                                              :fail_on_404 => true)
 
-        # The :rest node terminus returns a node with an environment_name, but not an
-        # environment instance. Attempting to get the environment instance will load
-        # it from disk, which will likely fail. So create a remote environment.
-        #
-        # The :plain node terminus returns a node with an environment, but not an
-        # environment_name.
-        if !node.has_environment_instance? && node.environment_name
-          node.environment = Puppet::Node::Environment.remote(node.environment_name)
-        end
-
-        @server_specified_environment = node.environment.to_s
+        @server_specified_environment = node.environment_name.to_s
 
         if @server_specified_environment != @environment
           Puppet.notice _("Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'.") % { local_env: @environment, node_env: @server_specified_environment }
