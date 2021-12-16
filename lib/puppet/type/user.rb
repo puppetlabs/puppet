@@ -693,7 +693,7 @@ module Puppet
     end
 
     def generate
-      if !self[:purge_ssh_keys].empty? && self[:purge_ssh_keys] != :false
+      if !self[:purge_ssh_keys].empty?
         if Puppet::Type.type(:ssh_authorized_key).nil?
           warning _("Ssh_authorized_key type is not available. Cannot purge SSH keys.")
         else
