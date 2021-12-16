@@ -1,5 +1,5 @@
 # defaults
-* @puppetlabs/team-phoenix @puppetlabs/puppetserver-maintainers @puppetlabs/night-s-watch
+* @puppetlabs/phoenix @puppetlabs/puppetserver-maintainers @puppetlabs/night-s-watch
 
 # PAL
 /lib/puppet/pal @puppetlabs/bolt
