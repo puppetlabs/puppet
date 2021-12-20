@@ -8,13 +8,13 @@ test_name 'should manage purge_ssh_keys' do
   name = "usr#{rand(9999).to_i}"
 
   agents.each do |agent|
+    home = agent.tmpdir(name)
+    authorized_keys_path = "#{home}/.ssh/authorized_keys"
+
     teardown do
       agent.rm_rf(home)
       on(agent, puppet_resource('user', "#{name}", 'ensure=absent'))
     end
-
-    home = agent.tmpdir(name)
-    authorized_keys_path = "#{home}/.ssh/authorized_keys"
 
     step "create user #{name} with ssh keys purged" do
       apply_manifest_on(agent, <<-MANIFEST, { :catch_failures => true, :debug => true }) do |result|
