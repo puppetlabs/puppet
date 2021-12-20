@@ -221,6 +221,70 @@ describe Puppet::Face[:generate, :current] do
       end
 
     end
+
+    context "in an environment with a faulty type" do
+      let(:dir) do
+        dir_containing('environments', { 'testing_generate2' => {
+          'environment.conf' => "modulepath = modules",
+          'manifests' => { 'site.pp' => "" },
+          'modules' => {
+            'm3' => {
+              'lib' => { 'puppet' => { 'type' => {
+                'test3.rb' => <<-EOF
+                module Puppet
+                Type.newtype(:test3) do
+                  @doc = "Docs for resource"
+                  def self.title_patterns
+                    identity = lambda {|x| x}
+                    [
+                      [
+                      /^(.*)_(.*)$/,
+                        [
+                          [:name, identity ]
+                        ]
+                      ]
+                    ]
+                  end
+                  newproperty(:message) do
+                    desc "Docs for 'message' property"
+                  end
+                  newparam(:name) do
+                    desc "Docs for 'name' parameter"
+                    isnamevar
+                  end
+                end; end
+                EOF
+               } }
+            }
+          }
+        }}})
+      end
+
+      let(:modulepath) do
+        File.join(dir, 'testing_generate2', 'modules')
+      end
+
+      let(:m3) do
+        File.join(modulepath, 'm3')
+      end
+
+      around(:each) do |example|
+        Puppet.settings.initialize_global_settings
+        Puppet[:manifest] = ''
+        loader = Puppet::Environments::Directories.new(dir, [])
+        Puppet.override(:environments => loader) do
+          Puppet.override(:current_environment => loader.get('testing_generate2')) do
+            example.run
+          end
+        end
+      end
+
+      it 'fails when using procs for title patterns' do
+        expect {
+          genface.types(:format => 'pcore')
+        }.to exit_with(1)
+      end
+    end
   end
 
   def from_an_interactive_terminal

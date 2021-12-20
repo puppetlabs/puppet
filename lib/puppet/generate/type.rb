@@ -134,6 +134,9 @@ module Puppet
         inputs.sort_by! { |input| input.path }
       end
 
+      def self.bad_input?
+        @bad_input
+      end
       # Generates files for the given inputs.
       # If a file is up to date (newer than input) it is kept.
       # If a file is out of date it is regenerated.
@@ -170,6 +173,8 @@ module Puppet
         }
 
         up_to_date = true
+        @bad_input = false
+
         Puppet.notice _('Generating Puppet resource types.')
         inputs.each do |input|
           if !force && input.up_to_date?(outputdir)
@@ -187,6 +192,7 @@ module Puppet
             raise
           rescue Exception => e
             # Log the exception and move on to the next input
+            @bad_input = true
             Puppet.log_exception(e, _("Failed to load custom type '%{type_name}' from '%{input}': %{message}") % { type_name: type_name, input: input, message: e.message })
             next
           end
@@ -205,6 +211,7 @@ module Puppet
           begin
             model = Models::Type::Type.new(type)
           rescue Exception => e
+            @bad_input = true
             # Move on to the next input
             Puppet.log_exception(e, "#{input}: #{e.message}")
             next
@@ -214,6 +221,7 @@ module Puppet
           begin
             result = model.render(templates[input.template_path])
           rescue Exception => e
+            @bad_input = true
             Puppet.log_exception(e)
             raise
           end
@@ -227,6 +235,7 @@ module Puppet
               file.write(result)
             end
           rescue Exception => e
+            @bad_input = true
             Puppet.log_exception(e, _("Failed to generate '%{effective_output_path}': %{message}") % { effective_output_path: effective_output_path, message: e.message })
             # Move on to the next input
             next
