@@ -1,6 +1,6 @@
 test_name 'SysV on default Systemd Service Provider Validation' do
 
-  confine :to, :platform => /el-|centos|fedora-(2[0-9])/ do |h|
+  confine :to, :platform => /el-[6-8]|centos|fedora-(2[0-9])/ do |h|
     on h, 'which systemctl', :acceptable_exit_codes => [0, 1]
     stdout =~ /systemctl/
   end
