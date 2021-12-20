@@ -58,6 +58,8 @@ Puppet::Face.define(:generate, '0.1.0') do
       Puppet::FileSystem::mkpath(outputdir)
 
       generator.generate(inputs, outputdir, options[:force])
+
+      exit(1) if generator.bad_input?
       nil
     end
   end
