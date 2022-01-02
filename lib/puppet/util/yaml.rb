@@ -24,7 +24,11 @@ module Puppet::Util::Yaml
   # @raise [YamlLoadException] If deserialization fails.
   # @return The parsed YAML, which can be Hash, Array or scalar types.
   def self.safe_load(yaml, allowed_classes = [], filename = nil)
-    data = YAML.safe_load(yaml, allowed_classes, [], true, filename)
+    if Gem::Version.new(Psych::VERSION) >= Gem::Version.new('3.1.0')
+      data = YAML.safe_load(yaml, permitted_classes: allowed_classes, aliases: true, filename: filename)
+    else
+      data = YAML.safe_load(yaml, allowed_classes, [], true, filename)
+    end
     data = false if data.nil?
     data
   rescue ::Psych::DisallowedClass => detail
@@ -68,7 +72,11 @@ module Puppet::Util::Yaml
       end
       data.to_ruby || default_value
     else
-      yaml = YAML.load_file(filename)
+      if Gem::Version.new(Psych::VERSION) >= Gem::Version.new('3.3.2')
+        yaml = YAML.unsafe_load_file(filename)
+      else
+        yaml = YAML.load_file(filename)
+      end
       yaml || default_value
     end
   rescue *YamlLoadExceptions => detail
