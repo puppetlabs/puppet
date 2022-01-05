@@ -13,9 +13,9 @@ jobs:
     strategy:
       matrix:
         cfg:
-          - {check: rubocop, os: ubuntu-18.04, ruby: 2.5}
-          - {check: commits, os: ubuntu-18.04, ruby: 2.5}
-          - {check: warnings, os: ubuntu-18.04, ruby: 2.5}
+          - {check: rubocop,  os: ubuntu-18.04, ruby: '2.5'}
+          - {check: commits,  os: ubuntu-18.04, ruby: '2.5'}
+          - {check: warnings, os: ubuntu-18.04, ruby: '2.5'}
 
     runs-on: ${{ matrix.cfg.os }}
     steps:
@@ -29,9 +29,9 @@ jobs:
         with:
           ruby-version: ${{ matrix.cfg.ruby }}
 
-      - name: Install bundler and gems
+      - name: Update rubygems and install gems
         run: |
-          gem install bundler
+          gem update --system --silent --no-document
           bundle config set without packaging documentation
           bundle install --jobs 4 --retry 3
 
