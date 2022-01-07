@@ -48,6 +48,7 @@ describe 'lookup' do
     let(:facts) { Puppet::Node::Facts.new("facts", {'my_fact' => 'my_fact_value'}) }
     let(:cert) { pem_content('oid.pem') }
 
+    let(:node) { Puppet::Node.new('testnode', :facts => facts, :environment => env) }
     let(:populated_env_dir) do
       dir_contained_in(env_dir, environment_files)
       env_dir
@@ -104,7 +105,9 @@ describe 'lookup' do
         certname: fqdn,
         extensions: { "1.3.6.1.4.1.34380.1.2.1.1" => "somevalue" }))
 
-      lookup('a')
+      Puppet.settings[:node_terminus] = 'exec'
+      expect_any_instance_of(Puppet::Node::Exec).to receive(:find).and_return(node)
+      lookup('a', :compile => true)
     end
 
     it 'loads external facts when running without --node' do
