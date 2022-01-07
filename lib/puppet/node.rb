@@ -89,7 +89,7 @@ class Puppet::Node
     unless @environment.nil?
       # always set the environment parameter. It becomes top scope $environment for a manifest during catalog compilation.
       @parameters[ENVIRONMENT] = @environment.name.to_s
-      self.environment_name = @environment.name if instance_variable_defined?(:@environment_name)
+      self.environment_name = @environment.name
     end
     @environment
   end
