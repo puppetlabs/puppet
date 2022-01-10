@@ -40,6 +40,12 @@ describe Puppet::Node do
         expect(node.environment.name).to eq(:bar)
       end
 
+      it "sets environment_name with the correct environment name" do
+        node = Puppet::Node.new("foo")
+        node.environment = Puppet::Node::Environment.remote('www123')
+        expect(node.environment_name).to eq(:www123)
+      end
+
       it "allows its environment to be set by parameters after initialization" do
         node = Puppet::Node.new("foo")
         node.parameters["environment"] = :bar

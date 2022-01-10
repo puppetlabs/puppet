@@ -2193,16 +2193,6 @@ apply_manifest_on(master, @manifest, :catch_failures => true)
 step 'start puppet server'
 with_puppet_running_on master, @master_opts, @coderoot do
 
-  step "handle certificate"
-  on(master, "puppetserver ca generate --certname #{@node1}")
-  on(master, "puppetserver ca generate --certname #{@node2}")
-  on(master, "mkdir -p #{@testroot}/puppet/ssl/certs")
-  on(master, "mkdir -p #{@testroot}/puppet/ssl/private_keys")
-  on(master, "cp -a /etc/puppetlabs/puppet/ssl/certs/ca.pem #{@testroot}/puppet/ssl/certs")
-  on(master, "cp -a /etc/puppetlabs/puppet/ssl/crl.pem #{@testroot}/puppet/ssl")
-  on(master, "cp -a /etc/puppetlabs/puppet/ssl/private_keys/#{master.connection.hostname}.pem #{@testroot}/puppet/ssl/private_keys")
-  on(master, "cp -a /etc/puppetlabs/puppet/ssl/certs/#{master.connection.hostname}.pem #{@testroot}/puppet/ssl/certs")
-
   step "global_key"
   rg = on(master, puppet('lookup', 'global_key'))
   result = rg.stdout
@@ -2586,6 +2576,25 @@ with_puppet_running_on master, @master_opts, @coderoot do
 
   step 'apply enc manifest'
   apply_manifest_on(master, @encmanifest, :catch_failures => true)
+
+  step "--compile uses environment specified in ENC"
+  r = on(master, puppet('lookup', '--compile', "--node #{@node1}", "--confdir #{@confdir}", "--facts #{@coderoot}/facts.yaml", 'environment_key'))
+  result = r.stderr
+  assert_match(
+    /CA is not available/,
+    result,
+    "lookup in ENC specified environment failed"
+  )
+
+  step "handle certificate"
+  on(master, "puppetserver ca generate --certname #{@node1}")
+  on(master, "puppetserver ca generate --certname #{@node2}")
+  on(master, "mkdir -p #{@testroot}/puppet/ssl/certs")
+  on(master, "mkdir -p #{@testroot}/puppet/ssl/private_keys")
+  on(master, "cp -a /etc/puppetlabs/puppet/ssl/certs/ca.pem #{@testroot}/puppet/ssl/certs")
+  on(master, "cp -a /etc/puppetlabs/puppet/ssl/crl.pem #{@testroot}/puppet/ssl")
+  on(master, "cp -a /etc/puppetlabs/puppet/ssl/private_keys/#{master.connection.hostname}.pem #{@testroot}/puppet/ssl/private_keys")
+  on(master, "cp -a /etc/puppetlabs/puppet/ssl/certs/#{master.connection.hostname}.pem #{@testroot}/puppet/ssl/certs")
 
   step "--compile uses environment specified in ENC"
   r = on(master, puppet('lookup', '--compile', "--node #{@node1}", "--confdir #{@confdir}", "--facts #{@coderoot}/facts.yaml", 'environment_key'))
