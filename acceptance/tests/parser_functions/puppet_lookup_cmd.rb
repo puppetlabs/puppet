@@ -2579,7 +2579,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
 
   step "--compile uses environment specified in ENC"
   r = on(master, puppet('lookup', '--compile', "--node #{@node1}", "--confdir #{@confdir}", "--facts #{@coderoot}/facts.yaml", 'environment_key'))
-  result = r.stdout
+  result = r.stderr
   assert_match(
     /CA is not available/,
     result,
