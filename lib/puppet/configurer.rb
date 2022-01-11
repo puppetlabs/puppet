@@ -304,7 +304,7 @@ class Puppet::Configurer
         Puppet.debug(_("Environment not passed via CLI and no catalog was given, attempting to find out the last server-specified environment"))
         initial_environment, loaded_last_environment = last_server_specified_environment
 
-        unless loaded_last_environment
+        unless Puppet[:use_last_environment] && loaded_last_environment
           Puppet.debug(_("Requesting environment from the server"))
           initial_environment = current_server_specified_environment(@environment, configured_environment, options)
         end
