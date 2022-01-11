@@ -421,6 +421,17 @@ module Puppet
         <https://puppet.com/docs/puppet/latest/environments_about.html>",
       :type    => :path,
     },
+    :use_last_environment => {
+      :type     => :boolean,
+      :default  => true,
+      :desc     => <<-'EOT'
+      Puppet saves both the initial and converged environment in the last_run_summary file.
+      If they differ, and this setting is set to true, we will use the last converged
+      environment and skip the node request.
+
+      When set to false, we will do the node request and ignore the environment data from the last_run_summary file.
+    EOT
+    },
     :always_retry_plugins => {
         :type     => :boolean,
         :default  => true,

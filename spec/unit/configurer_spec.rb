@@ -1251,88 +1251,120 @@ describe Puppet::Configurer do
           converged_environment: #{last_server_specified_environment}
           run_mode: agent
         SUMMARY
+      end
 
-        expect(Puppet::Node.indirection).not_to receive(:find)
+      describe "when the use_last_environment is set to true" do
+        before do
+          expect(Puppet::Node.indirection).not_to receive(:find)
           .with(anything, hash_including(:ignore_cache => true, :fail_on_404 => true))
-      end
+        end
 
-      it "prefers the environment set via cli" do
-        Puppet.settings.handlearg('--environment', 'usethis')
-        configurer.run
+        it "prefers the environment set via cli" do
+          Puppet.settings.handlearg('--environment', 'usethis')
+          configurer.run
 
-        expect(configurer.environment).to eq('usethis')
-      end
+          expect(configurer.environment).to eq('usethis')
+        end
 
-      it "prefers the environment set via lastrunfile over config" do
-        FileUtils.mkdir_p(Puppet[:confdir])
-        set_puppet_conf(Puppet[:confdir], <<~CONF)
-        [main]
-        environment = usethis
-        lastrunfile = #{Puppet[:lastrunfile]}
-        CONF
+        it "prefers the environment set via lastrunfile over config" do
+          FileUtils.mkdir_p(Puppet[:confdir])
+          set_puppet_conf(Puppet[:confdir], <<~CONF)
+          [main]
+          environment = usethis
+          lastrunfile = #{Puppet[:lastrunfile]}
+          CONF
 
-        Puppet.initialize_settings
-        configurer.run
-
-        expect(configurer.environment).to eq(last_server_specified_environment)
-      end
-
-      it "uses the environment from Puppet[:environment] if given a catalog" do
-        configurer.run(catalog: catalog)
-
-        expect(configurer.environment).to eq(Puppet[:environment])
-      end
-
-      it "uses the environment from Puppet[:environment] if use_cached_catalog = true" do
-        Puppet[:use_cached_catalog] = true
-        expects_cached_catalog_only(catalog)
-        configurer.run
-
-        expect(configurer.environment).to eq(Puppet[:environment])
-      end
-
-      describe "when the environment is not set via CLI" do
-        it "uses the environment found in lastrunfile if the key exists" do
+          Puppet.initialize_settings
           configurer.run
 
           expect(configurer.environment).to eq(last_server_specified_environment)
         end
 
-        it "pushes the converged environment found in lastrunfile over the existing context" do
-          initial_env = Puppet::Node::Environment.remote('production')
-          Puppet.push_context(
-            current_environment: initial_env,
-            loaders: Puppet::Pops::Loaders.new(initial_env, true))
+        it "uses the environment from Puppet[:environment] if given a catalog" do
+          configurer.run(catalog: catalog)
 
-          expect(Puppet).to receive(:push_context).with(
-            hash_including(:current_environment, :loaders),
-            "Local node environment #{last_server_specified_environment} for configurer transaction"
-          ).once.and_call_original
-
-          configurer.run
+          expect(configurer.environment).to eq(Puppet[:environment])
         end
 
-        it "uses the environment from Puppet[:environment] if strict_environment_mode is set" do
-          Puppet[:strict_environment_mode] = true
+        it "uses the environment from Puppet[:environment] if use_cached_catalog = true" do
+          Puppet[:use_cached_catalog] = true
+          expects_cached_catalog_only(catalog)
           configurer.run
 
           expect(configurer.environment).to eq(Puppet[:environment])
         end
 
-        it "uses the environment from Puppet[:environment] if initial_environment is the same as converged_environment" do
-          Puppet[:lastrunfile] = file_containing('last_run_summary.yaml', <<~SUMMARY)
-          ---
-          version:
-            config: 1624882680
-            puppet: 6.24.0
-          application:
-            initial_environment: development
-            converged_environment: development
-            run_mode: agent
-          SUMMARY
+        describe "when the environment is not set via CLI" do
+          it "uses the environment found in lastrunfile if the key exists" do
+            configurer.run
+
+            expect(configurer.environment).to eq(last_server_specified_environment)
+          end
+
+          it "pushes the converged environment found in lastrunfile over the existing context" do
+            initial_env = Puppet::Node::Environment.remote('production')
+            Puppet.push_context(
+              current_environment: initial_env,
+              loaders: Puppet::Pops::Loaders.new(initial_env, true))
+
+            expect(Puppet).to receive(:push_context).with(
+              hash_including(:current_environment, :loaders),
+              "Local node environment #{last_server_specified_environment} for configurer transaction"
+            ).once.and_call_original
+
+            configurer.run
+          end
+
+          it "uses the environment from Puppet[:environment] if strict_environment_mode is set" do
+            Puppet[:strict_environment_mode] = true
+            configurer.run
+
+            expect(configurer.environment).to eq(Puppet[:environment])
+          end
+
+          it "uses the environment from Puppet[:environment] if initial_environment is the same as converged_environment" do
+            Puppet[:lastrunfile] = file_containing('last_run_summary.yaml', <<~SUMMARY)
+            ---
+            version:
+              config: 1624882680
+              puppet: 6.24.0
+            application:
+              initial_environment: development
+              converged_environment: development
+              run_mode: agent
+            SUMMARY
+            configurer.run
+
+            expect(configurer.environment).to eq(Puppet[:environment])
+          end
+        end
+      end
+
+      describe "when the use_last_environment setting is set to false" do
+        let(:node_environment) { Puppet::Node::Environment.remote(:salam) }
+        let(:node) { Puppet::Node.new(Puppet[:node_name_value]) }
+
+        before do
+          Puppet[:use_last_environment] = false
+          node.environment = node_environment
+
+          allow(Puppet::Node.indirection).to receive(:find)
+          allow(Puppet::Node.indirection).to receive(:find)
+            .with(anything, hash_including(:ignore_cache => true, :fail_on_404 => true))
+            .and_return(node)
+        end
+
+        it "does a node request" do
+          expect(Puppet::Node.indirection).to receive(:find)
+          .with(anything, hash_including(:ignore_cache => true, :fail_on_404 => true))
+
+          configurer.run
+        end
+
+        it "uses the node environment from the node request" do
           configurer.run
 
-          expect(configurer.environment).to eq(Puppet[:environment])
+          expect(configurer.environment).to eq(node_environment.name.to_s)
         end
       end
     end
