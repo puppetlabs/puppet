@@ -272,8 +272,9 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
   def uninstall
     command = resource_or_provider_command
     command_options = ["uninstall"]
-    command_options << "--executables" << "--all" << resource[:name]
+    command_options << "--executables" << "--all"
     command_options += uninstall_options if resource[:uninstall_options]
+    command_options << resource[:name]
     output = self.class.execute_gem_command(command, command_options)
     # Apparently some gem versions don't exit non-0 on failure.
     self.fail _("Could not uninstall: %{output}") % { output: output.chomp } if output.include?("ERROR")
