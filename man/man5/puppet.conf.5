@@ -2045,6 +2045,17 @@ Whether to only use the cached catalog rather than compiling a new catalog on ev
 .
 .IP "" 0
 .
+.SS "use_last_environment"
+Puppet saves both the initial and converged environment in the last_run_summary file\. If they differ, and this setting is set to true, we will use the last converged environment and skip the node request\.
+.
+.P
+When set to false, we will do the node request and ignore the environment data from the last_run_summary file\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: \fBtrue\fR
+.
+.IP "" 0
+.
 .SS "use_srv_records"
 Whether the server will search for SRV records in DNS for the current domain\.
 .
