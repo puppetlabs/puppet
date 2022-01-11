@@ -10,9 +10,11 @@ test_name "C100532: Server returns expected format when --preferred_serializatio
     formats.each do |expected_format|
       step "Server returns #{expected_format} catalog when --preferred_serialization_format=#{expected_format}" do
         agents.each do |agent|
+          # We use :silent here to avoid raw http_debug bytes being printed to our CI logs
           on(agent, puppet('agent', '-t',
                            "--preferred_serialization_format #{expected_format}",
-                           '--http_debug'), :acceptable_exit_codes => [0,2]) do |res|
+                           '--http_debug'),
+                    :acceptable_exit_codes => [0,2], :silent => true) do |res|
             found_format = false
             started = false
             res.stderr.each_line do |line|
