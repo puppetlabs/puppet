@@ -24,6 +24,7 @@ class Puppet::Resource::TypeCollection
     @definitions = {}
     @nodes = {}
     @notfound = {}
+    # always lock the environment before acquiring this lock
     @lock = Puppet::Concurrent::Lock.new
 
     # So we can keep a list and match the first-defined regex
@@ -185,26 +186,29 @@ class Puppet::Resource::TypeCollection
   # Resolve namespaces and find the given object.  Autoload it if
   # necessary.
   def find_or_load(name, type)
-    @lock.synchronize do
-      # Name is always absolute, but may start with :: which must be removed
-      fqname = (name[0,2] == COLON_COLON ? name[2..-1] : name)
+    # always lock the environment before locking the type collection
+    @environment.lock.synchronize do
+      @lock.synchronize do
+        # Name is always absolute, but may start with :: which must be removed
+        fqname = (name[0,2] == COLON_COLON ? name[2..-1] : name)
 
-      result = send(type, fqname)
-      unless result
-        if @notfound[ fqname ] && Puppet[ :ignoremissingtypes ]
-          # do not try to autoload if we already tried and it wasn't conclusive
-          # as this is a time consuming operation. Warn the user.
-          # Check first if debugging is on since the call to debug_once is expensive
-          if Puppet[:debug]
-            debug_once _("Not attempting to load %{type} %{fqname} as this object was missing during a prior compilation") % { type: type, fqname: fqname }
+        result = send(type, fqname)
+        unless result
+          if @notfound[ fqname ] && Puppet[ :ignoremissingtypes ]
+            # do not try to autoload if we already tried and it wasn't conclusive
+            # as this is a time consuming operation. Warn the user.
+            # Check first if debugging is on since the call to debug_once is expensive
+            if Puppet[:debug]
+              debug_once _("Not attempting to load %{type} %{fqname} as this object was missing during a prior compilation") % { type: type, fqname: fqname }
+            end
+          else
+            fqname = munge_name(fqname)
+            result = loader.try_load_fqname(type, fqname)
+            @notfound[ fqname ] = result.nil?
           end
-        else
-          fqname = munge_name(fqname)
-          result = loader.try_load_fqname(type, fqname)
-          @notfound[ fqname ] = result.nil?
         end
+        result
       end
-      result
     end
   end
 
