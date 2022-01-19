@@ -457,7 +457,7 @@ module Puppet
 
             exec { '/bin/echo root >> /usr/lib/cron/cron.allow':
               path   => '/usr/bin:/usr/sbin:/bin',
-              unless => 'grep root /usr/lib/cron/cron.allow 2>/dev/null',
+              unless => 'grep ^root$ /usr/lib/cron/cron.allow 2>/dev/null',
             }
 
         This would add `root` to the cron.allow file (on Solaris) unless
