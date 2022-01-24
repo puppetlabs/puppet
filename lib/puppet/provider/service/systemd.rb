@@ -14,11 +14,13 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   confine :true => Puppet::FileSystem.exist?('/proc/1/comm') && Puppet::FileSystem.read('/proc/1/comm').include?('systemd')
 
   defaultfor :osfamily => [:archlinux]
-  defaultfor :osfamily => :redhat, :operatingsystemmajrelease => ["7", "8", "9"]
+  defaultfor :osfamily => :redhat
+  notdefaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..6).to_a
   defaultfor :osfamily => :redhat, :operatingsystem => :fedora
   defaultfor :osfamily => :suse
   defaultfor :osfamily => :coreos
   defaultfor :operatingsystem => :amazon, :operatingsystemmajrelease => ["2"]
+  notdefaultfor :operatingsystem => :amazon, :operatingsystemmajrelease => ["2017"]
   defaultfor :operatingsystem => :debian
   notdefaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ["5", "6", "7"] # These are using the "debian" method
   defaultfor :operatingsystem => :LinuxMint

@@ -19,11 +19,9 @@ describe 'Puppet::Type::Service::Provider::Redhat',
     allow(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
   end
 
-  osfamilies = [ 'RedHat' ]
-
-  osfamilies.each do |osfamily|
-    it "should be the default provider on #{osfamily}" do
-      expect(Facter).to receive(:value).with(:osfamily).and_return(osfamily)
+  [4, 5, 6].each do |ver|
+    it "should be the default provider on rhel#{ver}" do
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return(ver)
       expect(provider_class.default?).to be_truthy
     end
   end
