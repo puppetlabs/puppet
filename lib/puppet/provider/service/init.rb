@@ -4,7 +4,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   desc "Standard `init`-style service management."
 
   def self.defpath
-    case Puppet.runtime[:facter].value(:operatingsystem)
+    case Puppet.runtime[:facter].value(:os)['name']
     when "FreeBSD", "DragonFly"
       ["/etc/rc.d", "/usr/local/etc/rc.d"]
     when "HP-UX"
@@ -21,8 +21,8 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   # Debian and Ubuntu should use the Debian provider.
   # RedHat systems should use the RedHat provider.
   confine :true => begin
-      os = Puppet.runtime[:facter].value(:operatingsystem).downcase
-      family = Puppet.runtime[:facter].value(:osfamily).downcase
+      os = Puppet.runtime[:facter].value(:os)['name'].downcase
+      family = Puppet.runtime[:facter].value(:os)['family'].downcase
       !(os == 'debian' || os == 'ubuntu' || family == 'redhat')
   end
 
