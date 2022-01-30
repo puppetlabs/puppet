@@ -129,7 +129,9 @@ module Puppet
     private
 
     def build_cert(name, issuer, opts = {})
-      key = if opts[:key_type] == :ec
+      key = if opts[:key_type] == :ed25519
+              key = OpenSSL::PKey.generate('ed25519')
+            elsif opts[:key_type] == :ec
               key = OpenSSL::PKey::EC.generate('prime256v1')
             elsif opts[:reuse_key]
               key = opts[:reuse_key]
