@@ -112,7 +112,6 @@
 # * `reverse_each` - get "leaves before root"
 # * `filter` - prune the tree
 # * `map` - transform each element
-# * `reduce` - produce something else
 #
 # Note than when chaining, the value passed on is a `Tuple` with `[path, value]`.
 #
