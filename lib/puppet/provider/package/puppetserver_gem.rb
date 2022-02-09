@@ -53,7 +53,7 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
     end
 
     if options[:local]
-      list = execute_rubygems_list_command(gem_regex)
+      list = execute_rubygems_list_command(command_options)
     else
       begin
         list = puppetservercmd(command_options)
@@ -137,7 +137,7 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
   # for example: json (1.8.3 java)
   # but java platform gems should not be managed by this (or any) provider.
 
-  def self.execute_rubygems_list_command(gem_regex)
+  def self.execute_rubygems_list_command(command_options)
     puppetserver_default_gem_home            = '/opt/puppetlabs/server/data/puppetserver/jruby-gems'
     puppetserver_default_vendored_jruby_gems = '/opt/puppetlabs/server/data/puppetserver/vendored-jruby-gems'
     puppet_default_vendor_gems               = '/opt/puppetlabs/puppet/lib/ruby/vendor_gems'
@@ -157,24 +157,15 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
       gem_env['GEM_PATH'] = puppetserver_conf['jruby-puppet'].key?('gem-path') ? puppetserver_conf['jruby-puppet']['gem-path'].join(':') : puppetserver_default_gem_path
     end
     gem_env['GEM_SPEC_CACHE'] = "/tmp/#{$$}"
-    Gem.paths = gem_env
 
-    sio_inn = StringIO.new
-    sio_out = StringIO.new
-    sio_err = StringIO.new
-    stream_ui = Gem::StreamUI.new(sio_inn, sio_out, sio_err, false)
-    gem_list_cmd = Gem::Commands::ListCommand.new
-    gem_list_cmd.options[:domain] = :local
-    gem_list_cmd.options[:args] = [gem_regex] if gem_regex
-    gem_list_cmd.ui = stream_ui
-    gem_list_cmd.execute
+    # Remove the 'gem' from the command_options
+    command_options.shift
+    gem_out = execute_gem_command(Puppet::Type::Package::ProviderPuppet_gem.provider_command, command_options, gem_env)
 
     # There is no method exclude default gems from the local gem list,
     # for example: psych (default: 2.2.2)
     # but default gems should not be managed by this (or any) provider.
-    gem_list = sio_out.string.lines.reject { |gem| gem =~ / \(default\: / }
+    gem_list = gem_out.lines.reject { |gem| gem =~ / \(default\: / }
     gem_list.join("\n")
-  ensure
-    Gem.clear_paths
   end
 end
