@@ -1,8 +1,6 @@
 ---
 name: Snyk Monitor
 on:
-  schedule:
-    - cron: '0 6 * * 1-5'
   push:
     branches:
       - main
@@ -27,7 +25,7 @@ jobs:
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/ruby@master
         env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_TOKEN: ${{ secrets.SNYK_FOSS_KEY }}
         with:
           command: monitor
           args: --org=puppet-foss --project-name=${{ github.repository }}#${{ steps.extract_branch.outputs.branch }}
