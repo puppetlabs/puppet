@@ -1995,7 +1995,6 @@ EOT
       :hook => proc do |value|
         paths = value.split(File::PATH_SEPARATOR)
         facter = Puppet.runtime[:facter]
-        facter.reset
         facter.search(*paths)
       end
     }
