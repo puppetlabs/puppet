@@ -22,7 +22,7 @@ module Util
   require 'puppet/util/posix'
   extend Puppet::Util::POSIX
 
-  require 'puppet/util/windows/process' if Puppet::Util::Platform.windows?
+  require 'puppet/util/windows'
 
   extend Puppet::Util::SymbolicFileMode
 
