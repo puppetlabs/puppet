@@ -36,7 +36,7 @@ describe 'Timespan' do
       expect(Timespan.parse('97811', '%S')).to eql(simple)
     end
 
-    it 'where biggest quantity is not frist' do
+    it 'where biggest quantity is not first' do
       expect(Timespan.parse('11:1630', '%S:%M')).to eql(simple)
     end
 
