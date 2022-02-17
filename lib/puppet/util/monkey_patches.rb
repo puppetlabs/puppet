@@ -70,8 +70,6 @@ unless Puppet::Util::Platform.jruby_fips?
 end
 
 if Puppet::Util::Platform.windows?
-  require 'puppet/util/windows'
-
   class OpenSSL::X509::Store
     @puppet_certs_loaded = false
     alias __original_set_default_paths set_default_paths
