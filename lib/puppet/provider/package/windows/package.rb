@@ -1,5 +1,4 @@
 require 'puppet/provider/package'
-require 'puppet/util/windows'
 
 class Puppet::Provider::Package::Windows
   class Package
