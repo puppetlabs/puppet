@@ -1,4 +1,3 @@
-require 'puppet/util/windows'
 require 'puppet/ssl/openssl_loader'
 require 'ffi'
 

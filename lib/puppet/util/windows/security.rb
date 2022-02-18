@@ -61,7 +61,6 @@
 #   automatically rebuild the access control list based on the new
 #   (and different) owner or group.
 
-require 'puppet/util/windows'
 require 'pathname'
 require 'ffi'
 

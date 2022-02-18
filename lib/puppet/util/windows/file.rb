@@ -1,5 +1,3 @@
-require 'puppet/util/windows'
-
 module Puppet::Util::Windows::File
   require 'ffi'
   extend FFI::Library

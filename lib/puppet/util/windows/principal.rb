@@ -1,5 +1,3 @@
-require 'puppet/util/windows'
-
 module Puppet::Util::Windows::SID
   class Principal
     extend FFI::Library

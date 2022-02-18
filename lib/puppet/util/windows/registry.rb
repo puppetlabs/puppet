@@ -1,5 +1,3 @@
-require 'puppet/util/windows'
-
 module Puppet::Util::Windows
   module Registry
     require 'ffi'

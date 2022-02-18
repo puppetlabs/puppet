@@ -1,5 +1,4 @@
 # coding: utf-8
-require 'puppet/util/windows'
 require 'ffi'
 
 module Puppet::Util::Windows

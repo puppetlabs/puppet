@@ -1,4 +1,3 @@
-require 'puppet/util/windows'
 require 'ffi'
 
 module Puppet::Util::Windows::User

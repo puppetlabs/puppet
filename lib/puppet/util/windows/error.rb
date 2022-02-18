@@ -1,5 +1,3 @@
-require 'puppet/util/windows'
-
 # represents an error resulting from a Win32 error code
 class Puppet::Util::Windows::Error < Puppet::Error
   require 'ffi'
