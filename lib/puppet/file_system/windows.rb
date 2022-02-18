@@ -1,5 +1,4 @@
 require 'puppet/file_system/posix'
-require 'puppet/util/windows'
 
 class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
   FULL_CONTROL = Puppet::Util::Windows::File::FILE_ALL_ACCESS
