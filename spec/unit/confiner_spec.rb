@@ -3,6 +3,8 @@ require 'spec_helper'
 require 'puppet/confiner'
 
 describe Puppet::Confiner do
+  let(:coll) { Puppet::ConfineCollection.new('') }
+
   before do
     @object = Object.new
     @object.extend(Puppet::Confiner)
@@ -21,7 +23,6 @@ describe Puppet::Confiner do
   end
 
   it "should delegate its confine method to its confine collection" do
-    coll = double('collection')
     allow(@object).to receive(:confine_collection).and_return(coll)
     expect(coll).to receive(:confine).with(:foo => :bar, :bee => :baz)
     @object.confine(:foo => :bar, :bee => :baz)
@@ -39,22 +40,21 @@ describe Puppet::Confiner do
 
   describe "when testing suitability" do
     before do
-      @coll = double('collection')
-      allow(@object).to receive(:confine_collection).and_return(@coll)
+      allow(@object).to receive(:confine_collection).and_return(coll)
     end
 
     it "should return true if the confine collection is valid" do
-      expect(@coll).to receive(:valid?).and_return(true)
+      expect(coll).to receive(:valid?).and_return(true)
       expect(@object).to be_suitable
     end
 
     it "should return false if the confine collection is invalid" do
-      expect(@coll).to receive(:valid?).and_return(false)
+      expect(coll).to receive(:valid?).and_return(false)
       expect(@object).not_to be_suitable
     end
 
     it "should return the summary of the confine collection if a long result is asked for" do
-      expect(@coll).to receive(:summary).and_return("myresult")
+      expect(coll).to receive(:summary).and_return("myresult")
       expect(@object.suitable?(false)).to eq("myresult")
     end
   end
