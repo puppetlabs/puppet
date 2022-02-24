@@ -30,12 +30,14 @@ describe "puppet resource", unless: Puppet::Util::Platform.jruby? do
     it 'lists types from the default environment' do
       modulepath = File.join(Puppet[:codedir], 'modules', 'test', 'lib', 'puppet', 'type')
       FileUtils.mkdir_p(modulepath)
-      File.write(File.join(modulepath, 'test.rb'), 'Puppet::Type.newtype(:test)')
+      File.write(File.join(modulepath, 'test_resource_spec.rb'), 'Puppet::Type.newtype(:test_resource_spec)')
       resource.command_line.args = ['--types']
 
       expect {
         resource.run
-      }.to exit_with(0).and output(/test/).to_stdout
+      }.to exit_with(0).and output(/test_resource_spec/).to_stdout
+      ensure
+        Puppet::Type.rmtype(:test_resource_spec)
     end
   end
 
