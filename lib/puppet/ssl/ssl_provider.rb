@@ -51,8 +51,7 @@ class Puppet::SSL::SSLProvider
   # @raise (see #create_context)
   # @api private
   def create_system_context(cacerts:, path: Puppet[:ssl_trust_store])
-    store = create_x509_store(cacerts, [], false)
-    store.set_default_paths
+    store = create_x509_store(cacerts, [], false, include_system_store: true)
 
     if path
       stat = Puppet::FileSystem.stat(path)
@@ -186,13 +185,15 @@ class Puppet::SSL::SSLProvider
     end
   end
 
-  def create_x509_store(roots, crls, revocation)
+  def create_x509_store(roots, crls, revocation, include_system_store: false)
     store = OpenSSL::X509::Store.new
     store.purpose = OpenSSL::X509::PURPOSE_ANY
     store.flags = default_flags | revocation_mode(revocation)
 
     roots.each { |cert| store.add_cert(cert) }
     crls.each { |crl| store.add_crl(crl) }
+
+    store.set_default_paths if include_system_store
 
     store
   end
