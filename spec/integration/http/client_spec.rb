@@ -77,6 +77,12 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       }
     }
 
+    let(:systemstore) do
+      res = tmpfile('systemstore')
+      File.write(res, https_server.ca_cert)
+      res
+    end
+
     it "mutually authenticates the connection" do
       client_context = ssl_provider.create_context(
         cacerts: [https_server.ca_cert], crls: [https_server.ca_crl],
@@ -86,6 +92,30 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       https_server.start_server(ctx_proc: ctx_proc) do |port|
         res = client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: client_context})
         expect(res).to be_success
+      end
+    end
+
+    it "connects when the server's CA is in the system store and the connection is mutually authenticated using create_context" do
+      Puppet::Util.withenv("SSL_CERT_FILE" => systemstore) do
+        client_context = ssl_provider.create_context(
+          cacerts: [https_server.ca_cert], crls: [https_server.ca_crl],
+          client_cert: https_server.server_cert, private_key: https_server.server_key,
+          revocation: false, include_system_store: true
+        )
+        https_server.start_server(ctx_proc: ctx_proc) do |port|
+          res = client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: client_context})
+          expect(res).to be_success
+        end
+      end
+    end
+
+    it "connects when the server's CA is in the system store and the connection is mutually authenticated uning load_context" do
+      Puppet::Util.withenv("SSL_CERT_FILE" => systemstore) do
+        client_context = ssl_provider.load_context(revocation: false, include_system_store: true)
+        https_server.start_server(ctx_proc: ctx_proc) do |port|
+          res = client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: client_context})
+          expect(res).to be_success
+        end
       end
     end
   end

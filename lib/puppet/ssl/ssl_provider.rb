@@ -93,19 +93,20 @@ class Puppet::SSL::SSLProvider
   # @param client_cert [OpenSSL::X509::Certificate] client's cert whose public
   #   key matches the `private_key`
   # @param revocation [:chain, :leaf, false] revocation mode
+  # @param include_system_store [true, false] Also trust system CA
   # @return [Puppet::SSL::SSLContext] A context to use to create connections
   # @raise [Puppet::SSL::CertVerifyError] There was an issue with
   #   one of the certs or CRLs.
   # @raise [Puppet::SSL::SSLError] There was an issue with the
   #   `private_key`.
   # @api private
-  def create_context(cacerts:, crls:, private_key:, client_cert:, revocation: Puppet[:certificate_revocation])
+  def create_context(cacerts:, crls:, private_key:, client_cert:, revocation: Puppet[:certificate_revocation], include_system_store: false)
     raise ArgumentError, _("CA certs are missing") unless cacerts
     raise ArgumentError, _("CRLs are missing") unless crls
     raise ArgumentError, _("Private key is missing") unless private_key
     raise ArgumentError, _("Client cert is missing") unless client_cert
 
-    store = create_x509_store(cacerts, crls, revocation)
+    store = create_x509_store(cacerts, crls, revocation, include_system_store: include_system_store)
     client_chain = verify_cert_with_store(store, client_cert)
 
     if !private_key.is_a?(OpenSSL::PKey::RSA) && !private_key.is_a?(OpenSSL::PKey::EC)
@@ -133,12 +134,13 @@ class Puppet::SSL::SSLProvider
   # @param password [String, nil] If the private key is encrypted, decrypt
   #   it using the password. If the key is encrypted, but a password is
   #   not specified, then the key cannot be loaded.
+  # @param include_system_store [true, false] Also trust system CA
   # @return [Puppet::SSL::SSLContext] A context to use to create connections
   # @raise [Puppet::SSL::CertVerifyError] There was an issue with
   #   one of the certs or CRLs.
   # @raise [Puppet::Error] There was an issue with one of the required components.
   # @api private
-  def load_context(certname: Puppet[:certname], revocation: Puppet[:certificate_revocation], password: nil)
+  def load_context(certname: Puppet[:certname], revocation: Puppet[:certificate_revocation], password: nil, include_system_store: false)
     cert = Puppet::X509::CertProvider.new
     cacerts = cert.load_cacerts(required: true)
     crls = case revocation
@@ -150,7 +152,7 @@ class Puppet::SSL::SSLProvider
     private_key = cert.load_private_key(certname, required: true, password: password)
     client_cert = cert.load_client_cert(certname, required: true)
 
-    create_context(cacerts: cacerts, crls: crls,  private_key: private_key, client_cert: client_cert, revocation: revocation)
+    create_context(cacerts: cacerts, crls: crls,  private_key: private_key, client_cert: client_cert, revocation: revocation, include_system_store: include_system_store)
   rescue OpenSSL::PKey::PKeyError => e
     raise Puppet::SSL::SSLError.new(_("Failed to load private key for host '%{name}': %{message}") % { name: certname, message: e.message }, e)
   end
