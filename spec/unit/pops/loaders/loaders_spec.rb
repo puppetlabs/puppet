@@ -606,7 +606,7 @@ describe 'loaders' do
     it "an illegal function is loaded" do
       expect {
         loader.load_typed(typed_name(:function, 'bad_func_load3')).value
-      }.to raise_error(SecurityError, /Illegal method definition of method 'bad_func_load3_illegal_method' on line 8 in legacy function/)
+      }.to raise_error(SecurityError, /Illegal method definition of method 'bad_func_load3_illegal_method' in source .*bad_func_load3.rb on line 8 in legacy function/)
     end
   end
 
