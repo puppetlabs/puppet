@@ -9,9 +9,6 @@ describe Puppet::Configurer do
     Puppet[:report] = true
 
     catalog.add_resource(resource)
-    allow_any_instance_of(described_class).to(
-      receive(:valid_server_environment?).and_return(true)
-    )
 
     Puppet[:lastrunfile] = file_containing('last_run_summary.yaml', <<~SUMMARY)
     ---
@@ -78,10 +75,44 @@ describe Puppet::Configurer do
     end
   end
 
+  describe "when executing a catalog run without stubbing valid_server_environment?" do
+    before do
+      Puppet::Resource::Catalog.indirection.terminus_class = :rest
+      allow(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(catalog)
+    end
+
+    it 'skips initial plugin sync if environment is not found and no strict_environment_mode' do
+      body = "{\"message\":\"Not Found: Could not find environment 'fasdfad'\",\"issue_kind\":\"RUNTIME_ERROR\"}"
+      stub_request(:get, %r{/puppet/v3/file_metadatas/plugins?}).to_return(
+        status: 404, body: body, headers: {'Content-Type' => 'application/json'}
+      )
+
+      configurer.run(:pluginsync => true)
+
+      expect(@logs).to include(an_object_having_attributes(level: :notice, message: %r{Environment 'production' not found on server, skipping initial pluginsync.}))
+      expect(@logs).to include(an_object_having_attributes(level: :notice, message: /Applied catalog in .* seconds/))
+    end
+
+    it 'if strict_environment_mode is set and environment is not found, aborts the puppet run' do
+      Puppet[:strict_environment_mode] = true
+      body = "{\"message\":\"Not Found: Could not find environment 'fasdfad'\",\"issue_kind\":\"RUNTIME_ERROR\"}"
+      stub_request(:get, %r{/puppet/v3/file_metadatas/plugins?}).to_return(
+        status: 404, body: body, headers: {'Content-Type' => 'application/json'}
+      )
+
+      configurer.run(:pluginsync => true)
+
+      expect(@logs).to include(an_object_having_attributes(level: :err, message: %r{Failed to apply catalog: Environment 'production' not found on server, aborting run.}))
+    end
+  end
+
   describe "when executing a catalog run" do
     before do
       Puppet::Resource::Catalog.indirection.terminus_class = :rest
       allow(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(catalog)
+      allow_any_instance_of(described_class).to(
+        receive(:valid_server_environment?).and_return(true)
+      )
     end
 
     it "downloads plugins when told" do
