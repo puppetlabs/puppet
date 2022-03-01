@@ -19,7 +19,7 @@
 #   response = client.get(URI("http://www.example.com"))
 #
 # @example To make an HTTPS GET request, trusting the puppet CA and certs in Puppet's CA bundle:
-#   response = client.get(URI("https://www.example.com"), include_system_store: true)
+#   response = client.get(URI("https://www.example.com"), options: { include_system_store: true })
 #
 # @example To use a URL containing special characters, such as spaces:
 #  response = client.get(URI(Puppet::Util.uri_encode("https://www.example.com/path to file")))
