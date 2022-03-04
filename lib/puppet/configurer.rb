@@ -418,7 +418,7 @@ class Puppet::Configurer
       temp_value = options[:pluginsync]
 
       # only validate server environment if pluginsync is requested
-      options[:pluginsync] = valid_server_environment? if options[:pluginsync] == true
+      options[:pluginsync] = valid_server_environment? if options[:pluginsync]
 
       query_options, facts = get_facts(options) unless query_options
       options[:pluginsync] = temp_value
@@ -531,7 +531,11 @@ class Puppet::Configurer
       true
     rescue Puppet::HTTP::ResponseError => detail
       if detail.response.code == 404
-        Puppet.notice(_("Environment '%{environment}' not found on server, skipping initial pluginsync.") % { environment: @environment })
+        if Puppet[:strict_environment_mode]
+          raise Puppet::Error.new(_("Environment '%{environment}' not found on server, aborting run.") % { environment: @environment })
+        else
+          Puppet.notice(_("Environment '%{environment}' not found on server, skipping initial pluginsync.") % { environment: @environment })
+        end
       else
         Puppet.log_exception(detail, detail.message)
       end
