@@ -3,7 +3,9 @@ module Puppet
   Puppet::Type.type(:file).ensurable do
     require 'etc'
     require_relative '../../../puppet/util/symbolic_file_mode'
+    require_relative '../../../puppet/type/file/data_sync.rb'
     include Puppet::Util::SymbolicFileMode
+    include Puppet::DataSync
 
     desc <<-EOT
       Whether the file should exist, and if so what kind of file it should be.
@@ -160,11 +162,18 @@ module Puppet
         return true
       end
 
-      if self.should == :present
-        return !(currentvalue.nil? or currentvalue == :absent)
+      is_insync = if self.should == :present
+        !(currentvalue.nil? or currentvalue == :absent)
       else
-        return super(currentvalue)
+        super(currentvalue)
       end
+
+      if self.should == :file && show_diff?(!is_insync)
+        contents_prop = resource.parameter(:source) || resource.parameter(:content)
+        show_diff(contents_prop, currentvalue)
+      end
+
+      return is_insync
     end
 
     def retrieve

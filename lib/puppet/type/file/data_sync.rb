@@ -38,19 +38,28 @@ module Puppet
       is_insync = yield(is)
 
       if show_diff?(!is_insync)
-        if param.sensitive
-          send resource[:loglevel], "[diff redacted]"
-        else
-          write_temporarily(param) do |path|
-            diff_output = diff(resource[:path], path)
-            if diff_output.encoding == Encoding::BINARY || !diff_output.valid_encoding?
-              diff_output = "Binary files #{resource[:path]} and #{path} differ"
-            end
-            send resource[:loglevel], "\n" + diff_output
-          end
-        end
+        show_diff(param, is)
       end
       is_insync
+    end
+
+    def show_diff(param, is)
+      if param.sensitive
+        send resource[:loglevel], "[diff redacted]"
+      else
+        write_temporarily(param) do |path|
+          resource_path = if is == :absent
+                            Puppet::Util::Platform.windows? ? 'NUL' : '/dev/null'
+                          else
+                            resource[:path]
+                          end
+          diff_output = diff(resource_path, path)
+          if diff_output.encoding == Encoding::BINARY || !diff_output.valid_encoding?
+            diff_output = "Binary files #{resource_path} and #{path} differ"
+          end
+          send resource[:loglevel], "\n" + diff_output
+        end
+      end
     end
 
     def show_diff?(has_changes)
