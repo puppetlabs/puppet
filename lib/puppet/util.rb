@@ -7,6 +7,7 @@ require 'uri'
 require 'pathname'
 require 'ostruct'
 require 'puppet/util/platform'
+require 'puppet/util/windows'
 require 'puppet/util/symbolic_file_mode'
 require 'puppet/file_system/uniquefile'
 require 'securerandom'
@@ -21,8 +22,6 @@ module Util
   # to be in Puppet::Util but have been moved into external modules.
   require 'puppet/util/posix'
   extend Puppet::Util::POSIX
-
-  require 'puppet/util/windows/process' if Puppet::Util::Platform.windows?
 
   extend Puppet::Util::SymbolicFileMode
 
