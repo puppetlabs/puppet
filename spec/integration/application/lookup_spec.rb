@@ -72,6 +72,25 @@ describe 'lookup' do
       expect_lookup_with_output(0, /value a/)
     end
 
+    it "resolves hiera data using a top-level node parameter" do
+      File.write(File.join(env_dir, env_name, 'hiera.yaml'), <<~YAML)
+        ---
+        version: 5
+        hierarchy:
+          - name: "Per Node"
+            data_hash: yaml_data
+            path: "%{my_fact}.yaml"
+      YAML
+
+      File.write(File.join(env_dir, env_name, 'data', "my_fact_value.yaml"), <<~YAML)
+        ---
+        a: value from per node data
+      YAML
+
+      app.command_line.args << 'a'
+      expect_lookup_with_output(0, /--- value from per node data/)
+    end
+
     it 'loads trusted information from the node certificate' do
       Puppet.settings[:node_terminus] = 'exec'
       expect_any_instance_of(Puppet::Node::Exec).to receive(:find) do |args|
