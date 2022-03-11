@@ -373,38 +373,34 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
     end
 
     unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
-      facts = retrieve_node_facts(node, given_facts) 
-      if Puppet.settings.set_by_cli?('environment')
-        node = Puppet::Node.new(node, :classes => nil, :parameters => nil, :facts => facts, :environment => Puppet.settings.value('environment'))
-      else
-        ni = Puppet::Node.indirection
-        tc = ni.terminus_class
-        if options[:compile]
-          if tc == :plain
-            node = ni.find(node, facts: facts)
-          else
-            begin
-              service = Puppet.runtime[:http]
-              session = service.create_session
-              cert = session.route_to(:ca)
+      facts = retrieve_node_facts(node, given_facts)
+      ni = Puppet::Node.indirection
+      tc = ni.terminus_class
+      if options[:compile] && !Puppet.settings.set_by_cli?('environment')
+        if tc == :plain
+          node = ni.find(node, facts: facts)
+        else
+          begin
+            service = Puppet.runtime[:http]
+            session = service.create_session
+            cert = session.route_to(:ca)
 
-              _, x509 = cert.get_certificate(node)
-              cert = OpenSSL::X509::Certificate.new(x509)
-              Puppet::SSL::Oids.register_puppet_oids
-              trusted = Puppet::Context::TrustedInformation.remote(true, facts.values['certname'] || node, Puppet::SSL::Certificate.from_instance(cert))
-              Puppet.override(trusted_information: trusted) do
-                node = ni.find(node, facts: facts)
-              end
-            rescue
-              Puppet.warning _("CA is not available, the operation will continue without using trusted facts.")
+            _, x509 = cert.get_certificate(node)
+            cert = OpenSSL::X509::Certificate.new(x509)
+            Puppet::SSL::Oids.register_puppet_oids
+            trusted = Puppet::Context::TrustedInformation.remote(true, facts.values['certname'] || node, Puppet::SSL::Certificate.from_instance(cert))
+            Puppet.override(trusted_information: trusted) do
               node = ni.find(node, facts: facts)
             end
+          rescue
+            Puppet.warning _("CA is not available, the operation will continue without using trusted facts.")
+            node = ni.find(node, facts: facts)
           end
-        else
-          ni.terminus_class = :plain
-          node = ni.find(node, facts: facts)
-          ni.terminus_class = tc
         end
+      else
+        ni.terminus_class = :plain
+        node = ni.find(node, facts: facts, environment: Puppet[:environment])
+        ni.terminus_class = tc
       end
     else
       node.add_extra_facts(given_facts) if given_facts
