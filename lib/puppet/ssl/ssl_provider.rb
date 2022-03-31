@@ -185,6 +185,12 @@ class Puppet::SSL::SSLProvider
           Puppet.debug(_("Verified CA certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_utf8, digest: digest})
         end
       end
+      ssl_context.crls.each do |crl|
+        oid_values = Hash[crl.extensions.map { |ext| [ext.oid, ext.value] }]
+        crlNumber = oid_values['crlNumber'] || 'unknown'
+        authKeyId = (oid_values['authorityKeyIdentifier'] || 'unknown').chomp!
+        Puppet.debug("Using CRL '#{crl.issuer.to_utf8}' authorityKeyIdentifier '#{authKeyId}' crlNumber '#{crlNumber }'")
+      end
     end
   end
 
