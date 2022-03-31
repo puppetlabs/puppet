@@ -417,20 +417,7 @@ class Puppet::SSL::StateMachine
   def ensure_client_certificate
     final_state = run_machine(NeedLock.new(self), Done)
     ssl_context = final_state.ssl_context
-
-    if Puppet::Util::Log.sendlevel?(:debug)
-      chain = ssl_context.client_chain
-      # print from root to client
-      chain.reverse.each_with_index do |cert, i|
-        digest = Puppet::SSL::Digest.new(@digest, cert.to_der)
-        if i == chain.length - 1
-          Puppet.debug(_("Verified client certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_utf8, digest: digest})
-        else
-          Puppet.debug(_("Verified CA certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_utf8, digest: digest})
-        end
-      end
-    end
-
+    @ssl_provider.print(ssl_context, @digest)
     ssl_context
   end
 
