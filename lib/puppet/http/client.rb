@@ -272,6 +272,8 @@ class Puppet::HTTP::Client
   #
   def close
     @pool.close
+    @default_ssl_context = nil
+    @default_system_ssl_context = nil
   end
 
   def default_ssl_context

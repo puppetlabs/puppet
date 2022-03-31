@@ -94,6 +94,8 @@ class Puppet::Agent
           rescue StandardError => detail
             Puppet.log_exception(detail, _("Could not run %{client_class}: %{detail}") % { client_class: client_class, detail: detail })
             nil
+          ensure
+            Puppet.runtime[:http].close
           end
         end
       end

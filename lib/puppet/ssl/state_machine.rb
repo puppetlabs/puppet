@@ -278,7 +278,7 @@ class Puppet::SSL::StateMachine
       else
         Puppet.info(_("Will try again in %{time} seconds.") % {time: time})
 
-        # close persistent connections and session state before sleeping
+        # close http/tls and session state before sleeping
         Puppet.runtime[:http].close
         @machine.session = Puppet.runtime[:http].create_session
 
