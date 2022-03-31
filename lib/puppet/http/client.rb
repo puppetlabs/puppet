@@ -274,6 +274,20 @@ class Puppet::HTTP::Client
     @pool.close
   end
 
+  def default_ssl_context
+    cert = Puppet::X509::CertProvider.new
+    password = cert.load_private_key_password
+
+    ssl = Puppet::SSL::SSLProvider.new
+    ssl.load_context(certname: Puppet[:certname], password: password)
+  rescue => e
+    # TRANSLATORS: `message` is an already translated string of why SSL failed to initialize
+    Puppet.log_exception(e, _("Failed to initialize SSL: %{message}") % { message: e.message })
+    # TRANSLATORS: `puppet agent -t` is a command and should not be translated
+    Puppet.err(_("Run `puppet agent -t`"))
+    raise e
+  end
+
   protected
 
   def encode_query(url, params)
