@@ -836,7 +836,6 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
           instance.agent.run(splay: false)
         end
 
-        pending("PUP-11428: the second run should fail due to the revoked client cert")
         agent.command_line.args << '--verbose'
         expect {
           agent.run

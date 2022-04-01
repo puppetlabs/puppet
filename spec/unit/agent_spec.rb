@@ -38,6 +38,10 @@ describe Puppet::Agent do
         end
       end
     end
+
+    ssl_context = Puppet::SSL::SSLContext.new
+    machine = instance_double("Puppet::SSL::StateMachine", ensure_client_certificate: ssl_context)
+    allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
   end
 
   after do
@@ -197,7 +201,7 @@ describe Puppet::Agent do
         @agent.run
       end
 
-      it "should inform that a run is already in progres and try to run every X seconds if waitforlock is used" do
+      it "should inform that a run is already in progress and try to run every X seconds if waitforlock is used" do
         # so the locked file exists
         allow(File).to receive(:file?).and_return(true)
         # so we don't have to wait again for the run to exit (default maxwaitforcert is 60)
@@ -226,7 +230,7 @@ describe Puppet::Agent do
         @agent.run
       end
     end
-    
+
     describe "when should_fork is true", :if => Puppet.features.posix? && RUBY_PLATFORM != 'java' do
       before do
         @agent = Puppet::Agent.new(AgentTestClient, true)
