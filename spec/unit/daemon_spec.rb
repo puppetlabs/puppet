@@ -1,18 +1,13 @@
 require 'spec_helper'
 require 'puppet/daemon'
 require 'puppet/agent'
+require 'puppet/configurer'
 
 def without_warnings
   flag = $VERBOSE
   $VERBOSE = nil
   yield
   $VERBOSE = flag
-end
-
-class TestClient
-  def lockfile_path
-    "/dev/null"
-  end
 end
 
 describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
@@ -26,7 +21,7 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
     end
   end
 
-  let(:agent) { Puppet::Agent.new(TestClient.new, false) }
+  let(:agent) { Puppet::Agent.new(Puppet::Configurer, false) }
   let(:server) { double("Server", :start => nil, :wait_for_shutdown => nil) }
 
   let(:pidfile) { double("PidFile", :lock => true, :unlock => true, :file_path => 'fake.pid') }
@@ -131,10 +126,6 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
   end
 
   describe "when reloading" do
-    it "should do nothing if no agent is configured" do
-      daemon.reload
-    end
-
     it "should do nothing if the agent is running" do
       expect(agent).to receive(:run).with({:splay => false}).and_raise(Puppet::LockError, 'Failed to aquire lock')
       expect(Puppet).to receive(:notice).with('Not triggering already-running agent')
