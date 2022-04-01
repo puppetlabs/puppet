@@ -37,14 +37,15 @@ task(:gen_cert_fixtures) do
   #                                   |   |
   # signed.pem                        |   +- /CN=signed
   # revoked.pem                       |   +- /CN=revoked
-  # 127.0.0.1.pem                     |   +- /CN=127.0.0.1 (with dns alt names)
   # tampered-cert.pem                 |   +- /CN=signed (with different public key)
   # ec.pem                            |   +- /CN=ec (with EC private key)
   # oid.pem                           |   +- /CN=oid (with custom oid)
   #                                   |
-  #                                   + /CN=Test CA Agent Subauthority
-  #                                   |  |
-  # pluto.pem                         |  +- /CN=pluto
+  # 127.0.0.1.pem                     +- /CN=127.0.0.1 (with dns alt names)
+  #                                   |
+  # intermediate-agent.pem            +- /CN=Test CA Agent Subauthority
+  #                                   |   |
+  # pluto.pem                         |   +- /CN=pluto
   #                                   |
   # bad-int-basic-constraints.pem     +- /CN=Test CA Subauthority (bad isCA constraint)
   #
