@@ -27,6 +27,15 @@ class Puppet::SSL::StateMachine
       detail.set_backtrace(cause.backtrace)
       Error.new(@machine, message, detail)
     end
+
+    def log_error(message)
+      # When running daemonized we set stdout to /dev/null, so write to the log instead
+      if Puppet[:daemonize]
+        Puppet.err(message)
+      else
+        $stdout.puts(message)
+      end
+    end
   end
 
   # Load existing CA certs or download them. Transition to NeedCRLs.
@@ -270,10 +279,10 @@ class Puppet::SSL::StateMachine
     def next_state
       time = @machine.waitforcert
       if time < 1
-        puts _("Exiting now because the waitforcert setting is set to 0.")
+        log_error(_("Exiting now because the waitforcert setting is set to 0."))
         exit(1)
       elsif Time.now.to_i > @machine.wait_deadline
-        puts _("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the maxwaitforcert timeout has been exceeded.") % {name: Puppet[:certname] }
+        log_error(_("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the maxwaitforcert timeout has been exceeded.") % {name: Puppet[:certname] })
         exit(1)
       else
         Puppet.info(_("Will try again in %{time} seconds.") % {time: time})
