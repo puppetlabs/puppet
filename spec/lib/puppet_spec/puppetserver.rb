@@ -72,6 +72,40 @@ class PuppetSpec::Puppetserver
     end
   end
 
+  class CertificateServlet < WEBrick::HTTPServlet::AbstractServlet
+    def initialize(server, ca_cert)
+      super(server)
+      @ca_cert = ca_cert
+    end
+
+    def do_GET request, response
+      if request.path =~ %r{/puppet-ca/v1/certificate/ca$}
+        response['Content-Type'] = 'text/plain'
+        response.body = @ca_cert.to_pem
+      else
+        response.status = 404
+      end
+    end
+  end
+
+  class CertificateRevocationListServlet < WEBrick::HTTPServlet::AbstractServlet
+    def initialize(server, crl)
+      super(server)
+      @crl = crl
+    end
+
+    def do_GET request, response
+      response['Content-Type'] = 'text/plain'
+      response.body = @crl.to_pem
+    end
+  end
+
+  class CertificateRequestServlet < WEBrick::HTTPServlet::AbstractServlet
+    def do_PUT request, response
+      response.status = 404
+    end
+  end
+
   def initialize
     @ca_cert = cert_fixture('ca.pem')
     @ca_crl = crl_fixture('crl.pem')
@@ -125,15 +159,18 @@ class PuppetSpec::Puppetserver
     register_mount('/puppet/v3/static_file_content', mounts[:static_file_content], StaticFileContentServlet)
     register_mount('/puppet/v3/report', mounts[:report], ReportServlet)
     register_mount('/puppet/v3/file_bucket_file', mounts[:filebucket], FilebucketServlet)
+    register_mount('/puppet-ca/v1/certificate', mounts[:certificate], CertificateServlet, @ca_cert)
+    register_mount('/puppet-ca/v1/certificate_revocation_list', mounts[:certificate_revocation_list], CertificateRevocationListServlet, @ca_crl)
+    register_mount('/puppet-ca/v1/certificate_request', mounts[:certificate_request], CertificateRequestServlet)
   end
 
-  def register_mount(path, user_proc, default_servlet)
+  def register_mount(path, user_proc, default_servlet, *args)
     handler = if user_proc
                 WEBrick::HTTPServlet::ProcHandler.new(user_proc)
               else
                 default_servlet
               end
-    @https.mount(path, handler)
+    @https.mount(path, handler, *args)
   end
 
   def upload_directory

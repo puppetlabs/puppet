@@ -45,11 +45,19 @@ class Puppet::Agent
     result = nil
     wait_for_lock_deadline = nil
     block_run = Puppet::Application.controlled_run do
-      splay client_options.fetch :splay, Puppet[:splay]
+      # splay may sleep for awhile!
+      splay(client_options.fetch(:splay, Puppet[:splay]))
+
+      # waiting for certs may sleep for awhile depending on onetime, waitforcert and maxwaitforcert!
+      # this needs to happen before forking so that if we fail to obtain certs and try to exit, then
+      # we exit the main process and not the forked child.
+      ssl_context = wait_for_certificates(client_options)
+
       result = run_in_fork(should_fork) do
         with_client(client_options[:transaction_uuid], client_options[:job_id]) do |client|
           client_args = client_options.merge(:pluginsync => Puppet::Configurer.should_pluginsync?)
           begin
+            # lock may sleep for awhile depending on waitforlock and maxwaitforlock!
             lock do
               # NOTE: Timeout is pretty heinous as the location in which it
               # throws an error is entirely unpredictable, which means that
@@ -57,7 +65,9 @@ class Puppet::Agent
               # sanity. The only thing a Puppet agent should do after this
               # error is thrown is die with as much dignity as possible.
               Timeout.timeout(Puppet[:runtimeout], RunTimeoutError) do
-                client.run(client_args)
+                Puppet.override(ssl_context: ssl_context) do
+                  client.run(client_args)
+                end
               end
             end
           rescue Puppet::LockError
@@ -84,6 +94,8 @@ class Puppet::Agent
           rescue StandardError => detail
             Puppet.log_exception(detail, _("Could not run %{client_class}: %{detail}") % { client_class: client_class, detail: detail })
             nil
+          ensure
+            Puppet.runtime[:http].close
           end
         end
       end
@@ -136,5 +148,11 @@ class Puppet::Agent
     yield @client
   ensure
     @client = nil
+  end
+
+  def wait_for_certificates(options)
+    waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
+    sm = Puppet::SSL::StateMachine.new(waitforcert: waitforcert, onetime: Puppet[:onetime])
+    sm.ensure_client_certificate
   end
 end

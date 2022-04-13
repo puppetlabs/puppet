@@ -3,6 +3,7 @@ require 'puppet_spec/files'
 require 'puppet_spec/puppetserver'
 require 'puppet_spec/compiler'
 require 'puppet_spec/https'
+require 'puppet/application/agent'
 
 describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
@@ -734,6 +735,113 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         }.to exit_with(2)
          .and output(a_string_matching(%r{Notice: Local environment: 'production' doesn't match server specified environment 'newenv', restarting agent run with environment 'newenv'})
          .and matching(%r{defined 'message' as 'web'})).to_stdout
+      end
+    end
+  end
+
+  context "ssl" do
+    context "bootstrapping" do
+      before :each do
+        # reconfigure ssl to non-existent dir and files to force bootstrapping
+        dir = tmpdir('ssl')
+        Puppet[:ssldir] = dir
+        Puppet[:localcacert] = File.join(dir, 'ca.pem')
+        Puppet[:hostcrl] = File.join(dir, 'crl.pem')
+        Puppet[:hostprivkey] = File.join(dir, 'cert.pem')
+        Puppet[:hostcert] = File.join(dir, 'key.pem')
+
+        Puppet[:daemonize] = false
+        Puppet[:logdest] = 'console'
+        Puppet[:log_level] = 'info'
+      end
+
+      it "exits if the agent is not allowed to wait" do
+        Puppet[:waitforcert] = 0
+
+        server.start_server do |port|
+          Puppet[:serverport] = port
+          expect {
+            agent.run
+          }.to exit_with(1)
+           .and output(%r{Exiting now because the waitforcert setting is set to 0}).to_stdout
+           .and output(%r{Failed to submit the CSR, HTTP response was 404}).to_stderr
+        end
+      end
+
+      it "exits if the maxwaitforcert time is exceeded" do
+        Puppet[:waitforcert] = 1
+        Puppet[:maxwaitforcert] = 1
+
+        server.start_server do |port|
+          Puppet[:serverport] = port
+          expect {
+            agent.run
+          }.to exit_with(1)
+            .and output(%r{Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate \(127.0.0.1\). Exiting now because the maxwaitforcert timeout has been exceeded.}).to_stdout
+            .and output(%r{Failed to submit the CSR, HTTP response was 404}).to_stderr
+        end
+      end
+    end
+
+    def copy_fixtures(sources, dest)
+      ssldir = File.join(PuppetSpec::FIXTURE_DIR, 'ssl')
+      File.open(dest, 'w') do |f|
+        sources.each do |s|
+          f.write(File.read(File.join(ssldir, s)))
+        end
+      end
+    end
+
+    it "reloads the CRL between runs" do
+      Puppet[:localcacert] = ca = tmpfile('ca')
+      Puppet[:hostcrl] = crl = tmpfile('crl')
+      Puppet[:hostcert] = cert = tmpfile('cert')
+      Puppet[:hostprivkey] = key = tmpfile('key')
+
+      copy_fixtures(%w[ca.pem intermediate.pem], ca)
+      copy_fixtures(%w[crl.pem intermediate-crl.pem], crl)
+      copy_fixtures(%w[127.0.0.1.pem], cert)
+      copy_fixtures(%w[127.0.0.1-key.pem], key)
+
+      revoked = cert_fixture('revoked.pem')
+      revoked_key = key_fixture('revoked-key.pem')
+
+      mounts = {}
+      mounts[:catalog] = -> (req, res) {
+        catalog = compile_to_catalog(<<~MANIFEST, node)
+          file { '#{cert}':
+            ensure => file,
+            content => '#{revoked}'
+          }
+          file { '#{key}':
+            ensure => file,
+            content => '#{revoked_key}'
+          }
+        MANIFEST
+
+        res.body = formatter.render(catalog)
+        res['Content-Type'] = formatter.mime
+      }
+
+      server.start_server(mounts: mounts) do |port|
+        Puppet[:serverport] = port
+        Puppet[:daemonize] = false
+        Puppet[:runinterval] = 1
+        Puppet[:waitforcert] = 1
+        Puppet[:maxwaitforcert] = 1
+
+        # simulate two runs of the agent, then return so we don't infinite loop
+        allow_any_instance_of(Puppet::Daemon).to receive(:run_event_loop) do |instance|
+          instance.agent.run(splay: false)
+          instance.agent.run(splay: false)
+        end
+
+        agent.command_line.args << '--verbose'
+        expect {
+          agent.run
+        }.to exit_with(1)
+         .and output(%r{Exiting now because the maxwaitforcert timeout has been exceeded}).to_stdout
+         .and output(%r{Certificate 'CN=revoked' is revoked}).to_stderr
       end
     end
   end

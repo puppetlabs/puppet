@@ -25,7 +25,7 @@ class Puppet::HTTP::Client
   #   used if :include_system_store is set to true
   # @param [Integer] redirect_limit default number of HTTP redirections to allow
   #   in a given request. Can also be specified per-request.
-  # @param [Integer] retry_limit number of HTTP reties allowed in a given
+  # @param [Integer] retry_limit number of HTTP retries allowed in a given
   #   request
   #
   def initialize(pool: Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout]), ssl_context: nil, system_ssl_context: nil, redirect_limit: 10, retry_limit: 100)
@@ -272,6 +272,24 @@ class Puppet::HTTP::Client
   #
   def close
     @pool.close
+    @default_ssl_context = nil
+    @default_system_ssl_context = nil
+  end
+
+  def default_ssl_context
+    cert = Puppet::X509::CertProvider.new
+    password = cert.load_private_key_password
+
+    ssl = Puppet::SSL::SSLProvider.new
+    ctx = ssl.load_context(certname: Puppet[:certname], password: password)
+    ssl.print(ctx)
+    ctx
+  rescue => e
+    # TRANSLATORS: `message` is an already translated string of why SSL failed to initialize
+    Puppet.log_exception(e, _("Failed to initialize SSL: %{message}") % { message: e.message })
+    # TRANSLATORS: `puppet agent -t` is a command and should not be translated
+    Puppet.err(_("Run `puppet agent -t`"))
+    raise e
   end
 
   protected
@@ -409,6 +427,8 @@ class Puppet::HTTP::Client
 
     ssl = Puppet::SSL::SSLProvider.new
     @default_system_ssl_context = ssl.create_system_context(cacerts: cacerts)
+    ssl.print(@default_system_ssl_context)
+    @default_system_ssl_context
   end
 
   def apply_auth(request, basic_auth)
