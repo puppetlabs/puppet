@@ -276,6 +276,7 @@ class Puppet::Transaction
 
   # Evaluate a single resource.
   def eval_resource(resource, ancestor = nil)
+    resolve_resource(resource)
     propagate_failure(resource)
     if skip?(resource)
       resource_status(resource).skipped = true
@@ -464,6 +465,20 @@ class Puppet::Transaction
   public :skip?
   public :missing_tags?
 
+  def resolve_resource(resource)
+    return unless catalog.host_config?
+
+    resource.eachparameter do |param|
+      if param.value.instance_of?(Puppet::Pops::Evaluator::DeferredValue)
+        # Puppet::Parameter#value= triggers validation and munging. Puppet::Property#value=
+        # overrides the method, but also triggers validation and munging, since we're
+        # setting the desired/should value.
+        resolved = param.value.resolve
+        # resource.notice("Resolved deferred value to #{resolved}")
+        param.value = resolved
+      end
+    end
+  end
 end
 
 require_relative 'transaction/report'
