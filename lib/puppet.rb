@@ -235,20 +235,7 @@ module Puppet
 
     {
       :environments => Puppet::Environments::Cached.new(Puppet::Environments::Combined.new(*loaders)),
-      :ssl_context => proc {
-        begin
-          cert = Puppet::X509::CertProvider.new
-          password = cert.load_private_key_password
-          ssl = Puppet::SSL::SSLProvider.new
-          ssl.load_context(certname: Puppet[:certname], password: password)
-        rescue => e
-          # TRANSLATORS: `message` is an already translated string of why SSL failed to initialize
-          Puppet.log_exception(e, _("Failed to initialize SSL: %{message}") % { message: e.message })
-          # TRANSLATORS: `puppet agent -t` is a command and should not be translated
-          Puppet.err(_("Run `puppet agent -t`"))
-          raise e
-        end
-      },
+      :ssl_context => proc { Puppet.runtime[:http].default_ssl_context },
       :http_session => proc { Puppet.runtime[:http].create_session },
       :plugins => proc { Puppet::Plugins::Configuration.load_plugins },
       :rich_data => false

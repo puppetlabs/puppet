@@ -4,6 +4,11 @@ require 'puppet/agent'
 require 'puppet/application/agent'
 require 'puppet/daemon'
 
+class TestAgentClientClass
+  def initialize(transaction_uuid = nil, job_id = nil); end
+  def run(options = {}); end
+end
+
 describe Puppet::Application::Agent do
   include PuppetSpec::Files
 
@@ -12,13 +17,20 @@ describe Puppet::Application::Agent do
   before :each do
     @puppetd = Puppet::Application[:agent]
 
-    @agent = double('agent')
+    @client = TestAgentClientClass.new
+    allow(TestAgentClientClass).to receive(:new).and_return(@client)
+
+    @agent = Puppet::Agent.new(TestAgentClientClass, false)
     allow(Puppet::Agent).to receive(:new).and_return(@agent)
 
-    @daemon = Puppet::Daemon.new(@agent, nil)
+    Puppet[:pidfile] = tmpfile('pidfile')
+    @daemon = Puppet::Daemon.new(@agent, Puppet::Util::Pidlock.new(Puppet[:pidfile]))
     allow(@daemon).to receive(:daemonize)
-    allow(@daemon).to receive(:start)
     allow(@daemon).to receive(:stop)
+    # simulate one run so we don't infinite looptwo runs of the agent, then return so we don't infinite loop
+    allow(@daemon).to receive(:run_event_loop) do
+      @agent.run(splay: false)
+    end
     allow(Puppet::Daemon).to receive(:new).and_return(@daemon)
     Puppet[:daemonize] = false
 
@@ -92,10 +104,6 @@ describe Puppet::Application::Agent do
   end
 
   describe "when handling options" do
-    before do
-      allow(@puppetd.command_line).to receive(:args).and_return([])
-    end
-
     [:enable, :debug, :fqdn, :test, :verbose, :digest].each do |option|
       it "should declare handle_#{option} method" do
         expect(@puppetd).to respond_to("handle_#{option}".to_sym)
@@ -127,32 +135,34 @@ describe Puppet::Application::Agent do
     end
 
     it "should set waitforcert to 0 with --onetime and if --waitforcert wasn't given" do
-      allow(@agent).to receive(:run).and_return(2)
+      allow(@client).to receive(:run).and_return(2)
       Puppet[:onetime] = true
 
-      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 0).and_return(machine)
+      expect(Puppet::SSL::StateMachine).to receive(:new).with(hash_including(waitforcert: 0)).and_return(machine)
 
       expect { execute_agent }.to exit_with 0
     end
 
     it "should use supplied waitforcert when --onetime is specified" do
-      allow(@agent).to receive(:run).and_return(2)
+      allow(@client).to receive(:run).and_return(2)
       Puppet[:onetime] = true
       @puppetd.handle_waitforcert(60)
 
-      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 60).and_return(machine)
+      expect(Puppet::SSL::StateMachine).to receive(:new).with(hash_including(waitforcert: 60)).and_return(machine)
 
       expect { execute_agent }.to exit_with 0
     end
 
     it "should use a default value for waitforcert when --onetime and --waitforcert are not specified" do
-      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 120).and_return(machine)
+      allow(@client).to receive(:run).and_return(2)
+
+      expect(Puppet::SSL::StateMachine).to receive(:new).with(hash_including(waitforcert: 120)).and_return(machine)
 
       execute_agent
     end
 
     it "should register ssl OIDs" do
-      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 120).and_return(double(ensure_client_certificate: nil))
+      expect(Puppet::SSL::StateMachine).to receive(:new).with(hash_including(waitforcert: 120)).and_return(machine)
       expect(Puppet::SSL::Oids).to receive(:register_puppet_oids)
 
       execute_agent
@@ -161,7 +171,7 @@ describe Puppet::Application::Agent do
     it "should use the waitforcert setting when checking for a signed certificate" do
       Puppet[:waitforcert] = 10
 
-      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 10).and_return(machine)
+      expect(Puppet::SSL::StateMachine).to receive(:new).with(hash_including(waitforcert: 10)).and_return(machine)
 
       execute_agent
     end
@@ -413,9 +423,9 @@ describe Puppet::Application::Agent do
     end
 
     it "should wait for a certificate" do
-      @puppetd.options[:waitforcert] = 123
+      Puppet[:waitforcert] = 123
 
-      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 123).and_return(machine)
+      expect(Puppet::SSL::StateMachine).to receive(:new).with(hash_including(waitforcert: 123)).and_return(machine)
 
       execute_agent
     end

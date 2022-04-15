@@ -120,6 +120,24 @@ describe Puppet::HTTP::Client do
 
       client.close
     end
+
+    it 'reloads the default ssl context' do
+      expect(client.pool).to receive(:with_connection) do |_, verifier|
+        expect(verifier.ssl_context).to_not equal(puppet_context)
+      end
+
+      client.close
+      client.connect(uri)
+    end
+
+    it 'reloads the default system ssl context' do
+      expect(client.pool).to receive(:with_connection) do |_, verifier|
+        expect(verifier.ssl_context).to_not equal(system_context)
+      end
+
+      client.close
+      client.connect(uri, options: {include_system_store: true})
+    end
   end
 
   context "for GET requests" do
