@@ -27,6 +27,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
   let(:refused_message) { %r{Connection refused|No connection could be made because the target machine actively refused it} }
 
   before(:each) do
+    Puppet[:daemonize] = false
     Puppet[:ssl_lockfile] = tmpfile('ssllock')
     allow(Kernel).to receive(:sleep)
   end
