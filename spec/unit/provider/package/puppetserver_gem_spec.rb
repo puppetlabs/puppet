@@ -105,9 +105,9 @@ describe Puppet::Type.type(:package).provider(:puppetserver_gem) do
 
   describe ".gemlist" do
     context "listing installed packages" do
-      it "uses the puppet rubygems library to list local gems" do
+      it "uses the puppet_gem provider_command to list local gems" do
         expected = { name: 'world_airports', provider: :puppetserver_gem, ensure: ['1.1.3'] }
-        expect(described_class).to receive(:execute_rubygems_list_command).with(nil).and_return(File.read(my_fixture('gem-list-local-packages')))
+        expect(described_class).to receive(:execute_rubygems_list_command).with(['gem', 'list', '--local']).and_return(File.read(my_fixture('gem-list-local-packages')))
         expect(described_class.gemlist({ local: true })).to include(expected)
       end
     end
