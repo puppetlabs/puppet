@@ -142,8 +142,11 @@ describe Puppet::Util::SELinux do
         fstat = double('File::Stat', :mode => 0)
         expect(Puppet::FileSystem).to receive(:lstat).with('/foo').and_return(fstat)
         expect(self).to receive(:find_fs).with("/foo").and_return("ext3")
-        expect(Selinux).to receive(:matchpathcon).with("/foo", 0).and_return([0, "user_u:role_r:type_t:s0"])
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        expect(Selinux).to receive(:selabel_open).with(0, nil, 0).and_return(hnd)
+        expect(Selinux).to receive(:selabel_lookup).with(hnd, '/foo', 0).and_return([0, "user_u:role_r:type_t:s0"])
 
+        expect(Selinux).to receive(:selabel_close).with(hnd)
         expect(get_selinux_default_context("/foo")).to eq("user_u:role_r:type_t:s0")
       end
     end
@@ -152,9 +155,12 @@ describe Puppet::Util::SELinux do
       without_partial_double_verification do
         allow(self).to receive(:selinux_support?).and_return(true)
         allow(self).to receive(:selinux_label_support?).and_return(true)
-        allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 0).and_return(-1)
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        allow(Selinux).to receive(:selabel_open).with(0, nil, 0).and_return(hnd)
+        allow(Selinux).to receive(:selabel_lookup).with(hnd, "/root/chuj", 0).and_return(-1)
         allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::EACCES, "/root/chuj")
 
+        expect(Selinux).to receive(:selabel_close).with(hnd)
         expect(get_selinux_default_context("/root/chuj")).to be_nil
       end
     end
@@ -163,9 +169,12 @@ describe Puppet::Util::SELinux do
       without_partial_double_verification do
         allow(self).to receive(:selinux_support?).and_return(true)
         allow(self).to receive(:selinux_label_support?).and_return(true)
-        allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 0).and_return(-1)
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        allow(Selinux).to receive(:selabel_open).with(0, nil, 0).and_return(hnd)
+        allow(Selinux).to receive(:selabel_lookup).with(hnd, "/root/chuj", 0).and_return(-1)
         allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
 
+        expect(Selinux).to receive(:selabel_close).with(hnd)
         expect(get_selinux_default_context("/root/chuj")).to be_nil
       end
     end
@@ -174,9 +183,12 @@ describe Puppet::Util::SELinux do
       without_partial_double_verification do
         allow(self).to receive(:selinux_support?).and_return(true)
         allow(self).to receive(:selinux_label_support?).and_return(true)
-        allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 32768).and_return(-1)
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        allow(Selinux).to receive(:selabel_open).with(0, nil, 0).and_return(hnd)
+        allow(Selinux).to receive(:selabel_lookup).with(hnd, "/root/chuj", 32768).and_return(-1)
         allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
 
+        expect(Selinux).to receive(:selabel_close).twice.with(hnd)
         expect(get_selinux_default_context("/root/chuj", :present)).to be_nil
         expect(get_selinux_default_context("/root/chuj", :file)).to be_nil
       end
@@ -186,8 +198,11 @@ describe Puppet::Util::SELinux do
       without_partial_double_verification do
         allow(self).to receive(:selinux_support?).and_return(true)
         allow(self).to receive(:selinux_label_support?).and_return(true)
-        allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 16384).and_return(-1)
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        allow(Selinux).to receive(:selabel_open).with(0, nil, 0).and_return(hnd)
+        allow(Selinux).to receive(:selabel_lookup).with(hnd, "/root/chuj", 16384).and_return(-1)
         allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
+        allow(Selinux).to receive(:selabel_close).with(hnd)
 
         expect(get_selinux_default_context("/root/chuj", :directory)).to be_nil
       end
@@ -197,9 +212,12 @@ describe Puppet::Util::SELinux do
       without_partial_double_verification do
         allow(self).to receive(:selinux_support?).and_return(true)
         allow(self).to receive(:selinux_label_support?).and_return(true)
-        allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 40960).and_return(-1)
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        allow(Selinux).to receive(:selabel_open).with(0, nil, 0).and_return(hnd)
+        allow(Selinux).to receive(:selabel_lookup).with(hnd, "/root/chuj", 40960).and_return(-1)
         allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
 
+        expect(Selinux).to receive(:selabel_close).with(hnd)
         expect(get_selinux_default_context("/root/chuj", :link)).to be_nil
       end
     end
@@ -208,21 +226,27 @@ describe Puppet::Util::SELinux do
       without_partial_double_verification do
         allow(self).to receive(:selinux_support?).and_return(true)
         allow(self).to receive(:selinux_label_support?).and_return(true)
-        allow(Selinux).to receive(:matchpathcon).with("/root/chuj", 0).and_return(-1)
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        allow(Selinux).to receive(:selabel_open).with(0, nil, 0).and_return(hnd)
+        allow(Selinux).to receive(:selabel_lookup).with(hnd, "/root/chuj", 0).and_return(-1)
         allow(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
 
+        expect(Selinux).to receive(:selabel_close).with(hnd)
         expect(get_selinux_default_context("/root/chuj", "unknown")).to be_nil
       end
     end
 
-    it "should return nil if matchpathcon returns failure" do
+    it "should close handle and return nil if selabel_lookup returns failure" do
       without_partial_double_verification do
         expect(self).to receive(:selinux_support?).and_return(true)
         fstat = double('File::Stat', :mode => 0)
         expect(Puppet::FileSystem).to receive(:lstat).with('/foo').and_return(fstat)
         expect(self).to receive(:find_fs).with("/foo").and_return("ext3")
-        expect(Selinux).to receive(:matchpathcon).with("/foo", 0).and_return(-1)
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        expect(Selinux).to receive(:selabel_open).with(0, nil, 0).and_return(hnd)
+        expect(Selinux).to receive(:selabel_lookup).with(hnd, '/foo', 0).and_return(-1)
 
+        expect(Selinux).to receive(:selabel_close).with(hnd)
         expect(get_selinux_default_context("/foo")).to be_nil
       end
     end

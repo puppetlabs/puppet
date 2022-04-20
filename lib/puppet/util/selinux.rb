@@ -45,9 +45,9 @@ module Puppet::Util::SELinux
   def get_selinux_default_context(file, resource_ensure=nil)
     return nil unless selinux_support?
     # If the filesystem has no support for SELinux labels, return a default of nil
-    # instead of what matchpathcon would return
+    # instead of what selabel_lookup would return
     return nil unless selinux_label_support?(file)
-    # If the file exists we should pass the mode to matchpathcon for the most specific
+    # If the file exists we should pass the mode to selable_lookup for the most specific
     # matching.  If not, we can pass a mode of 0.
     begin
       filestat = file_lstat(file)
@@ -62,11 +62,19 @@ module Puppet::Util::SELinux
       end
     end
 
-    retval = Selinux.matchpathcon(file, mode)
-    if retval == -1
-      return nil
+    begin
+      # Create an open selabel_handle and use it to perform selabel_lookup.
+      # The first selabel_open arg specifies file context backend, SELABEL_CTX_FILE.
+      # The second and third arguments specify no SELABEL_OPT_* options are used.
+      hnd = Selinux.selabel_open(0, nil, 0)
+      retval = Selinux.selabel_lookup(hnd, file, mode)
+      return nil if retval == -1
+      retval[1]
+    rescue
+      nil
+    ensure
+      Selinux.selabel_close(hnd) if hnd
     end
-    retval[1]
   end
 
   # Take the full SELinux context returned from the tools and parse it
