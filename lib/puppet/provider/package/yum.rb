@@ -204,7 +204,7 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
         return should
       end
       versions = []
-      available_versions(@resource[:name]).each do |version|
+      available_versions(@resource[:name], disablerepo, enablerepo, disableexcludes).each do |version|
         begin
           rpm_version = RPM_VERSION.parse(version)
           versions << rpm_version if should_range.include?(rpm_version)
@@ -225,8 +225,13 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
     end
   end
 
-  def available_versions(package_name)
-    output = execute("yum list #{package_name} --showduplicates | sed -e '1,/Available Packages/ d' | awk '{print $2}'")
+  def available_versions(package_name, disablerepo, enablerepo, disableexcludes)
+    args = [command(:cmd), 'list', package_name, '--showduplicates']
+    args.concat(disablerepo.map { |repo| ["--disablerepo=#{repo}"] }.flatten)
+    args.concat(enablerepo.map { |repo| ["--enablerepo=#{repo}"] }.flatten)
+    args.concat(disableexcludes.map { |repo| ["--disableexcludes=#{repo}"] }.flatten)
+
+    output = execute("#{args.compact.join(' ')} | sed -e '1,/Available Packages/ d' | awk '{print $2}'")
     output.split("\n")
   end
 
