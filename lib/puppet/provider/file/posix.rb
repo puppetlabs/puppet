@@ -8,11 +8,6 @@ Puppet::Type.type(:file).provide :posix do
   include Puppet::Util::Warnings
 
   require 'etc'
-  require_relative '../../../puppet/util/selinux'
-
-  def self.post_resource_eval
-    Selinux.matchpathcon_fini if Puppet::Util::SELinux.selinux_support?
-  end
 
   def uid2name(id)
     return id.to_s if id.is_a?(Symbol) or id.is_a?(String)
