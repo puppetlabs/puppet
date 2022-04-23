@@ -30,6 +30,19 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
   has_feature :versionable
 
   attr_accessor :package
+  class << self
+    attr_accessor :paths
+  end
+
+  def self.post_resource_eval
+    @paths.each do |path|
+      begin
+        Puppet::FileSystem.unlink(path)
+      rescue => detail
+        raise Puppet::Error.new(_("Error when unlinking %{path}: %{detail}") % { path: path ,detail: detail.message}, detail)
+      end
+    end if @paths
+  end
 
   # Return an array of provider instances
   def self.instances
@@ -64,7 +77,7 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
 
     command = [installer.install_command(resource), install_options].flatten.compact.join(' ')
     working_dir = File.dirname(resource[:source])
-    if !Puppet::FileSystem.exist?(working_dir) && resource[:source] =~ /\.msi"?\Z/i
+    unless Puppet::FileSystem.exist?(working_dir)
       working_dir = nil
     end
     output = execute(command, :failonfail => false, :combine => true, :cwd => working_dir, :suppress_window => true)
