@@ -665,6 +665,18 @@ class amod::bad_type {
   end
 
   context 'rich data' do
+    let(:deferred_file) { tmpfile('deferred') }
+    let(:deferred_manifest) do <<~END
+      file { '#{deferred_file}':
+        ensure => file,
+        content => '123',
+      } ->
+      notify { 'deferred':
+        message => Deferred('binary_file', ['#{deferred_file}'])
+      }
+      END
+    end
+
     it "calls a deferred 4x function" do
       apply.command_line.args = ['-e', 'notify { "deferred3x": message => Deferred("join", [[1,2,3], ":"]) }']
 
@@ -681,5 +693,25 @@ class amod::bad_type {
       }.to exit_with(0) # for some reason apply returns 0 instead of 2
        .and output(%r{Notice: /Stage\[main\]/Main/Notify\[deferred4x\]/message: defined 'message' as 'I am deferred'}).to_stdout
     end
+
+    it "fails to apply a deferred function with an unsatified prerequisite" do
+      apply.command_line.args = ['-e', deferred_manifest]
+      expect {
+        apply.run
+      }.to exit_with(1) # for some reason apply returns 0 instead of 2
+       .and output(/Compiled catalog/).to_stdout
+       .and output(%r{The given file '#{deferred_file}' does not exist}).to_stderr
+    end
+
+    it "applies a deferred function and its prerequisite in the same run" do
+      Puppet[:preprocess_deferred] = false
+
+      apply.command_line.args = ['-e', deferred_manifest]
+      expect {
+        apply.run
+      }.to exit_with(0) # for some reason apply returns 0 instead of 2
+        .and output(%r{defined 'message' as Binary\("MTIz"\)}).to_stdout
+    end
+
   end
 end
