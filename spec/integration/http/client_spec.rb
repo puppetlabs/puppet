@@ -83,7 +83,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       res
     end
 
-    it "mutually authenticates the connection" do
+    it "mutually authenticates the connection using an explicit context" do
       client_context = ssl_provider.create_context(
         cacerts: [https_server.ca_cert], crls: [https_server.ca_crl],
         client_cert: https_server.server_cert, private_key: https_server.server_key
@@ -91,6 +91,23 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
 
       https_server.start_server(ctx_proc: ctx_proc) do |port|
         res = client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: client_context})
+        expect(res).to be_success
+      end
+    end
+
+    it "mutually authenticates the connection when the client and server certs are issued from different CAs" do
+      # this is the client cert's CA, key and cert
+      Puppet[:localcacert] = fixtures('ssl/unknown-ca.pem')
+      Puppet[:hostprivkey] = fixtures('ssl/unknown-127.0.0.1-key.pem')
+      Puppet[:hostcert] = fixtures('ssl/unknown-127.0.0.1.pem')
+
+      # this is the server cert's CA that the client needs in order to authenticate the server
+      Puppet[:ssl_trust_store] = fixtures('ssl/ca.pem')
+
+      # need to pass both the client and server CAs. The former is needed so the server can authenticate our client cert
+      https_server = PuppetSpec::HTTPSServer.new(ca_cert: [cert_fixture('ca.pem'), cert_fixture('unknown-ca.pem')])
+      https_server.start_server(ctx_proc: ctx_proc) do |port|
+        res = client.get(URI("https://127.0.0.1:#{port}"), options: {include_system_store: true})
         expect(res).to be_success
       end
     end
