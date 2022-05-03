@@ -113,10 +113,19 @@ describe Puppet::SSL::SSLProvider do
       }.to raise_error(/can't modify frozen/)
     end
 
-    it 'trusts system ca store' do
+    it 'trusts system ca store by default' do
       expect_any_instance_of(OpenSSL::X509::Store).to receive(:set_default_paths)
 
       subject.create_system_context(cacerts: [])
+    end
+
+    it 'trusts an external ca store' do
+      path = tmpfile('system_cacerts')
+      File.write(path, cert_fixture('ca.pem').to_pem)
+
+      expect_any_instance_of(OpenSSL::X509::Store).to receive(:add_file).with(path)
+
+      subject.create_system_context(cacerts: [], path: path)
     end
 
     it 'verifies peer' do
@@ -448,6 +457,18 @@ describe Puppet::SSL::SSLProvider do
       sslctx = subject.create_context(**config)
       expect(sslctx.verify_peer).to eq(true)
     end
+
+    it 'does not trust the system ca store by default' do
+      expect_any_instance_of(OpenSSL::X509::Store).to receive(:set_default_paths).never
+
+      subject.create_context(**config)
+    end
+
+    it 'trusts the system ca store' do
+      expect_any_instance_of(OpenSSL::X509::Store).to receive(:set_default_paths)
+
+      subject.create_context(**config.merge(include_system_store: true))
+    end
   end
 
   context 'when loading an ssl context' do
@@ -527,6 +548,18 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.load_context(password: 'wrongpassword')
       }.to raise_error(Puppet::SSL::SSLError, /Failed to load private key for host 'signed': Could not parse PKey/)
+    end
+
+    it 'does not trust the system ca store by default' do
+      expect_any_instance_of(OpenSSL::X509::Store).to receive(:set_default_paths).never
+
+      subject.load_context
+    end
+
+    it 'trusts the system ca store' do
+      expect_any_instance_of(OpenSSL::X509::Store).to receive(:set_default_paths)
+
+      subject.load_context(include_system_store: true)
     end
   end
 
