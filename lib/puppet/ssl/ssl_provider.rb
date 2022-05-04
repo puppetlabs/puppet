@@ -42,15 +42,18 @@ class Puppet::SSL::SSLProvider
   # refers to the cacerts bundle in the puppet-agent package.
   #
   # Connections made from the returned context will authenticate the server,
-  # i.e. `VERIFY_PEER`, but will not use a client certificate and will not
-  # perform revocation checking.
+  # i.e. `VERIFY_PEER`, but will not use a client certificate (unless requested)
+  # and will not perform revocation checking.
   #
   # @param cacerts [Array<OpenSSL::X509::Certificate>] Array of trusted CA certs
   # @param path [String, nil] A file containing additional trusted CA certs.
+  # @param include_client_cert [true, false] If true, the client cert will be added to the context
+  #   allowing mutual TLS authentication. The default is false. If the client cert doesn't exist
+  #   then the option will be ignored.
   # @return [Puppet::SSL::SSLContext] A context to use to create connections
   # @raise (see #create_context)
   # @api private
-  def create_system_context(cacerts:, path: Puppet[:ssl_trust_store])
+  def create_system_context(cacerts:, path: Puppet[:ssl_trust_store], include_client_cert: false)
     store = create_x509_store(cacerts, [], false, include_system_store: true)
 
     if path
@@ -68,6 +71,30 @@ class Puppet::SSL::SSLProvider
         else
           Puppet.warning(_("The 'ssl_trust_store' setting does not refer to a file and will be ignored: '%{path}'" % { path: path }))
         end
+      end
+    end
+
+    if include_client_cert
+      cert_provider = Puppet::X509::CertProvider.new
+      private_key = cert_provider.load_private_key(Puppet[:certname], required: false)
+      client_cert = cert_provider.load_client_cert(Puppet[:certname], required: false)
+
+      if private_key && client_cert
+        client_chain = verify_cert_with_store(store, client_cert)
+
+        if !private_key.is_a?(OpenSSL::PKey::RSA) && !private_key.is_a?(OpenSSL::PKey::EC)
+          raise Puppet::SSL::SSLError, _("Unsupported key '%{type}'") % { type: private_key.class.name }
+        end
+
+        unless client_cert.check_private_key(private_key)
+          raise Puppet::SSL::SSLError, _("The certificate for '%{name}' does not match its private key") % { name: subject(client_cert) }
+        end
+
+        return Puppet::SSL::SSLContext.new(
+          store: store, cacerts: cacerts, crls: [],
+          private_key: private_key, client_cert: client_cert, client_chain: client_chain,
+          revocation: false
+        ).freeze
       end
     end
 

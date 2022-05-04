@@ -144,6 +144,31 @@ describe Puppet::SSL::SSLProvider do
       expect(sslctx.private_key).to be_nil
     end
 
+    it 'includes the client cert and private key when requested' do
+      Puppet[:hostcert] = fixtures('ssl/signed.pem')
+      Puppet[:hostprivkey] = fixtures('ssl/signed-key.pem')
+      sslctx = subject.create_system_context(cacerts: [], include_client_cert: true)
+      expect(sslctx.client_cert).to be_an(OpenSSL::X509::Certificate)
+      expect(sslctx.private_key).to be_an(OpenSSL::PKey::RSA)
+    end
+
+    it 'ignores non-existent client cert and private key when requested' do
+      Puppet[:certname] = 'doesnotexist'
+      sslctx = subject.create_system_context(cacerts: [], include_client_cert: true)
+      expect(sslctx.client_cert).to be_nil
+      expect(sslctx.private_key).to be_nil
+    end
+
+    it 'raises if client cert and private key are mismatched' do
+      Puppet[:hostcert] = fixtures('ssl/signed.pem')
+      Puppet[:hostprivkey] = fixtures('ssl/127.0.0.1-key.pem')
+
+      expect {
+        subject.create_system_context(cacerts: [], include_client_cert: true)
+      }.to raise_error(Puppet::SSL::SSLError,
+        "The certificate for 'CN=signed' does not match its private key")
+    end
+
     it 'trusts additional system certs' do
       path = tmpfile('system_cacerts')
       File.write(path, cert_fixture('ca.pem').to_pem)
