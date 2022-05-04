@@ -158,7 +158,7 @@ applying the whole thing.
 '--fingerprint' is a one-time flag. In this mode 'puppet agent' runs
 once and displays on the console (and in the log) the current certificate
 (or certificate request) fingerprint. Providing the '--digest' option
-allows to use a different digest algorithm to generate the fingerprint.
+allows you to use a different digest algorithm to generate the fingerprint.
 The main use is to verify that before signing a certificate request on
 the master, the certificate request the master received is the same as
 the one the client sent (to prevent against man-in-the-middle attacks

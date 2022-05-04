@@ -1534,7 +1534,7 @@ EOT
       :type => :file,
       :mode => "0640",
       :desc => "Transactional storage file for persisting data between
-        transactions for the purposes of infering information (such as
+        transactions for the purposes of inferring information (such as
         corrective_change) on new data received."
     },
     :clientyamldir => {
