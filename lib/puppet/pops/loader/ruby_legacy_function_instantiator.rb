@@ -18,7 +18,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
   def self.create(loader, typed_name, source_ref, ruby_code_string)
     # Assert content of 3x function by parsing
     assertion_result = []
-    if assert_code(ruby_code_string, assertion_result)
+    if assert_code(ruby_code_string, source_ref, assertion_result)
       unless ruby_code_string.is_a?(String) && assertion_result.include?(:found_newfunction)
         raise ArgumentError, _("The code loaded from %{source_ref} does not seem to be a Puppet 3x API function - no 'newfunction' call.") % { source_ref: source_ref }
       end
@@ -69,15 +69,15 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
   end
   private_class_method :get_binding
 
-  def self.assert_code(code_string, result)
+  def self.assert_code(code_string, source_ref, result)
     ripped = Ripper.sexp(code_string)
     return false if ripped.nil?  # Let the next real parse crash and tell where and what is wrong
-    ripped.each {|x| walk(x, result) }
+    ripped.each {|x| walk(x, source_ref, result) }
     true
   end
   private_class_method :assert_code
 
-  def self.walk(x, result)
+  def self.walk(x, source_ref, result)
     return unless x.is_a?(Array)
     first = x[0]
     case first
@@ -89,13 +89,14 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
     when :def, :defs
       # There should not be any calls to def in a 3x function
       mname, mline = extract_name_line(find_identity(x))
-      raise SecurityError, _("Illegal method definition of method '%{method_name}' on line %{line} in legacy function. See %{url} for more information") % { 
+      raise SecurityError, _("Illegal method definition of method '%{method_name}' in source %{source_ref} on line %{line} in legacy function. See %{url} for more information") % {
         method_name: mname,
+        source_ref: source_ref,
         line: mline,
         url: "https://puppet.com/docs/puppet/latest/functions_refactor_legacy.html"
       }
     end
-    x.each {|v| walk(v, result) }
+    x.each {|v| walk(v, source_ref, result) }
   end
   private_class_method :walk
 
