@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-AGENT" "8" "April 2022" "Puppet, Inc." "Puppet manual"
+.TH "PUPPET\-AGENT" "8" "May 2022" "Puppet, Inc." "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-agent\fR \- The puppet agent daemon
@@ -51,7 +51,7 @@ Some flags are meant specifically for interactive use \-\-\- in particular, \'te
 \'\-\-tags\' allows you to specify what portions of a configuration you want to apply\. Puppet elements are tagged with all of the class or definition names that contain them, and you can use the \'tags\' flag to specify one of these names, causing only configuration elements contained within that class or definition to be applied\. This is very useful when you are testing new configurations \-\-\- for instance, if you are just starting to manage \'ntpd\', you would put all of the new elements into an \'ntpd\' class, and call puppet with \'\-\-tags ntpd\', which would only apply that small portion of the configuration during your testing, rather than applying the whole thing\.
 .
 .P
-\'\-\-fingerprint\' is a one\-time flag\. In this mode \'puppet agent\' runs once and displays on the console (and in the log) the current certificate (or certificate request) fingerprint\. Providing the \'\-\-digest\' option allows to use a different digest algorithm to generate the fingerprint\. The main use is to verify that before signing a certificate request on the master, the certificate request the master received is the same as the one the client sent (to prevent against man\-in\-the\-middle attacks when signing certificates)\.
+\'\-\-fingerprint\' is a one\-time flag\. In this mode \'puppet agent\' runs once and displays on the console (and in the log) the current certificate (or certificate request) fingerprint\. Providing the \'\-\-digest\' option allows you to use a different digest algorithm to generate the fingerprint\. The main use is to verify that before signing a certificate request on the master, the certificate request the master received is the same as the one the client sent (to prevent against man\-in\-the\-middle attacks when signing certificates)\.
 .
 .P
 \'\-\-skip_tags\' is a flag used to filter resources\. If this is set, then only resources not tagged with the specified tags will be applied\. Values must be comma\-separated\.
