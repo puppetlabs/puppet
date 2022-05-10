@@ -52,6 +52,10 @@ class Puppet::Module
       return false
     end
 
+    def self.is_tasks_file?(path)
+      File.file?(path) && is_tasks_filename?(path)
+    end
+
     # Determine whether a file has a legal name for either a task's executable or metadata file.
     def self.is_tasks_filename?(path)
       name_less_extension = File.basename(path, '.*')
@@ -200,7 +204,7 @@ class Puppet::Module
 
     def self.tasks_in_module(pup_module)
       task_files = Dir.glob(File.join(pup_module.tasks_directory, '*'))
-        .keep_if { |f| is_tasks_filename?(f) }
+        .keep_if { |f| is_tasks_file?(f) }
 
       module_executables = task_files.reject(&method(:is_tasks_metadata_filename?)).map.to_a
 
