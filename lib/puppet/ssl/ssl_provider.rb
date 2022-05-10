@@ -80,15 +80,7 @@ class Puppet::SSL::SSLProvider
       client_cert = cert_provider.load_client_cert(Puppet[:certname], required: false)
 
       if private_key && client_cert
-        client_chain = verify_cert_with_store(store, client_cert)
-
-        if !private_key.is_a?(OpenSSL::PKey::RSA) && !private_key.is_a?(OpenSSL::PKey::EC)
-          raise Puppet::SSL::SSLError, _("Unsupported key '%{type}'") % { type: private_key.class.name }
-        end
-
-        unless client_cert.check_private_key(private_key)
-          raise Puppet::SSL::SSLError, _("The certificate for '%{name}' does not match its private key") % { name: subject(client_cert) }
-        end
+        client_chain = resolve_client_chain(store, client_cert, private_key)
 
         return Puppet::SSL::SSLContext.new(
           store: store, cacerts: cacerts, crls: [],
@@ -134,15 +126,7 @@ class Puppet::SSL::SSLProvider
     raise ArgumentError, _("Client cert is missing") unless client_cert
 
     store = create_x509_store(cacerts, crls, revocation, include_system_store: include_system_store)
-    client_chain = verify_cert_with_store(store, client_cert)
-
-    if !private_key.is_a?(OpenSSL::PKey::RSA) && !private_key.is_a?(OpenSSL::PKey::EC)
-      raise Puppet::SSL::SSLError, _("Unsupported key '%{type}'") % { type: private_key.class.name }
-    end
-
-    unless client_cert.check_private_key(private_key)
-      raise Puppet::SSL::SSLError, _("The certificate for '%{name}' does not match its private key") % { name: subject(client_cert) }
-    end
+    client_chain = resolve_client_chain(store, client_cert, private_key)
 
     Puppet::SSL::SSLContext.new(
       store: store, cacerts: cacerts, crls: crls,
@@ -266,6 +250,20 @@ class Puppet::SSL::SSLProvider
       # :chain is the default
       OpenSSL::X509::V_FLAG_CRL_CHECK | OpenSSL::X509::V_FLAG_CRL_CHECK_ALL
     end
+  end
+
+  def resolve_client_chain(store, client_cert, private_key)
+    client_chain = verify_cert_with_store(store, client_cert)
+
+    if !private_key.is_a?(OpenSSL::PKey::RSA) && !private_key.is_a?(OpenSSL::PKey::EC)
+      raise Puppet::SSL::SSLError, _("Unsupported key '%{type}'") % { type: private_key.class.name }
+    end
+
+    unless client_cert.check_private_key(private_key)
+      raise Puppet::SSL::SSLError, _("The certificate for '%{name}' does not match its private key") % { name: subject(client_cert) }
+    end
+
+    client_chain
   end
 
   def verify_cert_with_store(store, cert)
