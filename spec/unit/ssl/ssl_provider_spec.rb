@@ -159,6 +159,22 @@ describe Puppet::SSL::SSLProvider do
       expect(sslctx.private_key).to be_nil
     end
 
+    it 'warns if the client cert does not exist' do
+      Puppet[:certname] = 'missingcert'
+      Puppet[:hostprivkey] = fixtures('ssl/signed-key.pem')
+
+      expect(Puppet).to receive(:warning).with("Client certificate for 'missingcert' does not exist")
+      subject.create_system_context(cacerts: [], include_client_cert: true)
+    end
+
+    it 'warns if the private key does not exist' do
+      Puppet[:certname] = 'missingkey'
+      Puppet[:hostcert] = fixtures('ssl/signed.pem')
+
+      expect(Puppet).to receive(:warning).with("Private key for 'missingkey' does not exist")
+      subject.create_system_context(cacerts: [], include_client_cert: true)
+    end
+
     it 'raises if client cert and private key are mismatched' do
       Puppet[:hostcert] = fixtures('ssl/signed.pem')
       Puppet[:hostprivkey] = fixtures('ssl/127.0.0.1-key.pem')
