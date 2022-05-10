@@ -147,9 +147,9 @@ Puppet::Type.type(:user).provide :directoryservice do
     else
       embedded_binary_plist = get_embedded_binary_plist(attribute_hash[:shadowhashdata])
       if embedded_binary_plist['SALTED-SHA512-PBKDF2']
-        attribute_hash[:password]   = get_salted_sha512_pbkdf2('entropy', embedded_binary_plist)
-        attribute_hash[:salt]       = get_salted_sha512_pbkdf2('salt', embedded_binary_plist)
-        attribute_hash[:iterations] = get_salted_sha512_pbkdf2('iterations', embedded_binary_plist)
+        attribute_hash[:password]   = get_salted_sha512_pbkdf2('entropy', embedded_binary_plist, attribute_hash[:name])
+        attribute_hash[:salt]       = get_salted_sha512_pbkdf2('salt', embedded_binary_plist, attribute_hash[:name])
+        attribute_hash[:iterations] = get_salted_sha512_pbkdf2('iterations', embedded_binary_plist, attribute_hash[:name])
       elsif embedded_binary_plist['SALTED-SHA512']
         attribute_hash[:password] = get_salted_sha512(embedded_binary_plist)
       end
@@ -205,16 +205,18 @@ Puppet::Type.type(:user).provide :directoryservice do
   # according to which field is passed.  Arguments passed are the hash
   # containing the value read from the 'ShadowHashData' key in the User's
   # plist, and the field to be read (one of 'entropy', 'salt', or 'iterations')
-  def self.get_salted_sha512_pbkdf2(field, embedded_binary_plist)
+  def self.get_salted_sha512_pbkdf2(field, embedded_binary_plist, user_name = "")
     case field
     when 'salt', 'entropy'
-      embedded_binary_plist['SALTED-SHA512-PBKDF2'][field].unpack('H*').first
+      value = embedded_binary_plist['SALTED-SHA512-PBKDF2'][field]
+      if value == nil
+        raise Puppet::Error, "Invalid #{field} given for user #{user_name}"
+      end
+      value.unpack('H*').first
     when 'iterations'
       Integer(embedded_binary_plist['SALTED-SHA512-PBKDF2'][field])
     else
-      raise Puppet::Error, 'Puppet has tried to read an incorrect value from the ' +
-           "SALTED-SHA512-PBKDF2 hash. Acceptable fields are 'salt', " +
-           "'entropy', or 'iterations'."
+      raise Puppet::Error, "Puppet has tried to read an incorrect value from the user #{user_name} in the SALTED-SHA512-PBKDF2 hash. Acceptable fields are 'salt', 'entropy', or 'iterations'."
     end
   end
 
