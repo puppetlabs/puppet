@@ -19,6 +19,10 @@ class Puppet::Pops::Functions::Dispatcher
     @dispatchers.empty?
   end
 
+  def find_matching_dispatcher(args, &block)
+    @dispatchers.find { |d| d.type.callable_with?(args, block) }
+  end
+
   # Dispatches the call to the first found signature (entry with matching type).
   #
   # @param instance [Puppet::Functions::Function] - the function to call
@@ -28,19 +32,19 @@ class Puppet::Pops::Functions::Dispatcher
   #
   # @api private
   def dispatch(instance, calling_scope, args, &block)
-    found = @dispatchers.find { |d| d.type.callable_with?(args, block) }
-    unless found
+
+    dispatcher = find_matching_dispatcher(args, &block)
+    unless dispatcher
       args_type = Puppet::Pops::Types::TypeCalculator.singleton.infer_set(block_given? ? args + [block] : args)
       raise ArgumentError, Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(instance.class.name, signatures, args_type)
     end
-
-    if found.argument_mismatch_handler?
-      msg = found.invoke(instance, calling_scope, args)
+    if dispatcher.argument_mismatch_handler?
+      msg = dispatcher.invoke(instance, calling_scope, args)
       raise ArgumentError, "'#{instance.class.name}' #{msg}"
     end
 
     catch(:next) do
-      found.invoke(instance, calling_scope, args, &block)
+      dispatcher.invoke(instance, calling_scope, args, &block)
     end
   end
 

@@ -581,6 +581,15 @@ module Types
       end
     end
 
+    def get_deferred_function_return_type(value)
+      func = Puppet.lookup(:loaders).private_environment_loader.
+               load(:function, value.name)
+      dispatcher = func.class.dispatcher.find_matching_dispatcher(value.arguments)
+      raise ArgumentError, "No matching arity found for #{func.class.name} with arguments #{value.arguments}" unless dispatcher
+      dispatcher.type.return_type
+    end
+    private :get_deferred_function_return_type
+
     # Validates that all entries in the _param_hash_ exists in the given param_struct, that their type conforms
     # with the corresponding param_struct element and that all required values are provided.
     # An error message is created for each problem found.
@@ -598,7 +607,19 @@ module Types
         value = param_hash[name]
         value_type = elem.value_type
         if param_hash.include?(name)
-          result << describe(value_type, TypeCalculator.singleton.infer_set(value), [ParameterPathElement.new(name)]) unless value_type.instance?(value)
+          if Puppet::Pops::Types::TypeFactory.deferred.implementation_class == value.class
+            if (df_return_type = get_deferred_function_return_type(value))
+              result << describe(value_type, df_return_type, [ParameterPathElement.new(name)]) unless value_type.generalize.assignable?(df_return_type.generalize)
+            else
+              warning_text = _("Deferred function %{function_name} has no return_type, unable to guarantee value type during compilation.") %
+                             {function_name: value.name }
+              Puppet.warn_once('deprecations',
+                               "#{value.name}_deferred_warning",
+                               warning_text)
+            end
+          else
+            result << describe(value_type, TypeCalculator.singleton.infer_set(value), [ParameterPathElement.new(name)]) unless value_type.instance?(value)
+          end
         else
           result << MissingParameter.new(nil, name) unless missing_ok || elem.key_type.is_a?(POptionalType)
         end

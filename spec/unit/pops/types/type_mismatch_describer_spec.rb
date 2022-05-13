@@ -1,12 +1,178 @@
 require 'spec_helper'
 require 'puppet/pops'
 require 'puppet_spec/compiler'
+require 'puppet_spec/files'
+require 'puppet/loaders'
 
 module Puppet::Pops
 module Types
 
 describe 'the type mismatch describer' do
-  include PuppetSpec::Compiler
+  include PuppetSpec::Compiler, PuppetSpec::Files
+
+  context 'with deferred functions' do
+    let(:env_name) { 'spec' }
+    let(:code_dir) { Puppet[:environmentpath] }
+    let(:env_dir) { File.join(code_dir, env_name) }
+    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_code_dir, env_name, 'modules')]) }
+    let(:node) { Puppet::Node.new('fooname', environment: env) }
+    let(:populated_code_dir) do
+      dir_contained_in(code_dir, env_name => env_content)
+      PuppetSpec::Files.record_tmp(env_dir)
+      code_dir
+    end
+
+    let(:env_content) {
+      {
+        'lib' => {
+          'puppet' => {
+            'functions' => {
+              'string_return.rb' => <<-RUBY.unindent,
+              Puppet::Functions.create_function(:string_return) do
+                dispatch :string_return do
+                  param 'String', :arg1
+                  return_type 'String'
+                end
+                def string_return(arg1)
+                  arg1
+                end
+              end
+              RUBY
+              'variant_return.rb' => <<-RUBY.unindent,
+              Puppet::Functions.create_function(:variant_return) do
+                dispatch :variant_return do
+                  param 'String', :arg1
+                  return_type 'Variant[Integer,Float]'
+                end
+                def variant_return(arg1)
+                  arg1
+                end
+              end
+              RUBY
+              'no_return.rb' => <<-RUBY.unindent,
+              Puppet::Functions.create_function(:no_return) do
+                dispatch :no_return do
+                  param 'String', :arg1
+                end
+                def variant_return(arg1)
+                  arg1
+                end
+              end
+              RUBY
+            }
+          }
+        }
+      }
+    }
+
+    before(:each) do
+      Puppet.push_context(:loaders => Puppet::Pops::Loaders.new(env))
+    end
+
+    after(:each) do
+      Puppet.pop_context
+    end
+
+    it 'will compile when the parameter type matches the function return_type' do
+      code = <<-CODE
+        $d = Deferred("string_return", ['/a/non/existing/path'])
+        class testclass(String $classparam) {
+        }
+        class { 'testclass':
+          classparam => $d
+        }
+      CODE
+      expect { eval_and_collect_notices(code, node) }.to_not raise_error
+    end
+
+    it "will compile when a Variant parameter's types matches the return type" do
+      code = <<-CODE
+        $d = Deferred("string_return", ['/a/non/existing/path'])
+        class testclass(Variant[String, Float] $classparam) {
+        }
+        class { 'testclass':
+          classparam => $d
+        }
+      CODE
+      expect { eval_and_collect_notices(code, node) }.to_not raise_error
+    end
+
+    it "will compile with a union of a Variant parameters' types and Variant return types" do
+      code = <<-CODE
+        $d = Deferred("variant_return", ['/a/non/existing/path'])
+        class testclass(Variant[Any,Float] $classparam) {
+        }
+        class { 'testclass':
+          classparam => $d
+        }
+      CODE
+      expect { eval_and_collect_notices(code, node) }.to_not raise_error
+    end
+
+    it 'will warn when there is no defined return_type for the function definition' do
+      code = <<-CODE
+        $d = Deferred("no_return", ['/a/non/existing/path'])
+        class testclass(Variant[String,Boolean] $classparam) {
+        }
+        class { 'testclass':
+          classparam => $d
+        }
+      CODE
+      expect(Puppet).to receive(:warn_once).with(anything, anything, /.+function no_return has no return_type/).at_least(:once)
+      expect { eval_and_collect_notices(code, node) }.to_not raise_error
+    end
+
+    it 'will report a mismatch between a deferred function return type and class parameter value' do
+      code = <<-CODE
+        $d = Deferred("string_return", ['/a/non/existing/path'])
+        class testclass(Integer $classparam) {
+        }
+        class { 'testclass':
+          classparam => $d
+        }
+      CODE
+      expect { eval_and_collect_notices(code, node) }.to raise_error(Puppet::Error, /.+'classparam' expects an Integer value, got String/)
+    end
+
+    it 'will report an argument error when no matching arity is found' do
+      code = <<-CODE
+        $d = Deferred("string_return", ['/a/non/existing/path', 'second-invalid-arg'])
+        class testclass(Integer $classparam) {
+        }
+        class { 'testclass':
+          classparam => $d
+        }
+      CODE
+      expect { eval_and_collect_notices(code,node) }.to raise_error(Puppet::Error, /.+ No matching arity found for string_return/)
+    end
+
+    it 'will error with no matching Variant class parameters and return_type' do
+      code = <<-CODE
+        $d = Deferred("string_return", ['/a/non/existing/path'])
+        class testclass(Variant[Integer,Float] $classparam) {
+        }
+        class { 'testclass':
+          classparam => $d
+        }
+      CODE
+      expect { eval_and_collect_notices(code,node) }.to raise_error(Puppet::Error, /.+'classparam' expects a value of type Integer or Float, got String/)
+    end
+
+    # This test exposes a shortcoming in the #message function for Puppet::Pops::Type::TypeMismatch
+    # where the `actual` is not introspected for the list of Variant types, so the error message
+    # shows that the list of expected types does not match Variant, instead of a list of actual types.
+    it 'will error with no matching Variant class parameters and Variant return_type' do
+      code = <<-CODE
+        $d = Deferred("variant_return", ['/a/non/existing/path'])
+        class testclass(Variant[String,Boolean] $classparam) {
+        }
+        class { 'testclass':
+          classparam => $d
+        }
+      CODE
+      expect { eval_and_collect_notices(code, node) }.to raise_error(Puppet::Error, /.+'classparam' expects a value of type String or Boolean, got Variant/)
+    end
+  end
 
   it 'will report a mismatch between a hash and a struct with details' do
     code = <<-CODE
