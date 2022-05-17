@@ -40,7 +40,7 @@ class PuppetSpec::HTTPSServer
 
     IO.pipe {|stop_pipe_r, stop_pipe_w|
       store = OpenSSL::X509::Store.new
-      store.add_cert(@ca_cert)
+      Array(@ca_cert).each { |c| store.add_cert(c) }
       store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
       ctx = OpenSSL::SSL::SSLContext.new
       ctx.cert_store = store

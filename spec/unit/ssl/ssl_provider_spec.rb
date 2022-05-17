@@ -113,10 +113,19 @@ describe Puppet::SSL::SSLProvider do
       }.to raise_error(/can't modify frozen/)
     end
 
-    it 'trusts system ca store' do
+    it 'trusts system ca store by default' do
       expect_any_instance_of(OpenSSL::X509::Store).to receive(:set_default_paths)
 
       subject.create_system_context(cacerts: [])
+    end
+
+    it 'trusts an external ca store' do
+      path = tmpfile('system_cacerts')
+      File.write(path, cert_fixture('ca.pem').to_pem)
+
+      expect_any_instance_of(OpenSSL::X509::Store).to receive(:add_file).with(path)
+
+      subject.create_system_context(cacerts: [], path: path)
     end
 
     it 'verifies peer' do
@@ -133,6 +142,47 @@ describe Puppet::SSL::SSLProvider do
       sslctx = subject.create_system_context(cacerts: [])
       expect(sslctx.client_cert).to be_nil
       expect(sslctx.private_key).to be_nil
+    end
+
+    it 'includes the client cert and private key when requested' do
+      Puppet[:hostcert] = fixtures('ssl/signed.pem')
+      Puppet[:hostprivkey] = fixtures('ssl/signed-key.pem')
+      sslctx = subject.create_system_context(cacerts: [], include_client_cert: true)
+      expect(sslctx.client_cert).to be_an(OpenSSL::X509::Certificate)
+      expect(sslctx.private_key).to be_an(OpenSSL::PKey::RSA)
+    end
+
+    it 'ignores non-existent client cert and private key when requested' do
+      Puppet[:certname] = 'doesnotexist'
+      sslctx = subject.create_system_context(cacerts: [], include_client_cert: true)
+      expect(sslctx.client_cert).to be_nil
+      expect(sslctx.private_key).to be_nil
+    end
+
+    it 'warns if the client cert does not exist' do
+      Puppet[:certname] = 'missingcert'
+      Puppet[:hostprivkey] = fixtures('ssl/signed-key.pem')
+
+      expect(Puppet).to receive(:warning).with("Client certificate for 'missingcert' does not exist")
+      subject.create_system_context(cacerts: [], include_client_cert: true)
+    end
+
+    it 'warns if the private key does not exist' do
+      Puppet[:certname] = 'missingkey'
+      Puppet[:hostcert] = fixtures('ssl/signed.pem')
+
+      expect(Puppet).to receive(:warning).with("Private key for 'missingkey' does not exist")
+      subject.create_system_context(cacerts: [], include_client_cert: true)
+    end
+
+    it 'raises if client cert and private key are mismatched' do
+      Puppet[:hostcert] = fixtures('ssl/signed.pem')
+      Puppet[:hostprivkey] = fixtures('ssl/127.0.0.1-key.pem')
+
+      expect {
+        subject.create_system_context(cacerts: [], include_client_cert: true)
+      }.to raise_error(Puppet::SSL::SSLError,
+        "The certificate for 'CN=signed' does not match its private key")
     end
 
     it 'trusts additional system certs' do
@@ -448,6 +498,18 @@ describe Puppet::SSL::SSLProvider do
       sslctx = subject.create_context(**config)
       expect(sslctx.verify_peer).to eq(true)
     end
+
+    it 'does not trust the system ca store by default' do
+      expect_any_instance_of(OpenSSL::X509::Store).to receive(:set_default_paths).never
+
+      subject.create_context(**config)
+    end
+
+    it 'trusts the system ca store' do
+      expect_any_instance_of(OpenSSL::X509::Store).to receive(:set_default_paths)
+
+      subject.create_context(**config.merge(include_system_store: true))
+    end
   end
 
   context 'when loading an ssl context' do
@@ -527,6 +589,18 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.load_context(password: 'wrongpassword')
       }.to raise_error(Puppet::SSL::SSLError, /Failed to load private key for host 'signed': Could not parse PKey/)
+    end
+
+    it 'does not trust the system ca store by default' do
+      expect_any_instance_of(OpenSSL::X509::Store).to receive(:set_default_paths).never
+
+      subject.load_context
+    end
+
+    it 'trusts the system ca store' do
+      expect_any_instance_of(OpenSSL::X509::Store).to receive(:set_default_paths)
+
+      subject.load_context(include_system_store: true)
     end
   end
 

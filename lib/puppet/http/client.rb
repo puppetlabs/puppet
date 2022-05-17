@@ -426,7 +426,7 @@ class Puppet::HTTP::Client
     cacerts = cert_provider.load_cacerts || []
 
     ssl = Puppet::SSL::SSLProvider.new
-    @default_system_ssl_context = ssl.create_system_context(cacerts: cacerts)
+    @default_system_ssl_context = ssl.create_system_context(cacerts: cacerts, include_client_cert: true)
     ssl.print(@default_system_ssl_context)
     @default_system_ssl_context
   end
