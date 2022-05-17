@@ -713,5 +713,47 @@ class amod::bad_type {
         .and output(%r{defined 'message' as Binary\("MTIz"\)}).to_stdout
     end
 
+    it "validates the deferred resource before applying any resources" do
+      undeferred_file = tmpfile('undeferred')
+
+      manifest = <<~END
+      file { '#{undeferred_file}':
+        ensure => file,
+      }
+      file { '#{deferred_file}':
+          ensure => file,
+          content => Deferred('inline_epp', ['<%= 42 %>']),
+          source => 'http://example.com/content',
+      }
+      END
+      apply.command_line.args = ['-e', manifest]
+      expect {
+        apply.run
+      }.to exit_with(1)
+        .and output(/Compiled catalog/).to_stdout
+        .and output(/Validation of File.* failed: You cannot specify more than one of content, source, target/).to_stderr
+
+      # validation happens before all resources are applied, so this shouldn't exist
+      expect(File).to_not be_exist(undeferred_file)
+    end
+
+    it "evaluates resources before validating the deferred resource" do
+      Puppet[:preprocess_deferred] = false
+
+      manifest = <<~END
+        notify { 'runs before file': } ->
+        file { '#{deferred_file}':
+          ensure => file,
+          content => Deferred('inline_epp', ['<%= 42 %>']),
+          source => 'http://example.com/content',
+      }
+      END
+      apply.command_line.args = ['-e', manifest]
+      expect {
+        apply.run
+      }.to exit_with(1)
+        .and output(/Notify\[runs before file\]/).to_stdout
+        .and output(/Validation of File.* failed: You cannot specify more than one of content, source, target/).to_stderr
+    end
   end
 end

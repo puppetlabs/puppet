@@ -2282,7 +2282,13 @@ class Type
   # @api public
   #
   def self.validate(&block)
-    define_method(:validate, &block)
+    define_method(:unsafe_validate, &block)
+
+    define_method(:validate) do
+      return if enum_for(:eachparameter).any? { |p| p.value.instance_of?(Puppet::Pops::Evaluator::DeferredValue) }
+
+      unsafe_validate
+    end
   end
 
   # @return [String] The file from which this type originates from
@@ -2372,6 +2378,19 @@ class Type
 
     set_parameters(@original_parameters)
 
+    validate_resource
+
+    set_sensitive_parameters(resource.sensitive_parameters)
+  end
+
+  # Optionally validate the resource. This method is a noop if the type has not defined
+  # a `validate` method using the puppet DSL. If validation fails, then an exception will
+  # be raised with this resources as the context.
+  #
+  # @api public
+  #
+  # @return [void]
+  def validate_resource
     begin
       self.validate if self.respond_to?(:validate)
     rescue Puppet::Error, ArgumentError => detail
@@ -2379,8 +2398,6 @@ class Type
       adderrorcontext(error, detail)
       raise error
     end
-
-    set_sensitive_parameters(resource.sensitive_parameters)
   end
 
   protected

@@ -468,6 +468,8 @@ class Puppet::Transaction
   def resolve_resource(resource)
     return unless catalog.host_config?
 
+    deferred_validate = false
+
     resource.eachparameter do |param|
       if param.value.instance_of?(Puppet::Pops::Evaluator::DeferredValue)
         # Puppet::Parameter#value= triggers validation and munging. Puppet::Property#value=
@@ -476,7 +478,12 @@ class Puppet::Transaction
         resolved = param.value.resolve
         # resource.notice("Resolved deferred value to #{resolved}")
         param.value = resolved
+        deferred_validate = true
       end
+    end
+
+    if deferred_validate
+      resource.validate_resource
     end
   end
 end
