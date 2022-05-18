@@ -1486,6 +1486,14 @@ The preferred means of serializing ruby instances for passing over the wire\. Th
 .
 .IP "" 0
 .
+.SS "preprocess_deferred"
+Whether puppet should call deferred functions before applying the catalog\. If set to \fBtrue\fR, then all prerequisites needed for the deferred function must be satified prior to puppet running\. If set to \fBfalse\fR, then deferred functions will follow puppet relationships and ordering\. This allows puppet to install prerequisites needed for a deferred function and call the deferred function in the same run\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: \fBtrue\fR
+.
+.IP "" 0
+.
 .SS "prerun_command"
 A command to run before every agent run\. If this command returns a non\-zero return code, the entire Puppet run will fail\.
 .
