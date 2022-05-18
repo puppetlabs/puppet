@@ -112,7 +112,7 @@ class Puppet::Configurer
     catalog_conversion_time = thinmark do
       # Will mutate the result and replace all Deferred values with resolved values
       if facts
-        Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(facts, result, Puppet.lookup(:current_environment))
+        Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(facts, result, Puppet.lookup(:current_environment), Puppet[:preprocess_deferred])
       end
 
       catalog = result.to_ral

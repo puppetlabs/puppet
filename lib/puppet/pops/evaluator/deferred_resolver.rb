@@ -3,6 +3,16 @@ require_relative '../../../puppet/parser/script_compiler'
 module Puppet::Pops
 module Evaluator
 
+class DeferredValue
+  def initialize(proc)
+    @proc = proc
+  end
+
+  def resolve
+    @proc.call
+  end
+end
+
 # Utility class to help resolve instances of Puppet::Pops::Types::PDeferredType::Deferred
 #
 class DeferredResolver
@@ -20,9 +30,9 @@ class DeferredResolver
   #  are to be mixed into the scope
   # @return [nil] does not return anything - the catalog is modified as a side effect
   #
-  def self.resolve_and_replace(facts, catalog, environment = catalog.environment_instance)
-    compiler = Puppet::Parser::ScriptCompiler.new(environment, catalog.name, true)
-    resolver = new(compiler)
+  def self.resolve_and_replace(facts, catalog, environment = catalog.environment_instance, preprocess_deferred = true)
+    compiler = Puppet::Parser::ScriptCompiler.new(environment, catalog.name, preprocess_deferred)
+    resolver = new(compiler, preprocess_deferred)
     resolver.set_facts_variable(facts)
     # TODO:
     #    # When scripting the trusted data are always local, but set them anyway
@@ -53,11 +63,12 @@ class DeferredResolver
     resolver.resolve(value)
   end
 
-  def initialize(compiler)
+  def initialize(compiler, preprocess_deferred = true)
     @compiler = compiler
     # Always resolve in top scope
     @scope = @compiler.topscope
     @deferred_class = Puppet::Pops::Types::TypeFactory.deferred.implementation_class
+    @preprocess_deferred = preprocess_deferred
   end
 
   # @param facts [Puppet::Node::Facts] the facts to set in $facts in the compiler's topscope
@@ -106,6 +117,24 @@ class DeferredResolver
     end
   end
 
+  def resolve_lazy_args(x)
+    if x.is_a?(DeferredValue)
+      x.resolve
+    elsif x.is_a?(Array)
+      x.map {|v| resolve_lazy_args(v) }
+    elsif x.is_a?(Hash)
+      result = {}
+      x.each_pair {|k,v| result[k] = resolve_lazy_args(v) }
+      result
+    elsif x.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+      # rewrap in a new Sensitive after resolving any nested deferred values
+      Puppet::Pops::Types::PSensitiveType::Sensitive.new(resolve_lazy_args(x.unwrap))
+    else
+      x
+    end
+  end
+  private :resolve_lazy_args
+
   def resolve_future(f)
     # If any of the arguments to a future is a future it needs to be resolved first
     func_name = f.name
@@ -117,8 +146,19 @@ class DeferredResolver
       mapped_arguments.insert(0, @scope[var_name])
     end
 
-    # call the function (name in deferred, or 'dig' for a variable)
-    @scope.call_function(func_name, mapped_arguments)
+    if @preprocess_deferred
+      # call the function (name in deferred, or 'dig' for a variable)
+      @scope.call_function(func_name, mapped_arguments)
+    else
+      # call the function later
+      DeferredValue.new(
+        Proc.new {
+          # deferred functions can have nested deferred arguments
+          resolved_arguments = mapped_arguments.map { |arg| resolve_lazy_args(arg) }
+          @scope.call_function(func_name, resolved_arguments)
+        }
+      )
+    end
   end
 
   def map_arguments(args)

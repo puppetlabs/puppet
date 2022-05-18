@@ -665,6 +665,18 @@ class amod::bad_type {
   end
 
   context 'rich data' do
+    let(:deferred_file) { tmpfile('deferred') }
+    let(:deferred_manifest) do <<~END
+      file { '#{deferred_file}':
+        ensure => file,
+        content => '123',
+      } ->
+      notify { 'deferred':
+        message => Deferred('binary_file', ['#{deferred_file}'])
+      }
+      END
+    end
+
     it "calls a deferred 4x function" do
       apply.command_line.args = ['-e', 'notify { "deferred3x": message => Deferred("join", [[1,2,3], ":"]) }']
 
@@ -680,6 +692,68 @@ class amod::bad_type {
         apply.run
       }.to exit_with(0) # for some reason apply returns 0 instead of 2
        .and output(%r{Notice: /Stage\[main\]/Main/Notify\[deferred4x\]/message: defined 'message' as 'I am deferred'}).to_stdout
+    end
+
+    it "fails to apply a deferred function with an unsatified prerequisite" do
+      apply.command_line.args = ['-e', deferred_manifest]
+      expect {
+        apply.run
+      }.to exit_with(1) # for some reason apply returns 0 instead of 2
+       .and output(/Compiled catalog/).to_stdout
+       .and output(%r{The given file '#{deferred_file}' does not exist}).to_stderr
+    end
+
+    it "applies a deferred function and its prerequisite in the same run" do
+      Puppet[:preprocess_deferred] = false
+
+      apply.command_line.args = ['-e', deferred_manifest]
+      expect {
+        apply.run
+      }.to exit_with(0) # for some reason apply returns 0 instead of 2
+        .and output(%r{defined 'message' as Binary\("MTIz"\)}).to_stdout
+    end
+
+    it "validates the deferred resource before applying any resources" do
+      undeferred_file = tmpfile('undeferred')
+
+      manifest = <<~END
+      file { '#{undeferred_file}':
+        ensure => file,
+      }
+      file { '#{deferred_file}':
+          ensure => file,
+          content => Deferred('inline_epp', ['<%= 42 %>']),
+          source => 'http://example.com/content',
+      }
+      END
+      apply.command_line.args = ['-e', manifest]
+      expect {
+        apply.run
+      }.to exit_with(1)
+        .and output(/Compiled catalog/).to_stdout
+        .and output(/Validation of File.* failed: You cannot specify more than one of content, source, target/).to_stderr
+
+      # validation happens before all resources are applied, so this shouldn't exist
+      expect(File).to_not be_exist(undeferred_file)
+    end
+
+    it "evaluates resources before validating the deferred resource" do
+      Puppet[:preprocess_deferred] = false
+
+      manifest = <<~END
+        notify { 'runs before file': } ->
+        file { '#{deferred_file}':
+          ensure => file,
+          content => Deferred('inline_epp', ['<%= 42 %>']),
+          source => 'http://example.com/content',
+      }
+      END
+      apply.command_line.args = ['-e', manifest]
+      expect {
+        apply.run
+      }.to exit_with(1)
+        .and output(/Notify\[runs before file\]/).to_stdout
+        .and output(/Validation of File.* failed: You cannot specify more than one of content, source, target/).to_stderr
     end
   end
 end

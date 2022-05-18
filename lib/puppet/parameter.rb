@@ -177,15 +177,15 @@ class Puppet::Parameter
     end
 
     # @overload unmunge {|| ... }
-    # Defines an optional method used to convert the parameter value to DSL/string form from an internal form.
+    # Defines an optional method used to convert the parameter value from internal form to DSL/string form.
     # If an `unmunge` method is not defined, the internal form is used.
     # @see munge
-    # @note This adds a method with the name `unmunge` in the created parameter class.
+    # @note This adds a method with the name `unsafe_unmunge` in the created parameter class.
     # @dsl type
     # @api public
     #
     def unmunge(&block)
-      define_method(:unmunge, &block)
+      define_method(:unsafe_unmunge, &block)
     end
 
     # Sets a marker indicating that this parameter is the _namevar_ (unique identifier) of the type
@@ -415,10 +415,21 @@ class Puppet::Parameter
   # @return [Object] the unmunged value
   #
   def unmunge(value)
+    return value if value.is_a?(Puppet::Pops::Evaluator::DeferredValue)
+
+    unsafe_unmunge(value)
+  end
+
+  # This is the default implementation of `unmunge` that simply produces the value (if it is valid).
+  # The DSL method {unmunge} should be used to define an overriding method if unmunging is required.
+  #
+  # @api private
+  #
+  def unsafe_unmunge(value)
     value
   end
 
-  # Munges the value to internal form.
+  # Munges the value from DSL form to internal form.
   # This implementation of `munge` provides exception handling around the specified munging of this parameter.
   # @note This method should not be overridden. Use the DSL method {munge} to define a munging method
   #   if required.
@@ -426,6 +437,8 @@ class Puppet::Parameter
   # @return [Object] the munged (internal) value
   #
   def munge(value)
+    return value if value.is_a?(Puppet::Pops::Evaluator::DeferredValue)
+
     begin
       ret = unsafe_munge(value)
     rescue Puppet::Error => detail
@@ -459,6 +472,8 @@ class Puppet::Parameter
   # @api public
   #
   def validate(value)
+    return if value.is_a?(Puppet::Pops::Evaluator::DeferredValue)
+
     begin
       unsafe_validate(value)
     rescue ArgumentError => detail

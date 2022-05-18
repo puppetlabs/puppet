@@ -98,6 +98,18 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
   end
 
   context 'rich data' do
+    let(:deferred_file) { tmpfile('deferred') }
+    let(:deferred_manifest) do <<~END
+      file { '#{deferred_file}':
+        ensure => file,
+        content => '123',
+      } ->
+      notify { 'deferred':
+        message => Deferred('binary_file', ['#{deferred_file}'])
+      }
+      END
+    end
+
     it "calls a deferred 4x function" do
       catalog_handler = -> (req, res) {
         catalog = compile_to_catalog(<<-MANIFEST, node)
@@ -139,6 +151,43 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
           agent.run
         }.to exit_with(2)
          .and output(%r{Notice: /Stage\[main\]/Main/Notify\[deferred3x\]/message: defined 'message' as 'I am deferred'}).to_stdout
+      end
+    end
+
+    it "fails to apply a deferred function with an unsatified prerequisite" do
+      catalog_handler = -> (req, res) {
+        catalog = compile_to_catalog(deferred_manifest, node)
+        res.body = formatter.render(catalog)
+        res['Content-Type'] = formatter.mime
+      }
+
+      server.start_server(mounts: {catalog: catalog_handler}) do |port|
+        Puppet[:serverport] = port
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(1)
+         .and output(%r{Using environment}).to_stdout
+         .and output(%r{The given file '#{deferred_file}' does not exist}).to_stderr
+      end
+    end
+
+    it "applies a deferred function and its prerequisite in the same run" do
+      Puppet[:preprocess_deferred] = false
+
+      catalog_handler = -> (req, res) {
+        catalog = compile_to_catalog(deferred_manifest, node)
+        res.body = formatter.render(catalog)
+        res['Content-Type'] = formatter.mime
+      }
+
+      server.start_server(mounts: {catalog: catalog_handler}) do |port|
+        Puppet[:serverport] = port
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(2)
+         .and output(%r{defined 'message' as Binary\("MTIz"\)}).to_stdout
       end
     end
 
