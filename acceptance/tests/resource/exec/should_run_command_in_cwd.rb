@@ -120,7 +120,10 @@ test_name "The Exec resource should run commands in the specified cwd" do
         # we need to create the user directory ourselves in order for deb users to successfully login
         on(agent, "mkdir /home/#{username} && chown -R #{username} /home/#{username}")
       end
-      teardown { agent.user_absent(username) }
+      teardown do
+        on(agent, "pkill -9 -u `id -u #{username}`") if agent.platform =~ /ubuntu-22\.04/
+        agent.user_absent(username)
+      end
     end
 
     tmpdir_noaccess = agent.tmpdir("mock_noaccess")
