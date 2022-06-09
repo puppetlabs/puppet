@@ -103,6 +103,8 @@ describe Puppet::Agent do
     end
 
     it "should splay" do
+      Puppet[:splay] = true
+
       expect(@agent).to receive(:splay)
 
       @agent.run
@@ -183,6 +185,26 @@ describe Puppet::Agent do
 
       expect(@agent).to receive(:lock).and_return(:result)
       expect(@agent.run).to eq(:result)
+    end
+
+    it "should check if it's disabled after splaying and log a message" do
+      Puppet[:splay] = true
+      Puppet[:splaylimit] = '5s'
+      Puppet[:onetime] = true
+
+      expect(@agent).to receive(:disabled?).and_return(false, true)
+
+      allow(Puppet).to receive(:notice).and_call_original
+      expect(Puppet).to receive(:notice).with(/Skipping run of .*; administratively disabled.*/)
+      @agent.run
+    end
+
+    it "should check if it's disabled after acquiring the lock and log a message" do
+      expect(@agent).to receive(:disabled?).and_return(false, true)
+
+      allow(Puppet).to receive(:notice).and_call_original
+      expect(Puppet).to receive(:notice).with(/Skipping run of .*; administratively disabled.*/)
+      @agent.run
     end
 
     describe "and a puppet agent is already running" do
