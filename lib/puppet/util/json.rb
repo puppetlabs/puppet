@@ -49,13 +49,16 @@ module Puppet::Util
     def self.load(string, options = {})
       if defined? MultiJson
         begin
-          # This ensures that JrJackson will parse very large or very small
+          # This ensures that JrJackson and Oj will parse very large or very small
           # numbers as floats rather than BigDecimals, which are serialized as
           # strings by the built-in JSON gem and therefore can cause schema errors,
           # for example, when we are rendering reports to JSON using `to_pson` in
           # PuppetDB.
-          if MultiJson.adapter.name == "MultiJson::Adapters::JrJackson"
+          case MultiJson.adapter.name
+          when "MultiJson::Adapters::JrJackson"
             options[:use_bigdecimal] = false
+          when "MultiJson::Adapters::Oj"
+            options[:bigdecimal_load] = :float
           end
 
           MultiJson.load(string, options)
