@@ -90,7 +90,7 @@ class Puppet::Parser::TemplateWrapper
 
     result = nil
     benchmark(:debug, _("Interpolated template %{template_source} in %%{seconds} seconds") % { template_source: escaped_template_source }) do
-      template = ERB.new(string, 0, "-")
+      template = Puppet::Util.create_erb(string)
       template.filename = @__file__
       result = template.result(binding)
     end

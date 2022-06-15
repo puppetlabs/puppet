@@ -34,6 +34,17 @@ module Util
   end
   module_function :default_env
 
+  if RUBY_VERSION >= "2.6"
+    def create_erb(content)
+      ERB.new(content, trim_mode: '-')
+    end
+  else
+    def create_erb(content)
+      ERB.new(content, 0, '-')
+    end
+  end
+  module_function :create_erb
+
   # @param name [String] The name of the environment variable to retrieve
   # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
   # @return [String] Value of the specified environment variable.  nil if it does not exist

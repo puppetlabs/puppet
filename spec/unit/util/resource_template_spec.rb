@@ -39,7 +39,7 @@ describe Puppet::Util::ResourceTemplate do
 
     it "should create a template instance with the contents of the file" do
       expect(Puppet::FileSystem).to receive(:read).with("/my/template", :encoding => 'utf-8').and_return("yay")
-      expect(ERB).to receive(:new).with("yay", 0, "-").and_return(@template)
+      expect(Puppet::Util).to receive(:create_erb).with("yay").and_return(@template)
 
       allow(@wrapper).to receive(:set_resource_variables)
 
