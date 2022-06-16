@@ -38,15 +38,25 @@ class Puppet::Agent
   # Perform a run with our client.
   def run(client_options = {})
     if disabled?
-      Puppet.notice _("Skipping run of %{client_class}; administratively disabled (Reason: '%{disable_message}');\nUse 'puppet agent --enable' to re-enable.") % { client_class: client_class, disable_message: disable_message }
+      log_disabled_message
       return
     end
 
     result = nil
     wait_for_lock_deadline = nil
     block_run = Puppet::Application.controlled_run do
-      # splay may sleep for awhile!
-      splay(client_options.fetch(:splay, Puppet[:splay]))
+      # splay may sleep for awhile when running onetime! If not onetime, then
+      # the job scheduler splays (only once) so that agents assign themselves a
+      # slot within the splay interval.
+      do_splay = client_options.fetch(:splay, Puppet[:splay])
+      if do_splay
+        splay(do_splay)
+
+        if disabled?
+          log_disabled_message
+          break
+        end
+      end
 
       # waiting for certs may sleep for awhile depending on onetime, waitforcert and maxwaitforcert!
       # this needs to happen before forking so that if we fail to obtain certs and try to exit, then
@@ -59,14 +69,19 @@ class Puppet::Agent
           begin
             # lock may sleep for awhile depending on waitforlock and maxwaitforlock!
             lock do
-              # NOTE: Timeout is pretty heinous as the location in which it
-              # throws an error is entirely unpredictable, which means that
-              # it can interrupt code blocks that perform cleanup or enforce
-              # sanity. The only thing a Puppet agent should do after this
-              # error is thrown is die with as much dignity as possible.
-              Timeout.timeout(Puppet[:runtimeout], RunTimeoutError) do
-                Puppet.override(ssl_context: ssl_context) do
-                  client.run(client_args)
+              if disabled?
+                log_disabled_message
+                nil
+              else
+                # NOTE: Timeout is pretty heinous as the location in which it
+                # throws an error is entirely unpredictable, which means that
+                # it can interrupt code blocks that perform cleanup or enforce
+                # sanity. The only thing a Puppet agent should do after this
+                # error is thrown is die with as much dignity as possible.
+                Timeout.timeout(Puppet[:runtimeout], RunTimeoutError) do
+                  Puppet.override(ssl_context: ssl_context) do
+                    client.run(client_args)
+                  end
                 end
               end
             end
@@ -88,8 +103,7 @@ class Puppet::Agent
             end
           rescue RunTimeoutError => detail
             Puppet.log_exception(detail, _("Execution of %{client_class} did not complete within %{runtimeout} seconds and was terminated.") %
-              {client_class: client_class,
-              runtimeout: Puppet[:runtimeout]})
+              {client_class: client_class, runtimeout: Puppet[:runtimeout]})
             nil
           rescue StandardError => detail
             Puppet.log_exception(detail, _("Could not run %{client_class}: %{detail}") % { client_class: client_class, detail: detail })
@@ -154,5 +168,9 @@ class Puppet::Agent
     waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
     sm = Puppet::SSL::StateMachine.new(waitforcert: waitforcert, onetime: Puppet[:onetime])
     sm.ensure_client_certificate
+  end
+
+  def log_disabled_message
+    Puppet.notice _("Skipping run of %{client_class}; administratively disabled (Reason: '%{disable_message}');\nUse 'puppet agent --enable' to re-enable.") % { client_class: client_class, disable_message: disable_message }
   end
 end
