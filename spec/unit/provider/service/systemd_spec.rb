@@ -18,7 +18,7 @@ describe 'Puppet::Type::Service::Provider::Systemd',
     Puppet::Util::Execution::ProcessOutput.new('', 0)
   end
 
-  osfamilies = [ 'archlinux', 'coreos' ]
+  osfamilies = [ 'archlinux', 'coreos', 'gentoo' ]
 
   osfamilies.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
