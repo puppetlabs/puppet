@@ -24,6 +24,7 @@ describe Puppet::Module::Task do
   it "constructs tasks as expected when every task has a metadata file with the same name (besides extension)" do
     task_files = %w{task1.json task1 task2.json task2.exe task3.json task3.sh}.map { |bn| "#{tasks_path}/#{bn}" }
     expect(Dir).to receive(:glob).with(tasks_glob).and_return(task_files)
+    task_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
     allow_any_instance_of(Puppet::Module::Task).to receive(:metadata).and_return({})
 
@@ -52,6 +53,7 @@ describe Puppet::Module::Task do
   it "constructs tasks as expected when some tasks don't have a metadata file" do
     task_files = %w{task1 task2.exe task3.json task3.sh}.map { |bn| "#{tasks_path}/#{bn}" }
     expect(Dir).to receive(:glob).with(tasks_glob).and_return(task_files)
+    task_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
     allow_any_instance_of(Puppet::Module::Task).to receive(:metadata).and_return({})
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
@@ -66,6 +68,7 @@ describe Puppet::Module::Task do
   it "constructs a task as expected when a task has implementations" do
     task_files = %w{task1.elf task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
     expect(Dir).to receive(:glob).with(tasks_glob).and_return(task_files)
+    task_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
     allow_any_instance_of(Puppet::Module::Task).to receive(:metadata).and_return({'implementations' => [{"name" => "task1.sh"}]})
 
@@ -78,6 +81,7 @@ describe Puppet::Module::Task do
   it "constructs a task as expected when task metadata declares additional files" do
     task_files = %w{task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
     expect(Dir).to receive(:glob).with(tasks_glob).and_return(task_files)
+    task_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
     expect(Puppet::Module::Task).to receive(:find_extra_files).and_return([{'name' => 'mymod/lib/file0.elf', 'path' => "/path/to/file0.elf"}])
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
     allow_any_instance_of(Puppet::Module::Task).to receive(:metadata).and_return({'files' => ["mymod/lib/file0.elf"]})
@@ -91,6 +95,7 @@ describe Puppet::Module::Task do
   it "constructs a task as expected when a task implementation declares additional files" do
     task_files = %w{task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
     expect(Dir).to receive(:glob).with(tasks_glob).and_return(task_files)
+    task_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
     expect(Puppet::Module::Task).to receive(:find_extra_files).and_return([{'name' => 'mymod/lib/file0.elf', 'path' => "/path/to/file0.elf"}])
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
     allow_any_instance_of(Puppet::Module::Task).to receive(:metadata).and_return({'implementations' => [{"name" => "task1.sh", "files" => ["mymod/lib/file0.elf"]}]})
@@ -104,6 +109,7 @@ describe Puppet::Module::Task do
   it "constructs a task as expected when task metadata and a task implementation both declare additional files" do
     task_files = %w{task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
     expect(Dir).to receive(:glob).with(tasks_glob).and_return(task_files)
+    task_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
     expect(Puppet::Module::Task).to receive(:find_extra_files).and_return([
       {'name' => 'mymod/lib/file0.elf', 'path' => "/path/to/file0.elf"},
       {'name' => 'yourmod/files/file1.txt', 'path' => "/other/path/to/file1.txt"}
@@ -124,6 +130,7 @@ describe Puppet::Module::Task do
   it "constructs a task as expected when a task has files" do
     og_files = %w{task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
     expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+    og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
     expect(File).to receive(:exist?).with(any_args).and_return(true).at_least(:once)
 
     expect(Puppet::Module).to receive(:find).with(othermod.name, "production").and_return(othermod).at_least(:once)
@@ -139,6 +146,7 @@ describe Puppet::Module::Task do
   it "fails to load a task if its metadata specifies a non-existent file" do
     og_files = %w{task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
     allow(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+    og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
     allow(File).to receive(:exist?).with(any_args).and_return(true)
 
     expect(Puppet::Module).to receive(:find).with(othermod.name, "production").and_return(nil).at_least(:once)
@@ -149,7 +157,9 @@ describe Puppet::Module::Task do
   end
 
   it "finds files whose names (besides extensions) are valid task names" do
-    expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task task_1 xx_t_a_s_k_2_xx})
+    og_files = %w{task task_1 xx_t_a_s_k_2_xx}.map { |bn| "#{tasks_path}/#{bn}" }
+    expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+    og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
     expect(tasks.count).to eq(3)
@@ -157,7 +167,9 @@ describe Puppet::Module::Task do
   end
 
   it "ignores files that have names (besides extensions) that are not valid task names" do
-    expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{.nottask.exe .wat !runme _task 2task2furious def_a_task_PSYCH Fake_task not-a-task realtask})
+    og_files = %w{.nottask.exe .wat !runme _task 2task2furious def_a_task_PSYCH Fake_task not-a-task realtask}.map { |bn| "#{tasks_path}/#{bn}" }
+    expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+    og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
     expect(tasks.count).to eq(1)
@@ -165,11 +177,22 @@ describe Puppet::Module::Task do
   end
 
   it "ignores files that have names ending in .conf and .md" do
-    expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{ginuwine_task task.conf readme.md other_task.md})
+    og_files = %w{ginuwine_task task.conf readme.md other_task.md}.map { |bn| "#{tasks_path}/#{bn}" }
+    expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+    og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
     expect(tasks.count).to eq(1)
     expect(tasks.map{|t| t.name}).to eq(%w{mymod::ginuwine_task})
+  end
+
+  it "ignores files which are not regular files" do
+    og_files = %w{foo}.map { |bn| "#{tasks_path}/#{bn}" }
+    expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+    og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(false) }
+    tasks = Puppet::Module::Task.tasks_in_module(mymod)
+
+    expect(tasks.count).to eq(0)
   end
 
   it "gives the 'init' task a name that is just the module's name" do
@@ -179,7 +202,9 @@ describe Puppet::Module::Task do
   describe :metadata do
     it "loads metadata for a task" do
       metadata  = {'desciption': 'some info'}
-      expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task1.exe task1.json})
+      og_files = %w{task1.exe task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
+      expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+      og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
       allow(Puppet::Module::Task).to receive(:read_metadata).and_return(metadata)
 
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
@@ -189,7 +214,9 @@ describe Puppet::Module::Task do
     end
 
     it 'returns nil for metadata if no file is present' do
-      expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task1.exe})
+      og_files = %w{task1.exe}.map { |bn| "#{tasks_path}/#{bn}" }
+      expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+      og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
       expect(tasks.count).to eq(1)
@@ -212,7 +239,9 @@ describe Puppet::Module::Task do
 
   describe :validate do
     it "validates when there is no metadata" do
-      expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task1.exe})
+      og_files = %w{task1.exe}.map { |bn| "#{tasks_path}/#{bn}" }
+      expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+      og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
 
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
@@ -223,7 +252,9 @@ describe Puppet::Module::Task do
     it "validates when an implementation isn't used" do
       metadata  = {'desciption' => 'some info',
         'implementations' => [ {"name" => "task1.exe"}, ] }
-      expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task1.exe task1.sh task1.json})
+      og_files = %w{task1.exe task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
+      expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+      og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
       allow(Puppet::Module::Task).to receive(:read_metadata).and_return(metadata)
 
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
@@ -235,7 +266,9 @@ describe Puppet::Module::Task do
     it "validates when an implementation is another task" do
       metadata  = {'desciption' => 'some info',
                    'implementations' => [ {"name" => "task2.sh"}, ] }
-      expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task1.exe task2.sh task1.json})
+      og_files = %w{task1.exe task2.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
+      expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+      og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
       allow(Puppet::Module::Task).to receive(:read_metadata).and_return(metadata)
 
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
@@ -245,7 +278,9 @@ describe Puppet::Module::Task do
     end
 
     it "fails validation when there is no metadata and multiple task files" do
-      expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task1.elf task1.exe task1.json task2.ps1 task2.sh})
+      og_files = %w{task1.elf task1.exe task1.json task2.ps1 task2.sh}.map { |bn| "#{tasks_path}/#{bn}" }
+      expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+      og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
       allow_any_instance_of(Puppet::Module::Task).to receive(:metadata).and_return({})
 
@@ -255,7 +290,9 @@ describe Puppet::Module::Task do
     end
 
     it "fails validation when an implementation references a non-existant file" do
-      expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task1.elf task1.exe task1.json})
+      og_files = %w{task1.elf task1.exe task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
+      expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+      og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
       allow_any_instance_of(Puppet::Module::Task).to receive(:metadata).and_return({'implementations' => [ { 'name' => 'task1.sh' } ] })
 
@@ -265,7 +302,9 @@ describe Puppet::Module::Task do
     end
 
     it 'fails validation when there is metadata but no executable' do
-      expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task1.json task2.sh})
+      og_files = %w{task1.json task2.sh}.map { |bn| "#{tasks_path}/#{bn}" }
+      expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+      og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
       allow_any_instance_of(Puppet::Module::Task).to receive(:metadata).and_return({})
 
@@ -273,7 +312,9 @@ describe Puppet::Module::Task do
     end
 
     it 'fails validation when the implementations are not an array' do
-      expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task1.json task2.sh})
+      og_files = %w{task1.json task2.sh}.map { |bn| "#{tasks_path}/#{bn}" }
+      expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+      og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
       allow_any_instance_of(Puppet::Module::Task).to receive(:metadata).and_return({"implemenations" => {}})
 
@@ -281,7 +322,9 @@ describe Puppet::Module::Task do
     end
 
     it 'fails validation when the implementation is json' do
-      expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task1.json task1.sh})
+      og_files = %w{task1.json task1.sh}.map { |bn| "#{tasks_path}/#{bn}" }
+      expect(Dir).to receive(:glob).with(tasks_glob).and_return(og_files)
+      og_files.each { |f| expect(File).to receive(:file?).with(f).and_return(true) }
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
       allow_any_instance_of(Puppet::Module::Task).to receive(:metadata).and_return({'implementations' => [ { 'name' => 'task1.json' } ] })
 
