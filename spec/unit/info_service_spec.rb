@@ -11,6 +11,9 @@ describe "Puppet::InfoService" do
 
   context 'task information service' do
     let(:mod_name) { 'test1' }
+    let(:metadata) {
+      { "private" => true,
+        "description" => "a task that does a thing" } }
     let(:task_name) { "#{mod_name}::thingtask" }
     let(:modpath) { tmpdir('modpath') }
     let(:env_name) { 'testing' }
@@ -20,8 +23,13 @@ describe "Puppet::InfoService" do
     context 'tasks_per_environment method' do
       it "returns task data for the tasks in an environment" do
         Puppet.override(:environments => env_loader) do
-          PuppetSpec::Modules.create(mod_name, modpath, {:environment => env, :tasks => [['thingtask']]})
-          expect(Puppet::InfoService.tasks_per_environment(env_name)).to eq([{:name => task_name, :module => {:name => mod_name}}])
+          PuppetSpec::Modules.create(mod_name, modpath, {:environment => env,
+                                                         :tasks => [['thingtask',
+                                                                     {:name => 'thingtask.json',
+                                                                      :content => metadata.to_json}]]})
+          expect(Puppet::InfoService.tasks_per_environment(env_name)).to eq([{:name => task_name,
+                                                                              :module => {:name => mod_name},
+                                                                              :metadata => metadata}  ])
         end
       end
 
@@ -207,7 +215,7 @@ describe "Puppet::InfoService" do
       end
     end
   end
-  
+
   context 'plan information service' do
     let(:mod_name) { 'test1' }
     let(:plan_name) { "#{mod_name}::thingplan" }

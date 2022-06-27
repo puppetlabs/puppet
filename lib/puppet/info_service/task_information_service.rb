@@ -6,7 +6,7 @@ class Puppet::InfoService::TaskInformationService
     env = Puppet.lookup(:environments).get!(environment_name)
     env.modules.map do |mod|
       mod.tasks.map do |task|
-        {:module => {:name => task.module.name}, :name => task.name}
+        {:module => {:name => task.module.name}, :name => task.name, :metadata => task.metadata}
       end
     end.flatten
   end
