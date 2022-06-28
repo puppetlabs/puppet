@@ -11,6 +11,7 @@ test_name 'utf-8 characters in cached catalog' do
   on(master, "rm -rf '#{codedir}'")
   env_dir = "#{codedir}/environments"
   agents.each do |agent|
+    pending_test("Windows 11 UTF-8 file paths") if agent['platform'] =~ /windows-11/
 
     step "agent name: #{agent.hostname}, platform: #{agent.platform}"
     agent_vardir = agent.tmpdir("agent_vardir")
