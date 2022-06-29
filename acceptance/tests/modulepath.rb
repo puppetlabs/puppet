@@ -1,6 +1,8 @@
 test_name 'Supports vendored modules' do
   tag 'risk:high'
 
+  pending_test("Windows 11 scp seems to crash sshd") if agents.any? { |host| host['platform'] =~ /windows-11/ }
+
   # beacon custom type emits a message so we can tell where the
   # type was loaded from, e.g. vendored, global, and whether the
   # type was loaded locally or pluginsynced from the master.
