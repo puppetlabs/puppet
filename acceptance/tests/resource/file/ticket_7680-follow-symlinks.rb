@@ -5,7 +5,12 @@ tag 'audit:high',
     'audit:acceptance'
 
 agents.each do |agent|
-  pending_test("Windows 11 backslashes") if agent['platform'] =~ /windows-11/
+  if agent.platform.variant == 'windows'
+    # symlinks are supported only on Vista+ (version 6.0 and higher)
+    on agent, facter('kernelmajversion') do
+      skip_test "Test not supported on this platform" if stdout.chomp.to_f < 6.0
+    end
+  end
 
   step "Create file content"
   real_source = agent.tmpfile('follow_links_source')

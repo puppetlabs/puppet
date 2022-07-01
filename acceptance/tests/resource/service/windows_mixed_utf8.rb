@@ -38,8 +38,6 @@ MANIFEST
     }
   ].each do |mock_service|
     agents.each do |agent|
-      pending_test("Windows 11 UTF-8 file paths") if agent['platform'] =~ /windows-11/
-
       setup_service(agent, mock_service, 'MockService.cs')
 
       step 'Verify that enable = false disables the service' do

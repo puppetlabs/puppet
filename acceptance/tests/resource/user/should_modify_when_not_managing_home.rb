@@ -26,8 +26,6 @@ agents.each do |agent|
   home_prop = nil
   case agent['platform']
   when /windows/
-    pending_test("Windows 11 backslashes") if agent['platform'] =~ /windows-11/
-
     # Sadly Windows ADSI won't tell us the default home directory
     # for a user. You can get it via WMI Win32_UserProfile, but that
     # doesn't exist in a base 2003 install. So we simply specify an
