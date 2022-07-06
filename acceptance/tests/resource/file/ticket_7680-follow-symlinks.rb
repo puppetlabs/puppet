@@ -5,7 +5,6 @@ tag 'audit:high',
     'audit:acceptance'
 
 agents.each do |agent|
-  pending_test("Windows 11 backslashes") if agent['platform'] =~ /windows-11/
 
   step "Create file content"
   real_source = agent.tmpfile('follow_links_source')

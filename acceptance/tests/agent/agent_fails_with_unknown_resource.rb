@@ -10,8 +10,6 @@ test_name "agent run should fail if it finds an unknown resource type" do
   require 'puppet/acceptance/temp_file_utils'
   extend Puppet::Acceptance::TempFileUtils
 
-  pending_test("Windows 11 not sure why this fails") if agents.any? { |host| host['platform'] =~ /windows-11/ }
-
   step "agent should fail when it can't find a resource" do
     vendor_modules_path = master.tmpdir('vendor_modules')
     tmp_environment = mk_tmp_environment_with_teardown(master, 'tmp')

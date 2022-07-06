@@ -11,8 +11,6 @@ tag 'audit:high',
 require 'puppet/acceptance/windows_utils'
 extend Puppet::Acceptance::WindowsUtils
 
-pending_test("Windows 11 backslashes") if agents.any? { |host| host['platform'] =~ /windows-11/ }
-
 name = "pl#{rand(999999).to_i}"
 pw = "Passwrd-#{rand(999999).to_i}"[0..11]
 
