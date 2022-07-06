@@ -15,8 +15,6 @@ test_name "PUP-8735: UTF-8 characters are preserved after recursively copying di
   extend Puppet::Acceptance::I18nUtils
 
   agents.each do |host|
-    pending_test("Windows 11 UTF-8 file paths") if host['platform'] =~ /windows-11/
-
     filename = "Fișier"
     content = <<-CONTENT
 閑けさや

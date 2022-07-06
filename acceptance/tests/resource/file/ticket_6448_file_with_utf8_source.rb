@@ -14,8 +14,6 @@ test_name 'Ensure a file resource can have a UTF-8 source attribute, content, an
   agent_tmp_dirs  = {}
 
   agents.each do |agent|
-    pending_test("Windows 11 UTF-8 file paths") if agent['platform'] =~ /windows-11/
-
     agent_tmp_dirs[agent_to_fqdn(agent)] = agent.tmpdir(tmp_environment)
   end
 
