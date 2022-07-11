@@ -1,5 +1,7 @@
 test_name "should query all groups"
 confine :except, :platform => /^cisco_/ # See PUP-5828
+skip_test if agents.any? {|agent| agent['platform'] =~ /osx-12-arm64/ } # See PA-4555
+
 tag 'audit:high',
     'audit:refactor',   # Use block style `test_name`
     'audit:integration' # Does not modify system running test
