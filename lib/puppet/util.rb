@@ -530,7 +530,7 @@ module Util
             IO::new(f.to_i).close rescue nil
           end
         end
-      rescue Errno::ENOENT # /proc/self/fd not found
+      rescue Errno::ENOENT, Errno::ENOTDIR # /proc/self/fd not found, /proc/self not a dir
         3.upto(256){|fd| IO::new(fd).close rescue nil}
       end
 

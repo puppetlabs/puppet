@@ -625,12 +625,22 @@ describe Puppet::Util do
       Puppet::Util.safe_posix_fork
     end
 
-    it "should close all open file descriptors except stdin/stdout/stderr when /proc/self/fd doesn't exists" do
+    it "should close all open file descriptors except stdin/stdout/stderr when /proc/self/fd doesn't exist" do
       # This is ugly, but I can't really think of a better way to do it without
       # letting it actually close fds, which seems risky
       (0..2).each {|n| expect(IO).not_to receive(:new).with(n)}
       (3..256).each {|n| expect(IO).to receive(:new).with(n).and_return(double('io', close: nil))  }
       allow(Dir).to receive(:foreach).with('/proc/self/fd').and_raise(Errno::ENOENT)
+
+      Puppet::Util.safe_posix_fork
+    end
+
+    it "should close all open file descriptors except stdin/stdout/stderr when /proc/self is not a directory" do
+      # This is ugly, but I can't really think of a better way to do it without
+      # letting it actually close fds, which seems risky
+      (0..2).each {|n| expect(IO).not_to receive(:new).with(n)}
+      (3..256).each {|n| expect(IO).to receive(:new).with(n).and_return(double('io', close: nil))  }
+      allow(Dir).to receive(:foreach).with('/proc/self/fd').and_raise(Errno::ENOTDIR)
 
       Puppet::Util.safe_posix_fork
     end
