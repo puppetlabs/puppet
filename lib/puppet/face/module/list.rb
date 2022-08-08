@@ -60,10 +60,12 @@ Puppet::Face.define(:module, '1.0.0') do
     when_invoked do |options|
       Puppet::ModuleTool.set_option_defaults(options)
       environment = options[:environment_instance]
+      modules_by_path = environment.modules_by_path
 
       {
         :environment     => environment,
-        :modules_by_path => environment.modules_by_path,
+        :modules_by_path => modules_by_path,
+        :unmet_dependencies => unmet_dependencies(environment),
       }
     end
 
@@ -103,12 +105,13 @@ Puppet::Face.define(:module, '1.0.0') do
     end
   end
 
-  def warn_unmet_dependencies(environment)
+
+  def unmet_dependencies(environment)
     error_types = [:non_semantic_version, :version_mismatch, :missing]
 
-    @unmet_deps = {}
+    unmet_deps = {}
     error_types.each do |type|
-      @unmet_deps[type] = Hash.new do |hash, key|
+      unmet_deps[type] = Hash.new do |hash, key|
         hash[key] = { :errors => [], :parent => nil }
       end
     end
@@ -130,16 +133,22 @@ Puppet::Face.define(:module, '1.0.0') do
             parent_version     = dep[:parent][:version]
 
             msg = _("'%{parent_name}' (%{parent_version}) requires '%{dependency_name}' (%{dependency_version})") % { parent_name: parent_name, parent_version: parent_version, dependency_name: dep_name, dependency_version: version_constraint }
-            @unmet_deps[type][dep[:name]][:errors] << msg
-            @unmet_deps[type][dep[:name]][:parent] = {
+            unmet_deps[type][dep[:name]][:errors] << msg
+            unmet_deps[type][dep[:name]][:parent] = {
               :name    => dep[:parent][:name],
               :version => parent_version
             }
-            @unmet_deps[type][dep[:name]][:version] = installed_version
+            unmet_deps[type][dep[:name]][:version] = installed_version
           end
         end
       end
     end
+    unmet_deps
+  end
+
+
+  def warn_unmet_dependencies(environment)
+    @unmet_deps = unmet_dependencies(environment)
 
     # Display unmet dependencies by category.
     error_display_order = [:non_semantic_version, :version_mismatch, :missing]
