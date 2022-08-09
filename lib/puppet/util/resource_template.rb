@@ -40,7 +40,7 @@ class Puppet::Util::ResourceTemplate
 
   def evaluate
     set_resource_variables
-    ERB.new(Puppet::FileSystem.read(@file, :encoding => 'utf-8'), 0, "-").result(binding)
+    Puppet::Util.create_erb(Puppet::FileSystem.read(@file, :encoding => 'utf-8')).result(binding)
   end
 
   def initialize(file, resource)

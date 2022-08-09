@@ -140,7 +140,7 @@ Puppet::Face.define(:help, '0.0.1') do
 
   def erb(name)
     template = (Pathname(__FILE__).dirname + "help" + name)
-    erb = ERB.new(template.read, nil, '-')
+    erb = Puppet::Util.create_erb(template.read)
     erb.filename = template.to_s
     return erb
   end
