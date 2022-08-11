@@ -10,6 +10,7 @@
 #
 [Unit]
 Description=Puppet agent
+Documentation=man:puppet-agent(8)
 Wants=basic.target
 After=basic.target network.target network-online.target
 
