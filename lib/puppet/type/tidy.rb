@@ -6,7 +6,7 @@ Puppet::Type.newtype(:tidy) do
 
   @doc = "Remove unwanted files based on specific criteria.  Multiple
     criteria are OR'd together, so a file that is too large but is not
-    old enough will still get tidied.
+    old enough will still get tidied. Ignores managed resources.
 
     If you don't specify either `age` or `size`, then all files will
     be removed.
