@@ -16,7 +16,7 @@
 # @example Capitalizing a String
 # ```puppet
 # 'hello'.capitalize()
-# upcase('hello')
+# capitalize('hello')
 # ```
 # Would both result in `"Hello"`
 #
