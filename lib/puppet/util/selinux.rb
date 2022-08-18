@@ -204,7 +204,7 @@ module Puppet::Util::SELinux
   def selinux_label_support?(file)
     fstype = find_fs(file)
     return false if fstype.nil?
-    filesystems = ['ext2', 'ext3', 'ext4', 'gfs', 'gfs2', 'xfs', 'jfs', 'btrfs', 'tmpfs']
+    filesystems = ['ext2', 'ext3', 'ext4', 'gfs', 'gfs2', 'xfs', 'jfs', 'btrfs', 'tmpfs', 'zfs']
     filesystems.include?(fstype)
   end
 

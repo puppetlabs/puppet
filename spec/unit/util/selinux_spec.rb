@@ -65,6 +65,7 @@ describe Puppet::Util::SELinux do
         '/'        => 'ext3',
         '/sys'     => 'sysfs',
         '/mnt/nfs' => 'nfs',
+        '/mnt/zfs' => 'zfs',
         '/proc'    => 'proc',
         '/dev'     => 'tmpfs' })
     end
@@ -83,6 +84,10 @@ describe Puppet::Util::SELinux do
 
     it "should return true if tmpfs" do
       expect(selinux_label_support?('/dev/shm/testfile')).to be_truthy
+    end
+
+    it "should return true if zfs" do
+      expect(selinux_label_support?('/mnt/zfs/testfile')).to be_truthy
     end
 
     it "should return false for a noncapable filesystem" do
