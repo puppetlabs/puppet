@@ -227,4 +227,30 @@ describe "puppet module list" do
       console_output(:tree => true)
     end
   end
+
+  describe "when rendering as json" do
+    let(:face) { Puppet::Face[:module, :current] }
+    let(:action) { face.get_action(:list) }
+
+    it "should warn about missing dependencies" do
+      PuppetSpec::Modules.create('depender', @modpath1, :metadata => {
+        :version => '1.0.0',
+        :dependencies => [{
+          "version_requirement" => ">= 0.0.5",
+          "name"                => "puppetlabs/dependable"
+        }]
+      })
+
+      result = face.list
+      expect(result.dig(:unmet_dependencies, :missing)).to include(
+        "puppetlabs/dependable" => {
+          errors: ["'puppetlabs-depender' (v1.0.0) requires 'puppetlabs-dependable' (>= 0.0.5)"],
+          parent: {
+            name: "puppetlabs/depender", :version=>"v1.0.0"
+          },
+          version: nil
+        }
+      )
+    end
+  end
 end
