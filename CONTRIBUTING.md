@@ -32,7 +32,6 @@ the [puppet-dev mailing list](https://groups.google.com/forum/#!forum/puppet-dev
 * Submit a Jira ticket for your issue if one does not already exist.
   * Clearly describe the issue including steps to reproduce when it is a bug.
   * Make sure you fill in the earliest version that you know has the issue.
-  * A ticket is not necessary for [trivial changes](https://puppet.com/community/trivial-patch-exemption-policy)
 * Fork the repository on GitHub.
 
 ## Making Changes
