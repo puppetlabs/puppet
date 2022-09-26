@@ -16,11 +16,11 @@ jobs:
     strategy:
       matrix:
         cfg:
-          - {os: ubuntu-18.04, ruby: '2.5'}
-          - {os: ubuntu-18.04, ruby: '2.6'}
-          - {os: ubuntu-18.04, ruby: '2.7'}
-          - {os: ubuntu-18.04, ruby: '3.0'}
-          - {os: ubuntu-18.04, ruby: 'jruby-9.2.17.0'}
+          - {os: ubuntu-latest, ruby: '2.5'}
+          - {os: ubuntu-latest, ruby: '2.6'}
+          - {os: ubuntu-latest, ruby: '2.7'}
+          - {os: ubuntu-latest, ruby: '3.0'}
+          - {os: ubuntu-latest, ruby: 'jruby-9.2.17.0'}
           - {os: windows-2019, ruby: '2.5'}
           - {os: windows-2019, ruby: '2.6'}
           - {os: windows-2019, ruby: '2.7'}
