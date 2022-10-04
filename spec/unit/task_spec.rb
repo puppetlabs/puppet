@@ -235,6 +235,17 @@ describe Puppet::Module::Task do
         tasks[0].metadata
       }.to raise_error(Puppet::Module::Task::InvalidMetadata, /whoops/)
     end
+
+    it 'returns empty hash for metadata when json metadata file is empty' do
+      FileUtils.mkdir_p(tasks_path)
+      FileUtils.touch(File.join(tasks_path, 'task.json'))
+      FileUtils.touch(File.join(tasks_path, 'task'))
+
+      tasks = Puppet::Module::Task.tasks_in_module(mymod)
+
+      expect(tasks.count).to eq(1)
+      expect(tasks[0].metadata).to eq({})
+    end
   end
 
   describe :validate do
