@@ -232,7 +232,12 @@ class Puppet::Module
     end
 
     def self.read_metadata(file)
-      Puppet::Util::Json.load(Puppet::FileSystem.read(file, :encoding => 'utf-8')) if file
+      # MultiJSON has a bug that improperly errors when loading an empty string
+      # so we handle it here for now. See: PUP-11629
+      if file
+        content = Puppet::FileSystem.read(file, :encoding => 'utf-8')
+        content.empty? ? {} : Puppet::Util::Json.load(content)
+      end
     rescue SystemCallError, IOError => err
       msg = _("Error reading metadata: %{message}" % {message: err.message})
       raise InvalidMetadata.new(msg, 'puppet.tasks/unreadable-metadata')
