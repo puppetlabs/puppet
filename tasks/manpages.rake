@@ -13,6 +13,11 @@ task :gen_manpages do
 
   ronn_args = '--manual="Puppet manual" --organization="Puppet, Inc." --roff'
 
+  unless ENV['SOURCE_DATE_EPOCH'].nil?
+    source_date = Time.at(ENV['SOURCE_DATE_EPOCH'].to_i).strftime('%Y-%m-%d')
+    ronn_args += " --date=#{source_date}"
+  end
+
   # Locate ronn
   begin
     require 'ronn'
