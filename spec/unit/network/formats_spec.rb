@@ -504,7 +504,7 @@ EOT
 
     context "when rendering face-related objects" do
       it "pretty prints facts" do
-        tm = Time.new("2016-01-27T19:30:00")
+        tm = Time.new(2016, 1, 27, 19, 30, 0)
         values = {
           "architecture" =>  "x86_64",
           "os" => {

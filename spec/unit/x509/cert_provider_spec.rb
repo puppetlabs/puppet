@@ -135,7 +135,7 @@ describe Puppet::X509::CertProvider do
 
           expect {
             create_provider(crlpath: crl_path).load_crls
-          }.to raise_error(OpenSSL::X509::CRLError, 'nested asn1 error')
+          }.to raise_error(OpenSSL::X509::CRLError, /(PEM_read_bio_X509_CRL: bad base64 decode|nested asn1 error)/)
         end
 
         it 'raises if the input is empty' do

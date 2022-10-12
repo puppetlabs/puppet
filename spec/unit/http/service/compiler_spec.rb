@@ -592,7 +592,7 @@ describe Puppet::HTTP::Service::Compiler do
       invalid_facts = Puppet::Node::Facts.new(certname, {'invalid_utf8_sequence' => "\xE2\x82".force_encoding('binary')})
       expect {
         subject.put_facts(certname, environment: 'production', facts: invalid_facts)
-      }.to raise_error(Puppet::HTTP::SerializationError, /Failed to serialize Puppet::Node::Facts to json: "\\xE2" from ASCII-8BIT to UTF-8/)
+      }.to raise_error(Puppet::HTTP::SerializationError, /Failed to serialize Puppet::Node::Facts to json: ("\\xE2" from ASCII-8BIT to UTF-8|partial character in source, but hit end)/)
     end
   end
 
