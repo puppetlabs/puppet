@@ -15,7 +15,11 @@ describe Puppet::Reports.report(:store) do
     end
 
     let(:report) do
-      report = YAML.load_file(File.join(PuppetSpec::FIXTURE_DIR, 'yaml/report2.6.x.yaml'))
+      if RUBY_VERSION < "3.0"
+        report = YAML.load_file(File.join(PuppetSpec::FIXTURE_DIR, 'yaml/report2.6.x.yaml'))
+      else
+        report = YAML.unsafe_load_file(File.join(PuppetSpec::FIXTURE_DIR, 'yaml/report2.6.x.yaml'))
+      end
       report.extend(described_class)
       report
     end
