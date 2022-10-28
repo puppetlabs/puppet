@@ -59,10 +59,10 @@ describe Puppet::Provider::ParsedFile do
         {:name => 'target3_record2'}
       ])
       expect(Puppet).to receive(:err).with('Could not prefetch parsedfile_type provider \'parsedfile_provider\' target \'/two\': some error. Treating as empty')
-      expect(provider).to receive(:new).with(:name => 'target1_record1', :on_disk => true, :target => '/one', :ensure => :present).and_return('r1')
-      expect(provider).to receive(:new).with(:name => 'target1_record2', :on_disk => true, :target => '/one', :ensure => :present).and_return('r2')
-      expect(provider).to receive(:new).with(:name => 'target3_record1', :on_disk => true, :target => '/three', :ensure => :present).and_return('r3')
-      expect(provider).to receive(:new).with(:name => 'target3_record2', :on_disk => true, :target => '/three', :ensure => :present).and_return('r4')
+      expect(provider).to receive(:new).with({:name => 'target1_record1', :on_disk => true, :target => '/one', :ensure => :present}).and_return('r1')
+      expect(provider).to receive(:new).with({:name => 'target1_record2', :on_disk => true, :target => '/one', :ensure => :present}).and_return('r2')
+      expect(provider).to receive(:new).with({:name => 'target3_record1', :on_disk => true, :target => '/three', :ensure => :present}).and_return('r3')
+      expect(provider).to receive(:new).with({:name => 'target3_record2', :on_disk => true, :target => '/three', :ensure => :present}).and_return('r4')
 
       expect(provider.instances).to eq(%w{r1 r2 r3 r4})
     end

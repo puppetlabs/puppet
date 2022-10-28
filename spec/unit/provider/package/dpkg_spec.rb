@@ -32,7 +32,7 @@ describe Puppet::Type.type(:package).provider(:dpkg), unless: Puppet::Util::Plat
       expect(Puppet::Util::Execution).to receive(:execpipe).with(execpipe_args).and_yield(bash_installed_io)
 
       installed = double('bash')
-      expect(described_class).to receive(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :mark => :none, :status => "installed", :provider => :dpkg).and_return(installed)
+      expect(described_class).to receive(:new).with({:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :mark => :none, :status => "installed", :provider => :dpkg}).and_return(installed)
 
       expect(described_class.instances).to eq([installed])
     end
@@ -41,9 +41,9 @@ describe Puppet::Type.type(:package).provider(:dpkg), unless: Puppet::Util::Plat
       expect(Puppet::Util::Execution).to receive(:execpipe).with(execpipe_args).and_yield(all_installed_io)
 
       bash = double('bash')
-      expect(described_class).to receive(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :mark => :none, :status => "installed", :provider => :dpkg).and_return(bash)
+      expect(described_class).to receive(:new).with({:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :mark => :none, :status => "installed", :provider => :dpkg}).and_return(bash)
       vim = double('vim')
-      expect(described_class).to receive(:new).with(:ensure => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :mark => :none, :status => "installed", :provider => :dpkg).and_return(vim)
+      expect(described_class).to receive(:new).with({:ensure => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :mark => :none, :status => "installed", :provider => :dpkg}).and_return(vim)
 
       expect(described_class.instances).to eq([bash, vim])
     end

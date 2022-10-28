@@ -195,7 +195,7 @@ Not in catalog"
       expect(described_class).to receive(:pkguti).with(['-c']).and_return(fake_data)
 
       testpkg = double('pkg1')
-      expect(described_class).to receive(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil).and_return(testpkg)
+      expect(described_class).to receive(:new).with({:ensure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil}).and_return(testpkg)
       expect(described_class.instances).to eq([testpkg])
     end
 
@@ -207,10 +207,10 @@ Not in catalog"
       expect(described_class).to receive(:pkguti).with(['-c']).and_return(fake_data)
 
       testpkg = double('pkg1')
-      expect(described_class).to receive(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil).and_return(testpkg)
+      expect(described_class).to receive(:new).with({:ensure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil}).and_return(testpkg)
 
       aliaspkg = double('pkg2')
-      expect(described_class).to receive(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "mypkg", :provider => :pkgutil).and_return(aliaspkg)
+      expect(described_class).to receive(:new).with({:ensure => "1.4.5,REV=2007.11.18", :name => "mypkg", :provider => :pkgutil}).and_return(aliaspkg)
 
       expect(described_class.instances).to eq([testpkg,aliaspkg])
     end
@@ -223,7 +223,7 @@ Not in catalog"
       expect(described_class).to receive(:pkguti).with(['-c']).and_return(fake_data)
 
       testpkg = double('pkg1')
-      expect(described_class).to receive(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil).and_return(testpkg)
+      expect(described_class).to receive(:new).with({:ensure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil}).and_return(testpkg)
 
       expect(described_class.instances).to eq([testpkg])
     end

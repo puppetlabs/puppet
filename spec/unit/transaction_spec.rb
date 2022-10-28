@@ -570,7 +570,7 @@ describe Puppet::Transaction do
     end
 
     it "should match resources by name, not title" do
-      expect(resource.provider.class).to receive(:prefetch).with("bar" => resource)
+      expect(resource.provider.class).to receive(:prefetch).with({"bar" => resource})
 
       transaction.prefetch_if_necessary(resource)
     end
@@ -598,7 +598,7 @@ describe Puppet::Transaction do
       catalog.add_resource other
 
       allow(resource.class).to receive(:defaultprovider).and_return(resource.provider.class)
-      expect(resource.provider.class).to receive(:prefetch).with('bar' => resource, 'other' => other)
+      expect(resource.provider.class).to receive(:prefetch).with({'bar' => resource, 'other' => other})
 
       transaction.prefetch_if_necessary(resource)
     end

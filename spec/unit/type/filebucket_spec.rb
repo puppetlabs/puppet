@@ -82,20 +82,20 @@ describe Puppet::Type.type(:filebucket) do
     it "should use any provided path" do
       path = make_absolute("/foo/bar")
       bucket = Puppet::Type.type(:filebucket).new :name => "main", :path => path
-      expect(Puppet::FileBucket::Dipper).to receive(:new).with(:Path => path).and_return(@bucket)
+      expect(Puppet::FileBucket::Dipper).to receive(:new).with({:Path => path}).and_return(@bucket)
       bucket.bucket
     end
 
     it "should use any provided server and port" do
       bucket = Puppet::Type.type(:filebucket).new :name => "main", :server => "myserv", :port => "myport", :path => false
-      expect(Puppet::FileBucket::Dipper).to receive(:new).with(:Server => "myserv", :Port => "myport").and_return(@bucket)
+      expect(Puppet::FileBucket::Dipper).to receive(:new).with({:Server => "myserv", :Port => "myport"}).and_return(@bucket)
       bucket.bucket
     end
 
     it "should not try to guess server or port if the path is unset and no server is provided" do
       Puppet.settings[:server] = "myserv"
       Puppet.settings[:server_list] = ['server_list_0', 'server_list_1']
-      expect(Puppet::FileBucket::Dipper).to receive(:new).with(:Server => nil, :Port => nil).and_return(@bucket)
+      expect(Puppet::FileBucket::Dipper).to receive(:new).with({:Server => nil, :Port => nil}).and_return(@bucket)
 
       bucket = Puppet::Type.type(:filebucket).new :name => "main", :path => false
       bucket.bucket

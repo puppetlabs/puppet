@@ -196,7 +196,7 @@ describe tidy do
       end
 
       it "should use a Fileset with default max_files for infinite recursion" do
-        expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, :recurse => true, :max_files=>0).and_return(@fileset)
+        expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, {:recurse => true, :max_files=>0}).and_return(@fileset)
         expect(@fileset).to receive(:files).and_return(%w{. one two})
         allow(@tidy).to receive(:tidy?).and_return(false)
 
@@ -205,7 +205,7 @@ describe tidy do
 
       it "should use a Fileset with default max_files for limited recursion" do
         @tidy[:recurse] = 42
-        expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, :recurse => true, :recurselimit => 42, :max_files=>0).and_return(@fileset)
+        expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, {:recurse => true, :recurselimit => 42, :max_files=>0}).and_return(@fileset)
         expect(@fileset).to receive(:files).and_return(%w{. one two})
         allow(@tidy).to receive(:tidy?).and_return(false)
 
@@ -215,7 +215,7 @@ describe tidy do
       it "should use a Fileset with max_files for limited recursion" do
         @tidy[:recurse] = 42
         @tidy[:max_files] = 9876
-        expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, :recurse => true, :recurselimit => 42, :max_files=>9876).and_return(@fileset)
+        expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, {:recurse => true, :recurselimit => 42, :max_files=>9876}).and_return(@fileset)
         expect(@fileset).to receive(:files).and_return(%w{. one two})
         allow(@tidy).to receive(:tidy?).and_return(false)
 
@@ -428,7 +428,7 @@ describe tidy do
       @tidy[:recurse] = true
       @tidy[:rmdirs] = true
       fileset = double('fileset')
-      expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, :recurse => true, :max_files=>0).and_return(fileset)
+      expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, {:recurse => true, :max_files=>0}).and_return(fileset)
       expect(fileset).to receive(:files).and_return(%w{. one two one/subone two/subtwo one/subone/ssone})
       allow(@tidy).to receive(:tidy?).and_return(true)
 
@@ -450,7 +450,7 @@ describe tidy do
       @tidy[:recurse] = true
       @tidy[:rmdirs] = true
       fileset = double('fileset')
-      expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, :recurse => true, :max_files=>0).and_return(fileset)
+      expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, {:recurse => true, :max_files=>0}).and_return(fileset)
       expect(fileset).to receive(:files).and_return(%w{. a a/2 a/1 a/3})
       allow(@tidy).to receive(:tidy?).and_return(true)
 
@@ -463,7 +463,7 @@ describe tidy do
       @tidy[:noop] = true
 
       fileset = double('fileset')
-      expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, :recurse => true, :max_files=>0).and_return(fileset)
+      expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, {:recurse => true, :max_files=>0}).and_return(fileset)
       expect(fileset).to receive(:files).and_return(%w{. a a/2 a/1 a/3})
       allow(@tidy).to receive(:tidy?).and_return(true)
 
