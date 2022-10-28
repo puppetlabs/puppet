@@ -24,7 +24,7 @@ describe Puppet::Confiner do
 
   it "should delegate its confine method to its confine collection" do
     allow(@object).to receive(:confine_collection).and_return(coll)
-    expect(coll).to receive(:confine).with(:foo => :bar, :bee => :baz)
+    expect(coll).to receive(:confine).with({:foo => :bar, :bee => :baz})
     @object.confine(:foo => :bar, :bee => :baz)
   end
 

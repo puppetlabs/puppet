@@ -153,11 +153,11 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
       end
 
       it "should create a new process for the command" do
-        expect(Process).to receive(:create).with(
+        expect(Process).to receive(:create).with({
           :command_line => "test command",
           :startup_info => {:stdin => @stdin, :stdout => @stdout, :stderr => @stderr},
           :close_handles => false
-        ).and_return(proc_info_stub)
+        }).and_return(proc_info_stub)
 
         call_exec_windows('test command', {}, @stdin, @stdout, @stderr)
       end
@@ -165,7 +165,7 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
       context 'cwd option' do
         let(:cwd) { 'cwd' }
         it "should execute the command in the specified working directory" do
-          expect(Process).to receive(:create).with(
+          expect(Process).to receive(:create).with({
             :command_line => "test command",
             :startup_info => {
               :stdin => @stdin,
@@ -174,7 +174,7 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
             },
             :close_handles => false,
             :cwd => cwd
-          )
+          })
 
           call_exec_windows('test command', { :cwd => cwd }, @stdin, @stdout, @stderr)
         end
@@ -192,7 +192,7 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
       context 'suppress_window option' do
         let(:cwd) { 'cwd' }
         it "should execute the command in the specified working directory" do
-          expect(Process).to receive(:create).with(
+          expect(Process).to receive(:create).with({
             :command_line => "test command",
             :startup_info => {
               :stdin => @stdin,
@@ -201,7 +201,7 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
             },
             :close_handles => false,
             :creation_flags => Puppet::Util::Windows::Process::CREATE_NO_WINDOW
-          )
+          })
 
           call_exec_windows('test command', { :suppress_window => true }, @stdin, @stdout, @stderr)
         end

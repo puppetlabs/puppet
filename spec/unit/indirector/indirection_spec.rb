@@ -6,7 +6,7 @@ shared_examples_for "Indirection Delegator" do
   it "should create a request object with the appropriate method name and all of the passed arguments" do
     request = Puppet::Indirector::Request.new(:indirection, :find, "me", nil)
 
-    expect(@indirection).to receive(:request).with(@method, "mystuff", nil, :one => :two).and_return(request)
+    expect(@indirection).to receive(:request).with(@method, "mystuff", nil, {:one => :two}).and_return(request)
 
     allow(@terminus).to receive(@method)
 

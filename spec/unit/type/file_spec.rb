@@ -516,8 +516,8 @@ describe Puppet::Type.type(:file) do
       it "should pass the already-discovered resources to recurse_remote" do
         file[:source] = File.expand_path(__FILE__)
         allow(child).to receive(:[]).with(:path).and_return(name)
-        allow(file).to receive(:recurse_local).and_return(name => child)
-        expect(file).to receive(:recurse_remote).with(name => child).and_return([])
+        allow(file).to receive(:recurse_local).and_return({name => child})
+        expect(file).to receive(:recurse_remote).with({name => child}).and_return([])
         file.recurse
       end
     end
@@ -526,8 +526,8 @@ describe Puppet::Type.type(:file) do
       it "should use recurse_link" do
         file[:target] = File.expand_path(__FILE__)
         allow(child).to receive(:[]).with(:path).and_return(name)
-        allow(file).to receive(:recurse_local).and_return(name => child)
-        expect(file).to receive(:recurse_link).with(name => child).and_return([])
+        allow(file).to receive(:recurse_local).and_return({name => child})
+        expect(file).to receive(:recurse_link).with({name => child}).and_return([])
         file.recurse
       end
     end

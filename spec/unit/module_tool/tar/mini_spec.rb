@@ -82,7 +82,7 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
     expect(Zlib::GzipReader).to receive(:open).with(sourcefile).and_yield(reader)
     expect(minitar).to receive(:find_valid_files).with(reader).and_return([name])
     entry = MockFileStatEntry.new(mode)
-    expect(Archive::Tar::Minitar).to receive(:unpack).with(reader, destdir, [name], :fsync => false).
+    expect(Archive::Tar::Minitar).to receive(:unpack).with(reader, destdir, [name], {:fsync => false}).
         and_yield(type, name, {:entry => entry})
     entry
   end

@@ -20,14 +20,9 @@ describe Puppet::Util::NetworkDevice do
   end
 
   describe "when initializing the remote network device singleton" do
-    it "should load the network device code" do
-      expect(Puppet::Util::NetworkDevice).to receive(:require)
-      Puppet::Util::NetworkDevice.init(@device)
-    end
-
     it "should create a network device instance" do
       allow(Puppet::Util::NetworkDevice).to receive(:require)
-      expect(Puppet::Util::NetworkDevice::Test::Device).to receive(:new).with("telnet://admin:password@127.0.0.1", :debug => false)
+      expect(Puppet::Util::NetworkDevice::Test::Device).to receive(:new).with("telnet://admin:password@127.0.0.1", {:debug => false})
       Puppet::Util::NetworkDevice.init(@device)
     end
 

@@ -173,7 +173,7 @@ describe Puppet::Agent do
       client = AgentTestClient.new
       expect(AgentTestClient).to receive(:new).and_return(client)
 
-      expect(client).to receive(:run).with(:pluginsync => true, :other => :options)
+      expect(client).to receive(:run).with({:pluginsync => true, :other => :options})
       @agent.run(:other => :options)
     end
 
