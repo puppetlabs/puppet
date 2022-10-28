@@ -356,6 +356,16 @@ class Type
     param
   end
 
+  # Copies all of a resource's metaparameters (except `alias`) to a generated child resource
+  # @param parameters [Hash] of a resource's parameters
+  # @return [Void]
+  def copy_metaparams(parameters)
+    parameters.each do |name, param|
+      self[name] = param.value if param.metaparam? && !name == :alias
+    end
+    nil
+  end
+
   # Returns the list of parameters that comprise the composite key / "uniqueness key".
   # All parameters that return true from #isnamevar? or is named `:name` are included in the returned result.
   # @see uniqueness_key

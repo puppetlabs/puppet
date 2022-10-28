@@ -811,9 +811,7 @@ module Puppet
         flatten.each do |res|
           res[:ensure] = :absent
           res[:user] = self[:name]
-          @parameters.each do |name, param|
-            res[name] = param.value if param.metaparam?
-          end
+          res.copy_metaparams(@parameters)
         end
     end
 
