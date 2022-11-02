@@ -83,6 +83,16 @@ describe Puppet::Node::Facts::Facter do
 
       @facter.find(@request)
     end
+
+    it "can exclude legacy facts" do
+      Puppet[:include_legacy_facts] = false
+
+      facts = Puppet::Node::Facts.new("foo")
+      expect(Puppet::Node::Facts).to receive(:new).and_return(facts)
+      expect(Puppet.runtime[:facter]).to receive(:resolve).with('')
+
+      @facter.find(@request)
+    end
   end
 
   it 'should fail when saving facts' do

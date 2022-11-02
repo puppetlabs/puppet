@@ -35,8 +35,12 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     result = if request.options[:resolve_options]
                raise(Puppet::Error, _("puppet facts show requires version 4.0.40 or greater of Facter.")) unless Facter.respond_to?(:resolve)
                find_with_options(request)
-             else
+             elsif Puppet[:include_legacy_facts]
+               # to_hash returns both structured and legacy facts
                Puppet::Node::Facts.new(request.key, Puppet.runtime[:facter].to_hash)
+             else
+               # resolve does not return legacy facts unless requested
+               Puppet::Node::Facts.new(request.key, Puppet.runtime[:facter].resolve(''))
              end
 
     result.add_local_facts unless request.options[:resolve_options]

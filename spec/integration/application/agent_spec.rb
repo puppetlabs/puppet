@@ -897,4 +897,103 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       end
     end
   end
+
+  context "legacy facts" do
+    let(:mod_dir) { tmpdir('module_dir') }
+    let(:custom_dir) { File.join(mod_dir, 'lib') }
+    let(:external_dir) { File.join(mod_dir, 'facts.d') }
+
+    before(:each) do
+      # don't stub facter behavior, since we're relying on
+      # `Facter.resolve` to omit legacy facts
+      Puppet::Node::Facts.indirection.terminus_class = :facter
+
+      facter_dir = File.join(custom_dir, 'facter')
+      FileUtils.mkdir_p(facter_dir)
+      File.write(File.join(facter_dir, 'custom.rb'), <<~END)
+        Facter.add(:custom) { setcode { 'a custom value' } }
+      END
+
+      FileUtils.mkdir_p(external_dir)
+      File.write(File.join(external_dir, 'external.json'), <<~END)
+        {"external":"an external value"}
+      END
+
+      # avoid pluginsync'ing contents
+      FileUtils.mkdir_p(Puppet[:vardir])
+      FileUtils.cp_r(custom_dir, Puppet[:vardir])
+      FileUtils.cp_r(external_dir, Puppet[:vardir])
+    end
+
+    def mounts
+      {
+        # the server needs to provide metadata that matches what the agent has
+        # so that the agent doesn't delete them during pluginsync
+        file_metadatas: -> (req, res) {
+          path = case req.path
+                 when /pluginfacts/
+                   external_dir
+                 when /plugins/
+                   custom_dir
+                 else
+                   raise "Unknown mount #{req.path}"
+                 end
+          request = Puppet::FileServing::Metadata.indirection.request(
+            :search, path, nil, recurse: true
+          )
+          data = Puppet::FileServing::Metadata.indirection.terminus(:file).search(request)
+          res.body = formatter.render(data)
+          res['Content-Type'] = formatter.mime
+        },
+        catalog: -> (req, res) {
+          data = CGI.unescape(req.query['facts'])
+          facts = Puppet::Node::Facts.convert_from('json', data)
+          node.fact_merge(facts)
+
+          catalog = compile_to_catalog(<<~MANIFEST, node)
+            notify { "legacy $osfamily": }
+            notify { "custom ${facts['custom']}": }
+            notify { "external ${facts['external']}": }
+          MANIFEST
+
+          res.body = formatter.render(catalog)
+          res['Content-Type'] = formatter.mime
+        }
+      }
+    end
+
+    it "includes legacy facts by default" do
+      server.start_server(mounts: mounts) do |port|
+        Puppet[:serverport] = port
+
+        agent.command_line.args << '--test'
+        expect {
+          agent.run
+        }.to exit_with(2)
+          .and output(
+            match(/defined 'message' as 'legacy [A-Za-z]+'/)
+              .and match(/defined 'message' as 'custom a custom value'/)
+              .and match(/defined 'message' as 'external an external value'/)
+          ).to_stdout
+      end
+    end
+
+    it "can exclude legacy facts" do
+      server.start_server(mounts: mounts) do |port|
+        Puppet[:serverport] = port
+        Puppet[:include_legacy_facts] = false
+
+        agent.command_line.args << '--test'
+        expect {
+          agent.run
+        }.to exit_with(2)
+          .and output(
+            match(/defined 'message' as 'legacy '/)
+              .and match(/defined 'message' as 'custom a custom value'/)
+              .and match(/defined 'message' as 'external an external value'/)
+            ).to_stdout
+          .and output(/Warning: Unknown variable: 'osfamily'/).to_stderr
+      end
+    end
+  end
 end

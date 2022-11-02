@@ -1712,6 +1712,14 @@ EOT
         new configurations, where you want to fix the broken configuration
         rather than reverting to a known-good one.",
     },
+    :include_legacy_facts => {
+      :type       => :boolean,
+      :default    => true,
+      :desc       => "Whether to include legacy facts when requesting a catalog. This
+        option can be set to false provided all puppet manifests, hiera.yaml and hiera
+        configuration layers no longer access legacy facts, such as `$osfamily`, and
+        instead access structured facts, such as `$facts['os']['family']`."
+    },
     :fact_name_length_soft_limit => {
       :default    => 2560,
       :type       => :integer,
