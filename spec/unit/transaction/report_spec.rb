@@ -1,5 +1,5 @@
 require 'spec_helper'
-
+require 'puppet_spec/compiler'
 require 'puppet'
 require 'puppet/transaction/report'
 require 'matchers/json'
@@ -7,6 +7,7 @@ require 'matchers/json'
 describe Puppet::Transaction::Report do
   include JSONMatchers
   include PuppetSpec::Files
+  include PuppetSpec::Compiler
 
   before do
     allow(Puppet::Util::Storage).to receive(:store)
@@ -134,6 +135,33 @@ describe Puppet::Transaction::Report do
 
     expect(report.resource_statuses.values.any? {|res| res.resource_type =~ /whit/i}).to be_falsey
     expect(report.metrics['time'].values.any? {|metric| metric.first =~ /whit/i}).to be_falsey
+  end
+
+  describe "when exclude_unchanged_resources is true" do
+    before do
+      Puppet[:exclude_unchanged_resources] = true
+    end
+
+    let(:test_dir) { tmpdir('unchanged_resources') }
+    def generate_report_and_get_resource_statuses(test_dir)
+      transaction = apply_compiled_manifest(<<-END)
+        file { '#{test_dir}':
+          ensure => directory
+        }
+      END
+      return transaction.report.to_data_hash['resource_statuses']
+    end
+
+    it 'a changed resource is still reported correctly' do
+      FileUtils.rm_rf(test_dir)
+      resource_statuses = generate_report_and_get_resource_statuses(test_dir)
+      expect(resource_statuses["File[#{test_dir}]"]['out_of_sync']).to be_truthy
+    end
+
+    it 'the status for the unchanged resource should be empty' do
+      resource_statuses = generate_report_and_get_resource_statuses(test_dir)
+      expect(resource_statuses["File[#{test_dir}]"]).to eq({})
+    end
   end
 
   describe "when accepting logs" do

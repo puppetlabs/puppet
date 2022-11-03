@@ -308,6 +308,16 @@ class Puppet::Transaction::Report
     end
   end
 
+  def skip_or_to_data_hash(rs)
+    if rs.nil?
+      nil
+    elsif !rs.out_of_sync? && Puppet[:exclude_unchanged_resources]
+      {}
+    else
+      rs.to_data_hash
+    end
+  end
+
   def to_data_hash
     hash = {
       'host' => @host,
@@ -323,7 +333,7 @@ class Puppet::Transaction::Report
       'environment' => @environment,
       'logs' => @logs.map { |log| log.to_data_hash },
       'metrics' => Hash[@metrics.map { |key, metric| [key, metric.to_data_hash] }],
-      'resource_statuses' => Hash[@resource_statuses.map { |key, rs| [key, rs.nil? ? nil : rs.to_data_hash] }],
+      'resource_statuses' => Hash[@resource_statuses.map { |key, rs| [key, skip_or_to_data_hash(rs)] }],
       'corrective_change' => @corrective_change,
     }
 
