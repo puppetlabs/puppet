@@ -91,6 +91,61 @@ describe 'lookup' do
       expect_lookup_with_output(0, /--- value from per node data/)
     end
 
+    it "resolves hiera data using a top-level node parameter from enc" do
+      Puppet.settings[:node_terminus] = 'exec'
+      enc = tmpfile('enc.sh')
+      Puppet.settings[:external_nodes] = enc
+      File.write(File.join(env_dir, env_name, 'hiera.yaml'), <<~YAML)
+      ---
+      version: 5
+      hierarchy:
+        - name: "Node parameters"
+          data_hash: yaml_data
+          path: "%{site}.yaml"
+      YAML
+
+      File.write(File.join(env_dir, env_name, 'data', "pdx.yaml"), <<~YAML)
+      ---
+      key: value
+      YAML
+      allow(Puppet::Util::Execution).to receive(:execute).with([enc, fqdn], anything).and_return(<<~YAML)
+      parameters:
+        site: pdx
+      YAML
+      app.command_line.args << 'key' << '--compile'
+      Puppet.initialize_settings(['-E', env_name])
+      expect_lookup_with_output(0, /--- value/)
+    end
+
+    it "prefers the environment specified on the commandline over the enc environment" do
+      Puppet.settings[:node_terminus] = 'exec'
+      enc = tmpfile('enc.sh')
+      Puppet.settings[:external_nodes] = enc
+      File.write(File.join(env_dir, env_name, 'hiera.yaml'), <<~YAML)
+      ---
+      version: 5
+      hierarchy:
+        - name: "Node parameters"
+          data_hash: yaml_data
+          path: "%{site}.yaml"
+      YAML
+
+      File.write(File.join(env_dir, env_name, 'data', "pdx.yaml"), <<~YAML)
+      ---
+      key: value
+      YAML
+      allow(Puppet::Util::Execution).to receive(:execute).with([enc, fqdn], anything).and_return(<<~YAML)
+      ---
+      # return 'someother' environment because it doesn't have any hiera data
+      environment: someother
+      parameters:
+        site: pdx
+      YAML
+      app.command_line.args << 'key' << '--compile'
+      Puppet.initialize_settings(['-E', env_name])
+      expect_lookup_with_output(0, /--- value/)
+    end
+
     it 'loads trusted information from the node certificate' do
       Puppet.settings[:node_terminus] = 'exec'
       expect_any_instance_of(Puppet::Node::Exec).to receive(:find) do |args|
