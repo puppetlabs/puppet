@@ -647,6 +647,14 @@ Whether each resource should log when it is being evaluated\. This allows you to
 .
 .IP "" 0
 .
+.SS "exclude_unchanged_resources"
+When set to true, resources that have had no changes after catalog application will not have corresponding unchanged resource status updates listed in the report\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: \fBfalse\fR
+.
+.IP "" 0
+.
 .SS "external_nodes"
 The external node classifier (ENC) script to use for node data\. Puppet combines this data with the main manifest to produce node catalogs\.
 .
