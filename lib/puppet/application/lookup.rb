@@ -376,9 +376,9 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       facts = retrieve_node_facts(node, given_facts)
       ni = Puppet::Node.indirection
       tc = ni.terminus_class
-      if options[:compile] && !Puppet.settings.set_by_cli?('environment')
+      if options[:compile]
         if tc == :plain
-          node = ni.find(node, facts: facts)
+          node = ni.find(node, facts: facts, environment: Puppet[:environment])
         else
           begin
             service = Puppet.runtime[:http]
@@ -390,11 +390,11 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
             Puppet::SSL::Oids.register_puppet_oids
             trusted = Puppet::Context::TrustedInformation.remote(true, facts.values['certname'] || node, Puppet::SSL::Certificate.from_instance(cert))
             Puppet.override(trusted_information: trusted) do
-              node = ni.find(node, facts: facts)
+              node = ni.find(node, facts: facts, environment: Puppet[:environment])
             end
           rescue
             Puppet.warning _("CA is not available, the operation will continue without using trusted facts.")
-            node = ni.find(node, facts: facts)
+            node = ni.find(node, facts: facts, environment: Puppet[:environment])
           end
         end
       else
@@ -405,7 +405,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
     else
       node.add_extra_facts(given_facts) if given_facts
     end
-
+    node.environment = Puppet[:environment] if Puppet.settings.set_by_cli?(:environment)
     Puppet[:code] = 'undef' unless options[:compile]
     compiler = Puppet::Parser::Compiler.new(node)
     if options[:node]
