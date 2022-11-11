@@ -19,6 +19,8 @@ class LookupAdapter < DataAdapter
   CONVERT_TO = 'convert_to'.freeze
   NEW = 'new'.freeze
 
+  attr_reader :merge
+  
   def self.create_adapter(compiler)
     new(compiler)
   end
@@ -29,6 +31,7 @@ class LookupAdapter < DataAdapter
     @lookup_options = {}
     # Get a KeyRecorder from context, and set a "null recorder" if not defined
     @key_recorder = Puppet.lookup(:lookup_key_recorder) { KeyRecorder.singleton }
+    merge = nil
   end
 
   # Performs a lookup using global, environment, and module data providers. Merge the result using the given
@@ -43,6 +46,7 @@ class LookupAdapter < DataAdapter
   # @throw :no_such_key when the object is not found
   #
   def lookup(key, lookup_invocation, merge)
+    @merge = merge
     # The 'lookup_options' key is reserved and not found as normal data
     if key == LOOKUP_OPTIONS || key.start_with?(LOOKUP_OPTIONS_PREFIX)
       lookup_invocation.with(:invalid_key, LOOKUP_OPTIONS) do
