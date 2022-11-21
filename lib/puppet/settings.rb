@@ -147,8 +147,19 @@ class Puppet::Settings
     @configuration_file = nil
 
     # And keep a per-environment cache
-    @cache = Concurrent::Hash.new { |hash, key| hash[key] = Concurrent::Hash.new }
-    @values = Concurrent::Hash.new { |hash, key| hash[key] = Concurrent::Hash.new }
+    @mutex = Mutex.new
+    @cache = Concurrent::Hash.new do |hash, key|
+      @mutex.synchronize do
+        break hash[key] if hash.key?(key)
+        hash[key] = Concurrent::Hash.new
+      end
+    end
+    @values = Concurrent::Hash.new do |hash, key|
+      @mutex.synchronize do
+        break hash[key] if hash.key?(key)
+        hash[key] = Concurrent::Hash.new
+      end
+    end
 
     # The list of sections we've used.
     @used = []
