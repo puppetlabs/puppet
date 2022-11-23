@@ -160,7 +160,7 @@ describe Puppet::Transaction::Report do
 
     it 'the status for the unchanged resource should be empty' do
       resource_statuses = generate_report_and_get_resource_statuses(test_dir)
-      expect(resource_statuses["File[#{test_dir}]"]).to eq({})
+      expect(resource_statuses).to_not have_key(["File[#{test_dir}]"])
     end
   end
 
