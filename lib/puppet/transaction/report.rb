@@ -38,6 +38,7 @@ class Puppet::Transaction::Report
   include Puppet::Util::PsychSupport
   extend Puppet::Indirector
 
+  STATES_FOR_EXCLUSION_FROM_REPORT = [:failed, :failed_to_restart, :out_of_sync, :skipped].freeze
   indirects :report, :terminus_class => :processor
 
   # The version of the configuration
@@ -308,14 +309,20 @@ class Puppet::Transaction::Report
     end
   end
 
-  def skip_or_to_data_hash(rs)
-    if rs.nil?
-      nil
-    elsif !rs.out_of_sync? && Puppet[:exclude_unchanged_resources]
-      {}
-    else
-      rs.to_data_hash
+  def resource_unchanged?(rs)
+    STATES_FOR_EXCLUSION_FROM_REPORT.each do |state|
+      return false if rs.send(state)
     end
+    true
+  end
+
+  def calculate_resource_statuses
+    resource_statuses = if Puppet[:exclude_unchanged_resources]
+                          @resource_statuses.reject { |_key, rs| resource_unchanged?(rs) }
+                        else
+                          @resource_statuses
+                        end
+    Hash[resource_statuses.map { |key, rs| [key, rs.nil? ? nil : rs.to_data_hash] }]
   end
 
   def to_data_hash
@@ -333,7 +340,7 @@ class Puppet::Transaction::Report
       'environment' => @environment,
       'logs' => @logs.map { |log| log.to_data_hash },
       'metrics' => Hash[@metrics.map { |key, metric| [key, metric.to_data_hash] }],
-      'resource_statuses' => Hash[@resource_statuses.map { |key, rs| [key, skip_or_to_data_hash(rs)] }],
+      'resource_statuses' => calculate_resource_statuses,
       'corrective_change' => @corrective_change,
     }
 
