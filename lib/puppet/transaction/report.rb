@@ -308,11 +308,21 @@ class Puppet::Transaction::Report
     end
   end
 
+  def keep_resource_status?(statuses, rs)
+    statuses.each do |status|
+      if rs.send(status) == true
+        return true
+      end
+    end
+      return false
+  end
+
   def calculate_resource_statuses
-    resource_statuses = if Puppet[:exclude_unchanged_resources]
-                          @resource_statuses.select { |_key, rs| rs.out_of_sync? }
-                        else
+    statuses_to_omit = Puppet[:resource_statuses_to_omit]
+    resource_statuses = if statuses_to_omit.empty?
                           @resource_statuses
+                        else
+                          @resource_statuses.select { |_key, rs| keep_resource_status?(statuses_to_omit, rs) }
                         end
     Hash[resource_statuses.map { |key, rs| [key, rs.nil? ? nil : rs.to_data_hash] }]
   end

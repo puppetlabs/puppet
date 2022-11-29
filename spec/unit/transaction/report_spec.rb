@@ -137,9 +137,9 @@ describe Puppet::Transaction::Report do
     expect(report.metrics['time'].values.any? {|metric| metric.first =~ /whit/i}).to be_falsey
   end
 
-  describe "when exclude_unchanged_resources is true" do
+  describe "when excluding out_of_sync resources" do
     before do
-      Puppet[:exclude_unchanged_resources] = true
+      Puppet[:resource_statuses_to_omit] = ['out_of_sync']
     end
 
     let(:test_dir) { tmpdir('unchanged_resources') }
@@ -152,13 +152,13 @@ describe Puppet::Transaction::Report do
       return transaction.report.to_data_hash['resource_statuses']
     end
 
-    it 'a changed resource is still reported correctly' do
+    it 'a changed resource is still reported as out_of_sync' do
       FileUtils.rm_rf(test_dir)
       resource_statuses = generate_report_and_get_resource_statuses(test_dir)
       expect(resource_statuses["File[#{test_dir}]"]['out_of_sync']).to be_truthy
     end
 
-    it 'the status for the unchanged resource should be empty' do
+    it 'the status for the unchanged resource should not exist' do
       resource_statuses = generate_report_and_get_resource_statuses(test_dir)
       expect(resource_statuses).to_not have_key(["File[#{test_dir}]"])
     end

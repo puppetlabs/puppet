@@ -1450,11 +1450,19 @@ EOT
 
         To turn off reports entirely, set this to `none`",
     },
-    :exclude_unchanged_resources => {
-      :default => false,
-      :type => :boolean,
-      :desc => 'When set to true, resources that have had no changes after catalog application
-        will not have corresponding unchanged resource status updates listed in the report.'
+    :resource_statuses_to_omit => {
+      :default => [],
+      :type => :array,
+      :desc => 'A comma separated list of resource status states to suppress from the report',
+      :hook => proc do |value|
+        values = munge(value)
+        valid = %w[skipped failed failed_to_restart out_of_sync]
+        invalid = values - (values & valid)
+        if not invalid.empty?
+          raise ArgumentError, _("Cannot omit the following resource status '%{invalid}'.") % { invalid: invalid.join(',') } +
+                               ' ' + _("Valid values are '%{values}'.") % { values: valid.join(', ') }
+        end
+      end
     },
     :reportdir => {
       :default => "$vardir/reports",
