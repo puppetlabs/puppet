@@ -3,9 +3,9 @@ name: RSpec tests
 
 on:
   push:
-    branches: [main]
+    branches: [7.x]
   pull_request:
-    branches: [main]
+    branches: [7.x]
 
 permissions:
   contents: read

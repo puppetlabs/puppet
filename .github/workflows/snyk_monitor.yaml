@@ -3,7 +3,7 @@ name: Snyk Monitor
 on:
   push:
     branches:
-      - main
+      - 7.x
 permissions:
   contents: read
 
