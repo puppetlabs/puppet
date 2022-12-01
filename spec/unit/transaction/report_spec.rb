@@ -143,24 +143,33 @@ describe Puppet::Transaction::Report do
     end
 
     let(:test_dir) { tmpdir('unchanged_resources') }
-    def generate_report_and_get_resource_statuses(test_dir)
+    let(:test_dir2) { tmpdir('unchanged_resources') }
+    let(:test_file) { tmpfile('some_path')}
+    it 'should still list "changed" resource statuses but remove "unchanged"' do
       transaction = apply_compiled_manifest(<<-END)
+        notify { "hi": } ~>
+        exec { "/bin/this_command_does_not_exist":
+          command => "#{make_absolute('/bin/this_command_does_not_exist')}",
+          refreshonly => true,
+        }
         file { '#{test_dir}':
           ensure => directory
         }
+        file { 'failing_file':
+          path => '#{test_dir2}',
+          ensure => file
+        }
+        file { 'skipped_file':
+          path => '#{test_file}',
+          require => File[failing_file]
+        }
       END
-      return transaction.report.to_data_hash['resource_statuses']
-    end
-
-    it 'a changed resource is still reported correctly' do
-      FileUtils.rm_rf(test_dir)
-      resource_statuses = generate_report_and_get_resource_statuses(test_dir)
-      expect(resource_statuses["File[#{test_dir}]"]['out_of_sync']).to be_truthy
-    end
-
-    it 'the status for the unchanged resource should be empty' do
-      resource_statuses = generate_report_and_get_resource_statuses(test_dir)
-      expect(resource_statuses["File[#{test_dir}]"]).to eq({})
+      rs = transaction.report.to_data_hash['resource_statuses']
+      expect(rs["Notify[hi]"]['out_of_sync']).to be true
+      expect(rs["Exec[/bin/this_command_does_not_exist]"]['failed_to_restart']).to be true
+      expect(rs["File[failing_file]"]['failed']).to be true
+      expect(rs["File[skipped_file]"]['skipped']).to be true
+      expect(rs).to_not have_key(["File[#{test_dir}]"])
     end
   end
 
