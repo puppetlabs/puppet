@@ -33,6 +33,27 @@ describe "Puppet::InfoService" do
         end
       end
 
+      it "returns task data for valid tasks in an environment even if invalid tasks exist" do
+        Puppet.override(:environments => env_loader) do
+          @mod = PuppetSpec::Modules.create(mod_name, modpath, {:environment => env,
+                                                                :tasks => [['atask',
+                                                                            {:name => 'atask.json',
+                                                                             :content => metadata.to_json}],
+                                                                           ['btask',
+                                                                            {:name => 'btask.json',
+                                                                             :content => metadata.to_json}],
+                                                                           ['ctask',
+                                                                            {:name => 'ctask.json',
+                                                                             :content => metadata.to_json}]]})
+          File.write("#{modpath}/#{mod_name}/tasks/atask.json", "NOT JSON")
+
+          expect(Puppet).to receive(:send_log).with(:err, 'Failed to validate task')
+
+          @tasks = Puppet::InfoService.tasks_per_environment(env_name)
+          expect(@tasks.map{|t| t[:name]}).to contain_exactly('test1::btask', 'test1::ctask')
+        end
+      end
+
       it "should throw EnvironmentNotFound if given a nonexistent environment" do
         expect{ Puppet::InfoService.tasks_per_environment('utopia') }.to raise_error(Puppet::Environments::EnvironmentNotFound)
       end

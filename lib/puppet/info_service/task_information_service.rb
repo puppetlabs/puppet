@@ -4,11 +4,19 @@ class Puppet::InfoService::TaskInformationService
   def self.tasks_per_environment(environment_name)
     # get the actual environment object, raise error if the named env doesn't exist
     env = Puppet.lookup(:environments).get!(environment_name)
+
     env.modules.map do |mod|
       mod.tasks.map do |task|
-        {:module => {:name => task.module.name}, :name => task.name, :metadata => task.metadata}
+        # If any task is malformed continue to list other tasks in module
+        begin
+          task.validate
+          {:module => {:name => task.module.name}, :name => task.name, :metadata => task.metadata}
+        rescue Puppet::Module::Task::Error => err
+          Puppet.log_exception(err, 'Failed to validate task')
+          nil
+        end
       end
-    end.flatten
+    end.flatten.compact
   end
 
   def self.task_data(environment_name, module_name, task_name)
