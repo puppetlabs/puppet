@@ -361,7 +361,7 @@ class Type
   # @return [Void]
   def copy_metaparams(parameters)
     parameters.each do |name, param|
-      self[name] = param.value if param.metaparam? && !name == :alias
+      self[name] = param.value if param.metaparam? && name != :alias
     end
     nil
   end

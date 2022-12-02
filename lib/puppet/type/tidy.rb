@@ -247,9 +247,10 @@ Puppet::Type.newtype(:tidy) do
       :ensure => :absent, :force => true
     }
 
-    parameters[:noop] = self[:noop] unless self[:noop].nil?
+    new_file = Puppet::Type.type(:file).new(parameters)
+    new_file.copy_metaparams(@parameters)
 
-    Puppet::Type.type(:file).new(parameters)
+    new_file
   end
 
   def retrieve
