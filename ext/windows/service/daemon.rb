@@ -48,7 +48,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
     #
     # Example code to register an event source;
     # eventlogdll =  File.expand_path(File.join(basedir, 'puppet', 'ext', 'windows', 'eventlog', 'puppetres.dll'))
-    # if (File.exists?(eventlogdll))
+    # if (File.exist?(eventlogdll))
     #   Win32::EventLog.add_event_source(
     #      'source' => "Application",
     #      'key_name' => "Puppet Agent",
