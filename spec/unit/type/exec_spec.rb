@@ -295,7 +295,7 @@ RSpec.describe Puppet::Type.type(:exec) do
 
       it "accepts the current user" do
         allow(Puppet.features).to receive(:root?).and_return(false)
-        allow(Etc).to receive(:getpwuid).and_return(Struct::Passwd.new('input'))
+        allow(Etc).to receive(:getpwuid).and_return(Etc::Passwd.new('input'))
 
         type = Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => 'input')
 
