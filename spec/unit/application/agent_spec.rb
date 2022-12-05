@@ -524,7 +524,7 @@ describe Puppet::Application::Agent do
       end
 
       it "should stop the daemon" do
-        expect(@daemon).to receive(:stop).with(:exit => false)
+        expect(@daemon).to receive(:stop).with({:exit => false})
 
         expect { execute_agent }.to exit_with 0
       end

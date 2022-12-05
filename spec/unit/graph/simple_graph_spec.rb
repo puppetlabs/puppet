@@ -475,7 +475,7 @@ describe Puppet::Graph::SimpleGraph do
 
     it "should write a dot file based on the passed name" do
       expect(File).to receive(:open).with(@file, "w:UTF-8").and_yield(double("file", :puts => nil))
-      expect(@graph).to receive(:to_dot).with("name" => @name.to_s.capitalize)
+      expect(@graph).to receive(:to_dot).with({"name" => @name.to_s.capitalize})
       Puppet[:graph] = true
       @graph.write_graph(@name)
     end

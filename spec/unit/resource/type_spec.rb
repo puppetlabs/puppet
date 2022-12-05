@@ -521,7 +521,7 @@ describe Puppet::Resource::Type do
       allow(@type).to receive(:code).and_return(code)
 
       subscope = double('subscope', :compiler => @compiler)
-      expect(@scope).to receive(:newscope).with(:source => @type, :resource => @resource).and_return(subscope)
+      expect(@scope).to receive(:newscope).with({:source => @type, :resource => @resource}).and_return(subscope)
 
       expect(subscope).to receive(:with_guarded_scope).and_yield
       expect(subscope).to receive(:ephemeral_from).with(match, nil, nil).and_return(subscope)
@@ -546,7 +546,7 @@ describe Puppet::Resource::Type do
 
     it "should set all of its parameters in a subscope" do
       subscope = double('subscope', :compiler => @compiler)
-      expect(@scope).to receive(:newscope).with(:source => @type, :resource => @resource).and_return(subscope)
+      expect(@scope).to receive(:newscope).with({:source => @type, :resource => @resource}).and_return(subscope)
       expect(@type).to receive(:set_resource_parameters).with(@resource, subscope)
 
       @type.evaluate_code(@resource)

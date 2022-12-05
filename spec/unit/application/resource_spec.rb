@@ -122,7 +122,7 @@ describe Puppet::Application::Resource do
       allow(@resource_app.command_line).to receive(:args).and_return(['type','name','param=temp'])
 
       expect(Puppet::Resource.indirection).to receive(:save).with(@res, 'type/name').and_return([@res, @report])
-      expect(Puppet::Resource).to receive(:new).with('type', 'name', :parameters => {'param' => 'temp'}).and_return(@res)
+      expect(Puppet::Resource).to receive(:new).with('type', 'name', {:parameters => {'param' => 'temp'}}).and_return(@res)
 
       @resource_app.main
     end

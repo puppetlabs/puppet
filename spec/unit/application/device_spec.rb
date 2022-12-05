@@ -535,7 +535,7 @@ describe Puppet::Application::Device do
         end
 
         it "makes the Puppet::Pops::Loaders available" do
-          expect(configurer).to receive(:run).with(:network_device => true, :pluginsync => false) do
+          expect(configurer).to receive(:run).with({:network_device => true, :pluginsync => false}) do
             fail('Loaders not available') unless Puppet.lookup(:loaders) { nil }.is_a?(Puppet::Pops::Loaders)
             true
           end.and_return(6, 2)

@@ -199,7 +199,7 @@ describe Puppet::Provider::NameService do
     it "should pass the Puppet::Etc :canonical_name Struct member to the constructor" do
       users = [ Struct::Passwd.new(invalid_utf_8_jose, invalid_utf_8_jose, 1002, 2000), nil ]
       allow(Etc).to receive(:getpwent).and_return(*users)
-      expect(provider.class).to receive(:new).with(:name => escaped_utf_8_jose, :canonical_name => invalid_utf_8_jose, :ensure => :present)
+      expect(provider.class).to receive(:new).with({:name => escaped_utf_8_jose, :canonical_name => invalid_utf_8_jose, :ensure => :present})
       provider.class.instances
     end
   end

@@ -180,7 +180,7 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
 
     it "should shut down without exiting" do
       daemon.argv = %w{foo}
-      expect(daemon).to receive(:stop).with(:exit => false)
+      expect(daemon).to receive(:stop).with({:exit => false})
       daemon.reexec
     end
 
