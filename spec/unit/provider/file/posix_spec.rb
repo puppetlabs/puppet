@@ -39,7 +39,7 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
 
   describe "#uid2name" do
     it "should return the name of the user identified by the id" do
-      allow(Etc).to receive(:getpwuid).with(501).and_return(Struct::Passwd.new('jilluser', nil, 501))
+      allow(Etc).to receive(:getpwuid).with(501).and_return(Etc::Passwd.new('jilluser', nil, 501))
 
       expect(provider.uid2name(501)).to eq('jilluser')
     end
@@ -61,7 +61,7 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
 
   describe "#name2uid" do
     it "should return the id of the user if it exists" do
-      passwd = Struct::Passwd.new('bobbo', nil, 502)
+      passwd = Etc::Passwd.new('bobbo', nil, 502)
 
       allow(Etc).to receive(:getpwnam).with('bobbo').and_return(passwd)
       allow(Etc).to receive(:getpwuid).with(502).and_return(passwd)
@@ -131,7 +131,7 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
 
   describe "#gid2name" do
     it "should return the name of the group identified by the id" do
-      allow(Etc).to receive(:getgrgid).with(501).and_return(Struct::Passwd.new('unicorns', nil, nil, 501))
+      allow(Etc).to receive(:getgrgid).with(501).and_return(Etc::Passwd.new('unicorns', nil, nil, 501))
 
       expect(provider.gid2name(501)).to eq('unicorns')
     end
@@ -153,7 +153,7 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
 
   describe "#name2gid" do
     it "should return the id of the group if it exists" do
-      passwd = Struct::Passwd.new('penguins', nil, nil, 502)
+      passwd = Etc::Passwd.new('penguins', nil, nil, 502)
 
       allow(Etc).to receive(:getgrnam).with('penguins').and_return(passwd)
       allow(Etc).to receive(:getgrgid).with(502).and_return(passwd)

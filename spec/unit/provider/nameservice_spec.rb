@@ -30,8 +30,8 @@ describe Puppet::Provider::NameService do
   # These are values getpwent might give you
   let :users do
     [
-      Struct::Passwd.new('root', 'x', 0, 0),
-      Struct::Passwd.new('foo', 'x', 1000, 2000),
+      Etc::Passwd.new('root', 'x', 0, 0),
+      Etc::Passwd.new('foo', 'x', 1000, 2000),
       nil
     ]
   end
@@ -39,13 +39,13 @@ describe Puppet::Provider::NameService do
   # These are values getgrent might give you
   let :groups do
     [
-      Struct::Group.new('root', 'x', 0, %w{root}),
-      Struct::Group.new('bin', 'x', 1, %w{root bin daemon}),
+      Etc::Group.new('root', 'x', 0, %w{root}),
+      Etc::Group.new('bin', 'x', 1, %w{root bin daemon}),
       nil
     ]
   end
 
-  # A fake struct besides Struct::Group and Struct::Passwd
+  # A fake struct besides Etc::Group and Etc::Passwd
   let :fakestruct do
     Struct.new(:foo, :bar)
   end
@@ -82,11 +82,11 @@ describe Puppet::Provider::NameService do
 
   let(:utf_8_mixed_users) {
     [
-      Struct::Passwd.new('root', 'x', 0, 0),
-      Struct::Passwd.new('foo', 'x', 1000, 2000),
-      Struct::Passwd.new(utf_8_jose, utf_8_jose, 1001, 2000), # UTF-8 character
+      Etc::Passwd.new('root', 'x', 0, 0),
+      Etc::Passwd.new('foo', 'x', 1000, 2000),
+      Etc::Passwd.new(utf_8_jose, utf_8_jose, 1001, 2000), # UTF-8 character
       # In a UTF-8 environment, ruby will return strings labeled as UTF-8 even if they're not valid in UTF-8
-      Struct::Passwd.new(invalid_utf_8_jose, invalid_utf_8_jose, 1002, 2000),
+      Etc::Passwd.new(invalid_utf_8_jose, invalid_utf_8_jose, 1002, 2000),
       nil
     ]
   }
@@ -94,10 +94,10 @@ describe Puppet::Provider::NameService do
   let(:latin_1_mixed_users) {
     [
       # In a LATIN-1 environment, ruby will return *all* strings labeled as LATIN-1
-      Struct::Passwd.new('root'.force_encoding(Encoding::ISO_8859_1), 'x', 0, 0),
-      Struct::Passwd.new('foo'.force_encoding(Encoding::ISO_8859_1), 'x', 1000, 2000),
-      Struct::Passwd.new(utf_8_labeled_as_latin_1_jose, utf_8_labeled_as_latin_1_jose, 1002, 2000),
-      Struct::Passwd.new(valid_latin1_jose, valid_latin1_jose, 1001, 2000), # UTF-8 character
+      Etc::Passwd.new('root'.force_encoding(Encoding::ISO_8859_1), 'x', 0, 0),
+      Etc::Passwd.new('foo'.force_encoding(Encoding::ISO_8859_1), 'x', 1000, 2000),
+      Etc::Passwd.new(utf_8_labeled_as_latin_1_jose, utf_8_labeled_as_latin_1_jose, 1002, 2000),
+      Etc::Passwd.new(valid_latin1_jose, valid_latin1_jose, 1001, 2000), # UTF-8 character
       nil
     ]
   }
@@ -197,7 +197,7 @@ describe Puppet::Provider::NameService do
     end
 
     it "should pass the Puppet::Etc :canonical_name Struct member to the constructor" do
-      users = [ Struct::Passwd.new(invalid_utf_8_jose, invalid_utf_8_jose, 1002, 2000), nil ]
+      users = [ Etc::Passwd.new(invalid_utf_8_jose, invalid_utf_8_jose, 1002, 2000), nil ]
       allow(Etc).to receive(:getpwent).and_return(*users)
       expect(provider.class).to receive(:new).with({:name => escaped_utf_8_jose, :canonical_name => invalid_utf_8_jose, :ensure => :present})
       provider.class.instances

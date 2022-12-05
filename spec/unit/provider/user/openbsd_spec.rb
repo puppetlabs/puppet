@@ -22,7 +22,7 @@ describe Puppet::Type.type(:user).provider(:openbsd) do
 
   let(:shadow_entry) {
     return unless Puppet.features.libshadow?
-    entry = Struct::PasswdEntry.new
+    entry = Etc::PasswdEntry.new
     entry[:sp_namp]   = 'myuser' # login name
     entry[:sp_loginclass] = 'staff' # login class
     entry

@@ -29,7 +29,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
   let(:shadow_entry) {
     return unless Puppet.features.libshadow?
-    entry = Struct::PasswdEntry.new
+    entry = Etc::PasswdEntry.new
     entry[:sp_namp]   = 'myuser' # login name
     entry[:sp_pwdp]   = '$6$FvW8Ib8h$qQMI/CR9m.QzIicZKutLpBgCBBdrch1IX0rTnxuI32K1pD9.RXZrmeKQlaC.RzODNuoUtPPIyQDufunvLOQWF0' # encrypted password
     entry[:sp_lstchg] = 15573    # date of last password change

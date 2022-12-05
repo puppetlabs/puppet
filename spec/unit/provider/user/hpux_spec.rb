@@ -27,7 +27,7 @@ describe Puppet::Type.type(:user).provider(:hpuxuseradd),
 
   context "managing passwords" do
     let :pwent do
-      Struct::Passwd.new("testuser", "foopassword")
+      Etc::Passwd.new("testuser", "foopassword")
     end
 
     before :each do
