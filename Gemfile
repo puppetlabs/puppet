@@ -64,7 +64,7 @@ group(:packaging) do
 end
 
 group(:documentation, optional: true) do
-  gem 'gettext-setup', '~> 0.28', require: false, platforms: [:ruby]
+  gem 'gettext-setup', '~> 1.0', require: false, platforms: [:ruby]
   gem 'ronn', '~> 0.7.3', require: false, platforms: [:ruby]
 end
 
