@@ -527,7 +527,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       }
 
       # ensure file is written before yielding
-      until File.exists?(path) && File.size(path) > 0 do
+      until File.exist?(path) && File.size(path) > 0 do
         sleep 0.1
       end
 
