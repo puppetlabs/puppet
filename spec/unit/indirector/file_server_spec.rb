@@ -183,10 +183,10 @@ describe Puppet::Indirector::FileServer do
       expect(Puppet::FileServing::Fileset).to receive(:merge).and_return("one" => "/one", "two" => "/two")
 
       one = double('one', :collect => nil)
-      expect(model).to receive(:new).with("/one", :relative_path => "one").and_return(one)
+      expect(model).to receive(:new).with("/one", {:relative_path => "one"}).and_return(one)
 
       two = double('two', :collect => nil)
-      expect(model).to receive(:new).with("/two", :relative_path => "two").and_return(two)
+      expect(model).to receive(:new).with("/two", {:relative_path => "two"}).and_return(two)
 
       # order can't be guaranteed
       result = indirection.search(uri)
@@ -205,7 +205,7 @@ describe Puppet::Indirector::FileServer do
       expect(Puppet::FileServing::Fileset).to receive(:merge).and_return("one" => "/one")
 
       one = double('one', :collect => nil)
-      expect(model).to receive(:new).with("/one", :relative_path => "one").and_return(one)
+      expect(model).to receive(:new).with("/one", {:relative_path => "one"}).and_return(one)
       expect(one).to receive(:links=).with(true)
 
       indirection.search(uri, links: true)
@@ -221,7 +221,7 @@ describe Puppet::Indirector::FileServer do
       expect(Puppet::FileServing::Fileset).to receive(:merge).and_return("one" => "/one")
 
       one = double('one', :collect => nil)
-      expect(model).to receive(:new).with("/one", :relative_path => "one").and_return(one)
+      expect(model).to receive(:new).with("/one", {:relative_path => "one"}).and_return(one)
 
       expect(one).to receive(:checksum_type=).with(:checksum)
 
@@ -238,7 +238,7 @@ describe Puppet::Indirector::FileServer do
       expect(Puppet::FileServing::Fileset).to receive(:merge).and_return("one" => "/one")
 
       one = double('one')
-      expect(model).to receive(:new).with("/one", :relative_path => "one").and_return(one)
+      expect(model).to receive(:new).with("/one", {:relative_path => "one"}).and_return(one)
       expect(one).to receive(:collect)
 
       indirection.search(uri)

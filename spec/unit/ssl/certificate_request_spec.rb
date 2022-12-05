@@ -45,7 +45,7 @@ describe Puppet::SSL::CertificateRequest do
 
     it "should be able to read requests from disk" do
       path = "/my/path"
-      expect(Puppet::FileSystem).to receive(:read).with(path, :encoding => Encoding::ASCII).and_return("my request")
+      expect(Puppet::FileSystem).to receive(:read).with(path, {:encoding => Encoding::ASCII}).and_return("my request")
       my_req = double('request')
       expect(OpenSSL::X509::Request).to receive(:new).with("my request").and_return(my_req)
       expect(request.read(path)).to equal(my_req)

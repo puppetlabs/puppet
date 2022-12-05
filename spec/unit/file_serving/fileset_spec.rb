@@ -153,12 +153,12 @@ describe Puppet::FileServing::Fileset do
       top_names = %w{one two .svn CVS}
       sub_names = %w{file1 file2 .svn CVS 0 false}
 
-      allow(Dir).to receive(:entries).with(path, encoding: Encoding::UTF_8).and_return(top_names)
+      allow(Dir).to receive(:entries).with(path, {encoding: Encoding::UTF_8}).and_return(top_names)
       top_names.each do |subdir|
         @files << subdir # relative path
         subpath = File.join(path, subdir)
         allow(Puppet::FileSystem).to receive(stat_method).with(subpath).and_return(@dirstat)
-        allow(Dir).to receive(:entries).with(subpath, encoding: Encoding::UTF_8).and_return(sub_names)
+        allow(Dir).to receive(:entries).with(subpath, {encoding: Encoding::UTF_8}).and_return(sub_names)
         sub_names.each do |file|
           @files << File.join(subdir, file) # relative path
           subfile_path = File.join(subpath, file)
@@ -176,12 +176,12 @@ describe Puppet::FileServing::Fileset do
       top_names = (1..10).map {|i| "dir_#{i}" }
       sub_names = (1..100).map {|i| "file__#{i}" }
 
-      allow(Dir).to receive(:entries).with(path, encoding: Encoding::UTF_8).and_return(top_names)
+      allow(Dir).to receive(:entries).with(path, {encoding: Encoding::UTF_8}).and_return(top_names)
       top_names.each do |subdir|
         @files << subdir # relative path
         subpath = File.join(path, subdir)
         allow(Puppet::FileSystem).to receive(stat_method).with(subpath).and_return(@dirstat)
-        allow(Dir).to receive(:entries).with(subpath, encoding: Encoding::UTF_8).and_return(sub_names)
+        allow(Dir).to receive(:entries).with(subpath, {encoding: Encoding::UTF_8}).and_return(sub_names)
         sub_names.each do |file|
           @files << File.join(subdir, file) # relative path
           subfile_path = File.join(subpath, file)
@@ -193,7 +193,7 @@ describe Puppet::FileServing::Fileset do
     def setup_mocks_for_dir(mock_dir, base_path)
       path = File.join(base_path, mock_dir.name)
       allow(Puppet::FileSystem).to receive(:lstat).with(path).and_return(MockStat.new(path, true))
-      allow(Dir).to receive(:entries).with(path, encoding: Encoding::UTF_8).and_return(['.', '..'] + mock_dir.entries.map(&:name))
+      allow(Dir).to receive(:entries).with(path, {encoding: Encoding::UTF_8}).and_return(['.', '..'] + mock_dir.entries.map(&:name))
       mock_dir.entries.each do |entry|
         setup_mocks_for_entry(entry, path)
       end
@@ -360,7 +360,7 @@ describe Puppet::FileServing::Fileset do
     link_path = File.join(path, "mylink")
     expect(Puppet::FileSystem).to receive(:stat).with(link_path).and_raise(Errno::ENOENT)
 
-    allow(Dir).to receive(:entries).with(path, encoding: Encoding::UTF_8).and_return(["mylink"])
+    allow(Dir).to receive(:entries).with(path, {encoding: Encoding::UTF_8}).and_return(["mylink"])
 
     fileset = Puppet::FileServing::Fileset.new(path)
 
@@ -377,16 +377,16 @@ describe Puppet::FileServing::Fileset do
 
       @filesets = @paths.collect do |path|
         allow(Puppet::FileSystem).to receive(:lstat).with(path).and_return(double('stat', :directory? => true))
-        Puppet::FileServing::Fileset.new(path, :recurse => true)
+        Puppet::FileServing::Fileset.new(path, {:recurse => true})
       end
 
       allow(Dir).to receive(:entries).and_return([])
     end
 
     it "returns a hash of all files in each fileset with the value being the base path" do
-      expect(Dir).to receive(:entries).with(make_absolute("/first/path"), encoding: Encoding::UTF_8).and_return(%w{one uno})
-      expect(Dir).to receive(:entries).with(make_absolute("/second/path"), encoding: Encoding::UTF_8).and_return(%w{two dos})
-      expect(Dir).to receive(:entries).with(make_absolute("/third/path"), encoding: Encoding::UTF_8).and_return(%w{three tres})
+      expect(Dir).to receive(:entries).with(make_absolute("/first/path"), {encoding: Encoding::UTF_8}).and_return(%w{one uno})
+      expect(Dir).to receive(:entries).with(make_absolute("/second/path"), {encoding: Encoding::UTF_8}).and_return(%w{two dos})
+      expect(Dir).to receive(:entries).with(make_absolute("/third/path"), {encoding: Encoding::UTF_8}).and_return(%w{three tres})
 
       expect(Puppet::FileServing::Fileset.merge(*@filesets)).to eq({
         "." => make_absolute("/first/path"),
@@ -400,15 +400,15 @@ describe Puppet::FileServing::Fileset do
     end
 
     it "includes the base directory from the first fileset" do
-      expect(Dir).to receive(:entries).with(make_absolute("/first/path"), encoding: Encoding::UTF_8).and_return(%w{one})
-      expect(Dir).to receive(:entries).with(make_absolute("/second/path"), encoding: Encoding::UTF_8).and_return(%w{two})
+      expect(Dir).to receive(:entries).with(make_absolute("/first/path"), {encoding: Encoding::UTF_8}).and_return(%w{one})
+      expect(Dir).to receive(:entries).with(make_absolute("/second/path"), {encoding: Encoding::UTF_8}).and_return(%w{two})
 
       expect(Puppet::FileServing::Fileset.merge(*@filesets)["."]).to eq(make_absolute("/first/path"))
     end
 
     it "uses the base path of the first found file when relative file paths conflict" do
-      expect(Dir).to receive(:entries).with(make_absolute("/first/path"), encoding: Encoding::UTF_8).and_return(%w{one})
-      expect(Dir).to receive(:entries).with(make_absolute("/second/path"), encoding: Encoding::UTF_8).and_return(%w{one})
+      expect(Dir).to receive(:entries).with(make_absolute("/first/path"), {encoding: Encoding::UTF_8}).and_return(%w{one})
+      expect(Dir).to receive(:entries).with(make_absolute("/second/path"), {encoding: Encoding::UTF_8}).and_return(%w{one})
 
       expect(Puppet::FileServing::Fileset.merge(*@filesets)["one"]).to eq(make_absolute("/first/path"))
     end

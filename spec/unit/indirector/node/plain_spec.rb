@@ -21,7 +21,7 @@ describe Puppet::Node::Plain do
   end
 
   it "should find facts if none are supplied" do
-    expect(Puppet::Node::Facts.indirection).to receive(:find).with(nodename, :environment => environment).and_return(indirection_facts)
+    expect(Puppet::Node::Facts.indirection).to receive(:find).with(nodename, {:environment => environment}).and_return(indirection_facts)
     request.options.delete(:facts)
     node = node_indirection.find(request)
     expect(node.parameters).to include(indirection_fact_values)

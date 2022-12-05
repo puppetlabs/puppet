@@ -158,14 +158,14 @@ OUTPUT
     it "should call installp to uninstall a bff package" do
       expect(@provider).to receive(:lslpp).with("-qLc", "mypackage.foo").and_return("#bos.atm:bos.atm.atmle:7.1.2.0: : :C: :ATM LAN Emulation Client Support : : : : : : :0:0:/:1241")
       expect(@provider).to receive(:installp).with("-gu", "mypackage.foo")
-      expect(@provider.class).to receive(:pkglist).with(:pkgname => 'mypackage.foo').and_return(nil)
+      expect(@provider.class).to receive(:pkglist).with({:pkgname => 'mypackage.foo'}).and_return(nil)
       @provider.uninstall
     end
 
     it "should call rpm to uninstall an rpm package" do
       expect(@provider).to receive(:lslpp).with("-qLc", "mypackage.foo").and_return("cdrecord:cdrecord-1.9-6:1.9-6: : :C:R:A command line CD/DVD recording program.: :/bin/rpm -e cdrecord: : : : :0: :/opt/freeware:Wed Jun 29 09:41:32 PDT 2005")
       expect(@provider).to receive(:rpm).with("-e", "mypackage.foo")
-      expect(@provider.class).to receive(:pkglist).with(:pkgname => 'mypackage.foo').and_return(nil)
+      expect(@provider.class).to receive(:pkglist).with({:pkgname => 'mypackage.foo'}).and_return(nil)
       @provider.uninstall
     end
   end

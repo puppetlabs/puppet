@@ -80,7 +80,7 @@ describe Puppet::Util::Backups do
       end
 
       it "a copy should be created in the local directory" do
-        expect(FileUtils).to receive(:cp_r).with(path, backup, :preserve => true)
+        expect(FileUtils).to receive(:cp_r).with(path, backup, {:preserve => true})
         allow(Puppet::FileSystem).to receive(:exist?).with(path).and_return(true)
 
         expect(file.perform_backup).to be_truthy
