@@ -819,9 +819,11 @@ describe "Puppet::FileSystem" do
         mode = Puppet::FileSystem.stat(dir).mode
         Puppet::FileSystem.chmod(0, dir)
         begin
+          # JRuby 9.2.21.0 drops the path from the message..
+          message = Puppet::Util::Platform.jruby? ? /^Permission denied/ : /^Permission denied .* #{path}/
           expect {
             Puppet::FileSystem.unlink(path)
-          }.to raise_error(Errno::EACCES, /^Permission denied .* #{path}/)
+          }.to raise_error(Errno::EACCES, message)
         ensure
           Puppet::FileSystem.chmod(mode, dir)
         end
