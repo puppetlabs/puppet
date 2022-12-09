@@ -165,7 +165,7 @@ describe 'Puppet::Type::User::Provider::Aix' do
       allow(mock_tempfile_obj).to receive(:path).and_return('tempfile_path')
 
       allow(Tempfile).to receive(:new)
-        .with("puppet_#{provider.name}_pw", :encoding => Encoding::ASCII)
+        .with("puppet_#{provider.name}_pw", {:encoding => Encoding::ASCII})
         .and_return(mock_tempfile_obj)
 
       mock_tempfile_obj

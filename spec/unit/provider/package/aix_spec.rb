@@ -16,7 +16,7 @@ describe Puppet::Type.type(:package).provider(:aix) do
 
   it "should uninstall a package" do
     expect(@provider).to receive(:installp).with('-gu', 'mypackage')
-    expect(@provider.class).to receive(:pkglist).with(:pkgname => 'mypackage').and_return(nil)
+    expect(@provider.class).to receive(:pkglist).with({:pkgname => 'mypackage'}).and_return(nil)
     @provider.uninstall
   end
 
