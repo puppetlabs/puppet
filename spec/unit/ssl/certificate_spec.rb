@@ -156,7 +156,7 @@ describe Puppet::SSL::Certificate do
 
     it "should be able to read certificates from disk" do
       path = "/my/path"
-      expect(Puppet::FileSystem).to receive(:read).with(path, :encoding => Encoding::ASCII).and_return("my certificate")
+      expect(Puppet::FileSystem).to receive(:read).with(path, {:encoding => Encoding::ASCII}).and_return("my certificate")
       certificate = double('certificate')
       expect(OpenSSL::X509::Certificate).to receive(:new).with("my certificate").and_return(certificate)
       expect(@certificate.read(path)).to equal(certificate)

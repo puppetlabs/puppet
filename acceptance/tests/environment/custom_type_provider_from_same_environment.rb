@@ -53,7 +53,7 @@ TYPE
             File.unlink(@resource[:name])
           end
           def exists?
-            File.exists?(@resource[:name])
+            File.exist?(@resource[:name])
           end
         end
 PROVIDER

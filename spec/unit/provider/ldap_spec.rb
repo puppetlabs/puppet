@@ -73,7 +73,7 @@ describe Puppet::Provider::Ldap do
       it "should create a provider with :ensure => :absent" do
         expect(@manager).to receive(:find).with("one").and_return(nil)
 
-        expect(@class).to receive(:new).with(:ensure => :absent).and_return("myprovider")
+        expect(@class).to receive(:new).with({:ensure => :absent}).and_return("myprovider")
 
         expect(@resource).to receive(:provider=).with("myprovider")
 

@@ -16,7 +16,7 @@ describe Puppet::Util::FileType do
     describe "when the file already exists" do
       it "should return the file's contents when asked to read it" do
         expect(Puppet::FileSystem).to receive(:exist?).with(path).and_return(true)
-        expect(Puppet::FileSystem).to receive(:read).with(path, :encoding => Encoding.default_external).and_return("my text")
+        expect(Puppet::FileSystem).to receive(:read).with(path, {:encoding => Encoding.default_external}).and_return("my text")
 
         expect(file.read).to eq("my text")
       end
@@ -46,7 +46,7 @@ describe Puppet::Util::FileType do
       end
 
       it "should first create a temp file and copy its contents over to the file location" do
-        expect(Tempfile).to receive(:new).with("puppet", :encoding => Encoding.default_external).and_return(tempfile)
+        expect(Tempfile).to receive(:new).with("puppet", {:encoding => Encoding.default_external}).and_return(tempfile)
         expect(tempfile).to receive(:print).with("my text")
         expect(tempfile).to receive(:flush)
         expect(tempfile).to receive(:close)
@@ -163,7 +163,7 @@ describe Puppet::Util::FileType do
         @tmp_cron = Tempfile.new("puppet_crontab_spec")
         @tmp_cron_path = @tmp_cron.path
         allow(Puppet::Util).to receive(:uid).with(uid).and_return(9000)
-        expect(Tempfile).to receive(:new).with("puppet_#{name}", :encoding => Encoding.default_external).and_return(@tmp_cron)
+        expect(Tempfile).to receive(:new).with("puppet_#{name}", {:encoding => Encoding.default_external}).and_return(@tmp_cron)
       end
 
       after :each do

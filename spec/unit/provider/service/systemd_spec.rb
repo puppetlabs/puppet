@@ -217,7 +217,7 @@ describe 'Puppet::Type::Service::Provider::Systemd',
     it "should use the supplied start command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :start => '/bin/foo'))
       expect(provider).to receive(:daemon_reload?).and_return('no')
-      expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(provider).to receive(:execute).with(['/bin/foo'], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
       provider.start
     end
 
@@ -249,13 +249,13 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
   describe "#stop" do
     it "should use the supplied stop command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :stop => '/bin/foo'))
-      expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(provider).to receive(:execute).with(['/bin/foo'], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
       provider.stop
     end
 
     it "should stop the service with systemctl stop otherwise" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','stop', '--', 'sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(provider).to receive(:execute).with(['/bin/systemctl','stop', '--', 'sshd.service'], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
       provider.stop
     end
 
@@ -277,13 +277,13 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
   describe "#daemon_reload?" do
     it "should skip the systemctl daemon_reload if not required by the service" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl', 'show', '--property=NeedDaemonReload', '--', 'sshd.service'], :failonfail => false).and_return("no")
+      expect(provider).to receive(:execute).with(['/bin/systemctl', 'show', '--property=NeedDaemonReload', '--', 'sshd.service'], {:failonfail => false}).and_return("no")
       provider.daemon_reload?
     end
     it "should run a systemctl daemon_reload if the service has been modified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl', 'show', '--property=NeedDaemonReload', '--', 'sshd.service'], :failonfail => false).and_return("yes")
-      expect(provider).to receive(:execute).with(['/bin/systemctl', 'daemon-reload'], :failonfail => false)
+      expect(provider).to receive(:execute).with(['/bin/systemctl', 'show', '--property=NeedDaemonReload', '--', 'sshd.service'], {:failonfail => false}).and_return("yes")
+      expect(provider).to receive(:execute).with(['/bin/systemctl', 'daemon-reload'], {:failonfail => false})
       provider.daemon_reload?
     end
   end
@@ -291,51 +291,51 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
   describe "#enabled?" do
     it "should return :true if the service is enabled" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).
+      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], {:failonfail => false}).
                             and_return(Puppet::Util::Execution::ProcessOutput.new("enabled\n", 0))
       expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :true if the service is static" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled','--', 'sshd.service'], :failonfail => false).
+      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled','--', 'sshd.service'], {:failonfail => false}).
                             and_return(Puppet::Util::Execution::ProcessOutput.new("static\n", 0))
       expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :false if the service is disabled" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).
+      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], {:failonfail => false}).
                             and_return(Puppet::Util::Execution::ProcessOutput.new("disabled\n", 1))
       expect(provider.enabled?).to eq(:false)
     end
 
     it "should return :false if the service is indirect" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).
+      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], {:failonfail => false}).
                             and_return(Puppet::Util::Execution::ProcessOutput.new("indirect\n", 0))
       expect(provider.enabled?).to eq(:false)
     end
 
     it "should return :false if the service is masked and the resource is attempting to be disabled" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => false))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).
+      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], {:failonfail => false}).
                             and_return(Puppet::Util::Execution::ProcessOutput.new("masked\n", 1))
       expect(provider.enabled?).to eq(:false)
     end
 
     it "should return :mask if the service is masked and the resource is attempting to be masked" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => 'mask'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], :failonfail => false).
+      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'sshd.service'], {:failonfail => false}).
                             and_return(Puppet::Util::Execution::ProcessOutput.new("masked\n", 1))
       expect(provider.enabled?).to eq(:mask)
     end
 
     it "should consider nonexistent services to be disabled" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'doesnotexist'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'doesnotexist'], :failonfail => false)
+      expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'doesnotexist'], {:failonfail => false})
                             .and_return(Puppet::Util::Execution::ProcessOutput.new("", 1))
-      expect(provider).to receive(:execute).with(["/usr/sbin/invoke-rc.d", "--quiet", "--query", "doesnotexist", "start"], :failonfail => false)
+      expect(provider).to receive(:execute).with(["/usr/sbin/invoke-rc.d", "--quiet", "--query", "doesnotexist", "start"], {:failonfail => false})
                             .and_return(Puppet::Util::Execution::ProcessOutput.new("", 1))
 
       expect(provider.enabled?).to be(:false)
@@ -363,7 +363,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
     it "should run systemctl to disable and mask a service" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       expect(provider).to receive(:execute).
-                            with(['/bin/systemctl','cat', '--', 'sshd.service'], :failonfail => false).
+                            with(['/bin/systemctl','cat', '--', 'sshd.service'], {:failonfail => false}).
                             and_return(Puppet::Util::Execution::ProcessOutput.new("# /lib/systemd/system/sshd.service\n...", 0))
       # :disable is the only call in the provider that uses a symbol instead of
       # a string.
@@ -376,7 +376,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
     it "masks a service that doesn't exist" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'doesnotexist.service'))
       expect(provider).to receive(:execute).
-                            with(['/bin/systemctl','cat', '--', 'doesnotexist.service'], :failonfail => false).
+                            with(['/bin/systemctl','cat', '--', 'doesnotexist.service'], {:failonfail => false}).
                             and_return(Puppet::Util::Execution::ProcessOutput.new("No files found for doesnotexist.service.\n", 1))
       expect(provider).to receive(:systemctl).with(:mask, '--', 'doesnotexist.service')
       provider.mask
@@ -389,7 +389,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
     it "should return running if the command returns 0" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       expect(provider).to receive(:execute)
-        .with(['/bin/systemctl','is-active', '--', 'sshd.service'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        .with(['/bin/systemctl','is-active', '--', 'sshd.service'], {:failonfail => false, :override_locale => false, :squelch => false, :combine => true})
         .and_return(Puppet::Util::Execution::ProcessOutput.new("active\n", 0))
       expect(provider.status).to eq(:running)
     end
@@ -398,7 +398,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
       it "should return stopped if the command returns something non-0" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
         expect(provider).to receive(:execute)
-          .with(['/bin/systemctl','is-active', '--', 'sshd.service'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+          .with(['/bin/systemctl','is-active', '--', 'sshd.service'], {:failonfail => false, :override_locale => false, :squelch => false, :combine => true})
           .and_return(Puppet::Util::Execution::ProcessOutput.new("inactive\n", ec))
         expect(provider.status).to eq(:stopped)
       end
@@ -407,7 +407,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
     it "should use the supplied status command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :status => '/bin/foo'))
       expect(provider).to receive(:execute)
-        .with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        .with(['/bin/foo'], {:failonfail => false, :override_locale => false, :squelch => false, :combine => true})
         .and_return(process_output)
       provider.status
     end
@@ -419,15 +419,15 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
     it "should use the supplied restart command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :restart => '/bin/foo'))
       expect(provider).to receive(:daemon_reload?).and_return('no')
-      expect(provider).to receive(:execute).with(['/bin/systemctl','restart', '--', 'sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
-      expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(provider).to receive(:execute).with(['/bin/systemctl','restart', '--', 'sshd.service'], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true}).never
+      expect(provider).to receive(:execute).with(['/bin/foo'], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
       provider.restart
     end
 
     it "should restart the service with systemctl restart" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       expect(provider).to receive(:daemon_reload?).and_return('no')
-      expect(provider).to receive(:execute).with(['/bin/systemctl','restart','--','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(provider).to receive(:execute).with(['/bin/systemctl','restart','--','sshd.service'], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
       provider.restart
     end
 

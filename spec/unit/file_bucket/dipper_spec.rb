@@ -322,7 +322,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         file = make_tmp_file(plaintext)
 
         expect(Puppet::FileBucket::File.indirection).to receive(:head).with(
-          %r{#{digest_algorithm}/#{checksum}}, :bucket_path => "/my/bucket"
+          %r{#{digest_algorithm}/#{checksum}}, {:bucket_path => "/my/bucket"}
         ).and_return(true)
         expect(Puppet::FileBucket::File.indirection).not_to receive(:save)
         expect(@dipper.backup(file)).to eq(checksum)
