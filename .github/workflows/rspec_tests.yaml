@@ -35,7 +35,7 @@ jobs:
 
       - name: Update rubygems and install gems
         run: |
-          gem update --system --no-document
+          gem update --system 3.3.26 --no-document
           bundle config set without packaging documentation
           bundle install --jobs 4 --retry 3
 
