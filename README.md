@@ -15,7 +15,7 @@ Documentation for Puppet and related projects can be found online at the
 
 ### HTTP API
 
-[HTTP API Index](https://puppet.com/docs/puppet/latest/http_api/http_api_index.html)
+[HTTP API Index](https://www.puppet.com/docs/puppet/latest/server/http_api_index.html)
 
 ## Installation
 
