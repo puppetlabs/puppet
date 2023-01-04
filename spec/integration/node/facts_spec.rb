@@ -30,7 +30,7 @@ describe Puppet::Node::Facts do
     it "should be able to delegate to the :facter terminus" do
       allow(Puppet::Node::Facts.indirection).to receive(:terminus_class).and_return(:facter)
 
-      expect(Facter).to receive(:to_hash).and_return("facter_hash")
+      expect(Facter).to receive(:resolve).and_return("facter_hash")
       facts = Puppet::Node::Facts.new("me")
       expect(Puppet::Node::Facts).to receive(:new).with("me", "facter_hash").and_return(facts)
 
