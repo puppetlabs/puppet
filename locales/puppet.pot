@@ -6741,6 +6741,14 @@ msgstr ""
 msgid "Don't know how to install '%{source}'"
 msgstr ""
 
+#: ../lib/puppet/provider/package/xbps.rb:36
+msgid "Failed to match line '%{line}"
+msgstr ""
+
+#: ../lib/puppet/provider/package/xbps.rb:43
+msgid "Error getting installed packages"
+msgstr ""
+
 #: ../lib/puppet/provider/package/yum.rb:75
 msgid "The yum provider can only be used as root"
 msgstr ""
