@@ -384,7 +384,7 @@ Setting a global value for config_version in puppet\.conf is not allowed (but it
 Prints the value of a specific configuration setting\. If the name of a setting is provided for this, then the value is printed and puppet exits\. Comma\-separate multiple values\. For a list of all values, specify \'all\'\. This setting is deprecated, the \'puppet config\' command replaces this functionality\.
 .
 .SS "crl_refresh_interval"
-How often the Puppet agent refreshes its local CRL\. By default the CRL is only downloaded once, and never refreshed\. If a duration is specified, then the agent will refresh its CRL whenever it next runs and the elapsed time since the CRL was last refreshed exceeds the duration\.
+How often the Puppet agent refreshes its local CRL\. By default the CRL is refreshed once every 24 hours\. If a different duration is specified, then the agent will refresh its CRL whenever it next runs and the elapsed time since the CRL was last refreshed exceeds the duration\.
 .
 .P
 In general, the duration should be greater than the \fBruninterval\fR\. Setting it to an equal or lesser value will cause the CRL to be refreshed on every run\.
@@ -393,7 +393,7 @@ In general, the duration should be greater than the \fBruninterval\fR\. Setting 
 If the agent downloads a new CRL, the agent will use it for subsequent network requests\. If the refresh request fails or if the CRL is unchanged on the server, then the agent run will continue using the local CRL it already has\.This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: ``
+\fIDefault\fR: \fB1d\fR
 .
 .IP "" 0
 .
