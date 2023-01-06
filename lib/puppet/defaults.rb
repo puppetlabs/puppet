@@ -1198,12 +1198,13 @@ EOT
       #{AS_DURATION}",
     },
     :crl_refresh_interval => {
+      :default    => "1d",
       :type       => :duration,
       :desc       => "How often the Puppet agent refreshes its local CRL. By
-         default the CRL is only downloaded once, and never refreshed. If a
-         duration is specified, then the agent will refresh its CRL whenever it
-         next runs and the elapsed time since the CRL was last refreshed exceeds
-         the duration.
+         default the CRL is refreshed once every 24 hours. If a different
+         duration is specified, then the agent will refresh its CRL whenever
+         it next runs and the elapsed time since the CRL was last refreshed
+         exceeds the duration.
 
          In general, the duration should be greater than the `runinterval`.
          Setting it to an equal or lesser value will cause the CRL to be

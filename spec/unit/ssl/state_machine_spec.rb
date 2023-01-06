@@ -30,6 +30,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     Puppet[:daemonize] = false
     Puppet[:ssl_lockfile] = tmpfile('ssllock')
     allow(Kernel).to receive(:sleep)
+    allow_any_instance_of(Puppet::X509::CertProvider).to receive(:crl_last_update).and_return(Time.now + (5 * 60))
   end
 
   def expected_digest(name, content)
@@ -524,12 +525,6 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       state.next_state
 
       expect(File).to_not exist(Puppet[:hostcrl])
-    end
-
-    it 'skips CRL refresh by default' do
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_crls).and_return(crls)
-
-      state.next_state
     end
 
     it 'skips CRL refresh if it has not expired' do
