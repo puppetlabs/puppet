@@ -1032,47 +1032,6 @@ class Type
     self.provider.flush if self.provider and self.provider.respond_to?(:flush)
   end
 
-  # Returns true if all contained objects are in sync.
-  # @todo "contained in what?" in the given "in" parameter?
-  #
-  # @todo deal with the comment _"FIXME I don't think this is used on the type instances any more,
-  #   it's really only used for testing"_
-  # @return [Boolean] true if in sync, false otherwise.
-  #
-  def insync?(is)
-    insync = true
-
-    property = @parameters[:ensure]
-    if property
-      unless is.include? property
-        #TRANSLATORS 'is' is a variable name and should not be translated
-        raise Puppet::DevError, _("The 'is' value is not in the 'is' array for '%{name}'") % { name: property.name }
-      end
-      ensureis = is[property]
-      if property.safe_insync?(ensureis) and property.should == :absent
-        return true
-      end
-    end
-
-    properties.each { |prop|
-      unless is.include? prop
-        #TRANSLATORS 'is' is a variable name and should not be translated
-        raise Puppet::DevError, _("The 'is' value is not in the 'is' array for '%{name}'") % { name: prop.name }
-      end
-
-      propis = is[prop]
-      unless prop.safe_insync?(propis)
-        prop.debug("Not in sync: #{propis.inspect} vs #{prop.should.inspect}")
-        insync = false
-      #else
-      #    property.debug("In sync")
-      end
-    }
-
-    #self.debug("#{self} sync status is #{insync}")
-    insync
-  end
-
   # Says if the ensure property should be retrieved if the resource is ensurable
   # Defaults to true. Some resource type classes can override it
   def self.needs_ensure_retrieved
