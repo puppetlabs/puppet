@@ -908,6 +908,13 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       # `Facter.resolve` to omit legacy facts
       Puppet::Node::Facts.indirection.terminus_class = :facter
 
+      # need to use `Facter::OptionStore.reset` in order to reset
+      # Facter::OptionStore since Facter.clear does not reset it.
+      # Specifically, Options[:show_legacy] needs to be reset to
+      # true for legacy facts test below
+      Facter.clear
+      Facter::OptionStore.reset
+
       facter_dir = File.join(custom_dir, 'facter')
       FileUtils.mkdir_p(facter_dir)
       File.write(File.join(facter_dir, 'custom.rb'), <<~END)
@@ -962,9 +969,10 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       }
     end
 
-    it "includes legacy facts by default" do
+    it "can include legacy facts" do
       server.start_server(mounts: mounts) do |port|
         Puppet[:serverport] = port
+        Puppet[:include_legacy_facts] = true
 
         agent.command_line.args << '--test'
         expect {
@@ -978,10 +986,9 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       end
     end
 
-    it "can exclude legacy facts" do
+    it "excludes legacy facts by default" do
       server.start_server(mounts: mounts) do |port|
         Puppet[:serverport] = port
-        Puppet[:include_legacy_facts] = false
 
         agent.command_line.args << '--test'
         expect {

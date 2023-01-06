@@ -1720,7 +1720,7 @@ EOT
     },
     :include_legacy_facts => {
       :type       => :boolean,
-      :default    => true,
+      :default    => false,
       :desc       => "Whether to include legacy facts when requesting a catalog. This
         option can be set to false provided all puppet manifests, hiera.yaml and hiera
         configuration layers no longer access legacy facts, such as `$osfamily`, and

@@ -63,7 +63,7 @@ describe Puppet::Node::Facts::Facter do
     end
 
     it "should return the Facter facts as the values in the Facts instance" do
-      expect(Facter).to receive(:to_hash).and_return("one" => "two")
+      expect(Facter).to receive(:resolve).and_return("one" => "two")
       facts = @facter.find(@request)
       expect(facts.values["one"]).to eq("two")
     end
