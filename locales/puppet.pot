@@ -1,16 +1,16 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) 2022 Puppet, Inc.
+# Copyright (C) 2023 Puppet, Inc.
 # This file is distributed under the same license as the Puppet automation framework package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 7.21.0-21-gdfaff8f4c1\n"
+"Project-Id-Version: Puppet automation framework 7.21.0-38-g7ffe4a0b07\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2022-12-16 23:07+0000\n"
-"PO-Revision-Date: 2022-12-16 23:07+0000\n"
+"POT-Creation-Date: 2023-01-07 00:23+0000\n"
+"PO-Revision-Date: 2023-01-07 00:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -768,7 +768,7 @@ msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{all
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1981
+#: ../lib/puppet/defaults.rb:1982
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -7931,57 +7931,51 @@ msgstr ""
 msgid "Undefined attribute '%{attribute}' in %{name}"
 msgstr ""
 
-#. TRANSLATORS 'is' is a variable name and should not be translated
-#. TRANSLATORS 'is' is a variable name and should not be translated
-#: ../lib/puppet/type.rb:1049 ../lib/puppet/type.rb:1060
-msgid "The 'is' value is not in the 'is' array for '%{name}'"
-msgstr ""
-
-#: ../lib/puppet/type.rb:1191
+#: ../lib/puppet/type.rb:1150
 msgid "%{name} has no providers and has not overridden 'instances'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1455
+#: ../lib/puppet/type.rb:1414
 msgid "Cannot add aliases without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1535
+#: ../lib/puppet/type.rb:1494
 msgid "Could not find %{description} %{ref} for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1759
+#: ../lib/puppet/type.rb:1718
 msgid "Found multiple default providers for %{name}: %{provider_list}; using %{selected_provider}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1846
+#: ../lib/puppet/type.rb:1805
 msgid "Could not find parent provider %{parent} of %{name}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1920
+#: ../lib/puppet/type.rb:1879
 msgid "Invalid %{resource} provider '%{provider_class}'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2005
+#: ../lib/puppet/type.rb:1964
 msgid "Could not find %{name} provider of %{provider}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2123
+#: ../lib/puppet/type.rb:2082
 msgid "You cannot add relationships without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2443
+#: ../lib/puppet/type.rb:2402
 msgid "Unable to mark '%{name}' as sensitive: %{name} is a parameter and not a property, and cannot be automatically redacted."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2446
+#: ../lib/puppet/type.rb:2405
 msgid "Unable to mark '%{name}' as sensitive: the property itself was not assigned a value."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2448
+#: ../lib/puppet/type.rb:2407
 msgid "Unable to mark '%{name}' as sensitive: the property itself is not defined on %{type}."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2506
+#: ../lib/puppet/type.rb:2465
 msgid "Could not set %{attribute} on %{class_name}: %{detail}"
 msgstr ""
 
