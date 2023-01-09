@@ -138,10 +138,6 @@ describe Puppet::Transaction::Report do
   end
 
   describe "when exclude_unchanged_resources is true" do
-    before do
-      Puppet[:exclude_unchanged_resources] = true
-    end
-
     let(:test_dir) { tmpdir('unchanged_resources') }
     let(:test_dir2) { tmpdir('unchanged_resources') }
     let(:test_file) { tmpfile('some_path')}
@@ -170,6 +166,42 @@ describe Puppet::Transaction::Report do
       expect(rs["File[failing_file]"]['failed']).to be true
       expect(rs["File[skipped_file]"]['skipped']).to be true
       expect(rs).to_not have_key(["File[#{test_dir}]"])
+    end
+  end
+
+  describe"when exclude_unchanged_resources is false" do
+    before do
+      Puppet[:exclude_unchanged_resources] = false
+    end
+
+    let(:test_dir) { tmpdir('unchanged_resources') }
+    let(:test_dir2) { tmpdir('unchanged_resources') }
+    let(:test_file) { tmpfile('some_path')}
+    it 'should list all resource statuses' do
+      transaction = apply_compiled_manifest(<<-END)
+        notify { "hi": } ~>
+        exec { "/bin/this_command_does_not_exist":
+          command => "#{make_absolute('/bin/this_command_does_not_exist')}",
+          refreshonly => true,
+        }
+        file { '#{test_dir}':
+          ensure => directory
+        }
+        file { 'failing_file':
+          path => '#{test_dir2}',
+          ensure => file
+        }
+        file { 'skipped_file':
+          path => '#{test_file}',
+          require => File[failing_file]
+        }
+      END
+      rs = transaction.report.to_data_hash['resource_statuses']
+      expect(rs["Notify[hi]"]['out_of_sync']).to be true
+      expect(rs["Exec[/bin/this_command_does_not_exist]"]['failed_to_restart']).to be true
+      expect(rs["File[failing_file]"]['failed']).to be true
+      expect(rs["File[skipped_file]"]['skipped']).to be true
+      expect(rs["File[#{test_dir}]"]['changed']).to be false
     end
   end
 
