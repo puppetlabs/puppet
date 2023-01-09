@@ -53,7 +53,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
         expect {
           client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: alt_context})
         }.to raise_error(Puppet::SSL::CertVerifyError,
-                         %r{certificate verify failed.* .self signed certificate in certificate chain for CN=Test CA.})
+                         %r{certificate verify failed.* .self.signed certificate in certificate chain for CN=Test CA.})
       end
     end
 
@@ -170,7 +170,7 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
         expect {
           client.get(URI("https://127.0.0.1:#{port}"), options: {ssl_context: system_context})
         }.to raise_error(Puppet::SSL::CertVerifyError,
-                         %r{certificate verify failed.* .self signed certificate in certificate chain for CN=Test CA.})
+                         %r{certificate verify failed.* .self.signed certificate in certificate chain for CN=Test CA.})
       end
     end
   end
