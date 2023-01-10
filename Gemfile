@@ -13,7 +13,7 @@ def location_for(place, fake_version = nil)
 end
 
 # override .gemspec deps - may issue warning depending on Bundler version
-gem "facter", *location_for(ENV['FACTER_LOCATION']) if ENV.has_key?('FACTER_LOCATION')
+gem "facter", :git => 'https://github.com/puppetlabs/facter'
 gem "hiera", *location_for(ENV['HIERA_LOCATION']) if ENV.has_key?('HIERA_LOCATION')
 gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ["~> 1.0"])
 gem "puppet-resource_api", *location_for(ENV['RESOURCE_API_LOCATION'] || ["~> 1.5"])
