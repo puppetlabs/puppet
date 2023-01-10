@@ -155,6 +155,8 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
     end
 
     it "fails to apply a deferred function with an unsatified prerequisite" do
+      Puppet[:preprocess_deferred] = true
+
       catalog_handler = -> (req, res) {
         catalog = compile_to_catalog(deferred_manifest, node)
         res.body = formatter.render(catalog)
@@ -173,8 +175,6 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
     end
 
     it "applies a deferred function and its prerequisite in the same run" do
-      Puppet[:preprocess_deferred] = false
-
       catalog_handler = -> (req, res) {
         catalog = compile_to_catalog(deferred_manifest, node)
         res.body = formatter.render(catalog)

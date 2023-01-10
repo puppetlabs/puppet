@@ -695,6 +695,8 @@ class amod::bad_type {
     end
 
     it "fails to apply a deferred function with an unsatified prerequisite" do
+      Puppet[:preprocess_deferred] = true
+
       apply.command_line.args = ['-e', deferred_manifest]
       expect {
         apply.run
@@ -704,8 +706,6 @@ class amod::bad_type {
     end
 
     it "applies a deferred function and its prerequisite in the same run" do
-      Puppet[:preprocess_deferred] = false
-
       apply.command_line.args = ['-e', deferred_manifest]
       expect {
         apply.run
@@ -714,6 +714,7 @@ class amod::bad_type {
     end
 
     it "validates the deferred resource before applying any resources" do
+      Puppet[:preprocess_deferred] = true
       undeferred_file = tmpfile('undeferred')
 
       manifest = <<~END
@@ -738,8 +739,6 @@ class amod::bad_type {
     end
 
     it "evaluates resources before validating the deferred resource" do
-      Puppet[:preprocess_deferred] = false
-
       manifest = <<~END
         notify { 'runs before file': } ->
         file { '#{deferred_file}':

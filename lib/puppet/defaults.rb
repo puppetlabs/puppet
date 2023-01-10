@@ -2037,7 +2037,7 @@ EOT
         what is being done.",
     },
     :preprocess_deferred => {
-      :default => true,
+      :default => false,
       :type => :boolean,
       :desc => "Whether puppet should call deferred functions before applying
         the catalog. If set to `true`, then all prerequisites needed for the
