@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
   s.version = mdata ? mdata[1] : version
 
   s.required_rubygems_version = Gem::Requirement.new("> 1.3.1")
+  # Bump this in PUP-11716
   s.required_ruby_version = Gem::Requirement.new(">= 2.5.0")
   s.authors = ["Puppet Labs"]
   s.date = "2012-08-17"
