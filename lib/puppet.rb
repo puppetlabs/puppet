@@ -1,11 +1,11 @@
 require_relative 'puppet/version'
 require_relative 'puppet/concurrent/synchronized'
 
-if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new("2.5.0")
-  raise LoadError, "Puppet #{Puppet.version} requires Ruby 2.5.0 or greater, found Ruby #{RUBY_VERSION.dup}."
+if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new("2.7.0")
+  raise LoadError, "Puppet #{Puppet.version} requires Ruby 2.7.0 or greater, found Ruby #{RUBY_VERSION.dup}."
 end
 
-Puppet::OLDEST_RECOMMENDED_RUBY_VERSION = '2.5.0'
+Puppet::OLDEST_RECOMMENDED_RUBY_VERSION = '2.7.0'
 
 $LOAD_PATH.extend(Puppet::Concurrent::Synchronized)
 
