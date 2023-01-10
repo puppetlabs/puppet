@@ -77,7 +77,7 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
           expect {
             http.get('/')
           }.to raise_error(Puppet::Error,
-                           %r{certificate verify failed.* .self signed certificate in certificate chain for CN=Test CA.})
+                           %r{certificate verify failed.* .self.signed certificate in certificate chain for CN=Test CA.})
         end
       end
 
@@ -219,7 +219,7 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
         expect {
           http.get('/')
         }.to raise_error(Puppet::Error,
-                         %r{certificate verify failed.* .self signed certificate in certificate chain for CN=Test CA.})
+                         %r{certificate verify failed.* .self.signed certificate in certificate chain for CN=Test CA.})
       end
     end
 

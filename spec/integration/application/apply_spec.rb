@@ -629,7 +629,7 @@ class amod::bad_type {
           apply.run
         }.to exit_with(0)
          .and output(/Applied catalog/).to_stdout
-         .and output(/Report processor failed: certificate verify failed \[self signed certificate in certificate chain for CN=Unknown CA\]/).to_stderr
+         .and output(/Report processor failed: certificate verify failed \[self.signed certificate in certificate chain for CN=Unknown CA\]/).to_stderr
       end
     end
 
