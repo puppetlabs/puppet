@@ -68,10 +68,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     csr.public_key = if key.is_a?(OpenSSL::PKey::EC)
                        # EC#public_key doesn't follow the PKey API,
                        # see https://github.com/ruby/openssl/issues/29
-                       point = key.public_key
-                       pubkey = OpenSSL::PKey::EC.new(point.group)
-                       pubkey.public_key = point
-                       pubkey
+                       key
                      else
                        key.public_key
                      end
