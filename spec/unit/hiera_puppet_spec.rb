@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'hiera_puppet'
 require 'puppet_spec/scope'
 
-describe 'HieraPuppet' do
+describe 'HieraPuppet', :if => Puppet.features.hiera? do
   include PuppetSpec::Scope
 
   after(:all) do
