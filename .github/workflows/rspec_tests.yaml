@@ -27,6 +27,7 @@ jobs:
           - {os: windows-2019, ruby: '2.6'}
           - {os: windows-2019, ruby: '2.7'}
           - {os: windows-2019, ruby: '3.0'}
+          - {os: windows-2019, ruby: '3.2'} # openssl 3
 
     runs-on: ${{ matrix.cfg.os }}
     steps:
