@@ -1,4 +1,4 @@
-require 'hiera'
+Puppet.features.hiera?
 require 'hiera/scope'
 require_relative 'puppet'
 
