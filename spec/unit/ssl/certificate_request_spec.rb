@@ -198,7 +198,7 @@ describe Puppet::SSL::CertificateRequest do
 
         expect do
           request.generate(key, :csr_attributes => csr_attributes)
-        end.to raise_error Puppet::Error, /Cannot create CSR with attribute thats\.no\.moon: first num too large/
+        end.to raise_error Puppet::Error, /Cannot create CSR with attribute thats\.no\.moon: /
       end
 
       it "should support old non-DER encoded extensions" do
@@ -271,7 +271,7 @@ describe Puppet::SSL::CertificateRequest do
         exts = {"thats.no.moon" => "death star"}
         expect do
           request.generate(key, :extension_requests => exts)
-        end.to raise_error Puppet::Error, /Cannot create CSR with extension request thats\.no\.moon.*: first num too large/
+        end.to raise_error Puppet::Error, /Cannot create CSR with extension request thats\.no\.moon.*: /
       end
     end
 
@@ -313,6 +313,7 @@ describe Puppet::SSL::CertificateRequest do
 
     it "should use SHA1 to sign the csr when SHA256 isn't available" do
       csr = OpenSSL::X509::Request.new
+      csr.public_key = key.public_key
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA256").and_return(false)
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA1").and_return(true)
       signer = Puppet::SSL::CertificateSigner.new
@@ -323,6 +324,7 @@ describe Puppet::SSL::CertificateRequest do
     it "should use SHA512 to sign the csr when SHA256 and SHA1 aren't available" do
       key = OpenSSL::PKey::RSA.new(2048)
       csr = OpenSSL::X509::Request.new
+      csr.public_key = key.public_key
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA256").and_return(false)
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA1").and_return(false)
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA512").and_return(true)
@@ -334,6 +336,7 @@ describe Puppet::SSL::CertificateRequest do
     it "should use SHA384 to sign the csr when SHA256/SHA1/SHA512 aren't available" do
       key = OpenSSL::PKey::RSA.new(2048)
       csr = OpenSSL::X509::Request.new
+      csr.public_key = key.public_key
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA256").and_return(false)
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA1").and_return(false)
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA512").and_return(false)
@@ -345,6 +348,7 @@ describe Puppet::SSL::CertificateRequest do
 
     it "should use SHA224 to sign the csr when SHA256/SHA1/SHA512/SHA384 aren't available" do
       csr = OpenSSL::X509::Request.new
+      csr.public_key = key.public_key
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA256").and_return(false)
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA1").and_return(false)
       expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA512").and_return(false)

@@ -459,10 +459,13 @@ describe Puppet::SSL::SSLProvider do
     it "raises if root CA's isCA basic constraint is false", unless: Puppet::Util::Platform.jruby? || OpenSSL::OPENSSL_VERSION_NUMBER < 0x10100000 do
       certs = [cert_fixture('bad-basic-constraints.pem'), cert_fixture('intermediate.pem')]
 
+      # openssl 3 returns 79
+      # define X509_V_ERR_NO_ISSUER_PUBLIC_KEY                 24
+      # define X509_V_ERR_INVALID_CA                           79
       expect {
         subject.create_context(**config.merge(cacerts: certs, crls: [], revocation: false))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "Certificate 'CN=Test CA' failed verification (24): invalid CA certificate")
+                       /Certificate 'CN=Test CA' failed verification \((24|79)\): invalid CA certificate/)
     end
 
     # OpenSSL < 1.1 does not verify basicConstraints
@@ -472,7 +475,7 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(**config.merge(cacerts: certs, crls: [], revocation: false))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "Certificate 'CN=Test CA Subauthority' failed verification (24): invalid CA certificate")
+                       /Certificate 'CN=Test CA Subauthority' failed verification \((24|79)\): invalid CA certificate/)
     end
 
     it 'accepts CA certs in any order' do
