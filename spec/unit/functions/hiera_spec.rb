@@ -161,7 +161,7 @@ describe 'when calling' do
     with_scope { |scope| the_func.call(scope, *args, &block) }
   end
 
-  context 'hiera' do
+  context 'hiera', :if => Puppet.features.hiera? do
     it 'should require a key argument' do
       expect { func([]) }.to raise_error(ArgumentError)
     end
@@ -195,7 +195,7 @@ describe 'when calling' do
       expect(func('datasources', nil, 'the_override')).to eql(['the_override', 'first', 'second'])
     end
 
-    it 'a hiera v3 scope is used' do
+    it 'a hiera v3 scope is used', :if => Puppet.features.hiera? do
       expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['-- testing --', '-- mod::foo --', '-- mod/foo --', '-- mod --', '-- mod --'])
       class testing () {
          notice(hiera('class_name'))
@@ -266,7 +266,7 @@ describe 'when calling' do
     end
   end
 
-  context 'hiera_array' do
+  context 'hiera_array', :if => Puppet.features.hiera? do
     let(:the_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'hiera_array') }
 
     it 'should require a key argument' do
@@ -299,7 +299,7 @@ describe 'when calling' do
     end
   end
 
-  context 'hiera_hash' do
+  context 'hiera_hash', :if => Puppet.features.hiera? do
     let(:the_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'hiera_hash') }
 
     it 'should require a key argument' do
@@ -336,7 +336,7 @@ describe 'when calling' do
     end
   end
 
-  context 'hiera_include' do
+  context 'hiera_include', :if => Puppet.features.hiera? do
     let(:the_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'hiera_include') }
 
     it 'should require a key argument' do
@@ -365,7 +365,7 @@ describe 'when calling' do
     end
   end
 
-  context 'with custom backend and merge_behavior declared in hiera.yaml' do
+  context 'with custom backend and merge_behavior declared in hiera.yaml', :if => Puppet.features.hiera? do
     let(:merge_behavior) { 'deeper' }
 
     let(:hiera_yaml) do
@@ -468,7 +468,7 @@ describe 'when calling' do
       end
     end
 
-    context 'hiera_array' do
+    context 'hiera_array', :if => Puppet.features.hiera? do
       let(:the_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'hiera_array') }
 
       it 'declared merge_behavior is ignored' do

@@ -282,8 +282,9 @@ class HieraConfig
   end
 
   def create_hiera3_backend_provider(name, backend, parent_data_provider, datadir, paths, hiera3_config)
-    # Custom backend. Hiera v3 must be installed, it's logger configured, and it must be made aware of the loaded config
-    require 'hiera'
+    # Custom backend. Hiera 3 must be installed, its logger configured, and it must be made aware of the loaded config
+    raise Puppet::DataBinding::LookupError, 'Hiera 3 is not installed' if !Puppet.features.hiera?
+
     if Hiera::Config.instance_variable_defined?(:@config) && (current_config = Hiera::Config.instance_variable_get(:@config)).is_a?(Hash)
       current_config.each_pair do |key, val|
         case key
