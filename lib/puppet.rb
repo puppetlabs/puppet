@@ -1,11 +1,12 @@
 require_relative 'puppet/version'
 require_relative 'puppet/concurrent/synchronized'
 
-if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new("2.5.0")
-  raise LoadError, "Puppet #{Puppet.version} requires Ruby 2.5.0 or greater, found Ruby #{RUBY_VERSION.dup}."
+# Update JRuby version constraints in PUP-11716
+if !defined?(JRUBY_VERSION) && Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new("2.7.0")
+  raise LoadError, "Puppet #{Puppet.version} requires Ruby 2.7.0 or greater, found Ruby #{RUBY_VERSION.dup}."
 end
 
-Puppet::OLDEST_RECOMMENDED_RUBY_VERSION = '2.5.0'
+Puppet::OLDEST_RECOMMENDED_RUBY_VERSION = '2.7.0'
 
 $LOAD_PATH.extend(Puppet::Concurrent::Synchronized)
 
@@ -130,6 +131,7 @@ module Puppet
 
   # Now that settings are loaded we have the code loaded to be able to issue
   # deprecation warnings. Warn if we're on a deprecated ruby version.
+  # Update JRuby version constraints in PUP-11716
   if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
     Puppet.deprecation_warning(_("Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html for a list of supported ruby versions.") % { version: RUBY_VERSION })
   end

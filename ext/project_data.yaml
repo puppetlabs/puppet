@@ -15,7 +15,7 @@ gem_executables: 'puppet'
 gem_default_executables: 'puppet'
 gem_license: 'Apache-2.0'
 gem_forge_project: 'puppet'
-gem_required_ruby_version: '>= 2.5.0'
+gem_required_ruby_version: '>= 2.7.0'
 gem_required_rubygems_version: '> 1.3.1'
 gem_runtime_dependencies:
   facter: ['> 2.0.1', '< 5']
