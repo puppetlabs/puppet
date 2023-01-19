@@ -104,7 +104,6 @@ def get_test_sample
   # covering a wide range of features and code susceptible to regressions.
   tests = [ 'tests/direct_puppet/cached_catalog_remediate_local_drift.rb',
             'tests/resource/file/content_attribute.rb',
-            'tests/puppet_apply_basics.rb',
             'tests/face/loadable_from_modules.rb',
             'tests/language/functions_in_puppet_language.rb',
             'tests/parser_functions/calling_all_functions.rb',
