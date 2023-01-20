@@ -40,7 +40,10 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
                Puppet::Node::Facts.new(request.key, Puppet.runtime[:facter].to_hash)
              else
                # resolve does not return legacy facts unless requested
-               Puppet::Node::Facts.new(request.key, Puppet.runtime[:facter].resolve(''))
+               facts = Puppet.runtime[:facter].resolve('')
+               # some versions of Facter 4 return a Facter::FactCollection instead of
+               # a Hash, breaking API compatibility, so force a hash using `to_h`
+               Puppet::Node::Facts.new(request.key, facts.to_h)
              end
 
     result.add_local_facts unless request.options[:resolve_options]
