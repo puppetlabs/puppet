@@ -68,7 +68,9 @@ test_name "agent run should fail if it finds an unknown resource type" do
           agent.rm_rf(vendor_modules_path)
         end
 
-        on(agent, puppet('agent', '-t', '--environment', tmp_environment), acceptable_exit_codes: [1]) do |result|  
+        # override vendormoduledir in case agent and server are on the same host
+        agent_dir = get_test_file_path(agent, 'vendormodulepath')
+        on(agent, puppet('agent', '-t', '--environment', tmp_environment, '--vendormoduledir', agent_dir), acceptable_exit_codes: [1]) do |result|
           assert_match(/Error: Failed to apply catalog: Resource type 'Mycustomtype' was not found/, result.stderr)
         end
       end
