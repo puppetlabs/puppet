@@ -54,7 +54,7 @@ test_name 'Ensure a file resource can have a UTF-8 source attribute, content, an
 
   step 'create a site.pp on master containing a unicode file resource' do
     site_pp_contents = <<-SITE_PP
-      \$test_path = \$::fqdn ? #{agent_tmp_dirs}
+      \$test_path = \$facts['networking']['fqdn'] ? #{agent_tmp_dirs}
       file { "\$test_path/\uff72\uff67\u30d5\u30eb":
         ensure => present,
         source => "puppet:///modules/utf8_file_module/\u9759\u7684",
