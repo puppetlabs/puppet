@@ -38,7 +38,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency(%q<locale>, "~> 2.1")
   s.add_runtime_dependency(%q<multi_json>, "~> 1.13")
   s.add_runtime_dependency(%q<httpclient>, "~> 2.8")
-  s.add_runtime_dependency(%q<concurrent-ruby>, "~> 1.0")
+  s.add_runtime_dependency(%q<concurrent-ruby>, ["~> 1.0", "< 1.2.0"])
   s.add_runtime_dependency(%q<deep_merge>, "~> 1.0")
 
   # loads platform specific gems like ffi, win32 platform gems
