@@ -26,7 +26,7 @@ gem_runtime_dependencies:
   multi_json: '~> 1.10'
   httpclient: '~> 2.8'
   puppet-resource_api: '~>1.5'
-  concurrent-ruby: '~> 1.0'
+  concurrent-ruby: ["~> 1.0", "< 1.2.0"]
   deep_merge: '~> 1.0'
 gem_rdoc_options:
   - --title
