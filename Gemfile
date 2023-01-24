@@ -18,6 +18,7 @@ gem "facter-ng", *location_for(ENV['FACTER_NG_LOCATION']) if ENV.has_key?('FACTE
 gem "hiera", *location_for(ENV['HIERA_LOCATION']) if ENV.has_key?('HIERA_LOCATION')
 gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ["~> 1.0"])
 gem "puppet-resource_api", *location_for(ENV['RESOURCE_API_LOCATION'] || ["~> 1.5"])
+gem "concurrent-ruby", git: 'https://github.com/ioquatix/concurrent-ruby', branch: 'ruby-thread-local-var-compatibility'
 
 gem "scanf" if RUBY_VERSION.to_f >= 2.7
 
