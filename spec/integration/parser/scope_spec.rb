@@ -276,6 +276,8 @@ describe "Two step scoping for variables" do
 
     ['a:.b', '::a::b'].each do |ref|
       it "does not resolve a qualified name on the form #{ref} against top scope" do
+        # strict_variables is off so behavior this test is trying to check isn't stubbed out
+        Puppet[:strict_variables] = false
         expect_the_message_not_to_be("from topscope") do <<-"MANIFEST"
               class c {
                 notify { 'something': message => "$#{ref}" }
@@ -297,6 +299,8 @@ describe "Two step scoping for variables" do
 
     ['a:.b', '::a::b'].each do |ref|
       it "does not resolve a qualified name on the form #{ref} against node scope" do
+        # strict_variables is off so behavior this test is trying to check isn't stubbed out
+        Puppet[:strict_variables] = false
         expect_the_message_not_to_be("from node") do <<-MANIFEST
               class c {
                 notify { 'something': message => "$a::b" }
@@ -626,8 +630,9 @@ describe "Two step scoping for variables" do
       end
     end
 
-    it "finds nil when the only set variable is in the dynamic scope" do
-      expect_the_message_to_be(nil) do <<-MANIFEST
+    it "raises an evaluation error when the only set variable is in the dynamic scope" do
+      expect {
+        compile_to_catalog(<<-MANIFEST)
             node default {
               include baz
             }
@@ -641,7 +646,7 @@ describe "Two step scoping for variables" do
               include bar
             }
         MANIFEST
-      end
+      }.to raise_error(/Evaluation Error: Unknown variable: 'var'./)
     end
 
     it "ignores the value in the dynamic scope for a defined type" do

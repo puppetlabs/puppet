@@ -19,6 +19,8 @@ describe 'the return function' do
     end
 
     it 'with undef value as function result when not given an argument' do
+      # strict_variables is off so behavior this test is trying to check isn't stubbed out
+      Puppet[:strict_variables] = false
       expect(compile_to_catalog(<<-CODE)).to have_resource('Notify[xy]')
           function please_return() {
             [1,2,3].map |$x| { if $x == 1 { return() } 200 }

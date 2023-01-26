@@ -993,13 +993,11 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         agent.command_line.args << '--test'
         expect {
           agent.run
-        }.to exit_with(2)
+        }.to exit_with(1)
           .and output(
-            match(/defined 'message' as 'legacy '/)
-              .and match(/defined 'message' as 'custom a custom value'/)
-              .and match(/defined 'message' as 'external an external value'/)
-            ).to_stdout
-          .and output(/Warning: Unknown variable: 'osfamily'/).to_stderr
+            match(/Error: Evaluation Error: Unknown variable: 'osfamily'/)
+              .and match(/Error: Could not retrieve catalog from remote server: Error 500 on SERVER:/)
+          ).to_stderr
       end
     end
   end

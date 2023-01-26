@@ -16,7 +16,12 @@ describe "the inline_epp function" do
       expect(eval_template("all your base <%= $what %> to us")).to eq("all your base are belong to us")
     end
 
-    it "get nil accessing a variable that does not exist" do
+    it "gets error accessing a variable that does not exist" do
+      expect { eval_template("<%= $kryptonite == undef %>")}.to raise_error(/Evaluation Error: Unknown variable: 'kryptonite'./)
+    end
+
+    it "get nil accessing a variable that does not exist when strict_variables is off" do
+      Puppet[:strict_variables] = false
       expect(eval_template("<%= $kryptonite == undef %>")).to eq("true")
     end
 

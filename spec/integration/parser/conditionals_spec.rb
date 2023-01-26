@@ -68,6 +68,8 @@ describe "Evaluation of Conditionals" do
     end
 
     it "evaluates undefined variables as false" do
+      # strict_variables is off so behavior this test is trying to check isn't stubbed out
+      Puppet[:strict_variables] = false
       catalog = compile_to_catalog(<<-CODE)
       if $undef_var {
       } else {

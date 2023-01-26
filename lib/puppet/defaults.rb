@@ -2210,7 +2210,7 @@ EOT
     EOT
     },
   :strict_variables => {
-    :default => false,
+    :default => true,
     :type => :boolean,
     :desc => <<-'EOT'
       Causes an evaluation error when referencing unknown variables. (This does not affect
