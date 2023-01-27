@@ -693,8 +693,19 @@ describe Puppet::Parser::Compiler do
         end.to raise_error(/Illegal variable name/)
       end
 
-      it 'a missing variable as default value becomes undef' do
-        # strict variables not on
+      it 'a missing variable as default causes an evaluation error' do
+        # when strict variables not on
+        expect {
+          compile_to_catalog(<<-MANIFEST)
+          class a ($b=$x) { notify {test: message=>"yes ${undef == $b}" } }
+            include a
+          MANIFEST
+        }.to raise_error(/Evaluation Error: Unknown variable: 'x'/)
+      end
+
+      it 'a missing variable as default value becomes undef when strict_variables is off' do
+        # strict variables on by default for 8.x
+        Puppet[:strict_variables] = false
         catalog = compile_to_catalog(<<-MANIFEST)
         class a ($b=$x) { notify {test: message=>"yes ${undef == $b}" } }
           include a

@@ -514,9 +514,10 @@ describe Puppet::Resource::Catalog::Compiler do
 
     it "should not add 'pe_serverversion' when FOSS" do
       allow(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(node)
-      catalog = compiler.find(request)
-
-      expect(catalog.resource('notify', 'PE Version: 2019.2.0')).to be_nil
+      expect {
+        catalog = compiler.find(request)
+        catalog.resource('notify', 'PE Version: 2019.2.0') 
+      }.to raise_error(/Evaluation Error: Unknown variable: 'pe_serverversion'./)
     end
 
     it "should add 'pe_serverversion' when PE" do

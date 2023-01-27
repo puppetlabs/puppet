@@ -673,6 +673,8 @@ Searching for "a"
       let(:node) { Puppet::Node.new("testnode", :facts => facts, :environment => 'puppet_func_provider') }
 
       it "works OK in the absense of '--compile'" do
+        # strict_variables is off so behavior this test is trying to check isn't stubbed out
+        Puppet[:strict_variables] = false
         lookup.options[:node] = node
         allow(lookup.command_line).to receive(:args).and_return(['c'])
         lookup.options[:render_as] = :s
