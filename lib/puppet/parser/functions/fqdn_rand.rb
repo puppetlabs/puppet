@@ -23,7 +23,7 @@ Puppet::Parser::Functions::newfunction(:fqdn_rand, :arity => -2, :type => :rvalu
     initial_seed = args.shift
     downcase = !!args.shift
 
-    fqdn = self['::fqdn']
+    fqdn = self['facts'].dig('networking', 'fqdn')
     fqdn = fqdn.downcase if downcase
 
     # Puppet 5.4's fqdn_rand function produces a different value than earlier versions
