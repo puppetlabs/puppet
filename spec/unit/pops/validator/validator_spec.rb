@@ -142,10 +142,9 @@ describe "validating 4x" do
   end
 
   context 'with the default settings for --strict' do
-    it 'produces a warning for duplicate keys in a literal hash' do
+    it 'produces an error for duplicate keys in a literal hash' do
       acceptor = validate(parse('{ a => 1, a => 2 }'))
-      expect(acceptor.warning_count).to eql(1)
-      expect(acceptor.error_count).to eql(0)
+      expect(acceptor.error_count).to eql(1)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
     end
 

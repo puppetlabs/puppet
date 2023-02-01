@@ -22,8 +22,9 @@ describe "the epp function" do
       expect { eval_template("<%= $kryptonite == undef %>")}.to raise_error(/Evaluation Error: Unknown variable: 'kryptonite'./)
     end
 
-    it "get nil accessing a variable that does not exist when strict_variables is off" do
+    it "get nil accessing a variable that does not exist when strict mode is off" do
       Puppet[:strict_variables] = false
+      Puppet[:strict] = :warning
       expect(eval_template("<%= $kryptonite == undef %>")).to eq("true")
     end
 

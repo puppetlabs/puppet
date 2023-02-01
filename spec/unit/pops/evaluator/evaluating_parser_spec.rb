@@ -439,6 +439,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     context "on strings requiring boxing to Numeric" do
+      # turn strict mode off so behavior is not stubbed out
+      before :each do
+        Puppet[:strict] = :off
+      end
       let(:logs) { [] }
       let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
       let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
@@ -851,6 +855,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "[1,2][1, -1.0]"              => "An Array[] cannot use Float where Integer is expected",
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
+        Puppet[:strict] = :off
         expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(Regexp.new(Regexp.quote(result)))
       end
     end

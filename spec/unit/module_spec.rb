@@ -773,12 +773,14 @@ describe Puppet::Module do
   end
 
   it "should not have metadata if it has a metadata file and its data is empty" do
+    Puppet[:strict] = :warning
     allow(File).to receive(:read).with(mymod_metadata, {:encoding => 'utf-8'}).and_return("")
 
     expect(mymod).not_to be_has_metadata
   end
 
   it "should not have metadata if has a metadata file and its data is invalid" do
+    Puppet[:strict] = :warning
     allow(File).to receive(:read).with(mymod_metadata, {:encoding => 'utf-8'}).and_return("This is some invalid json.\n")
     expect(mymod).not_to be_has_metadata
   end
@@ -797,12 +799,6 @@ describe Puppet::Module do
     expect_any_instance_of(Puppet::Module).to receive(:load_metadata)
 
     Puppet::Module.new("yay", "/path", double("env"))
-  end
-
-  it "should tolerate failure to parse" do
-    allow(File).to receive(:read).with(mymod_metadata, {:encoding => 'utf-8'}).and_return(my_fixture('trailing-comma.json'))
-
-    expect(mymod.has_metadata?).to be_falsey
   end
 
   describe 'when --strict is warning' do

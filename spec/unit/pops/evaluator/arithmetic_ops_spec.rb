@@ -94,6 +94,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     context "on strings requiring boxing to Numeric" do
+      before :each do
+        Puppet[:strict] = :off
+      end
       it "'2' + '2'        ==  4" do
         expect(evaluate(literal('2') + literal('2'))).to eq(4)
       end
@@ -124,6 +127,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it "'012.3' + '010'  ==  20.3 (not error, floats can start with 0)" do
         expect(evaluate(literal('012.3') + literal('010'))).to eq(20.3)
+      end
+
+      it "raises an error when coercing string to numerical by default" do
+        Puppet[:strict] = :error
+        expect { evaluate(literal('2') + literal('2')) }.to raise_error(/Evaluation Error: The string '2' was automatically coerced to the numerical value 2/)
       end
     end
 

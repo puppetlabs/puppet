@@ -573,9 +573,11 @@ describe "The lookup function" do
         it 'reloads the configuration if interpolated values change' do
           Puppet[:log_level] = 'debug'
           collect_notices("notice('success')") do |scope|
+            scope['var'] = {}
             expect(lookup_func.call(scope, 'y')).to eql('value y from x')
-            scope['var'] = { 'sub' => '_d' }
-            expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
+            nested_scope = scope.compiler.newscope(scope)
+            nested_scope['var'] = { 'sub' => '_d' }
+            expect(lookup_func.call(nested_scope, 'y')).to eql('value y from x_d')
             nested_scope = scope.compiler.newscope(scope)
             nested_scope['var'] = { 'sub' => '_e' }
             expect(lookup_func.call(nested_scope, 'y')).to eql('value y from x_e')
@@ -602,15 +604,10 @@ describe "The lookup function" do
       context 'using global variable reference' do
         let(:data_path) { 'x%{::var.sub}.yaml' }
 
-        it 'reloads the configuration if interpolated that was previously undefined, gets defined' do
-          Puppet[:log_level] = 'debug'
+        it 'raises an error when reloads the configuration if interpolating undefined values' do
           collect_notices("notice('success')") do |scope|
-            expect(lookup_func.call(scope, 'y')).to eql('value y from x')
-            scope['var'] = { 'sub' => '_d' }
-            expect(lookup_func.call(scope, 'y')).to eql('value y from x_d')
+            expect { lookup_func.call(scope, 'y') }.to raise_error(/Undefined variable '::var'/)
           end
-          expect(notices).to eql(['success'])
-          expect(debugs.any? { |m| m =~ /Hiera configuration recreated due to change of scope variables used in interpolation expressions/ }).to be_truthy
         end
 
         it 'does not reload the configuration if value changes locally' do
@@ -726,10 +723,13 @@ describe "The lookup function" do
         it 'interpolates both key and value"' do
           Puppet[:log_level] = 'debug'
           collect_notices("notice('success')") do |scope|
+            scope['key'] = ''
+            scope['value'] = ''
             expect(lookup_func.call(scope, 'a')).to eql({'' => 'the '})
-            scope['key'] = 'a_key'
-            scope['value'] = 'interpolated value'
-            expect(lookup_func.call(scope, 'a')).to eql({'a_key' => 'the interpolated value'})
+            nested_scope = scope.compiler.newscope(scope)
+            nested_scope['key'] = 'a_key'
+            nested_scope['value'] = 'interpolated value'
+            expect(lookup_func.call(nested_scope, 'a')).to eql({'a_key' => 'the interpolated value'})
           end
           expect(notices).to eql(['success'])
         end
@@ -783,15 +783,26 @@ describe "The lookup function" do
       context 'that contains a legal yaml that is not a hash' do
         let(:common_yaml) { "- A list\n- of things" }
 
-        it 'fails with a "did not find"' do
+        it 'fails with a "invalid yaml hash"' do
           expect { lookup('a') }.to raise_error do |e|
-            expect(e.message).to match(/did not find a value for the name 'a'/)
+            expect(e.message).to match(/spec\/data\/common.yaml: file does not contain a valid yaml hash/)
           end
         end
 
-        it 'logs a warning that the file does not contain a hash' do
-          expect { lookup('a') }.to raise_error(Puppet::DataBinding::LookupError)
-          expect(warnings).to include(/spec\/data\/common.yaml: file does not contain a valid yaml hash/)
+        context 'when strict mode is off' do
+          before :each do
+            Puppet[:strict] = :warning
+          end
+          it 'fails with a "did not find"' do
+            expect { lookup('a') }.to raise_error do |e|
+              expect(e.message).to match(/did not find a value for the name 'a'/)
+            end
+          end
+
+          it 'logs a warning that the file does not contain a hash' do
+            expect { lookup('a') }.to raise_error(Puppet::DataBinding::LookupError)
+            expect(warnings).to include(/spec\/data\/common.yaml: file does not contain a valid yaml hash/)
+          end
         end
       end
 
@@ -2412,6 +2423,7 @@ describe "The lookup function" do
         end
 
         it 'defaults are used when data is not found in scope interpolations' do
+          pending('See PUP-11751')
           expect(lookup('mod_a::interpolate_scope_xd', { 'default_values_hash' => defaults })).to eql('-- value scope_xd (from default) --')
         end
 
@@ -2449,15 +2461,16 @@ describe "The lookup function" do
           expect(lookup('mod_a::interpolate_scope')).to eql('-- scope scalar value --')
         end
 
-        it 'interpolates not found in scope as empty string' do
-          expect(lookup('mod_a::interpolate_scope_not_found')).to eql('--  --')
+        it 'raises an error when trying to interpolate not found in scope' do
+          expect { lookup('mod_a::interpolate_scope_not_found') 
+          }.to raise_error(/Evaluation Error: Error while evaluating a Function Call, Undefined variable 'scope_nope';/)
         end
 
         it 'interpolates dotted key from scope' do
           expect(lookup('mod_a::interpolate_scope_dig')).to eql('-- scope hash a --')
         end
 
-        it 'treates interpolated dotted key but not found in scope as empty string' do
+        it 'treats interpolated dotted key but not found in scope as empty string' do
           expect(lookup('mod_a::interpolate_scope_dig_not_found')).to eql('--  --')
         end
 

@@ -188,7 +188,7 @@ module Puppet
         ",
     },
     :strict => {
-      :default    => :warning,
+      :default    => :error,
       :type       => :symbolic_enum,
       :values     => [:off, :warning, :error],
       :desc       => "The strictness level of puppet. Allowed values are:

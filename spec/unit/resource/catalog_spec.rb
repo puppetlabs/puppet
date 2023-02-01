@@ -965,7 +965,8 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
 
     context 'and rich_data is disabled' do
       before(:each) do
-        Puppet[:rich_data] = false
+        Puppet[:rich_data] = false 
+        Puppet[:strict] = :warning # do not want to stub out behavior in tests
       end
 
       let(:catalog_w_regexp)  { compile_to_catalog("notify {'foo': message => /[a-z]+/ }") }
@@ -1031,6 +1032,14 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
         expect(message.has_key?('a')).to eql(true)
         expect(message['a']).to eql(nil)
         expect(message['b']).to eql(10)
+      end
+
+      it 'should raise an error by default when trying to convert parameter with rich data' do
+        Puppet[:strict] = :error
+        expect {
+          catalog = compile_to_catalog("notify {'foo': message => Timestamp('2016-09-15T08:32:16.123 UTC') }")
+          Puppet::Resource::Catalog.from_data_hash(JSON.parse(catalog.to_json)) 
+        }.to raise_error(/Evaluation Error: Notify\[foo\]\['message'\] contains a Puppet::Pops::Time::Timestamp value. It will be converted to the String '2016-09-15T08:32:16.123000000 UTC'/)
       end
     end
   end
