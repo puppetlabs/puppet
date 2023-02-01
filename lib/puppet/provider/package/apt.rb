@@ -19,7 +19,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   commands :aptmark => "/usr/bin/apt-mark"
   commands :preseed => "/usr/bin/debconf-set-selections"
 
-  defaultfor :osfamily => :debian
+  defaultfor 'os.family' => :debian
 
   ENV['DEBIAN_FRONTEND'] = "noninteractive"
 

@@ -42,8 +42,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   commands :launchctl => "/bin/launchctl"
 
-  defaultfor :operatingsystem => :darwin
-  confine :operatingsystem    => :darwin
+  defaultfor 'os.name' => :darwin
+  confine 'os.name'    => :darwin
   confine :feature            => :cfpropertylist
 
   has_feature :enableable
@@ -70,7 +70,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   #
   # @api private
   def self.get_os_version
-    @os_version ||= Puppet.runtime[:facter].value(:operatingsystemmajrelease).to_i
+    @os_version ||= Facter.value('os.release.major').to_i
   end
 
   # Defines the path to the overrides plist file where service enabling

@@ -170,7 +170,7 @@ Puppet::Type.newtype(:resources) do
     end
 
     # Otherwise, use a sensible default based on the OS family
-    @system_users_max_uid ||= case Puppet.runtime[:facter].value(:osfamily)
+    @system_users_max_uid ||= case Puppet.runtime[:facter].value('os.family')
       when 'OpenBSD', 'FreeBSD'
         999
       else

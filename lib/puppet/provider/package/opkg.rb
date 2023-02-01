@@ -5,8 +5,8 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
 
   commands :opkg => "opkg"
 
-  confine     :operatingsystem => :openwrt
-  defaultfor  :operatingsystem => :openwrt
+  confine     'os.name' => :openwrt
+  defaultfor  'os.name' => :openwrt
 
   def self.instances
     packages = []

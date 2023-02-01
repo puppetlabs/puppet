@@ -13,19 +13,19 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   confine :true => Puppet::FileSystem.exist?('/proc/1/comm') && Puppet::FileSystem.read('/proc/1/comm').include?('systemd')
 
-  defaultfor :osfamily => [:archlinux]
-  defaultfor :osfamily => :redhat, :operatingsystemmajrelease => ["7", "8", "9"]
-  defaultfor :osfamily => :redhat, :operatingsystem => :fedora
-  defaultfor :osfamily => :suse
-  defaultfor :osfamily => :coreos
-  defaultfor :operatingsystem => :amazon, :operatingsystemmajrelease => ["2"]
-  defaultfor :operatingsystem => :debian
-  notdefaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ["5", "6", "7"] # These are using the "debian" method
-  defaultfor :operatingsystem => :LinuxMint
-  notdefaultfor :operatingsystem => :LinuxMint, :operatingsystemmajrelease => ["10", "11", "12", "13", "14", "15", "16", "17"] # These are using upstart
-  defaultfor :operatingsystem => :ubuntu
-  notdefaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["10.04", "12.04", "14.04", "14.10"] # These are using upstart
-  defaultfor :operatingsystem => :cumuluslinux, :operatingsystemmajrelease => ["3", "4"]
+  defaultfor 'os.family' => [:archlinux]
+  defaultfor 'os.family' => :redhat, 'os.release.major' => ["7", "8", "9"]
+  defaultfor 'os.family' => :redhat, 'os.name' => :fedora
+  defaultfor 'os.family' => :suse
+  defaultfor 'os.family' => :coreos
+  defaultfor 'os.name' => :amazon, 'os.release.major' => ["2"]
+  defaultfor 'os.name' => :debian
+  notdefaultfor 'os.name' => :debian, 'os.release.major' => ["5", "6", "7"] # These are using the "debian" method
+  defaultfor 'os.name' => :LinuxMint
+  notdefaultfor 'os.name' => :LinuxMint, 'os.release.major' => ["10", "11", "12", "13", "14", "15", "16", "17"] # These are using upstart
+  defaultfor 'os.name' => :ubuntu
+  notdefaultfor 'os.name' => :ubuntu, 'os.release.major' => ["10.04", "12.04", "14.04", "14.10"] # These are using upstart
+  defaultfor 'os.name' => :cumuluslinux, 'os.release.major' => ["3", "4"]
 
   def self.instances
     i = []
@@ -110,7 +110,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     # The indirect state indicates that the unit is not enabled.
     return :false if output == 'indirect'
     return :true if (code == 0)
-    if (output.empty?) && (code > 0) && (Puppet.runtime[:facter].value(:osfamily).casecmp('debian').zero?)
+    if (output.empty?) && (code > 0) && (Puppet.runtime[:facter].value('os.family').casecmp('debian').zero?)
       ret = debian_enabled?
       return ret if ret
     end

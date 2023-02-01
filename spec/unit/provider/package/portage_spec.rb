@@ -72,8 +72,8 @@ describe Puppet::Type.type(:package).provider(:portage) do
     expect(described_class).to be_reinstallable
   end
 
-  it "should be the default provider on :osfamily => Gentoo" do
-    expect(Facter).to receive(:value).with(:osfamily).and_return("Gentoo")
+  it "should be the default provider on 'os.family' => Gentoo" do
+    expect(Facter).to receive(:value).with('os.family').and_return("Gentoo")
     expect(described_class.default?).to be_truthy
   end
 
