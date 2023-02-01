@@ -26,6 +26,8 @@ tag 'audit:high',
     step 'delete custom backend, restore default hiera config' do
       on(master, "rm #{existing_loadpath}/hiera/backend/custom_backend.rb", :acceptable_exit_codes => [0,1])
       on(master, "mv #{hiera_conf_backup} #{confdir}/hiera.yaml", :acceptable_exit_codes => [0,1])
+      on(master, "/opt/puppetlabs/server/bin/puppetserver gem uninstall --executables --force hiera")
+      on(master, "/opt/puppetlabs/puppet/bin/gem uninstall --executables --force hiera")
     end
 
     agents.each do |agent|
@@ -33,6 +35,13 @@ tag 'audit:high',
         agent.rm_rf(command_result.stdout)
       end
     end
+  end
+
+  step "install hiera v3 gem" do
+    # for puppet agent <-> server, hiera must be installed using puppetserver's gem command
+    on(master, "/opt/puppetlabs/server/bin/puppetserver gem install --no-document hiera")
+    # for puppet lookup, hiera must be installed using puppet's gem command
+    on(master, "/opt/puppetlabs/puppet/bin/gem install --no-document hiera")
   end
 
   step "create hiera v5 config and v3 custom backend" do
