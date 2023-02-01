@@ -43,9 +43,9 @@ tag 'audit:high',
   - "host"
   - "roles"
   - "profiles"
-  - "%{::operatingsystem}"
-  - "%{::osfamily}"
-  - "%{::kernel}"
+  - "%{facts.os.name}"
+  - "%{facts.os.family}"
+  - "%{facts.kernel}"
   - "common"
 :merge_behavior: deeper
 :deep_merge_options:
