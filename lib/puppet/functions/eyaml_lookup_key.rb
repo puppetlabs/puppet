@@ -87,7 +87,7 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
       Hiera::Backend::Eyaml::Options.set(options)
       begin
         tokens = Hiera::Backend::Eyaml::Parser::ParserFactory.hiera_backend_parser.parse(data)
-        data = tokens.map(&:to_plain_text).join.chomp
+        data = tokens.select{|token| not token.kind_of? Hiera::Backend::Eyaml::Parser::NonMatchToken}.map(&:to_plain_text).join
       rescue StandardError => ex
         raise Puppet::DataBinding::LookupError,
           _("hiera-eyaml backend error decrypting %{data} when looking up %{key} in %{path}. Error was %{message}") % { data: data, key: key, path: options['path'], message: ex.message }
