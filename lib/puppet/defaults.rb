@@ -2041,7 +2041,7 @@ EOT
       :type => :boolean,
       :desc => "Whether puppet should call deferred functions before applying
         the catalog. If set to `true`, then all prerequisites needed for the
-        deferred function must be satified prior to puppet running. If set to
+        deferred function must be satisfied prior to puppet running. If set to
         `false`, then deferred functions will follow puppet relationships and
         ordering. This allows puppet to install prerequisites needed for a
         deferred function and call the deferred function in the same run."
