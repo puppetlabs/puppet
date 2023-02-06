@@ -79,11 +79,11 @@ class Puppet::Settings
   end
 
   def self.hostname_fact()
-    Puppet.runtime[:facter].value :hostname
+    Puppet.runtime[:facter].value 'networking.hostname'
   end
 
   def self.domain_fact()
-    Puppet.runtime[:facter].value :domain
+    Puppet.runtime[:facter].value 'networking.domain'
   end
 
   def self.default_config_file_name

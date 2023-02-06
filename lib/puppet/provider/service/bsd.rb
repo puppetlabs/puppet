@@ -5,7 +5,7 @@ Puppet::Type.type(:service).provide :bsd, :parent => :init do
     Uses `rc.conf.d` for service enabling and disabling.
   EOT
 
-  confine :operatingsystem => [:freebsd, :dragonfly]
+  confine 'os.name' => [:freebsd, :dragonfly]
 
   def rcconf_dir
     '/etc/rc.conf.d'

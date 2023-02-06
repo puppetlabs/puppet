@@ -429,9 +429,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     @server_facts["serverversion"] = Puppet.version.to_s
 
     # And then add the server name and IP
-    {"servername" => "fqdn",
-      "serverip"  => "ipaddress",
-      "serverip6" => "ipaddress6"
+    {"servername" => "networking.fqdn",
+      "serverip"  => "networking.ip",
+      "serverip6" => "networking.ip6"
     }.each do |var, fact|
       value = Puppet.runtime[:facter].value(fact)
       if !value.nil?
@@ -440,10 +440,10 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     end
 
     if @server_facts["servername"].nil?
-      host = Puppet.runtime[:facter].value(:hostname)
+      host = Puppet.runtime[:facter].value('networking.hostname')
       if host.nil?
         Puppet.warning _("Could not retrieve fact servername")
-      elsif domain = Puppet.runtime[:facter].value(:domain) #rubocop:disable Lint/AssignmentInCondition
+      elsif domain = Puppet.runtime[:facter].value('networking.domain') #rubocop:disable Lint/AssignmentInCondition 
         @server_facts["servername"] = [host, domain].join(".")
       else
         @server_facts["servername"] = host

@@ -4,7 +4,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   desc "Standard `init`-style service management."
 
   def self.defpath
-    case Puppet.runtime[:facter].value(:operatingsystem)
+    case Puppet.runtime[:facter].value('os.name')
     when "FreeBSD", "DragonFly"
       ["/etc/rc.d", "/usr/local/etc/rc.d"]
     when "HP-UX"
@@ -21,8 +21,8 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   # Debian and Ubuntu should use the Debian provider.
   # RedHat systems should use the RedHat provider.
   confine :true => begin
-      os = Puppet.runtime[:facter].value(:operatingsystem).downcase
-      family = Puppet.runtime[:facter].value(:osfamily).downcase
+      os = Puppet.runtime[:facter].value('os.name').downcase
+      family = Puppet.runtime[:facter].value('os.family').downcase
       !(os == 'debian' || os == 'ubuntu' || family == 'redhat')
   end
 
@@ -54,7 +54,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     # these excludes were found with grep -r -L start /etc/init.d
     excludes += %w{rcS module-init-tools}
     # Prevent puppet failing on unsafe scripts from Yocto Linux
-    if Puppet.runtime[:facter].value(:osfamily) == "cisco-wrlinux"
+    if Puppet.runtime[:facter].value('os.family') == "cisco-wrlinux"
       excludes += %w{banner.sh bootmisc.sh checkroot.sh devpts.sh dmesg.sh
                    hostname.sh mountall.sh mountnfs.sh populate-volatile.sh
                    rmnologin.sh save-rtc.sh sendsigs sysfs.sh umountfs
@@ -172,7 +172,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   end
 
   def service_execute(type, command, fof = true, squelch = false, combine = true)
-    if type == :start && Puppet.runtime[:facter].value(:osfamily) == "Solaris"
+    if type == :start && Puppet.runtime[:facter].value('os.family') == "Solaris"
         command =  ["/usr/bin/ctrun -l child", command].flatten.join(" ")
     end
     super(type, command, fof, squelch, combine)

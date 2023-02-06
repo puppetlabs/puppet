@@ -33,7 +33,7 @@ describe 'Puppet::Type::Service::Provider::Openwrt',
   end
 
   it "should be the default provider on 'openwrt'" do
-    expect(Facter).to receive(:value).with(:operatingsystem).and_return('openwrt')
+    expect(Facter).to receive(:value).with('os.name').and_return('openwrt')
     expect(provider_class.default?).to be_truthy
   end
 

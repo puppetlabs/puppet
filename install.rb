@@ -92,7 +92,7 @@ def do_man(man, strip = 'man/')
     FileUtils.install(mf, omf, mode: 0644, preserve: true, verbose: true)
     # Solaris does not support gzipped man pages. When called with
     # --no-check-prereqs/without facter the default gzip behavior still applies
-    unless $operatingsystem == "Solaris"
+    unless $osname == "Solaris"
       gzip = %x{which gzip}
       gzip.chomp!
       %x{#{gzip} -f #{omf}}
@@ -234,16 +234,16 @@ def prepare_installation
     RbConfig::CONFIG['bindir'] = "/usr/bin"
   end
 
-  # Here we only set $operatingsystem if we have opted to check for prereqs.
+  # Here we only set $osname if we have opted to check for prereqs.
   # Otherwise facter won't be guaranteed to be present.
   if InstallOptions.check_prereqs
     check_prereqs
-    $operatingsystem = Facter.value :operatingsystem
+    $osname = Facter.value('os.name')
   end
 
   if not InstallOptions.configdir.nil?
     configdir = InstallOptions.configdir
-  elsif $operatingsystem == "windows"
+  elsif $osname == "windows"
     configdir = File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "etc")
   else
     configdir = "/etc/puppetlabs/puppet"
@@ -251,7 +251,7 @@ def prepare_installation
 
   if not InstallOptions.codedir.nil?
     codedir = InstallOptions.codedir
-  elsif $operatingsystem == "windows"
+  elsif $osname == "windows"
     codedir = File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "code")
   else
     codedir = "/etc/puppetlabs/code"
@@ -259,7 +259,7 @@ def prepare_installation
 
   if not InstallOptions.vardir.nil?
     vardir = InstallOptions.vardir
-  elsif $operatingsystem == "windows"
+  elsif $osname == "windows"
     vardir = File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "cache")
   else
     vardir = "/opt/puppetlabs/puppet/cache"
@@ -267,7 +267,7 @@ def prepare_installation
 
   if not InstallOptions.publicdir.nil?
     publicdir = InstallOptions.publicdir
-  elsif $operatingsystem == "windows"
+  elsif $osname == "windows"
     publicdir = File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "public")
   else
     publicdir = "/opt/puppetlabs/puppet/public"
@@ -275,7 +275,7 @@ def prepare_installation
 
   if not InstallOptions.rundir.nil?
     rundir = InstallOptions.rundir
-  elsif $operatingsystem == "windows"
+  elsif $osname == "windows"
     rundir = File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "var", "run")
   else
     rundir = "/var/run/puppetlabs"
@@ -283,7 +283,7 @@ def prepare_installation
 
   if not InstallOptions.logdir.nil?
     logdir = InstallOptions.logdir
-  elsif $operatingsystem == "windows"
+  elsif $osname == "windows"
     logdir = File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "var", "log")
   else
     logdir = "/var/log/puppetlabs/puppet"
@@ -298,7 +298,7 @@ def prepare_installation
   if not InstallOptions.localedir.nil?
     localedir = InstallOptions.localedir
   else
-    if $operatingsystem == "windows"
+    if $osname == "windows"
       localedir = File.join(ENV['PROGRAMFILES'], "Puppet Labs", "Puppet", "puppet", "share", "locale")
     else
       localedir = "/opt/puppetlabs/puppet/share/locale"
@@ -376,7 +376,7 @@ end
 # by stripping the drive letter, but only if the basedir is not empty.
 #
 def join(basedir, dir)
-  return "#{basedir}#{dir[2..-1]}" if $operatingsystem == "windows" and basedir.length > 0 and dir.length > 2
+  return "#{basedir}#{dir[2..-1]}" if $osname == "windows" and basedir.length > 0 and dir.length > 2
 
   "#{basedir}#{dir}"
 end
@@ -398,7 +398,7 @@ end
 
 def build_ri(files)
   return unless $haverdoc
-  return if $operatingsystem == "windows"
+  return if $osname == "windows"
   begin
     ri = RDoc::RDoc.new
     #ri.document(["--ri-site", "--merge"] + files)
@@ -427,14 +427,14 @@ def install_binfile(from, op_file, target)
 
   File.open(from) do |ip|
     File.open(tmp_file.path, "w") do |op|
-      op.puts "#!#{ruby}" unless $operatingsystem == "windows"
+      op.puts "#!#{ruby}" unless $osname == "windows"
       contents = ip.readlines
       contents.shift if contents[0] =~ /^#!/
       op.write contents.join
     end
   end
 
-  if $operatingsystem == "windows" && InstallOptions.batch_files
+  if $osname == "windows" && InstallOptions.batch_files
     installed_wrapper = false
 
     unless File.extname(from) =~ /\.(cmd|bat)/
@@ -484,7 +484,7 @@ FileUtils.cd File.dirname(__FILE__) do
 
   prepare_installation
 
-  if $operatingsystem == "windows"
+  if $osname == "windows"
     windows_bins = glob(%w{ext/windows/*bat})
   end
 
@@ -492,8 +492,8 @@ FileUtils.cd File.dirname(__FILE__) do
   #build_ri(ri) if InstallOptions.ri
   do_configs(configs, InstallOptions.config_dir) if InstallOptions.configs
   do_bins(bins, InstallOptions.bin_dir)
-  do_bins(windows_bins, InstallOptions.bin_dir, 'ext/windows/') if $operatingsystem == "windows" && InstallOptions.batch_files
+  do_bins(windows_bins, InstallOptions.bin_dir, 'ext/windows/') if $osname == "windows" && InstallOptions.batch_files
   do_libs(libs)
   do_locales(locales)
-  do_man(man) unless $operatingsystem == "windows"
+  do_man(man) unless $osname == "windows"
 end
