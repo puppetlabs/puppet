@@ -16,8 +16,13 @@ describe Hiera::Scope do
   end
 
   describe "#[]" do
-    it "should return nil when no value is found" do
+    it "should return nil when no value is found and strict mode is off" do
+      Puppet[:strict] = :warning
       expect(scope["foo"]).to eq(nil)
+    end
+
+    it "should raise error by default when no value is found" do
+      expect { scope["foo"] }.to raise_error(/Undefined variable 'foo'/)
     end
 
     it "should treat '' as nil" do

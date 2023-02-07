@@ -35,6 +35,7 @@ describe "when using a hiera data provider" do
     node = Puppet::Node.new("testnode", :facts => facts, :environment => environment)
     compiler = Puppet::Parser::Compiler.new(node)
     compiler.topscope['domain'] = 'example.com'
+    compiler.topscope['my_fact'] = 'server3'
     block_given? ? compiler.compile { |catalog| yield(compiler); catalog } : compiler.compile
   end
 
@@ -164,6 +165,7 @@ describe "when using a hiera data provider" do
     expect(extract_notifications(compiler.compile)).to include('server2')
 
     compiler = Puppet::Parser::Compiler.new(node)
+    compiler.topscope['my_fact'] = 'server3'
     expect(extract_notifications(compiler.compile)).to include('In name.yaml')
   end
 

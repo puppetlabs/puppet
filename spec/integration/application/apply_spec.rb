@@ -203,6 +203,7 @@ describe "apply", unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'can apply the catalog' do
+      Puppet[:strict] = :warning
       catalog = compile_to_catalog('include mod', node)
 
       Puppet[:environment] = env_name
@@ -211,6 +212,20 @@ describe "apply", unless: Puppet::Util::Platform.jruby? do
       expect {
         apply.run
       }.to output(%r{Notify\[The Street 23\]/message: defined 'message' as 'The Street 23'}).to_stdout
+    end
+
+    it 'can apply the catalog with no warning' do
+      pending("See PUP-11751")
+      Puppet[:strict] = :warning
+      logs = []
+      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        catalog = compile_to_catalog('include mod', node)
+        Puppet[:environment] = env_name
+        apply.command_line.args = ['--catalog', file_containing('manifest', catalog.to_json)]
+        apply.run
+      end
+      # expected to have no warnings
+      expect(logs.select { |log| log.level == :warning }.map { |log| log.message }).to be_empty
     end
   end
 
@@ -438,6 +453,11 @@ class amod::bad_type {
     end
 
     context 'and the file is not serialized with rich_data' do
+      # do not want to stub out behavior in tests
+      before :each do 
+        Puppet[:strict] = :warning
+      end
+
       it 'will notify a string that is the result of Regexp#inspect (from Runtime3xConverter)' do
         catalog = compile_to_catalog(execute, node)
         apply.command_line.args = ['--catalog', file_containing('manifest', catalog.to_json)]

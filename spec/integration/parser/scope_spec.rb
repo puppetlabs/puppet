@@ -276,8 +276,9 @@ describe "Two step scoping for variables" do
 
     ['a:.b', '::a::b'].each do |ref|
       it "does not resolve a qualified name on the form #{ref} against top scope" do
-        # strict_variables is off so behavior this test is trying to check isn't stubbed out
+        # strict mode is off so behavior this test is trying to check isn't stubbed out
         Puppet[:strict_variables] = false
+        Puppet[:strict] = :warning
         expect_the_message_not_to_be("from topscope") do <<-"MANIFEST"
               class c {
                 notify { 'something': message => "$#{ref}" }
@@ -299,8 +300,9 @@ describe "Two step scoping for variables" do
 
     ['a:.b', '::a::b'].each do |ref|
       it "does not resolve a qualified name on the form #{ref} against node scope" do
-        # strict_variables is off so behavior this test is trying to check isn't stubbed out
+        # strict mode is off so behavior this test is trying to check isn't stubbed out
         Puppet[:strict_variables] = false
+        Puppet[:strict] = :warning
         expect_the_message_not_to_be("from node") do <<-MANIFEST
               class c {
                 notify { 'something': message => "$a::b" }

@@ -162,6 +162,10 @@ describe Puppet::Parser::Scope do
   end
 
   describe "when looking up a variable" do
+    before :each do
+      Puppet[:strict] = :warning
+    end
+
     it "should support :lookupvar and :setvar for backward compatibility" do
       @scope.setvar("var", "yep")
       expect(@scope.lookupvar("var")).to eq("yep")

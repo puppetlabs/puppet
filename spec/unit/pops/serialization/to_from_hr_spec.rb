@@ -493,6 +493,10 @@ module Serialization
   end
 
   context 'with rich_data set to false' do
+    before :each do
+      # strict mode off so behavior is not stubbed
+      Puppet[:strict] = :warning
+    end
     let(:to_converter) { ToDataConverter.new(:message_prefix => 'Test Hash', :rich_data => false) }
     let(:logs) { [] }
     let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
@@ -521,6 +525,14 @@ module Serialization
       expect(warnings).to eql([
         "Test Hash contains a hash with a SemanticPuppet::Version key. It will be converted to the String '1.0.0'",
         "Test Hash contains a hash with a SemanticPuppet::Version key. It will be converted to the String '2.0.0'"])
+      end
+
+    it 'A Hash with rich data is not converted and raises error by default' do
+      Puppet[:strict] = :error
+      expect do
+        val = { SemanticPuppet::Version.parse('1.0.0') => 'one', SemanticPuppet::Version.parse('2.0.0') => 'two' }
+        write(val)
+      end.to raise_error(/Evaluation Error: Test Hash contains a hash with a SemanticPuppet::Version key. It will be converted to the String '1.0.0'/)
     end
 
     context 'and symbol_as_string is set to true' do

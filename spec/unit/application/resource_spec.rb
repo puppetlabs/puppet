@@ -129,22 +129,24 @@ describe Puppet::Application::Resource do
   end
 
   describe "when printing output" do
-    it "should not emit puppet class tags when printing yaml" do
-      Puppet::Type.newtype(:stringify) do
-        ensurable
-        newparam(:name, isnamevar: true)
-        newproperty(:string)
+    Puppet::Type.newtype(:stringify) do
+      ensurable
+      newparam(:name, isnamevar: true)
+      newproperty(:string)
+    end
+
+    Puppet::Type.type(:stringify).provide(:stringify) do
+      def exists?
+        true
       end
 
-      Puppet::Type.type(:stringify).provide(:stringify) do
-        def exists?
-          true
-        end
-
-        def string
-          Puppet::Util::Execution::ProcessOutput.new('test', 0)
-        end
+      def string
+        Puppet::Util::Execution::ProcessOutput.new('test', 0)
       end
+    end
+    
+    it "should not emit puppet class tags when printing yaml when strict mode is off" do
+      Puppet[:strict] = :warning
 
       @resource_app.options[:to_yaml] = true
       allow(@resource_app.command_line).to receive(:args).and_return(['stringify', 'hello', 'ensure=present', 'string=asd'])
@@ -156,6 +158,13 @@ describe Puppet::Application::Resource do
           string: test
       YAML
       expect { @resource_app.main }.not_to raise_error
+    end
+
+    it "should raise an error when printing yaml by default" do
+      @resource_app.options[:to_yaml] = true
+      allow(@resource_app.command_line).to receive(:args).and_return(['stringify', 'hello', 'ensure=present', 'string=asd'])
+      expect { @resource_app.main }.to raise_error( Puppet::PreformattedError,
+        /Stringify\[hello\]\['string'\] contains a Puppet::Util::Execution::ProcessOutput value. It will be converted to the String 'test'/)
     end
 
     it "should ensure all values to be printed are in the external encoding" do
