@@ -119,7 +119,7 @@ class RelationshipOperator
   # To implement this, the general evaluator needs to be able to track each evaluation result and associate
   # it with a corresponding expression. This structure should then be passed to the relationship operator.
   #
-  def evaluate (left_right_evaluated, relationship_expression, scope)
+  def evaluate(left_right_evaluated, relationship_expression, scope)
     # assert operator (should have been validated, but this logic makes assumptions which would
     # screw things up royally). Better safe than sorry.
     unless RELATIONSHIP_OPERATORS.include?(relationship_expression.operator)
