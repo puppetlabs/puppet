@@ -194,8 +194,8 @@ module Puppet
       :desc       => "The strictness level of puppet. Allowed values are:
 
         * off     - do not perform extra validation, do not report
-        * warning - perform extra validation, report as warning (default)
-        * error   - perform extra validation, fail with error
+        * warning - perform extra validation, report as warning
+        * error   - perform extra validation, fail with error (default)
 
         The strictness level is for both language semantics and runtime
         evaluation validation. In addition to controlling the behavior with
