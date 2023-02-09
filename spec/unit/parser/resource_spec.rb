@@ -108,6 +108,15 @@ describe Puppet::Parser::Resource do
       }.to raise_error(ArgumentError, /Resources require a hash as last argument/)
     end
 
+    it "should attempt to externalize filepaths via the environment" do
+      environment = Puppet::Node::Environment.create(:testing, [])
+      expect(environment).to receive(:externalize_path).at_least(:once).and_return("foo")
+      Puppet[:code] = "notify { 'hello': }"
+      catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new 'anyone', environment: environment)
+      notify = catalog.resource('Notify[hello]')
+      expect(notify.file).to eq("foo")
+    end
+
     it "should set the reference correctly" do
       res = Puppet::Parser::Resource.new("resource", "testing", @arguments)
       expect(res.ref).to eq("Resource[testing]")

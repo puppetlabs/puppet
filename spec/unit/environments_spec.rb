@@ -115,6 +115,15 @@ describe Puppet::Environments do
       end
     end
 
+    it "sets the environment's configured and resolved paths set when symlinked" do
+      loader_from(:filesystem => [directory_tree],
+                  :directory => directory_tree.children.first) do |loader|
+        env = loader.get("symlinked_environment")
+        expect(env.resolved_path).to eq("#{FS.path_string(directory_tree)}/versioned_env")
+        expect(env.configured_path).to eq("#{FS.path_string(directory_tree)}/envdir/symlinked_environment")
+      end
+    end
+
     it "ignores symlinked environments when `:versioned_environment_dirs` is false" do
       Puppet[:versioned_environment_dirs] = false
       loader_from(:filesystem => [directory_tree],

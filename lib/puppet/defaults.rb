@@ -421,6 +421,19 @@ module Puppet
         <https://puppet.com/docs/puppet/latest/environments_about.html>",
       :type    => :path,
     },
+    :report_configured_environmentpath => {
+      :type     => :boolean,
+      :default  => true,
+      :desc     => <<-'EOT'
+      When versioned_environment_dirs is `true` Puppet will readlink the environmentpath
+      when constructing the environment's modulepath. The full readlinked path is referred
+      to as the "resolved path" and the configured path potentially containing symlinks is
+      the "configured path". When reporting where resources come from users may choose
+      between the configured or resolved path.
+
+      When set to false, the resolved paths are reported instead of the configured paths.
+    EOT
+    },
     :use_last_environment => {
       :type     => :boolean,
       :default  => true,

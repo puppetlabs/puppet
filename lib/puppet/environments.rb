@@ -243,6 +243,15 @@ module Puppet::Environments
         setting_values.interpolate(:manifest),
         setting_values.interpolate(:config_version)
       )
+
+      configured_path = File.join(@environment_dir, name.to_s)
+      env.configured_path = configured_path
+      if Puppet.settings[:report_configured_environmentpath]
+        env.resolved_path = validated_directory(configured_path)
+      else
+        env.resolved_path = configured_path
+      end
+
       env
     end
 
