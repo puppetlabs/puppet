@@ -194,7 +194,7 @@ Layout/SpaceAroundKeyword:
   Enabled: false
 
 Layout/SpaceAfterMethodName:
-  Enabled: false
+  Enabled: true
 
 Layout/SpaceAfterNot:
   Enabled: false
