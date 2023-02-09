@@ -12,8 +12,7 @@ def location_for(place, fake_version = nil)
   end
 end
 
-# override .gemspec deps - may issue warning depending on Bundler version
-gem "facter", :git => 'https://github.com/puppetlabs/facter'
+gem "facter", *location_for(ENV['FACTER_LOCATION'] || ["~> 4.3"])
 gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ["~> 1.0"])
 gem "puppet-resource_api", *location_for(ENV['RESOURCE_API_LOCATION'] || ["~> 1.5"])
 
