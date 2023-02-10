@@ -11,7 +11,7 @@ test_name "rpm should install packages with multiple versions" do
 
   repo_content = <<-REPO
 [local]
-name=EL-$releasever - test packages
+name=EL-releasever - test packages
 baseurl=file:///tmp/el-repo
 enabled=1
 gpgcheck=0
