@@ -454,7 +454,7 @@ class amod::bad_type {
 
     context 'and the file is not serialized with rich_data' do
       # do not want to stub out behavior in tests
-      before :each do 
+      before :each do
         Puppet[:strict] = :warning
       end
 
@@ -714,7 +714,7 @@ class amod::bad_type {
        .and output(%r{Notice: /Stage\[main\]/Main/Notify\[deferred4x\]/message: defined 'message' as 'I am deferred'}).to_stdout
     end
 
-    it "fails to apply a deferred function with an unsatified prerequisite" do
+    it "fails to apply a deferred function with an unsatisfied prerequisite" do
       Puppet[:preprocess_deferred] = true
 
       apply.command_line.args = ['-e', deferred_manifest]

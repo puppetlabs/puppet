@@ -154,7 +154,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       end
     end
 
-    it "fails to apply a deferred function with an unsatified prerequisite" do
+    it "fails to apply a deferred function with an unsatisfied prerequisite" do
       Puppet[:preprocess_deferred] = true
 
       catalog_handler = -> (req, res) {
