@@ -32,7 +32,6 @@ file { '#{testdir}/hiera.yaml':
       - "yaml"
     :logger: "console"
     :hierarchy:
-      - "%{fqdn}"
       - "%{environment}"
       - "global"
 
