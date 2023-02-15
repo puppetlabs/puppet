@@ -92,12 +92,11 @@ class FunctionContext
 
   def cached_entries(&block)
     if block_given?
-      enumerator = @cache.each_pair
-      @cache.size.times do
+      @cache.each_pair do |pair|
         if block.arity == 2
-          yield(*enumerator.next)
+          yield(*pair)
         else
-          yield(enumerator.next)
+          yield(pair)
         end
       end
       nil
