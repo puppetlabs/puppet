@@ -1599,6 +1599,17 @@ Whether to send reports after every transaction\.
 .
 .IP "" 0
 .
+.SS "report_configured_environmentpath"
+When versioned_environment_dirs is \fBtrue\fR Puppet will readlink the environmentpath when constructing the environment\'s modulepath\. The full readlinked path is referred to as the "resolved path" and the configured path potentially containing symlinks is the "configured path"\. When reporting where resources come from users may choose between the configured or resolved path\.
+.
+.P
+When set to false, the resolved paths are reported instead of the configured paths\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: \fBtrue\fR
+.
+.IP "" 0
+.
 .SS "report_include_system_store"
 Whether the \'http\' report processor should include the system certificate store when submitting reports to HTTPS URLs\. If false, then the \'http\' processor will only trust HTTPS report servers whose certificates are issued by the puppet CA or one of its intermediate CAs\. If true, the processor will additionally trust CA certificates in the system\'s certificate store\.
 .
