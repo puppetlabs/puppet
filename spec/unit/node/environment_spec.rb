@@ -40,6 +40,47 @@ describe Puppet::Node::Environment do
       expect(e.inspect).to match(%r{<Puppet::Node::Environment:\w* @name="test" @manifest="#{File.expand_path('/manifests/path')}" @modulepath="#{File.expand_path('/modules/path')}:#{File.expand_path('/other/modules')}" >})
     end
 
+    describe "externalizing filepaths" do
+      before(:each) do
+        env.resolved_path = "/opt/puppetlabs/envs/prod_123"
+        env.configured_path = "/etc/puppetlabs/envs/prod"
+
+        @vendored_manifest = "/opt/puppetlabs/vendored/modules/foo/manifests/init.pp"
+        @production_manifest = "/opt/puppetlabs/envs/prod_123/modules/foo/manifests/init.pp"
+      end
+
+      it "leaves paths alone if they do not match the resolved path" do
+        expect(env.externalize_path(@vendored_manifest)).to eq(@vendored_manifest)
+      end
+
+      it "leaves paths alone if resolved or configured paths are not set" do
+        env.resolved_path = nil
+        env.configured_path = nil
+        expect(env.externalize_path(@production_manifest)).to eq(@production_manifest)
+      end
+
+      it "replaces resolved paths with configured paths" do
+        externalized_path = env.externalize_path(@production_manifest)
+        expect(externalized_path).to eq("/etc/puppetlabs/envs/prod/modules/foo/manifests/init.pp")
+      end
+
+      it "handles nil" do
+        externalized_path = env.externalize_path(nil)
+        expect(externalized_path).to eq(nil)
+      end
+
+      it "appropriately handles mismatched trailing slashes" do
+        env.resolved_path = "/opt/puppetlabs/envs/prod_123/"
+        externalized_path = env.externalize_path(@production_manifest)
+        expect(externalized_path).to eq("/etc/puppetlabs/envs/prod/modules/foo/manifests/init.pp")
+      end
+
+      it "can be disabled with the `report_configured_environmentpath` setting" do
+        Puppet[:report_configured_environmentpath] = false
+        expect(env.externalize_path(@production_manifest)).to eq(@production_manifest)
+      end
+    end
+
     describe "equality" do
       it "works as a hash key" do
         base = Puppet::Node::Environment.create(:first, ["modules"], "manifests")
