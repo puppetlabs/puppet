@@ -10,7 +10,7 @@ module Puppet
       if stat
         current_value = stat.ctime
       end
-      current_value
+      current_value.to_s
     end
 
     validate do |val|
