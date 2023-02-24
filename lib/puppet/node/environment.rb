@@ -166,6 +166,44 @@ class Puppet::Node::Environment
   # @api private
   attr_reader :lock
 
+  # For use with versioned dirs
+  # our environment path may contain symlinks, while we want to resolve the
+  # path while reading the manifests we may want to report the resources as
+  # coming from the configured path.
+  attr_accessor :configured_path
+
+  # See :configured_path above
+  attr_accessor :resolved_path
+
+  # Ensure the path given is of the format we want in the catalog/report.
+  #
+  # Intended for use with versioned symlinked environments. If this
+  # environment is configured with "/etc/puppetlabs/code/environments/production"
+  # but the resolved path is
+  #
+  # "/opt/puppetlabs/server/puppetserver/filesync/client/puppet-code/production_abcdef1234"
+  #
+  # this changes the filepath
+  #
+  # "/opt/puppetlabs/server/puppetserver/filesync/client/puppet-code/production_abcdef1234/modules/foo/manifests/init.pp"
+  #
+  # to
+  #
+  # "/etc/puppetlabs/code/environments/production/modules/foo/manifests/init.pp"
+  def externalize_path(filepath)
+    paths_set        = configured_path && resolved_path
+    munging_possible = paths_set && configured_path != resolved_path
+    munging_desired  = munging_possible &&
+                         Puppet[:report_configured_environmentpath] &&
+                         filepath.to_s.start_with?(resolved_path)
+
+    if munging_desired
+      File.join(configured_path, filepath.delete_prefix(resolved_path))
+    else
+      filepath
+    end
+  end
+
   # Checks to make sure that this environment did not have a manifest set in
   # its original environment.conf if Puppet is configured with
   # +disable_per_environment_manifest+ set true.  If it did, the environment's

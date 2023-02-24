@@ -323,6 +323,10 @@ class Puppet::Resource
         send(attr.to_s + "=", value)
       end
 
+      if environment.is_a?(Puppet::Node::Environment) && environment != Puppet::Node::Environment::NONE
+        self.file = environment.externalize_path(attributes[:file])
+      end
+
       @type, @title = self.class.type_and_title(type, title)
 
       rt = resource_type

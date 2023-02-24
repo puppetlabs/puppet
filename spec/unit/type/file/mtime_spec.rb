@@ -15,7 +15,7 @@ describe Puppet::Type.type(:file).attrclass(:mtime) do
     @resource[:audit] = [:mtime]
 
     # this .to_resource audit behavior is magical :-(
-    expect(@resource.to_resource[:mtime]).to eq(Puppet::FileSystem.stat(@filename).mtime)
+    expect(@resource.to_resource[:mtime]).to eq(Puppet::FileSystem.stat(@filename).mtime.to_s)
   end
 
   it "should return absent if auditing an absent file" do
