@@ -1,4 +1,5 @@
 test_name 'puppet module changes (on a module with a removed file)'
+skip_test "The test forge instance's SSL cert expired, see ITHELP-60681"
 
 tag 'audit:high',
     'audit:acceptance',
