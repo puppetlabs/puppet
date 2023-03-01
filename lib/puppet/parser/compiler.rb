@@ -19,27 +19,31 @@ class Puppet::Parser::Compiler
   include Puppet::Pops::Evaluator::Runtime3Support
 
   def self.compile(node, code_id = nil)
-    node.environment.check_for_reparse
+    Puppet.override(during_compilation: true) do
+      begin
+        node.environment.check_for_reparse
 
-    errors = node.environment.validation_errors
-    if !errors.empty?
-      errors.each { |e| Puppet.err(e) } if errors.size > 1
-      errmsg = [
-        _("Compilation has been halted because: %{error}") % { error: errors.first },
-        _("For more information, see https://puppet.com/docs/puppet/latest/environments_about.html"),
-      ]
-      raise(Puppet::Error, errmsg.join(' '))
+        errors = node.environment.validation_errors
+        if !errors.empty?
+          errors.each { |e| Puppet.err(e) } if errors.size > 1
+          errmsg = [
+            _("Compilation has been halted because: %{error}") % { error: errors.first },
+            _("For more information, see https://puppet.com/docs/puppet/latest/environments_about.html"),
+          ]
+          raise(Puppet::Error, errmsg.join(' '))
+        end
+
+        new(node, :code_id => code_id).compile {|resulting_catalog| resulting_catalog.to_resource }
+      rescue Puppet::ParseErrorWithIssue => detail
+        detail.node = node.name
+        Puppet.log_exception(detail)
+        raise
+      rescue => detail
+        message = _("%{message} on node %{node}") % { message: detail, node: node.name }
+        Puppet.log_exception(detail, message)
+        raise Puppet::Error, message, detail.backtrace
+      end
     end
-
-    new(node, :code_id => code_id).compile {|resulting_catalog| resulting_catalog.to_resource }
-  rescue Puppet::ParseErrorWithIssue => detail
-    detail.node = node.name
-    Puppet.log_exception(detail)
-    raise
-  rescue => detail
-    message = _("%{message} on node %{node}") % { message: detail, node: node.name }
-    Puppet.log_exception(detail, message)
-    raise Puppet::Error, message, detail.backtrace
   end
 
   attr_reader :node, :facts, :collections, :catalog, :resources, :relationships, :topscope

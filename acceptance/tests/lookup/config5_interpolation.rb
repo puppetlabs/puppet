@@ -10,9 +10,6 @@ tag 'audit:high',
                        # lookup in a masterless setup.
     'server'
 
-  pending_test('unexpected `::roles` returning undefined here, but the test passes when strict=warning')
-  # Should revisit this in PUP-11751
-
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type + '1')
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"

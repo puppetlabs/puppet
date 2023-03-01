@@ -373,21 +373,43 @@ describe Puppet::Parser::Scope do
       end
     end
 
-    context "and strict_variables is false and --strict=error" do
+    context "and strict_variables is false and --strict=error and mimicking a compilation" do
+      around(:each) do |example|
+        Puppet.override(during_compilation: true, avoid_hiera_lookup_errors: true) do
+          example.run
+        end
+      end
+
       before(:each) do
         Puppet[:strict_variables] = false
         Puppet[:strict] = :error
       end
-
-      it "should raise error when unknown variable is looked up" do
-        expect { @scope['john_doe'] }.to raise_error(/Undefined variable/)
+      it "should raise warn when an unknown variable is looked up" do
+        expect(Puppet).to receive(:warn_once)
+        expect(@scope['john_doe']) .to be_nil
       end
 
       it "should not throw a symbol when unknown qualified variable is looked up" do
-        expect { @scope['nowhere::john_doe'] }.to raise_error(/Undefined variable/)
+        expect(Puppet).to receive(:warn_once)
+        expect(@scope['nowhere::john_doe']) .to be_nil
       end
     end
+
+  context "and strict_variables is false and --strict=error but not during compilation" do
+
+    before(:each) do
+      Puppet[:strict_variables] = false
+      Puppet[:strict] = :error
+    end
+    it "should raise error when unknown variable is looked up" do
+      expect { @scope['john_doe'] }.to raise_error(/Undefined variable/)
+    end
+
+    it "should raise an eror when unknown qualified variable is looked up" do
+      expect { @scope['nowhere::john_doe'] }.to raise_error(/Undefined variable/)
+    end
   end
+end
 
   describe "when calling number?" do
     it "should return nil if called with anything not a number" do
