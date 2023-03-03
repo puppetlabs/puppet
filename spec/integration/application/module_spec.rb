@@ -196,5 +196,30 @@ describe 'puppet module', unless: Puppet::Util::Platform.jruby? do
         .and output(%r{README}).to_stdout
         .and output(pattern).to_stderr
     end
+
+    it 'reports when a file is missing' do
+      tmp = tmpdir('module_missing_file')
+      FileUtils.cp_r(File.join(my_fixture_dir, 'environments'), tmp)
+
+      # delete README so checksum doesn't match
+      nginx_dir = File.join(tmp, 'environments', 'direnv', 'modules', 'nginx')
+      File.unlink(File.join(nginx_dir, 'README'))
+
+      Puppet.initialize_settings(['-E', 'direnv'])
+      Puppet[:color] = false
+      Puppet[:environmentpath] = File.join(tmp, 'environments')
+
+      # odd that it says modified
+      pattern = Regexp.new([
+        %Q{.*Warning: 1 files modified.*},
+      ].join("\n"), Regexp::MULTILINE)
+
+      expect {
+        app.command_line.args = ['changes', nginx_dir]
+        app.run
+      }.to exit_with(0)
+        .and output(%r{README}).to_stdout
+        .and output(pattern).to_stderr
+    end
   end
 end
