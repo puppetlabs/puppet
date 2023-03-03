@@ -100,4 +100,24 @@ describe 'puppet module', unless: Puppet::Util::Platform.jruby? do
        .and output(Regexp.new("└── pmtacceptance-nginx".encode(Encoding.default_external), Regexp::MULTILINE)).to_stdout
     end
   end
+
+  context 'changes' do
+    it 'reports an error when the install path is invalid' do
+      Puppet.initialize_settings(['-E', 'direnv'])
+      Puppet[:color] = false
+      Puppet[:environmentpath] = File.join(my_fixture_dir, 'environments')
+      dir = tmpdir('module_changes')
+
+      pattern = Regexp.new([
+        %Q{.*Error: Could not find a valid module at "#{dir}/nginx".*},
+        %Q{.*Error: Try 'puppet help module changes' for usage.*},
+      ].join("\n"), Regexp::MULTILINE)
+
+      expect {
+        app.command_line.args = ['changes', File.join(dir, 'nginx')]
+        app.run
+      }.to exit_with(1)
+       .and output(pattern).to_stderr
+    end
+  end
 end
