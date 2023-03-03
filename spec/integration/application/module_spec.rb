@@ -148,5 +148,29 @@ describe 'puppet module', unless: Puppet::Util::Platform.jruby? do
       }.to exit_with(1)
         .and output(pattern).to_stderr
     end
+
+    it 'reports module not found when metadata.json is missing' do
+      tmp = tmpdir('module_missing_metadata')
+      FileUtils.cp_r(File.join(my_fixture_dir, 'environments'), tmp)
+
+      # overwrite checksums in metadata.json
+      nginx_dir = File.join(tmp, 'environments', 'direnv', 'modules', 'nginx')
+      File.unlink(File.join(nginx_dir, 'metadata.json'))
+
+      Puppet.initialize_settings(['-E', 'direnv'])
+      Puppet[:color] = false
+      Puppet[:environmentpath] = File.join(tmp, 'environments')
+
+      pattern = Regexp.new([
+        %Q{.*Error: Could not find a valid module at.*},
+        %Q{.*Error: Try 'puppet help module changes' for usage.*},
+      ].join("\n"), Regexp::MULTILINE)
+
+      expect {
+        app.command_line.args = ['changes', nginx_dir]
+        app.run
+      }.to exit_with(1)
+        .and output(pattern).to_stderr
+    end
   end
 end
