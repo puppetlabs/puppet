@@ -221,5 +221,18 @@ describe 'puppet module', unless: Puppet::Util::Platform.jruby? do
         .and output(%r{README}).to_stdout
         .and output(pattern).to_stderr
     end
+
+    it 'reports when there are no changes' do
+      Puppet.initialize_settings(['-E', 'direnv'])
+      Puppet[:color] = false
+      Puppet[:environmentpath] = File.join(my_fixture_dir, 'environments')
+      nginx_dir = File.join(Puppet[:environmentpath], 'direnv', 'modules', 'nginx')
+
+      expect {
+        app.command_line.args = ['changes', nginx_dir]
+        app.run
+      }.to exit_with(0)
+        .and output(/No modified files/).to_stdout
+    end
   end
 end
