@@ -202,27 +202,16 @@ describe "apply", unless: Puppet::Util::Platform.jruby? do
       compile_to_catalog('include mod', node)
     end
 
-    it 'can apply the catalog' do
-      Puppet[:strict] = :warning
-      catalog = compile_to_catalog('include mod', node)
-
-      Puppet[:environment] = env_name
-      apply.command_line.args = ['--catalog', file_containing('manifest', catalog.to_json)]
-
-      expect {
-        apply.run
-      }.to output(%r{Notify\[The Street 23\]/message: defined 'message' as 'The Street 23'}).to_stdout
-    end
-
     it 'can apply the catalog with no warning' do
-      pending("See PUP-11751")
-      Puppet[:strict] = :warning
       logs = []
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
         catalog = compile_to_catalog('include mod', node)
         Puppet[:environment] = env_name
-        apply.command_line.args = ['--catalog', file_containing('manifest', catalog.to_json)]
-        apply.run
+        handler = Puppet::Network::FormatHandler.format(:rich_data_json)
+        apply.command_line.args = ['--catalog', file_containing('manifest', handler.render(catalog))]
+        expect {
+          apply.run
+        }.to output(%r{Notify\[The Street 23\]/message: defined 'message' as 'The Street 23'}).to_stdout
       end
       # expected to have no warnings
       expect(logs.select { |log| log.level == :warning }.map { |log| log.message }).to be_empty
