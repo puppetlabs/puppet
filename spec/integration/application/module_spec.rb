@@ -119,5 +119,34 @@ describe 'puppet module', unless: Puppet::Util::Platform.jruby? do
       }.to exit_with(1)
        .and output(pattern).to_stderr
     end
+
+    it 'reports when checksums are missing from metadata.json' do
+      tmp = tmpdir('module_invalid_checksums')
+      FileUtils.cp_r(File.join(my_fixture_dir, 'environments'), tmp)
+
+      # overwrite checksums in metadata.json
+      nginx_dir = File.join(tmp, 'environments', 'direnv', 'modules', 'nginx')
+      File.write(File.join(nginx_dir, 'metadata.json'), <<~END)
+        {
+          "name": "pmtacceptance/nginx",
+          "version": "0.0.1"
+        }
+      END
+
+      Puppet.initialize_settings(['-E', 'direnv'])
+      Puppet[:color] = false
+      Puppet[:environmentpath] = File.join(tmp, 'environments')
+
+      pattern = Regexp.new([
+        %Q{.*Error: No file containing checksums found.*},
+        %Q{.*Error: Try 'puppet help module changes' for usage.*},
+      ].join("\n"), Regexp::MULTILINE)
+
+      expect {
+        app.command_line.args = ['changes', nginx_dir]
+        app.run
+      }.to exit_with(1)
+        .and output(pattern).to_stderr
+    end
   end
 end
