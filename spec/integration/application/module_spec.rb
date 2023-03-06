@@ -86,4 +86,18 @@ describe 'puppet module', unless: Puppet::Util::Platform.jruby? do
       end
     end
   end
+
+  context 'install' do
+    it 'lists a module in a non-default directory environment' do
+      Puppet.initialize_settings(['-E', 'direnv'])
+      Puppet[:color] = false
+      Puppet[:environmentpath] = File.join(my_fixture_dir, 'environments')
+
+      expect {
+        app.command_line.args = ['list']
+        app.run
+      }.to exit_with(0)
+       .and output(Regexp.new("└── pmtacceptance-nginx".encode(Encoding.default_external), Regexp::MULTILINE)).to_stdout
+    end
+  end
 end
