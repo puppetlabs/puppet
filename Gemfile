@@ -46,7 +46,7 @@ group(:test) do
   gem 'webrick', '~> 1.7', require: false if RUBY_VERSION.to_f >= 3.0
   gem 'yard', require: false
 
-  gem 'rubocop', '~> 1.0', require: false, platforms: [:ruby]
+  gem 'rubocop', '1.28.0', require: false, platforms: [:ruby]
   gem 'rubocop-i18n', '~> 3.0', require: false, platforms: [:ruby]
 end
 
