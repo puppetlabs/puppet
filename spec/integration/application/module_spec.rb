@@ -86,4 +86,145 @@ describe 'puppet module', unless: Puppet::Util::Platform.jruby? do
       end
     end
   end
+
+  context 'install' do
+    it 'lists a module in a non-default directory environment' do
+      Puppet.initialize_settings(['-E', 'direnv'])
+      Puppet[:color] = false
+      Puppet[:environmentpath] = File.join(my_fixture_dir, 'environments')
+
+      expect {
+        app.command_line.args = ['list']
+        app.run
+      }.to exit_with(0)
+       .and output(Regexp.new("└── pmtacceptance-nginx".encode(Encoding.default_external), Regexp::MULTILINE)).to_stdout
+    end
+  end
+
+  context 'changes' do
+    let(:tmp) { tmpdir('module_changes') }
+
+    before :each do
+      Puppet.initialize_settings(['-E', 'direnv'])
+      Puppet[:color] = false
+    end
+
+    def use_local_fixture
+      Puppet[:environmentpath] = File.join(my_fixture_dir, 'environments')
+    end
+
+    def create_working_copy
+      Puppet[:environmentpath] = File.join(tmp, 'environments')
+      FileUtils.cp_r(File.join(my_fixture_dir, 'environments'), tmp)
+    end
+
+    it 'reports an error when the install path is invalid' do
+      use_local_fixture
+
+      pattern = Regexp.new([
+        %Q{.*Error: Could not find a valid module at "#{tmp}/nginx".*},
+        %Q{.*Error: Try 'puppet help module changes' for usage.*},
+      ].join("\n"), Regexp::MULTILINE)
+
+      expect {
+        app.command_line.args = ['changes', File.join(tmp, 'nginx')]
+        app.run
+      }.to exit_with(1)
+       .and output(pattern).to_stderr
+    end
+
+    it 'reports when checksums are missing from metadata.json' do
+      create_working_copy
+
+      # overwrite checksums in metadata.json
+      nginx_dir = File.join(tmp, 'environments', 'direnv', 'modules', 'nginx')
+      File.write(File.join(nginx_dir, 'metadata.json'), <<~END)
+        {
+          "name": "pmtacceptance/nginx",
+          "version": "0.0.1"
+        }
+      END
+
+      pattern = Regexp.new([
+        %Q{.*Error: No file containing checksums found.*},
+        %Q{.*Error: Try 'puppet help module changes' for usage.*},
+      ].join("\n"), Regexp::MULTILINE)
+
+      expect {
+        app.command_line.args = ['changes', nginx_dir]
+        app.run
+      }.to exit_with(1)
+        .and output(pattern).to_stderr
+    end
+
+    it 'reports module not found when metadata.json is missing' do
+      create_working_copy
+
+      # overwrite checksums in metadata.json
+      nginx_dir = File.join(tmp, 'environments', 'direnv', 'modules', 'nginx')
+      File.unlink(File.join(nginx_dir, 'metadata.json'))
+
+      pattern = Regexp.new([
+        %Q{.*Error: Could not find a valid module at.*},
+        %Q{.*Error: Try 'puppet help module changes' for usage.*},
+      ].join("\n"), Regexp::MULTILINE)
+
+      expect {
+        app.command_line.args = ['changes', nginx_dir]
+        app.run
+      }.to exit_with(1)
+        .and output(pattern).to_stderr
+    end
+
+    it 'reports when a file is modified' do
+      create_working_copy
+
+      # overwrite README so checksum doesn't match
+      nginx_dir = File.join(tmp, 'environments', 'direnv', 'modules', 'nginx')
+      File.write(File.join(nginx_dir, 'README'), '')
+
+      pattern = Regexp.new([
+        %Q{.*Warning: 1 files modified.*},
+      ].join("\n"), Regexp::MULTILINE)
+
+      expect {
+        app.command_line.args = ['changes', nginx_dir]
+        app.run
+      }.to exit_with(0)
+        .and output(%r{README}).to_stdout
+        .and output(pattern).to_stderr
+    end
+
+    it 'reports when a file is missing' do
+      create_working_copy
+
+      # delete README so checksum doesn't match
+      nginx_dir = File.join(tmp, 'environments', 'direnv', 'modules', 'nginx')
+      File.unlink(File.join(nginx_dir, 'README'))
+
+      # odd that it says modified
+      pattern = Regexp.new([
+        %Q{.*Warning: 1 files modified.*},
+      ].join("\n"), Regexp::MULTILINE)
+
+      expect {
+        app.command_line.args = ['changes', nginx_dir]
+        app.run
+      }.to exit_with(0)
+        .and output(%r{README}).to_stdout
+        .and output(pattern).to_stderr
+    end
+
+    it 'reports when there are no changes' do
+      use_local_fixture
+
+      nginx_dir = File.join(Puppet[:environmentpath], 'direnv', 'modules', 'nginx')
+
+      expect {
+        app.command_line.args = ['changes', nginx_dir]
+        app.run
+      }.to exit_with(0)
+        .and output(/No modified files/).to_stdout
+    end
+  end
 end

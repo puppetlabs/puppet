@@ -257,18 +257,6 @@ module Puppet
               on(master, puppet(*(["apply", '-e', '"include testing_mod"'] + args)), :acceptable_exit_codes => (0..255)) do
                 agent_results[:puppet_apply] = result
               end
-
-              # Be aware that Puppet Module Tool will create the module directory path if it
-              # does not exist.  So these tests should be run last...
-              step "install a module into environment"
-              on(master, puppet(*(["module", "install", "pmtacceptance-nginx"] + args)), :acceptable_exit_codes => (0..255)) do
-                agent_results[:puppet_module_install] = result
-              end
-
-              step "uninstall a module from #{description} environment"
-              on(master, puppet(*(["module", "uninstall", "pmtacceptance-nginx"] + args)), :acceptable_exit_codes => (0..255)) do
-                agent_results[:puppet_module_uninstall] = result
-              end
             end
           end
         end
