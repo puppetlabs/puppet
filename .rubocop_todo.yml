@@ -596,9 +596,6 @@ Lint/DeprecatedOpenSSLConstant:
     - 'lib/puppet/util/checksums.rb'
     - 'lib/puppet/x509/cert_provider.rb'
 
-Lint/DuplicateMethods:
-  Enabled: false
-
 # This cop supports safe auto-correction (--auto-correct).
 Lint/ElseLayout:
   Exclude:

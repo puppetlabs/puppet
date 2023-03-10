@@ -54,14 +54,12 @@ module LoaderPaths
 #  end
 
   class SmartPath
-    # Generic path, in the sense of "if there are any entities of this kind to load, where are they?"
-    attr_reader :generic_path
-
     # Creates SmartPath for the given loader (loader knows how to check for existence etc.)
     def initialize(loader)
       @loader = loader
     end
 
+    # Generic path, in the sense of "if there are any entities of this kind to load, where are they?"
     def generic_path
       return @generic_path unless @generic_path.nil?
 

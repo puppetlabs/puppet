@@ -215,7 +215,7 @@ class Puppet::Module
       end
     end
 
-    attr_reader :name, :module, :metadata_file, :metadata
+    attr_reader :name, :module, :metadata_file
 
     # file paths must be relative to the modules task directory
     def initialize(pup_module, task_name,  module_executables, metadata_file = nil)
