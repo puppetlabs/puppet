@@ -216,7 +216,7 @@ class Puppet::Interface::Action
 
   # The arity of the action
   # @return [Integer]
-  attr_reader   :positional_arg_count
+  attr_reader :positional_arg_count
 
   # The block that is executed when the action is invoked
   # @return [block]

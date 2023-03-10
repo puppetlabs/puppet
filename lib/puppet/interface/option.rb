@@ -132,7 +132,7 @@ class Puppet::Interface::Option
     @default and @default.call
   end
 
-  attr_reader   :parent, :name, :aliases, :optparse, :required
+  attr_reader :parent, :name, :aliases, :optparse, :required
   def required=(value)
     if has_default?
       raise ArgumentError, _("%{name} can't be optional and have a default value") % { name: self }
