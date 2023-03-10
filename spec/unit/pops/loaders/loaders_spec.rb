@@ -246,7 +246,6 @@ describe 'loaders' do
     end
 
     it 'loader allows loading a function more than once' do
-      pending('See PUP-11754')
       allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return('')
       allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
