@@ -166,7 +166,7 @@ class HieraConfig
     end
   end
 
-  attr_reader :config_path, :version
+  attr_reader :config_path
 
   # Creates a new HieraConfig from the given _config_root_. This is where the 'lookup.yaml' is expected to be found
   # and is also the base location used when resolving relative paths.

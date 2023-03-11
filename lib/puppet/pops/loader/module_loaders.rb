@@ -115,7 +115,7 @@ module ModuleLoaders
     # created a different way, this loader can be set explicitly by the loaders bootstrap logic.
     #
     # @api private
-    attr_accessor :private_loader
+    attr_writer :private_loader
 
     # Initialize a kind of ModuleLoader for one module
     # @param parent_loader [Loader] loader with higher priority
