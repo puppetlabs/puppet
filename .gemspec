@@ -10,6 +10,9 @@
 # Please see the [packaging
 # repository](https://github.com/puppetlabs/packaging) for information on how
 # to build the Puppet gem package.
+#
+# Make sure these gem requirements are in sync with ext/project_data.yaml and
+# the Gemfile
 
 Gem::Specification.new do |s|
   s.name = "puppet"
@@ -37,6 +40,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency(%q<fast_gettext>, ">= 2.1", "< 3")
   s.add_runtime_dependency(%q<locale>, "~> 2.1")
   s.add_runtime_dependency(%q<multi_json>, "~> 1.13")
+  s.add_runtime_dependency(%q<puppet-resource_api>, "~> 1.5")
   s.add_runtime_dependency(%q<concurrent-ruby>, ["~> 1.0", "< 1.2.0"])
   s.add_runtime_dependency(%q<deep_merge>, "~> 1.0")
   s.add_runtime_dependency(%q<scanf>, "~> 1.0")
