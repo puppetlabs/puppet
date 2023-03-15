@@ -252,7 +252,7 @@ class HieraConfig
       scope = lookup_invocation.scope
       lookup_invocation.without_explain do
         @scope_interpolations.all? do |key, root_key, segments, old_value|
-          value = scope[root_key]
+          value = Puppet.override(avoid_hiera_interpolation_errors: true) { scope[root_key] }
           unless value.nil? || segments.empty?
             found = nil;
             catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
@@ -633,23 +633,26 @@ class HieraConfigV5 < HieraConfig
       entry_datadir = @config_root + (he[KEY_DATADIR] || datadir)
       entry_datadir = Pathname(interpolate(entry_datadir.to_s, lookup_invocation, false))
       location_key = LOCATION_KEYS.find { |key| he.include?(key) }
-      locations = case location_key
-      when KEY_PATHS
-        resolve_paths(entry_datadir, he[location_key], lookup_invocation, @config_path.nil?)
-      when KEY_PATH
-        resolve_paths(entry_datadir, [he[location_key]], lookup_invocation, @config_path.nil?)
-      when KEY_GLOBS
-        expand_globs(entry_datadir, he[location_key], lookup_invocation)
-      when KEY_GLOB
-        expand_globs(entry_datadir, [he[location_key]], lookup_invocation)
-      when KEY_URIS
-        expand_uris(he[location_key], lookup_invocation)
-      when KEY_URI
-        expand_uris([he[location_key]], lookup_invocation)
-      when KEY_MAPPED_PATHS
-        expand_mapped_paths(entry_datadir, he[location_key], lookup_invocation)
-      else
-        nil
+      locations = []
+      Puppet.override(avoid_hiera_interpolation_errors: true) do
+        locations = case location_key
+                    when KEY_PATHS
+                      resolve_paths(entry_datadir, he[location_key], lookup_invocation, @config_path.nil?)
+                    when KEY_PATH
+                      resolve_paths(entry_datadir, [he[location_key]], lookup_invocation, @config_path.nil?)
+                    when KEY_GLOBS
+                      expand_globs(entry_datadir, he[location_key], lookup_invocation)
+                    when KEY_GLOB
+                      expand_globs(entry_datadir, [he[location_key]], lookup_invocation)
+                    when KEY_URIS
+                      expand_uris(he[location_key], lookup_invocation)
+                    when KEY_URI
+                      expand_uris([he[location_key]], lookup_invocation)
+                    when KEY_MAPPED_PATHS
+                      expand_mapped_paths(entry_datadir, he[location_key], lookup_invocation)
+                    else
+                      nil
+                    end
       end
       next if @config_path.nil? && !locations.nil? && locations.empty? # Default config and no existing paths found
       options = he[KEY_OPTIONS] || defaults[KEY_OPTIONS]

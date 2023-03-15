@@ -286,7 +286,6 @@ describe "The lookup function" do
             YAML
 
           it 'fails and reports error' do
-            Puppet[:strict] = :error
             expect { lookup('a') }.to raise_error(
               "'default_hierarchy' is only allowed in the module layer (file: #{code_dir}/hiera.yaml, line: 5)")
           end
@@ -302,8 +301,7 @@ describe "The lookup function" do
             YAML
 
           it 'fails and reports errors when strict == error' do
-            Puppet[:strict] = :error
-            expect { lookup('a') }.to raise_error("Undefined variable '::nonesuch' (file: #{code_dir}/hiera.yaml, line: 4)")
+            expect { lookup('a') }.to raise_error("Function lookup() did not find a value for the name 'a'")
           end
         end
 
@@ -316,7 +314,6 @@ describe "The lookup function" do
             YAML
 
           it 'fails and reports errors when strict == error' do
-            Puppet[:strict] = :error
             expect { lookup('a') }.to raise_error("Interpolation using method syntax is not allowed in this context (file: #{code_dir}/hiera.yaml)")
           end
         end
@@ -604,9 +601,9 @@ describe "The lookup function" do
       context 'using global variable reference' do
         let(:data_path) { 'x%{::var.sub}.yaml' }
 
-        it 'raises an error when reloads the configuration if interpolating undefined values' do
+        it 'does not raise an error when reloads the configuration if interpolating undefined values' do
           collect_notices("notice('success')") do |scope|
-            expect { lookup_func.call(scope, 'y') }.to raise_error(/Undefined variable '::var'/)
+            expect { lookup_func.call(scope, 'y') }.to_not raise_error
           end
         end
 

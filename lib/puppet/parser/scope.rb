@@ -535,7 +535,12 @@ class Puppet::Parser::Scope
         Puppet.warn_once(UNDEFINED_VARIABLES_KIND, _("Variable: %{name}") % { name: name },
         _("Undefined variable '%{name}'; %{reason}") % { name: name, reason: reason } )
       when :error
-        raise ArgumentError, _("Undefined variable '%{name}'; %{reason}") % { name: name, reason: reason }
+        if Puppet.lookup(:avoid_hiera_interpolation_errors){false}
+          Puppet.warn_once(UNDEFINED_VARIABLES_KIND, _("Variable: %{name}") % { name: name },
+          _("Interpolation failed with '%{name}', but compilation continuing; %{reason}") % { name: name, reason: reason } )
+        else
+          raise ArgumentError, _("Undefined variable '%{name}'; %{reason}") % { name: name, reason: reason }
+        end
       end
     end
     nil
