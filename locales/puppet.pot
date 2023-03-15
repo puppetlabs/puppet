@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 7.21.0-38-g7ffe4a0b07\n"
+"Project-Id-Version: Puppet automation framework 7.23.0-146-g4c125d3c23\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2023-01-07 00:23+0000\n"
-"PO-Revision-Date: 2023-01-07 00:23+0000\n"
+"POT-Creation-Date: 2023-03-15 14:36+0000\n"
+"PO-Revision-Date: 2023-03-15 14:36+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -28,11 +28,11 @@ msgstr ""
 msgid "See https://puppet.com/docs/puppet/%{minor_version}/deprecated_language.html"
 msgstr ""
 
-#: ../lib/hiera/scope.rb:46 ../lib/puppet/parser/scope.rb:535
+#: ../lib/hiera/scope.rb:46 ../lib/puppet/parser/scope.rb:535 ../lib/puppet/parser/scope.rb:539
 msgid "Variable: %{name}"
 msgstr ""
 
-#: ../lib/hiera/scope.rb:47 ../lib/hiera/scope.rb:49 ../lib/puppet/parser/scope.rb:536 ../lib/puppet/parser/scope.rb:538
+#: ../lib/hiera/scope.rb:47 ../lib/hiera/scope.rb:49 ../lib/puppet/parser/scope.rb:536 ../lib/puppet/parser/scope.rb:542
 msgid "Undefined variable '%{name}'; %{reason}"
 msgstr ""
 
@@ -48,11 +48,11 @@ msgstr ""
 msgid "Config file %{hiera_config} not found, using Hiera defaults"
 msgstr ""
 
-#: ../lib/puppet.rb:134
+#: ../lib/puppet.rb:136
 msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html for a list of supported ruby versions."
 msgstr ""
 
-#: ../lib/puppet.rb:220
+#: ../lib/puppet.rb:222
 msgid "The environmentpath setting cannot be empty or nil."
 msgstr ""
 
@@ -308,33 +308,33 @@ msgstr ""
 msgid "Could not generate reference %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/application/face_base.rb:34
+#: ../lib/puppet/application/face_base.rb:35
 msgid "I don't know how to render '%{format}'"
 msgstr ""
 
-#: ../lib/puppet/application/face_base.rb:56
+#: ../lib/puppet/application/face_base.rb:57
 msgid "Cancelling Face"
 msgstr ""
 
-#: ../lib/puppet/application/face_base.rb:135
+#: ../lib/puppet/application/face_base.rb:136
 msgid "'%{face}' has no %{action} action.  See `puppet help %{face}`."
 msgstr ""
 
-#: ../lib/puppet/application/face_base.rb:213
+#: ../lib/puppet/application/face_base.rb:214
 msgid "%{face} does not respond to action %{arg}"
 msgstr ""
 
-#: ../lib/puppet/application/face_base.rb:246
+#: ../lib/puppet/application/face_base.rb:247
 msgid "puppet %{face} %{action} takes %{arg_count} argument, but you gave %{given_count}"
 msgid_plural "puppet %{face} %{action} takes %{arg_count} arguments, but you gave %{given_count}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../lib/puppet/application/face_base.rb:251
+#: ../lib/puppet/application/face_base.rb:252
 msgid "'puppet %{face}' is deprecated and will be removed in a future release"
 msgstr ""
 
-#: ../lib/puppet/application/face_base.rb:270
+#: ../lib/puppet/application/face_base.rb:271
 msgid "Try 'puppet help %{face} %{action}' for usage"
 msgstr ""
 
@@ -708,7 +708,7 @@ msgstr ""
 msgid "TrustedInformation expected a certificate, but none was given."
 msgstr ""
 
-#: ../lib/puppet/context/trusted_information.rb:104 ../lib/puppet/parser/scope.rb:836
+#: ../lib/puppet/context/trusted_information.rb:104 ../lib/puppet/parser/scope.rb:841
 msgid "Unsupported data type: '%{klass}'"
 msgstr ""
 
@@ -745,30 +745,30 @@ msgid "Valid values are '%{values}'."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:550
+#: ../lib/puppet/defaults.rb:563
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:552
+#: ../lib/puppet/defaults.rb:565
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:746
+#: ../lib/puppet/defaults.rb:759
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:837
+#: ../lib/puppet/defaults.rb:850
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1096 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1109 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1982
+#: ../lib/puppet/defaults.rb:1995
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -2528,7 +2528,7 @@ msgstr ""
 msgid "puppet facts show requires version 4.0.40 or greater of Facter."
 msgstr ""
 
-#: ../lib/puppet/indirector/facts/facter.rb:66
+#: ../lib/puppet/indirector/facts/facter.rb:69
 msgid "Loading facts"
 msgstr ""
 
@@ -3019,7 +3019,7 @@ msgstr ""
 msgid "%{name} is an invalid option name"
 msgstr ""
 
-#: ../lib/puppet/interface/option.rb:121 ../lib/puppet/interface/option.rb:139
+#: ../lib/puppet/interface/option.rb:121 ../lib/puppet/interface/option.rb:138
 msgid "%{name} can't be optional and have a default value"
 msgstr ""
 
@@ -3029,12 +3029,12 @@ msgid "default value for %{name} is a %{class_name}, not a proc"
 msgstr ""
 
 #. TRANSLATORS 'proc' is a Ruby block of code
-#: ../lib/puppet/interface/option.rb:148
+#: ../lib/puppet/interface/option.rb:147
 msgid "before action hook for %{name} is a %{class_name}, not a proc"
 msgstr ""
 
 #. TRANSLATORS 'proc' is a Ruby block of code
-#: ../lib/puppet/interface/option.rb:159
+#: ../lib/puppet/interface/option.rb:158
 msgid "after action hook for %{name} is a %{class_name}, not a proc"
 msgstr ""
 
@@ -3102,7 +3102,7 @@ msgid "Loaded puppet/type/%{name} but no class was created"
 msgstr ""
 
 #. TRANSLATORS 'metadata.json' is a specific file name and should not be translated.
-#: ../lib/puppet/module.rb:222
+#: ../lib/puppet/module.rb:224
 msgid "%{name} has an invalid and unparsable metadata.json file. The parse error: %{error}"
 msgstr ""
 
@@ -3182,7 +3182,7 @@ msgstr ""
 msgid "Multiple executables were found in directory %{directory} for task %{name}; define 'implementations' in metadata to differentiate between them"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:242
+#: ../lib/puppet/module/task.rb:240
 msgid "Error reading metadata: %{message}"
 msgstr ""
 
@@ -3896,11 +3896,11 @@ msgstr ""
 msgid "Trusted node data modified for node %{name}"
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:212
+#: ../lib/puppet/node/environment.rb:250
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:574 ../lib/puppet/pops/loaders.rb:301
+#: ../lib/puppet/node/environment.rb:612 ../lib/puppet/pops/loaders.rb:305
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -4357,83 +4357,87 @@ msgstr ""
 msgid "Scope variable name %{name} is a %{klass}, not a string"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:656
+#: ../lib/puppet/parser/scope.rb:540
+msgid "Interpolation failed with '%{name}', but compilation continuing; %{reason}"
+msgstr ""
+
+#: ../lib/puppet/parser/scope.rb:661
 msgid "class %{classname} could not be found"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:658
+#: ../lib/puppet/parser/scope.rb:663
 msgid "class %{classname} has not been evaluated"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:704
+#: ../lib/puppet/parser/scope.rb:709
 msgid "Default already defined for %{type} { %{param} }; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:764
+#: ../lib/puppet/parser/scope.rb:769
 msgid "Cannot assign to a numeric match result variable '$%{name}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:767
+#: ../lib/puppet/parser/scope.rb:772
 msgid "Scope variable name %{name} is a %{class_type}, not a string"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:772 ../lib/puppet/parser/scope.rb:777
+#: ../lib/puppet/parser/scope.rb:777 ../lib/puppet/parser/scope.rb:782
 msgid "Attempt to assign to a reserved variable name: '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:782
+#: ../lib/puppet/parser/scope.rb:787
 msgid "Cannot reassign variable '$%{name}'"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1013
+#: ../lib/puppet/parser/scope.rb:1018
 msgid "Invalid regex match data. Got a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1021
+#: ../lib/puppet/parser/scope.rb:1026
 msgid "Scope#find_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1026
+#: ../lib/puppet/parser/scope.rb:1031
 msgid "Scope#find_builtin_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1031
+#: ../lib/puppet/parser/scope.rb:1036
 msgid "Scope#find_defined_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1045
+#: ../lib/puppet/parser/scope.rb:1050
 msgid "Function %{name} not defined despite being loaded!"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1052
+#: ../lib/puppet/parser/scope.rb:1057
 msgid "Scope#resolve_type_and_title() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1072
+#: ../lib/puppet/parser/scope.rb:1077
 msgid "Cannot use undef as a class name"
 msgstr ""
 
-#: ../lib/puppet/parser/scope.rb:1074
+#: ../lib/puppet/parser/scope.rb:1079
 msgid "Cannot use empty string as a class name"
 msgstr ""
 
 #. TRANSLATORS "Class" and "Type" are Puppet keywords and should not be translated
-#: ../lib/puppet/parser/scope.rb:1083
+#: ../lib/puppet/parser/scope.rb:1088
 msgid "Cannot use an unspecific Class[] Type"
 msgstr ""
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1110
+#: ../lib/puppet/parser/scope.rb:1115
 msgid "Cannot use an unspecific Resource[] where a Resource['class', name] is expected"
 msgstr ""
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1114
+#: ../lib/puppet/parser/scope.rb:1119
 msgid "Cannot use a Resource[%{type_name}] where a Resource['class', name] is expected"
 msgstr ""
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1118
+#: ../lib/puppet/parser/scope.rb:1123
 msgid "Cannot use an unspecific Resource['class'] where a Resource['class', name] is expected"
 msgstr ""
 
@@ -4613,11 +4617,11 @@ msgstr ""
 msgid "Unknown injection %{injection_name}"
 msgstr ""
 
-#: ../lib/puppet/pops/functions/function.rb:112
+#: ../lib/puppet/pops/functions/function.rb:110
 msgid "Function %{class_name}(): cannot call function '%{function_name}' - no loader specified"
 msgstr ""
 
-#: ../lib/puppet/pops/functions/function.rb:128
+#: ../lib/puppet/pops/functions/function.rb:126
 msgid "Function %{class_name}(): Unknown function: '%{function_name}'"
 msgstr ""
 
@@ -5519,23 +5523,23 @@ msgstr ""
 msgid "The code loaded from %{source_ref} contains additional logic - can only contain the type '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:34
+#: ../lib/puppet/pops/loaders.rb:38
 msgid "Attempt to redefine already initialized loaders for environment"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:177
+#: ../lib/puppet/pops/loaders.rb:181
 msgid "Internal Error: Puppet Context ':loaders' missing"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:191
+#: ../lib/puppet/pops/loaders.rb:195
 msgid "Unable to find loader named '%{loader_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:212
+#: ../lib/puppet/pops/loaders.rb:216
 msgid "Internal Error: did not find public loader for module: '%{module_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:258
+#: ../lib/puppet/pops/loaders.rb:262
 msgid "Internal Error: Attempt to redefine loader named '%{name}'"
 msgstr ""
 
@@ -5566,11 +5570,11 @@ msgstr ""
 msgid "Hiera configuration recreated due to change of scope variables used in interpolation expressions"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/hiera_config.rb:429
+#: ../lib/puppet/pops/lookup/hiera_config.rb:430
 msgid "%{config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5"
 msgstr ""
 
-#: ../lib/puppet/pops/lookup/hiera_config.rb:529
+#: ../lib/puppet/pops/lookup/hiera_config.rb:530
 msgid "%{config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5"
 msgstr ""
 
@@ -6894,32 +6898,32 @@ msgstr ""
 msgid "incorrect metaparams: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/reference/providers.rb:58
+#: ../lib/puppet/reference/providers.rb:57
 msgid ""
 "  - Missing files %{files}\n"
 msgstr ""
 
-#: ../lib/puppet/reference/providers.rb:62
+#: ../lib/puppet/reference/providers.rb:61
 msgid ""
 "  - Setting %{name} (currently %{value}) not in list %{facts}\n"
 msgstr ""
 
-#: ../lib/puppet/reference/providers.rb:64
+#: ../lib/puppet/reference/providers.rb:63
 msgid ""
 "  - Fact %{name} (currently %{value}) not in list %{facts}\n"
 msgstr ""
 
-#: ../lib/puppet/reference/providers.rb:68
+#: ../lib/puppet/reference/providers.rb:67
 msgid ""
 "  - Got %{values} true tests that should have been false\n"
 msgstr ""
 
-#: ../lib/puppet/reference/providers.rb:70
+#: ../lib/puppet/reference/providers.rb:69
 msgid ""
 "  - Got %{values} false tests that should have been true\n"
 msgstr ""
 
-#: ../lib/puppet/reference/providers.rb:72
+#: ../lib/puppet/reference/providers.rb:71
 msgid ""
 "  - Missing features %{values}\n"
 msgstr ""
@@ -6962,23 +6966,23 @@ msgstr ""
 msgid "Did you mean (%{type}, %{title}) ?"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:333
+#: ../lib/puppet/resource.rb:337
 msgid "Could not find declared class %{title}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:335
+#: ../lib/puppet/resource.rb:339
 msgid "Invalid resource type %{type}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:535
+#: ../lib/puppet/resource.rb:539
 msgid "no parameter named '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:580
+#: ../lib/puppet/resource.rb:584
 msgid "No title provided and %{type} is not a valid resource reference"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:654
+#: ../lib/puppet/resource.rb:658
 msgid "No set of title patterns matched the title \"%{title}\"."
 msgstr ""
 
@@ -7120,77 +7124,77 @@ msgstr ""
 msgid "Not attempting to load %{type} %{fqname} as this object was missing during a prior compilation"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:103
+#: ../lib/puppet/settings.rb:102
 msgid "New environment loaders generated from the requested section."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:305
+#: ../lib/puppet/settings.rb:304
 msgid "Attempting to initialize global default settings more than once!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:505
+#: ../lib/puppet/settings.rb:504
 msgid "Using --configprint is deprecated. Use 'puppet config <subcommand>' instead."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:647
+#: ../lib/puppet/settings.rb:646
 msgid "Could not load %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:756
+#: ../lib/puppet/settings.rb:755
 msgid "Invalid setting type '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:874
+#: ../lib/puppet/settings.rb:873
 msgid "Cannot manage owner permissions, because the provider for '%{name}' is not functional"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:890
+#: ../lib/puppet/settings.rb:889
 msgid "Cannot manage group permissions, because the provider for '%{name}' is not functional"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:926
+#: ../lib/puppet/settings.rb:925
 msgid "Unknown searchpath case: %{source_type} for the %{source} settings path element."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1007
+#: ../lib/puppet/settings.rb:1006
 msgid "setting definition for '%{name}' is not a hash!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1012
+#: ../lib/puppet/settings.rb:1011
 msgid "Setting %{name} is already defined"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1018
+#: ../lib/puppet/settings.rb:1017
 msgid "Setting %{name} is already using short name '%{short}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1289
+#: ../lib/puppet/settings.rb:1288
 msgid "Setting %{name} is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'puppet.conf' is a file name and should not be translated
-#: ../lib/puppet/settings.rb:1294
+#: ../lib/puppet/settings.rb:1293
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1481
+#: ../lib/puppet/settings.rb:1480
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1505
+#: ../lib/puppet/settings.rb:1504
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1515
+#: ../lib/puppet/settings.rb:1514
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1516
+#: ../lib/puppet/settings.rb:1515
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1547
+#: ../lib/puppet/settings.rb:1546
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
@@ -7203,38 +7207,38 @@ msgid "Invalid autosign value %{value}: must be 'true'/'false' or an absolute pa
 msgstr ""
 
 #. TRANSLATORS ':%{name}', ':call_hook', and ':on_write_only' should not be translated
-#: ../lib/puppet/settings/base_setting.rb:37
+#: ../lib/puppet/settings/base_setting.rb:38
 msgid "Setting :%{name} :call_hook is nil, defaulting to :on_write_only"
 msgstr ""
 
 #. TRANSLATORS 'call_hook' is a Puppet option name and should not be translated
-#: ../lib/puppet/settings/base_setting.rb:42
+#: ../lib/puppet/settings/base_setting.rb:43
 msgid "Invalid option %{value} for call_hook"
 msgstr ""
 
 #. TRANSLATORS ':call_hook' and ':hook' are specific setting names and should not be translated
-#: ../lib/puppet/settings/base_setting.rb:101
+#: ../lib/puppet/settings/base_setting.rb:102
 msgid "Cannot reference :call_hook for :%{name} if no :hook is defined"
 msgstr ""
 
-#: ../lib/puppet/settings/base_setting.rb:107
+#: ../lib/puppet/settings/base_setting.rb:108
 msgid "%{class_name} (setting '%{setting}') does not accept %{parameter}"
 msgstr ""
 
-#: ../lib/puppet/settings/base_setting.rb:114
+#: ../lib/puppet/settings/base_setting.rb:115
 msgid "You must provide a description for the %{class_name} config option"
 msgstr ""
 
-#: ../lib/puppet/settings/base_setting.rb:128
+#: ../lib/puppet/settings/base_setting.rb:129
 msgid "Short names can only be one character."
 msgstr ""
 
 #. TRANSLATORS 'deprecated' is a Puppet setting and ':completely' and ':allowed_on_commandline' are possible values and should not be translated
-#: ../lib/puppet/settings/base_setting.rb:197
+#: ../lib/puppet/settings/base_setting.rb:198
 msgid "Unsupported deprecated value '%{deprecation}'."
 msgstr ""
 
-#: ../lib/puppet/settings/base_setting.rb:198
+#: ../lib/puppet/settings/base_setting.rb:199
 msgid "Supported values for deprecated are ':completely' or ':allowed_on_commandline'"
 msgstr ""
 
@@ -7368,55 +7372,55 @@ msgstr ""
 msgid "Creating a new SSL certificate request for %{name}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:90
+#: ../lib/puppet/ssl/certificate_request.rb:87
 msgid "CSR sign verification failed; you need to clean the certificate request for %{name} on the server"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:96
+#: ../lib/puppet/ssl/certificate_request.rb:93
 msgid "Certificate Request fingerprint (%{digest}): %{hex_digest}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:140
+#: ../lib/puppet/ssl/certificate_request.rb:137
 msgid "CSR needs content to extract fields"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:167
+#: ../lib/puppet/ssl/certificate_request.rb:164
 msgid "In %{attr}, expected extension record %{index} to have two or three items, but found %{count}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:218
+#: ../lib/puppet/ssl/certificate_request.rb:215
 msgid "Cannot specify CSR attribute %{oid}: conflicts with internally used CSR attribute"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:227
+#: ../lib/puppet/ssl/certificate_request.rb:224
 msgid "Cannot create CSR with attribute %{oid}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:244
+#: ../lib/puppet/ssl/certificate_request.rb:241
 msgid "Cannot specify CSR extension request %{oid}: conflicts with internally used extension request"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:250
+#: ../lib/puppet/ssl/certificate_request.rb:247
 msgid "Cannot create CSR with extension request %{oid}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:301
+#: ../lib/puppet/ssl/certificate_request.rb:298
 msgid "In %{attr}, expected Set but found %{klass}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:305
+#: ../lib/puppet/ssl/certificate_request.rb:302
 msgid "In %{attr}, expected Set[Array] but found %{klass}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:309
+#: ../lib/puppet/ssl/certificate_request.rb:306
 msgid "In %{attr}, expected Set[Array] with one value but found %{count} elements"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:313
+#: ../lib/puppet/ssl/certificate_request.rb:310
 msgid "In %{attr}, expected Set[Array[Sequence[...]]], but found %{klass}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:317
+#: ../lib/puppet/ssl/certificate_request.rb:314
 msgid "In %{attr}, expected Set[Array[Sequence[Array[...]]]], but found %{klass}"
 msgstr ""
 
