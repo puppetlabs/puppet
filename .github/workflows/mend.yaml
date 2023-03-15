@@ -3,7 +3,7 @@ name: Mend Monitor
 on:
   push:
     branches:
-      - 7.x
+      - main
 jobs:
   mend_monitor:
     if: ${{ github.repository_owner == 'puppetlabs' }}

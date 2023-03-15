@@ -40,7 +40,6 @@ class Puppet::Settings
   # local reference for convenience
   PuppetOptionParser = Puppet::Util::CommandLine::PuppetOptionParser
 
-  attr_accessor :files
   attr_reader :timer
 
   # These are the settings that every app is required to specify; there are

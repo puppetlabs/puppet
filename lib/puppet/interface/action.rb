@@ -141,7 +141,7 @@ class Puppet::Interface::Action
 
   # @api private
   # @return [Symbol]
-  attr_accessor :render_as
+  attr_reader :render_as
   def render_as=(value)
     @render_as = value.to_sym
   end
@@ -216,11 +216,11 @@ class Puppet::Interface::Action
 
   # The arity of the action
   # @return [Integer]
-  attr_reader   :positional_arg_count
+  attr_reader :positional_arg_count
 
   # The block that is executed when the action is invoked
   # @return [block]
-  attr_accessor :when_invoked
+  attr_reader :when_invoked
   def when_invoked=(block)
 
     internal_name = "#{@name} implementation, required on Ruby 1.8".to_sym
