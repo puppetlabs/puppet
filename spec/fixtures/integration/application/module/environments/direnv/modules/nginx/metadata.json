@@ -1,0 +1,20 @@
+{
+  "name": "pmtacceptance/nginx",
+  "version": "0.0.1",
+  "source": "UNKNOWN",
+  "author": "pmtacceptance",
+  "license": "UNKNOWN",
+  "summary": "UNKNOWN",
+  "description": "UNKNOWN",
+  "project_page": "UNKNOWN",
+  "dependencies": [
+
+  ],
+  "types": [
+
+  ],
+  "checksums": {
+    "README": "5c4fbf4812d8a4d4b0fe1c13ad640b0e",
+    "manifests/init.pp": "3a8ab171fd609a527ae0b293ced9a014"
+  }
+}

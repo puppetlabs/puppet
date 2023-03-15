@@ -294,8 +294,8 @@ class Puppet::Util::Log
   end
 
 
-  attr_accessor :time, :remote, :file, :line, :pos, :source, :issue_code, :environment, :node, :backtrace
-  attr_reader :level, :message
+  attr_accessor :time, :remote, :file, :line, :pos, :issue_code, :environment, :node, :backtrace
+  attr_reader :level, :message, :source
 
   def initialize(args)
     self.level = args[:level]

@@ -8,10 +8,6 @@
 # @api private
 #
 class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
-
-  # An index of module_name to module loader used to speed up lookup of qualified names
-  attr_reader :index
-
   # Creates a DependencyLoader for one parent loader
   #
   # @param parent_loader [Puppet::Pops::Loader] typically a module loader for the root
@@ -88,6 +84,7 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
     end
   end
 
+  # An index of module_name to module loader used to speed up lookup of qualified names
   def index
     @index ||= @dependency_loaders.reduce({}) { |index, loader| index[loader.module_name] = loader; index }
   end

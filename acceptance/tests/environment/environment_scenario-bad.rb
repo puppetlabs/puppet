@@ -21,8 +21,6 @@ test_name 'Test behavior of directory environments when environmentpath is set t
 
   step 'setup environments'
 
-  stub_forge_on(master)
-
   testdir                = create_tmpdir_for_user(master, 'confdir')
   puppet_conf_backup_dir = create_tmpdir_for_user(master, "puppet-conf-backup-dir")
 
@@ -46,14 +44,6 @@ test_name 'Test behavior of directory environments when environmentpath is set t
                            %r{modulepath =},
                            %r{manifest =},
                            %r{config_version =}],
-        },
-        :puppet_module_install   => {
-            :exit_code => 1,
-            :matches   => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{env_path}}],
-        },
-        :puppet_module_uninstall => {
-            :exit_code => 1,
-            :matches   => [%r{Could not find a directory environment named '#{env}' anywhere in the path.*#{env_path}}],
         },
         :puppet_apply            => {
             :exit_code => 1,

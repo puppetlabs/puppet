@@ -1,0 +1,6 @@
+# Disable NL -> CRNL translation on Windows. This is necessary because the files on disk must
+# match the checksums in metadata.json.
+spec/fixtures/integration/application/module/environments/direnv/modules/nginx/README -text
+spec/fixtures/integration/application/module/environments/direnv/modules/nginx/metadata.json -text
+spec/fixtures/integration/application/module/environments/direnv/modules/nginx/Modulefile -text
+spec/fixtures/integration/application/module/environments/direnv/modules/nginx/manifests/init.pp -text

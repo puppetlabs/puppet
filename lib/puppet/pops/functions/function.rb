@@ -11,9 +11,6 @@
 #
 # @api public
 class Puppet::Pops::Functions::Function
-  # The scope where the function was defined
-  attr_reader :closure_scope
-
   # The loader that loaded this function.
   # Should be used if function wants to load other things.
   #
@@ -74,6 +71,7 @@ class Puppet::Pops::Functions::Function
     internal_call_function(closure_scope, function_name, args, &block)
   end
 
+  # The scope where the function was defined
   def closure_scope
     # If closure scope is explicitly set to not nil, if there is a global scope, otherwise an empty hash
     @closure_scope || Puppet.lookup(:global_scope) { {} }

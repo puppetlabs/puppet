@@ -27,7 +27,8 @@ class Puppet::Application::FaceBase < Puppet::Application
     exit(0)
   end
 
-  attr_accessor :face, :action, :type, :arguments, :render_as
+  attr_reader :render_as
+  attr_accessor :face, :action, :type, :arguments
 
   def render_as=(format)
     @render_as = Puppet::Network::FormatHandler.format(format)
