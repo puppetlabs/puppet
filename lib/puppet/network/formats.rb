@@ -87,6 +87,8 @@ end
 
 # PSON is deprecated
 Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
+  confine :feature => :pson
+
   def intern(klass, text)
     data_to_instance(klass, PSON.parse(text))
   end
