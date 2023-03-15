@@ -32,7 +32,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
 
         it "should find the file metadata with expected checksum" do
           request = a_request_that_finds(Puppet::IndirectorProxy.new("modules/lib/file.rb", "file_metadata"),
-                                         {:accept_header => 'unknown, text/pson'},
+                                         {:accept_header => 'unknown, application/json'},
                                          {:environment => 'production', :checksum_type => checksum_type})
           handler.call(request, response)
           resp = Puppet::Util::Json.load(response.body)
@@ -43,7 +43,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
 
         it "should search for the file metadata with expected checksum" do
           request = a_request_that_searches(Puppet::IndirectorProxy.new("modules/lib", "file_metadata"),
-                                            {:accept_header => 'unknown, text/pson'},
+                                            {:accept_header => 'unknown, application/json'},
                                             {:environment => 'production', :checksum_type => checksum_type, :recurse => 'yes'})
           handler.call(request, response)
           resp = Puppet::Util::Json.load(response.body)
