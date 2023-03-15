@@ -622,7 +622,7 @@ Version:
 
     after(:each) { Puppet.pop_context }
 
-    it 'pson' do
+    it 'pson', if: Puppet.features.pson? do
       report = generate_report
 
       tripped = Puppet::Transaction::Report.convert_from(:pson, report.render)

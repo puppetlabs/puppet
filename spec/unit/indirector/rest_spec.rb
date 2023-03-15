@@ -123,7 +123,7 @@ describe Puppet::Indirector::REST do
       }.to raise_error(Net::HTTPError, 'Error 500 on SERVER: json error')
     end
 
-    it 'parses the response body as pson and returns the "message"' do
+    it 'parses the response body as pson and returns the "message"', if: Puppet.features.pson? do
       stub_request(
         :get, 'http://puppet.example.com:8140/puppet/v3/failing_test_model'
       ).to_return(status: [500, 'Internal Server Error'],

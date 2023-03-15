@@ -68,7 +68,7 @@ describe Puppet::HTTP::Service::Compiler do
       subject.post_catalog(certname, environment: environment, facts: facts)
     end
 
-    it 'submits facts as pson if set as the preferred format' do
+    it 'submits facts as pson if set as the preferred format', if: Puppet.features.pson? do
       Puppet[:preferred_serialization_format] = "pson"
 
       stub_request(:post, uri)

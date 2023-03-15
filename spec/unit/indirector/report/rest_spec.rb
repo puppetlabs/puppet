@@ -69,7 +69,7 @@ describe Puppet::Transaction::Report::Rest do
       }.to raise_error(Puppet::Error, /To submit reports to a server running puppetserver 4.10.1, set preferred_serialization_format to pson/)
     end
 
-    it "raises with HTTP 500 if the save fails and we're already using pson" do
+    it "raises with HTTP 500 if the save fails and we're already using pson", if: Puppet.features.pson? do
       Puppet[:preferred_serialization_format] = "pson"
 
       stub_request(:put, uri)

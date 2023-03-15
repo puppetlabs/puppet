@@ -177,7 +177,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:json))
     end
 
-    it "falls back to the next supported format" do
+    it "falls back to the next supported format", if: Puppet.features.pson? do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
       request = a_request_that_finds(data, :accept_header => "application/json, text/pson")
@@ -223,7 +223,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(response.body).to eq(Puppet::IndirectorTesting.render_multiple(:json, [data]))
     end
 
-    it "falls back to the next supported format" do
+    it "falls back to the next supported format", if: Puppet.features.pson? do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
       request = a_request_that_searches(Puppet::IndirectorTesting.new("my"), :accept_header => "application/json, text/pson")

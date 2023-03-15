@@ -321,7 +321,7 @@ describe Puppet::Resource::Catalog::Compiler do
         expect(facts.timestamp).to eq(time)
       end
 
-      it "accepts PSON facts from older agents" do
+      it "accepts PSON facts from older agents", :if => Puppet.features.pson? do
         request = a_legacy_request_that_contains(facts)
 
         facts = compiler.extract_facts_from_request(request)
