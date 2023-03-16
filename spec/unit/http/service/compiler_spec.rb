@@ -141,20 +141,22 @@ describe Puppet::HTTP::Service::Compiler do
 
     it 'does not accept msgpack by default' do
       stub_request(:post, uri)
-        .with(headers: {'Accept' => 'application/vnd.puppet.rich+json, application/json, text/pson'})
+        .with(headers: {'Accept' => 'application/vnd.puppet.rich+json, application/json'})
         .to_return(**catalog_response)
 
       allow(Puppet.features).to receive(:msgpack?).and_return(false)
+      allow(Puppet.features).to receive(:pson?).and_return(false)
 
       subject.post_catalog(certname, environment: environment, facts: facts)
     end
 
     it 'accepts msgpack & rich_json_msgpack if the gem is present' do
       stub_request(:post, uri)
-        .with(headers: {'Accept' => 'application/vnd.puppet.rich+json, application/json, application/vnd.puppet.rich+msgpack, application/x-msgpack, text/pson'})
+        .with(headers: {'Accept' => 'application/vnd.puppet.rich+json, application/json, application/vnd.puppet.rich+msgpack, application/x-msgpack'})
         .to_return(**catalog_response)
 
       allow(Puppet.features).to receive(:msgpack?).and_return(true)
+      allow(Puppet.features).to receive(:pson?).and_return(false)
 
       subject.post_catalog(certname, environment: environment, facts: facts)
     end

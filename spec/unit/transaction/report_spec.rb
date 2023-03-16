@@ -610,9 +610,9 @@ Version:
     expect(Puppet::Transaction::Report.default_format).to eq(:json)
   end
 
-  it "supports both json, pson and yaml" do
-    # msgpack is optional, so using include instead of eq
-    expect(Puppet::Transaction::Report.supported_formats).to include(:json, :pson, :yaml)
+  it "supports both json and yaml" do
+    # msgpack and pson are optional, so using include instead of eq
+    expect(Puppet::Transaction::Report.supported_formats).to include(:json, :yaml)
   end
 
   context 'can make a round trip through' do

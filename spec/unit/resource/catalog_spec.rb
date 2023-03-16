@@ -13,9 +13,9 @@ describe Puppet::Resource::Catalog, "when compiling" do
     allow(Puppet::Util::Storage).to receive(:store)
   end
 
-  it "should support json, pson, dot, yaml" do
-    # msgpack is optional, so using include instead of eq
-    expect(Puppet::Resource::Catalog.supported_formats).to include(:json, :pson, :dot, :yaml)
+  it "should support json, dot, yaml" do
+    # msgpack and pson are optional, so using include instead of eq
+    expect(Puppet::Resource::Catalog.supported_formats).to include(:json, :dot, :yaml)
   end
 
   # audit only resources are unmanaged
