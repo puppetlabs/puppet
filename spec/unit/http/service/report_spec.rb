@@ -1,7 +1,10 @@
 require 'spec_helper'
+require 'puppet_spec/network'
 require 'puppet/http'
 
 describe Puppet::HTTP::Service::Report do
+  include PuppetSpec::Network
+
   let(:ssl_context) { Puppet::SSL::SSLContext.new }
   let(:client) { Puppet::HTTP::Client.new(ssl_context: ssl_context) }
   let(:subject) { client.create_session.route_to(:report) }
@@ -64,7 +67,7 @@ describe Puppet::HTTP::Service::Report do
       stub_request(:put, url)
         .with(
           headers: {
-            'Accept'=>'application/json, application/x-msgpack, text/pson',
+            'Accept'=>acceptable_content_types_string,
             'Content-Type'=>'application/json',
            }).
          to_return(status: 200, body: "", headers: {})

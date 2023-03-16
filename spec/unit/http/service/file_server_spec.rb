@@ -1,8 +1,10 @@
 require 'spec_helper'
+require 'puppet_spec/network'
 require 'puppet/http'
 
 describe Puppet::HTTP::Service::FileServer do
   include PuppetSpec::Files
+  include PuppetSpec::Network
 
   let(:ssl_context) { Puppet::SSL::SSLContext.new }
   let(:client) { Puppet::HTTP::Client.new(ssl_context: ssl_context) }
@@ -57,7 +59,7 @@ describe Puppet::HTTP::Service::FileServer do
 
     it 'submits a request for file metadata to the server' do
       stub_request(:get, url).with(
-        headers: {'Accept'=>'application/json, application/x-msgpack, text/pson',}
+        headers: {'Accept'=>acceptable_content_types_string}
       ).to_return(
         status: 200, body: filemetadata.render, headers: { 'Content-Type' => 'application/json' }
       )
@@ -139,7 +141,7 @@ describe Puppet::HTTP::Service::FileServer do
 
     it 'submits a request for file metadata to the server' do
       stub_request(:get, url).with(
-        headers: {'Accept'=>'application/json, application/x-msgpack, text/pson',}
+        headers: {'Accept' => acceptable_content_types_string}
       ).to_return(
         status: 200, body: formatter.render_multiple(filemetadatas), headers: { 'Content-Type' => 'application/json' }
       )
@@ -160,7 +162,7 @@ describe Puppet::HTTP::Service::FileServer do
     it 'automatically converts an array of parameters to the stringified query' do
       url = "https://www.example.com/puppet/v3/file_metadatas/:mount/#{path}?checksum_type=sha256&environment=testing&ignore=CVS&ignore=.git&ignore=.hg&links=manage&recurse=false&source_permissions=ignore"
       stub_request(:get, url).with(
-        headers: {'Accept'=>'application/json, application/x-msgpack, text/pson',}
+        headers: {'Accept'=>acceptable_content_types_string}
       ).to_return(
         status: 200, body: formatter.render_multiple(filemetadatas), headers: { 'Content-Type' => 'application/json' }
       )
