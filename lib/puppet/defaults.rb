@@ -1711,6 +1711,11 @@ EOT
       instances will be serialized using this method, since not all classes
       can be guaranteed to support this format, but it will be used for all
       classes that support it.",
+      :hook => proc { |value|
+        if value == "pson" && !Puppet.features.pson?
+          raise(Puppet::Settings::ValidationError, "The 'puppet-pson' gem must be installed to use the PSON serialization format.")
+        end
+      }
     },
     :agent_catalog_run_lockfile => {
       :default    => "$statedir/agent_catalog_run.lock",
