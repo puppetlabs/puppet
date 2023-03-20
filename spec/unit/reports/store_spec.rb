@@ -15,10 +15,12 @@ describe Puppet::Reports.report(:store) do
     end
 
     let(:report) do
-      if RUBY_VERSION < "3.0"
-        report = YAML.load_file(File.join(PuppetSpec::FIXTURE_DIR, 'yaml/report2.6.x.yaml'))
-      else
+      # It's possible to install Psych 5 with Ruby 2.7, so check whether underlying YAML supports
+      # unsafe_load_file. This check can be removed in PUP-11718
+      if YAML.respond_to?(:unsafe_load_file)
         report = YAML.unsafe_load_file(File.join(PuppetSpec::FIXTURE_DIR, 'yaml/report2.6.x.yaml'))
+      else
+        report = YAML.load_file(File.join(PuppetSpec::FIXTURE_DIR, 'yaml/report2.6.x.yaml'))
       end
       report.extend(described_class)
       report
