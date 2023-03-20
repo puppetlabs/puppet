@@ -16,7 +16,7 @@ PUT
 
 ### Supported Format(s)
 
-`application/json`, `text/pson`
+`application/json`
 
 ### Parameters
 

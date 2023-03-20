@@ -66,9 +66,9 @@ available and how to interact with it.
 These services are all directly used by the Puppet agent application, in order
 to manage the configuration of a node.
 
-These endpoints accept payload formats formatted as JSON or PSON (MIME types of
-`application/json` and `text/pson`, respectively) except for `File Content` and
-`File Bucket File` which always use `application/octet-stream`.
+These endpoints accept payload formats formatted as JSON (MIME type
+`application/json`) except for `File Content` and `File Bucket File` which
+always use `application/octet-stream`.
 
 * [Facts](./http_facts.md)
 * [Catalog](./http_catalog.md)
@@ -133,10 +133,10 @@ The certificate authority (CA) API contains all of the endpoints supporting Pupp
 Serialization Formats
 ---------------------
 
-Puppet sends messages using several different serialization formats. Not all
+Puppet sends messages using `JSON` or as binary data. Not all
 REST services support all of the formats.
 
 * [JSON](https://tools.ietf.org/html/rfc7159)
-* [PSON](./pson.md)
+* [PSON](./pson.md) was supported in earlier versions of Puppet, but is no longer for performance reasons.
 
 `YAML` was supported in earlier versions of Puppet, but is no longer for security reasons.

@@ -155,7 +155,6 @@ Layout/EmptyLinesAroundAccessModifier:
 Layout/EmptyLinesAroundArguments:
   Exclude:
     - 'lib/puppet/defaults.rb'
-    - 'lib/puppet/external/pson/common.rb'
     - 'lib/puppet/parser/functions/sprintf.rb'
     - 'lib/puppet/settings.rb'
     - 'lib/puppet/type.rb'
@@ -602,14 +601,8 @@ Lint/ElseLayout:
     - 'lib/puppet/resource.rb'
 
 # Configuration parameters: AllowComments.
-Lint/EmptyConditionalBody:
-  Exclude:
-    - 'lib/puppet/external/pson/pure/parser.rb'
-
-# Configuration parameters: AllowComments.
 Lint/EmptyWhen:
   Exclude:
-    - 'lib/puppet/external/pson/pure/parser.rb'
     - 'lib/puppet/indirector/hiera.rb'
     - 'lib/puppet/pops/evaluator/evaluator_impl.rb'
     - 'lib/puppet/pops/lookup/data_dig_function_provider.rb'
@@ -853,7 +846,6 @@ Naming/ClassAndModuleCamelCase:
 
 Naming/ConstantName:
   Exclude:
-    - 'lib/puppet/external/pson/common.rb'
     - 'lib/puppet/graph/relationship_graph.rb'
     - 'lib/puppet/indirector/hiera.rb'
     - 'lib/puppet/provider/package/sun.rb'
@@ -909,7 +901,6 @@ Naming/VariableName:
     - 'ext/windows/service/daemon.rb'
     - 'lib/puppet/agent.rb'
     - 'lib/puppet/application/describe.rb'
-    - 'lib/puppet/external/pson/common.rb'
     - 'lib/puppet/pops/lookup/hiera_config.rb'
     - 'lib/puppet/pops/validation/checker4_0.rb'
     - 'lib/puppet/provider/package/pip.rb'
@@ -1020,11 +1011,6 @@ Style/CaseLikeIf:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/CharacterLiteral:
-  Exclude:
-    - 'lib/puppet/external/pson/pure/parser.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: nested, compact
 Style/ClassAndModuleChildren:
@@ -1121,8 +1107,6 @@ Style/DoubleNegation:
   Exclude:
     - 'lib/puppet/application/lookup.rb'
     - 'lib/puppet/confine/boolean.rb'
-    - 'lib/puppet/external/pson/pure/generator.rb'
-    - 'lib/puppet/external/pson/pure/parser.rb'
     - 'lib/puppet/http/service/compiler.rb'
     - 'lib/puppet/parser/functions/fqdn_rand.rb'
     - 'lib/puppet/pops/evaluator/evaluator_impl.rb'
@@ -1146,8 +1130,6 @@ Style/EmptyBlockParameter:
 # This cop supports safe auto-correction (--auto-correct).
 Style/EmptyCaseCondition:
   Exclude:
-    - 'lib/puppet/external/pson/common.rb'
-    - 'lib/puppet/external/pson/pure/parser.rb'
     - 'lib/puppet/pops/lookup/hiera_config.rb'
     - 'lib/puppet/pops/serialization/serializer.rb'
     - 'lib/puppet/pops/types/type_calculator.rb'
@@ -1220,8 +1202,6 @@ Style/ExplicitBlockArgument:
 # SupportedStyles: each, for
 Style/For:
   Exclude:
-    - 'lib/puppet/external/pson/common.rb'
-    - 'lib/puppet/external/pson/pure/generator.rb'
     - 'lib/puppet/file_system/uniquefile.rb'
     - 'lib/puppet/module_tool/contents_description.rb'
     - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
@@ -1294,8 +1274,6 @@ Style/HashTransformValues:
 # This cop supports safe auto-correction (--auto-correct).
 Style/IdenticalConditionalBranches:
   Exclude:
-    - 'lib/puppet/external/pson/common.rb'
-    - 'lib/puppet/external/pson/pure/generator.rb'
     - 'lib/puppet/functions/filter.rb'
     - 'lib/puppet/network/http_pool.rb'
     - 'lib/puppet/node.rb'
@@ -1848,7 +1826,6 @@ Style/SignalException:
 # Configuration parameters: AllowIfMethodIsEmpty.
 Style/SingleLineMethods:
   Exclude:
-    - 'lib/puppet/external/pson/pure/generator.rb'
     - 'lib/puppet/ffi/windows/api_types.rb'
     - 'lib/puppet/file_system/memory_file.rb'
     - 'lib/puppet/graph/simple_graph.rb'
@@ -2007,7 +1984,6 @@ Style/TrivialAccessors:
 Style/UnlessElse:
   Exclude:
     - 'lib/puppet/application/lookup.rb'
-    - 'lib/puppet/external/pson/pure/parser.rb'
     - 'lib/puppet/pops/evaluator/evaluator_impl.rb'
     - 'lib/puppet/pops/types/type_mismatch_describer.rb'
     - 'lib/puppet/provider/package/aix.rb'
@@ -2026,7 +2002,6 @@ Style/UnpackFirst:
 # This cop supports safe auto-correction (--auto-correct).
 Style/VariableInterpolation:
   Exclude:
-    - 'lib/puppet/external/pson/pure/parser.rb'
     - 'lib/puppet/util/command_line/trollop.rb'
     - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
 
