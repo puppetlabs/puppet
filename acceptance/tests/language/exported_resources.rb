@@ -17,7 +17,7 @@ tag 'audit:high',
     step 'stop puppet server' do
       on(master, "service #{master['puppetservice']} stop")
     end
-    step 'remove cached agent pson catalogs from the master' do
+    step 'remove cached agent json catalogs from the master' do
       on(master, "rm -f #{File.join(master.puppet['yamldir'],'catalog','*')}",
          :accept_all_exit_codes => true)
     end
@@ -33,10 +33,10 @@ tag 'audit:high',
     end
   end
 
-  storeconfigs_backend_name = 'pson_storeconfigs'
+  storeconfigs_backend_name = 'json_storeconfigs'
   step 'create a yaml storeconfigs terminus in the modulepath' do
     moduledir = File.join(environmentpath,tmp_environment,'modules')
-    terminus_class_name = 'PsonStoreconfigs'
+    terminus_class_name = 'JsonStoreconfigs'
     manifest = <<MANIFEST
 File {
   ensure => directory,
@@ -64,8 +64,8 @@ file { '#{moduledir}/yaml_terminus/lib/puppet/indirector/catalog/#{storeconfigs_
         # This is quite likely a bad idea, since we are not managing ownership or modes.
         Dir.mkdir(basedir) unless Puppet::FileSystem.exist?(basedir)
         begin
-          # We cannot dump anonymous modules in yaml, so dump to json/pson
-          File.open(file, "w") { |f| f.write request.instance.to_pson }
+          # We cannot dump anonymous modules in yaml, so dump to json
+          File.open(file, "w") { |f| f.write request.instance.to_json }
         rescue TypeError => detail
           Puppet.err "Could not save \#{self.name} \#{request.key}: \#{detail}"
         end
@@ -108,7 +108,7 @@ file { '#{moduledir}/yaml_terminus/lib/puppet/indirector/resource/#{storeconfigs
       def search(request)
         catalog_dir = File.join(Puppet.run_mode.server? ? Puppet[:yamldir] : Puppet[:clientyamldir], "catalog", "*")
         results = Dir.glob(catalog_dir).collect { |file|
-          catalog = Puppet::Resource::Catalog.convert_from(:pson, File.read(file))
+          catalog = Puppet::Resource::Catalog.convert_from(:json, File.read(file))
           if catalog.name == request.options[:host]
             next
           end

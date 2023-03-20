@@ -44,7 +44,7 @@ module Puppet
       # @param host [String] hostname
       # @return [Array] paths for found modules
       def get_installed_modules_for_host(host)
-        on host, puppet("module list --render-as pson")
+        on host, puppet("module list --render-as json")
         str  = stdout.lines.to_a.last
         pat = /\(([^()]+)\)/
         mods =  str.scan(pat).flatten
