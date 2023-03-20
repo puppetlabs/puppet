@@ -103,18 +103,5 @@ describe Puppet::HTTP::Service::Report do
         expect(err.response.code).to eq(400)
       end
     end
-
-    it 'raises an error if unsuccessful, the server version is < 5, and the current serialization format is not pson' do
-      Puppet[:preferred_serialization_format] = 'json'
-
-      stub_request(:put, url).to_return(status: [400, 'Bad Request'], headers: {'X-Puppet-Version' => '4.2.3' })
-
-      expect {
-        subject.put_report('infinity', report, environment: environment)
-      }.to raise_error do |err|
-        expect(err).to be_an_instance_of(Puppet::HTTP::ProtocolError)
-        expect(err.message).to eq('To submit reports to a server running puppetserver 4.2.3, set preferred_serialization_format to pson')
-      end
-    end
   end
 end
