@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 7.23.0-146-g4c125d3c23\n"
+"Project-Id-Version: Puppet automation framework 7.23.0-158-g2faf561418\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2023-03-15 14:36+0000\n"
-"PO-Revision-Date: 2023-03-15 14:36+0000\n"
+"POT-Creation-Date: 2023-03-21 16:51+0000\n"
+"PO-Revision-Date: 2023-03-21 16:51+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -48,11 +48,11 @@ msgstr ""
 msgid "Config file %{hiera_config} not found, using Hiera defaults"
 msgstr ""
 
-#: ../lib/puppet.rb:136
+#: ../lib/puppet.rb:132
 msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html for a list of supported ruby versions."
 msgstr ""
 
-#: ../lib/puppet.rb:222
+#: ../lib/puppet.rb:218
 msgid "The environmentpath setting cannot be empty or nil."
 msgstr ""
 
@@ -768,7 +768,7 @@ msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{all
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1995
+#: ../lib/puppet/defaults.rb:2000
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -2282,11 +2282,6 @@ msgstr ""
 msgid "No content type in http response; cannot parse"
 msgstr ""
 
-#. TRANSLATORS "pson", "preferred_serialization_format", and "puppetserver" should not be translated
-#: ../lib/puppet/http/service/report.rb:59
-msgid "To submit reports to a server running puppetserver %{server_version}, set preferred_serialization_format to pson"
-msgstr ""
-
 #: ../lib/puppet/indirector.rb:25
 msgid "Indirection %{indirection_name} does not exist"
 msgstr ""
@@ -2761,10 +2756,6 @@ msgstr ""
 
 #: ../lib/puppet/indirector/report/processor.rb:56
 msgid "No report named '%{name}'"
-msgstr ""
-
-#: ../lib/puppet/indirector/report/rest.rb:31
-msgid "Server version %{version} does not accept reports in '%{format}', use `preferred_serialization_format=pson`"
 msgstr ""
 
 #: ../lib/puppet/indirector/request.rb:102
