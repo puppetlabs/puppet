@@ -117,15 +117,16 @@ module Puppet::Util::Execution
   # @option options [String] :cwd the directory from which to run the command. Raises an error if the directory does not exist.
   #   This option is only available on the agent. It cannot be used on the master, meaning it cannot be used in, for example,
   #   regular functions, hiera backends, or report processors.
-  # @option options [Boolean]  :failonfail if this value is set to true, then this method will raise an error if the
+  # @option options [Boolean] :failonfail if this value is set to true, then this method will raise an error if the
   #   command is not executed successfully.
   # @option options [Integer, String] :uid (nil) the user id of the user that the process should be run as. Will be ignored if the
   #   user id matches the effective user id of the current process.
   # @option options [Integer, String] :gid (nil) the group id of the group that the process should be run as. Will be ignored if the
   #   group id matches the effective group id of the current process.
   # @option options [Boolean] :combine sets whether or not to combine stdout/stderr in the output, if false stderr output is discarded
-  # @option options [String] :stdinfile (nil) sets a file that can be used for stdin. Passing a string for stdin is not currently
-  #   supported.
+  # @option options [String] :stdin (nil) a filename or IO object that will be streamed into stdin.
+  # @option options [String] :stdinfile (nil) alias for `stdin`.
+  # @option options [Boolean] :stdin_yield (false) yield an IO object attached to stdin.
   # @option options [Boolean] :squelch (false) if true, ignore stdout / stderr completely.
   # @option options [Boolean] :override_locale (true) by default (and if this option is set to true), we will temporarily override
   #   the user/system locale to "C" (via environment variables LANG and LC_*) while we are executing the command.
@@ -133,8 +134,16 @@ module Puppet::Util::Execution
   #   Passing in a value of false for this option will allow the command to be executed using the user/system locale.
   # @option options [Hash<{String => String}>] :custom_environment ({}) a hash of key/value pairs to set as environment variables for the duration
   #   of the command.
-  # @return [Puppet::Util::Execution::ProcessOutput] output as specified by options
-  # @raise [Puppet::ExecutionFailure] if the executed chiled process did not exit with status == 0 and `failonfail` is
+  # @yield [stdin, stdout, stderr] an optional block that can interact with the command's input
+  #   and/or output.
+  # @yieldparam stdin [nil] an IO object attached to stdin if `stdin_yield` is `true`, otherwise `nil`.
+  # @yieldparam stdout [IO] an IO object attached to stdout if `squelch` is `false`, otherwise `nil`.
+  #   If `combine` is `true`, then the IO object will be attached to both stdout and stderr.
+  # @yieldparam stderr an IO object attached to stderr if `squelch` and `combine` are `false`,
+  #   otherwise `nil`.
+  # @yieldreturn [String] the output to return from the `execute` call.
+  # @return [Puppet::Util::Execution::ProcessOutput] output as specified by options.
+  # @raise [Puppet::ExecutionFailure] if the executed child process did not exit with status == 0 and `failonfail` is
   #   `true`.
   # @note Unfortunately, the default behavior for failonfail and combine (since
   #   0.22.4 and 0.24.7, respectively) depend on whether options are specified
@@ -152,7 +161,9 @@ module Puppet::Util::Execution
         :uid => nil,
         :gid => nil,
         :combine => NoOptionsSpecified.equal?(options),
+        :stdin => nil,
         :stdinfile => nil,
+        :stdin_yield => false,
         :squelch => false,
         :override_locale => true,
         :custom_environment => {},
@@ -161,6 +172,21 @@ module Puppet::Util::Execution
     }
 
     options = default_options.merge(options)
+
+    if [!options[:stdin].nil?, !options[:stdinfile].nil?, options[:stdin_yield]].count { |i| i } > 1
+      raise ArgumentError, _("Only one of the 'stdin', 'stdinfile', or 'stdin_yield' options may be provided to Puppet::Util::Execution.execute")
+    elsif !options[:stdinfile].nil?
+      options[:stdin] = options[:stdinfile]
+    end
+    if block_given?
+      if options[:squelch] and !options[:stdin_yield]
+        raise ArgumentError, _("Providing a block to Puppet::Util::Execution.execute doesn't make sense when 'squelch' is true and 'stdin_yield' is false")
+      end
+    else
+      if options[:stdin_yield]
+        raise ArgumentError, _("Enabling 'stdin_yield' makes sense only when a block is provided to Puppet::Util::Execution.execute")
+      end
+    end
 
     if command.is_a?(Array)
       command = command.flatten.map(&:to_s)
@@ -197,26 +223,43 @@ module Puppet::Util::Execution
     end
 
     begin
-      stdin = Puppet::FileSystem.open(options[:stdinfile] || null_file, nil, 'r')
-      # On Windows, continue to use the file-based approach to avoid breaking people's existing
-      # manifests. If they use a script that doesn't background cleanly, such as
-      # `start /b ping 127.0.0.1`, we couldn't handle it with pipes as there's no non-blocking
-      # read available.
+      if options[:stdin_yield]
+        stdin, stdin_writer = IO.pipe
+      elsif options[:stdin].is_a?(StringIO)
+        # Unlike other IO objects, StringIO does not represent an OS file handle, and therefore it
+        # cannot be attached to a process.  Instead, we create a pipe, attach the pipe to a process,
+        # then copy the StringIO object's contents into the pipe.
+        stdin, stdin_writer = IO.pipe
+      elsif options[:stdin].is_a?(IO)
+        stdin = options[:stdin]
+      else
+        stdin = Puppet::FileSystem.open(options[:stdin] || null_file, nil, 'r')
+      end
       if options[:squelch]
         stdout = Puppet::FileSystem.open(null_file, nil, 'w')
-      elsif Puppet.features.posix?
-        reader, stdout = IO.pipe
+      elsif Puppet.features.posix? or block_given?
+        stdout_reader, stdout = IO.pipe
       else
+        # On Windows, continue to use the file-based approach to avoid breaking people's existing
+        # manifests. If they use a script that doesn't background cleanly, such as
+        # `start /b ping 127.0.0.1`, we couldn't handle it with pipes as there's no non-blocking
+        # read available.
         stdout = Puppet::FileSystem::Uniquefile.new('puppet')
       end
-      stderr = options[:combine] ? stdout : Puppet::FileSystem.open(null_file, nil, 'w')
+      if options[:combine]
+        stderr = stdout
+      elsif block_given?
+        stderr_reader, stderr = IO.pipe
+      else
+        stderr = Puppet::FileSystem.open(null_file, nil, 'w')
+      end
 
       exec_args = [command, options, stdin, stdout, stderr]
       output = ''
 
       # We close stdin/stdout/stderr immediately after fork/exec as they're no longer needed by
       # this process. In most cases they could be closed later, but when `stdout` is the "writer"
-      # pipe we must close it or we'll never reach eof on the `reader` pipe.
+      # pipe we must close it or we'll never reach eof on the `stdout_reader` pipe.
       execution_stub = Puppet::Util::ExecutionStub.current_value
       if execution_stub
         child_pid = execution_stub.call(*exec_args)
@@ -227,7 +270,23 @@ module Puppet::Util::Execution
         begin
           child_pid = execute_posix(*exec_args)
           [stdin, stdout, stderr].each {|io| io.close rescue nil}
-          if options[:squelch]
+          if options[:stdin].is_a?(StringIO)
+            begin
+              IO.copy_stream(options[:stdin], stdin_writer)
+            rescue Errno::EPIPE
+              # Ignore "Broken pipe" error if the process closes stdin before
+              # the write is complete.
+            end
+            stdin_writer.close
+            stdin_writer = nil
+          end
+          if options[:squelch] or block_given?
+            if block_given?
+              output = yield(stdin_writer, stdout_reader, stderr_reader)
+              stdin_writer.close if stdin_writer
+              stdout_reader.close if stdout_reader
+              stderr_reader.close if stderr_reader
+            end
             exit_status = Process.waitpid2(child_pid).last.exitstatus
           else
             # Use non-blocking read to check for data. After each attempt,
@@ -240,9 +299,9 @@ module Puppet::Util::Execution
               # This timeout is selected to keep activity low while waiting on
               # a long process, while not waiting too long for the pathological
               # case where stdout is never closed.
-              ready = IO.select([reader], [], [], 0.1)
+              ready = IO.select([stdout_reader], [], [], 0.1)
               begin
-                output << reader.read_nonblock(4096) if ready
+                output << stdout_reader.read_nonblock(4096) if ready
               rescue Errno::EAGAIN
               rescue EOFError
               end
@@ -251,7 +310,7 @@ module Puppet::Util::Execution
             # Read any remaining data. Allow for but don't expect EOF.
             begin
               loop do
-                output << reader.read_nonblock(4096)
+                output << stdout_reader.read_nonblock(4096)
               end
             rescue Errno::EAGAIN
             rescue EOFError
@@ -280,10 +339,29 @@ module Puppet::Util::Execution
         process_info = execute_windows(*exec_args)
         begin
           [stdin, stderr].each {|io| io.close rescue nil}
+
+          if options[:stdin].is_a?(StringIO)
+            begin
+              IO.copy_stream(options[:stdin], stdin_writer)
+            rescue Errno::EPIPE
+              # Ignore "Broken pipe" error if the process closes stdin before
+              # the write is complete.
+            end
+            stdin_writer.close
+            stdin_writer = nil
+          end
+
+          if block_given?
+            output = yield(stdin_writer, stdout_reader, stderr_reader)
+            stdin_writer.close if stdin_writer
+            stdout_reader.close if stdout_reader
+            stderr_reader.close if stderr_reader
+          end
+
           exit_status = Puppet::Util::Windows::Process.wait_process(process_info.process_handle)
 
           # read output in if required
-          unless options[:squelch]
+          unless options[:squelch] or block_given?
             output = wait_for_output(stdout)
             Puppet.warning _("Could not get output") unless output
           end
@@ -299,11 +377,10 @@ module Puppet::Util::Execution
     ensure
       # Make sure all handles are closed in case an exception was thrown attempting to execute.
       [stdin, stdout, stderr].each {|io| io.close rescue nil}
-      if !options[:squelch]
-        # if we opened a pipe, we need to clean it up.
-        reader.close if reader
-        stdout.close! if Puppet::Util::Platform.windows?
-      end
+      stdin_writer.close if stdin_writer
+      stdout_reader.close if stdout_reader
+      stderr_reader.close if stderr_reader
+      stdout.close! if stdout.is_a?(Puppet::FileSystem::Uniquefile)
     end
 
     Puppet::Util::Execution::ProcessOutput.new(output || '', exit_status)

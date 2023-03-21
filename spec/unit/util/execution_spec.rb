@@ -251,6 +251,27 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
           allow(Puppet::Util::Execution).to receive(:wait_for_output)
         end
 
+        it "should set stdin to the stdin argument if specified" do
+          input = tmpfile('stdin')
+          FileUtils.touch(input)
+
+          expect(Puppet::Util::Execution).to receive(executor) do |_,_,stdin,_,_|
+            expect(stdin.path).to eq(input)
+            rval
+          end
+
+          Puppet::Util::Execution.execute('test command', :stdin => input)
+        end
+
+        it "should set stdin to a pipe if the stdin argument is a StringIO" do
+          expect(Puppet::Util::Execution).to receive(executor) do |_,_,stdin,_,_|
+            expect(stdin.class).to eq(IO)
+            rval
+          end
+
+          Puppet::Util::Execution.execute('test command', :stdin => StringIO.new)
+        end
+
         it "should set stdin to the stdinfile if specified" do
           input = tmpfile('stdin')
           FileUtils.touch(input)
@@ -270,6 +291,15 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
           end
 
           Puppet::Util::Execution.execute('test command')
+        end
+
+        it "should set stdin to a pipe if stdin_yield is specified" do
+          expect(Puppet::Util::Execution).to receive(executor) do |_,_,stdin,_,_|
+            expect(stdin.class).to eq(IO)
+            rval
+          end
+
+          Puppet::Util::Execution.execute('test command', :stdin_yield => true) { |_,_,_| }
         end
 
         describe "when squelch is set" do
