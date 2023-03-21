@@ -1,9 +1,7 @@
 # Encoding: UTF-8
 require 'spec_helper'
 
-require 'puppet/external/pson/common'
-
-describe PSON do
+describe 'PSON', if: Puppet.features.pson? do
   {
     'foo' => '"foo"',
     1 => '1',

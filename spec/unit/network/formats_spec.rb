@@ -247,7 +247,7 @@ describe "Puppet Network Format" do
     end
   end
 
-  describe "pson" do
+  describe "pson", :if => Puppet.features.pson? do
     let(:pson) { Puppet::Network::FormatHandler.format(:pson) }
 
     it "should include a pson format" do

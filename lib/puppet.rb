@@ -20,10 +20,6 @@ require_relative 'puppet/settings'
 require_relative 'puppet/util/feature'
 require_relative 'puppet/util/suidmanager'
 require_relative 'puppet/util/run_mode'
-# PSON is deprecated, use JSON instead
-require_relative 'puppet/external/pson/common'
-require_relative 'puppet/external/pson/version'
-require_relative 'puppet/external/pson/pure'
 require_relative 'puppet/gettext/config'
 require_relative 'puppet/defaults'
 

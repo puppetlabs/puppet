@@ -79,7 +79,7 @@ describe Puppet::Configurer::FactHandler do
       { :hash => { 'afact' => "A\u06FF\u16A0\u{2070E}" }, :encoded => '%22values%22%3A%7B%22afact%22%3A%22' + 'A%DB%BF%E1%9A%A0%F0%A0%9C%8E' + '%22%7D' },
     ]
 
-    context "as pson" do
+    context "as pson", if: Puppet.features.pson? do
       before :each do
         Puppet[:preferred_serialization_format] = 'pson'
       end

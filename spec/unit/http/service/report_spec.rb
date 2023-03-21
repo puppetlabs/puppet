@@ -1,7 +1,10 @@
 require 'spec_helper'
+require 'puppet_spec/network'
 require 'puppet/http'
 
 describe Puppet::HTTP::Service::Report do
+  include PuppetSpec::Network
+
   let(:ssl_context) { Puppet::SSL::SSLContext.new }
   let(:client) { Puppet::HTTP::Client.new(ssl_context: ssl_context) }
   let(:subject) { client.create_session.route_to(:report) }
@@ -64,7 +67,7 @@ describe Puppet::HTTP::Service::Report do
       stub_request(:put, url)
         .with(
           headers: {
-            'Accept'=>'application/json, application/x-msgpack, text/pson',
+            'Accept'=>acceptable_content_types_string,
             'Content-Type'=>'application/json',
            }).
          to_return(status: 200, body: "", headers: {})
@@ -98,19 +101,6 @@ describe Puppet::HTTP::Service::Report do
         expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
         expect(err.message).to eq('Bad Request')
         expect(err.response.code).to eq(400)
-      end
-    end
-
-    it 'raises an error if unsuccessful, the server version is < 5, and the current serialization format is not pson' do
-      Puppet[:preferred_serialization_format] = 'json'
-
-      stub_request(:put, url).to_return(status: [400, 'Bad Request'], headers: {'X-Puppet-Version' => '4.2.3' })
-
-      expect {
-        subject.put_report('infinity', report, environment: environment)
-      }.to raise_error do |err|
-        expect(err).to be_an_instance_of(Puppet::HTTP::ProtocolError)
-        expect(err.message).to eq('To submit reports to a server running puppetserver 4.2.3, set preferred_serialization_format to pson')
       end
     end
   end

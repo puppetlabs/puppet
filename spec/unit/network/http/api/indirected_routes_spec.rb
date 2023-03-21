@@ -177,7 +177,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:json))
     end
 
-    it "falls back to the next supported format" do
+    it "falls back to the next supported format", if: Puppet.features.pson? do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
       request = a_request_that_finds(data, :accept_header => "application/json, text/pson")
@@ -223,7 +223,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(response.body).to eq(Puppet::IndirectorTesting.render_multiple(:json, [data]))
     end
 
-    it "falls back to the next supported format" do
+    it "falls back to the next supported format", if: Puppet.features.pson? do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
       request = a_request_that_searches(Puppet::IndirectorTesting.new("my"), :accept_header => "application/json, text/pson")
@@ -238,14 +238,13 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     it "raises 406 not acceptable if no formats are accceptable" do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
-      request = a_request_that_searches(Puppet::IndirectorTesting.new("my"), :accept_header => "application/json, text/pson")
+      request = a_request_that_searches(Puppet::IndirectorTesting.new("my"), :accept_header => "application/json")
       allow(data).to receive(:to_json).and_raise(Puppet::Network::FormatHandler::FormatError, 'Could not render to Puppet::Network::Format[json]: source sequence is illegal/malformed utf-8')
-      allow(data).to receive(:to_pson).and_raise(Puppet::Network::FormatHandler::FormatError, 'Could not render to Puppet::Network::Format[pson]: source sequence is illegal/malformed utf-8')
 
       expect {
         handler.call(request, response)
       }.to raise_error(Puppet::Network::HTTP::Error::HTTPNotAcceptableError,
-                       %r{No supported formats are acceptable \(Accept: application/json, text/pson\)})
+                       %r{No supported formats are acceptable \(Accept: application/json\)})
     end
 
     it "should return [] when searching returns an empty array" do

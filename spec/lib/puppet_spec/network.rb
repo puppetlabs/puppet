@@ -33,6 +33,24 @@ module PuppetSpec::Network
     { :environment => "production" }
   end
 
+  def acceptable_content_types
+    types = ['application/json']
+    types << 'application/x-msgpack' if Puppet.features.msgpack?
+    types << 'text/pson' if Puppet.features.pson?
+    types
+  end
+
+  def acceptable_content_types_string
+    acceptable_content_types.join(', ')
+  end
+
+  def acceptable_catalog_content_types
+    types = %w[application/vnd.puppet.rich+json application/json]
+    types.concat(%w[application/vnd.puppet.rich+msgpack application/x-msgpack]) if Puppet.features.msgpack?
+    types << 'text/pson' if Puppet.features.pson?
+    types
+  end
+
   def master_url_prefix
     "#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/v3"
   end

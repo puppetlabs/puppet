@@ -16,7 +16,7 @@ describe Puppet::Util::JsonLockfile do
       data = { "foo" => "foofoo", "bar" => "barbar" }
       @lock.lock(data)
 
-      expect(PSON.parse(File.read(@lockfile))).to eq(data)
+      expect(JSON.parse(File.read(@lockfile))).to eq(data)
     end
   end
 

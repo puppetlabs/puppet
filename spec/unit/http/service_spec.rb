@@ -1,10 +1,13 @@
 require 'spec_helper'
+require 'puppet_spec/network'
 require 'puppet/http'
 require 'puppet/file_serving'
 require 'puppet/file_serving/content'
 require 'puppet/file_serving/metadata'
 
 describe Puppet::HTTP::Service do
+  include PuppetSpec::Network
+
   let(:ssl_context) { Puppet::SSL::SSLContext.new }
   let(:client) { Puppet::HTTP::Client.new(ssl_context: ssl_context) }
   let(:session) { Puppet::HTTP::Session.new(client, []) }
@@ -114,11 +117,7 @@ describe Puppet::HTTP::Service do
   end
 
   it 'returns different mime types for different models' do
-    mimes = if Puppet.features.msgpack?
-              %w[application/json application/x-msgpack text/pson]
-            else
-              %w[application/json text/pson]
-            end
+    mimes = acceptable_content_types
 
     service = TestService.new(client, session, url)
     [
@@ -133,11 +132,6 @@ describe Puppet::HTTP::Service do
     # These are special
     expect(service.mime_types(Puppet::FileServing::Content)).to eq(%w[application/octet-stream])
 
-    catalog_mimes = if Puppet.features.msgpack?
-                      %w[application/vnd.puppet.rich+json application/json application/vnd.puppet.rich+msgpack application/x-msgpack text/pson]
-                    else
-                      %w[application/vnd.puppet.rich+json application/json text/pson]
-                    end
-    expect(service.mime_types(Puppet::Resource::Catalog)).to eq(catalog_mimes)
+    expect(service.mime_types(Puppet::Resource::Catalog)).to eq(acceptable_catalog_content_types)
   end
 end

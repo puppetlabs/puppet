@@ -55,30 +55,4 @@ describe Puppet::Transaction::Report::Rest do
 
     expect(described_class.indirection.save(report)).to eq(["store"])
   end
-
-  describe "when the server major version is less than 5" do
-    it "raises if the save fails and we're not using pson" do
-      Puppet[:preferred_serialization_format] = "json"
-
-      stub_request(:put, uri)
-        .to_return(status: 500,
-                   headers: { 'Content-Type' => 'text/pson', Puppet::HTTP::HEADER_PUPPET_VERSION => '4.10.1' })
-
-      expect {
-        described_class.indirection.save(report)
-      }.to raise_error(Puppet::Error, /To submit reports to a server running puppetserver 4.10.1, set preferred_serialization_format to pson/)
-    end
-
-    it "raises with HTTP 500 if the save fails and we're already using pson" do
-      Puppet[:preferred_serialization_format] = "pson"
-
-      stub_request(:put, uri)
-        .to_return(status: 500,
-                   headers: { 'Content-Type' => 'text/pson', Puppet::HTTP::HEADER_PUPPET_VERSION => '4.10.1' })
-
-      expect {
-        described_class.indirection.save(report)
-      }.to raise_error(Net::HTTPError, /Error 500 on SERVER/)
-    end
-  end
 end

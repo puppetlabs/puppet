@@ -307,7 +307,7 @@ describe 'loaders' do
     end
 
     it 'all dependent modules are visible' do
-      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'}, { 'name' => 'test-usee2'} ]).to_pson)
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'}, { 'name' => 'test-usee2'} ]).to_json)
       allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       loaders = Puppet::Pops::Loaders.new(env)
@@ -338,7 +338,7 @@ describe 'loaders' do
         case_number = from_idx * 3 + called_idx + 1
 
         it "can call #{desc[:called]} from #{desc[:from]} when dependency is present in metadata.json" do
-          allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+          allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_json)
           allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
           allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
@@ -360,7 +360,7 @@ describe 'loaders' do
         end
 
         it "can not call #{desc[:called]} from #{desc[:from]} if dependency is missing in existing metadata.json" do
-          allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => []).to_pson)
+          allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => []).to_json)
           allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
           allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
@@ -373,7 +373,7 @@ describe 'loaders' do
     end
 
     it "a type can reference an autoloaded type alias from another module when dependency is present in metadata.json" do
-      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_json)
       allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
@@ -391,7 +391,7 @@ describe 'loaders' do
     end
 
     it "a type can reference a type alias from another module when other module has it declared in init.pp" do
-      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_json)
       allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
@@ -402,7 +402,7 @@ describe 'loaders' do
     end
 
     it "an autoloaded type can reference an autoloaded type alias from another module when dependency is present in metadata.json" do
-      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_json)
       allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
@@ -412,7 +412,7 @@ describe 'loaders' do
     end
 
     it "an autoloaded type can reference an autoloaded type alias from another module when other module has it declared in init.pp" do
-      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_json)
       allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])

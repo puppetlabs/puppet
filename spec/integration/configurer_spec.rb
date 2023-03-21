@@ -1,9 +1,11 @@
 require 'spec_helper'
 
+require 'puppet_spec/network'
 require 'puppet/configurer'
 
 describe Puppet::Configurer do
   include PuppetSpec::Files
+  include PuppetSpec::Network
 
   describe "when running" do
     before(:each) do
@@ -117,7 +119,7 @@ describe Puppet::Configurer do
                   "values" => {"test_fact" => 'test value',},
                 }),
               headers: {
-                'Accept'=>'application/json, application/x-msgpack, text/pson',
+                'Accept'=>acceptable_content_types_string,
                 'Content-Type'=>'application/json',
               })
 
@@ -150,7 +152,7 @@ describe Puppet::Configurer do
                 "values" => {"test_fact": "test value"},
               }),
               headers: {
-                'Accept'=>'application/json, application/x-msgpack, text/pson',
+                'Accept'=>acceptable_content_types_string,
                 'Content-Type'=>'application/json',
               }).to_return(status: 200)
 

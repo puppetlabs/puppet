@@ -43,7 +43,7 @@ describe Puppet::Network::FormatHandler.format(:s) do
   end
 end
 
-describe Puppet::Network::FormatHandler.format(:pson) do
+describe Puppet::Network::FormatHandler.format(:pson), if: Puppet.features.pson? do
   before do
     @pson = Puppet::Network::FormatHandler.format(:pson)
   end
