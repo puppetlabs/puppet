@@ -11,8 +11,6 @@ describe Puppet::Indirector::Face do
     instance
   end
 
-  it { is_expected.to be_option :extra }
-
   it "should be able to return a list of indirections" do
     expect(Puppet::Indirector::Face.indirections).to be_include("catalog")
   end
@@ -56,14 +54,14 @@ describe Puppet::Indirector::Face do
     end
 
     it "should forward passed options" do
-      expect(subject.indirection).to receive(method).with(:test, *params(method, {'one'=>'1'}))
-      subject.send(method, :test, :extra => {'one'=>'1'})
+      expect(subject.indirection).to receive(method).with(:test, *params(method, {}))
+      subject.send(method, :test, {})
     end
   end
 
   it "should default key to certname for find action" do
-    expect(subject.indirection).to receive(:find).with(Puppet[:certname], {'one'=>'1'})
-    subject.send(:find, :extra => {'one'=>'1'})
+    expect(subject.indirection).to receive(:find).with(Puppet[:certname], {})
+    subject.send(:find, {})
   end
 
   it "should be able to override its indirection name" do

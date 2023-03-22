@@ -54,7 +54,6 @@ undocumented option
 	end
 	unless action.options.empty?
       action.options.sort.each do |name|
-        next if name == :extra
         option = action.get_option name -%>
 <%= "  " + option.optparse.join(" | ")[0,(optionroom - 1)].ljust(optionroom) + ' - ' -%>
 <%     if !(option.summary) -%>

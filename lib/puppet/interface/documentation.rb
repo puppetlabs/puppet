@@ -76,7 +76,6 @@ class Puppet::Interface
         s.text(" ")
 
         options.each do |option|
-          next if option == :extra
           option = get_option(option)
           wrap = option.required? ? %w{ < > } : %w{ [ ] }
 
