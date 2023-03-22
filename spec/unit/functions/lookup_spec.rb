@@ -2420,7 +2420,6 @@ describe "The lookup function" do
         end
 
         it 'defaults are used when data is not found in scope interpolations' do
-          pending('See PUP-11751')
           expect(lookup('mod_a::interpolate_scope_xd', { 'default_values_hash' => defaults })).to eql('-- value scope_xd (from default) --')
         end
 
