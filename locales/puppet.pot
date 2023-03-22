@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 7.23.0-158-g2faf561418\n"
+"Project-Id-Version: Puppet automation framework 7.23.0-161-gad64a8db6a\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2023-03-21 16:51+0000\n"
-"PO-Revision-Date: 2023-03-21 16:51+0000\n"
+"POT-Creation-Date: 2023-03-22 00:36+0000\n"
+"PO-Revision-Date: 2023-03-22 00:36+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2455,59 +2455,51 @@ msgstr ""
 msgid "Could not call '%{method}' on '%{indirection}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/face.rb:57
-msgid "HASH"
-msgstr ""
-
 #: ../lib/puppet/indirector/face.rb:58
-msgid "Extra arguments to pass to the indirection request"
-msgstr ""
-
-#: ../lib/puppet/indirector/face.rb:68
 msgid "Delete an object."
 msgstr ""
 
-#: ../lib/puppet/indirector/face.rb:69 ../lib/puppet/indirector/face.rb:90
+#: ../lib/puppet/indirector/face.rb:59 ../lib/puppet/indirector/face.rb:79
 msgid "<key>"
 msgstr ""
 
-#: ../lib/puppet/indirector/face.rb:74
+#: ../lib/puppet/indirector/face.rb:64
 msgid "Retrieve an object by name."
 msgstr ""
 
-#: ../lib/puppet/indirector/face.rb:75
+#: ../lib/puppet/indirector/face.rb:65
 msgid "[<key>]"
 msgstr ""
 
-#: ../lib/puppet/indirector/face.rb:89
+#: ../lib/puppet/indirector/face.rb:78
 msgid "API only: create or overwrite an object."
 msgstr ""
 
-#: ../lib/puppet/indirector/face.rb:100
+#: ../lib/puppet/indirector/face.rb:89
 msgid "Search for an object or retrieve multiple objects."
 msgstr ""
 
-#: ../lib/puppet/indirector/face.rb:101
+#: ../lib/puppet/indirector/face.rb:90
 msgid "<query>"
 msgstr ""
 
-#: ../lib/puppet/indirector/face.rb:107
+#: ../lib/puppet/indirector/face.rb:96
 msgid "Print the default terminus class for this face."
 msgstr ""
 
-#: ../lib/puppet/indirector/face.rb:116
+#: ../lib/puppet/indirector/face.rb:105
 msgid "Run mode '%{mode}': %{terminus}"
 msgstr ""
 
-#: ../lib/puppet/indirector/face.rb:118
+#: ../lib/puppet/indirector/face.rb:107
 msgid "No default terminus class for run mode '%{mode}'"
 msgstr ""
 
-#: ../lib/puppet/indirector/face.rb:140
+#: ../lib/puppet/indirector/face.rb:129
 msgid "Could not find terminus for %{indirection}"
 msgstr ""
 
-#: ../lib/puppet/indirector/face.rb:149
+#: ../lib/puppet/indirector/face.rb:138
 msgid "Could not set '%{indirection}' terminus to '%{from}' (%{detail}); valid terminus types are %{types}"
 msgstr ""
 
@@ -2919,43 +2911,43 @@ msgid "Face summary should be a single line; put the long text in 'description' 
 msgstr ""
 
 #. TRANSLATORS 'author' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:206
+#: ../lib/puppet/interface/documentation.rb:205
 msgid "author must be a string; use multiple statements for multiple authors"
 msgstr ""
 
 #. TRANSLATORS 'author' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:211
+#: ../lib/puppet/interface/documentation.rb:210
 msgid "author should be a single line; use multiple statements for multiple authors"
 msgstr ""
 
 #. TRANSLATORS 'author' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:231
+#: ../lib/puppet/interface/documentation.rb:230
 msgid "author should be a single line; use multiple statements"
 msgstr ""
 
 #. TRANSLATORS 'copyright' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:252
+#: ../lib/puppet/interface/documentation.rb:251
 msgid "copyright takes the owners names, then the years covered"
 msgstr ""
 
 #. TRANSLATORS 'copyright' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:276
+#: ../lib/puppet/interface/documentation.rb:275
 msgid "copyright owner must be a string or an array of strings"
 msgstr ""
 
 #. TRANSLATORS 'copyright' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:313
+#: ../lib/puppet/interface/documentation.rb:312
 msgid "copyright with a year %{value} is very strange; did you accidentally add or subtract two years?"
 msgstr ""
 
 #. TRANSLATORS 'copyright' is an attribute name and should not be translated
 #. TRANSLATORS 'copyright' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:329 ../lib/puppet/interface/documentation.rb:334
+#: ../lib/puppet/interface/documentation.rb:328 ../lib/puppet/interface/documentation.rb:333
 msgid "%{value} is not a good copyright year or range"
 msgstr ""
 
 #. TRANSLATORS 'copyright' is an attribute name and should not be translated
-#: ../lib/puppet/interface/documentation.rb:353
+#: ../lib/puppet/interface/documentation.rb:352
 msgid "%{value} is not a good copyright year, set, or range"
 msgstr ""
 
