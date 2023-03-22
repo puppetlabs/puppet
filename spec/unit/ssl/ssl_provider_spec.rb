@@ -299,6 +299,7 @@ describe Puppet::SSL::SSLProvider do
     end
 
     it 'raises if client cert signature is invalid' do
+      client_cert.public_key = wrong_key.public_key
       client_cert.sign(wrong_key, OpenSSL::Digest::SHA256.new)
       expect {
         subject.create_context(**config.merge(client_cert: client_cert))
@@ -339,6 +340,7 @@ describe Puppet::SSL::SSLProvider do
 
     it 'raises if intermediate CA signature is invalid' do
       int = global_cacerts.last
+      int.public_key = wrong_key.public_key if Puppet::Util::Platform.jruby?
       int.sign(wrong_key, OpenSSL::Digest::SHA256.new)
 
       expect {
