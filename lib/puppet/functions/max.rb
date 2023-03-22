@@ -82,6 +82,18 @@ Puppet::Functions.create_function(:max) do
     repeated_param 'String', :values
   end
 
+  dispatch :on_semver do
+    repeated_param 'Semver', :values
+  end
+
+  dispatch :on_timespan do
+    repeated_param 'Timespan', :values
+  end
+
+  dispatch :on_timestamp do
+    repeated_param 'Timestamp', :values
+  end
+
   dispatch :on_single_numeric_array do
     param 'Array[Numeric]', :values
     optional_block_param 'Callable[2,2]', :block
@@ -89,6 +101,21 @@ Puppet::Functions.create_function(:max) do
 
   dispatch :on_single_string_array do
     param 'Array[String]', :values
+    optional_block_param 'Callable[2,2]', :block
+  end
+
+  dispatch :on_single_semver_array do
+    param 'Array[Semver]', :values
+    optional_block_param 'Callable[2,2]', :block
+  end
+
+  dispatch :on_single_timespan_array do
+    param 'Array[Timespan]', :values
+    optional_block_param 'Callable[2,2]', :block
+  end
+
+  dispatch :on_single_timestamp_array do
+    param 'Array[Timestamp]', :values
     optional_block_param 'Callable[2,2]', :block
   end
 
@@ -129,6 +156,21 @@ Puppet::Functions.create_function(:max) do
     end
   end
 
+  def on_semver(*args)
+    assert_arg_count(args)
+    args.max
+  end
+
+  def on_timespan(*args)
+    assert_arg_count(args)
+    args.max
+  end
+
+  def on_timestamp(*args)
+    assert_arg_count(args)
+    args.max
+  end
+
   def on_any_with_block(*args, &block)
     args.max {|x,y| block.call(x,y) }
   end
@@ -146,6 +188,30 @@ Puppet::Functions.create_function(:max) do
       on_any_with_block(*array, &block)
     else
       on_string(*array)
+    end
+  end
+
+  def on_single_semver_array(array, &block)
+    if block_given?
+      on_any_with_block(*array, &block)
+    else
+      on_semver(*array)
+    end
+  end
+
+  def on_single_timespan_array(array, &block)
+    if block_given?
+      on_any_with_block(*array, &block)
+    else
+      on_timespan(*array)
+    end
+  end
+
+  def on_single_timestamp_array(array, &block)
+    if block_given?
+      on_any_with_block(*array, &block)
+    else
+      on_timestamp(*array)
     end
   end
 
