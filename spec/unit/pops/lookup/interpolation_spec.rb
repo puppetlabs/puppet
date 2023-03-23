@@ -45,6 +45,18 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
     keys.each { |key| expect(adapter).to receive(:track).with(key) }
   end
 
+  context 'when the invocation has a default falsey values' do
+    let(:lookup_invocation) { Lookup::Invocation.new(scope, {}, {'key' => false, 'key2' => nil}, nil) }
+
+    it 'converts boolean false to a "false" string in interpolation' do
+      expect(interpolator.interpolate('%{key}', lookup_invocation, true)).to eq("false")
+    end
+
+    it 'converts nil to an empty string in interpolation' do
+      expect(interpolator.interpolate('%{key2}', lookup_invocation, true)).to eq("")
+    end
+  end
+
   context 'when interpolating nested data' do
     let(:nested_hash) { {'a' => {'aa' => "%{alias('aaa')}"}} }
 
