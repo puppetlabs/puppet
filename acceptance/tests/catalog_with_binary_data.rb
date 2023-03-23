@@ -45,7 +45,7 @@ test_name "C100300: Catalog containing binary data is applied correctly" do
         \$test_path = \$facts['networking']['fqdn'] ? #{agent_tmp_dirs}
         file { '#{test_num}':
           path   => "\$test_path/#{test_num}",
-          content => file('#{test_num}/binary_data'),
+          content => binary_file('#{test_num}/binary_data'),
           ensure => present,
         }
       }
