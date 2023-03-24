@@ -124,7 +124,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
     rendered_result = result
 
-    rendered_format = first_response_formatter_for(indirection.model, request) do |format|
+    rendered_format = first_response_formatter_for(indirection.model, request, key) do |format|
       if result.respond_to?(:render)
         Puppet::Util::Profiler.profile(_("Rendered result in %{format}") % { format: format }, [:http, :v3_render, format]) do
           rendered_result = result.render(format)
@@ -157,7 +157,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
     rendered_result = nil
 
-    rendered_format = first_response_formatter_for(indirection.model, request) do |format|
+    rendered_format = first_response_formatter_for(indirection.model, request, key) do |format|
       rendered_result = indirection.model.render_multiple(format, result)
     end
 
@@ -185,14 +185,15 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
   # Return the first response formatter that didn't cause the yielded
   # block to raise a FormatError.
-  def first_response_formatter_for(model, request, &block)
+  def first_response_formatter_for(model, request, key, &block)
     formats = accepted_response_formatters_for(model, request)
     formatter = formats.find do |format|
       begin
         yield format
         true
       rescue Puppet::Network::FormatHandler::FormatError => err
-        Puppet.log_exception(err, err.message, level: :debug)
+        Puppet.warning(_("Failed to serialize %{model} for '%{key}': %{detail}") %
+          {model: model, key: key, detail: err})
         false
       end
     end
