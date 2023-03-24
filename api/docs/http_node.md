@@ -22,7 +22,7 @@ GET
 
 ### Supported Response Formats
 
-`application/json`, `text/pson`
+`application/json`
 
 ### Parameters
 
@@ -38,7 +38,7 @@ environment, which might differ from what the client believes is its current env
 ### Examples
 
     > GET /puppet/v3/node/mycertname?environment=production&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c&configured_environment=production HTTP/1.1
-    > Accept: application/json, text/pson
+    > Accept: application/json
 
     < HTTP/1.1 200 OK
     < Content-Type: application/json

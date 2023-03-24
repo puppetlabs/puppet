@@ -19,7 +19,7 @@ The endpoint path includes a `:mount` which can be one of the following types:
 * `pluginfacts` --- a highly magical mount point which merges the `facts.d` directory of every module together. Used for syncing external facts; not intended for general consumption. Per-module sub-paths can not be specified.
 * `tasks/<MODULE>` --- a semi-magical mount point which allows access to files in the `tasks` subdirectory of `<MODULE>` --- see the [the docs on file serving](https://puppet.com/docs/puppet/latest/file_serving.html).
 
-Note: PSON responses in the examples below are pretty-printed for readability.
+Note: JSON responses in the examples below are pretty-printed for readability.
 
 Find
 ----
@@ -34,7 +34,7 @@ GET
 
 ### Supported Response Formats
 
-`application/json`, `text/pson`
+`application/json`
 
 ### Parameters
 
@@ -54,7 +54,7 @@ Optional parameters to GET:
     GET /puppet/v3/file_metadata/modules/example/just_a_file.txt?environment=env
 
     HTTP/1.1 200 OK
-    Content-Type: text/pson
+    Content-Type: application/json
 
     {
         "checksum": {
@@ -76,7 +76,7 @@ Optional parameters to GET:
     GET /puppet/v3/file_metadata/modules/example/subdirectory?environment=env
 
     HTTP/1.1 200 OK
-    Content-Type: text/pson
+    Content-Type: application/json
 
     {
         "checksum": {
@@ -98,7 +98,7 @@ Optional parameters to GET:
     GET /puppet/v3/file_metadata/modules/example/link_to_file.txt?environment=env&source_permissions=ignore
 
     HTTP/1.1 200 OK
-    Content-Type: text/pson
+    Content-Type: application/json
 
     {
         "checksum": {
@@ -136,7 +136,7 @@ GET
 
 ### Supported Response Formats
 
-`application/json`, `text/pson`
+`application/json`
 
 ### Parameters
 
@@ -156,7 +156,7 @@ GET
     GET /puppet/v3/file_metadatas/modules/example?environment=env&recurse=yes
 
     HTTP 200 OK
-    Content-Type: text/pson
+    Content-Type: application/json
 
     [
         {
@@ -236,7 +236,7 @@ GET
     GET /puppet/v3/file_metadatas/modules/example?environment=env&recurse=true&ignore=sub*&links=manage
 
     HTTP 200 OK
-    Content-Type: text/pson
+    Content-Type: application/json
 
     [
         {
@@ -285,7 +285,7 @@ GET
 
 #### Search ignoring "sub*" and links = follow
 
-This example is identical to the above example, except for the links parameter. The resulting PSON, then,
+This example is identical to the above example, except for the links parameter. The resulting JSON, then,
 is identical to the above example, except for:
 
 * the "links" field is set to "follow" rather than "manage" in all metadata objects
@@ -298,7 +298,7 @@ is identical to the above example, except for:
 GET /puppet/v3/file_metadatas/modules/example?environment=env&recurse=true&ignore=sub*&links=follow
 
 HTTP 200 OK
-Content-Type: text/pson
+Content-Type: application/json
 
 [
     {

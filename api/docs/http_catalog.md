@@ -17,7 +17,7 @@ POST, GET
 
 ### Supported Response Formats
 
-`application/json`, `text/pson`
+`application/json`
 
 ### Notes
 
@@ -34,8 +34,8 @@ The examples below use the POST method.
 Four parameters should be provided to the POST or GET:
 
 - `environment`: the environment name.
-- `facts_format`: must be `application/json` or `pson`.
-- `facts`: serialized JSON or PSON of the facts hash. Since facts can contain `&`, which
+- `facts_format`: must be `application/json`.
+- `facts`: serialized JSON of the facts hash. Since facts can contain `&`, which
   is also the HTTP query parameter delimiter, facts are doubly-escaped.
 - `transaction_uuid`: a transaction uuid identifying the entire transaction (shows up in the report as well).
 
