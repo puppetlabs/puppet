@@ -67,6 +67,36 @@ describe 'the min function' do
 
   end
 
+  context 'compares semver' do
+    { ["Semver('2.0.0')", "Semver('10.0.0')"] => "Semver('2.0.0')",
+      ["Semver('5.5.5')", "Semver('5.6.7')"]  => "Semver('5.5.5')",
+    }.each_pair do |values, expected|
+      it "called as min(#{values[0]}, #{values[1]}) results in the value #{expected}" do
+        expect(compile_to_catalog("notify { String( min(#{values[0]}, #{values[1]}) == #{expected}): }")).to have_resource("Notify[true]")
+      end
+    end
+  end
+
+  context 'compares timespans' do
+    { ["Timespan(2)", "Timespan(77.3)"] => "Timespan(2)",
+      ["Timespan('1-00:00:00')", "Timespan('2-00:00:00')"]  => "Timespan('1-00:00:00')",
+    }.each_pair do |values, expected|
+      it "called as min(#{values[0]}, #{values[1]}) results in the value #{expected}" do
+        expect(compile_to_catalog("notify { String( min(#{values[0]}, #{values[1]}) == #{expected}): }")).to have_resource("Notify[true]")
+      end
+    end
+  end
+
+  context 'compares timestamps' do
+    { ["Timestamp(0)", "Timestamp(298922400)"] => "Timestamp(0)",
+      ["Timestamp('1970-01-01T12:00:00.000')", "Timestamp('1979-06-22T18:00:00.000')"]  => "Timestamp('1970-01-01T12:00:00.000')",
+    }.each_pair do |values, expected|
+      it "called as min(#{values[0]}, #{values[1]}) results in the value #{expected}" do
+        expect(compile_to_catalog("notify { String( min(#{values[0]}, #{values[1]}) == #{expected}): }")).to have_resource("Notify[true]")
+      end
+    end
+  end
+
   context 'compares all except numeric and string by conversion to string (and issues deprecation warning)' do
     {
       [[20], "'a'"]                  => [20],             # before since '[' is before 'a'
@@ -74,7 +104,6 @@ describe 'the min function' do
       [false, 'fal']                 => "'fal'",          # 'fal' before since shorter than 'false'
       ['/b/', "'(?-mix:a)'"]         => "'(?-mix:a)'",    # because regexp to_s is a (?-mix:b) string
       ["Timestamp(1)", "'1556 a.d'"] => "'1556 a.d'",     # because timestamp to_s is a date-time string here starting with 1970
-      ["Semver('2.0.0')", "Semver('10.0.0')"] => "Semver('10.0.0')", # "10.0.0" is lexicographically before "2.0.0"
     }.each_pair do |values, expected|
       it "called as min(#{values[0]}, #{values[1]}) results in the value #{expected} and issues deprecation warning" do
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
