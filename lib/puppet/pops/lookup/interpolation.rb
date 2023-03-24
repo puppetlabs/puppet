@@ -91,15 +91,18 @@ module Interpolation
           else
             scope = lookup_invocation.scope
             val = nil
-            if (default_val = lookup_invocation.default_values[root_key])
+            if (default_key_exists = lookup_invocation.default_values.include?(root_key) )
               catch(:undefined_variable) { val = scope[root_key] }
             else
               val = scope[root_key]
             end
-            if val.nil? && default_val.nil?
-              nil
-            elsif val.nil?
-              lookup_invocation.report_found_in_defaults(root_key, default_val)
+            if val.nil? && !nil_in_scope?(scope, root_key)
+              if default_key_exists
+                lookup_invocation.report_found_in_defaults(root_key,
+                                                           lookup_invocation.default_values[root_key])
+              else
+                nil
+              end
             else
               lookup_invocation.report_found(root_key, val)
             end
@@ -125,6 +128,15 @@ module Interpolation
     interpolate_method = @@interpolate_methods[method_key]
     fail(Issues::HIERA_INTERPOLATION_UNKNOWN_INTERPOLATION_METHOD, :name => method_key) unless interpolate_method
     interpolate_method
+  end
+
+  # Because the semantics of Puppet::Parser::Scope#include? differs from Hash#include?
+  def nil_in_scope?(scope, key)
+    if scope.is_a?(Hash)
+      scope.include?(key)
+    else
+      scope.exist?(key)
+    end
   end
 
   def get_method_and_data(data, allow_methods)
