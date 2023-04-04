@@ -182,6 +182,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       indirection.save(data, "my data")
       request = a_request_that_finds(data, :accept_header => "application/json, text/pson")
       allow(data).to receive(:to_json).and_raise(Puppet::Network::FormatHandler::FormatError, 'Could not render to Puppet::Network::Format[json]: source sequence is illegal/malformed utf-8')
+      expect(Puppet).to receive(:warning).with(/Failed to serialize Puppet::IndirectorTesting for 'my data': Could not render to Puppet::Network::Format\[json\]/)
 
       handler.call(request, response)
 
@@ -228,6 +229,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       indirection.save(data, "my data")
       request = a_request_that_searches(Puppet::IndirectorTesting.new("my"), :accept_header => "application/json, text/pson")
       allow(data).to receive(:to_json).and_raise(Puppet::Network::FormatHandler::FormatError, 'Could not render to Puppet::Network::Format[json]: source sequence is illegal/malformed utf-8')
+      expect(Puppet).to receive(:warning).with(/Failed to serialize Puppet::IndirectorTesting for 'my': Could not render_multiple to Puppet::Network::Format\[json\]/)
 
       handler.call(request, response)
 
