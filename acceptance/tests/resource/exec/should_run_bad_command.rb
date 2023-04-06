@@ -27,7 +27,7 @@ def stop_sleep_process(targets, accept_no_pid_found = false)
     when /osx/
       command = "ps -e -o pid,comm | grep sleep | sed 's/^[^0-9]*//g' | cut -d\\  -f1"
     when /win/
-      command = "cmd.exe /C WMIC path win32_process WHERE Name=\\\"PING.EXE\\\" get ProcessId | egrep -o '[0-9]+\\s*$'"
+      command = "cmd.exe /C WMIC path win32_process WHERE Name=\\\"PING.EXE\\\" get ProcessId | grep -o '[0-9]+\\s*$'"
     else
       command = "ps -ef | grep 'bin/sleep ' | grep -v 'grep' | grep -v 'true' | sed 's/^[^0-9]*//g' | cut -d\\  -f1"
     end
