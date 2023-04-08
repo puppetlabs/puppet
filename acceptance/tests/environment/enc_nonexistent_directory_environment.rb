@@ -72,7 +72,7 @@ file {
         unless agent['locale'] == 'ja'
           assert_match(/Could not find a directory environment named 'doesnotexist'/, result.stderr, "Errors when nonexistent environment is specified")
         end
-        assert_not_match(/In the production environment/, result.stdout, "Executed manifest from production environment")
+        refute_match(/In the production environment/, result.stdout, "Executed manifest from production environment")
       end
     end
   end

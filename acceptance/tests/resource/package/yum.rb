@@ -82,7 +82,7 @@ test_name "test the yum package provider" do
     step 'Installing a non-existent version of a known package fails' do
       verify_absent agents, 'guid'
       apply_manifest_on(agents, 'package {"guid": ensure => "1.1"}') do |result|
-        assert_not_match(/Package\[guid\]\/ensure: created/, "#{result.host}: #{result.stdout}")
+        refute_match(/Package\[guid\]\/ensure: created/, "#{result.host}: #{result.stdout}")
         assert_match("Package[guid]/ensure: change from 'purged' to '1.1' failed", "#{result.host}: #{result.stderr}")
       end
       verify_absent agents, 'guid'
@@ -91,7 +91,7 @@ test_name "test the yum package provider" do
     step 'Installing a non-existent package fails' do
       verify_absent agents, 'not_a_package'
       apply_manifest_on(agents, 'package {"not_a_package": ensure => present}') do |result|
-        assert_not_match(/Package\[not_a_package\]\/ensure: created/, "#{result.host}: #{result.stdout}")
+        refute_match(/Package\[not_a_package\]\/ensure: created/, "#{result.host}: #{result.stdout}")
         assert_match("Package[not_a_package]/ensure: change from 'purged' to 'present' failed", "#{result.host}: #{result.stderr}")
       end
       verify_absent agents, 'not_a_package'
@@ -100,7 +100,7 @@ test_name "test the yum package provider" do
     step 'Removing a non-existent package succeeds' do
       verify_absent agents, 'not_a_package'
       apply_manifest_on(agents, 'package {"not_a_package": ensure => absent}') do |result|
-        assert_not_match(/Package\[not_a_package\]\/ensure/, "#{result.host}: #{result.stdout}")
+        refute_match(/Package\[not_a_package\]\/ensure/, "#{result.host}: #{result.stdout}")
         assert_match('Applied catalog', "#{result.host}: #{result.stdout}")
       end
       verify_absent agents, 'not_a_package'
