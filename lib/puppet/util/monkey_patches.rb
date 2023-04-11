@@ -29,17 +29,13 @@ class Object
   end
 end
 
-# (#19151) Reject all SSLv2 ciphers and handshakes
 require_relative '../../puppet/ssl/openssl_loader'
 unless Puppet::Util::Platform.jruby_fips?
   class OpenSSL::SSL::SSLContext
     if DEFAULT_PARAMS[:options]
-      DEFAULT_PARAMS[:options] |= OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
+      DEFAULT_PARAMS[:options] |= OpenSSL::SSL::OP_NO_SSLv3
     else
-      DEFAULT_PARAMS[:options] = OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
-    end
-    if DEFAULT_PARAMS[:ciphers]
-      DEFAULT_PARAMS[:ciphers] << ':!SSLv2'
+      DEFAULT_PARAMS[:options] = OpenSSL::SSL::OP_NO_SSLv3
     end
 
     alias __original_initialize initialize

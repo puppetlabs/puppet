@@ -29,19 +29,8 @@ describe Symbol do
 end
 
 describe OpenSSL::SSL::SSLContext do
-  it 'disables SSLv2 via the SSLContext#options bitmask' do
-    expect(subject.options & OpenSSL::SSL::OP_NO_SSLv2).to eq(OpenSSL::SSL::OP_NO_SSLv2)
-  end
-
   it 'disables SSLv3 via the SSLContext#options bitmask' do
     expect(subject.options & OpenSSL::SSL::OP_NO_SSLv3).to eq(OpenSSL::SSL::OP_NO_SSLv3)
-  end
-
-  it 'explicitly disable SSLv2 ciphers using the ! prefix so they cannot be re-added' do
-    cipher_str = OpenSSL::SSL::SSLContext::DEFAULT_PARAMS[:ciphers]
-    if cipher_str
-      expect(cipher_str.split(':')).to include('!SSLv2')
-    end
   end
 
   it 'does not exclude SSLv3 ciphers shared with TLSv1' do
@@ -54,13 +43,6 @@ describe OpenSSL::SSL::SSLContext do
   it 'sets parameters on initialization' do
     expect_any_instance_of(described_class).to receive(:set_params)
     subject
-  end
-
-  it 'has no ciphers with version SSLv2 enabled' do
-    ciphers = subject.ciphers.select do |name, version, bits, alg_bits|
-      /SSLv2/.match(version)
-    end
-    expect(ciphers).to be_empty
   end
 end
 
