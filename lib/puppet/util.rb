@@ -34,15 +34,10 @@ module Util
   end
   module_function :default_env
 
-  if RUBY_VERSION >= "2.6"
-    def create_erb(content)
-      ERB.new(content, trim_mode: '-')
-    end
-  else
-    def create_erb(content)
-      ERB.new(content, 0, '-')
-    end
+  def create_erb(content)
+    ERB.new(content, trim_mode: '-')
   end
+
   module_function :create_erb
 
   # @param name [String] The name of the environment variable to retrieve

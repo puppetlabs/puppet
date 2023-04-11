@@ -140,7 +140,7 @@ describe Puppet::HTTP::Factory do
   end
 
   context 'tls' do
-    it "sets the minimum version to TLS 1.0", if: RUBY_VERSION.to_f >= 2.5 do
+    it "sets the minimum version to TLS 1.0" do
       conn = create_connection(site)
       expect(conn.min_version).to eq(OpenSSL::SSL::TLS1_VERSION)
     end
