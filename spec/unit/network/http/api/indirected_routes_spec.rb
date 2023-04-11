@@ -210,6 +210,19 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
         handler.call(request, response)
       }.to raise_error(not_found_error)
     end
+
+    it "should raise FormatError if tries to fallback and pson serialization is not allowed" do
+      Puppet[:allow_pson_serialization] = false
+      data = Puppet::IndirectorTesting.new("my data")
+      indirection.save(data, "my data")
+      request = a_request_that_finds(data, :accept_header => "unknown, text/pson")
+      allow(data).to receive(:to_pson).and_raise(Puppet::Network::FormatHandler::FormatError, 'Could not render to Puppet::Network::Format[pson]: source sequence is illegal/malformed utf-8')
+
+      expect {
+        handler.call(request, response)
+      }.to raise_error(Puppet::Network::FormatHandler::FormatError,
+                       %r{Failed to serialize Puppet::IndirectorTesting for 'my data': Could not render to Puppet::Network::Format\[pson\]})
+    end
   end
 
   describe "when searching for model instances" do
@@ -248,6 +261,19 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
         handler.call(request, response)
       }.to raise_error(Puppet::Network::HTTP::Error::HTTPNotAcceptableError,
                        %r{No supported formats are acceptable \(Accept: application/json, text/pson\)})
+    end
+
+    it "raises FormatError if tries to fallback and pson serialization is not allowed" do
+      Puppet[:allow_pson_serialization] = false
+      data = Puppet::IndirectorTesting.new("my data")
+      indirection.save(data, "my data")
+      request = a_request_that_searches(Puppet::IndirectorTesting.new("my"), :accept_header => "unknown, text/pson")
+      allow(data).to receive(:to_pson).and_raise(Puppet::Network::FormatHandler::FormatError, 'Could not render to Puppet::Network::Format[pson]: source sequence is illegal/malformed utf-8')
+
+      expect {
+        handler.call(request, response)
+      }.to raise_error(Puppet::Network::FormatHandler::FormatError,
+                       %r{Failed to serialize Puppet::IndirectorTesting for 'my': Could not render_multiple to Puppet::Network::Format\[pson\]})
     end
 
     it "should return [] when searching returns an empty array" do
