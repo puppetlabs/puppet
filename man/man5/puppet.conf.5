@@ -62,6 +62,14 @@ Whether to allow a new certificate request to overwrite an existing certificate 
 .
 .IP "" 0
 .
+.SS "allow_pson_serialization"
+Whether when unable to serialize to JSON or other formats, Puppet falls back to PSON\. This option affects both puppetserver\'s configuration management service responses and when the agent saves its cached catalog\. This option is useful in preventing the loss of data because rich data cannot be serialized via PSON\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: \fBtrue\fR
+.
+.IP "" 0
+.
 .SS "always_retry_plugins"
 Affects how we cache attempts to load Puppet resource types and features\. If true, then calls to \fBPuppet\.type\.<type>?\fR \fBPuppet\.feature\.<feature>?\fR will always attempt to load the type or feature (which can be an expensive operation) unless it has already been loaded successfully\. This makes it possible for a single agent run to, e\.g\., install a package that provides the underlying capabilities for a type or feature, and then later load that type or feature during the same run (even if the type or feature had been tested earlier and had not been available)\.
 .
