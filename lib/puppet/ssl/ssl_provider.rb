@@ -235,7 +235,7 @@ class Puppet::SSL::SSLProvider
   def default_flags
     # checking the signature of the self-signed cert doesn't add any security,
     # but it's a sanity check to make sure the cert isn't corrupt. This option
-    # is only available in openssl 1.1+
+    # is not available in JRuby's OpenSSL library.
     if defined?(OpenSSL::X509::V_FLAG_CHECK_SS_SIGNATURE)
       OpenSSL::X509::V_FLAG_CHECK_SS_SIGNATURE
     else
