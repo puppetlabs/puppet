@@ -29,39 +29,13 @@ class Object
   end
 end
 
-if RUBY_VERSION.to_f < 3.0
-  # absolute/relative were optimized to avoid chop_basename in ruby 3
-  # see https://github.com/ruby/ruby/commit/39312cf4d6c2ab3f07d688ad1a467c8f84b58db0
-  require 'pathname'
-  class Pathname
-    if File.dirname('A:') == 'A:.' # DOSish drive letter
-      ABSOLUTE_PATH = /\A(?:[A-Za-z]:|#{SEPARATOR_PAT})/o
-    else
-      ABSOLUTE_PATH = /\A#{SEPARATOR_PAT}/o
-    end
-    private_constant :ABSOLUTE_PATH
-
-    def absolute?
-      ABSOLUTE_PATH.match? @path
-    end
-
-    def relative?
-      !absolute?
-    end
-  end
-end
-
-# (#19151) Reject all SSLv2 ciphers and handshakes
 require_relative '../../puppet/ssl/openssl_loader'
 unless Puppet::Util::Platform.jruby_fips?
   class OpenSSL::SSL::SSLContext
     if DEFAULT_PARAMS[:options]
-      DEFAULT_PARAMS[:options] |= OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
+      DEFAULT_PARAMS[:options] |= OpenSSL::SSL::OP_NO_SSLv3
     else
-      DEFAULT_PARAMS[:options] = OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
-    end
-    if DEFAULT_PARAMS[:ciphers]
-      DEFAULT_PARAMS[:ciphers] << ':!SSLv2'
+      DEFAULT_PARAMS[:options] = OpenSSL::SSL::OP_NO_SSLv3
     end
 
     alias __original_initialize initialize
