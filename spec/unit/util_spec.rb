@@ -129,7 +129,7 @@ describe Puppet::Util do
         ENV[env_key] = original_value
         new_value = 'goodbye'
 
-        Puppet::Util.withenv({env_key.upcase => new_value}, :posix) do
+        Puppet::Util.withenv(env_key.upcase => new_value) do
           expect(ENV[env_key]).to eq(original_value)
           expect(ENV[env_key.upcase]).to eq(new_value)
         end
@@ -154,7 +154,7 @@ describe Puppet::Util do
         ENV[env_key] = original_value
         new_value = 'goodbye'
 
-        Puppet::Util.withenv({env_key.upcase => new_value}, :windows) do
+        Puppet::Util.withenv(env_key.upcase => new_value) do
           expect(ENV[env_key]).to eq(new_value)
           expect(ENV[env_key.upcase]).to eq(new_value)
         end
@@ -174,7 +174,7 @@ describe Puppet::Util do
       utf_8_value = utf_8_key + 'value'
       codepage_key = utf_8_key.dup.force_encoding(Encoding.default_external)
 
-      Puppet::Util.withenv({utf_8_key => utf_8_value}, :windows) do
+      Puppet::Util.withenv(utf_8_key => utf_8_value) do
         # the true Windows environment APIs see the variables correctly
         expect(process.get_environment_strings[utf_8_key]).to eq(utf_8_value)
 
@@ -201,7 +201,7 @@ describe Puppet::Util do
         process.set_environment_variable(env_var_name, utf_8_str)
 
         original_keys = process.get_environment_strings.keys.to_a
-        Puppet::Util.withenv({}, :windows) { }
+        Puppet::Util.withenv({}) { }
 
         env = process.get_environment_strings
 

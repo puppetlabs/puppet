@@ -96,7 +96,7 @@ describe Puppet::Util do
       Puppet::FileSystem.touch(filepath)
 
       path = [utf8, "c:\\windows\\system32", "c:\\windows"].join(File::PATH_SEPARATOR)
-      Puppet::Util.withenv( { "PATH" => path } , :windows) do
+      Puppet::Util.withenv("PATH" => path) do
         expect(Puppet::Util.which(filename)).to eq(filepath)
       end
     end
