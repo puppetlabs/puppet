@@ -182,13 +182,8 @@ module Puppet::Test
       end
       $saved_indirection_state = nil
 
-      # Restore the global process environment.  Can't just assign because this
-      # is a magic variable, sadly, and doesn't do that™.  It is sufficiently
-      # faster to use the compare-then-set model to avoid excessive work that it
-      # justifies the complexity.  --daniel 2012-03-15
-      if ENV.to_hash != $old_env
-        ENV.replace($old_env)
-      end
+      # Restore the global process environment.
+      ENV.replace($old_env)
 
       # Clear all environments
       Puppet.lookup(:environments).clear_all
