@@ -18,7 +18,7 @@ class Puppet::Resource::Catalog::Json < Puppet::Indirector::JSON
   def to_json(object)
     object.render(json_format)
   rescue Puppet::Network::FormatHandler::FormatError => err
-    if Puppet[allow_pson_serialization]
+    if Puppet[:allow_pson_serialization]
       Puppet.info(_("Unable to serialize catalog to json, retrying with pson. PSON is deprecated and will be removed in a future release"))
       Puppet.log_exception(err, err.message, level: :debug)
       object.render('pson').force_encoding(Encoding::BINARY)
