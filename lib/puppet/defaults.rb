@@ -1717,6 +1717,15 @@ EOT
         end
       }
     },
+    :allow_pson_serialization => {
+      :default    => true,
+      :type       => :boolean,
+      :desc       => "Whether when unable to serialize to JSON or other formats,
+        Puppet falls back to PSON. This option affects both puppetserver's
+        configuration management service responses and when the agent saves its
+        cached catalog. This option is useful in preventing the loss of data because
+        rich data cannot be serialized via PSON.",
+    },
     :agent_catalog_run_lockfile => {
       :default    => "$statedir/agent_catalog_run.lock",
       :type       => :string, # (#2888) Ensure this file is not added to the settings catalog.
