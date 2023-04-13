@@ -65,6 +65,31 @@ describe Puppet::Util do
       end
       expect(ENV["FOO"]).to eq(nil)
     end
+
+    it "accepts symbolic keys" do
+      Puppet::Util.withenv(:FOO => "bar") do
+        expect(ENV["FOO"]).to eq("bar")
+      end
+    end
+
+    it "coerces invalid keys to strings" do
+      Puppet::Util.withenv(12345678 => "bar") do
+        expect(ENV["12345678"]).to eq("bar")
+      end
+    end
+
+    it "rejects keys with leading equals" do
+      expect {
+        Puppet::Util.withenv("=foo" => "bar") {}
+      }.to raise_error(Errno::EINVAL, /Invalid argument/)
+    end
+
+    it "includes keys with unicode replacement characters" do
+      Puppet::Util.withenv("foo\uFFFD" => "bar") do
+        expect(ENV).to be_include("foo\uFFFD")
+      end
+    end
+
     it "accepts a unicode key" do
       key = "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7"
 
@@ -81,16 +106,21 @@ describe Puppet::Util do
       end
     end
 
+    it "rejects a non-string value" do
+      expect {
+        Puppet::Util.withenv("reject" => 123) {}
+      }.to raise_error(TypeError, /no implicit conversion of Integer into String/)
+    end
+
     it "accepts a nil value" do
       Puppet::Util.withenv("foo" => nil) do
         expect(ENV["foo"]).to eq(nil)
       end
     end
-
   end
 
   describe "#withenv on POSIX", :unless => Puppet::Util::Platform.windows? do
-    it "should preserve case" do
+    it "compares keys case sensitively" do
       # start with lower case key,
       env_key = SecureRandom.uuid.downcase
 
@@ -115,7 +145,7 @@ describe Puppet::Util do
   describe "#withenv on Windows", :if => Puppet::Util::Platform.windows? do
     let(:process) { Puppet::Util::Windows::Process }
 
-    it "should ignore case" do
+    it "compares keys case-insensitively" do
       # start with lower case key, ensuring string is not entirely numeric
       env_key = SecureRandom.uuid.downcase + 'a'
 
