@@ -35,8 +35,8 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
   describe '.windows_gemcmd' do
     context 'when PUPPET_DIR is not set' do
       before do
-        allow(Puppet::Util).to receive(:get_env).and_call_original
-        allow(Puppet::Util).to receive(:get_env).with('PUPPET_DIR').and_return(nil)
+        allow(ENV).to receive(:[]).and_call_original
+        allow(ENV).to receive(:[]).with('PUPPET_DIR').and_return(nil)
         allow(Gem).to receive(:default_bindir).and_return('default_gem_bin')
       end
 
@@ -48,8 +48,8 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
 
     context 'when PUPPET_DIR is set' do
       before do
-        allow(Puppet::Util).to receive(:get_env).and_call_original
-        allow(Puppet::Util).to receive(:get_env).with('PUPPET_DIR').and_return('puppet_dir')
+        allow(ENV).to receive(:[]).and_call_original
+        allow(ENV).to receive(:[]).with('PUPPET_DIR').and_return('puppet_dir')
       end
 
       it 'uses Gem.default_bindir' do

@@ -37,7 +37,6 @@ module Util
   def create_erb(content)
     ERB.new(content, trim_mode: '-')
   end
-
   module_function :create_erb
 
   # @param name [String] The name of the environment variable to retrieve
@@ -258,16 +257,16 @@ module Util
     if absolute_path?(bin)
       return bin if FileTest.file? bin and FileTest.executable? bin
     else
-      exts = Puppet::Util.get_env('PATHEXT')
+      exts = ENV['PATHEXT']
       exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
-      Puppet::Util.get_env('PATH').split(File::PATH_SEPARATOR).each do |dir|
+      ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
         begin
           dest = File.expand_path(File.join(dir, bin))
         rescue ArgumentError => e
           # if the user's PATH contains a literal tilde (~) character and HOME is not set, we may get
           # an ArgumentError here.  Let's check to see if that is the case; if not, re-raise whatever error
           # was thrown.
-          if e.to_s =~ /HOME/ and (Puppet::Util.get_env('HOME').nil? || Puppet::Util.get_env('HOME') == "")
+          if e.to_s =~ /HOME/ and (ENV['HOME'].nil? || ENV['HOME'] == "")
             # if we get here they have a tilde in their PATH.  We'll issue a single warning about this and then
             # ignore this path element and carry on with our lives.
             #TRANSLATORS PATH and HOME are environment variables and should not be translated

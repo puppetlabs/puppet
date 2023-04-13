@@ -69,13 +69,7 @@ module Puppet::Test
     # @return nil
     def self.before_all_tests()
       # The process environment is a shared, persistent resource.
-      # Can't use Puppet.features.microsoft_windows? as it may be mocked out in a test.  This can cause test recurring test failures
-      if (!!File::ALT_SEPARATOR)
-        mode = :windows
-      else
-        mode = :posix
-      end
-      $old_env = Puppet::Util.get_environment(mode)
+      $old_env = ENV.to_hash
     end
 
     # Call this method once, at the end of a test run, when no more tests
@@ -188,19 +182,12 @@ module Puppet::Test
       end
       $saved_indirection_state = nil
 
-      # Can't use Puppet.features.microsoft_windows? as it may be mocked out in a test.  This can cause test recurring test failures
-      if (!!File::ALT_SEPARATOR)
-        mode = :windows
-      else
-        mode = :posix
-      end
       # Restore the global process environment.  Can't just assign because this
       # is a magic variable, sadly, and doesn't do that™.  It is sufficiently
       # faster to use the compare-then-set model to avoid excessive work that it
       # justifies the complexity.  --daniel 2012-03-15
-      unless Puppet::Util.get_environment(mode) == $old_env
-        Puppet::Util.clear_environment(mode)
-        $old_env.each {|k, v| Puppet::Util.set_env(k, v, mode) }
+      if ENV.to_hash != $old_env
+        ENV.replace($old_env)
       end
 
       # Clear all environments

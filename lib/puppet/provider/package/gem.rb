@@ -55,9 +55,9 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
   # that contains the content of PATH but without puppet/bin dir.
   # This is used to pass a custom PATH and execute commands in a controlled environment
   def self.windows_path_without_puppet_bin
-    @path ||= Puppet::Util.get_env('PATH').split(File::PATH_SEPARATOR)
-                                          .reject { |dir| dir =~ /puppet\\bin$/ }
-                                          .join(File::PATH_SEPARATOR)
+    @path ||= ENV['PATH'].split(File::PATH_SEPARATOR)
+                         .reject { |dir| dir =~ /puppet\\bin$/ }
+                         .join(File::PATH_SEPARATOR)
   end
 
   private_class_method :windows_path_without_puppet_bin
@@ -73,7 +73,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
     validate_command(command)
     cmd = [command] << command_options
 
-    custom_environment = {'HOME'=>Puppet::Util.get_env('HOME')}.merge(custom_environment)
+    custom_environment = {'HOME'=>ENV['HOME']}.merge(custom_environment)
 
     if Puppet::Util::Platform.windows?
       custom_environment[:PATH] = windows_path_without_puppet_bin
