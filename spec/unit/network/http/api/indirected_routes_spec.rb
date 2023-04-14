@@ -216,6 +216,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
       request = a_request_that_finds(data, :accept_header => "unknown, text/pson")
+      allow(Puppet.features).to receive(:pson?).and_return(true)
       allow(data).to receive(:to_pson).and_raise(Puppet::Network::FormatHandler::FormatError, 'Could not render to Puppet::Network::Format[pson]: source sequence is illegal/malformed utf-8')
 
       expect {
@@ -267,6 +268,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       data = Puppet::IndirectorTesting.new("my data")
       indirection.save(data, "my data")
       request = a_request_that_searches(Puppet::IndirectorTesting.new("my"), :accept_header => "unknown, text/pson")
+      allow(Puppet.features).to receive(:pson?).and_return(true)
       allow(data).to receive(:to_pson).and_raise(Puppet::Network::FormatHandler::FormatError, 'Could not render to Puppet::Network::Format[pson]: source sequence is illegal/malformed utf-8')
 
       expect {
