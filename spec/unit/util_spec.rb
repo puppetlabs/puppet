@@ -65,6 +65,28 @@ describe Puppet::Util do
       end
       expect(ENV["FOO"]).to eq(nil)
     end
+    it "accepts a unicode key" do
+      key = "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7"
+
+      Puppet::Util.withenv(key => "bar") do
+        expect(ENV[key]).to eq("bar")
+      end
+    end
+
+    it "accepts a unicode value" do
+      value = "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7"
+
+      Puppet::Util.withenv("runes" => value) do
+        expect(ENV["runes"]).to eq(value)
+      end
+    end
+
+    it "accepts a nil value" do
+      Puppet::Util.withenv("foo" => nil) do
+        expect(ENV["foo"]).to eq(nil)
+      end
+    end
+
   end
 
   describe "#withenv on POSIX", :unless => Puppet::Util::Platform.windows? do

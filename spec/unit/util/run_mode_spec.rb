@@ -171,30 +171,6 @@ describe Puppet::Util::RunMode do
         end
       end
     end
-
-    describe "#without_env internal helper with UTF8 characters" do
-      let(:varname) { "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7" }
-      let(:rune_utf8) { "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7" }
-
-      before do
-        Puppet::Util::Windows::Process.set_environment_variable(varname, rune_utf8)
-      end
-
-      it "removes environment variables within the block with UTF8 name" do
-        without_env(varname) do
-          expect(ENV[varname]).to be(nil)
-        end
-      end
-
-      it "restores UTF8 characters in environment variable values" do
-        without_env(varname) do
-          Puppet::Util::Windows::Process.set_environment_variable(varname, 'bad value')
-        end
-
-        envhash = Puppet::Util::Windows::Process.get_environment_strings
-        expect(envhash[varname]).to eq(rune_utf8)
-      end
-    end
   end
 
   def as_root
@@ -205,13 +181,5 @@ describe Puppet::Util::RunMode do
   def as_non_root
     allow(Puppet.features).to receive(:root?).and_return(false)
     yield
-  end
-
-  def without_env(name, &block)
-    saved = Puppet::Util.get_env(name)
-    Puppet::Util.set_env(name, nil)
-    yield
-  ensure
-    Puppet::Util.set_env(name, saved)
   end
 end
