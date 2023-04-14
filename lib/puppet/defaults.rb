@@ -1718,7 +1718,7 @@ EOT
       }
     },
     :allow_pson_serialization => {
-      :default    => true,
+      :default    => false,
       :type       => :boolean,
       :desc       => "Whether when unable to serialize to JSON or other formats,
         Puppet falls back to PSON. This option affects both puppetserver's
