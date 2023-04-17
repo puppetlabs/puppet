@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../puppet'
 require 'getoptlong'
 require_relative '../puppet/util/watched_file'

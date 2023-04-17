@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Resource::Validator
   def validate_key(request)
     type, title = request.key.split('/', 2)

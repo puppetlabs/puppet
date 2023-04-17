@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/util/autoload'
 require_relative '../../puppet/parser/scope'
 require_relative '../../puppet/pops/adaptable'

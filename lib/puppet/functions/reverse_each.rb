@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Reverses the order of the elements of something that is iterable and optionally runs a
 # [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html) for each
 # element.

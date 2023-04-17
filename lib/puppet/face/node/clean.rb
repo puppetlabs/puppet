@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Face.define(:node, '0.0.1') do
   action(:clean) do
 

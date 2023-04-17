@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Provides utility functions to help interface Puppet to SELinux.
 #
 # This requires the very new SELinux Ruby bindings.  These bindings closely

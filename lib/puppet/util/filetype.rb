@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Basic classes for reading, writing, and emptying files.  Not much
 # to see here.
 

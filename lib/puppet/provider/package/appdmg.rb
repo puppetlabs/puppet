@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Jeff McCune <mccune.jeff@gmail.com>
 # Changed to app.dmg by: Udo Waechter <root@zoide.net>
 # Mac OS X Package Installer which handles application (.app)

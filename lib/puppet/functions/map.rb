@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Applies a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # to every value in a data structure and returns an array containing the results.
 #

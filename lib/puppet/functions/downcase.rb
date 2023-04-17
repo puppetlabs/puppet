@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Converts a String, Array or Hash (recursively) into lower case.
 #
 # This function is compatible with the stdlib function with the same name.

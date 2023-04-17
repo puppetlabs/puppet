@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc => "A reference for all settings") do
   docs = {}
   Puppet.settings.each do |name, object|

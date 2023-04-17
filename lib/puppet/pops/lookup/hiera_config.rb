@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative 'data_dig_function_provider'
 require_relative 'data_hash_function_provider'
 require_relative 'lookup_key_function_provider'

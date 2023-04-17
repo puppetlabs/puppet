@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../../puppet/network/http/api/indirection_type'
 
 class Puppet::Network::HTTP::API::IndirectedRoutes

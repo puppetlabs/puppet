@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def find(request)

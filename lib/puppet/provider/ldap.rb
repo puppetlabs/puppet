@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/provider'
 
 # The base class for LDAP providers.

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative 'iterable'
 require_relative 'recursion_guard'
 require_relative 'type_acceptor'

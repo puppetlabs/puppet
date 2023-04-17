@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/util/tagging'
 require_relative '../../puppet/util/classgen'
 require_relative '../../puppet/util/psych_support'

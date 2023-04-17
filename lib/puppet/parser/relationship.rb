@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Puppet::Parser::Relationship
   attr_accessor :source, :target, :type
 

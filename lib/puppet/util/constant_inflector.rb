@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Created on 2008-02-12
 # Copyright Luke Kanies
 

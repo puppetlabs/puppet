@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Type.type(:service).provide :rcng, :parent => :bsd do
   desc <<-EOT
     RCng service management with rc.d

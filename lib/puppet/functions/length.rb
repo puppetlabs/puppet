@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Returns the length of an Array, Hash, String, or Binary value.
 #
 # The returned value is a positive integer indicating the number

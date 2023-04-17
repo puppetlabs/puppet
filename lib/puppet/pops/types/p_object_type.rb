@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative 'ruby_generator'
 require_relative 'type_with_members'
 

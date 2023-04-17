@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Abstract class for a catalog validator that can be registered with the compiler to run at
 # a certain stage.
 class Puppet::Parser::Compiler

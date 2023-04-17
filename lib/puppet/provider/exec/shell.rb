@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Type.type(:exec).provide :shell, :parent => :posix do
   include Puppet::Util::Execution
 

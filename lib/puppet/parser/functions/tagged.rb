@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Test whether a given tag is set.  This functions as a big OR -- if any of the specified tags are unset, we return false.
 Puppet::Parser::Functions::newfunction(:tagged, :type => :rvalue, :arity => -2, :doc => "A boolean function that
   tells you whether the current container is tagged with the specified tags.

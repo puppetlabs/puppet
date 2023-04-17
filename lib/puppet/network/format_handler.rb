@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'yaml'
 require_relative '../../puppet/network'
 require_relative '../../puppet/network/format'

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Calls a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # with the given arguments and returns the result.
 #

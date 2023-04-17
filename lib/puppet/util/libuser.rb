@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Util::Libuser
    def self.getconf
      File.expand_path("../libuser.conf", __FILE__)

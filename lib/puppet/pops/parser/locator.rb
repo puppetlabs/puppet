@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Parser
 # Helper class that keeps track of where line breaks are located and can answer questions about positions.

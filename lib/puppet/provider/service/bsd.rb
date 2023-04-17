@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Type.type(:service).provide :bsd, :parent => :init do
   desc <<-EOT
     Generic BSD form of `init`-style service management with `rc.d`.

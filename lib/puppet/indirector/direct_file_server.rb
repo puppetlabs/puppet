@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/file_serving/terminus_helper'
 require_relative '../../puppet/indirector/terminus'
 

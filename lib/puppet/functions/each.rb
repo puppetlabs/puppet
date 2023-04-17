@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Runs a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # repeatedly using each value in a data structure, then returns the values unchanged.
 #

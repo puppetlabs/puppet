@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'puppet/file_serving/mount'
 
 class Puppet::FileServing::Mount::Scripts < Puppet::FileServing::Mount

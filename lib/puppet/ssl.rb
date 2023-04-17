@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Just to make the constants work out.
 require_relative '../puppet'
 require_relative 'ssl/openssl_loader'

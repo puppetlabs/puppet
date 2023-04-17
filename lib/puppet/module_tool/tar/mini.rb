@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Puppet::ModuleTool::Tar::Mini
   def unpack(sourcefile, destdir, _)
     Zlib::GzipReader.open(sourcefile) do |reader|

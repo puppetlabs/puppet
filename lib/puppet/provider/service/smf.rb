@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'timeout'
 
 # Solaris 10 SMF-style services.

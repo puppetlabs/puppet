@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Parser::Functions::newfunction(
   :reverse_each,
   :type => :rvalue,

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Manage Red Hat services.  Start/stop uses /sbin/service and enable/disable uses chkconfig
 
 Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init do

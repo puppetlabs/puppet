@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/indirector'
 require_relative '../../puppet/file_serving'
 require_relative '../../puppet/file_serving/base'

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The `eyaml_lookup_key` is a hiera 5 `lookup_key` data provider function.
 # See [the configuration guide documentation](https://puppet.com/docs/puppet/latest/hiera_config_yaml_5.html#configuring-a-hierarchy-level-hiera-eyaml) for
 # how to use this function.

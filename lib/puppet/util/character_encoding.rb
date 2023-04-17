@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # A module to centralize heuristics/practices for managing character encoding in Puppet
 
 module Puppet::Util::CharacterEncoding

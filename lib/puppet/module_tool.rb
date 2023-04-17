@@ -1,4 +1,5 @@
 # encoding: UTF-8
+# frozen_string_literal: true
 # Load standard libraries
 require 'pathname'
 require 'fileutils'

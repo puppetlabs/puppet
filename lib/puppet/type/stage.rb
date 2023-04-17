@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Type.newtype(:stage) do
   desc "A resource type for creating new run stages.  Once a stage is available,
     classes can be assigned to it by declaring them with the resource-like syntax

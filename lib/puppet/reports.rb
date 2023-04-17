@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../puppet/util/instance_loader'
 
 # This class is an implementation of a simple mechanism for loading and returning reports.

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/confiner'
 
 # A simple class for modeling encoding formats for moving

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 # This is the base class of all prefetched network device provider
 class Puppet::Provider::NetworkDevice < Puppet::Provider

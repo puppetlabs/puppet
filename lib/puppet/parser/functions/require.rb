@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Requires the specified classes
 
   Puppet::Parser::Functions::newfunction(

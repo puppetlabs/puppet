@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Interface for something that is "locatable" (holds offset and length).
 class Puppet::Pops::Parser::Locatable
 

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/transaction/report'
 require_relative '../../../puppet/indirector/code'
 require_relative '../../../puppet/reports'

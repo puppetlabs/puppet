@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Logs a message on the server at level `emerg`.
 Puppet::Functions.create_function(:emerg, Puppet::Functions::InternalFunction) do
   # @param values The values to log.

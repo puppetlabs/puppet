@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # A syntax checker for Base64.
 # @api public
 require_relative '../../puppet/syntax_checkers'

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Serialization
   # Implements all the constructors found in the Time class and ensures that

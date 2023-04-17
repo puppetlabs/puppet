@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/face'
 require_relative '../../puppet/pops'
 require_relative '../../puppet/parser/files'

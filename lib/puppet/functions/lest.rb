@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Calls a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # without arguments if the value given to `lest` is `undef`.
 # Returns the result of calling the lambda if the argument is `undef`, otherwise the

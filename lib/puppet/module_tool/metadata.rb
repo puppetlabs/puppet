@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/module_tool'
 require_relative '../../puppet/network/format_support'
 require 'uri'

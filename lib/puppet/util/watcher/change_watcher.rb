@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Watches for changes over time. It only re-examines the values when it is requested to update readings.
 # @api private
 class Puppet::Util::Watcher::ChangeWatcher

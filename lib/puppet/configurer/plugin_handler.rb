@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Break out the code related to plugins.  This module is
 # just included into the agent, but having it here makes it
 # easier to test.

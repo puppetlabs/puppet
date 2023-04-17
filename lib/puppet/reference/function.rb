@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 function = Puppet::Util::Reference.newreference :function, :doc => "All functions available in the parser" do
   Puppet::Parser::Functions.functiondocs
 end

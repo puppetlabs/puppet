@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # A simple boolean.
 class Puppet::Settings::BooleanSetting < Puppet::Settings::BaseSetting
   # get the arguments in getopt format

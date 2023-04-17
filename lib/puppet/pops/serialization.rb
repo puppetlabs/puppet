@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Serialization
   def self.not_implemented(impl, method_name)

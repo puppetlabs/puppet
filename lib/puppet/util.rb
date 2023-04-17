@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # A module to collect utility functions.
 
 require 'English'

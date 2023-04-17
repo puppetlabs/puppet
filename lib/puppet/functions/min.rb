@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Returns the lowest value among a variable number of arguments.
 # Takes at least one argument.
 #

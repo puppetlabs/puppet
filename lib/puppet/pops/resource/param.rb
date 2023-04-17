@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # An implementation of the interface Puppet::Resource
 # that adapts the 3.x compiler and catalog expectations on
 # a resource instance. This instance is backed by a

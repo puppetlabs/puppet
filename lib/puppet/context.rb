@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../puppet/thread_local'
 
 # Puppet::Context is a system for tracking services and contextual information

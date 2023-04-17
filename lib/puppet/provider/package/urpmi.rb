@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
   desc "Support via `urpmi`."
   commands :urpmi => "urpmi", :urpmq => "urpmq", :rpm => "rpm", :urpme => "urpme"

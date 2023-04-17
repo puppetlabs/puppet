@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The base class for the 3x "parse tree", now only used by the top level
 # constructs and the compiler.
 # Handles things like file name, line #, and also does the initialization

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Puppet::Pops::Evaluator::Collectors::FixedSetCollector < Puppet::Pops::Evaluator::Collectors::AbstractCollector
 
   # Creates a FixedSetCollector using the AbstractCollector constructor

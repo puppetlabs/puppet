@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Loads a binary file from a module or file system and returns its contents as a `Binary`.
 # The argument to this function should be a `<MODULE NAME>/<FILE>`
 # reference, which will load `<FILE>` from a module's `files`

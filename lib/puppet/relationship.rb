@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # subscriptions are permanent associations determining how different
 # objects react to an event
 

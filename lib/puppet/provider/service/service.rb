@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Type.type(:service).provide :service do
   desc "The simplest form of service support."
 

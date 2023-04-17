@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Makes one or more classes be contained inside the current class.
 # If any of these classes are undeclared, they will be declared as if
 # there were declared with the `include` function.

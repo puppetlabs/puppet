@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Loader
 # The PuppetPlanInstantiator instantiates a Puppet::Functions::PuppetFunction given a Puppet Programming language

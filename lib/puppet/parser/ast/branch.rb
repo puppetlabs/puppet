@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The parent class of all AST objects that contain other AST objects.
 # Everything but the really simple objects descend from this.  It is
 # important to note that Branch objects contain other AST objects only --

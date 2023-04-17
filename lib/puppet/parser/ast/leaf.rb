@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The base class for all of the leaves of the parse trees.  These
 # basically just have types and values.  Both of these parameters
 # are simple values, not AST objects.

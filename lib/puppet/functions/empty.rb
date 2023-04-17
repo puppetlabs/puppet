@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Returns `true` if the given argument is an empty collection of values.
 #
 # This function can answer if one of the following is empty:

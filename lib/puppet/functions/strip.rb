@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Strips leading and trailing spaces from a String
 #
 # This function is compatible with the stdlib function with the same name.

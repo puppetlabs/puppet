@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Slices an array or hash into pieces of a given size.
 #
 # This function takes two mandatory arguments: the first should be an array or hash, and the second specifies

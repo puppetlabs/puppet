@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../../puppet/provider/package/windows/package'
 
 class Puppet::Provider::Package::Windows

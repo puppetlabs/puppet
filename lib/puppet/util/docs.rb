@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Some simple methods for helping manage automatic documentation generation.
 module Puppet::Util::Docs
   # Specify the actual doc string.

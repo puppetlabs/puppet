@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/indirector'
 
 # Provide any attributes or functionality needed for indirected

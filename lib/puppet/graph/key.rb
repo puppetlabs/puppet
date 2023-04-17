@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Sequential, nestable keys for tracking order of insertion in "the graph"
 # @api private
 class Puppet::Graph::Key

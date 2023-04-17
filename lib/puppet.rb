@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative 'puppet/version'
 require_relative 'puppet/concurrent/synchronized'
 

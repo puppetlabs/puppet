@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Runs a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # repeatedly using each value in a data structure until the lambda returns a "truthy" value which
 # makes the function return `true`, or if the end of the iteration is reached, false is returned.

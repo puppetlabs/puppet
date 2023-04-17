@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Serialization
   # An InstanceReader is responsible for reading an instance of a complex object using a deserializer. The read involves creating the

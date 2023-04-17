@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet
   # The Pops language system. This includes the parser, evaluator, AST model, and
   # Binder.

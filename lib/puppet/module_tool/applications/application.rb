@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'net/http'
 require_relative '../../../puppet/util/json'
 require_relative '../../../puppet/util/colors'

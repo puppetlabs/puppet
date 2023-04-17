@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Finds an existing module and returns the path to its root directory.
 #
 # The argument to this function should be a module name String

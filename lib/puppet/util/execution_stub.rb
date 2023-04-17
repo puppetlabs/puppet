@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Util
   class ExecutionStub
     class << self

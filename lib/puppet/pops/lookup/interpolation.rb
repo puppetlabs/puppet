@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'hiera/scope'
 require_relative 'sub_lookup'
 module Puppet::Pops

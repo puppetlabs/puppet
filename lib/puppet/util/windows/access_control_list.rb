@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Windows Access Control List
 #
 # Represents a list of access control entries (ACEs).

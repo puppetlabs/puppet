@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The AST object for the parameters inside resource expressions
 #
 class Puppet::Parser::AST::ResourceParam < Puppet::Parser::AST::Branch

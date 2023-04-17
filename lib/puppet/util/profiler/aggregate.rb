@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/util/profiler'
 require_relative '../../../puppet/util/profiler/wall_clock'
 

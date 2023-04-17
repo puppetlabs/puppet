@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Loader
 # A namespace/name/type combination that can be used as a compound hash key

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'ostruct'
 require_relative '../../../puppet/util/watched_file'
 require_relative '../../../puppet/util/network_device'

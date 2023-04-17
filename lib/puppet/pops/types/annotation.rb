@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Types
   # Pcore variant of the Adaptable::Adapter. Uses a Pcore Object type instead of a Class

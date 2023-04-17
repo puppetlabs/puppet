@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/parameter'
 
 # This specialized {Puppet::Parameter} handles validation and munging of paths.

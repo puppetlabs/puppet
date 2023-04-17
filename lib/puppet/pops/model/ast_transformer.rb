@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/parser/ast'
 
 # The receiver of `import(file)` calls; once per imported file, or nil if imports are ignored

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Util::Terminal
   # Attempts to determine the width of the terminal.  This is currently only
   # supported on POSIX systems, and relies on the claims of `stty` (or `tput`).

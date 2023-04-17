@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Adapts an external http_client_class to the HTTP client API. The former
 # is typically registered by puppetserver and only implements a subset of
 # the Puppet::Network::HTTP::Connection methods. As a result, only the

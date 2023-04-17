@@ -1218,12 +1218,6 @@ Style/FormatStringToken:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: always, always_true, never
-Style/FrozenStringLiteralComment:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/GlobalStdStream:
   Exclude:
     - 'lib/puppet/application/apply.rb'

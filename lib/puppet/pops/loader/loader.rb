@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Loader
 # ===
 # A Loader is responsible for loading "entities" ("instantiable and executable objects in the puppet language" which

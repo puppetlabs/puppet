@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # included so we can test object types
 require_relative '../../puppet'
 require_relative '../../puppet/network/format_support'

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Puppet::Network::HTTP::MemoryResponse
   attr_reader :code, :type, :body
 

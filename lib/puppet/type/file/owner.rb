@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet
   Puppet::Type.type(:file).newproperty(:owner) do
     include Puppet::Util::Warnings

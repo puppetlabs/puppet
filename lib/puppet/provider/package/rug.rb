@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Type.type(:package).provide :rug, :parent => :rpm do
   desc "Support for suse `rug` package manager."
 

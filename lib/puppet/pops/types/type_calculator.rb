@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 module Puppet::Pops

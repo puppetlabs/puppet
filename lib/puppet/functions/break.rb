@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Breaks an innermost iteration as if it encountered an end of input.
 # This function does not return to the caller.
 #

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Returns an `Integer` value rounded to the nearest value.
 # Takes a single `Numeric` value as an argument.
 #

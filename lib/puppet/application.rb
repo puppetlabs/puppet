@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'optparse'
 require_relative '../puppet/util/command_line'
 require_relative '../puppet/util/constant_inflector'

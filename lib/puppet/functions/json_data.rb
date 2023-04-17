@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The `json_data` is a hiera 5 `data_hash` data provider function.
 # See [the configuration guide documentation](https://puppet.com/docs/puppet/latest/hiera_config_yaml_5.html#configuring-a-hierarchy-level-built-in-backends) for
 # how to use this function.

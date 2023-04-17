@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Manage debian services.  Start/stop is the same as InitSvc, but enable/disable
 # is special.
 Puppet::Type.type(:service).provide :debian, :parent => :init do

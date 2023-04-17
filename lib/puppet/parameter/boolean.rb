@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/coercion'
 
 # This specialized {Puppet::Parameter} handles Boolean options, accepting lots

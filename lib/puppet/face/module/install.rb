@@ -1,4 +1,5 @@
 # encoding: UTF-8
+# frozen_string_literal: true
 require_relative '../../../puppet/forge'
 require_relative '../../../puppet/module_tool/install_directory'
 require 'pathname'

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # @abstract base class for PObjectType and other types that implements lazy evaluation of content
 # @api private
 module Puppet::Pops

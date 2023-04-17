@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet
 module Pal
   # A PlanSignature is returned from `plan_signature`. Its purpose is to answer questions about the plans's parameters

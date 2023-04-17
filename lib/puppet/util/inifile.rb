@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Module Puppet::IniConfig
 # A generic way to parse .ini style files and manipulate them in memory
 # One 'file' can be made up of several physical files. Changes to sections

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/provider/package'
 
 Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::Provider::Package do

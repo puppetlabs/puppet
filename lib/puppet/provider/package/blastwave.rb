@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Packaging using Blastwave's pkg-get program.
 Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun do
   desc "Package management using Blastwave.org's `pkg-get` command on Solaris."

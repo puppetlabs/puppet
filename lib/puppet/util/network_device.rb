@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Puppet::Util::NetworkDevice
   class << self
     attr_reader :current

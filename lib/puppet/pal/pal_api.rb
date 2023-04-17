@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet
   require_relative '../../puppet/parser/script_compiler'
   require_relative '../../puppet/parser/catalog_compiler'

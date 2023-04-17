@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Puppet::Settings::IntegerSetting < Puppet::Settings::BaseSetting
   def munge(value)
     return value if Integer === value

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # This class maps POSIX owner, group, and modes to the Windows
 # security model, and back.
 #

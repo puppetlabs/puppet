@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../puppet/indirector'
 
 # A class for managing nodes, including their facts and environment.

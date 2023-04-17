@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Puppet::DataTypes::Error
   attr_reader :msg, :kind, :issue_code, :details
   alias message msg

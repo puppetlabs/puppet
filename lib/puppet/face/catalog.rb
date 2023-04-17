@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/indirector/face'
 
 Puppet::Indirector::Face.define(:catalog, '0.0.1') do

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/x509'
 
 # Class for loading and saving cert related objects. By default the provider

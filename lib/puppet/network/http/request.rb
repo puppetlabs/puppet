@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :routing_path, :client_cert, :body) do
   def self.from_hash(hash)
     symbol_members = members.collect(&:intern)

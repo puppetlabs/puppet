@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Util::Log.newdesttype :syslog do
   def self.suitable?(obj)
     Puppet.features.syslog?

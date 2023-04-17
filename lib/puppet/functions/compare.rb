@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Compares two values and returns -1, 0 or 1 if first value is smaller, equal or larger than the second value.
 # The compare function accepts arguments of the data types `String`, `Numeric`, `Timespan`, `Timestamp`, and `Semver`,
 # such that:

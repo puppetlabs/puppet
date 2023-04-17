@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/util/platform'
 
 # This file should be required instead of writing `require 'openssl'`
