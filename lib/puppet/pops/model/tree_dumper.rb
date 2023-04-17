@@ -20,7 +20,7 @@ class Puppet::Pops::Model::TreeDumper
   end
 
   def format(x)
-    result = ""
+    result = String.new
     parts = format_r(x)
     parts.each_index do |i|
       if i > 0

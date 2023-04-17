@@ -487,7 +487,7 @@ module Puppet::Util::Windows::ADSI
     # UNLEN from lmcons.h - https://stackoverflow.com/a/2155176
     MAX_USERNAME_LENGTH = 256
     def self.current_user_name
-      user_name = ''
+      user_name = String.new
       max_length = MAX_USERNAME_LENGTH + 1 # NULL terminated
       FFI::MemoryPointer.new(max_length * 2) do |buffer| # wide string
         FFI::MemoryPointer.new(:dword, 1) do |buffer_size|
@@ -519,7 +519,7 @@ module Puppet::Util::Windows::ADSI
     NameSurname           = 14
 
     def self.current_user_name_with_format(format)
-      user_name = ''
+      user_name = String.new
       max_length = 1024
 
       FFI::MemoryPointer.new(:lpwstr, max_length * 2 + 1) do |buffer|

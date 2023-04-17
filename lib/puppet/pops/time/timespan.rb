@@ -544,7 +544,7 @@ module Time
       end
 
       def format(timespan)
-        bld = timespan.negative? ? '-' : ''
+        bld = String.new(timespan.negative? ? '-' : '')
         @segments.each { |segment| segment.append_to(bld, timespan) }
         bld
       end
@@ -574,7 +574,7 @@ module Time
       end
 
       def build_regexp
-        bld = '\A-?'
+        bld = String.new('\A-?')
         @segments.each { |segment| segment.append_regexp(bld) }
         bld << '\z'
         Regexp.new(bld)
@@ -612,7 +612,7 @@ module Time
 
       def append_literal(bld, codepoint)
         if bld.empty? || !bld.last.is_a?(Format::LiteralSegment)
-          bld << Format::LiteralSegment.new(''.concat(codepoint))
+          bld << Format::LiteralSegment.new(String.new.concat(codepoint))
         else
           bld.last.concat(codepoint)
         end

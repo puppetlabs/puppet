@@ -460,7 +460,7 @@ module Util
     raise ArgumentError.new(_('path may not be nil')) if path.nil?
 
     # ensure string starts as UTF-8 for the sake of Ruby 1.9.3
-    encoded = ''.encode!(Encoding::UTF_8)
+    encoded = String.new.encode!(Encoding::UTF_8)
 
     # parse uri into named matches, then reassemble properly encoded
     parts = path.match(RFC_3986_URI_REGEX)
@@ -504,7 +504,7 @@ module Util
 
   def rfc2396_escape(str)
     str.gsub(UNSAFE) do |match|
-      tmp = ''
+      tmp = String.new
       match.each_byte do |uc|
         tmp << sprintf('%%%02X', uc)
       end

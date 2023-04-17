@@ -700,7 +700,7 @@ class StringConverter
   # Performs post-processing of literals to apply width and precision flags
   def apply_string_flags(f, literal_str)
     if f.left || f.width || f.prec
-      fmt = '%'
+      fmt = String.new('%')
       fmt << '-' if f.left
       fmt << f.width.to_s if f.width
       fmt << '.' << f.prec.to_s if f.prec
@@ -852,7 +852,7 @@ class StringConverter
     end
 
     # Assume that the string can be single quoted
-    bld = '\''
+    bld = String.new('\'')
     bld.force_encoding(str.encoding)
     escaped = false
     str.each_codepoint do |codepoint|
@@ -883,7 +883,7 @@ class StringConverter
   end
 
   def puppet_double_quote(str)
-    bld = '"'
+    bld = String.new('"')
     str.each_codepoint do |codepoint|
       case codepoint
       when 0x09
@@ -939,7 +939,7 @@ class StringConverter
 
     case format.format
     when :a, :s, :p
-      buf = ''
+      buf = String.new
       if indentation.breaks?
         buf << "\n"
         buf << indentation.padding
@@ -1054,7 +1054,7 @@ class StringConverter
 
     when :h, :s, :p
       indentation = indentation.indenting(format.alt? || indentation.is_indenting?)
-      buf = ''
+      buf = String.new
       if indentation.breaks?
         buf << "\n"
         buf << indentation.padding

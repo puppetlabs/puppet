@@ -10,7 +10,7 @@ module JsonPath
   #
   # @api private
   def self.to_json_path(path)
-    p = '$'
+    p = String.new('$')
     path.each do |seg|
       if seg.nil?
         p << '[null]'

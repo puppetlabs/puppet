@@ -217,7 +217,7 @@ class PNParser
 
   def consume_string
     s = @pos
-    b = ''
+    b = String.new
     loop do
       c = next_cp
       case c

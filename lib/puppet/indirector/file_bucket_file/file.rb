@@ -57,7 +57,7 @@ module Puppet::FileBucketFile
       end
       # Setting hash's default value to [], needed by the following loop
       bucket = Hash.new {[]}
-      msg = ""
+      msg = String.new
       # Get all files with mtime between 'from' and 'to'
       Pathname.new(request.options[:bucket_path]).find { |item|
         if item.file? and item.basename.to_s == "paths"

@@ -368,7 +368,7 @@ class Puppet::Transaction::Report
   def summary
     report = raw_summary
 
-    ret = ""
+    ret = String.new
     report.keys.sort_by(&:to_s).each do |key|
       ret += "#{Puppet::Util::Metric.labelize(key)}:\n"
 

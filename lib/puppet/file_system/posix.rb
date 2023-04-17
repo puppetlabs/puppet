@@ -12,8 +12,8 @@ class Puppet::FileSystem::Posix < Puppet::FileSystem::FileImpl
   def compare_stream(path, stream)
     open(path, 0, 'rb') do |this|
       bsize = stream_blksize(this, stream)
-      sa = "".force_encoding('ASCII-8BIT')
-      sb = "".force_encoding('ASCII-8BIT')
+      sa = String.new.force_encoding('ASCII-8BIT')
+      sb = String.new.force_encoding('ASCII-8BIT')
       loop do
         this.read(bsize, sa)
         stream.read(bsize, sb)

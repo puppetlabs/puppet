@@ -120,7 +120,7 @@ module Puppet::Util::Windows::Process
   module_function :with_process_token
 
   def get_process_image_name_by_pid(pid)
-    image_name = ""
+    image_name = String.new
 
     Puppet::Util::Windows::Security.with_privilege(Puppet::Util::Windows::Security::SE_DEBUG_NAME) do
       open_process(PROCESS_QUERY_INFORMATION, false, pid) do |phandle|

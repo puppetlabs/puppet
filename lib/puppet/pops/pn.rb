@@ -19,7 +19,7 @@ module PN
   end
 
   def to_s
-    s = ''
+    s = String.new
     format(nil, s)
     s
   end
