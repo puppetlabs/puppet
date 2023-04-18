@@ -3,9 +3,9 @@ module Puppet::Pops
 module Parser
 
 class PNParser
-  LIT_TRUE = 'true'.freeze
-  LIT_FALSE = 'false'.freeze
-  LIT_NIL = 'nil'.freeze
+  LIT_TRUE = 'true'
+  LIT_FALSE = 'false'
+  LIT_NIL = 'nil'
 
   TOKEN_END = 0
   TOKEN_BOOL = 1

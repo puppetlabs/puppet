@@ -191,9 +191,9 @@ Puppet::Face.define(:help, '0.0.1') do
     end
   end
 
-  COMMON = 'Common:'.freeze
-  SPECIALIZED = 'Specialized:'.freeze
-  BLANK = "\n".freeze
+  COMMON = 'Common:'
+  SPECIALIZED = 'Specialized:'
+  BLANK = "\n"
   def available_application_names_special_sort()
     full_list = Puppet::Application.available_application_names
     a_list = full_list & %w{apply agent config help lookup module resource}

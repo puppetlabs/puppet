@@ -658,7 +658,7 @@ class AccessOperator
     return result_type_array ? result : result.pop
   end
 
-  NS = '::'.freeze
+  NS = '::'
 
   def access_PClassType(o, scope, keys)
     blamed = keys.size == 0 ? @semantic : @semantic.keys[0]

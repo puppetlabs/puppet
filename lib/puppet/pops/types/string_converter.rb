@@ -264,14 +264,14 @@ class StringConverter
   }.freeze
 
   DEFAULT_ARRAY_FORMAT                          = Format.new('%a')
-  DEFAULT_ARRAY_FORMAT.separator                = ', '.freeze
-  DEFAULT_ARRAY_FORMAT.separator2               = ', '.freeze
+  DEFAULT_ARRAY_FORMAT.separator                = ', '
+  DEFAULT_ARRAY_FORMAT.separator2               = ', '
   DEFAULT_ARRAY_FORMAT.container_string_formats = DEFAULT_CONTAINER_FORMATS
   DEFAULT_ARRAY_FORMAT.freeze
 
   DEFAULT_HASH_FORMAT                           = Format.new('%h')
-  DEFAULT_HASH_FORMAT.separator                 = ', '.freeze
-  DEFAULT_HASH_FORMAT.separator2                = ' => '.freeze
+  DEFAULT_HASH_FORMAT.separator                 = ', '
+  DEFAULT_HASH_FORMAT.separator2                = ' => '
   DEFAULT_HASH_FORMAT.container_string_formats  = DEFAULT_CONTAINER_FORMATS
   DEFAULT_HASH_FORMAT.freeze
 

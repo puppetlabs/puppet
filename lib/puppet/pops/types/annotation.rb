@@ -5,7 +5,7 @@ module Types
   class Annotation < Adaptable::Adapter
     include Types::PuppetObject
 
-    CLEAR = 'clear'.freeze
+    CLEAR = 'clear'
 
     # Register the Annotation type. This is the type that all custom Annotations will inherit from.
     def self.register_ptype(loader, ir)

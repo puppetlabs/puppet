@@ -9,7 +9,7 @@ class DataHashFunctionProvider < FunctionProvider
   include SubLookup
   include Interpolation
 
-  TAG = 'data_hash'.freeze
+  TAG = 'data_hash'
 
   def self.trusted_return_type
     @trusted_return_type ||= Types::PHashType.new(DataProvider.key_type, DataProvider.value_type)
@@ -81,7 +81,7 @@ end
 
 # @api private
 class V3DataHashFunctionProvider < DataHashFunctionProvider
-  TAG = 'v3_data_hash'.freeze
+  TAG = 'v3_data_hash'
 
   def initialize(name, parent_data_provider, function_name, options, locations)
     @datadir = options.delete(HieraConfig::KEY_DATADIR)
@@ -109,7 +109,7 @@ end
 # TODO: API 5.0, remove this class
 # @api private
 class V4DataHashFunctionProvider < DataHashFunctionProvider
-  TAG = 'v4_data_hash'.freeze
+  TAG = 'v4_data_hash'
 
   def name
     "Deprecated API function \"#{function_name}\""

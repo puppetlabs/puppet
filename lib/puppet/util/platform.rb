@@ -2,8 +2,8 @@
 module Puppet
   module Util
     module Platform
-      FIPS_STATUS_FILE = "/proc/sys/crypto/fips_enabled".freeze
-      WINDOWS_FIPS_REGISTRY_KEY = 'System\\CurrentControlSet\\Control\\Lsa\\FipsAlgorithmPolicy'.freeze
+      FIPS_STATUS_FILE = "/proc/sys/crypto/fips_enabled"
+      WINDOWS_FIPS_REGISTRY_KEY = 'System\\CurrentControlSet\\Control\\Lsa\\FipsAlgorithmPolicy'
 
       def windows?
         # Ruby only sets File::ALT_SEPARATOR on Windows and the Ruby standard

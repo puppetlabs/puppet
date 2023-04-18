@@ -34,7 +34,7 @@ class EvaluatorImpl
   include Runtime3Support
   include ExternalSyntaxSupport
 
-  COMMA_SEPARATOR = ', '.freeze
+  COMMA_SEPARATOR = ', '
 
   # Reference to Issues name space makes it easier to refer to issues
   # (Issues are shared with the validator).

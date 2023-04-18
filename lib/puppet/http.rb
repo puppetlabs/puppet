@@ -8,8 +8,8 @@ module Puppet
   # @see Puppet::HTTP::Response
   # @api public
   module HTTP
-    ACCEPT_ENCODING = "gzip;q=1.0,deflate;q=0.6,identity;q=0.3".freeze
-    HEADER_PUPPET_VERSION = "X-Puppet-Version".freeze
+    ACCEPT_ENCODING = "gzip;q=1.0,deflate;q=0.6,identity;q=0.3"
+    HEADER_PUPPET_VERSION = "X-Puppet-Version"
 
     require_relative 'http/errors'
     require_relative 'http/site'

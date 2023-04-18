@@ -164,7 +164,7 @@ class Closure < CallableSignature
     'unsupported_block'
   end
 
-  CLOSURE_NAME = 'lambda'.freeze
+  CLOSURE_NAME = 'lambda'
 
   # @api public
   def closure_name()

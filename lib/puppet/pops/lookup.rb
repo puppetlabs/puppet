@@ -4,8 +4,8 @@
 #
 module Puppet::Pops
 module Lookup
-  LOOKUP_OPTIONS = 'lookup_options'.freeze
-  GLOBAL = '__global__'.freeze
+  LOOKUP_OPTIONS = 'lookup_options'
+  GLOBAL = '__global__'
 
   # Performs a lookup in the configured scopes and optionally merges the default.
   #

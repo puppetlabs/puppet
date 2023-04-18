@@ -685,11 +685,11 @@ module Puppet::Functions
     # Table of optimized parameter names - 0 to 5 parameters
     PARAM_NAMES = [
       [],
-      ['p0'.freeze].freeze,
-      ['p0'.freeze, 'p1'.freeze].freeze,
-      ['p0'.freeze, 'p1'.freeze, 'p2'.freeze].freeze,
-      ['p0'.freeze, 'p1'.freeze, 'p2'.freeze, 'p3'.freeze].freeze,
-      ['p0'.freeze, 'p1'.freeze, 'p2'.freeze, 'p3'.freeze, 'p4'.freeze].freeze,
+      ['p0'].freeze,
+      ['p0', 'p1'].freeze,
+      ['p0', 'p1', 'p2'].freeze,
+      ['p0', 'p1', 'p2', 'p3'].freeze,
+      ['p0', 'p1', 'p2', 'p3', 'p4'].freeze,
     ]
 
     # Creates an anonymous Function3x class that wraps a 3x function

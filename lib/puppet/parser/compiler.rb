@@ -580,7 +580,7 @@ class Puppet::Parser::Compiler
     @topscope.set_facts(facts_hash)
   end
 
-  SETTINGS = 'settings'.freeze
+  SETTINGS = 'settings'
 
   def create_settings_scope
     settings_type = create_settings_type

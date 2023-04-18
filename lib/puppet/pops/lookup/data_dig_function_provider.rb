@@ -5,7 +5,7 @@ module Puppet::Pops
 module Lookup
 # @api private
 class DataDigFunctionProvider < FunctionProvider
-  TAG = 'data_dig'.freeze
+  TAG = 'data_dig'
 
   # Performs a lookup with the assumption that a recursive check has been made.
   #
@@ -64,7 +64,7 @@ end
 
 # @api private
 class V3BackendFunctionProvider < DataDigFunctionProvider
-  TAG = 'hiera3_backend'.freeze
+  TAG = 'hiera3_backend'
 
   def data_dig(key, lookup_invocation, location, merge)
     @backend ||= instantiate_backend(lookup_invocation)

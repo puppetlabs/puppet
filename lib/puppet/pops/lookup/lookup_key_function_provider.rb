@@ -5,7 +5,7 @@ module Puppet::Pops
 module Lookup
 # @api private
 class LookupKeyFunctionProvider < FunctionProvider
-  TAG = 'lookup_key'.freeze
+  TAG = 'lookup_key'
 
   # Performs a lookup with the assumption that a recursive check has been made.
   #
@@ -65,7 +65,7 @@ end
 
 # @api private
 class V3LookupKeyFunctionProvider < LookupKeyFunctionProvider
-  TAG = 'v3_lookup_key'.freeze
+  TAG = 'v3_lookup_key'
 
   def initialize(name, parent_data_provider, function_name, options, locations)
     @datadir = options.delete(HieraConfig::KEY_DATADIR)

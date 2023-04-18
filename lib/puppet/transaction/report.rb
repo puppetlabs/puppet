@@ -140,7 +140,7 @@ class Puppet::Transaction::Report
   #
   attr_accessor :transaction_completed
 
-  TOTAL = "total".freeze
+  TOTAL = "total"
 
   def self.from_data_hash(data)
     obj = self.allocate

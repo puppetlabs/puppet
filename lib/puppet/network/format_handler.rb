@@ -6,7 +6,7 @@ require_relative '../../puppet/network/format'
 module Puppet::Network::FormatHandler
   class FormatError < Puppet::Error; end
 
-  ALL_MEDIA_TYPES = '*/*'.freeze
+  ALL_MEDIA_TYPES = '*/*'
 
   @formats = {}
 

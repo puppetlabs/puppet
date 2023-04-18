@@ -1920,7 +1920,7 @@ end
 #
 class PStructElement < TypedModelObject
   def self.register_ptype(loader, ir)
-    @type = Pcore::create_object_type(loader, ir, self, 'Pcore::StructElement'.freeze, nil,
+    @type = Pcore::create_object_type(loader, ir, self, 'Pcore::StructElement', nil,
       'key_type' => PTypeType::DEFAULT,
       'value_type' => PTypeType::DEFAULT)
   end

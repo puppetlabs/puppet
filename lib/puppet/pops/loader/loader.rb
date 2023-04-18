@@ -23,8 +23,8 @@
 module Puppet::Pops
 module Loader
 
-ENVIRONMENT = 'environment'.freeze
-ENVIRONMENT_PRIVATE = 'environment private'.freeze
+ENVIRONMENT = 'environment'
+ENVIRONMENT_PRIVATE = 'environment private'
 
 class Loader
   attr_reader :environment, :loader_name

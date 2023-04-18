@@ -4,9 +4,9 @@
 module Puppet::Pops
 module Types
 
-KEY_NAME = 'name'.freeze
-KEY_TYPE = 'type'.freeze
-KEY_VALUE = 'value'.freeze
+KEY_NAME = 'name'
+KEY_TYPE = 'type'
+KEY_VALUE = 'value'
 
 class PMetaType < PAnyType
   include Annotatable

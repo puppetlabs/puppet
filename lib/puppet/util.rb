@@ -494,13 +494,13 @@ module Util
   module_function :uri_encode
 
   # From https://github.com/ruby/ruby/blob/v2_7_3/lib/uri/rfc2396_parser.rb#L24-L46
-  ALPHA = "a-zA-Z".freeze
-  ALNUM = "#{ALPHA}\\d".freeze
-  UNRESERVED = "\\-_.!~*'()#{ALNUM}".freeze
-  RESERVED = ";/?:@&=+$,\\[\\]".freeze
+  ALPHA = "a-zA-Z"
+  ALNUM = "#{ALPHA}\\d"
+  UNRESERVED = "\\-_.!~*'()#{ALNUM}"
+  RESERVED = ";/?:@&=+$,\\[\\]"
   UNSAFE = Regexp.new("[^#{UNRESERVED}#{RESERVED}]").freeze
 
-  HEX = "a-fA-F\\d".freeze
+  HEX = "a-fA-F\\d"
   ESCAPED = Regexp.new("%[#{HEX}]{2}").freeze
 
   def rfc2396_escape(str)

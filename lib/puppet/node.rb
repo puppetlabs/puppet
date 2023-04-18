@@ -22,7 +22,7 @@ class Puppet::Node
 
   attr_reader :server_facts
 
-  ENVIRONMENT = 'environment'.freeze
+  ENVIRONMENT = 'environment'
 
   def initialize_from_hash(data)
     @name       = data['name']       || (raise ArgumentError, _("No name provided in serialized data"))

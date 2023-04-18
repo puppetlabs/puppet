@@ -12,8 +12,8 @@ module Pcore
   TYPE_QUALIFIED_REFERENCE = Types::TypeFactory.pattern(/\A[A-Z][\w]*(?:::[A-Z][\w]*)*\z/)
   TYPE_MEMBER_NAME = Types::PPatternType.new([Types::PRegexpType.new(Patterns::PARAM_NAME)])
 
-  KEY_PCORE_URI = 'pcore_uri'.freeze
-  KEY_PCORE_VERSION = 'pcore_version'.freeze
+  KEY_PCORE_URI = 'pcore_uri'
+  KEY_PCORE_VERSION = 'pcore_version'
 
   PCORE_URI = 'http://puppet.com/2016.1/pcore'
   PCORE_VERSION = SemanticPuppet::Version.new(1,0,0)
