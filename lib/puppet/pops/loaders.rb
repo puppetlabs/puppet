@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 # This is the container for all Loader instances. Each Loader instance has a `loader_name` by which it can be uniquely
 # identified within this container.

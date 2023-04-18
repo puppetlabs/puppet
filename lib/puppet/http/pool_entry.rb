@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # An entry in the peristent HTTP pool that references the connection and
 # an expiration time for the connection.
 #

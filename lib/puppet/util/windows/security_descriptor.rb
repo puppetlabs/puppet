@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Windows Security Descriptor
 #
 # Represents a security descriptor that can be applied to any Windows securable

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # This class defines the private API of the Lookup Key Recorder support.
 # @api private
 #

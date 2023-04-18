@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Include the specified classes
 Puppet::Parser::Functions::newfunction(:include, :arity => -2, :doc =>
 "Declares one or more classes, causing the resources in them to be

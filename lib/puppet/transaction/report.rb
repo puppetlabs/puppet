@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet'
 require_relative '../../puppet/indirector'
 
@@ -139,7 +140,7 @@ class Puppet::Transaction::Report
   #
   attr_accessor :transaction_completed
 
-  TOTAL = "total".freeze
+  TOTAL = "total"
 
   def self.from_data_hash(data)
     obj = self.allocate
@@ -368,7 +369,7 @@ class Puppet::Transaction::Report
   def summary
     report = raw_summary
 
-    ret = ""
+    ret = String.new
     report.keys.sort_by(&:to_s).each do |key|
       ret += "#{Puppet::Util::Metric.labelize(key)}:\n"
 

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'digest/md5'
 require 'digest/sha1'
 require 'time'

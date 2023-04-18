@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Digs into a variable with dot notation to get a value from a structure.
 #
 # **To get the value from a variable** (that may or may not exist), call the function with

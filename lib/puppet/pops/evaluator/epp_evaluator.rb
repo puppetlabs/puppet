@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Handler of Epp call/evaluation from the epp and inline_epp functions
 #
 class Puppet::Pops::Evaluator::EppEvaluator

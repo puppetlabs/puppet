@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Returns the largest `Integer` less or equal to the argument.
 # Takes a single numeric value as an argument.
 #

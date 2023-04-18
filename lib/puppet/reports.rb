@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../puppet/util/instance_loader'
 
 # This class is an implementation of a simple mechanism for loading and returning reports.
@@ -70,7 +71,7 @@ class Puppet::Reports
   # Collects the docs for all reports.
   # @api private
   def self.reportdocs
-    docs = ""
+    docs = String.new
 
     # Use this method so they all get loaded
     instance_loader(:report).loadall(Puppet.lookup(:current_environment))

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/transaction'
 
 # This class stores, routes, and responds to events generated while evaluating

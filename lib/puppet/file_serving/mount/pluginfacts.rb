@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/file_serving/mount'
 
 # Find files in the modules' pluginfacts directories.

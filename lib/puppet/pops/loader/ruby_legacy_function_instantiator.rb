@@ -1,9 +1,10 @@
+# frozen_string_literal: true
 # The RubyLegacyFunctionInstantiator instantiates a Puppet::Functions::Function given the ruby source
 # that calls Puppet::Functions.create_function.
 #
 require 'ripper'
 class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
-  UNKNOWN = '<unknown>'.freeze
+  UNKNOWN = '<unknown>'
 
   # Produces an instance of the Function class with the given typed_name, or fails with an error if the
   # given ruby source does not produce this instance when evaluated.

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # dnfmodule - A puppet package provider for DNF modules
 #
 # Installing a module:

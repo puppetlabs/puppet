@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The Patterns module contains common regular expression patters for the Puppet DSL language
 module Puppet::Pops::Patterns
 

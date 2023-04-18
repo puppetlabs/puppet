@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../puppet/vendor'
 Puppet::Vendor.load_vendored
 
@@ -15,7 +16,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
 
   include Puppet::Forge::Errors
 
-  USER_AGENT = "PMT/1.1.1 (v3; Net::HTTP)".freeze
+  USER_AGENT = "PMT/1.1.1 (v3; Net::HTTP)"
 
   # From https://forgeapi.puppet.com/#!/release/getReleases
   MODULE_RELEASE_EXCLUSIONS=%w[readme changelog license uri module tags supported file_size downloads created_at updated_at deleted_at].join(',').freeze

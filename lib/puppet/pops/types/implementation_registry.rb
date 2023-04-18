@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Types
   # The {ImplementationRegistry} maps names types in the Puppet Type System to names of corresponding implementation

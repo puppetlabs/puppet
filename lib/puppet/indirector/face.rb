@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/face'
 
 class Puppet::Indirector::Face < Puppet::Face

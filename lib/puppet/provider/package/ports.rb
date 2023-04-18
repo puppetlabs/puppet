@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :freebsd do
   desc "Support for FreeBSD's ports.  Note that this, too, mixes packages and ports."
 

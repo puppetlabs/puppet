@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative 'configured_data_provider'
 
 module Puppet::Pops

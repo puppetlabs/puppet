@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Scheduler
   class Timer
     def wait_for(seconds)

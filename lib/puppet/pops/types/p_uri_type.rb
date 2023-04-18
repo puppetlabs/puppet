@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Types
 class PURIType < PAnyType
@@ -5,14 +6,14 @@ class PURIType < PAnyType
   # Tell evaluator that an members of instances of this type can be invoked using dot notation
   include TypeWithMembers
 
-  SCHEME = 'scheme'.freeze
-  USERINFO = 'userinfo'.freeze
-  HOST = 'host'.freeze
-  PORT = 'port'.freeze
-  PATH = 'path'.freeze
-  QUERY = 'query'.freeze
-  FRAGMENT = 'fragment'.freeze
-  OPAQUE = 'opaque'.freeze
+  SCHEME = 'scheme'
+  USERINFO = 'userinfo'
+  HOST = 'host'
+  PORT = 'port'
+  PATH = 'path'
+  QUERY = 'query'
+  FRAGMENT = 'fragment'
+  OPAQUE = 'opaque'
 
   URI_MEMBERS = {
     SCHEME => AttrReader.new(SCHEME),

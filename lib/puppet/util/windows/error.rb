@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/util/windows'
 require_relative '../../../puppet/error'
 
@@ -31,7 +32,7 @@ class Puppet::Util::Windows::Error < Puppet::Error
             FORMAT_MESSAGE_ARGUMENT_ARRAY |
             FORMAT_MESSAGE_IGNORE_INSERTS |
             FORMAT_MESSAGE_MAX_WIDTH_MASK
-    error_string = ''
+    error_string = String.new
 
     # this pointer actually points to a :lpwstr (pointer) since we're letting Windows allocate for us
     FFI::MemoryPointer.new(:pointer, 1) do |buffer_ptr|

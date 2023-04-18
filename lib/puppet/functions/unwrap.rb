@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Unwraps a Sensitive value and returns the wrapped object.
 # Returns the Value itself, if it is not Sensitive.
 #

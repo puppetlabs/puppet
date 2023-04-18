@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet'
 
 # This is the parent class of all NSS classes.  They're very different in

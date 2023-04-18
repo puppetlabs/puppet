@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative 'v3/environments'
 require_relative '../../../../../puppet/network/http/api/indirected_routes'
 

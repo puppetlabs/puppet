@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The CA service is used to handle certificate related REST requests.
 #
 # @api public
@@ -6,7 +7,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   HEADERS = { 'Accept' => 'text/plain' }.freeze
 
   # @return [String] default API for the ca service
-  API = '/puppet-ca/v1'.freeze
+  API = '/puppet-ca/v1'
 
   # Use `Puppet::HTTP::Session.route_to(:ca)` to create or get an instance of this class.
   #

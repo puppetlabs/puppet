@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'pathname'
 require_relative '../../puppet/error'
 
@@ -5,7 +6,7 @@ module Puppet::FileSystem
   class PathPattern
     class InvalidPattern < Puppet::Error; end
 
-    DOTDOT = '..'.freeze
+    DOTDOT = '..'
     ABSOLUTE_UNIX = /^\//
     ABSOLUTE_WINDOWS = /^[a-z]:/i
     CURRENT_DRIVE_RELATIVE_WINDOWS = /^\\/

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'yaml'
 
 module Puppet::Util::Yaml

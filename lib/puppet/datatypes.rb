@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Data types in the Puppet Language can have implementations written in Ruby
 # and distributed in puppet modules. A data type can be declared together with
 # its implementation by creating a file in 'lib/puppet/functions/<modulename>'.

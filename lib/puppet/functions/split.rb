@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Splits a string into an array using a given pattern.
 # The pattern can be a string, regexp or regexp type.
 #

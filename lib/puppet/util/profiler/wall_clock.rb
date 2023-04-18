@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/util/profiler/logging'
 
 # A profiler implementation that measures the number of seconds a segment of

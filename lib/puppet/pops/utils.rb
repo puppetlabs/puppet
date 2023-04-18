@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Provides utility methods
 module Puppet::Pops
 module Utils
@@ -105,11 +106,11 @@ module Utils
 
   # is the name absolute (i.e. starts with ::)
   def self.is_absolute? name
-    name.start_with? "::".freeze
+    name.start_with? "::"
   end
 
   def self.name_to_segments name
-    name.split("::".freeze)
+    name.split("::")
   end
 
   def self.relativize_name name

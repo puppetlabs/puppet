@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # This module holds funtions for network URI's
 module Puppet::Network::Uri
   # Mask credentials in given URI or address as string. Resulting string will

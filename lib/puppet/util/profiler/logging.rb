@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Puppet::Util::Profiler::Logging
   def initialize(logger, identifier)
     @logger = logger

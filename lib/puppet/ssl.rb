@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Just to make the constants work out.
 require_relative '../puppet'
 require_relative 'ssl/openssl_loader'
@@ -9,7 +10,7 @@ require_relative 'ssl/openssl_loader'
 # @see Puppet::SSL::SSLProvider
 # @api private
 module Puppet::SSL
-  CA_NAME = "ca".freeze
+  CA_NAME = "ca"
 
   require_relative 'ssl/oids'
   require_relative 'ssl/error'

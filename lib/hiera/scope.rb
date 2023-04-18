@@ -1,15 +1,16 @@
+# frozen_string_literal: true
 require 'forwardable'
 class Hiera
   class Scope
     extend Forwardable
 
-    CALLING_CLASS = 'calling_class'.freeze
-    CALLING_CLASS_PATH = 'calling_class_path'.freeze
-    CALLING_MODULE = 'calling_module'.freeze
-    MODULE_NAME = 'module_name'.freeze
+    CALLING_CLASS = 'calling_class'
+    CALLING_CLASS_PATH = 'calling_class_path'
+    CALLING_MODULE = 'calling_module'
+    MODULE_NAME = 'module_name'
 
     CALLING_KEYS = [CALLING_CLASS, CALLING_CLASS_PATH, CALLING_MODULE].freeze
-    EMPTY_STRING = ''.freeze
+    EMPTY_STRING = ''
 
     attr_reader :real
 

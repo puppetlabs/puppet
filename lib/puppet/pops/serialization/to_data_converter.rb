@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Serialization
   # Class that can process an arbitrary object into a value that is assignable to `Data`.
@@ -63,7 +64,7 @@ module Serialization
     private
 
     def path_to_s
-      s = @message_prefix || ''
+      s = String.new(@message_prefix || '')
       s << JsonPath.to_json_path(@path)[1..-1]
       s
     end

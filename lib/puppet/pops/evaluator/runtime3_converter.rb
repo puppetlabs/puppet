@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops::Evaluator
 # Converts nested 4x supported values to 3x values. This is required because
 # resources and other objects do not know about the new type system, and does not support

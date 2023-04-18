@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/ssl/openssl_loader'
 require 'net/http'
 require_relative '../../puppet/http'

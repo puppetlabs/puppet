@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Makes iteration continue with the next value, optionally with a given value for this iteration.
 # If a value is not given it defaults to `undef`
 # 

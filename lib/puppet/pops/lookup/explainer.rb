@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Lookup
 
@@ -19,7 +20,7 @@ module Lookup
     end
 
     def explain
-      io = ''
+      io = String.new
       dump_on(io, '', '')
       io
     end
@@ -585,7 +586,7 @@ module Lookup
     end
 
     def emit_debug_info(preamble)
-      io = ''
+      io = String.new
       io << preamble << "\n"
       dump_on(io, '  ', '  ')
       Puppet.debug(io.chomp!)

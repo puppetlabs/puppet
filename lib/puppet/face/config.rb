@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/face'
 require_relative '../../puppet/settings/ini_file'
 
@@ -81,7 +82,7 @@ Puppet::Face.define(:config, '0.0.1') do
     end
 
     when_rendering :console do |to_be_rendered|
-      output = ''
+      output = String.new
       if to_be_rendered.keys.length > 1
         to_be_rendered.keys.sort.each do |setting|
           output << "#{setting} = #{to_be_rendered[setting]}\n"

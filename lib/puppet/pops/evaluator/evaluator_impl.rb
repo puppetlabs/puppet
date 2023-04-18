@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/parser/scope'
 require_relative '../../../puppet/pops/evaluator/compare_operator'
 require_relative '../../../puppet/pops/evaluator/relationship_operator'
@@ -33,7 +34,7 @@ class EvaluatorImpl
   include Runtime3Support
   include ExternalSyntaxSupport
 
-  COMMA_SEPARATOR = ', '.freeze
+  COMMA_SEPARATOR = ', '
 
   # Reference to Issues name space makes it easier to refer to issues
   # (Issues are shared with the validator).

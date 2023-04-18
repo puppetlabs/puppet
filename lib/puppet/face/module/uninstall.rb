@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Face.define(:module, '1.0.0') do
   action(:uninstall) do
     summary _("Uninstall a puppet module.")

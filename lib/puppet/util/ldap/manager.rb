@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/util/ldap'
 require_relative '../../../puppet/util/ldap/connection'
 require_relative '../../../puppet/util/ldap/generator'

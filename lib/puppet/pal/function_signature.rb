@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet
 module Pal
   # A FunctionSignature is returned from `function_signature`. Its purpose is to answer questions about the function's parameters

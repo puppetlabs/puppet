@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative 'hiera_config'
 require_relative 'data_provider'
 

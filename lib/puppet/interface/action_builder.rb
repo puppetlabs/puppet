@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # This class is used to build {Puppet::Interface::Action actions}.
 # When an action is defined with
 # {Puppet::Interface::ActionManager#action} the block is evaluated

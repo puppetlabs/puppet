@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Puppet as a Library "PAL"
 # This is the entry point when using PAL as a standalone library.
 #

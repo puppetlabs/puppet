@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Loader
 # =ModuleLoaders
@@ -21,7 +22,7 @@ module Loader
 module ModuleLoaders
 
   # Wildcard module name for module loaders, makes loading possible from any namespace.
-  NAMESPACE_WILDCARD = '*'.freeze
+  NAMESPACE_WILDCARD = '*'
 
   # This is exactly the same as the #system_loader_from method, but the argument for path is changed to
   # location where pluginsync stores functions. It also accepts definitions in any namespace since pluginsync

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops::Loader::UriHelper
   # Raises an exception if specified gem can not be located
   #

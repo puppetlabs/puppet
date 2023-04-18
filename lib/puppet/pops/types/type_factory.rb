@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Types
 # Helper module that makes creation of type objects simpler.
@@ -281,7 +282,7 @@ module TypeFactory
       when PPatternType
         re.patterns
 
-     else
+      else
        raise ArgumentError, "Only String, Regexp, Pattern-Type, and Regexp-Type are allowed: got '#{re.class}"
       end
     end.flatten.uniq

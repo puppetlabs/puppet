@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The RubyTypeInstantiator instantiates a data type from the ruby source
 # that calls Puppet::DataTypes.create_type.
 #

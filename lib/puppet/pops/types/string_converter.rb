@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 module Puppet::Pops
@@ -263,14 +264,14 @@ class StringConverter
   }.freeze
 
   DEFAULT_ARRAY_FORMAT                          = Format.new('%a')
-  DEFAULT_ARRAY_FORMAT.separator                = ', '.freeze
-  DEFAULT_ARRAY_FORMAT.separator2               = ', '.freeze
+  DEFAULT_ARRAY_FORMAT.separator                = ', '
+  DEFAULT_ARRAY_FORMAT.separator2               = ', '
   DEFAULT_ARRAY_FORMAT.container_string_formats = DEFAULT_CONTAINER_FORMATS
   DEFAULT_ARRAY_FORMAT.freeze
 
   DEFAULT_HASH_FORMAT                           = Format.new('%h')
-  DEFAULT_HASH_FORMAT.separator                 = ', '.freeze
-  DEFAULT_HASH_FORMAT.separator2                = ' => '.freeze
+  DEFAULT_HASH_FORMAT.separator                 = ', '
+  DEFAULT_HASH_FORMAT.separator2                = ' => '
   DEFAULT_HASH_FORMAT.container_string_formats  = DEFAULT_CONTAINER_FORMATS
   DEFAULT_HASH_FORMAT.freeze
 
@@ -700,7 +701,7 @@ class StringConverter
   # Performs post-processing of literals to apply width and precision flags
   def apply_string_flags(f, literal_str)
     if f.left || f.width || f.prec
-      fmt = '%'
+      fmt = String.new('%')
       fmt << '-' if f.left
       fmt << f.width.to_s if f.width
       fmt << '.' << f.prec.to_s if f.prec
@@ -852,7 +853,7 @@ class StringConverter
     end
 
     # Assume that the string can be single quoted
-    bld = '\''
+    bld = String.new('\'')
     bld.force_encoding(str.encoding)
     escaped = false
     str.each_codepoint do |codepoint|
@@ -883,7 +884,7 @@ class StringConverter
   end
 
   def puppet_double_quote(str)
-    bld = '"'
+    bld = String.new('"')
     str.each_codepoint do |codepoint|
       case codepoint
       when 0x09
@@ -939,7 +940,7 @@ class StringConverter
 
     case format.format
     when :a, :s, :p
-      buf = ''
+      buf = String.new
       if indentation.breaks?
         buf << "\n"
         buf << indentation.padding
@@ -1054,7 +1055,7 @@ class StringConverter
 
     when :h, :s, :p
       indentation = indentation.indenting(format.alt? || indentation.is_indenting?)
-      buf = ''
+      buf = String.new
       if indentation.breaks?
         buf << "\n"
         buf << indentation.padding

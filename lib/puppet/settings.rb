@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../puppet'
 require 'getoptlong'
 require_relative '../puppet/util/watched_file'
@@ -49,7 +50,7 @@ class Puppet::Settings
   # The acceptable sections of the puppet.conf configuration file.
   ALLOWED_SECTION_NAMES = ['main', 'server', 'master', 'agent', 'user'].freeze
 
-  NONE = 'none'.freeze
+  NONE = 'none'
 
   # This method is intended for puppet internal use only; it is a convenience method that
   # returns reasonable application default settings values for a given run_mode.
@@ -1400,7 +1401,7 @@ Generated on #{Time.now}.
   #
   # @api public
   class ChainedValues
-    ENVIRONMENT_SETTING = "environment".freeze
+    ENVIRONMENT_SETTING = "environment"
     ENVIRONMENT_INTERPOLATION_ALLOWED = ['config_version'].freeze
 
     # @see Puppet::Settings.values

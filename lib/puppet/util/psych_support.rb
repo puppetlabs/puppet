@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # This module should be included when a class can be serialized to yaml and
 # needs to handle the deserialization from Psych with more control. Psych normally
 # pokes values directly into an instance using `instance_variable_set` which completely

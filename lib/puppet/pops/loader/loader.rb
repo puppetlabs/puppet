@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Loader
 # ===
 # A Loader is responsible for loading "entities" ("instantiable and executable objects in the puppet language" which
@@ -22,8 +23,8 @@
 module Puppet::Pops
 module Loader
 
-ENVIRONMENT = 'environment'.freeze
-ENVIRONMENT_PRIVATE = 'environment private'.freeze
+ENVIRONMENT = 'environment'
+ENVIRONMENT_PRIVATE = 'environment private'
 
 class Loader
   attr_reader :environment, :loader_name

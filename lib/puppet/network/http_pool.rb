@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/network/http/connection'
 
 module Puppet::Network; end

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Parser::Functions::newfunction(:template, :type => :rvalue, :arity => -2, :doc =>
   "Loads an ERB template from a module, evaluates it, and returns the resulting
   value as a string.

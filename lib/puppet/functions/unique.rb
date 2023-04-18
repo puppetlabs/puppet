@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Produces a unique set of values from an `Iterable` argument.
 #
 # * If the argument is a `String`, the unique set of characters are returned as a new `String`.

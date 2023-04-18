@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Returns the absolute value of a Numeric value, for example -34.56 becomes
 # 34.56. Takes a single `Integer` or `Float` value as an argument.
 #

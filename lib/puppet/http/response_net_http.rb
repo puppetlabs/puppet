@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Adapts Net::HTTPResponse to Puppet::HTTP::Response
 #
 # @api public

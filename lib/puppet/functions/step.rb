@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Provides stepping with given interval over elements in an iterable and optionally runs a
 # [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html) for each
 # element.

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 module Puppet::Pops
@@ -233,7 +234,7 @@ class TypeCalculator
     when c == Hash
       # Assume hash of any
       type = PHashType::DEFAULT
-   else
+    else
       type = PRuntimeType.new(:ruby, c.name)
     end
     type

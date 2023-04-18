@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Applies a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # to every value in a data structure from the first argument, carrying over the returned
 # value of each iteration, and returns the result of the lambda's final iteration. This

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/ssl/openssl_loader'
 require 'digest/sha1'
 require 'uri'

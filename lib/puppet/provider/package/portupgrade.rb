@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Whole new package, so include pack stuff
 require_relative '../../../puppet/provider/package'
 

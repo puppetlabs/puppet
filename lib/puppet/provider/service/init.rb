@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The standard init-based service type.  Many other service types are
 # customizations of this module.
 Puppet::Type.type(:service).provide :init, :parent => :base do

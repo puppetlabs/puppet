@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/reports'
 
 Puppet::Reports.register_report(:log) do

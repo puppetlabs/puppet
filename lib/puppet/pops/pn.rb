@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module PN
   KEY_PATTERN = /^[A-Za-z_-][0-9A-Za-z_-]*$/
@@ -19,7 +20,7 @@ module PN
   end
 
   def to_s
-    s = ''
+    s = String.new
     format(nil, s)
     s
   end

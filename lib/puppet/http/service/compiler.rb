@@ -1,10 +1,11 @@
+# frozen_string_literal: true
 # The Compiler service is used to submit and retrieve data from the
 # puppetserver.
 #
 # @api public
 class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   # @return [String] Default API for the Compiler service
-  API = '/puppet/v3'.freeze
+  API = '/puppet/v3'
 
   # Use `Puppet::HTTP::Session.route_to(:puppet)` to create or get an instance of this class.
   #

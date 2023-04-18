@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 # Simple module for logging messages on the client-side
 

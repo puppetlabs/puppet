@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/application'
 
 class Puppet::Application::Doc < Puppet::Application
@@ -151,7 +152,7 @@ HELP
   end
 
   def other
-    text = ""
+    text = String.new
     with_contents = options[:references].length <= 1
     exit_code = 0
     require_relative '../../puppet/util/reference'

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Util::Package::Version
   class Pip
     include Comparable
@@ -31,7 +32,7 @@ module Puppet::Util::Package::Version
         )?
       )
       (?:\\+(?<local>[a-z0-9]+(?:[-_\\.][a-z0-9]+)*))?      # local version
-    ".freeze
+    "
 
     def self.parse(version)
       raise ValidationFailure, version.to_s unless version.is_a? String

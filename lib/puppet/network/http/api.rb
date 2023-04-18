@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Puppet::Network::HTTP::API
   require_relative '../../../puppet/version'
 

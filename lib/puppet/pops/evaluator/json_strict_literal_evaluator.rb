@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Literal values for
 #
 #   * String
@@ -19,7 +20,7 @@
 class Puppet::Pops::Evaluator::JsonStrictLiteralEvaluator
   #include Puppet::Pops::Utils
 
-  COMMA_SEPARATOR = ', '.freeze
+  COMMA_SEPARATOR = ', '
 
   def initialize
     @@literal_visitor ||= Puppet::Pops::Visitor.new(self, "literal", 0, 0)

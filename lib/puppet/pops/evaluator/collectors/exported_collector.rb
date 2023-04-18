@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Evaluator::Collectors::AbstractCollector
 
   # Creates an ExportedCollector using the AbstractCollector's

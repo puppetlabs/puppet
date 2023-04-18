@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Puppet "parser" for the rdoc system
 # The parser uses puppet parser and traverse the AST to instruct RDoc about
 # our current structures. It also parses ruby files that could contain

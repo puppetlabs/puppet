@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Complies with Proc API by mapping a Puppet::Pops::Evaluator::Closure to a ruby Proc.
 # Creating and passing an instance of this class instead of just a plain block makes
 # it possible to inherit the parameter info and arity from the closure. Advanced users

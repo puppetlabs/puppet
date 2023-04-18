@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'timeout'
 
 # AIX System Resource controller (SRC)

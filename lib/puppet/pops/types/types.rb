@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative 'iterable'
 require_relative 'recursion_guard'
 require_relative 'type_acceptor'
@@ -1712,7 +1713,7 @@ class PRegexpType < PScalarType
     if options == 0
       rx_string
     else
-      bld = '(?'
+      bld = String.new('(?')
       bld << 'i' if (options & Regexp::IGNORECASE) != 0
       bld << 'm' if (options & Regexp::MULTILINE) != 0
       bld << 'x' if (options & Regexp::EXTENDED) != 0
@@ -1919,7 +1920,7 @@ end
 #
 class PStructElement < TypedModelObject
   def self.register_ptype(loader, ir)
-    @type = Pcore::create_object_type(loader, ir, self, 'Pcore::StructElement'.freeze, nil,
+    @type = Pcore::create_object_type(loader, ir, self, 'Pcore::StructElement', nil,
       'key_type' => PTypeType::DEFAULT,
       'value_type' => PTypeType::DEFAULT)
   end

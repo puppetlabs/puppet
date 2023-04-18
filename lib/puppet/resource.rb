@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../puppet'
 require_relative '../puppet/util/tagging'
 require_relative '../puppet/parameter'
@@ -30,16 +31,16 @@ class Puppet::Resource
   EMPTY_HASH = {}.freeze
 
   ATTRIBUTES = [:file, :line, :exported, :kind].freeze
-  TYPE_CLASS = 'Class'.freeze
-  TYPE_NODE  = 'Node'.freeze
+  TYPE_CLASS = 'Class'
+  TYPE_NODE  = 'Node'
 
-  CLASS_STRING = 'class'.freeze
-  DEFINED_TYPE_STRING = 'defined_type'.freeze
-  COMPILABLE_TYPE_STRING = 'compilable_type'.freeze
-  UNKNOWN_TYPE_STRING  = 'unknown'.freeze
+  CLASS_STRING = 'class'
+  DEFINED_TYPE_STRING = 'defined_type'
+  COMPILABLE_TYPE_STRING = 'compilable_type'
+  UNKNOWN_TYPE_STRING  = 'unknown'
 
-  PCORE_TYPE_KEY = '__ptype'.freeze
-  VALUE_KEY = 'value'.freeze
+  PCORE_TYPE_KEY = '__ptype'
+  VALUE_KEY = 'value'
 
   def self.from_data_hash(data)
     resource = self.allocate

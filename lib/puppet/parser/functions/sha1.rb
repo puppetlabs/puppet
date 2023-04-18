@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'digest/sha1'
 
 Puppet::Parser::Functions::newfunction(:sha1, :type => :rvalue, :arity => 1, :doc => "Returns a SHA1 hash value from a provided string.") do |args|

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Sun packaging.
 
 require_relative '../../../puppet/provider/package'

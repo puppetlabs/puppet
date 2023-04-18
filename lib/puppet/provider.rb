@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # A Provider is an implementation of the actions that manage resources (of some type) on a system.
 # This class is the base class for all implementation of a Puppet Provider.
 #

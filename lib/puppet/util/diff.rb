@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'tempfile'
 
 # Provide a diff between two strings.
@@ -33,7 +34,7 @@ module Puppet::Util::Diff
     data_old = data_old.split(/\n/).map! { |e| e.chomp }
     data_new = data_new.split(/\n/).map! { |e| e.chomp }
 
-    output = ""
+    output = String.new
 
     diffs = ::Diff::LCS.diff(data_old, data_new)
     return output if diffs.empty?

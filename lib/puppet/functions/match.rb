@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Matches a regular expression against a string and returns an array containing the match
 # and any matched capturing groups.
 #

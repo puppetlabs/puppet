@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/trusted_external'
 
 # @api private
@@ -109,12 +110,12 @@ class Puppet::Context::TrustedInformation
 
   def to_h
     {
-      'authenticated'.freeze => authenticated,
-      'certname'.freeze => certname,
-      'extensions'.freeze => extensions,
-      'hostname'.freeze => hostname,
-      'domain'.freeze => domain,
-      'external'.freeze => external,
+      'authenticated' => authenticated,
+      'certname' => certname,
+      'extensions' => extensions,
+      'hostname' => hostname,
+      'domain' => domain,
+      'external' => external,
     }.freeze
   end
 end

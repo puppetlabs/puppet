@@ -1,10 +1,11 @@
+# frozen_string_literal: true
 # This class is the backing implementation of the Puppet function 'lookup'.
 # See puppet/functions/lookup.rb for documentation.
 #
 module Puppet::Pops
 module Lookup
-  LOOKUP_OPTIONS = 'lookup_options'.freeze
-  GLOBAL = '__global__'.freeze
+  LOOKUP_OPTIONS = 'lookup_options'
+  GLOBAL = '__global__'
 
   # Performs a lookup in the configured scopes and optionally merges the default.
   #

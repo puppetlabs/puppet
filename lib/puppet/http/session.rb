@@ -1,10 +1,11 @@
+# frozen_string_literal: true
 # The session is the mechanism by which services may be connected to and accessed.
 #
 # @api public
 class Puppet::HTTP::Session
   # capabilities for a site
-  CAP_LOCALES = 'locales'.freeze
-  CAP_JSON = 'json'.freeze
+  CAP_LOCALES = 'locales'
+  CAP_JSON = 'json'
 
   # puppet version where locales mount was added
   SUPPORTED_LOCALES_MOUNT_AGENT_VERSION = Gem::Version.new("5.3.4")

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # A setting that represents a span of time, and evaluates to an integer
 # number of seconds after being parsed
 class Puppet::Settings::DurationSetting < Puppet::Settings::BaseSetting

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Daemontools service management
 #
 # author Brice Figureau <brice-puppet@daysofwonder.com>

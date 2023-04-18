@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::ModuleTool
   module Applications
     class Uninstaller < Application

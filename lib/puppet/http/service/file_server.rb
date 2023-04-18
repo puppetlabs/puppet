@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/file_serving/metadata'
 
 # The FileServer service is used to retrieve file metadata and content.
@@ -6,7 +7,7 @@ require_relative '../../../puppet/file_serving/metadata'
 #
 class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   # @return [String] Default API for the FileServer service
-  API = '/puppet/v3'.freeze
+  API = '/puppet/v3'
 
   # @return [RegEx] RegEx used to determine if a path contains a leading slash
   PATH_REGEX = /^\//

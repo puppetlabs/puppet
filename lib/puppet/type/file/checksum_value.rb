@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/util/checksums'
 require_relative '../../../puppet/type/file/data_sync'
 

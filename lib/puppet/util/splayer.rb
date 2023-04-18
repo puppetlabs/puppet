@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Handle splay options (sleeping for a random interval before executing)
 module Puppet::Util::Splayer
   # Have we splayed already?

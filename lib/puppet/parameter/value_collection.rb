@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/parameter/value'
 
 # A collection of values and regular expressions, used for specifying allowed values
@@ -30,7 +31,7 @@ class Puppet::Parameter::ValueCollection
   #
   def doc
     unless defined?(@doc)
-      @doc = ""
+      @doc = String.new
       unless values.empty?
         @doc << "Valid values are "
         @doc << @strings.collect do |value|

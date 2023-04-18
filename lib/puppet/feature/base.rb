@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/util/feature'
 
 # Add the simple features, all in one file.

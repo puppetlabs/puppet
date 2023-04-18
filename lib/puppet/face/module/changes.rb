@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Face.define(:module, '1.0.0') do
   action(:changes) do
     summary _("Show modified files of an installed module.")

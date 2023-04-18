@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 module Puppet::Pops
@@ -124,7 +125,7 @@ class EvaluatingParser
   # @return [String] The quoted string
   #
   def self.quote(x)
-    escaped = '"'
+    escaped = String.new('"')
     p = nil
     x.each_char do |c|
       case p

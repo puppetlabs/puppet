@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/coercion'
 
 class Puppet::Property::Boolean < Puppet::Property

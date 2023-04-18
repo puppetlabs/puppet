@@ -1,11 +1,12 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Time
 class Timestamp < TimeData
   DEFAULT_FORMATS_WO_TZ = ['%FT%T.%N', '%FT%T', '%F %T.%N', '%F %T', '%F']
   DEFAULT_FORMATS = ['%FT%T.%N %Z', '%FT%T %Z', '%F %T.%N %Z', '%F %T %Z', '%F %Z'] + DEFAULT_FORMATS_WO_TZ
 
-  CURRENT_TIMEZONE = 'current'.freeze
-  KEY_TIMEZONE = 'timezone'.freeze
+  CURRENT_TIMEZONE = 'current'
+  KEY_TIMEZONE = 'timezone'
 
   # Converts a timezone that strptime can parse using '%z' into '-HH:MM' or '+HH:MM'
   # @param [String] tz the timezone to convert

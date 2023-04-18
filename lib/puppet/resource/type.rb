@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/parser'
 require_relative '../../puppet/util/warnings'
 require_relative '../../puppet/util/errors'
@@ -21,14 +22,14 @@ class Puppet::Resource::Type
   }
   RESOURCE_EXTERNAL_NAMES_TO_KINDS = RESOURCE_KINDS_TO_EXTERNAL_NAMES.invert
 
-  NAME = 'name'.freeze
-  TITLE = 'title'.freeze
-  MODULE_NAME = 'module_name'.freeze
-  CALLER_MODULE_NAME = 'caller_module_name'.freeze
-  PARAMETERS = 'parameters'.freeze
-  KIND = 'kind'.freeze
-  NODES = 'nodes'.freeze
-  DOUBLE_COLON = '::'.freeze
+  NAME = 'name'
+  TITLE = 'title'
+  MODULE_NAME = 'module_name'
+  CALLER_MODULE_NAME = 'caller_module_name'
+  PARAMETERS = 'parameters'
+  KIND = 'kind'
+  NODES = 'nodes'
+  DOUBLE_COLON = '::'
   EMPTY_ARRAY = [].freeze
 
   attr_accessor :file, :line, :doc, :code, :parent, :resource_type_collection, :override

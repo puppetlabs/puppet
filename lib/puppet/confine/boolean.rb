@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/confine'
 
 # Common module for the Boolean confines. It currently

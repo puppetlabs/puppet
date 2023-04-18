@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/property'
 
 # This property is automatically added to any {Puppet::Type} that responds

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Manage systemd services using systemctl
 
 require_relative '../../../puppet/file_system'

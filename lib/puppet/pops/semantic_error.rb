@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Error that is used to raise an Issue. See {Puppet::Pops::Issues}.
 #
 class Puppet::Pops::SemanticError < RuntimeError

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 require 'yaml'
 # The `yaml_data` is a hiera 5 `data_hash` data provider function.

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
   desc "The specific form of package management on FreeBSD.  This is an
     extremely quirky packaging system, in that it freely mixes between

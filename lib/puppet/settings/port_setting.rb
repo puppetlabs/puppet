@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Puppet::Settings::PortSetting < Puppet::Settings::IntegerSetting
   def munge(value)
     value = super

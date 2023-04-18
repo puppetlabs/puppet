@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Types
 
@@ -59,7 +60,7 @@ class RubyGenerator < TypeFormatter
       if cls.nil?
         rp = key.resolved_parent
         parent_class = rp.is_a?(PObjectType) ? rp.implementation_class : Object
-        class_def = ''
+        class_def = String.new
         class_body(key, EMPTY_ARRAY, class_def)
         cls = Class.new(parent_class)
         cls.class_eval(class_def)
@@ -108,7 +109,7 @@ class RubyGenerator < TypeFormatter
     end
 
     # Create class definition of all contained types
-    bld = ''
+    bld = String.new
     start_module(common_prefix, comment, bld)
     class_names = []
     names_by_prefix.each_pair do |seg_array, index_and_name_array|

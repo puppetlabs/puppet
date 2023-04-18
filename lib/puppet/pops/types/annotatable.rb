@@ -1,7 +1,8 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Types
 
-KEY_ANNOTATIONS = 'annotations'.freeze
+KEY_ANNOTATIONS = 'annotations'
 
 # Behaviour common to all Pcore annotatable classes
 #

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/http'
 
 # This will be raised if too many redirects happen for a given HTTP request

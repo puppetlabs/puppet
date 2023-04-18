@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Bundler and rubygems maintain a set of directories from which to
 # load gems. If Bundler is loaded, let it determine what can be
 # loaded. If it's not loaded, then use rubygems. But do this before

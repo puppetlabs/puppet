@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Provides utility functions to help interface Puppet to SELinux.
 #
 # This requires the very new SELinux Ruby bindings.  These bindings closely
@@ -226,7 +227,7 @@ module Puppet::Util::SELinux
 
   # Internal helper function to read and parse /proc/mounts
   def read_mounts
-    mounts = ""
+    mounts = String.new
     begin
       if File.method_defined? "read_nonblock"
         # If possible we use read_nonblock in a loop rather than read to work-

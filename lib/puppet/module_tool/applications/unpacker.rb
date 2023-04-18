@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'pathname'
 require 'tmpdir'
 require_relative '../../../puppet/util/json'

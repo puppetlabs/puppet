@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Puppet::Parser::Compiler
   # Validator that asserts relationship metaparameters refer to valid resources
   class CatalogValidator::RelationshipValidator < CatalogValidator

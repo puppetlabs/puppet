@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Base, template method, class for Prioritizers. This provides the basic
 # tracking facilities used.
 #

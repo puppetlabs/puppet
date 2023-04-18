@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 # = CSS2 RDoc HTML template
 #

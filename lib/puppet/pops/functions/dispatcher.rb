@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Evaluate the dispatches defined as {Puppet::Pops::Functions::Dispatch}
 # instances to call the appropriate method on the
 # {Puppet::Pops::Functions::Function} instance.

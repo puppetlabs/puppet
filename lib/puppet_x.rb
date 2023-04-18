@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The Puppet Extensions Module.
 #
 # Submodules of this module should be named after the publisher (e.g.

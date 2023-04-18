@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # @api private
 class Puppet::Settings::IniFile
   DEFAULT_SECTION_NAME = "main"

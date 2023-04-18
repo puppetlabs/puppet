@@ -1,12 +1,13 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Types
 
-KEY_NAME_AUTHORITY = 'name_authority'.freeze
-KEY_TYPES = 'types'.freeze
-KEY_ALIAS = 'alias'.freeze
-KEY_VERSION = 'version'.freeze
-KEY_VERSION_RANGE = 'version_range'.freeze
-KEY_REFERENCES = 'references'.freeze
+KEY_NAME_AUTHORITY = 'name_authority'
+KEY_TYPES = 'types'
+KEY_ALIAS = 'alias'
+KEY_VERSION = 'version'
+KEY_VERSION_RANGE = 'version_range'
+KEY_REFERENCES = 'references'
 
 class PTypeSetType < PMetaType
 
@@ -290,7 +291,7 @@ class PTypeSetType < PMetaType
     types = result[KEY_TYPES]
     if types.is_a?(Hash)
       types.each do |type_name, value|
-        full_name = "#{@name}::#{type_name}".freeze
+        full_name = "#{@name}::#{type_name}"
         typed_name = Loader::TypedName.new(:type, full_name, name_auth)
         if value.is_a?(Model::ResourceDefaultsExpression)
           # This is actually a <Parent> { <key-value entries> } notation. Convert to a literal hash that contains the parent
@@ -330,7 +331,7 @@ class PTypeSetType < PMetaType
     types = result[KEY_TYPES]
     if types.is_a?(Hash)
       types.each do |type_name, value|
-        full_name = "#{@name}::#{type_name}".freeze
+        full_name = "#{@name}::#{type_name}"
         typed_name = Loader::TypedName.new(:type, full_name, name_auth)
         meta_name = value.is_a?(Hash) ? 'Object' : 'TypeAlias'
         type = Loader::TypeDefinitionInstantiator.create_named_type(full_name, meta_name, value, name_auth)

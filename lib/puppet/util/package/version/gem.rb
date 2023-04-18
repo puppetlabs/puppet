@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Util::Package::Version
   class Gem < ::Gem::Version
     def self.parse(version)

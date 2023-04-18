@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Windows Access Control List
 #
 # Represents a list of access control entries (ACEs).
@@ -97,7 +98,7 @@ class Puppet::Util::Windows::AccessControlList
   end
 
   def inspect
-    str = ""
+    str = String.new
     @aces.each do |ace|
       str << "  #{ace.inspect}\n"
     end

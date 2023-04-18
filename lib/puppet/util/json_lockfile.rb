@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/util/lockfile'
 
 # This class provides a simple API for managing a lock file

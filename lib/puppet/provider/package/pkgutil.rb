@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Packaging using Peter Bonivart's pkgutil program.
 Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun do
   desc "Package management using Peter Bonivart's ``pkgutil`` command on Solaris."

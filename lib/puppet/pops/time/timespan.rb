@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 module Puppet::Pops
@@ -9,16 +10,16 @@ module Time
   NSECS_PER_HOUR = NSECS_PER_MIN  * 60
   NSECS_PER_DAY  = NSECS_PER_HOUR * 24
 
-  KEY_STRING = 'string'.freeze
-  KEY_FORMAT = 'format'.freeze
-  KEY_NEGATIVE = 'negative'.freeze
-  KEY_DAYS = 'days'.freeze
-  KEY_HOURS = 'hours'.freeze
-  KEY_MINUTES = 'minutes'.freeze
-  KEY_SECONDS = 'seconds'.freeze
-  KEY_MILLISECONDS = 'milliseconds'.freeze
-  KEY_MICROSECONDS = 'microseconds'.freeze
-  KEY_NANOSECONDS = 'nanoseconds'.freeze
+  KEY_STRING = 'string'
+  KEY_FORMAT = 'format'
+  KEY_NEGATIVE = 'negative'
+  KEY_DAYS = 'days'
+  KEY_HOURS = 'hours'
+  KEY_MINUTES = 'minutes'
+  KEY_SECONDS = 'seconds'
+  KEY_MILLISECONDS = 'milliseconds'
+  KEY_MICROSECONDS = 'microseconds'
+  KEY_NANOSECONDS = 'nanoseconds'
 
   # TimeData is a Numeric that stores its value internally as nano-seconds but will be considered to be seconds and fractions of
   # seconds when used in arithmetic or comparison with other Numeric types.
@@ -544,7 +545,7 @@ module Time
       end
 
       def format(timespan)
-        bld = timespan.negative? ? '-' : ''
+        bld = String.new(timespan.negative? ? '-' : '')
         @segments.each { |segment| segment.append_to(bld, timespan) }
         bld
       end
@@ -574,7 +575,7 @@ module Time
       end
 
       def build_regexp
-        bld = '\A-?'
+        bld = String.new('\A-?')
         @segments.each { |segment| segment.append_regexp(bld) }
         bld << '\z'
         Regexp.new(bld)
@@ -612,7 +613,7 @@ module Time
 
       def append_literal(bld, codepoint)
         if bld.empty? || !bld.last.is_a?(Format::LiteralSegment)
-          bld << Format::LiteralSegment.new(''.concat(codepoint))
+          bld << Format::LiteralSegment.new(String.new.concat(codepoint))
         else
           bld.last.concat(codepoint)
         end

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Formats timestamp or timespan according to the directives in the given format string. The directives begins with a percent (%) character.
 # Any text not listed as a directive will be passed through to the output string.
 #

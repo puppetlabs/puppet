@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # MultiMatch allows multiple values to be tested at once in a case expression.
 # This class is needed since Array does not implement the === operator to mean
 # "each v === other.each v". 

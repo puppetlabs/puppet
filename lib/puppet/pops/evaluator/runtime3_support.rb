@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Evaluator
 # A module with bindings between the new evaluator and the 3x runtime.
@@ -7,7 +8,7 @@ module Evaluator
 # @api private
 module Runtime3Support
 
-  NAME_SPACE_SEPARATOR = '::'.freeze
+  NAME_SPACE_SEPARATOR = '::'
 
   # Fails the evaluation of _semantic_ with a given issue.
   #

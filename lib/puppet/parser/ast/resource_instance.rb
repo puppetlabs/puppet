@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # A simple container for a parameter for an object.  Consists of a
 # title and a set of parameters.
 #

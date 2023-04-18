@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Puppet as a Library "PAL"
 
 # Yes, this requires all of puppet for now because 'settings' and many other things...

@@ -1,10 +1,11 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Types
   # Pcore variant of the Adaptable::Adapter. Uses a Pcore Object type instead of a Class
   class Annotation < Adaptable::Adapter
     include Types::PuppetObject
 
-    CLEAR = 'clear'.freeze
+    CLEAR = 'clear'
 
     # Register the Annotation type. This is the type that all custom Annotations will inherit from.
     def self.register_ptype(loader, ir)

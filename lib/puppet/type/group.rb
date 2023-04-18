@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'etc'
 require_relative '../../puppet/property/keyvalue'
 require_relative '../../puppet/parameter/boolean'

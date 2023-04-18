@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Puppet package provider for Python's `pip3` package management frontend.
 # <http://pip.pypa.io/>
 

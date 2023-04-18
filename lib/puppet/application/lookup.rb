@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/application'
 require_relative '../../puppet/pops'
 require_relative '../../puppet/node'
@@ -6,7 +7,7 @@ require_relative '../../puppet/parser/compiler'
 class Puppet::Application::Lookup < Puppet::Application
 
   RUN_HELP = _("Run 'puppet lookup --help' for more details").freeze
-  DEEP_MERGE_OPTIONS = '--knock-out-prefix, --sort-merged-arrays, and --merge-hash-arrays'.freeze
+  DEEP_MERGE_OPTIONS = '--knock-out-prefix, --sort-merged-arrays, and --merge-hash-arrays'
   TRUSTED_INFORMATION_FACTS = ["hostname", "domain", "fqdn", "clientcert"].freeze
 
   run_mode :server

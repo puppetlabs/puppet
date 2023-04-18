@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 # LoaderPaths
 # ===
@@ -87,7 +88,7 @@ module LoaderPaths
 
     def typed_name(type, name_authority, relative_path, module_name)
       # Module name is assumed to be included in the path and therefore not added here
-      n = ''
+      n = String.new
       unless extension.empty?
         # Remove extension
         relative_path = relative_path[0..-(extension.length+1)]
@@ -117,7 +118,7 @@ module LoaderPaths
   end
 
   class RubySmartPath < SmartPath
-    EXTENSION = '.rb'.freeze
+    EXTENSION = '.rb'
 
     def extension
       EXTENSION
@@ -133,7 +134,7 @@ module LoaderPaths
   # path (which is a reference to its 'lib' directory.
   #
   class PuppetSmartPath < SmartPath
-    EXTENSION = '.pp'.freeze
+    EXTENSION = '.pp'
 
     def extension
       EXTENSION
@@ -152,7 +153,7 @@ module LoaderPaths
     end
 
     def typed_name(type, name_authority, relative_path, module_name)
-      n = ''
+      n = String.new
       n << module_name unless module_name.nil?
       unless extension.empty?
         # Remove extension
@@ -193,7 +194,7 @@ module LoaderPaths
   end
 
   class FunctionPathPP < PuppetSmartPath
-    FUNCTION_PATH_PP = 'functions'.freeze
+    FUNCTION_PATH_PP = 'functions'
 
     def relative_path
       FUNCTION_PATH_PP
@@ -218,7 +219,7 @@ module LoaderPaths
   end
 
   class TypePathPP < PuppetSmartPath
-    TYPE_PATH_PP = 'types'.freeze
+    TYPE_PATH_PP = 'types'
 
     def relative_path
       TYPE_PATH_PP
@@ -232,7 +233,7 @@ module LoaderPaths
   # TaskPath is like PuppetSmartPath but it does not use an extension and may
   # match more than one path with one name
   class TaskPath < PuppetSmartPath
-    TASKS_PATH = 'tasks'.freeze
+    TASKS_PATH = 'tasks'
     FORBIDDEN_EXTENSIONS = %w{.conf .md}.freeze
 
     def extension
@@ -248,7 +249,7 @@ module LoaderPaths
     end
 
     def typed_name(type, name_authority, relative_path, module_name)
-      n = ''
+      n = String.new
       n << module_name unless module_name.nil?
 
       # Remove the file extension, defined as everything after the *last* dot.
@@ -285,7 +286,7 @@ module LoaderPaths
   end
 
   class ResourceTypeImplPP < PuppetSmartPath
-    RESOURCE_TYPES_PATH_PP = '.resource_types'.freeze
+    RESOURCE_TYPES_PATH_PP = '.resource_types'
 
     def relative_path
       RESOURCE_TYPES_PATH_PP
@@ -312,8 +313,8 @@ module LoaderPaths
 
   class PlanPath < PuppetSmartPath
     PLAN_PATH = File.join('plans')
-    PP_EXT = '.pp'.freeze
-    YAML_EXT = '.yaml'.freeze
+    PP_EXT = '.pp'
+    YAML_EXT = '.yaml'
 
     def initialize(loader)
       super
@@ -350,7 +351,7 @@ module LoaderPaths
       if @init_filenames.include?(relative_path) && !(module_name.nil? || module_name.empty?)
         TypedName.new(type, module_name, name_authority)
       else
-        n = ''
+        n = String.new
         n << module_name unless module_name.nil?
         ext = @extensions.find { |extension| relative_path.end_with?(extension) }
         relative_path = relative_path[0..-(ext.length+1)]

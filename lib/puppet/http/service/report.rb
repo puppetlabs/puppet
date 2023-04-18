@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The Report service is used to submit run reports to the report server.
 #
 # @api public
@@ -5,7 +6,7 @@
 class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
 
   # @return [String] Default API for the report service
-  API = '/puppet/v3'.freeze
+  API = '/puppet/v3'
 
   # Use `Puppet::HTTP::Session.route_to(:report)` to create or get an instance of this class.
   #

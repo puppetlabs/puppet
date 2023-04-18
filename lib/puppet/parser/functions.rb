@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/util/autoload'
 require_relative '../../puppet/parser/scope'
 require_relative '../../puppet/pops/adaptable'
@@ -257,7 +258,7 @@ module Puppet::Parser::Functions
   def self.functiondocs(environment = Puppet.lookup(:current_environment))
     autoloader.delegatee.loadall(environment)
 
-    ret = ""
+    ret = String.new
 
     merged_functions(environment).sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
       ret << "#{name}\n#{"-" * name.to_s.length}\n"

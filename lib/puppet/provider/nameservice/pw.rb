@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/provider/nameservice/objectadd'
 
 class Puppet::Provider::NameService

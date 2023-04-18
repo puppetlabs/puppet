@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet
 module Pal
   # A TaskSignature is returned from `task_signature`. Its purpose is to answer questions about the task's parameters

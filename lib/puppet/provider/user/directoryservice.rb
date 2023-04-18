@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet'
 require_relative '../../../puppet/util/plist' if Puppet.features.cfpropertylist?
 require 'base64'
@@ -636,7 +637,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   def set_salted_sha512(users_plist, shadow_hash_data, value)
     unless shadow_hash_data
       shadow_hash_data = Hash.new
-      shadow_hash_data['SALTED-SHA512'] = ''
+      shadow_hash_data['SALTED-SHA512'] = String.new
     end
     shadow_hash_data['SALTED-SHA512'] = base64_decode_string(value)
     binary_plist = self.class.convert_hash_to_binary(shadow_hash_data)

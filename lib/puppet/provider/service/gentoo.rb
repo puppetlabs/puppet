@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Manage gentoo services.  Start/stop is the same as InitSvc, but enable/disable
 # is special.
 Puppet::Type.type(:service).provide :gentoo, :parent => :init do

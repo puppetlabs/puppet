@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # A module to collect utility functions.
 
 require 'English'
@@ -409,7 +410,7 @@ module Util
     raise ArgumentError.new(_('path may not be nil')) if path.nil?
 
     # ensure string starts as UTF-8 for the sake of Ruby 1.9.3
-    encoded = ''.encode!(Encoding::UTF_8)
+    encoded = String.new.encode!(Encoding::UTF_8)
 
     # parse uri into named matches, then reassemble properly encoded
     parts = path.match(RFC_3986_URI_REGEX)
@@ -442,18 +443,18 @@ module Util
   module_function :uri_encode
 
   # From https://github.com/ruby/ruby/blob/v2_7_3/lib/uri/rfc2396_parser.rb#L24-L46
-  ALPHA = "a-zA-Z".freeze
-  ALNUM = "#{ALPHA}\\d".freeze
-  UNRESERVED = "\\-_.!~*'()#{ALNUM}".freeze
-  RESERVED = ";/?:@&=+$,\\[\\]".freeze
+  ALPHA = "a-zA-Z"
+  ALNUM = "#{ALPHA}\\d"
+  UNRESERVED = "\\-_.!~*'()#{ALNUM}"
+  RESERVED = ";/?:@&=+$,\\[\\]"
   UNSAFE = Regexp.new("[^#{UNRESERVED}#{RESERVED}]").freeze
 
-  HEX = "a-fA-F\\d".freeze
+  HEX = "a-fA-F\\d"
   ESCAPED = Regexp.new("%[#{HEX}]{2}").freeze
 
   def rfc2396_escape(str)
     str.gsub(UNSAFE) do |match|
-      tmp = ''
+      tmp = String.new
       match.each_byte do |uc|
         tmp << sprintf('%%%02X', uc)
       end

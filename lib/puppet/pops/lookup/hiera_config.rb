@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative 'data_dig_function_provider'
 require_relative 'data_hash_function_provider'
 require_relative 'lookup_key_function_provider'
@@ -41,22 +42,22 @@ class HieraConfig
 
   CONFIG_FILE_NAME = 'hiera.yaml'
 
-  KEY_NAME = 'name'.freeze
-  KEY_VERSION = 'version'.freeze
-  KEY_DATADIR = 'datadir'.freeze
-  KEY_DEFAULT_HIERARCHY = 'default_hierarchy'.freeze
-  KEY_HIERARCHY = 'hierarchy'.freeze
-  KEY_PLAN_HIERARCHY = 'plan_hierarchy'.freeze
-  KEY_LOGGER = 'logger'.freeze
-  KEY_OPTIONS = 'options'.freeze
-  KEY_PATH = 'path'.freeze
-  KEY_PATHS = 'paths'.freeze
-  KEY_MAPPED_PATHS = 'mapped_paths'.freeze
-  KEY_GLOB = 'glob'.freeze
-  KEY_GLOBS = 'globs'.freeze
-  KEY_URI = 'uri'.freeze
-  KEY_URIS = 'uris'.freeze
-  KEY_DEFAULTS = 'defaults'.freeze
+  KEY_NAME = 'name'
+  KEY_VERSION = 'version'
+  KEY_DATADIR = 'datadir'
+  KEY_DEFAULT_HIERARCHY = 'default_hierarchy'
+  KEY_HIERARCHY = 'hierarchy'
+  KEY_PLAN_HIERARCHY = 'plan_hierarchy'
+  KEY_LOGGER = 'logger'
+  KEY_OPTIONS = 'options'
+  KEY_PATH = 'path'
+  KEY_PATHS = 'paths'
+  KEY_MAPPED_PATHS = 'mapped_paths'
+  KEY_GLOB = 'glob'
+  KEY_GLOBS = 'globs'
+  KEY_URI = 'uri'
+  KEY_URIS = 'uris'
+  KEY_DEFAULTS = 'defaults'
   KEY_DATA_HASH = DataHashFunctionProvider::TAG
   KEY_LOOKUP_KEY = LookupKeyFunctionProvider::TAG
   KEY_DATA_DIG = DataDigFunctionProvider::TAG
@@ -64,8 +65,8 @@ class HieraConfig
   KEY_V3_LOOKUP_KEY = V3LookupKeyFunctionProvider::TAG
   KEY_V3_BACKEND = V3BackendFunctionProvider::TAG
   KEY_V4_DATA_HASH = V4DataHashFunctionProvider::TAG
-  KEY_BACKEND = 'backend'.freeze
-  KEY_EXTENSION = 'extension'.freeze
+  KEY_BACKEND = 'backend'
+  KEY_EXTENSION = 'extension'
 
   FUNCTION_KEYS = [KEY_DATA_HASH, KEY_LOOKUP_KEY, KEY_DATA_DIG, KEY_V3_BACKEND]
   ALL_FUNCTION_KEYS = FUNCTION_KEYS + [KEY_V4_DATA_HASH]
@@ -227,7 +228,7 @@ class HieraConfig
       line_number += 1
       next if line_number < start_line
       quote = nil
-      stripped = ''
+      stripped = String.new
       line.each_codepoint do |cp|
         if cp == 0x22 || cp == 0x27 # double or single quote
           if quote == cp
@@ -346,9 +347,9 @@ end
 
 # @api private
 class HieraConfigV3 < HieraConfig
-  KEY_BACKENDS = 'backends'.freeze
-  KEY_MERGE_BEHAVIOR = 'merge_behavior'.freeze
-  KEY_DEEP_MERGE_OPTIONS = 'deep_merge_options'.freeze
+  KEY_BACKENDS = 'backends'
+  KEY_MERGE_BEHAVIOR = 'merge_behavior'
+  KEY_DEEP_MERGE_OPTIONS = 'deep_merge_options'
 
   def self.config_type
     return @@CONFIG_TYPE if class_variable_defined?(:@@CONFIG_TYPE)

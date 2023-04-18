@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/ffi/windows'
 require_relative '../../../puppet/util/windows/string'
 
@@ -20,7 +21,7 @@ module Puppet::FFI::Windows
 
     class ::FFI::Pointer
       NULL_HANDLE = 0
-      WCHAR_NULL = "\0\0".force_encoding('UTF-16LE').freeze
+      WCHAR_NULL = String.new("\0\0").force_encoding('UTF-16LE').freeze
 
       def self.from_string_to_wide_string(str, &block)
         str = Puppet::Util::Windows::String.wide_string(str)

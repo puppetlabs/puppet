@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet'
 require 'fileutils'
 require_relative '../../puppet/util'

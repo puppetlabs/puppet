@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/parser/ast/top_level_construct'
 
 class Puppet::Parser::AST::Hostclass < Puppet::Parser::AST::TopLevelConstruct

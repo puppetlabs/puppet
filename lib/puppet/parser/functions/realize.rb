@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # This is just syntactic sugar for a collection, although it will generally
 # be a good bit faster.
 

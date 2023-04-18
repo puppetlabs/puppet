@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # A method for retrieving external trusted facts
 module Puppet::TrustedExternal
   def retrieve(certname)

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 Puppet::Type.type(:file).provide :windows do
   desc "Uses Microsoft Windows functionality to manage file ownership and permissions."
 

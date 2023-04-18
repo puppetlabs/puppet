@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/parser/script_compiler'
 
 module Puppet::Pops
@@ -16,8 +17,8 @@ end
 # Utility class to help resolve instances of Puppet::Pops::Types::PDeferredType::Deferred
 #
 class DeferredResolver
-  DOLLAR = '$'.freeze
-  DIG    = 'dig'.freeze
+  DOLLAR = '$'
+  DIG    = 'dig'
 
   # Resolves and replaces all Deferred values in a catalog's resource attributes
   # found as direct values or nested inside Array, Hash or Sensitive values.

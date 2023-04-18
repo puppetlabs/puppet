@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Pops
 module Evaluator
 # Literal values for
@@ -16,7 +17,7 @@ module Evaluator
 #
 class LiteralEvaluator
 
-  COMMA_SEPARATOR = ', '.freeze
+  COMMA_SEPARATOR = ', '
 
   def initialize
     @@literal_visitor ||= Visitor.new(self, "literal", 0, 0)

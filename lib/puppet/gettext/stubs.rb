@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # These stub the translation methods normally brought in
 # by FastGettext. Used when Gettext could not be properly
 # initialized.

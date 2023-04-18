@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../puppet/indirector'
 
 # A class for managing nodes, including their facts and environment.
@@ -21,7 +22,7 @@ class Puppet::Node
 
   attr_reader :server_facts
 
-  ENVIRONMENT = 'environment'.freeze
+  ENVIRONMENT = 'environment'
 
   def initialize_from_hash(data)
     @name       = data['name']       || (raise ArgumentError, _("No name provided in serialized data"))

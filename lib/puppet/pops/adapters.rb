@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # The Adapters module contains adapters for Documentation, Origin, SourcePosition, and Loader.
 #
 module Puppet::Pops

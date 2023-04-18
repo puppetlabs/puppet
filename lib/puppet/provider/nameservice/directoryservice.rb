@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet'
 require_relative '../../../puppet/provider/nameservice'
 require_relative '../../../puppet/util/plist' if Puppet.features.cfpropertylist?
@@ -217,8 +218,8 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
         password_hash_plist = users_plist['ShadowHashData'][0]
         converted_hash_plist = convert_binary_to_hash(password_hash_plist)
       else
-        users_plist['ShadowHashData'] = ''
-        converted_hash_plist = {'SALTED-SHA512' => ''}
+        users_plist['ShadowHashData'] = String.new
+        converted_hash_plist = {'SALTED-SHA512' => String.new}
       end
 
       # converted_hash_plist['SALTED-SHA512'] expects a Base64 encoded

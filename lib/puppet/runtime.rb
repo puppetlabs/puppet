@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../puppet/http'
 require_relative '../puppet/facter_impl'
 require 'singleton'

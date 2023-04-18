@@ -1,10 +1,11 @@
+# frozen_string_literal: true
 require_relative '../../puppet/indirector/indirection'
 require_relative '../../puppet/util/checksums'
 require_relative '../../puppet/file_serving/content'
 require_relative '../../puppet/file_serving/metadata'
 
 reference = Puppet::Util::Reference.newreference :indirection, :doc => "Indirection types and their terminus classes" do
-  text = ""
+  text = String.new
   Puppet::Indirector::Indirection.instances.sort_by(&:to_s).each do |indirection|
     ind = Puppet::Indirector::Indirection.instance(indirection)
     name = indirection.to_s.capitalize

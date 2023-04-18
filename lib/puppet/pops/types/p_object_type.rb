@@ -1,29 +1,30 @@
+# frozen_string_literal: true
 require_relative 'ruby_generator'
 require_relative 'type_with_members'
 
 module Puppet::Pops
 module Types
 
-KEY_ATTRIBUTES = 'attributes'.freeze
-KEY_CHECKS = 'checks'.freeze
-KEY_CONSTANTS = 'constants'.freeze
-KEY_EQUALITY = 'equality'.freeze
-KEY_EQUALITY_INCLUDE_TYPE = 'equality_include_type'.freeze
-KEY_FINAL = 'final'.freeze
-KEY_FUNCTIONS = 'functions'.freeze
-KEY_KIND = 'kind'.freeze
-KEY_OVERRIDE = 'override'.freeze
-KEY_PARENT = 'parent'.freeze
-KEY_TYPE_PARAMETERS = 'type_parameters'.freeze
+KEY_ATTRIBUTES = 'attributes'
+KEY_CHECKS = 'checks'
+KEY_CONSTANTS = 'constants'
+KEY_EQUALITY = 'equality'
+KEY_EQUALITY_INCLUDE_TYPE = 'equality_include_type'
+KEY_FINAL = 'final'
+KEY_FUNCTIONS = 'functions'
+KEY_KIND = 'kind'
+KEY_OVERRIDE = 'override'
+KEY_PARENT = 'parent'
+KEY_TYPE_PARAMETERS = 'type_parameters'
 
 # @api public
 class PObjectType < PMetaType
   include TypeWithMembers
 
-  ATTRIBUTE_KIND_CONSTANT = 'constant'.freeze
-  ATTRIBUTE_KIND_DERIVED = 'derived'.freeze
-  ATTRIBUTE_KIND_GIVEN_OR_DERIVED = 'given_or_derived'.freeze
-  ATTRIBUTE_KIND_REFERENCE = 'reference'.freeze
+  ATTRIBUTE_KIND_CONSTANT = 'constant'
+  ATTRIBUTE_KIND_DERIVED = 'derived'
+  ATTRIBUTE_KIND_GIVEN_OR_DERIVED = 'given_or_derived'
+  ATTRIBUTE_KIND_REFERENCE = 'reference'
   TYPE_ATTRIBUTE_KIND = TypeFactory.enum(ATTRIBUTE_KIND_CONSTANT, ATTRIBUTE_KIND_DERIVED, ATTRIBUTE_KIND_GIVEN_OR_DERIVED, ATTRIBUTE_KIND_REFERENCE)
 
   TYPE_OBJECT_NAME = Pcore::TYPE_QUALIFIED_REFERENCE

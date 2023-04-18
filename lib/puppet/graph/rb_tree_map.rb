@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Algorithms and Containers project is Copyright (c) 2009 Kanwei Li
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy

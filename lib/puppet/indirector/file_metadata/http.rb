@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../../puppet/file_serving/http_metadata'
 require_relative '../../../puppet/indirector/generic_http'
 require_relative '../../../puppet/indirector/file_metadata'

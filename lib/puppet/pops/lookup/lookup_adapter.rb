@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative 'data_adapter'
 require_relative 'lookup_key'
 
@@ -12,12 +13,12 @@ class LookupAdapter < DataAdapter
 
   LOOKUP_OPTIONS_PREFIX = LOOKUP_OPTIONS + '.'
   LOOKUP_OPTIONS_PREFIX.freeze
-  LOOKUP_OPTIONS_PATTERN_START = '^'.freeze
+  LOOKUP_OPTIONS_PATTERN_START = '^'
 
-  HASH = 'hash'.freeze
-  MERGE = 'merge'.freeze
-  CONVERT_TO = 'convert_to'.freeze
-  NEW = 'new'.freeze
+  HASH = 'hash'
+  MERGE = 'merge'
+  CONVERT_TO = 'convert_to'
+  NEW = 'new'
 
   def self.create_adapter(compiler)
     new(compiler)
@@ -334,7 +335,7 @@ class LookupAdapter < DataAdapter
     end
   end
 
-  GLOBAL_ENV_MERGE = 'Global and Environment'.freeze
+  GLOBAL_ENV_MERGE = 'Global and Environment'
 
   # Retrieve lookup options that applies when using a specific module (i.e. a merge of the pre-cached
   # `env_lookup_options` and the module specific data)

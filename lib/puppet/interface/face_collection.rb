@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Puppet::Interface::FaceCollection
   @faces = Hash.new { |hash, key| hash[key] = {} }
 

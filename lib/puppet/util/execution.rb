@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'timeout'
 require_relative '../../puppet/file_system/uniquefile'
 
@@ -161,7 +162,7 @@ module Puppet::Util::Execution
     # do this after processing 'command' array or string
     command_str = '[redacted]' if options[:sensitive]
 
-    user_log_s = ''
+    user_log_s = String.new
     if options[:uid]
       user_log_s << " uid=#{options[:uid]}"
     end
@@ -201,7 +202,7 @@ module Puppet::Util::Execution
       stderr = options[:combine] ? stdout : Puppet::FileSystem.open(null_file, nil, 'w')
 
       exec_args = [command, options, stdin, stdout, stderr]
-      output = ''
+      output = String.new
 
       # We close stdin/stdout/stderr immediately after fork/exec as they're no longer needed by
       # this process. In most cases they could be closed later, but when `stdout` is the "writer"

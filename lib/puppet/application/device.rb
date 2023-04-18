@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative '../../puppet/application'
 require_relative '../../puppet/configurer'
 require_relative '../../puppet/util/network_device'

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Utility methods for interacting with POSIX objects; mostly user and group
 module Puppet::Util::POSIX
 
