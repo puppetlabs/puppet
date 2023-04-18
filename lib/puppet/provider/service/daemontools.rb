@@ -157,7 +157,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
         Puppet::FileSystem.symlink(self.daemon, self.service)
       end
     end
-rescue Puppet::ExecutionFailure
+  rescue Puppet::ExecutionFailure
     raise Puppet::Error.new( "No daemon directory found for #{self.service}", $!)
   end
 

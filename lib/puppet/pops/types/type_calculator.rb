@@ -234,7 +234,7 @@ class TypeCalculator
     when c == Hash
       # Assume hash of any
       type = PHashType::DEFAULT
-   else
+    else
       type = PRuntimeType.new(:ruby, c.name)
     end
     type
