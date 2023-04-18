@@ -137,7 +137,7 @@ describe "Puppet defaults" do
 
     it "path should not add anything" do
       path = "c:\\windows\\system32#{File::PATH_SEPARATOR}c:\\windows"
-      Puppet::Util.withenv( {"PATH" => path }, :windows ) do
+      Puppet::Util.withenv("PATH" => path) do
         Puppet.settings[:path] = "none" # this causes it to ignore the setting
         expect(ENV["PATH"]).to eq(path)
       end
@@ -145,10 +145,10 @@ describe "Puppet defaults" do
 
     it "path should support UTF8 characters" do
       path = "c:\\windows\\system32#{File::PATH_SEPARATOR}c:\\windows#{File::PATH_SEPARATOR}C:\\" + rune_utf8
-      Puppet::Util.withenv( {"PATH" => path }, :windows) do
+      Puppet::Util.withenv("PATH" => path) do
         Puppet.settings[:path] = "none" # this causes it to ignore the setting
 
-        expect(Puppet::Util.get_env('Path')).to eq(path)
+        expect(ENV['Path']).to eq(path)
       end
     end
   end

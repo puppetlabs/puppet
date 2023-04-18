@@ -379,7 +379,7 @@ module Puppet::Util::Execution
     end.join(" ") if command.is_a?(Array)
 
     options[:custom_environment] ||= {}
-    Puppet::Util.withenv(options[:custom_environment], :windows) do
+    Puppet::Util.withenv(options[:custom_environment]) do
       Puppet::Util::Windows::Process.execute(command, options, stdin, stdout, stderr)
     end
   end

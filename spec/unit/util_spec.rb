@@ -65,10 +65,62 @@ describe Puppet::Util do
       end
       expect(ENV["FOO"]).to eq(nil)
     end
+
+    it "accepts symbolic keys" do
+      Puppet::Util.withenv(:FOO => "bar") do
+        expect(ENV["FOO"]).to eq("bar")
+      end
+    end
+
+    it "coerces invalid keys to strings" do
+      Puppet::Util.withenv(12345678 => "bar") do
+        expect(ENV["12345678"]).to eq("bar")
+      end
+    end
+
+    it "rejects keys with leading equals" do
+      expect {
+        Puppet::Util.withenv("=foo" => "bar") {}
+      }.to raise_error(Errno::EINVAL, /Invalid argument/)
+    end
+
+    it "includes keys with unicode replacement characters" do
+      Puppet::Util.withenv("foo\uFFFD" => "bar") do
+        expect(ENV).to be_include("foo\uFFFD")
+      end
+    end
+
+    it "accepts a unicode key" do
+      key = "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7"
+
+      Puppet::Util.withenv(key => "bar") do
+        expect(ENV[key]).to eq("bar")
+      end
+    end
+
+    it "accepts a unicode value" do
+      value = "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7"
+
+      Puppet::Util.withenv("runes" => value) do
+        expect(ENV["runes"]).to eq(value)
+      end
+    end
+
+    it "rejects a non-string value" do
+      expect {
+        Puppet::Util.withenv("reject" => 123) {}
+      }.to raise_error(TypeError, /no implicit conversion of Integer into String/)
+    end
+
+    it "accepts a nil value" do
+      Puppet::Util.withenv("foo" => nil) do
+        expect(ENV["foo"]).to eq(nil)
+      end
+    end
   end
 
   describe "#withenv on POSIX", :unless => Puppet::Util::Platform.windows? do
-    it "should preserve case" do
+    it "compares keys case sensitively" do
       # start with lower case key,
       env_key = SecureRandom.uuid.downcase
 
@@ -77,7 +129,7 @@ describe Puppet::Util do
         ENV[env_key] = original_value
         new_value = 'goodbye'
 
-        Puppet::Util.withenv({env_key.upcase => new_value}, :posix) do
+        Puppet::Util.withenv(env_key.upcase => new_value) do
           expect(ENV[env_key]).to eq(original_value)
           expect(ENV[env_key.upcase]).to eq(new_value)
         end
@@ -93,7 +145,7 @@ describe Puppet::Util do
   describe "#withenv on Windows", :if => Puppet::Util::Platform.windows? do
     let(:process) { Puppet::Util::Windows::Process }
 
-    it "should ignore case" do
+    it "compares keys case-insensitively" do
       # start with lower case key, ensuring string is not entirely numeric
       env_key = SecureRandom.uuid.downcase + 'a'
 
@@ -102,7 +154,7 @@ describe Puppet::Util do
         ENV[env_key] = original_value
         new_value = 'goodbye'
 
-        Puppet::Util.withenv({env_key.upcase => new_value}, :windows) do
+        Puppet::Util.withenv(env_key.upcase => new_value) do
           expect(ENV[env_key]).to eq(new_value)
           expect(ENV[env_key.upcase]).to eq(new_value)
         end
@@ -122,7 +174,7 @@ describe Puppet::Util do
       utf_8_value = utf_8_key + 'value'
       codepage_key = utf_8_key.dup.force_encoding(Encoding.default_external)
 
-      Puppet::Util.withenv({utf_8_key => utf_8_value}, :windows) do
+      Puppet::Util.withenv(utf_8_key => utf_8_value) do
         # the true Windows environment APIs see the variables correctly
         expect(process.get_environment_strings[utf_8_key]).to eq(utf_8_value)
 
@@ -134,52 +186,6 @@ describe Puppet::Util do
 
       # real environment shouldn't have env var anymore
       expect(process.get_environment_strings[utf_8_key]).to eq(nil)
-    end
-
-    # document buggy Ruby behavior here for https://bugs.ruby-lang.org/issues/8822
-    # Ruby retrieves / stores ENV names in the current codepage
-    # when these tests no longer pass, Ruby has fixed its bugs and workarounds can be removed
-
-    # In 2.3, the behavior is mostly correct when external codepage is 65001 / UTF-8
-    it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV) (Ruby >= 2.3.x) ",
-      :if => Puppet::Util::Platform.windows? && RUBY_VERSION.to_f < 3 do
-
-      withenv_utf8 do |utf_8_key, utf_8_value, codepage_key|
-        # Ruby 2.3 fixes access by the original UTF-8 key, and behaves differently than 2.1
-        # keying by local codepage will work only when the UTF-8 can be converted to local codepage
-        # the key selected for this test contains characters unavailable to a local codepage, hence doesn't work
-
-        # On Japanese Windows (Code Page 932) this test resolves as true.
-        # otherwise the key selected for this test contains characters
-        # unavailable to a local codepage, hence doesn't work
-        # HACK: tech debt to replace once PUP-7019 is understood
-        should_be_found = (Encoding.default_external == Encoding::CP932)
-        expect(ENV.key?(codepage_key)).to eq(should_be_found)
-        expect(ENV.key?(utf_8_key)).to eq(true)
-
-        # Ruby's ENV.keys has slightly different behavior than ENV.key?(key), and 2.3 differs from 2.1
-        # (codepage_key / utf_8_key have same bytes for the sake of searching)
-        found = ENV.keys.find { |k| k.bytes == codepage_key.bytes }
-
-        # the keys collection in 2.3 does not have a string with the correct bytes!
-        # a corrupt version of the key exists with the bytes [225, 154, 160] replaced with [63]!
-        expect(found).to be_nil
-
-        # given the key is corrupted, include? cannot be used to find it in either UTF-8 or codepage encoding
-        expect(ENV.keys.include?(codepage_key)).to eq(false)
-        expect(ENV.keys.include?(utf_8_key)).to eq(false)
-
-        # The value stored at the UTF-8 key is a corrupted current codepage string and won't match UTF-8 value
-        # again the bytes [225, 154, 160] have irreversibly been changed to [63]!
-        env_value = ENV[utf_8_key]
-        expect(env_value).to_not eq(utf_8_value)
-        expect(env_value.encoding).to_not eq(Encoding::UTF_8)
-
-        # the ENV value returned will be in the local codepage which may or may not be able to be
-        # encoded to UTF8.  Our test UTF8 data is not convertible to non-Unicode codepages
-        converted_value = ENV[utf_8_key].dup.force_encoding(Encoding::UTF_8)
-        expect(converted_value).to_not eq(utf_8_value)
-      end
     end
 
     it "should preseve existing environment and should not corrupt UTF-8 environment variables" do
@@ -195,7 +201,7 @@ describe Puppet::Util do
         process.set_environment_variable(env_var_name, utf_8_str)
 
         original_keys = process.get_environment_strings.keys.to_a
-        Puppet::Util.withenv({}, :windows) { }
+        Puppet::Util.withenv({}) { }
 
         env = process.get_environment_strings
 
@@ -700,8 +706,8 @@ describe Puppet::Util do
       end
 
       it "should walk the search PATH returning the first executable" do
-        allow(Puppet::Util).to receive(:get_env).with('PATH').and_return(File.expand_path('/bin'))
-        allow(Puppet::Util).to receive(:get_env).with('PATHEXT').and_return(nil)
+        allow(ENV).to receive(:[]).with('PATH').and_return(File.expand_path('/bin'))
+        allow(ENV).to receive(:[]).with('PATHEXT').and_return(nil)
 
         expect(Puppet::Util.which('foo')).to eq(path)
       end
@@ -717,8 +723,8 @@ describe Puppet::Util do
 
       describe "when a file extension is specified" do
         it "should walk each directory in PATH ignoring PATHEXT" do
-          allow(Puppet::Util).to receive(:get_env).with('PATH').and_return(%w[/bar /bin].map{|dir| File.expand_path(dir)}.join(File::PATH_SEPARATOR))
-          allow(Puppet::Util).to receive(:get_env).with('PATHEXT').and_return('.FOOBAR')
+          allow(ENV).to receive(:[]).with('PATH').and_return(%w[/bar /bin].map{|dir| File.expand_path(dir)}.join(File::PATH_SEPARATOR))
+          allow(ENV).to receive(:[]).with('PATHEXT').and_return('.FOOBAR')
 
           expect(FileTest).to receive(:file?).with(File.join(File.expand_path('/bar'), 'foo.CMD')).and_return(false)
 
@@ -729,8 +735,8 @@ describe Puppet::Util do
       describe "when a file extension is not specified" do
         it "should walk each extension in PATHEXT until an executable is found" do
           bar = File.expand_path('/bar')
-          allow(Puppet::Util).to receive(:get_env).with('PATH').and_return("#{bar}#{File::PATH_SEPARATOR}#{base}")
-          allow(Puppet::Util).to receive(:get_env).with('PATHEXT').and_return(".EXE#{File::PATH_SEPARATOR}.CMD")
+          allow(ENV).to receive(:[]).with('PATH').and_return("#{bar}#{File::PATH_SEPARATOR}#{base}")
+          allow(ENV).to receive(:[]).with('PATHEXT').and_return(".EXE#{File::PATH_SEPARATOR}.CMD")
 
           expect(FileTest).to receive(:file?).ordered().with(File.join(bar, 'foo.EXE')).and_return(false)
           expect(FileTest).to receive(:file?).ordered().with(File.join(bar, 'foo.CMD')).and_return(false)
@@ -741,8 +747,8 @@ describe Puppet::Util do
         end
 
         it "should walk the default extension path if the environment variable is not defined" do
-          allow(Puppet::Util).to receive(:get_env).with('PATH').and_return(base)
-          allow(Puppet::Util).to receive(:get_env).with('PATHEXT').and_return(nil)
+          allow(ENV).to receive(:[]).with('PATH').and_return(base)
+          allow(ENV).to receive(:[]).with('PATHEXT').and_return(nil)
 
           %w[.COM .EXE .BAT].each do |ext|
             expect(FileTest).to receive(:file?).ordered().with(File.join(base, "foo#{ext}")).and_return(false)
@@ -753,8 +759,8 @@ describe Puppet::Util do
         end
 
         it "should fall back if no extension matches" do
-          allow(Puppet::Util).to receive(:get_env).with('PATH').and_return(base)
-          allow(Puppet::Util).to receive(:get_env).with('PATHEXT').and_return(".EXE")
+          allow(ENV).to receive(:[]).with('PATH').and_return(base)
+          allow(ENV).to receive(:[]).with('PATHEXT').and_return(".EXE")
 
           allow(FileTest).to receive(:file?).with(File.join(base, 'foo.EXE')).and_return(false)
           allow(FileTest).to receive(:file?).with(File.join(base, 'foo')).and_return(true)

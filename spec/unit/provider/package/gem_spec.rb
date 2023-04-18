@@ -51,8 +51,8 @@ context Puppet::Type.type(:package).provider(:gem) do
 
         before do
           allow(Puppet::Util::Platform).to receive(:windows?).and_return(true)
-          allow(Puppet::Util).to receive(:get_env)
-          allow(Puppet::Util).to receive(:get_env).with('PATH').and_return(path)
+          allow(ENV).to receive(:[]).and_call_original
+          allow(ENV).to receive(:[]).with('PATH').and_return(path)
           allow(described_class).to receive(:validate_command).with(provider_gem_cmd)
           stub_const('::File::PATH_SEPARATOR', ';')
         end

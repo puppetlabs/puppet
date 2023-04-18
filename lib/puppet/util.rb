@@ -37,106 +37,55 @@ module Util
   def create_erb(content)
     ERB.new(content, trim_mode: '-')
   end
-
   module_function :create_erb
 
-  # @param name [String] The name of the environment variable to retrieve
-  # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
-  # @return [String] Value of the specified environment variable.  nil if it does not exist
+  # @deprecated Use ENV instead
   # @api private
   def get_env(name, mode = default_env)
-    if mode == :windows
-      Puppet::Util::Windows::Process.get_environment_strings.each do |key, value |
-        if name.casecmp(key) == 0 then
-          return value
-        end
-      end
-      return nil
-    else
-      ENV[name]
-    end
+    ENV[name]
   end
   module_function :get_env
 
-  # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
-  # @return [Hash] A hashtable of all environment variables
+  # @deprecated Use ENV instead
   # @api private
   def get_environment(mode = default_env)
-    case mode
-      when :posix
-        ENV.to_hash
-      when :windows
-        Puppet::Util::Windows::Process.get_environment_strings
-      else
-        raise _("Unable to retrieve the environment for mode %{mode}") % { mode: mode }
-    end
+    ENV.to_hash
   end
   module_function :get_environment
 
-  # Removes all environment variables
-  # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
+  # @deprecated Use ENV instead
   # @api private
   def clear_environment(mode = default_env)
-    case mode
-      when :posix
-        ENV.clear
-      when :windows
-        Puppet::Util::Windows::Process.get_environment_strings.each do |key, _|
-          Puppet::Util::Windows::Process.set_environment_variable(key, nil)
-        end
-      else
-        raise _("Unable to clear the environment for mode %{mode}") % { mode: mode }
-    end
+    ENV.clear
   end
   module_function :clear_environment
 
-  # @param name [String] The name of the environment variable to set
-  # @param value [String] The value to set the variable to.  nil deletes the environment variable
-  # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
+  # @deprecated Use ENV instead
   # @api private
   def set_env(name, value = nil, mode = default_env)
-    case mode
-      when :posix
-        ENV[name] = value
-      when :windows
-        Puppet::Util::Windows::Process.set_environment_variable(name,value)
-      else
-        raise _("Unable to set the environment variable %{name} for mode %{mode}") % { name: name, mode: mode }
-    end
+    ENV[name] = value
   end
   module_function :set_env
 
-  # @param name [Hash] Environment variables to merge into the existing environment.  nil values will remove the variable
-  # @param mode [Symbol] Which operating system mode to use e.g. :posix or :windows.  Use nil to autodetect
+  # @deprecated Use ENV instead
   # @api private
   def merge_environment(env_hash, mode = default_env)
-    case mode
-      when :posix
-        env_hash.each { |name, val| ENV[name.to_s] = val }
-      when :windows
-        env_hash.each do |name, val|
-          Puppet::Util::Windows::Process.set_environment_variable(name.to_s, val)
-        end
-      else
-        raise _("Unable to merge given values into the current environment for mode %{mode}") % { mode: mode }
-    end
+    ENV.merge!(hash.transform_keys(&:to_s))
   end
   module_function :merge_environment
 
   # Run some code with a specific environment.  Resets the environment back to
   # what it was at the end of the code.
-  # Windows can store Unicode chars in the environment as keys or values, but
-  # Ruby's ENV tries to roundtrip them through the local codepage, which can
-  # cause encoding problems - underlying helpers use Windows APIs on Windows
-  # see https://bugs.ruby-lang.org/issues/8822
+  #
+  # @param hash [Hash{String,Symbol => String}] Environment variables to override the current environment.
+  # @param mode [Symbol] ignored
   def withenv(hash, mode = :posix)
-    saved = get_environment(mode)
-    merge_environment(hash, mode)
-    yield
-  ensure
-    if saved
-      clear_environment(mode)
-      merge_environment(saved, mode)
+    saved = ENV.to_hash
+    begin
+      ENV.merge!(hash.transform_keys(&:to_s))
+      yield
+    ensure
+      ENV.replace(saved)
     end
   end
   module_function :withenv
@@ -258,16 +207,16 @@ module Util
     if absolute_path?(bin)
       return bin if FileTest.file? bin and FileTest.executable? bin
     else
-      exts = Puppet::Util.get_env('PATHEXT')
+      exts = ENV['PATHEXT']
       exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
-      Puppet::Util.get_env('PATH').split(File::PATH_SEPARATOR).each do |dir|
+      ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
         begin
           dest = File.expand_path(File.join(dir, bin))
         rescue ArgumentError => e
           # if the user's PATH contains a literal tilde (~) character and HOME is not set, we may get
           # an ArgumentError here.  Let's check to see if that is the case; if not, re-raise whatever error
           # was thrown.
-          if e.to_s =~ /HOME/ and (Puppet::Util.get_env('HOME').nil? || Puppet::Util.get_env('HOME') == "")
+          if e.to_s =~ /HOME/ and (ENV['HOME'].nil? || ENV['HOME'] == "")
             # if we get here they have a tilde in their PATH.  We'll issue a single warning about this and then
             # ignore this path element and carry on with our lives.
             #TRANSLATORS PATH and HOME are environment variables and should not be translated

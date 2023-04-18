@@ -369,11 +369,12 @@ module Puppet
           be set in `[server]`, `[agent]`, or an environment config section.",
         :call_hook => :on_define_and_write,
         :hook             => proc do |value|
-          Puppet::Util.set_env('PATH', '') if Puppet::Util.get_env('PATH').nil?
-          Puppet::Util.set_env('PATH', value) unless value == 'none'
-          paths = Puppet::Util.get_env('PATH').split(File::PATH_SEPARATOR)
+          ENV['PATH'] = '' if ENV['PATH'].nil?
+          ENV['PATH'] = value unless value == 'none'
+          paths = ENV['PATH'].split(File::PATH_SEPARATOR)
           Puppet::Util::Platform.default_paths.each do |path|
-            Puppet::Util.set_env('PATH', Puppet::Util.get_env('PATH') + File::PATH_SEPARATOR + path) unless paths.include?(path)
+            next if paths.include?(path)
+            ENV['PATH'] = ENV['PATH'] + File::PATH_SEPARATOR + path
           end
           value
         end

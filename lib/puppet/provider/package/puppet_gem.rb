@@ -7,9 +7,9 @@ Puppet::Type.type(:package).provide :puppet_gem, :parent => :gem do
   confine :true => Puppet.runtime[:facter].value(:aio_agent_version)
 
   def self.windows_gemcmd
-    puppet_dir = Puppet::Util.get_env('PUPPET_DIR')
+    puppet_dir = ENV['PUPPET_DIR']
     if puppet_dir
-      File.join(Puppet::Util.get_env('PUPPET_DIR').to_s, 'bin', 'gem.bat')
+      File.join(ENV['PUPPET_DIR'].to_s, 'bin', 'gem.bat')
     else
       File.join(Gem.default_bindir, 'gem.bat')
     end
