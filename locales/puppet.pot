@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 7.24.0-167-ga75a81b676\n"
+"Project-Id-Version: Puppet automation framework 7.24.0-181-g3f37b6955e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2023-04-13 22:51+0000\n"
-"PO-Revision-Date: 2023-04-13 22:51+0000\n"
+"POT-Creation-Date: 2023-04-18 00:24+0000\n"
+"PO-Revision-Date: 2023-04-18 00:24+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -745,30 +745,30 @@ msgid "Valid values are '%{values}'."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:563
+#: ../lib/puppet/defaults.rb:564
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:565
+#: ../lib/puppet/defaults.rb:566
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:759
+#: ../lib/puppet/defaults.rb:760
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:850
+#: ../lib/puppet/defaults.rb:851
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1109 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1110 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:2009
+#: ../lib/puppet/defaults.rb:2010
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -1752,7 +1752,7 @@ msgstr ""
 msgid "Timeout waiting for exclusive lock on %{path}"
 msgstr ""
 
-#: ../lib/puppet/file_system/jruby.rb:18 ../lib/puppet/file_system/windows.rb:127 ../lib/puppet/util.rb:722
+#: ../lib/puppet/file_system/jruby.rb:18 ../lib/puppet/file_system/windows.rb:127 ../lib/puppet/util.rb:671
 msgid "Is a directory: %{directory}"
 msgstr ""
 
@@ -8389,70 +8389,54 @@ msgstr ""
 msgid "Class name must be provided."
 msgstr ""
 
-#: ../lib/puppet/util.rb:71
-msgid "Unable to retrieve the environment for mode %{mode}"
-msgstr ""
-
-#: ../lib/puppet/util.rb:88
-msgid "Unable to clear the environment for mode %{mode}"
-msgstr ""
-
-#: ../lib/puppet/util.rb:104
-msgid "Unable to set the environment variable %{name} for mode %{mode}"
-msgstr ""
-
-#: ../lib/puppet/util.rb:121
-msgid "Unable to merge given values into the current environment for mode %{mode}"
-msgstr ""
-
-#: ../lib/puppet/util.rb:163
+#: ../lib/puppet/util.rb:112
 msgid "could not change to group %{group}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:164
+#: ../lib/puppet/util.rb:113
 msgid "could not change to group %{group}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:177
+#: ../lib/puppet/util.rb:126
 msgid "Could not change to user %{user}: %{detail}"
 msgstr ""
 
 #. TRANSLATORS 'benchmark' is a method name and should not be translated
-#: ../lib/puppet/util.rb:231
+#: ../lib/puppet/util.rb:180
 msgid "Failed to provide level to benchmark"
 msgstr ""
 
-#: ../lib/puppet/util.rb:234
+#: ../lib/puppet/util.rb:183
 msgid "Benchmarked object does not respond to %{value}"
 msgstr ""
 
 #. TRANSLATORS PATH and HOME are environment variables and should not be translated
-#: ../lib/puppet/util.rb:274
+#: ../lib/puppet/util.rb:223
 msgid "PATH contains a ~ character, and HOME is not set; ignoring PATH element '%{dir}'."
 msgstr ""
 
 #. TRANSLATORS PATH is an environment variable and should not be translated
-#: ../lib/puppet/util.rb:278
+#: ../lib/puppet/util.rb:227
 msgid "Couldn't expand PATH containing a ~ character; ignoring PATH element '%{dir}'."
 msgstr ""
 
-#: ../lib/puppet/util.rb:325
+#: ../lib/puppet/util.rb:274
 msgid "unknown platform %{platform} in absolute_path"
 msgstr ""
 
-#: ../lib/puppet/util.rb:360
+#: ../lib/puppet/util.rb:309
 msgid "Failed to convert '%{path}' to URI: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:460
+#: ../lib/puppet/util.rb:409
 msgid "path may not be nil"
 msgstr ""
 
-#: ../lib/puppet/util.rb:637
+#: ../lib/puppet/util.rb:586
 msgid "replace_file requires a block"
 msgstr ""
 
-#: ../lib/puppet/util.rb:641
+#: ../lib/puppet/util.rb:590
 msgid "replace_file default_mode: %{default_mode} is invalid"
 msgstr ""
 
