@@ -1,11 +1,11 @@
 # defaults
-* @puppetlabs/phoenix @puppetlabs/puppetserver-maintainers
+* @puppetlabs/phoenix
 
 # PAL
 /lib/puppet/pal @puppetlabs/bolt
 
 # puppet module
-/lib/puppet/application/module.rb @puppetlabs/pdk
-/lib/puppet/face/module @puppetlabs/pdk
-/lib/puppet/forge @puppetlabs/pdk
-/lib/puppet/module_tool @puppetlabs/pdk
+/lib/puppet/application/module.rb @puppetlabs/modules
+/lib/puppet/face/module @puppetlabs/modules
+/lib/puppet/forge @puppetlabs/modules
+/lib/puppet/module_tool @puppetlabs/modules
