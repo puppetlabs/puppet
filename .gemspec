@@ -16,7 +16,7 @@
 
 Gem::Specification.new do |s|
   s.name = "puppet"
-  version = "8.0.0"
+  version = "8.0.1"
   mdata = version.match(/(\d+\.\d+\.\d+)/)
   s.version = mdata ? mdata[1] : version
 
