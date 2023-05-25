@@ -139,6 +139,9 @@ class Puppet::SSL::StateMachine
       next_ctx = @ssl_provider.create_root_context(cacerts: cacerts, revocation: false)
       @cert_provider.save_cacerts(cacerts)
 
+      digest = Puppet::SSL::Digest.new(@machine.digest, pem).to_hex
+      Puppet.info("Refreshed CA certificate: #{digest}")
+
       next_ctx
     end
   end
@@ -231,6 +234,9 @@ class Puppet::SSL::StateMachine
       # verify crls before saving
       next_ctx = @ssl_provider.create_root_context(cacerts: ssl_ctx[:cacerts], crls: crls)
       @cert_provider.save_crls(crls)
+
+      digest = Puppet::SSL::Digest.new(@machine.digest, pem).to_hex
+      Puppet.info("Refreshed CRL: #{digest}")
 
       next_ctx
     end
