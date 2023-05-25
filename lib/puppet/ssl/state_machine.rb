@@ -50,9 +50,23 @@ class Puppet::SSL::StateMachine
     def next_state
       Puppet.debug("Loading CA certs")
 
+      force_crl_refresh = false
+
       cacerts = @cert_provider.load_cacerts
       if cacerts
         next_ctx = @ssl_provider.create_root_context(cacerts: cacerts, revocation: false)
+
+        now = Time.now
+        last_update = @cert_provider.ca_last_update
+        if needs_refresh?(now, last_update)
+          # set last updated time first, then make a best effort to refresh
+          @cert_provider.ca_last_update = now
+
+          # If we refresh the CA, then we need to force the CRL to be refreshed too,
+          # since if there is a new CA in the chain, then we need its CRL to check
+          # the full chain for revocation status.
+          next_ctx, force_crl_refresh = refresh_ca(next_ctx, last_update)
+        end
       else
         route = @machine.session.route_to(:ca, ssl_context: @ssl_context)
         _, pem = route.get_certificate(Puppet::SSL::CA_NAME, ssl_context: @ssl_context)
@@ -74,7 +88,7 @@ class Puppet::SSL::StateMachine
         @cert_provider.save_cacerts(cacerts)
       end
 
-      NeedCRLs.new(@machine, next_ctx)
+      NeedCRLs.new(@machine, next_ctx, force_crl_refresh)
     rescue OpenSSL::X509::CertificateError => e
       Error.new(@machine, e.message, e)
     rescue Puppet::HTTP::ResponseError => e
@@ -83,6 +97,49 @@ class Puppet::SSL::StateMachine
       else
         to_error(_('Could not download CA certificate: %{message}') % { message: e.message }, e)
       end
+    end
+
+    private
+
+    def needs_refresh?(now, last_update)
+      return true if last_update.nil?
+
+      ca_ttl = Puppet[:ca_refresh_interval]
+      return false unless ca_ttl
+
+      now.to_i > last_update.to_i + ca_ttl
+    end
+
+    def refresh_ca(ssl_ctx, last_update)
+      Puppet.info(_("Refreshing CA certificate"))
+
+      # return the next_ctx containing the updated ca
+      [download_ca(ssl_ctx, last_update), true]
+    rescue Puppet::HTTP::ResponseError => e
+      if e.response.code == 304
+        Puppet.info(_("CA certificate is unmodified, using existing CA certificate"))
+      else
+        Puppet.info(_("Failed to refresh CA certificate, using existing CA certificate: %{message}") % {message: e.message})
+      end
+
+      # return the original ssl_ctx
+      [ssl_ctx, false]
+    rescue Puppet::HTTP::HTTPError => e
+      Puppet.warning(_("Failed to refresh CA certificate, using existing CA certificate: %{message}") % {message: e.message})
+
+      # return the original ssl_ctx
+      [ssl_ctx, false]
+    end
+
+    def download_ca(ssl_ctx, last_update)
+      route = @machine.session.route_to(:ca, ssl_context: ssl_ctx)
+      _, pem = route.get_certificate(Puppet::SSL::CA_NAME, if_modified_since: last_update, ssl_context: ssl_ctx)
+      cacerts = @cert_provider.load_cacerts_from_pem(pem)
+      # verify cacerts before saving
+      next_ctx = @ssl_provider.create_root_context(cacerts: cacerts, revocation: false)
+      @cert_provider.save_cacerts(cacerts)
+
+      next_ctx
     end
   end
 
@@ -93,6 +150,13 @@ class Puppet::SSL::StateMachine
   # for which we don't have a CRL
   #
   class NeedCRLs < SSLState
+    attr_reader :force_crl_refresh
+
+    def initialize(machine, ssl_context, force_crl_refresh = false)
+      super(machine, ssl_context)
+      @force_crl_refresh = force_crl_refresh
+    end
+
     def next_state
       Puppet.debug("Loading CRLs")
 
@@ -102,15 +166,12 @@ class Puppet::SSL::StateMachine
         if crls
           next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
 
-          crl_ttl = Puppet[:crl_refresh_interval]
-          if crl_ttl
-            last_update = @cert_provider.crl_last_update
-            now = Time.now
-            if last_update.nil? || now.to_i > last_update.to_i + crl_ttl
-              # set last updated time first, then make a best effort to refresh
-              @cert_provider.crl_last_update = now
-              next_ctx = refresh_crl(next_ctx, last_update)
-            end
+          now = Time.now
+          last_update = @cert_provider.crl_last_update
+          if needs_refresh?(now, last_update)
+            # set last updated time first, then make a best effort to refresh
+            @cert_provider.crl_last_update = now
+            next_ctx = refresh_crl(next_ctx, last_update)
           end
         else
           next_ctx = download_crl(@ssl_context, nil)
@@ -132,6 +193,15 @@ class Puppet::SSL::StateMachine
     end
 
     private
+
+    def needs_refresh?(now, last_update)
+      return true if @force_crl_refresh || last_update.nil?
+
+      crl_ttl = Puppet[:crl_refresh_interval]
+      return false unless crl_ttl
+
+      now.to_i > last_update.to_i + crl_ttl
+    end
 
     def refresh_crl(ssl_ctx, last_update)
       Puppet.info(_("Refreshing CRL"))

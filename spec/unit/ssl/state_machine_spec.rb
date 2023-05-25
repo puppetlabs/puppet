@@ -30,7 +30,9 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     Puppet[:daemonize] = false
     Puppet[:ssl_lockfile] = tmpfile('ssllock')
     allow(Kernel).to receive(:sleep)
-    allow_any_instance_of(Puppet::X509::CertProvider).to receive(:crl_last_update).and_return(Time.now + (5 * 60))
+    future = Time.now + (5 * 60)
+    allow_any_instance_of(Puppet::X509::CertProvider).to receive(:crl_last_update).and_return(future)
+    allow_any_instance_of(Puppet::X509::CertProvider).to receive(:ca_last_update).and_return(future)
   end
 
   def expected_digest(name, content)
@@ -396,6 +398,16 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       expect(File).to_not exist(Puppet[:localcacert])
     end
 
+    it 'skips CA refresh if it has not expired' do
+      Puppet[:ca_refresh_interval] = '1y'
+      Puppet::FileSystem.touch(Puppet[:localcacert], mtime: Time.now)
+
+      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_cacerts).and_return(cacerts)
+
+      # we're expecting a net/http request to never be made
+      state.next_state
+    end
+
     context 'when verifying CA cert bundle' do
       before :each do
         allow(cert_provider).to receive(:load_cacerts).and_return(nil)
@@ -434,6 +446,61 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         st = state.next_state
         expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
         expect(st.message).to eq("CA bundle with digest (SHA256) #{fingerprint} did not match expected digest WR:ON:G!")
+      end
+    end
+
+    context 'when refreshing a CA bundle' do
+      before :each do
+        Puppet[:ca_refresh_interval] = '1s'
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_cacerts).and_return(cacerts)
+
+        yesterday = Time.now - (24 * 60 * 60)
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:ca_last_update).and_return(yesterday)
+      end
+
+      let(:new_ca_bundle) do
+        # add 'unknown' cert to the bundle
+        [cacert, cert_fixture('intermediate.pem'), cert_fixture('unknown-ca.pem')].map(&:to_pem)
+      end
+
+      it 'uses the local CA if it has not been modified' do
+        stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 304)
+
+        expect(state.next_state.ssl_context.cacerts).to eq(cacerts)
+      end
+
+      it 'uses the local CA if refreshing fails in HTTP layer' do
+        stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 503)
+
+        expect(state.next_state.ssl_context.cacerts).to eq(cacerts)
+      end
+
+      it 'uses the local CA if refreshing fails in TCP layer' do
+        stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_raise(Errno::ECONNREFUSED)
+
+        expect(state.next_state.ssl_context.cacerts).to eq(cacerts)
+      end
+
+      it 'uses the updated crl for the future requests' do
+        stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: new_ca_bundle.join)
+
+        expect(state.next_state.ssl_context.cacerts.map(&:to_pem)).to eq(new_ca_bundle)
+      end
+
+      it 'updates the `last_update` time' do
+        stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: new_ca_bundle.join)
+
+        expect_any_instance_of(Puppet::X509::CertProvider).to receive(:ca_last_update=).with(be_within(60).of(Time.now))
+
+        state.next_state
+      end
+
+      it 'forces the NeedCRLs to refresh' do
+        stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: new_ca_bundle.join)
+
+        st = state.next_state
+        expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCRLs)
+        expect(st.force_crl_refresh).to eq(true)
       end
     end
   end
@@ -533,6 +600,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
       allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_crls).and_return(crls)
 
+      # we're expecting a net/http request to never be made
       state.next_state
     end
 
