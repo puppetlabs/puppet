@@ -95,6 +95,18 @@ describe Puppet::HTTP::Service::Ca do
         expect(err.response.code).to eq(404)
       end
     end
+
+    it 'raises a 304 response error if it is unmodified' do
+      stub_request(:get, url).to_return(status: [304, 'Not Modified'])
+
+      expect {
+        subject.get_certificate('ca', if_modified_since: Time.now)
+      }.to raise_error do |err|
+        expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
+        expect(err.message).to eq("Not Modified")
+        expect(err.response.code).to eq(304)
+      end
+    end
   end
 
   context 'when getting CRLs' do
