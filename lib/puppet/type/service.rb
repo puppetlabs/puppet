@@ -10,7 +10,7 @@ module Puppet
 
   Type.newtype(:service) do
     @doc = "Manage running services.  Service support unfortunately varies
-      widely by platform --- some platforms have very little if any concept of a
+      widely by platform – some platforms have very little if any concept of a
       running service, and some have a very codified and powerful concept.
       Puppet's service support is usually capable of doing the right thing, but
       the more information you can provide, the better behaviour you will get.

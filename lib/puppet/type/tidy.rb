@@ -86,7 +86,7 @@ Puppet::Type.newtype(:tidy) do
       are not in a subdirectory and match one of the shell globs given.
 
       Note that the patterns are matched against the basename of each
-      file -- that is, your glob patterns should not have any '/'
+      file – that is, your glob patterns should not have any '/'
       characters in them, since you are only specifying against the last
       bit of the file.
 

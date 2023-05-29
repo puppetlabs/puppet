@@ -445,7 +445,7 @@ module Puppet
     newproperty(:expiry, :required_features => :manages_expiry) do
       desc "The expiry date for this user. Provide as either the special
            value `absent` to ensure that the account never expires, or as
-           a zero-padded YYYY-MM-DD format -- for example, 2010-02-19."
+           a zero-padded YYYY-MM-DD format – for example, 2010-02-19."
 
       newvalues :absent
       newvalues(/^\d{4}-\d{2}-\d{2}$/)
@@ -715,11 +715,11 @@ module Puppet
         
         Allowed values are:
 
-        * `false` (default) --- don't purge SSH keys for this user.
-        * `true` --- look for keys in the `.ssh/authorized_keys` file in the user's
+        * `false` (default) – don't purge SSH keys for this user.
+        * `true` – look for keys in the `.ssh/authorized_keys` file in the user's
           home directory. Purge any keys that aren't managed as `ssh_authorized_key`
           resources.
-        * An array of file paths --- look for keys in all of the files listed. Purge
+        * An array of file paths – look for keys in all of the files listed. Purge
           any keys that aren't managed as `ssh_authorized_key` resources. If any of
           these paths starts with `~` or `%h`, that token will be replaced with
           the user's home directory."

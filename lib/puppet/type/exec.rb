@@ -7,7 +7,7 @@ module Puppet
     @doc = "Executes external commands.
 
       Any command in an `exec` resource **must** be able to run multiple times
-      without causing harm --- that is, it must be *idempotent*. There are three
+      without causing harm – that is, it must be *idempotent*. There are three
       main ways for an exec to be idempotent:
 
       * The command itself is already idempotent. (For example, `apt-get update`.)
@@ -256,7 +256,7 @@ module Puppet
 
     newparam(:group) do
       desc "The group to run the command as.  This seems to work quite
-        haphazardly on different platforms -- it is a platform issue
+        haphazardly on different platforms – it is a platform issue
         not a Ruby or Puppet one, since the same variety exists when
         running commands as different users in the shell."
       # Validation is handled by the SUIDManager class.

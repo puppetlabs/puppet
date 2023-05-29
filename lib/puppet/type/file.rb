@@ -147,9 +147,9 @@ Puppet::Type.newtype(:file) do
     desc "Whether to recursively manage the _contents_ of a directory. This attribute
       is only used when `ensure => directory` is set. The allowed values are:
 
-      * `false` --- The default behavior. The contents of the directory will not be
+      * `false` – The default behavior. The contents of the directory will not be
         automatically managed.
-      * `remote` --- If the `source` attribute is set, Puppet will automatically
+      * `remote` – If the `source` attribute is set, Puppet will automatically
         manage the contents of the source directory (or directories), ensuring
         that equivalent files and directories exist on the target system and
         that their contents match.
@@ -158,7 +158,7 @@ Puppet::Type.newtype(:file) do
         catalog application than `recurse => true`.
 
         The `source` attribute is mandatory when `recurse => remote`.
-      * `true` --- If the `source` attribute is set, this behaves similarly to
+      * `true` – If the `source` attribute is set, this behaves similarly to
         `recurse => remote`, automatically managing files from the source directory.
 
         This also enables the `purge` attribute, which can delete unmanaged
@@ -193,7 +193,7 @@ Puppet::Type.newtype(:file) do
       The recursion limit affects which files will be copied from the `source`
       directory, as well as which files can be purged when `purge => true`.
 
-      Setting `recurselimit => 0` is the same as setting `recurse => false` ---
+      Setting `recurselimit => 0` is the same as setting `recurse => false` –
       Puppet will manage the directory, but all of its contents will be treated
       as unmanaged.
 
