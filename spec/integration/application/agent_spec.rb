@@ -1043,6 +1043,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         expect {
           agent.run
         }.to exit_with(1)
+          .and output(/Info: Loading facts/).to_stdout
           .and output(
             match(/Error: Evaluation Error: Unknown variable: 'osfamily'/)
               .and match(/Error: Could not retrieve catalog from remote server: Error 500 on SERVER:/)
