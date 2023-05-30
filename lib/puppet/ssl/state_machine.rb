@@ -71,7 +71,7 @@ class Puppet::SSL::StateMachine
         route = @machine.session.route_to(:ca, ssl_context: @ssl_context)
         _, pem = route.get_certificate(Puppet::SSL::CA_NAME, ssl_context: @ssl_context)
         if @machine.ca_fingerprint
-          actual_digest = Puppet::SSL::Digest.new(@machine.digest, pem).to_hex
+          actual_digest = @machine.digest_as_hex(pem)
           expected_digest = @machine.ca_fingerprint.scan(/../).join(':').upcase
           if actual_digest == expected_digest
             Puppet.info(_("Verified CA bundle with digest (%{digest_type}) %{actual_digest}") %
@@ -139,8 +139,7 @@ class Puppet::SSL::StateMachine
       next_ctx = @ssl_provider.create_root_context(cacerts: cacerts, revocation: false)
       @cert_provider.save_cacerts(cacerts)
 
-      digest = Puppet::SSL::Digest.new(@machine.digest, pem).to_hex
-      Puppet.info("Refreshed CA certificate: #{digest}")
+      Puppet.info("Refreshed CA certificate: #{@machine.digest_as_hex(pem)}")
 
       next_ctx
     end
@@ -235,8 +234,7 @@ class Puppet::SSL::StateMachine
       next_ctx = @ssl_provider.create_root_context(cacerts: ssl_ctx[:cacerts], crls: crls)
       @cert_provider.save_crls(crls)
 
-      digest = Puppet::SSL::Digest.new(@machine.digest, pem).to_hex
-      Puppet.info("Refreshed CRL: #{digest}")
+      Puppet.info("Refreshed CRL: #{@machine.digest_as_hex(pem)}")
 
       next_ctx
     end
@@ -515,6 +513,10 @@ class Puppet::SSL::StateMachine
 
   def unlock
     @lockfile.unlock
+  end
+
+  def digest_as_hex(str)
+    Puppet::SSL::Digest.new(digest, str).to_hex
   end
 
   private
