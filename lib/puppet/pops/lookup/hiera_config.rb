@@ -253,7 +253,9 @@ class HieraConfig
       scope = lookup_invocation.scope
       lookup_invocation.without_explain do
         @scope_interpolations.all? do |key, root_key, segments, old_value|
-          value = Puppet.override(avoid_hiera_interpolation_errors: true) { scope[root_key] }
+          value = Puppet.override(avoid_hiera_interpolation_errors: Puppet.lookup(:avoid_hiera_interpolation_errors) {true}) do
+            scope[root_key]
+          end
           unless value.nil? || segments.empty?
             found = nil;
             catch(:no_such_key) { found = sub_lookup(key, lookup_invocation, segments, value) }
@@ -635,7 +637,7 @@ class HieraConfigV5 < HieraConfig
       entry_datadir = Pathname(interpolate(entry_datadir.to_s, lookup_invocation, false))
       location_key = LOCATION_KEYS.find { |key| he.include?(key) }
       locations = []
-      Puppet.override(avoid_hiera_interpolation_errors: true) do
+      Puppet.override(avoid_hiera_interpolation_errors: Puppet.lookup(:avoid_hiera_interpolation_errors) {true}) do
         locations = case location_key
                     when KEY_PATHS
                       resolve_paths(entry_datadir, he[location_key], lookup_invocation, @config_path.nil?)
