@@ -9,7 +9,13 @@ class DeferredValue
   end
 
   def resolve
-    @proc.call
+    val = @proc.call
+    # Deferred sensitive values will be marked as such in resolve_futures()
+    if val.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+      val.unwrap
+    else
+      val
+    end
   end
 end
 
@@ -88,6 +94,12 @@ class DeferredResolver
         if resolved.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
           resolved = resolved.unwrap
           unless r.sensitive_parameters.include?(k.to_sym)
+            r.sensitive_parameters = (r.sensitive_parameters + [k.to_sym]).freeze
+          end
+        # If the value is a DeferredValue and it has an argument of type PSensitiveType, mark it as sensitive
+        # The DeferredValue.resolve method will unwrap it during catalog application
+        elsif resolved.is_a?(Puppet::Pops::Evaluator::DeferredValue)
+          if v.arguments.any? {|arg| arg.is_a?(Puppet::Pops::Types::PSensitiveType)} and not r.sensitive_parameters.include?(k.to_sym)
             r.sensitive_parameters = (r.sensitive_parameters + [k.to_sym]).freeze
           end
         end
