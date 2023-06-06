@@ -147,6 +147,28 @@ class Puppet::X509::CertProvider
     Puppet::FileSystem.touch(@crlpath, mtime: time)
   end
 
+  # Return the time when the CA bundle was last updated.
+  #
+  # @return [Time, nil] Time when the CA bundle was last updated, or nil if we don't
+  #   have a CA bundle
+  #
+  # @api private
+  def ca_last_update
+    stat = Puppet::FileSystem.stat(@capath)
+    Time.at(stat.mtime)
+  rescue Errno::ENOENT
+    nil
+  end
+
+  # Set the CA bundle last updated time.
+  #
+  # @param time [Time] The last updated time
+  #
+  # @api private
+  def ca_last_update=(time)
+    Puppet::FileSystem.touch(@capath, mtime: time)
+  end
+
   # Save named private key in the configured `privatekeydir`. For
   # historical reasons, names are case insensitive.
   #

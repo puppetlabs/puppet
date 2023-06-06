@@ -896,6 +896,55 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
          .and output(%r{Certificate 'CN=revoked' is revoked}).to_stderr
       end
     end
+
+    it "refreshes the CA and CRL" do
+      Puppet[:localcacert] = ca = tmpfile('ca')
+      Puppet[:hostcrl] = crl = tmpfile('crl')
+      copy_fixtures(%w[ca.pem intermediate.pem], ca)
+      copy_fixtures(%w[crl.pem intermediate-crl.pem], crl)
+
+      now = Time.now
+      yesterday = now - (60 * 60 * 24)
+      Puppet::FileSystem.touch(ca, mtime: yesterday)
+      Puppet::FileSystem.touch(crl, mtime: yesterday)
+
+      server.start_server do |port|
+        Puppet[:serverport] = port
+        Puppet[:ca_refresh_interval] = 1
+
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(0)
+         .and output(/Info: Refreshed CA certificate: /).to_stdout
+      end
+
+      # If the CA is updated, then the CRL must be updated too
+      expect(Puppet::FileSystem.stat(ca).mtime).to be >= now
+      expect(Puppet::FileSystem.stat(crl).mtime).to be >= now
+    end
+
+    it "refreshes only the CRL" do
+      Puppet[:hostcrl] = crl = tmpfile('crl')
+      copy_fixtures(%w[crl.pem intermediate-crl.pem], crl)
+
+      now = Time.now
+      yesterday = now - (60 * 60 * 24)
+      Puppet::FileSystem.touch(crl, mtime: yesterday)
+
+      server.start_server do |port|
+        Puppet[:serverport] = port
+        Puppet[:crl_refresh_interval] = 1
+
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(0)
+         .and output(/Info: Refreshed CRL: /).to_stdout
+      end
+
+      expect(Puppet::FileSystem.stat(crl).mtime).to be >= now
+    end
   end
 
   context "legacy facts" do
@@ -994,6 +1043,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
         expect {
           agent.run
         }.to exit_with(1)
+          .and output(/Info: Loading facts/).to_stdout
           .and output(
             match(/Error: Evaluation Error: Unknown variable: 'osfamily'/)
               .and match(/Error: Could not retrieve catalog from remote server: Error 500 on SERVER:/)

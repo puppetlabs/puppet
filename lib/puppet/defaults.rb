@@ -1212,6 +1212,24 @@ EOT
       :desc       => "The default TTL for new certificates.
       #{AS_DURATION}",
     },
+    :ca_refresh_interval => {
+      :default    => "1d",
+      :type       => :duration,
+      :desc       => "How often the Puppet agent refreshes its local CA certs. By
+         default the CA certs are refreshed once every 24 hours. If a different
+         duration is specified, then the agent will refresh its CA certs whenever
+         it next runs and the elapsed time since the certs were last refreshed
+         exceeds the duration.
+
+         In general, the duration should be greater than the `runinterval`.
+         Setting it to 0 or an equal or lesser value than `runinterval`,
+         will cause the CA certs to be refreshed on every run.
+
+         If the agent downloads new CA certs, the agent will use it for subsequent
+         network requests. If the refresh request fails or if the CA certs are
+         unchanged on the server, then the agent run will continue using the
+         local CA certs it already has. #{AS_DURATION}",
+    },
     :crl_refresh_interval => {
       :default    => "1d",
       :type       => :duration,
@@ -1222,8 +1240,8 @@ EOT
          exceeds the duration.
 
          In general, the duration should be greater than the `runinterval`.
-         Setting it to an equal or lesser value will cause the CRL to be
-         refreshed on every run.
+         Setting it to 0 or an equal or lesser value than `runinterval`,
+         will cause the CRL to be refreshed on every run.
 
          If the agent downloads a new CRL, the agent will use it for subsequent
          network requests. If the refresh request fails or if the CRL is

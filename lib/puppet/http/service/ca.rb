@@ -28,16 +28,21 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   # Submit a GET request to retrieve the named certificate from the server.
   #
   # @param [String] name name of the certificate to request
+  # @param [Time] if_modified_since If not nil, only download the cert if it has
+  #   been modified since the specified time.
   # @param [Puppet::SSL::SSLContext] ssl_context
   #
   # @return [Array<Puppet::HTTP::Response, String>] An array containing the
   #   request response and the stringified body of the request response
   #
   # @api public
-  def get_certificate(name, ssl_context: nil)
+  def get_certificate(name, if_modified_since: nil, ssl_context: nil)
+    headers = add_puppet_headers(HEADERS)
+    headers['If-Modified-Since'] = if_modified_since.httpdate if if_modified_since
+
     response = @client.get(
       with_base_url("/certificate/#{name}"),
-      headers: add_puppet_headers(HEADERS),
+      headers: headers,
       options: {ssl_context: ssl_context}
     )
 

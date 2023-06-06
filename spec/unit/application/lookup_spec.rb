@@ -668,6 +668,7 @@ Searching for "a"
           expect {
             lookup.run_command
           }.to exit_with(0)
+           .and output(/This is in facts hash/).to_stdout
         end
       end
     end
