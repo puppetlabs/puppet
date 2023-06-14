@@ -1248,6 +1248,22 @@ EOT
          unchanged on the server, then the agent run will continue using the
          local CRL it already has.#{AS_DURATION}",
     },
+    :hostcert_renewal_interval => {
+      :default => "30d",
+      :type    => :duration,
+      :desc    => "How often the Puppet agent refreshes its client certificate.
+         By default the client certificate is refreshed once every 30 days. If
+         a different duration is specified, then the agent will refresh its
+         client certificate whenever it next runs and the elapsed time since the
+         client certificate was last refreshed exceeds the duration.
+
+         In general, the duration should be greater than the `runinterval`.
+         Setting it to 0 will disable automatic renewal.
+
+         If the agent downloads a new certificate, the agent will use it for subsequent
+         network requests. If the refresh request fails, then the agent run will continue using the
+         certificate it already has. #{AS_DURATION}",
+    },
     :keylength => {
       :default    => 4096,
       :type       => :integer,
