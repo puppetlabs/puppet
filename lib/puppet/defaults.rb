@@ -3,11 +3,7 @@ require_relative '../puppet/util/platform'
 module Puppet
 
   def self.default_diffargs
-    if (Puppet.runtime[:facter].value(:kernel) == "AIX" && Puppet.runtime[:facter].value(:kernelmajversion) == "5300")
-      ""
-    else
-      "-u"
-    end
+    '-u'
   end
 
   def self.default_digest_algorithm
