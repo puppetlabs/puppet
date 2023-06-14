@@ -59,9 +59,6 @@ class Puppet::SSL::StateMachine
         now = Time.now
         last_update = @cert_provider.ca_last_update
         if needs_refresh?(now, last_update)
-          # set last updated time first, then make a best effort to refresh
-          @cert_provider.ca_last_update = now
-
           # If we refresh the CA, then we need to force the CRL to be refreshed too,
           # since if there is a new CA in the chain, then we need its CRL to check
           # the full chain for revocation status.
@@ -114,7 +111,12 @@ class Puppet::SSL::StateMachine
       Puppet.info(_("Refreshing CA certificate"))
 
       # return the next_ctx containing the updated ca
-      [download_ca(ssl_ctx, last_update), true]
+      next_ctx = [download_ca(ssl_ctx, last_update), true]
+
+      # After a successful refresh, update ca_last_update
+      @cert_provider.ca_last_update = Time.now
+
+      next_ctx
     rescue Puppet::HTTP::ResponseError => e
       if e.response.code == 304
         Puppet.info(_("CA certificate is unmodified, using existing CA certificate"))
@@ -171,8 +173,6 @@ class Puppet::SSL::StateMachine
           now = Time.now
           last_update = @cert_provider.crl_last_update
           if needs_refresh?(now, last_update)
-            # set last updated time first, then make a best effort to refresh
-            @cert_provider.crl_last_update = now
             next_ctx = refresh_crl(next_ctx, last_update)
           end
         else
@@ -209,7 +209,12 @@ class Puppet::SSL::StateMachine
       Puppet.info(_("Refreshing CRL"))
 
       # return the next_ctx containing the updated crl
-      download_crl(ssl_ctx, last_update)
+      next_ctx = download_crl(ssl_ctx, last_update)
+
+      # After a successful refresh, update crl_last_update
+      @cert_provider.crl_last_update = Time.now
+
+      next_ctx
     rescue Puppet::HTTP::ResponseError => e
       if e.response.code == 304
         Puppet.info(_("CRL is unmodified, using existing CRL"))
