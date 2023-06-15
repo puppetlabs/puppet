@@ -487,10 +487,18 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         expect(state.next_state.ssl_context.cacerts.map(&:to_pem)).to eq(new_ca_bundle)
       end
 
-      it 'updates the `last_update` time' do
+      it 'updates the `last_update` time on successful CA refresh' do
         stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: new_ca_bundle.join)
 
         expect_any_instance_of(Puppet::X509::CertProvider).to receive(:ca_last_update=).with(be_within(60).of(Time.now))
+
+        state.next_state
+      end
+
+      it "does not update the `last_update` time when CA refresh fails" do
+        stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_raise(Errno::ECONNREFUSED)
+
+        expect_any_instance_of(Puppet::X509::CertProvider).to receive(:ca_last_update=).never
 
         state.next_state
       end
