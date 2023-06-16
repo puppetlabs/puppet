@@ -3,46 +3,8 @@ require 'puppet/settings'
 
 describe "Defaults" do
   describe ".default_diffargs" do
-    describe "on AIX" do
-      before(:each) do
-        allow(Facter).to receive(:value).with(:kernel).and_return("AIX")
-      end
-
-      describe "on 5.3" do
-        before(:each) do
-          allow(Facter).to receive(:value).with(:kernelmajversion).and_return("5300")
-        end
-
-        it "should be empty" do
-          expect(Puppet.default_diffargs).to eq("")
-        end
-      end
-
-      [ "",
-        nil,
-        "6300",
-        "7300",
-      ].each do |kernel_version|
-        describe "on kernel version #{kernel_version.inspect}" do
-          before(:each) do
-            allow(Facter).to receive(:value).with(:kernelmajversion).and_return(kernel_version)
-          end
-
-          it "should be '-u'" do
-            expect(Puppet.default_diffargs).to eq("-u")
-          end
-        end
-      end
-    end
-
-    describe "on everything else" do
-      before(:each) do
-        allow(Facter).to receive(:value).with(:kernel).and_return("NOT_AIX")
-      end
-
-      it "should be '-u'" do
-        expect(Puppet.default_diffargs).to eq("-u")
-      end
+    it "should be '-u'" do
+      expect(Puppet.default_diffargs).to eq("-u")
     end
   end
 
