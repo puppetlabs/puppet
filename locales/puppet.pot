@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 8.0.1-21-gfe0e6b5ed8\n"
+"Project-Id-Version: Puppet automation framework 8.1.0-19-g2095c8b1d7\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2023-06-06 21:41+0000\n"
-"PO-Revision-Date: 2023-06-06 21:41+0000\n"
+"POT-Creation-Date: 2023-06-20 17:38+0000\n"
+"PO-Revision-Date: 2023-06-20 17:38+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -68,7 +68,7 @@ msgstr ""
 msgid "Another puppet instance is already running; --waitforlock flag used, waiting for running instance to finish."
 msgstr ""
 
-#: ../lib/puppet/agent.rb:101 ../lib/puppet/ssl/state_machine.rb:363 ../lib/puppet/ssl/state_machine.rb:394
+#: ../lib/puppet/agent.rb:101 ../lib/puppet/ssl/state_machine.rb:368 ../lib/puppet/ssl/state_machine.rb:399
 msgid "Will try again in %{time} seconds."
 msgstr ""
 
@@ -458,7 +458,7 @@ msgstr ""
 msgid "Unknown action '%{action}'"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:167 ../lib/puppet/ssl/state_machine.rb:264
+#: ../lib/puppet/application/ssl.rb:167 ../lib/puppet/ssl/state_machine.rb:269
 msgid "Creating a new EC SSL key for %{name} using curve %{curve}"
 msgstr ""
 
@@ -736,39 +736,39 @@ msgstr ""
 msgid "a data type can only have one implementation"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:173
+#: ../lib/puppet/defaults.rb:169
 msgid "Cannot disable unrecognized warning types '%{invalid}'."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:174
+#: ../lib/puppet/defaults.rb:170
 msgid "Valid values are '%{values}'."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:565
+#: ../lib/puppet/defaults.rb:561
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:567
+#: ../lib/puppet/defaults.rb:563
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:761
+#: ../lib/puppet/defaults.rb:757
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:852
+#: ../lib/puppet/defaults.rb:848
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1111 ../lib/puppet/settings/enum_setting.rb:14 ../lib/puppet/settings/symbolic_enum_setting.rb:15
+#: ../lib/puppet/defaults.rb:1107 ../lib/puppet/settings/enum_setting.rb:14 ../lib/puppet/settings/symbolic_enum_setting.rb:15
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:2029
+#: ../lib/puppet/defaults.rb:2041
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -2272,6 +2272,10 @@ msgstr ""
 
 #: ../lib/puppet/http/service.rb:134 ../lib/puppet/indirector/rest.rb:54
 msgid "No content type in http response; cannot parse"
+msgstr ""
+
+#: ../lib/puppet/http/service/ca.rb:126
+msgid "SSL context must contain a client certificate."
 msgstr ""
 
 #: ../lib/puppet/indirector.rb:26
@@ -3883,7 +3887,7 @@ msgstr ""
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:613 ../lib/puppet/pops/loaders.rb:306
+#: ../lib/puppet/node/environment.rb:615 ../lib/puppet/pops/loaders.rb:306
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -7543,31 +7547,31 @@ msgstr ""
 msgid "Certificate '%{subject}' failed verification (%{err}): %{err_utf8}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:77
+#: ../lib/puppet/ssl/state_machine.rb:74
 msgid "Verified CA bundle with digest (%{digest_type}) %{actual_digest}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:80
+#: ../lib/puppet/ssl/state_machine.rb:77
 msgid "CA bundle with digest (%{digest_type}) %{actual_digest} did not match expected digest %{expected_digest}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:96
+#: ../lib/puppet/ssl/state_machine.rb:93
 msgid "CA certificate is missing from the server"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:98
+#: ../lib/puppet/ssl/state_machine.rb:95
 msgid "Could not download CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:114
+#: ../lib/puppet/ssl/state_machine.rb:111
 msgid "Refreshing CA certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:120
+#: ../lib/puppet/ssl/state_machine.rb:122
 msgid "CA certificate is unmodified, using existing CA certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:122 ../lib/puppet/ssl/state_machine.rb:128
+#: ../lib/puppet/ssl/state_machine.rb:124 ../lib/puppet/ssl/state_machine.rb:130
 msgid "Failed to refresh CA certificate, using existing CA certificate: %{message}"
 msgstr ""
 
@@ -7583,71 +7587,71 @@ msgstr ""
 msgid "Refreshing CRL"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:215
+#: ../lib/puppet/ssl/state_machine.rb:220
 msgid "CRL is unmodified, using existing CRL"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:217 ../lib/puppet/ssl/state_machine.rb:223
+#: ../lib/puppet/ssl/state_machine.rb:222 ../lib/puppet/ssl/state_machine.rb:228
 msgid "Failed to refresh CRL, using existing CRL: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:250
+#: ../lib/puppet/ssl/state_machine.rb:255
 msgid "Loading/generating private key"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:267
+#: ../lib/puppet/ssl/state_machine.rb:272
 msgid "Creating a new RSA SSL key for %{name}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:297
+#: ../lib/puppet/ssl/state_machine.rb:302
 msgid "Generating and submitting a CSR"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:308
+#: ../lib/puppet/ssl/state_machine.rb:313
 msgid "Failed to submit the CSR, HTTP response was %{code}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:317
+#: ../lib/puppet/ssl/state_machine.rb:322
 msgid "Downloading client certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:323
+#: ../lib/puppet/ssl/state_machine.rb:328
 msgid "Downloaded certificate for %{name} from %{url}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:334
+#: ../lib/puppet/ssl/state_machine.rb:339
 msgid "Failed to parse certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:337
+#: ../lib/puppet/ssl/state_machine.rb:342
 msgid "Certificate for %{certname} has not been signed yet"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:338
+#: ../lib/puppet/ssl/state_machine.rb:343
 msgid "Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name})."
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:341
+#: ../lib/puppet/ssl/state_machine.rb:346
 msgid "Failed to retrieve certificate for %{certname}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:357
+#: ../lib/puppet/ssl/state_machine.rb:362
 msgid "Exiting now because the waitforcert setting is set to 0."
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:360
+#: ../lib/puppet/ssl/state_machine.rb:365
 msgid "Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the maxwaitforcert timeout has been exceeded."
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:389
+#: ../lib/puppet/ssl/state_machine.rb:394
 msgid "Another puppet instance is already running and the waitforlock setting is set to 0; exiting"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:391
+#: ../lib/puppet/ssl/state_machine.rb:396
 msgid "Another puppet instance is already running and the maxwaitforlock timeout has been exceeded; exiting"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:393
+#: ../lib/puppet/ssl/state_machine.rb:398
 msgid "Another puppet instance is already running; waiting for it to finish"
 msgstr ""
 
