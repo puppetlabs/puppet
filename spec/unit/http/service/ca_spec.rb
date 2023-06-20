@@ -207,4 +207,75 @@ describe Puppet::HTTP::Service::Ca do
       end
     end
   end
+
+  context 'when getting certificates' do
+    let(:cert) { cert_fixture('signed.pem') }
+    let(:pem) { cert.to_pem }
+    let(:url) { "https://www.example.com/puppet-ca/v1/certificate_renewal" }
+    let(:cert_context) { Puppet::SSL::SSLContext.new(client_cert: pem) }
+    let(:client) { Puppet::HTTP::Client.new(ssl_context: cert_context) }
+    let(:session) { Puppet::HTTP::Session.new(client, []) }
+    let(:subject) { client.create_session.route_to(:ca) }
+
+    it "gets a certificate from the 'certificate_renewal' endpoint" do
+      stub_request(:post, url).to_return(body: pem)
+
+      _, body = subject.post_certificate_renewal(cert_context)
+      expect(body).to eq(pem)
+    end
+
+    it 'returns the request response' do
+      stub_request(:post, url).to_return(body: 'pem')
+
+      resp, _ = subject.post_certificate_renewal(cert_context)
+      expect(resp).to be_a(Puppet::HTTP::Response)
+    end
+
+    it 'accepts text/plain responses' do
+      stub_request(:post, url).with(headers: {'Accept' => 'text/plain'})
+
+      subject.post_certificate_renewal(cert_context)
+    end
+
+    it 'raises an ArgumentError if the SSL context does not contain a client cert' do
+      stub_request(:post, url)
+      expect { subject.post_certificate_renewal(ssl_context) }.to raise_error(ArgumentError, 'SSL context must contain a client certificate.')
+    end
+
+    it 'raises response error if unsuccessful' do
+      stub_request(:post, url).to_return(status: [400, 'Bad Request'])
+
+      expect {
+        subject.post_certificate_renewal(cert_context)
+      }.to raise_error do |err|
+        expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
+        expect(err.message).to eq('Bad Request')
+        expect(err.response.code).to eq(400)
+      end
+    end
+
+    it 'raises a response error if unsuccessful' do
+      stub_request(:post, url).to_return(status: [404, 'Not Found'])
+
+      expect {
+        subject.post_certificate_renewal(cert_context)
+      }.to raise_error do |err|
+        expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
+        expect(err.message).to eq("Not Found")
+        expect(err.response.code).to eq(404)
+      end
+    end
+
+    it 'raises a response error if unsuccessful' do
+      stub_request(:post, url).to_return(status: [404, 'Forbidden'])
+
+      expect {
+        subject.post_certificate_renewal(cert_context)
+      }.to raise_error do |err|
+        expect(err).to be_an_instance_of(Puppet::HTTP::ResponseError)
+        expect(err.message).to eq("Forbidden")
+        expect(err.response.code).to eq(404)
+      end
+    end
+  end
 end

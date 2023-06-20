@@ -104,4 +104,29 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
 
     response
   end
+
+  # Submit a POST request to send a certificate renewal request to the server
+  #
+  # @param [Puppet::SSL::SSLContext] ssl_context
+  #
+  # @return [Puppet::HTTP::Response] The request response
+  #
+  # @api public
+  def post_certificate_renewal(ssl_context)
+    headers = add_puppet_headers(HEADERS)
+    headers['Content-Type'] = 'text/plain'
+
+    response = @client.post(
+      with_base_url('/certificate_renewal'),
+      '', # Puppet::HTTP::Client.post requires a body, the API endpoint does not
+      headers: headers,
+      options: {ssl_context: ssl_context}
+    )
+
+    raise ArgumentError.new(_('SSL context must contain a client certificate.')) unless ssl_context.client_cert
+
+    process_response(response)
+
+    [response, response.body.to_s]
+  end
 end
