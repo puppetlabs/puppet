@@ -262,7 +262,11 @@ class Puppet::SSL::StateMachine
           next_ctx = @ssl_provider.create_context(
             cacerts: @ssl_context.cacerts, crls: @ssl_context.crls, private_key: key, client_cert: cert
           )
-          return Done.new(@machine, next_ctx)
+          if needs_refresh?(cert)
+            return NeedRenewedCert.new(@machine, next_ctx, key)
+          else
+            return Done.new(@machine, next_ctx)
+          end
         end
       else
         if Puppet[:key_type] == 'ec'
@@ -277,6 +281,15 @@ class Puppet::SSL::StateMachine
       end
 
       NeedSubmitCSR.new(@machine, @ssl_context, key)
+    end
+
+    private
+
+    def needs_refresh?(cert)
+      cert_ttl = Puppet[:hostcert_renewal_interval]
+      return false unless cert_ttl
+
+      Time.now.to_i >= (cert.not_after.to_i - cert_ttl)
     end
   end
 
@@ -346,6 +359,39 @@ class Puppet::SSL::StateMachine
         to_error(_("Failed to retrieve certificate for %{certname}: %{message}") %
                  {certname: Puppet[:certname], message: e.response.message}, e)
       end
+    end
+  end
+
+  # Class to renew a client/host certificate automatically.
+  #
+  class NeedRenewedCert < KeySSLState
+    def next_state
+      Puppet.debug(_("Renewing client certificate"))
+
+      route = @machine.session.route_to(:ca, ssl_context: @ssl_context)
+      cert = OpenSSL::X509::Certificate.new(
+        route.post_certificate_renewal(@ssl_context)[1]
+      )
+
+      # verify client cert before saving
+      next_ctx = @ssl_provider.create_context(
+        cacerts: @ssl_context.cacerts, crls: @ssl_context.crls, private_key: @private_key, client_cert: cert
+      )
+      @cert_provider.save_client_cert(Puppet[:certname], cert)
+
+      Puppet.info(_("Refreshed client certificate: %{cert_digest}, not before '%{not_before}', not after '%{not_after}'") % { cert_digest: @machine.digest_as_hex(cert.to_pem), not_before: cert.not_before, not_after: cert.not_after })
+      
+      Done.new(@machine, next_ctx)
+    rescue Puppet::HTTP::ResponseError => e
+      if e.response.code == 404
+        Puppet.info(_("Certificate autorenewal has not been enabled on the server."))
+      else
+        Puppet.warning(_("Failed to automatically renew certificate: %{code} %{reason}") % { code: e.response.code, reason: e.response.reason })
+      end
+      Done.new(@machine, @ssl_context)
+    rescue => e
+      Puppet.warning(_("Unable to automatically renew certificate: %{message}") % { message: e })
+      Done.new(@machine, @ssl_context)
     end
   end
 

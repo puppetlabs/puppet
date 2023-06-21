@@ -745,6 +745,26 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
           state.next_state
         }.to raise_error(OpenSSL::PKey::RSAError)
       end
+
+      it "transitions to Done if current time plus renewal interval is less than cert's \"NotAfter\" time" do
+        allow(cert_provider).to receive(:load_private_key).and_return(private_key)
+        allow(cert_provider).to receive(:load_client_cert).and_return(client_cert)
+
+        st = state.next_state
+        expect(st).to be_instance_of(Puppet::SSL::StateMachine::Done)
+      end
+
+      it "returns NeedRenewedCert if current time plus renewal interval is greater than cert's \"NotAfter\" time" do
+        client_cert.not_after=(Time.now + 300)
+        allow(cert_provider).to receive(:load_private_key).and_return(private_key)
+        allow(cert_provider).to receive(:load_client_cert).and_return(client_cert)
+
+        ssl_context = Puppet::SSL::SSLContext.new(cacerts: [cacert], client_cert: client_cert, crls: [crl])
+        state = Puppet::SSL::StateMachine::NeedKey.new(machine, ssl_context)
+
+        st = state.next_state
+        expect(st).to be_instance_of(Puppet::SSL::StateMachine::NeedRenewedCert)
+      end
     end
 
     context 'in state NeedSubmitCSR' do
@@ -1047,6 +1067,49 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       it 'transitions to LockFailure if it fails to acquire the lock' do
         expect(lockfile).to receive(:lock).and_return(false)
         expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::LockFailure)
+      end
+    end
+
+    context 'in state NeedRenewedCert' do
+      before :each do
+        client_cert.not_after=(Time.now + 300)
+      end
+
+      let(:ssl_context) { Puppet::SSL::SSLContext.new(cacerts: cacerts, client_cert: client_cert, crls: crls,)}
+      let(:state) { Puppet::SSL::StateMachine::NeedRenewedCert.new(machine, ssl_context, private_key) }
+      let(:renewed_cert) { cert_fixture('renewed.pem') }
+
+      it 'returns Done with renewed cert when successful' do
+        allow(cert_provider).to receive(:save_client_cert)
+        stub_request(:post, %r{puppet-ca/v1/certificate_renewal}).to_return(status: 200, body: renewed_cert.to_pem)
+
+        st = state.next_state
+        expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Done)
+        expect(st.ssl_context[:client_cert]).to eq(renewed_cert)
+      end
+
+      it 'logs a warning message when failing with a non-404 status' do
+        stub_request(:post, %r{puppet-ca/v1/certificate_renewal}).to_return(status: 400, body: 'Failed to automatically renew certificate: 400 Bad request')
+
+        expect(Puppet).to receive(:warning).with(/Failed to automatically renew certificate/)
+        st = state.next_state
+        expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Done)
+      end
+
+      it 'logs an info message when failing with 404' do
+        stub_request(:post, %r{puppet-ca/v1/certificate_renewal}).to_return(status: 404, body: 'Certificate autorenewal has not been enabled on the server.')
+
+        expect(Puppet).to receive(:info).with('Certificate autorenewal has not been enabled on the server.')
+        st = state.next_state
+        expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Done)
+      end
+
+      it 'logs a warning message when failing with no HTTP status' do
+        stub_request(:post, %r{puppet-ca/v1/certificate_renewal}).to_raise(Errno::ECONNREFUSED)
+
+        expect(Puppet).to receive(:warning).with(/Unable to automatically renew certificate:/)
+        st = state.next_state
+        expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Done)
       end
     end
   end
