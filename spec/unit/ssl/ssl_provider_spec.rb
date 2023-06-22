@@ -634,4 +634,24 @@ describe Puppet::SSL::SSLProvider do
                        "The CSR for host 'CN=signed' does not match the public key")
     end
   end
+
+  context 'printing' do
+    let(:client_cert) { cert_fixture('signed.pem') }
+    let(:private_key) { key_fixture('signed-key.pem') }
+    let(:config) { { cacerts: global_cacerts, crls: global_crls, client_cert: client_cert, private_key: private_key } }
+
+    it 'prints in debug' do
+      Puppet[:log_level] = 'debug'
+
+      ctx = subject.create_context(**config)
+      subject.print(ctx)
+      expect(@logs.map(&:message)).to include(
+        /Verified CA certificate 'CN=Test CA' fingerprint/,
+        /Verified CA certificate 'CN=Test CA Subauthority' fingerprint/,
+        /Verified client certificate 'CN=signed' fingerprint/,
+        /Using CRL 'CN=Test CA' authorityKeyIdentifier '(keyid:)?[A-Z0-9:]{59}' crlNumber '0'/,
+        /Using CRL 'CN=Test CA Subauthority' authorityKeyIdentifier '(keyid:)?[A-Z0-9:]{59}' crlNumber '0'/
+      )
+    end
+  end
 end
