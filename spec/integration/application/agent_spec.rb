@@ -15,6 +15,24 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
   let(:node) { Puppet::Node.new(Puppet[:certname], environment: 'production')}
   let(:formatter) { Puppet::Network::FormatHandler.format(:rich_data_json) }
 
+  # Create temp fixtures since the agent will attempt to refresh the CA/CRL
+  before do
+    Puppet[:localcacert] = ca = tmpfile('ca')
+    Puppet[:hostcrl] = crl = tmpfile('crl')
+
+    copy_fixtures(%w[ca.pem intermediate.pem], ca)
+    copy_fixtures(%w[crl.pem intermediate-crl.pem], crl)
+  end
+
+  def copy_fixtures(sources, dest)
+    ssldir = File.join(PuppetSpec::FIXTURE_DIR, 'ssl')
+    File.open(dest, 'w') do |f|
+      sources.each do |s|
+        f.write(File.read(File.join(ssldir, s)))
+      end
+    end
+  end
+
   context 'server_list' do
     it "uses the first server in the list" do
       Puppet[:server_list] = '127.0.0.1'
@@ -835,23 +853,10 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       end
     end
 
-    def copy_fixtures(sources, dest)
-      ssldir = File.join(PuppetSpec::FIXTURE_DIR, 'ssl')
-      File.open(dest, 'w') do |f|
-        sources.each do |s|
-          f.write(File.read(File.join(ssldir, s)))
-        end
-      end
-    end
-
     it "reloads the CRL between runs" do
-      Puppet[:localcacert] = ca = tmpfile('ca')
-      Puppet[:hostcrl] = crl = tmpfile('crl')
       Puppet[:hostcert] = cert = tmpfile('cert')
       Puppet[:hostprivkey] = key = tmpfile('key')
 
-      copy_fixtures(%w[ca.pem intermediate.pem], ca)
-      copy_fixtures(%w[crl.pem intermediate-crl.pem], crl)
       copy_fixtures(%w[127.0.0.1.pem], cert)
       copy_fixtures(%w[127.0.0.1-key.pem], key)
 
@@ -898,15 +903,10 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
     end
 
     it "refreshes the CA and CRL" do
-      Puppet[:localcacert] = ca = tmpfile('ca')
-      Puppet[:hostcrl] = crl = tmpfile('crl')
-      copy_fixtures(%w[ca.pem intermediate.pem], ca)
-      copy_fixtures(%w[crl.pem intermediate-crl.pem], crl)
-
       now = Time.now
       yesterday = now - (60 * 60 * 24)
-      Puppet::FileSystem.touch(ca, mtime: yesterday)
-      Puppet::FileSystem.touch(crl, mtime: yesterday)
+      Puppet::FileSystem.touch(Puppet[:localcacert], mtime: yesterday)
+      Puppet::FileSystem.touch(Puppet[:hostcrl], mtime: yesterday)
 
       server.start_server do |port|
         Puppet[:serverport] = port
@@ -920,17 +920,17 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
       end
 
       # If the CA is updated, then the CRL must be updated too
-      expect(Puppet::FileSystem.stat(ca).mtime).to be >= now
-      expect(Puppet::FileSystem.stat(crl).mtime).to be >= now
+      expect(Puppet::FileSystem.stat(Puppet[:localcacert]).mtime).to be >= now
+      expect(Puppet::FileSystem.stat(Puppet[:hostcrl]).mtime).to be >= now
     end
 
     it "refreshes only the CRL" do
-      Puppet[:hostcrl] = crl = tmpfile('crl')
-      copy_fixtures(%w[crl.pem intermediate-crl.pem], crl)
-
       now = Time.now
+      tomorrow = now + (60 * 60 * 24)
+      Puppet::FileSystem.touch(Puppet[:localcacert], mtime: tomorrow)
+
       yesterday = now - (60 * 60 * 24)
-      Puppet::FileSystem.touch(crl, mtime: yesterday)
+      Puppet::FileSystem.touch(Puppet[:hostcrl], mtime: yesterday)
 
       server.start_server do |port|
         Puppet[:serverport] = port
@@ -943,7 +943,7 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
          .and output(/Info: Refreshed CRL: /).to_stdout
       end
 
-      expect(Puppet::FileSystem.stat(crl).mtime).to be >= now
+      expect(Puppet::FileSystem.stat(Puppet[:hostcrl]).mtime).to be >= now
     end
   end
 
