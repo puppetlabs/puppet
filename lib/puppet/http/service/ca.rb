@@ -109,7 +109,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   #
   # @param [Puppet::SSL::SSLContext] ssl_context
   #
-  # @return [Puppet::HTTP::Response] The request response
+  # @return [Array<Puppet::HTTP::Response, String>] The request response
   #
   # @api public
   def post_certificate_renewal(ssl_context)
