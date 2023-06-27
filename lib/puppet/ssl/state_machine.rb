@@ -546,7 +546,7 @@ class Puppet::SSL::StateMachine
     final_state.ssl_context
   end
 
-  # Run the state machine for CA certs and CRLs.
+  # Run the state machine for client certs.
   #
   # @return [Puppet::SSL::SSLContext] initialized SSLContext
   # @raise [Puppet::Error] If we fail to generate an SSLContext
