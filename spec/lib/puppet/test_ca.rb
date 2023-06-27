@@ -131,20 +131,13 @@ module Puppet
     def build_cert(name, issuer, opts = {})
       key = if opts[:key_type] == :ec
               key = OpenSSL::PKey::EC.generate('prime256v1')
+            elsif opts[:reuse_key]
+              key = opts[:reuse_key]
             else
               key = OpenSSL::PKey::RSA.new(2048)
             end
       cert = OpenSSL::X509::Certificate.new
-      cert.public_key = if key.is_a?(OpenSSL::PKey::EC)
-                         # EC#public_key doesn't following the PKey API,
-                         # see https://github.com/ruby/openssl/issues/29
-                         point = key.public_key
-                         pubkey = OpenSSL::PKey::EC.new(point.group)
-                         pubkey.public_key = point
-                         pubkey
-                       else
-                         key.public_key
-                       end
+      cert.public_key = key
       cert.subject = OpenSSL::X509::Name.new([["CN", name]])
       cert.issuer = issuer
       cert.version = 2
