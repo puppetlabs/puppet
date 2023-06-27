@@ -131,6 +131,8 @@ module Puppet
     def build_cert(name, issuer, opts = {})
       key = if opts[:key_type] == :ec
               key = OpenSSL::PKey::EC.generate('prime256v1')
+            elsif opts[:reuse_key]
+              key = opts[:reuse_key]
             else
               key = OpenSSL::PKey::RSA.new(2048)
             end

@@ -94,6 +94,10 @@ task(:gen_cert_fixtures) do
   save(dir, 'signed.pem', signed[:cert])
   save(dir, 'signed-key.pem', signed[:private_key])
 
+  # Create a cert for host "renewed" and issued by "Test CA Subauthority"
+  renewed = ca.create_cert('renewed', inter[:cert], inter[:private_key], reuse_key: signed[:private_key])
+  save(dir, 'renewed.pem', renewed[:cert])
+
   # Create an encrypted version of the above private key for host "signed"
   save(dir, 'encrypted-key.pem', signed[:private_key]) do |x509|
     # private key password was chosen at random
