@@ -73,6 +73,7 @@ module Puppet::SSL::Oids
     ["1.3.6.1.4.1.34380.1.3.1",  'pp_authorization', 'Certificate Extension Authorization'],
     ["1.3.6.1.4.1.34380.1.3.2", 'pp_auth_auto_renew', 'Auto-Renew Certificate Extension'],
     ["1.3.6.1.4.1.34380.1.3.13", 'pp_auth_role', 'Puppet Node Role Name for Authorization'],
+    ["1.3.6.1.4.1.34380.1.3.39", 'pp_cli_auth', 'Puppetserver CA CLI Authorization'],
   ]
 
   @did_register_puppet_oids = false
