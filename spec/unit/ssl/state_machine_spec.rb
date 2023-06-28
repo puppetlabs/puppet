@@ -843,7 +843,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
             csr.request_extensions
           ).to contain_exactly(
                  {'oid' => '1.3.6.1.4.1.34380.1.1.31415', 'value' => 'pi'},
-                 {'oid' => '1.3.6.1.4.1.34380.1.1.2718', 'value' => 'e'}
+                 {'oid' => '1.3.6.1.4.1.34380.1.1.2718', 'value' => 'e'},
+                 {'oid' => 'pp_auth_auto_renew', 'value' => 'true'}
                )
         end.to_return(status: 200)
 

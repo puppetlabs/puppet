@@ -311,6 +311,13 @@ class Puppet::X509::CertProvider
       options[:extension_requests] = csr_attributes.extension_requests
     end
 
+    # Adds auto-renew extension to CSR if the agent supports auto-renewal of
+    # certificates
+    if Puppet[:hostcert_renewal_interval] && Puppet[:hostcert_renewal_interval] > 0
+      options[:extension_requests] ||= {}
+      options[:extension_requests].merge!({'1.3.6.1.4.1.34380.1.3.2' => 'true'})
+    end
+
     csr = Puppet::SSL::CertificateRequest.new(name)
     csr.generate(private_key, options)
   end
