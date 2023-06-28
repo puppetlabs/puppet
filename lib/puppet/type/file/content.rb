@@ -64,7 +64,17 @@ module Puppet
         ) if !@actual_content && !resource.parameter(:source)
         value
       else
-        @actual_content = value.is_a?(Puppet::Pops::Types::PBinaryType::Binary) ? value.binary_buffer : value
+        @actual_content = if value.is_a?(Puppet::Pops::Types::PBinaryType::Binary)
+                            value.binary_buffer
+                          elsif value.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+                            self.sensitive = true
+                            # Also mark `ensure` as sensitive as we may be creating a new file,
+                            # as opposed to modifying an existing one
+                            @resource.newattr(:ensure).sensitive = true
+                            value.unwrap
+                          else
+                            value
+                          end
         resource.parameter(:checksum).sum(@actual_content)
       end
     end
