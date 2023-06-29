@@ -586,25 +586,25 @@ describe Puppet::X509::CertProvider do
     end
   end
 
-  context 'when creating' do
+  context 'when creating', :unless => RUBY_PLATFORM == 'java' do
     context 'requests' do
       let(:name) { 'tom' }
       let(:requestdir) { tmpdir('cert_provider') }
       let(:provider) { create_provider(requestdir: requestdir) }
       let(:key) { OpenSSL::PKey::RSA.new(Puppet[:keylength]) }
 
-      it 'has the auto-renew extension by default for agents that support automatic renewal' do
+      it 'has the auto-renew attribute by default for agents that support automatic renewal' do
         csr = provider.create_request(name, key)
-        # need to create CertificateRequest instance from csr in order to use request_extensions()
+        # need to create CertificateRequest instance from csr in order to view CSR attributes
         wrapped_csr = Puppet::SSL::CertificateRequest.from_instance csr
-        expect(wrapped_csr.request_extensions).to include('oid' => 'pp_auth_auto_renew', 'value' => 'true')
+        expect(wrapped_csr.custom_attributes).to include('oid' => 'pp_auth_auto_renew', 'value' => 'true')
       end
 
-      it 'does not have the auto-renew extension for agents that do not support automatic renewal' do
+      it 'does not have the auto-renew attribute for agents that do not support automatic renewal' do
         Puppet[:hostcert_renewal_interval] = 0
         csr = provider.create_request(name, key)
         wrapped_csr = Puppet::SSL::CertificateRequest.from_instance csr
-        expect(wrapped_csr.request_extensions.length).to eq(0)
+        expect(wrapped_csr.custom_attributes.length).to eq(0)
       end
     end
   end

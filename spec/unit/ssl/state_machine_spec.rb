@@ -806,7 +806,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         state.next_state
       end
 
-      it 'includes CSR attributes' do
+      it 'includes CSR attributes', :unless => RUBY_PLATFORM == 'java' do
         Puppet[:csr_attributes] = write_csr_attributes(
           'custom_attributes' => {
               '1.3.6.1.4.1.34380.1.2.1' => 'CSR specific info',
@@ -820,7 +820,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
             csr.custom_attributes
           ).to contain_exactly(
                  {'oid' => '1.3.6.1.4.1.34380.1.2.1', 'value' => 'CSR specific info'},
-                 {'oid' => '1.3.6.1.4.1.34380.1.2.2', 'value' => 'more CSR specific info'}
+                 {'oid' => '1.3.6.1.4.1.34380.1.2.2', 'value' => 'more CSR specific info'},
+                 {'oid' => 'pp_auth_auto_renew', 'value' => 'true'}
                )
         end.to_return(status: 200)
 
@@ -843,8 +844,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
             csr.request_extensions
           ).to contain_exactly(
                  {'oid' => '1.3.6.1.4.1.34380.1.1.31415', 'value' => 'pi'},
-                 {'oid' => '1.3.6.1.4.1.34380.1.1.2718', 'value' => 'e'},
-                 {'oid' => 'pp_auth_auto_renew', 'value' => 'true'}
+                 {'oid' => '1.3.6.1.4.1.34380.1.1.2718', 'value' => 'e'}
                )
         end.to_return(status: 200)
 
