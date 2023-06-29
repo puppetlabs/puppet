@@ -93,14 +93,12 @@ class DeferredResolver
         #
         if resolved.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
           resolved = resolved.unwrap
-          unless r.sensitive_parameters.include?(k.to_sym)
-            r.sensitive_parameters = (r.sensitive_parameters + [k.to_sym]).freeze
-          end
+          mark_sensitive_parameters(r, k)
         # If the value is a DeferredValue and it has an argument of type PSensitiveType, mark it as sensitive
         # The DeferredValue.resolve method will unwrap it during catalog application
         elsif resolved.is_a?(Puppet::Pops::Evaluator::DeferredValue)
-          if v.arguments.any? {|arg| arg.is_a?(Puppet::Pops::Types::PSensitiveType)} and not r.sensitive_parameters.include?(k.to_sym)
-            r.sensitive_parameters = (r.sensitive_parameters + [k.to_sym]).freeze
+          if v.arguments.any? {|arg| arg.is_a?(Puppet::Pops::Types::PSensitiveType)}
+            mark_sensitive_parameters(r, k)
           end
         end
         overrides[ k ] = resolved
@@ -108,6 +106,13 @@ class DeferredResolver
       r.parameters.merge!(overrides) unless overrides.empty?
     end
   end
+
+  def mark_sensitive_parameters(r, k)
+    unless r.sensitive_parameters.include?(k.to_sym)
+      r.sensitive_parameters = (r.sensitive_parameters + [k.to_sym]).freeze
+    end
+  end
+  private :mark_sensitive_parameters
 
   def resolve(x)
     if x.class == @deferred_class
