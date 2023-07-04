@@ -21,9 +21,9 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   # Debian and Ubuntu should use the Debian provider.
   # RedHat systems should use the RedHat provider.
   confine :true => begin
-      os = Puppet.runtime[:facter].value(:operatingsystem).downcase
-      family = Puppet.runtime[:facter].value(:osfamily).downcase
-      !(os == 'debian' || os == 'ubuntu' || family == 'redhat')
+      os = Puppet.runtime[:facter].value(:operatingsystem)
+      family = Puppet.runtime[:facter].value(:osfamily)
+      !(os == 'Debian' || os == 'Ubuntu' || family == 'RedHat')
   end
 
   # We can't confine this here, because the init path can be overridden.
