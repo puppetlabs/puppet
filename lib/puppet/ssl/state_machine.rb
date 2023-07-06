@@ -379,7 +379,7 @@ class Puppet::SSL::StateMachine
       )
       @cert_provider.save_client_cert(Puppet[:certname], cert)
 
-      Puppet.info(_("Refreshed client certificate: %{cert_digest}, not before '%{not_before}', not after '%{not_after}'") % { cert_digest: @machine.digest_as_hex(cert.to_pem), not_before: cert.not_before, not_after: cert.not_after })
+      Puppet.info(_("Renewed client certificate: %{cert_digest}, not before '%{not_before}', not after '%{not_after}'") % { cert_digest: @machine.digest_as_hex(cert.to_pem), not_before: cert.not_before, not_after: cert.not_after })
       
       Done.new(@machine, next_ctx)
     rescue Puppet::HTTP::ResponseError => e
