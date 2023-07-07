@@ -16,3 +16,4 @@ Developer References
 * [Indirector](indirector.md)
 * [HTTP](http.md)
 * [Environment Convergence](environment_convergence.md)
+* [Settings](settings.md)
