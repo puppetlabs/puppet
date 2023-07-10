@@ -6,7 +6,7 @@ module Puppet::Util::RpmCompare
     armv5tejl armv6l armv7l m68kmint s390 s390x ia64 x86_64 sh3 sh4
   ).freeze
 
-  ARCH_REGEX = Regexp.new(ARCH_LIST.join('|\.'))
+  ARCH_REGEX = Regexp.new('\.' + ARCH_LIST.join('|\.'))
 
   # This is an attempt at implementing RPM's
   # lib/rpmvercmp.c rpmvercmp(a, b) in Ruby.
