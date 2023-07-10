@@ -8,7 +8,8 @@
 #
 # This function can also accept:
 #
-# * An absolute String path, which checks for the existence of a file from anywhere on disk.
+# * An absolute String path, which checks for the existence of a file from anywhere
+#   on the disk of the puppet instance responsible for catalog compiling.
 # * Multiple String arguments, which returns the path of the **first** file
 #   found, skipping nonexistent files.
 # * An array of string paths, which returns the path of the **first** file
