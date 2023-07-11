@@ -368,6 +368,7 @@ class Puppet::HTTP::Client
         apply_auth(request, basic_auth) if redirects.zero?
 
         # don't call return within the `request` block
+        close_and_sleep = nil
         http.request(request) do |nethttp|
           response = Puppet::HTTP::ResponseNetHTTP.new(request.uri, nethttp)
           begin
@@ -381,12 +382,14 @@ class Puppet::HTTP::Client
               interval = @retry_after_handler.retry_after_interval(request, response, retries)
               retries += 1
               if interval
-                if http.started?
-                  Puppet.debug("Closing connection for #{Puppet::HTTP::Site.from_uri(request.uri)}")
-                  http.finish
+                close_and_sleep = proc do
+                  if http.started?
+                    Puppet.debug("Closing connection for #{Puppet::HTTP::Site.from_uri(request.uri)}")
+                    http.finish
+                  end
+                  Puppet.warning(_("Sleeping for %{interval} seconds before retrying the request") % { interval: interval })
+                  ::Kernel.sleep(interval)
                 end
-                Puppet.warning(_("Sleeping for %{interval} seconds before retrying the request") % { interval: interval })
-                ::Kernel.sleep(interval)
                 next
               end
             end
@@ -405,6 +408,10 @@ class Puppet::HTTP::Client
 
           done = true
         end
+      ensure
+        # If a server responded with a retry, make sure the connection is closed and then
+        # sleep the specified time.
+        close_and_sleep.call if close_and_sleep
       end
     end
 

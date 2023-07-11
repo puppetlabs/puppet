@@ -175,6 +175,22 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
     end
   end
 
+  context 'ensure that retrying does not attempt to read the body after closing the connection' do
+    let(:client) { Puppet::HTTP::Client.new(retry_limit: 1) }
+    it 'raises a retry error instead' do
+      response_proc = -> (req, res) {
+        res['Retry-After'] = 1
+        res.status = 503
+      }
+
+      https_server.start_server(response_proc: response_proc) do |port|
+        uri = URI("https://127.0.0.1:#{port}")
+        kwargs = {headers: {'Content-Type' => 'text/plain'}, options: {ssl_context: root_context}}
+        expect{client.post(uri, '', **kwargs)}.to raise_error(Puppet::HTTP::TooManyRetryAfters)
+      end
+    end
+  end
+
   context 'persistent connections' do
     it "detects when the server has closed the connection and reconnects" do
       Puppet[:http_debug] = true

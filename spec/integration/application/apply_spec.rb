@@ -763,5 +763,19 @@ class amod::bad_type {
         .and output(/Notify\[runs before file\]/).to_stdout
         .and output(/Validation of File.* failed: You cannot specify more than one of content, source, target/).to_stderr
     end
+
+    it "applies deferred sensitive file content" do
+      manifest = <<~END
+      file { '#{deferred_file}':
+        ensure => file,
+        content => Deferred('new', [Sensitive, "hello\n"])
+      }
+      END
+      apply.command_line.args = ['-e', manifest]
+      expect {
+        apply.run
+      }.to exit_with(0)
+        .and output(/ensure: changed \[redacted\] to \[redacted\]/).to_stdout
+    end
   end
 end
