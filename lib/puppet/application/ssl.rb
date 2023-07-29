@@ -60,6 +60,11 @@ ACTIONS
   the CSR. Otherwise a new key pair will be generated. If a CSR has already
   been submitted with the given `certname`, then the operation will fail.
 
+* generate_request:
+  Generate a certificate signing request (CSR). If
+  a private and public key pair already exist, they will be used to generate
+  the CSR. Otherwise a new key pair will be generated.
+
 * download_cert:
   Download a certificate for this host. If the current private key matches
   the downloaded certificate, then the certificate will be saved and used
@@ -186,6 +191,26 @@ HELP
     end
   rescue => e
     raise Puppet::Error.new(_("Failed to submit certificate request: %{message}") % { message: e.message }, e)
+  end
+
+  def generate_request(ssl_context)
+    key = @cert_provider.load_private_key(Puppet[:certname])
+    unless key
+      if Puppet[:key_type] == 'ec'
+        Puppet.info _("Creating a new EC SSL key for %{name} using curve %{curve}") % { name: Puppet[:certname], curve: Puppet[:named_curve] }
+        key = OpenSSL::PKey::EC.generate(Puppet[:named_curve])
+      else
+        Puppet.info _("Creating a new SSL key for %{name}") % { name: Puppet[:certname] }
+        key = OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
+      end
+      @cert_provider.save_private_key(Puppet[:certname], key)
+    end
+
+    csr = @cert_provider.create_request(Puppet[:certname], key)
+    @cert_provider.save_request(Puppet[:certname], csr)
+    Puppet.notice _("Generated certificate request for '%{name}' at %{requestdir}") % { name: Puppet[:certname], requestdir: Puppet[:requestdir] }
+  rescue => e
+    raise Puppet::Error.new(_("Failed to generate certificate request: %{message}") % { message: e.message }, e)
   end
 
   def download_cert(ssl_context)
