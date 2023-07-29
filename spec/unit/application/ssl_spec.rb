@@ -184,32 +184,23 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     it 'generates an RSA private key' do
       File.unlink(Puppet[:hostprivkey])
 
-      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
-      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
-
-      expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
+      expects_command_to_pass(%r{Generated certificate request for '#{name}' at #{requestdir}})
     end
 
     it 'generates an EC private key' do
       Puppet[:key_type] = 'ec'
       File.unlink(Puppet[:hostprivkey])
 
-      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
-      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
-
-      expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
+      expects_command_to_pass(%r{Generated certificate request for '#{name}' at #{requestdir}})
     end
 
     it 'registers OIDs' do
-      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
-      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
-
       expect(Puppet::SSL::Oids).to receive(:register_puppet_oids)
-      expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
+
+      expects_command_to_pass(%r{Generated certificate request for '#{name}' at #{requestdir}})
     end
 
     it 'saves the CSR locally' do
-
       expects_command_to_pass(%r{Generated certificate request for '#{name}' at #{requestdir}})
 
       expect(Puppet::FileSystem).to be_exist(csr_path)
