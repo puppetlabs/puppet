@@ -171,6 +171,85 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     end
   end
 
+  context 'when generating a CSR' do
+    let(:csr_path) { Puppet[:hostcsr] }
+    let(:requestdir) { Puppet[:requestdir] }
+
+    before do
+      ssl.command_line.args << 'generate_request'
+    end
+
+    it_behaves_like 'an ssl action'
+
+    it 'generates an RSA private key' do
+      File.unlink(Puppet[:hostprivkey])
+
+      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+
+      expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
+    end
+
+    it 'generates an EC private key' do
+      Puppet[:key_type] = 'ec'
+      File.unlink(Puppet[:hostprivkey])
+
+      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+
+      expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
+    end
+
+    it 'registers OIDs' do
+      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+
+      expect(Puppet::SSL::Oids).to receive(:register_puppet_oids)
+      expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
+    end
+
+    it 'saves the CSR locally' do
+
+      expects_command_to_pass(%r{Generated certificate request for '#{name}' at #{requestdir}})
+
+      expect(Puppet::FileSystem).to be_exist(csr_path)
+    end
+
+    it 'detects when a CSR with the same public key has already been submitted' do
+      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+
+      expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
+
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+
+      expects_command_to_pass
+    end
+
+    it 'downloads the certificate when autosigning is enabled' do
+      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
+
+      expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
+
+      expect(Puppet::FileSystem).to be_exist(Puppet[:hostcert])
+      expect(Puppet::FileSystem).to_not be_exist(csr_path)
+    end
+
+    it 'accepts dns alt names' do
+      Puppet[:dns_alt_names] = 'majortom'
+
+      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+
+      expects_command_to_pass
+
+      csr = Puppet::SSL::CertificateRequest.new(name)
+      csr.read(csr_path)
+      expect(csr.subject_alt_names).to include('DNS:majortom')
+    end
+  end
+
   context 'when downloading a certificate' do
     before do
       ssl.command_line.args << 'download_cert'
