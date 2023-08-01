@@ -101,7 +101,7 @@ Puppet::Face.define(:parser, '0.0.1') do
   end
 
 
-  action (:dump) do
+  action(:dump) do
     summary _("Outputs a dump of the internal parse tree for debugging")
     arguments "[--format <old|pn|json>] [--pretty] { -e <source> | [<templates> ...] } "
     returns _("A dump of the resulting AST model unless there are syntax or validation errors.")

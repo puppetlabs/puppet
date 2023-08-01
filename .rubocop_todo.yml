@@ -650,13 +650,6 @@ Lint/NestedMethodDefinition:
     - 'lib/puppet/type.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
-Lint/ParenthesesAsGroupedExpression:
-  Exclude:
-    - 'lib/puppet/face/epp.rb'
-    - 'lib/puppet/face/parser.rb'
-    - 'lib/puppet/util/retry_action.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Lint/RedundantCopDisableDirective:
   Exclude:
     - 'lib/puppet/pops/loader/static_loader.rb'

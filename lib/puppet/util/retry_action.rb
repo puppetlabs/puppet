@@ -38,7 +38,7 @@ module Puppet::Util::RetryAction
 
       # Increase the amount of time that we sleep after every
       # failed retry attempt.
-      sleep (((2 ** failures) -1) * 0.1)
+      sleep(((2 ** failures) -1) * 0.1)
 
       retry
 
