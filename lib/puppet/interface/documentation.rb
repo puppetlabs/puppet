@@ -275,7 +275,6 @@ class Puppet::Interface
         #TRANSLATORS 'copyright' is an attribute name and should not be translated
         raise ArgumentError, _("copyright owner must be a string or an array of strings")
       end
-      @copyright_owner
     end
 
     # Sets the copyright year

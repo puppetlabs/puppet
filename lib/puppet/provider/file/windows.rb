@@ -80,7 +80,6 @@ Puppet::Type.type(:file).provide :windows do
       error.set_backtrace detail.backtrace
       raise error
     end
-    :file_changed
   end
 
   def validate

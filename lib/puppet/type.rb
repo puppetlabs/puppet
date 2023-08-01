@@ -659,7 +659,7 @@ class Type
   end
 
   # Sets the 'should' (wanted state) value of a property, or the value of a parameter.
-  # @return
+  #
   # @raise [Puppet::Error] if the setting of the value fails, or if the given name is nil.
   # @raise [Puppet::ResourceError] when the parameter validation raises Puppet::Error or
   #   ArgumentError
@@ -687,8 +687,6 @@ class Type
         raise error
       end
     end
-
-    nil
   end
 
   # Removes an attribute from the object; useful in testing or in cleanup

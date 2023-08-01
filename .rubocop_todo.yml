@@ -729,19 +729,6 @@ Lint/UselessMethodDefinition:
     - 'lib/puppet/util/rdoc/code_objects.rb'
     - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
 
-# Configuration parameters: CheckForMethodsWithNoSideEffects.
-Lint/Void:
-  Exclude:
-    - 'lib/puppet/file_serving/http_metadata.rb'
-    - 'lib/puppet/interface/documentation.rb'
-    - 'lib/puppet/interface/option_builder.rb'
-    - 'lib/puppet/node.rb'
-    - 'lib/puppet/pops/model/factory.rb'
-    - 'lib/puppet/provider/file/windows.rb'
-    - 'lib/puppet/settings.rb'
-    - 'lib/puppet/ssl/certificate_signer.rb'
-    - 'lib/puppet/type.rb'
-
 Naming/AccessorMethodName:
   Enabled: false
 

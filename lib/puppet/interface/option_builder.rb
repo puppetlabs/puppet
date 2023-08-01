@@ -17,7 +17,6 @@ class Puppet::Interface::OptionBuilder
     @face   = face
     @option = Puppet::Interface::Option.new(face, *declaration)
     instance_eval(&block) if block_given?
-    @option
   end
 
   # Metaprogram the simple DSL from the option class.
