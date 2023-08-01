@@ -661,13 +661,6 @@ Lint/RescueException:
     - 'lib/puppet/util/command_line/trollop.rb'
     - 'util/rspec_grouper'
 
-Lint/SelfAssignment:
-  Exclude:
-    - 'lib/puppet/pops/evaluator/evaluator_impl.rb'
-    - 'lib/puppet/pops/evaluator/runtime3_support.rb'
-    - 'lib/puppet/pops/validation/validator_factory_4_0.rb'
-    - 'lib/puppet/provider/nameservice/directoryservice.rb'
-
 # Configuration parameters: IgnoreImplicitReferences.
 Lint/ShadowedArgument:
   Exclude:

@@ -4,8 +4,6 @@ module Validation
 # Configures validation suitable for 4.0
 #
 class ValidatorFactory_4_0 < Factory
-  Issues = Issues
-
   # Produces the checker to use
   def checker diagnostic_producer
     if Puppet[:tasks]
