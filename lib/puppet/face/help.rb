@@ -5,6 +5,12 @@ require_relative '../../puppet/util/constant_inflector'
 require 'pathname'
 require 'erb'
 
+module Puppet::Face::Help
+  COMMON = 'Common:'
+  SPECIALIZED = 'Specialized:'
+  BLANK = "\n"
+end
+
 Puppet::Face.define(:help, '0.0.1') do
   copyright "Puppet Inc.", 2011
   license   _("Apache 2 license; see COPYING")
@@ -162,7 +168,7 @@ Puppet::Face.define(:help, '0.0.1') do
     available_application_names_special_sort().inject([]) do |result, appname|
       next result if exclude_from_docs?(appname)
 
-      if (appname == COMMON || appname == SPECIALIZED || appname == BLANK)
+      if (appname == Puppet::Face::Help::COMMON || appname == Puppet::Face::Help::SPECIALIZED || appname == Puppet::Face::Help::BLANK)
         result << appname
       elsif (is_face_app?(appname))
         begin
@@ -191,16 +197,21 @@ Puppet::Face.define(:help, '0.0.1') do
     end
   end
 
-  COMMON = 'Common:'
-  SPECIALIZED = 'Specialized:'
-  BLANK = "\n"
+  # Deprecate top-level constants
+  COMMON = Puppet::Face::Help::COMMON # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:COMMON)
+  SPECIALIZED = Puppet::Face::Help::SPECIALIZED # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:SPECIALIZED)
+  BLANK = Puppet::Face::Help::BLANK # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:BLANK)
+
   def available_application_names_special_sort()
     full_list = Puppet::Application.available_application_names
     a_list = full_list & %w{apply agent config help lookup module resource}
     a_list = a_list.sort
     also_ran = full_list - a_list
     also_ran = also_ran.sort
-    [[COMMON], a_list, [BLANK], [SPECIALIZED], also_ran].flatten(1)
+    [[Puppet::Face::Help::COMMON], a_list, [Puppet::Face::Help::BLANK], [Puppet::Face::Help::SPECIALIZED], also_ran].flatten(1)
   end
 
   def horribly_extract_summary_from(appname)
