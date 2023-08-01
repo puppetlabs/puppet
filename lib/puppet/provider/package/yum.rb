@@ -255,7 +255,7 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
         operation = update_command
         self.debug "Ensuring latest, so using #{operation}"
       else
-        self.debug "Ensuring latest, but package is absent, so using #{:install}"
+        self.debug "Ensuring latest, but package is absent, so using install"
         operation = :install
       end
       should = nil
