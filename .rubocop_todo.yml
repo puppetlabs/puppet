@@ -624,13 +624,6 @@ Lint/SuppressedException:
     - 'util/rspec_grouper'
 
 # This cop supports safe auto-correction (--auto-correct).
-Lint/ToJSON:
-  Exclude:
-    - 'lib/puppet/module_tool/metadata.rb'
-    - 'lib/puppet/network/http/error.rb'
-    - 'lib/puppet/pops/serialization/json.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: AllowUnusedKeywordArguments, IgnoreEmptyMethods, IgnoreNotImplementedMethods.
 Lint/UnusedMethodArgument:
   Enabled: false

@@ -13,7 +13,7 @@ module Puppet::Network::HTTP::Error
       @issue_kind = issue_kind
     end
 
-    def to_json
+    def to_json(*_args)
       Puppet::Util::Json.dump({:message => message, :issue_kind => @issue_kind})
     end
   end
@@ -67,7 +67,7 @@ module Puppet::Network::HTTP::Error
       super(_("Server Error: %{message}") % { message: original_error.message }, CODE, issue_kind)
     end
 
-    def to_json
+    def to_json(*_args)
       Puppet::Util::Json.dump({:message => message, :issue_kind => @issue_kind})
     end
   end

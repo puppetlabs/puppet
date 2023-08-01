@@ -39,7 +39,7 @@ module JSON
       @packer.to_a
     end
 
-    def to_json
+    def to_json(*_args)
       @packer.to_json
     end
   end
@@ -150,7 +150,7 @@ module JSON
       ::Puppet::Util::Json.load(io_string)
     end
 
-    def to_json
+    def to_json(*_args)
       if @indent > 0
         ::Puppet::Util::Json.dump(to_a, { :pretty => true, :indent => ' ' * @indent })
       else

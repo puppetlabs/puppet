@@ -97,7 +97,7 @@ module Puppet::ModuleTool
     end
     alias :to_data_hash :to_hash
 
-    def to_json
+    def to_json(*_args)
       data = @data.dup.merge('dependencies' => dependencies)
 
       contents = data.keys.map do |k|
