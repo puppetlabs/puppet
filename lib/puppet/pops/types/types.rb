@@ -1879,10 +1879,8 @@ class PBooleanType < PScalarDataType
       def from_args(from)
         from = from.downcase if from.is_a?(String)
         case from
-        when Float
-          from != 0.0
-        when Integer
-          from != 0
+        when Float, Integer
+          !from.zero?
         when false, 'false', 'no', 'n'
           false
         else

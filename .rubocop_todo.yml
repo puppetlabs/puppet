@@ -612,10 +612,6 @@ Lint/EnsureReturn:
   Exclude:
     - 'lib/puppet/configurer.rb'
 
-Lint/FloatComparison:
-  Exclude:
-    - 'lib/puppet/pops/types/types.rb'
-
 Lint/HashCompareByIdentity:
   Exclude:
     - 'lib/puppet/pops/serialization/serializer.rb'
