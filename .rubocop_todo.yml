@@ -649,10 +649,6 @@ Lint/NestedMethodDefinition:
     - 'lib/puppet/pops/types/types.rb'
     - 'lib/puppet/type.rb'
 
-Lint/OutOfRangeRegexpRef:
-  Exclude:
-    - 'lib/puppet/vendor.rb'
-
 # This cop supports safe auto-correction (--auto-correct).
 Lint/ParenthesesAsGroupedExpression:
   Exclude:
