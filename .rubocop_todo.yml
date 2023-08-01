@@ -650,12 +650,6 @@ Lint/NestedMethodDefinition:
     - 'lib/puppet/type.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
-Lint/RedundantCopDisableDirective:
-  Exclude:
-    - 'lib/puppet/pops/loader/static_loader.rb'
-    - 'lib/puppet/util/posix.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Lint/RedundantRequireStatement:
   Exclude:
     - 'lib/puppet/type/file.rb'
