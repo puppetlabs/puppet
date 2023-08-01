@@ -1083,7 +1083,9 @@ class EvaluatorImpl
     # may occur for some evaluation use cases.
     case name
     when String
+      # do nothing
     when Numeric
+      # do nothing
     else
       fail(Issues::ILLEGAL_VARIABLE_EXPRESSION, o.expr)
     end

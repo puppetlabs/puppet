@@ -585,19 +585,6 @@ Layout/TrailingWhitespace:
 Lint/ConstantDefinitionInBlock:
   Enabled: false
 
-# Configuration parameters: AllowComments.
-Lint/EmptyWhen:
-  Exclude:
-    - 'lib/puppet/indirector/hiera.rb'
-    - 'lib/puppet/pops/evaluator/evaluator_impl.rb'
-    - 'lib/puppet/pops/lookup/data_dig_function_provider.rb'
-    - 'lib/puppet/pops/types/type_formatter.rb'
-    - 'lib/puppet/pops/types/type_mismatch_describer.rb'
-    - 'lib/puppet/pops/types/types.rb'
-    - 'lib/puppet/pops/validation/checker4_0.rb'
-    - 'lib/puppet/util/backups.rb'
-    - 'lib/puppet/util/windows/security.rb'
-
 # This cop supports safe auto-correction (--auto-correct).
 Lint/EnsureReturn:
   Exclude:

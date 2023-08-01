@@ -1178,6 +1178,7 @@ class PIntegerType < PNumericType
       def assert_radix(radix)
         case radix
         when 2, 8, 10, 16
+          # do nothing
         else
           raise ArgumentError.new(_("Illegal radix: %{radix}, expected 2, 8, 10, 16, or default") % { radix: radix })
         end

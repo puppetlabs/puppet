@@ -42,8 +42,7 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   # @return [Symbol,Hash,nil] The Hiera 'resolution_type'
   def convert_merge(merge)
     case merge
-    when nil
-    when 'first'
+    when nil, 'first'
       # Nil is OK. Defaults to Hiera :priority
       nil
     when Puppet::Pops::MergeStrategy

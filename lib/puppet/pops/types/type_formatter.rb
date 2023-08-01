@@ -728,6 +728,7 @@ class TypeFormatter
   def append_elements(array, to_be_continued = false)
     case array.size
     when 0
+      # do nothing
     when 1
       @bld << array[0]
       @bld << COMMA_SEP if to_be_continued
@@ -740,6 +741,7 @@ class TypeFormatter
   def append_strings(array, to_be_continued = false)
     case array.size
     when 0
+      # do nothing
     when 1
       append_string(array[0])
       @bld << COMMA_SEP if to_be_continued
