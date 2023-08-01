@@ -17,6 +17,17 @@ AllCops:
     - 'lib/puppet/vendor/**/*'
     - 'lib/puppet/pops/parser/eparser.rb'
 
+# puppet uses symbol booleans in types and providers to work around long standing
+# bugs when trying to manage falsey pararameters and properties
+Lint/BooleanSymbol:
+  Enabled: true
+  Exclude:
+    - 'lib/puppet/type.rb'
+    - 'lib/puppet/type/**/*.rb'
+    - 'lib/puppet/provider/**/*.rb'
+    - 'lib/puppet/reference/providers.rb'
+    - 'lib/puppet/parameter/value.rb'
+
 Metrics/AbcSize:
   Enabled: false
 

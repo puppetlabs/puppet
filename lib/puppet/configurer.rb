@@ -528,7 +528,7 @@ class Puppet::Configurer
     session = Puppet.lookup(:http_session)
     begin
       fs = session.route_to(:fileserver)
-      fs.get_file_metadatas(path: URI(Puppet[:pluginsource]).path, recurse: :false, environment: @environment)
+      fs.get_file_metadatas(path: URI(Puppet[:pluginsource]).path, recurse: :false, environment: @environment) # rubocop:disable Lint/BooleanSymbol
       true
     rescue Puppet::HTTP::ResponseError => detail
       if detail.response.code == 404

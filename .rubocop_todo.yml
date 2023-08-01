@@ -580,10 +580,6 @@ Layout/TrailingEmptyLines:
 Layout/TrailingWhitespace:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-Lint/BooleanSymbol:
-  Enabled: false
-
 # Configuration parameters: AllowedMethods.
 # AllowedMethods: enums
 Lint/ConstantDefinitionInBlock:
