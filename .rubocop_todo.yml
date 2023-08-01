@@ -618,13 +618,6 @@ Lint/HashCompareByIdentity:
     - 'lib/puppet/pops/types/recursion_guard.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
-Lint/IdentityComparison:
-  Exclude:
-    - 'lib/puppet/parser/resource.rb'
-    - 'lib/puppet/ssl/verifier.rb'
-    - 'lib/puppet/type.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: standard_error, runtime_error
 Lint/InheritException:
