@@ -713,11 +713,6 @@ Lint/UnusedMethodArgument:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Lint/UriRegexp:
-  Exclude:
-    - 'lib/puppet/pops/pcore.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: ContextCreatingMethods, MethodCreatingMethods.
 Lint/UselessAccessModifier:
   Exclude:
