@@ -580,11 +580,6 @@ Layout/TrailingEmptyLines:
 Layout/TrailingWhitespace:
   Enabled: false
 
-# Configuration parameters: AllowedMethods.
-# AllowedMethods: enums
-Lint/ConstantDefinitionInBlock:
-  Enabled: false
-
 Lint/MissingSuper:
   Enabled: false
 

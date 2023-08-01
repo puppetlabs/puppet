@@ -5,8 +5,15 @@ require_relative '../../../puppet/util/package/version/debian'
 Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # Provide sorting functionality
   include Puppet::Util::Package
-  DebianVersion = Puppet::Util::Package::Version::Debian
-  VersionRange  = Puppet::Util::Package::Version::Range
+  const_set(:DebianVersion, Puppet::Util::Package::Version::Debian)
+  const_set(:VersionRange, Puppet::Util::Package::Version::Range)
+
+  # deprecate top-level constants
+  DebianVersion = const_get(:DebianVersion) # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:DebianVersion)
+  VersionRange = const_get(:VersionRange) # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:VersionRange)
+
   desc "Package management via `apt-get`.
 
     This provider supports the `install_options` attribute, which allows command-line flags to be passed to apt-get.
@@ -98,9 +105,9 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     output.each_line do |line|
       is = line.split('|')[1].strip
       begin
-        is_version = DebianVersion.parse(is)
+        is_version = self.class::DebianVersion.parse(is)
         versions << is_version if should_range.include?(is_version)
-      rescue DebianVersion::ValidationFailure
+      rescue self.class::DebianVersion::ValidationFailure
         Puppet.debug("Cannot parse #{is} as a debian version")
       end
     end
@@ -119,12 +126,12 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
     if should.is_a?(String)
       begin
-        should_range = VersionRange.parse(should, DebianVersion)
+        should_range = self.class::VersionRange.parse(should, self.class::DebianVersion)
 
-        unless should_range.is_a?(VersionRange::Eq)
+        unless should_range.is_a?(self.class::VersionRange::Eq)
           should = best_version(should_range)
         end
-      rescue VersionRange::ValidationFailure, DebianVersion::ValidationFailure
+      rescue self.class::VersionRange::ValidationFailure, self.class::DebianVersion::ValidationFailure
         Puppet.debug("Cannot parse #{should} as a debian version range, falling through")
       end
     end
@@ -240,15 +247,15 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     return false unless is.is_a?(String) && should.is_a?(String)
 
     begin
-      should_range = VersionRange.parse(should, DebianVersion)
-    rescue VersionRange::ValidationFailure, DebianVersion::ValidationFailure
+      should_range = self.class::VersionRange.parse(should, self.class::DebianVersion)
+    rescue self.class::VersionRange::ValidationFailure, self.class::DebianVersion::ValidationFailure
       Puppet.debug("Cannot parse #{should} as a debian version range")
       return false
     end
 
     begin
-      is_version = DebianVersion.parse(is)
-    rescue DebianVersion::ValidationFailure
+      is_version = self.class::DebianVersion.parse(is)
+    rescue self.class::DebianVersion::ValidationFailure
       Puppet.debug("Cannot parse #{is} as a debian version")
       return false
     end

@@ -417,26 +417,32 @@ Puppet::Type.newtype(:file) do
   end
 
   # mutually exclusive ways to create files
-  CREATORS = [:content, :source, :target].freeze
+  const_set(:CREATORS, [:content, :source, :target].freeze)
 
   # This is both "checksum types that can't be used with the content property"
   # and "checksum types that are not digest based"
-  SOURCE_ONLY_CHECKSUMS = [:none, :ctime, :mtime].freeze
+  const_set(:SOURCE_ONLY_CHECKSUMS, [:none, :ctime, :mtime].freeze)
+
+  # deprecate top-level constants
+  CREATORS = const_get(:CREATORS) # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:CREATORS)
+  SOURCE_ONLY_CHECKSUMS = const_get(:SOURCE_ONLY_CHECKSUMS) # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:SOURCE_ONLY_CHECKSUMS)
 
   validate do
     creator_count = 0
-    CREATORS.each do |param|
+    self.class::CREATORS.each do |param|
       creator_count += 1 if self.should(param)
     end
     creator_count += 1 if @parameters.include?(:source)
 
-    self.fail _("You cannot specify more than one of %{creators}") % { creators: CREATORS.collect { |p| p.to_s}.join(", ") } if creator_count > 1
+    self.fail _("You cannot specify more than one of %{creators}") % { creators: self.class::CREATORS.collect { |p| p.to_s}.join(", ") } if creator_count > 1
 
     self.fail _("You cannot specify a remote recursion without a source") if !self[:source] && self[:recurse] == :remote
 
     self.fail _("You cannot specify source when using checksum 'none'") if self[:checksum] == :none && !self[:source].nil?
 
-    SOURCE_ONLY_CHECKSUMS.each do |checksum_type|
+    self.class::SOURCE_ONLY_CHECKSUMS.each do |checksum_type|
       self.fail _("You cannot specify content when using checksum '%{checksum_type}'") % { checksum_type: checksum_type } if self[:checksum] == checksum_type && !self[:content].nil?
     end
 
@@ -1077,7 +1083,7 @@ Puppet::Type.newtype(:file) do
 
   # Return the desired checksum or nil
   def desired_checksum(property, path)
-    return if SOURCE_ONLY_CHECKSUMS.include?(self[:checksum])
+    return if self.class::SOURCE_ONLY_CHECKSUMS.include?(self[:checksum])
 
     if self[:checksum] && self[:checksum_value]
       "{#{self[:checksum]}}#{self[:checksum_value]}"
@@ -1086,7 +1092,7 @@ Puppet::Type.newtype(:file) do
       return unless meta
 
       # due to HttpMetadata the checksum type may fallback to mtime, so recheck
-      return if SOURCE_ONLY_CHECKSUMS.include?(meta.checksum_type)
+      return if self.class::SOURCE_ONLY_CHECKSUMS.include?(meta.checksum_type)
       meta.checksum
     elsif property && property.name == :content
       str = property.actual_content

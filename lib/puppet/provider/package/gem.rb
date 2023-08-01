@@ -20,8 +20,14 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
 
   has_feature :versionable, :install_options, :uninstall_options, :targetable, :version_ranges
 
-  GEM_VERSION =       Puppet::Util::Package::Version::Gem
-  GEM_VERSION_RANGE = Puppet::Util::Package::Version::Range
+  const_set(:GEM_VERSION, Puppet::Util::Package::Version::Gem)
+  const_set(:GEM_VERSION_RANGE, Puppet::Util::Package::Version::Range)
+
+  # deprecate top-level constants
+  GEM_VERSION = const_get(:GEM_VERSION) # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:GEM_VERSION)
+  GEM_VERSION_RANGE = const_get(:GEM_VERSION_RANGE) # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:GEM_VERSION_RANGE)
 
   # Override the specificity method to return 1 if gem is not set as default provider
   def self.specificity
@@ -158,16 +164,16 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
 
     unless should =~ Regexp.union(/,/, Gem::Requirement::PATTERN)
       begin
-        should_range = GEM_VERSION_RANGE.parse(should, GEM_VERSION)
-      rescue GEM_VERSION_RANGE::ValidationFailure, GEM_VERSION::ValidationFailure
+        should_range = self.class::GEM_VERSION_RANGE.parse(should, self.class::GEM_VERSION)
+      rescue self.class::GEM_VERSION_RANGE::ValidationFailure, self.class::GEM_VERSION::ValidationFailure
         Puppet.debug("Cannot parse #{should} as a ruby gem version range")
         return false
       end
 
       return is.any? do |version|
         begin
-          should_range.include?(GEM_VERSION.parse(version))
-        rescue GEM_VERSION::ValidationFailure
+          should_range.include?(self.class::GEM_VERSION.parse(version))
+        rescue self.class::GEM_VERSION::ValidationFailure
           Puppet.debug("Cannot parse #{version} as a ruby gem version")
           false
         end
@@ -199,10 +205,10 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
 
     unless should =~ Regexp.union(/,/, Gem::Requirement::PATTERN)
       begin
-        should_range = GEM_VERSION_RANGE.parse(should, GEM_VERSION)
+        should_range = self.class::GEM_VERSION_RANGE.parse(should, self.class::GEM_VERSION)
         should = should_range.to_gem_version
         useversion = true
-      rescue GEM_VERSION_RANGE::ValidationFailure, GEM_VERSION::ValidationFailure
+      rescue self.class::GEM_VERSION_RANGE::ValidationFailure, self.class::GEM_VERSION::ValidationFailure
         Puppet.debug("Cannot parse #{should} as a ruby gem version range. Falling through.")
       end
     end
