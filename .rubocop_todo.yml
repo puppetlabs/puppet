@@ -585,11 +585,6 @@ Layout/TrailingWhitespace:
 Lint/ConstantDefinitionInBlock:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-Lint/ElseLayout:
-  Exclude:
-    - 'lib/puppet/resource.rb'
-
 # Configuration parameters: AllowComments.
 Lint/EmptyWhen:
   Exclude:
