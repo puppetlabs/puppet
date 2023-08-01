@@ -590,12 +590,6 @@ Lint/ConstantDefinitionInBlock:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Lint/DeprecatedOpenSSLConstant:
-  Exclude:
-    - 'lib/puppet/util/checksums.rb'
-    - 'lib/puppet/x509/cert_provider.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Lint/ElseLayout:
   Exclude:
     - 'lib/puppet/resource.rb'
