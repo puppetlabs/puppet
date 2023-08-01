@@ -661,11 +661,6 @@ Lint/RescueException:
     - 'lib/puppet/util/command_line/trollop.rb'
     - 'util/rspec_grouper'
 
-Lint/ReturnInVoidContext:
-  Exclude:
-    - 'lib/puppet/type/component.rb'
-    - 'lib/puppet/util/suidmanager.rb'
-
 Lint/SelfAssignment:
   Exclude:
     - 'lib/puppet/pops/evaluator/evaluator_impl.rb'

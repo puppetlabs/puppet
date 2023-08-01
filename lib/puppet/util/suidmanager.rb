@@ -24,7 +24,7 @@ module Puppet::Util::SUIDManager
 
   def groups=(grouplist)
     begin
-      return Process.groups = grouplist
+      Process.groups = grouplist
     rescue Errno::EINVAL => e
       #We catch Errno::EINVAL as some operating systems (OS X in particular) can
       # cause troubles when using Process#groups= to change *this* user / process
@@ -37,9 +37,7 @@ module Puppet::Util::SUIDManager
       # operating system side.  Therefore we catch the exception and look whether
       # we run under OS X or not -- if so, then we acknowledge the problem and
       # re-throw the exception otherwise.
-      if osx_maj_ver and not osx_maj_ver.empty?
-        return true
-      else
+      if !osx_maj_ver || osx_maj_ver.empty?
         raise e
       end
     end

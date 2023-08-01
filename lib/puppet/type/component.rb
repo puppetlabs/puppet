@@ -15,15 +15,21 @@ Puppet::Type.newtype(:component) do
   # Override how parameters are handled so that we support the extra
   # parameters that are used with defined resource types.
   def [](param)
-    return super if self.class.valid_parameter?(param)
-    @extra_parameters[param.to_sym]
+    if self.class.valid_parameter?(param)
+      super
+    else
+      @extra_parameters[param.to_sym]
+    end
   end
 
   # Override how parameters are handled so that we support the extra
   # parameters that are used with defined resource types.
   def []=(param, value)
-    return super if self.class.valid_parameter?(param)
-    @extra_parameters[param.to_sym] = value
+    if self.class.valid_parameter?(param)
+      super
+    else
+      @extra_parameters[param.to_sym] = value
+    end
   end
 
   # Initialize a new component
