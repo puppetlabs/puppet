@@ -155,14 +155,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
         # Any other error (dump output to log)
         raise Puppet::ExecutionFailure, _("Unexpected output from portversion: %{output}") % { output: output }
       end
-
-      # Just in case we still are running, return nil
-      return nil
     end
-
-    # At this point normal operation has finished and we shouldn't have been called.
-    # Error out and let the admin deal with it.
-    raise Puppet::Error, _("portversion.latest() - fatal error with portversion: %{output}") % { output: output }
   end
 
   ###### Query subcommand - return a hash of details if exists, or nil if it doesn't.

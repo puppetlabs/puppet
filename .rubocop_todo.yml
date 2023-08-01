@@ -696,10 +696,6 @@ Lint/UnderscorePrefixedVariableName:
     - 'lib/puppet/type/file/checksum_value.rb'
     - 'lib/puppet/type/file/content.rb'
 
-Lint/UnreachableCode:
-  Exclude:
-    - 'lib/puppet/provider/package/portupgrade.rb'
-
 # Configuration parameters: AllowedPatterns, IgnoredPatterns.
 # AllowedPatterns: (?-mix:(exactly|at_least|at_most)\(\d+\)\.times)
 Lint/UnreachableLoop:
