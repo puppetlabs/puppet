@@ -661,13 +661,6 @@ Lint/RescueException:
     - 'lib/puppet/util/command_line/trollop.rb'
     - 'util/rspec_grouper'
 
-# Configuration parameters: IgnoreImplicitReferences.
-Lint/ShadowedArgument:
-  Exclude:
-    - 'lib/puppet/pops/lookup.rb'
-    - 'lib/puppet/settings/file_setting.rb'
-    - 'lib/puppet/settings/port_setting.rb'
-
 Lint/StructNewOverride:
   Exclude:
     - 'lib/puppet/network/http/request.rb'

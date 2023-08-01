@@ -27,22 +27,26 @@ module Lookup
     # with name and value.
     not_found = MergeStrategy::NOT_FOUND
     override_values = lookup_invocation.override_values
-    result_with_name = names.reduce([nil, not_found]) do |memo, key|
+    result_with_name = [nil, not_found]
+    names.each do |key|
       value = override_values.include?(key) ? assert_type(["Value found for key '%s' in override hash", key], value_type, override_values[key]) : not_found
       catch(:no_such_key) { value = search_and_merge(key, lookup_invocation, merge, false) } if value.equal?(not_found)
-      break [key, assert_type('Found value', value_type, value)] unless value.equal?(not_found)
-      memo
+      next if value.equal?(not_found)
+
+      result_with_name = [key, assert_type('Found value', value_type, value)]
+      break
     end
 
     # Use the 'default_values' hash as a last resort if nothing is found
     if result_with_name[1].equal?(not_found)
       default_values = lookup_invocation.default_values
       unless default_values.empty?
-        result_with_name = names.reduce(result_with_name) do |memo, key|
+        names.each do |key|
           value = default_values.include?(key) ? assert_type(["Value found for key '%s' in default values hash", key], value_type, default_values[key]) : not_found
-          memo = [key, value]
-          break memo unless value.equal?(not_found)
-          memo
+          next if value.equal?(not_found)
+
+          result_with_name = [key, value]
+          break
         end
       end
     end
