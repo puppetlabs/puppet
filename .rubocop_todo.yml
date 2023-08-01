@@ -652,11 +652,6 @@ Lint/InheritException:
     - 'lib/puppet/util/logging.rb'
     - 'lib/puppet/util/retry_action.rb'
 
-# This cop supports unsafe auto-correction (--auto-correct-all).
-Lint/InterpolationCheck:
-  Exclude:
-    - 'lib/puppet/util/package/version/pip.rb'
-
 # This cop supports safe auto-correction (--auto-correct).
 Lint/LiteralInInterpolation:
   Exclude:
