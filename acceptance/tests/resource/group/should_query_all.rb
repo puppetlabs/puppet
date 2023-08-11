@@ -9,10 +9,12 @@ agents.each do |agent|
   step "query natively"
 
   # [PA-4555] Added below code to enable SSH permissions before test starts if they are disabled by default
-  on(agent, 'dscl . list /Groups | grep com.apple.access_ssh') do
-    stdout.each_line do |line|
-      if line =~ /com.apple.access_ssh-disabled/
-        on(agent, 'dscl . change /Groups/com.apple.access_ssh-disabled RecordName com.apple.access_ssh-disabled com.apple.access_ssh')
+  if (agent['platform'] =~ /osx-12-arm64/ || agent['platform'] =~ /osx-13-arm64/)
+    on(agent, 'dscl . list /Groups | grep com.apple.access_ssh') do
+      stdout.each_line do |line|
+        if line =~ /com.apple.access_ssh-disabled/
+          on(agent, 'dscl . change /Groups/com.apple.access_ssh-disabled RecordName com.apple.access_ssh-disabled com.apple.access_ssh')
+        end
       end
     end
   end
