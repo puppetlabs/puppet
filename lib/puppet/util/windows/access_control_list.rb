@@ -98,7 +98,7 @@ class Puppet::Util::Windows::AccessControlList
   end
 
   def inspect
-    str = String.new
+    str = ''.dup
     @aces.each do |ace|
       str << "  #{ace.inspect}\n"
     end

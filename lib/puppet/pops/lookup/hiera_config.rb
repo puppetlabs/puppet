@@ -228,7 +228,7 @@ class HieraConfig
       line_number += 1
       next if line_number < start_line
       quote = nil
-      stripped = String.new
+      stripped = ''.dup
       line.each_codepoint do |cp|
         if cp == 0x22 || cp == 0x27 # double or single quote
           if quote == cp

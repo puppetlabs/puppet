@@ -20,7 +20,7 @@ module Lookup
     end
 
     def explain
-      io = String.new
+      io = ''.dup
       dump_on(io, '', '')
       io
     end

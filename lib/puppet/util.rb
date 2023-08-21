@@ -409,8 +409,7 @@ module Util
   def uri_encode(path, opts = { :allow_fragment => false })
     raise ArgumentError.new(_('path may not be nil')) if path.nil?
 
-    # ensure string starts as UTF-8 for the sake of Ruby 1.9.3
-    encoded = String.new.encode!(Encoding::UTF_8)
+    encoded = ''.dup
 
     # parse uri into named matches, then reassemble properly encoded
     parts = path.match(RFC_3986_URI_REGEX)
@@ -454,7 +453,7 @@ module Util
 
   def rfc2396_escape(str)
     str.gsub(UNSAFE) do |match|
-      tmp = String.new
+      tmp = ''.dup
       match.each_byte do |uc|
         tmp << sprintf('%%%02X', uc)
       end

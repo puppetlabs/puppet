@@ -125,7 +125,7 @@ class EvaluatingParser
   # @return [String] The quoted string
   #
   def self.quote(x)
-    escaped = String.new('"')
+    escaped = '"'.dup
     p = nil
     x.each_char do |c|
       case p

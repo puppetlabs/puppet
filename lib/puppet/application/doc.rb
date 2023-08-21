@@ -152,7 +152,7 @@ HELP
   end
 
   def other
-    text = String.new
+    text = ''.dup
     with_contents = options[:references].length <= 1
     exit_code = 0
     require_relative '../../puppet/util/reference'

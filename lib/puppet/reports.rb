@@ -71,7 +71,7 @@ class Puppet::Reports
   # Collects the docs for all reports.
   # @api private
   def self.reportdocs
-    docs = String.new
+    docs = ''.dup
 
     # Use this method so they all get loaded
     instance_loader(:report).loadall(Puppet.lookup(:current_environment))

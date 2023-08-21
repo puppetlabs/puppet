@@ -34,7 +34,7 @@ module Puppet::Util::Diff
     data_old = data_old.split(/\n/).map! { |e| e.chomp }
     data_new = data_new.split(/\n/).map! { |e| e.chomp }
 
-    output = String.new
+    output = ''.dup
 
     diffs = ::Diff::LCS.diff(data_old, data_new)
     return output if diffs.empty?

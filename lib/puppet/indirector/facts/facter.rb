@@ -105,7 +105,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
 
   def find_with_options(request)
     options = request.options
-    options_for_facter = String.new
+    options_for_facter = ''.dup
     options_for_facter += options[:user_query].join(' ')
     options_for_facter += " --config #{options[:config_file]}" if options[:config_file]
     options_for_facter += " --show-legacy" if options[:show_legacy]

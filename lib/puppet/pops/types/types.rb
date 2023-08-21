@@ -1713,7 +1713,7 @@ class PRegexpType < PScalarType
     if options == 0
       rx_string
     else
-      bld = String.new('(?')
+      bld = '(?'.dup
       bld << 'i' if (options & Regexp::IGNORECASE) != 0
       bld << 'm' if (options & Regexp::MULTILINE) != 0
       bld << 'x' if (options & Regexp::EXTENDED) != 0

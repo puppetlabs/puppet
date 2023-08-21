@@ -81,7 +81,7 @@ class Puppet::Indirector::Indirection
 
   # Generate the full doc string.
   def doc
-    text = String.new
+    text = ''.dup
 
     text << scrub(@doc) << "\n\n" if @doc
 

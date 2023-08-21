@@ -20,7 +20,7 @@ module PN
   end
 
   def to_s
-    s = String.new
+    s = ''.dup
     format(nil, s)
     s
   end

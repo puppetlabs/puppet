@@ -50,7 +50,7 @@ class TypeFormatter
   # @api public
   #
   def string(t)
-    @bld = String.new
+    @bld = ''.dup
     append_string(t)
     @bld
   end
@@ -64,7 +64,7 @@ class TypeFormatter
   #
   # @api public
   def indented_string(t, indent = 0, indent_width = 2)
-    @bld = String.new
+    @bld = ''.dup
     append_indented_string(t, indent, indent_width)
     @bld
   end

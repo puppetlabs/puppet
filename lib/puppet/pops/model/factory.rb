@@ -1112,7 +1112,7 @@ class Factory
   end
 
   def self.concat(*args)
-    result = String.new
+    result = ''.dup
     args.each do |e|
       if e.instance_of?(Factory) && e.model_class <= LiteralString
         result << e[KEY_VALUE]

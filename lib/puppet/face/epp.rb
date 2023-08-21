@@ -367,7 +367,7 @@ Puppet::Face.define(:epp, '0.0.1') do
   end
 
   def dump_parse(source, filename, options, show_filename = true)
-    output = String.new
+    output = ''.dup
     evaluating_parser = Puppet::Pops::Parser::EvaluatingParser::EvaluatingEppParser.new
     begin
       if options[:validate]
@@ -451,7 +451,7 @@ Puppet::Face.define(:epp, '0.0.1') do
 
   def render_file(epp_template_name, compiler, options, show_filename, file_nbr)
     template_args = get_values(compiler, options)
-    output = String.new
+    output = ''.dup
     begin
       if show_filename && options[:header]
         output << "\n" unless file_nbr == 1

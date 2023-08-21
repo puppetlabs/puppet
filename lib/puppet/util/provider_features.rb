@@ -76,7 +76,7 @@ module Puppet::Util::ProviderFeatures
 
   # @return [String] Returns a string with documentation covering all features.
   def featuredocs
-    str = String.new
+    str = ''.dup
     @features ||= {}
     return nil if @features.empty?
     names = @features.keys.sort_by(&:to_s)

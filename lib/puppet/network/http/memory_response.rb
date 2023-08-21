@@ -3,7 +3,7 @@ class Puppet::Network::HTTP::MemoryResponse
   attr_reader :code, :type, :body
 
   def initialize
-    @body = String.new
+    @body = ''.dup
   end
 
   def respond_with(code, type, body)

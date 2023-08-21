@@ -74,7 +74,7 @@ Puppet::Face.define(:module, '1.0.0') do
       environment     = result[:environment]
       modules_by_path = result[:modules_by_path]
 
-      output = String.new
+      output = ''.dup
 
       warn_unmet_dependencies(environment)
 
@@ -248,7 +248,7 @@ Puppet::Face.define(:module, '1.0.0') do
   # Returns a Hash
   #
   def list_build_node(mod, parent, params)
-    str = String.new
+    str = ''.dup
     str << (mod.forge_name ? mod.forge_name.tr('/', '-') : mod.name)
     str << ' (' + colorize(:cyan, mod.version ? "v#{mod.version}" : '???') + ')'
 

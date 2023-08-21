@@ -5,7 +5,7 @@ require_relative '../../puppet/file_serving/content'
 require_relative '../../puppet/file_serving/metadata'
 
 reference = Puppet::Util::Reference.newreference :indirection, :doc => "Indirection types and their terminus classes" do
-  text = String.new
+  text = ''.dup
   Puppet::Indirector::Indirection.instances.sort_by(&:to_s).each do |indirection|
     ind = Puppet::Indirector::Indirection.instance(indirection)
     name = indirection.to_s.capitalize
