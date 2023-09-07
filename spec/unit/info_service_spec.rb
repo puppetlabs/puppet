@@ -47,7 +47,7 @@ describe "Puppet::InfoService" do
                                                                              :content => metadata.to_json}]]})
           File.write("#{modpath}/#{mod_name}/tasks/atask.json", "NOT JSON")
 
-          expect(Puppet).to receive(:send_log).with(:err, 'Failed to validate task')
+          expect(Puppet).to receive(:send_log).with(:err, /unexpected token at 'NOT JSON'/)
 
           @tasks = Puppet::InfoService.tasks_per_environment(env_name)
           expect(@tasks.map{|t| t[:name]}).to contain_exactly('test1::btask', 'test1::ctask')
