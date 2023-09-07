@@ -13,7 +13,7 @@ class Puppet::InfoService::TaskInformationService
           task.validate
           {:module => {:name => task.module.name}, :name => task.name, :metadata => task.metadata}
         rescue Puppet::Module::Task::Error => err
-          Puppet.log_exception(err, 'Failed to validate task')
+          Puppet.log_exception(err)
           nil
         end
       end
