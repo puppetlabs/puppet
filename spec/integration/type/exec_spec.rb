@@ -75,6 +75,19 @@ describe Puppet::Type.type(:exec), unless: Puppet::Util::Platform.jruby? do
     end
   end
 
+  context 'when an exec sends an EOF' do
+    let(:command) { ["/bin/bash", "-c", "exec /bin/sleep 1 >/dev/null 2>&1"] }
+
+    it 'should not take significant user time' do
+      exec = described_class.new :command => command, :path => ENV['PATH']
+      catalog.add_resource exec
+      timed_apply = Benchmark.measure { catalog.apply }
+      # In testing I found the user time before the patch in 4f35fd262e to be above
+      # 0.3, after the patch it was consistently below 0.1 seconds.
+      expect(timed_apply.utime).to be < 0.3
+    end
+  end
+
   context 'when command is a string' do
     let(:command) { "ruby -e 'File.open(\"#{path}\", \"w\") { |f| f.print \"foo\" }'" }
 
