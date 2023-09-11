@@ -238,7 +238,7 @@ module Puppet::Util::Execution
                 output << reader.read_nonblock(4096) if ready
               rescue Errno::EAGAIN
               rescue EOFError
-                wait_flags &= ~Process::WNOHANG
+                wait_flags = 0
               end
             end
 
