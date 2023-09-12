@@ -11,7 +11,7 @@ module JsonPath
   #
   # @api private
   def self.to_json_path(path)
-    p = String.new('$')
+    p = '$'.dup
     path.each do |seg|
       if seg.nil?
         p << '[null]'

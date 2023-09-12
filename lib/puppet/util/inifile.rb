@@ -79,7 +79,7 @@ module Puppet::Util::IniConfig
     # written to file
     def format
       if @destroy
-        text = String.new
+        text = ''.dup
       else
         text = "[#{name}]\n"
         @entries.each do |entry|
@@ -208,7 +208,7 @@ module Puppet::Util::IniConfig
     end
 
     def format
-      text = String.new
+      text = ''.dup
 
       @contents.each do |content|
         if content.is_a? Section

@@ -70,7 +70,7 @@ module Puppet
     # Builds a formatted tree from a list of node hashes containing +:text+
     # and +:dependencies+ keys.
     def self.format_tree(nodes, level = 0)
-      str = String.new
+      str = ''.dup
       nodes.each_with_index do |node, i|
         last_node = nodes.length - 1 == i
         deps = node[:dependencies] || []

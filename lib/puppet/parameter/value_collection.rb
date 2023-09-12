@@ -31,7 +31,7 @@ class Puppet::Parameter::ValueCollection
   #
   def doc
     unless defined?(@doc)
-      @doc = String.new
+      @doc = ''.dup
       unless values.empty?
         @doc << "Valid values are "
         @doc << @strings.collect do |value|

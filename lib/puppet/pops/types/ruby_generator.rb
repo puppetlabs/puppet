@@ -60,7 +60,7 @@ class RubyGenerator < TypeFormatter
       if cls.nil?
         rp = key.resolved_parent
         parent_class = rp.is_a?(PObjectType) ? rp.implementation_class : Object
-        class_def = String.new
+        class_def = ''.dup
         class_body(key, EMPTY_ARRAY, class_def)
         cls = Class.new(parent_class)
         cls.class_eval(class_def)
@@ -109,7 +109,7 @@ class RubyGenerator < TypeFormatter
     end
 
     # Create class definition of all contained types
-    bld = String.new
+    bld = ''.dup
     start_module(common_prefix, comment, bld)
     class_names = []
     names_by_prefix.each_pair do |seg_array, index_and_name_array|

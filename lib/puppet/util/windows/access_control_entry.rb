@@ -61,7 +61,7 @@ class Puppet::Util::Windows::AccessControlEntry
   end
 
   def inspect
-    inheritance = String.new
+    inheritance = ''.dup
     inheritance << '(I)' if inherited?
     inheritance << '(OI)' if object_inherit?
     inheritance << '(CI)' if container_inherit?

@@ -245,7 +245,7 @@ module Puppet::Util::Windows::File
   module_function :readlink
 
   def get_long_pathname(path)
-    converted = String.new
+    converted = ''.dup
     FFI::Pointer.from_string_to_wide_string(path) do |path_ptr|
       # includes terminating NULL
       buffer_size = GetLongPathNameW(path_ptr, FFI::Pointer::NULL, 0)
@@ -263,7 +263,7 @@ module Puppet::Util::Windows::File
   module_function :get_long_pathname
 
   def get_short_pathname(path)
-    converted = String.new
+    converted = ''.dup
     FFI::Pointer.from_string_to_wide_string(path) do |path_ptr|
       # includes terminating NULL
       buffer_size = GetShortPathNameW(path_ptr, FFI::Pointer::NULL, 0)

@@ -82,7 +82,7 @@ Puppet::Face.define(:config, '0.0.1') do
     end
 
     when_rendering :console do |to_be_rendered|
-      output = String.new
+      output = ''.dup
       if to_be_rendered.keys.length > 1
         to_be_rendered.keys.sort.each do |setting|
           output << "#{setting} = #{to_be_rendered[setting]}\n"
