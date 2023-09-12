@@ -222,8 +222,12 @@ module Puppet::Util::Execution
             # Use non-blocking read to check for data. After each attempt,
             # check whether the child is done. This is done in case the child
             # forks and inherits stdout, as happens in `foo &`.
-            
-            until results = Process.waitpid2(child_pid, Process::WNOHANG) #rubocop:disable Lint/AssignmentInCondition
+            # If we encounter EOF, though, then switch to a blocking wait for
+            # the child; after EOF, IO.select will never block and the loop
+            # below will use maximum CPU available.
+
+            wait_flags = Process::WNOHANG
+            until results = Process.waitpid2(child_pid, wait_flags) #rubocop:disable Lint/AssignmentInCondition
 
               # If not done, wait for data to read with a timeout
               # This timeout is selected to keep activity low while waiting on
@@ -234,6 +238,7 @@ module Puppet::Util::Execution
                 output << reader.read_nonblock(4096) if ready
               rescue Errno::EAGAIN
               rescue EOFError
+                wait_flags = 0
               end
             end
 

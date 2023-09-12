@@ -29,6 +29,7 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
         allow(FFI::WIN32).to receive(:CloseHandle).with(thread_handle)
       else
         allow(Process).to receive(:waitpid2).with(pid, Process::WNOHANG).and_return(nil, [pid, double('child_status', :exitstatus => exitstatus)])
+        allow(Process).to receive(:waitpid2).with(pid, 0).and_return(nil, [pid, double('child_status', :exitstatus => exitstatus)])
         allow(Process).to receive(:waitpid2).with(pid).and_return([pid, double('child_status', :exitstatus => exitstatus)])
       end
     end
