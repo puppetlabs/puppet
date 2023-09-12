@@ -169,13 +169,7 @@ HELP
   def submit_request(ssl_context)
     key = @cert_provider.load_private_key(Puppet[:certname])
     unless key
-      if Puppet[:key_type] == 'ec'
-        Puppet.info _("Creating a new EC SSL key for %{name} using curve %{curve}") % { name: Puppet[:certname], curve: Puppet[:named_curve] }
-        key = OpenSSL::PKey::EC.generate(Puppet[:named_curve])
-      else
-        Puppet.info _("Creating a new SSL key for %{name}") % { name: Puppet[:certname] }
-        key = OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
-      end
+      key = create_key(Puppet[:certname])
       @cert_provider.save_private_key(Puppet[:certname], key)
     end
 
@@ -197,13 +191,7 @@ HELP
   def generate_request(certname)
     key = @cert_provider.load_private_key(certname)
     unless key
-      if Puppet[:key_type] == 'ec'
-        Puppet.info _("Creating a new EC SSL key for %{name} using curve %{curve}") % { name: certname, curve: Puppet[:named_curve] }
-        key = OpenSSL::PKey::EC.generate(Puppet[:named_curve])
-      else
-        Puppet.info _("Creating a new SSL key for %{name}") % { name: certname }
-        key = OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
-      end
+      key = create_key(certname)
       @cert_provider.save_private_key(certname, key)
     end
 
@@ -311,5 +299,15 @@ END
 
   def create_route(ssl_context)
     @session.route_to(:ca, ssl_context: ssl_context)
+  end
+
+  def create_key(certname)
+    if Puppet[:key_type] == 'ec'
+      Puppet.info _("Creating a new EC SSL key for %{name} using curve %{curve}") % { name: certname, curve: Puppet[:named_curve] }
+      OpenSSL::PKey::EC.generate(Puppet[:named_curve])
+    else
+      Puppet.info _("Creating a new SSL key for %{name}") % { name: certname }
+      OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
+    end
   end
 end
