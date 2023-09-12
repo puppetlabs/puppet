@@ -182,24 +182,24 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     it 'generates an RSA private key' do
       File.unlink(Puppet[:hostprivkey])
 
-      expects_command_to_pass(%r{Generated certificate request for '#{name}' at #{requestdir}})
+      expects_command_to_pass(%r{Generated certificate request in '#{csr_path}'})
     end
 
     it 'generates an EC private key' do
       Puppet[:key_type] = 'ec'
       File.unlink(Puppet[:hostprivkey])
 
-      expects_command_to_pass(%r{Generated certificate request for '#{name}' at #{requestdir}})
+      expects_command_to_pass(%r{Generated certificate request in '#{csr_path}'})
     end
 
     it 'registers OIDs' do
       expect(Puppet::SSL::Oids).to receive(:register_puppet_oids)
 
-      expects_command_to_pass(%r{Generated certificate request for '#{name}' at #{requestdir}})
+      expects_command_to_pass(%r{Generated certificate request in '#{csr_path}'})
     end
 
     it 'saves the CSR locally' do
-      expects_command_to_pass(%r{Generated certificate request for '#{name}' at #{requestdir}})
+      expects_command_to_pass(%r{Generated certificate request in '#{csr_path}'})
 
       expect(Puppet::FileSystem).to be_exist(csr_path)
     end

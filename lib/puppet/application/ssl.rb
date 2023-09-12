@@ -209,7 +209,7 @@ HELP
 
     csr = @cert_provider.create_request(certname, key)
     @cert_provider.save_request(certname, csr)
-    Puppet.notice _("Generated certificate request for '%{name}' at %{requestdir}") % { name: certname, requestdir: Puppet[:requestdir] }
+    Puppet.notice _("Generated certificate request in '%{path}'") % { path: @cert_provider.to_path(Puppet[:requestdir], certname) }
   rescue => e
     raise Puppet::Error.new(_("Failed to generate certificate request: %{message}") % { message: e.message }, e)
   end
