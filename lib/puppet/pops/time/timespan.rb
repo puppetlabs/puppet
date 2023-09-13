@@ -633,7 +633,7 @@ module Time
         position = -1
         fstart = 0
 
-        str.codepoints do |codepoint|
+        str.each_codepoint do |codepoint|
           position += 1
           if state == STATE_LITERAL
             if codepoint == 0x25 # '%'
