@@ -135,7 +135,7 @@ class Puppet::HTTP::Client
   # @option options [Boolean] :include_system_store (false) if we should include
   #   the system store for connection
   def connect(uri, options: {}, &block)
-    start = Time.now
+    start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     verifier = nil
     connected = false
 
@@ -455,7 +455,7 @@ class Puppet::HTTP::Client
   end
 
   def elapsed(start)
-    (Time.now - start).to_f.round(3)
+    (Process.clock_gettime(Process::CLOCK_MONOTONIC) - start).to_f.round(3)
   end
 
   def raise_error(message, cause, connected)
