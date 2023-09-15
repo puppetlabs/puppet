@@ -346,12 +346,16 @@ class Puppet::X509::CertProvider
     OpenSSL::X509::Request.new(pem)
   end
 
-  private
-
+  # Return the path to the cert related object (key, CSR, cert, etc).
+  #
+  # @param base [String] base directory
+  # @param name [String] the name associated with the cert related object
   def to_path(base, name)
     raise _("Certname %{name} must not contain unprintable or non-ASCII characters") % { name: name.inspect } unless name =~ VALID_CERTNAME
     File.join(base, "#{name.downcase}.pem")
   end
+
+  private
 
   def permissions_for_setting(name)
     setting = Puppet.settings.setting(name)
