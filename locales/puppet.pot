@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 8.1.0-43-g2052c18a7f\n"
+"Project-Id-Version: Puppet automation framework 8.2.0-29-g809d465a09\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2023-07-06 21:09+0000\n"
-"PO-Revision-Date: 2023-07-06 21:09+0000\n"
+"POT-Creation-Date: 2023-09-21 23:07+0000\n"
+"PO-Revision-Date: 2023-09-21 23:07+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -442,60 +442,68 @@ msgstr ""
 msgid "Manage SSL keys and certificates for puppet SSL clients"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:107
+#: ../lib/puppet/application/ssl.rb:112
 msgid "An action must be specified."
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:131 ../lib/puppet/application/ssl.rb:138
+#: ../lib/puppet/application/ssl.rb:136 ../lib/puppet/application/ssl.rb:143
 msgid "The certificate for '%{name}' has not yet been signed"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:149
+#: ../lib/puppet/application/ssl.rb:156
 msgid "Completed SSL initialization"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:153
+#: ../lib/puppet/application/ssl.rb:160
 msgid "Unknown action '%{action}'"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:167 ../lib/puppet/ssl/state_machine.rb:273
-msgid "Creating a new EC SSL key for %{name} using curve %{curve}"
-msgstr ""
-
-#: ../lib/puppet/application/ssl.rb:170
-msgid "Creating a new SSL key for %{name}"
-msgstr ""
-
-#: ../lib/puppet/application/ssl.rb:180
+#: ../lib/puppet/application/ssl.rb:181
 msgid "Submitted certificate request for '%{name}' to %{url}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:183
+#: ../lib/puppet/application/ssl.rb:184
 msgid "Could not submit certificate request for '%{name}' to %{url} due to a conflict on the server"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:185 ../lib/puppet/application/ssl.rb:188
+#: ../lib/puppet/application/ssl.rb:186 ../lib/puppet/application/ssl.rb:189
 msgid "Failed to submit certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:196
+#: ../lib/puppet/application/ssl.rb:201
+msgid "Generated certificate request in '%{path}'"
+msgstr ""
+
+#: ../lib/puppet/application/ssl.rb:203
+msgid "Failed to generate certificate request: %{message}"
+msgstr ""
+
+#: ../lib/puppet/application/ssl.rb:211
 msgid "Downloading certificate '%{name}' from %{url}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:200
+#: ../lib/puppet/application/ssl.rb:215
 msgid "Downloaded certificate '%{name}' with fingerprint %{fingerprint}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:213 ../lib/puppet/application/ssl.rb:216
+#: ../lib/puppet/application/ssl.rb:228 ../lib/puppet/application/ssl.rb:231
 msgid "Failed to download certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:245 ../lib/puppet/application/ssl.rb:248
+#: ../lib/puppet/application/ssl.rb:260 ../lib/puppet/application/ssl.rb:263
 msgid "Failed to connect to the CA to determine if certificate %{certname} has been cleaned"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:275
+#: ../lib/puppet/application/ssl.rb:290
 msgid "Removed %{label} %{path}"
+msgstr ""
+
+#: ../lib/puppet/application/ssl.rb:307 ../lib/puppet/ssl/state_machine.rb:273
+msgid "Creating a new EC SSL key for %{name} using curve %{curve}"
+msgstr ""
+
+#: ../lib/puppet/application/ssl.rb:310
+msgid "Creating a new SSL key for %{name}"
 msgstr ""
 
 #: ../lib/puppet/configurer.rb:22
@@ -1752,7 +1760,7 @@ msgstr ""
 msgid "Timeout waiting for exclusive lock on %{path}"
 msgstr ""
 
-#: ../lib/puppet/file_system/jruby.rb:19 ../lib/puppet/file_system/windows.rb:128 ../lib/puppet/util.rb:672
+#: ../lib/puppet/file_system/jruby.rb:19 ../lib/puppet/file_system/windows.rb:128 ../lib/puppet/util.rb:671
 msgid "Is a directory: %{directory}"
 msgstr ""
 
@@ -2226,11 +2234,11 @@ msgstr ""
 msgid "Run `puppet agent -t`"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:388
+#: ../lib/puppet/http/client.rb:390
 msgid "Sleeping for %{interval} seconds before retrying the request"
 msgstr ""
 
-#: ../lib/puppet/http/client.rb:438
+#: ../lib/puppet/http/client.rb:445
 msgid "HTTP REST queries cannot handle values of type '%{klass}'"
 msgstr ""
 
@@ -7335,7 +7343,7 @@ msgstr ""
 msgid "%{name} has not declared what class it wraps"
 msgstr ""
 
-#: ../lib/puppet/ssl/base.rb:32 ../lib/puppet/x509/cert_provider.rb:382
+#: ../lib/puppet/ssl/base.rb:32 ../lib/puppet/x509/cert_provider.rb:384
 msgid "Certname %{name} must not contain unprintable or non-ASCII characters"
 msgstr ""
 
@@ -8468,11 +8476,11 @@ msgstr ""
 msgid "path may not be nil"
 msgstr ""
 
-#: ../lib/puppet/util.rb:587
+#: ../lib/puppet/util.rb:586
 msgid "replace_file requires a block"
 msgstr ""
 
-#: ../lib/puppet/util.rb:591
+#: ../lib/puppet/util.rb:590
 msgid "replace_file default_mode: %{default_mode} is invalid"
 msgstr ""
 
@@ -8757,19 +8765,19 @@ msgstr ""
 msgid "Working directory %{cwd} does not exist!"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:278
+#: ../lib/puppet/util/execution.rb:283
 msgid "Could not get output"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:287
+#: ../lib/puppet/util/execution.rb:292
 msgid "Execution of '%{str}' returned %{exit_status}: %{output}"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:364
+#: ../lib/puppet/util/execution.rb:369
 msgid "Could not execute posix command: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:412
+#: ../lib/puppet/util/execution.rb:417
 msgid "Waiting for output; will sleep %{time_to_sleep} seconds"
 msgstr ""
 
