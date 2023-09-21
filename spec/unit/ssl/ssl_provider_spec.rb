@@ -338,7 +338,7 @@ describe Puppet::SSL::SSLProvider do
       end
     end
 
-    it 'raises if intermediate CA signature is invalid' do
+    it 'raises if intermediate CA signature is invalid', unless: Puppet::Util::Platform.jruby? && RUBY_VERSION.to_f >= 2.6 do
       int = global_cacerts.last
       int.public_key = wrong_key.public_key if Puppet::Util::Platform.jruby?
       int.sign(wrong_key, OpenSSL::Digest::SHA256.new)

@@ -60,6 +60,11 @@ ACTIONS
   the CSR. Otherwise a new key pair will be generated. If a CSR has already
   been submitted with the given `certname`, then the operation will fail.
 
+* generate_request:
+  Generate a certificate signing request (CSR). If
+  a private and public key pair already exist, they will be used to generate
+  the CSR. Otherwise a new key pair will be generated.
+
 * download_cert:
   Download a certificate for this host. If the current private key matches
   the downloaded certificate, then the certificate will be saved and used
@@ -137,6 +142,8 @@ HELP
       unless cert
         raise Puppet::Error, _("The certificate for '%{name}' has not yet been signed") % { name: certname }
       end
+    when 'generate_request'
+      generate_request(certname)
     when 'verify'
       verify(certname)
     when 'clean'
@@ -163,13 +170,7 @@ HELP
   def submit_request(ssl_context)
     key = @cert_provider.load_private_key(Puppet[:certname])
     unless key
-      if Puppet[:key_type] == 'ec'
-        Puppet.info _("Creating a new EC SSL key for %{name} using curve %{curve}") % { name: Puppet[:certname], curve: Puppet[:named_curve] }
-        key = OpenSSL::PKey::EC.generate(Puppet[:named_curve])
-      else
-        Puppet.info _("Creating a new SSL key for %{name}") % { name: Puppet[:certname] }
-        key = OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
-      end
+      key = create_key(Puppet[:certname])
       @cert_provider.save_private_key(Puppet[:certname], key)
     end
 
@@ -186,6 +187,20 @@ HELP
     end
   rescue => e
     raise Puppet::Error.new(_("Failed to submit certificate request: %{message}") % { message: e.message }, e)
+  end
+
+  def generate_request(certname)
+    key = @cert_provider.load_private_key(certname)
+    unless key
+      key = create_key(certname)
+      @cert_provider.save_private_key(certname, key)
+    end
+
+    csr = @cert_provider.create_request(certname, key)
+    @cert_provider.save_request(certname, csr)
+    Puppet.notice _("Generated certificate request in '%{path}'") % { path: @cert_provider.to_path(Puppet[:requestdir], certname) }
+  rescue => e
+    raise Puppet::Error.new(_("Failed to generate certificate request: %{message}") % { message: e.message }, e)
   end
 
   def download_cert(ssl_context)
@@ -285,5 +300,15 @@ END
 
   def create_route(ssl_context)
     @session.route_to(:ca, ssl_context: ssl_context)
+  end
+
+  def create_key(certname)
+    if Puppet[:key_type] == 'ec'
+      Puppet.info _("Creating a new EC SSL key for %{name} using curve %{curve}") % { name: certname, curve: Puppet[:named_curve] }
+      OpenSSL::PKey::EC.generate(Puppet[:named_curve])
+    else
+      Puppet.info _("Creating a new SSL key for %{name}") % { name: certname }
+      OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
+    end
   end
 end
