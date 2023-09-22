@@ -146,6 +146,16 @@ HELP
     when 'verify'
       verify(certname)
     when 'clean'
+      possible_extra_args = command_line.args.drop(1)
+      unless possible_extra_args.empty?
+        raise Puppet::Error, _(<<END) % { args: possible_extra_args.join(' ')}
+Extra arguments detected: %{args}
+Did you mean to run:
+  puppetserver ca clean --certname <name>
+Or:
+  puppet ssl clean --target <name>
+END
+      end
       clean(certname)
     when 'bootstrap'
       if !Puppet::Util::Log.sendlevel?(:info)

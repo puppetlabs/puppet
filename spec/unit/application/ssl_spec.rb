@@ -391,6 +391,11 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       expects_command_to_fail(%r{Failed to connect to the CA to determine if certificate #{name} has been cleaned})
     end
 
+    it 'raises if we have extra args' do
+      ssl.command_line.args << 'hostname.example.biz'
+      expects_command_to_fail(/Extra arguments detected: hostname.example.biz/)
+    end
+
     context 'when deleting local CA' do
       before do
         ssl.command_line.args << '--localca'
