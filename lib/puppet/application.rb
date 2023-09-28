@@ -504,8 +504,12 @@ class Application
     runtime_info = {
       'puppet_version' => Puppet.version,
       'ruby_version'   => RUBY_VERSION,
-      'run_mode'       => self.class.run_mode.name,
+      'run_mode'       => self.class.run_mode.name
     }
+    unless Puppet::Util::Platform.jruby_fips?
+      runtime_info['openssl_version'] = "'#{OpenSSL::OPENSSL_VERSION}'"
+      runtime_info['openssl_fips'] = OpenSSL::OPENSSL_FIPS
+    end
     runtime_info['default_encoding'] = Encoding.default_external
     runtime_info.merge!(extra_info) unless extra_info.nil?
 

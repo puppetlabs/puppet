@@ -36,7 +36,7 @@ group(:features) do
 end
 
 group(:test) do
-  gem "ffi", require: false
+  gem "ffi", '1.15.5', require: false
   gem "json-schema", "~> 2.0", require: false
   gem "rake", *location_for(ENV['RAKE_LOCATION'] || '~> 13.0')
   gem "rspec", "~> 3.1", require: false
