@@ -13,7 +13,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     These options should be specified as an array where each element is either a
      string or a hash."
 
-  has_feature :versionable, :install_options, :virtual_packages
+  has_feature :versionable, :install_options, :virtual_packages, :version_ranges
 
   commands :aptget => "/usr/bin/apt-get"
   commands :aptcache => "/usr/bin/apt-cache"

@@ -16,7 +16,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   This provider supports the `install_options` attribute, which allows command-line flags to be passed to yum.
   These options should be specified as an array where each element is either a string or a hash."
 
-  has_feature :install_options, :versionable, :virtual_packages, :install_only
+  has_feature :install_options, :versionable, :virtual_packages, :install_only, :version_ranges
 
   RPM_VERSION       = Puppet::Util::Package::Version::Rpm
   RPM_VERSION_RANGE = Puppet::Util::Package::Version::Range
