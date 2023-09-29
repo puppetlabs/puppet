@@ -257,6 +257,10 @@ describe Puppet::Type.type(:user) do
           it "has no autorequire" do
             expect(testuser.autorequire).to be_empty
           end
+
+          it "has no autobefore" do
+            expect(testuser.autobefore).to be_empty
+          end
         end
 
         context 'when gid specified as number-looking string' do
@@ -264,6 +268,10 @@ describe Puppet::Type.type(:user) do
 
           it "autorequires the group" do
             expect(testuser.autorequire).to match_array([an_object_having_attributes(source: testgroup, target: testuser)])
+          end
+
+          it "has no autobefore" do
+            expect(testuser.autobefore).to be_empty
           end
         end
 
@@ -273,6 +281,10 @@ describe Puppet::Type.type(:user) do
           it "autorequires the group" do
             expect(testuser.autorequire).to match_array([an_object_having_attributes(source: testgroup, target: testuser)])
           end
+
+          it "has no autobefore" do
+            expect(testuser.autobefore).to be_empty
+          end
         end
 
         context 'when gid specified as name' do
@@ -280,6 +292,60 @@ describe Puppet::Type.type(:user) do
 
           it "autorequires the group" do
             expect(testuser.autorequire).to match_array([an_object_having_attributes(source: testgroup, target: testuser)])
+          end
+
+          it "has no autobefore" do
+            expect(testuser.autobefore).to be_empty
+          end
+        end
+      end
+
+      context 'when ensure => absent' do
+        context 'when gid specified as :absent' do
+          let(:testuser) { described_class.new(:name => "testuser", :ensure => :absent, :gid => :absent) }
+
+          it "has no autorequire" do
+            expect(testuser.autorequire).to be_empty
+          end
+
+          it "has no autobefore" do
+            expect(testuser.autobefore).to be_empty
+          end
+        end
+
+        context 'when gid specified as number-looking string' do
+          let(:testuser) { described_class.new(:name => "testuser", :ensure => :absent, :gid => '50') }
+
+          it "has no autorequire" do
+            expect(testuser.autorequire).to be_empty
+          end
+
+          it "autobefores the group" do
+            expect(testuser.autobefore).to match_array([an_object_having_attributes(source: testuser, target: testgroup)])
+          end
+        end
+
+        context 'when gid specified as integer' do
+          let(:testuser) { described_class.new(:name => "testuser", :ensure => :absent, :gid => 50) }
+
+          it "has no autorequire" do
+            expect(testuser.autorequire).to be_empty
+          end
+
+          it "autobefores the group" do
+            expect(testuser.autobefore).to match_array([an_object_having_attributes(source: testuser, target: testgroup)])
+          end
+        end
+
+        context 'when gid specified as name' do
+          let(:testuser) { described_class.new(:name => "testuser", :ensure => :absent, :gid => 'foo') }
+
+          it "has no autorequire" do
+            expect(testuser.autorequire).to be_empty
+          end
+
+          it "autobefores the group" do
+            expect(testuser.autobefore).to match_array([an_object_having_attributes(source: testuser, target: testgroup)])
           end
         end
       end
