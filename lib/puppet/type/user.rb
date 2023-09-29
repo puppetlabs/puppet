@@ -459,41 +459,24 @@ module Puppet
       end
     end
 
-    # Autorequire the group, if it's around
+    # Autorequire groups, if they're around
     autorequire(:group) do
       autos = []
 
-      # autorequire primary group, if managed
-      obj = @parameters[:gid]
-      groups = obj.shouldorig if obj
-      if groups
-        groups = groups.collect { |group|
-          if group.is_a?(String) && group =~/^\d+$/
-            Integer(group)
+      if @parameters[:gid]&.shouldorig
+        groups_in_catalog = catalog.resources.filter { |r| r.is_a?(Puppet::Type.type(:group)) }
+        autos += @parameters[:gid].shouldorig.filter_map do |group|
+          if (group.is_a?(String) && group.match?(/^\d+$/)) || group.is_a?(Integer)
+            gid = Integer(group)
+            groups_in_catalog.find { |r| r.should(:gid) == gid }
           else
             group
           end
-        }
-        groups.each { |group|
-          case group
-          when Integer
-            resource = catalog.resources.find { |r| r.is_a?(Puppet::Type.type(:group)) && r.should(:gid) == group }
-            if resource
-              autos << resource
-            end
-          else
-            autos << group
-          end
-        }
+        end
       end
 
-      # autorequire groups, excluding primary group, if managed
-      obj = @parameters[:groups]
-      if obj
-        groups = obj.should
-        if groups
-          autos += groups.split(",")
-        end
+      if @parameters[:groups]&.should
+        autos += @parameters[:groups].should.split(",")
       end
 
       autos
