@@ -30,6 +30,24 @@ class Object
   end
 end
 
+unless Dir.singleton_methods.include?(:exists?)
+  class Dir
+    def self.exists?(file_name)
+      Puppet.warning('exists? is a deprecated name, use exist? instead')
+      Dir.exist?(file_name)
+    end
+  end
+end
+
+unless File.singleton_methods.include?(:exists?)
+  class File
+    def self.exists?(file_name)
+      Puppet.warning('exists? is a deprecated name, use exist? instead')
+      File.exist?(file_name)
+    end
+  end
+end
+
 require_relative '../../puppet/ssl/openssl_loader'
 unless Puppet::Util::Platform.jruby_fips?
   class OpenSSL::SSL::SSLContext

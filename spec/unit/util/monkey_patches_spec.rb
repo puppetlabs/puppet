@@ -2,6 +2,44 @@ require 'spec_helper'
 
 require 'puppet/util/monkey_patches'
 
+describe Dir do
+  describe '.exists?' do
+    it 'returns false if the directory does not exist' do
+      expect(Dir.exists?('/madeupdirectory')).to be false
+    end
+
+    it 'returns true if the directory exists' do
+      expect(Dir.exists?(__dir__)).to be true
+    end
+
+    if RUBY_VERSION >= '3.2' 
+      it 'logs a warning message' do
+        expect(Puppet).to receive(:warning).with('exists? is a deprecated name, use exist? instead')
+        Dir.exists?(__dir__)
+      end
+    end
+  end
+end
+
+describe File do
+  describe '.exists?' do
+    it 'returns false if the directory does not exist' do
+      expect(File.exists?('spec/unit/util/made_up_file')).to be false
+    end
+
+    it 'returns true if the file exists' do
+      expect(File.exists?(__FILE__)).to be true
+    end
+
+    if RUBY_VERSION >= '3.2'
+      it 'logs a warning message' do
+        expect(Puppet).to receive(:warning).with('exists? is a deprecated name, use exist? instead')
+        File.exists?(__FILE__)
+      end
+    end
+  end
+end
+
 describe Symbol do
   after :all do
     $unique_warnings.delete('symbol_comparison') if $unique_warnings
