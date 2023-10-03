@@ -1247,11 +1247,11 @@ EOT
     :hostcert_renewal_interval => {
       :default => "30d",
       :type    => :duration,
-      :desc    => "How often the Puppet agent refreshes its client certificate.
-         By default the client certificate is refreshed once every 30 days. If
-         a different duration is specified, then the agent will refresh its
-         client certificate whenever it next runs and the elapsed time since the
-         client certificate was last refreshed exceeds the duration.
+      :desc    => "When the Puppet agent refreshes its client certificate.
+         By default the client certificate will refresh 30 days before the certificate
+         expires. If a different duration is specified, then the agent will refresh its
+         client certificate whenever it next runs and if the client certificate expires
+         within the duration specified.
 
          In general, the duration should be greater than the `runinterval`.
          Setting it to 0 will disable automatic renewal.
