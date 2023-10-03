@@ -849,7 +849,7 @@ Where individual hosts store and look for their certificates\.
 .IP "" 0
 .
 .SS "hostcert_renewal_interval"
-How often the Puppet agent refreshes its client certificate\. By default the client certificate is refreshed once every 30 days\. If a different duration is specified, then the agent will refresh its client certificate whenever it next runs and the elapsed time since the client certificate was last refreshed exceeds the duration\.
+When the Puppet agent refreshes its client certificate\. By default the client certificate will refresh 30 days before the certificate expires\. If a different duration is specified, then the agent will refresh its client certificate whenever it next runs and if the client certificate expires within the duration specified\.
 .
 .P
 In general, the duration should be greater than the \fBruninterval\fR\. Setting it to 0 will disable automatic renewal\.
