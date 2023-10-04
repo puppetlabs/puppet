@@ -176,6 +176,13 @@ module Puppet::Util::Windows::ADSI
         sids = []
         adsi_child_collection.each do |m|
           sids << Puppet::Util::Windows::SID.ads_to_principal(m)
+        rescue Puppet::Util::Windows::Error => e
+          case e.code
+          when Puppet::Util::Windows::SID::ERROR_TRUSTED_RELATIONSHIP_FAILURE, Puppet::Util::Windows::SID::ERROR_TRUSTED_DOMAIN_FAILURE
+            sids << Puppet::Util::Windows::SID.unresolved_principal(m.name, m.sid)
+          else
+            raise e
+          end
         end
 
         sids
