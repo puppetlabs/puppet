@@ -95,6 +95,31 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
     end
   end
 
+  describe '.get_sids' do
+    it 'returns an array of SIDs given two an array of ADSI children' do
+      child1 = double('child1', name: 'Administrator', sid: 'S-1-5-21-3882680660-671291151-3888264257-500')
+      child2 = double('child2', name: 'Guest', sid: 'S-1-5-21-3882680660-671291151-3888264257-501')
+      allow(Puppet::Util::Windows::SID).to receive(:ads_to_principal).with(child1).and_return('Administrator')
+      allow(Puppet::Util::Windows::SID).to receive(:ads_to_principal).with(child2).and_return('Guest')
+      sids = Puppet::Util::Windows::ADSI::ADSIObject.get_sids([child1, child2])
+      expect(sids).to eq(['Administrator', 'Guest'])
+    end
+
+    it 'returns an array of SIDs given an ADSI child and ads_to_principal returning domain failure' do
+      child = double('child1', name: 'Administrator', sid: 'S-1-5-21-3882680660-671291151-3888264257-500')
+      allow(Puppet::Util::Windows::SID).to receive(:ads_to_principal).with(child).and_raise(Puppet::Util::Windows::Error.new('', Puppet::Util::Windows::SID::ERROR_TRUSTED_DOMAIN_FAILURE))
+      sids = Puppet::Util::Windows::ADSI::ADSIObject.get_sids([child])
+      expect(sids[0]).to eq(Puppet::Util::Windows::SID::Principal.new(child.name, child.sid, child.name, nil, :SidTypeUnknown))
+    end
+
+    it 'returns an array of SIDs given an ADSI child and ads_to_principal returning relationship failure' do
+      child = double('child1', name: 'Administrator', sid: 'S-1-5-21-3882680660-671291151-3888264257-500')
+      allow(Puppet::Util::Windows::SID).to receive(:ads_to_principal).with(child).and_raise(Puppet::Util::Windows::Error.new('', Puppet::Util::Windows::SID::ERROR_TRUSTED_RELATIONSHIP_FAILURE))
+      sids = Puppet::Util::Windows::ADSI::ADSIObject.get_sids([child])
+      expect(sids[0]).to eq(Puppet::Util::Windows::SID::Principal.new(child.name, child.sid, child.name, nil, :SidTypeUnknown))
+    end
+  end
+
   describe Puppet::Util::Windows::ADSI::User do
     let(:username)  { 'testuser' }
     let(:domain)    { 'DOMAIN' }
