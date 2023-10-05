@@ -36,6 +36,21 @@ Puppet::Functions.create_function(:split) do
     param 'Type[Regexp]', :pattern
   end
 
+  dispatch :split_String_sensitive do
+    param 'Sensitive[String]', :sensitive
+    param 'String', :pattern
+  end
+
+  dispatch :split_Regexp_sensitive do
+    param 'Sensitive[String]', :sensitive
+    param 'Regexp', :pattern
+  end
+
+  dispatch :split_RegexpType_sensitive do
+    param 'Sensitive[String]', :sensitive
+    param 'Type[Regexp]', :pattern
+  end
+
   def split_String(str, pattern)
     str.split(Regexp.compile(pattern))
   end
@@ -46,5 +61,17 @@ Puppet::Functions.create_function(:split) do
 
   def split_RegexpType(str, pattern)
     str.split(pattern.regexp)
+  end
+
+  def split_String_sensitive(sensitive, pattern)
+    Puppet::Pops::Types::PSensitiveType::Sensitive.new(split_String(sensitive.unwrap, pattern))
+  end
+
+  def split_Regexp_sensitive(sensitive, pattern)
+    Puppet::Pops::Types::PSensitiveType::Sensitive.new(split_Regexp(sensitive.unwrap, pattern))
+  end
+
+  def split_RegexpType_sensitive(sensitive, pattern)
+    Puppet::Pops::Types::PSensitiveType::Sensitive.new(split_RegexpType(sensitive.unwrap, pattern))
   end
 end
