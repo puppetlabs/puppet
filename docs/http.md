@@ -260,7 +260,7 @@ possible to additionally trust the system store when making HTTPS requests:
 
 ```ruby
 client = Puppet::HTTP::Client.new
-response = http.get("https://artifactory.example.com/java.tar.gz", trust_system_store: true)
+response = client.get("https://artifactory.example.com/java.tar.gz", options: { include_system_store: true })
 response.read_body do |data|
   puts "Read #{data.bytes}"
 end
