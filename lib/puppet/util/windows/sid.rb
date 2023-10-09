@@ -6,8 +6,10 @@ module Puppet::Util::Windows
     extend FFI::Library
 
     # missing from Windows::Error
-    ERROR_NONE_MAPPED           = 1332
-    ERROR_INVALID_SID_STRUCTURE = 1337
+    ERROR_NONE_MAPPED                  = 1332
+    ERROR_INVALID_SID_STRUCTURE        = 1337
+    ERROR_TRUSTED_DOMAIN_FAILURE       = 1788
+    ERROR_TRUSTED_RELATIONSHIP_FAILURE = 1789
 
     # Well Known SIDs
     Null                        = 'S-1-0'
