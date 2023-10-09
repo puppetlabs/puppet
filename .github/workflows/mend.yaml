@@ -11,7 +11,7 @@ jobs:
     name: Mend Monitor
     steps:
       - name: Checkout current PR
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
