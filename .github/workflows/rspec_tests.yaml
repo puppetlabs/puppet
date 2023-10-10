@@ -26,7 +26,7 @@ jobs:
     runs-on: ${{ matrix.cfg.os }}
     steps:
       - name: Checkout current PR
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install ruby version ${{ matrix.cfg.ruby }}
         uses: ruby/setup-ruby@v1
