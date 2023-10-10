@@ -1,0 +1,16 @@
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  issues: write
+
+jobs:
+  export:
+    uses: "puppetlabs/phoenix-github-actions/.github/workflows/jira.yml@main"
+    with:
+      jira-project: PUP
+      jira-base-url: ${{ vars.jira_base_url }}
+      jira-user-email: ${{ vars.jira_user_email }}
+    secrets:
+      jira-api-token: ${{ secrets.JIRA_ISSUES_ACTION }}
