@@ -33,7 +33,7 @@ end
 unless Dir.singleton_methods.include?(:exists?)
   class Dir
     def self.exists?(file_name)
-      Puppet.warning('exists? is a deprecated name, use exist? instead')
+      warn('exists? is a deprecated name, use exist? instead')
       Dir.exist?(file_name)
     end
   end
@@ -42,7 +42,7 @@ end
 unless File.singleton_methods.include?(:exists?)
   class File
     def self.exists?(file_name)
-      Puppet.warning('exists? is a deprecated name, use exist? instead')
+      warn('exists? is a deprecated name, use exist? instead')
       File.exist?(file_name)
     end
   end

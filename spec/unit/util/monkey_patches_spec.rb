@@ -14,7 +14,7 @@ describe Dir do
 
     if RUBY_VERSION >= '3.2' 
       it 'logs a warning message' do
-        expect(Puppet).to receive(:warning).with('exists? is a deprecated name, use exist? instead')
+        expect(Dir).to receive(:warn).with('exists? is a deprecated name, use exist? instead')
         Dir.exists?(__dir__)
       end
     end
@@ -33,7 +33,7 @@ describe File do
 
     if RUBY_VERSION >= '3.2'
       it 'logs a warning message' do
-        expect(Puppet).to receive(:warning).with('exists? is a deprecated name, use exist? instead')
+        expect(File).to receive(:warn).with('exists? is a deprecated name, use exist? instead')
         File.exists?(__FILE__)
       end
     end
