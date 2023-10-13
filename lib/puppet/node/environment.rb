@@ -591,10 +591,12 @@ class Puppet::Node::Environment
       if file == NO_MANIFEST
         empty_parse_result
       elsif File.directory?(file)
-        parse_results = Puppet::FileSystem::PathPattern.absolute(File.join(file, '**/*.pp')).glob.sort.map do | file_to_parse |
-          parser.file = file_to_parse
-          parser.parse
-          end
+        # JRuby does not properly perform Dir.glob operations with wildcards, (see PUP-11788 and https://github.com/jruby/jruby/issues/7836).
+        # We sort the results because Dir.glob order is inconsistent in Ruby < 3 (see PUP-10115).
+        parse_results = Puppet::FileSystem::PathPattern.absolute(File.join(file, '**/*')).glob.select {|globbed_file| globbed_file.end_with?('.pp')}.sort.map do | file_to_parse |
+                          parser.file = file_to_parse
+                          parser.parse
+                        end
         # Use a parser type specific merger to concatenate the results
         Puppet::Parser::AST::Hostclass.new('', :code => Puppet::Parser::ParserFactory.code_merger.concatenate(parse_results))
       else
