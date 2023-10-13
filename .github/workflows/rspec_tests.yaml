@@ -19,7 +19,7 @@ jobs:
           - {os: ubuntu-latest, ruby: '3.1'}
           - {os: ubuntu-20.04, ruby: '3.2'} # openssl 1.1.1
           - {os: ubuntu-22.04, ruby: '3.2'} # openssl 3
-          - {os: ubuntu-latest, ruby: 'jruby-9.4.2.0'}
+          - {os: ubuntu-latest, ruby: 'jruby-9.4.3.0'}
           - {os: windows-2019, ruby: '3.1'}
           - {os: windows-2019, ruby: '3.2'} # openssl 3
 
