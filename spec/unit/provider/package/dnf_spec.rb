@@ -42,6 +42,13 @@ describe Puppet::Type.type(:package).provider(:dnf) do
       allow(Facter).to receive(:value).with('os.release.major').and_return("8")
       expect(described_class).to be_default
     end
+
+    it "should be the default provider on Amazon Linux 2023" do
+      allow(Facter).to receive(:value).with('os.family').and_return(:redhat)
+      allow(Facter).to receive(:value).with('os.name').and_return(:amazon)
+      allow(Facter).to receive(:value).with('os.release.major').and_return("2023")
+      expect(described_class).to be_default
+    end
   end
 
   describe 'provider features' do

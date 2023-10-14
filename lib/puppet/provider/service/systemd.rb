@@ -19,7 +19,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   defaultfor 'os.family' => :redhat, 'os.name' => :fedora
   defaultfor 'os.family' => :suse
   defaultfor 'os.family' => :coreos
-  defaultfor 'os.name' => :amazon, 'os.release.major' => ["2"]
+  defaultfor 'os.name' => :amazon, 'os.release.major' => ["2", "2023"]
   defaultfor 'os.name' => :debian
   notdefaultfor 'os.name' => :debian, 'os.release.major' => ["5", "6", "7"] # These are using the "debian" method
   defaultfor 'os.name' => :LinuxMint
@@ -40,8 +40,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     return []
   end
 
-  # Static services cannot be enabled or disabled manually. Indirect services 
-  # should not be enabled or disabled due to limitations in systemd (see 
+  # Static services cannot be enabled or disabled manually. Indirect services
+  # should not be enabled or disabled due to limitations in systemd (see
   # https://github.com/systemd/systemd/issues/6681).
   def enabled_insync?(current)
     case cached_enabled?[:output]
