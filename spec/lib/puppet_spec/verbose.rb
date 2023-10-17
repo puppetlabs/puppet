@@ -2,9 +2,11 @@
 module Kernel
   def with_verbose_disabled
     verbose, $VERBOSE = $VERBOSE, nil
-    result = yield
-    $VERBOSE = verbose
-    return result
+    begin
+      yield
+    ensure
+      $VERBOSE = verbose
+    end
   end
 
   def with_verbose_enabled
