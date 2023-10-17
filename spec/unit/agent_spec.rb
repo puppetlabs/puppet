@@ -19,8 +19,8 @@ describe Puppet::Agent do
   before do
     @agent = Puppet::Agent.new(AgentTestClient, false)
 
-    # make Puppet::Application safe for stubbing; restore in an :after block; silence warnings for this.
-    with_verbose_disabled { Puppet::Application = Class.new(Puppet::Application) }
+    # make Puppet::Application safe for stubbing
+    stub_const('Puppet::Application', Class.new(Puppet::Application))
     allow(Puppet::Application).to receive(:clear?).and_return(true)
     Puppet::Application.class_eval do
       class << self
@@ -33,11 +33,6 @@ describe Puppet::Agent do
     ssl_context = Puppet::SSL::SSLContext.new
     machine = instance_double("Puppet::SSL::StateMachine", ensure_client_certificate: ssl_context)
     allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
-  end
-
-  after do
-    # restore Puppet::Application from stub-safe subclass, and silence warnings
-    with_verbose_disabled { Puppet::Application = Puppet::Application.superclass }
   end
 
   it "should set its client class at initialization" do

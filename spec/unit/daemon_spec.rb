@@ -3,13 +3,6 @@ require 'puppet/daemon'
 require 'puppet/agent'
 require 'puppet/configurer'
 
-def without_warnings
-  flag = $VERBOSE
-  $VERBOSE = nil
-  yield
-  $VERBOSE = flag
-end
-
 describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
   include PuppetSpec::Files
 
@@ -91,14 +84,8 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
   describe "when stopping" do
     before do
       allow(Puppet::Util::Log).to receive(:close_all)
-      # to make the global safe to mock, set it to a subclass of itself,
-      # then restore it in an after pass
-      without_warnings { Puppet::Application = Class.new(Puppet::Application) }
-    end
-
-    after do
-      # restore from the superclass so we lose the stub garbage
-      without_warnings { Puppet::Application = Puppet::Application.superclass }
+      # to make the global safe to mock, set it to a subclass of itself
+      stub_const('Puppet::Application', Class.new(Puppet::Application))
     end
 
     it 'should request a stop from Puppet::Application' do
@@ -143,11 +130,7 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
 
   describe "when restarting" do
     before do
-      without_warnings { Puppet::Application = Class.new(Puppet::Application) }
-    end
-
-    after do
-      without_warnings { Puppet::Application = Puppet::Application.superclass }
+      stub_const('Puppet::Application', Class.new(Puppet::Application))
     end
 
     it 'should set Puppet::Application.restart!' do
