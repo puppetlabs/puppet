@@ -12,10 +12,12 @@ describe Dir do
       expect(Dir.exists?(__dir__)).to be true
     end
 
-    if RUBY_VERSION >= '3.2' 
+    if RUBY_VERSION >= '3.2'
       it 'logs a warning message' do
-        expect(Dir).to receive(:warn).with('exists? is a deprecated name, use exist? instead')
-        Dir.exists?(__dir__)
+        expect(Dir).to receive(:warn).with("Dir.exists?('#{__dir__}') is deprecated, use Dir.exist? instead")
+        with_verbose_enabled do
+          Dir.exists?(__dir__)
+        end
       end
     end
   end
@@ -33,8 +35,10 @@ describe File do
 
     if RUBY_VERSION >= '3.2'
       it 'logs a warning message' do
-        expect(File).to receive(:warn).with('exists? is a deprecated name, use exist? instead')
-        File.exists?(__FILE__)
+        expect(File).to receive(:warn).with("File.exists?('#{__FILE__}') is deprecated, use File.exist? instead")
+        with_verbose_enabled do
+          File.exists?(__FILE__)
+        end
       end
     end
   end

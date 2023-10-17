@@ -33,7 +33,7 @@ end
 unless Dir.singleton_methods.include?(:exists?)
   class Dir
     def self.exists?(file_name)
-      warn('exists? is a deprecated name, use exist? instead')
+      warn("Dir.exists?('#{file_name}') is deprecated, use Dir.exist? instead") if $VERBOSE
       Dir.exist?(file_name)
     end
   end
@@ -42,7 +42,7 @@ end
 unless File.singleton_methods.include?(:exists?)
   class File
     def self.exists?(file_name)
-      warn('exists? is a deprecated name, use exist? instead')
+      warn("File.exists?('#{file_name}') is deprecated, use File.exist? instead") if $VERBOSE
       File.exist?(file_name)
     end
   end
