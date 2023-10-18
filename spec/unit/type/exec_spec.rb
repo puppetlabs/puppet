@@ -266,15 +266,7 @@ RSpec.describe Puppet::Type.type(:exec) do
 
     describe "on platforms where path separator is not :" do
       before :each do
-        @old_verbosity = $VERBOSE
-        $VERBOSE = nil
-        @old_separator = File::PATH_SEPARATOR
-        File::PATH_SEPARATOR = 'q'
-      end
-
-      after :each do
-        File::PATH_SEPARATOR = @old_separator
-        $VERBOSE = @old_verbosity
+        stub_const('File::PATH_SEPARATOR', 'q')
       end
 
       it "should use the path separator of the current platform" do
