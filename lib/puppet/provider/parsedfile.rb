@@ -21,10 +21,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   extend Puppet::Util::FileParsing
 
   class << self
-    attr_accessor :default_target, :target, :raise_prefetch_errors
+    attr_accessor :default_target, :raise_prefetch_errors
   end
-
-  attr_accessor :property_hash
 
   def self.clean(hash)
     newhash = hash.dup
@@ -247,7 +245,9 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         resource = match(record, matchers)
         if resource
           matchers.delete(resource.title)
-          record[:name] = resource[:name]
+          resource.class.key_attributes.each do |name|
+            record[name] = resource[name]
+          end
           resource.provider = new(record)
         end
       end
@@ -263,9 +263,10 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   #
   # @return [Puppet::Resource, nil] The resource if found, else nil
   def self.resource_for_record(record, resources)
-    name = record[:name]
-    if name
-      resources[name]
+    resources.values.find do |resource|
+      resource.class.key_attributes.all? do |name|
+        record[name] == resource[name]
+      end
     end
   end
 
@@ -309,12 +310,6 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     raise Puppet::DevError, _("Prefetching %{target} for provider %{name} returned nil") % { target: target, name: self.name } unless target_records
 
     target_records
-  end
-
-  # Is there an existing record with this name?
-  def self.record?(name)
-    return nil unless @records
-    @records.find { |r| r[:name] == name }
   end
 
   # Retrieve the text for the file. Returns nil in the unlikely
@@ -386,12 +381,10 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     targets += @target_objects.keys
 
     # Lastly, check the file from any resource instances
-    if resources
-      resources.each do |name, resource|
-        value = resource.should(:target)
-        if value
-          targets << value
-        end
+    resources&.each do |name, resource|
+      value = resource[:target]
+      if value
+        targets << value
       end
     end
 
@@ -429,17 +422,15 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
       end
     end
     mark_target_modified
-    (@resource.class.name.to_s + "_created").intern
   end
 
   def destroy
     # We use the method here so it marks the target as modified.
     self.ensure = :absent
-    (@resource.class.name.to_s + "_deleted").intern
   end
 
   def exists?
-    !(@property_hash[:ensure] == :absent or @property_hash[:ensure].nil?)
+    @property_hash[:ensure] == :present
   end
 
   # Write our data to disk.
@@ -449,7 +440,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     # If the target isn't set, then this is our first modification, so
     # mark it for flushing.
     unless @property_hash[:target]
-      @property_hash[:target] = @resource.should(:target) || self.class.default_target
+      @property_hash[:target] = @resource[:target] || self.class.default_target
       self.class.modified(@property_hash[:target])
     end
     @resource.class.key_attributes.each do |attr|
@@ -465,13 +456,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     # The 'record' could be a resource or a record, depending on how the provider
     # is initialized.  If we got an empty property hash (probably because the resource
     # is just being initialized), then we want to set up some defaults.
-    @property_hash = self.class.record?(resource[:name]) || {:record_type => self.class.name, :ensure => :absent} if @property_hash.empty?
-  end
-
-  # Retrieve the current state from disk.
-  def prefetch
-    raise Puppet::DevError, _("Somehow got told to prefetch with no resource set") unless @resource
-    self.class.prefetch(@resource[:name] => @resource)
+    @property_hash[:record_type] ||= self.class.name
   end
 
   def record_type
