@@ -25,6 +25,23 @@ describe Puppet::Resource::Catalog::Rest do
     expect(described_class.indirection.find(certname)).to be_a(Puppet::Resource::Catalog)
   end
 
+  it 'logs a notice when requesting a catalog' do
+    expect(Puppet).to receive(:notice).with("Requesting catalog from compiler.example.com:8140")
+
+    stub_request(:post, uri).to_return(**catalog_response(catalog))
+
+    described_class.indirection.find(certname)
+  end
+
+  it 'logs a notice when the IP address is resolvable when requesting a catalog' do
+    allow(Resolv).to receive_message_chain(:getaddress).and_return('192.0.2.0')
+    expect(Puppet).to receive(:notice).with("Requesting catalog from compiler.example.com:8140 (192.0.2.0)")
+
+    stub_request(:post, uri).to_return(**catalog_response(catalog))
+
+    described_class.indirection.find(certname)
+  end
+
   it "serializes the environment" do
     stub_request(:post, uri)
       .with(query: hash_including('environment' => 'outerspace'))
