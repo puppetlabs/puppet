@@ -53,12 +53,20 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
 
     if node.environment
-      # If the requested environment doesn't match the server specified environment,
-      # as determined by the node terminus, and the request wants us to check for an
+      # If the requested environment name doesn't match the server specified environment
+      # name, as determined by the node terminus, and the request wants us to check for an
       # environment mismatch, then return an empty catalog with the server-specified
       # enviroment.
-      if request.remote? && request.options[:check_environment] && node.environment != request.environment
-        return Puppet::Resource::Catalog.new(node.name, node.environment)
+      if request.remote? && request.options[:check_environment]
+        # The "environment" may be same while environment objects differ. This
+        # is most likely because the environment cache was flushed between the request
+        # processing and node lookup. Environment overrides `==` but requires the
+        # name and modulepath to be the same. When using versioned environment dirs the
+        # same "environment" can have different modulepaths so simply compare names here.
+        if node.environment.name != request.environment.name
+          Puppet.warning _("Requested environment '%{request_env}' did not match server specified environment '%{server_env}'") % {request_env: request.environment.name, server_env: node.environment.name}
+          return Puppet::Resource::Catalog.new(node.name, node.environment)
+        end
       end
 
       node.environment.with_text_domain do
