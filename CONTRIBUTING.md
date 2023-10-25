@@ -32,7 +32,6 @@ the [puppet-dev mailing list](https://groups.google.com/forum/#!forum/puppet-dev
 * Submit a Jira ticket for your issue if one does not already exist.
   * Clearly describe the issue including steps to reproduce when it is a bug.
   * Make sure you fill in the earliest version that you know has the issue.
-  * A ticket is not necessary for [trivial changes](https://puppet.com/community/trivial-patch-exemption-policy)
 * Fork the repository on GitHub.
 
 ## Making Changes
@@ -84,29 +83,6 @@ When adding user-facing strings to your work, follow these guidelines:
 
 It is the responsibility of contributors and code reviewers to ensure that all
 user-facing strings are marked in new PRs before merging.
-
-## Making Trivial Changes
-
-For [changes of a trivial nature](https://puppet.com/community/trivial-patch-exemption-policy), it is not always necessary to create a new
-ticket in Jira. In this case, it is appropriate to start the first line of a
-commit with one of `(docs)`, `(maint)`, or `(packaging)` instead of a ticket
-number.
-
-If a Jira ticket exists for the documentation commit, you can include it
-after the `(docs)` token.
-
-```
-    (docs)(DOCUMENT-000) Add docs commit example to CONTRIBUTING
-
-    There is no example for contributing a documentation commit
-    to the Puppet repository. This is a problem because the contributor
-    is left to assume how a commit of this nature may appear.
-
-    The first line is a real-life imperative statement with '(docs)' in
-    place of what would have been the PUP project ticket number in a
-    non-documentation related commit. The body describes the nature of
-    the new documentation or comments added.
-```
 
 For commits that address trivial repository maintenance tasks or packaging
 issues, start the first line of the commit with `(maint)` or `(packaging)`,
