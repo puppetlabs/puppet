@@ -56,11 +56,13 @@ describe 'Puppet::Type::Service::Provider::Systemd',
     end
   end
 
-  it "should be the default provider on Amazon Linux 2.0" do
-    allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
-    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:amazon)
-    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("2")
-    expect(provider_class).to be_default
+  [ 2, 2023 ].each do |ver|
+    it "should be the default provider on Amazon Linux #{ver}" do
+      allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return(:amazon)
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("#{ver}")
+      expect(provider_class).to be_default
+    end
   end
 
   it "should not be the default provider on Amazon Linux 2017.09" do
