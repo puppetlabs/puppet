@@ -33,6 +33,7 @@ Puppet::Type.type(:package).provide :dnf, :parent => :yum do
   notdefaultfor 'os.name' => :fedora, 'os.release.major' => (19..21).to_a
   defaultfor 'os.family' => :redhat
   notdefaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
+  defaultfor 'os.name' => :amazon, 'os.release.major' => ["2023"]
 
   def self.update_command
     # In DNF, update is deprecated for upgrade
