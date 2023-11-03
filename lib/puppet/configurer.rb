@@ -194,7 +194,6 @@ class Puppet::Configurer
         path.push(key)
         parse_fact_name_and_value_limits(value, path)
         path.pop
-        @number_of_facts += 1
       end
     when Array
       object.each_with_index do |e, idx|
@@ -205,6 +204,7 @@ class Puppet::Configurer
     else
       check_fact_name_length(path.join(), path.size)
       check_fact_values_length(object)
+      @number_of_facts += 1
     end
   end
 
