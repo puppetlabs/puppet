@@ -5,7 +5,7 @@ require_relative '../../puppet/util/package'
 #
 # Prototype:
 #
-#     \$result = versioncmp(a, b)
+#     $result = versioncmp(a, b)
 #
 # Where a and b are arbitrary version strings.
 #
