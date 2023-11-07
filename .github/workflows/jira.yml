@@ -1,3 +1,6 @@
+---
+name: Export issue to Jira
+
 on:
   issues:
     types: [labeled]
