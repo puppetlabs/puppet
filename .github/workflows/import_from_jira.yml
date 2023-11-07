@@ -1,0 +1,23 @@
+---
+name: Import issue from JIRA
+
+on:
+  workflow_dispatch:
+    inputs:
+      jira-key:
+        description: The JIRA issue key, e.g. PUP-123
+        required: true
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  import-issue:
+    uses: "puppetlabs/phoenix-github-actions/.github/workflows/import_from_jira.yml@main"
+    with:
+      jira-key: ${{ inputs.jira-key }}
+      jira-base-url: ${{ vars.jira_base_url }}
+      jira-user-email: ${{ vars.jira_user_email }}
+    secrets:
+      jira-api-token: ${{ secrets.JIRA_ISSUES_ACTION }}
