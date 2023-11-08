@@ -110,6 +110,8 @@ module Puppet
         provider.start
       end
 
+      newvalue(:absent)
+
       aliasvalue(:false, :stopped)
       aliasvalue(:true, :running)
 
