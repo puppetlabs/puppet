@@ -33,6 +33,19 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
     end
   end
 
+  context 'server identification' do
+    it 'emits a notice if the server sends the X-Puppet-Compiler-Name header' do
+      server.start_server do |port|
+        Puppet[:serverport] = port
+        expect {
+          agent.command_line.args << '--test'
+          agent.run
+        }.to exit_with(0)
+               .and output(%r{Notice: Catalog compiled by test-compiler-hostname}).to_stdout
+      end
+    end
+  end
+
   context 'server_list' do
     it "uses the first server in the list" do
       Puppet[:server_list] = '127.0.0.1'
