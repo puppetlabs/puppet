@@ -592,13 +592,17 @@ module Puppet
       cmd = self[:command]
       cmd = cmd[0] if cmd.is_a? Array
 
-      cmd.scan(file_regex) { |str|
-        reqs << str
-      }
+      if cmd.is_a?(Puppet::Pops::Evaluator::DeferredValue)
+        self.debug("The 'command' parameter is deferred and cannot be autorequired")
+      else
+        cmd.scan(file_regex) { |str|
+          reqs << str
+        }
 
-      cmd.scan(/^"([^"]+)"/) { |str|
-        reqs << str
-      }
+        cmd.scan(/^"([^"]+)"/) { |str|
+          reqs << str
+        }
+      end
 
       [:onlyif, :unless].each { |param|
         tmp = self[param]
@@ -613,7 +617,11 @@ module Puppet
           # unqualified files, but, well, that's a bit more annoying
           # to do.
           line = line[0] if line.is_a? Array
-          reqs += line.scan(file_regex)
+          if line.is_a?(Puppet::Pops::Evaluator::DeferredValue)
+            self.debug("The '#{param}' parameter is deferred and cannot be autorequired")
+          else
+            reqs += line.scan(file_regex)
+          end
         end
       }
 
