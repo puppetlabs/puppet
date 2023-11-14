@@ -237,6 +237,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
           save_result, report = Puppet::Resource.indirection.save(resource, key)
           status = report.resource_statuses[resource.ref]
           raise "Failed to manage resource #{resource.ref}" if status&.failed?
+
           [ save_result ]
         end
       else
