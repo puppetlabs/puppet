@@ -19,6 +19,7 @@ class PuppetSpec::Puppetserver
   class CatalogServlet < WEBrick::HTTPServlet::AbstractServlet
     def do_POST request, response
       response['Content-Type'] = 'application/json'
+      response['X-Puppet-Compiler-Name'] = 'test-compiler-hostname'
       catalog = Puppet::Resource::Catalog.new(Puppet[:certname], 'production')
       response.body = catalog.render(:json)
     end

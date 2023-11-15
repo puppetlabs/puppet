@@ -119,6 +119,10 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       params: { environment: environment },
     )
 
+    if (compiler = response['X-Puppet-Compiler-Name'])
+      Puppet.notice("Catalog compiled by #{compiler}")
+    end
+
     process_response(response)
 
     [response, deserialize(response, Puppet::Resource::Catalog)]
