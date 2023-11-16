@@ -252,6 +252,19 @@ RSpec.describe Puppet::Type.type(:exec) do
     expect(dependencies.collect(&:to_s)).to eq([Puppet::Relationship.new(tmp, execer).to_s])
   end
 
+  it "skips autorequire for deferred commands" do
+    foo = make_absolute('/bin/foo')
+    catalog = Puppet::Resource::Catalog.new
+    tmp = Puppet::Type.type(:file).new(:name => foo)
+    execer = Puppet::Type.type(:exec).new(:name => 'test array', :command => Puppet::Pops::Evaluator::DeferredValue.new(nil))
+
+    catalog.add_resource tmp
+    catalog.add_resource execer
+    dependencies = execer.autorequire(catalog)
+
+    expect(dependencies.collect(&:to_s)).to eq([])
+  end
+
   describe "when handling the path parameter" do
     expect = %w{one two three four}
     { "an array"                                      => expect,

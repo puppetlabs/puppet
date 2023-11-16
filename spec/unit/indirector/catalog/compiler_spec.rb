@@ -271,6 +271,23 @@ describe Puppet::Resource::Catalog::Compiler do
         expect(catalog).to have_resource('Stage[main]')
       end
 
+      # versioned environment directories can cause this
+      it 'allows environments with the same name but mismatched modulepaths' do
+        envs = Puppet.lookup(:environments)
+        env_server = envs.get!(:env_server)
+        v1_env = env_server.override_with({ modulepath: ['/code-v1/env-v1/'] })
+        v2_env = env_server.override_with({ modulepath: ['/code-v2/env-v2/'] })
+
+        @request.options[:check_environment] = "true"
+        @request.environment = v1_env
+        node.environment = v2_env
+
+        catalog = compiler.find(@request)
+
+        expect(catalog.environment).to eq('env_server')
+        expect(catalog).to have_resource('Stage[main]')
+      end
+
       it 'returns an empty catalog if asked to check the environment and they are mismatched' do
         @request.options[:check_environment] = "true"
         catalog = compiler.find(@request)
