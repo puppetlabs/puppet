@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 8.2.0-29-g809d465a09\n"
+"Project-Id-Version: Puppet automation framework 8.3.1-65-g3a4b5cbf69\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2023-09-21 23:07+0000\n"
-"PO-Revision-Date: 2023-09-21 23:07+0000\n"
+"POT-Creation-Date: 2023-11-16 23:22+0000\n"
+"PO-Revision-Date: 2023-11-16 23:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -162,7 +162,7 @@ msgstr ""
 msgid "Could not set logdest to %{dest}."
 msgstr ""
 
-#: ../lib/puppet/application.rb:581
+#: ../lib/puppet/application.rb:585
 msgid "No help available for puppet %{app_name}"
 msgstr ""
 
@@ -450,59 +450,59 @@ msgstr ""
 msgid "The certificate for '%{name}' has not yet been signed"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:156
+#: ../lib/puppet/application/ssl.rb:166
 msgid "Completed SSL initialization"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:160
+#: ../lib/puppet/application/ssl.rb:170
 msgid "Unknown action '%{action}'"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:181
+#: ../lib/puppet/application/ssl.rb:191
 msgid "Submitted certificate request for '%{name}' to %{url}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:184
+#: ../lib/puppet/application/ssl.rb:194
 msgid "Could not submit certificate request for '%{name}' to %{url} due to a conflict on the server"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:186 ../lib/puppet/application/ssl.rb:189
+#: ../lib/puppet/application/ssl.rb:196 ../lib/puppet/application/ssl.rb:199
 msgid "Failed to submit certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:201
+#: ../lib/puppet/application/ssl.rb:211
 msgid "Generated certificate request in '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:203
+#: ../lib/puppet/application/ssl.rb:213
 msgid "Failed to generate certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:211
+#: ../lib/puppet/application/ssl.rb:221
 msgid "Downloading certificate '%{name}' from %{url}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:215
+#: ../lib/puppet/application/ssl.rb:225
 msgid "Downloaded certificate '%{name}' with fingerprint %{fingerprint}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:228 ../lib/puppet/application/ssl.rb:231
+#: ../lib/puppet/application/ssl.rb:238 ../lib/puppet/application/ssl.rb:241
 msgid "Failed to download certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:260 ../lib/puppet/application/ssl.rb:263
+#: ../lib/puppet/application/ssl.rb:270 ../lib/puppet/application/ssl.rb:273
 msgid "Failed to connect to the CA to determine if certificate %{certname} has been cleaned"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:290
+#: ../lib/puppet/application/ssl.rb:300
 msgid "Removed %{label} %{path}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:307 ../lib/puppet/ssl/state_machine.rb:273
+#: ../lib/puppet/application/ssl.rb:317 ../lib/puppet/ssl/state_machine.rb:273
 msgid "Creating a new EC SSL key for %{name} using curve %{curve}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:310
+#: ../lib/puppet/application/ssl.rb:320
 msgid "Creating a new SSL key for %{name}"
 msgstr ""
 
@@ -2306,120 +2306,124 @@ msgstr ""
 msgid "Catalog for %{request} was requested with fact definition for the wrong node (%{fact_name})."
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:86
+#: ../lib/puppet/indirector/catalog/compiler.rb:68
+msgid "Requested environment '%{request_env}' did not match server specified environment '%{server_env}'"
+msgstr ""
+
+#: ../lib/puppet/indirector/catalog/compiler.rb:94
 msgid "Setup server facts for compiling"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:114
+#: ../lib/puppet/indirector/catalog/compiler.rb:122
 msgid "Unsupported facts format"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:155
+#: ../lib/puppet/indirector/catalog/compiler.rb:163
 msgid "Not inlining absent resource"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:158
+#: ../lib/puppet/indirector/catalog/compiler.rb:166
 msgid "Not inlining resource without sources"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:161
+#: ../lib/puppet/indirector/catalog/compiler.rb:169
 msgid "Not inlining unsupported source scheme"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:183
+#: ../lib/puppet/indirector/catalog/compiler.rb:191
 msgid "Not inlining file outside environment"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:189
+#: ../lib/puppet/indirector/catalog/compiler.rb:197
 msgid "Inlining file metadata"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:279
+#: ../lib/puppet/indirector/catalog/compiler.rb:287
 msgid "Could not get metadata for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:300
+#: ../lib/puppet/indirector/catalog/compiler.rb:308
 msgid "Unable to find a common checksum type between agent '%{agent_type}' and master '%{master_type}'."
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:307
+#: ../lib/puppet/indirector/catalog/compiler.rb:315
 msgid "Compiled static catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:308
+#: ../lib/puppet/indirector/catalog/compiler.rb:316
 msgid "Compiled static catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:310
+#: ../lib/puppet/indirector/catalog/compiler.rb:318
 msgid "Compiled static catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:311
+#: ../lib/puppet/indirector/catalog/compiler.rb:319
 msgid "Compiled static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:316
+#: ../lib/puppet/indirector/catalog/compiler.rb:324
 msgid "Compiled catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:317
+#: ../lib/puppet/indirector/catalog/compiler.rb:325
 msgid "Compiled catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:319
+#: ../lib/puppet/indirector/catalog/compiler.rb:327
 msgid "Compiled catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:320
+#: ../lib/puppet/indirector/catalog/compiler.rb:328
 msgid "Compiled catalog for %{node}"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:342
+#: ../lib/puppet/indirector/catalog/compiler.rb:350
 msgid "Inlined resource metadata into static catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:344
+#: ../lib/puppet/indirector/catalog/compiler.rb:352
 msgid "Inlined resource metadata into static catalog for %{node} in environment %{environment}"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:347
+#: ../lib/puppet/indirector/catalog/compiler.rb:355
 msgid "Inlined resource metadata into static catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:349
+#: ../lib/puppet/indirector/catalog/compiler.rb:357
 msgid "Inlined resource metadata into static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:366
+#: ../lib/puppet/indirector/catalog/compiler.rb:374
 msgid "Found node information"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:374
+#: ../lib/puppet/indirector/catalog/compiler.rb:382
 msgid "Failed when searching for node %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:394
+#: ../lib/puppet/indirector/catalog/compiler.rb:402
 msgid "Invalid option use_node for a remote request"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:413
+#: ../lib/puppet/indirector/catalog/compiler.rb:421
 msgid "Could not find node '%{name}'; cannot compile"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:446
+#: ../lib/puppet/indirector/catalog/compiler.rb:454
 msgid "Could not retrieve fact servername"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:455
+#: ../lib/puppet/indirector/catalog/compiler.rb:463
 msgid "Could not retrieve either serverip or serverip6 fact"
 msgstr ""
 
@@ -2435,7 +2439,7 @@ msgstr ""
 msgid "Unable to serialize catalog to json, no other acceptable format"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/rest.rb:34 ../lib/puppet/indirector/facts/rest.rb:21 ../lib/puppet/indirector/file_content/rest.rb:30 ../lib/puppet/indirector/file_metadata/rest.rb:27 ../lib/puppet/indirector/node/rest.rb:24
+#: ../lib/puppet/indirector/catalog/rest.rb:42 ../lib/puppet/indirector/facts/rest.rb:21 ../lib/puppet/indirector/file_content/rest.rb:30 ../lib/puppet/indirector/file_metadata/rest.rb:27 ../lib/puppet/indirector/node/rest.rb:24
 msgid "Find %{uri} resulted in 404 with the message: %{body}"
 msgstr ""
 
@@ -4015,7 +4019,7 @@ msgstr ""
 msgid "Please remove it."
 msgstr ""
 
-#: ../lib/puppet/parameter/value_collection.rb:188 ../lib/puppet/type/resources.rb:85
+#: ../lib/puppet/parameter/value_collection.rb:188 ../lib/puppet/type/resources.rb:86
 msgid "Invalid value %{value}."
 msgstr ""
 
@@ -8075,7 +8079,7 @@ msgstr ""
 msgid "Check %{value} exceeded timeout"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:654
+#: ../lib/puppet/type/exec.rb:662
 msgid "'%{cmd}' won't be executed because of failed check '%{check}'"
 msgstr ""
 
@@ -8260,27 +8264,27 @@ msgstr ""
 msgid "You cannot use \"mark\" property while \"ensure\" is one of [\"absent\", \"purged\"]"
 msgstr ""
 
-#: ../lib/puppet/type/resources.rb:16
+#: ../lib/puppet/type/resources.rb:17
 msgid "Could not find resource type '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/type/resources.rb:34
+#: ../lib/puppet/type/resources.rb:35
 msgid "Purging resources of type %{res_type} is not supported, since they cannot be queried from the system"
 msgstr ""
 
-#: ../lib/puppet/type/resources.rb:36
+#: ../lib/puppet/type/resources.rb:37
 msgid "Purging is only supported on types that accept 'ensure'"
 msgstr ""
 
-#: ../lib/puppet/type/resources.rb:58
+#: ../lib/puppet/type/resources.rb:59
 msgid "Invalid value %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/resources.rb:110
+#: ../lib/puppet/type/resources.rb:111
 msgid "The 'ensure' attribute on %{name} resources does not accept 'absent' as a value"
 msgstr ""
 
-#: ../lib/puppet/type/resources.rb:133
+#: ../lib/puppet/type/resources.rb:134
 msgid "Could not find resource type"
 msgstr ""
 
@@ -9265,39 +9269,39 @@ msgstr ""
 msgid "Value must be in DOMAIN\\%{object_class} style syntax"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:189
+#: ../lib/puppet/util/windows/adsi.rb:196
 msgid "Could not resolve name: %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:231
+#: ../lib/puppet/util/windows/adsi.rb:238
 msgid "Subclass must implement class-level method 'list_all'!"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:284
+#: ../lib/puppet/util/windows/adsi.rb:291
 msgid "Puppet is not able to create/delete domain %{object_class} objects with the %{object_class} resource."
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:288
+#: ../lib/puppet/util/windows/adsi.rb:295
 msgid "%{object_class} update failed: %{error}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:314
+#: ../lib/puppet/util/windows/adsi.rb:321
 msgid "Cannot create user if group '%{name}' exists."
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:454
+#: ../lib/puppet/util/windows/adsi.rb:461
 msgid "Unrecognized ADS UserFlags: %{unrecognized_flags}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:498 ../lib/puppet/util/windows/adsi.rb:531
+#: ../lib/puppet/util/windows/adsi.rb:505 ../lib/puppet/util/windows/adsi.rb:538
 msgid "Failed to get user name"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:581
+#: ../lib/puppet/util/windows/adsi.rb:588
 msgid "Cannot delete user profile for '%{sid}' prior to Vista SP1"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:599
+#: ../lib/puppet/util/windows/adsi.rb:606
 msgid "Cannot create group if user '%{name}' exists."
 msgstr ""
 
@@ -9475,7 +9479,7 @@ msgstr ""
 msgid "An attempt to set mode %{mode} on item %{path} would result in the group, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:434 ../lib/puppet/util/windows/security.rb:451 ../lib/puppet/util/windows/sid.rb:160 ../lib/puppet/util/windows/sid.rb:222 ../lib/puppet/util/windows/user.rb:59
+#: ../lib/puppet/util/windows/security.rb:434 ../lib/puppet/util/windows/security.rb:451 ../lib/puppet/util/windows/sid.rb:162 ../lib/puppet/util/windows/sid.rb:224 ../lib/puppet/util/windows/user.rb:59
 msgid "Invalid SID"
 msgstr ""
 
@@ -9631,19 +9635,19 @@ msgstr ""
 msgid "Timed out while waiting for the pending transition from %{pending_state} to %{final_state} to finish. The current state is %{current_state}."
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:99
+#: ../lib/puppet/util/windows/sid.rb:101
 msgid "Octet string must be an array of bytes"
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:166
+#: ../lib/puppet/util/windows/sid.rb:168
 msgid "Failed to convert binary SID"
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:171
+#: ../lib/puppet/util/windows/sid.rb:173
 msgid "ConvertSidToStringSidW failed to allocate buffer for sid"
 msgstr ""
 
-#: ../lib/puppet/util/windows/sid.rb:191
+#: ../lib/puppet/util/windows/sid.rb:193
 msgid "Failed to convert string SID: %{string_sid}"
 msgstr ""
 
