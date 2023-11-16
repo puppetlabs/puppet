@@ -2,6 +2,7 @@
 require_relative '../../puppet/ssl'
 
 module Puppet::SSL
+  # The `keyword_init: true` option is no longer needed in Ruby >= 3.2
   SSLContext = Struct.new(
     :store,
     :cacerts,
@@ -10,22 +11,16 @@ module Puppet::SSL
     :client_cert,
     :client_chain,
     :revocation,
-    :verify_peer
+    :verify_peer,
+    keyword_init: true
   ) do
-    DEFAULTS = {
-      cacerts: [],
-      crls: [],
-      client_chain: [],
-      revocation: true,
-      verify_peer: true
-    }.freeze
-
-    # This is an idiom to initialize a Struct from keyword
-    # arguments. Ruby 2.5 introduced `keyword_init: true` for
-    # that purpose, but we need to support older versions.
-    def initialize(kwargs = {})
-      super({})
-      DEFAULTS.merge(**kwargs).each { |k,v| self[k] = v }
+    def initialize(*)
+      super
+      self[:cacerts] ||= []
+      self[:crls] ||= []
+      self[:client_chain] ||= []
+      self[:revocation] = true if self[:revocation].nil?
+      self[:verify_peer] = true if self[:verify_peer].nil?
     end
   end
 end
