@@ -5,6 +5,7 @@ require_relative '../puppet/util/command_line/puppet_option_parser'
 require 'forwardable'
 require 'fileutils'
 require 'concurrent'
+require_relative 'concurrent/lock'
 
 # The class for handling configuration files.
 class Puppet::Settings
@@ -146,8 +147,21 @@ class Puppet::Settings
     @configuration_file = nil
 
     # And keep a per-environment cache
-    @cache = Concurrent::Hash.new { |hash, key| hash[key] = Concurrent::Hash.new }
-    @values = Concurrent::Hash.new { |hash, key| hash[key] = Concurrent::Hash.new }
+    # We can't use Concurrent::Map because we want to preserve insertion order
+    @cache_lock = Puppet::Concurrent::Lock.new
+    @cache = Concurrent::Hash.new do |hash, key|
+      @cache_lock.synchronize do
+        break hash[key] if hash.key?(key)
+        hash[key] = Concurrent::Hash.new
+      end
+    end
+    @values_lock = Puppet::Concurrent::Lock.new
+    @values = Concurrent::Hash.new do |hash, key|
+      @values_lock.synchronize do
+        break hash[key] if hash.key?(key)
+        hash[key] = Concurrent::Hash.new
+      end
+    end
 
     # The list of sections we've used.
     @used = []
