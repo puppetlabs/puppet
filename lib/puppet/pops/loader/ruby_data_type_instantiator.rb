@@ -19,7 +19,7 @@ class Puppet::Pops::Loader::RubyDataTypeInstantiator
     # make the private loader available in a binding to allow it to be passed on
     loader_for_type = loader.private_loader
     here = get_binding(loader_for_type)
-    created = eval(ruby_code_string, here, source_ref, 1)
+    created = eval(ruby_code_string, here, source_ref, 1) # rubocop:disable Security/Eval
     unless created.is_a?(Puppet::Pops::Types::PAnyType)
       raise ArgumentError, _("The code loaded from %{source_ref} did not produce a data type when evaluated. Got '%{klass}'") % { source_ref: source_ref, klass: created.class }
     end

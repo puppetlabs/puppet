@@ -927,14 +927,6 @@ Naming/VariableName:
 Naming/VariableNumber:
   Enabled: false
 
-Security/Eval:
-  Exclude:
-    - 'lib/puppet/interface/action.rb'
-    - 'lib/puppet/interface/action_builder.rb'
-    - 'lib/puppet/pops/loader/ruby_data_type_instantiator.rb'
-    - 'lib/puppet/pops/loader/ruby_function_instantiator.rb'
-    - 'lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb'
-
 # Configuration parameters: EnforcedStyle, AllowModifiersOnSymbols.
 # SupportedStyles: inline, group
 Style/AccessModifierDeclarations:

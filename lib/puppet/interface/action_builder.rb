@@ -4,6 +4,8 @@
 # within the context of a new instance of this class.
 # @api public
 class Puppet::Interface::ActionBuilder
+  extend Forwardable
+
   # The action under construction
   # @return [Puppet::Interface::Action]
   # @api private
@@ -141,15 +143,8 @@ class Puppet::Interface::ActionBuilder
     property = setter.to_s.chomp('=')
 
     unless method_defined? property
-      # Using eval because the argument handling semantics are less awful than
-      # when we use the define_method/block version.  The later warns on older
-      # Ruby versions if you pass the wrong number of arguments, but carries
-      # on, which is totally not what we want. --daniel 2011-04-18
-      eval <<-METHOD
-        def #{property}(value)
-          @action.#{property} = value
-        end
-      METHOD
+      # ActionBuilder#<property> delegates to Action#<setter>
+      def_delegator :@action, setter, property
     end
   end
 
