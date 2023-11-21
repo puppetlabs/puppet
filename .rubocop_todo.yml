@@ -585,17 +585,6 @@ Layout/TrailingWhitespace:
 Lint/ConstantDefinitionInBlock:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: standard_error, runtime_error
-Lint/InheritException:
-  Exclude:
-    - 'lib/puppet/agent.rb'
-    - 'lib/puppet/network/http/error.rb'
-    - 'lib/puppet/pops/evaluator/closure.rb'
-    - 'lib/puppet/util/logging.rb'
-    - 'lib/puppet/util/retry_action.rb'
-
 Lint/MissingSuper:
   Enabled: false
 

@@ -18,7 +18,7 @@ class Puppet::Agent
   include Puppet::Util::Splayer
 
   # Special exception class used to signal an agent run has timed out.
-  class RunTimeoutError < Exception
+  class RunTimeoutError < Exception # rubocop:disable Lint/InheritException
   end
 
   attr_reader :client_class, :client, :should_fork

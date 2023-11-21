@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 module Puppet::Pops
 module Evaluator
-  class Jumper < Exception
+  class Jumper < Exception # rubocop:disable Lint/InheritException
     attr_reader :value
     attr_reader :file
     attr_reader :line
