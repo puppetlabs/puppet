@@ -586,11 +586,6 @@ Lint/ConstantDefinitionInBlock:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Lint/EnsureReturn:
-  Exclude:
-    - 'lib/puppet/configurer.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: standard_error, runtime_error
 Lint/InheritException:

@@ -504,7 +504,7 @@ class Puppet::Configurer
       Puppet.log_exception(detail, _("Failed to apply catalog: %{detail}") % { detail: detail })
       return nil
     ensure
-      execute_postrun_command or return nil
+      execute_postrun_command or return nil # rubocop:disable Lint/EnsureReturn
     end
   ensure
     if Puppet[:resubmit_facts]
