@@ -38,7 +38,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
       # This will do the 3x loading and define the "function_<name>" and "real_function_<name>" methods
       # in the anonymous module used to hold function definitions.
       #
-      func_info = eval(ruby_code_string, here, source_ref, 1)
+      func_info = eval(ruby_code_string, here, source_ref, 1) # rubocop:disable Security/Eval
 
       # Validate what was loaded
       unless func_info.is_a?(Hash)

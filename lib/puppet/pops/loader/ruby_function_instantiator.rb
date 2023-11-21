@@ -20,7 +20,7 @@ class Puppet::Pops::Loader::RubyFunctionInstantiator
     # make the private loader available in a binding to allow it to be passed on
     loader_for_function = loader.private_loader
     here = get_binding(loader_for_function)
-    created = eval(ruby_code_string, here, source_ref, 1)
+    created = eval(ruby_code_string, here, source_ref, 1) # rubocop:disable Security/Eval
     unless created.is_a?(Class)
       raise ArgumentError, _("The code loaded from %{source_ref} did not produce a Function class when evaluated. Got '%{klass}'") % { source_ref: source_ref, klass: created.class }
     end
