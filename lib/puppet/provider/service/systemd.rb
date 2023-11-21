@@ -18,6 +18,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   defaultfor :osfamily => :redhat, :operatingsystem => :fedora
   defaultfor :osfamily => :suse
   defaultfor :osfamily => :coreos
+  defaultfor :osfamily => :gentoo
   defaultfor :operatingsystem => :amazon, :operatingsystemmajrelease => ["2", "2023"]
   defaultfor :operatingsystem => :debian
   notdefaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ["5", "6", "7"] # These are using the "debian" method
