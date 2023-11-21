@@ -17,6 +17,7 @@ confine :to, {}, agents.select { |agent| supports_systemd?(agent) }
 package_name = {'el'     => 'httpd',
                 'centos' => 'httpd',
                 'fedora' => 'httpd',
+                'amazon' => 'httpd',
                 'sles'   => 'apache2',
                 'debian' => 'cron', # apache2 does not create systemd service symlinks in Debian
                 'ubuntu' => 'cron', # See https://bugs.launchpad.net/ubuntu/+source/systemd/+bug/1447807
