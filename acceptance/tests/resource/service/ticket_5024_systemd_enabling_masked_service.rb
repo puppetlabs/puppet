@@ -43,13 +43,6 @@ agents.each do |agent|
     package { '#{package_name[platform]}':
       ensure => present,
     }
-    if ($::operatingsystem == 'Fedora') and ($::operatingsystemmajrelease == '23') {
-      package{'libnghttp2':
-        ensure => latest,
-        install_options => '--best',
-        before => Package['httpd'],
-      }
-    }
   }
   manifest_service_masked = %Q{
     service { '#{package_name[platform]}':
