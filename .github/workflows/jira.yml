@@ -4,12 +4,9 @@ name: Export issue to Jira
 on:
   issues:
     types: [labeled]
-  pull_request:
-    types: [labeled]
 
 permissions:
   issues: write
-  pull-requests: write
 
 jobs:
   export:
