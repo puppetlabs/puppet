@@ -436,6 +436,14 @@ module Puppet
         back by re-extracting the tarball. If `important.tar` does **not**
         actually contain `myfile`, the exec will keep running every time
         Puppet runs.
+
+        This parameter can also take an array of files and the command will
+        not run if **any** of these files exist. For example:
+
+            creates => ['/tmp/file1', '/tmp/file2'],
+
+        will only run the command if both files don't exist.
+
       EOT
 
       accept_arrays
