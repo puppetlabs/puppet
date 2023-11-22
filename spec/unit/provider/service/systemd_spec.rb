@@ -171,6 +171,13 @@ describe 'Puppet::Type::Service::Provider::Systemd',
     end
   end
 
+  it "should be the default provider on raspbian12" do
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:raspbian)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("12")
+    expect(provider_class).to be_default
+  end
+
   %i[enabled? daemon_reload? enable disable start stop status restart].each do |method|
     it "should have a #{method} method" do
       expect(provider).to respond_to(method)
