@@ -11,7 +11,7 @@ describe Puppet::Type.type(:package).provider(:appdmg) do
     before do
       fh = double('filehandle', path: '/tmp/foo')
       resource[:source] = "foo.dmg"
-      allow(described_class).to receive(:open).and_yield(fh)
+      allow(File).to receive(:open).and_yield(fh)
       allow(Dir).to receive(:mktmpdir).and_return("/tmp/testtmp123")
       allow(FileUtils).to receive(:remove_entry_secure)
     end
