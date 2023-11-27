@@ -66,7 +66,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
         end
       end
 
-      open(cached_source) do |dmg|
+      File.open(cached_source) do |dmg|
         xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-mountrandom", "/tmp", dmg.path
           ptable = Puppet::Util::Plist::parse_plist(xml_str)
           # JJM Filter out all mount-paths into a single array, discard the rest.

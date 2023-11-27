@@ -264,12 +264,14 @@ def #{@name}(#{decl.join(", ")})
 end
 WRAPPER
 
+    # It should be possible to rewrite this code to use `define_method`
+    # instead of `class/instance_eval` since Ruby 1.8 is long dead.
     if @face.is_a?(Class)
-      @face.class_eval do eval wrapper, nil, file, line end
+      @face.class_eval do eval wrapper, nil, file, line end # rubocop:disable Security/Eval
       @face.send(:define_method, internal_name, &block)
       @when_invoked = @face.instance_method(name)
     else
-      @face.instance_eval do eval wrapper, nil, file, line end
+      @face.instance_eval do eval wrapper, nil, file, line end # rubocop:disable Security/Eval
       @face.meta_def(internal_name, &block)
       @when_invoked = @face.method(name).unbind
     end
