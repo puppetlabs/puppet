@@ -361,7 +361,7 @@ class Puppet::Transaction
       @catalog.vertices.each do |resource|
         if resource.class.attrclass(:provider)
           prov = resource.provider && resource.provider.class.name
-          @resources_by_provider[resource.type][prov][resource.name] = resource
+          @resources_by_provider[resource.type][prov][resource.title] = resource
         end
       end
     end
