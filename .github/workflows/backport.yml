@@ -1,0 +1,19 @@
+name: Backport merged pull request
+on:
+  pull_request_target:
+    types: [labeled]
+permissions:
+  contents: write      # so it can comment
+  pull-requests: write # so it can create pull requests
+jobs:
+  backport:
+    name: Backport merged pull request
+    runs-on: ubuntu-latest
+    # For security reasons, we don't want to checkout and run arbitrary code when
+    # using the pull_request_target trigger. So restrict this to cases where the
+    # backport label is applied to an already merged PR.
+    if: github.event.pull_request.merged && contains(github.event.label.name, 'backport')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create backport pull requests
+        uses: korthout/backport-action@v1
