@@ -17,6 +17,7 @@ confine :to, {}, agents.select { |agent| supports_systemd?(agent) }
 package_name = {'el'     => 'httpd',
                 'centos' => 'httpd',
                 'fedora' => 'httpd',
+                'amazon' => 'httpd',
                 'sles'   => 'apache2',
                 'debian' => 'cron', # apache2 does not create systemd service symlinks in Debian
                 'ubuntu' => 'cron', # See https://bugs.launchpad.net/ubuntu/+source/systemd/+bug/1447807
@@ -42,13 +43,6 @@ agents.each do |agent|
   manifest_install_package = %Q{
     package { '#{package_name[platform]}':
       ensure => present,
-    }
-    if ($os['name'] == 'Fedora') and ($os['release']['major'] == '23') {
-      package{'libnghttp2':
-        ensure => latest,
-        install_options => '--best',
-        before => Package['httpd'],
-      }
     }
   }
   manifest_service_masked = %Q{
