@@ -618,10 +618,6 @@ Lint/RescueException:
     - 'lib/puppet/util/command_line/trollop.rb'
     - 'util/rspec_grouper'
 
-Lint/StructNewOverride:
-  Exclude:
-    - 'lib/puppet/network/http/request.rb'
-
 # Configuration parameters: AllowComments, AllowNil.
 Lint/SuppressedException:
   Exclude:
