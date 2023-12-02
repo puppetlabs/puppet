@@ -16,10 +16,6 @@ class Puppet::Util::Profiler::Aggregate < Puppet::Util::Profiler::WallClock
     @logger.call("----------------------------")
   end
 
-  def do_start(description, metric_id)
-    super(description, metric_id)
-  end
-
   def do_finish(context, description, metric_id)
     result = super(context, description, metric_id)
     update_metric(@metrics_hash, metric_id, result[:time])

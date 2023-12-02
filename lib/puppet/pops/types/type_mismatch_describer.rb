@@ -482,10 +482,6 @@ module Types
 
   # @api private
   class CountMismatch < SizeMismatch
-    def initialize(path, expected, actual)
-      super(path, expected, actual)
-    end
-
     def message(variant, position)
       min = expected.from || 0
       max = expected.to || Float::INFINITY

@@ -643,17 +643,6 @@ Lint/ToJSON:
 Lint/UnusedMethodArgument:
   Enabled: false
 
-# This cop supports unsafe auto-correction (--auto-correct-all).
-Lint/UselessMethodDefinition:
-  Exclude:
-    - 'lib/puppet/pops/evaluator/closure.rb'
-    - 'lib/puppet/pops/types/type_conversion_error.rb'
-    - 'lib/puppet/pops/types/type_mismatch_describer.rb'
-    - 'lib/puppet/settings/file_or_directory_setting.rb'
-    - 'lib/puppet/util/profiler/aggregate.rb'
-    - 'lib/puppet/util/rdoc/code_objects.rb'
-    - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
-
 Naming/AccessorMethodName:
   Enabled: false
 
