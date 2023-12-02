@@ -68,7 +68,7 @@ module Puppet::Util::Windows::COM
     def self.[](*args)
       spec, iid, *ifaces = args.reverse
 
-      spec.each { |name, signature| signature[0].unshift(:pointer) }
+      spec.each { |_name, signature| signature[0].unshift(:pointer) }
 
       Class.new(FFI::Struct) do
         const_set(:IID, iid)

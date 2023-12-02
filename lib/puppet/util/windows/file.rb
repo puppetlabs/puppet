@@ -59,7 +59,7 @@ module Puppet::Util::Windows::File
 
     seen_paths = []
     # follow up to 64 symlinks before giving up
-    0.upto(64) do |depth|
+    0.upto(64) do |_depth|
       # return false if this path has been seen before.  This is protection against circular symlinks
       return false if seen_paths.include?(path.downcase)
 

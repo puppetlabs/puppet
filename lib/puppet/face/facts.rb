@@ -59,7 +59,7 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
 
     render_as :json
 
-    when_invoked do |options|
+    when_invoked do |_options|
       # Use `agent` sections  settings for certificates, Puppet Server URL,
       # etc. instead of `user` section settings.
       Puppet.settings.preferred_run_mode = :agent

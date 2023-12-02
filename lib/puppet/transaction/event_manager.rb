@@ -58,7 +58,7 @@ class Puppet::Transaction::EventManager
       collection[event.name] ||= []
       collection[event.name] << event
       collection
-    end.collect do |name, list|
+    end.collect do |_name, list|
       # It doesn't matter which event we use - they all have the same source
       # and name here.
       event = list[0]

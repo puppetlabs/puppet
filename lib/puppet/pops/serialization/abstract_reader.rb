@@ -115,7 +115,7 @@ class AbstractReader
     end
 
     register_type(Extension::DEFAULT) do |data|
-      read_payload(data) { |ep| Extension::Default::INSTANCE }
+      read_payload(data) { |_ep| Extension::Default::INSTANCE }
     end
 
     register_type(Extension::COMMENT) do |data|
@@ -123,7 +123,7 @@ class AbstractReader
     end
 
     register_type(Extension::SENSITIVE_START) do |data|
-      read_payload(data) { |ep| Extension::SensitiveStart::INSTANCE }
+      read_payload(data) { |_ep| Extension::SensitiveStart::INSTANCE }
     end
 
     register_type(Extension::REGEXP) do |data|

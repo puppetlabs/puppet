@@ -95,7 +95,7 @@ with calls to stdlib's `deep_merge` function depending on kind of hiera call and
 
 - Since 4.0.0
 DOC
-  ) do |*args|
+  ) do |*_args|
     Error.is4x('hiera_include')
   end
 end

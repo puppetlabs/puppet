@@ -69,13 +69,13 @@ class Puppet::Util::Log
 
   # Flush any log destinations that support such operations.
   def Log.flush
-    @destinations.each { |type, dest|
+    @destinations.each { |_type, dest|
       dest.flush if dest.respond_to?(:flush)
     }
   end
 
   def Log.autoflush=(v)
-    @destinations.each do |type, dest|
+    @destinations.each do |_type, dest|
       dest.autoflush = v if dest.respond_to?(:autoflush=)
     end
   end
@@ -126,11 +126,11 @@ class Puppet::Util::Log
   # Create a new log destination.
   def Log.newdestination(dest)
     # Each destination can only occur once.
-    if @destinations.find { |name, obj| obj.name == dest }
+    if @destinations.find { |_name, obj| obj.name == dest }
       return
     end
 
-    _, type = @desttypes.find do |name, klass|
+    _, type = @desttypes.find do |_name, klass|
       klass.match?(dest)
     end
 
@@ -197,7 +197,7 @@ class Puppet::Util::Log
 
     queuemessage(msg) if @destinations.length == 0
 
-    @destinations.each do |name, dest|
+    @destinations.each do |_name, dest|
       dest.handle(msg)
     end
   end
@@ -236,7 +236,7 @@ class Puppet::Util::Log
   def Log.reopen
     Puppet.notice _("Reopening log files")
     types = @destinations.keys
-    @destinations.each { |type, dest|
+    @destinations.each { |_type, dest|
       dest.close if dest.respond_to?(:close)
     }
     @destinations.clear

@@ -144,7 +144,7 @@ module Generators
         # generate nodes and plugins found
         classes.each do |k|
           if k.context.is_module?
-            k.context.each_node do |name,node|
+            k.context.each_node do |_name,node|
               nodes << HTMLPuppetNode.new(node, toplevel, NODE_DIR, @options)
               @nodes << nodes.last
             end

@@ -672,7 +672,7 @@ class EvaluatorImpl
   # Evaluates all statements and produces the last evaluated value
   #
   def eval_BlockExpression o, scope
-    o.statements.reduce(nil) {|memo, s| evaluate(s, scope)}
+    o.statements.reduce(nil) {|_memo, s| evaluate(s, scope)}
   end
 
   # Performs optimized search over case option values, lazily evaluating each

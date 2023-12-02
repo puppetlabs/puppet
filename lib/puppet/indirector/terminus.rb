@@ -98,7 +98,7 @@ class Puppet::Indirector::Terminus
 
     # Convert a short name to a constant.
     def name2const(name)
-      name.to_s.capitalize.sub(/_(.)/) { |i| $1.upcase }
+      name.to_s.capitalize.sub(/_(.)/) { |_i| $1.upcase }
     end
 
     # Register a class, probably autoloaded.

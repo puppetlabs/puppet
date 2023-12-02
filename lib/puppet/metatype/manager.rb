@@ -16,7 +16,7 @@ module Manager
   # @api private
   #
   def allclear
-    @types.each { |name, type|
+    @types.each { |_name, type|
       type.clear
     }
   end
@@ -37,7 +37,7 @@ module Manager
   # @yieldreturn [Object] the last returned object is also returned from this method
   # @return [Object] the last returned value from the block.
   def eachtype
-    @types.each do |name, type|
+    @types.each do |_name, type|
       # Only consider types that have names
       #if ! type.parameters.empty? or ! type.validproperties.empty?
         yield type

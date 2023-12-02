@@ -61,7 +61,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
           # ...
     EOT
 
-    when_invoked do |options|
+    when_invoked do |_options|
       catalog = Puppet::Face[:catalog, "0.0.1"].find(Puppet[:certname]) or raise "Could not find catalog for #{Puppet[:certname]}"
       catalog = catalog.to_ral
 
@@ -131,7 +131,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
           Puppet::Face[:catalog, '0.0.1'].download
           # ...
     EOT
-    when_invoked do |options|
+    when_invoked do |_options|
       Puppet::Resource::Catalog.indirection.terminus_class = :rest
       Puppet::Resource::Catalog.indirection.cache_class = nil
       catalog = nil

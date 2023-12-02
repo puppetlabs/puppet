@@ -166,7 +166,7 @@ end
 class Puppet::Application::Describe < Puppet::Application
   banner "puppet describe [options] [type]"
 
-  option("--short", "-s", "Only list parameters without detail") do |arg|
+  option("--short", "-s", "Only list parameters without detail") do |_arg|
     options[:parameters] = false
   end
 

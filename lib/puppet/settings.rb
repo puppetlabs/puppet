@@ -216,7 +216,7 @@ class Puppet::Settings
   # understand, and add them to the passed option list.
   def addargs(options)
     # Add all of the settings as valid options.
-    self.each { |name, setting|
+    self.each { |_name, setting|
       setting.getopt_args.each { |args| options << args }
     }
 
@@ -227,7 +227,7 @@ class Puppet::Settings
   # understand, and add them to the passed option list.
   def optparse_addargs(options)
     # Add all of the settings as valid options.
-    self.each { |name, setting|
+    self.each { |_name, setting|
       options << setting.optparse_args
     }
 
@@ -524,7 +524,7 @@ class Puppet::Settings
     val = value(:configprint)
     if val == "all"
       hash = {}
-      each do |name, obj|
+      each do |name, _obj|
         val = value(name,env)
         val = val.inspect if val == ""
         hash[name] = val
@@ -787,7 +787,7 @@ class Puppet::Settings
   # Iterate across all of the objects in a given section.
   def persection(section)
     section = section.to_sym
-    self.each { |name, obj|
+    self.each { |_name, obj|
       if obj.section == section
         yield obj
       end
@@ -1292,7 +1292,7 @@ Generated on #{Time.now}.
 
   def issue_deprecation_warning(setting, msg = nil)
     name = setting.name
-    ref = DEPRECATION_REFS.find { |params,reference| params.include?(name) }
+    ref = DEPRECATION_REFS.find { |params,_reference| params.include?(name) }
     ref = ref[1] if ref
     case
     when msg
@@ -1347,7 +1347,7 @@ Generated on #{Time.now}.
     return if Puppet::Util::Platform.windows?
     return unless self[:mkusers]
 
-    @config.each do |name, setting|
+    @config.each do |_name, setting|
       next unless setting.respond_to?(:owner)
       next unless sections.nil? or sections.include?(setting.section)
 

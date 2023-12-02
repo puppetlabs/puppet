@@ -986,7 +986,7 @@ notice($fmt(256)) # will notice '0x100'
 ```
 
 DOC
-) do |args|
+) do |_args|
   Puppet::Parser::Functions::Error.is4x('new')
 end
 

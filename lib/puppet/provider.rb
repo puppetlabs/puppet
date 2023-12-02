@@ -476,7 +476,7 @@ class Puppet::Provider
 
   dochook(:commands) do
     if @commands.length > 0
-      return "Required binaries: " + @commands.collect do |n, c|
+      return "Required binaries: " + @commands.collect do |_n, c|
         "`#{c}`"
       end.sort.join(", ") + "."
     end

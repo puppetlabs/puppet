@@ -189,7 +189,7 @@ class Puppet::Node
   def split_name(name)
     list = name.split(".")
     tmp = []
-    list.each_with_index do |short, i|
+    list.each_with_index do |_short, i|
       tmp << list[0..i].join(".")
     end
     tmp.reverse

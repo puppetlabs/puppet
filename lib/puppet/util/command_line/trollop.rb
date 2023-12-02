@@ -386,7 +386,7 @@ class Parser
       end
     end
 
-    required.each do |sym, val|
+    required.each do |sym, _val|
       raise CommandlineError, _("option --%{opt} must be specified") % { opt: @specs[sym][:long] } unless given_args.include? sym
     end
 

@@ -150,7 +150,7 @@ class AbstractWriter
 
     # 0x20 - 0x2f reserved for special extension objects
 
-    register_type(Extension::DEFAULT, Extension::Default) do |o|
+    register_type(Extension::DEFAULT, Extension::Default) do |_o|
       build_payload { |ep| }
     end
 
@@ -158,7 +158,7 @@ class AbstractWriter
       build_payload { |ep| ep.write(o.comment) }
     end
 
-    register_type(Extension::SENSITIVE_START, Extension::SensitiveStart) do |o|
+    register_type(Extension::SENSITIVE_START, Extension::SensitiveStart) do |_o|
       build_payload { |ep| }
     end
 

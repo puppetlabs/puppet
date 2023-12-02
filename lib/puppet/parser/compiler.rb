@@ -185,7 +185,7 @@ class Puppet::Parser::Compiler
   # parameters won't conflict even if the class has already been included.
   def evaluate_node_classes
     if @node.classes.is_a? Hash
-      classes_with_params, classes_without_params = @node.classes.partition {|name,params| params and !params.empty?}
+      classes_with_params, classes_without_params = @node.classes.partition {|_name,params| params and !params.empty?}
 
       # The results from Hash#partition are arrays of pairs rather than hashes,
       # so we have to convert to the forms evaluate_classes expects (Hash, and

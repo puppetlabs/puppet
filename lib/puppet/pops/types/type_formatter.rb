@@ -480,7 +480,7 @@ class TypeFormatter
           old_ts = @type_set
           @type_set = t
           begin
-            append_hash(v, proc { |tk| @bld << symbolic_key(tk) }) do |tk, tv|
+            append_hash(v, proc { |tk| @bld << symbolic_key(tk) }) do |_tk, tv|
               if tv.is_a?(Hash)
                 append_object_hash(tv)
               else

@@ -638,10 +638,6 @@ Lint/ToJSON:
     - 'lib/puppet/network/http/error.rb'
     - 'lib/puppet/pops/serialization/json.rb'
 
-# Configuration parameters: IgnoreEmptyBlocks, AllowUnusedKeywordArguments.
-Lint/UnusedBlockArgument:
-  Enabled: false
-
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: AllowUnusedKeywordArguments, IgnoreEmptyMethods, IgnoreNotImplementedMethods.
 Lint/UnusedMethodArgument:

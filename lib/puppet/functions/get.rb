@@ -132,7 +132,7 @@ Puppet::Functions.create_function(:get, Puppet::Functions::InternalFunction) do
     # like '0.1' the wanted result is `[0,1]`, not `["0", 1]`. The workaround here is to
     # prefix the navigation with `"x."` thus giving split_key a first segment that is a string.
     # The fake segment is then dropped.
-    segments = split_key("x." + navigation) {|err| _("Syntax error in dotted-navigation string")}
+    segments = split_key("x." + navigation) {|_err| _("Syntax error in dotted-navigation string")}
     segments.shift
 
     begin

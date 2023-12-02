@@ -105,7 +105,7 @@ module Puppet::Util::Windows
     ERROR_CALL_NOT_IMPLEMENTED = 0x78
 
     # Handles control signals from the service control manager.
-    Service_Ctrl_ex = Proc.new do |dwCtrlCode, dwEventType, lpEventData, lpContext|
+    Service_Ctrl_ex = Proc.new do |dwCtrlCode, _dwEventType, _lpEventData, _lpContext|
       @@waiting_control_code = dwCtrlCode;
       return_value = NO_ERROR
 

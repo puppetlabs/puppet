@@ -39,6 +39,6 @@ $matches = ["abc123","def456"].match(/([a-z]+)([1-9]+)/)
 
 - Since 4.0.0
 DOC
-) do |args|
+) do |_args|
   Puppet::Parser::Functions::Error.is4x('match')
 end

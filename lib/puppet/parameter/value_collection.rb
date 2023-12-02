@@ -138,7 +138,7 @@ class Puppet::Parameter::ValueCollection
       message = _("Property option :call is deprecated and no longer used.")
       message += ' ' + _("Please remove it.")
       Puppet.deprecation_warning(message)
-      options = options.reject { |k,v| k == :call }
+      options = options.reject { |k,_v| k == :call }
     end
 
     value = Puppet::Parameter::Value.new(name)
@@ -184,7 +184,7 @@ class Puppet::Parameter::ValueCollection
   def validate(value)
     return if empty?
 
-    unless @values.detect {|name, v| v.match?(value)}
+    unless @values.detect {|_name, v| v.match?(value)}
       str = _("Invalid value %{value}.") % { value: value.inspect }
       str += " " + _("Valid values are %{value_list}.") % { value_list: values.join(", ") } unless values.empty?
       str += " " + _("Valid values match %{pattern}.") % { pattern: regexes.join(", ") } unless regexes.empty?

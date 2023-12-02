@@ -63,7 +63,7 @@ module Puppet::Util::Windows
 
     def values(key)
       vals = {}
-      each_value(key) { |subkey, type, data| vals[subkey] = data }
+      each_value(key) { |subkey, _type, data| vals[subkey] = data }
       vals
     end
 

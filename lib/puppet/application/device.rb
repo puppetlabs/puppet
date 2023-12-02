@@ -52,7 +52,7 @@ class Puppet::Application::Device < Puppet::Application
   option("--to_yaml","-y")
   option("--verbose","-v")
 
-  option("--detailed-exitcodes") do |arg|
+  option("--detailed-exitcodes") do |_arg|
     options[:detailed_exitcodes] = true
   end
 
@@ -251,7 +251,7 @@ Licensed under the Apache 2.0 License
       require_relative '../../puppet/util/network_device/config'
       devices = Puppet::Util::NetworkDevice::Config.devices.dup
       if options[:target]
-        devices.select! { |key, value| key == options[:target] }
+        devices.select! { |key, _value| key == options[:target] }
       end
       if devices.empty?
         if options[:target]
@@ -261,7 +261,7 @@ Licensed under the Apache 2.0 License
           exit(1)
         end
       end
-      devices.collect do |devicename,device|
+      devices.collect do |_devicename,device|
         # TODO when we drop support for ruby < 2.5 we can remove the extra block here
         begin
           device_url = URI.parse(device.url)

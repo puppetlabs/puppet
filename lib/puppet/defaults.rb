@@ -2036,7 +2036,7 @@ EOT
       :type       => :boolean,
       :desc       => "Whether plugins should be synced with the central server. This setting is
         deprecated.",
-      :hook => proc { |value|
+      :hook => proc { |_value|
         #TRANSLATORS 'pluginsync' is a setting and should not be translated
         Puppet.deprecation_warning(_("Setting 'pluginsync' is deprecated."))
       }

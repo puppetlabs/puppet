@@ -33,7 +33,7 @@ module Puppet::Network::FormatHandler
   end
 
   def self.format_by_extension(ext)
-    @formats.each do |name, format|
+    @formats.each do |_name, format|
       return format if format.extension == ext
     end
     nil

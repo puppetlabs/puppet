@@ -387,7 +387,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     # Lastly, check the file from any resource instances
     if resources
-      resources.each do |name, resource|
+      resources.each do |_name, resource|
         value = resource.should(:target)
         if value
           targets << value

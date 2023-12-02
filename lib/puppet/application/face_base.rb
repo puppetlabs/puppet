@@ -5,7 +5,7 @@ require 'optparse'
 require 'pp'
 
 class Puppet::Application::FaceBase < Puppet::Application
-  option("--debug", "-d") do |arg|
+  option("--debug", "-d") do |_arg|
     set_log_level(:debug => true)
   end
 
@@ -17,7 +17,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     self.render_as = format.to_sym
   end
 
-  option("--help", "-h") do |arg|
+  option("--help", "-h") do |_arg|
     if action && !@is_default_action
       # Only invoke help on the action if it was specified, not if
       # it was the default action.
@@ -155,7 +155,7 @@ class Puppet::Application::FaceBase < Puppet::Application
   end
 
   def find_global_settings_argument(item)
-    Puppet.settings.each do |name, object|
+    Puppet.settings.each do |_name, object|
       object.optparse_args.each do |arg|
         next unless arg =~ /^-/
         # sadly, we have to emulate some of optparse here...
@@ -167,7 +167,7 @@ class Puppet::Application::FaceBase < Puppet::Application
   end
 
   def find_application_argument(item)
-    self.class.option_parser_commands.each do |options, function|
+    self.class.option_parser_commands.each do |options, _function|
       options.each do |option|
         next unless option =~ /^-/
         pattern = /^#{option.sub('[no-]', '').sub(/[ =].*$/, '')}(?:[ =].*)?$/

@@ -100,7 +100,7 @@ class TreeIterator
       if @include_refs
         val._pcore_type.attributes.each_key
       else
-        val._pcore_type.attributes.reject {|k,v| v.kind == PObjectType::ATTRIBUTE_KIND_REFERENCE }.each_key
+        val._pcore_type.attributes.reject {|_k,v| v.kind == PObjectType::ATTRIBUTE_KIND_REFERENCE }.each_key
       end
     end
   end

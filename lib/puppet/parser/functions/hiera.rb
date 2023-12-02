@@ -98,7 +98,7 @@ for more information about Hiera lookup functions.
 
 - Since 4.0.0
 DOC
-  ) do |*args|
+  ) do |*_args|
     Error.is4x('hiera')
   end
 end

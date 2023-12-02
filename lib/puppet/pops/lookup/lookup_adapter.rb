@@ -298,7 +298,7 @@ class LookupAdapter < DataAdapter
     return options if module_name.nil?
 
     pfx = "#{module_name}::"
-    options.each_pair do |key, value|
+    options.each_pair do |key, _value|
       if key.start_with?(LOOKUP_OPTIONS_PATTERN_START)
         unless key[1..pfx.length] == pfx
           raise Puppet::DataBinding::LookupError.new(_("all %{opts} patterns must match a key starting with module name '%{module_name}'") % { opts: LOOKUP_OPTIONS, module_name: module_name })

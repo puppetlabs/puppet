@@ -39,7 +39,7 @@ Puppet::Indirector::Face.define(:report, '0.0.1') do
           Puppet::Face[:report, '0.0.1'].submit(report)
           return report
     EOT
-    when_invoked do |report, options|
+    when_invoked do |report, _options|
       begin
         Puppet::Transaction::Report.indirection.terminus_class = :rest
         Puppet::Face[:report, "0.0.1"].save(report)
