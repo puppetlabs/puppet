@@ -588,10 +588,6 @@ Lint/ConstantDefinitionInBlock:
 Lint/MissingSuper:
   Enabled: false
 
-Lint/MixedRegexpCaptureTypes:
-  Exclude:
-    - 'lib/puppet/util.rb'
-
 Lint/NestedMethodDefinition:
   Exclude:
     - 'lib/puppet/pops/types/p_binary_type.rb'
