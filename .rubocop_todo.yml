@@ -643,12 +643,6 @@ Lint/ToJSON:
 Lint/UnusedMethodArgument:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: ContextCreatingMethods, MethodCreatingMethods.
-Lint/UselessAccessModifier:
-  Exclude:
-    - 'lib/hiera_puppet.rb'
-
 # This cop supports unsafe auto-correction (--auto-correct-all).
 Lint/UselessMethodDefinition:
   Exclude:

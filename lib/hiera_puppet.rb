@@ -49,9 +49,6 @@ module HieraPuppet
     return [key, default, override]
   end
 
-  private
-  module_function
-
   def hiera
     @hiera ||= Hiera.new(:config => hiera_config)
   end
