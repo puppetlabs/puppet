@@ -645,13 +645,6 @@ Lint/UnderscorePrefixedVariableName:
     - 'lib/puppet/type/file/checksum_value.rb'
     - 'lib/puppet/type/file/content.rb'
 
-# Configuration parameters: AllowedPatterns, IgnoredPatterns.
-# AllowedPatterns: (?-mix:(exactly|at_least|at_most)\(\d+\)\.times)
-Lint/UnreachableLoop:
-  Exclude:
-    - 'lib/puppet/util/at_fork.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: IgnoreEmptyBlocks, AllowUnusedKeywordArguments.
 Lint/UnusedBlockArgument:
   Enabled: false

@@ -13,7 +13,7 @@ require_relative '../../puppet'
 #   killed in the process as a consequence of running in the same contract as the
 #   service.
 module Puppet::Util::AtFork
-  @handler_class = loop do
+  @handler_class = loop do # rubocop:disable Lint/UnreachableLoop
     if Puppet::Util::Platform.solaris?
       begin
         require_relative 'at_fork/solaris'
