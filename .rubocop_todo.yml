@@ -638,13 +638,6 @@ Lint/ToJSON:
     - 'lib/puppet/network/http/error.rb'
     - 'lib/puppet/pops/serialization/json.rb'
 
-# Configuration parameters: AllowKeywordBlockArguments.
-Lint/UnderscorePrefixedVariableName:
-  Exclude:
-    - 'lib/puppet/pops/types/p_object_type.rb'
-    - 'lib/puppet/type/file/checksum_value.rb'
-    - 'lib/puppet/type/file/content.rb'
-
 # Configuration parameters: IgnoreEmptyBlocks, AllowUnusedKeywordArguments.
 Lint/UnusedBlockArgument:
   Enabled: false

@@ -104,7 +104,7 @@ module Puppet
       end
 
       contents_prop = resource.parameter(:source) || self
-      checksum_insync?(contents_prop, is, !resource[:content].nil?) {|_is| super(_is)}
+      checksum_insync?(contents_prop, is, !resource[:content].nil?) {|inner| super(inner)}
     end
 
     def property_matches?(current, desired)
