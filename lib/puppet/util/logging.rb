@@ -125,7 +125,7 @@ module Logging
     raise exception, message + "\n" + exception.to_s, exception.backtrace
   end
 
-  class DeprecationWarning < Exception; end
+  class DeprecationWarning < Exception; end # rubocop:disable Lint/InheritException
 
   # Logs a warning indicating that the Ruby code path is deprecated.  Note that
   # this method keeps track of the offending lines of code that triggered the

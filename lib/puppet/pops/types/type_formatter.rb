@@ -480,7 +480,7 @@ class TypeFormatter
           old_ts = @type_set
           @type_set = t
           begin
-            append_hash(v, proc { |tk| @bld << symbolic_key(tk) }) do |tk, tv|
+            append_hash(v, proc { |tk| @bld << symbolic_key(tk) }) do |_tk, tv|
               if tv.is_a?(Hash)
                 append_object_hash(tv)
               else
@@ -728,6 +728,7 @@ class TypeFormatter
   def append_elements(array, to_be_continued = false)
     case array.size
     when 0
+      # do nothing
     when 1
       @bld << array[0]
       @bld << COMMA_SEP if to_be_continued
@@ -740,6 +741,7 @@ class TypeFormatter
   def append_strings(array, to_be_continued = false)
     case array.size
     when 0
+      # do nothing
     when 1
       append_string(array[0])
       @bld << COMMA_SEP if to_be_continued

@@ -103,6 +103,6 @@ defined('$tmp_file2')
 - Since 3.8.1 type specific requests with future parser
 - Since 4.0.0 includes all future parser features
 DOC
-) do |vals|
+) do |_vals|
   Puppet::Parser::Functions::Error.is4x('defined')
 end

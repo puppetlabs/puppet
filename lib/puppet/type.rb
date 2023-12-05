@@ -659,7 +659,7 @@ class Type
   end
 
   # Sets the 'should' (wanted state) value of a property, or the value of a parameter.
-  # @return
+  #
   # @raise [Puppet::Error] if the setting of the value fails, or if the given name is nil.
   # @raise [Puppet::ResourceError] when the parameter validation raises Puppet::Error or
   #   ArgumentError
@@ -687,8 +687,6 @@ class Type
         raise error
       end
     end
-
-    nil
   end
 
   # Removes an attribute from the object; useful in testing or in cleanup
@@ -982,7 +980,7 @@ class Type
   def remove()
     # This is hackish (mmm, cut and paste), but it works for now, and it's
     # better than warnings.
-    @parameters.each do |name, obj|
+    @parameters.each do |_name, obj|
       obj.remove
     end
     @parameters.clear
@@ -1417,7 +1415,7 @@ class Type
       aliases.each do |other|
         obj = @resource.catalog.resource(@resource.class.name, other)
         if obj
-          unless obj.object_id == @resource.object_id
+          unless obj.equal?(@resource) # same object?
             self.fail("#{@resource.title} can not create alias #{other}: object already exists")
           end
           next
@@ -1915,9 +1913,9 @@ class Type
   #
   def self.suitableprovider
     providerloader.loadall(Puppet.lookup(:current_environment)) if provider_hash.empty?
-    provider_hash.find_all { |name, provider|
+    provider_hash.find_all { |_name, provider|
       provider.suitable?
-    }.collect { |name, provider|
+    }.collect { |_name, provider|
       provider
     }.reject { |p| p.name == :fake } # For testing
   end
@@ -2409,7 +2407,7 @@ class Type
       end
     end
 
-    parameters.each do |name, param|
+    parameters.each do |_name, param|
       next if param.sensitive
       if param.is_a?(Puppet::Parameter)
         param.sensitive = param.is_sensitive if param.respond_to?(:is_sensitive)

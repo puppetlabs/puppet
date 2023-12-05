@@ -40,7 +40,7 @@ module Puppet::Util::POSIX
       user_gid = Puppet::Etc.getpwnam(user).gid
       ngroups = Puppet::FFI::POSIX::Constants::MAXIMUM_NUMBER_OF_GROUPS
 
-      while true do # rubocop:disable Lint/LiteralInCondition
+      while true do
         FFI::MemoryPointer.new(:int) do |ngroups_ptr|
           FFI::MemoryPointer.new(:uint, ngroups) do |groups_ptr|
             old_ngroups = ngroups

@@ -117,7 +117,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       ds_value = input_hash[key]
       case ds_to_ns_attribute_map[ds_attribute]
         when :members
-          ds_value = ds_value # only members uses arrays so far
+          # do nothing, only members uses arrays so far
         when :gid, :uid
           # OS X stores objects like uid/gid as strings.
           # Try casting to an integer for these cases to be

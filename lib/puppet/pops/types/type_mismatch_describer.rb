@@ -482,10 +482,6 @@ module Types
 
   # @api private
   class CountMismatch < SizeMismatch
-    def initialize(path, expected, actual)
-      super(path, expected, actual)
-    end
-
     def message(variant, position)
       min = expected.from || 0
       max = expected.to || Float::INFINITY
@@ -533,6 +529,7 @@ module Types
       errors = describe_struct_signature(params_struct, given_hash, missing_ok).flatten
       case errors.size
       when 0
+        # do nothing
       when 1
         raise Puppet::ParseError.new("#{subject}:#{errors[0].format}")
       else
@@ -573,6 +570,7 @@ module Types
         errors = describe(param_type, TypeCalculator.singleton.infer_set(value).generalize, [ParameterPathElement.new(param_name)])
         case errors.size
         when 0
+          # do nothing
         when 1
           raise Puppet::ParseError.new("#{subject}:#{errors[0].format}")
         else

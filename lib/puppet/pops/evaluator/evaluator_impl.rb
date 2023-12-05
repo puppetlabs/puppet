@@ -36,11 +36,6 @@ class EvaluatorImpl
 
   COMMA_SEPARATOR = ', '
 
-  # Reference to Issues name space makes it easier to refer to issues
-  # (Issues are shared with the validator).
-  #
-  Issues = Issues
-
   def initialize
     @@initialized ||= static_initialize
 
@@ -677,7 +672,7 @@ class EvaluatorImpl
   # Evaluates all statements and produces the last evaluated value
   #
   def eval_BlockExpression o, scope
-    o.statements.reduce(nil) {|memo, s| evaluate(s, scope)}
+    o.statements.reduce(nil) {|_memo, s| evaluate(s, scope)}
   end
 
   # Performs optimized search over case option values, lazily evaluating each
@@ -1088,7 +1083,9 @@ class EvaluatorImpl
     # may occur for some evaluation use cases.
     case name
     when String
+      # do nothing
     when Numeric
+      # do nothing
     else
       fail(Issues::ILLEGAL_VARIABLE_EXPRESSION, o.expr)
     end

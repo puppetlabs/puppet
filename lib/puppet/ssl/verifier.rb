@@ -30,7 +30,7 @@ class Puppet::SSL::Verifier
   # @api private
   def reusable?(verifier)
     verifier.instance_of?(self.class) &&
-      verifier.ssl_context.object_id == @ssl_context.object_id
+      verifier.ssl_context.equal?(@ssl_context) # same object?
   end
 
   # Configure the `http` connection based on the current `ssl_context`.

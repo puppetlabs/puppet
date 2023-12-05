@@ -205,7 +205,7 @@ class Puppet::Transaction::Report
 
   # @api private
   def prune_internal_data
-    resource_statuses.delete_if {|name,res| res.resource_type == 'Whit'}
+    resource_statuses.delete_if {|_name,res| res.resource_type == 'Whit'}
   end
 
   # @api private
@@ -219,7 +219,7 @@ class Puppet::Transaction::Report
     add_metric(:changes, {TOTAL => change_metric})
     add_metric(:events, calculate_event_metrics)
     @status = compute_status(resource_metrics, change_metric)
-    @noop_pending = @resource_statuses.any? { |name,res| has_noop_events?(res) }
+    @noop_pending = @resource_statuses.any? { |_name,res| has_noop_events?(res) }
   end
 
   # @api private
@@ -409,10 +409,10 @@ class Puppet::Transaction::Report
       }
     }
 
-    @metrics.each do |name, metric|
+    @metrics.each do |_name, metric|
       key = metric.name.to_s
       report[key] = {}
-      metric.values.each do |metric_name, label, value|
+      metric.values.each do |metric_name, _label, value|
         report[key][metric_name.to_s] = value
       end
       report[key][TOTAL] = 0 unless key == "time" or report[key].include?(TOTAL)
@@ -449,19 +449,19 @@ class Puppet::Transaction::Report
 
   # Mark the report as corrective, if there are any resource_status marked corrective.
   def calculate_report_corrective_change
-    @corrective_change = resource_statuses.any? do |name, status|
+    @corrective_change = resource_statuses.any? do |_name, status|
       status.corrective_change
     end
   end
 
   def calculate_change_metric
-    resource_statuses.map { |name, status| status.change_count || 0 }.inject(0) { |a,b| a+b }
+    resource_statuses.map { |_name, status| status.change_count || 0 }.inject(0) { |a,b| a+b }
   end
 
   def calculate_event_metrics
     metrics = Hash.new(0)
     %w{total failure success}.each { |m| metrics[m] = 0 }
-    resource_statuses.each do |name, status|
+    resource_statuses.each do |_name, status|
       metrics[TOTAL] += status.events.length
       status.events.each do |event|
         metrics[event.status] += 1
@@ -481,7 +481,7 @@ class Puppet::Transaction::Report
       metrics[state.to_s] = 0
     end
 
-    resource_statuses.each do |name, status|
+    resource_statuses.each do |_name, status|
       Puppet::Resource::Status::STATES.each do |state|
         metrics[state.to_s] += 1 if status.send(state)
       end
@@ -492,7 +492,7 @@ class Puppet::Transaction::Report
 
   def calculate_time_metrics
     metrics = Hash.new(0)
-    resource_statuses.each do |name, status|
+    resource_statuses.each do |_name, status|
       metrics[status.resource_type.downcase] += status.evaluation_time if status.evaluation_time
     end
 

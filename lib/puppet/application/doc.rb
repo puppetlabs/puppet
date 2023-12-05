@@ -39,7 +39,7 @@ class Puppet::Application::Doc < Puppet::Application
     end
   end
 
-  option("--list", "-l") do |arg|
+  option("--list", "-l") do |_arg|
     require_relative '../../puppet/util/reference'
     refs = Puppet::Util::Reference.references(Puppet.lookup(:current_environment))
     puts refs.collect { |r| Puppet::Util::Reference.reference(r).doc }.join("\n")

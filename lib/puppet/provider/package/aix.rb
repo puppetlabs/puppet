@@ -46,9 +46,9 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
   def self.prefetch(packages)
     raise Puppet::Error, _("The aix provider can only be used by root") if Process.euid != 0
 
-    return unless packages.detect { |name, package| package.should(:ensure) == :latest }
+    return unless packages.detect { |_name, package| package.should(:ensure) == :latest }
 
-    sources = packages.collect { |name, package| package[:source] }.uniq.compact
+    sources = packages.collect { |_name, package| package[:source] }.uniq.compact
 
     updates = {}
     sources.each do |source|

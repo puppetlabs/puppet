@@ -29,7 +29,7 @@ class Puppet::Application::Apply < Puppet::Application
     handle_logdest_arg(arg)
   end
 
-  option("--parseonly") do |args|
+  option("--parseonly") do |_args|
     puts "--parseonly has been removed. Please use 'puppet parser validate <manifest>'"
     exit 1
   end

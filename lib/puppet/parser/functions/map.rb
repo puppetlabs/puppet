@@ -72,6 +72,6 @@ $transformed_data = $data.map |$key,$value| { $value }
 
 - Since 4.0.0
 DOC
-) do |args|
+) do |_args|
   Puppet::Parser::Functions::Error.is4x('map')
 end

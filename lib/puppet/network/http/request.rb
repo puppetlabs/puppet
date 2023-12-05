@@ -1,5 +1,12 @@
 # frozen_string_literal: true
-Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :routing_path, :client_cert, :body) do
+
+# This class is effectively public API, because a Request object is passed as a
+# parameter to the current Handler subclass. Puppetserver implements its own
+# Handler
+# https://github.com/puppetlabs/puppetserver/blob/8.3.0/src/ruby/puppetserver-lib/puppet/server/network/http/handler.rb#L9
+# and the Request object is passed to its Handler#body method
+# https://github.com/puppetlabs/puppetserver/blob/8.3.0/src/ruby/puppetserver-lib/puppet/server/network/http/handler.rb#L36
+Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :routing_path, :client_cert, :body) do # rubocop:disable Lint/StructNewOverride
   def self.from_hash(hash)
     symbol_members = members.collect(&:intern)
     unknown = hash.keys - symbol_members

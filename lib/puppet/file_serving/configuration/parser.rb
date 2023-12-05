@@ -109,6 +109,6 @@ class Puppet::FileServing::Configuration::Parser
   # Make sure all of our mounts are valid.  We have to do this after the fact
   # because details are added over time as the file is parsed.
   def validate
-    @mounts.each { |name, mount| mount.validate }
+    @mounts.each { |_name, mount| mount.validate }
   end
 end

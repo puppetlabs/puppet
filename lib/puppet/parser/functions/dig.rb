@@ -34,6 +34,6 @@ exists in a structure without mandating that it always exists.
 
 * Since 4.5.0
 DOC
-) do |args|
+) do |_args|
   Puppet::Parser::Functions::Error.is4x('dig')
 end

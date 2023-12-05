@@ -580,88 +580,13 @@ Layout/TrailingEmptyLines:
 Layout/TrailingWhitespace:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-Lint/BooleanSymbol:
-  Enabled: false
-
 # Configuration parameters: AllowedMethods.
 # AllowedMethods: enums
 Lint/ConstantDefinitionInBlock:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-Lint/DeprecatedOpenSSLConstant:
-  Exclude:
-    - 'lib/puppet/util/checksums.rb'
-    - 'lib/puppet/x509/cert_provider.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Lint/ElseLayout:
-  Exclude:
-    - 'lib/puppet/resource.rb'
-
-# Configuration parameters: AllowComments.
-Lint/EmptyWhen:
-  Exclude:
-    - 'lib/puppet/indirector/hiera.rb'
-    - 'lib/puppet/pops/evaluator/evaluator_impl.rb'
-    - 'lib/puppet/pops/lookup/data_dig_function_provider.rb'
-    - 'lib/puppet/pops/types/type_formatter.rb'
-    - 'lib/puppet/pops/types/type_mismatch_describer.rb'
-    - 'lib/puppet/pops/types/types.rb'
-    - 'lib/puppet/pops/validation/checker4_0.rb'
-    - 'lib/puppet/util/backups.rb'
-    - 'lib/puppet/util/windows/security.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Lint/EnsureReturn:
-  Exclude:
-    - 'lib/puppet/configurer.rb'
-
-Lint/FloatComparison:
-  Exclude:
-    - 'lib/puppet/pops/types/types.rb'
-
-Lint/HashCompareByIdentity:
-  Exclude:
-    - 'lib/puppet/pops/serialization/serializer.rb'
-    - 'lib/puppet/pops/types/recursion_guard.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Lint/IdentityComparison:
-  Exclude:
-    - 'lib/puppet/parser/resource.rb'
-    - 'lib/puppet/ssl/verifier.rb'
-    - 'lib/puppet/type.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: standard_error, runtime_error
-Lint/InheritException:
-  Exclude:
-    - 'lib/puppet/agent.rb'
-    - 'lib/puppet/network/http/error.rb'
-    - 'lib/puppet/pops/evaluator/closure.rb'
-    - 'lib/puppet/util/logging.rb'
-    - 'lib/puppet/util/retry_action.rb'
-
-# This cop supports unsafe auto-correction (--auto-correct-all).
-Lint/InterpolationCheck:
-  Exclude:
-    - 'lib/puppet/util/package/version/pip.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Lint/LiteralInInterpolation:
-  Exclude:
-    - 'lib/puppet/provider/package/yum.rb'
-    - 'lib/puppet/type/component.rb'
-
 Lint/MissingSuper:
   Enabled: false
-
-Lint/MixedRegexpCaptureTypes:
-  Exclude:
-    - 'lib/puppet/util.rb'
 
 Lint/NestedMethodDefinition:
   Exclude:
@@ -677,28 +602,6 @@ Lint/NestedMethodDefinition:
     - 'lib/puppet/pops/types/types.rb'
     - 'lib/puppet/type.rb'
 
-Lint/OutOfRangeRegexpRef:
-  Exclude:
-    - 'lib/puppet/vendor.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Lint/ParenthesesAsGroupedExpression:
-  Exclude:
-    - 'lib/puppet/face/epp.rb'
-    - 'lib/puppet/face/parser.rb'
-    - 'lib/puppet/util/retry_action.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Lint/RedundantCopDisableDirective:
-  Exclude:
-    - 'lib/puppet/pops/loader/static_loader.rb'
-    - 'lib/puppet/util/posix.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Lint/RedundantRequireStatement:
-  Exclude:
-    - 'lib/puppet/type/file.rb'
-
 Lint/RescueException:
   Exclude:
     - 'ext/windows/service/daemon.rb'
@@ -710,29 +613,6 @@ Lint/RescueException:
     - 'lib/puppet/util/autoload.rb'
     - 'lib/puppet/util/command_line/trollop.rb'
     - 'util/rspec_grouper'
-
-Lint/ReturnInVoidContext:
-  Exclude:
-    - 'lib/puppet/type/component.rb'
-    - 'lib/puppet/util/suidmanager.rb'
-
-Lint/SelfAssignment:
-  Exclude:
-    - 'lib/puppet/pops/evaluator/evaluator_impl.rb'
-    - 'lib/puppet/pops/evaluator/runtime3_support.rb'
-    - 'lib/puppet/pops/validation/validator_factory_4_0.rb'
-    - 'lib/puppet/provider/nameservice/directoryservice.rb'
-
-# Configuration parameters: IgnoreImplicitReferences.
-Lint/ShadowedArgument:
-  Exclude:
-    - 'lib/puppet/pops/lookup.rb'
-    - 'lib/puppet/settings/file_setting.rb'
-    - 'lib/puppet/settings/port_setting.rb'
-
-Lint/StructNewOverride:
-  Exclude:
-    - 'lib/puppet/network/http/request.rb'
 
 # Configuration parameters: AllowComments, AllowNil.
 Lint/SuppressedException:
@@ -758,67 +638,10 @@ Lint/ToJSON:
     - 'lib/puppet/network/http/error.rb'
     - 'lib/puppet/pops/serialization/json.rb'
 
-# Configuration parameters: AllowKeywordBlockArguments.
-Lint/UnderscorePrefixedVariableName:
-  Exclude:
-    - 'lib/puppet/pops/types/p_object_type.rb'
-    - 'lib/puppet/type/file/checksum_value.rb'
-    - 'lib/puppet/type/file/content.rb'
-
-Lint/UnreachableCode:
-  Exclude:
-    - 'lib/puppet/provider/package/portupgrade.rb'
-
-# Configuration parameters: AllowedPatterns, IgnoredPatterns.
-# AllowedPatterns: (?-mix:(exactly|at_least|at_most)\(\d+\)\.times)
-Lint/UnreachableLoop:
-  Exclude:
-    - 'lib/puppet/util/at_fork.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: IgnoreEmptyBlocks, AllowUnusedKeywordArguments.
-Lint/UnusedBlockArgument:
-  Enabled: false
-
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: AllowUnusedKeywordArguments, IgnoreEmptyMethods, IgnoreNotImplementedMethods.
 Lint/UnusedMethodArgument:
   Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-Lint/UriRegexp:
-  Exclude:
-    - 'lib/puppet/pops/pcore.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: ContextCreatingMethods, MethodCreatingMethods.
-Lint/UselessAccessModifier:
-  Exclude:
-    - 'lib/hiera_puppet.rb'
-
-# This cop supports unsafe auto-correction (--auto-correct-all).
-Lint/UselessMethodDefinition:
-  Exclude:
-    - 'lib/puppet/pops/evaluator/closure.rb'
-    - 'lib/puppet/pops/types/type_conversion_error.rb'
-    - 'lib/puppet/pops/types/type_mismatch_describer.rb'
-    - 'lib/puppet/settings/file_or_directory_setting.rb'
-    - 'lib/puppet/util/profiler/aggregate.rb'
-    - 'lib/puppet/util/rdoc/code_objects.rb'
-    - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
-
-# Configuration parameters: CheckForMethodsWithNoSideEffects.
-Lint/Void:
-  Exclude:
-    - 'lib/puppet/file_serving/http_metadata.rb'
-    - 'lib/puppet/interface/documentation.rb'
-    - 'lib/puppet/interface/option_builder.rb'
-    - 'lib/puppet/node.rb'
-    - 'lib/puppet/pops/model/factory.rb'
-    - 'lib/puppet/provider/file/windows.rb'
-    - 'lib/puppet/settings.rb'
-    - 'lib/puppet/ssl/certificate_signer.rb'
-    - 'lib/puppet/type.rb'
 
 Naming/AccessorMethodName:
   Enabled: false

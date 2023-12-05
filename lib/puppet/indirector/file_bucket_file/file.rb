@@ -72,7 +72,7 @@ module Puppet::FileBucketFile
         end
       }
       # Sort the results
-      bucket.each { |filename, contents|
+      bucket.each { |_filename, contents|
         contents.sort_by! do |item|
           # NOTE: Ruby 2.4 may reshuffle item order even if the keys in sequence are sorted already
           item[0]

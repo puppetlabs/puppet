@@ -64,7 +64,7 @@ class Puppet::Application::Agent < Puppet::Application
 
   option("--sourceaddress IP_ADDRESS")
 
-  option("--detailed-exitcodes") do |arg|
+  option("--detailed-exitcodes") do |_arg|
     options[:detailed_exitcodes] = true
   end
 

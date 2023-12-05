@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 module Puppet::Pops
 module Evaluator
-  class Jumper < Exception
+  class Jumper < Exception # rubocop:disable Lint/InheritException
     attr_reader :value
     attr_reader :file
     attr_reader :line
@@ -12,17 +12,9 @@ module Evaluator
     end
   end
 
-  class Next < Jumper
-    def initialize(value, file, line)
-      super
-    end
-  end
+  class Next < Jumper; end
 
-  class Return < Jumper
-    def initialize(value, file, line)
-      super
-    end
-  end
+  class Return < Jumper; end
 
   class PuppetStopIteration < StopIteration
     attr_reader :file

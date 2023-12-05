@@ -5,7 +5,6 @@ require 'cgi'
 require 'etc'
 require 'uri'
 require 'fileutils'
-require 'enumerator'
 require 'pathname'
 require_relative '../../puppet/parameter/boolean'
 require_relative '../../puppet/util/diff'
@@ -542,7 +541,7 @@ Puppet::Type.newtype(:file) do
 
   def flush
     # We want to make sure we retrieve metadata anew on each transaction.
-    @parameters.each do |name, param|
+    @parameters.each do |_name, param|
       param.flush if param.respond_to?(:flush)
     end
     @stat = :needs_stat
@@ -569,7 +568,7 @@ Puppet::Type.newtype(:file) do
 
   # Configure discovered resources to be purged.
   def mark_children_for_purging(children)
-    children.each do |name, child|
+    children.each do |_name, child|
       next if child[:source]
       child[:ensure] = :absent
     end
@@ -589,7 +588,7 @@ Puppet::Type.newtype(:file) do
     # or so.  Unfortunately, we don't have a straightforward way to manage
     # the different lifetimes of this data, so we kludge it like this.
     # The right-side hash wins in the merge.
-    options = @original_parameters.merge(:path => full_path).reject { |param, value| value.nil? }
+    options = @original_parameters.merge(:path => full_path).reject { |_param, value| value.nil? }
 
     # These should never be passed to our children.
     [:parent, :ensure, :recurse, :recurselimit, :max_files, :target, :alias, :source].each do |param|

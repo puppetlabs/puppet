@@ -169,18 +169,6 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     resource
   end
 
-  # Make sure any provided variables look up to something.
-  def validate(value)
-    return true unless value.is_a? String
-    value.scan(/\$(\w+)/) { |name|
-      name = $1
-      unless @settings.include?(name)
-        raise ArgumentError,
-          _("Settings parameter '%{name}' is undefined") % { name: name }
-      end
-    }
-  end
-
   # @api private
   # @param option [String] Extra file operation mode information to use
   #   (defaults to read-only mode 'r')

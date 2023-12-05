@@ -14,7 +14,7 @@ module Puppet
       current_value.to_s
     end
 
-    validate do |val|
+    validate do |_val|
       fail "ctime is read-only"
     end
   end

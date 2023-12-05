@@ -119,7 +119,7 @@ Puppet::Functions.create_function(:unique) do
     end
     # reduce the set of possibly duplicated value entries
     inverted = {}
-    result.each_pair {|k,v| inverted[v[:keys]] = v[:values].uniq }
+    result.each_pair {|_k,v| inverted[v[:keys]] = v[:values].uniq }
     inverted
   end
 

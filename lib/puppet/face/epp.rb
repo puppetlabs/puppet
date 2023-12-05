@@ -103,7 +103,7 @@ Puppet::Face.define(:epp, '0.0.1') do
   end
 
 
-  action (:dump) do
+  action(:dump) do
     summary _("Outputs a dump of the internal template parse tree for debugging")
     arguments "[--format <old|pn|json>] [--pretty] { -e <source> | [<templates> ...] } "
     returns _("A dump of the resulting AST model unless there are syntax or validation errors.")
@@ -204,7 +204,7 @@ Puppet::Face.define(:epp, '0.0.1') do
     end
   end
 
-  action (:render) do
+  action(:render) do
     summary _("Renders an epp template as text")
     arguments "-e <source> | [<templates> ...] "
     returns _("A rendered result of one or more given templates.")

@@ -16,10 +16,6 @@ class Puppet::Util::Profiler::Aggregate < Puppet::Util::Profiler::WallClock
     @logger.call("----------------------------")
   end
 
-  def do_start(description, metric_id)
-    super(description, metric_id)
-  end
-
   def do_finish(context, description, metric_id)
     result = super(context, description, metric_id)
     update_metric(@metrics_hash, metric_id, result[:time])
@@ -43,7 +39,7 @@ class Puppet::Util::Profiler::Aggregate < Puppet::Util::Profiler::WallClock
   end
 
   def print_metrics(metrics_hash, prefix)
-    metrics_hash.sort_by {|k,v| v.time }.reverse_each do |k,v|
+    metrics_hash.sort_by {|_k,v| v.time }.reverse_each do |k,v|
       @logger.call("#{prefix}#{k}: #{v.time} s (#{v.count} calls)")
       print_metrics(metrics_hash[k], "#{prefix}#{k} -> ")
     end

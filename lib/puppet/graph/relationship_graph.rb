@@ -244,8 +244,8 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     #   can "do the right thing" for references to other vertices that may or
     #   may not be containers.
     #
-    admissible = Hash.new { |h,k| k }
-    completed  = Hash.new { |h,k| k }
+    admissible = Hash.new { |_h,k| k }
+    completed  = Hash.new { |_h,k| k }
     containers.each { |x|
       admissible[x] = whit_class.new(:name => "admissible_#{x.ref}", :catalog => catalog)
       completed[x]  = whit_class.new(:name => "completed_#{x.ref}",  :catalog => catalog)

@@ -521,7 +521,7 @@ class Puppet::Resource
   end
 
   def missing_arguments
-    resource_type.arguments.select do |param, default|
+    resource_type.arguments.select do |param, _default|
       the_param = parameters[param.to_sym]
       the_param.nil? || the_param.value.nil? || the_param.value == :undef
     end
@@ -582,7 +582,7 @@ class Puppet::Resource
           argtype =~ /^([^\[\]]+)\[(.+)\]$/m                   then [ $1,                 $2            ]
     elsif argtitle                                             then [ argtype,            argtitle      ]
     elsif argtype.is_a?(Puppet::Type)                          then [ argtype.class.name, argtype.title ]
-    else  raise ArgumentError, _("No title provided and %{type} is not a valid resource reference") % { type: argtype.inspect }
+    else  raise ArgumentError, _("No title provided and %{type} is not a valid resource reference") % { type: argtype.inspect } # rubocop:disable Lint/ElseLayout
     end
   end
   private_class_method :extract_type_and_title

@@ -26,7 +26,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
   end
 
   def initialize(basename, *rest)
-    create_tmpname(basename, *rest) do |tmpname, n, opts|
+    create_tmpname(basename, *rest) do |tmpname, _n, opts|
       mode = File::RDWR|File::CREAT|File::EXCL
       perm = 0600
       if opts

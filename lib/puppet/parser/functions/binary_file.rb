@@ -20,6 +20,6 @@ To search for the existence of files, use the `find_file()` function.
 
 - since 4.8.0
 DOC
-) do |args|
+) do |_args|
   Puppet::Parser::Functions::Error.is4x('binary_file')
 end

@@ -332,7 +332,7 @@ module Util
   end
   module_function :uri_to_path
 
-  RFC_3986_URI_REGEX = /^(?<scheme>([^:\/?#]+):)?(?<authority>\/\/([^\/?#]*))?(?<path>[^?#]*)(\?(?<query>[^#]*))?(#(?<fragment>.*))?$/
+  RFC_3986_URI_REGEX = /^(?<scheme>(?:[^:\/?#]+):)?(?<authority>\/\/(?:[^\/?#]*))?(?<path>[^?#]*)(?:\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$/
 
   # Percent-encodes a URI query parameter per RFC3986 - https://tools.ietf.org/html/rfc3986
   #

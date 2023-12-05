@@ -8,6 +8,10 @@ module Types
 #
 # All comparisons are made using the `object_id` of the instance rather than the instance itself.
 #
+# Hash#compare_by_identity is intentionally not used since we only need to keep
+# track of object ids we've seen before, based on object_id, so we don't store
+# entire objects in memory.
+#
 # @api private
 class RecursionGuard
   attr_reader :state
@@ -25,14 +29,14 @@ class RecursionGuard
   # @param instance [Object] the instance to check
   # @return [Integer] the resulting state
   def recursive_this?(instance)
-    instance_variable_defined?(:@recursive_this_map) && @recursive_this_map.has_key?(instance.object_id)
+    instance_variable_defined?(:@recursive_this_map) && @recursive_this_map.has_key?(instance.object_id) # rubocop:disable Lint/HashCompareByIdentity
   end
 
   # Checks if recursion was detected for the given argument in the 'that' context
   # @param instance [Object] the instance to check
   # @return [Integer] the resulting state
   def recursive_that?(instance)
-    instance_variable_defined?(:@recursive_that_map) && @recursive_that_map.has_key?(instance.object_id)
+    instance_variable_defined?(:@recursive_that_map) && @recursive_that_map.has_key?(instance.object_id) # rubocop:disable Lint/HashCompareByIdentity
   end
 
   # Add the given argument as 'this' invoke the given block with the resulting state

@@ -327,13 +327,13 @@ class Application
   # Every app responds to --version
   # See also `lib/puppet/util/command_line.rb` for some special case early
   # handling of this.
-  option("--version", "-V") do |arg|
+  option("--version", "-V") do |_arg|
     puts "#{Puppet.version}"
     exit(0)
   end
 
   # Every app responds to --help
-  option("--help", "-h") do |v|
+  option("--help", "-h") do |_v|
     puts help
     exit(0)
   end

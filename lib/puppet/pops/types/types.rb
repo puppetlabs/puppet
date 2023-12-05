@@ -1178,6 +1178,7 @@ class PIntegerType < PNumericType
       def assert_radix(radix)
         case radix
         when 2, 8, 10, 16
+          # do nothing
         else
           raise ArgumentError.new(_("Illegal radix: %{radix}, expected 2, 8, 10, 16, or default") % { radix: radix })
         end
@@ -1879,10 +1880,8 @@ class PBooleanType < PScalarDataType
       def from_args(from)
         from = from.downcase if from.is_a?(String)
         case from
-        when Float
-          from != 0.0
-        when Integer
-          from != 0
+        when Float, Integer
+          !from.zero?
         when false, 'false', 'no', 'n'
           false
         else

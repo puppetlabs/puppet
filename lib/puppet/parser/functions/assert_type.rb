@@ -56,6 +56,6 @@ For more information about data types, see the
 
 - Since 4.0.0
 DOC
-) do |args|
+) do |_args|
   Puppet::Parser::Functions::Error.is4x('assert_type')
 end

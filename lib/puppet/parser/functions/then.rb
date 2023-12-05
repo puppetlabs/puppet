@@ -69,6 +69,6 @@ was not a String.
 * Since 4.5.0
 
 DOC
-) do |args|
+) do |_args|
   Puppet::Parser::Functions::Error.is4x('then')
 end

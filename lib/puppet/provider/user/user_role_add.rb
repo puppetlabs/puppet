@@ -144,7 +144,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
 
   def remove_managed_attributes
     managed = managed_attributes
-    user_attributes.select { |k,v| !managed.include?(k) }.inject({}) { |hash, array| hash[array[0]] = array[1]; hash }
+    user_attributes.select { |k,_v| !managed.include?(k) }.inject({}) { |hash, array| hash[array[0]] = array[1]; hash }
   end
 
   def keys

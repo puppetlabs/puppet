@@ -166,7 +166,7 @@ module Puppet
         end
 
         templates = {}
-        templates.default_proc = lambda { |hash, key|
+        templates.default_proc = lambda { |_hash, key|
           raise _("template was not found at '%{key}'.") % { key: key } unless Puppet::FileSystem.file?(key)
           template = Puppet::Util.create_erb(File.read(key))
           template.filename = key

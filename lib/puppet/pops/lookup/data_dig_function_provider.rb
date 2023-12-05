@@ -107,8 +107,7 @@ class V3BackendFunctionProvider < DataDigFunctionProvider
   # @return [Symbol,Hash,nil] The Hiera 'resolution_type'
   def convert_merge(merge)
     case merge
-    when nil
-    when 'first', 'default'
+    when nil, 'first', 'default'
       # Nil is OK. Defaults to Hiera :priority
       nil
     when Puppet::Pops::MergeStrategy

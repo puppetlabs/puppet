@@ -4,7 +4,7 @@ require_relative '../../../puppet/util/json'
 module Puppet::Network::HTTP::Error
   Issues = Puppet::Network::HTTP::Issues
 
-  class HTTPError < Exception
+  class HTTPError < Exception # rubocop:disable Lint/InheritException
     attr_reader :status, :issue_kind
 
     def initialize(message, status, issue_kind)

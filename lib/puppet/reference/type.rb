@@ -90,7 +90,7 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
     }
 
     str << markdown_header("Parameters", 4) + "\n"
-    type.parameters.sort_by(&:to_s).each { |type_name, param|
+    type.parameters.sort_by(&:to_s).each { |type_name, _param|
       docs[type_name] = scrub(type.paramdoc(type_name))
     }
 

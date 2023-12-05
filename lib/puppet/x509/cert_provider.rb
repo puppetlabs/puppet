@@ -182,7 +182,7 @@ class Puppet::X509::CertProvider
   # @api private
   def save_private_key(name, key, password: nil)
     pem = if password
-            cipher = OpenSSL::Cipher::AES.new(128, :CBC)
+            cipher = OpenSSL::Cipher.new('aes-128-cbc')
             key.export(cipher, password)
           else
             key.to_pem

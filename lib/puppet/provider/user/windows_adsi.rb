@@ -162,7 +162,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
 
   [:gid, :shell].each do |prop|
     define_method(prop) { nil }
-    define_method("#{prop}=") do |v|
+    define_method("#{prop}=") do |_v|
       fail "No support for managing property #{prop} of user #{@resource[:name]} on Windows"
     end
   end

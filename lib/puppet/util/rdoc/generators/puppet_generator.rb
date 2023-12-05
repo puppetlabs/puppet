@@ -144,7 +144,7 @@ module Generators
         # generate nodes and plugins found
         classes.each do |k|
           if k.context.is_module?
-            k.context.each_node do |name,node|
+            k.context.each_node do |_name,node|
               nodes << HTMLPuppetNode.new(node, toplevel, NODE_DIR, @options)
               @nodes << nodes.last
             end
@@ -649,10 +649,6 @@ module Generators
   end
 
   class HTMLPuppetModule < HtmlClass
-
-    def initialize(context, html_file, prefix, options)
-      super(context, html_file, prefix, options)
-    end
 
     def value_hash
       @values = super

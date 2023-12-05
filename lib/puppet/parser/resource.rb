@@ -42,7 +42,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   def eachparam
-    @parameters.each do |name, param|
+    @parameters.each do |_name, param|
       yield param
     end
   end
@@ -156,7 +156,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def merge(resource)
     # Test the resource scope, to make sure the resource is even allowed
     # to override.
-    unless self.source.object_id == resource.source.object_id || resource.source.child_of?(self.source)
+    unless self.source.equal?(resource.source) || resource.source.child_of?(self.source)
       raise Puppet::ParseError.new(_("Only subclasses can override parameters"), resource.file, resource.line)
     end
 
@@ -179,7 +179,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
 
     # Some of these might fail, but they'll fail in the way we want.
-    resource.parameters.each do |name, param|
+    resource.parameters.each do |_name, param|
       override_parameter(param)
     end
   end
@@ -332,7 +332,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def validate
     if builtin_type?
       begin
-        @parameters.each { |name, value| validate_parameter(name) }
+        @parameters.each { |name, _value| validate_parameter(name) }
       rescue => detail
         self.fail Puppet::ParseError, detail.to_s + " on #{self}", detail
       end

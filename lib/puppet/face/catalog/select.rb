@@ -25,7 +25,7 @@ Puppet::Face.define(:catalog, '0.0.1') do
 
       $ puppet catalog select --terminus rest somenode.magpie.lan file
     EOT
-    when_invoked do |host, type, options|
+    when_invoked do |host, type, _options|
       # REVISIT: Eventually, type should have a default value that triggers
       # the non-specific behaviour.  For now, though, this will do.
       # --daniel 2011-05-03

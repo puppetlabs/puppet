@@ -21,11 +21,11 @@ class Puppet::Indirector::Face < Puppet::Face
       face's manpage for more details.
     EOT
 
-    before_action do |action, args, options|
+    before_action do |_action, _args, options|
       set_terminus(options[:terminus])
     end
 
-    after_action do |action, args, options|
+    after_action do |_action, _args, _options|
       indirection.reset_terminus_class
     end
   end
@@ -58,7 +58,7 @@ class Puppet::Indirector::Face < Puppet::Face
   action :destroy do
     summary _("Delete an object.")
     arguments _("<key>")
-    when_invoked {|key, options| call_indirection_method :destroy, key, {} }
+    when_invoked {|key, _options| call_indirection_method :destroy, key, {} }
   end
 
   action :find do
@@ -83,13 +83,13 @@ class Puppet::Indirector::Face < Puppet::Face
       currently accept data from STDIN, save actions cannot currently be invoked
       from the command line.
     EOT
-    when_invoked {|key, options| call_indirection_method :save, key, {} }
+    when_invoked {|key, _options| call_indirection_method :save, key, {} }
   end
 
   action :search do
     summary _("Search for an object or retrieve multiple objects.")
     arguments _("<query>")
-    when_invoked {|key, options| call_indirection_method :search, key, {} }
+    when_invoked {|key, _options| call_indirection_method :search, key, {} }
   end
 
   # Print the configuration for the current terminus class
@@ -101,7 +101,7 @@ class Puppet::Indirector::Face < Puppet::Face
       run mode with the '--run_mode' option.
     EOT
 
-    when_invoked do |options|
+    when_invoked do |_options|
       if indirection.terminus_class
         _("Run mode '%{mode}': %{terminus}") % { mode: Puppet.run_mode.name, terminus: indirection.terminus_class }
       else

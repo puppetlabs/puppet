@@ -16,6 +16,8 @@ module Serialization
     # @option options [Boolean] :type_by_reference `true` if Object types are serialized by name only.
     # @api public
     def initialize(writer, options = EMPTY_HASH)
+      # Hash#compare_by_identity is intentionally not used since we only need to map
+      # object ids to their size and we don't want to store entire objects in memory
       @written = {}
       @writer = writer
       @options = options
@@ -37,7 +39,7 @@ module Serialization
       when :default
         @writer.write(Extension::Default::INSTANCE)
       else
-        index = @written[value.object_id]
+        index = @written[value.object_id] # rubocop:disable Lint/HashCompareByIdentity
         if index.nil?
           write_tabulated_first_time(value)
         else
@@ -76,7 +78,7 @@ module Serialization
     end
 
     def push_written(value)
-      @written[value.object_id] = @written.size
+      @written[value.object_id] = @written.size # rubocop:disable Lint/HashCompareByIdentity
     end
 
     # Write the start of a sensitive object

@@ -5,7 +5,7 @@ module Puppet::Pops
 module Pcore
   include Types::PuppetObject
 
-  TYPE_URI_RX = Types::TypeFactory.regexp(URI.regexp)
+  TYPE_URI_RX = Types::TypeFactory.regexp(URI::DEFAULT_PARSER.make_regexp)
   TYPE_URI = Types::TypeFactory.pattern(TYPE_URI_RX)
   TYPE_URI_ALIAS = Types::PTypeAliasType.new('Pcore::URI', nil, TYPE_URI)
   TYPE_SIMPLE_TYPE_NAME = Types::TypeFactory.pattern(/\A[A-Z]\w*\z/)
