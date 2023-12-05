@@ -121,7 +121,7 @@ Puppet::Functions.create_function(:each) do
       hash.each_pair do |pair|
         yield(pair)
       end
-    rescue StopIteration
+    rescue StopIteration # rubocop:disable Lint/SuppressedException
     end
     # produces the receiver
     hash
@@ -132,7 +132,7 @@ Puppet::Functions.create_function(:each) do
       hash.each_pair do |pair|
         yield(*pair)
       end
-    rescue StopIteration
+    rescue StopIteration # rubocop:disable Lint/SuppressedException
     end
     # produces the receiver
     hash
@@ -144,7 +144,7 @@ Puppet::Functions.create_function(:each) do
       enum.each do |value|
         yield value
       end
-    rescue StopIteration
+    rescue StopIteration # rubocop:disable Lint/SuppressedException
     end
     # produces the receiver
     enumerable
@@ -159,7 +159,7 @@ Puppet::Functions.create_function(:each) do
         enum.each_with_index do |value, index|
           yield(index, value)
         end
-      rescue StopIteration
+      rescue StopIteration # rubocop:disable Lint/SuppressedException
       end
     end
     # produces the receiver

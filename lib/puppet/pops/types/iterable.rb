@@ -241,7 +241,7 @@ module Puppet::Pops::Types
         else
           loop { yield(*r.next) }
         end
-        rescue StopIteration
+        rescue StopIteration # rubocop:disable Lint/SuppressedException
         end
         self
       else
@@ -292,7 +292,7 @@ module Puppet::Pops::Types
       if skip > 0
         begin
           skip.times { @enumeration.next }
-        rescue StopIteration
+        rescue StopIteration # rubocop:disable Lint/SuppressedException
         end
       end
       result

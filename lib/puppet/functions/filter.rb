@@ -113,7 +113,7 @@ Puppet::Functions.create_function(:filter) do
       enum.each do |value|
         result << value if yield(value)
       end
-    rescue StopIteration
+    rescue StopIteration # rubocop:disable Lint/SuppressedException
     end
     result
   end
@@ -130,7 +130,7 @@ Puppet::Functions.create_function(:filter) do
         enum.each_with_index do |value, index|
           result << value if yield(index, value)
         end
-      rescue StopIteration
+      rescue StopIteration # rubocop:disable Lint/SuppressedException
       end
       result
     end

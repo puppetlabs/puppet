@@ -239,6 +239,7 @@ module Puppet::Util::Execution
               begin
                 output << reader.read_nonblock(4096) if ready
               rescue Errno::EAGAIN
+                retry
               rescue EOFError
                 wait_flags = 0
               end
@@ -250,7 +251,9 @@ module Puppet::Util::Execution
                 output << reader.read_nonblock(4096)
               end
             rescue Errno::EAGAIN
+              retry
             rescue EOFError
+              # done reading, continue
             end
 
             # Force to external encoding to preserve prior behavior when reading a file.

@@ -53,6 +53,7 @@ class PRuntimeType < PAnyType
         c = ClassLoader.provide(self)
         return c < Iterable unless c.nil?
       rescue ArgumentError
+        # fall through
       end
     end
     false

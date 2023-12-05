@@ -16,6 +16,7 @@ AllCops:
     - 'ext/suse/puppet.spec'
     - 'lib/puppet/vendor/**/*'
     - 'lib/puppet/pops/parser/eparser.rb'
+    - 'util/**/*'
 
 # puppet uses symbol booleans in types and providers to work around long standing
 # bugs when trying to manage falsey pararameters and properties

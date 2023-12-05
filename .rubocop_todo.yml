@@ -606,23 +606,6 @@ Lint/RescueException:
     - 'lib/puppet/util/command_line/trollop.rb'
     - 'util/rspec_grouper'
 
-# Configuration parameters: AllowComments, AllowNil.
-Lint/SuppressedException:
-  Exclude:
-    - 'lib/puppet/application/face_base.rb'
-    - 'lib/puppet/ffi/windows/functions.rb'
-    - 'lib/puppet/forge/errors.rb'
-    - 'lib/puppet/functions/each.rb'
-    - 'lib/puppet/functions/filter.rb'
-    - 'lib/puppet/functions/map.rb'
-    - 'lib/puppet/functions/slice.rb'
-    - 'lib/puppet/pops/time/timespan.rb'
-    - 'lib/puppet/pops/types/iterable.rb'
-    - 'lib/puppet/pops/types/p_runtime_type.rb'
-    - 'lib/puppet/util/command_line.rb'
-    - 'lib/puppet/util/execution.rb'
-    - 'util/rspec_grouper'
-
 Naming/AccessorMethodName:
   Enabled: false
 

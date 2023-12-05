@@ -130,6 +130,7 @@ class Puppet::Application::FaceBase < Puppet::Application
         begin
           super
         rescue OptionParser::InvalidOption
+          # fall through
         end
 
         face   = @face.name

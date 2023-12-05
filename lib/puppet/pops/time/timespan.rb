@@ -111,6 +111,7 @@ module Time
           begin
             return fmt.parse(str)
           rescue ArgumentError
+            # fall through
           end
         end
         raise ArgumentError, _("Unable to parse '%{str}' using any of the formats %{formats}") % { str: str, formats: format.join(', ') }
