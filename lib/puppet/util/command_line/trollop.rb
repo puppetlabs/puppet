@@ -533,7 +533,9 @@ class Parser
         x = Curses::cols
         Curses::close_screen
         x
-      rescue Exception
+      rescue SystemExit
+        raise
+      rescue Exception # rubocop:disable Lint/RescueException
         80
       end
     else

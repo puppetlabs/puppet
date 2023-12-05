@@ -151,7 +151,7 @@ class Puppet::Transaction::ResourceHarness
                                    param.is_to_s(current_value),
                                    param.should_to_s(param.should)) + detail.to_s
       event
-    rescue Exception => detail
+    rescue Exception => detail # rubocop:disable Lint/RescueException
       # Execution will halt on Exceptions, they get raised to the application
       event = create_change_event(param, current_value, historical_value)
       event.status = "failure"

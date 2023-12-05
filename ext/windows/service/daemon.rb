@@ -91,13 +91,13 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
           sleep(runinterval)
           service.log_debug('Service worker thread woken up')
         end
-      rescue Exception => e
+      rescue Exception => e # rubocop:disable Lint/RescueException
         service.log_exception(e)
       end
     end
     @run_thread.join
 
-  rescue Exception => e
+  rescue Exception => e # rubocop:disable Lint/RescueException
     log_exception(e)
   ensure
     log_notice('Service stopped')
@@ -151,7 +151,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
         :event_id    => id,     # 0x01 or 0x02, 0x03 etc.
         :data        => message # "the message"
       )
-    rescue Exception
+    rescue Exception # rubocop:disable Lint/RescueException
       # Ignore all errors
     ensure
       if (!eventlog.nil?)
@@ -167,7 +167,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
         runinterval = 1800
         log_err("Failed to determine runinterval, defaulting to #{runinterval} seconds")
       end
-    rescue Exception => e
+    rescue Exception => e # rubocop:disable Lint/RescueException
       log_exception(e)
       runinterval = 1800
     end
@@ -182,7 +182,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
         loglevel = :notice
         log_err("Failed to determine loglevel, defaulting to #{loglevel}")
       end
-    rescue Exception => e
+    rescue Exception => e # rubocop:disable Lint/RescueException
       log_exception(e)
       loglevel = :notice
     end

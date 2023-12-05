@@ -594,18 +594,6 @@ Lint/NestedMethodDefinition:
     - 'lib/puppet/pops/types/types.rb'
     - 'lib/puppet/type.rb'
 
-Lint/RescueException:
-  Exclude:
-    - 'ext/windows/service/daemon.rb'
-    - 'lib/puppet/configurer/fact_handler.rb'
-    - 'lib/puppet/generate/type.rb'
-    - 'lib/puppet/settings.rb'
-    - 'lib/puppet/transaction/resource_harness.rb'
-    - 'lib/puppet/util.rb'
-    - 'lib/puppet/util/autoload.rb'
-    - 'lib/puppet/util/command_line/trollop.rb'
-    - 'util/rspec_grouper'
-
 Naming/AccessorMethodName:
   Enabled: false
 

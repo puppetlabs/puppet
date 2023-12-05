@@ -191,7 +191,7 @@ module Puppet
             require input.path
           rescue SystemExit
             raise
-          rescue Exception => e
+          rescue Exception => e # rubocop:disable Lint/RescueException
             # Log the exception and move on to the next input
             @bad_input = true
             Puppet.log_exception(e, _("Failed to load custom type '%{type_name}' from '%{input}': %{message}") % { type_name: type_name, input: input, message: e.message })
@@ -211,7 +211,9 @@ module Puppet
           # Create the model
           begin
             model = Models::Type::Type.new(type)
-          rescue Exception => e
+          rescue SystemExit
+            raise
+          rescue Exception => e # rubocop:disable Lint/RescueException
             @bad_input = true
             # Move on to the next input
             Puppet.log_exception(e, "#{input}: #{e.message}")
@@ -221,7 +223,9 @@ module Puppet
           # Render the template
           begin
             result = model.render(templates[input.template_path])
-          rescue Exception => e
+          rescue SystemExit
+            raise
+          rescue Exception => e # rubocop:disable Lint/RescueException
             @bad_input = true
             Puppet.log_exception(e)
             raise
@@ -235,7 +239,9 @@ module Puppet
             Puppet::FileSystem.open(effective_output_path, nil, 'w:UTF-8') do |file|
               file.write(result)
             end
-          rescue Exception => e
+          rescue SystemExit
+            raise
+          rescue Exception => e # rubocop:disable Lint/RescueException
             @bad_input = true
             Puppet.log_exception(e, _("Failed to generate '%{effective_output_path}': %{message}") % { effective_output_path: effective_output_path, message: e.message })
             # Move on to the next input

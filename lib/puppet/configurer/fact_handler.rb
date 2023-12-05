@@ -21,7 +21,7 @@ module Puppet::Configurer::FactHandler
       facts
     rescue SystemExit,NoMemoryError
       raise
-    rescue Exception => detail
+    rescue Exception => detail # rubocop:disable Lint/RescueException
       message = _("Could not retrieve local facts: %{detail}") % { detail: detail }
       Puppet.log_exception(detail, message)
       raise Puppet::Error, message, detail.backtrace
