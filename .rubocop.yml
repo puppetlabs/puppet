@@ -28,6 +28,10 @@ Lint/BooleanSymbol:
     - 'lib/puppet/reference/providers.rb'
     - 'lib/puppet/parameter/value.rb'
 
+# This breaks the ruby convention of passing &block and using block_given?
+Lint/UnusedMethodArgument:
+  Enabled: false
+
 Metrics/AbcSize:
   Enabled: false
 

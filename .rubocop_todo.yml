@@ -623,11 +623,6 @@ Lint/SuppressedException:
     - 'lib/puppet/util/execution.rb'
     - 'util/rspec_grouper'
 
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: AllowUnusedKeywordArguments, IgnoreEmptyMethods, IgnoreNotImplementedMethods.
-Lint/UnusedMethodArgument:
-  Enabled: false
-
 Naming/AccessorMethodName:
   Enabled: false
 
