@@ -63,7 +63,7 @@ Puppet::Type.newtype(:component) do
     catalog.adjacent(self).each do |child|
       if child.respond_to?(:refresh)
         child.refresh
-        child.log "triggering #{:refresh}"
+        child.log "triggering refresh"
       end
     end
   end

@@ -149,10 +149,10 @@ module Puppet::Util::Package::Version
           return compare(element, other.at(index)) if element != other.at(index)
         end
       elsif (this.is_a? Array) && !(other.is_a? Array)
-        raise Puppet::Error, 'Cannot compare #{this} (Array) with #{other} (#{other.class}). Only ±Float::INFINITY accepted.' unless other.abs == Float::INFINITY
+        raise Puppet::Error, "Cannot compare #{this} (Array) with #{other} (#{other.class}). Only ±Float::INFINITY accepted." unless other.abs == Float::INFINITY
         return other == -Float::INFINITY ? 1 : -1
       elsif !(this.is_a? Array) && (other.is_a? Array)
-        raise Puppet::Error, 'Cannot compare #{this} (#{this.class}) with #{other} (Array). Only ±Float::INFINITY accepted.' unless this.abs == Float::INFINITY
+        raise Puppet::Error, "Cannot compare #{this} (#{this.class}) with #{other} (Array). Only ±Float::INFINITY accepted." unless this.abs == Float::INFINITY
         return this == -Float::INFINITY ? -1 : 1
       end
       this <=> other
