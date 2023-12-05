@@ -30,6 +30,7 @@ module Time
     attr_reader :nsecs
 
     def initialize(nanoseconds)
+      super()
       @nsecs = nanoseconds
     end
 
@@ -335,6 +336,7 @@ module Time
         end
 
         def initialize(literal)
+          super()
           @literal = literal
         end
 
@@ -353,6 +355,7 @@ module Time
 
       class ValueSegment < Segment
         def initialize(padchar, width, default_width)
+          super()
           @use_total = false
           @padchar = padchar
           @width = width

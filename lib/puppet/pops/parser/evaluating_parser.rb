@@ -11,8 +11,8 @@ class EvaluatingParser
 
   attr_reader :parser
 
-  def initialize()
-    @parser = Parser.new()
+  def initialize(parser = Parser.new)
+    @parser = parser
   end
 
   def parse_string(s, file_source = nil)
@@ -154,8 +154,8 @@ class EvaluatingParser
   end
 
   class EvaluatingEppParser < EvaluatingParser
-    def initialize()
-      @parser = EppParser.new()
+    def initialize
+      super(EppParser.new)
     end
   end
 end

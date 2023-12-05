@@ -11,7 +11,7 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
   # Create an external http client.
   #
   # @param [Class] http_client_class The class to create to handle the request
-  def initialize(http_client_class)
+  def initialize(http_client_class) #rubocop:disable Lint/MissingSuper
     @http_client_class = http_client_class
   end
 

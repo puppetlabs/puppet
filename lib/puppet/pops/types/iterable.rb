@@ -312,7 +312,7 @@ module Puppet::Pops::Types
   class IntegerRangeIterator < Iterator
     include Enumerable
 
-    def initialize(range, step = 1)
+    def initialize(range, step = 1) # rubocop:disable Lint/MissingSuper
       raise ArgumentError if step == 0
       @range = range
       @step_size = step

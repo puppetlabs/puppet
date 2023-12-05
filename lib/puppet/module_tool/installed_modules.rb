@@ -13,6 +13,7 @@ module Puppet::ModuleTool
     end
 
     def initialize(env)
+      super()
       @env = env
       modules = env.modules_by_path
 

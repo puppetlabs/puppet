@@ -19,6 +19,7 @@ class PSemVerType < PScalarType
   attr_reader :ranges
 
   def initialize(ranges)
+    super()
     ranges = ranges.map { |range| range.is_a?(SemanticPuppet::VersionRange) ? range : SemanticPuppet::VersionRange.parse(range) }
     ranges = merge_ranges(ranges) if ranges.size > 1
     @ranges = ranges

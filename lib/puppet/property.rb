@@ -282,6 +282,8 @@ class Puppet::Property < Puppet::Parameter
   # @api private
   #
   def self.method_added(sym)
+    super(sym)
+
     raise "Puppet::Property#safe_insync? shouldn't be overridden; please override insync? instead" if sym == :safe_insync?
   end
 

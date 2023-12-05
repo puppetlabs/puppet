@@ -106,6 +106,7 @@ module LexerSupport
     attr_reader :locator
 
     def initialize(token_array, offset, locator)
+      super()
       @token_array = token_array
       @offset = offset
       @locator = locator

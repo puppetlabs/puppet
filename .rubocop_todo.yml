@@ -580,9 +580,6 @@ Layout/TrailingEmptyLines:
 Layout/TrailingWhitespace:
   Enabled: false
 
-Lint/MissingSuper:
-  Enabled: false
-
 Lint/NestedMethodDefinition:
   Exclude:
     - 'lib/puppet/pops/types/p_binary_type.rb'

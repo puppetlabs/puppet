@@ -27,6 +27,7 @@ class PRuntimeType < PAnyType
   # @param name_or_pattern [String,Array(Regexp,String)] name of runtime or two patterns, mapping Puppet name => runtime name
   # @api public
   def initialize(runtime, name_or_pattern)
+    super()
     unless runtime.nil? || runtime.is_a?(Symbol)
       runtime = TypeAsserter.assert_instance_of("Runtime 'runtime'", PStringType::NON_EMPTY, runtime).to_sym
     end

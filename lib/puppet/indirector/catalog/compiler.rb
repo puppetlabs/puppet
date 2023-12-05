@@ -91,6 +91,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   end
 
   def initialize
+    super()
     Puppet::Util::Profiler.profile(_("Setup server facts for compiling"), [:compiler, :init_server_facts]) do
       set_server_facts
     end

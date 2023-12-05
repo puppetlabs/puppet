@@ -29,6 +29,7 @@ class EnvironmentContext < Adaptable::Adapter
   end
 
   def initialize(environment)
+    super()
     @environment_name = environment.name
     @file_data_cache = {}
   end

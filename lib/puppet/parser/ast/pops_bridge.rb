@@ -76,6 +76,7 @@ class Puppet::Parser::AST::PopsBridge
     attr_reader :program_model, :context
 
     def initialize(program_model, context = {})
+      super()
       @program_model = program_model
       @context = context
       @ast_transformer ||= Puppet::Pops::Model::AstTransformer.new(@context[:file])

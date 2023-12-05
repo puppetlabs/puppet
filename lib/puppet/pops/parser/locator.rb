@@ -103,6 +103,7 @@ class Locator
     # or not.
     #
     def initialize(string, file, line_index = nil)
+      super()
       @string = string.freeze
       @file = file.freeze
       @prev_offset = nil

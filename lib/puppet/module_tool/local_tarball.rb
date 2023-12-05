@@ -10,6 +10,7 @@ module Puppet::ModuleTool
     attr_accessor :release
 
     def initialize(filename)
+      super()
       unpack(filename, tmpdir)
       Puppet.debug "Unpacked local tarball to #{tmpdir}"
 

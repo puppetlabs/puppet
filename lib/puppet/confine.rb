@@ -13,6 +13,7 @@ class Puppet::Confine
   end
 
   def self.inherited(klass)
+    super(klass)
     name = klass.to_s.split("::").pop.downcase.to_sym
     raise "Test #{name} is already defined" if @tests.include?(name)
 

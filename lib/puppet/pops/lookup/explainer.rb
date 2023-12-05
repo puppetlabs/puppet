@@ -54,6 +54,7 @@ module Lookup
     attr_accessor :key
 
     def initialize(parent)
+      super()
       @parent = parent
       @event = nil
     end
@@ -193,6 +194,7 @@ module Lookup
     attr_reader :merge_source
 
     def initialize(merge_source)
+      super()
       @merge_source = merge_source
     end
 
@@ -462,6 +464,7 @@ module Lookup
 
   class Explainer < ExplainNode
     def initialize(explain_options = false, only_explain_options = false)
+      super()
       @current = self
       @explain_options = explain_options
       @only_explain_options = only_explain_options
@@ -569,6 +572,7 @@ module Lookup
     attr_reader :wrapped_explainer
 
     def initialize(wrapped_explainer)
+      super
       @wrapped_explainer = wrapped_explainer
       if wrapped_explainer.nil?
         @current = self

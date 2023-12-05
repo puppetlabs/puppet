@@ -48,6 +48,8 @@ class Puppet::Indirector::Terminus
     # This follows the convention that our terminus is named after the
     # indirection.
     def inherited(subclass)
+      super(subclass)
+
       longname = subclass.to_s
       if longname =~ /#<Class/
         raise Puppet::DevError, _("Terminus subclasses must have associated constants")

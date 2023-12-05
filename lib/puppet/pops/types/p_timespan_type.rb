@@ -5,6 +5,7 @@ module Types
     # @param from [AbstractTime] lower bound for this type. Nil or :default means unbounded
     # @param to [AbstractTime] upper bound for this type. Nil or :default means unbounded
     def initialize(from, to = nil)
+      super()
       @from = convert_arg(from, true)
       @to = convert_arg(to, false)
       raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{@from}, #{@to}" unless @from <= @to

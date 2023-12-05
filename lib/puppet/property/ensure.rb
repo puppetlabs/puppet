@@ -43,6 +43,8 @@ class Puppet::Property::Ensure < Puppet::Property
   end
 
   def self.inherited(sub)
+    super(sub)
+
     # Add in the two properties that everyone will have.
     sub.class_eval do
     end
