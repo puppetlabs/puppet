@@ -6,6 +6,7 @@ module Evaluator
     attr_reader :file
     attr_reader :line
     def initialize(value, file, line)
+      super()
       @value = value
       @file = file
       @line = line
@@ -22,6 +23,7 @@ module Evaluator
     attr_reader :pos
 
     def initialize(file, line, pos = nil)
+      super()
       @file = file
       @line = line
       @pos = pos
@@ -51,6 +53,7 @@ class Closure < CallableSignature
   attr_reader :enclosing_scope
 
   def initialize(evaluator, model)
+    super()
     @evaluator = evaluator
     @model = model
   end

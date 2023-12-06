@@ -101,7 +101,7 @@ module Puppet
       end
     end
 
-    SEPARATOR_REGEX = [Regexp.escape(File::SEPARATOR.to_s), Regexp.escape(File::ALT_SEPARATOR.to_s)].join
+    SEPARATOR_REGEX = [Regexp.escape(File::SEPARATOR.to_s), Regexp.escape(File::ALT_SEPARATOR.to_s)].join.freeze # rubocop:disable Lint/ConstantDefinitionInBlock
 
     munge do |sources|
       sources = [sources] unless sources.is_a?(Array)

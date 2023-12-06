@@ -89,6 +89,7 @@ class PTypeSetType < PMetaType
   #
   # @api private
   def initialize(name_or_init_hash, init_hash_expression = nil, name_authority = nil)
+    super()
     @types = EMPTY_HASH
     @references = EMPTY_HASH
 

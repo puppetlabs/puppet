@@ -156,7 +156,7 @@ describe 'loaders' do
     expect_loader_hierarchy(
       Puppet::Pops::Loaders.new(empty_test_env),
       [
-        [nil,                   Puppet::Pops::Loader::StaticLoader],
+        ['static',              Puppet::Pops::Loader::StaticLoader],
         ['puppet_system',       Puppet::Pops::Loader::ModuleLoaders::LibRootedFileBased],
         [empty_test_env.name,   Puppet::Pops::Loader::Runtime3TypeLoader],
         ['environment',         Puppet::Pops::Loader::SimpleEnvironmentLoader],
@@ -171,7 +171,7 @@ describe 'loaders' do
     expect_loader_hierarchy(
       Puppet::Pops::Loaders.new(empty_test_env),
       [
-        [nil,                   Puppet::Pops::Loader::StaticLoader],
+        ['static',              Puppet::Pops::Loader::StaticLoader],
         ['puppet_system',       Puppet::Pops::Loader::ModuleLoaders::LibRootedFileBased],
         ['environment',         Puppet::Pops::Loader::ModuleLoaders::EmptyLoader],
         ['environment private', Puppet::Pops::Loader::DependencyLoader],
@@ -183,7 +183,7 @@ describe 'loaders' do
     expect_loader_hierarchy(
       Puppet::Pops::Loaders.new(empty_test_env, true),
       [
-        [nil,                   Puppet::Pops::Loader::StaticLoader],
+        ['static',              Puppet::Pops::Loader::StaticLoader],
         ['puppet_system',       Puppet::Pops::Loader::ModuleLoaders::LibRootedFileBased],
         ['cached_puppet_lib',   Puppet::Pops::Loader::ModuleLoaders::LibRootedFileBased],
         [empty_test_env.name,   Puppet::Pops::Loader::Runtime3TypeLoader],

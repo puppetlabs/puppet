@@ -477,7 +477,6 @@ module Puppet::FFI::Windows
       ffi_lib :kernel32
       attach_function_private :CreateSymbolicLinkW,
         [:lpwstr, :lpwstr, :dword], :boolean
-    rescue LoadError
     end
 
     # https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getcurrentdirectory

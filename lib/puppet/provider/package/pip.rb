@@ -15,8 +15,14 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
 
   has_feature :installable, :uninstallable, :upgradeable, :versionable, :version_ranges, :install_options, :targetable
 
-  PIP_VERSION       = Puppet::Util::Package::Version::Pip
-  PIP_VERSION_RANGE = Puppet::Util::Package::Version::Range
+  const_set(:PIP_VERSION, Puppet::Util::Package::Version::Pip)
+  const_set(:PIP_VERSION_RANGE, Puppet::Util::Package::Version::Range)
+
+  # deprecate top-level constants
+  PIP_VERSION = const_get(:PIP_VERSION) # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:PIP_VERSION)
+  PIP_VERSION_RANGE = const_get(:PIP_VERSION_RANGE) # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:PIP_VERSION_RANGE)
 
   # Override the specificity method to return 1 if pip is not set as default provider
   def self.specificity
@@ -134,7 +140,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   def self.compare_pip_versions(x, y)
     begin
       Puppet::Util::Package::Version::Pip.compare(x, y)
-    rescue PIP_VERSION::ValidationFailure => ex
+    rescue self::PIP_VERSION::ValidationFailure => ex
       Puppet.debug("Cannot compare #{x} and #{y}. #{ex.message} Falling through default comparison mechanism.")
       Puppet::Util::Package.versioncmp(x, y)
     end
@@ -202,7 +208,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   def best_version(should_range)
     included_available_versions = []
     available_versions.each do |version|
-      version = PIP_VERSION.parse(version)
+      version = self.class::PIP_VERSION.parse(version)
       included_available_versions.push(version) if should_range.include?(version)
     end
 
@@ -241,15 +247,15 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     end
 
     begin
-      should_range = PIP_VERSION_RANGE.parse(should, PIP_VERSION)
-    rescue PIP_VERSION_RANGE::ValidationFailure, PIP_VERSION::ValidationFailure
+      should_range = self.class::PIP_VERSION_RANGE.parse(should, self.class::PIP_VERSION)
+    rescue self.class::PIP_VERSION_RANGE::ValidationFailure, self.class::PIP_VERSION::ValidationFailure
       Puppet.debug("Cannot parse #{should} as a pip version range, falling through.")
       command_options << "#{@resource[:name]}==#{should}"
 
       return command_options
     end
 
-    if should_range.is_a?(PIP_VERSION_RANGE::Eq)
+    if should_range.is_a?(self.class::PIP_VERSION_RANGE::Eq)
       command_options << "#{@resource[:name]}==#{should}"
 
       return command_options
@@ -259,7 +265,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
 
     if should == should_range
       # when no suitable version for the given range was found, let pip handle
-      if should.is_a?(PIP_VERSION_RANGE::MinMax)
+      if should.is_a?(self.class::PIP_VERSION_RANGE::MinMax)
         command_options << "#{@resource[:name]} #{should.split.join(',')}"
       else
         command_options << "#{@resource[:name]} #{should}"
@@ -306,15 +312,15 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     return false unless is && is != :absent
     begin
       should = @resource[:ensure]
-      should_range = PIP_VERSION_RANGE.parse(should, PIP_VERSION)
-    rescue PIP_VERSION_RANGE::ValidationFailure, PIP_VERSION::ValidationFailure
+      should_range = self.class::PIP_VERSION_RANGE.parse(should, self.class::PIP_VERSION)
+    rescue self.class::PIP_VERSION_RANGE::ValidationFailure, self.class::PIP_VERSION::ValidationFailure
       Puppet.debug("Cannot parse #{should} as a pip version range")
       return false
     end
 
     begin
-      is_version = PIP_VERSION.parse(is)
-    rescue PIP_VERSION::ValidationFailure
+      is_version = self.class::PIP_VERSION.parse(is)
+    rescue self.class::PIP_VERSION::ValidationFailure
       Puppet.debug("Cannot parse #{is} as a pip version")
       return false
     end

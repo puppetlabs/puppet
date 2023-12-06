@@ -126,16 +126,20 @@ Puppet::Type.newtype(:tidy) do
 
       Specifying 0 will remove all files."
 
-    AgeConvertors = {
+    const_set(:AgeConvertors, {
       :s => 1,
       :m => 60,
       :h => 60 * 60,
       :d => 60 * 60 * 24,
       :w => 60 * 60 * 24 * 7,
-    }
+    }.freeze)
+
+    # deprecate top-level constant
+    AgeConvertors = const_get(:AgeConvertors) # rubocop:disable Lint/ConstantDefinitionInBlock
+    Object.deprecate_constant(:AgeConvertors)
 
     def convert(unit, multi)
-      num = AgeConvertors[unit]
+      num = self.class::AgeConvertors[unit]
       if num
         return num * multi
       else

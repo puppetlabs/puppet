@@ -17,7 +17,7 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
   #   will return nil.
   #
   def initialize(client, server_list_setting:, default_port:, services: )
-    @client = client
+    super(client)
     @server_list_setting = server_list_setting
     @default_port = default_port
     @services = services

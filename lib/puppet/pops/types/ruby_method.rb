@@ -24,6 +24,7 @@ module Types
     attr_reader :body, :parameters
 
     def initialize(body, parameters = nil)
+      super()
       @body = body
       @parameters = parameters
     end

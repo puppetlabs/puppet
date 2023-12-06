@@ -11,6 +11,7 @@ class Puppet::Pops::SemanticError < RuntimeError
   # @param options [Hash] an options hash with Symbol to value mapping - these are the arguments to the issue
   #
   def initialize(issue, semantic=nil, options = {})
+    super()
     @issue = issue
     @semantic = semantic
     @options = options

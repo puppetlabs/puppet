@@ -89,11 +89,15 @@ Puppet::Type.newtype(:resources) do
     end
   end
 
-  WINDOWS_SYSTEM_SID_REGEXES =
+  const_set(:WINDOWS_SYSTEM_SID_REGEXES,
       # Administrator, Guest, Domain Admins, Schema Admins, Enterprise Admins.
       # https://support.microsoft.com/en-us/help/243330/well-known-security-identifiers-in-windows-operating-systems
       [/S-1-5-21.+-500/, /S-1-5-21.+-501/, /S-1-5-21.+-512/, /S-1-5-21.+-518/,
-       /S-1-5-21.+-519/]
+       /S-1-5-21.+-519/])
+
+  # deprecate top-level constant
+  WINDOWS_SYSTEM_SID_REGEXES = const_get(:WINDOWS_SYSTEM_SID_REGEXES) # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:WINDOWS_SYSTEM_SID_REGEXES)
 
   def check(resource)
     @checkmethod ||= "#{self[:name]}_check"
@@ -151,7 +155,7 @@ Puppet::Type.newtype(:resources) do
     return false if unless_uids && unless_uids.include?(current_uid)
     if current_uid.is_a?(String)
       # Windows user; is a system user if any regex matches.
-      WINDOWS_SYSTEM_SID_REGEXES.none? { |regex| current_uid =~ regex }
+      self.class::WINDOWS_SYSTEM_SID_REGEXES.none? { |regex| current_uid =~ regex }
     else
       current_uid > self[:unless_system_user]
     end

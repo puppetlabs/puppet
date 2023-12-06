@@ -47,28 +47,10 @@ Puppet::Face.define(:node, '0.0.1') do
     clean_reports(node)
   end
 
-  class LoggerIO
-    def debug(message)
-      Puppet.debug(message)
-    end
-
-    def warn(message)
-      Puppet.warning(message) unless message =~ /cadir is currently configured to be inside/
-    end
-
-    def err(message)
-      Puppet.err(message) unless message =~ /^\s*Error:\s*/
-    end
-
-    def inform(message)
-      Puppet.notice(message)
-    end
-  end
-
   # clean signed cert for +host+
   def clean_cert(node)
     if Puppet.features.puppetserver_ca?
-      Puppetserver::Ca::Action::Clean.new(LoggerIO.new).run({ 'certnames' => [node] })
+      Puppetserver::Ca::Action::Clean.new(Puppet::Face::Node::LoggerIO.new).run({ 'certnames' => [node] })
     else
       Puppet.info _("Not managing %{node} certs as this host is not a CA") % { node: node }
     end
@@ -104,5 +86,25 @@ Puppet::Face.define(:node, '0.0.1') do
       return true if type && type.arguments.keys.include?('ensure')
     end
     return false
+  end
+end
+
+module Puppet::Face::Node
+  class LoggerIO
+    def debug(message)
+      Puppet.debug(message)
+    end
+
+    def warn(message)
+      Puppet.warning(message) unless message =~ /cadir is currently configured to be inside/
+    end
+
+    def err(message)
+      Puppet.err(message) unless message =~ /^\s*Error:\s*/
+    end
+
+    def inform(message)
+      Puppet.notice(message)
+    end
   end
 end

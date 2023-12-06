@@ -92,7 +92,7 @@ Puppet::Functions.create_function(:map) do
     result = []
     begin
       hash.each {|x, y| result << yield([x, y]) }
-    rescue StopIteration
+    rescue StopIteration # rubocop:disable Lint/SuppressedException
     end
     result
   end
@@ -101,7 +101,7 @@ Puppet::Functions.create_function(:map) do
     result = []
     begin
       hash.each {|x, y| result << yield(x, y) }
-    rescue StopIteration
+    rescue StopIteration # rubocop:disable Lint/SuppressedException
     end
     result
   end
@@ -113,7 +113,7 @@ Puppet::Functions.create_function(:map) do
       enum.each do |val|
         result << yield(val)
       end
-    rescue StopIteration
+    rescue StopIteration # rubocop:disable Lint/SuppressedException
     end
     result
   end
@@ -128,7 +128,7 @@ Puppet::Functions.create_function(:map) do
         enum.each_with_index do |val, index|
           result << yield(index, val)
         end
-      rescue StopIteration
+      rescue StopIteration # rubocop:disable Lint/SuppressedException
       end
       result
     end

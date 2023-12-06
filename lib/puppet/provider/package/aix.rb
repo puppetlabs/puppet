@@ -30,14 +30,17 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
   attr_accessor   :latest_info
 
-  STATE_CODE = {
+  const_set(:STATE_CODE, {
     'A' => :applied,
     'B' => :broken,
     'C' => :committed,
     'E' => :efix_locked,
     'O' => :obsolete,
     '?' => :inconsistent,
-  }.freeze
+  }.freeze)
+  # deprecate top-level constant
+  STATE_CODE = const_get(:STATE_CODE) # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:STATE_CODE)
 
   def self.srclistcmd(source)
     [ command(:installp), "-L", "-d", source ]
@@ -124,8 +127,8 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
     begin
       list = execute(cmd).scan(/^[^#][^:]*:([^:]*):([^:]*):[^:]*:[^:]*:([^:])/).collect { |n,e,s|
-        e = :absent if [:broken, :inconsistent].include?(STATE_CODE[s])
-        { :name => n, :ensure => e, :status => STATE_CODE[s], :provider => self.name }
+        e = :absent if [:broken, :inconsistent].include?(self::STATE_CODE[s])
+        { :name => n, :ensure => e, :status => self::STATE_CODE[s], :provider => self.name }
       }
     rescue Puppet::ExecutionFailure => detail
       if hash[:pkgname]

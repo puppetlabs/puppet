@@ -85,7 +85,7 @@ Puppet::Functions.create_function(:slice) do
             result << enumerator.next
           end
         end
-      rescue StopIteration
+      rescue StopIteration # rubocop:disable Lint/SuppressedException
       end
     else
       begin
@@ -96,7 +96,7 @@ Puppet::Functions.create_function(:slice) do
           end
           pblock.call(*a)
         end
-      rescue StopIteration
+      rescue StopIteration # rubocop:disable Lint/SuppressedException
       end
     end
     if pblock

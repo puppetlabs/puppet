@@ -549,7 +549,7 @@ Puppet::Type.type(:user).provide :directoryservice do
       # could be missing entirely and without it the managed user cannot log in
       if needs_sha512_pbkdf2_authentication_authority_to_be_added?(users_plist)
         Puppet.debug("Adding 'SALTED-SHA512-PBKDF2' AuthenticationAuthority key for ShadowHash to user '#{@resource.name}'")
-        merge_attribute_with_dscl('Users', @resource.name, 'AuthenticationAuthority', ERB::Util.html_escape(SHA512_PBKDF2_AUTHENTICATION_AUTHORITY))
+        merge_attribute_with_dscl('Users', @resource.name, 'AuthenticationAuthority', ERB::Util.html_escape(self.class::SHA512_PBKDF2_AUTHENTICATION_AUTHORITY))
       end
 
       set_salted_pbkdf2(users_plist, shadow_hash_data, 'entropy', value)
@@ -583,7 +583,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # where users created with `dscl` started to have this field missing
   def needs_sha512_pbkdf2_authentication_authority_to_be_added?(users_plist)
     authority = users_plist['authentication_authority']
-    return false if Puppet::Util::Package.versioncmp(self.class.get_os_version, '11.0.0') < 0 && authority && authority.include?(SHA512_PBKDF2_AUTHENTICATION_AUTHORITY)
+    return false if Puppet::Util::Package.versioncmp(self.class.get_os_version, '11.0.0') < 0 && authority && authority.include?(self.class::SHA512_PBKDF2_AUTHENTICATION_AUTHORITY)
 
     Puppet.debug("User '#{@resource.name}' is missing the 'SALTED-SHA512-PBKDF2' AuthenticationAuthority key for ShadowHash")
     true
@@ -677,5 +677,5 @@ Puppet::Type.type(:user).provide :directoryservice do
 
   private
 
-  SHA512_PBKDF2_AUTHENTICATION_AUTHORITY = ';ShadowHash;HASHLIST:<SALTED-SHA512-PBKDF2,SRP-RFC5054-4096-SHA512-PBKDF2>'
+  const_set(:SHA512_PBKDF2_AUTHENTICATION_AUTHORITY, ';ShadowHash;HASHLIST:<SALTED-SHA512-PBKDF2,SRP-RFC5054-4096-SHA512-PBKDF2>')
 end

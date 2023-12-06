@@ -1570,7 +1570,9 @@ Generated on #{Time.now}.
         if default.has_hook?
           default.handle(value)
         end
-      rescue Exception => e
+      rescue SystemExit
+        raise
+      rescue Exception => e # rubocop:disable Lint/RescueException
         @values[name] = old_value
         raise e
       end

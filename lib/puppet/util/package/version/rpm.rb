@@ -63,7 +63,7 @@ module Puppet::Util::Package::Version
       super(a, b)
     end
 
-    def initialize(epoch, version, release, arch)
+    def initialize(epoch, version, release, arch) # rubocop:disable Lint/MissingSuper
       @epoch   = epoch
       @version = version
       @release = release

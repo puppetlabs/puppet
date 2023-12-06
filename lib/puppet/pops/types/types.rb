@@ -419,6 +419,7 @@ class PTypeWithContainedType < PAnyType
   attr_reader :type
 
   def initialize(type)
+    super()
     @type = type
   end
 
@@ -766,6 +767,7 @@ class PEnumType < PScalarDataType
   attr_reader :values, :case_insensitive
 
   def initialize(values, case_insensitive = false)
+    super()
     @values = values.uniq.sort.freeze
     @case_insensitive = case_insensitive
   end
@@ -937,6 +939,7 @@ class PNumericType < PScalarDataType
   end
 
   def initialize(from, to = Float::INFINITY)
+    super()
     from = -Float::INFINITY if from.nil? || from == :default
     to = Float::INFINITY if to.nil? || to == :default
     raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{from}, #{to}" if from > to
@@ -1320,6 +1323,7 @@ class PCollectionType < PAnyType
   attr_reader :size_type
 
   def initialize(size_type)
+    super()
     @size_type = size_type.nil? ? nil : size_type.to_size
   end
 
@@ -1509,6 +1513,7 @@ class PStringType < PScalarDataType
   attr_reader :size_type_or_value
 
   def initialize(size_type_or_value, deprecated_multi_args = EMPTY_ARRAY)
+    super()
     unless deprecated_multi_args.empty?
       if Puppet[:strict] != :off
         #TRANSLATORS 'PStringType#initialize' is a class and method name and should not be translated
@@ -1730,6 +1735,7 @@ class PRegexpType < PScalarType
   end
 
   def initialize(pattern)
+    super()
     if pattern.is_a?(Regexp)
       @regexp = pattern
       @pattern = PRegexpType.regexp_to_s(pattern)
@@ -1778,6 +1784,7 @@ class PPatternType < PScalarDataType
   attr_reader :patterns
 
   def initialize(patterns)
+    super()
     @patterns = patterns.freeze
   end
 
@@ -1848,6 +1855,7 @@ class PBooleanType < PScalarDataType
   attr_reader :value
 
   def initialize(value = nil)
+    super()
     @value = value
   end
 
@@ -1942,6 +1950,7 @@ class PStructElement < TypedModelObject
   end
 
   def initialize(key_type, value_type)
+    super()
     @key_type = key_type
     @value_type = value_type
   end
@@ -1993,6 +2002,7 @@ class PStructType < PAnyType
   end
 
   def initialize(elements)
+    super()
     @elements = elements.freeze
   end
 
@@ -2200,6 +2210,7 @@ class PTupleType < PAnyType
   end
 
   def initialize(types, size_type = nil)
+    super()
     @types = types
     @size_type = size_type.nil? ? nil : size_type.to_size
   end
@@ -2375,6 +2386,7 @@ class PCallableType < PAnyType
   # @param block_type [PAnyType]
   # @param return_type [PAnyType]
   def initialize(param_types, block_type = nil, return_type = nil)
+    super()
     @param_types = param_types
     @block_type = block_type
     @return_type = return_type == PAnyType::DEFAULT ? nil : return_type
@@ -2902,6 +2914,7 @@ class PVariantType < PAnyType
 
   # @param types [Array[PAnyType]] the variants
   def initialize(types)
+    super()
     @types = types.freeze
   end
 
@@ -3164,6 +3177,7 @@ class PClassType < PCatalogEntryType
   end
 
   def initialize(class_name)
+    super()
     @class_name = class_name
   end
 
@@ -3213,6 +3227,7 @@ class PResourceType < PCatalogEntryType
   attr_reader :type_name, :title, :downcased_name
 
   def initialize(type_name, title = nil)
+    super()
     @type_name = type_name.freeze
     @title = title.freeze
     @downcased_name = type_name.nil? ? nil : @type_name.downcase.freeze
@@ -3309,6 +3324,7 @@ class PTypeReferenceType < PAnyType
   attr_reader :type_string
 
   def initialize(type_string)
+    super()
     @type_string = type_string
   end
 
@@ -3368,6 +3384,7 @@ class PTypeAliasType < PAnyType
   # @param type_expr [Model::PopsObject] The expression that describes the aliased type
   # @param resolved_type [PAnyType] the resolve type (only used for the DEFAULT initialization)
   def initialize(name, type_expr, resolved_type = nil)
+    super()
     @name = name
     @type_expr = type_expr
     @resolved_type = resolved_type

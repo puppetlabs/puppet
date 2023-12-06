@@ -1,8 +1,16 @@
 # frozen_string_literal: true
 Puppet::Type.type(:service).provide :upstart, :parent => :debian do
-  START_ON = /^\s*start\s+on/
-  COMMENTED_START_ON = /^\s*#+\s*start\s+on/
-  MANUAL   = /^\s*manual\s*$/
+  const_set(:START_ON, /^\s*start\s+on/)
+  const_set(:COMMENTED_START_ON, /^\s*#+\s*start\s+on/)
+  const_set(:MANUAL, /^\s*manual\s*$/)
+
+  # deprecate top-level constants
+  START_ON = const_get(:START_ON) # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:START_ON)
+  COMMENTED_START_ON = const_get(:COMMENTED_START_ON) # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:COMMENTED_START_ON)
+  MANUAL = const_get(:MANUAL) # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:MANUAL)
 
   desc "Ubuntu service management with `upstart`.
 
@@ -211,7 +219,7 @@ private
 
   def enabled_pre_0_6_7?(script_text)
     # Upstart version < 0.6.7 means no manual stanza.
-    if script_text.match(START_ON)
+    if script_text.match(self.class::START_ON)
       return :true
     else
       return :false
@@ -224,9 +232,9 @@ private
     # The last one in the file wins.
     enabled = :false
     script_text.each_line do |line|
-      if line.match(START_ON)
+      if line.match(self.class::START_ON)
         enabled = :true
-      elsif line.match(MANUAL)
+      elsif line.match(self.class::MANUAL)
         enabled = :false
       end
     end
@@ -240,16 +248,16 @@ private
     enabled = :false
 
     script_text.each_line do |line|
-      if line.match(START_ON)
+      if line.match(self.class::START_ON)
         enabled = :true
-      elsif line.match(MANUAL)
+      elsif line.match(self.class::MANUAL)
         enabled = :false
       end
     end
     over_text.each_line do |line|
-      if line.match(START_ON)
+      if line.match(self.class::START_ON)
         enabled = :true
-      elsif line.match(MANUAL)
+      elsif line.match(self.class::MANUAL)
         enabled = :false
       end
     end if over_text
@@ -262,7 +270,7 @@ private
 
     if enabled_pre_0_9_0?(text) == :false
       enabled_script =
-        if text.match(COMMENTED_START_ON)
+        if text.match(self.class::COMMENTED_START_ON)
           uncomment_start_block_in(text)
         else
           add_default_start_to(text)
@@ -278,7 +286,7 @@ private
     over_text = remove_manual_from(over_text)
 
     if enabled_post_0_9_0?(script_text, over_text) == :false
-      if script_text.match(START_ON)
+      if script_text.match(self.class::START_ON)
         over_text << extract_start_on_block_from(script_text)
       else
         over_text << "\nstart on runlevel [2,3,4,5]"
@@ -326,13 +334,13 @@ private
   end
 
   def remove_manual_from(text)
-    text.gsub(MANUAL, "")
+    text.gsub(self.class::MANUAL, "")
   end
 
   def comment_start_block_in(text)
     parens = 0
     text.lines.map do |line|
-      if line.match(START_ON) || parens > 0
+      if line.match(self.class::START_ON) || parens > 0
         # If there are more opening parens than closing parens, we need to comment out a multiline 'start on' stanza
         parens += unbalanced_parens_on(remove_trailing_comments_from(line))
         "#" + line
@@ -345,7 +353,7 @@ private
   def uncomment_start_block_in(text)
     parens = 0
     text.lines.map do |line|
-      if line.match(COMMENTED_START_ON) || parens > 0
+      if line.match(self.class::COMMENTED_START_ON) || parens > 0
         parens += unbalanced_parens_on(remove_trailing_comments_from_commented_line_of(line))
         uncomment(line)
       else
@@ -357,7 +365,7 @@ private
   def extract_start_on_block_from(text)
     parens = 0
     text.lines.map do |line|
-      if line.match(START_ON) || parens > 0
+      if line.match(self.class::START_ON) || parens > 0
         parens += unbalanced_parens_on(remove_trailing_comments_from(line))
         line
       end

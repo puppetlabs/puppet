@@ -8,6 +8,7 @@ module Adapters
     attr_accessor :cache
 
     def initialize
+      super()
       @cache = {}
     end
 

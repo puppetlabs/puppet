@@ -80,7 +80,7 @@ class Puppet::Util::Autoload
         return true
       rescue SystemExit,NoMemoryError
         raise
-      rescue Exception => detail
+      rescue Exception => detail # rubocop:disable Lint/RescueException
         message = _("Could not autoload %{name}: %{detail}") % { name: name, detail: detail }
         Puppet.log_exception(detail, message)
         raise Puppet::Error, message, detail.backtrace

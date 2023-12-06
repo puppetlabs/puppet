@@ -8,6 +8,7 @@ class Puppet::Transaction::Report::Processor < Puppet::Indirector::Code
     the report types listed in the 'reports' setting."
 
   def initialize
+    super
     Puppet.settings.use(:main, :reporting, :metrics)
   end
 

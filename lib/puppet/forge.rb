@@ -24,6 +24,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   attr_reader :host, :repository
 
   def initialize(host = Puppet[:module_repository])
+    super()
     @host = host
     @repository = Puppet::Forge::Repository.new(host, USER_AGENT)
   end

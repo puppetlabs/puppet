@@ -5,8 +5,8 @@ module Puppet::ModuleTool
       include Puppet::ModuleTool::Errors
 
       def initialize(name, options)
+        super(options)
         @name        = name
-        @options     = options
         @errors      = Hash.new {|h, k| h[k] = {}}
         @unfiltered  = []
         @installed   = []

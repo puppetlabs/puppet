@@ -16,6 +16,7 @@ AllCops:
     - 'ext/suse/puppet.spec'
     - 'lib/puppet/vendor/**/*'
     - 'lib/puppet/pops/parser/eparser.rb'
+    - 'util/**/*'
 
 # puppet uses symbol booleans in types and providers to work around long standing
 # bugs when trying to manage falsey pararameters and properties
@@ -27,6 +28,31 @@ Lint/BooleanSymbol:
     - 'lib/puppet/provider/**/*.rb'
     - 'lib/puppet/reference/providers.rb'
     - 'lib/puppet/parameter/value.rb'
+
+# This breaks the ruby convention of passing &block and using block_given?
+Lint/UnusedMethodArgument:
+  Enabled: false
+
+# Nested methods are bad because the nested method is defined in the outer scope
+# and the nested method is redefined each time the outer method is called.
+# However, `Puppet::Functions.create_loaded_function` calls `class_eval` to
+# evaluate the function and that avoids the first issue. Secondly, the type
+# system always memoizes the result, so the nested method is only called once.
+Lint/NestedMethodDefinition:
+  Enabled: true
+  Exclude:
+    - 'lib/puppet/pops/types/p_binary_type.rb'
+    - 'lib/puppet/pops/types/p_init_type.rb'
+    - 'lib/puppet/pops/types/p_object_type.rb'
+    - 'lib/puppet/pops/types/p_sem_ver_range_type.rb'
+    - 'lib/puppet/pops/types/p_sem_ver_type.rb'
+    - 'lib/puppet/pops/types/p_sensitive_type.rb'
+    - 'lib/puppet/pops/types/p_timespan_type.rb'
+    - 'lib/puppet/pops/types/p_timestamp_type.rb'
+    - 'lib/puppet/pops/types/p_uri_type.rb'
+    - 'lib/puppet/pops/types/types.rb'
+  # AllowedMethods: this requires rubocop 1.37.0
+  #  - 'create_loaded_function'
 
 Metrics/AbcSize:
   Enabled: false

@@ -16,6 +16,7 @@ class Puppet::Pops::Parser::Locatable
     attr_reader :length
 
     def initialize(offset, length)
+      super()
       @offset = offset
       @length = length
     end

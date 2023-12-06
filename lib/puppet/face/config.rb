@@ -2,6 +2,11 @@
 require_relative '../../puppet/face'
 require_relative '../../puppet/settings/ini_file'
 
+module Puppet::Face::Config
+  DEFAULT_SECTION_MARKER = Object.new
+  DEFAULT_SECTION = "main"
+end
+
 Puppet::Face.define(:config, '0.0.1') do
   extend Puppet::Util::Colors
   copyright "Puppet Inc.", 2011
@@ -13,10 +18,14 @@ Puppet::Face.define(:config, '0.0.1') do
     'puppet.conf' configuration file. For documentation about individual settings,
     see https://puppet.com/docs/puppet/latest/configuration.html."
 
-  DEFAULT_SECTION_MARKER = Object.new
-  DEFAULT_SECTION = "main"
+  # deprecate top-level constants
+  DEFAULT_SECTION_MARKER = Puppet::Face::Config::DEFAULT_SECTION_MARKER # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:DEFAULT_SECTION_MARKER)
+  DEFAULT_SECTION = Puppet::Face::Config::DEFAULT_SECTION # rubocop:disable Lint/ConstantDefinitionInBlock
+  Object.deprecate_constant(:DEFAULT_SECTION)
+
   option "--section " + _("SECTION_NAME") do
-    default_to { DEFAULT_SECTION_MARKER } #Sentinel object for default detection during commands
+    default_to { Puppet::Face::Config::DEFAULT_SECTION_MARKER } # Sentinel object for default detection during commands
     summary _("The section of the configuration file to interact with.")
     description <<-EOT
       The section of the puppet.conf configuration file to interact with.
@@ -62,8 +71,8 @@ Puppet::Face.define(:config, '0.0.1') do
       options = args.pop
 
       @default_section = false
-      if options[:section] == DEFAULT_SECTION_MARKER
-        options[:section] = DEFAULT_SECTION
+      if options[:section] == Puppet::Face::Config::DEFAULT_SECTION_MARKER
+        options[:section] = Puppet::Face::Config::DEFAULT_SECTION
         @default_section = true
       end
 
@@ -138,8 +147,8 @@ Puppet::Face.define(:config, '0.0.1') do
     when_invoked do |name, value, options|
 
       @default_section = false
-      if options[:section] == DEFAULT_SECTION_MARKER
-        options[:section] = DEFAULT_SECTION
+      if options[:section] == Puppet::Face::Config::DEFAULT_SECTION_MARKER
+        options[:section] = Puppet::Face::Config::DEFAULT_SECTION
         @default_section = true
       end
 
@@ -221,8 +230,8 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
     when_invoked do |name, options|
 
       @default_section = false
-      if options[:section] == DEFAULT_SECTION_MARKER
-        options[:section] = DEFAULT_SECTION
+      if options[:section] == Puppet::Face::Config::DEFAULT_SECTION_MARKER
+        options[:section] = Puppet::Face::Config::DEFAULT_SECTION
         @default_section = true
       end
 

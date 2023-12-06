@@ -6,7 +6,7 @@
 if not defined? ::Bundler
   begin
     require 'rubygems'
-  rescue LoadError
+  rescue LoadError # rubocop:disable Lint/SuppressedException
   end
 end
 

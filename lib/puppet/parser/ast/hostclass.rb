@@ -5,6 +5,7 @@ class Puppet::Parser::AST::Hostclass < Puppet::Parser::AST::TopLevelConstruct
   attr_accessor :name, :context
 
   def initialize(name, context = {})
+    super()
     @context = context
     @name = name
   end

@@ -65,6 +65,7 @@ module Generators
     end
 
     def initialize(options) #:not-new:
+      super()
       @options    = options
       load_html_template
     end

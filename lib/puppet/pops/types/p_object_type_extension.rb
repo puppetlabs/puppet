@@ -52,6 +52,7 @@ class PObjectTypeExtension < PAnyType
 
   # @api private
   def initialize(base_type, init_parameters)
+    super()
     pts = base_type.type_parameters(true)
     raise Puppet::ParseError, _('The %{label}-Type cannot be parameterized using []') % { label: base_type.label } if pts.empty?
     @base_type = base_type

@@ -57,7 +57,7 @@ module Puppet::Util::Package::Version
 
     private
 
-    def initialize(epoch, upstream_version, debian_revision)
+    def initialize(epoch, upstream_version, debian_revision) # rubocop:disable Lint/MissingSuper
       @epoch            = epoch
       @upstream_version = upstream_version
       @debian_revision  = debian_revision

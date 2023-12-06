@@ -88,6 +88,7 @@ module Puppet::Forge::Errors
           @message ||= body['message'].strip
         end
       rescue Puppet::Util::Json::ParseError
+        # fall through
       end
 
       message = if @message
