@@ -1855,7 +1855,7 @@ class Type
 
       # Provides the ability to add documentation to a provider.
       #
-      def self.doc
+      def self.doc # rubocop:disable Lint/NestedMethodDefinition
         # Since we're mixing @doc with text from other sources, we must normalize
         # its indentation with scrub. But we don't need to manually scrub the
         # provider's doc string, since markdown_definitionlist sanitizes its inputs.
