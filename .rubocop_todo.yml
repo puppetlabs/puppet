@@ -656,17 +656,6 @@ Naming/BlockParameterName:
     - 'lib/puppet/util/windows/daemon.rb'
     - 'lib/puppet/util/windows/user.rb'
 
-# Configuration parameters: AllowedNames.
-# AllowedNames: module_parent
-Naming/ClassAndModuleCamelCase:
-  Exclude:
-    - 'lib/puppet/ffi/windows/structs.rb'
-    - 'lib/puppet/pops/validation/checker4_0.rb'
-    - 'lib/puppet/pops/validation/validator_factory_4_0.rb'
-    - 'lib/puppet/util/windows/root_certs.rb'
-    - 'lib/puppet/util/windows/security.rb'
-    - 'lib/puppet/util/windows/user.rb'
-
 Naming/ConstantName:
   Exclude:
     - 'lib/puppet/graph/relationship_graph.rb'
