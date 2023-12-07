@@ -684,11 +684,6 @@ Naming/ConstantName:
     - 'lib/puppet/util/windows/sid.rb'
     - 'lib/puppet/util/yaml.rb'
 
-# Configuration parameters: ForbiddenDelimiters.
-# ForbiddenDelimiters: (?-mix:(^|\s)(EO[A-Z]{1}|END)(\s|$))
-Naming/HeredocDelimiterNaming:
-  Enabled: false
-
 # Configuration parameters: EnforcedStyleForLeadingUnderscores.
 # SupportedStylesForLeadingUnderscores: disallowed, required, optional
 Naming/MemoizedInstanceVariableName:
