@@ -656,23 +656,6 @@ Naming/BlockParameterName:
     - 'lib/puppet/util/windows/daemon.rb'
     - 'lib/puppet/util/windows/user.rb'
 
-Naming/ConstantName:
-  Exclude:
-    - 'lib/puppet/graph/relationship_graph.rb'
-    - 'lib/puppet/indirector/hiera.rb'
-    - 'lib/puppet/provider/package/sun.rb'
-    - 'lib/puppet/resource/type.rb'
-    - 'lib/puppet/type/schedule.rb'
-    - 'lib/puppet/type/tidy.rb'
-    - 'lib/puppet/util.rb'
-    - 'lib/puppet/util/colors.rb'
-    - 'lib/puppet/util/execution.rb'
-    - 'lib/puppet/util/symbolic_file_mode.rb'
-    - 'lib/puppet/util/tagging.rb'
-    - 'lib/puppet/util/windows/adsi.rb'
-    - 'lib/puppet/util/windows/sid.rb'
-    - 'lib/puppet/util/yaml.rb'
-
 # Configuration parameters: EnforcedStyleForLeadingUnderscores.
 # SupportedStylesForLeadingUnderscores: disallowed, required, optional
 Naming/MemoizedInstanceVariableName:
