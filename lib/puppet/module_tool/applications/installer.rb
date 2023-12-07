@@ -395,18 +395,6 @@ module Puppet::ModuleTool
           end
         end
       end
-
-      #
-      # Check if a file is a vaild module package.
-      # ---
-      # FIXME: Checking for a valid module package should be more robust and
-      # use the actual metadata contained in the package. 03132012 - Hightower
-      # +++
-      #
-      def is_module_package?(name)
-        filename = File.expand_path(name)
-        filename =~ /.tar.gz$/
-      end
     end
   end
 end
