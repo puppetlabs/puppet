@@ -55,6 +55,9 @@ Metrics/ParameterLists:
 Metrics/PerceivedComplexity:
   Enabled: false
 
+Naming/BinaryOperatorParameterName:
+  Enabled: false
+
 Naming/ClassAndModuleCamelCase:
   Exclude:
     - 'lib/puppet/ffi/windows/structs.rb'
