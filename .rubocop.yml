@@ -104,3 +104,19 @@ Naming/MethodParameterName:
 
 Naming/RescuedExceptionsVariableName:
   Enabled: false
+
+Naming/VariableName:
+  Exclude:
+    - 'ext/windows/service/daemon.rb'
+    - 'lib/puppet/agent.rb'
+    - 'lib/puppet/application/describe.rb'
+    - 'lib/puppet/pops/lookup/hiera_config.rb'
+    - 'lib/puppet/pops/validation/checker4_0.rb'
+    - 'lib/puppet/provider/package/pip.rb'
+    - 'lib/puppet/provider/package/windows/exe_package.rb'
+    - 'lib/puppet/provider/package/windows/msi_package.rb'
+    - 'lib/puppet/ssl/ssl_provider.rb'
+    - 'lib/puppet/util/windows/adsi.rb'
+    - 'lib/puppet/util/windows/daemon.rb'
+    - 'lib/puppet/util/windows/error.rb'
+    - 'lib/puppet/util/windows/user.rb'

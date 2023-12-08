@@ -664,24 +664,6 @@ Naming/BlockParameterName:
 Naming/PredicateName:
   Enabled: false
 
-# Configuration parameters: EnforcedStyle, AllowedIdentifiers.
-# SupportedStyles: snake_case, camelCase
-Naming/VariableName:
-  Exclude:
-    - 'ext/windows/service/daemon.rb'
-    - 'lib/puppet/agent.rb'
-    - 'lib/puppet/application/describe.rb'
-    - 'lib/puppet/pops/lookup/hiera_config.rb'
-    - 'lib/puppet/pops/validation/checker4_0.rb'
-    - 'lib/puppet/provider/package/pip.rb'
-    - 'lib/puppet/provider/package/windows/exe_package.rb'
-    - 'lib/puppet/provider/package/windows/msi_package.rb'
-    - 'lib/puppet/ssl/ssl_provider.rb'
-    - 'lib/puppet/util/windows/adsi.rb'
-    - 'lib/puppet/util/windows/daemon.rb'
-    - 'lib/puppet/util/windows/error.rb'
-    - 'lib/puppet/util/windows/user.rb'
-
 # Configuration parameters: EnforcedStyle, CheckMethodNames, CheckSymbols, AllowedIdentifiers.
 # SupportedStyles: snake_case, normalcase, non_integer
 # AllowedIdentifiers: capture3, iso8601, rfc1123_date, rfc822, rfc2822, rfc3339
