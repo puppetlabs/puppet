@@ -120,3 +120,6 @@ Naming/VariableName:
     - 'lib/puppet/util/windows/daemon.rb'
     - 'lib/puppet/util/windows/error.rb'
     - 'lib/puppet/util/windows/user.rb'
+
+Naming/VariableNumber:
+  Enabled: false
