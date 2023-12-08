@@ -55,6 +55,9 @@ Metrics/ParameterLists:
 Metrics/PerceivedComplexity:
   Enabled: false
 
+Naming/AccessorMethodName:
+  Enabled: false
+
 Naming/BinaryOperatorParameterName:
   Enabled: false
 
