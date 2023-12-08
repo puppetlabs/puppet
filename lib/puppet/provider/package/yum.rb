@@ -292,10 +292,10 @@ defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
         if @resource[:install_only]
           self.debug "Updating package #{@resource[:name]} from version #{current_package[:ensure]} to #{should} as install_only packages are never downgraded"
           operation = update_command
-        elsif rpm_compareEVR(should, current_package[:ensure]) < 0
+        elsif rpm_compare_evr(should, current_package[:ensure]) < 0
           self.debug "Downgrading package #{@resource[:name]} from version #{current_package[:ensure]} to #{should}"
           operation = :downgrade
-        elsif rpm_compareEVR(should, current_package[:ensure]) > 0
+        elsif rpm_compare_evr(should, current_package[:ensure]) > 0
           self.debug "Upgrading package #{@resource[:name]} from version #{current_package[:ensure]} to #{should}"
           operation = update_command
         end

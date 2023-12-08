@@ -656,11 +656,6 @@ Naming/BlockParameterName:
     - 'lib/puppet/util/windows/daemon.rb'
     - 'lib/puppet/util/windows/user.rb'
 
-# Configuration parameters: EnforcedStyle, AllowedPatterns, IgnoredPatterns.
-# SupportedStyles: snake_case, camelCase
-Naming/MethodName:
-  Enabled: false
-
 # Configuration parameters: NamePrefix, ForbiddenPrefixes, AllowedMethods, MethodDefinitionMacros.
 # NamePrefix: is_, has_, have_
 # ForbiddenPrefixes: is_, has_, have_

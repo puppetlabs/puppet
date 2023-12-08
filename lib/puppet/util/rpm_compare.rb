@@ -165,7 +165,7 @@ module Puppet::Util::RpmCompare
   # return 1: a is newer than b
   #        0: a and b are the same version
   #       -1: b is newer than a
-  def rpm_compareEVR(should, is)
+  def rpm_compare_evr(should, is)
     # pass on to rpm labelCompare
     should_hash = rpm_parse_evr(should)
     is_hash = rpm_parse_evr(is)

@@ -92,5 +92,12 @@ Naming/MemoizedInstanceVariableName:
     - 'lib/puppet/provider/package/portage.rb'
     - 'lib/puppet/resource.rb'
 
+Naming/MethodName:
+  Exclude:
+    - 'lib/puppet/functions/**/*'
+    - 'lib/puppet/parser/ast/pops_bridge.rb'
+    - 'lib/puppet/pops/**/*'
+    - 'lib/puppet/util/windows/**/*'
+
 Naming/MethodParameterName:
   Enabled: false
