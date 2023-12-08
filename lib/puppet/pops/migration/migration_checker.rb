@@ -7,9 +7,11 @@ class Puppet::Pops::Migration::MigrationChecker
   def initialize()
   end
 
+  # rubocop:disable Naming/MemoizedInstanceVariableName
   def self.singleton
     @null_checker ||= self.new
   end
+  # rubocop:enable Naming/MemoizedInstanceVariableName
 
   # Produces a hash of available migrations; a map from a symbolic name in string form to a brief description.
   # This version has no such supported migrations.

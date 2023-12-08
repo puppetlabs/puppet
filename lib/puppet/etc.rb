@@ -132,6 +132,7 @@ module Puppet::Etc
     # these fields as well. API compatible with Etc::Passwd. Because Struct.new
     # defines a new Class object, we memoize to avoid superfluous extra Class
     # instantiations.
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     def puppet_etc_passwd_class
       @password_class ||= Struct.new(*Etc::Passwd.members, *Etc::Passwd.members.map { |member| "canonical_#{member}".to_sym })
     end
@@ -145,6 +146,7 @@ module Puppet::Etc
     def puppet_etc_group_class
       @group_class ||= Struct.new(*Etc::Group.members, *Etc::Group.members.map { |member| "canonical_#{member}".to_sym })
     end
+    # rubocop:enable Naming/MemoizedInstanceVariableName
 
     # Utility method for overriding the String values of a struct returned by
     # the Etc module to UTF-8. Structs returned by the ruby Etc module contain

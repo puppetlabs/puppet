@@ -188,10 +188,11 @@ module Adaptable
     # Adapter#instance_var_name and then cached.
     # @return [String] the instance variable name for _name_
     # @api private
-    #
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     def self.self_attr_name
       @attr_name_sym ||= :"@#{instance_var_name(type_name)}"
     end
+    # rubocop:enable Naming/MemoizedInstanceVariableName
   end
 end
 end

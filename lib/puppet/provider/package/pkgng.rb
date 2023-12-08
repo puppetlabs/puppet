@@ -23,7 +23,9 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
   end
 
   def self.cached_version_list
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     @version_list ||= get_version_list
+    # rubocop:enable Naming/MemoizedInstanceVariableName
   end
 
   def self.get_version_list

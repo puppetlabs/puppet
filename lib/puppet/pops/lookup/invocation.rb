@@ -109,9 +109,11 @@ class Invocation
     @explainer.emit_debug_info(preamble) if @explainer.is_a?(DebugExplainer)
   end
 
+  # rubocop:disable Naming/MemoizedInstanceVariableName
   def lookup_adapter
     @adapter ||= @adapter_class.adapt(scope.compiler)
   end
+  # rubocop:enable Naming/MemoizedInstanceVariableName
 
   # This method is overridden by the special Invocation used while resolving interpolations in a
   # Hiera configuration file (hiera.yaml) where it's used for collecting and remembering the current

@@ -135,9 +135,11 @@ class Closure < CallableSignature
   end
 
   # @api public
+  # rubocop:disable Naming/MemoizedInstanceVariableName
   def type
     @callable ||= create_callable_type
   end
+  # rubocop:enable Naming/MemoizedInstanceVariableName
 
   # @api public
   def params_struct

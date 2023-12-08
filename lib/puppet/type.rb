@@ -386,7 +386,9 @@ class Type
   #
   def self.key_attributes
     # This is a cache miss around 0.05 percent of the time. --daniel 2012-07-17
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     @key_attributes_cache ||= key_attribute_parameters.collect { |p| p.name }
+    # rubocop:enable Naming/MemoizedInstanceVariableName
   end
 
   # Returns any parameters that should be included by default in puppet resource's output
@@ -2220,9 +2222,9 @@ class Type
         "Param Documentation for #{key} not found"
       end
     }
-
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     @doc ||= ""
-
+    # rubocop:enable Naming/MemoizedInstanceVariableName
   end
 
   # Returns the name of this type (if specified) or the parent type #to_s.

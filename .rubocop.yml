@@ -84,5 +84,13 @@ Naming/ConstantName:
 Naming/HeredocDelimiterNaming:
   Enabled: false
 
+# Exclude existing violations to avoid breaking changes
+Naming/MemoizedInstanceVariableName:
+  Exclude:
+    - 'lib/puppet/module_tool/applications/installer.rb'
+    - 'lib/puppet/pops/types/type_factory.rb'
+    - 'lib/puppet/provider/package/portage.rb'
+    - 'lib/puppet/resource.rb'
+
 Naming/MethodParameterName:
   Enabled: false

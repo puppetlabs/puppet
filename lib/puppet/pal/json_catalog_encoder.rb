@@ -62,11 +62,12 @@ class JsonCatalogEncoder
   # or the catalog itself if filtering was not needed.
   # The result is cached.
   # @api private
-  #
+  # rubocop:disable Naming/MemoizedInstanceVariableName
   def possibly_filtered_catalog
     @filtered ||= (exclude_virtual ? catalog.filter { |r| r.virtual? } : catalog)
   end
   private :possibly_filtered_catalog
+  # rubocop:enable Naming/MemoizedInstanceVariableName
 end
 end
 end

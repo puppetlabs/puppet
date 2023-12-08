@@ -656,11 +656,6 @@ Naming/BlockParameterName:
     - 'lib/puppet/util/windows/daemon.rb'
     - 'lib/puppet/util/windows/user.rb'
 
-# Configuration parameters: EnforcedStyleForLeadingUnderscores.
-# SupportedStylesForLeadingUnderscores: disallowed, required, optional
-Naming/MemoizedInstanceVariableName:
-  Enabled: false
-
 # Configuration parameters: EnforcedStyle, AllowedPatterns, IgnoredPatterns.
 # SupportedStyles: snake_case, camelCase
 Naming/MethodName:

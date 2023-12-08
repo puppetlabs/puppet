@@ -93,9 +93,11 @@ module Puppet::ModuleTool
       #
       # @api private
       # @return [String] path to temporary unpacking location
+      # rubocop:disable Naming/MemoizedInstanceVariableName
       def tmpdir
         @dir ||= Dir.mktmpdir('tmp', Puppet::Forge::Cache.base_path)
       end
+      # rubocop:enable Naming/MemoizedInstanceVariableName
     end
   end
 end

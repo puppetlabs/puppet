@@ -36,7 +36,9 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
   end
 
   def extension_factory
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     @ef ||= OpenSSL::X509::ExtensionFactory.new
+    # rubocop:enable Naming/MemoizedInstanceVariableName
   end
 
   # Create a certificate request with our system settings.

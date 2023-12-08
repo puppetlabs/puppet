@@ -316,6 +316,7 @@ class Locator
   class Locator19 < AbstractLocator
     include Types::PuppetObject
 
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     def self._pcore_type
       @type ||= Types::PObjectType.new('Puppet::AST::Locator', {
         'attributes' => {
@@ -328,6 +329,7 @@ class Locator
         }
       })
     end
+    # rubocop:enable Naming/MemoizedInstanceVariableName
 
     # Returns the offset on line (first offset on a line is 0).
     # Ruby 19 is multibyte but has no character position methods, must use byteslice
