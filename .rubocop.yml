@@ -58,6 +58,11 @@ Metrics/PerceivedComplexity:
 Naming/BinaryOperatorParameterName:
   Enabled: false
 
+Naming/BlockParameterName:
+  Exclude:
+    - 'lib/puppet/util/windows/daemon.rb'
+    - 'lib/puppet/util/windows/user.rb'
+
 Naming/ClassAndModuleCamelCase:
   Exclude:
     - 'lib/puppet/ffi/windows/structs.rb'

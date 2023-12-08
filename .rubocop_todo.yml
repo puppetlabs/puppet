@@ -646,12 +646,6 @@ Lint/UnusedMethodArgument:
 Naming/AccessorMethodName:
   Enabled: false
 
-# Configuration parameters: MinNameLength, AllowNamesEndingInNumbers, AllowedNames, ForbiddenNames.
-Naming/BlockParameterName:
-  Exclude:
-    - 'lib/puppet/util/windows/daemon.rb'
-    - 'lib/puppet/util/windows/user.rb'
-
 # Configuration parameters: NamePrefix, ForbiddenPrefixes, AllowedMethods, MethodDefinitionMacros.
 # NamePrefix: is_, has_, have_
 # ForbiddenPrefixes: is_, has_, have_
