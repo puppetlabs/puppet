@@ -664,11 +664,6 @@ Naming/BlockParameterName:
 Naming/PredicateName:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: PreferredName.
-Naming/RescuedExceptionsVariableName:
-  Enabled: false
-
 # Configuration parameters: EnforcedStyle, AllowedIdentifiers.
 # SupportedStyles: snake_case, camelCase
 Naming/VariableName:
