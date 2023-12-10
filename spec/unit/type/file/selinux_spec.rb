@@ -54,7 +54,7 @@ require 'spec_helper'
       expect(@sel.default).to be_nil
     end
 
-    it "should be able to detect matchpathcon defaults" do
+    it "should be able to detect default context" do
       allow(@sel).to receive(:debug)
       expect(@sel).to receive(:get_selinux_default_context).with(@path, :file).and_return("user_u:role_r:type_t:s0")
       expectedresult = case param

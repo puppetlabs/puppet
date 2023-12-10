@@ -758,20 +758,6 @@ describe Puppet::Transaction do
       transaction.evaluate
     end
 
-    it "should call Selinux.matchpathcon_fini in case Selinux is enabled ", :if => Puppet.features.posix? do
-      selinux = double('selinux', is_selinux_enabled: true, matchpathcon_fini: nil)
-      stub_const('Selinux', selinux)
-
-      resource = Puppet::Type.type(:file).new(:path => make_absolute("/tmp/foo"))
-      transaction = transaction_with_resource(resource)
-
-      expect(Selinux).to receive(:matchpathcon_fini)
-      expect(Puppet::Util::SELinux).to receive(:selinux_support?).and_return(true)
-
-      transaction.evaluate
-    end
-  end
-
   describe 'when checking application run state' do
     before do
       @catalog = Puppet::Resource::Catalog.new
