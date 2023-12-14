@@ -113,6 +113,9 @@ Naming/MethodName:
 Naming/MethodParameterName:
   Enabled: false
 
+Naming/PredicateName:
+  ForbiddenPrefixes: []
+
 Naming/RescuedExceptionsVariableName:
   Enabled: false
 

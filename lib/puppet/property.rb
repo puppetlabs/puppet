@@ -403,7 +403,7 @@ class Puppet::Property < Puppet::Parameter
   # are not already in suitable form.
   # @param value [Object] the value to format as a string
   # @return [String] a pretty printing string
-  def is_to_s(value)
+  def is_to_s(value) # rubocop:disable Naming/PredicateName
     self.class.format_value_for_display(value)
   end
 

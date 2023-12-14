@@ -622,20 +622,20 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   # if none is found.
   def get_module_relative_path(file_path, modulepath_directories)
     clean_file = file_path.cleanpath.to_s
-    parent_path = modulepath_directories.find { |path_dir| is_parent_dir_of(path_dir, clean_file) }
+    parent_path = modulepath_directories.find { |path_dir| is_parent_dir_of?(path_dir, clean_file) }
     return NO_PATH if parent_path.nil?
 
     file_path.relative_path_from(Pathname.new(parent_path))
   end
   private :get_module_relative_path
 
-  def is_parent_dir_of(parent_dir, child_dir)
+  def is_parent_dir_of?(parent_dir, child_dir)
     parent_dir_path = Pathname.new(parent_dir)
     clean_parent = parent_dir_path.cleanpath.to_s + File::SEPARATOR
 
     return child_dir.start_with?(clean_parent)
   end
-  private :is_parent_dir_of
+  private :is_parent_dir_of?
 
   def dir_to_names(relative_path)
     # Downcasing here because check is case-insensitive

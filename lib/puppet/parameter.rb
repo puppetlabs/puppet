@@ -92,6 +92,7 @@ class Puppet::Parameter
       end
     end
 
+    # rubocop:disable Naming/PredicateName
     def sensitive(value = nil, &block)
       if block
         define_method(:is_sensitive, &block)
@@ -99,6 +100,7 @@ class Puppet::Parameter
         define_method(:is_sensitive) do value end
       end
     end
+    # rubocop:enable Naming/PredicateName
 
     # Produces a documentation string.
     # If an enumeration of _valid values_ has been defined, it is appended to the documentation
