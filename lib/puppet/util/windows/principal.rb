@@ -81,7 +81,7 @@ module Puppet::Util::Windows::SID
                   return lookup_account_sid(
                     system_name,
                     sid_ptr.read_bytes(sid_length_ptr.read_dword).unpack('C*'))
-                  end
+                end
                 end
               end
             end

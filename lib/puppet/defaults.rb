@@ -493,10 +493,10 @@ module Puppet
           currently cannot daemonize).",
         :short    => "D",
         :hook     => proc do |value|
-          if value and Puppet::Util::Platform.windows?
-            raise "Cannot daemonize on Windows"
-          end
-      end
+                       if value and Puppet::Util::Platform.windows?
+                         raise "Cannot daemonize on Windows"
+                       end
+                     end
     },
     :maximum_uid => {
         :default  => 4294967290,

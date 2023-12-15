@@ -70,18 +70,6 @@ Layout/AssignmentIndentation:
     - 'lib/puppet/util/windows/daemon.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyleAlignWith.
-# SupportedStylesAlignWith: either, start_of_block, start_of_line
-Layout/BlockAlignment:
-  Exclude:
-    - 'lib/puppet/defaults.rb'
-    - 'lib/puppet/node/environment.rb'
-    - 'lib/puppet/parser/functions/lookup.rb'
-    - 'lib/puppet/provider/package/dnfmodule.rb'
-    - 'lib/puppet/type/file.rb'
-    - 'lib/puppet/util/windows/principal.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, IndentOneStep, IndentationWidth.
 # SupportedStyles: case, end
 Layout/CaseIndentation:
