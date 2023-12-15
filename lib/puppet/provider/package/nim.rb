@@ -249,12 +249,12 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     package_string = match.captures[1]
 
     case package_type_flag
-      when "I","S"
-        parse_installp_package_string(package_string)
-      when "R"
-        parse_rpm_package_string(package_string)
-      else
-        self.fail _("Unrecognized package type specifier: '%{package_type_flag}' in package line:\n'%{line}'") % { package_type_flag: package_type_flag, line: line }
+    when "I","S"
+      parse_installp_package_string(package_string)
+    when "R"
+      parse_rpm_package_string(package_string)
+    else
+      self.fail _("Unrecognized package type specifier: '%{package_type_flag}' in package line:\n'%{line}'") % { package_type_flag: package_type_flag, line: line }
     end
   end
 

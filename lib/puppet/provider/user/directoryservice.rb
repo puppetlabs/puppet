@@ -107,17 +107,17 @@ Puppet::Type.type(:user).provide :directoryservice do
       next unless ds_to_ns_attribute_map.keys.include?(ds_attribute)
       ds_value = input_hash[key]
       case ds_to_ns_attribute_map[ds_attribute]
-        when :gid, :uid
-          # OS X stores objects like uid/gid as strings.
-          # Try casting to an integer for these cases to be
-          # consistent with the other providers and the group type
-          # validation
-          begin
-            ds_value = Integer(ds_value[0])
-          rescue ArgumentError
-            ds_value = ds_value[0]
-          end
-        else ds_value = ds_value[0]
+      when :gid, :uid
+        # OS X stores objects like uid/gid as strings.
+        # Try casting to an integer for these cases to be
+        # consistent with the other providers and the group type
+        # validation
+        begin
+          ds_value = Integer(ds_value[0])
+        rescue ArgumentError
+          ds_value = ds_value[0]
+        end
+      else ds_value = ds_value[0]
       end
       attribute_hash[ds_to_ns_attribute_map[ds_attribute]] = ds_value
     end

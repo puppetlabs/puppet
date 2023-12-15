@@ -101,10 +101,10 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
       # While subsystems with -S (signals) must be stopped/started
       method = args[11]
       do_refresh = case method
-        when "-K" then :true
-        when "-S" then :false
-        else self.fail("Unknown service communication method #{method}")
-      end
+                   when "-K" then :true
+                   when "-S" then :false
+                   else self.fail("Unknown service communication method #{method}")
+                   end
 
       begin
         if do_refresh == :true
@@ -133,9 +133,9 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
       # PID is the 3rd field, but inoperative subsystems
       # skip this so split doesn't work right
       state = case args[-1]
-        when "active" then :running
-        when "inoperative" then :stopped
-      end
+              when "active"      then :running
+              when "inoperative" then :stopped
+              end
       Puppet.debug("Service #{@resource[:name]} is #{args[-1]}")
       return state
     end

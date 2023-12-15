@@ -144,16 +144,16 @@ module Puppet::Util::Windows::File
 
       reparse_tag = reparse_data_buffer_ptr.read_win32_ulong
       buffer_type = case reparse_tag
-      when IO_REPARSE_TAG_SYMLINK
-        SYMLINK_REPARSE_DATA_BUFFER
-      when IO_REPARSE_TAG_MOUNT_POINT
-        MOUNT_POINT_REPARSE_DATA_BUFFER
-      when IO_REPARSE_TAG_NFS
-        raise Puppet::Util::Windows::Error.new("Retrieving NFS reparse point data is unsupported")
-      else
-        raise Puppet::Util::Windows::Error.new("DeviceIoControl(#{handle}, " +
-          "FSCTL_GET_REPARSE_POINT) returned unknown tag 0x#{reparse_tag.to_s(16).upcase}")
-      end
+                    when IO_REPARSE_TAG_SYMLINK
+                      SYMLINK_REPARSE_DATA_BUFFER
+                    when IO_REPARSE_TAG_MOUNT_POINT
+                      MOUNT_POINT_REPARSE_DATA_BUFFER
+                    when IO_REPARSE_TAG_NFS
+                      raise Puppet::Util::Windows::Error.new("Retrieving NFS reparse point data is unsupported")
+                    else
+                      raise Puppet::Util::Windows::Error.new("DeviceIoControl(#{handle}, " +
+                        "FSCTL_GET_REPARSE_POINT) returned unknown tag 0x#{reparse_tag.to_s(16).upcase}")
+                    end
 
       yield buffer_type.new(reparse_data_buffer_ptr)
     end

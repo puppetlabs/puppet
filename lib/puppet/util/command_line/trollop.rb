@@ -231,10 +231,10 @@ class Parser
     ## fill in :short
     opts[:short] = opts[:short].to_s if opts[:short] unless opts[:short] == :none
     opts[:short] = case opts[:short]
-      when /^-(.)$/; $1
-      when nil, :none, /^.$/; opts[:short]
-      else raise ArgumentError, _("invalid short option name '%{name}'") % { name: opts[:short].inspect }
-    end
+                   when /^-(.)$/; $1
+                   when nil, :none, /^.$/; opts[:short]
+                   else raise ArgumentError, _("invalid short option name '%{name}'") % { name: opts[:short].inspect }
+                   end
 
     if opts[:short]
       raise ArgumentError, _("short option name %{value0} is already taken; please specify a (different) :short") % { value0: opts[:short].inspect } if @short[opts[:short]]
@@ -327,15 +327,15 @@ class Parser
     given_args = {}
     @leftovers = each_arg cmdline do |arg, params|
       sym = case arg
-      when /^-([^-])$/
-        @short[$1]
-      when /^--no-([^-]\S*)$/
-        @long["[no-]#{$1}"]
-      when /^--([^-]\S*)$/
-        @long[$1] ? @long[$1] : @long["[no-]#{$1}"]
-      else
-        raise CommandlineError, _("invalid argument syntax: '%{arg}'") % { arg: arg }
-      end
+            when /^-([^-])$/
+              @short[$1]
+            when /^--no-([^-]\S*)$/
+              @long["[no-]#{$1}"]
+            when /^--([^-]\S*)$/
+              @long[$1] ? @long[$1] : @long["[no-]#{$1}"]
+            else
+              raise CommandlineError, _("invalid argument syntax: '%{arg}'") % { arg: arg }
+            end
 
       unless sym
         next 0 if ignore_invalid_options
@@ -502,14 +502,14 @@ class Parser
       stream.printf "  %#{leftcol_width}s:   ", left[opt]
       desc = spec[:desc] + begin
         default_s = case spec[:default]
-        when $stdout; "<stdout>"
-        when $stdin; "<stdin>"
-        when $stderr; "<stderr>"
-        when Array
-          spec[:default].join(", ")
-        else
-          spec[:default].to_s
-        end
+                    when $stdout; "<stdout>"
+                    when $stdin; "<stdin>"
+                    when $stderr; "<stderr>"
+                    when Array
+                      spec[:default].join(", ")
+                    else
+                      spec[:default].to_s
+                    end
 
         if spec[:default]
           if spec[:desc] =~ /\.$/

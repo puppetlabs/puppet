@@ -1208,31 +1208,30 @@ class EvaluatorImpl
     case x
     when Array
       y = case y
-      when Array then y
-      when Hash  then y.to_a
-      else
-        [y]
-      end
+          when Array then y
+          when Hash  then y.to_a
+          else            [y]
+          end
       x + y # new array with concatenation
     when Hash
       y = case y
-      when Hash then y
-      when Array
-        # Hash[[a, 1, b, 2]] => {}
-        # Hash[a,1,b,2] => {a => 1, b => 2}
-        # Hash[[a,1], [b,2]] => {[a,1] => [b,2]}
-        # Hash[[[a,1], [b,2]]] => {a => 1, b => 2}
-        # Use type calculator to determine if array is Array[Array[?]], and if so use second form
-        # of call
-        t = @@type_calculator.infer(y)
-        if t.element_type.is_a? Types::PArrayType
-          Hash[y]
-        else
-          Hash[*y]
-        end
-      else
-        raise ArgumentError.new(_('Can only append Array or Hash to a Hash'))
-      end
+          when Hash then y
+          when Array
+            # Hash[[a, 1, b, 2]] => {}
+            # Hash[a,1,b,2] => {a => 1, b => 2}
+            # Hash[[a,1], [b,2]] => {[a,1] => [b,2]}
+            # Hash[[[a,1], [b,2]]] => {a => 1, b => 2}
+            # Use type calculator to determine if array is Array[Array[?]], and if so use second form
+            # of call
+            t = @@type_calculator.infer(y)
+            if t.element_type.is_a? Types::PArrayType
+              Hash[y]
+            else
+              Hash[*y]
+            end
+          else
+            raise ArgumentError.new(_('Can only append Array or Hash to a Hash'))
+          end
       x.merge y # new hash with overwrite
     when URI
       raise ArgumentError.new(_('An URI can only be merged with an URI or String')) unless y.is_a?(String) || y.is_a?(URI)
@@ -1256,16 +1255,16 @@ class EvaluatorImpl
     case x
     when Array
       y = case y
-      when Array then y
-      when Hash then y.to_a
+          when Array then y
+          when Hash then y.to_a
       else
         [y]
       end
       y.each {|e| result.delete(e) }
     when Hash
       y = case y
-      when Array then y
-      when Hash then y.keys
+          when Array then y
+          when Hash then y.keys
       else
         [y]
       end

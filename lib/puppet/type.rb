@@ -136,10 +136,10 @@ class Type
     # of times (as in, hundreds of thousands in a given run).
     unless @attrclasses.include?(name)
       @attrclasses[name] = case self.attrtype(name)
-      when :property; @validproperties[name]
-      when :meta; @@metaparamhash[name]
-      when :param; @paramhash[name]
-      end
+                           when :property; @validproperties[name]
+                           when :meta; @@metaparamhash[name]
+                           when :param; @paramhash[name]
+                           end
     end
     @attrclasses[name]
   end
@@ -153,10 +153,10 @@ class Type
     @attrtypes ||= {}
     unless @attrtypes.include?(attr)
       @attrtypes[attr] = case
-        when @validproperties.include?(attr); :property
-        when @paramhash.include?(attr); :param
-        when @@metaparamhash.include?(attr); :meta
-        end
+                         when @validproperties.include?(attr); :property
+                         when @paramhash.include?(attr); :param
+                         when @@metaparamhash.include?(attr); :meta
+                         end
     end
 
     @attrtypes[attr]
@@ -1548,13 +1548,13 @@ class Type
         # i.e. before, after, subscribe, notify
         self.debug do
           relation = case self.class.name
-          when "subscribe"
-            "subscribes"
-          when "notify"
-            "notifies"
-          else
-            self.class.name
-          end
+                     when "subscribe"
+                       "subscribes"
+                     when "notify"
+                       "notifies"
+                     else
+                       self.class.name
+                     end
 
           "#{relation} to #{related_resource.ref}"
         end

@@ -133,23 +133,23 @@ class Runtime3Converter
   def catalog_type_to_split_type_title(catalog_type)
     split_type = catalog_type.is_a?(Puppet::Pops::Types::PTypeType) ? catalog_type.type : catalog_type
     case split_type
-      when Puppet::Pops::Types::PClassType
-        class_name = split_type.class_name
-        ['class', class_name.nil? ? nil : class_name.sub(/^::/, '')]
-      when Puppet::Pops::Types::PResourceType
-        type_name = split_type.type_name
-        title = split_type.title
-        if type_name =~ /^(::)?[Cc]lass$/
-          ['class', title.nil? ? nil : title.sub(/^::/, '')]
-        else
-          # Ensure that title is '' if nil
-          # Resources with absolute name always results in error because tagging does not support leading ::
-          [type_name.nil? ? nil : type_name.sub(/^::/, '').downcase, title.nil? ? '' : title]
-        end
+    when Puppet::Pops::Types::PClassType
+      class_name = split_type.class_name
+      ['class', class_name.nil? ? nil : class_name.sub(/^::/, '')]
+    when Puppet::Pops::Types::PResourceType
+      type_name = split_type.type_name
+      title = split_type.title
+      if type_name =~ /^(::)?[Cc]lass$/
+        ['class', title.nil? ? nil : title.sub(/^::/, '')]
       else
-        #TRANSLATORS 'PClassType' and 'PResourceType' are Puppet types and should not be translated
-        raise ArgumentError, _("Cannot split the type %{class_name}, it represents neither a PClassType, nor a PResourceType.") %
-            { class_name: catalog_type.class }
+        # Ensure that title is '' if nil
+        # Resources with absolute name always results in error because tagging does not support leading ::
+        [type_name.nil? ? nil : type_name.sub(/^::/, '').downcase, title.nil? ? '' : title]
+      end
+    else
+      #TRANSLATORS 'PClassType' and 'PResourceType' are Puppet types and should not be translated
+      raise ArgumentError, _("Cannot split the type %{class_name}, it represents neither a PClassType, nor a PResourceType.") %
+          { class_name: catalog_type.class }
     end
   end
 

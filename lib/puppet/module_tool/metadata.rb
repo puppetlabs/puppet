@@ -172,14 +172,14 @@ module Puppet::ModuleTool
       modname = :namespace_missing if namespace == ''
 
       err = case modname
-      when nil, '', :namespace_missing
-        _("the field must be a namespaced module name")
-      when /[^a-z0-9_]/i
-        _("the module name contains non-alphanumeric (or underscore) characters")
-      when /^[^a-z]/i
-        _("the module name must begin with a letter")
-      else
-        _("the namespace contains non-alphanumeric characters")
+            when nil, '', :namespace_missing
+              _("the field must be a namespaced module name")
+            when /[^a-z0-9_]/i
+              _("the module name contains non-alphanumeric (or underscore) characters")
+            when /^[^a-z]/i
+              _("the module name must begin with a letter")
+            else
+              _("the namespace contains non-alphanumeric characters")
       end
 
       raise ArgumentError, _("Invalid 'name' field in metadata.json: %{err}") % { err: err }

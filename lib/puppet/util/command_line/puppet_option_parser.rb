@@ -57,12 +57,12 @@ module Puppet
           }
 
           case type
-            when :REQUIRED
-              options[:type] = :string
-            when :NONE
-              options[:type] = :flag
-            else
-              raise PuppetOptionError.new(_("Unsupported type: '%{type}'") % { type: type })
+          when :REQUIRED
+            options[:type] = :string
+          when :NONE
+            options[:type] = :flag
+          else
+            raise PuppetOptionError.new(_("Unsupported type: '%{type}'") % { type: type })
           end
 
           @parser.opt long.sub("^--", "").intern, desc, options

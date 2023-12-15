@@ -70,12 +70,6 @@ Layout/AssignmentIndentation:
     - 'lib/puppet/util/windows/daemon.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, IndentOneStep, IndentationWidth.
-# SupportedStyles: case, end
-Layout/CaseIndentation:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/ClosingHeredocIndentation:
   Enabled: false
 

@@ -48,12 +48,12 @@ class Puppet::Util::Pidlock
 
   def ps_argument_for_current_kernel
     case Puppet.runtime[:facter].value(:kernel)
-      when "Linux"
-        "-eq"
-      when "AIX"
-        "-T"
-      else
-        "-p"
+    when "Linux"
+      "-eq"
+    when "AIX"
+      "-T"
+    else
+      "-p"
     end
   end
 

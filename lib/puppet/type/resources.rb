@@ -78,12 +78,12 @@ Puppet::Type.newtype(:resources) do
       value = [value] unless value.is_a? Array
       value.flatten.collect do |v|
         case v
-          when Integer
-            v
-          when String
-            Integer(v)
-          else
-            raise ArgumentError, _("Invalid value %{value}.") % { value: v.inspect }
+        when Integer
+          v
+        when String
+          Integer(v)
+        else
+          raise ArgumentError, _("Invalid value %{value}.") % { value: v.inspect }
         end
       end
     end
@@ -173,7 +173,7 @@ Puppet::Type.newtype(:resources) do
 
     # Otherwise, use a sensible default based on the OS family
     @system_users_max_uid ||= case Puppet.runtime[:facter].value('os.family')
-      when 'OpenBSD', 'FreeBSD'
+                              when 'OpenBSD', 'FreeBSD'
         999
       else
         499

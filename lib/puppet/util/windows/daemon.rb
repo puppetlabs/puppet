@@ -113,16 +113,16 @@ module Puppet::Util::Windows
         dwState = SERVICE_RUNNING
 
         case dwCtrlCode
-          when SERVICE_CONTROL_STOP
-            dwState = SERVICE_STOP_PENDING
-          when SERVICE_CONTROL_SHUTDOWN
-            dwState = SERVICE_STOP_PENDING
-          when SERVICE_CONTROL_PAUSE
-            dwState = SERVICE_PAUSED
-          when SERVICE_CONTROL_CONTINUE
-            dwState = SERVICE_RUNNING
-          #else
-            # TODO: Handle other control codes? Retain the current state?
+        when SERVICE_CONTROL_STOP
+          dwState = SERVICE_STOP_PENDING
+        when SERVICE_CONTROL_SHUTDOWN
+          dwState = SERVICE_STOP_PENDING
+        when SERVICE_CONTROL_PAUSE
+          dwState = SERVICE_PAUSED
+        when SERVICE_CONTROL_CONTINUE
+          dwState = SERVICE_RUNNING
+        #else
+          # TODO: Handle other control codes? Retain the current state?
         end
 
         # Set the status of the service except on interrogation.
@@ -284,24 +284,24 @@ module Puppet::Util::Windows
           while(WaitForSingleObject(@@hStopEvent, 1000) == WAIT_TIMEOUT)
             # Check to see if anything interesting has been signaled
             case @@waiting_control_code
-              when SERVICE_CONTROL_PAUSE
-                service_pause() if respond_to?('service_pause')
-              when SERVICE_CONTROL_CONTINUE
-                service_resume() if respond_to?('service_resume')
-              when SERVICE_CONTROL_INTERROGATE
-                service_interrogate() if respond_to?('service_interrogate')
-              when SERVICE_CONTROL_SHUTDOWN
-                service_shutdown() if respond_to?('service_shutdown')
-              when SERVICE_CONTROL_PARAMCHANGE
-                service_paramchange() if respond_to?('service_paramchange')
-              when SERVICE_CONTROL_NETBINDADD
-                service_netbindadd() if respond_to?('service_netbindadd')
-              when SERVICE_CONTROL_NETBINDREMOVE
-                service_netbindremove() if respond_to?('service_netbindremove')
-              when SERVICE_CONTROL_NETBINDENABLE
-                service_netbindenable() if respond_to?('service_netbindenable')
-              when SERVICE_CONTROL_NETBINDDISABLE
-                service_netbinddisable() if respond_to?('service_netbinddisable')
+            when SERVICE_CONTROL_PAUSE
+              service_pause() if respond_to?('service_pause')
+            when SERVICE_CONTROL_CONTINUE
+              service_resume() if respond_to?('service_resume')
+            when SERVICE_CONTROL_INTERROGATE
+              service_interrogate() if respond_to?('service_interrogate')
+            when SERVICE_CONTROL_SHUTDOWN
+              service_shutdown() if respond_to?('service_shutdown')
+            when SERVICE_CONTROL_PARAMCHANGE
+              service_paramchange() if respond_to?('service_paramchange')
+            when SERVICE_CONTROL_NETBINDADD
+              service_netbindadd() if respond_to?('service_netbindadd')
+            when SERVICE_CONTROL_NETBINDREMOVE
+              service_netbindremove() if respond_to?('service_netbindremove')
+            when SERVICE_CONTROL_NETBINDENABLE
+              service_netbindenable() if respond_to?('service_netbindenable')
+            when SERVICE_CONTROL_NETBINDDISABLE
+              service_netbinddisable() if respond_to?('service_netbinddisable')
             end
             @@waiting_control_code = IDLE_CONTROL_CODE
           end

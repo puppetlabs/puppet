@@ -43,36 +43,36 @@ class AccessOperator
   def access_String(o, scope, keys)
     keys.flatten!
     result = case keys.size
-    when 0
-      fail(Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
-    when 1
-      # Note that Ruby 1.8.7 requires a length of 1 to produce a String
-      k1 = Utils.to_n(keys[0])
-      bad_string_access_key_type(o, 0, k1.nil? ? keys[0] : k1) unless k1.is_a?(Integer)
-      k2 = 1
-      k1 = k1 < 0 ? o.length + k1 : k1           # abs pos
-      # if k1 is outside, a length of 1 always produces an empty string
-      if k1 < 0
-        EMPTY_STRING
-      else
-        o[ k1, k2 ]
-      end
-    when 2
-      k1 = Utils.to_n(keys[0])
-      k2 = Utils.to_n(keys[1])
-      [k1, k2].each_with_index { |k,i| bad_string_access_key_type(o, i, k.nil? ? keys[i] : k) unless k.is_a?(Integer) }
+             when 0
+               fail(Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
+             when 1
+               # Note that Ruby 1.8.7 requires a length of 1 to produce a String
+               k1 = Utils.to_n(keys[0])
+               bad_string_access_key_type(o, 0, k1.nil? ? keys[0] : k1) unless k1.is_a?(Integer)
+               k2 = 1
+               k1 = k1 < 0 ? o.length + k1 : k1           # abs pos
+               # if k1 is outside, a length of 1 always produces an empty string
+               if k1 < 0
+                 EMPTY_STRING
+               else
+                 o[ k1, k2 ]
+               end
+             when 2
+               k1 = Utils.to_n(keys[0])
+               k2 = Utils.to_n(keys[1])
+               [k1, k2].each_with_index { |k,i| bad_string_access_key_type(o, i, k.nil? ? keys[i] : k) unless k.is_a?(Integer) }
 
-      k1 = k1 < 0 ? o.length + k1 : k1           # abs pos (negative is count from end)
-      k2 = k2 < 0 ? o.length - k1 + k2 + 1 : k2  # abs length (negative k2 is length from pos to end count)
-      # if k1 is outside, adjust to first position, and adjust length
-      if k1 < 0
-        k2 = k2 + k1
-        k1 = 0
-      end
-      o[ k1, k2 ]
-    else
-      fail(Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
-    end
+               k1 = k1 < 0 ? o.length + k1 : k1           # abs pos (negative is count from end)
+               k2 = k2 < 0 ? o.length - k1 + k2 + 1 : k2  # abs length (negative k2 is length from pos to end count)
+               # if k1 is outside, adjust to first position, and adjust length
+               if k1 < 0
+                 k2 = k2 + k1
+                 k1 = 0
+               end
+               o[ k1, k2 ]
+             else
+               fail(Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
+             end
     # Specified as: an index outside of range, or empty result == empty string
     (result.nil? || result.empty?) ? EMPTY_STRING : result
   end
@@ -592,15 +592,15 @@ class AccessOperator
     # type_name is LHS type_name if set, else the first given arg
     type_name = o.type_name || Types::TypeFormatter.singleton.capitalize_segments(keys.shift)
     type_name = case type_name
-    when Types::PResourceType
-      type_name.type_name
-    when String
-      type_name
-    else
-      # blame given left expression if it defined the type, else the first given key expression
-      blame = o.type_name.nil? ? @semantic.keys[0] : @semantic.left_expr
-      fail(Issues::ILLEGAL_RESOURCE_SPECIALIZATION, blame, {:actual => bad_key_type_name(type_name)})
-    end
+                when Types::PResourceType
+                  type_name.type_name
+                when String
+                  type_name
+                else
+                  # blame given left expression if it defined the type, else the first given key expression
+                  blame = o.type_name.nil? ? @semantic.keys[0] : @semantic.left_expr
+                  fail(Issues::ILLEGAL_RESOURCE_SPECIALIZATION, blame, {:actual => bad_key_type_name(type_name)})
+                end
 
     # type name must conform
     if type_name !~ Patterns::CLASSREF_EXT

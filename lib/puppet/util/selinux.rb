@@ -117,16 +117,16 @@ module Puppet::Util::SELinux
       end
       context = context.split(':')
       case component
-        when :seluser
-          context[0] = value
-        when :selrole
-          context[1] = value
-        when :seltype
-          context[2] = value
-        when :selrange
-          context[3] = value
-        else
-          raise ArgumentError, _("set_selinux_context component must be one of :seluser, :selrole, :seltype, or :selrange")
+      when :seluser
+        context[0] = value
+      when :selrole
+        context[1] = value
+      when :seltype
+        context[2] = value
+      when :selrange
+        context[3] = value
+      else
+        raise ArgumentError, _("set_selinux_context component must be one of :seluser, :selrole, :seltype, or :selrange")
       end
       context = context.join(':')
     else
