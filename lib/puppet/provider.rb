@@ -273,12 +273,7 @@ class Puppet::Provider
   def self.some_default_match(defaultlist)
     defaultlist.find do |default|
       default.all? do |key, values|
-        case key
-          when :feature
-            feature_match(values)
-          else
-            fact_match(key, values)
-        end
+        key == :feature ? feature_match(values) : fact_match(key, values)
       end
     end
   end
