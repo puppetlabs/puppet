@@ -79,10 +79,10 @@ module Puppet::ModuleTool
             changes = Checksummer.run(mod.path) rescue []
             if mod.has_metadata? && !changes.empty?
               raise LocalChangesError,
-                :action            => :upgrade,
-                :module_name       => name,
-                :requested_version => results[:requested_version],
-                :installed_version => mod.version
+                    :action            => :upgrade,
+                    :module_name       => name,
+                    :requested_version => results[:requested_version],
+                    :installed_version => mod.version
             end
           end
 
@@ -157,11 +157,11 @@ module Puppet::ModuleTool
               end
 
               raise InstallConflictError,
-                :requested_module  => name,
-                :requested_version => options[:version] || 'latest',
-                :dependency        => dependency,
-                :directory         => mod.path,
-                :metadata          => mod.metadata
+                    :requested_module  => name,
+                    :requested_version => options[:version] || 'latest',
+                    :dependency        => dependency,
+                    :directory         => mod.path,
+                    :metadata          => mod.metadata
             end
           end
 
@@ -173,16 +173,16 @@ module Puppet::ModuleTool
               newer_versions = versions.select { |v| v > results[:installed_version] }
 
               raise VersionAlreadyInstalledError,
-                :module_name       => name,
-                :requested_version => results[:requested_version],
-                :installed_version => results[:installed_version],
-                :newer_versions    => newer_versions,
-                :possible_culprits => installed_modules_source.fetched.reject { |x| x == name }
+                    :module_name       => name,
+                    :requested_version => results[:requested_version],
+                    :installed_version => results[:installed_version],
+                    :newer_versions    => newer_versions,
+                    :possible_culprits => installed_modules_source.fetched.reject { |x| x == name }
             elsif child.version < results[:installed_version]
               raise DowngradingUnsupportedError,
-                :module_name       => name,
-                :requested_version => results[:requested_version],
-                :installed_version => results[:installed_version]
+                    :module_name       => name,
+                    :requested_version => results[:requested_version],
+                    :installed_version => results[:installed_version]
             end
           end
 

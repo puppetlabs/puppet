@@ -67,9 +67,9 @@ class PURIType < PAnyType
 
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-      {
-        'parameters' => { KEY_TYPE => TypeFactory.optional(TYPE_URI_PARAM_TYPE), KEY_VALUE => nil }
-      }
+                 {
+                   'parameters' => { KEY_TYPE => TypeFactory.optional(TYPE_URI_PARAM_TYPE), KEY_VALUE => nil }
+                 }
     )
   end
 

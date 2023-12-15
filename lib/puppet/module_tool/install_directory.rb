@@ -37,9 +37,9 @@ module Puppet
         return orig_error if not ERROR_MAPPINGS.include?(orig_error.class)
 
         ERROR_MAPPINGS[orig_error.class].new(orig_error,
-          :requested_module  => module_name,
-          :requested_version => version,
-          :directory         => @target.to_s)
+                                             :requested_module  => module_name,
+                                             :requested_version => version,
+                                             :directory         => @target.to_s)
       end
     end
   end

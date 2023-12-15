@@ -37,7 +37,7 @@ class Puppet::Util::Windows::Error < Puppet::Error
     # this pointer actually points to a :lpwstr (pointer) since we're letting Windows allocate for us
     FFI::MemoryPointer.new(:pointer, 1) do |buffer_ptr|
       length = FormatMessageW(flags, FFI::Pointer::NULL, code, dwLanguageId,
-        buffer_ptr, 0, FFI::Pointer::NULL)
+                              buffer_ptr, 0, FFI::Pointer::NULL)
 
       if length == FFI::WIN32_FALSE
         # can't raise same error type here or potentially recurse infinitely
@@ -81,5 +81,5 @@ class Puppet::Util::Windows::Error < Puppet::Error
   # NOTE: since we're not preallocating the buffer, use a :pointer for lpBuffer
   ffi_lib :kernel32
   attach_function_private :FormatMessageW,
-    [:dword, :lpcvoid, :dword, :dword, :pointer, :dword, :pointer], :dword
+                          [:dword, :lpcvoid, :dword, :dword, :pointer, :dword, :pointer], :dword
 end

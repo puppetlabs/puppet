@@ -18,12 +18,12 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
   has_feature :manages_passwords, :manages_shell
 
   manages(:posixAccount, :person).at("ou=People").named_by(:uid).and.maps :name => :uid,
-    :password => :userPassword,
-    :comment => :cn,
-    :uid => :uidNumber,
-    :gid => :gidNumber,
-    :home => :homeDirectory,
-    :shell => :loginShell
+                                                                          :password => :userPassword,
+                                                                          :comment => :cn,
+                                                                          :uid => :uidNumber,
+                                                                          :gid => :gidNumber,
+                                                                          :home => :homeDirectory,
+                                                                          :shell => :loginShell
 
   # Use the last field of a space-separated array as
   # the sn.  LDAP requires a surname, for some stupid reason.

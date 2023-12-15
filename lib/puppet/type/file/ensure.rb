@@ -84,7 +84,7 @@ module Puppet
       parent = File.dirname(@resource[:path])
       unless Puppet::FileSystem.exist? parent
         raise Puppet::Error,
-          "Cannot create #{@resource[:path]}; parent directory #{parent} does not exist"
+              "Cannot create #{@resource[:path]}; parent directory #{parent} does not exist"
       end
       if mode
         Puppet::Util.withumask(000) do
@@ -147,10 +147,10 @@ module Puppet
 
       if ! Puppet::FileSystem.exist?(basedir)
         raise Puppet::Error,
-          "Can not create #{@resource.title}; parent directory does not exist"
+              "Can not create #{@resource.title}; parent directory does not exist"
       elsif ! FileTest.directory?(basedir)
         raise Puppet::Error,
-          "Can not create #{@resource.title}; #{dirname} is not a directory"
+              "Can not create #{@resource.title}; #{dirname} is not a directory"
       end
     end
 

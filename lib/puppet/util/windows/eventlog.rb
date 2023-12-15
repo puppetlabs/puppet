@@ -69,8 +69,8 @@ class Puppet::Util::Windows::EventLog
         num_strings = 1
         eventlog_category = 0
         report_result = ReportEventW(@eventlog_handle, args[:event_type],
-          eventlog_category, args[:event_id], user_sid,
-          num_strings, raw_data_size, message_array_ptr, raw_data)
+                                     eventlog_category, args[:event_id], user_sid,
+                                     num_strings, raw_data_size, message_array_ptr, raw_data)
 
         if report_result == WIN32_FALSE
           #TRANSLATORS 'Windows' is the operating system and 'ReportEventW' is a API call and should not be translated

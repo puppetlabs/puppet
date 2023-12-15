@@ -3,7 +3,7 @@
 # <http://pip.pypa.io/>
 
 Puppet::Type.type(:package).provide :pip2,
-  :parent => :pip do
+                                    :parent => :pip do
 
   desc "Python packages via `pip2`.
 

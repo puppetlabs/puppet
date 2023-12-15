@@ -39,7 +39,7 @@ Puppet::Type.newtype(:file) do
      or `recursive_file_permissions` modules from the Forge."
 
   feature :manages_symlinks,
-    "The provider can manage symbolic links."
+          "The provider can manage symbolic links."
 
   def self.title_patterns
     # strip trailing slashes from path but allow the root directory, including

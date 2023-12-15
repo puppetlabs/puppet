@@ -69,7 +69,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     def section
       unless resource_type
         raise Puppet::DevError,
-          "Cannot determine Etc section without a resource type"
+              "Cannot determine Etc section without a resource type"
       end
 
       if @resource_type.name == :group

@@ -23,7 +23,7 @@ class Puppet::SSL::CertificateSigner
       @digest = OpenSSL::Digest::SHA224
     else
       raise Puppet::Error,
-        "No FIPS 140-2 compliant digest algorithm in OpenSSL::Digest"
+            "No FIPS 140-2 compliant digest algorithm in OpenSSL::Digest"
     end
   end
 

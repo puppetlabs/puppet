@@ -88,9 +88,9 @@ class Puppet::Node::Environment
   # @return [Puppet::Node::Environment]
   def override_with(env_params)
     return self.class.create(name,
-                      env_params[:modulepath] || modulepath,
-                      env_params[:manifest] || manifest,
-                      env_params[:config_version] || config_version)
+                             env_params[:modulepath] || modulepath,
+                             env_params[:manifest] || manifest,
+                             env_params[:config_version] || config_version)
   end
 
   # Creates a new Puppet::Node::Environment instance, overriding :manifest,

@@ -12,8 +12,8 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
      or a hash."
 
   commands :pkginfo => "/usr/bin/pkginfo",
-    :pkgadd => "/usr/sbin/pkgadd",
-    :pkgrm => "/usr/sbin/pkgrm"
+           :pkgadd => "/usr/sbin/pkgadd",
+           :pkgrm => "/usr/sbin/pkgrm"
 
   confine 'os.family' => :solaris
   defaultfor 'os.family' => :solaris

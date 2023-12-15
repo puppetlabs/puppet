@@ -92,7 +92,7 @@ class FunctionProvider
     te = loader.load_typed(typed_name)
     if te.nil? || te.value.nil?
       @parent_data_provider.config(lookup_invocation).fail(Issues::HIERA_DATA_PROVIDER_FUNCTION_NOT_FOUND,
-        :function_type => self.class::TAG, :function_name => @function_name)
+                                                           :function_type => self.class::TAG, :function_name => @function_name)
     end
     func = te.value
     @value_is_validated = func.class.dispatcher.dispatchers.all? do |dispatcher|

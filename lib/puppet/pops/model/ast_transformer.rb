@@ -65,7 +65,7 @@ class Puppet::Pops::Model::AstTransformer
       loc_data = {}
       merge_location(loc_data, o)
       raise Puppet::ParseError.new(_("Error while transforming to Puppet 3 AST: %{message}") % { message: e.message },
-        loc_data[:file], loc_data[:line], loc_data[:pos], e)
+                                   loc_data[:file], loc_data[:line], loc_data[:pos], e)
     end
   end
 

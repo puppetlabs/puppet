@@ -277,7 +277,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :LogonUserW,
-    [:lpwstr, :lpwstr, :lpwstr, :dword, :dword, :phandle], :win32_bool
+                          [:lpwstr, :lpwstr, :lpwstr, :dword, :dword, :phandle], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/bb773378(v=vs.85).aspx
   # typedef struct _PROFILEINFO {
@@ -310,7 +310,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :userenv
   attach_function_private :LoadUserProfileW,
-    [:handle, :pointer], :win32_bool
+                          [:handle, :pointer], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/bb762282(v=vs.85).aspx
   # BOOL WINAPI UnloadUserProfile(
@@ -319,7 +319,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :userenv
   attach_function_private :UnloadUserProfile,
-    [:handle, :handle], :win32_bool
+                          [:handle, :handle], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa376389(v=vs.85).aspx
   # BOOL WINAPI CheckTokenMembership(
@@ -329,7 +329,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :CheckTokenMembership,
-    [:handle, :pointer, :pbool], :win32_bool
+                          [:handle, :pointer, :pbool], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379650(v=vs.85).aspx
   WELL_KNOWN_SID_TYPE = enum(
@@ -439,7 +439,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :CreateWellKnownSid,
-    [WELL_KNOWN_SID_TYPE, :pointer, :pointer, :lpdword], :win32_bool
+                          [WELL_KNOWN_SID_TYPE, :pointer, :pointer, :lpdword], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379151(v=vs.85).aspx
   # BOOL WINAPI IsValidSid(
@@ -447,7 +447,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :IsValidSid,
-    [:pointer], :win32_bool
+                          [:pointer], :win32_bool
 
   # https://docs.microsoft.com/en-us/windows/win32/api/lsalookup/ns-lsalookup-lsa_object_attributes
   # typedef struct _LSA_OBJECT_ATTRIBUTES {
@@ -460,11 +460,11 @@ module Puppet::Util::Windows::User
   # } LSA_OBJECT_ATTRIBUTES, *PLSA_OBJECT_ATTRIBUTES;
   class LSA_OBJECT_ATTRIBUTES < FFI::Struct
     layout :Length, :ulong,
-      :RootDirectory, :handle,
-      :ObjectName, :plsa_unicode_string,
-      :Attributes, :ulong,
-      :SecurityDescriptor, :pvoid,
-      :SecurityQualityOfService, :pvoid
+           :RootDirectory, :handle,
+           :ObjectName, :plsa_unicode_string,
+           :Attributes, :ulong,
+           :SecurityDescriptor, :pvoid,
+           :SecurityQualityOfService, :pvoid
   end
 
   # https://docs.microsoft.com/en-us/windows/win32/api/lsalookup/ns-lsalookup-lsa_unicode_string
@@ -475,8 +475,8 @@ module Puppet::Util::Windows::User
   # } LSA_UNICODE_STRING, *PLSA_UNICODE_STRING;
   class LSA_UNICODE_STRING < FFI::Struct
     layout :Length, :ushort,
-      :MaximumLength, :ushort,
-      :Buffer, :pwstr
+           :MaximumLength, :ushort,
+           :Buffer, :pwstr
   end
 
   # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-lsaenumerateaccountrights
@@ -489,7 +489,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :LsaEnumerateAccountRights,
-    [:lsa_handle, :psid, :plsa_unicode_string, :pulong], :ntstatus
+                          [:lsa_handle, :psid, :plsa_unicode_string, :pulong], :ntstatus
 
   # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-lsaaddaccountrights
   # NTSTATUS LsaAddAccountRights(
@@ -500,7 +500,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :LsaAddAccountRights,
-    [:lsa_handle, :psid, :plsa_unicode_string, :ulong], :ntstatus
+                          [:lsa_handle, :psid, :plsa_unicode_string, :ulong], :ntstatus
 
   # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-lsaremoveaccountrights
   # NTSTATUS LsaRemoveAccountRights(
@@ -512,7 +512,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :LsaRemoveAccountRights,
-    [:lsa_handle, :psid, :bool, :plsa_unicode_string, :ulong], :ntstatus
+                          [:lsa_handle, :psid, :bool, :plsa_unicode_string, :ulong], :ntstatus
 
   # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-lsaopenpolicy
   # NTSTATUS LsaOpenPolicy(
@@ -523,7 +523,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :LsaOpenPolicy,
-    [:plsa_unicode_string, :plsa_object_attributes, :access_mask, :plsa_handle], :ntstatus
+                          [:plsa_unicode_string, :plsa_object_attributes, :access_mask, :plsa_handle], :ntstatus
 
   # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-lsaclose
   # NTSTATUS LsaClose(
@@ -531,7 +531,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :LsaClose,
-    [:lsa_handle], :ntstatus
+                          [:lsa_handle], :ntstatus
 
   # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-lsafreememory
   # NTSTATUS LsaFreeMemory(
@@ -539,7 +539,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :LsaFreeMemory,
-    [:pvoid], :ntstatus
+                          [:pvoid], :ntstatus
 
   # https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-lsantstatustowinerror
   # ULONG LsaNtStatusToWinError(
@@ -547,5 +547,5 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :LsaNtStatusToWinError,
-    [:ntstatus], :ulong
+                          [:ntstatus], :ulong
 end

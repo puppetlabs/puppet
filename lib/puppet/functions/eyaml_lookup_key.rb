@@ -29,8 +29,8 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
     unless options.include?('path')
       #TRANSLATORS 'eyaml_lookup_key':, 'path', 'paths' 'glob', 'globs', 'mapped_paths', and lookup_key should not be translated
       raise ArgumentError,
-        _("'eyaml_lookup_key': one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml"\
-              " when using this lookup_key function")
+            _("'eyaml_lookup_key': one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml"\
+                  " when using this lookup_key function")
     end
 
     # nil key is used to indicate that the cache contains the raw content of the eyaml file
@@ -91,7 +91,7 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
         data = tokens.map(&:to_plain_text).join.chomp
       rescue StandardError => ex
         raise Puppet::DataBinding::LookupError,
-          _("hiera-eyaml backend error decrypting %{data} when looking up %{key} in %{path}. Error was %{message}") % { data: data, key: key, path: options['path'], message: ex.message }
+              _("hiera-eyaml backend error decrypting %{data} when looking up %{key} in %{path}. Error was %{message}") % { data: data, key: key, path: options['path'], message: ex.message }
       end
     end
     context.interpolate(data)

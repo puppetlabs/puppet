@@ -30,11 +30,11 @@ module ModuleLoaders
   #
   def self.cached_loader_from(parent_loader, loaders)
     LibRootedFileBased.new(parent_loader,
-      loaders,
-      NAMESPACE_WILDCARD,
-      Puppet[:libdir],
-      'cached_puppet_lib',
-      [:func_4x, :func_3x, :datatype]
+                           loaders,
+                           NAMESPACE_WILDCARD,
+                           Puppet[:libdir],
+                           'cached_puppet_lib',
+                           [:func_4x, :func_3x, :datatype]
     )
   end
 
@@ -59,29 +59,29 @@ module ModuleLoaders
       EmptyLoader.new(parent_loader, ENVIRONMENT, loaders.environment)
     else
       FileBased.new(parent_loader,
-        loaders,
-        ENVIRONMENT,
-        env_path,
-        ENVIRONMENT
+                    loaders,
+                    ENVIRONMENT,
+                    env_path,
+                    ENVIRONMENT
       )
     end
   end
 
   def self.module_loader_from(parent_loader, loaders, module_name, module_path)
     ModuleLoaders::FileBased.new(parent_loader,
-                                                       loaders,
-                                                       module_name,
-                                                       module_path,
-                                                       module_name
+                                 loaders,
+                                 module_name,
+                                 module_path,
+                                 module_name
                                                        )
   end
 
   def self.pcore_resource_type_loader_from(parent_loader, loaders, environment_path)
     ModuleLoaders::FileBased.new(parent_loader,
-      loaders,
-      nil,
-      environment_path,
-      'pcore_resource_types'
+                                 loaders,
+                                 nil,
+                                 environment_path,
+                                 'pcore_resource_types'
     )
   end
 

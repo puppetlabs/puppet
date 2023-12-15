@@ -110,8 +110,8 @@ Puppet::Face.define(:config, '0.0.1') do
 
   def report_section_and_environment(section_name, environment_name)
       $stderr.puts colorize(:hyellow,
-        _("Resolving settings from section '%{section_name}' in environment '%{environment_name}'") %
-          { section_name: section_name, environment_name: environment_name })
+                            _("Resolving settings from section '%{section_name}' in environment '%{environment_name}'") %
+                              { section_name: section_name, environment_name: environment_name })
   end
 
   action(:set) do

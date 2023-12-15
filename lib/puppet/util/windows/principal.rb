@@ -62,7 +62,7 @@ module Puppet::Util::Windows::SID
 
                 sid_length_ptr.write_dword(MAXIMUM_SID_BYTE_LENGTH)
                 success = LookupAccountNameW(system_name_ptr, account_name_ptr, sid_ptr, sid_length_ptr,
-                  FFI::Pointer::NULL, domain_length_ptr, name_use_enum_ptr)
+                                             FFI::Pointer::NULL, domain_length_ptr, name_use_enum_ptr)
                 last_error = FFI.errno
 
                 if (success == FFI::WIN32_FALSE && last_error != ERROR_INSUFFICIENT_BUFFER)
@@ -71,8 +71,8 @@ module Puppet::Util::Windows::SID
 
                 FFI::MemoryPointer.new(:lpwstr, domain_length_ptr.read_dword) do |domain_ptr|
                   if LookupAccountNameW(system_name_ptr, account_name_ptr,
-                      sid_ptr, sid_length_ptr,
-                      domain_ptr, domain_length_ptr, name_use_enum_ptr) == FFI::WIN32_FALSE
+                                        sid_ptr, sid_length_ptr,
+                                        domain_ptr, domain_length_ptr, name_use_enum_ptr) == FFI::WIN32_FALSE
                   raise Puppet::Util::Windows::Error.new(_('Failed to call LookupAccountNameW with account: %{account_name}') % { account_name: account_name} )
                   end
 
@@ -117,7 +117,7 @@ module Puppet::Util::Windows::SID
                 end
 
                 success = LookupAccountSidW(system_name_ptr, sid_ptr, FFI::Pointer::NULL, name_length_ptr,
-                  FFI::Pointer::NULL, domain_length_ptr, name_use_enum_ptr)
+                                            FFI::Pointer::NULL, domain_length_ptr, name_use_enum_ptr)
                 last_error = FFI.errno
 
                 if (success == FFI::WIN32_FALSE && last_error != ERROR_INSUFFICIENT_BUFFER)
@@ -127,7 +127,7 @@ module Puppet::Util::Windows::SID
                 FFI::MemoryPointer.new(:lpwstr, name_length_ptr.read_dword) do |name_ptr|
                   FFI::MemoryPointer.new(:lpwstr, domain_length_ptr.read_dword) do |domain_ptr|
                     if LookupAccountSidW(system_name_ptr, sid_ptr, name_ptr, name_length_ptr,
-                        domain_ptr, domain_length_ptr, name_use_enum_ptr) == FFI::WIN32_FALSE
+                                         domain_ptr, domain_length_ptr, name_use_enum_ptr) == FFI::WIN32_FALSE
                      raise Puppet::Util::Windows::Error.new(_('Failed to call LookupAccountSidW with bytes: %{sid_bytes}') % { sid_bytes: sid_bytes} )
                     end
 
@@ -183,7 +183,7 @@ module Puppet::Util::Windows::SID
     # );
     ffi_lib :advapi32
     attach_function_private :LookupAccountNameW,
-      [:lpcwstr, :lpcwstr, :pointer, :lpdword, :lpwstr, :lpdword, :pointer], :win32_bool
+                            [:lpcwstr, :lpcwstr, :pointer, :lpdword, :lpwstr, :lpdword, :pointer], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379166(v=vs.85).aspx
     # BOOL WINAPI LookupAccountSid(
@@ -197,6 +197,6 @@ module Puppet::Util::Windows::SID
     # );
     ffi_lib :advapi32
     attach_function_private :LookupAccountSidW,
-      [:lpcwstr, :pointer, :lpwstr, :lpdword, :lpwstr, :lpdword, :pointer], :win32_bool
+                            [:lpcwstr, :pointer, :lpwstr, :lpdword, :lpwstr, :lpdword, :pointer], :win32_bool
   end
 end

@@ -140,11 +140,11 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
         unless @resource[:source]
           raise Puppet::Error,
-          _("No valid installpath found in /etc/pkg.conf and no source was set")
+                _("No valid installpath found in /etc/pkg.conf and no source was set")
         end
       else
         raise Puppet::Error,
-        _("You must specify a package source or configure an installpath in /etc/pkg.conf")
+              _("You must specify a package source or configure an installpath in /etc/pkg.conf")
       end
     end
   end

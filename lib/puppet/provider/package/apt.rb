@@ -87,7 +87,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
     if have_cdrom and @resource[:allowcdrom] != :true
       raise Puppet::Error,
-        _("/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure.")
+            _("/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure.")
     end
   end
 

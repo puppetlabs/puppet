@@ -25,7 +25,7 @@ Puppet::Functions.create_function(:ceiling) do
 
   def on_string(x)
     Puppet.warn_once('deprecations', 'ceiling_function_numeric_coerce_string',
-      _("The ceiling() function's auto conversion of String to Float is deprecated - change to convert input before calling"))
+                     _("The ceiling() function's auto conversion of String to Float is deprecated - change to convert input before calling"))
 
     begin
       Float(x).ceil

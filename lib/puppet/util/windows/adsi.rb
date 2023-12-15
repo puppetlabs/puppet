@@ -129,7 +129,7 @@ module Puppet::Util::Windows::ADSI
     # );
     ffi_lib :kernel32
     attach_function_private :GetComputerNameW,
-      [:lpwstr, :lpdword], :win32_bool
+                            [:lpwstr, :lpdword], :win32_bool
   end
 
   # Common base class shared by the User and Group
@@ -562,7 +562,7 @@ module Puppet::Util::Windows::ADSI
     # );
     ffi_lib :advapi32
     attach_function_private :GetUserNameW,
-      [:lpwstr, :lpdword], :win32_bool
+                            [:lpwstr, :lpdword], :win32_bool
 
     # https://docs.microsoft.com/en-us/windows/win32/api/secext/nf-secext-getusernameexa
     # BOOLEAN SEC_ENTRY GetUserNameExA(

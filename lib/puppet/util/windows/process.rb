@@ -182,7 +182,7 @@ module Puppet::Util::Windows::Process
       # re-call API with properly sized buffer for all results
       FFI::MemoryPointer.new(return_length) do |token_information_buf|
         result = GetTokenInformation(token_handle, token_information,
-          token_information_buf, return_length, return_length_ptr)
+                                     token_information_buf, return_length, return_length_ptr)
 
         if result == FFI::WIN32_FALSE
           raise Puppet::Util::Windows::Error.new(
