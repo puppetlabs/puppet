@@ -281,22 +281,22 @@ class Loaders
     parser = Parser::EvaluatingParser.singleton
     parsed_code = Puppet[:code]
     program = if parsed_code != ""
-      parser.parse_string(parsed_code, 'unknown-source-location')
-    else
-      file = @environment.manifest
+                parser.parse_string(parsed_code, 'unknown-source-location')
+              else
+                file = @environment.manifest
 
-      # if the manifest file is a reference to a directory, parse and combine
-      # all .pp files in that directory
-      if file == Puppet::Node::Environment::NO_MANIFEST
-        nil
-      elsif File.directory?(file)
-        raise Puppet::Error, "manifest of environment '#{@environment.name}' appoints directory '#{file}'. It must be a file"
-      elsif File.exist?(file)
-        parser.parse_file(file)
-      else
-        raise Puppet::Error, "manifest of environment '#{@environment.name}' appoints '#{file}'. It does not exist"
-      end
-    end
+                # if the manifest file is a reference to a directory, parse and
+                # combine all .pp files in that directory
+                if file == Puppet::Node::Environment::NO_MANIFEST
+                  nil
+                elsif File.directory?(file)
+                  raise Puppet::Error, "manifest of environment '#{@environment.name}' appoints directory '#{file}'. It must be a file"
+                elsif File.exist?(file)
+                  parser.parse_file(file)
+                else
+                  raise Puppet::Error, "manifest of environment '#{@environment.name}' appoints '#{file}'. It does not exist"
+                end
+              end
     instantiate_definitions(program, public_environment_loader) unless program.nil?
     program
   rescue Puppet::ParseErrorWithIssue => detail

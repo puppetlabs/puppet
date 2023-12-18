@@ -298,7 +298,7 @@ class Puppet::Parser::Scope
       else
         other_scope.exist?(variable_name)
       end
-    else
+    else # rubocop:disable Layout/ElseAlignment
       next_scope = inherited_scope || enclosing_scope
       effective_symtable(true).include?(name) || next_scope && next_scope.exist?(name) || BUILT_IN_VARS.include?(name)
     end

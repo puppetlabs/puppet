@@ -84,11 +84,11 @@ class FunctionProvider
     loaders = lookup_invocation.scope.compiler.loaders
     typed_name = Loader::TypedName.new(:function, @function_name)
     loader = if typed_name.qualified?
-      qualifier = typed_name.name_parts[0]
-      qualifier == 'environment' ? loaders.private_environment_loader : loaders.private_loader_for_module(qualifier)
-    else
-      loaders.private_environment_loader
-    end
+               qualifier = typed_name.name_parts[0]
+               qualifier == 'environment' ? loaders.private_environment_loader : loaders.private_loader_for_module(qualifier)
+             else
+               loaders.private_environment_loader
+             end
     te = loader.load_typed(typed_name)
     if te.nil? || te.value.nil?
       @parent_data_provider.config(lookup_invocation).fail(Issues::HIERA_DATA_PROVIDER_FUNCTION_NOT_FOUND,

@@ -21,19 +21,24 @@ module Pal
     def runnable_with?(args_hash)
       params = @task.parameters
       params_type = if params.nil?
-        T_GENERIC_TASK_HASH
-      else
-        Puppet::Pops::Types::TypeFactory.struct(params)
-      end
+                      T_GENERIC_TASK_HASH
+                    else
+                      Puppet::Pops::Types::TypeFactory.struct(params)
+                    end
       return true if params_type.instance?(args_hash)
 
       if block_given?
         tm = Puppet::Pops::Types::TypeMismatchDescriber.singleton
         error = if params.nil?
-          tm.describe_mismatch('', params_type, Puppet::Pops::Types::TypeCalculator.infer_set(args_hash))
-        else
-          tm.describe_struct_signature(params_type, args_hash).flatten.map {|e| e.format }.join("\n")
-        end
+                  tm.describe_mismatch('', params_type, 
+                                       Puppet::Pops::Types::TypeCalculator
+                                         .infer_set(args_hash))
+                else
+                  tm.describe_struct_signature(params_type, args_hash)
+                    .flatten
+                    .map {|e| e.format }
+                    .join("\n")
+                end
         yield "Task #{@task.name}:\n#{error}"
       end
       false

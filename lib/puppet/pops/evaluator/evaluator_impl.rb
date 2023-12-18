@@ -1256,18 +1256,16 @@ class EvaluatorImpl
     when Array
       y = case y
           when Array then y
-          when Hash then y.to_a
-      else
-        [y]
-      end
+          when Hash  then y.to_a
+          else            [y]
+          end
       y.each {|e| result.delete(e) }
     when Hash
       y = case y
           when Array then y
-          when Hash then y.keys
-      else
-        [y]
-      end
+          when Hash  then y.keys
+          else            [y]
+          end
       y.each {|e| result.delete(e) }
     else
       raise ArgumentError.new(_("Can only delete from an Array or Hash."))

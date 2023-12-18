@@ -626,12 +626,12 @@ class HieraConfigV5 < HieraConfig
 
     compiler = Puppet.lookup(:pal_compiler) { nil }
     config_key = if compiler.is_a?(Puppet::Pal::ScriptCompiler) && !@config[KEY_PLAN_HIERARCHY].nil?
-          KEY_PLAN_HIERARCHY
-        elsif use_default_hierarchy
-          KEY_DEFAULT_HIERARCHY
-        else
-          KEY_HIERARCHY
-        end
+                   KEY_PLAN_HIERARCHY
+                 elsif use_default_hierarchy
+                   KEY_DEFAULT_HIERARCHY
+                 else
+                   KEY_HIERARCHY
+                 end
     @config[config_key].each do |he|
       name = he[KEY_NAME]
       if data_providers.include?(name)

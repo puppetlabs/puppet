@@ -353,12 +353,12 @@ class LookupAdapter < DataAdapter
             catch(:no_such_key) do
               module_opts = validate_lookup_options(lookup_in_module(LookupKey::LOOKUP_OPTIONS, meta_invocation, merge_strategy), module_name)
               opts = if opts.nil?
-                module_opts
-              elsif module_opts
-                merge_strategy.lookup([GLOBAL_ENV_MERGE, "Module #{lookup_invocation.module_name}"], meta_invocation) do |n|
-                  meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS,  n == GLOBAL_ENV_MERGE ? opts : module_opts) }
-                end
-              end
+                       module_opts
+                     elsif module_opts
+                       merge_strategy.lookup([GLOBAL_ENV_MERGE, "Module #{lookup_invocation.module_name}"], meta_invocation) do |n|
+                         meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS,  n == GLOBAL_ENV_MERGE ? opts : module_opts) }
+                       end
+                     end
             end
           end
           compile_patterns(opts)

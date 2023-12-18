@@ -1795,20 +1795,20 @@ class Type
 
     pname = options[:parent]
     parent = if pname
-      options.delete(:parent)
-      if pname.is_a? Class
-        pname
-      else
-        provider = self.provider(pname)
-        if provider
-          provider
-        else
-          raise Puppet::DevError, _("Could not find parent provider %{parent} of %{name}") % { parent: pname, name: name }
-        end
-      end
-    else
-      Puppet::Provider
-    end
+               options.delete(:parent)
+               if pname.is_a? Class
+                 pname
+               else
+                 provider = self.provider(pname)
+                 if provider
+                   provider
+                 else
+                   raise Puppet::DevError, _("Could not find parent provider %{parent} of %{name}") % { parent: pname, name: name }
+                 end
+               end
+             else
+               Puppet::Provider
+             end
 
     options[:resource_type] ||= self
 
@@ -2520,10 +2520,10 @@ class Type
     return @parent if @parent
     parents = catalog.adjacent(self, :direction => :in)
     @parent = if parents
-      parents.shift
-    else
-      nil
-    end
+                parents.shift
+              else
+                nil
+              end
   end
 
   # Returns a reference to this as a string in "Type[name]" format.

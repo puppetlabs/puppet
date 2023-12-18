@@ -507,26 +507,26 @@ class Puppet::Graph::SimpleGraph
   def to_data_hash
     hash = { 'edges' => edges.map(&:to_data_hash) }
     hash['vertices'] = if self.class.use_new_yaml_format
-      vertices
-    else
-      # Represented in YAML using the old (version 2.6) format.
-      result = {}
-      vertices.each do |vertex|
-        adjacencies = {}
-        [:in, :out].each do |direction|
-          direction_hash = {}
-          adjacencies[direction.to_s] = direction_hash
-          adjacent(vertex, :direction => direction, :type => :edges).each do |edge|
-            other_vertex = direction == :in ? edge.source : edge.target
-            (direction_hash[other_vertex.to_s] ||= []) << edge
-          end
-          direction_hash.each_pair { |key, edges| direction_hash[key] = edges.uniq.map(&:to_data_hash) }
-        end
-        vname = vertex.to_s
-        result[vname] = { 'adjacencies' => adjacencies, 'vertex' => vname }
-      end
-      result
-    end
+                         vertices
+                       else
+                         # Represented in YAML using the old (version 2.6) format.
+                         result = {}
+                         vertices.each do |vertex|
+                           adjacencies = {}
+                           [:in, :out].each do |direction|
+                             direction_hash = {}
+                             adjacencies[direction.to_s] = direction_hash
+                             adjacent(vertex, :direction => direction, :type => :edges).each do |edge|
+                               other_vertex = direction == :in ? edge.source : edge.target
+                               (direction_hash[other_vertex.to_s] ||= []) << edge
+                             end
+                             direction_hash.each_pair { |key, edges| direction_hash[key] = edges.uniq.map(&:to_data_hash) }
+                           end
+                           vname = vertex.to_s
+                           result[vname] = { 'adjacencies' => adjacencies, 'vertex' => vname }
+                         end
+                         result
+                       end
     hash
   end
 

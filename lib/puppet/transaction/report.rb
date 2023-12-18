@@ -301,12 +301,18 @@ class Puppet::Transaction::Report
 
     @resource_statuses = {}
     data['resource_statuses'].map do |key, rs|
-      @resource_statuses[key] = if rs == Puppet::Resource::EMPTY_HASH
-        nil
-      else
-        # Older versions contain tags that causes Psych to create instances directly
-        rs.is_a?(Puppet::Resource::Status) ? rs : Puppet::Resource::Status.from_data_hash(rs)
-      end
+      @resource_statuses[key] =
+        if rs == Puppet::Resource::EMPTY_HASH
+          nil
+        else
+          # Older versions contain tags that causes Psych to create instances
+          # directly
+          if rs.is_a?(Puppet::Resource::Status)
+            rs
+          else
+            Puppet::Resource::Status.from_data_hash(rs)
+          end
+        end
     end
   end
 

@@ -527,18 +527,18 @@ class Parser
 
   def width #:nodoc:
     @width ||= if $stdout.tty?
-      begin
-        require 'curses'
-        Curses::init_screen
-        x = Curses::cols
-        Curses::close_screen
-        x
-      rescue Exception
-        80
-      end
-    else
-      80
-    end
+               begin
+                 require 'curses'
+                 Curses::init_screen
+                 x = Curses::cols
+                 Curses::close_screen
+                 x
+               rescue Exception
+                 80
+               end
+               else
+                 80
+               end
   end
 
   def wrap str, opts={} # :nodoc:
