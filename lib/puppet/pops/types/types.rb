@@ -1367,7 +1367,6 @@ class PCollectionType < PAnyType
     self.class == o.class && @size_type == o.size_type
   end
 
-
   DEFAULT_SIZE = PIntegerType.new(0)
   ZERO_SIZE = PIntegerType.new(0, 0)
   NOT_EMPTY_SIZE = PIntegerType.new(1)
@@ -3192,7 +3191,6 @@ end
 
 # For backward compatibility
 PHostClassType = PClassType
-
 
 # Represents a Resource Type in the Puppet Language
 # @api public

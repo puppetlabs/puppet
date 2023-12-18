@@ -196,7 +196,6 @@ module Puppet::Test
       Puppet.rollback_context(ROLLBACK_MARK)
     end
 
-
     #########################################################################################
     # PRIVATE METHODS (not part of the public TestHelper API--do not call these from outside
     #  of this class!)

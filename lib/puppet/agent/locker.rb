@@ -43,5 +43,4 @@ module Puppet::Agent::Locker
   end
   private :lockfile
 
-
 end

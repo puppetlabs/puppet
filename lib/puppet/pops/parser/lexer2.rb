@@ -245,7 +245,6 @@ class Lexer2
         emit(TOKEN_RBRACE, @scanner.pos)
       end,
 
-
       # TOKENS @, @@, @(
       '@' => lambda do
         scn = @scanner

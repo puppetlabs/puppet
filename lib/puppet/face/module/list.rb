@@ -106,7 +106,6 @@ Puppet::Face.define(:module, '1.0.0') do
     end
   end
 
-
   def unmet_dependencies(environment)
     error_types = [:non_semantic_version, :version_mismatch, :missing]
 

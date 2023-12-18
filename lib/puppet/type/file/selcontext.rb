@@ -20,7 +20,6 @@
 #
 # See https://www.nsa.gov/selinux/ for complete docs on SELinux.
 
-
 module Puppet
   require_relative '../../../puppet/util/selinux'
 

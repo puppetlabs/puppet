@@ -147,7 +147,6 @@ module LexerSupport
     #
   end
 
-
   MM = Puppet::Util::MultiMatch
   MM_ANY = MM::NOT_NIL
 

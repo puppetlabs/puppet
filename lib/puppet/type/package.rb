@@ -190,7 +190,6 @@ module Puppet
               self.debug "#{@resource.name} #{is.inspect} is installed, latest is #{@latest.inspect}"
             end
 
-
           when :absent
             return true if is == :absent || is == :purged
           when :purged

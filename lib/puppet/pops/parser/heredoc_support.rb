@@ -9,7 +9,6 @@ module HeredocSupport
   #
   PATTERN_HEREDOC = %r{@\(([^:/\r\n\)]+)(?::[[:blank:]]*([a-z][a-zA-Z0-9_+]+)[[:blank:]]*)?(?:/((?:\w|[$])*)[[:blank:]]*)?\)}
 
-
   def heredoc
     scn = @scanner
     ctx = @lexing_context
@@ -93,7 +92,6 @@ module HeredocSupport
         remove_break = md[3] == '-'
         # Record position where next heredoc (from same line as current @()) should start scanning for content
         ctx[:newline_jump] = scn.pos
-
 
         # Process captured lines - remove leading, and trailing newline
         # get processed string and index of removed margin/leading size per line

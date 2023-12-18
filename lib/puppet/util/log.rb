@@ -294,7 +294,6 @@ class Puppet::Util::Log
     nil
   end
 
-
   attr_accessor :time, :remote, :file, :line, :pos, :issue_code, :environment, :node, :backtrace
   attr_reader :level, :message, :source
 

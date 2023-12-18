@@ -143,7 +143,6 @@ end
 # This is really only ever going to be used for Catalogs.
 Puppet::Network::FormatHandler.create_serialized_formats(:dot, :required_methods => [:render_method])
 
-
 Puppet::Network::FormatHandler.create(:console,
                                       :mime   => 'text/x-console-text',
                                       :weight => 0) do
@@ -252,7 +251,6 @@ Puppet::Network::FormatHandler.create(:flat,
     data.collect(&:render).join("\n")
   end
 end
-
 
 Puppet::Network::FormatHandler.create(:rich_data_json, mime: 'application/vnd.puppet.rich+json', charset: Encoding::UTF_8, weight: 30) do
   def intern(klass, text)

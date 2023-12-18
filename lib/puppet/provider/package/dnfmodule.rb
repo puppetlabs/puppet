@@ -8,7 +8,6 @@
 #   flavor   => 'client',  # install a specific profile
 # }
 
-
 require_relative '../../../puppet/provider/package'
 
 Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do

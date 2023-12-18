@@ -10,7 +10,6 @@ Puppet::Type.newtype(:whit) do
     desc "The name of the whit, because it must have one."
   end
 
-
   # Hide the fact that we're a whit from logs.
   #
   # I hate you, milkman whit.  You are so painful, so often.

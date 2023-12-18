@@ -640,7 +640,6 @@ class AccessOperator
       return result_type_array ? result : result.pop
     end
 
-
     keys = [:no_title] if keys.size < 1 # if there was only a type_name and it was consumed
     result = keys.each_with_index.map do |t, i|
       unless t.is_a?(String) || t == :no_title

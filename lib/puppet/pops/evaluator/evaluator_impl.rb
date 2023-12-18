@@ -106,7 +106,6 @@ class EvaluatorImpl
         fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e)
       end
 
-
     rescue Puppet::Error => e
       # PuppetError has the ability to wrap an exception, if so, use the wrapped exception's
       # call stack instead

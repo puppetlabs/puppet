@@ -27,8 +27,6 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
   attr_accessor :latest_info
 
-
-
   def self.srclistcmd(source)
     [ command(:nimclient), "-o", "showres", "-a", "installp_flags=L", "-a", "resource=#{source}" ]
   end
@@ -91,7 +89,6 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     end
     output = Puppet::Util::Execution.execute(showres_command)
 
-
     if (version_specified)
       package_type = determine_package_type(output, pkg, version)
     else
@@ -146,7 +143,6 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     end
   end
 
-
   private
 
   ## UTILITY METHODS FOR PARSING `nimclient -o showres` output
@@ -180,7 +176,6 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
   #   @@R:mypackage.foo-1.2.3-1 1.2.3-1
   #   @@R:mypackage.foo-1.2.3-4 1.2.3-4
   #   @@R:mypackage.foo-1.2.3-8 1.2.3-8
-
 
   # Parse the output of a `nimclient -o showres` command.  Returns a two-dimensional
   # hash, where the first-level keys are package names, the second-level keys are

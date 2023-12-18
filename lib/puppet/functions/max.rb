@@ -134,7 +134,6 @@ Puppet::Functions.create_function(:max) do
     repeated_param 'Any', :values
   end
 
-
   # All are Numeric - ok now, will be ok later
   def on_numeric(*args)
     assert_arg_count(args)

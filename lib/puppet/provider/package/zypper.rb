@@ -122,7 +122,6 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
     inst_opts = []
     inst_opts = install_options if resource[:install_options]
 
-
     options = []
     options << quiet
     options << '--no-gpg-check' unless inst_opts.delete('--no-gpg-check').nil?

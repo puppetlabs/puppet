@@ -15,7 +15,6 @@ require_relative '../puppet/concurrent/lock'
 
 # see the bottom of the file for the rest of the inclusions
 
-
 module Puppet
 # The base class for all Puppet types.
 #
@@ -1569,7 +1568,6 @@ class Type
     RelationshipMetaparam.subclasses
   end
 
-
   # Note that the order in which the relationships params is defined
   # matters.  The labeled params (notify and subscribe) must be later,
   # so that if both params are used, those ones win.  It's a hackish
@@ -2290,7 +2288,6 @@ class Type
       :source => self
     )
   end
-
 
   # instance methods related to instance intrinsics
   # e.g., initialize and name

@@ -72,7 +72,6 @@ class Puppet::Interface::Action
   ########################################################################
   # Support for rendering formats and all.
 
-
   # @api private
   def when_rendering(type)
     unless type.is_a? Symbol
@@ -139,7 +138,6 @@ class Puppet::Interface::Action
   end
   private :__render_method_name_for
 
-
   # @api private
   # @return [Symbol]
   attr_reader :render_as
@@ -194,7 +192,6 @@ class Puppet::Interface::Action
   #   @face.send(name, *args, &block)
   # end
 
-
   # We need to build an instance method as a wrapper, using normal code, to be
   # able to expose argument defaulting between the caller and definer in the
   # Ruby API.  An extra method is, sadly, required for Ruby 1.8 to work since
@@ -213,7 +210,6 @@ class Puppet::Interface::Action
   # this stuff work, because it would have been cleaner.  Which gives you an
   # idea how motivated we were to make this cleaner.  Sorry.
   # --daniel 2011-03-31
-
 
   # The arity of the action
   # @return [Integer]

@@ -161,7 +161,6 @@ module DOT
 
   end
 
-
   # This is used when we build nodes that have shape=record
   # ports don't have options :)
 

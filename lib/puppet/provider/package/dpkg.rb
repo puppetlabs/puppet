@@ -92,7 +92,6 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     end
     args = []
 
-
     if @resource[:configfiles] == :keep
       args << '--force-confold'
     else

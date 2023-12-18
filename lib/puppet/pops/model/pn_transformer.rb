@@ -4,7 +4,6 @@ require_relative '../../../puppet/concurrent/thread_local_singleton'
 module Puppet::Pops
 module Model
 
-
 class PNTransformer
   extend Puppet::Concurrent::ThreadLocalSingleton
 

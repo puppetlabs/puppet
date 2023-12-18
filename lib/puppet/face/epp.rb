@@ -102,7 +102,6 @@ Puppet::Face.define(:epp, '0.0.1') do
     end
   end
 
-
   action(:dump) do
     summary _("Outputs a dump of the internal template parse tree for debugging")
     arguments "[--format <old|pn|json>] [--pretty] { -e <source> | [<templates> ...] } "

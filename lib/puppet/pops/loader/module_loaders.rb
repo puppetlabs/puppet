@@ -104,7 +104,6 @@ module ModuleLoaders
     # The name of the module, or nil, if this is a global "component", or "any module" if set to the `NAMESPACE_WILDCARD` (*)
     attr_reader :module_name
 
-
     # The path to the location of the module/component - semantics determined by subclass
     attr_reader :path
 

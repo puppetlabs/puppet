@@ -31,10 +31,6 @@ Layout/EmptyLineAfterMagicComment:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Layout/EmptyLines:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: around, only_before
 Layout/EmptyLinesAroundAccessModifier:

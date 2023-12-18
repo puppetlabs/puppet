@@ -121,7 +121,6 @@ Puppet::Functions.create_function(:index) do
     param 'Any', :match
   end
 
-
   def index_Hash_1(hash)
     hash.each_pair { |x, y| return x if yield(y)  }
     nil

@@ -24,7 +24,6 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   has_feature :upgradeable
   has_feature :versionable
 
-
   def self.parse_installed_query_line(line)
     regex = /(\S+)\s+@(\S+)_(\d+).*\(active\)/
     fields = [:name, :ensure, :revision]

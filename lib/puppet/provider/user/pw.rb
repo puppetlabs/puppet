@@ -19,7 +19,6 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     value.split("-").reverse.join("-")
   }
 
-
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
   end

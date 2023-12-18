@@ -246,7 +246,6 @@ div.method-source-code pre { color: #ffdead; overflow: hidden; }
 .ruby-value   { color: #7fffd4; background: transparent; }
 }
 
-
 #####################################################################
 ### H E A D E R   T E M P L A T E
 #####################################################################
@@ -300,14 +299,12 @@ HEADER = XHTML_PREAMBLE + %{
 <body>
 }
 
-
 #####################################################################
 ### C O N T E X T   C O N T E N T   T E M P L A T E
 #####################################################################
 
 CONTEXT_CONTENT = %{
 }
-
 
 #####################################################################
 ### F O O T E R   T E M P L A T E
@@ -320,7 +317,6 @@ FOOTER = %{
 </body>
 </html>
 }
-
 
 #####################################################################
 ### F I L E   P A G E   H E A D E R   T E M P L A T E
@@ -345,7 +341,6 @@ ENDIF:cvsurl
     </table>
   </div>
 }
-
 
 #####################################################################
 ### C L A S S   P A G E   H E A D E R   T E M P L A T E
@@ -468,7 +463,6 @@ END:infiles
     </div>
 }
 
-
 #####################################################################
 ### M E T H O D   L I S T   T E M P L A T E
 #####################################################################
@@ -530,7 +524,6 @@ ENDIF:seccomment
 ENDIF:sectitle
 END:sections
 }
-
 
 METHOD_LIST = %{
 
@@ -847,7 +840,6 @@ ENDIF:resource_list
 END:sections
 }
 
-
 #####################################################################
 ### B O D Y   T E M P L A T E
 #####################################################################
@@ -876,8 +868,6 @@ BODYINC = HEADER + %{
 
 } + FOOTER
 
-
-
 #####################################################################
 ### S O U R C E   C O D E   T E M P L A T E
 #####################################################################
@@ -894,7 +884,6 @@ SRC_PAGE = XHTML_PREAMBLE + %{
 </body>
 </html>
 }
-
 
 #####################################################################
 ### I N D E X   F I L E   T E M P L A T E S
@@ -962,7 +951,6 @@ END:entries
 </body>
 </html>
 }
-
 
 CLASS_INDEX = FILE_INDEX
 METHOD_INDEX = FILE_INDEX
@@ -1077,8 +1065,6 @@ INDEX = %{<?xml version="1.0" encoding="%charset%"?>
 </frameset>
 </html>
 }
-
-
 
   end # module Page
 end # class RDoc

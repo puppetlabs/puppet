@@ -16,7 +16,6 @@ class Puppet::Interface
   require_relative 'interface/option_builder'
   require_relative 'interface/option_manager'
 
-
   include FullDocs
 
   include Puppet::Interface::ActionManager
@@ -121,7 +120,6 @@ class Puppet::Interface
   # splits out this should merge into a module that both the action and face
   # include. --daniel 2011-04-17
 
-
   # Returns the synopsis for the face. This shows basic usage and global
   # options.
   # @return [String] usage synopsis
@@ -129,7 +127,6 @@ class Puppet::Interface
   def synopsis
     build_synopsis self.name, '<action>'
   end
-
 
   ########################################################################
 

@@ -187,7 +187,6 @@ module Puppet::SSL::Oids
     first_oid = OpenSSL::ASN1::ObjectId.new(first).oid
     second_oid = OpenSSL::ASN1::ObjectId.new(second).oid
 
-
     if exclusive and first_oid == second_oid
       false
     else
