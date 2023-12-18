@@ -139,7 +139,7 @@ class TypeCalculator
       o.instance_of?(Array) ||
       o.instance_of?(Hash) ||
       Types::PUndefType::DEFAULT.instance?(o)
-      )
+       )
       return nil
     end
     # For other objects (e.g. PObjectType instances, and runtime types) full inference needed, since that will

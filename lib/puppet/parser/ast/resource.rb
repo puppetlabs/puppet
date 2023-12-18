@@ -52,7 +52,7 @@ class Puppet::Parser::AST::Resource < Puppet::Parser::AST::Branch
           :source => scope.source,
           :scope => scope,
           :strict => true
-          )
+          ) # rubocop:disable Layout/ClosingParenthesisIndentation
 
           if resource.resource_type.is_a? Puppet::Resource::Type
             resource.resource_type.instantiate_resource(scope, resource)

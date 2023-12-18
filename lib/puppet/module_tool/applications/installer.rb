@@ -187,7 +187,7 @@ module Puppet::ModuleTool
                     :requested_name => name,
                     :requested_version => options[:version] || graph.dependencies[name].max.version.to_s,
                     :unsatisfied => unsatisfied
-            )
+                  )
           end
 
           unless forced?

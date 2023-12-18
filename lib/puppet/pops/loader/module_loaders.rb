@@ -35,7 +35,7 @@ module ModuleLoaders
                            Puppet[:libdir],
                            'cached_puppet_lib',
                            [:func_4x, :func_3x, :datatype]
-    )
+                          )
   end
 
   def self.system_loader_from(parent_loader, loaders)
@@ -63,7 +63,7 @@ module ModuleLoaders
                     ENVIRONMENT,
                     env_path,
                     ENVIRONMENT
-      )
+                   )
     end
   end
 
@@ -73,7 +73,7 @@ module ModuleLoaders
                                  module_name,
                                  module_path,
                                  module_name
-                                                       )
+                                )
   end
 
   def self.pcore_resource_type_loader_from(parent_loader, loaders, environment_path)
@@ -82,7 +82,7 @@ module ModuleLoaders
                                  nil,
                                  environment_path,
                                  'pcore_resource_types'
-    )
+                                )
   end
 
   class EmptyLoader < BaseLoader

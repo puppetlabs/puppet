@@ -153,7 +153,7 @@ module Puppet::Util::Windows::Process
         wide_string(system_name),
         wide_string(name.to_s),
         luid_ptr
-        )
+      )
 
       if result == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new(

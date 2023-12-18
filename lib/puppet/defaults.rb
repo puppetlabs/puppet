@@ -117,7 +117,7 @@ module Puppet
         :desc     => "The name of the application, if we are running as one.  The
           default is essentially $0 without the path or `.rb`.",
     }
-  )
+    )
 
   settings.define_settings(:main,
     :logdir => {
@@ -1298,7 +1298,7 @@ EOT
         :default    => nil,
         :desc       => "The address the agent should use to initiate requests.",
       },
-  )
+    )
 
   settings.define_settings(:environment,
     :manifest => {
@@ -2135,7 +2135,7 @@ EOT
 
           For more info, see [the ENC documentation](https://puppet.com/docs/puppet/latest/nodes_external.html).",
     }
-    )
+  )
 
         settings.define_settings(
         :ldap,
@@ -2205,7 +2205,7 @@ EOT
           have one already set.  Generally, it should be the 'ou=Hosts'
           branch under your main directory.",
     }
-  )
+      )
 
   settings.define_settings(:server,
     :storeconfigs => {

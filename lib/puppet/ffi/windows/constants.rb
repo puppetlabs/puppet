@@ -203,7 +203,7 @@ module Puppet::FFI::Windows
         :TokenSecurityAttributes,
         :TokenIsRestricted,
         :MaxTokenInfoClass
-    )
+      )
 
     # Service error codes
     # https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes--1000-1299-

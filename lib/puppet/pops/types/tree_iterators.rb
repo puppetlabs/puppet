@@ -9,7 +9,7 @@ class TreeIterator
     PArrayType::DEFAULT,
     PHashType::DEFAULT,
     PObjectType::DEFAULT
-    )
+  )
 
   # Creates a TreeIterator that by default treats all Array, Hash and Object instances as
   # containers - the 'containers' option can be set to a type that denotes which types of values

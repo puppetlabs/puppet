@@ -6,7 +6,7 @@ Puppet::Parser::Functions::newfunction(
 Fail with a parse error. Any parameters will be stringified,
 concatenated, and passed to the exception-handler.
 DOC
-) do |vals|
+  ) do |vals|
     vals = vals.collect { |s| s.to_s }.join(" ") if vals.is_a? Array
     raise Puppet::ParseError, vals.to_s
 end

@@ -364,7 +364,7 @@ class Application
   def app_defaults
     Puppet::Settings.app_defaults_for_run_mode(self.class.run_mode).merge(
         :name => name
-    )
+      )
   end
 
   # Initialize application defaults. It's usually not necessary to override this method.
