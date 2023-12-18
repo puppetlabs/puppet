@@ -38,8 +38,8 @@ module Puppet::Util::Windows::File
                          flags)
 
     return true if result != FFI::WIN32_FALSE
-    raise Puppet::Util::Windows::Error.
-      new("MoveFileEx(#{source}, #{target}, #{flags.to_s(8)})")
+    raise Puppet::Util::Windows::Error
+      .new("MoveFileEx(#{source}, #{target}, #{flags.to_s(8)})")
   end
   module_function :move_file_ex
 

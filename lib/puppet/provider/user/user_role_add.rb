@@ -178,11 +178,11 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   #No abstraction, all esoteric knowledge of file formats, yay
   def shadow_entry
     return @shadow_entry if defined? @shadow_entry
-    @shadow_entry = File.readlines(target_file_path).
-      reject { |r| r =~ /^[^\w]/ }.
+    @shadow_entry = File.readlines(target_file_path)
+      .reject { |r| r =~ /^[^\w]/ }.
       # PUP-229: don't suppress the empty fields
-      collect { |l| l.chomp.split(':', -1) }.
-      find { |user, _| user == @resource[:name] }
+      collect { |l| l.chomp.split(':', -1) }
+      .find { |user, _| user == @resource[:name] }
   end
 
   def password

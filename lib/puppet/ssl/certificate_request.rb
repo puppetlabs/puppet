@@ -170,12 +170,12 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
   end
 
   def subject_alt_names
-    @subject_alt_names ||= request_extensions.
-      select {|x| x["oid"] == "subjectAltName" }.
-      map {|x| x["value"].split(/\s*,\s*/) }.
-      flatten.
-      sort.
-      uniq
+    @subject_alt_names ||= request_extensions
+      .select {|x| x["oid"] == "subjectAltName" }
+      .map {|x| x["value"].split(/\s*,\s*/) }
+      .flatten
+      .sort
+      .uniq
   end
 
   # Return all user specified attributes attached to this CSR as a hash. IF an

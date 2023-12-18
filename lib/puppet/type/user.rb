@@ -806,10 +806,10 @@ module Puppet
     # @see generate
     # @api private
     def find_unmanaged_keys
-      self[:purge_ssh_keys].
-        select { |f| File.readable?(f) }.
-        map { |f| unknown_keys_in_file(f) }.
-        flatten.each do |res|
+      self[:purge_ssh_keys]
+        .select { |f| File.readable?(f) }
+        .map { |f| unknown_keys_in_file(f) }
+        .flatten.each do |res|
           res[:ensure] = :absent
           res[:user] = self[:name]
           res.copy_metaparams(@parameters)

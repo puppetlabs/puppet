@@ -581,8 +581,8 @@ module Types
     end
 
     def get_deferred_function_return_type(value)
-      func = Puppet.lookup(:loaders).private_environment_loader.
-               load(:function, value.name)
+      func = Puppet.lookup(:loaders).private_environment_loader
+               .load(:function, value.name)
       dispatcher = func.class.dispatcher.find_matching_dispatcher(value.arguments)
       raise ArgumentError, "No matching arity found for #{func.class.name} with arguments #{value.arguments}" unless dispatcher
       dispatcher.type.return_type

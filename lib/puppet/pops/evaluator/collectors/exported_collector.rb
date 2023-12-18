@@ -39,8 +39,8 @@ class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Eva
         resource.type == t && resource.exported? && (q.nil? || q.call(resource))
       end
 
-      found = Puppet::Resource.indirection.
-        search(@type, :host => @scope.compiler.node.name, :filter => @equery, :scope => @scope)
+      found = Puppet::Resource.indirection
+        .search(@type, :host => @scope.compiler.node.name, :filter => @equery, :scope => @scope)
 
       found_resources = found.map {|x| x.is_a?(Puppet::Parser::Resource) ? x : x.to_resource(@scope)}
 

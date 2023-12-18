@@ -135,9 +135,9 @@ class Puppet::FileServing::Fileset
     def children
       return [] unless directory?
 
-      Dir.entries(path, encoding: Encoding::UTF_8).
-        reject { |child| ignore?(child) }.
-        collect { |child| down_level(child) }
+      Dir.entries(path, encoding: Encoding::UTF_8)
+        .reject { |child| ignore?(child) }
+        .collect { |child| down_level(child) }
     end
 
     def ignore?(child)
