@@ -127,6 +127,7 @@ module Types
 
     def chop_path(element_index)
       return self if element_index >= @path.size
+
       chopped_path = @path.clone
       chopped_path.delete_at(element_index)
       copy = self.clone
@@ -585,6 +586,7 @@ module Types
                load(:function, value.name)
       dispatcher = func.class.dispatcher.find_matching_dispatcher(value.arguments)
       raise ArgumentError, "No matching arity found for #{func.class.name} with arguments #{value.arguments}" unless dispatcher
+
       dispatcher.type.return_type
     end
     private :get_deferred_function_return_type
@@ -739,6 +741,7 @@ module Types
       types.each_with_index do |vt, index|
         d = describe(vt, actual, path + [VariantPathElement.new(index)])
         return EMPTY_ARRAY if d.empty?
+
         variant_descriptions << d
       end
       descriptions = merge_descriptions(path.length, SizeMismatch, variant_descriptions)
@@ -759,6 +762,7 @@ module Types
           # If they all have the same canonical path, then we can compact this into one
           generic_mismatch = mismatches.inject do |prev, curr|
             break nil unless prev.canonical_path == curr.canonical_path
+
             prev.merge(prev.path, curr)
           end
           unless generic_mismatch.nil?
@@ -774,6 +778,7 @@ module Types
 
     def describe_POptionalType(expected, original, actual, path)
       return EMPTY_ARRAY if actual.is_a?(PUndefType) || expected.optional_type.nil?
+
       internal_describe(expected.optional_type, original.is_a?(PTypeAliasType) ? original : expected, actual, path)
     end
 
@@ -887,6 +892,7 @@ module Types
 
     def describe_tuple(expected, original, actual, path, size_mismatch_class)
       return EMPTY_ARRAY if expected == actual || expected.types.empty? && (actual.is_a?(PArrayType))
+
       expected_size = expected.size_type || TypeFactory.range(*expected.size_range)
 
       if actual.is_a?(PTupleType)

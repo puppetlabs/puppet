@@ -27,6 +27,7 @@ module Puppet::Interface::FaceCollection
     # elsewhere.  Usually this will start from :current and all...
     face = self[name, version]
     return nil unless face
+
     action = face.get_action(action_name)
     unless action
       # ...we need to search for it bound to an o{lder,ther} version.  Since
@@ -113,10 +114,12 @@ module Puppet::Interface::FaceCollection
 
   rescue LoadError => e
     raise unless e.message =~ %r{-- #{path}$}
+
     # ...guess we didn't find the file; return a much better problem.
     nil
   rescue SyntaxError => e
     raise unless e.message =~ %r{#{path}\.rb:\d+: }
+
     Puppet.err _("Failed to load face %{name}:\n%{detail}") % { name: name, detail: e }
     # ...but we just carry on after complaining.
     nil

@@ -46,6 +46,7 @@ module Pal
       if func
         return FunctionSignature.new(func.class)
       end
+
       # Could not find function
       nil
     end
@@ -87,6 +88,7 @@ module Pal
       unless puppet_code.is_a?(String)
         raise ArgumentError, _("The argument 'puppet_code' must be a String, got %{type}") % { type: puppet_code.class }
       end
+
       evaluate(parse_string(puppet_code, source_file))
     end
 
@@ -141,6 +143,7 @@ module Pal
       unless code_string.is_a?(String)
         raise ArgumentError, _("The argument 'code_string' must be a String, got %{type}") % { type: code_string.class }
       end
+
       internal_evaluator.parse_string(code_string, source_file)
     end
 
@@ -154,6 +157,7 @@ module Pal
       unless file.is_a?(String)
         raise ArgumentError, _("The argument 'file' must be a String, got %{type}") % { type: file.class }
       end
+
       internal_evaluator.parse_file(file)
     end
 
@@ -191,6 +195,7 @@ module Pal
       unless t.is_a?(Puppet::Pops::Types::PAnyType)
         raise ArgumentError, _("Given data_type value is not a data type, got '%{type}'") % {type: t.class}
       end
+
       call_function('new', t, *arguments)
     end
 

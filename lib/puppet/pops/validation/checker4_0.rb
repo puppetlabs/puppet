@@ -284,6 +284,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
       # ok (a call to a type)
       return nil
     end
+
     case functor
     when Model::QualifiedName
       # ok
@@ -872,6 +873,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # The expression must be a qualified name or an integer
     name_expr = o.expr
     return if name_expr.is_a?(Model::LiteralInteger)
+
     if !name_expr.is_a?(Model::QualifiedName)
       acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, :feature => 'name', :container => o)
     else
@@ -1110,12 +1112,14 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   # Case expression is idem, if test, and all options are idem
   def idem_CaseExpression(o)
     return false if !idem(o.test)
+
     ! o.options.any? {|opt| !idem(opt) }
   end
 
   # An option is idem if values and the then_expression are idem
   def idem_CaseOption(o)
     return false if o.values.any? { |value| !idem(value) }
+
     idem(o.then_expr)
   end
 

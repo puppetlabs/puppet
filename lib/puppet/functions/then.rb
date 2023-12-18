@@ -73,6 +73,7 @@ Puppet::Functions.create_function(:then) do
 
   def then(arg)
     return nil if arg.nil?
+
     yield(arg)
   end
 end

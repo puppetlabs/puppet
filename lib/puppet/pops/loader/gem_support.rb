@@ -31,6 +31,7 @@ module Puppet::Pops::Loader::GemSupport
     unless spec
       raise ArgumentError, _("Gem not found %{uri}") % { uri: uri }
     end
+
     # if path given append that, else append given subdir
     if uri.path.empty?
       spec.gem_dir
@@ -47,6 +48,7 @@ module Puppet::Pops::Loader::GemSupport
     unless spec
       raise ArgumentError, _("Gem not found '%{gem_name}'") % { gem_name: gem_name }
     end
+
     spec.full_gem_path
   end
 end

@@ -177,11 +177,13 @@ module Puppet::Util::POSIX
     if field.is_a?(Integer)
       name = get_posix_field(location, :name, field)
       return nil unless name
+
       id = get_posix_field(location, id_field, name)
       check_value = id
     else
       id = get_posix_field(location, id_field, field)
       return nil unless id
+
       name = get_posix_field(location, :name, id)
       check_value = name
     end

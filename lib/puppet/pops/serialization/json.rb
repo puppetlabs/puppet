@@ -250,6 +250,7 @@ module JSON
     def re_initialize(io)
       parsed = parse_io(io)
       raise SerializationError, _("JSON stream is not an array. It is a %{klass}") % { klass: io.class.name } unless parsed.is_a?(Array)
+
       @etor_stack = [parsed.each]
     end
 
@@ -257,6 +258,7 @@ module JSON
       obj = nil
       loop do
         raise SerializationError, _('Unexpected end of input') if @etor_stack.empty?
+
         etor = @etor_stack.last
         begin
           obj = etor.next
@@ -271,6 +273,7 @@ module JSON
         ext_no = ext_etor.next
         ext_block = @type_registry[ext_no]
         raise SerializationError, _("Invalid input. %{ext_no} is not a valid extension number") % { ext_no: ext_no } if ext_block.nil?
+
         obj = ext_block.call(nil)
       end
       obj

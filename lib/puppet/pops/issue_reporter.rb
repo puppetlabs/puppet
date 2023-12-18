@@ -50,6 +50,7 @@ class IssueReporter
       unless emit_errors
         raise emit_exception.new(emit_message)
       end
+
       formatter = Validation::DiagnosticFormatterPuppetStyle.new
       if errors.size == 1 || max_errors <= 1
         # raise immediately
@@ -84,6 +85,7 @@ class IssueReporter
 
   def self.format_with_prefix(prefix, message)
     return message unless prefix
+
     [prefix, message].join(' ')
   end
 

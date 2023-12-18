@@ -129,10 +129,6 @@ Layout/ElseAlignment:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Layout/EmptyLineAfterGuardClause:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/EmptyLineAfterMagicComment:
   Enabled: false
 

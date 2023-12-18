@@ -27,6 +27,7 @@ Puppet::Face.define(:module, '1.0.0') do
       unless root_path
         raise ArgumentError, _("Could not find a valid module at %{path}") % { path: path.inspect }
       end
+
       Puppet::ModuleTool::Applications::Checksummer.run(root_path, options)
     end
 

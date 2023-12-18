@@ -20,6 +20,7 @@ class Puppet::FileServing::Mount
     unless name =~ %r{^[-\w]+$}
       raise ArgumentError, _("Invalid mount name format '%{name}'") % { name: name }
     end
+
     @name = name
 
     super()

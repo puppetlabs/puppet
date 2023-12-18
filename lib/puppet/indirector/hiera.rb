@@ -12,6 +12,7 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
       #TRANSLATORS "Hiera" is the name of a code library and should not be translated
       raise _("Hiera terminus not supported without hiera library")
     end
+
     super
   end
 

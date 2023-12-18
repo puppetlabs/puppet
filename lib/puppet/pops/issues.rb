@@ -92,6 +92,7 @@ module Issues
       label_provider = @data[:label]
       #TRANSLATORS ":label" is a keyword and should not be translated
       raise Puppet::Error, _('Label provider key :label must be set to produce the text of the message!') unless label_provider
+
       label_provider
     end
 
@@ -100,6 +101,7 @@ module Issues
     def semantic
       #TRANSLATORS ":semantic" is a keyword and should not be translated
       raise Puppet::Error, _('Label provider key :semantic must be set to produce the text of the message!') unless @data[:semantic]
+
       @data[:semantic]
     end
   end

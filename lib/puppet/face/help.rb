@@ -62,6 +62,7 @@ Puppet::Face.define(:help, '0.0.1') do
         if actionname
           raise ArgumentError, _("The legacy subcommand '%{sub_command}' does not support supplying an action") % { sub_command: facename }
         end
+
         # legacy apps already emit ronn output
         return render_application_help(facename)
       else

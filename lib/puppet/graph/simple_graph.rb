@@ -279,6 +279,7 @@ class Puppet::Graph::SimpleGraph
   # Remove a vertex from the graph.
   def remove_vertex!(v)
     return unless vertex?(v)
+
     @upstream_from.clear
     @downstream_from.clear
     (@in_to[v].values+@out_from[v].values).flatten.each { |e| remove_edge!(e) }
@@ -300,6 +301,7 @@ class Puppet::Graph::SimpleGraph
   # since they have to specify what kind of edge it is.
   def add_edge(e,*a)
     return add_relationship(e,*a) unless a.empty?
+
     e = Puppet::Relationship.from_data_hash(e) if e.is_a?(Hash)
     @upstream_from.clear
     @downstream_from.clear
@@ -348,6 +350,7 @@ class Puppet::Graph::SimpleGraph
   def adjacent(v, options = {})
     ns = (options[:direction] == :in) ? @in_to[v] : @out_from[v]
     return [] unless ns
+
     (options[:type] == :edges) ? ns.values.flatten : ns.keys
   end
 
@@ -361,6 +364,7 @@ class Puppet::Graph::SimpleGraph
     until stack.empty?
       node = stack.shift
       next if seen.member? node
+
       connected = adjacent(node, :direction => direction)
       connected.each do |target|
         yield node, target
@@ -382,6 +386,7 @@ class Puppet::Graph::SimpleGraph
 
   def downstream_from_vertex(v)
     return @downstream_from[v] if @downstream_from[v]
+
     result = @downstream_from[v] = {}
     @out_from[v].keys.each do |node|
       result[node] = 1
@@ -396,6 +401,7 @@ class Puppet::Graph::SimpleGraph
 
   def upstream_from_vertex(v)
     return @upstream_from[v] if @upstream_from[v]
+
     result = @upstream_from[v] = {}
     @in_to[v].keys.each do |node|
       result[node] = 1

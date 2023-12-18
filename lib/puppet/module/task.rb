@@ -50,6 +50,7 @@ class Puppet::Module
 
     def self.is_task_name?(name)
       return true if name =~ /^[a-z][a-z0-9_]*$/
+
       return false
     end
 
@@ -61,6 +62,7 @@ class Puppet::Module
     def self.is_tasks_filename?(path)
       name_less_extension = File.basename(path, '.*')
       return false if not is_task_name?(name_less_extension)
+
       FORBIDDEN_EXTENSIONS.each do |ext|
         return false if path.end_with?(ext)
       end

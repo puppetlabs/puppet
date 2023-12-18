@@ -9,6 +9,7 @@ class Formatter
 
   def wrap(txt, opts)
     return "" unless txt && !txt.empty?
+
     work = (opts[:scrub] ? scrub(txt) : txt)
     indent = (opts[:indent] ? opts[:indent] : 0)
     textLen = @width - indent
@@ -59,6 +60,7 @@ class TypeDoc
     Puppet::Type.loadall
     Puppet::Type.eachtype { |type|
       next if type.name == :component
+
       @types[type.name] = type
     }
   end

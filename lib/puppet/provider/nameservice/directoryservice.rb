@@ -86,6 +86,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     #      with a group type, this will be /Groups.
     #   @ds_path is an attribute of the class itself.
     return @ds_path if defined?(@ds_path)
+
     # JJM: "Users" or "Groups" etc ...  (Based on the Puppet::Type)
     #       Remember this is a class method, so self.class is Class
     #       Also, @resource_type seems to be the reference to the
@@ -114,6 +115,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     input_hash.each_key do |key|
       ds_attribute = key.sub("dsAttrTypeStandard:", "")
       next unless (ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? ds_to_ns_attribute_map[ds_attribute])
+
       ds_value = input_hash[key]
       case ds_to_ns_attribute_map[ds_attribute]
         when :members
@@ -308,6 +310,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     if ensure_value == :present
       @resource.class.validproperties.each do |name|
         next if name == :ensure
+
         # LAK: We use property.sync here rather than directly calling
         # the settor method because the properties might do some kind
         # of conversion.  In particular, the user gid property might
@@ -405,6 +408,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # Now we create all the standard properties
     Puppet::Type.type(@resource.class.name).validproperties.each do |property|
       next if property == :ensure
+
       value = @resource.should(property)
       if property == :gid and value.nil?
         value = self.class.next_system_id('gid')
@@ -419,6 +423,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
           exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
           exec_arg_vector << ns_to_ds_attribute_map[property.intern]
           next if property == :password  # skip setting the password here
+
           exec_arg_vector << value.to_s
           begin
             execute(exec_arg_vector)

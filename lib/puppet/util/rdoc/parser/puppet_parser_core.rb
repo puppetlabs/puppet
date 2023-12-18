@@ -36,6 +36,7 @@ module RDoc::PuppetParserCore
   # but from which we are not descendant.
   def find_object_named(container, name)
     return container if container.name == name
+
     container.each_classmodule do |m|
       return m if m.name == name
     end

@@ -71,6 +71,7 @@ module Types
         impl_class.new(arg * Time::NSECS_PER_SEC)
       else
         raise ArgumentError, "Unable to create a #{impl_class.name} from a #{arg.class.name}" unless arg.nil? || arg == :default
+
         nil
       end
     end

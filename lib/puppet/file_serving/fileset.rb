@@ -91,6 +91,7 @@ class Puppet::FileServing::Fileset
     links = links.to_sym
     #TRANSLATORS ":links" is a parameter name and should not be translated
     raise(ArgumentError, _("Invalid :links value '%{links}'") % { links: links }) unless [:manage, :follow].include?(links)
+
     @links = links
     @stat_method = @links == :manage ? :lstat : :stat
   end
@@ -116,6 +117,7 @@ class Puppet::FileServing::Fileset
         value = request.options[param.to_s]
       end
       next if value.nil?
+
       value = true if value == "true"
       value = false if value == "false"
       value = Integer(value) if value.is_a?(String) and value =~ /^\d+$/

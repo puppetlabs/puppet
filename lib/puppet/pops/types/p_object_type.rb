@@ -174,6 +174,7 @@ class PObjectType < PMetaType
       unless @type.assignable?(member.type)
         raise Puppet::ParseError, _("%{member} attempts to override %{label} with a type that does not match") % { member: member.label, label: label }
       end
+
       member
     end
 
@@ -244,6 +245,7 @@ class PObjectType < PMetaType
       args_type = TypeCalculator.infer_set(block_given? ? args + [block] : args)
       found = @dispatch.find { |d| d.type.callable?(args_type) }
       raise ArgumentError, TypeMismatchDescriber.describe_signatures(label, @dispatch, args_type) if found.nil?
+
       found.invoke(receiver, scope, args, &block)
     end
 
@@ -288,12 +290,14 @@ class PObjectType < PMetaType
       if name == Serialization::PCORE_TYPE_KEY || name == Serialization::PCORE_VALUE_KEY
         raise Puppet::ParseError, _("The attribute '%{name}' is reserved and cannot be used") % { name: name}
       end
+
       @kind = init_hash[KEY_KIND]
       if @kind == ATTRIBUTE_KIND_CONSTANT # final is implied
         if init_hash.include?(KEY_FINAL) && !@final
           #TRANSLATOR 'final => false' is puppet syntax and should not be translated
           raise Puppet::ParseError, _("%{label} of kind 'constant' cannot be combined with final => false") % { label: label }
         end
+
         @final = true
       end
 
@@ -301,10 +305,12 @@ class PObjectType < PMetaType
         if @kind == ATTRIBUTE_KIND_DERIVED || @kind == ATTRIBUTE_KIND_GIVEN_OR_DERIVED
           raise Puppet::ParseError, _("%{label} of kind '%{kind}' cannot be combined with an attribute value") % { label: label, kind: @kind }
         end
+
         v = init_hash[KEY_VALUE]
         @value = v == :default ? v : TypeAsserter.assert_instance_of(nil, type, v) {"#{label} #{KEY_VALUE}" }
       else
         raise Puppet::ParseError, _("%{label} of kind 'constant' requires a value") % { label: label } if @kind == ATTRIBUTE_KIND_CONSTANT
+
         @value = :undef # Not to be confused with nil or :default
       end
     end
@@ -354,6 +360,7 @@ class PObjectType < PMetaType
     def value
       # An error must be raised here since `nil` is a valid value and it would be bad to leak the :undef symbol
       raise Puppet::Error, "#{label} has no value" if @value == :undef
+
       @value
     end
 
@@ -443,6 +450,7 @@ class PObjectType < PMetaType
     else
       name = o.class.name
       return false if name.nil? # anonymous class that doesn't implement PuppetObject is not an instance
+
       ir = Loaders.implementation_registry
       type = ir.nil? ? nil : ir.type_for_module(name)
       !type.nil? && assignable?(type, guard)
@@ -558,6 +566,7 @@ class PObjectType < PMetaType
   # @api private
   def implementation_class=(cls)
     raise ArgumentError, "attempt to redefine implementation class for #{label}" unless @implementation_class.nil?
+
     @implementation_class = cls
   end
 
@@ -573,6 +582,7 @@ class PObjectType < PMetaType
     if !@implementation_class.nil? || instance_variable_defined?(:@implementation_override)
       raise ArgumentError, "attempt to redefine implementation override for #{label}"
     end
+
     @implementation_override = block
   end
 
@@ -631,6 +641,7 @@ class PObjectType < PMetaType
       if init_param_names.size < param_count || init_non_opt_count > param_count
         raise Serialization::SerializationError, "Initializer for class #{impl_class.name} does not match the attributes of #{name}"
       end
+
       init_param_names = init_param_names[0, param_count] if init_param_names.size > param_count
       unless init_param_names == param_names
         # Reorder needed to match initialize method arguments
@@ -686,6 +697,7 @@ class PObjectType < PMetaType
       check_self_recursion(self)
       rp = resolved_parent
       raise Puppet::ParseError, _("reference to unresolved type '%{name}'") % { :name => rp.type_string } if rp.is_a?(PTypeReferenceType)
+
       if rp.is_a?(PObjectType)
         parent_object_type = rp
         parent_members = rp.members(true)
@@ -723,6 +735,7 @@ class PObjectType < PMetaType
         if attr_specs.include?(key)
           raise Puppet::ParseError, _("attribute %{label}[%{key}] is defined as both a constant and an attribute") % { label: label, key: key }
         end
+
         attr_spec = {
           # Type must be generic here, or overrides would become impossible
           KEY_TYPE => TypeCalculator.infer(value).generalize,
@@ -754,6 +767,7 @@ class PObjectType < PMetaType
         func = PFunction.new(key, self, func_spec)
         name = func.name
         raise Puppet::ParseError, _("%{label} conflicts with attribute with the same name") % { label: func.label } if @attributes.include?(name)
+
         [name, func.assert_override(parent_members)]
       end].freeze
     end
@@ -767,6 +781,7 @@ class PObjectType < PMetaType
       unless equality.empty?
         #TRANSLATORS equality_include_type = false should not be translated
         raise Puppet::ParseError, _('equality_include_type = false cannot be combined with non empty equality specification') unless @equality_include_type
+
         parent_eq_attrs = nil
         equality.each do |attr_name|
 
@@ -787,6 +802,7 @@ class PObjectType < PMetaType
             if attr.nil?
               raise Puppet::ParseError, _("%{label} equality is referencing non existent attribute '%{attribute}'") % { label: label, attribute: attr_name }
             end
+
             raise Puppet::ParseError, _("%{label} equality is referencing %{attribute}. Only attribute references are allowed") %
                 { label: label, attribute: attr.label }
           end
@@ -982,6 +998,7 @@ class PObjectType < PMetaType
   def check_self_recursion(originator)
     unless @parent.nil?
       raise Puppet::Error, "The Object type '#{originator.label}' inherits from itself" if @parent.equal?(originator)
+
       @parent.check_self_recursion(originator)
     end
   end
@@ -1092,6 +1109,7 @@ class PObjectType < PMetaType
       p = type.resolved_parent
       return type unless p.is_a?(PObjectType)
       return type unless p.equality_attributes.include?(attr.name)
+
       type = p
     end
     nil

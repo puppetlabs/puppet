@@ -158,6 +158,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     Puppet.settings.each do |_name, object|
       object.optparse_args.each do |arg|
         next unless arg =~ /^-/
+
         # sadly, we have to emulate some of optparse here...
         pattern = /^#{arg.sub('[no-]', '').sub(/[ =].*$/, '')}(?:[ =].*)?$/
         pattern.match item and return object
@@ -170,8 +171,10 @@ class Puppet::Application::FaceBase < Puppet::Application
     self.class.option_parser_commands.each do |options, _function|
       options.each do |option|
         next unless option =~ /^-/
+
         pattern = /^#{option.sub('[no-]', '').sub(/[ =].*$/, '')}(?:[ =].*)?$/
         next unless pattern.match(item)
+
         return {
           :argument => option =~ /[ =]/,
           :optional => option =~ /[ =]\[/

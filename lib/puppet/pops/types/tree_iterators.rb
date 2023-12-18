@@ -38,6 +38,7 @@ class TreeIterator
     unless DEFAULT_CONTAINERS.assignable?(@containers_t)
       raise ArgumentError, _("Only Array, Hash, and Object types can be used as container types. Got %{type}") % {type: @containers_t}
     end
+
     @with_root       = extract_option(options, 'include_root', true)
     @with_containers = extract_option(options, 'include_containers', true)
     @with_values     = extract_option(options, 'include_values', true)
@@ -45,6 +46,7 @@ class TreeIterator
     unless @with_containers || @with_values
       raise ArgumentError, _("Options 'include_containers' and 'include_values' cannot both be false")
     end
+
     @include_refs = !!options['include_refs']
   end
 
@@ -92,6 +94,7 @@ class TreeIterator
 
   def indexer_on(val)
     return nil unless @containers_t.instance?(val)
+
     if val.is_a?(Array)
       val.size.times
     elsif val.is_a?(Hash)

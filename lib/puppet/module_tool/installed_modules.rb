@@ -23,6 +23,7 @@ module Puppet::ModuleTool
         modules[path].each do |mod|
           @by_name[mod.name] = mod
           next unless mod.has_metadata?
+
           release = ModuleRelease.new(self, mod)
           @modules[release.name] ||= release
         end

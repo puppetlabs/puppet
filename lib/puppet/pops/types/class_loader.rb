@@ -37,6 +37,7 @@ class ClassLoader
     case type
     when PRuntimeType
       raise ArgumentError.new("Only Runtime type 'ruby' is supported, got #{type.runtime}") unless type.runtime == :ruby
+
       provide_from_string(type.runtime_type_name)
 
     when PBooleanType
@@ -95,6 +96,7 @@ class ClassLoader
       end
     end
     return nil unless result.is_a?(Module)
+
     result
   end
   private_class_method :provide_from_string

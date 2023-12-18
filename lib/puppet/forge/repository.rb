@@ -30,6 +30,7 @@ class Puppet::Forge
     # Return a Net::HTTPResponse read for this +path+.
     def make_http_request(path, io = nil)
       raise ArgumentError, "Path must start with forward slash" unless path.start_with?('/')
+
       begin
         str = @uri.to_s
         str.chomp!('/')

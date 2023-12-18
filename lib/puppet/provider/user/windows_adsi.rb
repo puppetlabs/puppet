@@ -69,6 +69,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
 
   def groups_to_s(groups)
     return '' if groups.nil? || !groups.kind_of?(Array)
+
     groups = groups.map do |group_name|
       sid = Puppet::Util::Windows::SID.name_to_principal(group_name)
       if sid.account =~ /\\/
@@ -138,6 +139,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
     # avoid a LogonUserW style password check when the resource is not yet
     # populated with a password (as is the case with `puppet resource user`)
     return nil if @resource[:password].nil?
+
     user.password_is?( @resource[:password] ) ? @resource[:password] : nil
   end
 

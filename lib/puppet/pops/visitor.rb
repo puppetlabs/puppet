@@ -34,6 +34,7 @@ class Visitor
   # Visit an explicit receiver
   def visit_this(receiver, thing, args)
     raise "Visitor Error: Too few arguments passed. min = #{@min_args}" unless args.length >= @min_args
+
     if @max_args
       raise "Visitor Error: Too many arguments passed. max = #{@max_args}" unless args.length <= @max_args
     end
@@ -44,18 +45,22 @@ class Visitor
       thing.class.ancestors().each do |ancestor|
         name = ancestor.name
         next if name.nil?
+
         method_name = :"#{@message}_#{name.split(DOUBLE_COLON).last}"
         next unless receiver.respond_to?(method_name, true)
+
         @cache[thing.class] = method_name
         return receiver.send(method_name, thing, *args)
       end
     end
+
     raise "Visitor Error: the configured receiver (#{receiver.class}) can't handle instance of: #{thing.class}"
   end
 
   # Visit an explicit receiver
   def visit_this_class(receiver, clazz, args)
     raise "Visitor Error: Too few arguments passed. min = #{@min_args}" unless args.length >= @min_args
+
     if @max_args
       raise "Visitor Error: Too many arguments passed. max = #{@max_args}" unless args.length <= @max_args
     end
@@ -66,12 +71,15 @@ class Visitor
       clazz.ancestors().each do |ancestor|
         name = ancestor.name
         next if name.nil?
+
         method_name = :"#{@message}_#{name.split(DOUBLE_COLON).last}"
         next unless receiver.respond_to?(method_name, true)
+
         @cache[clazz] = method_name
         return receiver.send(method_name, clazz, *args)
       end
     end
+
     raise "Visitor Error: the configured receiver (#{receiver.class}) can't handle instance of: #{clazz}"
   end
 
@@ -83,6 +91,7 @@ class Visitor
     if method_name
       return receiver.send(method_name, thing)
     end
+
     visit_this(receiver, thing, NO_ARGS)
   end
 
@@ -94,6 +103,7 @@ class Visitor
     if method_name
       return receiver.send(method_name, thing, arg)
     end
+
     visit_this(receiver, thing, [arg])
   end
 
@@ -105,6 +115,7 @@ class Visitor
     if method_name
       return receiver.send(method_name, thing, arg1, arg2)
     end
+
     visit_this(receiver, thing, [arg1, arg2])
   end
 
@@ -116,6 +127,7 @@ class Visitor
     if method_name
       return receiver.send(method_name, thing, arg1, arg2, arg3)
     end
+
     visit_this(receiver, thing, [arg1, arg2, arg3])
   end
 

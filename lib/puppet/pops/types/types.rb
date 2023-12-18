@@ -61,8 +61,10 @@ class TypedModelObject < Object
     ]
     Types.constants.each do |c|
       next if c == :PType || c == :PHostClassType
+
       cls = Types.const_get(c)
       next unless cls.is_a?(Class) && cls < self
+
       type = cls.register_ptype(loader, ir)
       types << type unless type.nil?
     end
@@ -133,6 +135,7 @@ class PAnyType < TypedModelObject
       return true if self.class == PAnyType
       # An empty variant may be assignable to NotUndef[T] if T is assignable to empty variant
       return _assignable?(o, guard) if is_a?(PNotUndefType) && o.types.empty?
+
       !o.types.empty? && o.types.all? { |vt| assignable?(vt, guard) }
     when POptionalType
       # Assignable if undef and contained type is assignable
@@ -538,6 +541,7 @@ class PTypeType < PTypeWithContainedType
     return false unless o.is_a?(PTypeType)
     return true if @type.nil? # wide enough to handle all types
     return false if o.type.nil? # wider than t
+
     @type.assignable?(o.type, guard)
   end
 end
@@ -823,6 +827,7 @@ class PEnumType < PScalarDataType
   # @api private
   def _assignable?(o, guard)
     return true if self == o
+
     svalues = values
     if svalues.empty?
       return true if o.is_a?(PStringType) || o.is_a?(PEnumType) || o.is_a?(PPatternType)
@@ -940,6 +945,7 @@ class PNumericType < PScalarDataType
     from = -Float::INFINITY if from.nil? || from == :default
     to = Float::INFINITY if to.nil? || to == :default
     raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{from}, #{to}" if from > to
+
     @from = from
     @to = to
   end
@@ -998,6 +1004,7 @@ class PNumericType < PScalarDataType
   # @api_private
   def _assignable?(o, guard)
     return false unless o.is_a?(self.class)
+
     # If o min and max are within the range of t
     @from <= o.numeric_from && @to >= o.numeric_to
   end
@@ -1064,6 +1071,7 @@ class PIntegerType < PNumericType
   # Returns Float.Infinity if one end of the range is unbound
   def size
     return Float::INFINITY if @from == -Float::INFINITY || @to == Float::INFINITY
+
     1+(to-from).abs
   end
 
@@ -1806,6 +1814,7 @@ class PPatternType < PScalarDataType
   #
   def _assignable?(o, guard)
     return true if self == o
+
     case o
     when PStringType
       v = o.value
@@ -2070,6 +2079,7 @@ class PStructType < PAnyType
   def instance?(o, guard = nil)
     # The inferred type of a class derived from Hash is either Runtime or Object. It's not assignable to the Struct type.
     return false unless o.instance_of?(Hash)
+
     matched = 0
     @elements.all? do |e|
       key = e.name
@@ -2243,6 +2253,7 @@ class PTupleType < PAnyType
   def instance?(o, guard = nil)
     # The inferred type of a class derived from Array is either Runtime or Object. It's not assignable to the Tuple type.
     return false unless o.instance_of?(Array)
+
     if @size_type
       return false unless @size_type.instance?(o.size, guard)
     else
@@ -2279,6 +2290,7 @@ class PTupleType < PAnyType
     if @size_type.nil?
       return [1, 1]
     end
+
     types_size = @types.size
     from, to = @size_type.range
     min = from - (types_size-1)
@@ -2309,15 +2321,18 @@ class PTupleType < PAnyType
   def _assignable?(o, guard)
     return true if self == o
     return false unless o.is_a?(PTupleType) || o.is_a?(PArrayType)
+
     s_types = types
     size_s = size_type || PIntegerType.new(*size_range)
 
     if o.is_a?(PTupleType)
       size_o = o.size_type || PIntegerType.new(*o.size_range)
       return false unless size_s.assignable?(size_o, guard)
+
       unless s_types.empty?
         o_types = o.types
         return size_s.numeric_from == 0 if o_types.empty?
+
         o_types.size.times do |index|
           return false unless (s_types[index] || s_types[-1]).assignable?(o_types[index], guard)
         end
@@ -2325,12 +2340,14 @@ class PTupleType < PAnyType
     else
       size_o = o.size_type || PCollectionType::DEFAULT_SIZE
       return false unless size_s.assignable?(size_o, guard)
+
       unless s_types.empty?
         o_entry = o.element_type
         # Array of anything can not be assigned (unless tuple is tuple of anything) - this case
         # was handled at the top of this method.
         #
         return false if o_entry.nil?
+
         [s_types.size, size_o.range[1]].min.times { |index| return false unless (s_types[index] || s_types[-1]).assignable?(o_entry, guard) }
       end
     end
@@ -2421,6 +2438,7 @@ class PCallableType < PAnyType
     # nil param_types and compatible return type means other Callable is assignable
     return true if @param_types.nil?
     return false unless @param_types.instance?(args)
+
     if @block_type.nil?
       block == nil
     else
@@ -2494,6 +2512,7 @@ class PCallableType < PAnyType
     other_param_types = o.param_types
 
     return false if other_param_types.nil? ||  !other_param_types.assignable?(@param_types, guard)
+
     # names are ignored, they are just information
     # Blocks must be compatible
     this_block_t = @block_type || PUndefType::DEFAULT
@@ -2574,6 +2593,7 @@ class PArrayType < PCollectionType
     # The inferred type of a class derived from Array is either Runtime or Object. It's not assignable to the Array type.
     return false unless o.instance_of?(Array)
     return false unless o.all? {|element| @element_type.instance?(element, guard) }
+
     size_t = size_type
     size_t.nil? || size_t.instance?(o.size, guard)
   end
@@ -2726,6 +2746,7 @@ class PHashType < PCollectionType
   def instance?(o, guard = nil)
     # The inferred type of a class derived from Hash is either Runtime or Object. It's not assignable to the Hash type.
     return false unless o.instance_of?(Hash)
+
     if o.keys.all? {|key| @key_type.instance?(key, guard) } && o.values.all? {|value| @value_type.instance?(value, guard) }
       size_t = size_type
       size_t.nil? || size_t.instance?(o.size, guard)
@@ -2762,6 +2783,7 @@ class PHashType < PCollectionType
 
   def self.array_as_hash(value)
     return value unless value.is_a?(Array)
+
     result = {}
     value.each_with_index {|v, idx| result[idx] = array_as_hash(v) }
     result
@@ -2798,6 +2820,7 @@ class PHashType < PCollectionType
         if build_option.nil?
           return from_tuples(tuple_array)
         end
+
         # only remaining possible options is 'tree' or 'hash_tree'
 
         all_hashes = build_option == 'hash_tree'
@@ -2831,6 +2854,7 @@ class PHashType < PCollectionType
             unless from.size % 2 == 0
               raise TypeConversionError.new(_('odd number of arguments for Hash'))
             end
+
             Hash[*from]
           end
         when Hash
@@ -2862,6 +2886,7 @@ class PHashType < PCollectionType
       size_s = size_type
       return true if (size_s.nil? || size_s.from == 0) && o.is_the_empty_hash?
       return false unless @key_type.assignable?(o.key_type, guard) && @value_type.assignable?(o.value_type, guard)
+
       super
     when PStructType
       # hash must accept String as key type
@@ -2994,6 +3019,7 @@ class PVariantType < PAnyType
     @types.reduce(-1) do |memo, type|
       ri = type.really_instance?(o, guard)
       break ri if ri > 0
+
       ri > memo ? ri : memo
     end
   end
@@ -3017,6 +3043,7 @@ class PVariantType < PAnyType
     return super unless o.is_a?(PVariantType)
     # If empty, all Variant types match irrespective of the types they hold (including being empty)
     return true if types.empty?
+
     # Since this variant is not empty, an empty Variant cannot match, because it matches nothing
     # otherwise all types in o must be assignable to this
     !o.types.empty? && o.types.all? { |vt| super(vt, guard) }
@@ -3183,6 +3210,7 @@ class PClassType < PCatalogEntryType
     return false unless o.is_a?(PClassType)
     # Class = Class[name}, Class[name] != Class
     return true if @class_name.nil?
+
     # Class[name] = Class[name]
     @class_name == o.class_name
   end
@@ -3292,6 +3320,7 @@ class POptionalType < PTypeWithContainedType
   def _assignable?(o, guard)
     return true if o.is_a?(PUndefType)
     return true if @type.nil?
+
     if o.is_a?(POptionalType)
       @type.assignable?(o.optional_type, guard)
     else
@@ -3390,6 +3419,7 @@ class PTypeAliasType < PAnyType
   # @raise [Puppet::Error] unless the type has been resolved prior to calling this method
   def resolved_type
     raise Puppet::Error, "Reference to unresolved type #{@name}" unless @resolved_type
+
     @resolved_type
   end
 
@@ -3452,6 +3482,7 @@ class PTypeAliasType < PAnyType
 
   def set_self_recursion_status
     return if @self_recursion || @resolved_type.is_a?(PTypeReferenceType)
+
     @self_recursion = true
     guard = RecursionGuard.new
     accept(NoopTypeAcceptor::INSTANCE, guard)
@@ -3489,6 +3520,7 @@ class PTypeAliasType < PAnyType
         unless real_type_asserter.other_type_detected?
           raise ArgumentError, "Type alias '#{name}' cannot be resolved to a real type"
         end
+
         @self_recursion = guard.recursive_this?(self)
         # All aliases involved must re-check status since this alias is now resolved
         if @self_recursion
@@ -3586,6 +3618,7 @@ class PTypeAliasType < PAnyType
       resolved_types = @resolved_type.types
       real_types = resolved_types.select do |type|
         next false if type == self
+
         real_type_asserter = AssertOtherTypeAcceptor.new
         type.accept(real_type_asserter, RecursionGuard.new)
         real_type_asserter.other_type_detected?

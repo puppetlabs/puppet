@@ -79,6 +79,7 @@ class Puppet::Node::Facts
 
   def ==(other)
     return false unless self.name == other.name
+
     values == other.values
   end
 

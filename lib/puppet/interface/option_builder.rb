@@ -22,6 +22,7 @@ class Puppet::Interface::OptionBuilder
   # Metaprogram the simple DSL from the option class.
   Puppet::Interface::Option.instance_methods.grep(/=$/).each do |setter|
     next if setter =~ /^=/
+
     dsl = setter.to_s.chomp('=')
 
     unless private_method_defined? dsl
@@ -52,6 +53,7 @@ class Puppet::Interface::OptionBuilder
       #TRANSLATORS 'before_action' is a method name and should not be translated
       raise ArgumentError, _("before_action takes three arguments, action, args, and options")
     end
+
     @option.before_action = block
   end
 
@@ -72,6 +74,7 @@ class Puppet::Interface::OptionBuilder
       #TRANSLATORS 'after_action' is a method name and should not be translated
       raise ArgumentError, _("after_action takes three arguments, action, args, and options")
     end
+
     @option.after_action = block
   end
 
@@ -100,6 +103,7 @@ class Puppet::Interface::OptionBuilder
       #TRANSLATORS 'default_to' is a method name and should not be translated
       raise ArgumentError, _("%{option} default_to block should not take any arguments") % { option: @option }
     end
+
     @option.default = block
   end
 end

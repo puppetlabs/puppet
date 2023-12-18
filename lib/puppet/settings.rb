@@ -153,6 +153,7 @@ class Puppet::Settings
     @cache = Concurrent::Hash.new do |hash, key|
       @cache_lock.synchronize do
         break hash[key] if hash.key?(key)
+
         hash[key] = Concurrent::Hash.new
       end
     end
@@ -160,6 +161,7 @@ class Puppet::Settings
     @values = Concurrent::Hash.new do |hash, key|
       @values_lock.synchronize do
         break hash[key] if hash.key?(key)
+
         hash[key] = Concurrent::Hash.new
       end
     end
@@ -563,6 +565,7 @@ class Puppet::Settings
   def print_configs
     return print_config_options if value(:configprint) != ""
     return generate_config if value(:genconfig)
+
     generate_manifest if value(:genmanifest)
   end
 
@@ -584,6 +587,7 @@ class Puppet::Settings
   def preferred_run_mode=(mode)
     mode = mode.to_s.downcase.intern
     raise ValidationError, "Invalid run mode '#{mode}'" unless [:server, :master, :agent, :user].include?(mode)
+
     @preferred_run_mode_name = mode
     # Changing the run mode has far-reaching consequences. Flush any cached
     # settings so they will be re-generated.
@@ -768,6 +772,7 @@ class Puppet::Settings
       unless klass
         raise ArgumentError, _("Invalid setting type '%{type}'") % { type: type }
       end
+
       hash.delete(:type)
     else
       # The only implicit typing we still do for settings is to fall back to "String" type if they didn't explicitly
@@ -808,6 +813,7 @@ class Puppet::Settings
 
   def files
     return @files if @files
+
     @files = []
     [main_config_file, user_config_file].each do |path|
       if Puppet::FileSystem.exist?(path)
@@ -831,6 +837,7 @@ class Puppet::Settings
 
   def reuse
     return unless defined?(@used)
+
     new = @used
     @used = []
     self.use(*new)
@@ -1023,6 +1030,7 @@ class Puppet::Settings
       hash[:name] = name
       hash[:section] = section
       raise ArgumentError, _("Setting %{name} is already defined") % { name: name } if @config.include?(name)
+
       tryconfig = newsetting(hash)
       short = tryconfig.short
       if short
@@ -1030,6 +1038,7 @@ class Puppet::Settings
         if other
           raise ArgumentError, _("Setting %{name} is already using short name '%{short}'") % { name: other.name, short: short }
         end
+
         @shortnames[short] = tryconfig
       end
       @config[name] = tryconfig
@@ -1062,6 +1071,7 @@ class Puppet::Settings
       file = @config[key]
       next if file.value.nil?
       next unless (sections.nil? or sections.include?(file.section))
+
       resource = file.to_resource
       next unless resource
       next if catalog.resource(resource.ref)
@@ -1619,11 +1629,13 @@ Generated on #{Time.now}.
       if Puppet::Settings::EnvironmentConf::VALID_SETTINGS.include?(name) && conf
         return true
       end
+
       false
     end
 
     def lookup(name)
       return nil unless Puppet::Settings::EnvironmentConf::VALID_SETTINGS.include?(name)
+
       conf.send(name) if conf
     end
 

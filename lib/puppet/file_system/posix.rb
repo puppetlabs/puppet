@@ -29,6 +29,7 @@ class Puppet::FileSystem::Posix < Puppet::FileSystem::FileImpl
   def stream_blksize(*streams)
     streams.each do |s|
       next unless s.respond_to?(:stat)
+
       size = blksize(s.stat)
       return size if size
     end
@@ -39,6 +40,7 @@ class Puppet::FileSystem::Posix < Puppet::FileSystem::FileImpl
     s = st.blksize
     return nil unless s
     return nil if s == 0
+
     s
   end
 

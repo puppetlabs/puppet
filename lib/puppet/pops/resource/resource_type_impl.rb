@@ -73,6 +73,7 @@ class ResourceTypeImpl
     # Order is only maintained against other types, not arbitrary objects.
     # The natural order is based on the reference name used when comparing
     return nil unless other.is_a?(Puppet::CompilableResourceType)
+
     # against other type instances.
     self.ref <=> other.ref
   end
@@ -165,6 +166,7 @@ class ResourceTypeImpl
           #
           raise Puppet::DevError, _("you must specify title patterns when there are two or more key attributes")
         end
+
         @title_patterns_hash.nil? ? [] : @title_patterns_hash.map { |k,v| [ k, v.map { |n| [ n.to_sym] } ] }
       end
   end

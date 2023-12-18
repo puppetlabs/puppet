@@ -39,6 +39,7 @@ class TypeParser
     if t
       return t
     end
+
     model = @parser.parse_string(string)
     interpret(model.model.body, context)
   end
@@ -483,6 +484,7 @@ class TypeParser
       raise_invalid_parameters_error('Boolean', '1', parameters.size) unless parameters.size == 1
       p = parameters[0]
       raise Puppet::ParseError, 'Boolean parameter must be true or false' unless p == true || p == false
+
       TypeFactory.boolean(p)
 
     when 'integer'

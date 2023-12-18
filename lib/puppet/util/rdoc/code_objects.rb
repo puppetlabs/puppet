@@ -69,6 +69,7 @@ module RDoc
       if cls
         return cls
       end
+
       @node_container ||= add_module(NormalModule, "__nodes__")
       cls = @node_container.add_class(PuppetNode, name, superclass)
       @nodes[name] = cls if !@done_documenting

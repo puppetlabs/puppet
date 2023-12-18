@@ -16,6 +16,7 @@ class Puppet::Util::FileWatcher
 
   def watch(filename)
     return if watching?(filename)
+
     @files[filename] = Puppet::Util::WatchedFile.new(filename)
   end
 

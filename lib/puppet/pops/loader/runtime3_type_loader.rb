@@ -31,6 +31,7 @@ class Runtime3TypeLoader < BaseLoader
   #
   def find(typed_name)
     return nil unless typed_name.name_authority == Pcore::RUNTIME_NAME_AUTHORITY
+
     case typed_name.type
     when :type
       value = nil

@@ -272,6 +272,7 @@ module Puppet::Functions
     unless the_class.method_defined?(func_name)
       raise ArgumentError, _("Function Creation Error, cannot create a default dispatcher for function '%{func_name}', no method with this name found") % { func_name: func_name }
     end
+
     any_signature(*min_max_param(the_class.instance_method(func_name)))
   end
 
@@ -350,6 +351,7 @@ module Puppet::Functions
       if loader.nil?
         raise ArgumentError, _("No loader present. Call create_loaded_function(:myname, loader,...), instead of 'create_function' if running tests")
       end
+
       aliases = LocalTypeAliasesBuilder.new(loader, name)
       aliases.instance_eval(&block)
       # Add the loaded types to the builder
@@ -413,6 +415,7 @@ module Puppet::Functions
     def param(type, name)
       internal_param(type, name)
       raise ArgumentError, _('A required parameter cannot be added after an optional parameter') if @min != @max
+
       @min += 1
       @max += 1
     end
@@ -462,6 +465,7 @@ module Puppet::Functions
     def required_repeated_param(type, name)
       internal_param(type, name, true)
       raise ArgumentError, _('A required repeated parameter cannot be added after an optional parameter') if @min != @max
+
       @min += 1
       @max = :default
     end
@@ -522,6 +526,7 @@ module Puppet::Functions
       unless type.is_a?(String) || type.is_a?(Puppet::Pops::Types::PAnyType)
         raise ArgumentError, _("Argument to 'return_type' must be a String reference to a Puppet Data Type. Got %{type_class}") % { type_class: type.class }
       end
+
       @return_type = type
     end
 

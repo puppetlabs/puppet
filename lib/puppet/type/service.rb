@@ -94,6 +94,7 @@ module Puppet
 
       def insync?(current)
         return provider.enabled_insync?(current) if provider.respond_to?(:enabled_insync?)
+
         super(current)
       end
     end
@@ -141,6 +142,7 @@ module Puppet
 
       def insync?(current)
         return provider.logonaccount_insync?(current) if provider.respond_to?(:logonaccount_insync?)
+
         super(current)
       end
     end
@@ -279,6 +281,7 @@ module Puppet
         begin
           value = value.to_i
           raise if value < 1
+
           value
         rescue
           raise Puppet::Error.new(_("\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer") % { value: value })

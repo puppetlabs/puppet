@@ -85,6 +85,7 @@ class Puppet::Util::Log
   def Log.create(hash)
     raise Puppet::DevError, _("Logs require a level") unless hash.include?(:level)
     raise Puppet::DevError, _("Invalid log level %{level}") % { level: hash[:level] } unless @levels.index(hash[:level])
+
     @levels.index(hash[:level]) >= @loglevel ? Puppet::Util::Log.new(hash) : nil
   end
 
@@ -208,6 +209,7 @@ class Puppet::Util::Log
 
   def Log.flushqueue
     return unless @destinations.size >= 1
+
     @queued.each do |msg|
       Log.newmessage(msg)
     end
@@ -314,6 +316,7 @@ class Puppet::Util::Log
     [:file, :line, :pos, :issue_code, :environment, :node, :backtrace].each do |attr|
       value = args[attr]
       next unless value
+
       send(attr.to_s + '=', value)
     end
 
@@ -333,6 +336,7 @@ class Puppet::Util::Log
     %w(file line pos issue_code environment node backtrace).each do |name|
       value = data[name]
       next unless value
+
       send(name + '=', value)
     end
   end
@@ -371,6 +375,7 @@ class Puppet::Util::Log
   def message=(msg)
     #TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
     raise ArgumentError, _("Puppet::Util::Log requires a message") unless msg
+
     @message = msg.to_s
   end
 
@@ -379,6 +384,7 @@ class Puppet::Util::Log
     raise ArgumentError, _("Puppet::Util::Log requires a log level") unless level
     #TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
     raise ArgumentError, _("Puppet::Util::Log requires a symbol or string") unless level.respond_to? "to_sym"
+
     @level = level.to_sym
     raise ArgumentError, _("Invalid log level %{level}") % { level: @level } unless self.class.validlevel?(@level)
 

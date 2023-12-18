@@ -24,6 +24,7 @@ module Puppet
 
     def property_matches?(current, desired)
       return true if super(current, desired)
+
       return date_matches?(resource.parameter(:checksum).value, current, desired)
     end
 

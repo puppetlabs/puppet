@@ -235,6 +235,7 @@ class Puppet::Parser::Compiler
   #
   def evaluate_classes(classes, scope, lazy_evaluate = true)
     raise Puppet::DevError, _("No source for scope passed to evaluate_classes") unless scope.source
+
     class_parameters = nil
     # if we are a param class, save the classes hash
     # and transform classes to be the keys
@@ -564,6 +565,7 @@ class Puppet::Parser::Compiler
       # case a custom node terminus has done any mucking about with
       # node.parameters.
       next if param.to_s == 'environment'
+
       # Ensure node does not leak Symbol instances in general
       @topscope[param.to_s] = value.is_a?(Symbol) ? value.to_s : value
     end

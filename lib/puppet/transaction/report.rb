@@ -385,6 +385,7 @@ class Puppet::Transaction::Report
       }.each do |label|
         value = report[key][label]
         next if value == 0
+
         value = "%0.2f" % value if value.is_a?(Float)
         ret += "   %15s %s\n" % [Puppet::Util::Metric.labelize(label) + ":", value]
       end

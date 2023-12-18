@@ -358,6 +358,7 @@ class Lexer2
             while escaped_end(value)
               more = scn.scan_until(PATTERN_REGEX_END)
               return emit(TOKEN_DIV, before) unless more
+
               value << more
             end
             regex = value.sub(PATTERN_REGEX_A, '').sub(PATTERN_REGEX_Z, '').gsub(PATTERN_REGEX_ESC, '/')
@@ -511,6 +512,7 @@ class Lexer2
                 invalid_number = nil
                 before = scn.pos
                 break if before == 0
+
                 scn.pos = scn.pos - 1
               end
             end

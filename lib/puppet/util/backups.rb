@@ -24,6 +24,7 @@ module Puppet::Util::Backups
     when "directory"
       # we don't need to backup directories when recurse is on
       return true if self[:recurse]
+
       info _("Recursively backing up to filebucket")
       Find.find(self[:path]) { |f| backup_file_with_filebucket(f) if File.file?(f) }
     when "file"; backup_file_with_filebucket(file)

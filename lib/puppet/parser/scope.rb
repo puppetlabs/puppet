@@ -213,6 +213,7 @@ class Puppet::Parser::Scope
       # Parameters are evaluated in the order they have in the @params hash.
       keys = @params.keys
       raise Puppet::Error, _("%{callee}: expects a value for parameter $%{to}") % { callee: @callee_name, to: to } if keys.index(to) < keys.index(from)
+
       raise Puppet::Error, _("%{callee}: default expression for $%{from} tries to illegally access not yet evaluated $%{to}") % { callee: @callee_name, from: from, to: to }
     end
     private :parameter_reference_failure
@@ -227,12 +228,14 @@ class Puppet::Parser::Scope
     def [](name)
       access = @params[name]
       return super if access.nil?
+
       throw(:unevaluated_parameter, name) unless access.assigned?
       access.value
     end
 
     def []=(name, value)
       raise Puppet::Error, _("Attempt to assign variable %{name} when evaluating parameters") % { name: name } if @read_only
+
       @params[name] ||= Access.new
       @params[name].value = value
     end
@@ -525,6 +528,7 @@ class Puppet::Parser::Scope
     if BUILT_IN_VARS.include?(name) || name =~ Puppet::Pops::Patterns::NUMERIC_VAR_NAME
       return nil
     end
+
     begin
       throw(:undefined_variable, reason)
     rescue  UNCAUGHT_THROW_EXCEPTION
@@ -615,6 +619,7 @@ class Puppet::Parser::Scope
         qs = qualified_scope(class_name)
         unless qs.nil?
           return qs.get_local_variable(leaf_name) if qs.has_local_variable?(leaf_name)
+
           iscope = qs.inherited_scope
           return lookup_qualified_variable("#{iscope.source.name}::#{leaf_name}", options) unless iscope.nil?
         end
@@ -659,8 +664,10 @@ class Puppet::Parser::Scope
   def qualified_scope(classname)
     klass = find_hostclass(classname)
     raise _("class %{classname} could not be found") % { classname: classname }     unless klass
+
     kscope = class_scope(klass)
     raise _("class %{classname} has not been evaluated") % { classname: classname } unless kscope
+
     kscope
   end
   private :qualified_scope
@@ -692,6 +699,7 @@ class Puppet::Parser::Scope
 
   def parent_module_name
     return nil unless @parent && @parent.source
+
     @parent.source.module_name
   end
 
@@ -708,6 +716,7 @@ class Puppet::Parser::Scope
       if table.include?(param.name)
         raise Puppet::ParseError.new(_("Default already defined for %{type} { %{param} }; cannot redefine") % { type: type, param: param.name }, param.file, param.line)
       end
+
       table[param.name] = param
     }
   end
@@ -722,6 +731,7 @@ class Puppet::Parser::Scope
     all_local = {}
     settings.each_key do |name|
       next if :name == name
+
       key = name.to_s
       value = transform_setting(settings.value_sym(name, env_name))
       if set_in_this_scope
@@ -1016,6 +1026,7 @@ class Puppet::Parser::Scope
       new_ephemeral(false)
     else
       raise(ArgumentError,_("Invalid regex match data. Got a %{klass}") % { klass: match.class }) unless match.is_a?(MatchData)
+
       # Create a match ephemeral and set values from match data
       new_match_scope(match)
     end
@@ -1077,6 +1088,7 @@ class Puppet::Parser::Scope
         raise ArgumentError, _("Cannot use undef as a class name")
       when String
         raise ArgumentError, _("Cannot use empty string as a class name") if name.empty?
+
         name.sub(/^([^:]{1,2})/, '::\1')
 
       when Puppet::Resource
@@ -1086,6 +1098,7 @@ class Puppet::Parser::Scope
       when Puppet::Pops::Types::PClassType
         #TRANSLATORS "Class" and "Type" are Puppet keywords and should not be translated
         raise ArgumentError, _("Cannot use an unspecific Class[] Type") unless name.class_name
+
         name.class_name.sub(/^([^:]{1,2})/, '::\1')
 
       when Puppet::Pops::Types::PResourceType

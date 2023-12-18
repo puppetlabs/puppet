@@ -79,6 +79,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
 
   def unlink
     return unless @tmpname
+
     begin
       File.unlink(@tmpname)
     rescue Errno::ENOENT

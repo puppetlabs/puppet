@@ -45,6 +45,7 @@ module Puppet
                 sc.convert(mapping[1].map do |names|
                   next if names.empty?
                   raise Puppet::Error, _('title patterns that use procs are not supported.') unless names.size == 1
+
                   names[0].to_s
                 end, '%p')
               ]

@@ -101,6 +101,7 @@ class Type
     # Order is only maintained against other types, not arbitrary objects.
     # The natural order is based on the reference name used when comparing
     return nil unless other.is_a?(Puppet::CompilableResourceType) || other.class.is_a?(Puppet::CompilableResourceType)
+
     # against other type instances.
     self.ref <=> other.ref
   end
@@ -295,6 +296,7 @@ class Type
   #
   def self.metaparamclass(name)
     return nil if name.nil?
+
     @@metaparamhash[name.intern]
   end
 
@@ -548,6 +550,7 @@ class Type
   # @return [Array<String>] Returns the parameter names
   def self.parameters
     return [] unless defined?(@parameters)
+
     @parameters.collect { |klass| klass.name }
   end
 
@@ -567,6 +570,7 @@ class Type
   def self.validattr?(name)
     name = name.intern
     return true if name == :name
+
     @validattrs ||= {}
 
     unless @validattrs.include?(name)
@@ -595,6 +599,7 @@ class Type
   # @return [Boolean] Returns true if the given name is the name of an existing parameter
   def self.validparameter?(name)
     raise Puppet::DevError, _("Class %{class_name} has not defined parameters") % { class_name: self } unless defined?(@parameters)
+
     !!(@paramhash.include?(name) or @@metaparamhash.include?(name))
   end
 
@@ -630,6 +635,7 @@ class Type
   #
   def name_var
     return @name_var_cache unless @name_var_cache.nil?
+
     key_attributes = self.class.key_attributes
     @name_var_cache = (key_attributes.length == 1) && key_attributes.first
   end
@@ -905,6 +911,7 @@ class Type
   # @return [???] the version of the catalog or 0 if there is no catalog.
   def version
     return 0 unless catalog
+
     catalog.version
   end
 
@@ -1064,6 +1071,7 @@ class Type
 
     properties.each do |property|
       next if property.name == :ensure
+
       if ensure_state == :absent
         result[property] = :absent
       else
@@ -1309,6 +1317,7 @@ class Type
       unless list == [:all]
         list.each do |param|
           next if @resource.class.validattr?(param)
+
           fail "Cannot audit #{param}: not a valid attribute for #{resource}"
         end
       end
@@ -1317,6 +1326,7 @@ class Type
     munge do |args|
       properties_to_audit(args).each do |param|
         next unless resource.class.validproperty?(param)
+
         resource.newattr(param)
       end
     end
@@ -2091,6 +2101,7 @@ class Type
       # Retrieve the list of names from the block.
       list = self.instance_eval(&block)
       next unless list
+
       list = [list] unless list.is_a?(Array)
 
       # Collect the current prereqs
@@ -2409,6 +2420,7 @@ class Type
 
     parameters.each do |_name, param|
       next if param.sensitive
+
       if param.is_a?(Puppet::Parameter)
         param.sensitive = param.is_sensitive if param.respond_to?(:is_sensitive)
       end
@@ -2516,6 +2528,7 @@ class Type
   def parent
     return nil unless catalog
     return @parent if @parent
+
     parents = catalog.adjacent(self, :direction => :in)
     @parent = if parents
       parents.shift
@@ -2605,6 +2618,7 @@ class Type
 
       # We've already got property values
       next if param.is_a?(Puppet::Property)
+
       resource[name] = param.value
     end
 

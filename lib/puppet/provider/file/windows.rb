@@ -37,6 +37,7 @@ Puppet::Type.type(:file).provide :windows do
 
   def owner
     return :absent unless resource.stat
+
     get_owner(resource[:path])
   end
 
@@ -50,6 +51,7 @@ Puppet::Type.type(:file).provide :windows do
 
   def group
     return :absent unless resource.stat
+
     get_group(resource[:path])
   end
 

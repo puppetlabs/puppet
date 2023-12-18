@@ -25,6 +25,7 @@ class Puppet::Daemon
 
   def initialize(agent, pidfile, scheduler = Puppet::Scheduler::Scheduler.new())
     raise Puppet::DevError, _("Daemons must have an agent") unless agent
+
     @scheduler = scheduler
     @pidfile = pidfile
     @agent = agent
@@ -80,6 +81,7 @@ class Puppet::Daemon
 
   def reexec
     raise Puppet::DevError, _("Cannot reexec unless ARGV arguments are set") unless argv
+
     command = $0 + " " + argv.join(" ")
     Puppet.notice "Restarting with '#{command}'"
     stop(:exit => false)

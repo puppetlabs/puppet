@@ -42,6 +42,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
   def self.current_version
     return @current_version unless @current_version.nil?
+
     output = rpm "--version"
     @current_version = output.gsub('RPM version ', '').strip
   end
@@ -246,6 +247,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     if list.size == 1
       return list[0]
     end
+
     return list
   end
 end

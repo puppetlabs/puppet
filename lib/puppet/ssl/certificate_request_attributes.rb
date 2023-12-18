@@ -26,11 +26,13 @@ class Puppet::SSL::CertificateRequestAttributes
       if ! hash.is_a?(Hash)
         raise Puppet::Error, _("invalid CSR attributes, expected instance of Hash, received instance of %{klass}") % { klass: hash.class }
       end
+
       @custom_attributes = hash.delete('custom_attributes') || {}
       @extension_requests = hash.delete('extension_requests') || {}
       if not hash.keys.empty?
         raise Puppet::Error, _("unexpected attributes %{keys} in %{path}") % { keys: hash.keys.inspect, path: @path.inspect }
       end
+
       return true
     end
     return false

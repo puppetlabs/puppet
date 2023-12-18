@@ -147,6 +147,7 @@ module LoaderPaths
       parts = typed_name.name_parts
       if start_index_in_name > 0
         return nil if start_index_in_name >= parts.size
+
         parts = parts[start_index_in_name..-1]
       end
       "#{File.join(generic_path, parts)}#{extension}"
@@ -370,6 +371,7 @@ module LoaderPaths
       parts = typed_name.name_parts
       if start_index_in_name > 0
         return nil if start_index_in_name >= parts.size
+
         parts = parts[start_index_in_name..-1]
       end
       basename = File.join(generic_path, parts)

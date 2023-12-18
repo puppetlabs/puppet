@@ -76,6 +76,7 @@ module Pal
         # TRANSLATORS: do not translate the variable names in this error message
         raise ArgumentError, _("manifest_file or code_string cannot be given when configured_by_env is true")
       end
+
       # Use the manifest setting
       manifest_file = Puppet[:manifest]
     else
@@ -182,6 +183,7 @@ module Pal
         # TRANSLATORS: do not translate the variable names in this error message
         raise ArgumentError, _("manifest_file or code_string cannot be given when configured_by_env is true")
       end
+
       # Use the manifest setting
       manifest_file = Puppet[:manifest]
     else
@@ -326,6 +328,7 @@ module Pal
       if env.nil?
         raise ArgumentError, _("No directory found for the environment '%{env_name}' on the path '%{envpath}'") % { env_name: env_name, envpath: envpath }
       end
+
       # A given modulepath should override the default
       mid_modulepath = modulepath.nil? ? env.modulepath : modulepath
       env_path = env.configuration.path_to_env

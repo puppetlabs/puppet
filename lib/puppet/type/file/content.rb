@@ -117,6 +117,7 @@ module Puppet
 
       # The inherited equality is always accepted, so use it if valid.
       return true if super(current, desired)
+
       return date_matches?(checksum_type, current, desired)
     end
 
@@ -167,6 +168,7 @@ module Puppet
     def read_file_from_filebucket
       dipper = resource.bucket
       raise "Could not get filebucket from file" unless dipper
+
       sum = should.sub(/\{\w+\}/, '')
 
       dipper.getfile(sum)

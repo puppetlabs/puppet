@@ -28,6 +28,7 @@ module Puppet::Pops
           #TRANSLATORS 'merge' is a variable name and 'strategy' is a key and should not be translated
           raise ArgumentError, _("The hash given as 'merge' must contain the name of a strategy in string form for the key 'strategy'")
         end
+
         merge_options  = merge.size == 1 ? EMPTY_HASH : merge
       else
         merge_strategy = merge
@@ -36,6 +37,7 @@ module Puppet::Pops
       merge_strategy = merge_strategy.to_sym if merge_strategy.is_a?(String)
       strategy_class = strategies[merge_strategy]
       raise ArgumentError, _("Unknown merge strategy: '%{strategy}'") % { strategy: merge_strategy } if strategy_class.nil?
+
       merge_options == EMPTY_HASH ? strategy_class::INSTANCE : strategy_class.new(merge_options)
     end
 

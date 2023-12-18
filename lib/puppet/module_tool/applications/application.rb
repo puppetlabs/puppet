@@ -34,6 +34,7 @@ module Puppet::ModuleTool
 
       def metadata(require_metadata = false)
         return @metadata if @metadata
+
         @metadata = Puppet::ModuleTool::Metadata.new
 
         unless @path

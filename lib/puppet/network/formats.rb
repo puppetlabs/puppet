@@ -9,6 +9,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:msgpack, :weight => 20
   def intern(klass, text)
     data = MessagePack.unpack(text)
     return data if data.is_a?(klass)
+
     klass.from_data_hash(data)
   end
 
@@ -113,6 +114,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :
       data = d
     end
     return data if data.is_a?(klass)
+
     klass.from_data_hash(data)
   end
 end
@@ -136,6 +138,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:json, :mime => 'applic
   # have never supported JSON
   def data_to_instance(klass, data)
     return data if data.is_a?(klass)
+
     klass.from_data_hash(data)
   end
 end
@@ -237,6 +240,7 @@ Puppet::Network::FormatHandler.create(:flat,
 
   def render(datum)
     return datum if datum.is_a?(String) || datum.is_a?(Numeric)
+
     # Simple hash
     if datum.is_a?(Hash)
       data = flatten_hash(datum)
@@ -283,6 +287,7 @@ Puppet::Network::FormatHandler.create(:rich_data_json, mime: 'application/vnd.pu
   def data_to_instance(klass, data)
     Puppet.override({:rich_data => true}) do
       return data if data.is_a?(klass)
+
       klass.from_data_hash(data)
     end
   end
@@ -300,6 +305,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:rich_data_msgpack, mim
     Puppet.override(rich_data: true) do
       data = MessagePack.unpack(text)
       return data if data.is_a?(klass)
+
       klass.from_data_hash(data)
     end
   end

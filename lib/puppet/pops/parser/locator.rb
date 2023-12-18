@@ -58,6 +58,7 @@ class Locator
     last = first + ast.length
     ast._pcore_all_contents([]) do |m|
       next unless m.is_a?(Model::Positioned)
+
       m_offset = m.offset
       m_last = m_offset + m.length
       first = m_offset if m_offset < first
@@ -160,6 +161,7 @@ class Locator
 
       return nil if low == ary.length
       return nil if !satisfied
+
       return low
     end
 
@@ -178,6 +180,7 @@ class Locator
         # use cache
         return @prev_line
       end
+
       line_nbr = ary_bsearch_i(line_index, offset)
       if line_nbr
         # cache

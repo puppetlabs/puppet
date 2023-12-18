@@ -78,6 +78,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
     unless source =~ /\.dmg$/i || source =~ /\.pkg$/i
       raise Puppet::Error.new(_("Mac OS X PKG DMGs must specify a source string ending in .dmg or flat .pkg file"))
     end
+
     require 'open-uri' # Dead code; this is never used. The File.open call 20-ish lines south of here used to be Kernel.open but changed in '09. -NF
     cached_source = source
     tmpdir = Dir.mktmpdir
@@ -106,6 +107,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
           xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-mountrandom", "/tmp", dmg.path
           hdiutil_info = Puppet::Util::Plist.parse_plist(xml_str)
           raise Puppet::Error.new(_("No disk entities returned by mount at %{path}") % { path: dmg.path }) unless hdiutil_info.has_key?("system-entities")
+
           mounts = hdiutil_info["system-entities"].collect { |entity|
             entity["mount-point"]
           }.compact
@@ -145,10 +147,12 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
     unless source
       raise Puppet::Error.new(_("Mac OS X PKG DMGs must specify a package source."))
     end
+
     name = @resource[:name]
     unless name
       raise Puppet::Error.new(_("Mac OS X PKG DMGs must specify a package name."))
     end
+
     self.class.installpkgdmg(source,name)
   end
 end

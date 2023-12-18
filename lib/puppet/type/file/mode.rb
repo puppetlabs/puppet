@@ -126,6 +126,7 @@ module Puppet
       if provider.respond_to?(:munge_windows_system_group)
         munged_mode = provider.munge_windows_system_group(currentvalue, @should)
         return false if munged_mode.nil?
+
         currentvalue = munged_mode
       end
       stat = @resource.stat
@@ -139,6 +140,7 @@ module Puppet
 
     def property_matches?(current, desired)
       return false unless current
+
       current_bits = normalize_symbolic_mode(current)
       desired_bits = desired_mode_from_current(desired, current).to_s(8)
       current_bits == desired_bits

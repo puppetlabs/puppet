@@ -4,6 +4,7 @@ module Puppet::Util::Package::Version
     def self.parse(version)
       raise ValidationFailure, version unless version.is_a? String
       raise ValidationFailure, version unless version =~ ANCHORED_VERSION_PATTERN
+
       new(version)
     end
 

@@ -58,6 +58,7 @@ module Interpolation
 
           # Alias is only permitted if the entire string is equal to the interpolate expression
           fail(Issues::HIERA_INTERPOLATION_ALIAS_NOT_ENTIRE_STRING) if is_alias && subject != match
+
           value = interpolate_method(method_key).call(key, lookup_invocation, subject)
 
           # break gsub and return value immediately if this was an alias substitution. The value might be something other than a String
@@ -128,6 +129,7 @@ module Interpolation
     end
     interpolate_method = @@interpolate_methods[method_key]
     fail(Issues::HIERA_INTERPOLATION_UNKNOWN_INTERPOLATION_METHOD, :name => method_key) unless interpolate_method
+
     interpolate_method
   end
 
@@ -144,6 +146,7 @@ module Interpolation
     match = data.match(/^(\w+)\((?:["]([^"]+)["]|[']([^']+)['])\)$/)
     if match
       fail(Issues::HIERA_INTERPOLATION_METHOD_SYNTAX_NOT_ALLOWED) unless allow_methods
+
       key = match[1].to_sym
       data = match[2] || match[3] # double or single qouted
     else

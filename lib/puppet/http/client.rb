@@ -237,6 +237,7 @@ class Puppet::HTTP::Client
   # @api public
   def put(url, body, headers: {}, params: {}, options: {})
     raise ArgumentError, "'put' requires a string 'body' argument" unless body.is_a?(String)
+
     url = encode_query(url, params)
 
     request = Net::HTTP::Put.new(url, @default_headers.merge(headers))
@@ -265,6 +266,7 @@ class Puppet::HTTP::Client
   # @api public
   def post(url, body, headers: {}, params: {}, options: {}, &block)
     raise ArgumentError, "'post' requires a string 'body' argument" unless body.is_a?(String)
+
     url = encode_query(url, params)
 
     request = Net::HTTP::Post.new(url, @default_headers.merge(headers))
@@ -469,6 +471,7 @@ class Puppet::HTTP::Client
   def resolve_ssl_context(ssl_context, include_system_store)
     if ssl_context
       raise Puppet::HTTP::HTTPError, "The ssl_context and include_system_store parameters are mutually exclusive" if include_system_store
+
       ssl_context
     elsif include_system_store
       system_ssl_context

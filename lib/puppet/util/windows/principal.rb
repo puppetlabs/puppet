@@ -151,6 +151,7 @@ module Puppet::Util::Windows::SID
     # Sanitize the given account name for lookup to avoid known issues
     def self.sanitize_account_name(account_name)
       return account_name unless account_name.start_with?('APPLICATION PACKAGE AUTHORITY\\')
+
       account_name.split('\\').last
     end
     private_class_method :sanitize_account_name

@@ -670,6 +670,7 @@ module Util
         if Puppet::FileSystem.exist?(file) && Puppet::FileSystem.directory?(file)
           raise Errno::EISDIR, _("Is a directory: %{directory}") % { directory: file }
         end
+
         File.rename(tempfile.path, Puppet::FileSystem.path_string(file))
       end
     ensure

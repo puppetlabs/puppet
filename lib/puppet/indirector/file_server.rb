@@ -30,6 +30,7 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
     # if not.
     path = mount.find(relative_path, request)
     return nil unless path
+
     path2instance(request, path)
   end
 

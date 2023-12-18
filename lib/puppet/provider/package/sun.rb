@@ -75,6 +75,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
            pkgs[0]['ERROR']
       end
       return self.class.namemap(pkgs[0]) if errmsg.nil?
+
       # according to commit 41356a7 some errors do not raise an exception
       # so even though pkginfo passed, we have to check the actual output
       raise Puppet::Error, _("Unable to get information about package %{name} because of: %{errmsg}") % { name: @resource[:name], errmsg: errmsg }
@@ -96,6 +97,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
   def install
     #TRANSLATORS Sun refers to the company name, do not translate
     raise Puppet::Error, _("Sun packages must specify a package source") unless @resource[:source]
+
     options = {
       :adminfile    => @resource[:adminfile],
       :responsefile => @resource[:responsefile],

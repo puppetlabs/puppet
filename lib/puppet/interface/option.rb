@@ -21,6 +21,7 @@ class Puppet::Interface::Option
         unless item =~ /^-[a-z]\b/ or item =~ /^--[^-]/ then
           raise ArgumentError, _("%{option}: long options need two dashes (--)") % { option: item.inspect }
         end
+
         @optparse << item
 
         # Duplicate checking...
@@ -36,6 +37,7 @@ class Puppet::Interface::Option
         if Puppet.settings.include? name then
           raise ArgumentError, _("%{option}: already defined in puppet") % { option: item.inspect }
         end
+
         dup = dups[name]
         if dup
           raise ArgumentError, _("%{option}: duplicates existing alias %{duplicate} in %{parent}") %
@@ -90,6 +92,7 @@ class Puppet::Interface::Option
     unless found
       raise ArgumentError, _("Can't find a name in the declaration %{declaration}") % { declaration: declaration.inspect }
     end
+
     found.captures.first
   end
 
@@ -99,6 +102,7 @@ class Puppet::Interface::Option
     unless name.to_s =~ /^[a-z]\w*$/
       raise _("%{name} is an invalid option name") % { name: name.inspect }
     end
+
     name.to_sym
   end
 
@@ -121,6 +125,7 @@ class Puppet::Interface::Option
     if required
       raise ArgumentError, _("%{name} can't be optional and have a default value") % { name: self }
     end
+
     unless proc.is_a? Proc
       #TRANSLATORS 'proc' is a Ruby block of code
       raise ArgumentError, _("default value for %{name} is a %{class_name}, not a proc") %
@@ -138,6 +143,7 @@ class Puppet::Interface::Option
     if has_default?
       raise ArgumentError, _("%{name} can't be optional and have a default value") % { name: self }
     end
+
     @required = value
   end
 

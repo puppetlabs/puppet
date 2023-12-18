@@ -53,6 +53,7 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
         else
           msg = _("%{path}: file does not contain a valid yaml hash") % { path: path }
           raise Puppet::DataBinding::LookupError, msg if Puppet[:strict] == :error && data != false
+
           Puppet.warning(msg)
           {}
         end

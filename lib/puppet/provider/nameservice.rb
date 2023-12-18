@@ -45,6 +45,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       unless resource_type.valid_parameter?(name)
         raise Puppet::DevError, _("%{name} is not a valid attribute for %{resource_type}") % { name: name, resource_type: resource_type.name }
       end
+
       @options ||= {}
       @options[name] ||= {}
 
@@ -59,6 +60,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       super
       @resource_type.validproperties.each do |prop|
         next if prop == :ensure
+
         define_method(prop) { get(prop) || :absent} unless public_method_defined?(prop)
         define_method(prop.to_s + "=") { |*vals| set(prop, *vals) } unless public_method_defined?(prop.to_s + "=")
       end
@@ -263,6 +265,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     self.class.validate(param, value)
     cmd = modifycmd(param, munge(param, value))
     raise Puppet::DevError, _("Nameservice command must be an array") unless cmd.is_a?(Array)
+
     sensitive = has_sensitive_data?(param)
     begin
       execute(cmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive})

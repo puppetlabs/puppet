@@ -4,6 +4,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
   Puppet::Type.loadall
   Puppet::Type.eachtype do |klass|
     next unless klass && klass.providers.length > 0
+
     types << klass
   end
   types.sort! { |a,b| a.name.to_s <=> b.name.to_s }

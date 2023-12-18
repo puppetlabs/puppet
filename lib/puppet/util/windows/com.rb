@@ -143,6 +143,7 @@ module Puppet::Util::Windows::COM
             if Puppet::Util::Windows::COM.FAILED(result = @vtbl[name].call(self, *args))
               raise Puppet::Util::Windows::Error.new(_("Failed to call %{klass}::%{name} with HRESULT: %{result}.") % { klass: self, name: name, result: result }, result)
             end
+
             result
           end
         end
@@ -184,6 +185,7 @@ module Puppet::Util::Windows::COM
             if Puppet::Util::Windows::COM.FAILED(result = @vtbl[name].call(self, *args))
               raise Puppet::Util::Windows::Error.new(_("Failed to call %{klass}::%{name} with HRESULT: %{result}.") % { klass: self, name: name, result: result }, result)
             end
+
             result
           end
         end

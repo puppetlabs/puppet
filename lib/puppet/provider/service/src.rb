@@ -74,6 +74,7 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
       loop do
         status = self.status
         break if status == desired_state.to_sym
+
         sleep(1)
       end
     end

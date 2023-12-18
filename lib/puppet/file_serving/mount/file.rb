@@ -55,6 +55,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
     else
       raise ArgumentError, _("%{path} does not exist or is not a directory") % { path: path } unless FileTest.directory?(path)
       raise ArgumentError, _("%{path} is not readable") % { path: path } unless FileTest.readable?(path)
+
       @expandable = false
     end
     @path = path
@@ -63,6 +64,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
   def search(path, request)
     path = complete_path(path, request.node)
     return nil unless path
+
     [path]
   end
 

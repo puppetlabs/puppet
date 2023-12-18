@@ -181,6 +181,7 @@ class DeferredResolver
 
   def map_arguments(args)
     return [] if args.nil?
+
     args.map {|v| resolve(v) }
   end
   private :map_arguments

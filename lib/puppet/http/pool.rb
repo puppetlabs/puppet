@@ -78,6 +78,7 @@ class Puppet::HTTP::Pool
   # @api private
   def close_connection(site, http)
     return false unless http.started?
+
     Puppet.debug("Closing connection for #{site}")
     http.finish
     true

@@ -90,6 +90,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     unless file
       raise ArgumentError, _("You cannot install dpkg packages without a source")
     end
+
     args = []
 
 

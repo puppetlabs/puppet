@@ -992,6 +992,7 @@ Puppet::Functions.create_function(:new, Puppet::Functions::InternalFunction) do
 
   def new_instance(scope, t, *args)
     return args[0] if args.size == 1 && !t.is_a?(Puppet::Pops::Types::PInitType) && t.instance?(args[0])
+
     result = assert_type(t, new_function_for_type(t).call(scope, *args))
     return block_given? ? yield(result) : result
   end

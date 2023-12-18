@@ -13,6 +13,7 @@ module LexerSupport
   # Returns "<eof>" if at end of input, else the following 5 characters with \n \r \t escaped
   def followed_by
     return "<eof>" if @scanner.eos?
+
     result = @scanner.rest[0,5] + "..."
     result.gsub!("\t", '\t')
     result.gsub!("\n", '\n')

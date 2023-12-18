@@ -53,8 +53,10 @@ class JsonCatalogEncoder
     #
     # TRANSLATORS 'type' and 'title' are internal parameter names - do not translate
     raise ArgumentError, _("Both type and title must be given") if type.nil? or title.nil?
+
     r = possibly_filtered_catalog.resource(type, title)
     return nil if r.nil?
+
     r.to_data_hash.to_json(:pretty => pretty)
   end
 

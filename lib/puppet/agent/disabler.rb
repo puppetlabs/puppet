@@ -41,6 +41,7 @@ module Puppet::Agent::Disabler
     if data.has_key?(DISABLED_MESSAGE_JSON_KEY)
       return data[DISABLED_MESSAGE_JSON_KEY]
     end
+
     nil
   end
 

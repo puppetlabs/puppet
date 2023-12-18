@@ -227,6 +227,7 @@ class HieraConfig
     File.foreach(@config_path) do |line|
       line_number += 1
       next if line_number < start_line
+
       quote = nil
       stripped = ''.dup
       line.each_codepoint do |cp|
@@ -353,6 +354,7 @@ class HieraConfigV3 < HieraConfig
 
   def self.config_type
     return @@CONFIG_TYPE if class_variable_defined?(:@@CONFIG_TYPE)
+
     tf = Types::TypeFactory
     nes_t = Types::PStringType::NON_EMPTY
 
@@ -477,6 +479,7 @@ end
 class HieraConfigV4 < HieraConfig
   def self.config_type
     return @@CONFIG_TYPE if class_variable_defined?(:@@CONFIG_TYPE)
+
     tf = Types::TypeFactory
     nes_t = Types::PStringType::NON_EMPTY
 
@@ -544,6 +547,7 @@ end
 class HieraConfigV5 < HieraConfig
   def self.config_type
     return @@CONFIG_TYPE if class_variable_defined?(:@@CONFIG_TYPE_V5)
+
     tf = Types::TypeFactory
     nes_t = Types::PStringType::NON_EMPTY
 
@@ -656,6 +660,7 @@ class HieraConfigV5 < HieraConfig
                     end
       end
       next if @config_path.nil? && !locations.nil? && locations.empty? # Default config and no existing paths found
+
       options = he[KEY_OPTIONS] || defaults[KEY_OPTIONS]
       options = options.nil? ? EMPTY_HASH : interpolate(options, lookup_invocation, false)
       if(function_kind == KEY_V3_BACKEND)
@@ -714,6 +719,7 @@ class HieraConfigV5 < HieraConfig
       unless owner.is_a?(ModuleDataProvider)
         fail(Issues::HIERA_DEFAULT_HIERARCHY_NOT_IN_MODULE, EMPTY_HASH, find_line_matching(/(?:^|\s+)#{KEY_DEFAULT_HIERARCHY}:/))
       end
+
       config[KEY_DEFAULT_HIERARCHY].each { |he| validate_hierarchy(he, defaults, owner) }
     end
     config
@@ -737,6 +743,7 @@ class HieraConfigV5 < HieraConfig
       unless owner.is_a?(GlobalDataProvider)
         fail(Issues::HIERA_V3_BACKEND_NOT_GLOBAL, EMPTY_HASH, find_line_matching(/\s+#{KEY_V3_BACKEND}:/))
       end
+
       if v3_backend == 'json' || v3_backend == 'yaml' || v3_backend == 'hocon' &&  Puppet.features.hocon?
         # Disallow use of backends that have corresponding "data_hash" functions in version 5
         fail(Issues::HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH, { :function_name => v3_backend },

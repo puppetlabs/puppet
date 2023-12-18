@@ -31,6 +31,7 @@ module Puppet
 
   def self.default_cadir
     return "" if Puppet::Util::Platform.windows?
+
     old_ca_dir = "#{Puppet[:ssldir]}/ca"
     new_ca_dir = "/etc/puppetlabs/puppetserver/ca"
 
@@ -371,6 +372,7 @@ module Puppet
           paths = ENV['PATH'].split(File::PATH_SEPARATOR)
           Puppet::Util::Platform.default_paths.each do |path|
             next if paths.include?(path)
+
             ENV['PATH'] = ENV['PATH'] + File::PATH_SEPARATOR + path
           end
           value

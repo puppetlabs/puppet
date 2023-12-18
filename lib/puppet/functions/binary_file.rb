@@ -28,6 +28,7 @@ Puppet::Functions.create_function(:binary_file, Puppet::Functions::InternalFunct
       #TRANSLATORS the string "binary_file()" should not be translated
       raise Puppet::ParseError, _("binary_file(): The given file '%{unresolved_path}' does not exist") % { unresolved_path: unresolved_path }
     end
+
     Puppet::Pops::Types::PBinaryType::Binary.from_binary_string(Puppet::FileSystem.binread(path))
   end
 end

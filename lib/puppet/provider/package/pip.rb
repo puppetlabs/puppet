@@ -83,6 +83,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
       process.collect do |line|
         pkg = parse(line)
         next unless pkg
+
         pkg[:command] = command
         packages << new(pkg)
       end
@@ -304,6 +305,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
 
   def insync?(is)
     return false unless is && is != :absent
+
     begin
       should = @resource[:ensure]
       should_range = PIP_VERSION_RANGE.parse(should, PIP_VERSION)

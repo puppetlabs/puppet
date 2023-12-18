@@ -171,6 +171,7 @@ class Puppet::Settings::EnvironmentConf
 
   def expand_glob(path)
     return nil if path.nil?
+
     if path =~ /[*?\[\{]/
       Dir.glob(path)
     else
@@ -180,6 +181,7 @@ class Puppet::Settings::EnvironmentConf
 
   def absolute(path)
     return nil if path.nil?
+
     if path =~ /^\$/
       # Path begins with $something interpolatable
       path

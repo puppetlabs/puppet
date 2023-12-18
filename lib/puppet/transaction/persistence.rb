@@ -75,6 +75,7 @@ class Puppet::Transaction::Persistence
     unless Puppet::FileSystem.exist?(filename)
       return
     end
+
     unless File.file?(filename)
       Puppet.warning(_("Transaction store file %{filename} is not a file, ignoring") % { filename: filename })
       return

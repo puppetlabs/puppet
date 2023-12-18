@@ -94,6 +94,7 @@ class Puppet::Resource::Type
     [:code, :doc, :line, :file, :parent].each do |param|
       value = options[param]
       next unless value
+
       send(param.to_s + '=', value)
     end
 
@@ -117,6 +118,7 @@ class Puppet::Resource::Type
   def merge(other)
     fail _("%{name} is not a class; cannot add code to it") % { name: name } unless type == :hostclass
     fail _("%{name} is not a class; cannot add code from it") % { name: other.name } unless other.type == :hostclass
+
     if name == "" && Puppet.settings[:freeze_main]
       # It is ok to merge definitions into main even if freeze is on (definitions are nodes, classes, defines, functions, and types)
       unless other.code.is_definitions_only?
@@ -258,11 +260,13 @@ class Puppet::Resource::Type
   def inject_external_parameters(resource, scope)
     # Only lookup parameters for host classes
     return unless type == :hostclass
+
     parameters = resource.parameters
     arguments.each do |param_name, default|
       sym_name = param_name.to_sym
       param = parameters[sym_name]
       next unless param.nil? || param.value.nil?
+
       catch(:no_such_key) do
         bound_value = Puppet::Pops::Lookup.search_and_merge("#{name}::#{param_name}", Puppet::Pops::Lookup::Invocation.new(scope), nil)
         # Assign bound value but don't let an undef trump a default expression
@@ -274,12 +278,15 @@ class Puppet::Resource::Type
 
   def assign_defaults(resource, param_scope, scope)
     return unless resource.is_a?(Puppet::Parser::Resource)
+
     parameters = resource.parameters
     arguments.each do |param_name, default|
       next if default.nil?
+
       name = param_name.to_sym
       param = parameters[name]
       next unless param.nil? || param.value.nil?
+
       value = exceptwrap { param_scope.evaluate3x(param_name, default, scope) }
       resource[name] = value
       param_scope[param_name] = value
@@ -331,6 +338,7 @@ class Puppet::Resource::Type
     @argument_types = {}
     @parameter_struct = nil
     return unless name_to_type_hash
+
     name_to_type_hash.each do |name, t|
       # catch internal errors
       unless @arguments.include?(name)
@@ -339,6 +347,7 @@ class Puppet::Resource::Type
       unless t.is_a? Puppet::Pops::Types::PAnyType
         raise Puppet::DevError, _("Parameter '%{name}' is given a type that is not a Puppet Type, got %{class_name}") % { name: name, class_name: t.class }
       end
+
       @argument_types[name] = t
     end
   end
@@ -358,6 +367,7 @@ class Puppet::Resource::Type
     klass = parent_type(resource.scope)
     parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name) || resource.scope.compiler.catalog.resource(:node, klass.name) if klass
     return unless klass && parent_resource
+
     parent_resource.evaluate unless parent_resource.evaluated?
     parent_scope(resource.scope, klass)
   end

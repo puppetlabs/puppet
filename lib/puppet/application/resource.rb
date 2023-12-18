@@ -21,6 +21,7 @@ class Puppet::Application::Resource < Puppet::Application
     Puppet::Type.typeloader.loadall(env)
     Puppet::Type.eachtype do |t|
       next if t.name == :component
+
       types << t.name.to_s
     end
     puts types.sort
@@ -241,6 +242,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
         if type == "file"
           raise _("Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc")
         end
+
         Puppet::Resource.indirection.search( key, {} )
       end
     end
