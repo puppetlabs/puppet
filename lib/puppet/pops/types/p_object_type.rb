@@ -485,7 +485,7 @@ class PObjectType < PMetaType
     writer.write(self, value, serializer)
   end
 
-    # @api private
+  # @api private
   def create_new_function
     impl_class = implementation_class
     return impl_class.create_new_function(self) if impl_class.respond_to?(:create_new_function)

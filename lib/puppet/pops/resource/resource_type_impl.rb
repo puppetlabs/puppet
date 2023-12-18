@@ -202,16 +202,16 @@ class ResourceTypeImpl
     # This is what the Puppet::Type implementation does
     # None of this should be needed
 
-      #    # Make sure our parent class has been evaluated, if we have one.
-      #    if parent && !scope.catalog.resource(resource.type, parent)
-      #      parent_type(scope).ensure_in_catalog(scope)
-      #    end
+    #    # Make sure our parent class has been evaluated, if we have one.
+    #    if parent && !scope.catalog.resource(resource.type, parent)
+    #      parent_type(scope).ensure_in_catalog(scope)
+    #    end
 
     # This will never happen
 
-      #    if ['Class', 'Node'].include? resource.type
-      #      scope.catalog.tag(*resource.tags)
-      #    end
+    #    if ['Class', 'Node'].include? resource.type
+    #      scope.catalog.tag(*resource.tags)
+    #    end
   end
 
   # Being isomorphic in puppet means that the resource is managing a state

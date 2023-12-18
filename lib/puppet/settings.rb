@@ -1094,7 +1094,7 @@ Generated on #{Time.now}.
 
 }.gsub(/^/, "# ")
 
-#         Add a section heading that matches our name.
+    #         Add a section heading that matches our name.
     str += "[#{preferred_run_mode}]\n"
     eachsection do |section|
       persection(section) do |obj|

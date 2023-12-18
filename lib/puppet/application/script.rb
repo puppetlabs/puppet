@@ -248,7 +248,7 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
     # installed where a settings catalog have already been applied...
     # This saves 1/5th of the startup time
 
-#    Puppet.settings.use :main, :agent, :ssl
+    #    Puppet.settings.use :main, :agent, :ssl
 
     # When running a script, the catalog is not relevant, and neither is caching of it
     Puppet::Resource::Catalog.indirection.cache_class = nil

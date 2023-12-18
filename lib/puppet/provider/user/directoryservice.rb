@@ -6,9 +6,9 @@ require 'base64'
 Puppet::Type.type(:user).provide :directoryservice do
   desc "User management on OS X."
 
-##                   ##
-## Provider Settings ##
-##                   ##
+  ##                   ##
+  ## Provider Settings ##
+  ##                   ##
 
   # Provider command declarations
   commands :uuidgen      => '/usr/bin/uuidgen'
@@ -34,9 +34,9 @@ Puppet::Type.type(:user).provide :directoryservice do
   #provider can set the user's shell
   has_feature :manages_shell
 
-##               ##
-## Class Methods ##
-##               ##
+  ##               ##
+  ## Class Methods ##
+  ##               ##
 
   # This method exists to map the dscl values to the correct Puppet
   # properties. This stays relatively consistent, but who knows what
@@ -240,9 +240,9 @@ Puppet::Type.type(:user).provide :directoryservice do
   end
 
 
-##                   ##
-## Ensurable Methods ##
-##                   ##
+  ##                   ##
+  ## Ensurable Methods ##
+  ##                   ##
 
   def exists?
     begin
@@ -322,9 +322,9 @@ Puppet::Type.type(:user).provide :directoryservice do
     dscl '.', '-delete', "/Users/#{@resource.name}"
   end
 
-##                       ##
-## Getter/Setter Methods ##
-##                       ##
+  ##                       ##
+  ## Getter/Setter Methods ##
+  ##                       ##
 
   # In the setter method we're only going to take action on groups for which
   # the user is not currently a member.

@@ -2,12 +2,12 @@
 module Puppet::Pops
 module Lookup
 
-# The ExplainNode contains information of a specific node in a tree traversed during
-# lookup. The tree can be traversed using the `parent` and `branches` attributes of
-# each node.
-#
-# Each leaf node contains information about what happened when the leaf of the branch
-# was traversed.
+  # The ExplainNode contains information of a specific node in a tree traversed during
+  # lookup. The tree can be traversed using the `parent` and `branches` attributes of
+  # each node.
+  #
+  # Each leaf node contains information about what happened when the leaf of the branch
+  # was traversed.
   class ExplainNode
     def branches
       @branches ||= []

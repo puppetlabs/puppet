@@ -1273,7 +1273,7 @@ EOT
     }
   )
 
-  # Define the config default.
+    # Define the config default.
 
     settings.define_settings(:application,
       :config_file_name => {
@@ -2054,7 +2054,7 @@ EOT
     }
   )
 
-  # Central fact information.
+    # Central fact information.
 
     settings.define_settings(
     :main,

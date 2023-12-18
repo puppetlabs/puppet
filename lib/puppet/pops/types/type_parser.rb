@@ -197,7 +197,7 @@ class TypeParser
         'typealias'    => TypeFactory.type_alias,
         'typereference' => TypeFactory.type_reference,
         'typeset'      => TypeFactory.type_set,
-         # A generic callable as opposed to one that does not accept arguments
+        # A generic callable as opposed to one that does not accept arguments
         'callable'     => TypeFactory.all_callables,
         'semver'       => TypeFactory.sem_ver,
         'semverrange'  => TypeFactory.sem_ver_range,

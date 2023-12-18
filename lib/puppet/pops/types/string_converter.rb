@@ -497,7 +497,7 @@ class StringConverter
 
     case string_formats
     when :default
-     # do nothing, use default formats
+    # do nothing, use default formats
 
     when Hash
       # Convert and validate user input
@@ -511,14 +511,14 @@ class StringConverter
     _convert(value_type, value, options, DEFAULT_INDENTATION)
   end
 
-#  # A method only used for manual debugging as the default output of the formatting rules is
-#  # very hard to read otherwise.
-#  #
-#  # @api private
-#  def dump_string_formats(f, indent = 1)
-#     return f.to_s unless f.is_a?(Hash)
-#     "{#{f.map {|k,v| "#{k.to_s} => #{dump_string_formats(v,indent+1)}"}.join(",\n#{'  '*indent}  ")}}"
-#  end
+  #  # A method only used for manual debugging as the default output of the formatting rules is
+  #  # very hard to read otherwise.
+  #  #
+  #  # @api private
+  #  def dump_string_formats(f, indent = 1)
+  #     return f.to_s unless f.is_a?(Hash)
+  #     "{#{f.map {|k,v| "#{k.to_s} => #{dump_string_formats(v,indent+1)}"}.join(",\n#{'  '*indent}  ")}}"
+  #  end
 
   def _convert(val_type, value, format_map, indentation)
     @string_visitor.visit_this_3(self, val_type, value, format_map, indentation)

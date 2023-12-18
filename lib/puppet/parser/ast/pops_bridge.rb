@@ -103,7 +103,7 @@ class Puppet::Parser::AST::PopsBridge
           nil
         end
       end.flatten().compact() # flatten since node definition may have returned an array
-                              # Compact since 4x definitions are not understood by compiler
+      # Compact since 4x definitions are not understood by compiler
     end
 
     def evaluate(scope)

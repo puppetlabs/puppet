@@ -1,7 +1,7 @@
 # frozen_string_literal: true
-  # Static Loader contains constants, basic data types and other types required for the system
-  # to boot.
-  #
+# Static Loader contains constants, basic data types and other types required for the system
+# to boot.
+#
 module Puppet::Pops
 module Loader
 class StaticLoader < Loader

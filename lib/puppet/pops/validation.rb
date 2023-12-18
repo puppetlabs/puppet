@@ -438,7 +438,7 @@ module Validation
           @error_count -= 1
         when :warning
           @warning_count -= 1
-        # there is not ignore_count
+          # there is not ignore_count
         end
       end
       removed.empty? ? nil : removed

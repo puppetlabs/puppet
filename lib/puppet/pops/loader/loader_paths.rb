@@ -45,14 +45,14 @@ module LoaderPaths
     result
   end
 
-#  # DO NOT REMOVE YET. needed later? when there is the need to decamel a classname
-#  def de_camel(fq_name)
-#    fq_name.to_s.gsub(/::/, '/').
-#    gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
-#    gsub(/([a-z\d])([A-Z])/,'\1_\2').
-#    tr("-", "_").
-#    downcase
-#  end
+  #  # DO NOT REMOVE YET. needed later? when there is the need to decamel a classname
+  #  def de_camel(fq_name)
+  #    fq_name.to_s.gsub(/::/, '/').
+  #    gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
+  #    gsub(/([a-z\d])([A-Z])/,'\1_\2').
+  #    tr("-", "_").
+  #    downcase
+  #  end
 
   class SmartPath
     # Creates SmartPath for the given loader (loader knows how to check for existence etc.)
