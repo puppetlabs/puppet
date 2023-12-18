@@ -87,7 +87,7 @@ notice $fruit
 
 * Also see functions `return` and `break`
 * Since 4.8.0
-DOC
+  DOC
 ) do |_args|
   Puppet::Parser::Functions::Error.is4x('return')
 end

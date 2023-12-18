@@ -94,7 +94,7 @@ result must be post processed to get exactly the same result, for example using 
 with calls to stdlib's `deep_merge` function depending on kind of hiera call and setting of merge in hiera.yaml.
 
 - Since 4.0.0
-DOC
+    DOC
   ) do |*_args|
     Error.is4x('hiera_include')
   end

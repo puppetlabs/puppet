@@ -51,7 +51,7 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
     data binding and Puppet default value expressions are considered (in that order) for the
     final value of a parameter (just as when setting a parameter to `undef` in a Puppet language
     resource declaration).
-  ENDHEREDOC
+ENDHEREDOC
   if Puppet[:tasks]
     raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
       Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,

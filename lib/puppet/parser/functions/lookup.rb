@@ -127,7 +127,7 @@ remove values by prefixing them with `--`:
               },
     })
 
-ENDHEREDOC
+  ENDHEREDOC
   Error.is4x('lookup')
   end
 end

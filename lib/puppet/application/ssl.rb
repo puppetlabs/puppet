@@ -83,7 +83,7 @@ ACTIONS
 
  * show:
   Print the full-text version of this host's certificate.
-HELP
+    HELP
   end
 
   option('--target CERTNAME') do |arg|

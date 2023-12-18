@@ -85,7 +85,7 @@ See
 for more information about Hiera lookup functions.
 
 - Since 4.0.0
-DOC
+    DOC
 ) do |*_args|
     Error.is4x('hiera_array')
   end
