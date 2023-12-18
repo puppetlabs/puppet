@@ -102,7 +102,6 @@ module Util
     end
   end
 
-
   # Change the process to a different user
   def self.chuser
     group = Puppet[:group]

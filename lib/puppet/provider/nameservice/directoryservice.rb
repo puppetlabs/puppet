@@ -37,6 +37,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   #     be actively maintained.  There may also be collisions with different
   #     types (Users, Groups, Mounts, Hosts, etc...)
   def ds_to_ns_attribute_map; self.class.ds_to_ns_attribute_map; end
+
   def self.ds_to_ns_attribute_map
     {
       'RecordName' => :name,
@@ -55,6 +56,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
   # JJM The same table as above, inverted.
   def ns_to_ds_attribute_map; self.class.ns_to_ds_attribute_map end
+
   def self.ns_to_ds_attribute_map
     @ns_to_ds_attribute_map ||= ds_to_ns_attribute_map.invert
   end
@@ -300,7 +302,6 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       return next_id if ids[i+1] != next_id and next_id >= min_id
     end
   end
-
 
   def ensure=(ensure_value)
     super

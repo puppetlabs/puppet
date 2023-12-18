@@ -147,7 +147,6 @@ Puppet::Face.define(:module, '1.0.0') do
     unmet_deps
   end
 
-
   def warn_unmet_dependencies(environment)
     @unmet_deps = unmet_dependencies(environment)
 

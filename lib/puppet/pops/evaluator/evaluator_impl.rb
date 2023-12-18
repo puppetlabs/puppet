@@ -390,7 +390,6 @@ class EvaluatorImpl
     result
   end
 
-
   # Handles binary expression where lhs and rhs are array/hash or numeric and operator is +, - , *, % / << >>
   #
   def calculate(left, right, bin_expr, scope)
@@ -1097,7 +1096,6 @@ class EvaluatorImpl
   def eval_ConcatenatedString o, scope
     o.segments.collect {|expr| string(evaluate(expr, scope), scope)}.join
   end
-
 
   # If the wrapped expression is a QualifiedName, it is taken as the name of a variable in scope.
   # Note that this is different from the 3.x implementation, where an initial qualified name

@@ -205,7 +205,6 @@ class Puppet::Application::FaceBase < Puppet::Application
     self.render_as ||= (@action.render_as || :console)
   end
 
-
   def main
     status = false
 

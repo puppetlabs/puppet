@@ -332,7 +332,6 @@ class Puppet::Parameter
     resource.version
   end
 
-
   # Initializes the parameter with a required resource reference and optional attribute settings.
   # The option `:resource` must be specified or an exception is raised. Any additional options passed
   # are used to initialize the attributes of this parameter by treating each key in the `options` hash as

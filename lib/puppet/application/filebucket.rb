@@ -209,7 +209,6 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
     HELP
   end
 
-
   def run_command
     @args = command_line.args
     command = args.shift

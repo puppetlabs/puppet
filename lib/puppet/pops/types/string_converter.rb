@@ -226,6 +226,7 @@ class StringConverter
         0
       end
     end
+
     # Returns an array with a delimiter pair derived from the format.
     # If format does not contain a delimiter specification the given default is returned
     #

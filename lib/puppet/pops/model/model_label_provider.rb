@@ -117,7 +117,6 @@ class ModelLabelProvider
     'Resource Statement'
   end
 
-
   def label_Class o
     if o <= Types::PAnyType
       simple_name = o.name.split('::').last

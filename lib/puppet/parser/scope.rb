@@ -264,7 +264,6 @@ class Puppet::Parser::Scope
     end
   end
 
-
   # Returns true if the variable of the given name has a non nil value.
   # TODO: This has vague semantics - does the variable exist or not?
   #       use ['name'] to get nil or value, and if nil check with exist?('name')
@@ -1035,7 +1034,6 @@ class Puppet::Parser::Scope
   def find_defined_resource_type(type)
     raise Puppet::DevError, _("Scope#find_defined_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead")
   end
-
 
   def method_missing(method, *args, &block)
     method.to_s =~ /^function_(.*)$/

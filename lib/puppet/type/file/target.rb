@@ -71,7 +71,6 @@ module Puppet
       end
     end
 
-
     def retrieve
       stat = @resource.stat
       if stat

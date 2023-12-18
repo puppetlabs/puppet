@@ -102,13 +102,14 @@ class Puppet::Interface::Option
     name.to_sym
   end
 
-
   def takes_argument?
     !!@argument
   end
+
   def optional_argument?
     !!@optional_argument
   end
+
   def required?
     !!@required
   end

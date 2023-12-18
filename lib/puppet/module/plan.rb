@@ -34,8 +34,10 @@ class Puppet::Module
 
     class InvalidPlan < Error
     end
+
     class InvalidMetadata < Error
     end
+
     class PlanNotFound < Error
       def initialize(plan_name, module_name)
         msg = _("Plan %{plan_name} not found in module %{module_name}.") %

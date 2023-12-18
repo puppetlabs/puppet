@@ -1218,7 +1218,6 @@ class Type
     resource
   end
 
-
   # Returns an array of strings representing the containment hierarchy
   # (types/classes) that make up the path to the resource from the root
   # of the catalog.  This is mostly used for logging purposes.

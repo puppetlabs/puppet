@@ -44,7 +44,6 @@ module Puppet::Agent::Disabler
     nil
   end
 
-
   def disable_lockfile
     @disable_lockfile ||= Puppet::Util::JsonLockfile.new(Puppet[:agent_disabled_lockfile])
 

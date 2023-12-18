@@ -289,7 +289,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     self.disable if did_enable_job and resource[:enable] == :false
   end
 
-
   def stop
     if resource[:stop]
       service_command(:stop)

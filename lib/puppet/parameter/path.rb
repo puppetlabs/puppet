@@ -12,6 +12,7 @@ class Puppet::Parameter::Path < Puppet::Parameter
   def self.accept_arrays(bool = true)
     @accept_arrays = !!bool
   end
+
   def self.arrays?
     @accept_arrays
   end

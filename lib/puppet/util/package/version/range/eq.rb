@@ -7,6 +7,7 @@ module Puppet::Util::Package::Version
       def to_s
         "#{@version}"
       end
+
       def include?(version)
         version == @version
       end

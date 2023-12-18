@@ -138,6 +138,7 @@ module Puppet
       def self.bad_input?
         @bad_input
       end
+
       # Generates files for the given inputs.
       # If a file is up to date (newer than input) it is kept.
       # If a file is out of date it is regenerated.

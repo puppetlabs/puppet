@@ -28,6 +28,7 @@ class PopsObject
   def initialize
     @hash = 2270595461303489901
   end
+
   def _pcore_init_hash
     {}
   end

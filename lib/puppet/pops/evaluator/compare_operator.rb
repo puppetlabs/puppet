@@ -114,7 +114,6 @@ class CompareOperator
     raise ArgumentError.new(_('Only Strings, Numbers, Timespans, Timestamps, and Versions are comparable'))
   end
 
-
   def equals_Object(a, b)
     a == b
   end

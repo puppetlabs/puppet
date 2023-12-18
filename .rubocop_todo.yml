@@ -31,11 +31,6 @@ Layout/EmptyLineAfterMagicComment:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EmptyLineBetweenMethodDefs, EmptyLineBetweenClassDefs, EmptyLineBetweenModuleDefs, AllowAdjacentOneLineDefs, NumberOfEmptyLines.
-Layout/EmptyLineBetweenDefs:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/EmptyLines:
   Enabled: false
 

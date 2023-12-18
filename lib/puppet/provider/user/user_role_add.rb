@@ -166,7 +166,6 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     run([command(:modify)] + build_keys_cmd(keys_hash) << @resource[:name], "modify attribute key pairs")
   end
 
-
   # This helper makes it possible to test this on stub data without having to
   # do too many crazy things!
   def target_file_path

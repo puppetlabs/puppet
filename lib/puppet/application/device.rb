@@ -227,7 +227,6 @@ Licensed under the Apache 2.0 License
       HELP
   end
 
-
   def main
     if options[:resource] and !options[:target]
       raise _("resource command requires target")

@@ -15,6 +15,7 @@ module Puppet::Network::HttpPool
   def self.http_client_class
     @http_client_class
   end
+
   def self.http_client_class=(klass)
     @http_client_class = klass
   end

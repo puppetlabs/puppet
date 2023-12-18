@@ -61,6 +61,7 @@ module Puppet
     module Resource
       require_relative 'pops/resource/resource_type_impl'
     end
+
     module Evaluator
       require_relative 'pops/evaluator/literal_evaluator'
       require_relative 'pops/evaluator/callable_signature'

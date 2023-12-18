@@ -79,7 +79,6 @@ class Puppet::Pops::Model::AstTransformer
     @@hostname_transform_visitor.visit_this_0(self, o)
   end
 
-
   # Ensures transformation fails if a 3.1 non supported object is encountered in a query expression
   #
   def query_Object(o)

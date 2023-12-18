@@ -35,8 +35,10 @@ class Puppet::Module
 
     class InvalidTask < Error
     end
+
     class InvalidMetadata < Error
     end
+
     class TaskNotFound < Error
       def initialize(task_name, module_name)
         msg = _("Task %{task_name} not found in module %{module_name}.") %

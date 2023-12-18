@@ -126,7 +126,6 @@ class AccessOperator
     end
   end
 
-
   # Evaluates <hsh>[] with support for one or more arguments. If more than one argument is used, the result
   # is an array with each lookup.
   # @note

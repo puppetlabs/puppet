@@ -71,7 +71,6 @@ class Puppet::HTTP::Pool
     end
   end
 
-
   # Safely close a persistent connection.
   # Don't try to close a connection that's already closed.
   #

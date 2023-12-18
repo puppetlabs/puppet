@@ -8,15 +8,20 @@ module Puppet::Util::Windows
     class UserProfile; end
     class Group < ADSIObject; end
   end
+
   module File; end
+
   module Registry
   end
+
   module Service
     DEFAULT_TIMEOUT = 30
   end
+
   module SID
     class Principal; end
   end
+
   class EventLog; end
 
   if Puppet::Util::Platform.windows?

@@ -574,7 +574,6 @@ class Puppet::Resource
     [type, title]
   end
 
-
   def self.extract_type_and_title(argtype, argtitle)
     if (argtype.nil? || argtype == :component || argtype == :whit) &&
           argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                  then [ $1,                 $2            ]

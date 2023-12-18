@@ -66,6 +66,7 @@ class Puppet::Parser::AST::PopsBridge
       end
     end
   end
+
   # Bridges the top level "Program" produced by the pops parser.
   # Its main purpose is to give one point where all definitions are instantiated (actually defined since the
   # Puppet 3x terminology is somewhat misleading - the definitions are instantiated, but instances of the created types

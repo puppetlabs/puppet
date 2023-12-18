@@ -63,7 +63,6 @@ module Pal
       end
     end
 
-
     # Compiles the result of additional evaluation taking place in a PAL catalog compilation.
     # This will evaluate all lazy constructs until all have been evaluated, and will the validate
     # the result.

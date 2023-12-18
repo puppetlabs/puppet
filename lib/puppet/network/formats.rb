@@ -247,6 +247,7 @@ Puppet::Network::FormatHandler.create(:flat,
     end
     Puppet::Util::Json.dump(datum, :pretty => true, :quirks_mode => true)
   end
+
   def render_multiple(data)
     data.collect(&:render).join("\n")
   end
