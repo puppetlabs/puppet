@@ -150,6 +150,7 @@ class Puppet::Interface::ActionBuilder
   end
 
   private
+
   def initialize(face, name, &block)
     @face   = face
     @action = Puppet::Interface::Action.new(face, name)

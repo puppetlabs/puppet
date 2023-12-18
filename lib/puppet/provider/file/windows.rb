@@ -135,7 +135,9 @@ Puppet::Type.type(:file).provide :windows do
   end
 
   attr_reader :file
+
   private
+
   def file
     @file ||= Puppet::FileSystem.pathname(resource[:path])
   end

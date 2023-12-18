@@ -239,6 +239,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   private
+
   def eix_get_version_for_versions(versions, target)
     # [2.7.10-r1,2.7.12,3.4.3-r1,3.4.5,3.5.2] 3.5.2
     return nil if versions.nil?
@@ -249,6 +250,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   private
+
   def eix_get_version_for_slot(versions_and_slots, slot)
     # [2.7.12:2.7 3.4.5:3.4 3.5.2:3.5] 3.5
     return nil if versions_and_slots.nil?

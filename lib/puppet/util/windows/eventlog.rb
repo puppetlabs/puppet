@@ -103,6 +103,7 @@ class Puppet::Util::Windows::EventLog
   end
 
   private
+
   # For the purposes of allowing this class to be standalone, the following are
   # duplicate definitions from elsewhere in Puppet:
 

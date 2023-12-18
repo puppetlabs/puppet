@@ -26,6 +26,7 @@ class Puppet::FileSystem::Posix < Puppet::FileSystem::FileImpl
   end
 
   private
+
   def stream_blksize(*streams)
     streams.each do |s|
       next unless s.respond_to?(:stat)

@@ -195,6 +195,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   end
 
   private
+
   # @param line [String] one line of rpm package query information
   # @return [Hash] of NEVRA_FIELDS strings parsed from package info
   # or an empty hash if we failed to parse

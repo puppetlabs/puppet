@@ -95,6 +95,7 @@ module Puppet::Util::IniConfig
     end
 
     private
+
     def find_entry(key)
       @entries.each do |entry|
         return entry if entry.is_a?(Array) && entry[0] == key

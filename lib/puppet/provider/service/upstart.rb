@@ -192,6 +192,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   private
+
   def is_upstart?(script = initscript)
     Puppet::FileSystem.exist?(script) && script.match(/\/etc\/init\/\S+\.conf/)
   end

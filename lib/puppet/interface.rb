@@ -198,7 +198,9 @@ class Puppet::Interface
   # to be unrecognizable in the final outcome.  At which point we will throw
   # all this away, replace it with something nice, and work out if we should
   # be making this visible to the outside world... --daniel 2011-04-14
+
   private
+
   # @return [void]
   # @api private
   def __invoke_decorations(type, action, passed_args = [], passed_options = {})

@@ -34,6 +34,7 @@ module Puppet::Util::POSIX
     end
 
     private
+
     def get_groups_list(user)
       raise LoadError, "The 'getgrouplist' method is not available" unless Puppet::FFI::POSIX::Functions.respond_to?(:getgrouplist)
 

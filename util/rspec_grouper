@@ -54,6 +54,7 @@ module Parallel
       end
 
       private
+
       def count_examples(group)
         return 0 unless group
         # Each group can have examples as well as child groups, so recursively traverse

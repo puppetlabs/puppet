@@ -220,6 +220,7 @@ module Puppet::ModuleTool
       end
 
       private
+
       # rubocop:disable Naming/MemoizedInstanceVariableName
       def module_repository
         @repo ||= Puppet::Forge.new(Puppet[:module_repository])

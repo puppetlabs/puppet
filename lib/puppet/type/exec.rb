@@ -694,6 +694,7 @@ module Puppet
     end
 
     private
+
     def set_sensitive_parameters(sensitive_parameters)
       # If any are sensitive, mark all as sensitive
       sensitive = false
