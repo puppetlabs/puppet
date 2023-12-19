@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Base class for formatted textual dump of a "model"
 #
 class Puppet::Pops::Model::TreeDumper

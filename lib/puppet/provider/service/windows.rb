@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Windows Service Control Manager (SCM) provider
 
 Puppet::Type.type(:service).provide :windows, :parent => :service do

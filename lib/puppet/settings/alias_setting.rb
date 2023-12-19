@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Puppet::Settings::AliasSetting
   attr_reader :name, :alias_name
 

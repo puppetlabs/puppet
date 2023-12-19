@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet.features.hiera?
 require 'hiera/scope'
 require_relative 'puppet'

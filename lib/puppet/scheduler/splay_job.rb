@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Scheduler
   class SplayJob < Job
     attr_reader :splay

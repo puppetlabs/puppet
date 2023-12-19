@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # A type of log destination.
 class Puppet::Util::Log::Destination
   class << self

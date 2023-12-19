@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Determines whether a given class or resource type is defined and returns a Boolean
 # value. You can also use `defined` to determine whether a specific resource is defined,
 # or whether a variable has a value (including `undef`, as opposed to the variable never

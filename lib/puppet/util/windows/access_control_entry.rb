@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Windows Access Control Entry
 #
 # Represents an access control entry, which grants or denies a subject,

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The RubyFunctionInstantiator instantiates a Puppet::Functions::Function given the ruby source
 # that calls Puppet::Functions.create_function.
 #

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Types
 # Helper module that makes creation of type objects simpler.

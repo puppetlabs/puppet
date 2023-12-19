@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Manage indirections to termini.  They are organized in terms of indirections -
 # - e.g., configuration, node, file, certificate -- and each indirection has one
 # or more terminus types defined.  The indirection is configured via the

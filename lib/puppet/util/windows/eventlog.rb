@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'ffi'
 
 # Puppet::Util::Windows::EventLog needs to be requirable without having loaded

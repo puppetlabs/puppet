@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Evaluates an Embedded Puppet (EPP) template string and returns the rendered
 # text result as a String.
 #

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 providers = Puppet::Util::Reference.newreference :providers, :title => "Provider Suitability Report", :depth => 1, :dynamic => true, :doc => "Which providers are valid for this machine" do
   types = []
   Puppet::Type.loadall

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops::Types
   # Implemented by classes that can produce an iterator to iterate over their contents
   module IteratorProducer

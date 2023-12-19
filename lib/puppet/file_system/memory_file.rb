@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # An in-memory file abstraction. Commonly used with Puppet::FileSystem::File#overlay
 # @api private
 class Puppet::FileSystem::MemoryFile

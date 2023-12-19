@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 # Motivation: DMG files provide a true HFS file system
 # and are easier to manage and .pkg bundles.

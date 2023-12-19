@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # CallableSignature
 # ===
 # A CallableSignature describes how something callable expects to be called.

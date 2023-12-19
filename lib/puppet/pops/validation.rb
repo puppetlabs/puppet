@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 # A module with base functionality for validation of a model.
 #

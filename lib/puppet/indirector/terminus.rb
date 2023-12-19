@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/indirector'
 require_relative '../../puppet/indirector/errors'
 require_relative '../../puppet/indirector/indirection'

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Uses the Puppet lookup system to retrieve a value for a given key. By default,
 # this returns the first value found (and fails compilation if no values are
 # available), but you can configure it to merge multiple values into one, fail

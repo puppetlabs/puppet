@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/parser/script_compiler'
 
 module Puppet::Pops

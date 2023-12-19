@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Puppet::FileSystem::MemoryImpl
   def initialize(*files)
     @files = files + all_children_of(files)

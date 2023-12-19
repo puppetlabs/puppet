@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Functions in the puppet language can be written in Ruby and distributed in
 # puppet modules. The function is written by creating a file in the module's
 # `lib/puppet/functions/<modulename>` directory, where `<modulename>` is

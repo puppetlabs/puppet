@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Util::RpmCompare
   ARCH_LIST = %w(
     noarch i386 i686 ppc ppc64 armv3l armv4b armv4l armv4tl armv5tel

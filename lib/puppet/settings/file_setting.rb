@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # A file.
 class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   class SettingError < StandardError; end

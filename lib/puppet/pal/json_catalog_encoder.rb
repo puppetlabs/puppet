@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The JsonCatalogEncoder is a wrapper around a catalog produced by the Pal::CatalogCompiler.with_json_encoding
 # method.
 # It allows encoding the entire catalog or an individual resource as Rich Data Json.

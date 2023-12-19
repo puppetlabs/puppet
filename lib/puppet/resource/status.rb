@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'time'
 require_relative '../../puppet/network/format_support'
 require_relative '../../puppet/util/psych_support'

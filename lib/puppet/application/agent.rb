@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/application'
 require_relative '../../puppet/daemon'
 require_relative '../../puppet/util/pidlock'

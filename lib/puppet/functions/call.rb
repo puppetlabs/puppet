@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Calls an arbitrary Puppet function by name.
 #
 # This function takes one mandatory argument and one or more optional arguments:

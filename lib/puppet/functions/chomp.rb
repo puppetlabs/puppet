@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Returns a new string with the record separator character(s) removed.
 # The record separator is the line ending characters `\r` and `\n`.
 #

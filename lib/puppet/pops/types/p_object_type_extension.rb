@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Types
 # Base class for Parameterized Object implementations. The wrapper impersonates the base

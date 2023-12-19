@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # module containing common methods used by json and yaml facts indirection terminus
 module Puppet::Indirector::FactSearch
   def node_matches?(facts, options)

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Utility methods for interacting with POSIX objects; mostly user and group
 module Puppet::Util::POSIX
   # This is a list of environment variables that we will set when we want to override the POSIX locale

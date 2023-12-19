@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'cfpropertylist' if Puppet.features.cfpropertylist?
 require_relative '../../puppet/util/execution'
 

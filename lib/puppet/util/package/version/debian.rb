@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Util::Package::Version
   class Debian < Numeric
     include Comparable

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Serialization
   # An instance writer is responsible for writing complex objects using a {Serializer}

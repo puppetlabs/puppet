@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'deep_merge/core'
 
 module Puppet::Pops

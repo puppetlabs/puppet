@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
   class ConstantAlreadyDefined < Error; end
   class SubclassAlreadyDefined < Error; end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # GemSupport offers methods to find a gem's location by name or gem://gemname URI.
 #
 # TODO: The Puppet 3x, uses Puppet::Util::RubyGems to do this, and obtain paths, and avoids using ::Gems

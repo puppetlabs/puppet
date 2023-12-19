@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Represents the response returned from the server from an HTTP request.
 #
 # @api abstract

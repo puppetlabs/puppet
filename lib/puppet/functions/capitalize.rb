@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Capitalizes the first character of a String, or the first character of every String in an Iterable value (such as an Array).
 #
 # This function is compatible with the stdlib function with the same name.

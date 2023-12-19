@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
   class Network::AuthConfig
     def self.authprovider_class=(_)

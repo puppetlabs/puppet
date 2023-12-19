@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The Patterns module contains common regular expression patters for the Puppet DSL language
 module Puppet::Pops::Patterns
   # NUMERIC matches hex, octal, decimal, and floating point and captures several parts

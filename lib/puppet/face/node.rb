@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/indirector/face'
 Puppet::Indirector::Face.define(:node, '0.0.1') do
   copyright "Puppet Inc.", 2011

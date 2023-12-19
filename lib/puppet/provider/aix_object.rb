@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Common code for AIX user/group providers.
 class Puppet::Provider::AixObject < Puppet::Provider
   desc "Generic AIX resource provider"

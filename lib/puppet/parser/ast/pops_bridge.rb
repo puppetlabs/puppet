@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/parser/ast/top_level_construct'
 require_relative '../../../puppet/pops'
 

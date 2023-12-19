@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This module is an integral part of the Lexer.
 # It defines interpolation support
 # PERFORMANCE NOTE: There are 4 very similar methods in this module that are designed to be as

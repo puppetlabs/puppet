@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 ## lib/trollop.rb -- trollop command-line processing library
 ## Author::    William Morgan (mailto: wmorgan-trollop@masanjin.net)
 ## Copyright:: Copyright 2007 William Morgan

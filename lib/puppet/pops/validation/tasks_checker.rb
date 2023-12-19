@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Validation
 # Validator that limits the set of allowed expressions to not include catalog related operations

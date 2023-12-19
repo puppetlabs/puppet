@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative 'range/lt'
 require_relative 'range/lt_eq'
 require_relative 'range/gt'

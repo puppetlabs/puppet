@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Handle HTTP redirects
 #
 # @api private

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
   desc "User management for HP-UX. This provider uses the undocumented `-F`
     switch to HP-UX's special `usermod` binary to work around the fact that

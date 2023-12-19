@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Resolver base class. Each resolver represents a different strategy for
 # resolving a service name into a list of candidate servers and ports.
 #

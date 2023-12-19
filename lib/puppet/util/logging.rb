@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # A module to make logging a bit easier.
 require_relative '../../puppet/util/log'
 require_relative '../../puppet/error'

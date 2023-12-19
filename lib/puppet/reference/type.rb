@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types and all their details" do
   types = {}
   Puppet::Type.loadall

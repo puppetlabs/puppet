@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The Compiler service is used to submit and retrieve data from the
 # puppetserver.
 #

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The public name of this feature is 'face', but we have hidden all the
 # plumbing over in the 'interfaces' namespace to make clear the distinction
 # between the two.

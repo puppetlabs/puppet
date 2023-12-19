@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The version method and constant are isolated in puppet/version.rb so that a
 # simple `require 'puppet/version'` allows a rubygems gemspec or bundler
 # Gemfile to get the Puppet version of the gem install.

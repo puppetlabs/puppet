@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/gettext/config'
 
 module Puppet::ModuleTranslations

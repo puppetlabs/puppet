@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # SimpleEnvironmentLoader
 # ===
 # This loader does not load anything and it is populated by the bootstrapping logic that loads

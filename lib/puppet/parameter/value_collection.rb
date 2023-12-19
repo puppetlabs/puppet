@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/parameter/value'
 
 # A collection of values and regular expressions, used for specifying allowed values

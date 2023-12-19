@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'hiera/puppet_function'
 
 # Assigns classes to a node using an

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Dumps a Pops::Model in reverse polish notation; i.e. LISP style
 # The intention is to use this for debugging output
 # TODO: BAD NAME - A DUMP is a Ruby Serialization

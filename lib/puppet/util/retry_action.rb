@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Util::RetryAction
   class RetryException < Exception; end # rubocop:disable Lint/InheritException
   class RetryException::NoBlockGiven < RetryException; end

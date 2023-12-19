@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Evaluator
   class Jumper < Exception # rubocop:disable Lint/InheritException

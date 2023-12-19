@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/package'
 
 Puppet::Parser::Functions::newfunction( :versioncmp, :type => :rvalue, :arity => 2, :doc =>

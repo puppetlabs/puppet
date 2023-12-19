@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Parser::Functions::newfunction(
   :break,
   :arity => 0,

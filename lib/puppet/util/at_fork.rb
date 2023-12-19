@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet'
 
 # A module for building AtFork handlers. These handlers are objects providing

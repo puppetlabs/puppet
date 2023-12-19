@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The relationship graph is the final form of a puppet catalog in
 # which all dependency edges are explicitly in the graph. This form of the
 # catalog is used to traverse the graph in the order in which resources are

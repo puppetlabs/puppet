@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Evaluator
 # The RelationshipOperator implements the semantics of the -> <- ~> <~ operators creating relationships or notification

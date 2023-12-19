@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/external/dot'
 require_relative '../../puppet/relationship'
 require 'set'

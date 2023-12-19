@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Puppet::Network::HTTP::Response
   def initialize(handler, response)
     @handler = handler

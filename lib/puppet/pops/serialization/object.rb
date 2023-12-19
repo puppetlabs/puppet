@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative 'instance_reader'
 require_relative 'instance_writer'
 

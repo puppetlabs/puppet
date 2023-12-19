@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
   # Simple module to manage vendored code.
   #

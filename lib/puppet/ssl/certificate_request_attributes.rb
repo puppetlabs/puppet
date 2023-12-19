@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/ssl'
 require_relative '../../puppet/util/yaml'
 

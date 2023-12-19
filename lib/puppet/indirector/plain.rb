@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/indirector/terminus'
 
 # An empty terminus type, meant to just return empty objects.

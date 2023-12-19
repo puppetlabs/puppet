@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Puppet::Pops::Evaluator::Collectors::CatalogCollector < Puppet::Pops::Evaluator::Collectors::AbstractCollector
   # Creates a CatalogCollector using the AbstractCollector's 
   # constructor to set the scope and overrides

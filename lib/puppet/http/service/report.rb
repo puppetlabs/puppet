@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The Report service is used to submit run reports to the report server.
 #
 # @api public

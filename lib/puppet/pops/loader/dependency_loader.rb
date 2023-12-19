@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # =DependencyLoader
 # This loader provides visibility into a set of other loaders. It is used as a child of a ModuleLoader (or other
 # loader) to make its direct dependencies visible for loading from contexts that have access to this dependency loader.

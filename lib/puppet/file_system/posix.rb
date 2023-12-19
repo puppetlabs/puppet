@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Puppet::FileSystem::Posix < Puppet::FileSystem::FileImpl
   def binread(path)
     path.binread

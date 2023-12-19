@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Runs an external command and returns the results
 Puppet::Parser::Functions::newfunction(:generate, :arity => -2, :type => :rvalue,
     :doc => "Calls an external command on the Puppet master and returns

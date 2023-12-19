@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Manage SELinux context of files.
 #
 # This code actually manages three pieces of data in the context.

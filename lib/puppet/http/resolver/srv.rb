@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Resolve a service using DNS SRV records.
 #
 # @api public

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Puppet::Settings::HttpExtraHeadersSetting < Puppet::Settings::BaseSetting
   def type
     :http_extra_headers

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 # A Visitor performs delegation to a given receiver based on the configuration of the Visitor.
 # A new visitor is created with a given receiver, a method prefix, min, and max argument counts.

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
   Puppet::Type.type(:file).newproperty(:target) do
     desc "The target for creating a link.  Currently, symlinks are the

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The virtual base class for properties, which are the self-contained building
 # blocks for actually doing work on the system.
 

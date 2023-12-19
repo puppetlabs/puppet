@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'shellwords'
 
 class Puppet::ModuleTool::Tar::Gnu

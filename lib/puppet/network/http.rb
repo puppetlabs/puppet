@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This module is used to handle puppet REST requests in puppetserver.
 module Puppet::Network::HTTP
   HEADER_ENABLE_PROFILING = "X-Puppet-Profiling"

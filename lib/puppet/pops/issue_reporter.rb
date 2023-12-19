@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 class IssueReporter
   # @param acceptor [Validation::Acceptor] the acceptor containing reported issues

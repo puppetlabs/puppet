@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'erb'
 require 'fileutils'
 require_relative '../../puppet/util/autoload'

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Creates a new instance/object of a given data type.
 #
 # This function makes it possible to create new instances of

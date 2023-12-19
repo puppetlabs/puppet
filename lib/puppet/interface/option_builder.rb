@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # @api public
 class Puppet::Interface::OptionBuilder
   # The option under construction

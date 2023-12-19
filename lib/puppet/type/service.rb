@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This is our main way of managing processes right now.
 #
 # a service is distinct from a process in that services

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/network/format_handler'
 require_relative '../../puppet/util/json'
 

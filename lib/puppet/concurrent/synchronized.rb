@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
 module Concurrent
 # Including Puppet::Concurrent::Synchronized into a class when running on JRuby

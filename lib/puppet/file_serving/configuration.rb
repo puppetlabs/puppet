@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet'
 require_relative '../../puppet/file_serving'
 require_relative '../../puppet/file_serving/mount'

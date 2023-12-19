@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/environments'
 require_relative '../../../puppet/node'
 require_relative '../../../puppet/resource/catalog'

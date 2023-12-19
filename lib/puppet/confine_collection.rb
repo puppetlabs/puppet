@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Manage a collection of confines, returning a boolean or
 # helpful information.
 require_relative '../puppet/confine'

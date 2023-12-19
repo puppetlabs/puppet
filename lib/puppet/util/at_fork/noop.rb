@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # A noop implementation of the Puppet::Util::AtFork handler
 class Puppet::Util::AtFork::Noop
   class << self

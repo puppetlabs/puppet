@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/indirector/facts/facter'
 
 require_relative '../../puppet/configurer'

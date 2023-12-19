@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/file_system/posix'
 
 class Puppet::FileSystem::JRuby < Puppet::FileSystem::Posix

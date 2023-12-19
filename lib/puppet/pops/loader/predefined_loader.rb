@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops::Loader
 # A PredefinedLoader is a loader that is manually populated with loaded elements
 # before being used. It never loads anything on its own.

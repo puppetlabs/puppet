@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::SSL
   class SSLError < Puppet::Error; end
 

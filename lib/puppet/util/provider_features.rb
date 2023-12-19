@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Provides feature definitions.
 require_relative '../../puppet/util/docs'
 require_relative '../../puppet/util'

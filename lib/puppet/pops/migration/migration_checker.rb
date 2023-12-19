@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This class defines the private API of the MigrationChecker support.
 # @api private
 #

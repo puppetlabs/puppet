@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Instruction for Resource instantiation.
 # Instantiates resources of both native and user defined types.
 #

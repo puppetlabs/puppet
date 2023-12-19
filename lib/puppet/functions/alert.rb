@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Logs a message on the server at level `alert`.
 Puppet::Functions.create_function(:alert, Puppet::Functions::InternalFunction) do
   # @param values The values to log.

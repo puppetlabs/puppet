@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/file_serving/configuration'
 require_relative '../../../puppet/util/watched_file'
 

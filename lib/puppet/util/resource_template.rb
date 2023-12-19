@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/util'
 require_relative '../../puppet/util/logging'
 require 'erb'

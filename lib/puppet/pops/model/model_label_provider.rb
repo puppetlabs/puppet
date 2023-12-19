@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Model
 # A provider of labels for model object, producing a human name for the model object.

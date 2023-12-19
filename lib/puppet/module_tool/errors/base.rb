@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::ModuleTool::Errors
   class ModuleToolError < Puppet::Error
     def v(version)

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/parser/functions'
 require_relative '../../../puppet/parser/files'
 require_relative '../../../puppet/resource/type_collection'

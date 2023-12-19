@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'pathname'
 require_relative '../../puppet/util/rubygems'
 require_relative '../../puppet/util/warnings'

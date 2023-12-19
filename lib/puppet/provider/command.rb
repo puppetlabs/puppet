@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # A command that can be executed on the system
 class Puppet::Provider::Command
   attr_reader :executable

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The session is the mechanism by which services may be connected to and accessed.
 #
 # @api public

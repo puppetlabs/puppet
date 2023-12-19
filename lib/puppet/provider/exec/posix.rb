@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/provider/exec'
 
 Puppet::Type.type(:exec).provide :posix, :parent => Puppet::Provider::Exec do

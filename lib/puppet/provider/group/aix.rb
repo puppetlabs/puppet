@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Group Puppet provider for AIX. It uses standard commands to manage groups:
 #  mkgroup, rmgroup, lsgroup, chgroup
 require_relative '../../../puppet/provider/aix_object'

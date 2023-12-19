@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Type.type(:package).provide :aptitude, :parent => :apt, :source => :dpkg do
   desc "Package management via `aptitude`."
 

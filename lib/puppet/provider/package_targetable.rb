@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Targetable package providers implement a `command` attribute.
 #
 # The `packages` hash passed to `Puppet::Provider::Package::prefetch` is deduplicated,

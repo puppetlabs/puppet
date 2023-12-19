@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet'
 require_relative '../../puppet/util/classgen'
 require_relative '../../puppet/node/environment'

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/parser/scope'
 require_relative '../../../puppet/pops/evaluator/compare_operator'
 require_relative '../../../puppet/pops/evaluator/relationship_operator'

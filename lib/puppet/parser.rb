@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # is only needed to create the name space
 module Puppet::Parser; end
 

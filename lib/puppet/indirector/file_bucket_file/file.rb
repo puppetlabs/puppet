@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/indirector/code'
 require_relative '../../../puppet/file_bucket/file'
 require_relative '../../../puppet/util/checksums'

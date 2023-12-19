@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Types
 # The ClassLoader provides a Class instance given a class name or a meta-type.

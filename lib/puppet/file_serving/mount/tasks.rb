@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/file_serving/mount'
 
 class Puppet::FileServing::Mount::Tasks < Puppet::FileServing::Mount

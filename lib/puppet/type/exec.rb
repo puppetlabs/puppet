@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
   Type.newtype(:exec) do
     include Puppet::Util::Execution

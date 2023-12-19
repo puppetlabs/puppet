@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Creates a Camel Case version of a String
 #
 # This function is compatible with the stdlib function with the same name.

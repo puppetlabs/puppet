@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Represents an abstract Puppet web service.
 #
 # @abstract Subclass and implement methods for the service's REST APIs.

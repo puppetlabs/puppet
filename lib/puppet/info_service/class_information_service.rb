@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet'
 require_relative '../../puppet/pops'
 require_relative '../../puppet/pops/evaluator/json_strict_literal_evaluator'

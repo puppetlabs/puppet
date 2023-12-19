@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # A pool for persistent `Net::HTTP` connections. Connections are
 # stored in the pool indexed by their {Site}.
 # Connections are borrowed from the pool, yielded to the caller, and

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Functionality common to both our RDoc version 1 and 2 parsers.
 module RDoc::PuppetParserCore
   SITE = "__site__"

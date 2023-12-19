@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Factory is a helper class that makes construction of a Pops Model
 # much more convenient. It can be viewed as a small internal DSL for model
 # constructions.

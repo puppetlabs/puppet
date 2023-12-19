@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
   desc "Support for SuSE `zypper` package manager. Found in SLES10sp2+ and SLES11.
 

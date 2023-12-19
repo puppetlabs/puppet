@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/provider/nameservice/objectadd'
 require_relative '../../../puppet/util/libuser'
 

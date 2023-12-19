@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # A mini-language for parsing files.  This is only used file the ParsedFile
 # provider, but it makes more sense to split it out so it's easy to maintain
 # in one place.

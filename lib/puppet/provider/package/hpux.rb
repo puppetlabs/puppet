@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # HP-UX packaging.
 
 require_relative '../../../puppet/provider/package'

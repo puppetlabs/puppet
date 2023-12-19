@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'base64'
 module Puppet::Pops
 module Types

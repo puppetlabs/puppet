@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class UserAttr
   def self.get_attributes_by_name(name)
     attributes = nil

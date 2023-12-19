@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/ssl/base'
 require_relative '../../puppet/ssl/certificate_signer'
 

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Parser::Functions::newfunction(:epp, :type => :rvalue, :arity => -2, :doc =>
 "Evaluates an Embedded Puppet (EPP) template file and returns the rendered text
 result as a String.

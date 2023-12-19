@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Puppet::Settings::EnumSetting < Puppet::Settings::BaseSetting
   attr_accessor :values
 

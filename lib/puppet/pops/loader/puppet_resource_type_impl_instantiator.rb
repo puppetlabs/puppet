@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Loader
 # The PuppetResourceTypeImplInstantiator instantiates a Puppet::Pops::ResourceTypeImpl object.

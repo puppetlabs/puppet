@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'digest/md5'
 
 Puppet::Parser::Functions::newfunction(:md5, :type => :rvalue, :arity => 1, :doc => "Returns a MD5 hash value from a provided string.") do |args|

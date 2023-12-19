@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
   # Contains an HTTP client for making network requests to puppet and other
   # HTTP servers.

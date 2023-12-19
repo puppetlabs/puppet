@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The HTTP client provides methods for making `GET`, `POST`, etc requests to
 # HTTP(S) servers. It also provides methods for resolving Puppetserver REST
 # service endpoints using SRV records and settings (such as `server_list`,

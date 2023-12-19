@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Resolve a service using settings. This is the default resolver if none of the
 # other resolvers find a functional connection.
 #

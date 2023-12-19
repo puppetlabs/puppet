@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
 module Pal
   # A CatalogCompiler is a compiler that builds a catalog of resources and dependencies as a side effect of

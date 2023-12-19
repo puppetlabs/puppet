@@ -1,5 +1,6 @@
 # coding: utf-8
 # frozen_string_literal: true
+
 require 'prettyprint'
 
 # This represents an action that is attached to a face. Actions should

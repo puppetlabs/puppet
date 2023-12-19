@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Parser::Functions
   newfunction(:lookup, :type => :rvalue, :arity => -2, :doc => <<-'ENDHEREDOC') do |_args|
 Uses the Puppet lookup system to retrieve a value for a given key. By default,

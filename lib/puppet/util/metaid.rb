@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Object
   # The hidden singleton lurks behind everyone
   def singleton_class; class << self; self; end; end

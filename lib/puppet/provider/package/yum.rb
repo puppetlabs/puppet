@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/package/version/range'
 require_relative '../../../puppet/util/package/version/rpm'
 require_relative '../../../puppet/util/rpm_compare'

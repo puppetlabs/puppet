@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/file_serving/configuration'
 require_relative '../../puppet/file_serving/fileset'
 require_relative '../../puppet/file_serving/terminus_helper'

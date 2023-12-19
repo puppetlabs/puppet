@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The puppetserver service.
 #
 # @api public

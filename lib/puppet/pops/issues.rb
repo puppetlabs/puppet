@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Defines classes to deal with issues, and message formatting and defines constants with Issues.
 # @api public
 #

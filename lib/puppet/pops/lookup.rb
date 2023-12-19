@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This class is the backing implementation of the Puppet function 'lookup'.
 # See puppet/functions/lookup.rb for documentation.
 #

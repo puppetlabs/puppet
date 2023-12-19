@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Methods to help with handling warnings.
 module Puppet::Util::Warnings
   module_function

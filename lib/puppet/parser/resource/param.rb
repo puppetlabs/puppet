@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The parameters we stick in Resources.
 class Puppet::Parser::Resource::Param
   include Puppet::Util

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet'
 require_relative '../../../puppet/provider/nameservice'
 require_relative '../../../puppet/util/plist' if Puppet.features.cfpropertylist?

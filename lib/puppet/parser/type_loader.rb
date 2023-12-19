@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'find'
 require 'forwardable'
 require_relative '../../puppet/parser/parser_factory'

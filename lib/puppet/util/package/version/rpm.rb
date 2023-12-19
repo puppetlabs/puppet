@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../../puppet/util/rpm_compare'
 
 module Puppet::Util::Package::Version
