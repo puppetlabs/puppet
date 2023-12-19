@@ -405,16 +405,24 @@ class HieraConfigV3 < HieraConfig
         ext = ".#{ext}"
       end
       paths = resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, ext)
-      data_providers[backend] = case
-      when backend == 'json', backend == 'yaml'
-        create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH, "#{backend}_data", { KEY_DATADIR => datadir }, paths)
-      when backend == 'hocon' && Puppet.features.hocon?
-        create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH, 'hocon_data', { KEY_DATADIR => datadir }, paths)
-      when backend == 'eyaml' && Puppet.features.hiera_eyaml?
-        create_data_provider(backend, parent_data_provider, KEY_V3_LOOKUP_KEY, 'eyaml_lookup_key', backend_config.merge(KEY_DATADIR => datadir), paths)
-      else
-        create_hiera3_backend_provider(backend, backend, parent_data_provider, datadir, paths, @loaded_config)
-      end
+      data_providers[backend] =
+        if %w[json yaml].include? backend
+          create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH,
+                               "#{backend}_data", { KEY_DATADIR => datadir },
+                               paths)
+        elsif backend == 'hocon' && Puppet.features.hocon?
+          create_data_provider(backend, parent_data_provider, KEY_V3_DATA_HASH,
+                               'hocon_data', { KEY_DATADIR => datadir }, paths)
+        elsif backend == 'eyaml' && Puppet.features.hiera_eyaml?
+          create_data_provider(backend, parent_data_provider,
+                               KEY_V3_LOOKUP_KEY, 'eyaml_lookup_key',
+                               backend_config.merge(KEY_DATADIR => datadir),
+                               paths)
+        else
+          create_hiera3_backend_provider(backend, backend,
+                                         parent_data_provider, datadir, paths,
+                                         @loaded_config)
+        end
     end
     data_providers.values
   end
@@ -511,16 +519,28 @@ class HieraConfigV4 < HieraConfig
       original_paths = he[KEY_PATHS] || [he[KEY_PATH] || name]
       datadir = @config_root + (he[KEY_DATADIR] || default_datadir)
       provider_name = he[KEY_BACKEND]
-      data_providers[name] = case
-      when provider_name == 'json', provider_name == 'yaml'
-        create_data_provider(name, parent_data_provider, KEY_DATA_HASH, "#{provider_name}_data", {},
-                             resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, ".#{provider_name}"))
-      when provider_name == 'hocon' &&  Puppet.features.hocon?
-        create_data_provider(name, parent_data_provider, KEY_DATA_HASH, 'hocon_data', {},
-                             resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, '.conf'))
-      else
-        fail(Issues::HIERA_NO_PROVIDER_FOR_BACKEND, { :name => provider_name }, find_line_matching(/[^\w]#{provider_name}(?:[^\w]|$)/))
-      end
+      data_providers[name] =
+        if %w[json yaml].include?(provider_name)
+          create_data_provider(name, parent_data_provider, KEY_DATA_HASH,
+                               "#{provider_name}_data", {},
+                               resolve_paths(datadir,
+                                             original_paths,
+                                             lookup_invocation,
+                                             @config_path.nil?,
+                                             ".#{provider_name}"))
+        elsif provider_name == 'hocon' && Puppet.features.hocon?
+          create_data_provider(name, parent_data_provider, KEY_DATA_HASH,
+                               'hocon_data', {},
+                               resolve_paths(datadir,
+                                             original_paths,
+                                             lookup_invocation,
+                                             @config_path.nil?,
+                                             '.conf'))
+        else
+          fail(Issues::HIERA_NO_PROVIDER_FOR_BACKEND,
+               { :name => provider_name },
+               find_line_matching(/[^\w]#{provider_name}(?:[^\w]|$)/))
+        end
     end
     data_providers.values
   end
