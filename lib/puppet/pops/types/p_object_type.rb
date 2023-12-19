@@ -30,18 +30,18 @@ class PObjectType < PMetaType
   TYPE_OBJECT_NAME = Pcore::TYPE_QUALIFIED_REFERENCE
 
   TYPE_ATTRIBUTE = TypeFactory.struct({
-    KEY_TYPE => PTypeType::DEFAULT,
+                                        KEY_TYPE => PTypeType::DEFAULT,
     TypeFactory.optional(KEY_FINAL) => PBooleanType::DEFAULT,
     TypeFactory.optional(KEY_OVERRIDE) => PBooleanType::DEFAULT,
     TypeFactory.optional(KEY_KIND) => TYPE_ATTRIBUTE_KIND,
     KEY_VALUE => PAnyType::DEFAULT,
     TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
-  })
+                                      })
 
   TYPE_PARAMETER = TypeFactory.struct({
-    KEY_TYPE => PTypeType::DEFAULT,
+                                        KEY_TYPE => PTypeType::DEFAULT,
     TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
-  })
+                                      })
 
   TYPE_CONSTANTS = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)
   TYPE_ATTRIBUTES = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
@@ -51,11 +51,11 @@ class PObjectType < PMetaType
   TYPE_FUNCTION_TYPE = PTypeType.new(PCallableType::DEFAULT)
 
   TYPE_FUNCTION = TypeFactory.struct({
-    KEY_TYPE => TYPE_FUNCTION_TYPE,
+                                       KEY_TYPE => TYPE_FUNCTION_TYPE,
     TypeFactory.optional(KEY_FINAL) => PBooleanType::DEFAULT,
     TypeFactory.optional(KEY_OVERRIDE) => PBooleanType::DEFAULT,
     TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
-  })
+                                     })
   TYPE_FUNCTIONS = TypeFactory.hash_kv(PVariantType.new([Pcore::TYPE_MEMBER_NAME, PStringType.new('[]')]), TypeFactory.not_undef)
 
   TYPE_EQUALITY = TypeFactory.variant(Pcore::TYPE_MEMBER_NAME, TypeFactory.array_of(Pcore::TYPE_MEMBER_NAME))
@@ -63,7 +63,7 @@ class PObjectType < PMetaType
   TYPE_CHECKS = PAnyType::DEFAULT # TBD
 
   TYPE_OBJECT_I12N = TypeFactory.struct({
-    TypeFactory.optional(KEY_NAME) => TYPE_OBJECT_NAME,
+                                          TypeFactory.optional(KEY_NAME) => TYPE_OBJECT_NAME,
     TypeFactory.optional(KEY_PARENT) => PTypeType::DEFAULT,
     TypeFactory.optional(KEY_TYPE_PARAMETERS) => TYPE_PARAMETERS,
     TypeFactory.optional(KEY_ATTRIBUTES) => TYPE_ATTRIBUTES,
@@ -73,7 +73,7 @@ class PObjectType < PMetaType
     TypeFactory.optional(KEY_EQUALITY_INCLUDE_TYPE) => PBooleanType::DEFAULT,
     TypeFactory.optional(KEY_CHECKS) =>  TYPE_CHECKS,
     TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
-  })
+                                        })
 
   def self.register_ptype(loader, ir)
     type = create_ptype(loader, ir, 'AnyType', '_pcore_init_hash' => TYPE_OBJECT_I12N)

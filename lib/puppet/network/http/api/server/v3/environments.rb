@@ -15,7 +15,7 @@ module Puppet
 
               def call(request, response)
                 response.respond_with(200, "application/json", Puppet::Util::Json.dump({
-                  "search_paths" => @env_loader.search_paths,
+                                                                                         "search_paths" => @env_loader.search_paths,
                   "environments" => Hash[@env_loader.list.collect do |env|
                     [env.name, {
                       "settings" => {
@@ -26,7 +26,7 @@ module Puppet
                       }
                     }]
                   end]
-                }))
+                                                                                       }))
               end
 
               private

@@ -164,7 +164,7 @@ class TypeParser
   # @api private
   def self.type_map
     @type_map ||= {
-        'integer'      => TypeFactory.integer,
+      'integer'      => TypeFactory.integer,
         'float'        => TypeFactory.float,
         'numeric'      => TypeFactory.numeric,
         'init'         => TypeFactory.init,
@@ -217,7 +217,7 @@ class TypeParser
     # back to the parser for evaluation).
     #
     @opt_type_map ||= {
-        'Integer'      => TypeFactory.integer,
+      'Integer'      => TypeFactory.integer,
         'Float'        => TypeFactory.float,
         'Numeric'      => TypeFactory.numeric,
 

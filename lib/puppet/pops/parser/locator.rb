@@ -320,15 +320,15 @@ class Locator
     # rubocop:disable Naming/MemoizedInstanceVariableName
     def self._pcore_type
       @type ||= Types::PObjectType.new('Puppet::AST::Locator', {
-        'attributes' => {
-          'string' => Types::PStringType::DEFAULT,
-          'file' => Types::PStringType::DEFAULT,
-          'line_index' => {
-            Types::KEY_TYPE => Types::POptionalType.new(Types::PArrayType.new(Types::PIntegerType::DEFAULT)),
-            Types::KEY_VALUE => nil
-          }
-        }
-      })
+                                         'attributes' => {
+                                           'string' => Types::PStringType::DEFAULT,
+                                           'file' => Types::PStringType::DEFAULT,
+                                           'line_index' => {
+                                             Types::KEY_TYPE => Types::POptionalType.new(Types::PArrayType.new(Types::PIntegerType::DEFAULT)),
+                                             Types::KEY_VALUE => nil
+                                           }
+                                         }
+                                       })
     end
     # rubocop:enable Naming/MemoizedInstanceVariableName
 

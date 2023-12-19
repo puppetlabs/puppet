@@ -308,9 +308,9 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   # @api public
   def put_filebucket_file(path, body:, environment:)
     headers = add_puppet_headers({
-      'Accept' => 'application/octet-stream',
+                                   'Accept' => 'application/octet-stream',
       'Content-Type' => 'application/octet-stream'
-      })
+                                 })
 
     response = @client.put(
       with_base_url("/file_bucket_file/#{path}"),

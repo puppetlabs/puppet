@@ -57,7 +57,7 @@ module Logging
       # Retain all detailed info and keep plain message and stacktrace separate
       backtrace = build_exception_trace(exception, combined_trace, puppet_trace)
       Puppet::Util::Log.create({
-          :level => level,
+        :level => level,
           :source => log_source,
           :message => exception.basic_message,
           :issue_code => exception.issue_code,
@@ -67,7 +67,7 @@ module Logging
           :pos => exception.pos,
           :environment => exception.environment,
           :node => exception.node
-        }.merge(log_metadata))
+      }.merge(log_metadata))
     else
       send_log(level, format_exception(exception, message, combined_trace, puppet_trace))
     end

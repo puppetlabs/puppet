@@ -53,13 +53,13 @@ module LexerSupport
 
   def lex_warning(issue, args = {}, pos=nil)
     Puppet::Util::Log.create({
-        :level => :warning,
+                               :level => :warning,
         :message => issue.format(args),
         :issue_code => issue.issue_code,
         :file => filename,
         :line => line(pos),
         :pos => position(pos),
-      })
+                             })
   end
 
   # @param issue [Issues::Issue] the issue

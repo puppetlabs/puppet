@@ -172,9 +172,9 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
   def app_defaults
     super.merge({
-      :default_file_terminus => :file_server,
+                  :default_file_terminus => :file_server,
       :write_catalog_summary => false
-    })
+                })
   end
 
   def run_command

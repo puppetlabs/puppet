@@ -1509,7 +1509,7 @@ class PStringType < PScalarDataType
                  'size_type_or_value' => {
                    KEY_TYPE => POptionalType.new(PVariantType.new([PStringType::DEFAULT, PTypeType.new(PIntegerType::DEFAULT)])),
                  KEY_VALUE => nil
-               })
+                 })
   end
 
   attr_reader :size_type_or_value

@@ -261,17 +261,17 @@ class AccessOperator
 
   def bad_access_key_type(lhs, key_index, actual, *expected_classes)
     fail(Issues::BAD_SLICE_KEY_TYPE, @semantic.keys[key_index], {
-      :left_value => lhs,
+           :left_value => lhs,
       :actual => bad_key_type_name(actual),
       :expected_classes => expected_classes
-    })
+         })
   end
 
   def bad_string_access_key_type(lhs, key_index, actual)
     fail(Issues::BAD_STRING_SLICE_KEY_TYPE, @semantic.keys[key_index], {
-      :left_value => lhs,
+           :left_value => lhs,
       :actual_type => bad_key_type_name(actual),
-    })
+         })
   end
 
   def bad_key_type_name(actual)
@@ -289,9 +289,9 @@ class AccessOperator
     label_provider = Model::ModelLabelProvider.new()
     expected = expected_classes.map {|c| label_provider.label(c) }.join(' or ')
     fail(Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[key_index], {
-      :type => type,
+           :type => type,
       :message => _("Cannot use %{key} where %{expected} is expected") % { key: bad_key_type_name(actual), expected: expected }
-    })
+         })
   end
 
   def access_PPatternType(o, scope, keys)
@@ -496,8 +496,8 @@ class AccessOperator
       size_t = collection_size_t(2, keys[2], keys[3])
     else
       fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, {
-        :base_type => 'Hash-Type', :min => 2, :max => 4, :actual => keys.size
-      })
+             :base_type => 'Hash-Type', :min => 2, :max => 4, :actual => keys.size
+           })
     end
     Types::PHashType.new(keys[0], keys[1], size_t)
   end
@@ -659,9 +659,9 @@ class AccessOperator
       unless t.is_a?(String) || t == :no_title
         index = keys_orig_size != keys.size ? i+1 : i
         fail(Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[index], {
-          :type => o,
+               :type => o,
           :message => "Cannot use #{bad_key_type_name(t)} where a resource title String is expected"
-        })
+             })
       end
 
       Types::PResourceType.new(type_name, t == :no_title ? nil : t)

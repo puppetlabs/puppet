@@ -187,7 +187,7 @@ class Puppet::Parser::AST::PopsBridge
     # Produces a hash with data for Definition and HostClass
     def args_from_definition(o, modname, expr_class = Expression)
       args = {
-       :arguments => o.parameters.collect {|p| instantiate_Parameter(p) },
+        :arguments => o.parameters.collect {|p| instantiate_Parameter(p) },
        :argument_types => create_type_map(o),
        :module_name => modname
       }

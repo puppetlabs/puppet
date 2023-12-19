@@ -61,8 +61,8 @@ class Puppet::Application::Lookup < Puppet::Application
 
   def app_defaults
     super.merge({
-      :facts_terminus => 'yaml'
-    })
+                  :facts_terminus => 'yaml'
+                })
   end
 
   def setup_logs

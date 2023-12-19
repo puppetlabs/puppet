@@ -114,8 +114,8 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
   def app_defaults
     super.merge({
-      :default_file_terminus => :file_server,
-    })
+                  :default_file_terminus => :file_server,
+                })
   end
 
   def run_command

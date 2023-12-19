@@ -77,7 +77,7 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
       puppet = session.route_to(:puppet)
 
       Puppet.notice(_("Uploading facts for '%{node}' to '%{server}'") % {
-                    node: Puppet[:node_name_value],
+        node: Puppet[:node_name_value],
                     server: puppet.url.hostname})
 
       puppet.put_facts(Puppet[:node_name_value], facts: facts, environment: Puppet.lookup(:current_environment).name.to_s)

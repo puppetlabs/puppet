@@ -53,9 +53,9 @@ module Puppet::Test
       Dir.mkdir("#{@environmentpath}/production")
       owner = Process.pid
       Puppet.push_context(Puppet.base_context({
-        :environmentpath => @environmentpath,
+                                                :environmentpath => @environmentpath,
         :basemodulepath => "",
-      }), "Initial for specs")
+                                              }), "Initial for specs")
       Puppet::Parser::Functions.reset
 
       ObjectSpace.define_finalizer(Puppet.lookup(:environments), proc {
@@ -206,7 +206,7 @@ module Puppet::Test
 
     def self.app_defaults_for_tests()
       {
-          :logdir     => "/dev/null",
+        :logdir     => "/dev/null",
           :confdir    => "/dev/null",
           :publicdir  => "/dev/null",
           :codedir    => "/dev/null",

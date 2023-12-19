@@ -492,7 +492,7 @@ class HieraConfigV4 < HieraConfig
     nes_t = Types::PStringType::NON_EMPTY
 
     @@CONFIG_TYPE = tf.struct({
-      KEY_VERSION => tf.range(4, 4),
+                                KEY_VERSION => tf.range(4, 4),
       tf.optional(KEY_DATADIR) => nes_t,
       tf.optional(KEY_HIERARCHY) => tf.array_of(tf.struct(
                                                   KEY_BACKEND => nes_t,
@@ -501,7 +501,7 @@ class HieraConfigV4 < HieraConfig
                                                   tf.optional(KEY_PATH) => nes_t,
                                                   tf.optional(KEY_PATHS) => tf.array_of(nes_t)
                                                 ))
-    })
+                              })
   end
 
   def create_configured_data_providers(lookup_invocation, parent_data_provider, _)
@@ -597,7 +597,7 @@ class HieraConfigV5 < HieraConfig
                                 }))
 
     @@CONFIG_TYPE = tf.struct({
-      KEY_VERSION => tf.range(5, 5),
+                                KEY_VERSION => tf.range(5, 5),
       tf.optional(KEY_DEFAULTS) => tf.struct(
         {
           tf.optional(KEY_DATA_HASH) => nes_t,
@@ -609,7 +609,7 @@ class HieraConfigV5 < HieraConfig
       tf.optional(KEY_HIERARCHY) => hierarchy_t,
       tf.optional(KEY_PLAN_HIERARCHY) => hierarchy_t,
       tf.optional(KEY_DEFAULT_HIERARCHY) => hierarchy_t
-    })
+                              })
   end
 
   def create_configured_data_providers(lookup_invocation, parent_data_provider, use_default_hierarchy)
@@ -687,15 +687,15 @@ class HieraConfigV5 < HieraConfig
         v3options = { :datadir => entry_datadir.to_s }
         options.each_pair { |k, v| v3options[k.to_sym] = v }
         data_providers[name] = create_hiera3_backend_provider(name, function_name, parent_data_provider, entry_datadir, locations, {
-          :hierarchy =>
-            locations.nil? ? [] : locations.map do |loc|
-              path = loc.original_location
-              path.end_with?(".#{function_name}") ? path[0..-(function_name.length + 2)] : path
-            end,
+                                                                :hierarchy =>
+                                                                  locations.nil? ? [] : locations.map do |loc|
+                                                                    path = loc.original_location
+                                                                    path.end_with?(".#{function_name}") ? path[0..-(function_name.length + 2)] : path
+                                                                  end,
           function_name.to_sym => v3options,
           :backends => [ function_name ],
           :logger => 'puppet'
-        })
+                                                              })
       else
         data_providers[name] = create_data_provider(name, parent_data_provider, function_kind, function_name, options, locations)
       end

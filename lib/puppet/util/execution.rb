@@ -139,7 +139,7 @@ module Puppet::Util::Execution
     # specifying these here rather than in the method signature to allow callers to pass in a partial
     # set of overrides without affecting the default values for options that they don't pass in
     default_options = {
-        :failonfail => NoOptionsSpecified.equal?(options),
+      :failonfail => NoOptionsSpecified.equal?(options),
         :uid => nil,
         :gid => nil,
         :combine => NoOptionsSpecified.equal?(options),

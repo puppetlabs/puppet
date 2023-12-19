@@ -37,9 +37,9 @@ module Puppet::TrustedExternal
 
   def fetch_data(command, certname)
     result = Puppet::Util::Execution.execute([command, certname], {
-      :combine => false,
+                                               :combine => false,
       :failonfail => true,
-    })
+                                             })
     JSON.parse(result)
   end
   module_function :fetch_data

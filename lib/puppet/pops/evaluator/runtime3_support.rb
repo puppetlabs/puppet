@@ -516,10 +516,10 @@ module Runtime3Support
     def accept(diagnostic)
       super
       IssueReporter.assert_and_report(self, {
-        :message => "Evaluation Error:",
+                                        :message => "Evaluation Error:",
         :emit_warnings => true,  # log warnings
         :exception_class => Puppet::PreformattedError
-      })
+                                      })
       if errors?
         raise ArgumentError, _("Internal Error: Configuration of runtime error handling wrong: should have raised exception")
       end

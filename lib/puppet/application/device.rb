@@ -12,11 +12,11 @@ class Puppet::Application::Device < Puppet::Application
 
   def app_defaults
     super.merge({
-      :catalog_terminus => :rest,
+                  :catalog_terminus => :rest,
       :catalog_cache_terminus => :json,
       :node_terminus => :rest,
       :facts_terminus => :network_device,
-    })
+                })
   end
 
   def preinit

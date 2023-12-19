@@ -17,7 +17,7 @@ class Puppet::Resource::Type
 
   # Map the names used in our documentation to the names used internally
   RESOURCE_KINDS_TO_EXTERNAL_NAMES = {
-      :hostclass => "class",
+    :hostclass => "class",
       :node => "node",
       :definition => "defined_type"
   }
