@@ -41,7 +41,6 @@ module Puppet::Util::RetryAction
       sleep(((2 ** failures) -1) * 0.1)
 
       retry
-
     end
   end
 end
