@@ -23,13 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: consistent, align_parentheses
-Layout/FirstParameterIndentation:
-  Exclude:
-    - 'lib/puppet/pal/pal_impl.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: AllowMultipleStyles, EnforcedHashRocketStyle, EnforcedColonStyle, EnforcedLastArgumentHashStyle.
 # SupportedHashRocketStyles: key, separator, table
 # SupportedColonStyles: key, separator, table

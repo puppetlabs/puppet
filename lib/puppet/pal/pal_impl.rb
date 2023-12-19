@@ -57,14 +57,14 @@ module Pal
   # @yieldparam [Puppet::Pal::ScriptCompiler] compiler, a ScriptCompiler to perform operations on.
   #
   def self.with_script_compiler(
-      configured_by_env: false,
+    configured_by_env: false,
       manifest_file:     nil,
       code_string:       nil,
       facts:             {},
       variables:         {},
       set_local_facts:   true,
       &block
-    )
+  )
     # TRANSLATORS: do not translate variable name strings in these assertions
     assert_mutually_exclusive(manifest_file, code_string, 'manifest_file', 'code_string')
     assert_non_empty_string(manifest_file, 'manifest_file', true)
