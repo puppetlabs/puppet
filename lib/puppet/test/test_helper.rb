@@ -94,6 +94,7 @@ module Puppet::Test
       # only once.
       #
       return unless @@reentry_count == 0
+
       @@reentry_count = 1
 
       Puppet.mark_context(ROLLBACK_MARK)
@@ -157,6 +158,7 @@ module Puppet::Test
       # Ensure that a matching tear down only happens once per completed setup
       # (see #before_each_test).
       return unless @@reentry_count == 1
+
       @@reentry_count = 0
 
       Puppet.settings.send(:clear_everything_for_tests)

@@ -64,6 +64,7 @@ class Puppet::Parser::TypeLoader
   # Try to load the object with the given fully qualified name.
   def try_load_fqname(type, fqname)
     return nil if fqname == "" # special-case main.
+
     files_to_try_for(fqname).each do |filename|
       begin
         imported_types = import_from_modules(filename)

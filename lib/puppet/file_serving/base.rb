@@ -50,6 +50,7 @@ class Puppet::FileServing::Base
     value = :manage if value == :ignore
     #TRANSLATORS ':link', ':manage', ':follow' should not be translated
     raise(ArgumentError, _(":links can only be set to :manage or :follow")) unless [:manage, :follow].include?(value)
+
     @links = value
   end
 
@@ -58,6 +59,7 @@ class Puppet::FileServing::Base
 
   def path=(path)
     raise ArgumentError.new(_("Paths must be fully qualified")) unless Puppet::FileServing::Base.absolute?(path)
+
     @path = path
   end
 
@@ -67,6 +69,7 @@ class Puppet::FileServing::Base
 
   def relative_path=(path)
     raise ArgumentError.new(_("Relative paths must not be fully qualified")) if Puppet::FileServing::Base.absolute?(path)
+
     @relative_path = path
   end
 

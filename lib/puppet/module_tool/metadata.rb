@@ -39,6 +39,7 @@ module Puppet::ModuleTool
     # Returns a string that uniquely represents this version of this module.
     def release_name
       return nil unless @data['name'] && @data['version']
+
       [ dashed_name, @data['version'] ].join('-')
     end
 
@@ -110,6 +111,7 @@ module Puppet::ModuleTool
     # Expose any metadata keys as callable reader methods.
     def method_missing(name, *args)
       return @data[name.to_s] if @data.key? name.to_s
+
       super
     end
 

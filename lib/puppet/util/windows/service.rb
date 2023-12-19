@@ -28,6 +28,7 @@ module Puppet::Util::Windows
       end
     rescue Puppet::Util::Windows::Error => e
       return false if e.code == ERROR_SERVICE_DOES_NOT_EXIST
+
       raise e
     end
     module_function :exists?
@@ -111,6 +112,7 @@ module Puppet::Util::Windows
       if state.nil?
         raise Puppet::Error.new(_("Unknown Service state '%{current_state}' for '%{service_name}'") % { current_state: state.to_s, service_name: service_name})
       end
+
       state
     end
     module_function :service_state
@@ -138,6 +140,7 @@ module Puppet::Util::Windows
       if start_type.nil?
         raise Puppet::Error.new(_("Unknown start type '%{start_type}' for '%{service_name}'") % { start_type: start_type.to_s, service_name: service_name})
       end
+
       start_type
     end
     module_function :service_start_type
@@ -253,6 +256,7 @@ module Puppet::Util::Windows
                 if success == FFI::WIN32_FALSE
                   raise Puppet::Util::Windows::Error.new(_("Failed to fetch services"))
                 end
+
                 # Now that the buffer is populated with services
                 # we pull the data from memory using pointer arithmetic:
                 # the number of services returned by the function is
@@ -301,6 +305,7 @@ module Puppet::Util::Windows
         open_scm(scm_access) do |scm|
           service = OpenServiceW(scm, wide_string(service_name), service_access)
           raise Puppet::Util::Windows::Error.new(_("Failed to open a handle to the service")) if service == FFI::Pointer::NULL_HANDLE
+
           result = yield service
         end
 
@@ -318,6 +323,7 @@ module Puppet::Util::Windows
       def open_scm(scm_access, &block)
         scm = OpenSCManagerW(FFI::Pointer::NULL, FFI::Pointer::NULL, scm_access)
         raise Puppet::Util::Windows::Error.new(_("Failed to open a handle to the service control manager")) if scm == FFI::Pointer::NULL_HANDLE
+
         yield scm
       ensure
         CloseServiceHandle(scm)
@@ -434,6 +440,7 @@ module Puppet::Util::Windows
             if success == FFI::WIN32_FALSE
               raise Puppet::Util::Windows::Error.new(_("Service query failed"))
             end
+
             yield status
           end
         end
@@ -470,6 +477,7 @@ module Puppet::Util::Windows
             if success == FFI::WIN32_FALSE
               raise Puppet::Util::Windows::Error.new(_("Service query failed"))
             end
+
             yield config
           end
         end
@@ -513,6 +521,7 @@ module Puppet::Util::Windows
             if success == FFI::WIN32_FALSE
               raise Puppet::Util::Windows::Error.new(_("Service query for %{parameter_name} failed") % { parameter_name: SERVICE_CONFIG_TYPES[info_level] } )
             end
+
             yield config
           end
         end
@@ -595,6 +604,7 @@ module Puppet::Util::Windows
           query_status(service) do |status|
             state = status[:dwCurrentState]
             return if state == final_state
+
             if state == pending_state
               Puppet.debug _("The service transitioned to the %{pending_state} state.") % { pending_state: SERVICE_STATES[pending_state] }
               wait_on_pending_state(service, pending_state, timeout)

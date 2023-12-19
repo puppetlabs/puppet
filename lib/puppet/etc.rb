@@ -161,6 +161,7 @@ module Puppet::Etc
     #   :canonical_<member name> struct member.
     def override_field_values_to_utf8(struct)
       return nil if struct.nil?
+
       new_struct = struct.is_a?(Etc::Passwd) ? puppet_etc_passwd_class.new : puppet_etc_group_class.new
       struct.each_pair do |member, value|
         if value.is_a?(String)

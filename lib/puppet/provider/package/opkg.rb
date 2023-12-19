@@ -65,6 +65,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
     if output =~ /^(\S+) - (\S+)/
       return { :ensure => $2 }
     end
+
     nil
   rescue Puppet::ExecutionFailure
     return {

@@ -37,6 +37,7 @@ module Puppet::Indirector
   # to override it.
   def indirects(indirection, options = {})
     raise(ArgumentError, _("Already handling indirection for %{current}; cannot also handle %{next}") % { current: @indirection.name, next: indirection }) if @indirection
+
     # populate this class with the various new methods
     extend ClassMethods
     include Puppet::Indirector::Envelope

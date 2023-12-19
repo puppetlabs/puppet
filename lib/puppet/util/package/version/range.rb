@@ -30,9 +30,11 @@ module Puppet::Util::Package::Version
     # @api public
     def self.parse(range_string, version_class)
       raise ValidationFailure, "Unable to parse '#{range_string}' as a string" unless range_string.is_a?(String)
+
       simples = range_string.split(RANGE_SPLIT).map do |simple|
         match, operator, version = *simple.match(FULL_REGEX)
         raise ValidationFailure, "Unable to parse '#{simple}' as a version range identifier" unless match
+
         case operator
         when '>'
           Gt.new(version_class::parse(version))

@@ -62,6 +62,7 @@ module Puppet
             boolean = strings.include?('\'true\'') || strings.include?('\'false\'') ? 'Boolean' : nil
             variant = [boolean, enum, pattern].reject { |t| t.nil? }
             return variant[0] if variant.size == 1
+
             "Variant[#{variant.join(', ')}]"
           end
         end

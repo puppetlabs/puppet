@@ -135,12 +135,14 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # @api private
   def self.make_label_to_path_map(refresh=false)
     return @label_to_path_map if @label_to_path_map and not refresh
+
     @label_to_path_map = {}
     launchd_paths.each do |path|
       return_globbed_list_of_file_paths(path).each do |filepath|
         Puppet.debug("Reading launchd plist #{filepath}")
         job = read_plist(filepath)
         next if job.nil?
+
         if job.respond_to?(:key) && job.key?("Label")
           @label_to_path_map[job["Label"]] = filepath
         else
@@ -185,6 +187,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     begin
       output = launchctl :list
       raise Puppet::Error.new("launchctl list failed to return any data.") if output.nil?
+
       output.split("\n").each do |line|
         @job_list[line.split(/\s/).last] = :running
       end
@@ -209,6 +212,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       overrides = read_plist(launchd_overrides)
       break unless overrides.nil?
       raise Puppet::Error.new(_('Unable to read overrides plist, too many attempts')) if i == 20
+
       Puppet.info(_('Overrides file could not be read, trying again.'))
       Kernel.sleep(0.1)
       i += 1

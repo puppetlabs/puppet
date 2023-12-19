@@ -267,6 +267,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     unless packages.has_key?(package_name)
       return nil
     end
+
     if (packages[package_name].count == 1)
       version = packages[package_name].keys[0]
       return packages[package_name][version], nil
@@ -282,6 +283,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     unless (packages.has_key?(package_name) and packages[package_name].has_key?(version))
       return nil
     end
+
     packages[package_name][version]
   end
 end

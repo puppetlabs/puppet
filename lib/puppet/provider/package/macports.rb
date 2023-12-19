@@ -74,6 +74,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   def query
     result = self.class.parse_installed_query_line(execute([command(:port), "-q", :installed, @resource[:name]], :failonfail => false, :combine => false))
     return {} if result.nil?
+
     return result
   end
 

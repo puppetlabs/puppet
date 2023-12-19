@@ -109,11 +109,13 @@ class StringConverter
       unless @format.is_a?(String) && @format.length == 1
         raise ArgumentError, "The format must be a one letter format specifier, got '#{@format}'"
       end
+
       @format = @format.to_sym
       flags  = match[1].split('') || []
       unless flags.uniq.size == flags.size
         raise ArgumentError, "The same flag can only be used once, got '#{fmt}'"
       end
+
       @left  = flags.include?('-')
       @alt   = flags.include?('#')
       @plus  = (flags.include?(' ') ? :space : (flags.include?('+') ? :plus : :ignore))
@@ -125,6 +127,7 @@ class StringConverter
           if !@delimiters.nil?
             raise ArgumentError, "Only one of the delimiters [ { ( < | can be given in the format flags, got '#{fmt}'"
           end
+
           @delimiters = d
       end
 
@@ -153,6 +156,7 @@ class StringConverter
       unless lower && higher
         return lower || higher
       end
+
       lower.merge(higher)
     end
 
@@ -529,11 +533,13 @@ class StringConverter
     unless fmt.is_a?(Hash)
       raise ArgumentError, "expected a hash with type to format mappings, got instance of '#{fmt.class}'"
     end
+
     fmt.reduce({}) do | result, entry|
       key, value = entry
       unless key.is_a?(Types::PAnyType)
         raise ArgumentError, "top level keys in the format hash must be data types, got instance of '#{key.class}'"
       end
+
       if value.is_a?(Hash)
         result[key] = validate_container_input(value)
       else
@@ -550,6 +556,7 @@ class StringConverter
     if (fmt.keys - FMT_KEYS).size > 0
       raise ArgumentError, "only #{FMT_KEYS.map {|k| "'#{k}'"}.join(', ')} are allowed in a container format, got #{fmt}"
     end
+
     result                          = Format.new(fmt['format'])
     result.separator                = fmt['separator']
     result.separator2               = fmt['separator2']
@@ -1126,6 +1133,7 @@ class StringConverter
   def get_format(val_t, format_options)
     fmt = format_options.find {|k,_| k.assignable?(val_t) }
     return fmt[1] unless fmt.nil?
+
     return Format.new("%s")
   end
   private :get_format

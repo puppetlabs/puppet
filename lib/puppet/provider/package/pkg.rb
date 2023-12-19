@@ -245,6 +245,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
         if tries > 4
           raise Puppet::Error, _("Pkg could not install %{name} after %{tries} tries. Aborting run") % { name: name, tries: tries }
         end
+
         sleep 2 ** tries
         tries += 1
         r = exec_cmd(command(:pkg), command, *args, name)
@@ -279,6 +280,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     r = install(true)
     # 4 == /No updates available for this image./
     return if [0,4].include? r[:exit]
+
     raise Puppet::Error, _("Unable to update %{package}") % { package: r[:out] }
   end
 
@@ -286,6 +288,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   def query
     r = exec_cmd(command(:pkg), 'list', '-Hv', @resource[:name])
     return {:ensure => :absent, :name => @resource[:name]} if r[:exit] != 0
+
     self.class.parse_line(r[:out])
   end
 

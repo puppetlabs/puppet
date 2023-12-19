@@ -54,6 +54,7 @@ class Puppet::Parameter::Path < Puppet::Parameter
     if paths.is_a?(Array) and ! self.class.arrays? then
       fail _("%{name} only accepts a single path, not an array of paths") % { name: name }
     end
+
     paths
   end
 end

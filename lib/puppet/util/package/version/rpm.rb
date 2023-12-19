@@ -14,6 +14,7 @@ module Puppet::Util::Package::Version
 
     def self.parse(ver)
       raise ValidationFailure unless ver.is_a?(String)
+
       version = rpm_parse_evr(ver)
       new(version[:epoch], version[:version], version[:release], version[:arch]).freeze
     end

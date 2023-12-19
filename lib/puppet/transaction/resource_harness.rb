@@ -36,6 +36,7 @@ class Puppet::Transaction::ResourceHarness
 
   def scheduled?(resource)
     return true if Puppet[:ignoreschedules]
+
     schedule = schedule(resource)
     return true unless schedule
 
@@ -55,6 +56,7 @@ class Puppet::Transaction::ResourceHarness
 
     name = resource[:schedule]
     return nil unless name
+
     resource.catalog.resource(:schedule, name) || resource.fail(_("Could not find schedule %{name}") % { name: name })
   end
 

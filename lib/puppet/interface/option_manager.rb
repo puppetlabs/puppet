@@ -13,6 +13,7 @@ module Puppet::Interface::OptionManager
         #TRANSLATORS 'Puppet.settings' references to the Puppet settings options and should not be translated
         raise ArgumentError, _("Global option %{option} does not exist in Puppet.settings") % { option: refopt }
       end
+
       @display_global_options << refopt if refopt
     end
     @display_global_options.uniq!

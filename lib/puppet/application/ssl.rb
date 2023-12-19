@@ -156,6 +156,7 @@ Or:
   puppet ssl clean --target <name>
 END
       end
+
       clean(certname)
     when 'bootstrap'
       if !Puppet::Util::Log.sendlevel?(:info)

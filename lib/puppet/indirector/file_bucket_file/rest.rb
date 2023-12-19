@@ -16,6 +16,7 @@ module Puppet::FileBucketFile
       )
     rescue Puppet::HTTP::ResponseError => e
       return nil if e.response.code == 404
+
       raise convert_to_http_error(e.response)
     end
 

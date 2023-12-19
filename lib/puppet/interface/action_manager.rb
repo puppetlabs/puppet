@@ -81,6 +81,7 @@ module Puppet::Interface::ActionManager
     if default.length > 1
       raise "The actions #{default.map(&:name).join(", ")} cannot all be default"
     end
+
     default.first
   end
 

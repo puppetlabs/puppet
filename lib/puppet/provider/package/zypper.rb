@@ -38,6 +38,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
       pkg_ver = line.split(/\s*\|\s*/)
       # ignore zypper headers
       next unless pkg_ver[0] == 'v'
+
       avail_updates[pkg_ver[2]] = pkg_ver[4]
     end
 
@@ -70,6 +71,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
       output.lines.each do |line|
         pkg_ver = line.split(/\s*\|\s*/)
         next unless pkg_ver[1] == @resource[:name]
+
         begin
           rpm_version = Puppet::Util::Package::Version::Rpm.parse(pkg_ver[3])
 

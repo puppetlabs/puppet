@@ -57,6 +57,7 @@ module Parallel
 
       def count_examples(group)
         return 0 unless group
+
         # Each group can have examples as well as child groups, so recursively traverse
         group.children.inject(group.examples.count) { |count, g| count + count_examples(g) }
       end

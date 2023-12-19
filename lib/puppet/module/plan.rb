@@ -57,6 +57,7 @@ class Puppet::Module
 
     def self.is_plan_name?(name)
       return true if name =~ /^[a-z][a-z0-9_]*$/
+
       return false
     end
 
@@ -74,6 +75,7 @@ class Puppet::Module
       if RESERVED_DATA_TYPES.include?(name)
         return [false, _("Plan name cannot be a Puppet data type, but was '%{name}'") % { name: name }]
       end
+
       return [true]
     end
 

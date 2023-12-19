@@ -85,6 +85,7 @@ module HeredocSupport
     while !scn.eos? do
       one_line = scn.scan_until(/(?:\n|\z)/)
       raise eof_error unless one_line
+
       md = one_line.match(endline_pattern)
       if md
         leading      = md[1]

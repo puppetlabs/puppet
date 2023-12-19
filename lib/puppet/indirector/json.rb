@@ -26,6 +26,7 @@ class Puppet::Indirector::JSON < Puppet::Indirector::Terminus
     unless detail.is_a? Errno::ENOENT
       raise Puppet::Error, _("Could not destroy %{json} %{request}: %{detail}") % { json: self.name, request: request.key, detail: detail }, detail.backtrace
     end
+
     1                           # emulate success...
   end
 

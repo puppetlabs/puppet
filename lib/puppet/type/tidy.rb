@@ -100,6 +100,7 @@ Puppet::Type.newtype(:tidy) do
     # Make sure we convert to an array.
     munge do |value|
       fail _("Tidy can't use matches with recurse 0, false, or undef") if "#{@resource[:recurse]}" =~ /^(0|false|)$/
+
       [value].flatten
     end
 
@@ -308,6 +309,7 @@ Puppet::Type.newtype(:tidy) do
       dir = ::File.dirname(path)
       resource = files_by_name[dir]
       next unless resource
+
       if resource[:require]
         resource[:require] << Puppet::Resource.new(:file, path)
       else
@@ -353,12 +355,14 @@ Puppet::Type.newtype(:tidy) do
     [:age, :size].each do |name|
       param = parameter(name)
       next unless param
+
       tested = true
       return true if param.tidy?(path, stat)
     end
 
     # If they don't specify either, then the file should always be removed.
     return true unless tested
+
     false
   end
 

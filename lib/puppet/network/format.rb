@@ -50,11 +50,13 @@ class Puppet::Network::Format
 
   def intern(klass, text)
     return klass.send(intern_method, text) if klass.respond_to?(intern_method)
+
     raise NotImplementedError, "#{klass} does not respond to #{intern_method}; can not intern instances from #{mime}"
   end
 
   def intern_multiple(klass, text)
     return klass.send(intern_multiple_method, text) if klass.respond_to?(intern_multiple_method)
+
     raise NotImplementedError, "#{klass} does not respond to #{intern_multiple_method}; can not intern multiple instances from #{mime}"
   end
 
@@ -64,12 +66,14 @@ class Puppet::Network::Format
 
   def render(instance)
     return instance.send(render_method) if instance.respond_to?(render_method)
+
     raise NotImplementedError, "#{instance.class} does not respond to #{render_method}; can not render instances to #{mime}"
   end
 
   def render_multiple(instances)
     # This method implicitly assumes that all instances are of the same type.
     return instances[0].class.send(render_multiple_method, instances) if instances[0].class.respond_to?(render_multiple_method)
+
     raise NotImplementedError, _("%{klass} does not respond to %{method}; can not render multiple instances to %{mime}") %
         { klass: instances[0].class, method: render_multiple_method, mime: mime }
   end

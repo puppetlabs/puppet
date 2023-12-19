@@ -404,6 +404,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
     Puppet.settings.stringify_settings(:agent, :all).each_pair do |k,v|
       next if k.include?("password") || v.to_s.empty?
+
       Puppet.debug("Using setting: #{k}=#{v}")
     end
   end

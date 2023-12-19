@@ -116,6 +116,7 @@ Puppet::Type.newtype(:resources) do
   # right now, because it only supports purging.
   def generate
     return [] unless self.purge?
+
     resource_type.instances
       .reject { |r| catalog.resource_refs.include? r.ref }
       .select { |r| check(r) }
@@ -133,6 +134,7 @@ Puppet::Type.newtype(:resources) do
       unless type
         raise Puppet::DevError, _("Could not find resource type")
       end
+
       @resource_type = type
     end
     @resource_type
@@ -142,6 +144,7 @@ Puppet::Type.newtype(:resources) do
   def user_check(resource)
     return true unless self[:name] == "user"
     return true unless self[:unless_system_user]
+
     resource[:audit] = :uid
     current_values = resource.retrieve_resource
     current_uid = current_values[resource.property(:uid)]
@@ -149,6 +152,7 @@ Puppet::Type.newtype(:resources) do
 
     return false if system_users.include?(resource[:name])
     return false if unless_uids && unless_uids.include?(current_uid)
+
     if current_uid.is_a?(String)
       # Windows user; is a system user if any regex matches.
       WINDOWS_SYSTEM_SID_REGEXES.none? { |regex| current_uid =~ regex }

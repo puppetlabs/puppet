@@ -289,6 +289,7 @@ module Lookup
 
     def to_hash
       return branches[0].to_hash if branches.size == 1
+
       hash = super
       hash[:merge] = @merge.class.key
       options = options_wo_strategy

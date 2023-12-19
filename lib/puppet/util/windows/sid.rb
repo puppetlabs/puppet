@@ -117,6 +117,7 @@ module Puppet::Util::Windows
         !ads_object.ole_respond_to?(:objectSID) || !ads_object.ole_respond_to?(:Name)
         raise Puppet::Error.new("ads_object must be an IAdsUser or IAdsGroup instance")
       end
+
       octet_string_to_principal(ads_object.objectSID)
     rescue Puppet::Util::Windows::Error => e
       # if the error is not a lookup / mapping problem, immediately re-raise

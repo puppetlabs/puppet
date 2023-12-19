@@ -117,6 +117,7 @@ class Puppet::Transaction::EventManager
   def queued_events(resource)
     callbacks = @event_queues[resource]
     return unless callbacks
+
     callbacks.each do |callback, events|
       yield callback, events unless events.empty?
     end

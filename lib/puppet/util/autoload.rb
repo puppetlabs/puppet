@@ -60,8 +60,10 @@ class Puppet::Util::Autoload
     def changed?(name, env)
       name = cleanpath(name).chomp('.rb')
       return true unless loaded.include?(name)
+
       file, old_mtime = loaded[name]
       return true unless file == get_file(name, env)
+
       begin
         old_mtime.to_i != File.mtime(file).to_i
       rescue Errno::ENOENT
@@ -74,6 +76,7 @@ class Puppet::Util::Autoload
     def load_file(name, env)
       file = get_file(name.to_s, env)
       return false unless file
+
       begin
         mark_loaded(name, file)
         Kernel.load file
@@ -176,6 +179,7 @@ class Puppet::Util::Autoload
   def initialize(obj, path)
     @path = path.to_s
     raise ArgumentError, _("Autoload paths cannot be fully qualified") if Puppet::Util.absolute_path?(@path)
+
     @object = obj
   end
 

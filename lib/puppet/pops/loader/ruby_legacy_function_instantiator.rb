@@ -45,6 +45,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
         # TRANSLATORS - the word 'newfunction' should not be translated as it is a method name.
         raise ArgumentError, _("Illegal legacy function definition! The code loaded from %{source_ref} did not return the result of calling 'newfunction'. Got '%{klass}'") % { source_ref: source_ref, klass: func_info.class }
       end
+
       unless func_info[:name] == "function_#{typed_name.name()}"
         raise ArgumentError, _("The code loaded from %{source_ref} produced mis-matched name, expected 'function_%{type_name}', got '%{created_name}'") % { 
           source_ref: source_ref, type_name: typed_name.name, created_name: func_info[:name] }
@@ -73,6 +74,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
   def self.assert_code(code_string, source_ref, result)
     ripped = Ripper.sexp(code_string)
     return false if ripped.nil?  # Let the next real parse crash and tell where and what is wrong
+
     ripped.each {|x| walk(x, source_ref, result) }
     true
   end
@@ -80,6 +82,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
 
   def self.walk(x, source_ref, result)
     return unless x.is_a?(Array)
+
     first = x[0]
     case first
     when :fcall, :call

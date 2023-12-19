@@ -60,6 +60,7 @@ class Puppet::FileServing::Configuration
 
     mount = find_mount(mount_name, request.environment)
     return nil unless mount
+
     if mount.name == "modules" and mount_name != "modules"
       # yay backward-compatibility
       path = "#{mount_name}/#{path}"

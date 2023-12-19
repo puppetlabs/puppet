@@ -382,6 +382,7 @@ module Puppet
         return true if @resource[:range]
 
         return true if value.has_key?(now.wday)
+
         false
       end
     end

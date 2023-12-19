@@ -178,6 +178,7 @@ class Puppet::Interface
       self.short_description = value unless value.nil?
       if @short_description.nil? then
         return nil if @description.nil?
+
         lines = @description.split("\n")
         first_paragraph_break = lines.index('') || 5
         grab  = [5, first_paragraph_break].min
@@ -209,6 +210,7 @@ class Puppet::Interface
           #TRANSLATORS 'author' is an attribute name and should not be translated
           raise ArgumentError, _('author should be a single line; use multiple statements for multiple authors')
         end
+
         @authors.push(Puppet::Interface::DocGen.strip_whitespace(value))
       end
       @authors.empty? ? nil : @authors.join("\n")
@@ -229,6 +231,7 @@ class Puppet::Interface
         #TRANSLATORS 'author' is an attribute name and should not be translated
         raise ArgumentError, _('author should be a single line; use multiple statements')
       end
+
       @authors = Array(value).map{|x| Puppet::Interface::DocGen.strip_whitespace(x) }
     end
     alias :authors= :author=
@@ -250,6 +253,7 @@ class Puppet::Interface
         #TRANSLATORS 'copyright' is an attribute name and should not be translated
         raise ArgumentError, _('copyright takes the owners names, then the years covered')
       end
+
       self.copyright_owner = owner unless owner.nil?
       self.copyright_years = years unless years.nil?
 
@@ -328,6 +332,7 @@ class Puppet::Interface
                 #TRANSLATORS 'copyright' is an attribute name and should not be translated
                 raise ArgumentError, _("%{value} is not a good copyright year or range") % { value: part.inspect }
               end
+
               Range.new(found[0].to_i, found[1].to_i)
             else
               #TRANSLATORS 'copyright' is an attribute name and should not be translated

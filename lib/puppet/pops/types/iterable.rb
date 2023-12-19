@@ -33,6 +33,7 @@ module Puppet::Pops::Types
     def self.asserted_iterable(my_caller, obj, infer_elements = false)
       iter = self.on(obj, nil, infer_elements)
       raise ArgumentError, "#{my_caller.class}(): wrong argument type (#{obj.class}; is not Iterable." if iter.nil?
+
       iter
     end
 
@@ -168,6 +169,7 @@ module Puppet::Pops::Types
 
     def to_a
       raise Puppet::Error, 'Attempt to create an Array from an unbounded Iterable' if unbounded?
+
       super
     end
 
@@ -230,6 +232,7 @@ module Puppet::Pops::Types
 
     def step(step, &block)
       raise ArgumentError if step <= 0
+
       r = self
       r = r.step_iterator(step) if step > 1
 
@@ -282,6 +285,7 @@ module Puppet::Pops::Types
     def initialize(element_type, enumeration, step_size)
       super(element_type, enumeration)
       raise ArgumentError if step_size <= 0
+
       @step_size = step_size
     end
 
@@ -313,6 +317,7 @@ module Puppet::Pops::Types
 
     def initialize(range, step = 1)
       raise ArgumentError if step == 0
+
       @range = range
       @step_size = step
       @current = (step < 0 ? range.to : range.from) - step

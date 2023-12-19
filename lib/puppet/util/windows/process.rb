@@ -46,6 +46,7 @@ module Puppet::Util::Windows::Process
       if GetExitCodeProcess(handle, exit_status_ptr) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new(_("Failed to get child process exit code"))
       end
+
       exit_status = exit_status_ptr.read_dword
 
       # $CHILD_STATUS is not set when calling win32/process Process.create

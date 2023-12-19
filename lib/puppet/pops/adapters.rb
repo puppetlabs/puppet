@@ -124,6 +124,7 @@ module Adapters
     def self.loader_name_by_source(environment, instance, file)
       file = instance.file if file.nil?
       return nil if file.nil? || EMPTY_STRING == file
+
       pn_adapter = PathsAndNameCacheAdapter.adapt(environment)
       dir = File.dirname(file)
       pn_adapter.cache.fetch(dir) do |key|
@@ -136,6 +137,7 @@ module Adapters
     # @api private
     def self.find_module_for_dir(environment, paths, dir)
       return nil if dir.nil?
+
       file_path = Pathname.new(dir)
       paths.each do |path|
         begin

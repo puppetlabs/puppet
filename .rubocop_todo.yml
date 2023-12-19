@@ -23,10 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Layout/EmptyLineAfterGuardClause:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/EmptyLineAfterMagicComment:
   Enabled: false
 

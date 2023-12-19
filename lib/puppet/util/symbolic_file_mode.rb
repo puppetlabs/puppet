@@ -17,6 +17,7 @@ module SymbolicFileMode
     value = normalize_symbolic_mode(value)
     return true if value =~ /^0?[0-7]{1,4}$/
     return true if value =~ /^([ugoa]*[-=+][-=+rstwxXugo]*)(,[ugoa]*[-=+][-=+rstwxXugo]*)*$/
+
     return false
   end
 
@@ -75,6 +76,7 @@ module SymbolicFileMode
       begin
         _, to, dsl = /^([ugoa]*)([-+=].*)$/.match(part).to_a
         if dsl.nil? then raise Puppet::Error, _('Missing action') end
+
         to = "a" unless to and to.length > 0
 
         # We want a snapshot of the mode before we start messing with it to

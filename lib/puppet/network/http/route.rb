@@ -74,6 +74,7 @@ class Puppet::Network::HTTP::Route
     else
       Puppet.debug { "Did not match path (#{request.routing_path.inspect})" }
     end
+
     return false
   end
 

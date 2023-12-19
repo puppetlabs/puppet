@@ -43,6 +43,7 @@ class RubyGenerator < TypeFormatter
     segments = name.split(TypeFormatter::NAME_SEGMENT_SEPARATOR)
     namespace_segments.size.times do |idx|
       break if segments.empty? || namespace_segments[idx] != segments[0]
+
       segments.shift
     end
     segments
@@ -68,6 +69,7 @@ class RubyGenerator < TypeFormatter
       hash[key] = cls
     end
     raise ArgumentError, "Expected a Puppet Type, got '#{obj.class.name}'" unless obj.is_a?(PAnyType)
+
     @dynamic_classes[obj]
   end
 
@@ -103,6 +105,7 @@ class RubyGenerator < TypeFormatter
     min_prefix_length.times do |idx|
       segment = segments_array[0][idx]
       break unless segments_array.all? { |sn| sn[idx] == segment }
+
       common_prefix << segment
     end
 
@@ -157,6 +160,7 @@ class RubyGenerator < TypeFormatter
       ir = Loaders.implementation_registry
       impl_name = ir.module_name_for_type(type)
       raise Puppet::Error, "Unable to create an instance of #{type.name}. No mapping exists to runtime object" if impl_name.nil?
+
       impl_name
     end
   end

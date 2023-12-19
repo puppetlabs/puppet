@@ -48,6 +48,7 @@ class ModuleDataProvider < ConfiguredDataProvider
     module_prefix = "#{module_name}::"
     data_hash.each_key.reduce(data_hash) do |memo, k|
       next memo if k == LOOKUP_OPTIONS || k.start_with?(module_prefix)
+
       msg = "#{yield} must use keys qualified with the name of the module"
       memo = memo.clone if memo.equal?(data_hash)
       memo.delete(k)
@@ -82,6 +83,7 @@ class ModuleDataProvider < ConfiguredDataProvider
     env = lookup_invocation.scope.environment
     mod = env.module(module_name)
     raise Puppet::DataBinding::LookupError, _("Environment '%{env}', cannot find module '%{module_name}'") % { env: env.name, module_name: module_name } unless mod
+
     Pathname.new(mod.path)
   end
 end

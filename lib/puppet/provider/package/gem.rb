@@ -155,6 +155,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
 
   def insync?(is)
     return false unless is && is != :absent
+
     is = [is] unless is.is_a? Array
     should = @resource[:ensure]
 

@@ -17,6 +17,7 @@ class Puppet::Interface::ActionBuilder
   # @api private
   def self.build(face, name, &block)
     raise "Action #{name.inspect} must specify a block" unless block
+
     new(face, name, &block).action
   end
 
@@ -67,6 +68,7 @@ class Puppet::Interface::ActionBuilder
       #TRANSLATORS 'when_rendering' is a method name and should not be translated
       raise ArgumentError, _('You must give a block to when_rendering')
     end
+
     @action.set_rendering_method_for(type, block)
   end
 
@@ -141,6 +143,7 @@ class Puppet::Interface::ActionBuilder
   # Metaprogram the simple DSL from the target class.
   Puppet::Interface::Action.instance_methods.grep(/=$/).each do |setter|
     next if setter =~ /^=/
+
     property = setter.to_s.chomp('=')
 
     unless method_defined? property

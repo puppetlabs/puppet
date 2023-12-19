@@ -359,6 +359,7 @@ Puppet::Face.define(:epp, '0.0.1') do
           end
         end
         raise Puppet::Error, _("error while rendering epp") unless status
+
         buffer.string
       end
     end
@@ -528,6 +529,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       unless given_facts.instance_of?(Hash)
         raise _("Incorrect formatted data in %{fact_file} given via the --facts flag") % { fact_file: fact_file }
       end
+
       # It is difficult to add to or modify the set of facts once the node is created
       # as changes does not show up in parameters. Rather than manually patching up
       # a node and risking future regressions, a new node is created from scratch

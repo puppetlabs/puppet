@@ -39,6 +39,7 @@ module Puppet
         def format=(format)
           format = format.to_sym
           raise _("unsupported format '%{format}'.") % { format: format } unless self.class.supported_format?(format)
+
           @format = format
         end
 
@@ -126,6 +127,7 @@ module Puppet
           Puppet.debug "Searching '#{mod.name}' module for custom types."
           Dir.glob("#{directory}/*.rb") do |file|
             next unless Puppet::FileSystem.file?(file)
+
             Puppet.debug "Found custom type source file '#{file}'."
             inputs << Input.new(mod.path, file, format)
           end
@@ -169,6 +171,7 @@ module Puppet
         templates = {}
         templates.default_proc = lambda { |_hash, key|
           raise _("template was not found at '%{key}'.") % { key: key } unless Puppet::FileSystem.file?(key)
+
           template = Puppet::Util.create_erb(File.read(key))
           template.filename = key
           template

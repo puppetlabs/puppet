@@ -174,6 +174,7 @@ module Puppet::Util::Windows::Security
                                flags_ptr, FFI::Pointer::NULL, 0) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new(_("Failed to get volume information"))
       end
+
       supported = flags_ptr.read_dword & FILE_PERSISTENT_ACLS == FILE_PERSISTENT_ACLS
     end
 

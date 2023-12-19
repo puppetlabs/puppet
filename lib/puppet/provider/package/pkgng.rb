@@ -39,6 +39,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
       if ['!', '?'].include?(compare)
         return nil
       end
+
       latest_version = status.split(' ').last.split(')').first
       return latest_version
     end
@@ -94,6 +95,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
     # extract repo tag from URN: urn:freebsd:repo:<tag>
     match = /^urn:freebsd:repo:(.+)$/.match(urn)
     raise ArgumentError urn.inspect unless match
+
     match[1]
   end
 

@@ -37,6 +37,7 @@ Puppet::Type.type(:exec).provide :posix, :parent => Puppet::Provider::Exec do
       elsif !File.executable?(exe)
         raise ArgumentError, _("'%{exe}' is not executable") % { exe: exe }
       end
+
       return
     end
 

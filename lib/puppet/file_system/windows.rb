@@ -11,6 +11,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     # Ruby on Windows uses mode for setting file attributes like read-only and
     # archived, not for setting permissions like POSIX
     raise TypeError.new('mode must be specified as an Integer') if mode && !mode.is_a?(Numeric)
+
     ::File.open(path, options, nil, &block)
   end
 
@@ -60,6 +61,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
 
   def symlink?(path)
     return false if ! Puppet.features.manages_symlinks?
+
     Puppet::Util::Windows::File.symlink?(path)
   end
 
@@ -102,6 +104,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     if ! Puppet.features.manages_symlinks?
       return Puppet::Util::Windows::File.stat(path)
     end
+
     Puppet::Util::Windows::File.lstat(path)
   end
 

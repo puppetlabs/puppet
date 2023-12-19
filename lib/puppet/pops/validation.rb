@@ -133,6 +133,7 @@ module Validation
       unless issue.demotable? || level == :error
         raise Puppet::DevError.new(_("Attempt to demote the hard issue '%{issue_code}' to %{level}") % { issue_code: issue.issue_code, level: level })
       end
+
       @severities[issue] = level
     end
 

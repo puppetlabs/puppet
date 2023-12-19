@@ -101,6 +101,7 @@ class Puppet::Indirector::Request
   def model
     ind = indirection
     raise ArgumentError, _("Could not find indirection '%{indirection}'") % { indirection: indirection_name } unless ind
+
     ind.model
   end
 

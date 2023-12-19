@@ -146,6 +146,7 @@ class LookupAdapter < DataAdapter
     end
   rescue Puppet::DataBinding::LookupError => detail
     raise detail unless detail.issue_code.nil?
+
     error = Puppet::Error.new(_("Lookup of key '%{key}' failed: %{detail}") % { key: lookup_invocation.top_key, detail: detail.message })
     error.set_backtrace(detail.backtrace)
     raise error
@@ -312,6 +313,7 @@ class LookupAdapter < DataAdapter
 
   def compile_patterns(options)
     return nil if options.nil?
+
     key_options = {}
     pattern_options = {}
     options.each_pair do |key, value|

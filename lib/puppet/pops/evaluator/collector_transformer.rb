@@ -14,6 +14,7 @@ class CollectorTransformer
     raise ArgumentError, _("Expected CollectExpression") unless o.is_a? Model::CollectExpression
 
     raise "LHS is not a type" unless o.type_expr.is_a? Model::QualifiedReference
+
     type = o.type_expr.value().downcase()
 
     if type == 'class'
@@ -103,6 +104,7 @@ class CollectorTransformer
         end
         tags = tags.collect do |t|
           raise ArgumentError, _('Cannot transform a number to a tag') if t.is_a?(Numeric)
+
           t.to_s.downcase
         end
         proc do |resource|

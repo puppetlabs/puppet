@@ -18,6 +18,7 @@ module Puppet::Util::SUIDManager
 
   def osx_maj_ver
     return @osx_maj_ver unless @osx_maj_ver.nil?
+
     @osx_maj_ver = Puppet.runtime[:facter].value('os.macosx.version.major') || false
   end
   module_function :osx_maj_ver
@@ -142,12 +143,15 @@ module Puppet::Util::SUIDManager
   # Make sure the passed argument is a number.
   def convert_xid(type, id)
     return id if id.kind_of? Integer
+
     map = {:gid => :group, :uid => :user}
     raise ArgumentError, _("Invalid id type %{type}") % { type: type } unless map.include?(type)
+
     ret = Puppet::Util.send(type, id)
     if ret == nil
       raise Puppet::Error, _("Invalid %{klass}: %{id}") % { klass: map[type], id: id }
     end
+
     ret
   end
   module_function :convert_xid

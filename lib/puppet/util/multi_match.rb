@@ -27,9 +27,11 @@ class MultiMatch
     case other
     when MultiMatch
       return false unless other.values.size == values.size
+
       other.values.each_with_index {|v, i| return false unless lv[i] === v || v === lv[i]}
     when Array
       return false unless other.size == values.size
+
       other.each_with_index {|v, i| return false unless lv[i] === v || v === lv[i]}
     else
       false

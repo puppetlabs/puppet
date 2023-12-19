@@ -334,6 +334,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     raise ArgumentError, _("Cannot have both 'forcelocal' and 'ia_load_module' at the same time!") if @resource[:ia_load_module] && @resource[:forcelocal]
     return ["-R", @resource[:ia_load_module].to_s] if @resource[:ia_load_module]
     return ["-R", "files"] if @resource[:forcelocal]
+
     []
   end
 
@@ -364,6 +365,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # Gets a Puppet property's value from object_info
   def get(property)
     return :absent unless exists?
+
     object_info[property] || :absent
   end
 
@@ -418,6 +420,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # the attributes property.
   def object_info(refresh = false)
     return @object_info if @object_info && ! refresh
+
     @object_info = nil
 
     begin
@@ -464,6 +467,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     mappings[:aix_attribute].each do |property, aix_attribute|
       property_should = @resource.should(property)
       next if property_should.nil?
+
       attributes[aix_attribute.name] = aix_attribute.convert_property_value(property_should)
     end
 

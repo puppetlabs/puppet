@@ -138,6 +138,7 @@ module Puppet::Util::IniConfig
       if text.nil?
         raise IniParseError, _("Cannot read nonexistent file %{file}") % { file: @file.inspect }
       end
+
       parse(text)
     end
 

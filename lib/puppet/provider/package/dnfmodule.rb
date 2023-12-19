@@ -28,6 +28,7 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
     if Puppet::Util::Package.versioncmp(current_version, '3.0.1') < 0
       raise Puppet::Error, _("Modules are not supported on DNF versions lower than 3.0.1")
     end
+
     super
   end
 
@@ -37,6 +38,7 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
     execute(cmd).each_line do |line|
       # select only lines with actual packages since DNF clutters the output
       next unless line =~ /\[[eix]\][, ]/
+
       line.gsub!(/\[d\]/, '')  # we don't care about the default flag
 
       flavor = if line.include?('[i]')

@@ -67,6 +67,7 @@ class Runtime3Converter
 
   def convert_Integer(o, scope, undef_value)
     return o unless o < MIN_INTEGER || o > MAX_INTEGER
+
     range_end = o > MAX_INTEGER ? 'max' : 'min'
     raise Puppet::Error, "Use of a Ruby Integer outside of Puppet Integer #{range_end} range, got '#{"0x%x" % o}'"
   end
@@ -75,6 +76,7 @@ class Runtime3Converter
     # transform to same value float value if possible without any rounding error
     f = o.to_f
     return f unless f != o
+
     raise Puppet::Error, "Use of a Ruby BigDecimal value outside Puppet Float range, got '#{o}'"
   end
 
@@ -107,6 +109,7 @@ class Runtime3Converter
 
   def convert_Symbol(o, scope, undef_value)
     return o unless o == :undef
+
     !@inner ? undef_value : nil
   end
 

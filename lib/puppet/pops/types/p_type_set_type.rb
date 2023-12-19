@@ -144,6 +144,7 @@ class PTypeSetType < PMetaType
           unless ranges.all? { |range| (range & ref.version_range).nil? }
             raise ArgumentError, "TypeSet '#{@name}' references TypeSet '#{ref_na}/#{ref_name}' more than once using overlapping version ranges"
           end
+
           ranges << ref.version_range
         end
 
@@ -153,6 +154,7 @@ class PTypeSetType < PMetaType
         if @types.has_key?(ref_alias)
           raise ArgumentError, "TypeSet '#{@name}' references a TypeSet using alias '#{ref_alias}'. The alias collides with the name of a declared type"
         end
+
         ref_map[ref_alias] = ref
 
         @dc_to_cc_map[ref_alias.downcase] = ref_alias
@@ -191,6 +193,7 @@ class PTypeSetType < PMetaType
   def [](qname)
     if qname.is_a?(Loader::TypedName)
       return nil unless qname.type == :type && qname.name_authority == @name_authority
+
       qname = qname.name
     end
 

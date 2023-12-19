@@ -64,6 +64,7 @@ class Puppet::Pops::Evaluator::PuppetProc < Proc
     parameters.reduce(0) do |memo, param|
       count = memo + 1
       break -count unless param[0] == :req
+
       count
     end
   end

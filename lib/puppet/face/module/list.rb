@@ -213,6 +213,7 @@ Puppet::Face.define(:module, '1.0.0') do
   def list_build_tree(list, ancestors=[], parent=nil, params={})
     list.map do |mod|
       next if @seen[(mod.forge_name or mod.name)]
+
       node = list_build_node(mod, parent, params)
       @seen[(mod.forge_name or mod.name)] = true
 

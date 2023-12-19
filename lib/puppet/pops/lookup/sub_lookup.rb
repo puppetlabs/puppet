@@ -19,6 +19,7 @@ module SubLookup
   # @api public
   def split_key(key)
     return [key] if key.match(SPECIAL).nil?
+
     segments = key.split(/(\s*"[^"]+"\s*|\s*'[^']+'\s*|[^'".]+)/)
     if segments.empty?
       # Only happens if the original key was an empty string
@@ -29,6 +30,7 @@ module SubLookup
 
       segments.keep_if { |seg| seg != '.' }
       raise yield('Syntax error') unless segments.size * 2 == count + 1
+
       segments.map! do |segment|
         segment.strip!
         if segment.start_with?('"', "'")

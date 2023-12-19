@@ -137,6 +137,7 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
     else
       manifest = command_line.args.shift
       raise _("Could not find file %{manifest}") % { manifest: manifest } unless Puppet::FileSystem.exist?(manifest)
+
       Puppet.warning(_("Only one file can be used per run. Skipping %{files}") % { files: command_line.args.join(', ') }) if command_line.args.size > 0
     end
 

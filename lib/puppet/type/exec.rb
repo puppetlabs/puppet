@@ -148,6 +148,7 @@ module Puppet
             debug("Exec try #{try+1}/#{tries}") if tries > 1
             @output, @status = provider.run(self.resource[:command])
             break if self.should.include?(@status.exitstatus.to_s)
+
             if try_sleep > 0 and tries > 1
               debug("Sleeping for #{try_sleep} seconds between tries")
               sleep try_sleep
@@ -354,9 +355,11 @@ module Puppet
           unless value =~ /^[\d]+$/
             raise ArgumentError, _("Tries must be an integer")
           end
+
           value = Integer(value)
         end
         raise ArgumentError, _("Tries must be an integer >= 1") if value < 1
+
         value
       end
 
@@ -371,9 +374,11 @@ module Puppet
           unless value =~ /^[-\d.]+$/
             raise ArgumentError, _("try_sleep must be a number")
           end
+
           value = Float(value)
         end
         raise ArgumentError, _("try_sleep cannot be a negative number") if value < 0
+
         value
       end
 
@@ -650,6 +655,7 @@ module Puppet
     def check_all_attributes(refreshing = false)
       self.class.checks.each { |check|
         next if refreshing and check == :refreshonly
+
         if @parameters.include?(check)
           val = @parameters[check].value
           val = [val] unless val.is_a? Array

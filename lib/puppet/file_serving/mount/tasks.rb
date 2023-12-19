@@ -4,6 +4,7 @@ require_relative '../../../puppet/file_serving/mount'
 class Puppet::FileServing::Mount::Tasks < Puppet::FileServing::Mount
   def find(path, request)
     raise _("No task specified") if path.to_s.empty?
+
     module_name, task_path = path.split("/", 2)
     mod = request.environment.module(module_name)
     return nil unless mod

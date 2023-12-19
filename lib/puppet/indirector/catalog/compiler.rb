@@ -22,6 +22,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   def extract_facts_from_request(request)
     text_facts = request.options[:facts]
     return unless text_facts
+
     format = request.options[:facts_format]
     unless format
       raise ArgumentError, _("Facts but no fact format provided for %{request}") % { request: request.key }
@@ -34,6 +35,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       unless facts.name == request.key
         raise Puppet::Error, _("Catalog for %{request} was requested with fact definition for the wrong node (%{fact_name}).") % { request: request.key.inspect, fact_name: facts.name.inspect }
       end
+
       return facts
     end
   end
@@ -87,6 +89,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # filter-out a catalog to remove exported resources
   def filter(catalog)
     return catalog.filter { |r| r.virtual? } if catalog.respond_to?(:filter)
+
     catalog
   end
 

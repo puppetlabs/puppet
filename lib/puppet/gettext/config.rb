@@ -64,6 +64,7 @@ module Puppet::GettextConfig
   # @param [String, Symbol] domain_name the name of the domain to create
   def self.reset_text_domain(domain_name)
     return if @gettext_disabled || !gettext_loaded?
+
     domain_name = domain_name.to_sym
 
     Puppet.debug { "Reset text domain to #{domain_name.inspect}" }
@@ -84,6 +85,7 @@ module Puppet::GettextConfig
   # non-default text domain.
   def self.clear_text_domain
     return if @gettext_disabled || !gettext_loaded?
+
     FastGettext.text_domain = nil
   end
 
@@ -113,6 +115,7 @@ module Puppet::GettextConfig
   # @param [String, Symbol] domain_name the name of the domain to switch to
   def self.use_text_domain(domain_name)
     return if @gettext_disabled || !gettext_loaded?
+
     domain_name = domain_name.to_sym
 
     if FastGettext.translation_repositories.include?(domain_name)
@@ -136,6 +139,7 @@ module Puppet::GettextConfig
   # @param [String, Symbol] domain_name the name of the domain to delete
   def self.delete_text_domain(domain_name)
     return if @gettext_disabled || !gettext_loaded?
+
     domain_name = domain_name.to_sym
 
     deleted = FastGettext.translation_repositories.delete(domain_name)
@@ -268,6 +272,7 @@ module Puppet::GettextConfig
   # @param [String] locale the language portion of a locale string (e.g. "ja")
   def self.set_locale(locale)
     return if @gettext_disabled || !gettext_loaded?
+
     # make sure we're not using the `available_locales` machinery
     FastGettext.default_available_locales = nil
 

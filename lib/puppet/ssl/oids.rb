@@ -128,6 +128,7 @@ module Puppet::SSL::Oids
         if shortname.nil? || longname.nil?
           raise Puppet::Error, _("Error loading ssl custom OIDs mapping file from '%{custom_oid_file}': incomplete definition of oid '%{oid}'") % { custom_oid_file: custom_oid_file, oid: oid }
         end
+
         oid_defns << [oid, shortname, longname]
       end
 

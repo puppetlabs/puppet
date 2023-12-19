@@ -51,6 +51,7 @@ module Puppet::Util::InstanceLoader
       name = name.intern
       instances = instance_hash(type)
       return nil unless instances
+
       unless instances.include? name
         if instance_loader(type).load(name, Puppet.lookup(:current_environment))
           unless instances.include? name

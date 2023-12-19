@@ -24,6 +24,7 @@ class PInitType < PTypeWithContainedType
 
     if type.nil?
       raise ArgumentError, _('Init cannot be parameterized with an undefined type and additional arguments') unless @init_args.empty?
+
       @initialized = true
     else
       @initialized = false
@@ -70,6 +71,7 @@ class PInitType < PTypeWithContainedType
 
   def new_function
     return super if type.nil?
+
     assert_initialized
 
     target_type = type
@@ -152,6 +154,7 @@ class PInitType < PTypeWithContainedType
       if @type.instance_of?(PInitType) || @type.instance_of?(POptionalType) || @type.instance_of?(PNotUndefType)
         raise ArgumentError.new
       end
+
       new_func = @type.new_function
     rescue ArgumentError
       raise ArgumentError, _("Creation of new instance of type '%{type_name}' is not supported") % { type_name: @type.to_s }

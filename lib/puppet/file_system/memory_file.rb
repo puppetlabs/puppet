@@ -55,6 +55,7 @@ class Puppet::FileSystem::MemoryFile
 
   def handle
     raise Errno::ENOENT unless exist?
+
     StringIO.new(@properties[:content] || '')
   end
 

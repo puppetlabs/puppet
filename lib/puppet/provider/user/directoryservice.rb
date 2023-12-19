@@ -105,6 +105,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     input_hash.each_key do |key|
       ds_attribute = key.sub("dsAttrTypeStandard:", "")
       next unless ds_to_ns_attribute_map.keys.include?(ds_attribute)
+
       ds_value = input_hash[key]
       case ds_to_ns_attribute_map[ds_attribute]
       when :gid, :uid
@@ -217,6 +218,7 @@ Puppet::Type.type(:user).provide :directoryservice do
       if value == nil
         raise Puppet::Error, "Invalid #{field} given for user #{user_name}"
       end
+
       value.unpack('H*').first
     when 'iterations'
       Integer(embedded_binary_plist['SALTED-SHA512-PBKDF2'][field])
@@ -232,6 +234,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     password_hash_file = "#{password_hash_dir}/#{guid}"
     if Puppet::FileSystem.exist?(password_hash_file) and File.file?(password_hash_file)
       raise Puppet::Error, "Could not read password hash file at #{password_hash_file}" if not File.readable?(password_hash_file)
+
       f = File.new(password_hash_file)
       password_hash = f.read
       f.close
@@ -268,6 +271,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     # Iterate through valid User type properties
     valid_properties.each do |attribute|
       next if attribute == :ensure
+
       value = @resource.should(attribute)
 
       # Value defaults
@@ -449,6 +453,7 @@ Puppet::Type.type(:user).provide :directoryservice do
         if %w(home uid).include?(setter_method)
           raise Puppet::Error, "OS X version #{self.class.get_os_version} does not allow changing #{setter_method} using puppet"
         end
+
         begin
           dscl '.', '-change', "/Users/#{resource.name}", self.class.ns_to_ds_attribute_map[setter_method.intern], @property_hash[setter_method.intern], value
         rescue Puppet::ExecutionFailure => e

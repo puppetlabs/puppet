@@ -28,6 +28,7 @@ class Parser
   # Returns the token text of the given lexer token, or nil, if token is nil
   def token_text t
     return t if t.nil?
+
     if t.is_a?(Factory) && t.model_class <= Model::QualifiedName
       t['value']
     elsif t.is_a?(Model::QualifiedName)

@@ -43,6 +43,7 @@ class Puppet::Settings::BaseSetting
       #TRANSLATORS 'call_hook' is a Puppet option name and should not be translated
       raise ArgumentError, _("Invalid option %{value} for call_hook") % { value: value }
     end
+
     @call_hook = value
   end
 
@@ -128,6 +129,7 @@ class Puppet::Settings::BaseSetting
   # short name for the element
   def short=(value)
     raise ArgumentError, _("Short names can only be one character.") if value.to_s.length != 1
+
     @short = value.to_s
   end
 
@@ -142,6 +144,7 @@ class Puppet::Settings::BaseSetting
       default_value = @default
     end
     return default_value unless check_application_defaults_first
+
     return @settings.value(name, :application_defaults, true) || default_value
   end
 

@@ -34,6 +34,7 @@ class PuppetFunctionInstantiator
     unless the_function_definition.is_a?(Model::FunctionDefinition)
       raise ArgumentError, _("The code loaded from %{source_ref} does not define the function '%{type_name}' - no function found.") % { source_ref: source_ref, type_name: typed_name.name }
     end
+
     unless the_function_definition.name == typed_name.name
       expected = typed_name.name
       actual = the_function_definition.name

@@ -38,6 +38,7 @@ class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
       if value < 0
         raise Puppet::Settings::ValidationError, _("Invalid negative 'time to live' %{value} - did you mean 'unlimited'?") % { value: value.inspect }
       end
+
       value
 
     when value == 'unlimited'

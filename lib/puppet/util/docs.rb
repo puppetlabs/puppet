@@ -116,6 +116,7 @@ module Puppet::Util::Docs
   def scrub(text)
     # One-liners are easy! (One-liners may be buffered with extra newlines.)
     return text.strip if text.strip !~ /\n/
+
     excluding_first_line = text.partition("\n").last
     indent = excluding_first_line.scan(/^[ \t]*(?=\S)/).min || '' # prevent nil
     # Clean hanging indent, if any

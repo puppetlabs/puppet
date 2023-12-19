@@ -92,6 +92,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def cached_enabled?
     return @cached_enabled if @cached_enabled
+
     cmd = [command(:systemctl), 'is-enabled', '--', @resource[:name]]
     result = execute(cmd, :failonfail => false)
     @cached_enabled = { output: result.chomp, exitcode: result.exitstatus }
@@ -112,6 +113,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     # The indirect state indicates that the unit is not enabled.
     return :false if output == 'indirect'
     return :true if (code == 0)
+
     if (output.empty?) && (code > 0) && (Puppet.runtime[:facter].value('os.family').casecmp('debian').zero?)
       ret = debian_enabled?
       return ret if ret

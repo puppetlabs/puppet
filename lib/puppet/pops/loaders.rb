@@ -37,6 +37,7 @@ class Loaders
   def initialize(environment, for_agent, load_from_pcore = true)
     # Protect against environment havoc
     raise ArgumentError.new(_("Attempt to redefine already initialized loaders for environment")) unless environment.loaders.nil?
+
     environment.loaders = self
     @environment = environment
     @loaders_by_name = {}
@@ -180,6 +181,7 @@ class Loaders
   def self.loaders
     loaders = Puppet.lookup(:loaders) { nil }
     raise Puppet::ParseError, _("Internal Error: Puppet Context ':loaders' missing") if loaders.nil?
+
     loaders
   end
 
@@ -216,6 +218,7 @@ class Loaders
       if loader.nil?
         raise Puppet::ParseError, _("Internal Error: did not find public loader for module: '%{module_name}'") % { module_name: module_name }
       end
+
       loader
     end
   end
@@ -262,6 +265,7 @@ class Loaders
     if @loaders_by_name.include?(name)
       raise Puppet::ParseError, _("Internal Error: Attempt to redefine loader named '%{name}'") % { name: name }
     end
+
     @loaders_by_name[name] = loader
   end
 

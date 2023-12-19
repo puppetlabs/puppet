@@ -12,6 +12,7 @@ module Pal
       if func
         return PlanSignature.new(func)
       end
+
       # Could not find plan
       nil
     end
@@ -45,6 +46,7 @@ module Pal
       if task
         return TaskSignature.new(task)
       end
+
       # Could not find task
       nil
     end

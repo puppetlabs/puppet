@@ -186,6 +186,7 @@ module Puppet
       return @metadata if @metadata
 
       return nil unless value
+
       value.each do |source|
         begin
           options = {

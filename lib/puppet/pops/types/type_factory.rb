@@ -179,6 +179,7 @@ module TypeFactory
       # TODO: Should have stricter name rule
       if key_type.is_a?(String)
         raise ArgumentError, 'Struct element key cannot be an empty String' if key_type.empty?
+
         key_type = string(key_type)
         # Must make key optional if the value can be Undef
         key_type = optional(key_type) if tc.assignable?(value_type, PUndefType::DEFAULT)
@@ -431,9 +432,11 @@ module TypeFactory
     when String
       type_name = TypeFormatter.singleton.capitalize_segments(type_name)
       raise ArgumentError, "Illegal type name '#{type_name}'" unless type_name =~ Patterns::CLASSREF_EXT
+
       PResourceType.new(type_name, title)
     when nil
       raise ArgumentError, 'The type name cannot be nil, if title is given' unless title.nil?
+
       PResourceType::DEFAULT
     else
       raise ArgumentError, "The type name cannot be a #{type_name.class.name}"

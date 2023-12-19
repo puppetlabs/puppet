@@ -233,6 +233,7 @@ Licensed under the Apache 2.0 License
     if options[:facts] and !options[:target]
       raise _("facts command requires target")
     end
+
     unless options[:apply].nil?
       raise _("missing argument: --target is required when using --apply") if options[:target].nil?
       raise _("%{file} does not exist, cannot apply") % { file: options[:apply] } unless File.file?(options[:apply])

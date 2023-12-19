@@ -151,6 +151,7 @@ class PURIType < PAnyType
   def _assignable?(o, guard = nil)
     return false unless o.class == self.class
     return true if @parameters.nil?
+
     o_params = o.parameters || EMPTY_HASH
 
     eval = Parser::EvaluatingParser.singleton.evaluator

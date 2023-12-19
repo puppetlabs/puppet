@@ -22,6 +22,7 @@ module Puppet::Util::SELinux
     if Selinux.is_selinux_enabled == 1
       return true
     end
+
     false
   end
 
@@ -33,10 +34,12 @@ module Puppet::Util::SELinux
   # SELinux support or if the SELinux call fails then return nil.
   def get_selinux_current_context(file)
     return nil unless selinux_support?
+
     retval = Selinux.lgetfilecon(file)
     if retval == -1
       return nil
     end
+
     retval[1]
   end
 
@@ -47,6 +50,7 @@ module Puppet::Util::SELinux
     # If the filesystem has no support for SELinux labels, return a default of nil
     # instead of what matchpathcon would return
     return nil unless selinux_label_support?(file)
+
     # If the file exists we should pass the mode to matchpathcon for the most specific
     # matching.  If not, we can pass a mode of 0.
     begin
@@ -66,6 +70,7 @@ module Puppet::Util::SELinux
     if retval == -1
       return nil
     end
+
     retval[1]
   end
 
@@ -76,10 +81,12 @@ module Puppet::Util::SELinux
     if context.nil? or context == "unlabeled"
       return nil
     end
+
     components = /^([^\s:]+):([^\s:]+):([^\s:]+)(?::([\sa-zA-Z0-9:,._-]+))?$/.match(context)
     unless components
       raise Puppet::Error, _("Invalid context to parse: %{context}") % { context: context }
     end
+
     case component
     when :seluser
       components[1]
@@ -149,6 +156,7 @@ module Puppet::Util::SELinux
   def set_selinux_default_context(file, resource_ensure=nil)
     new_context = get_selinux_default_context(file, resource_ensure)
     return nil unless new_context
+
     cur_context = get_selinux_current_context(file)
     if new_context != cur_context
       set_selinux_context(file, new_context)
@@ -179,6 +187,7 @@ module Puppet::Util::SELinux
         line.strip!
         next if line.empty?
         next if line[0] == "#" # skip comments
+
         line.gsub!(/[[:space:]]+/m, '')
         mapping = line.split("=", 2)
         if category == mapping[1]
@@ -204,6 +213,7 @@ module Puppet::Util::SELinux
   def selinux_label_support?(file)
     fstype = find_fs(file)
     return false if fstype.nil?
+
     filesystems = ['ext2', 'ext3', 'ext4', 'gfs', 'gfs2', 'xfs', 'jfs', 'btrfs', 'tmpfs', 'zfs']
     filesystems.include?(fstype)
   end
@@ -256,6 +266,7 @@ module Puppet::Util::SELinux
     mounts.each_line do |line|
       params = line.split(' ')
       next if params[2] == 'rootfs'
+
       mntpoint[params[1]] = params[2]
     end
     mntpoint

@@ -123,6 +123,7 @@ class Puppet::Graph::RbTreeMap
     result = nil
     if @root
       return unless has_key? key
+
       @root, result = delete_recursive(@root, key)
       @root.color = :black if @root
       @size -= 1
@@ -182,12 +183,14 @@ class Puppet::Graph::RbTreeMap
 
   def first
     return nil unless @root
+
     node = min_recursive(@root)
     [node.key, node.value]
   end
 
   def last
     return nil unless @root
+
     node = max_recursive(@root)
     [node.key, node.value]
   end
@@ -288,6 +291,7 @@ class Puppet::Graph::RbTreeMap
 
   def recursive_yield(node, &blk)
     return unless node
+
     recursive_yield(node.left, &blk)
     yield node.key, node.value
     recursive_yield(node.right, &blk)
@@ -302,6 +306,7 @@ class Puppet::Graph::RbTreeMap
       if ( ( (key <=> node.key) == 0) && node.right.nil? )
         return nil, node.value
       end
+
       if ( !isred(node.right) && !isred(node.right.left) )
         node.move_red_right
       end
@@ -322,6 +327,7 @@ class Puppet::Graph::RbTreeMap
     if node.left.nil?
       return nil, node.value
     end
+
     if ( !isred(node.left) && !isred(node.left.left) )
       node.move_red_left
     end
@@ -335,6 +341,7 @@ class Puppet::Graph::RbTreeMap
       node = node.rotate_right
     end
     return nil, node.value if node.right.nil?
+
     if ( !isred(node.right) && !isred(node.right.left) )
       node.move_red_right
     end
@@ -345,6 +352,7 @@ class Puppet::Graph::RbTreeMap
 
   def get_recursive(node, key)
     return nil if node.nil?
+
     case key <=> node.key
     when  0 then return node
     when -1 then return get_recursive(node.left, key)

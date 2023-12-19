@@ -169,6 +169,7 @@ class Application
     # Thus, long-running background processes can potentially finish their work before a restart.
     def controlled_run(&block)
       return unless clear?
+
       result = block.call
       Process.kill(:HUP, $PID) if restart_requested?
       result
@@ -303,6 +304,7 @@ class Application
     # @api public
     def environment_mode(mode_name)
       raise Puppet::Error, _("Invalid environment mode '%{mode_name}'") % { mode_name: mode_name } unless [:local, :remote, :not_required].include?(mode_name)
+
       @environment_mode = mode_name
     end
 

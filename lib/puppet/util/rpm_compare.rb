@@ -83,6 +83,7 @@ module Puppet::Util::RpmCompare
       # where alpha also includes ''; "numeric segments are always newer than alpha segments"
       if segment2.length == 0
         return 1 if isnum
+
         return -1
       end
 
@@ -105,6 +106,7 @@ module Puppet::Util::RpmCompare
     # if we haven't returned anything yet, "whichever version still has characters left over wins"
     return 1 if str1.length > str2.length
     return -1 if str1.length < str2.length
+
     0
   end
 
@@ -148,6 +150,7 @@ module Puppet::Util::RpmCompare
     return 0 if s1.nil? && s2.nil?
     return 1 if ( not s1.nil? ) && s2.nil?
     return -1 if s1.nil? && (not s2.nil?)
+
     return rpmvercmp(s1, s2)
   end
 

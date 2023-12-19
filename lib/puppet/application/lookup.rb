@@ -426,6 +426,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
     if facts.values.empty?
       raise _("No facts available for target node: %{node}") % { node: node}
     end
+
     facts
   end
 end

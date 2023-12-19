@@ -169,6 +169,7 @@ class Parser
       when nil; nil
       else
         raise ArgumentError, _("unsupported argument type '%{type}'") % { type: opts[:type] } unless TYPES.include?(opts[:type])
+
         opts[:type]
       end
 
@@ -195,6 +196,7 @@ class Parser
         if opts[:default].empty?
           raise ArgumentError, _("multiple argument type cannot be deduced from an empty array for '%{value0}'") % { value0: opts[:default][0].class.name }
         end
+
         case opts[:default][0]    # the first element determines the types
         when Integer; :ints
         when Numeric; :floats
@@ -634,11 +636,13 @@ class Parser
 
   def parse_integer_parameter param, arg
     raise CommandlineError, _("option '%{arg}' needs an integer") % { arg: arg } unless param =~ /^\d+$/
+
     param.to_i
   end
 
   def parse_float_parameter param, arg
     raise CommandlineError, _("option '%{arg}' needs a floating-point number") % { arg: arg } unless param =~ FLOAT_RE
+
     param.to_f
   end
 
@@ -668,6 +672,7 @@ class Parser
   def resolve_default_short_options
     @order.each do |type, name|
       next unless type == :opt
+
       opts = @specs[name]
       next if opts[:short]
 

@@ -4568,6 +4568,7 @@ module Model
 @@pcore_ast_initialized = false
 def self.register_pcore_types
   return if @@pcore_ast_initialized
+
   @@pcore_ast_initialized = true
   all_types = [
   Parser::Locator::Locator19,

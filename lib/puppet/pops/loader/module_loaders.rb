@@ -136,6 +136,7 @@ module ModuleLoaders
         #TRANSLATORS 'loadables' is a variable containing loadable modules and should not be translated
         raise ArgumentError, _('given loadables are not of supported loadable kind')
       end
+
       loaders.add_loader_by_name(self)
     end
 
@@ -150,6 +151,7 @@ module ModuleLoaders
           relative_paths(sp).each do |rp|
             tp = sp.typed_name(type, name_authority, rp, global ? nil : @module_name)
             next unless sp.valid_name?(tp)
+
             begin
               load_typed(tp) unless block_given? && !block.yield(tp)
             rescue StandardError => e
@@ -402,6 +404,7 @@ module ModuleLoaders
       is_global = global?
       smart_paths.effective_paths(typed_name.type).each do |sp|
         next unless sp.valid_name?(typed_name)
+
         origin = sp.effective_path(typed_name, is_global ? 0 : 1)
         unless origin.nil?
           if sp.fuzzy_matching?

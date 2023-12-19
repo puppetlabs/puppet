@@ -182,6 +182,7 @@ module EppSupport
       @skip_leading = skip_leading
 
       return nil if scanner.eos?
+
       s = ''.dup
       until scanner.eos?
         part = @scanner.scan_until(/(<%)|\z/)

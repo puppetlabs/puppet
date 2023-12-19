@@ -69,8 +69,10 @@ class PRuntimeType < PAnyType
   def class_or_module
     raise "Only ruby classes or modules can be produced by this runtime, got '#{runtime}" unless runtime == :ruby
     raise 'A pattern based Runtime type cannot produce a class or module' if @name_or_pattern.is_a?(Array)
+
     com = ClassLoader.provide(self)
     raise "The name #{@name_or_pattern} does not represent a ruby class or module" if com.nil?
+
     com
   end
 

@@ -100,6 +100,7 @@ class Puppet::Node
 
   def initialize(name, options = {})
     raise ArgumentError, _("Node names cannot be nil") unless name
+
     @name = name
 
     classes = options[:classes]

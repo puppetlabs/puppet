@@ -15,6 +15,7 @@ class ObjectReader
     unless value_count >= required_count && value_count <= max
       raise Serialization::SerializationError, _("Feature count mismatch for %{value0}. Expected %{required_count} - %{max}, actual %{value_count}") % { value0: impl_class.name, required_count: required_count, max: max, value_count: value_count }
     end
+
     # Deserializer must know about this instance before we read its attributes
     val = deserializer.remember(impl_class.allocate)
     args = Array.new(value_count) { deserializer.read }
@@ -25,6 +26,7 @@ class ObjectReader
       else
         attr = type[names[index]]
         raise Serialization::SerializationError, _("Missing default value for %{type_name}[%{name}]") % { type_name: type.name, name: names[index] } unless attr && attr.value?
+
         args << attr.value
       end
     end
@@ -48,6 +50,7 @@ class ObjectWriter
     # Pop optional arguments that are default
     while args.size > required_count
       break unless type[names[args.size-1]].default_value?(args.last)
+
       args.pop
     end
 

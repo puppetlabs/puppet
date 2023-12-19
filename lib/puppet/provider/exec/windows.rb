@@ -41,6 +41,7 @@ Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
       elsif !File.file?(exe)
         raise ArgumentError, _("'%{exe}' is a %{klass}, not a file") % { exe: exe, klass: File.ftype(exe) }
       end
+
       return
     end
 
