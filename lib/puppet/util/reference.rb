@@ -54,7 +54,6 @@ class Puppet::Util::Reference
     Dir.chdir("/tmp") do
       %x{texi2pdf puppetdoc.tex >/dev/null 2>/dev/null}
     end
-
   end
 
   def self.references(environment)

@@ -105,7 +105,6 @@ class Puppet::Pops::Functions::Function
   #
   # @api public
   def internal_call_function(scope, function_name, args, &block)
-
     the_loader = loader
     unless the_loader
       raise ArgumentError, _("Function %{class_name}(): cannot call function '%{function_name}' - no loader specified") %

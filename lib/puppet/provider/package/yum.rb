@@ -85,7 +85,6 @@ defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
   # @param disableexcludes [Array<String>] A list of repository excludes to disable for this query
   # @return [Hash<Symbol, String>]
   def self.latest_package_version(package, disablerepo, enablerepo, disableexcludes)
-
     key = [disablerepo, enablerepo, disableexcludes]
 
     @latest_versions ||= {}
@@ -149,7 +148,6 @@ defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
   end
 
   def self.update_to_hash(pkgname, pkgversion)
-
     # The pkgname string has two parts: name, and architecture. Architecture
     # is the portion of the string following the last "." character. All
     # characters preceding the final dot are the package name. Parse out

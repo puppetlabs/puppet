@@ -102,7 +102,6 @@ module Puppet::Forge::Errors
     #
     # @return [String] the multiline version of the error message
     def multiline
-
       message = []
       message << _('Request to Puppet Forge failed.')
       message << _('  The server being queried was %{uri}') % { uri: @uri }

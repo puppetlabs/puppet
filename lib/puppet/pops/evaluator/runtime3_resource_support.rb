@@ -7,7 +7,6 @@ module Runtime3ResourceSupport
   CLASS_STRING = 'class'
 
   def self.create_resources(file, line, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
-
     env = scope.environment
     #    loader = Adapters::LoaderAdapter.loader_for_model_object(o, scope)
 

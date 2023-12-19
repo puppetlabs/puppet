@@ -399,7 +399,6 @@ class Application
   # @return [void]
   # @api public
   def run
-
     # I don't really like the names of these lifecycle phases.  It would be nice to change them to some more meaningful
     # names, and make deprecated aliases.  --cprice 2012-03-16
 

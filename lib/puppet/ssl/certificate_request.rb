@@ -296,7 +296,6 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
   # @return [Array<Array<Object>>] A array of arrays containing the extension
   #   OID the critical state if present, and the extension value.
   def unpack_extension_request(attribute)
-
     unless attribute.value.is_a? OpenSSL::ASN1::Set
       raise Puppet::Error, _("In %{attr}, expected Set but found %{klass}") % { attr: attribute.oid, klass: attribute.value.class }
     end

@@ -21,7 +21,6 @@ class Puppet::Util::Log
 
   # Create a new destination type.
   def self.newdesttype(name, options = {}, &block)
-
     dest = genclass(
       name,
       :parent     => Puppet::Util::Log::Destination,

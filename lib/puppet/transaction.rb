@@ -331,7 +331,6 @@ class Puppet::Transaction
   # up-front at failure time because the graph may be mutated as we
   # walk it.
   def propagate_failure(resource)
-
     provider_class = resource.provider.class
     s = resource_status(resource)
     if prefetch_failed_providers[resource.type][provider_class.name] && !s.nil?

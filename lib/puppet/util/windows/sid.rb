@@ -137,7 +137,6 @@ module Puppet::Util::Windows
     # e.g. 'BUILTIN\Administrators'. Returns nil if an account
     # for that SID does not exist.
     def sid_to_name(value)
-
       sid_bytes = []
       begin
         string_to_sid_ptr(value) do |ptr|

@@ -222,7 +222,6 @@ class Puppet::Interface::Action
   attr_reader :when_invoked
 
   def when_invoked=(block)
-
     internal_name = "#{@name} implementation, required on Ruby 1.8".to_sym
 
     arity = @positional_arg_count = block.arity

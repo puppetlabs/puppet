@@ -199,7 +199,6 @@ module DOT
     end
 
     def to_s(t = '')
-
       # This code is totally incomprehensible; it needs to be replaced!
 
       label = @options['shape'] != 'record' && @ports.length == 0 ?

@@ -60,7 +60,6 @@ class Puppet::Resource::Type
 
   # Now evaluate the code associated with this class or definition.
   def evaluate_code(resource)
-
     static_parent = evaluate_parent_type(resource)
     scope = static_parent || resource.scope
 

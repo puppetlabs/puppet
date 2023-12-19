@@ -278,7 +278,6 @@ class Puppet::Settings
   #
   # @api private
   def clear_environment_settings(environment)
-
     if environment.nil?
       return
     end

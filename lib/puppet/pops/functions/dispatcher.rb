@@ -33,7 +33,6 @@ class Puppet::Pops::Functions::Dispatcher
   #
   # @api private
   def dispatch(instance, calling_scope, args, &block)
-
     dispatcher = find_matching_dispatcher(args, &block)
     unless dispatcher
       args_type = Puppet::Pops::Types::TypeCalculator.singleton.infer_set(block_given? ? args + [block] : args)

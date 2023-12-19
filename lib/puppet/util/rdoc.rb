@@ -6,7 +6,6 @@ module Puppet::Util::RDoc
   # launch a rdoc documentation process
   # with the files/dir passed in +files+
   def rdoc(outputdir, files, charset = nil)
-
     # then rdoc
     require 'rdoc/rdoc'
     require 'rdoc/options'

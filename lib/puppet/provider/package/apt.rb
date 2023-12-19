@@ -177,7 +177,6 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
       raise Puppet::Error, _("Failed to update to version %{should}, got version %{version} instead") % { should: should, version: version } unless
         insync?(version)
     end
-
   end
 
   # What's the latest package version available?
