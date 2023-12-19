@@ -395,7 +395,7 @@ module Puppet
         end
       end
 
-      def is_to_s(currentvalue)
+      def is_to_s(currentvalue) # rubocop:disable Naming/PredicateName
         if provider.respond_to?(:package_settings_is_to_s)
           provider.package_settings_is_to_s(should, currentvalue)
         else

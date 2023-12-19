@@ -56,9 +56,11 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
   # that contains the content of PATH but without puppet/bin dir.
   # This is used to pass a custom PATH and execute commands in a controlled environment
   def self.windows_path_without_puppet_bin
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     @path ||= ENV['PATH'].split(File::PATH_SEPARATOR)
                          .reject { |dir| dir =~ /puppet\\bin$/ }
                          .join(File::PATH_SEPARATOR)
+    # rubocop:enable Naming/MemoizedInstanceVariableName
   end
 
   private_class_method :windows_path_without_puppet_bin

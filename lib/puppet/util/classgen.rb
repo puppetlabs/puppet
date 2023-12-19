@@ -66,7 +66,7 @@ module Puppet::Util::ClassGen
   def rmclass(name, options)
     const = genconst_string(name, options)
     retval = false
-    if is_constant_defined?(const)
+    if const_defined?(const, false)
       remove_const(const)
       retval = true
     end
@@ -140,19 +140,13 @@ module Puppet::Util::ClassGen
     klass
   end
 
-  # @api private
-  #
-  def is_constant_defined?(const)
-    const_defined?(const, false)
-  end
-
   # Handle the setting and/or removing of the associated constant.
   # @api private
   #
   def handleclassconst(klass, name, options)
    const = genconst_string(name, options)
 
-    if is_constant_defined?(const)
+    if const_defined?(const, false)
       if options[:overwrite]
         Puppet.info _("Redefining %{name} in %{klass}") % { name: name, klass: self }
         remove_const(const)

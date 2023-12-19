@@ -39,7 +39,9 @@ class Puppet::Property::Ensure < Puppet::Property
     end
 
     # This doc will probably get overridden
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     @doc ||= "The basic property that the resource should be in."
+    # rubocop:enable Naming/MemoizedInstanceVariableName
   end
 
   def self.inherited(sub)

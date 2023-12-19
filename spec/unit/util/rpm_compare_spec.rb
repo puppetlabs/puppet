@@ -91,35 +91,35 @@ describe Puppet::Util::RpmCompare do
     it { expect(RpmTest.rpmvercmp('1', '0')).to eq(1) }
   end
 
-  describe '.rpm_compareEVR' do
+  describe '.rpm_compare_evr' do
     it 'evaluates identical version-release as equal' do
-      expect(RpmTest.rpm_compareEVR('1.2.3-1.el5', '1.2.3-1.el5')).to eq(0)
+      expect(RpmTest.rpm_compare_evr('1.2.3-1.el5', '1.2.3-1.el5')).to eq(0)
     end
 
     it 'evaluates identical version as equal' do
-      expect(RpmTest.rpm_compareEVR('1.2.3', '1.2.3')).to eq(0)
+      expect(RpmTest.rpm_compare_evr('1.2.3', '1.2.3')).to eq(0)
     end
 
     it 'evaluates identical version but older release as less' do
-      expect(RpmTest.rpm_compareEVR('1.2.3-1.el5', '1.2.3-2.el5')).to eq(-1)
+      expect(RpmTest.rpm_compare_evr('1.2.3-1.el5', '1.2.3-2.el5')).to eq(-1)
     end
 
     it 'evaluates identical version but newer release as greater' do
-      expect(RpmTest.rpm_compareEVR('1.2.3-3.el5', '1.2.3-2.el5')).to eq(1)
+      expect(RpmTest.rpm_compare_evr('1.2.3-3.el5', '1.2.3-2.el5')).to eq(1)
     end
 
     it 'evaluates a newer epoch as greater' do
-      expect(RpmTest.rpm_compareEVR('1:1.2.3-4.5', '1.2.3-4.5')).to eq(1)
+      expect(RpmTest.rpm_compare_evr('1:1.2.3-4.5', '1.2.3-4.5')).to eq(1)
     end
 
     # these tests describe PUP-1244 logic yet to be implemented
     it 'evaluates any version as equal to the same version followed by release' do
-      expect(RpmTest.rpm_compareEVR('1.2.3', '1.2.3-2.el5')).to eq(0)
+      expect(RpmTest.rpm_compare_evr('1.2.3', '1.2.3-2.el5')).to eq(0)
     end
 
     # test cases for PUP-682
     it 'evaluates same-length numeric revisions numerically' do
-      expect(RpmTest.rpm_compareEVR('2.2-405', '2.2-406')).to eq(-1)
+      expect(RpmTest.rpm_compare_evr('2.2-405', '2.2-406')).to eq(-1)
     end
   end
 

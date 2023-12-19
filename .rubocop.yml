@@ -54,3 +54,86 @@ Metrics/ParameterLists:
 
 Metrics/PerceivedComplexity:
   Enabled: false
+
+Naming/AccessorMethodName:
+  Enabled: false
+
+Naming/BinaryOperatorParameterName:
+  Enabled: false
+
+Naming/BlockParameterName:
+  Exclude:
+    - 'lib/puppet/util/windows/daemon.rb'
+    - 'lib/puppet/util/windows/user.rb'
+
+Naming/ClassAndModuleCamelCase:
+  Exclude:
+    - 'lib/puppet/ffi/windows/structs.rb'
+    - 'lib/puppet/pops/validation/checker4_0.rb'
+    - 'lib/puppet/pops/validation/validator_factory_4_0.rb'
+    - 'lib/puppet/util/windows/root_certs.rb'
+    - 'lib/puppet/util/windows/security.rb'
+    - 'lib/puppet/util/windows/user.rb'
+
+Naming/ConstantName:
+  Exclude:
+    - 'lib/puppet/graph/relationship_graph.rb'
+    - 'lib/puppet/indirector/hiera.rb'
+    - 'lib/puppet/provider/package/sun.rb'
+    - 'lib/puppet/resource/type.rb'
+    - 'lib/puppet/type/schedule.rb'
+    - 'lib/puppet/type/tidy.rb'
+    - 'lib/puppet/util.rb'
+    - 'lib/puppet/util/colors.rb'
+    - 'lib/puppet/util/execution.rb'
+    - 'lib/puppet/util/symbolic_file_mode.rb'
+    - 'lib/puppet/util/tagging.rb'
+    - 'lib/puppet/util/windows/adsi.rb'
+    - 'lib/puppet/util/windows/sid.rb'
+    - 'lib/puppet/util/yaml.rb'
+
+Naming/HeredocDelimiterNaming:
+  Enabled: false
+
+# Exclude existing violations to avoid breaking changes
+Naming/MemoizedInstanceVariableName:
+  Exclude:
+    - 'lib/puppet/module_tool/applications/installer.rb'
+    - 'lib/puppet/pops/types/type_factory.rb'
+    - 'lib/puppet/provider/package/portage.rb'
+    - 'lib/puppet/resource.rb'
+
+Naming/MethodName:
+  Exclude:
+    - 'lib/puppet/functions/**/*'
+    - 'lib/puppet/parser/ast/pops_bridge.rb'
+    - 'lib/puppet/pops/**/*'
+    - 'lib/puppet/util/windows/**/*'
+
+Naming/MethodParameterName:
+  Enabled: false
+
+Naming/PredicateName:
+  ForbiddenPrefixes: []
+
+Naming/RescuedExceptionsVariableName:
+  Enabled: false
+
+Naming/VariableName:
+  Exclude:
+    - 'ext/windows/service/daemon.rb'
+    - 'lib/puppet/agent.rb'
+    - 'lib/puppet/application/describe.rb'
+    - 'lib/puppet/pops/lookup/hiera_config.rb'
+    - 'lib/puppet/pops/validation/checker4_0.rb'
+    - 'lib/puppet/provider/package/pip.rb'
+    - 'lib/puppet/provider/package/windows/exe_package.rb'
+    - 'lib/puppet/provider/package/windows/msi_package.rb'
+    - 'lib/puppet/ssl/ssl_provider.rb'
+    - 'lib/puppet/util/windows/adsi.rb'
+    - 'lib/puppet/util/windows/daemon.rb'
+    - 'lib/puppet/util/windows/error.rb'
+    - 'lib/puppet/util/windows/user.rb'
+
+Naming/VariableNumber:
+  Enabled: false

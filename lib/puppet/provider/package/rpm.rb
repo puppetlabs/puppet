@@ -190,7 +190,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
     should = resource[:ensure]
     is.split(self.class::MULTIVERSION_SEPARATOR).any? do |version|
-      0 == rpm_compareEVR(should, version)
+      0 == rpm_compare_evr(should, version)
     end
   end
 

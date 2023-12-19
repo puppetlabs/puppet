@@ -195,6 +195,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     # Obtain a suitable temporary path for unpacking tarballs
     #
     # @return [Pathname] path to temporary unpacking location
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     def tmpdir
       @dir ||= Dir.mktmpdir(name, Puppet::Forge::Cache.base_path)
     end
@@ -204,6 +205,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
         f.binmode
       end
     end
+    # rubocop:enable Naming/MemoizedInstanceVariableName
 
     def download(uri, destination)
       response = @source.make_http_request(uri, destination)

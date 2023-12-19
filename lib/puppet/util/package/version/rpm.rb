@@ -39,18 +39,18 @@ module Puppet::Util::Package::Version
     def <=>(other)
       raise ArgumentError, _("Cannot compare, as %{other} is not a Rpm Version") % { other: other } unless other.is_a?(self.class)
 
-      rpm_compareEVR(self.to_s, other.to_s)
+      rpm_compare_evr(self.to_s, other.to_s)
     end
 
     private
 
-    # overwrite rpm_compareEVR to treat no epoch as zero epoch
+    # overwrite rpm_compare_evr to treat no epoch as zero epoch
     # in order to compare version correctly
     #
     # returns 1 if a is newer than b,
     #         0 if they are identical
     #        -1 if a is older than b
-    def rpm_compareEVR(a, b)
+    def rpm_compare_evr(a, b)
       a_hash = rpm_parse_evr(a)
       b_hash = rpm_parse_evr(b)
 

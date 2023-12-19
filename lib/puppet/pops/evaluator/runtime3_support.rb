@@ -460,12 +460,6 @@ module Runtime3Support
     end
   end
 
-  # Utility method for TrueClass || FalseClass
-  # @param x [Object] the object to test if it is instance of TrueClass or FalseClass
-  def is_boolean? x
-    x.is_a?(TrueClass) || x.is_a?(FalseClass)
-  end
-
   def extract_file_line(o)
     o.is_a?(Model::Positioned) ? [o.file, o.line] : [nil, -1]
   end

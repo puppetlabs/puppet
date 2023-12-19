@@ -177,7 +177,7 @@ module Puppet
       "'#{should_value.rjust(4, '0')}'"
     end
 
-    def is_to_s(currentvalue)
+    def is_to_s(currentvalue) # rubocop:disable Naming/PredicateName
       if currentvalue == :absent
         # This can occur during audits---if a file is transitioning from
         # present to absent the mode will have a value of `:absent`.

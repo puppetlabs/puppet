@@ -198,7 +198,7 @@ class Puppet::Provider
   # @note the name ´has_command´ looks odd in an API context, but makes more sense when seen in the internal
   #   DSL context where a Provider is declaratively defined.
   # @api public
-  #
+  # rubocop:disable Naming/PredicateName
   def self.has_command(name, path, &block)
     name = name.intern
     command = CommandDefiner.define(name, path, self, &block)
@@ -210,6 +210,7 @@ class Puppet::Provider
       return command.execute(*args)
     end
   end
+  # rubocop:enable Naming/PredicateName
 
   # Internal helper class when creating commands - undocumented.
   # @api private
@@ -230,7 +231,7 @@ class Puppet::Provider
       @custom_environment = {}
     end
 
-    def is_optional
+    def is_optional # rubocop:disable Naming/PredicateName
       @optional = true
     end
 

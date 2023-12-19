@@ -76,9 +76,11 @@ module Puppet::ModuleTool
     # Obtain a suitable temporary path for unpacking tarballs
     #
     # @return [String] path to temporary unpacking location
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     def tmpdir
       @dir ||= Dir.mktmpdir('local-tarball', Puppet::Forge::Cache.base_path)
     end
+    # rubocop:enable Naming/MemoizedInstanceVariableName
 
     def unpack(file, destination)
       begin

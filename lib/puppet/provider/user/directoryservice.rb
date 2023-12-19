@@ -160,13 +160,17 @@ Puppet::Type.type(:user).provide :directoryservice do
   end
 
   def self.get_os_version
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     @os_version ||= Puppet.runtime[:facter].value('os.macosx.version.major')
+    # rubocop:enable Naming/MemoizedInstanceVariableName
   end
 
   # Use dscl to retrieve an array of hashes containing attributes about all
   # of the local groups on the machine.
   def self.get_list_of_groups
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     @groups ||= Puppet::Util::Plist.parse_plist(dscl '-plist', '.', 'readall', '/Groups')
+    # rubocop:enable Naming/MemoizedInstanceVariableName
   end
 
   # Perform a dscl lookup at the path specified for the specific keyname

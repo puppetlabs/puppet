@@ -71,7 +71,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   #
   # @api private
   def self.get_os_version
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     @os_version ||= Facter.value('os.release.major').to_i
+    # rubocop:enable Naming/MemoizedInstanceVariableName
   end
 
   # Defines the path to the overrides plist file where service enabling

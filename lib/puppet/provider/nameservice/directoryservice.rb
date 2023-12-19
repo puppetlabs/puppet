@@ -94,7 +94,9 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   end
 
   def self.list_all_present
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     @all_present ||= begin
+    # rubocop:enable Naming/MemoizedInstanceVariableName
       # JJM: List all objects of this Puppet::Type already present on the system.
       begin
         dscl_output = execute(get_exec_preamble("-list"))

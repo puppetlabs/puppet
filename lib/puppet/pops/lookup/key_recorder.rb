@@ -7,9 +7,11 @@ class Puppet::Pops::Lookup::KeyRecorder
   def initialize()
   end
 
+  # rubocop:disable Naming/MemoizedInstanceVariableName
   def self.singleton
     @null_recorder ||= self.new
   end
+  # rubocop:enable Naming/MemoizedInstanceVariableName
 
   # Records a key
   # (This implementation does nothing)
