@@ -129,10 +129,10 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       hash = {}
       hash[:name] = $1
       hash[:ensure] = if $2 == "notinst"
-        :absent
-      else
-        $2
-      end
+                        :absent
+                      else
+                        $2
+                      end
       hash[:avail] = $3
 
       if hash[:avail] =~ /^SAME\s*$/

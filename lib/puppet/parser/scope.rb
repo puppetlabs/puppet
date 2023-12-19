@@ -300,7 +300,7 @@ class Puppet::Parser::Scope
     else # rubocop:disable Layout/ElseAlignment
       next_scope = inherited_scope || enclosing_scope
       effective_symtable(true).include?(name) || next_scope && next_scope.exist?(name) || BUILT_IN_VARS.include?(name)
-    end
+    end # rubocop:disable Layout/EndAlignment
   end
 
   # Returns true if the given name is bound in the current (most nested) scope for assignments.

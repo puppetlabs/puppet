@@ -378,12 +378,12 @@ defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
 
     values = options.map do | repo |
       value = if repo.is_a?(String)
-        next unless repo.include?('=')
+                next unless repo.include?('=')
 
-        Hash[*repo.strip.split('=')] # make it a hash
-      else
-        repo
-      end
+                Hash[*repo.strip.split('=')] # make it a hash
+              else
+                repo
+              end
       value[key]
     end
     values.compact.uniq

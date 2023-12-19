@@ -65,10 +65,10 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
       hash = {}
       hash[:name] = $1
       hash[:ensure] = if $2 == "[Not installed]"
-        :absent
-      else
-        $2
-      end
+                        :absent
+                      else
+                        $2
+                      end
       hash[:avail] = $5
 
       hash[:avail] = hash[:ensure] if hash[:avail] == "SAME"

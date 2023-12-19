@@ -181,7 +181,7 @@ module Puppet::ModuleTool
               _("the module name must begin with a letter")
             else
               _("the namespace contains non-alphanumeric characters")
-      end
+            end
 
       raise ArgumentError, _("Invalid 'name' field in metadata.json: %{err}") % { err: err }
     end
