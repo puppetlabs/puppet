@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The class that handles testing whether our providers
 # actually work or not.
 require_relative '../puppet/util'
@@ -42,6 +43,7 @@ class Puppet::Confine
 
   # Mark that this confine is used for testing binary existence.
   attr_accessor :for_binary
+
   def for_binary?
     for_binary
   end

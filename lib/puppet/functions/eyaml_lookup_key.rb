@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The `eyaml_lookup_key` is a hiera 5 `lookup_key` data provider function.
 # See [the configuration guide documentation](https://puppet.com/docs/puppet/latest/hiera_config_yaml_5.html#configuring-a-hierarchy-level-hiera-eyaml) for
 # how to use this function.
@@ -53,6 +54,7 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
         else
           msg = _("%{path}: file does not contain a valid yaml hash") % { path: path }
           raise Puppet::DataBinding::LookupError, msg if Puppet[:strict] == :error && data != false
+
           Puppet.warning(msg)
           {}
         end

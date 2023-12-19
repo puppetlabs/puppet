@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # A module to collect utility functions.
 
 require 'English'
@@ -101,7 +102,6 @@ module Util
       File.umask(cur)
     end
   end
-
 
   # Change the process to a different user
   def self.chuser
@@ -609,7 +609,6 @@ module Util
         tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(file), Puppet::FileSystem.dir_string(file))
       end
 
-
       effective_mode =
         if !Puppet::Util::Platform.windows?
           # Grab the current file mode, and fall back to the defaults.
@@ -670,6 +669,7 @@ module Util
         if Puppet::FileSystem.exist?(file) && Puppet::FileSystem.directory?(file)
           raise Errno::EISDIR, _("Is a directory: %{directory}") % { directory: file }
         end
+
         File.rename(tempfile.path, Puppet::FileSystem.path_string(file))
       end
     ensure
@@ -679,7 +679,6 @@ module Util
         tempfile.close!
       end
     end
-
 
     # Ideally, we would now fsync the directory as well, but Ruby doesn't
     # have support for that, and it doesn't matter /that/ much...
@@ -740,7 +739,6 @@ module Util
   module_function :skip_external_facts
 end
 end
-
 
 require_relative 'util/errors'
 require_relative 'util/metaid'

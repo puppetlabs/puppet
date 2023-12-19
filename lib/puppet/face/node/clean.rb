@@ -1,7 +1,7 @@
 # frozen_string_literal: true
+
 Puppet::Face.define(:node, '0.0.1') do
   action(:clean) do
-
     summary _("Clean up signed certs, cached facts, node objects, and reports for a node stored by the puppetmaster")
     arguments _("<host1> [<host2> ...]")
     description <<-'EOT'
@@ -103,6 +103,7 @@ Puppet::Face.define(:node, '0.0.1') do
       type = environment.known_resource_types.find_definition(resource.restype)
       return true if type && type.arguments.keys.include?('ensure')
     end
+
     return false
   end
 end

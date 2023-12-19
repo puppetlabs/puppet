@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../../puppet/provider/package'
 require_relative '../../../../puppet/util/windows'
 
@@ -70,6 +71,7 @@ class Puppet::Provider::Package::Windows
       when /\.exe"?\Z/i
         fail(_("The source does not exist: '%{source}'") % { source: resource[:source] }) unless
           Puppet::FileSystem.exist?(resource[:source]) || resource[:source].start_with?('http://', 'https://')
+
         ExePackage
       else
         fail(_("Don't know how to install '%{source}'") % { source: resource[:source] })

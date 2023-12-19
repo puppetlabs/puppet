@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/util/watcher'
 
 # Monitor a given file for changes on a periodic interval. Changes are detected

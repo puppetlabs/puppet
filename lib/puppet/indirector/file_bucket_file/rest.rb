@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/indirector/rest'
 require_relative '../../../puppet/file_bucket/file'
 
@@ -16,6 +17,7 @@ module Puppet::FileBucketFile
       )
     rescue Puppet::HTTP::ResponseError => e
       return nil if e.response.code == 404
+
       raise convert_to_http_error(e.response)
     end
 

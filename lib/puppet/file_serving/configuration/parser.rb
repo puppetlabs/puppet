@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/file_serving/configuration'
 require_relative '../../../puppet/util/watched_file'
 
@@ -30,6 +31,7 @@ class Puppet::FileServing::Configuration::Parser
           value = $2
           value.strip!
           raise(ArgumentError, _("Fileserver configuration file does not use '=' as a separator")) if value =~ /^=/
+
           case var
           when "path"
             path(mount, value)

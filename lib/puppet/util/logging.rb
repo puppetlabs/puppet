@@ -1,11 +1,11 @@
 # frozen_string_literal: true
+
 # A module to make logging a bit easier.
 require_relative '../../puppet/util/log'
 require_relative '../../puppet/error'
 
 module Puppet::Util
 module Logging
-
   def send_log(level, message)
     Puppet::Util::Log.create({:level => level, :source => log_source, :message => message}.merge(log_metadata))
   end
@@ -14,6 +14,7 @@ module Logging
   Puppet::Util::Log.eachlevel do |level|
     # handle debug a special way for performance reasons
     next if level == :debug
+
     define_method(level) do |args|
       args = args.join(" ") if args.is_a?(Array)
       send_log(level, args)
@@ -32,6 +33,7 @@ module Logging
   #
   def debug(*args)
     return nil unless Puppet::Util::Log.level == :debug
+
     if block_given?
       send_log(:debug, yield(*args))
     else
@@ -178,6 +180,7 @@ module Logging
   # Either :file and :line and/or :key must be passed.
   def warn_once(kind, key, message, file = nil, line = nil, level = :warning)
     return if Puppet[:disable_warnings].include?(kind)
+
     $unique_warnings ||= {}
     if $unique_warnings.length < 100 then
       if (! $unique_warnings.has_key?(key)) then
@@ -261,6 +264,7 @@ module Logging
 
   def issue_deprecation_warning(message, key, file, line, use_caller)
     return if Puppet[:disable_warnings].include?('deprecations')
+
     $deprecation_warnings ||= {}
     if $deprecation_warnings.length < 100
       key ||= (offender = get_deprecation_offender)

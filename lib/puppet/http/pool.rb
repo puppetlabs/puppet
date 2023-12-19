@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # A pool for persistent `Net::HTTP` connections. Connections are
 # stored in the pool indexed by their {Site}.
 # Connections are borrowed from the pool, yielded to the caller, and
@@ -71,13 +72,13 @@ class Puppet::HTTP::Pool
     end
   end
 
-
   # Safely close a persistent connection.
   # Don't try to close a connection that's already closed.
   #
   # @api private
   def close_connection(site, http)
     return false unless http.started?
+
     Puppet.debug("Closing connection for #{site}")
     http.finish
     true

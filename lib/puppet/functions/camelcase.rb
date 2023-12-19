@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Creates a Camel Case version of a String
 #
 # This function is compatible with the stdlib function with the same name.
@@ -30,7 +31,6 @@
 # Would both result in `['AbcDef', 'BcdXyz']`
 #
 Puppet::Functions.create_function(:camelcase) do
-
   dispatch :on_numeric do
     param 'Numeric', :arg
   end

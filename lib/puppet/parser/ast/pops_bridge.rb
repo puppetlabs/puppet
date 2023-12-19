@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/parser/ast/top_level_construct'
 require_relative '../../../puppet/pops'
 
@@ -7,7 +8,6 @@ require_relative '../../../puppet/pops'
 # fundamental for the rest of the logic.
 #
 class Puppet::Parser::AST::PopsBridge
-
   # Bridges to one Pops Model Expression
   # The @value is the expression
   # This is used to represent the body of a class, definition, or node, and for each parameter's default value
@@ -66,6 +66,7 @@ class Puppet::Parser::AST::PopsBridge
       end
     end
   end
+
   # Bridges the top level "Program" produced by the pops parser.
   # Its main purpose is to give one point where all definitions are instantiated (actually defined since the
   # Puppet 3x terminology is somewhat misleading - the definitions are instantiated, but instances of the created types
@@ -86,7 +87,6 @@ class Puppet::Parser::AST::PopsBridge
     # efficient as it avoids one full scan of all logic via recursive enumeration/yield)
     #
     def instantiate(modname)
-
       @program_model.definitions.map do |d|
         case d
         when Puppet::Pops::Model::HostClassDefinition
@@ -103,7 +103,7 @@ class Puppet::Parser::AST::PopsBridge
           nil
         end
       end.flatten().compact() # flatten since node definition may have returned an array
-                              # Compact since 4x definitions are not understood by compiler
+      # Compact since 4x definitions are not understood by compiler
     end
 
     def evaluate(scope)

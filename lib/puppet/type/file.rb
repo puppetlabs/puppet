@@ -1,5 +1,6 @@
 # coding: utf-8
 # frozen_string_literal: true
+
 require 'digest/md5'
 require 'cgi'
 require 'etc'
@@ -406,6 +407,7 @@ Puppet::Type.newtype(:file) do
         # The user/group property automatically converts to IDs
         should = @parameters[property].shouldorig
         next unless should
+
         val = should[0]
         if val.is_a?(Integer) or val =~ /^\d+$/
           nil
@@ -458,6 +460,7 @@ Puppet::Type.newtype(:file) do
 
   def self.[](path)
     return nil unless path
+
     super(path.gsub(/\/+/, '/').sub(/\/$/, ''))
   end
 
@@ -570,6 +573,7 @@ Puppet::Type.newtype(:file) do
   def mark_children_for_purging(children)
     children.each do |_name, child|
       next if child[:source]
+
       child[:ensure] = :absent
     end
   end
@@ -655,10 +659,10 @@ Puppet::Type.newtype(:file) do
   def self.remove_less_specific_files(files, parent_path, existing_files, &block)
     # REVISIT: is this Windows safe?  AltSeparator?
     mypath = parent_path.split(::File::Separator)
-    other_paths = existing_files.
-      select { |r| (yield r) != parent_path}.
-      collect { |r| (yield r).split(::File::Separator) }.
-      select  { |p| p[0,mypath.length]  == mypath }
+    other_paths = existing_files
+      .select { |r| (yield r) != parent_path}
+      .collect { |r| (yield r).split(::File::Separator) }
+      .select  { |p| p[0,mypath.length]  == mypath }
 
     return files if other_paths.empty?
 
@@ -696,6 +700,7 @@ Puppet::Type.newtype(:file) do
   def recurse_local
     result = perform_recursion(self[:path])
     return {} unless result
+
     result.inject({}) do |hash, meta|
       next hash if meta.relative_path == "."
 
@@ -735,8 +740,10 @@ Puppet::Type.newtype(:file) do
       end
 
       next unless result
+
       top = result.find { |r| r.relative_path == "." }
       return [] if top && top.ftype != "directory"
+
       result.each do |data|
         if data.relative_path == '.'
           data.source = source
@@ -746,6 +753,7 @@ Puppet::Type.newtype(:file) do
         end
       end
       break result if result and ! result.empty? and sourceselect == :first
+
       result
     end.flatten.compact
 
@@ -866,12 +874,14 @@ Puppet::Type.newtype(:file) do
     # The user doesn't really care, apparently
     if self[:ensure] == :present
       return true unless stat
+
       return(stat.ftype == "file" ? true : false)
     end
 
     # If we've gotten here, then :ensure isn't set
     return true if self[:content]
     return true if stat and stat.ftype == "file"
+
     false
   end
 
@@ -1087,6 +1097,7 @@ Puppet::Type.newtype(:file) do
 
       # due to HttpMetadata the checksum type may fallback to mtime, so recheck
       return if SOURCE_ONLY_CHECKSUMS.include?(meta.checksum_type)
+
       meta.checksum
     elsif property && property.name == :content
       str = property.actual_content
@@ -1112,7 +1123,6 @@ Puppet::Type.newtype(:file) do
       thing.sync unless thing.safe_insync?(currentvalue)
     end
   end
-
 end
 
 # We put all of the properties in separate files, because there are so many

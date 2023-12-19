@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/ssl'
 
 # This module defines OIDs for use within Puppet.
@@ -28,7 +29,6 @@ require_relative '../../puppet/ssl'
 #
 # @api private
 module Puppet::SSL::Oids
-
   # Note: When updating the following OIDs make sure to also update the OID
   # definitions here:
   # https://github.com/puppetlabs/puppetserver/blob/master/src/clj/puppetlabs/puppetserver/certificate_authority.clj#L122-L159
@@ -129,6 +129,7 @@ module Puppet::SSL::Oids
         if shortname.nil? || longname.nil?
           raise Puppet::Error, _("Error loading ssl custom OIDs mapping file from '%{custom_oid_file}': incomplete definition of oid '%{oid}'") % { custom_oid_file: custom_oid_file, oid: oid }
         end
+
         oid_defns << [oid, shortname, longname]
       end
 
@@ -186,7 +187,6 @@ module Puppet::SSL::Oids
   def self.subtree_of?(first, second, exclusive = false)
     first_oid = OpenSSL::ASN1::ObjectId.new(first).oid
     second_oid = OpenSSL::ASN1::ObjectId.new(second).oid
-
 
     if exclusive and first_oid == second_oid
       false

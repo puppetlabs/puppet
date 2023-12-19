@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
   desc "Support for SuSE `zypper` package manager. Found in SLES10sp2+ and SLES11.
 
@@ -38,6 +39,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
       pkg_ver = line.split(/\s*\|\s*/)
       # ignore zypper headers
       next unless pkg_ver[0] == 'v'
+
       avail_updates[pkg_ver[2]] = pkg_ver[4]
     end
 
@@ -70,6 +72,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
       output.lines.each do |line|
         pkg_ver = line.split(/\s*\|\s*/)
         next unless pkg_ver[1] == @resource[:name]
+
         begin
           rpm_version = Puppet::Util::Package::Version::Rpm.parse(pkg_ver[3])
 
@@ -121,7 +124,6 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
 
     inst_opts = []
     inst_opts = install_options if resource[:install_options]
-
 
     options = []
     options << quiet
@@ -178,7 +180,6 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
 
       zypper(*options)
     end
-
   end
 
   def insync?(is)

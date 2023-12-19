@@ -1,11 +1,11 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/application'
 require_relative '../../puppet/configurer'
 require_relative '../../puppet/util/profiler/aggregate'
 require_relative '../../puppet/parser/script_compiler'
 
 class Puppet::Application::Script < Puppet::Application
-
   option("--debug","-d")
   option("--execute EXECUTE","-e") do |arg|
     options[:code] = arg
@@ -138,6 +138,7 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
     else
       manifest = command_line.args.shift
       raise _("Could not find file %{manifest}") % { manifest: manifest } unless Puppet::FileSystem.exist?(manifest)
+
       Puppet.warning(_("Only one file can be used per run. Skipping %{files}") % { files: command_line.args.join(', ') }) if command_line.args.size > 0
     end
 
@@ -212,7 +213,6 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
           topscope.merge_settings(node.environment.name, false)
 
           compiler.compile()
-
         rescue Puppet::Error
           # already logged and handled by the compiler, including Puppet::ParseErrorWithIssue
           exit(1)
@@ -224,7 +224,6 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
         exit(1)
       end
     end
-
   ensure
     if @profiler
       Puppet::Util::Profiler.remove_profiler(@profiler)
@@ -248,7 +247,7 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
     # installed where a settings catalog have already been applied...
     # This saves 1/5th of the startup time
 
-#    Puppet.settings.use :main, :agent, :ssl
+    #    Puppet.settings.use :main, :agent, :ssl
 
     # When running a script, the catalog is not relevant, and neither is caching of it
     Puppet::Resource::Catalog.indirection.cache_class = nil

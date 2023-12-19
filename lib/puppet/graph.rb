@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Graph
   require_relative 'graph/prioritizer'
   require_relative 'graph/sequential_prioritizer'

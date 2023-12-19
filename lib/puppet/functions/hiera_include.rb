@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'hiera/puppet_function'
 
 # Assigns classes to a node using an
@@ -100,6 +101,7 @@ Puppet::Functions.create_function(:hiera_include, Hiera::PuppetFunction) do
 
   def post_lookup(scope, key, value)
     raise Puppet::ParseError, _("Could not find data item %{key}") % { key: key } if value.nil?
+
     call_function_with_scope(scope, 'include', value) unless value.empty?
   end
 end

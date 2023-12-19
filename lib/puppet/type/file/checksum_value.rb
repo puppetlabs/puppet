@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/checksums'
 require_relative '../../../puppet/type/file/data_sync'
 
@@ -24,6 +25,7 @@ module Puppet
 
     def property_matches?(current, desired)
       return true if super(current, desired)
+
       return date_matches?(resource.parameter(:checksum).value, current, desired)
     end
 
@@ -50,6 +52,5 @@ module Puppet
       # so instruct the resource to write its contents.
       contents_sync(resource.parameter(:source))
     end
-
   end
 end

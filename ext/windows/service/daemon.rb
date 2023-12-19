@@ -96,7 +96,6 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
       end
     end
     @run_thread.join
-
   rescue Exception => e
     log_exception(e)
   ensure

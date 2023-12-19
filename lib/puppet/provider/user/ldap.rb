@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/provider/ldap'
 
 Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
@@ -40,6 +41,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
       existing.each do |hash|
         value = hash[:uid]
         next unless value
+
         num = value[0].to_i
         largest = num if num > largest
       end

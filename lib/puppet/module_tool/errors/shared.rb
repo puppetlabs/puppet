@@ -1,6 +1,6 @@
 # frozen_string_literal: true
-module Puppet::ModuleTool::Errors
 
+module Puppet::ModuleTool::Errors
   class NoVersionsSatisfyError < ModuleToolError
     def initialize(options)
       @requested_name    = options[:requested_name]

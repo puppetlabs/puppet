@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/resource'
 
 # The primary difference between this class and its
@@ -34,6 +35,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     if param == :title
       return self.title
     end
+
     if @parameters.has_key?(param)
       @parameters[param].value
     else
@@ -69,6 +71,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   # Retrieve the associated definition and evaluate it.
   def evaluate
     return if evaluated?
+
     Puppet::Util::Profiler.profile(_("Evaluated resource %{res}") % { res: self }, [:compiler, :evaluate_resource, self]) do
       @evaluated = true
       if builtin_type?
@@ -98,6 +101,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   #
   def finish_evaluation
     return if @evaluation_finished
+
     add_scope_tags
     @evaluation_finished = true
   end
@@ -111,6 +115,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   # @api private
   def finish(do_validate = true)
     return if finished?
+
     @finished = true
     finish_evaluation
     replace_sensitive_data
@@ -125,6 +130,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def initialize(type, title, attributes, with_defaults = true)
     raise ArgumentError, _('Resources require a hash as last argument') unless attributes.is_a? Hash
     raise ArgumentError, _('Resources require a scope') unless attributes[:scope]
+
     super(type, title, attributes)
 
     @source ||= scope.source

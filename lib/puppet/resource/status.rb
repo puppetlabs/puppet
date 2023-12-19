@@ -1,11 +1,11 @@
 # frozen_string_literal: true
+
 require 'time'
 require_relative '../../puppet/network/format_support'
 require_relative '../../puppet/util/psych_support'
 
 module Puppet
   class Resource
-
     # This class represents the result of evaluating a given resource. It
     # contains file and line information about the source, events generated
     # while evaluating the resource, timing information, and the status of the

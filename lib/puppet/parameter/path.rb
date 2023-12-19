@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/parameter'
 
 # This specialized {Puppet::Parameter} handles validation and munging of paths.
@@ -12,6 +13,7 @@ class Puppet::Parameter::Path < Puppet::Parameter
   def self.accept_arrays(bool = true)
     @accept_arrays = !!bool
   end
+
   def self.arrays?
     @accept_arrays
   end
@@ -53,6 +55,7 @@ class Puppet::Parameter::Path < Puppet::Parameter
     if paths.is_a?(Array) and ! self.class.arrays? then
       fail _("%{name} only accepts a single path, not an array of paths") % { name: name }
     end
+
     paths
   end
 end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Face.define(:module, '1.0.0') do
   action(:changes) do
     summary _("Show modified files of an installed module.")
@@ -27,6 +28,7 @@ Puppet::Face.define(:module, '1.0.0') do
       unless root_path
         raise ArgumentError, _("Could not find a valid module at %{path}") % { path: path.inspect }
       end
+
       Puppet::ModuleTool::Applications::Checksummer.run(root_path, options)
     end
 

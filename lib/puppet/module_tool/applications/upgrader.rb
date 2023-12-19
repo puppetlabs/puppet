@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'pathname'
 
 require_relative '../../../puppet/forge'
@@ -10,7 +11,6 @@ require_relative '../../../puppet/module_tool/installed_modules'
 module Puppet::ModuleTool
   module Applications
     class Upgrader < Application
-
       include Puppet::ModuleTool::Errors
 
       def initialize(name, options)
@@ -203,7 +203,6 @@ module Puppet::ModuleTool
           results[:base_dir] = releases.first.install_dir
           results[:affected_modules] = releases
           results[:graph] = [ build_install_graph(releases.first, releases) ]
-
         rescue VersionAlreadyInstalledError => e
           results[:result] = (e.newer_versions.empty? ? :noop : :failure)
           results[:error] = { :oneline => e.message, :multiline => e.multiline }
@@ -220,6 +219,7 @@ module Puppet::ModuleTool
       end
 
       private
+
       # rubocop:disable Naming/MemoizedInstanceVariableName
       def module_repository
         @repo ||= Puppet::Forge.new(Puppet[:module_repository])

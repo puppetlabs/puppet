@@ -1,10 +1,10 @@
 # frozen_string_literal: true
+
 require 'rdoc/generators/html_generator'
 require_relative '../../../../puppet/util/rdoc/code_objects'
 require 'digest/md5'
 
 module Generators
-
   # This module holds all the classes needed to generate the HTML documentation
   # of a bunch of puppet manifests.
   #
@@ -52,7 +52,6 @@ module Generators
 
   # This is a specialized HTMLGenerator tailored to Puppet manifests
   class PuppetGenerator < HTMLGenerator
-
     def PuppetGenerator.for(options)
       AllReferences::reset
       HtmlMethod::reset
@@ -116,6 +115,7 @@ module Generators
       # build the modules, classes and per modules classes and define list
       @toplevels.each do |toplevel|
         next unless toplevel.document_self
+
         file = HtmlFile.new(toplevel, @options, FILE_DIR)
         classes = []
         methods = []
@@ -242,7 +242,6 @@ module Generators
           gen_composite_index(
             file,
             RDoc::Page::COMBO_INDEX,
-
             "#{MODULE_DIR}/fr_#{file["file"].context.module_name}.html")
         end
       end
@@ -348,7 +347,6 @@ module Generators
 
       ref
     end
-
   end
 
   # This module is used to generate a referenced full name list of ContextUser
@@ -502,7 +500,6 @@ module Generators
         template = TemplatePage.new(
           RDoc::Page::BODYINC,
           RDoc::Page::NODE_PAGE,
-
           RDoc::Page::METHOD_LIST)
       template.write_html_on(f, @values)
     end
@@ -536,7 +533,6 @@ module Generators
       @values["childs"] = cl unless cl.empty?
 
       @values["sections"] = @context.sections.map do |section|
-
         secdata = {
           "sectitle" => section.title,
           "secsequence" => section.sequence,
@@ -572,6 +568,7 @@ module Generators
       res = []
       atts.each do |att|
         next unless att.section == section
+
         if att.visibility == :public || att.visibility == :protected || @options.show_all
           entry = {
             "name"   => CGI.escapeHTML(att.name),
@@ -649,7 +646,6 @@ module Generators
   end
 
   class HTMLPuppetModule < HtmlClass
-
     def value_hash
       @values = super
 
@@ -696,7 +692,6 @@ module Generators
     def plugins
       @context.plugins
     end
-
   end
 
   class HTMLPuppetPlugin < ContextUser
@@ -746,7 +741,6 @@ module Generators
         template = TemplatePage.new(
           RDoc::Page::BODYINC,
           RDoc::Page::PLUGIN_PAGE,
-
           RDoc::Page::PLUGIN_LIST)
       template.write_html_on(f, @values)
     end
@@ -815,7 +809,6 @@ module Generators
     def <=>(other)
       self.name <=> other.name
     end
-
   end
 
   class HTMLPuppetResource
@@ -897,7 +890,6 @@ module Generators
       res = @context.parent.find_symbol(symbol, method)
       res && res.viewer
     end
-
   end
 
   class PuppetGeneratorInOne < HTMLGeneratorInOne
@@ -905,5 +897,4 @@ module Generators
       gen_an_index(HtmlMethod.all_methods, 'Defines')
     end
   end
-
 end

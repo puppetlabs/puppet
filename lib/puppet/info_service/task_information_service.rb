@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Puppet::InfoService::TaskInformationService
   require_relative '../../puppet/module'
 

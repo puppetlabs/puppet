@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The virtual base class for properties, which are the self-contained building
 # blocks for actually doing work on the system.
 
@@ -98,6 +99,7 @@ class Puppet::Property < Puppet::Parameter
       value = value.intern if value.is_a?(String)
       #TRANSLATORS 'Property#array_matching', 'first', and 'all' should not be translated
       raise ArgumentError, _("Supported values for Property#array_matching are 'first' and 'all'") unless [:first, :all].include?(value)
+
       @array_matching = value
     end
 
@@ -169,6 +171,7 @@ class Puppet::Property < Puppet::Parameter
         if instance_methods(false).include?(method)
           raise ArgumentError, _("Attempt to redefine method %{method} with block") % { method: method }
         end
+
         define_method(method, &value.block)
       else
         # Let the method be an alias for calling the providers setter unless we already have this method

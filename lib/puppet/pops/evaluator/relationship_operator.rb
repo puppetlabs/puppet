@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Evaluator
 # The RelationshipOperator implements the semantics of the -> <- ~> <~ operators creating relationships or notification
@@ -10,7 +11,6 @@ module Evaluator
 # module. Later when more is cleaned up this can be simplified further.
 #
 class RelationshipOperator
-
   # Provides access to the Puppet 3.x runtime (scope, etc.)
   # This separation has been made to make it easier to later migrate the evaluator to an improved runtime.
   #
@@ -18,6 +18,7 @@ class RelationshipOperator
 
   class IllegalRelationshipOperandError < RuntimeError
     attr_reader :operand
+
     def initialize operand
       @operand = operand
     end
@@ -25,6 +26,7 @@ class RelationshipOperator
 
   class NotCatalogTypeError < RuntimeError
     attr_reader :type
+
     def initialize type
       @type = type
     end
@@ -98,6 +100,7 @@ class RelationshipOperator
     unless @type_calculator.assignable?(@catalog_type, o)
       raise NotCatalogTypeError.new(o)
     end
+
     # TODO must check if this is an abstract PResourceType (i.e. without a type_name) - which should fail ?
     # e.g. File -> File (and other similar constructs) - maybe the catalog protects against this since references
     # may be to future objects...
@@ -170,7 +173,6 @@ class RelationshipOperator
         result = right
       end
       result
-
     rescue NotCatalogTypeError => e
       fail(Issues::NOT_CATALOG_TYPE, relationship_expression, {:type => @type_calculator.string(e.type)})
     rescue IllegalRelationshipOperandError => e

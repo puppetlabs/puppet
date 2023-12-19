@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/command_line/trollop'
 
 module Puppet
@@ -24,7 +25,6 @@ module Puppet
           @parser = Trollop::Parser.new do
             banner usage_msg
           end
-
         end
 
         # This parameter, if set, will tell the underlying option parser not to throw an

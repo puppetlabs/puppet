@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'timeout'
 
 # Solaris 10 SMF-style services.
@@ -130,6 +131,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
 
   def enabled?
     return :false unless service_exists?
+
     _property, _type, value = svccfg("-s", self.service_fmri, "listprop", "general/enabled").split(' ')
     value == 'true' ? :true : :false
   end
@@ -168,6 +170,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
       loop do
         states = self.service_states
         break if desired_states.include?(states[:current]) && states[:next].nil?
+
         Kernel.sleep(1)
       end
     end

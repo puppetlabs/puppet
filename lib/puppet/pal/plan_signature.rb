@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
 module Pal
   # A PlanSignature is returned from `plan_signature`. Its purpose is to answer questions about the plans's parameters
@@ -48,6 +49,7 @@ module Pal
 
       errors = Puppet::Pops::Types::TypeMismatchDescriber.singleton.describe_struct_signature(dispatcher.params_struct, param_scope).flatten
       return true if errors.empty?
+
       if block_given?
         yield errors.map {|e| e.format }.join("\n")
       end
@@ -67,6 +69,5 @@ module Pal
       dispatcher.params_struct
     end
   end
-
 end
 end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet'
 require_relative '../../puppet/file_serving'
 require_relative '../../puppet/file_serving/mount'
@@ -22,6 +23,7 @@ class Puppet::FileServing::Configuration
   private_class_method  :new
 
   attr_reader :mounts
+
   #private :mounts
 
   # Find the right mount.  Does some shenanigans to support old-style module
@@ -59,6 +61,7 @@ class Puppet::FileServing::Configuration
 
     mount = find_mount(mount_name, request.environment)
     return nil unless mount
+
     if mount.name == "modules" and mount_name != "modules"
       # yay backward-compatibility
       path = "#{mount_name}/#{path}"
@@ -106,7 +109,6 @@ class Puppet::FileServing::Configuration
     rescue => detail
       Puppet.log_exception(detail, _("Error parsing fileserver configuration: %{detail}; using old configuration") % { detail: detail })
     end
-
   ensure
     # Make sure we've got our plugins and modules.
     mk_default_mounts

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/json'
 require_relative '../../../puppet/module_tool/checksums'
 
 module Puppet::ModuleTool
   module Applications
     class Checksummer < Application
-
       def initialize(path, options = {})
         @path = Pathname.new(path)
         super(options)
@@ -15,7 +15,6 @@ module Puppet::ModuleTool
         changes = []
         sums = Puppet::ModuleTool::Checksums.new(@path)
         checksums.each do |child_path, canonical_checksum|
-
           # Avoid checksumming the checksums.json file
           next if File.basename(child_path) == "checksums.json"
 

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Puppet::Confine::Any < Puppet::Confine
   def self.summarize(confines)
     confines.inject(0) { |count, confine| count + confine.summary }

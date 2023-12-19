@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 module Puppet::Pops
@@ -139,9 +140,10 @@ class TypeCalculator
       o.instance_of?(Array) ||
       o.instance_of?(Hash) ||
       Types::PUndefType::DEFAULT.instance?(o)
-      )
+       )
       return nil
     end
+
     # For other objects (e.g. PObjectType instances, and runtime types) full inference needed, since that will
     # cover looking into the runtime type registry.
     #
@@ -197,6 +199,7 @@ class TypeCalculator
   # Answers if the two given types describe the same type
   def equals(left, right)
     return false unless left.is_a?(PAnyType) && right.is_a?(PAnyType)
+
     # Types compare per class only - an extra test must be made if the are mutually assignable
     # to find all types that represent the same type of instance
     #
@@ -455,6 +458,7 @@ class TypeCalculator
       if t1.runtime == t2.runtime && t1.runtime_type_name == t2.runtime_type_name
         return t1
       end
+
       # finding the common super class requires that names are resolved to class
       # NOTE: This only supports runtime type of :ruby
       c1 = ClassLoader.provide_from_type(t1)
@@ -528,9 +532,11 @@ class TypeCalculator
     else
       name = o.class.name
       return PRuntimeType.new(:ruby, nil) if name.nil? # anonymous class that doesn't implement PuppetObject is impossible to infer
+
       ir = Loaders.implementation_registry
       type = ir.nil? ? nil : ir.type_for_module(name)
       return PRuntimeType.new(:ruby, name) if type.nil?
+
       if type.is_a?(PObjectType) && type.parameterized?
         type = PObjectTypeExtension.create_from_instance(type, o)
       end
@@ -750,6 +756,7 @@ class TypeCalculator
   #
   def size_range(range)
     return [1,1] if range.nil?
+
     from = range.from
     to = range.to
     x = from.nil? ? 1 : from
@@ -817,7 +824,6 @@ class TypeCalculator
   def common_numeric?(t1, t2)
     PNumericType::DEFAULT.assignable?(t1) && PNumericType::DEFAULT.assignable?(t2)
   end
-
 end
 end
 end

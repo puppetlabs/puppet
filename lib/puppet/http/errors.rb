@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::HTTP
   # A base class for puppet http errors
   # @api public

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/external/dot'
 require_relative '../../puppet/relationship'
 require 'set'
@@ -279,6 +280,7 @@ class Puppet::Graph::SimpleGraph
   # Remove a vertex from the graph.
   def remove_vertex!(v)
     return unless vertex?(v)
+
     @upstream_from.clear
     @downstream_from.clear
     (@in_to[v].values+@out_from[v].values).flatten.each { |e| remove_edge!(e) }
@@ -300,6 +302,7 @@ class Puppet::Graph::SimpleGraph
   # since they have to specify what kind of edge it is.
   def add_edge(e,*a)
     return add_relationship(e,*a) unless a.empty?
+
     e = Puppet::Relationship.from_data_hash(e) if e.is_a?(Hash)
     @upstream_from.clear
     @downstream_from.clear
@@ -348,6 +351,7 @@ class Puppet::Graph::SimpleGraph
   def adjacent(v, options = {})
     ns = (options[:direction] == :in) ? @in_to[v] : @out_from[v]
     return [] unless ns
+
     (options[:type] == :edges) ? ns.values.flatten : ns.keys
   end
 
@@ -361,6 +365,7 @@ class Puppet::Graph::SimpleGraph
     until stack.empty?
       node = stack.shift
       next if seen.member? node
+
       connected = adjacent(node, :direction => direction)
       connected.each do |target|
         yield node, target
@@ -382,6 +387,7 @@ class Puppet::Graph::SimpleGraph
 
   def downstream_from_vertex(v)
     return @downstream_from[v] if @downstream_from[v]
+
     result = @downstream_from[v] = {}
     @out_from[v].keys.each do |node|
       result[node] = 1
@@ -396,6 +402,7 @@ class Puppet::Graph::SimpleGraph
 
   def upstream_from_vertex(v)
     return @upstream_from[v] if @upstream_from[v]
+
     result = @upstream_from[v] = {}
     @in_to[v].keys.each do |node|
       result[node] = 1
@@ -507,26 +514,26 @@ class Puppet::Graph::SimpleGraph
   def to_data_hash
     hash = { 'edges' => edges.map(&:to_data_hash) }
     hash['vertices'] = if self.class.use_new_yaml_format
-      vertices
-    else
-      # Represented in YAML using the old (version 2.6) format.
-      result = {}
-      vertices.each do |vertex|
-        adjacencies = {}
-        [:in, :out].each do |direction|
-          direction_hash = {}
-          adjacencies[direction.to_s] = direction_hash
-          adjacent(vertex, :direction => direction, :type => :edges).each do |edge|
-            other_vertex = direction == :in ? edge.source : edge.target
-            (direction_hash[other_vertex.to_s] ||= []) << edge
-          end
-          direction_hash.each_pair { |key, edges| direction_hash[key] = edges.uniq.map(&:to_data_hash) }
-        end
-        vname = vertex.to_s
-        result[vname] = { 'adjacencies' => adjacencies, 'vertex' => vname }
-      end
-      result
-    end
+                         vertices
+                       else
+                         # Represented in YAML using the old (version 2.6) format.
+                         result = {}
+                         vertices.each do |vertex|
+                           adjacencies = {}
+                           [:in, :out].each do |direction|
+                             direction_hash = {}
+                             adjacencies[direction.to_s] = direction_hash
+                             adjacent(vertex, :direction => direction, :type => :edges).each do |edge|
+                               other_vertex = direction == :in ? edge.source : edge.target
+                               (direction_hash[other_vertex.to_s] ||= []) << edge
+                             end
+                             direction_hash.each_pair { |key, edges| direction_hash[key] = edges.uniq.map(&:to_data_hash) }
+                           end
+                           vname = vertex.to_s
+                           result[vname] = { 'adjacencies' => adjacencies, 'vertex' => vname }
+                         end
+                         result
+                       end
     hash
   end
 

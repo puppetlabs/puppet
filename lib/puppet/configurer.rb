@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The client for interacting with the puppetmaster config server.
 require 'timeout'
 require_relative '../puppet/util'
@@ -445,6 +446,7 @@ class Puppet::Configurer
         if tries > 3
           raise Puppet::Error, _("Catalog environment didn't stabilize after %{tries} fetches, aborting run") % { tries: tries }
         end
+
         Puppet.notice _("Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'") % { local_env: @environment, catalog_env: catalog.environment }
         @environment = catalog.environment
         report.environment = @environment
@@ -457,6 +459,7 @@ class Puppet::Configurer
         # if we get here, ignore the cached catalog
         catalog = prepare_and_retrieve_catalog(nil, facts, options, query_options)
         return nil unless catalog
+
         tries += 1
       end
 
@@ -579,6 +582,7 @@ class Puppet::Configurer
     if Puppet::FileSystem.exist?(Puppet[:lastrunfile])
       summary = Puppet::Util::Yaml.safe_load_file(Puppet[:lastrunfile])
       return [nil, nil] unless summary['application']['run_mode'] == 'agent'
+
       initial_environment = summary['application']['initial_environment']
       converged_environment = summary['application']['converged_environment']
       @last_server_specified_environment = converged_environment if initial_environment != converged_environment

@@ -1,10 +1,10 @@
 # frozen_string_literal: true
+
 # Puppet package provider for Python's `pip2` package management frontend.
 # <http://pip.pypa.io/>
 
 Puppet::Type.type(:package).provide :pip2,
                                     :parent => :pip do
-
   desc "Python packages via `pip2`.
 
   This provider supports the `install_options` attribute, which allows command-line flags to be passed to pip2.

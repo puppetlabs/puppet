@@ -1,6 +1,6 @@
 # frozen_string_literal: true
-Puppet::Type.type(:service).provide :freebsd, :parent => :init do
 
+Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   desc "Provider for FreeBSD and DragonFly BSD. Uses the `rcvar` argument of init scripts and parses/edits rc files."
 
   confine 'os.name' => [:freebsd, :dragonfly]
@@ -140,5 +140,4 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   def statuscmd
     [self.initscript, :onestatus]
   end
-
 end

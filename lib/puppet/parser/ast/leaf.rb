@@ -1,10 +1,12 @@
 # frozen_string_literal: true
+
 # The base class for all of the leaves of the parse trees.  These
 # basically just have types and values.  Both of these parameters
 # are simple values, not AST objects.
 #
 class Puppet::Parser::AST::Leaf < Puppet::Parser::AST
   attr_accessor :value, :type
+
   # Return our value.
   def evaluate(scope)
     @value

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
-Puppet::Type.type(:service).provide :openbsd, :parent => :init do
 
+Puppet::Type.type(:service).provide :openbsd, :parent => :init do
   desc "Provider for OpenBSD's rc.d daemon control scripts"
 
   commands :rcctl => '/usr/sbin/rcctl'

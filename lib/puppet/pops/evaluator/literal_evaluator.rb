@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Evaluator
 # Literal values for
@@ -16,7 +17,6 @@ module Evaluator
 # QualifiedReference  # i.e. File, FooBar
 #
 class LiteralEvaluator
-
   COMMA_SEPARATOR = ', '
 
   def initialize

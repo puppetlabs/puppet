@@ -1,9 +1,9 @@
 # frozen_string_literal: true
+
 require 'fileutils'
 require_relative '../../puppet/util/lockfile'
 
 class Puppet::Util::Pidlock
-
   def initialize(lockfile)
     @lockfile = Puppet::Util::Lockfile.new(lockfile)
   end

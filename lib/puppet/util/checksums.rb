@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'digest/md5'
 require 'digest/sha1'
 require 'time'
@@ -232,6 +233,7 @@ module Puppet::Util::Checksums
 
   def mtime?(string)
     return true if string.is_a? Time
+
     !!DateTime.parse(string)
   rescue
     false
@@ -302,6 +304,7 @@ module Puppet::Util::Checksums
 
   def ctime?(string)
     return true if string.is_a? Time
+
     !!DateTime.parse(string)
   rescue
     false
@@ -373,5 +376,4 @@ module Puppet::Util::Checksums
     block.call(DigestLite.new(digest, lite))
     digest.hexdigest
   end
-
 end

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/ssl'
 
 # Verify an SSL connection.
 #
 # @api private
 class Puppet::SSL::Verifier
-
   FIVE_MINUTES_AS_SECONDS = 5 * 60
 
   attr_reader :ssl_context

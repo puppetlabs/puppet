@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/util/docs'
 require_relative '../../puppet/util/profiler'
 require_relative '../../puppet/indirector/envelope'
@@ -33,12 +34,14 @@ class Puppet::Indirector::Indirection
   def self.model(name)
     match = @@indirections.find { |i| i.name == name }
     return nil unless match
+
     match.model
   end
 
   # Create and return our cache terminus.
   def cache
     raise Puppet::DevError, _("Tried to cache when no cache class was set") unless cache_class
+
     terminus(cache_class)
   end
 
@@ -66,6 +69,7 @@ class Puppet::Indirector::Indirection
   def ttl=(value)
     #TRANSLATORS "TTL" stands for "time to live" and refers to a duration of time
     raise ArgumentError, _("Indirection TTL must be an integer") unless value.is_a?(Integer)
+
     @ttl = value
   end
 
@@ -101,6 +105,7 @@ class Puppet::Indirector::Indirection
     @doc = doc
 
     raise(ArgumentError, _("Indirection %{name} is already defined") % { name: @name }) if @@indirections.find { |i| i.name == @name }
+
     @@indirections << self
 
     @indirected_class = indirected_class
@@ -178,6 +183,7 @@ class Puppet::Indirector::Indirection
     unless terminus_class and terminus_class.to_s != ""
       raise ArgumentError, _("Invalid terminus name %{terminus_class}") % { terminus_class: terminus_class.inspect }
     end
+
     unless Puppet::Indirector::Terminus.terminus_class(self.name, terminus_class)
       raise ArgumentError, _("Could not find terminus %{terminus_class} for indirection %{name}") %
           { terminus_class: terminus_class, name: self.name }
@@ -265,6 +271,7 @@ class Puppet::Indirector::Indirection
     # See if our instance is in the cache and up to date.
     cached = cache.find(request) if cache? && ! request.ignore_cache?
     return nil unless cached
+
     if cached.expired?
       Puppet.info _("Not using expired %{indirection} for %{request} from cache; expired at %{expiration}") % { indirection: self.name, request: request.key, expiration: cached.expiration }
       return nil
@@ -300,8 +307,10 @@ class Puppet::Indirector::Indirection
     result = terminus.search(request)
     if result
       raise Puppet::DevError, _("Search results from terminus %{terminus_name} are not an array") % { terminus_name: terminus.name } unless result.is_a?(Array)
+
       result.each do |instance|
         next unless instance.respond_to? :expiration
+
         instance.expiration ||= self.expiration
       end
       return result
@@ -368,6 +377,7 @@ class Puppet::Indirector::Indirection
     unless klass
       raise ArgumentError, _("Could not find terminus %{terminus_class} for indirection %{indirection}") % { terminus_class: terminus_class, indirection: self.name }
     end
+
     klass.new
   end
 end

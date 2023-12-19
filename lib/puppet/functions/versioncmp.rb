@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/util/package'
 
 # Compares two version numbers.
@@ -28,7 +29,6 @@ require_relative '../../puppet/util/package'
 # `package` type.
 #
 Puppet::Functions.create_function(:versioncmp) do
-
   dispatch :versioncmp do
     param 'String', :a
     param 'String', :b

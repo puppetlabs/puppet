@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+
 require 'rubygems'
 require 'rspec'
 require 'rspec/core/formatters/progress_formatter'
@@ -23,6 +24,7 @@ module Parallel
         dump_failure_info(example)
       end
     end
+
     #
     # Responsible for running spec files given a spec file.
     # Can supply an optional list of additional options (used when running in CI).

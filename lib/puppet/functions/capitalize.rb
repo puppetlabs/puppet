@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Capitalizes the first character of a String, or the first character of every String in an Iterable value (such as an Array).
 #
 # This function is compatible with the stdlib function with the same name.
@@ -29,7 +30,6 @@
 # Would both result in `['Abc', 'Bcd']`
 #
 Puppet::Functions.create_function(:capitalize) do
-
   dispatch :on_numeric do
     param 'Numeric', :arg
   end

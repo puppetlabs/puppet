@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Returns a flat Array produced from its possibly deeply nested given arguments.
 #
 # One or more arguments of any data type can be given to this function.

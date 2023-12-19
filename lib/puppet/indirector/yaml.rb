@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/indirector/terminus'
 require_relative '../../puppet/util/yaml'
 

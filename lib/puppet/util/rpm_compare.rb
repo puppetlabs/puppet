@@ -1,6 +1,6 @@
 # frozen_string_literal: true
-module Puppet::Util::RpmCompare
 
+module Puppet::Util::RpmCompare
   ARCH_LIST = %w(
     noarch i386 i686 ppc ppc64 armv3l armv4b armv4l armv4tl armv5tel
     armv5tejl armv6l armv7l m68kmint s390 s390x ia64 x86_64 sh3 sh4
@@ -84,6 +84,7 @@ module Puppet::Util::RpmCompare
       # where alpha also includes ''; "numeric segments are always newer than alpha segments"
       if segment2.length == 0
         return 1 if isnum
+
         return -1
       end
 
@@ -106,6 +107,7 @@ module Puppet::Util::RpmCompare
     # if we haven't returned anything yet, "whichever version still has characters left over wins"
     return 1 if str1.length > str2.length
     return -1 if str1.length < str2.length
+
     0
   end
 
@@ -149,6 +151,7 @@ module Puppet::Util::RpmCompare
     return 0 if s1.nil? && s2.nil?
     return 1 if ( not s1.nil? ) && s2.nil?
     return -1 if s1.nil? && (not s2.nil?)
+
     return rpmvercmp(s1, s2)
   end
 

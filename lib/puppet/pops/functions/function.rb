@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # @note WARNING: This new function API is still under development and may change at
 #   any time
 #
@@ -105,7 +106,6 @@ class Puppet::Pops::Functions::Function
   #
   # @api public
   def internal_call_function(scope, function_name, args, &block)
-
     the_loader = loader
     unless the_loader
       raise ArgumentError, _("Function %{class_name}(): cannot call function '%{function_name}' - no loader specified") %
@@ -136,5 +136,4 @@ class Puppet::Pops::Functions::Function
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(function_name) ? result : nil
   end
-
 end

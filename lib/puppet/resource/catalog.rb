@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/node'
 require_relative '../../puppet/indirector'
 require_relative '../../puppet/transaction'
@@ -199,6 +200,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     existing = @resource_table[newref]
     if existing
       return if existing == resource
+
       resource_declaration = Puppet::Util::Errors.error_location(resource.file, resource.line)
       msg = if resource_declaration.empty?
               #TRANSLATORS 'alias' should not be translated
@@ -290,6 +292,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     unless klass
       raise ArgumentError, _("Unknown resource type %{type}") % { type: type }
     end
+
     resource = klass.new(options)
     return unless resource
 
@@ -539,6 +542,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     Puppet::FileSystem.open(resourcefile.value, resourcefile.mode.to_i(8), "w:UTF-8") do |f|
       to_print = resources.map do |resource|
         next unless resource.managed?
+
         "#{resource.ref.downcase}"
       end.compact
       f.puts to_print.join("\n")

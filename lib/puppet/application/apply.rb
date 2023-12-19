@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/application'
 require_relative '../../puppet/configurer'
 require_relative '../../puppet/util/profiler/aggregate'
@@ -310,7 +311,6 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
     Puppet.settings.use :main, :agent, :ssl
 
-
     if Puppet[:catalog_cache_terminus]
       Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus]
     end
@@ -382,6 +382,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   def get_node()
     node = Puppet::Node.indirection.find(Puppet[:node_name_value])
     raise _("Could not find node %{node}") % { node: Puppet[:node_name_value] } unless node
+
     node
   end
 
@@ -395,6 +396,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
     else
       manifest = command_line.args.shift
       raise _("Could not find file %{manifest}") % { manifest: manifest } unless Puppet::FileSystem.exist?(manifest)
+
       Puppet.warning(_("Only one file can be applied per run.  Skipping %{files}") % { files: command_line.args.join(', ') }) if command_line.args.size > 0
     end
     manifest

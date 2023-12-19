@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/node'
 require_relative '../../../puppet/indirector/exec'
 
@@ -10,6 +11,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
   def command
     command = Puppet[:external_nodes]
     raise ArgumentError, _("You must set the 'external_nodes' parameter to use the external node terminus") unless command != _("none")
+
     command.split
   end
 
@@ -64,7 +66,6 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
 
       hash
     end
-
   rescue => detail
       raise Puppet::Error, _("Could not load external node results for %{name}: %{detail}") % { name: name, detail: detail }, detail.backtrace
   end

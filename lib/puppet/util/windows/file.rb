@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/ffi/windows'
 
 module Puppet::Util::Windows::File
@@ -28,6 +29,7 @@ module Puppet::Util::Windows::File
     )
 
     return true if result != FFI::WIN32_FALSE
+
     raise Puppet::Util::Windows::Error.new("ReplaceFile(#{target}, #{source})")
   end
   module_function :replace_file
@@ -38,8 +40,9 @@ module Puppet::Util::Windows::File
                          flags)
 
     return true if result != FFI::WIN32_FALSE
-    raise Puppet::Util::Windows::Error.
-      new("MoveFileEx(#{source}, #{target}, #{flags.to_s(8)})")
+
+    raise Puppet::Util::Windows::Error
+      .new("MoveFileEx(#{source}, #{target}, #{flags.to_s(8)})")
   end
   module_function :move_file_ex
 
@@ -48,6 +51,7 @@ module Puppet::Util::Windows::File
     result = CreateSymbolicLinkW(wide_string(symlink.to_s),
                                  wide_string(target.to_s), flags)
     return true if result != FFI::WIN32_FALSE
+
     raise Puppet::Util::Windows::Error.new(
       "CreateSymbolicLink(#{symlink}, #{target}, #{flags.to_s(8)})")
   end
@@ -131,6 +135,7 @@ module Puppet::Util::Windows::File
                          flags_and_attributes, template_file_handle)
 
     return result unless result == INVALID_HANDLE_VALUE
+
     raise Puppet::Util::Windows::Error.new(
       "CreateFile(#{file_name}, #{desired_access.to_s(8)}, #{share_mode.to_s(8)}, " +
         "#{security_attributes}, #{creation_disposition.to_s(8)}, " +
@@ -206,6 +211,7 @@ module Puppet::Util::Windows::File
     attributes = get_attributes(file_name, false)
 
     return false if (attributes == INVALID_FILE_ATTRIBUTES)
+
     (attributes & FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT
   end
   module_function :reparse_point?

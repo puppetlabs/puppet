@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/windows/monkey_patches/process'
 require_relative '../../../puppet/ffi/windows'
 
@@ -46,6 +47,7 @@ module Puppet::Util::Windows::Process
       if GetExitCodeProcess(handle, exit_status_ptr) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new(_("Failed to get child process exit code"))
       end
+
       exit_status = exit_status_ptr.read_dword
 
       # $CHILD_STATUS is not set when calling win32/process Process.create
@@ -153,7 +155,7 @@ module Puppet::Util::Windows::Process
         wide_string(system_name),
         wide_string(name.to_s),
         luid_ptr
-        )
+      )
 
       if result == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new(
@@ -361,5 +363,4 @@ module Puppet::Util::Windows::Process
     windows_major_version >= 6
   end
   module_function :supports_elevated_security?
-
 end

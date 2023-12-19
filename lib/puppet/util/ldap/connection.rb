@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/ldap'
 
 class Puppet::Util::Ldap::Connection
@@ -9,12 +10,12 @@ class Puppet::Util::Ldap::Connection
   # Return a default connection, using our default settings.
   def self.instance
     ssl = if Puppet[:ldaptls]
-      :tls
-        elsif Puppet[:ldapssl]
-          true
-        else
-          false
-        end
+            :tls
+          elsif Puppet[:ldapssl]
+            true
+          else
+            false
+          end
 
     options = {}
     options[:ssl] = ssl

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/module_tool'
 require_relative '../../puppet/module_tool/errors'
 
@@ -9,6 +10,7 @@ module Puppet
       include Puppet::ModuleTool::Errors
 
       attr_reader :target
+
       def initialize(target)
         @target = target
       end

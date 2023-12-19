@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 unless Puppet::Util::Platform.jruby_fips?
   require 'rubygems/commands/list_command'
 end

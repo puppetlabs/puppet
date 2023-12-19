@@ -10,7 +10,6 @@
 module Puppet::Pops
 module Loader
 module LoaderPaths
-
   # Returns an array of SmartPath, each instantiated with a reference to the given loader (for root path resolution
   # and existence checks). The smart paths in the array appear in precedence order. The returned array may be
   # mutated.
@@ -45,14 +44,14 @@ module LoaderPaths
     result
   end
 
-#  # DO NOT REMOVE YET. needed later? when there is the need to decamel a classname
-#  def de_camel(fq_name)
-#    fq_name.to_s.gsub(/::/, '/').
-#    gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
-#    gsub(/([a-z\d])([A-Z])/,'\1_\2').
-#    tr("-", "_").
-#    downcase
-#  end
+  #  # DO NOT REMOVE YET. needed later? when there is the need to decamel a classname
+  #  def de_camel(fq_name)
+  #    fq_name.to_s.gsub(/::/, '/').
+  #    gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
+  #    gsub(/([a-z\d])([A-Z])/,'\1_\2').
+  #    tr("-", "_").
+  #    downcase
+  #  end
 
   class SmartPath
     # Creates SmartPath for the given loader (loader knows how to check for existence etc.)
@@ -147,6 +146,7 @@ module LoaderPaths
       parts = typed_name.name_parts
       if start_index_in_name > 0
         return nil if start_index_in_name >= parts.size
+
         parts = parts[start_index_in_name..-1]
       end
       "#{File.join(generic_path, parts)}#{extension}"
@@ -370,6 +370,7 @@ module LoaderPaths
       parts = typed_name.name_parts
       if start_index_in_name > 0
         return nil if start_index_in_name >= parts.size
+
         parts = parts[start_index_in_name..-1]
       end
       basename = File.join(generic_path, parts)

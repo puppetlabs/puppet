@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/util/json_lockfile'
 
 # This module is responsible for encapsulating the logic for
@@ -41,9 +42,9 @@ module Puppet::Agent::Disabler
     if data.has_key?(DISABLED_MESSAGE_JSON_KEY)
       return data[DISABLED_MESSAGE_JSON_KEY]
     end
+
     nil
   end
-
 
   def disable_lockfile
     @disable_lockfile ||= Puppet::Util::JsonLockfile.new(Puppet[:agent_disabled_lockfile])

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'optparse'
 require_relative '../puppet/util/command_line'
 require_relative '../puppet/util/constant_inflector'
@@ -6,7 +7,6 @@ require_relative '../puppet/error'
 require_relative '../puppet/application_support'
 
 module Puppet
-
 # Defines an abstract Puppet application.
 #
 # # Usage
@@ -170,6 +170,7 @@ class Application
     # Thus, long-running background processes can potentially finish their work before a restart.
     def controlled_run(&block)
       return unless clear?
+
       result = block.call
       Process.kill(:HUP, $PID) if restart_requested?
       result
@@ -304,6 +305,7 @@ class Application
     # @api public
     def environment_mode(mode_name)
       raise Puppet::Error, _("Invalid environment mode '%{mode_name}'") % { mode_name: mode_name } unless [:local, :remote, :not_required].include?(mode_name)
+
       @environment_mode = mode_name
     end
 
@@ -364,7 +366,7 @@ class Application
   def app_defaults
     Puppet::Settings.app_defaults_for_run_mode(self.class.run_mode).merge(
         :name => name
-    )
+      )
   end
 
   # Initialize application defaults. It's usually not necessary to override this method.
@@ -399,7 +401,6 @@ class Application
   # @return [void]
   # @api public
   def run
-
     # I don't really like the names of these lifecycle phases.  It would be nice to change them to some more meaningful
     # names, and make deprecated aliases.  --cprice 2012-03-16
 

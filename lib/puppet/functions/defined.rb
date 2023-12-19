@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Determines whether a given class or resource type is defined and returns a Boolean
 # value. You can also use `defined` to determine whether a specific resource is defined,
 # or whether a variable has a value (including `undef`, as opposed to the variable never
@@ -101,7 +102,6 @@
 # @since 4.0.0
 #
 Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunction) do
-
   dispatch :is_defined do
     scope_param
     required_repeated_param 'Variant[String, Type[CatalogEntry], Type[Type[CatalogEntry]]]', :vals
@@ -131,11 +131,13 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
 
       when Puppet::Pops::Types::PResourceType
         raise ArgumentError, _('The given resource type is a reference to all kind of types') if val.type_name.nil?
+
         type = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, val.type_name)
         val.title.nil? ? type : scope.compiler.findresource(type, val.title)
 
       when Puppet::Pops::Types::PClassType
         raise  ArgumentError, _('The given class type is a reference to all classes') if val.class_name.nil?
+
         scope.compiler.findresource(:class, val.class_name)
 
       when Puppet::Pops::Types::PTypeType
@@ -150,6 +152,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
           # (this is the same as asking for just the class' name, but with the added certainty that it cannot be a defined type.
           #
           raise  ArgumentError, _('The given class type is a reference to all classes') if val.type.class_name.nil?
+
           Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_hostclass(scope, val.type.class_name)
         end
       else

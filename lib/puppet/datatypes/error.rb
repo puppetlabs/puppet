@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::DataTypes.create_type('Error') do
   interface <<-PUPPET
     type_parameters => {

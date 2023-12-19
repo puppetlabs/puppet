@@ -1,9 +1,9 @@
 # frozen_string_literal: true
+
 require 'timeout'
 
 # AIX System Resource controller (SRC)
 Puppet::Type.type(:service).provide :src, :parent => :base do
-
   desc "Support for AIX's System Resource controller.
 
   Services are started/stopped based on the `stopsrc` and `startsrc`
@@ -74,6 +74,7 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
       loop do
         status = self.status
         break if status == desired_state.to_sym
+
         sleep(1)
       end
     end
@@ -143,6 +144,5 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
     self.debug(detail.message)
     return :stopped
   end
-
 end
 

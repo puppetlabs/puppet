@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'etc'
 require_relative '../../puppet/parameter/boolean'
 require_relative '../../puppet/property/list'
@@ -193,6 +194,7 @@ module Puppet
         if !@should.empty? && provider.respond_to?(:comments_insync?)
           return provider.comments_insync?(is, @should)
         end
+
         super(is)
       end
 
@@ -203,6 +205,7 @@ module Puppet
         if newvalue.is_a?(String) && !Encoding.compatible?(currentvalue, newvalue)
           return super(currentvalue, newvalue.dup.force_encoding(currentvalue.encoding))
         end
+
         super(currentvalue, newvalue)
       end
     end
@@ -733,10 +736,10 @@ module Puppet
         if [ :true, :false ].include? value.to_s.intern
           return
         end
+
         value = [ value ] if value.is_a?(String)
         if value.is_a?(Array)
           value.each do |entry|
-
             raise ArgumentError, _("Each entry for purge_ssh_keys must be a string, not a %{klass}") % { klass: entry.class } unless entry.is_a?(String)
 
             valid_home = Puppet::Util.absolute_path?(entry) || entry =~ %r{^~/|^%h/}
@@ -806,10 +809,10 @@ module Puppet
     # @see generate
     # @api private
     def find_unmanaged_keys
-      self[:purge_ssh_keys].
-        select { |f| File.readable?(f) }.
-        map { |f| unknown_keys_in_file(f) }.
-        flatten.each do |res|
+      self[:purge_ssh_keys]
+        .select { |f| File.readable?(f) }
+        .map { |f| unknown_keys_in_file(f) }
+        .flatten.each do |res|
           res[:ensure] = :absent
           res[:user] = self[:name]
           res.copy_metaparams(@parameters)
@@ -835,6 +838,7 @@ module Puppet
       # the authorized_keys file may contain UTF-8 comments
       Puppet::FileSystem.open(keyfile, nil, 'r:UTF-8').each do |line|
         next unless line =~ Puppet::Type.type(:ssh_authorized_key).keyline_regex
+
         # the name is stored in the 4th capture of the regex
         name = $4
         if name.empty?

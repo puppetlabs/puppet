@@ -1,14 +1,15 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/network/format_handler'
 require_relative '../../puppet/util/json'
 
 Puppet::Network::FormatHandler.create_serialized_formats(:msgpack, :weight => 20, :mime => "application/x-msgpack", :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
-
   confine :feature => :msgpack
 
   def intern(klass, text)
     data = MessagePack.unpack(text)
     return data if data.is_a?(klass)
+
     klass.from_data_hash(data)
   end
 
@@ -113,6 +114,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :
       data = d
     end
     return data if data.is_a?(klass)
+
     klass.from_data_hash(data)
   end
 end
@@ -136,13 +138,13 @@ Puppet::Network::FormatHandler.create_serialized_formats(:json, :mime => 'applic
   # have never supported JSON
   def data_to_instance(klass, data)
     return data if data.is_a?(klass)
+
     klass.from_data_hash(data)
   end
 end
 
 # This is really only ever going to be used for Catalogs.
 Puppet::Network::FormatHandler.create_serialized_formats(:dot, :required_methods => [:render_method])
-
 
 Puppet::Network::FormatHandler.create(:console,
                                       :mime   => 'text/x-console-text',
@@ -160,8 +162,8 @@ Puppet::Network::FormatHandler.create(:console,
       column_a = datum.empty? ? 2 : datum.map{ |k,_v| k.to_s.length }.max + 2
       datum.sort_by { |k,_v| k.to_s } .each do |key, value|
         output << key.to_s.ljust(column_a)
-        output << json.render(value).
-          chomp.gsub(/\n */) { |x| x + (' ' * column_a) }
+        output << json.render(value)
+          .chomp.gsub(/\n */) { |x| x + (' ' * column_a) }
         output << "\n"
       end
       return output
@@ -189,7 +191,6 @@ end
 Puppet::Network::FormatHandler.create(:flat,
                                       :mime   => 'text/x-flat-text',
                                       :weight => 0) do
-
   def flatten_hash(hash)
     hash.each_with_object({}) do |(k, v), h|
       if v.is_a? Hash
@@ -237,6 +238,7 @@ Puppet::Network::FormatHandler.create(:flat,
 
   def render(datum)
     return datum if datum.is_a?(String) || datum.is_a?(Numeric)
+
     # Simple hash
     if datum.is_a?(Hash)
       data = flatten_hash(datum)
@@ -247,11 +249,11 @@ Puppet::Network::FormatHandler.create(:flat,
     end
     Puppet::Util::Json.dump(datum, :pretty => true, :quirks_mode => true)
   end
+
   def render_multiple(data)
     data.collect(&:render).join("\n")
   end
 end
-
 
 Puppet::Network::FormatHandler.create(:rich_data_json, mime: 'application/vnd.puppet.rich+json', charset: Encoding::UTF_8, weight: 30) do
   def intern(klass, text)
@@ -283,6 +285,7 @@ Puppet::Network::FormatHandler.create(:rich_data_json, mime: 'application/vnd.pu
   def data_to_instance(klass, data)
     Puppet.override({:rich_data => true}) do
       return data if data.is_a?(klass)
+
       klass.from_data_hash(data)
     end
   end
@@ -300,6 +303,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:rich_data_msgpack, mim
     Puppet.override(rich_data: true) do
       data = MessagePack.unpack(text)
       return data if data.is_a?(klass)
+
       klass.from_data_hash(data)
     end
   end

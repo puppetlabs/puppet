@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/application'
 
 class Puppet::Application::Filebucket < Puppet::Application
@@ -209,11 +210,11 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
     HELP
   end
 
-
   def run_command
     @args = command_line.args
     command = args.shift
     return send(command) if %w{get backup restore diff list}.include? command
+
     help
   end
 
@@ -255,6 +256,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
   def diff
     raise Puppet::Error, _("Need exactly two arguments: filebucket diff <file_a> <file_b>") unless args.count == 2
+
     left = args.shift
     right = args.shift
     if Puppet::FileSystem.exist?(left)

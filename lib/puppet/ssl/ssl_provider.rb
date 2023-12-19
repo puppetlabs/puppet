@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/ssl'
 
 # SSL Provider creates `SSLContext` objects that can be used to create

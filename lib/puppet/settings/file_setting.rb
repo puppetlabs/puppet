@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # A file.
 class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   class SettingError < StandardError; end
@@ -49,6 +50,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     end
 
     private
+
     def safe_to_use_settings_value?
       @settings[:mkusers] or @settings.send(@available_method)
     end

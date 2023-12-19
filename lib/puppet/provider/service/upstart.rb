@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   START_ON = /^\s*start\s+on/
   COMMENTED_START_ON = /^\s*#+\s*start\s+on/
@@ -66,7 +67,6 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
     excludes
   end
-
 
   def self.get_services(exclude=[])
     instances = []
@@ -193,6 +193,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   private
+
   def is_upstart?(script = initscript)
     Puppet::FileSystem.exist?(script) && script.match(/\/etc\/init\/\S+\.conf/)
   end

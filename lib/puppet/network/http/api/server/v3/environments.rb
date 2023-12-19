@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../../../../puppet/util/json'
 
 module Puppet
@@ -8,7 +9,6 @@ module Puppet
         module Server
           class V3
             class Environments
-
               def initialize(env_loader)
                 @env_loader = env_loader
               end

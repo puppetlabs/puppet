@@ -1,10 +1,12 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/util/logging'
 
 class Puppet::Module
   class Plan
     class Error < Puppet::Error
       attr_accessor :kind, :details
+
       def initialize(message, kind, details = nil)
         super(message)
         @details = details || {}
@@ -34,8 +36,10 @@ class Puppet::Module
 
     class InvalidPlan < Error
     end
+
     class InvalidMetadata < Error
     end
+
     class PlanNotFound < Error
       def initialize(plan_name, module_name)
         msg = _("Plan %{plan_name} not found in module %{module_name}.") %
@@ -54,6 +58,7 @@ class Puppet::Module
 
     def self.is_plan_name?(name)
       return true if name =~ /^[a-z][a-z0-9_]*$/
+
       return false
     end
 
@@ -71,6 +76,7 @@ class Puppet::Module
       if RESERVED_DATA_TYPES.include?(name)
         return [false, _("Plan name cannot be a Puppet data type, but was '%{name}'") % { name: name }]
       end
+
       return [true]
     end
 

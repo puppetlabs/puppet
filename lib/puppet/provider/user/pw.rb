@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/provider/nameservice/pw'
 require 'open3'
 
@@ -19,7 +20,6 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     value.split("-").reverse.join("-")
   }
 
-
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
   end
@@ -32,6 +32,7 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     cmd = [command(:pw), "useradd", @resource[:name]]
     @resource.class.validproperties.each do |property|
       next if property == :ensure or property == :password
+
       value = @resource.should(property)
       if value and value != ""
         cmd << flag(property) << munge(property,value)

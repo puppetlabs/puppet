@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/face'
 require_relative '../../puppet/settings/ini_file'
 
@@ -136,7 +137,6 @@ Puppet::Face.define(:config, '0.0.1') do
     EOT
 
     when_invoked do |name, value, options|
-
       @default_section = false
       if options[:section] == DEFAULT_SECTION_MARKER
         options[:section] = DEFAULT_SECTION
@@ -219,7 +219,6 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
     EOT
 
     when_invoked do |name, options|
-
       @default_section = false
       if options[:section] == DEFAULT_SECTION_MARKER
         options[:section] = DEFAULT_SECTION
@@ -230,7 +229,6 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
       if Puppet::FileSystem.exist?(path)
         Puppet::FileSystem.open(path, nil, 'r+:UTF-8') do |file|
           Puppet::Settings::IniFile.update(file) do |config|
-
             # delete from both master section and server section
             if options[:section] == "master" || options[:section] == "server"
               master_setting_string = config.delete("master", name)

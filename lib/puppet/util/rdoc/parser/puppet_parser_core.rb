@@ -1,7 +1,7 @@
 # frozen_string_literal: true
+
 # Functionality common to both our RDoc version 1 and 2 parsers.
 module RDoc::PuppetParserCore
-
   SITE = "__site__"
 
   def self.included(base)
@@ -36,6 +36,7 @@ module RDoc::PuppetParserCore
   # but from which we are not descendant.
   def find_object_named(container, name)
     return container if container.name == name
+
     container.each_classmodule do |m|
       return m if m.name == name
     end
@@ -44,7 +45,6 @@ module RDoc::PuppetParserCore
 
   # walk down the namespace and lookup/create container as needed
   def get_class_or_module(container, name)
-
     # class ::A -> A is in the top level
     if name =~ /^::/
       container = @top_level

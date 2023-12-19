@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # =DependencyLoader
 # This loader provides visibility into a set of other loaders. It is used as a child of a ModuleLoader (or other
 # loader) to make its direct dependencies visible for loading from contexts that have access to this dependency loader.
@@ -44,6 +45,7 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
       # lookup otherwise).
       loaded = @dependency_loaders.reduce(nil) do |previous, loader|
         break previous if !previous.nil?
+
         loader.load_typed(typed_name)
       end
       if loaded
@@ -80,6 +82,7 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
       # lookup otherwise).
       @dependency_loaders.reduce(nil) do |previous, loader|
         break previous if !previous.nil?
+
         loader.loaded_entry(typed_name, check_dependencies)
       end
     end

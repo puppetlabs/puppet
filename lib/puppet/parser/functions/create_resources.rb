@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => <<-'ENDHEREDOC') do |args|
     Converts a hash into a set of resources and adds them to the catalog.
     
@@ -60,6 +61,7 @@ ENDHEREDOC
 
   raise ArgumentError, (_("create_resources(): wrong number of arguments (%{count}; must be 2 or 3)") % { count: args.length }) if args.length > 3
   raise ArgumentError, (_('create_resources(): second argument must be a hash')) unless args[1].is_a?(Hash)
+
   if args.length == 3
     raise ArgumentError, (_('create_resources(): third argument, if provided, must be a hash')) unless args[2].is_a?(Hash)
   end
@@ -106,6 +108,6 @@ ENDHEREDOC
           :add    => false
         )
       end.compact
-      )
+    )
   end.flatten.compact
 end

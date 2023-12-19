@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../../puppet/util/rpm_compare'
 
 module Puppet::Util::Package::Version
@@ -14,6 +15,7 @@ module Puppet::Util::Package::Version
 
     def self.parse(ver)
       raise ValidationFailure unless ver.is_a?(String)
+
       version = rpm_parse_evr(ver)
       new(version[:epoch], version[:version], version[:release], version[:arch]).freeze
     end

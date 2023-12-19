@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/file_system'
 require 'delegate'
 require 'tmpdir'
@@ -79,6 +80,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
 
   def unlink
     return unless @tmpname
+
     begin
       File.unlink(@tmpname)
     rescue Errno::ENOENT
@@ -161,7 +163,6 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
     File.expand_path(tmp)
   end
 
-
   class << self
     # yields with locking for +tmpname+ and returns the result of the
     # block.
@@ -185,5 +186,4 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
       Dir.rmdir(*args)
     end
   end
-
 end

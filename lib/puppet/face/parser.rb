@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/face'
 require_relative '../../puppet/parser'
 
@@ -99,7 +100,6 @@ Puppet::Face.define(:parser, '0.0.1') do
       exit(0)
     end
   end
-
 
   action(:dump) do
     summary _("Outputs a dump of the internal parse tree for debugging")

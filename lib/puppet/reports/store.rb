@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet'
 require 'fileutils'
 require_relative '../../puppet/util'
@@ -53,6 +54,7 @@ Puppet::Reports.register_report(:store) do
     if Puppet::FileSystem.exist?(dir)
       Dir.entries(dir).each do |file|
         next if ['.','..'].include?(file)
+
         file = File.join(dir, file)
         Puppet::FileSystem.unlink(file) if File.file?(file)
       end

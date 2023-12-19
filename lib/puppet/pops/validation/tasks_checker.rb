@@ -1,7 +1,7 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Validation
-
 # Validator that limits the set of allowed expressions to not include catalog related operations
 # @api private
 class TasksChecker < Checker4_0
@@ -10,6 +10,7 @@ class TasksChecker < Checker4_0
     step = -1
     until container(step) == top do
       return true if container(step).is_a? Puppet::Pops::Model::ApplyBlockExpression
+
       step -= 1
     end
   end

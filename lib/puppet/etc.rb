@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../puppet/util/character_encoding'
 # Wrapper around Ruby Etc module allowing us to manage encoding in a single
 # place.
@@ -40,7 +41,6 @@ require_relative '../puppet/util/character_encoding'
 # @api private
 module Puppet::Etc
   class << self
-
     # Etc::getgrent returns an Etc::Group struct object
     # On first call opens /etc/group and returns parse of first entry. Each subsquent call
     # returns new struct the next entry or nil if EOF. Call ::endgrent to close file.
@@ -162,6 +162,7 @@ module Puppet::Etc
     #   :canonical_<member name> struct member.
     def override_field_values_to_utf8(struct)
       return nil if struct.nil?
+
       new_struct = struct.is_a?(Etc::Passwd) ? puppet_etc_passwd_class.new : puppet_etc_group_class.new
       struct.each_pair do |member, value|
         if value.is_a?(String)

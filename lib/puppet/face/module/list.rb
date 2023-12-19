@@ -106,7 +106,6 @@ Puppet::Face.define(:module, '1.0.0') do
     end
   end
 
-
   def unmet_dependencies(environment)
     error_types = [:non_semantic_version, :version_mismatch, :missing]
 
@@ -146,7 +145,6 @@ Puppet::Face.define(:module, '1.0.0') do
     end
     unmet_deps
   end
-
 
   def warn_unmet_dependencies(environment)
     @unmet_deps = unmet_dependencies(environment)
@@ -215,6 +213,7 @@ Puppet::Face.define(:module, '1.0.0') do
   def list_build_tree(list, ancestors=[], parent=nil, params={})
     list.map do |mod|
       next if @seen[(mod.forge_name or mod.name)]
+
       node = list_build_node(mod, parent, params)
       @seen[(mod.forge_name or mod.name)] = true
 

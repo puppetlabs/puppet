@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Various methods used to coerce values into a canonical form.
 #
 # @api private

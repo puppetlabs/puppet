@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Joins the values of an Array into a string with elements separated by a delimiter.
 #
 # Supports up to two arguments

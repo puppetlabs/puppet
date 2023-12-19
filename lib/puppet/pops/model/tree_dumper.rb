@@ -1,8 +1,10 @@
 # frozen_string_literal: true
+
 # Base class for formatted textual dump of a "model"
 #
 class Puppet::Pops::Model::TreeDumper
   attr_accessor :indent_count
+
   def initialize initial_indentation = 0
     @@dump_visitor ||= Puppet::Pops::Visitor.new(nil,"dump",0,0)
     @indent_count = initial_indentation

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/parser/scope'
 require_relative '../../../puppet/pops/evaluator/compare_operator'
 require_relative '../../../puppet/pops/evaluator/relationship_operator'
@@ -75,20 +76,17 @@ class EvaluatorImpl
   def evaluate(target, scope)
     begin
       @@eval_visitor.visit_this_1(self, target, scope)
-
     rescue SemanticError => e
       # A raised issue may not know the semantic target, use errors call stack, but fill in the
       # rest from a supplied semantic object, or the target instruction if there is not semantic
       # object.
       #
       fail(e.issue, e.semantic || target, e.options, e)
-
     rescue Puppet::PreformattedError => e
       # Already formatted with location information, and with the wanted call stack.
       # Note this is currently a specialized ParseError, so rescue-order is important
       #
       raise e
-
     rescue Puppet::ParseError => e
       # ParseError may be raised in ruby code without knowing the location
       # in puppet code.
@@ -105,17 +103,13 @@ class EvaluatorImpl
         # error. Pass on its call stack.
         fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e)
       end
-
-
     rescue Puppet::Error => e
       # PuppetError has the ability to wrap an exception, if so, use the wrapped exception's
       # call stack instead
       fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e.original || e)
-
     rescue StopIteration => e
       # Ensure these are not rescued as StandardError
       raise e
-
     rescue StandardError => e
       # All other errors, use its message and call stack
       fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e)
@@ -215,6 +209,7 @@ class EvaluatorImpl
     if name =~ /::/
       fail(Issues::CROSS_SCOPE_ASSIGNMENT, o.left_expr, {:name => name})
     end
+
     set_variable(name, value, o, scope)
     value
   end
@@ -240,6 +235,7 @@ class EvaluatorImpl
       if Puppet[:tasks]
         fail(Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING, o, {:operation => _('multi var assignment from class')})
       end
+
       # assign variables from class variables
       # lookup class resource and return one or more parameter values
       # TODO: behavior when class_name is nil
@@ -266,6 +262,7 @@ class EvaluatorImpl
       if values.size != lvalues.size
         fail(Issues::ILLEGAL_MULTI_ASSIGNMENT_SIZE, o, :expected =>lvalues.size, :actual => values.size)
       end
+
       lvalues.zip(values).map { |lval, val| assign(lval, val, o, scope) }
     end
   end
@@ -318,6 +315,7 @@ class EvaluatorImpl
   def eval_QualifiedReference(o, scope)
     type = Types::TypeParser.singleton.interpret(o)
     fail(Issues::UNKNOWN_RESOURCE_TYPE, o, {:type_name => type.type_string }) if type.is_a?(Types::PTypeReferenceType)
+
     type
   end
 
@@ -390,7 +388,6 @@ class EvaluatorImpl
     result
   end
 
-
   # Handles binary expression where lhs and rhs are array/hash or numeric and operator is +, - , *, % / << >>
   #
   def calculate(left, right, bin_expr, scope)
@@ -413,6 +410,7 @@ class EvaluatorImpl
         unless left.is_a?(Array)
           fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
         end
+
         left + [right]
       end
     else
@@ -423,6 +421,7 @@ class EvaluatorImpl
         if operator == '%' && (left.is_a?(Float) || right.is_a?(Float))
           # Deny users the fun of seeing severe rounding errors and confusing results
           fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left}) if left.is_a?(Float)
+
           fail(Issues::OPERATOR_NOT_APPLICABLE_WHEN, left_o, {:operator => operator, :left_value => left, :right_value => right})
         end
         if right.is_a?(Time::TimeData) && !left.is_a?(Time::TimeData)
@@ -789,12 +788,14 @@ class EvaluatorImpl
           unless evaluated_name.class_name.nil?
             fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
           end
+
           'class'
 
         when Types::PResourceType
           unless evaluated_name.title().nil?
             fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
           end
+
           evaluated_name.type_name # assume validated
 
         when Types::PTypeReferenceType
@@ -829,6 +830,7 @@ class EvaluatorImpl
       if titles.nil?
         fail(Issues::MISSING_TITLE, body.title)
       end
+
       titles = [titles].flatten
 
       # Check types of evaluated titles and duplicate entries
@@ -846,6 +848,7 @@ class EvaluatorImpl
         elsif titles_to_body[title]
           fail(Issues::DUPLICATE_TITLE, o, {:title => title})
         end
+
         titles_to_body[title] = body
       end
 
@@ -863,6 +866,7 @@ class EvaluatorImpl
           if param_memo.include? p.name
             fail(Issues::DUPLICATE_ATTRIBUTE, o, {:attribute => p.name})
           end
+
           param_memo[p.name] = p
         end
         param_memo
@@ -966,11 +970,13 @@ class EvaluatorImpl
     unless o.functor_expr.is_a? Model::NamedAccessExpression
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function accessor', :container => o})
     end
+
     receiver = unfold([], [o.functor_expr.left_expr], scope)
     name = o.functor_expr.right_expr
     unless name.is_a? Model::QualifiedName
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end
+
     name = name.value # the string function name
 
     obj = receiver[0]
@@ -1097,7 +1103,6 @@ class EvaluatorImpl
   def eval_ConcatenatedString o, scope
     o.segments.collect {|expr| string(evaluate(expr, scope), scope)}.join
   end
-
 
   # If the wrapped expression is a QualifiedName, it is taken as the name of a variable in scope.
   # Note that this is different from the 3.x implementation, where an initial qualified name
@@ -1235,9 +1240,11 @@ class EvaluatorImpl
       x.merge y # new hash with overwrite
     when URI
       raise ArgumentError.new(_('An URI can only be merged with an URI or String')) unless y.is_a?(String) || y.is_a?(URI)
+
       x + y
     when Types::PBinaryType::Binary
       raise ArgumentError.new(_('Can only append Binary to a Binary')) unless y.is_a?(Types::PBinaryType::Binary)
+
       Types::PBinaryType::Binary.from_binary_string(x.binary_buffer + y.binary_buffer)
     else
       concatenate([x], y)
@@ -1256,18 +1263,16 @@ class EvaluatorImpl
     when Array
       y = case y
           when Array then y
-          when Hash then y.to_a
-      else
-        [y]
-      end
+          when Hash  then y.to_a
+          else            [y]
+          end
       y.each {|e| result.delete(e) }
     when Hash
       y = case y
           when Array then y
-          when Hash then y.keys
-      else
-        [y]
-      end
+          when Hash  then y.keys
+          else            [y]
+          end
       y.each {|e| result.delete(e) }
     else
       raise ArgumentError.new(_("Can only delete from an Array or Hash."))
@@ -1306,6 +1311,7 @@ class EvaluatorImpl
 
   def unwind_parentheses(o)
     return o unless o.is_a?(Model::ParenthesizedExpression)
+
     unwind_parentheses(o.expr)
   end
   private :unwind_parentheses

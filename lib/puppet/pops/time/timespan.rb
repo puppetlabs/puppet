@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 module Puppet::Pops
@@ -477,6 +478,7 @@ module Time
           # Using %L or %N to parse a string only makes sense when they are considered to be fractions. Using them
           # as a total quantity would introduce ambiguities.
           raise ArgumentError, _('Format specifiers %L and %N denotes fractions and must be used together with a specifier of higher magnitude') if use_total?
+
           n = group.to_i
           p = 9 - group.length
           p <= 0 ? n : n * 10 ** p
@@ -553,12 +555,15 @@ module Time
       def parse(timespan)
         md = regexp.match(timespan)
         raise ArgumentError, _("Unable to parse '%{timespan}' using format '%{format}'") % { timespan: timespan, format: @format } if md.nil?
+
         nanoseconds = 0
         md.captures.each_with_index do |group, index|
           segment = @segments[index]
           next if segment.is_a?(LiteralSegment)
+
           group.lstrip!
           raise ArgumentError, _("Unable to parse '%{timespan}' using format '%{format}'") % { timespan: timespan, format: @format } unless group =~ /\A[0-9]+\z/
+
           nanoseconds += segment.nanoseconds(group)
         end
         Timespan.new(timespan.start_with?('-') ? -nanoseconds : nanoseconds)
@@ -627,6 +632,7 @@ module Time
       def internal_parse(str)
         bld = []
         raise ArgumentError, _('Format must be a String') unless str.is_a?(String)
+
         highest = -1
         state = STATE_LITERAL
         padchar = '0'
@@ -654,10 +660,12 @@ module Time
             state = STATE_LITERAL
           when 0x2D # '-'
             raise ArgumentError, bad_format_specifier(str, fstart, position) unless state == STATE_PAD
+
             padchar = nil
             state = STATE_WIDTH
           when 0x5F # '_'
             raise ArgumentError, bad_format_specifier(str, fstart, position) unless state == STATE_PAD
+
             padchar = ' '
             state = STATE_WIDTH
           when 0x44 # 'D'
@@ -686,6 +694,7 @@ module Time
             state = STATE_LITERAL
           else # only digits allowed at this point
             raise ArgumentError, bad_format_specifier(str, fstart, position) unless codepoint >= 0x30 && codepoint <= 0x39
+
             if state == STATE_PAD && codepoint == 0x30
               padchar = '0'
             else
@@ -701,6 +710,7 @@ module Time
         end
 
         raise ArgumentError, bad_format_specifier(str, fstart, position)  unless state == STATE_LITERAL
+
         unless highest == -1
           hc = SEGMENT_CLASS_BY_ORDINAL[highest]
           bld.find { |s| s.instance_of?(hc) }.set_use_total

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'uri'
 
 module Puppet::Pops
@@ -83,7 +84,6 @@ module Pcore
         }
       }
     PUPPET
-
   end
 
   # Create and register a new `Object` type in the Puppet Type System and map it to an implementation class

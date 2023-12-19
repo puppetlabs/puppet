@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/thread_local'
 
 require_relative 'explainer'

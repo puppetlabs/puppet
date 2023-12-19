@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
   Puppet::Type.type(:file).newproperty(:mtime) do
     desc %q{A read-only state to check the file mtime. On \*nix-like systems, this

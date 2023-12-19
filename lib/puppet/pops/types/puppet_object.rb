@@ -1,7 +1,7 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Types
-
 # Marker module for implementations that are mapped to Object types
 # @api public
 module PuppetObject

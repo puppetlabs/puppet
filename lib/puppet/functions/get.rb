@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Digs into a value with dot notation to get a value from within a structure.
 #
 # **To dig into a given value**, call the function with (at least) two arguments:

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Data types in the Puppet Language can have implementations written in Ruby
 # and distributed in puppet modules. A data type can be declared together with
 # its implementation by creating a file in 'lib/puppet/functions/<modulename>'.
@@ -133,7 +134,6 @@ module Puppet::DataTypes
     rescue StandardError => e
       raise ArgumentError, _("Data Type Load Error for type '%{type_name}': %{message}") % {type_name: type_name, message: e.message}
     end
-
   end
 
   def self.create_loaded_type(type_name, loader, &block)
@@ -155,6 +155,7 @@ module Puppet::DataTypes
 
     def create_type(loader)
       raise ArgumentError, _('a data type must have an interface') unless @interface.is_a?(String)
+
       created_type = Puppet::Pops::Types::PObjectType.new(
         @type_name,
         Puppet::Pops::Parser::EvaluatingParser.new.parse_string("{ #{@interface} }").body)
@@ -194,16 +195,19 @@ module Puppet::DataTypes
 
     def interface(type_string)
       raise ArgumentError, _('a data type can only have one interface') unless @type_builder.interface.nil?
+
       @type_builder.interface = type_string
     end
 
     def implementation(&block)
       raise ArgumentError, _('a data type can only have one implementation') if @type_builder.has_implementation?
+
       @type_builder.implementation = block
     end
 
     def implementation_class(ruby_class)
       raise ArgumentError, _('a data type can only have one implementation') if @type_builder.has_implementation?
+
       @type_builder.implementation_class = ruby_class
     end
 

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'find'
 require_relative '../../puppet/file_serving'
 require_relative '../../puppet/file_serving/metadata'
@@ -91,6 +92,7 @@ class Puppet::FileServing::Fileset
     links = links.to_sym
     #TRANSLATORS ":links" is a parameter name and should not be translated
     raise(ArgumentError, _("Invalid :links value '%{links}'") % { links: links }) unless [:manage, :follow].include?(links)
+
     @links = links
     @stat_method = @links == :manage ? :lstat : :stat
   end
@@ -116,6 +118,7 @@ class Puppet::FileServing::Fileset
         value = request.options[param.to_s]
       end
       next if value.nil?
+
       value = true if value == "true"
       value = false if value == "false"
       value = Integer(value) if value.is_a?(String) and value =~ /^\d+$/
@@ -135,9 +138,9 @@ class Puppet::FileServing::Fileset
     def children
       return [] unless directory?
 
-      Dir.entries(path, encoding: Encoding::UTF_8).
-        reject { |child| ignore?(child) }.
-        collect { |child| down_level(child) }
+      Dir.entries(path, encoding: Encoding::UTF_8)
+        .reject { |child| ignore?(child) }
+        .collect { |child| down_level(child) }
     end
 
     def ignore?(child)

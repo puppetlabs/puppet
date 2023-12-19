@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Util::Windows::ADSI
   require 'ffi'
 
@@ -59,6 +60,7 @@ module Puppet::Util::Windows::ADSI
             if GetComputerNameW(buffer, buffer_size) == FFI::WIN32_FALSE
               raise Puppet::Util::Windows::Error.new(_("Failed to get computer name"))
             end
+
             @computer_name = buffer.read_wide_string(buffer_size.read_dword)
           end
         end
@@ -194,12 +196,12 @@ module Puppet::Util::Windows::ADSI
         sids = names.map do |name|
           sid = Puppet::Util::Windows::SID.name_to_principal(name, allow_unresolved)
           raise Puppet::Error.new( _("Could not resolve name: %{name}") % { name: name } ) if !sid
+
           [sid.sid, sid]
         end
 
         Hash[ sids ]
       end
-
 
       def delete(name)
         Puppet::Util::Windows::ADSI.delete(name, @object_class)
@@ -212,6 +214,7 @@ module Puppet::Util::Windows::ADSI
           if sid.account_type == "SidType#{@object_class.capitalize}".to_sym
             # Check if we're getting back a local user when domain-joined
             return true unless [:MEMBER_WORKSTATION, :MEMBER_SERVER].include?(Puppet::Util::Windows::ADSI.domain_role)
+
             # The resource domain and the computer name are not always case-matching
             return sid.domain.casecmp(Puppet::Util::Windows::ADSI.computer_name) == 0
           end
@@ -221,6 +224,7 @@ module Puppet::Util::Windows::ADSI
           # https://msdn.microsoft.com/en-us/library/cc234477.aspx
           well_known = sid.account_type == :SidTypeWellKnownGroup
           return false if sid.account_type != :SidTypeAlias && !well_known
+
           name_or_sid = "#{sid.domain}\\#{sid.account}"
         end
 
@@ -251,6 +255,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     attr_reader :name
+
     def initialize(name, native_object = nil)
       @name = name
       @native_object = native_object
@@ -319,6 +324,7 @@ module Puppet::Util::Windows::ADSI
       def create(name)
         # Windows error 1379: The specified local group already exists.
         raise Puppet::Error.new(_("Cannot create user if group '%{name}' exists.") % { name: name }) if Puppet::Util::Windows::ADSI::Group.exists? name
+
         new(name, Puppet::Util::Windows::ADSI.create(name, @object_class))
       end
     end
@@ -367,7 +373,6 @@ module Puppet::Util::Windows::ADSI
       end
     end
     alias remove_from_group remove_from_groups
-
 
     def add_group_sids(*sids)
       group_names = sids.map { |s| s.domain_account }
@@ -489,6 +494,7 @@ module Puppet::Util::Windows::ADSI
     rescue WIN32OLERuntimeError => e
       # This OLE error code indicates the property can't be found in the cache
       raise e unless e.message =~ /8000500D/m
+
       false
     end
 
@@ -504,6 +510,7 @@ module Puppet::Util::Windows::ADSI
           if GetUserNameW(buffer, buffer_size) == FFI::WIN32_FALSE
             raise Puppet::Util::Windows::Error.new(_("Failed to get user name"))
           end
+
           # buffer_size includes trailing NULL
           user_name = buffer.read_wide_string(buffer_size.read_dword - 1)
         end
@@ -591,7 +598,6 @@ module Puppet::Util::Windows::ADSI
   end
 
   class Group < ADSIObject
-
     # https://msdn.microsoft.com/en-us/library/aa706021.aspx
     # IADsGroup interface
     @object_class = 'group'
@@ -604,6 +610,7 @@ module Puppet::Util::Windows::ADSI
       def create(name)
         # Windows error 2224: The account already exists.
         raise Puppet::Error.new( _("Cannot create group if user '%{name}' exists.") % { name: name } ) if Puppet::Util::Windows::ADSI::User.exists?(name)
+
         new(name, Puppet::Util::Windows::ADSI.create(name, @object_class))
       end
     end

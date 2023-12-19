@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/indirector'
 require_relative '../../puppet/indirector/errors'
 require_relative '../../puppet/indirector/indirection'
@@ -52,6 +53,7 @@ class Puppet::Indirector::Terminus
       if longname =~ /#<Class/
         raise Puppet::DevError, _("Terminus subclasses must have associated constants")
       end
+
       names = longname.split("::")
 
       # Convert everything to a lower-case symbol, converting camelcase to underscore word separation.
@@ -72,6 +74,7 @@ class Puppet::Indirector::Terminus
 
       # This subclass is specifically associated with an indirection.
       raise("Invalid name #{longname}") unless names.length > 0
+
       processed_name = names.pop.sub(/^[A-Z]/) { |i| i.downcase }.gsub(/[A-Z]/) { |i| "_#{i.downcase}" }
 
       if processed_name.empty?

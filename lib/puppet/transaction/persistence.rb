@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'yaml'
 require_relative '../../puppet/util/yaml'
 
@@ -7,7 +8,6 @@ require_relative '../../puppet/util/yaml'
 # as calculating corrective_change).
 # @api private
 class Puppet::Transaction::Persistence
-
   def self.allowed_classes
     @allowed_classes ||= [
       Symbol,
@@ -75,6 +75,7 @@ class Puppet::Transaction::Persistence
     unless Puppet::FileSystem.exist?(filename)
       return
     end
+
     unless File.file?(filename)
       Puppet.warning(_("Transaction store file %{filename} is not a file, ignoring") % { filename: filename })
       return

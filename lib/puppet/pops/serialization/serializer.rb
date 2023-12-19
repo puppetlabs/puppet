@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative 'extension'
 
 module Puppet::Pops
@@ -135,6 +136,7 @@ module Serialization
         impl_class = value.class
         type = Loaders.implementation_registry.type_for_module(impl_class)
         raise SerializationError, _("No Puppet Type found for %{klass}") % { klass: impl_class.name } unless type.is_a?(Types::PObjectType)
+
         type.write(value, self)
       end
     end

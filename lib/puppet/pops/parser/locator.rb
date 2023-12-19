@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Parser
 # Helper class that keeps track of where line breaks are located and can answer questions about positions.
@@ -58,6 +59,7 @@ class Locator
     last = first + ast.length
     ast._pcore_all_contents([]) do |m|
       next unless m.is_a?(Model::Positioned)
+
       m_offset = m.offset
       m_last = m_offset + m.length
       first = m_offset if m_offset < first
@@ -160,6 +162,7 @@ class Locator
 
       return nil if low == ary.length
       return nil if !satisfied
+
       return low
     end
 
@@ -178,6 +181,7 @@ class Locator
         # use cache
         return @prev_line
       end
+
       line_nbr = ary_bsearch_i(line_index, offset)
       if line_nbr
         # cache
@@ -283,11 +287,9 @@ class Locator
     def char_length(offset, end_offset)
       raise "Should not be called"
     end
-
   end
 
   class LocatorForChars < AbstractLocator
-
     def offset_on_line(offset)
       line_offset = line_index[ line_for_offset(offset)-1 ]
       offset - line_offset
@@ -306,7 +308,6 @@ class Locator
     def extract_text(offset, length)
       string.slice(offset, length)
     end
-
   end
 
   # This implementation is for Ruby19 and Ruby20. It uses byteslice to get strings from byte based offsets.

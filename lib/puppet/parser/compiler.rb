@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'forwardable'
 
 require_relative '../../puppet/node'
@@ -235,6 +236,7 @@ class Puppet::Parser::Compiler
   #
   def evaluate_classes(classes, scope, lazy_evaluate = true)
     raise Puppet::DevError, _("No source for scope passed to evaluate_classes") unless scope.source
+
     class_parameters = nil
     # if we are a param class, save the classes hash
     # and transform classes to be the keys
@@ -349,7 +351,6 @@ class Puppet::Parser::Compiler
             # needs to be handled specifically as the error has the file/line/position where this
             # occurred rather than the resource
             fail(Puppet::Pops::Issues::RUNTIME_ERROR, detail, {:detail => detail.message}, detail)
-
           rescue Puppet::Error => e
             # PuppetError has the ability to wrap an exception, if so, use the wrapped exception's
             # call stack instead
@@ -564,6 +565,7 @@ class Puppet::Parser::Compiler
       # case a custom node terminus has done any mucking about with
       # node.parameters.
       next if param.to_s == 'environment'
+
       # Ensure node does not leak Symbol instances in general
       @topscope[param.to_s] = value.is_a?(Symbol) ? value.to_s : value
     end

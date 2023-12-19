@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/confine/boolean'
 
 class Puppet::Confine::False < Puppet::Confine

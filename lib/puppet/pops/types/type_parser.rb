@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 # This class provides parsing of Type Specification from a string into the Type
@@ -39,6 +40,7 @@ class TypeParser
     if t
       return t
     end
+
     model = @parser.parse_string(string)
     interpret(model.model.body, context)
   end
@@ -197,7 +199,7 @@ class TypeParser
         'typealias'    => TypeFactory.type_alias,
         'typereference' => TypeFactory.type_reference,
         'typeset'      => TypeFactory.type_set,
-         # A generic callable as opposed to one that does not accept arguments
+        # A generic callable as opposed to one that does not accept arguments
         'callable'     => TypeFactory.all_callables,
         'semver'       => TypeFactory.sem_ver,
         'semverrange'  => TypeFactory.sem_ver_range,
@@ -484,6 +486,7 @@ class TypeParser
       raise_invalid_parameters_error('Boolean', '1', parameters.size) unless parameters.size == 1
       p = parameters[0]
       raise Puppet::ParseError, 'Boolean parameter must be true or false' unless p == true || p == false
+
       TypeFactory.boolean(p)
 
     when 'integer'

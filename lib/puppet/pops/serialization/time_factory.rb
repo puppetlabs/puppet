@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Serialization
   # Implements all the constructors found in the Time class and ensures that
@@ -8,7 +9,6 @@ module Serialization
   # @deprecated No longer in use. Functionality replaced by Timestamp
   # @api private
   class TimeFactory
-
     NANO_DENOMINATOR = 10**9
 
     def self.at(*args)

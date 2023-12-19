@@ -1,6 +1,6 @@
 # frozen_string_literal: true
-class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Evaluator::Collectors::AbstractCollector
 
+class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Evaluator::Collectors::AbstractCollector
   # Creates an ExportedCollector using the AbstractCollector's
   # constructor to set the scope and overrides
   #
@@ -39,8 +39,8 @@ class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Eva
         resource.type == t && resource.exported? && (q.nil? || q.call(resource))
       end
 
-      found = Puppet::Resource.indirection.
-        search(@type, :host => @scope.compiler.node.name, :filter => @equery, :scope => @scope)
+      found = Puppet::Resource.indirection
+        .search(@type, :host => @scope.compiler.node.name, :filter => @equery, :scope => @scope)
 
       found_resources = found.map {|x| x.is_a?(Puppet::Parser::Resource) ? x : x.to_resource(@scope)}
 

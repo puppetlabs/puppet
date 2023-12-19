@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Basic classes for reading, writing, and emptying files.  Not much
 # to see here.
 
@@ -15,6 +16,7 @@ class Puppet::Util::FileType
 
   class << self
     attr_accessor :name
+
     include Puppet::Util::ClassGen
   end
 
@@ -81,6 +83,7 @@ class Puppet::Util::FileType
 
   def initialize(path, default_mode = nil)
     raise ArgumentError.new(_("Path is nil")) if path.nil?
+
     @path = path
     @default_mode = default_mode
   end

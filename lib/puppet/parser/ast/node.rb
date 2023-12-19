@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Puppet::Parser::AST::Node < Puppet::Parser::AST::TopLevelConstruct
   attr_accessor :names, :context
 

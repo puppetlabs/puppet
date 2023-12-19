@@ -1,9 +1,9 @@
 # frozen_string_literal: true
+
 require_relative '../puppet/concurrent/synchronized'
 
 # @api private
 module Puppet::Environments
-
   class EnvironmentNotFound < Puppet::Error
     def initialize(environment_name, original = nil)
       environmentpath = Puppet[:environmentpath]
@@ -139,7 +139,6 @@ module Puppet::Environments
   #
   # @api private
   class StaticPrivate < Static
-
     # Unlisted
     #
     # @!macro loader_list
@@ -160,6 +159,7 @@ module Puppet::Environments
     # @!macro loader_get_conf
     def get_conf(name)
       return nil unless name.intern == @env_name
+
       Puppet::Settings::EnvironmentConf.load_from(@env_dir, [])
     end
   end
@@ -268,6 +268,7 @@ module Puppet::Environments
 
     def valid_environment_names
       return [] unless Puppet::FileSystem.directory?(@environment_dir)
+
       Puppet::FileSystem.children(@environment_dir).map do |child|
         Puppet::FileSystem.basename_string(child).intern if validated_directory(child)
       end.compact

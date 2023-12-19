@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Util::Package::Version
   class Pip
     include Comparable
@@ -71,6 +72,7 @@ module Puppet::Util::Package::Version
 
     def <=>(other)
       raise ValidationFailure, other.to_s unless other.is_a?(self.class)
+
       compare(key, other.key)
     end
 
@@ -118,6 +120,7 @@ module Puppet::Util::Package::Version
       release_key = release.reverse
       release_key.each_with_index do |element, index|
         break unless element == 0
+
         release_key.delete_at(index) unless release_key.at(index + 1) != 0
       end
       release_key.reverse!
@@ -151,9 +154,11 @@ module Puppet::Util::Package::Version
         end
       elsif (this.is_a? Array) && !(other.is_a? Array)
         raise Puppet::Error, "Cannot compare #{this} (Array) with #{other} (#{other.class}). Only ±Float::INFINITY accepted." unless other.abs == Float::INFINITY
+
         return other == -Float::INFINITY ? 1 : -1
       elsif !(this.is_a? Array) && (other.is_a? Array)
         raise Puppet::Error, "Cannot compare #{this} (#{this.class}) with #{other} (Array). Only ±Float::INFINITY accepted." unless this.abs == Float::INFINITY
+
         return this == -Float::INFINITY ? -1 : 1
       end
       this <=> other

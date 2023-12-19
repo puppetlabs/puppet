@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Dumps a Pops::Model in reverse polish notation; i.e. LISP style
 # The intention is to use this for debugging output
 # TODO: BAD NAME - A DUMP is a Ruby Serialization
@@ -66,7 +67,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_EppExpression o
     result = ["epp"]
-#    result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    #    result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
     if o.body
       result << do_dump(o.body)
     else

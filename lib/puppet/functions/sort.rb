@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Sorts an Array numerically or lexicographically or the characters of a String lexicographically.
 # Please note: This function is based on Ruby String comparison and as such may not be entirely UTF8 compatible.
 # To ensure compatibility please use this function with Ruby 2.4.0 or greater - https://bugs.ruby-lang.org/issues/10085.

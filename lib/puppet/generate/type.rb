@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'erb'
 require 'fileutils'
 require_relative '../../puppet/util/autoload'
@@ -39,6 +40,7 @@ module Puppet
         def format=(format)
           format = format.to_sym
           raise _("unsupported format '%{format}'.") % { format: format } unless self.class.supported_format?(format)
+
           @format = format
         end
 
@@ -126,6 +128,7 @@ module Puppet
           Puppet.debug "Searching '#{mod.name}' module for custom types."
           Dir.glob("#{directory}/*.rb") do |file|
             next unless Puppet::FileSystem.file?(file)
+
             Puppet.debug "Found custom type source file '#{file}'."
             inputs << Input.new(mod.path, file, format)
           end
@@ -138,6 +141,7 @@ module Puppet
       def self.bad_input?
         @bad_input
       end
+
       # Generates files for the given inputs.
       # If a file is up to date (newer than input) it is kept.
       # If a file is out of date it is regenerated.
@@ -168,6 +172,7 @@ module Puppet
         templates = {}
         templates.default_proc = lambda { |_hash, key|
           raise _("template was not found at '%{key}'.") % { key: key } unless Puppet::FileSystem.file?(key)
+
           template = Puppet::Util.create_erb(File.read(key))
           template.filename = key
           template

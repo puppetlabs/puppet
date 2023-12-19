@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Strips leading and trailing spaces from a String
 #
 # This function is compatible with the stdlib function with the same name.
@@ -26,7 +27,6 @@
 # Would both result in `['hello', 'hi']`
 #
 Puppet::Functions.create_function(:strip) do
-
   dispatch :on_numeric do
     param 'Numeric', :arg
   end

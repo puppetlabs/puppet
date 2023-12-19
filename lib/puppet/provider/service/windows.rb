@@ -1,8 +1,8 @@
 # frozen_string_literal: true
+
 # Windows Service Control Manager (SCM) provider
 
 Puppet::Type.type(:service).provide :windows, :parent => :service do
-
   desc <<-EOT
     Support for Windows Service Control Manager (SCM). This provider can
     start, stop, enable, and disable services, and the SCM provides working
@@ -134,6 +134,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
 
   def logonaccount
     return unless Puppet::Util::Windows::Service.exists?(@resource[:name])
+
     Puppet::Util::Windows::Service.logon_account(@resource[:name])
   end
 
@@ -157,6 +158,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
     @logonaccount_information ||= Puppet::Util::Windows::SID.name_to_principal(logon_account)
     return logon_account unless @logonaccount_information
     return ".\\#{@logonaccount_information.account}" if @logonaccount_information.domain == Puppet::Util::Windows::ADSI.computer_name
+
     @logonaccount_information.domain_account
   end
 

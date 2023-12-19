@@ -1,5 +1,6 @@
 # coding: utf-8
 # frozen_string_literal: true
+
 require 'prettyprint'
 
 # This represents an action that is attached to a face. Actions should
@@ -14,6 +15,7 @@ class Puppet::Interface::Action
   # @api private
   def initialize(face, name)
     raise "#{name.inspect} is an invalid action name" unless name.to_s =~ /^[a-z]\w*$/
+
     @face    = face
     @name    = name.to_sym
 
@@ -57,6 +59,7 @@ class Puppet::Interface::Action
   # @return [Boolean]
   # @api private
   attr_accessor :default
+
   def default?
     !!@default
   end
@@ -71,7 +74,6 @@ class Puppet::Interface::Action
 
   ########################################################################
   # Support for rendering formats and all.
-
 
   # @api private
   def when_rendering(type)
@@ -125,6 +127,7 @@ class Puppet::Interface::Action
     if @when_rendering.has_key? type then
       raise ArgumentError, _("You can't define a rendering method for %{type} twice") % { type: type }
     end
+
     # Now, the ugly bit.  We add the method to our interface object, and
     # retrieve it, to rotate through the dance of getting a suitable method
     # object out of the whole process. --daniel 2011-04-18
@@ -139,10 +142,10 @@ class Puppet::Interface::Action
   end
   private :__render_method_name_for
 
-
   # @api private
   # @return [Symbol]
   attr_reader :render_as
+
   def render_as=(value)
     @render_as = value.to_sym
   end
@@ -194,7 +197,6 @@ class Puppet::Interface::Action
   #   @face.send(name, *args, &block)
   # end
 
-
   # We need to build an instance method as a wrapper, using normal code, to be
   # able to expose argument defaulting between the caller and definer in the
   # Ruby API.  An extra method is, sadly, required for Ruby 1.8 to work since
@@ -214,7 +216,6 @@ class Puppet::Interface::Action
   # idea how motivated we were to make this cleaner.  Sorry.
   # --daniel 2011-03-31
 
-
   # The arity of the action
   # @return [Integer]
   attr_reader :positional_arg_count
@@ -222,8 +223,8 @@ class Puppet::Interface::Action
   # The block that is executed when the action is invoked
   # @return [block]
   attr_reader :when_invoked
-  def when_invoked=(block)
 
+  def when_invoked=(block)
     internal_name = "#{@name} implementation, required on Ruby 1.8".to_sym
 
     arity = @positional_arg_count = block.arity
@@ -317,6 +318,7 @@ WRAPPER
         #TRANSLATORS 'Puppet.settings' should not be translated
         raise ArgumentError, _("Global option %{option} does not exist in Puppet.settings") % { option: refopt }
       end
+
       @display_global_options << refopt
     end
     @display_global_options.uniq!
@@ -399,6 +401,7 @@ WRAPPER
   # Support code for action decoration; see puppet/interface.rb for the gory
   # details of why this is hidden away behind private. --daniel 2011-04-15
   private
+
   # @return [void]
   # @api private
   def __add_method(name, proc)

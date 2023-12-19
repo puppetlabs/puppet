@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/util/tag_set'
 
 module Puppet::Util::Tagging
@@ -20,7 +21,7 @@ module Puppet::Util::Tagging
         # not seen before, so now we test if it is valid
         if valid_tag?(name)
           if split_qualified_tags?
-          # avoid adding twice by first testing if the string contains '::'
+            # avoid adding twice by first testing if the string contains '::'
             @tags.merge(name.split('::')) if name.include?('::')
           end
         else

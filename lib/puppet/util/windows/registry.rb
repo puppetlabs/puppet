@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/windows'
 
 module Puppet::Util::Windows
@@ -184,7 +185,6 @@ module Puppet::Util::Windows
 
       FFI::MemoryPointer.new(:dword) do |max_subkey_name_length_ptr|
         FFI::MemoryPointer.new(:dword) do |max_value_name_length_ptr|
-
           status = RegQueryInfoKeyW(key.hkey,
                                     FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
                                     FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
@@ -257,6 +257,7 @@ module Puppet::Util::Windows
                    end
         rescue IndexError => ex
           raise if (ex.message !~ /^Memory access .* is out of bounds$/i)
+
           parent_key_name = key.parent ? "#{key.parent.keyname}\\" : ""
           Puppet.warning _("A value in the registry key %{parent_key_name}%{key} is corrupt or invalid") % { parent_key_name: parent_key_name, key: key.keyname }
         end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/network/http/connection'
 
 module Puppet::Network; end
@@ -9,12 +10,12 @@ module Puppet::Network; end
 # @deprecated Use {Puppet::HTTP::Client} instead.
 #
 module Puppet::Network::HttpPool
-
   @http_client_class = Puppet::Network::HTTP::Connection
 
   def self.http_client_class
     @http_client_class
   end
+
   def self.http_client_class=(klass)
     @http_client_class = klass
   end

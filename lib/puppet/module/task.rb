@@ -1,10 +1,12 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/util/logging'
 
 class Puppet::Module
   class Task
     class Error < Puppet::Error
       attr_accessor :kind, :details
+
       def initialize(message, kind, details = nil)
         super(message)
         @details = details || {}
@@ -35,8 +37,10 @@ class Puppet::Module
 
     class InvalidTask < Error
     end
+
     class InvalidMetadata < Error
     end
+
     class TaskNotFound < Error
       def initialize(task_name, module_name)
         msg = _("Task %{task_name} not found in module %{module_name}.") %
@@ -50,6 +54,7 @@ class Puppet::Module
 
     def self.is_task_name?(name)
       return true if name =~ /^[a-z][a-z0-9_]*$/
+
       return false
     end
 
@@ -61,6 +66,7 @@ class Puppet::Module
     def self.is_tasks_filename?(path)
       name_less_extension = File.basename(path, '.*')
       return false if not is_task_name?(name_less_extension)
+
       FORBIDDEN_EXTENSIONS.each do |ext|
         return false if path.end_with?(ext)
       end

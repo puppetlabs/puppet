@@ -1,11 +1,11 @@
 # frozen_string_literal: true
+
 # A Profiler that can be used to wrap around blocks of code. It is configured
 # with other profilers and controls them to start before the block is executed
 # and finish after the block is executed.
 #
 # @api private
 class Puppet::Util::Profiler::AroundProfiler
-
   def initialize
     @profilers = []
   end

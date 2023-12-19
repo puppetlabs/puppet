@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Type.newtype(:whit) do
   desc "Whits are internal artifacts of Puppet's current implementation, and
     Puppet suppresses their appearance in all logs. We make no guarantee of
@@ -9,7 +10,6 @@ Puppet::Type.newtype(:whit) do
   newparam :name do
     desc "The name of the whit, because it must have one."
   end
-
 
   # Hide the fact that we're a whit from logs.
   #

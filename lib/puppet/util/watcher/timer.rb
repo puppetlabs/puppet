@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Puppet::Util::Watcher::Timer
   attr_reader :timeout
 

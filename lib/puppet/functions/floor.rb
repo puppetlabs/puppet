@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Returns the largest `Integer` less or equal to the argument.
 # Takes a single numeric value as an argument.
 #
@@ -34,5 +35,4 @@ Puppet::Functions.create_function(:floor) do
       raise(ArgumentError, _('floor(): cannot convert given value to a floating point value.'))
     end
   end
-
 end

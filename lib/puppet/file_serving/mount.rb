@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/util/logging'
 require_relative '../../puppet/file_serving'
 require_relative '../../puppet/file_serving/metadata'
@@ -20,6 +21,7 @@ class Puppet::FileServing::Mount
     unless name =~ %r{^[-\w]+$}
       raise ArgumentError, _("Invalid mount name format '%{name}'") % { name: name }
     end
+
     @name = name
 
     super()

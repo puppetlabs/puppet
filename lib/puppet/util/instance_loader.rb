@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/util/autoload'
 require_relative '../../puppet/util'
 require_relative '../../puppet/concurrent/lock'
@@ -51,6 +52,7 @@ module Puppet::Util::InstanceLoader
       name = name.intern
       instances = instance_hash(type)
       return nil unless instances
+
       unless instances.include? name
         if instance_loader(type).load(name, Puppet.lookup(:current_environment))
           unless instances.include? name

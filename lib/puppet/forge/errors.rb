@@ -1,11 +1,11 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/util/json'
 require_relative '../../puppet/error'
 require_relative '../../puppet/forge'
 
 # Puppet::Forge specific exceptions
 module Puppet::Forge::Errors
-
   # This exception is the parent for all Forge API errors
   class ForgeError < Puppet::Error
     # This is normally set by the child class, but if it is not this will
@@ -102,7 +102,6 @@ module Puppet::Forge::Errors
     #
     # @return [String] the multiline version of the error message
     def multiline
-
       message = []
       message << _('Request to Puppet Forge failed.')
       message << _('  The server being queried was %{uri}') % { uri: @uri }
@@ -111,5 +110,4 @@ module Puppet::Forge::Errors
       message.join("\n")
     end
   end
-
 end

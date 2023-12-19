@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet'
 require_relative '../../../puppet/provider/nameservice'
 require_relative '../../../puppet/util/plist' if Puppet.features.cfpropertylist?
@@ -37,6 +38,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   #     be actively maintained.  There may also be collisions with different
   #     types (Users, Groups, Mounts, Hosts, etc...)
   def ds_to_ns_attribute_map; self.class.ds_to_ns_attribute_map; end
+
   def self.ds_to_ns_attribute_map
     {
       'RecordName' => :name,
@@ -55,6 +57,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
   # JJM The same table as above, inverted.
   def ns_to_ds_attribute_map; self.class.ns_to_ds_attribute_map end
+
   def self.ns_to_ds_attribute_map
     @ns_to_ds_attribute_map ||= ds_to_ns_attribute_map.invert
   end
@@ -86,6 +89,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     #      with a group type, this will be /Groups.
     #   @ds_path is an attribute of the class itself.
     return @ds_path if defined?(@ds_path)
+
     # JJM: "Users" or "Groups" etc ...  (Based on the Puppet::Type)
     #       Remember this is a class method, so self.class is Class
     #       Also, @resource_type seems to be the reference to the
@@ -96,7 +100,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   def self.list_all_present
     # rubocop:disable Naming/MemoizedInstanceVariableName
     @all_present ||= begin
-    # rubocop:enable Naming/MemoizedInstanceVariableName
+      # rubocop:enable Naming/MemoizedInstanceVariableName
       # JJM: List all objects of this Puppet::Type already present on the system.
       begin
         dscl_output = execute(get_exec_preamble("-list"))
@@ -116,6 +120,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     input_hash.each_key do |key|
       ds_attribute = key.sub("dsAttrTypeStandard:", "")
       next unless (ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? ds_to_ns_attribute_map[ds_attribute])
+
       ds_value = input_hash[key]
       case ds_to_ns_attribute_map[ds_attribute]
       when :members
@@ -301,7 +306,6 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     end
   end
 
-
   def ensure=(ensure_value)
     super
     # We need to loop over all valid properties for the type we're
@@ -310,6 +314,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     if ensure_value == :present
       @resource.class.validproperties.each do |name|
         next if name == :ensure
+
         # LAK: We use property.sync here rather than directly calling
         # the settor method because the properties might do some kind
         # of conversion.  In particular, the user gid property might
@@ -407,6 +412,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # Now we create all the standard properties
     Puppet::Type.type(@resource.class.name).validproperties.each do |property|
       next if property == :ensure
+
       value = @resource.should(property)
       if property == :gid and value.nil?
         value = self.class.next_system_id('gid')
@@ -421,6 +427,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
           exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
           exec_arg_vector << ns_to_ds_attribute_map[property.intern]
           next if property == :password  # skip setting the password here
+
           exec_arg_vector << value.to_s
           begin
             execute(exec_arg_vector)

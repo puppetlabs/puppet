@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Gentoo OpenRC
 Puppet::Type.type(:service).provide :openrc, :parent => :base do
   desc <<-EOT
@@ -68,5 +69,4 @@ Puppet::Type.type(:service).provide :openrc, :parent => :base do
   def statuscmd
     ((@resource.provider.get(:hasstatus) == true) || (@resource[:hasstatus] == :true)) && [command(:rcservice), @resource[:name], :status]
   end
-
 end

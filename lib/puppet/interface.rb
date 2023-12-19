@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../puppet'
 require_relative '../puppet/util/autoload'
 require 'prettyprint'
@@ -15,7 +16,6 @@ class Puppet::Interface
   require_relative 'interface/option'
   require_relative 'interface/option_builder'
   require_relative 'interface/option_manager'
-
 
   include FullDocs
 
@@ -121,7 +121,6 @@ class Puppet::Interface
   # splits out this should merge into a module that both the action and face
   # include. --daniel 2011-04-17
 
-
   # Returns the synopsis for the face. This shows basic usage and global
   # options.
   # @return [String] usage synopsis
@@ -129,7 +128,6 @@ class Puppet::Interface
   def synopsis
     build_synopsis self.name, '<action>'
   end
-
 
   ########################################################################
 
@@ -201,7 +199,9 @@ class Puppet::Interface
   # to be unrecognizable in the final outcome.  At which point we will throw
   # all this away, replace it with something nice, and work out if we should
   # be making this visible to the outside world... --daniel 2011-04-14
+
   private
+
   # @return [void]
   # @api private
   def __invoke_decorations(type, action, passed_args = [], passed_options = {})

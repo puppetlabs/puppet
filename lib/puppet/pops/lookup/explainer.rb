@@ -1,13 +1,13 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Lookup
-
-# The ExplainNode contains information of a specific node in a tree traversed during
-# lookup. The tree can be traversed using the `parent` and `branches` attributes of
-# each node.
-#
-# Each leaf node contains information about what happened when the leaf of the branch
-# was traversed.
+  # The ExplainNode contains information of a specific node in a tree traversed during
+  # lookup. The tree can be traversed using the `parent` and `branches` attributes of
+  # each node.
+  #
+  # Each leaf node contains information about what happened when the leaf of the branch
+  # was traversed.
   class ExplainNode
     def branches
       @branches ||= []
@@ -290,6 +290,7 @@ module Lookup
 
     def to_hash
       return branches[0].to_hash if branches.size == 1
+
       hash = super
       hash[:merge] = @merge.class.key
       options = options_wo_strategy

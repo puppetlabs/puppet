@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../puppet/util/logging'
 require_relative '../puppet/util/docs'
 
@@ -331,7 +332,6 @@ class Puppet::Parameter
   def version
     resource.version
   end
-
 
   # Initializes the parameter with a required resource reference and optional attribute settings.
   # The option `:resource` must be specified or an exception is raised. Any additional options passed

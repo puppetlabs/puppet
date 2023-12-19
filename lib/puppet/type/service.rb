@@ -1,13 +1,12 @@
 # frozen_string_literal: true
+
 # This is our main way of managing processes right now.
 #
 # a service is distinct from a process in that services
 # can only be managed through the interface of an init script
 # which is why they have a search path for initscripts and such
 
-
 module Puppet
-
   Type.newtype(:service) do
     @doc = "Manage running services.  Service support unfortunately varies
       widely by platform --- some platforms have very little if any concept of a
@@ -94,6 +93,7 @@ module Puppet
 
       def insync?(current)
         return provider.enabled_insync?(current) if provider.respond_to?(:enabled_insync?)
+
         super(current)
       end
     end
@@ -141,6 +141,7 @@ module Puppet
 
       def insync?(current)
         return provider.logonaccount_insync?(current) if provider.respond_to?(:logonaccount_insync?)
+
         super(current)
       end
     end
@@ -279,6 +280,7 @@ module Puppet
         begin
           value = value.to_i
           raise if value < 1
+
           value
         rescue
           raise Puppet::Error.new(_("\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer") % { value: value })

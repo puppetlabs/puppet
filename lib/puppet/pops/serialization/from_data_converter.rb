@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Serialization
   class Builder
@@ -124,6 +125,7 @@ module Serialization
           type = without_value { convert(type_value) }
           if type.is_a?(Hash)
             raise SerializationError, _('Unable to deserialize type from %{type}') % { type: type } unless @allow_unresolved
+
             hash
           else
             pcore_type_hash_to_value(type, value)
@@ -134,6 +136,7 @@ module Serialization
             unless @allow_unresolved
               raise SerializationError, _('No implementation mapping found for Puppet Type %{type_name}') % { type_name: type_value }
             end
+
             hash
           else
             # not a string

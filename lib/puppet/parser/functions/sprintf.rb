@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Copyright (C) 2009 Thomas Bellman
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -42,7 +43,6 @@ Puppet::Parser::Functions::newfunction(
   ```
 
   This statement produces a notice of `value is : 42`."
-
 ) do |args|
   fmt = args[0]
   args = args[1..-1]

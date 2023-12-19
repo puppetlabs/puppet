@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Returns the given value if it is of the given
 # [data type](https://puppet.com/docs/puppet/latest/lang_data.html), or
 # otherwise either raises an error or executes an optional two-parameter

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/package/version/range'
 require_relative '../../../puppet/util/package/version/rpm'
 require_relative '../../../puppet/util/rpm_compare'
@@ -68,6 +69,7 @@ defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
 
   def self.prefetch(packages)
     raise Puppet::Error, _("The yum provider can only be used as root") if Process.euid != 0
+
     super
   end
 
@@ -85,7 +87,6 @@ defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
   # @param disableexcludes [Array<String>] A list of repository excludes to disable for this query
   # @return [Hash<Symbol, String>]
   def self.latest_package_version(package, disablerepo, enablerepo, disableexcludes)
-
     key = [disablerepo, enablerepo, disableexcludes]
 
     @latest_versions ||= {}
@@ -149,7 +150,6 @@ defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
   end
 
   def self.update_to_hash(pkgname, pkgversion)
-
     # The pkgname string has two parts: name, and architecture. Architecture
     # is the portion of the string following the last "." character. All
     # characters preceding the final dot are the package name. Parse out
@@ -337,6 +337,7 @@ defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
       self.debug "Yum didn't find updates, current version (#{properties[:ensure]}) is the latest"
       version = properties[:ensure]
       raise Puppet::DevError, _("Tried to get latest on a missing package") if version == :absent || version == :purged
+
       return version
     end
   end
@@ -374,9 +375,11 @@ defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
   # @return [Array<String>] All hash values with the given key.
   def scan_options(options, key)
     return [] unless options.is_a?(Enumerable)
+
     values = options.map do | repo |
       value = if repo.is_a?(String)
         next unless repo.include?('=')
+
         Hash[*repo.strip.split('=')] # make it a hash
       else
         repo

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Manage indirections to termini.  They are organized in terms of indirections -
 # - e.g., configuration, node, file, certificate -- and each indirection has one
 # or more terminus types defined.  The indirection is configured via the
@@ -37,6 +38,7 @@ module Puppet::Indirector
   # to override it.
   def indirects(indirection, options = {})
     raise(ArgumentError, _("Already handling indirection for %{current}; cannot also handle %{next}") % { current: @indirection.name, next: indirection }) if @indirection
+
     # populate this class with the various new methods
     extend ClassMethods
     include Puppet::Indirector::Envelope

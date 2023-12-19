@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Returns a value for a sequence of given keys/indexes into a structure, such as
 # an array or hash.
 #
@@ -38,6 +39,7 @@ Puppet::Functions.create_function(:dig) do
     walked_path = []
     args.reduce(data) do | d, k |
       return nil if d.nil? || k.nil?
+
       if !(d.is_a?(Array) || d.is_a?(Hash))
         t = Puppet::Pops::Types::TypeCalculator.infer(d)
         msg = _("The given data does not contain a Collection at %{walked_path}, got '%{type}'") % { walked_path: walked_path, type: t }
@@ -46,7 +48,7 @@ Puppet::Functions.create_function(:dig) do
             'SLICE_ERROR',
             {'walked_path' => walked_path, 'value_type' => t},
             'EXPECTED_COLLECTION'
-        )
+          )
         raise Puppet::ErrorWithData.new(error_data, msg)
       end
 
@@ -59,7 +61,7 @@ Puppet::Functions.create_function(:dig) do
             'SLICE_ERROR',
             {'walked_path' => walked_path, 'index_type' => t},
             'EXPECTED_INTEGER_INDEX'
-        )
+          )
         raise Puppet::ErrorWithData.new(error_data, msg)
       end
       d[k]

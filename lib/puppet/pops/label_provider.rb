@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Provides a label for an object.
 # This simple implementation calls #to_s on the given object, and handles articles 'a/an/the'.
 #

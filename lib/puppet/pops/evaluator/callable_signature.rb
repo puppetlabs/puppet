@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # CallableSignature
 # ===
 # A CallableSignature describes how something callable expects to be called.
@@ -7,7 +8,6 @@
 # @api public
 #
 class Puppet::Pops::Evaluator::CallableSignature
-
   # Returns the names of the parameters as an array of strings. This does not include the name
   # of an optional block parameter.
   #

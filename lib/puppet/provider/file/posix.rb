@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Type.type(:file).provide :posix do
   desc "Uses POSIX functionality to manage file ownership and permissions."
 

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Scheduler
   class Scheduler
     def initialize(timer=Puppet::Scheduler::Timer.new)

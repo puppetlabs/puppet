@@ -1,6 +1,6 @@
 # frozen_string_literal: true
-module Puppet::Parser::Functions
 
+module Puppet::Parser::Functions
   newfunction(
   :split, :type => :rvalue,
   :arity => 2,
@@ -23,7 +23,6 @@ Note that in the second example, we split on a literal string that contains
 a regexp meta-character (.), which must be escaped.  A simple
 way to do that for a single character is to enclose it in square
 brackets; a backslash will also escape a single character.") do |_args|
-
     Error.is4x('split')
   end
 end

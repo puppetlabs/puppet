@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Creates a new instance/object of a given data type.
 #
 # This function makes it possible to create new instances of
@@ -982,7 +983,6 @@
 # @since 4.5.0
 #
 Puppet::Functions.create_function(:new, Puppet::Functions::InternalFunction) do
-
   dispatch :new_instance do
     scope_param
     param          'Type', :type
@@ -992,6 +992,7 @@ Puppet::Functions.create_function(:new, Puppet::Functions::InternalFunction) do
 
   def new_instance(scope, t, *args)
     return args[0] if args.size == 1 && !t.is_a?(Puppet::Pops::Types::PInitType) && t.instance?(args[0])
+
     result = assert_type(t, new_function_for_type(t).call(scope, *args))
     return block_given? ? yield(result) : result
   end

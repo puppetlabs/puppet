@@ -1,7 +1,7 @@
 # frozen_string_literal: true
+
 module Puppet::Pops::Types
 module Iterable
-
 class TreeIterator
   include Iterable
 
@@ -9,7 +9,7 @@ class TreeIterator
     PArrayType::DEFAULT,
     PHashType::DEFAULT,
     PObjectType::DEFAULT
-    )
+  )
 
   # Creates a TreeIterator that by default treats all Array, Hash and Object instances as
   # containers - the 'containers' option can be set to a type that denotes which types of values
@@ -38,6 +38,7 @@ class TreeIterator
     unless DEFAULT_CONTAINERS.assignable?(@containers_t)
       raise ArgumentError, _("Only Array, Hash, and Object types can be used as container types. Got %{type}") % {type: @containers_t}
     end
+
     @with_root       = extract_option(options, 'include_root', true)
     @with_containers = extract_option(options, 'include_containers', true)
     @with_values     = extract_option(options, 'include_values', true)
@@ -45,6 +46,7 @@ class TreeIterator
     unless @with_containers || @with_values
       raise ArgumentError, _("Options 'include_containers' and 'include_values' cannot both be false")
     end
+
     @include_refs = !!options['include_refs']
   end
 
@@ -92,6 +94,7 @@ class TreeIterator
 
   def indexer_on(val)
     return nil unless @containers_t.instance?(val)
+
     if val.is_a?(Array)
       val.size.times
     elsif val.is_a?(Hash)
@@ -124,7 +127,6 @@ class TreeIterator
 end
 
 class DepthFirstTreeIterator < TreeIterator
-
   # Creates a DepthFirstTreeIterator that by default treats all Array, Hash and Object instances as
   # containers - the 'containers' option can be set to a type that denotes which types of values
   # should be treated as containers - a `Variant[Array, Hash]` would for instance not treat
@@ -169,7 +171,6 @@ class DepthFirstTreeIterator < TreeIterator
           redo unless @with_values
         end
         return [@current_path.dup, value]
-
       rescue StopIteration
         # end of current value's range of content
         # pop all until out of next values
@@ -227,7 +228,6 @@ class BreadthFirstTreeIterator < TreeIterator
           next unless @with_containers
         end
         return [@current_path.dup, value]
-
       rescue StopIteration
         # end of current value's range of content
         # shift all until out of next values
@@ -249,7 +249,6 @@ class BreadthFirstTreeIterator < TreeIterator
     @recursed = true
   end
   private :shift_level
-
 end
 end
 end

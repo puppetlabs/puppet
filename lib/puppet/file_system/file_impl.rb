@@ -1,8 +1,8 @@
 # frozen_string_literal: true
+
 # Abstract implementation of the Puppet::FileSystem
 #
 class Puppet::FileSystem::FileImpl
-
   def pathname(path)
     path.is_a?(Pathname) ? path : Pathname.new(path)
   end

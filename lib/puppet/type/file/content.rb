@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'net/http'
 require 'uri'
 require 'tempfile'
@@ -61,7 +62,7 @@ module Puppet
             _('See https://puppet.com/docs/puppet/latest/static_catalogs.html for more information.')].join(" "),
                                           :file => @resource.file,
                                           :line => @resource.line
-        ) if !@actual_content && !resource.parameter(:source)
+                                         ) if !@actual_content && !resource.parameter(:source)
         value
       else
         @actual_content = value.is_a?(Puppet::Pops::Types::PBinaryType::Binary) ? value.binary_buffer : value
@@ -117,6 +118,7 @@ module Puppet
 
       # The inherited equality is always accepted, so use it if valid.
       return true if super(current, desired)
+
       return date_matches?(checksum_type, current, desired)
     end
 
@@ -167,6 +169,7 @@ module Puppet
     def read_file_from_filebucket
       dipper = resource.bucket
       raise "Could not get filebucket from file" unless dipper
+
       sum = should.sub(/\{\w+\}/, '')
 
       dipper.getfile(sum)

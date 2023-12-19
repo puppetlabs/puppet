@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Configures the Puppet Plugins, by registering extension points
 # and default implementations.
 #

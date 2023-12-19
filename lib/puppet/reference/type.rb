@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types and all their details" do
   types = {}
   Puppet::Type.loadall
@@ -6,6 +7,7 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
   Puppet::Type.eachtype { |type|
     next if type.name == :component
     next if type.name == :whit
+
     types[type.name] = type
   }
 
@@ -51,7 +53,6 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
   }
 
   types.sort_by(&:to_s).each { |name,type|
-
     str << "
 
 ----------------

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Returns the index (or key in a hash) to a first-found value in an `Iterable` value.
 #
 # When called with a  [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
@@ -120,7 +121,6 @@ Puppet::Functions.create_function(:index) do
     param 'Iterable', :enumerable
     param 'Any', :match
   end
-
 
   def index_Hash_1(hash)
     hash.each_pair { |x, y| return x if yield(y)  }

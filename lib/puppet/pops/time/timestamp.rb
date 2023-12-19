@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Time
 class Timestamp < TimeData
@@ -39,6 +40,7 @@ class Timestamp < TimeData
       hash = DateTime._strptime(timezone, '%z')
       offset = hash.nil? ? nil : hash[:offset]
       raise ArgumentError, _("Illegal timezone '%{timezone}'") % { timezone: timezone } if offset.nil?
+
       offset
     end
   end
@@ -74,6 +76,7 @@ class Timestamp < TimeData
       format.each do |fmt|
         parsed = DateTime._strptime(str, fmt)
         next if parsed.nil?
+
         if parsed.include?(:leftover) || (has_timezone && parsed.include?(:zone))
           parsed = nil
           next
@@ -89,6 +92,7 @@ class Timestamp < TimeData
       if parsed.nil? || parsed.include?(:leftover)
         raise ArgumentError, _("Unable to parse '%{str}' using format '%{format}'") % { str: str, format: format }
       end
+
       if has_timezone && parsed.include?(:zone)
         raise ArgumentError, _(
           'Using a Timezone designator in format specification is mutually exclusive to providing an explicit timezone argument')

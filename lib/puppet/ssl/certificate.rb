@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/ssl/base'
 
 # Manage certificates themselves.  This class has no
@@ -21,6 +22,7 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
   def self.subject_alt_names_for(cert)
     alts = cert.extensions.find{|ext| ext.oid == "subjectAltName"}
     return [] unless alts
+
     alts.value.split(/\s*,\s*/)
   end
 
@@ -30,6 +32,7 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
 
   def expiration
     return nil unless content
+
     content.not_after
   end
 
@@ -62,7 +65,6 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
 
   private
 
-
   # Extract the extensions sequence from the wrapped certificate's raw ASN.1 form
   def exts_seq
     # See RFC-2459 section 4.1 (https://tools.ietf.org/html/rfc2459#section-4.1)
@@ -93,5 +95,4 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
       raw_val
     end
   end
-
 end

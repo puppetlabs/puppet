@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Requires the specified classes.
 # Evaluate one or more classes, adding the required class as a dependency.
 #
@@ -69,6 +70,7 @@ Puppet::Functions.create_function(:require, Puppet::Functions::InternalFunction)
       # lookup the class in the scopes
       klass = (classobj = krt.find_hostclass(klass)) ? classobj.name : nil
       raise Puppet::ParseError.new(_("Could not find class %{klass}") % { klass: klass }) unless klass
+
       ref = Puppet::Resource.new(:class, klass)
       resource = scope.resource
       resource.set_parameter(:require, [resource[:require]].flatten.compact << ref)

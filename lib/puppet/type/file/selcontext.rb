@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Manage SELinux context of files.
 #
 # This code actually manages three pieces of data in the context.
@@ -20,7 +21,6 @@
 #
 # See https://www.nsa.gov/selinux/ for complete docs on SELinux.
 
-
 module Puppet
   require_relative '../../../puppet/util/selinux'
 
@@ -29,6 +29,7 @@ module Puppet
 
     def retrieve
       return :absent unless @resource.stat
+
       context = self.get_selinux_current_context(@resource[:path])
       is = parse_selinux_context(name, context)
       if name == :selrange and selinux_support?
@@ -138,6 +139,5 @@ module Puppet
     @event = :file_changed
     defaultto { self.retrieve_default_context(:selrange) }
   end
-
 end
 

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/provider/package'
 
 Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package do
@@ -90,8 +91,8 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     unless file
       raise ArgumentError, _("You cannot install dpkg packages without a source")
     end
-    args = []
 
+    args = []
 
     if @resource[:configfiles] == :keep
       args << '--force-confold'
@@ -189,5 +190,4 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       execute([:dpkg, "--set-selections"], :failonfail => false, :combine => false, :stdinfile => tmpfile.path.to_s)
     end
   end
-
 end

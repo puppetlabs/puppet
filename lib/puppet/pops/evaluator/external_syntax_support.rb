@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This module is an integral part of the evaluator. It deals with the concern of validating
 # external syntax in text produced by heredoc and templates.
 #
@@ -43,5 +44,4 @@ module Puppet::Pops::Evaluator::ExternalSyntaxSupport
     end
     result
   end
-
 end

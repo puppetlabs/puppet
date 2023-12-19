@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative 'extension'
 
 module Puppet::Pops
@@ -45,6 +46,7 @@ module Serialization
         type_name = val.type_name
         type = Types::TypeParser.singleton.parse(type_name, @loader)
         raise SerializationError, _("No implementation mapping found for Puppet Type %{type_name}") % { type_name: type_name } if type.is_a?(Types::PTypeReferenceType)
+
         result = type.read(val.attribute_count, self)
         if result.is_a?(Types::PObjectType)
           existing_type = loader.load(:type, result.name)

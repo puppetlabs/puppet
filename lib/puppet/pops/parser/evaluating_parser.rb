@@ -1,9 +1,9 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 module Puppet::Pops
 module Parser
-
 # Does not support "import" and parsing ruby files
 #
 class EvaluatingParser
@@ -58,6 +58,7 @@ class EvaluatingParser
 
   def evaluate(scope, model)
     return nil unless model
+
     evaluator.evaluate(model, scope)
   end
 
@@ -73,6 +74,7 @@ class EvaluatingParser
     if (Puppet.lookup(:migration_checker) { nil })
       return Evaluator::EvaluatorImpl.new()
     end
+
     @@evaluator ||= Evaluator::EvaluatorImpl.new()
     @@evaluator
   end
@@ -97,6 +99,7 @@ class EvaluatingParser
 
   def assert_and_report(parse_result, file_source)
     return nil unless parse_result
+
     if parse_result['source_ref'].nil? || parse_result['source_ref'] == ''
       parse_result['source_ref'] = file_source
     end

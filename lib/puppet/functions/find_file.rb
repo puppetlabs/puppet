@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Finds an existing file from a module and returns its path.
 #
 # This function accepts an argument that is a String as a `<MODULE NAME>/<FILE>`

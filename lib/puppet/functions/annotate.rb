@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Handles annotations on objects. The function can be used in four different ways.
 #
 # With two arguments, an `Annotation` type and an object, the function returns the annotation

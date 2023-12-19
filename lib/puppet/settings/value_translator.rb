@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Convert arguments into booleans, integers, or whatever.
 class Puppet::Settings::ValueTranslator
   def [](value)

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/resource/catalog'
 require_relative '../../../puppet/indirector/msgpack'
 

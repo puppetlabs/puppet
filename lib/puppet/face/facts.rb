@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/indirector/face'
 require_relative '../../puppet/node/facts'
 

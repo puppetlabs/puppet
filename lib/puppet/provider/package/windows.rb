@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/provider/package'
 require_relative '../../../puppet/util/windows'
 require_relative 'windows/package'
@@ -31,6 +32,7 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
   has_feature :versionable
 
   attr_accessor :package
+
   class << self
     attr_accessor :paths
   end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/package/version/gem'
 require_relative '../../../puppet/util/package/version/range'
 require_relative '../../../puppet/provider/package_targetable'
@@ -118,9 +119,9 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
     end
 
     begin
-      list = execute_gem_command(options[:command], command_options).lines.
-        map {|set| gemsplit(set) }.
-        reject {|x| x.nil? }
+      list = execute_gem_command(options[:command], command_options).lines
+        .map {|set| gemsplit(set) }
+        .reject {|x| x.nil? }
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not list gems: %{detail}") % { detail: detail }, detail.backtrace
     end
@@ -155,6 +156,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
 
   def insync?(is)
     return false unless is && is != :absent
+
     is = [is] unless is.is_a? Array
     should = @resource[:ensure]
 

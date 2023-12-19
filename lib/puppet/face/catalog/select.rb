@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Select and show a list of resources of a given type.
 Puppet::Face.define(:catalog, '0.0.1') do
   action :select do

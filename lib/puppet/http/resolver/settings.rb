@@ -1,10 +1,10 @@
 # frozen_string_literal: true
+
 # Resolve a service using settings. This is the default resolver if none of the
 # other resolvers find a functional connection.
 #
 # @api public
 class Puppet::HTTP::Resolver::Settings < Puppet::HTTP::Resolver
-
   # Resolve a service using the default server and port settings for this service.
   #
   # @param [Puppet::HTTP::Session] session

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Defines classes to deal with issues, and message formatting and defines constants with Issues.
 # @api public
 #
@@ -23,6 +24,7 @@ module Issues
 
     # If this issue can have its severity lowered to :warning, :deprecation, or :ignored
     attr_writer :demotable
+
     # Configures the Issue with required arguments (bound by occurrence), and a block producing a message.
     def initialize issue_code, *args, &block
       @issue_code = issue_code
@@ -92,6 +94,7 @@ module Issues
       label_provider = @data[:label]
       #TRANSLATORS ":label" is a keyword and should not be translated
       raise Puppet::Error, _('Label provider key :label must be set to produce the text of the message!') unless label_provider
+
       label_provider
     end
 
@@ -100,6 +103,7 @@ module Issues
     def semantic
       #TRANSLATORS ":semantic" is a keyword and should not be translated
       raise Puppet::Error, _('Label provider key :semantic must be set to produce the text of the message!') unless @data[:semantic]
+
       @data[:semantic]
     end
   end

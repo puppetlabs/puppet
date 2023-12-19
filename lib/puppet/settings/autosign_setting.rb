@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/settings/base_setting'
 
 # A specialization of the file setting to allow boolean values.
@@ -8,7 +9,6 @@ require_relative '../../puppet/settings/base_setting'
 #
 # @api private
 class Puppet::Settings::AutosignSetting < Puppet::Settings::FileSetting
-
   def munge(value)
     if ['true', true].include? value
       true

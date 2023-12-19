@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/parser/ast'
 
 # The receiver of `import(file)` calls; once per imported file, or nil if imports are ignored
@@ -11,6 +12,7 @@ class Puppet::Pops::Model::AstTransformer
   Model = Puppet::Pops::Model
 
   attr_reader :importer
+
   def initialize(source_file = "unknown-file", importer=nil)
     @@transform_visitor ||= Puppet::Pops::Visitor.new(nil,"transform",0,0)
     @@query_transform_visitor ||= Puppet::Pops::Visitor.new(nil,"query",0,0)
@@ -78,7 +80,6 @@ class Puppet::Pops::Model::AstTransformer
   def hostname(o)
     @@hostname_transform_visitor.visit_this_0(self, o)
   end
-
 
   # Ensures transformation fails if a 3.1 non supported object is encountered in a query expression
   #

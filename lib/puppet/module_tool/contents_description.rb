@@ -1,13 +1,12 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/module_tool'
 
 module Puppet::ModuleTool
-
   # = ContentsDescription
   #
   # This class populates +Metadata+'s Puppet type information.
   class ContentsDescription
-
     # Instantiate object for string +module_path+.
     def initialize(module_path)
       @module_path = module_path

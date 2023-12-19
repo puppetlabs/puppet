@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/module_tool'
 require_relative '../../puppet/network/format_support'
 require 'uri'
@@ -6,7 +7,6 @@ require_relative '../../puppet/util/json'
 require 'set'
 
 module Puppet::ModuleTool
-
   # This class provides a data structure representing a module's metadata.
   # @api private
   class Metadata
@@ -40,6 +40,7 @@ module Puppet::ModuleTool
     # Returns a string that uniquely represents this version of this module.
     def release_name
       return nil unless @data['name'] && @data['version']
+
       [ dashed_name, @data['version'] ].join('-')
     end
 
@@ -111,6 +112,7 @@ module Puppet::ModuleTool
     # Expose any metadata keys as callable reader methods.
     def method_missing(name, *args)
       return @data[name.to_s] if @data.key? name.to_s
+
       super
     end
 
@@ -149,7 +151,6 @@ module Puppet::ModuleTool
         data['project_page'] ||= @data['project_page'] || source_uri.to_s
         data['issues_url'] ||= @data['issues_url'] || source_uri.to_s.sub(/\/*$/, '') + '/issues'
       end
-
     rescue URI::Error
       return
     end

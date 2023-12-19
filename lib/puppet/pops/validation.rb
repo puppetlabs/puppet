@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 # A module with base functionality for validation of a model.
 #
@@ -9,7 +10,6 @@ module Puppet::Pops
 # * **DiagnosticFormatter** - produces human readable output for a Diagnostic
 #
 module Validation
-
   # This class is an abstract base implementation of a _model validation factory_ that creates a validator instance
   # and associates it with a fully configured DiagnosticProducer.
   #
@@ -26,7 +26,6 @@ module Validation
   # @api public
   #
   class Factory
-
     # Produces a validator with the given acceptor as the recipient of produced diagnostics.
     # The acceptor is where detected issues are received (and typically collected).
     #
@@ -135,6 +134,7 @@ module Validation
       unless issue.demotable? || level == :error
         raise Puppet::DevError.new(_("Attempt to demote the hard issue '%{issue_code}' to %{level}") % { issue_code: issue.issue_code, level: level })
       end
+
       @severities[issue] = level
     end
 
@@ -169,7 +169,6 @@ module Validation
   # sets keys in the given argument hash that may be used in the formatting of the issue message.
   #
   class DiagnosticProducer
-
     # A producer of severity for a given issue
     # @return [SeverityProducer]
     #
@@ -179,6 +178,7 @@ module Validation
     # @return [LabelProvider]
     #
     attr_reader :label_provider
+
     # Initializes this producer.
     #
     # @param acceptor [Acceptor] a sink/collector of diagnostic results
@@ -229,6 +229,7 @@ module Validation
     attr_reader :exception
     attr_reader :file
     attr_reader :source_pos
+
     def initialize severity, issue, file, source_pos, arguments={}, exception=nil
       @severity = severity
       @issue = issue
@@ -353,7 +354,6 @@ module Validation
   # answer questions about what was diagnosed.
   #
   class Acceptor
-
     # All diagnostic in the order they were issued
     attr_reader :diagnostics
 
@@ -362,6 +362,7 @@ module Validation
 
     # The number of :error severity issues
     attr_reader :error_count
+
     # Initializes this diagnostics acceptor.
     # By default, the acceptor is configured with a default severity producer.
     # @param severity_producer [SeverityProducer] the severity producer to use to determine severity of an issue
@@ -438,7 +439,7 @@ module Validation
           @error_count -= 1
         when :warning
           @warning_count -= 1
-        # there is not ignore_count
+          # there is not ignore_count
         end
       end
       removed.empty? ? nil : removed

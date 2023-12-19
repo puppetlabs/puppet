@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm do
   desc "Support for Red Hat's proprietary `up2date` package update
     mechanism."

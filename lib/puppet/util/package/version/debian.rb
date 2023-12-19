@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Util::Package::Version
   class Debian < Numeric
     include Comparable
@@ -43,6 +44,7 @@ module Puppet::Util::Package::Version
 
     def <=>(other)
       return nil unless other.is_a?(self.class)
+
       cmp = @epoch <=> other.epoch
       if cmp == 0
         cmp = compare_upstream_version(other)

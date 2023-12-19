@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # frozen_string_literal: true
+
 require_relative '../puppet'
 require_relative '../puppet/util/log'
 require_relative '../puppet/util/metric'
@@ -14,7 +15,6 @@ require_relative '../puppet/util/tagging'
 require_relative '../puppet/concurrent/lock'
 
 # see the bottom of the file for the rest of the inclusions
-
 
 module Puppet
 # The base class for all Puppet types.
@@ -101,6 +101,7 @@ class Type
     # Order is only maintained against other types, not arbitrary objects.
     # The natural order is based on the reference name used when comparing
     return nil unless other.is_a?(Puppet::CompilableResourceType) || other.class.is_a?(Puppet::CompilableResourceType)
+
     # against other type instances.
     self.ref <=> other.ref
   end
@@ -295,6 +296,7 @@ class Type
   #
   def self.metaparamclass(name)
     return nil if name.nil?
+
     @@metaparamhash[name.intern]
   end
 
@@ -550,6 +552,7 @@ class Type
   # @return [Array<String>] Returns the parameter names
   def self.parameters
     return [] unless defined?(@parameters)
+
     @parameters.collect { |klass| klass.name }
   end
 
@@ -569,6 +572,7 @@ class Type
   def self.validattr?(name)
     name = name.intern
     return true if name == :name
+
     @validattrs ||= {}
 
     unless @validattrs.include?(name)
@@ -597,6 +601,7 @@ class Type
   # @return [Boolean] Returns true if the given name is the name of an existing parameter
   def self.validparameter?(name)
     raise Puppet::DevError, _("Class %{class_name} has not defined parameters") % { class_name: self } unless defined?(@parameters)
+
     !!(@paramhash.include?(name) or @@metaparamhash.include?(name))
   end
 
@@ -632,6 +637,7 @@ class Type
   #
   def name_var
     return @name_var_cache unless @name_var_cache.nil?
+
     key_attributes = self.class.key_attributes
     @name_var_cache = (key_attributes.length == 1) && key_attributes.first
   end
@@ -907,6 +913,7 @@ class Type
   # @return [???] the version of the catalog or 0 if there is no catalog.
   def version
     return 0 unless catalog
+
     catalog.version
   end
 
@@ -1066,6 +1073,7 @@ class Type
 
     properties.each do |property|
       next if property.name == :ensure
+
       if ensure_state == :absent
         result[property] = :absent
       else
@@ -1218,7 +1226,6 @@ class Type
     resource
   end
 
-
   # Returns an array of strings representing the containment hierarchy
   # (types/classes) that make up the path to the resource from the root
   # of the catalog.  This is mostly used for logging purposes.
@@ -1311,6 +1318,7 @@ class Type
       unless list == [:all]
         list.each do |param|
           next if @resource.class.validattr?(param)
+
           fail "Cannot audit #{param}: not a valid attribute for #{resource}"
         end
       end
@@ -1319,6 +1327,7 @@ class Type
     munge do |args|
       properties_to_audit(args).each do |param|
         next unless resource.class.validproperty?(param)
+
         resource.newattr(param)
       end
     end
@@ -1570,7 +1579,6 @@ class Type
     RelationshipMetaparam.subclasses
   end
 
-
   # Note that the order in which the relationships params is defined
   # matters.  The labeled params (notify and subscribe) must be later,
   # so that if both params are used, those ones win.  It's a hackish
@@ -1795,20 +1803,20 @@ class Type
 
     pname = options[:parent]
     parent = if pname
-      options.delete(:parent)
-      if pname.is_a? Class
-        pname
-      else
-        provider = self.provider(pname)
-        if provider
-          provider
-        else
-          raise Puppet::DevError, _("Could not find parent provider %{parent} of %{name}") % { parent: pname, name: name }
-        end
-      end
-    else
-      Puppet::Provider
-    end
+               options.delete(:parent)
+               if pname.is_a? Class
+                 pname
+               else
+                 provider = self.provider(pname)
+                 if provider
+                   provider
+                 else
+                   raise Puppet::DevError, _("Could not find parent provider %{parent} of %{name}") % { parent: pname, name: name }
+                 end
+               end
+             else
+               Puppet::Provider
+             end
 
     options[:resource_type] ||= self
 
@@ -2093,6 +2101,7 @@ class Type
       # Retrieve the list of names from the block.
       list = self.instance_eval(&block)
       next unless list
+
       list = [list] unless list.is_a?(Array)
 
       # Collect the current prereqs
@@ -2191,6 +2200,7 @@ class Type
     # @return [Boolean] true if the type should send itself a refresh event on change.
     #
     attr_accessor :self_refresh
+
     include Enumerable, Puppet::Util::ClassGen
 
     include Puppet::Util
@@ -2282,16 +2292,13 @@ class Type
   # @return [void]
   #
   def log(msg)
-
     Puppet::Util::Log.create(
-
       :level => @parameters[:loglevel].value,
       :message => msg,
 
       :source => self
     )
   end
-
 
   # instance methods related to instance intrinsics
   # e.g., initialize and name
@@ -2411,6 +2418,7 @@ class Type
 
     parameters.each do |_name, param|
       next if param.sensitive
+
       if param.is_a?(Puppet::Parameter)
         param.sensitive = param.is_sensitive if param.respond_to?(:is_sensitive)
       end
@@ -2518,12 +2526,13 @@ class Type
   def parent
     return nil unless catalog
     return @parent if @parent
+
     parents = catalog.adjacent(self, :direction => :in)
     @parent = if parents
-      parents.shift
-    else
-      nil
-    end
+                parents.shift
+              else
+                nil
+              end
   end
 
   # Returns a reference to this as a string in "Type[name]" format.
@@ -2607,6 +2616,7 @@ class Type
 
       # We've already got property values
       next if param.is_a?(Puppet::Property)
+
       resource[name] = param.value
     end
 

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Returns the length of an Array, Hash, String, or Binary value.
 #
 # The returned value is a positive integer indicating the number
@@ -41,5 +42,4 @@ Puppet::Functions.create_function(:length) do
   def binary_length(bin)
     bin.length
   end
-
 end

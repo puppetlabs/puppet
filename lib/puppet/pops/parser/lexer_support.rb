@@ -2,17 +2,16 @@
 
 module Puppet::Pops
 module Parser
-
 require_relative '../../../puppet/util/multi_match'
 
 # This is an integral part of the Lexer. It is broken out into a separate module
 # for maintainability of the code, and making the various parts of the lexer focused.
 #
 module LexerSupport
-
   # Returns "<eof>" if at end of input, else the following 5 characters with \n \r \t escaped
   def followed_by
     return "<eof>" if @scanner.eos?
+
     result = @scanner.rest[0,5] + "..."
     result.gsub!("\t", '\t')
     result.gsub!("\n", '\n')
@@ -147,7 +146,6 @@ module LexerSupport
     #
   end
 
-
   MM = Puppet::Util::MultiMatch
   MM_ANY = MM::NOT_NIL
 
@@ -214,9 +212,8 @@ module LexerSupport
       (content.getbyte(1) || ' '),
       (content.getbyte(2) || ' '),
       (content.getbyte(3) || ' ')
-      )
+    )
   end
-
 end
 end
 end

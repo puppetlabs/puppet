@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Returns a new string with the last character removed.
 # If the string ends with `\r\n`, both characters are removed. Applying chop to an empty
 # string returns an empty string. If you wish to merely remove record
@@ -35,7 +36,6 @@
 # Would both result in `['hello', 'hi']`
 #
 Puppet::Functions.create_function(:chop) do
-
   dispatch :on_numeric do
     param 'Numeric', :arg
   end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'forwardable'
 class Hiera
   class Scope
@@ -86,6 +87,5 @@ class Hiera
 
     # This is needed for type conversion to work
     def_delegators :@real, :call_function
-
   end
 end

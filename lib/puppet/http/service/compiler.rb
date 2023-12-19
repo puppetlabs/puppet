@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The Compiler service is used to submit and retrieve data from the
 # puppetserver.
 #
@@ -165,6 +166,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       raise ArgumentError.new("The 'persistence' hash is missing the keys: #{missing.join(', ')}")
     end
     raise ArgumentError.new("Facts must be a Hash not a #{facts.class}") unless facts.nil? || facts.is_a?(Hash)
+
     body = {
       certname: certname,
       persistence: persistence,

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Adaptable is a mix-in module that adds adaptability to a class.
 # This means that an adapter can
 # associate itself with an instance of the class and store additional data/have behavior.

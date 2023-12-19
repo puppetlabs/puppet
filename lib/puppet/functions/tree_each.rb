@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Runs a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # recursively and repeatedly using values from a data structure, then returns the unchanged data structure, or if
 # a lambda is not given, returns an `Iterator` for the tree.
@@ -141,7 +142,6 @@
 # @since 5.0.0
 #
 Puppet::Functions.create_function(:tree_each) do
-
   local_types do
     type "OptionsType  = Struct[{\
       container_type => Optional[Type],\

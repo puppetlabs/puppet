@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Types
 # The ClassLoader provides a Class instance given a class name or a meta-type.
@@ -37,6 +38,7 @@ class ClassLoader
     case type
     when PRuntimeType
       raise ArgumentError.new("Only Runtime type 'ruby' is supported, got #{type.runtime}") unless type.runtime == :ruby
+
       provide_from_string(type.runtime_type_name)
 
     when PBooleanType
@@ -95,6 +97,7 @@ class ClassLoader
       end
     end
     return nil unless result.is_a?(Module)
+
     result
   end
   private_class_method :provide_from_string
@@ -120,14 +123,13 @@ class ClassLoader
   private_class_method :paths_for_name
 
   def self.de_camel(fq_name)
-    fq_name.to_s.gsub(/::/, '/').
-    gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
-    gsub(/([a-z\d])([A-Z])/,'\1_\2').
-    tr("-", "_").
-    downcase
+    fq_name.to_s.gsub(/::/, '/')
+    .gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2')
+    .gsub(/([a-z\d])([A-Z])/,'\1_\2')
+    .tr("-", "_")
+    .downcase
   end
   private_class_method :de_camel
-
 end
 end
 end

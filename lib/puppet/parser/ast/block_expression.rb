@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Evaluates contained expressions, produce result of the last
 #
 class Puppet::Parser::AST::BlockExpression < Puppet::Parser::AST::Branch

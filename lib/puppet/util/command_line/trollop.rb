@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 ## lib/trollop.rb -- trollop command-line processing library
 ## Author::    William Morgan (mailto: wmorgan-trollop@masanjin.net)
 ## Copyright:: Copyright 2007 William Morgan
@@ -17,7 +18,6 @@ module Puppet
 module Util
 class CommandLine
 module Trollop
-
 VERSION = "1.16.2"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
@@ -48,7 +48,6 @@ PARAM_RE = /^-(-|\.$|[^\d\.])/
 ## and consider calling it from within
 ## Trollop::with_standard_exception_handling.
 class Parser
-
   ## The set of values that indicate a flag option when passed as the
   ## +:type+ parameter of #opt.
   FLAG_TYPES = [:flag, :bool, :boolean]
@@ -171,6 +170,7 @@ class Parser
       when nil; nil
       else
         raise ArgumentError, _("unsupported argument type '%{type}'") % { type: opts[:type] } unless TYPES.include?(opts[:type])
+
         opts[:type]
       end
 
@@ -197,6 +197,7 @@ class Parser
         if opts[:default].empty?
           raise ArgumentError, _("multiple argument type cannot be deduced from an empty array for '%{value0}'") % { value0: opts[:default][0].class.name }
         end
+
         case opts[:default][0]    # the first element determines the types
         when Integer; :ints
         when Numeric; :floats
@@ -463,7 +464,7 @@ class Parser
   ## Print the help message to +stream+.
   def educate stream=$stdout
     width # just calculate it now; otherwise we have to be careful not to
-          # call this unless the cursor's at the beginning of a line.
+    # call this unless the cursor's at the beginning of a line.
 
     left = {}
     @specs.each do |name, spec|
@@ -527,18 +528,18 @@ class Parser
 
   def width #:nodoc:
     @width ||= if $stdout.tty?
-      begin
-        require 'curses'
-        Curses::init_screen
-        x = Curses::cols
-        Curses::close_screen
-        x
-      rescue Exception
-        80
-      end
-    else
-      80
-    end
+               begin
+                 require 'curses'
+                 Curses::init_screen
+                 x = Curses::cols
+                 Curses::close_screen
+                 x
+               rescue Exception
+                 80
+               end
+               else
+                 80
+               end
   end
 
   def wrap str, opts={} # :nodoc:
@@ -636,11 +637,13 @@ class Parser
 
   def parse_integer_parameter param, arg
     raise CommandlineError, _("option '%{arg}' needs an integer") % { arg: arg } unless param =~ /^\d+$/
+
     param.to_i
   end
 
   def parse_float_parameter param, arg
     raise CommandlineError, _("option '%{arg}' needs a floating-point number") % { arg: arg } unless param =~ FLOAT_RE
+
     param.to_f
   end
 
@@ -670,6 +673,7 @@ class Parser
   def resolve_default_short_options
     @order.each do |type, name|
       next unless type == :opt
+
       opts = @specs[name]
       next if opts[:short]
 
@@ -819,7 +823,6 @@ def die arg, msg=nil
 end
 
 module_function :options, :die, :with_standard_exception_handling
-
 end # module
 end
 end

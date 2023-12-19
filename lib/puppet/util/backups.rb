@@ -1,8 +1,8 @@
 # frozen_string_literal: true
+
 require 'find'
 require 'fileutils'
 module Puppet::Util::Backups
-
   # Deal with backups.
   def perform_backup(file = nil)
     # if they specifically don't want a backup, then just say
@@ -24,6 +24,7 @@ module Puppet::Util::Backups
     when "directory"
       # we don't need to backup directories when recurse is on
       return true if self[:recurse]
+
       info _("Recursively backing up to filebucket")
       Find.find(self[:path]) { |f| backup_file_with_filebucket(f) if File.file?(f) }
     when "file"; backup_file_with_filebucket(file)

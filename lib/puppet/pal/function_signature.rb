@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
 module Pal
   # A FunctionSignature is returned from `function_signature`. Its purpose is to answer questions about the function's parameters
@@ -32,6 +33,7 @@ module Pal
 
       return true if callables.any? {|t| t.callable_with?(args) }
       return false unless block_given?
+
       args_type = Puppet::Pops::Types::TypeCalculator.singleton.infer_set(callable.nil? ? args : args + [callable])
       error_message = Puppet::Pops::Types::TypeMismatchDescriber.describe_signatures(@func.name, @func.signatures, args_type)
       yield error_message
@@ -48,6 +50,5 @@ module Pal
       signatures.is_a?(Puppet::Pops::Types::PVariantType) ? signatures.types : [signatures]
     end
   end
-
 end
 end

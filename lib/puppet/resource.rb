@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../puppet'
 require_relative '../puppet/util/tagging'
 require_relative '../puppet/parameter'
@@ -51,8 +52,10 @@ class Puppet::Resource
   def initialize_from_hash(data)
     type = data['type']
     raise ArgumentError, _('No resource type provided in serialized data') unless type
+
     title = data['title']
     raise ArgumentError, _('No resource title provided in serialized data') unless title
+
     @type, @title = self.class.type_and_title(type, title)
 
     params = data['parameters']
@@ -184,6 +187,7 @@ class Puppet::Resource
     return false unless other.respond_to?(:title) and self.type == other.type and self.title == other.title
 
     return false unless to_hash == other.to_hash
+
     true
   end
 
@@ -321,6 +325,7 @@ class Puppet::Resource
       # Set things like environment, strictness first.
       attributes.each do |attr, value|
         next if attr == :parameters
+
         send(attr.to_s + "=", value)
       end
 
@@ -574,7 +579,6 @@ class Puppet::Resource
     [type, title]
   end
 
-
   def self.extract_type_and_title(argtype, argtitle)
     if (argtype.nil? || argtype == :component || argtype == :whit) &&
           argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                  then [ $1,                 $2            ]
@@ -590,6 +594,7 @@ class Puppet::Resource
   def self.munge_type_name(value)
     return :main if value == :main
     return TYPE_CLASS if value == '' || value.nil? || value.to_s.casecmp('component') == 0
+
     Puppet::Pops::Types::TypeFormatter.singleton.capitalize_segments(value.to_s)
   end
   private_class_method :munge_type_name

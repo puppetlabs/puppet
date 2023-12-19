@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Puppet::FileSystem::Posix < Puppet::FileSystem::FileImpl
   def binread(path)
     path.binread
@@ -26,9 +27,11 @@ class Puppet::FileSystem::Posix < Puppet::FileSystem::FileImpl
   end
 
   private
+
   def stream_blksize(*streams)
     streams.each do |s|
       next unless s.respond_to?(:stat)
+
       size = blksize(s.stat)
       return size if size
     end
@@ -39,6 +42,7 @@ class Puppet::FileSystem::Posix < Puppet::FileSystem::FileImpl
     s = st.blksize
     return nil unless s
     return nil if s == 0
+
     s
   end
 

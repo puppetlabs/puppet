@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/configurer'
 require_relative '../../puppet/resource/catalog'
 
@@ -40,7 +41,6 @@ class Puppet::Configurer::Downloader
 
   def initialize(name, path, source, ignore = nil, environment = nil, source_permissions = :ignore)
     @name, @path, @source, @ignore, @environment, @source_permissions = name, path, source, ignore, environment, source_permissions
-
   end
 
   def file

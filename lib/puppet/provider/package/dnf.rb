@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Type.type(:package).provide :dnf, :parent => :yum do
   desc "Support via `dnf`.
 

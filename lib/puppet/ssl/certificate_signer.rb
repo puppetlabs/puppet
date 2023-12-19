@@ -1,11 +1,11 @@
 # frozen_string_literal: true
+
 # Take care of signing a certificate in a FIPS 140-2 compliant manner.
 #
 # @see https://projects.puppetlabs.com/issues/17295
 #
 # @api private
 class Puppet::SSL::CertificateSigner
-
   # @!attribute [r] digest
   #   @return [OpenSSL::Digest]
   attr_reader :digest

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Loader
 # BaseLoader
@@ -10,7 +11,6 @@ module Loader
 # @api private
 #
 class BaseLoader < Loader
-
   # The parent loader
   attr_reader :parent
 

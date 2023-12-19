@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/ssl/base'
 require_relative '../../puppet/ssl/certificate_signer'
 
@@ -170,12 +171,12 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
   end
 
   def subject_alt_names
-    @subject_alt_names ||= request_extensions.
-      select {|x| x["oid"] == "subjectAltName" }.
-      map {|x| x["value"].split(/\s*,\s*/) }.
-      flatten.
-      sort.
-      uniq
+    @subject_alt_names ||= request_extensions
+      .select {|x| x["oid"] == "subjectAltName" }
+      .map {|x| x["value"].split(/\s*,\s*/) }
+      .flatten
+      .sort
+      .uniq
   end
 
   # Return all user specified attributes attached to this CSR as a hash. IF an
@@ -296,7 +297,6 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
   # @return [Array<Array<Object>>] A array of arrays containing the extension
   #   OID the critical state if present, and the extension value.
   def unpack_extension_request(attribute)
-
     unless attribute.value.is_a? OpenSSL::ASN1::Set
       raise Puppet::Error, _("In %{attr}, expected Set but found %{klass}") % { attr: attribute.oid, klass: attribute.value.class }
     end

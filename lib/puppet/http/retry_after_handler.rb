@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'date'
 require 'time'
 
@@ -6,7 +7,6 @@ require 'time'
 #
 # @api private
 class Puppet::HTTP::RetryAfterHandler
-
   # Create a handler to allow the system to sleep between HTTP requests
   #
   # @param [Integer] retry_limit number of retries allowed

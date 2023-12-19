@@ -1,9 +1,9 @@
 # frozen_string_literal: true
+
 # Instruction for Resource instantiation.
 # Instantiates resources of both native and user defined types.
 #
 class Puppet::Parser::AST::Resource < Puppet::Parser::AST::Branch
-
   attr_accessor :type, :instances, :exported, :virtual
 
   def initialize(argshash)
@@ -26,7 +26,6 @@ class Puppet::Parser::AST::Resource < Puppet::Parser::AST::Branch
     # instance.  This handles things like:
     # file { '/foo': owner => blah; '/bar': owner => blah }
     @instances.map do |instance|
-
       # Evaluate all of the specified params.
       paramobjects = instance.parameters.map { |param| param.safeevaluate(scope) }
 
@@ -52,7 +51,7 @@ class Puppet::Parser::AST::Resource < Puppet::Parser::AST::Branch
           :source => scope.source,
           :scope => scope,
           :strict => true
-          )
+          ) # rubocop:disable Layout/ClosingParenthesisIndentation
 
           if resource.resource_type.is_a? Puppet::Resource::Type
             resource.resource_type.instantiate_resource(scope, resource)

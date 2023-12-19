@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/provider/package'
 
 # Packaging on OpenBSD.  Doesn't work anywhere else that I know of.
@@ -217,6 +218,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
       return master_version unless master_version == 0
       return '' if version == -1
+
       raise Puppet::Error, _("%{version} is not available for this package") % { version: version }
     end
   rescue Puppet::ExecutionFailure

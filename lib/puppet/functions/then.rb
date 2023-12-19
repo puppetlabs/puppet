@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Calls a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # with the given argument unless the argument is `undef`.
 # Returns `undef` if the argument is `undef`, and otherwise the result of giving the
@@ -73,6 +74,7 @@ Puppet::Functions.create_function(:then) do
 
   def then(arg)
     return nil if arg.nil?
+
     yield(arg)
   end
 end

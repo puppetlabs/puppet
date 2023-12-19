@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet'
 require_relative '../../puppet/parameter/boolean'
 
@@ -90,8 +91,8 @@ Puppet::Type.newtype(:resources) do
   end
 
   WINDOWS_SYSTEM_SID_REGEXES =
-      # Administrator, Guest, Domain Admins, Schema Admins, Enterprise Admins.
-      # https://support.microsoft.com/en-us/help/243330/well-known-security-identifiers-in-windows-operating-systems
+    # Administrator, Guest, Domain Admins, Schema Admins, Enterprise Admins.
+    # https://support.microsoft.com/en-us/help/243330/well-known-security-identifiers-in-windows-operating-systems
     [/S-1-5-21.+-500/, /S-1-5-21.+-501/, /S-1-5-21.+-512/, /S-1-5-21.+-518/,
      /S-1-5-21.+-519/]
 
@@ -116,12 +117,13 @@ Puppet::Type.newtype(:resources) do
   # right now, because it only supports purging.
   def generate
     return [] unless self.purge?
-    resource_type.instances.
-      reject { |r| catalog.resource_refs.include? r.ref }.
-      select { |r| check(r) }.
-      select { |r| r.class.validproperty?(:ensure) }.
-      select { |r| able_to_ensure_absent?(r) }.
-      each { |resource|
+
+    resource_type.instances
+      .reject { |r| catalog.resource_refs.include? r.ref }
+      .select { |r| check(r) }
+      .select { |r| r.class.validproperty?(:ensure) }
+      .select { |r| able_to_ensure_absent?(r) }
+      .each { |resource|
         resource.copy_metaparams(@parameters)
         resource.purging
       }
@@ -133,6 +135,7 @@ Puppet::Type.newtype(:resources) do
       unless type
         raise Puppet::DevError, _("Could not find resource type")
       end
+
       @resource_type = type
     end
     @resource_type
@@ -142,6 +145,7 @@ Puppet::Type.newtype(:resources) do
   def user_check(resource)
     return true unless self[:name] == "user"
     return true unless self[:unless_system_user]
+
     resource[:audit] = :uid
     current_values = resource.retrieve_resource
     current_uid = current_values[resource.property(:uid)]
@@ -149,6 +153,7 @@ Puppet::Type.newtype(:resources) do
 
     return false if system_users.include?(resource[:name])
     return false if unless_uids && unless_uids.include?(current_uid)
+
     if current_uid.is_a?(String)
       # Windows user; is a system user if any regex matches.
       WINDOWS_SYSTEM_SID_REGEXES.none? { |regex| current_uid =~ regex }
@@ -172,12 +177,11 @@ Puppet::Type.newtype(:resources) do
     end
 
     # Otherwise, use a sensible default based on the OS family
-    @system_users_max_uid ||= case Puppet.runtime[:facter].value('os.family')
-                              when 'OpenBSD', 'FreeBSD'
-        999
-      else
-        499
-    end
+    @system_users_max_uid ||=
+      case Puppet.runtime[:facter].value('os.family')
+      when 'OpenBSD', 'FreeBSD' then 999
+      else                           499
+      end
 
     @system_users_max_uid
   end

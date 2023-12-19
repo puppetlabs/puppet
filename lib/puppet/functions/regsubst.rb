@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Performs regexp replacement on a string or array of strings.
 Puppet::Functions.create_function(:regsubst) do
   # @param target [String]

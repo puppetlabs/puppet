@@ -1,8 +1,8 @@
 # frozen_string_literal: true
+
 # Configuration settings for a single directory Environment.
 # @api private
 class Puppet::Settings::EnvironmentConf
-
   ENVIRONMENT_CONF_ONLY_SETTINGS = [:modulepath, :manifest, :config_version].freeze
   VALID_SETTINGS = (ENVIRONMENT_CONF_ONLY_SETTINGS + [:environment_timeout, :environment_data_provider, :static_catalogs, :rich_data]).freeze
 
@@ -171,6 +171,7 @@ class Puppet::Settings::EnvironmentConf
 
   def expand_glob(path)
     return nil if path.nil?
+
     if path =~ /[*?\[\{]/
       Dir.glob(path)
     else
@@ -180,6 +181,7 @@ class Puppet::Settings::EnvironmentConf
 
   def absolute(path)
     return nil if path.nil?
+
     if path =~ /^\$/
       # Path begins with $something interpolatable
       path
@@ -221,5 +223,4 @@ class Puppet::Settings::EnvironmentConf
       @environment.config_version
     end
   end
-
 end

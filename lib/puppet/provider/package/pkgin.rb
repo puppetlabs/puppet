@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/provider/package'
 
 Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package do
@@ -11,7 +12,6 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
   has_feature :installable, :uninstallable, :upgradeable, :versionable
 
   def self.parse_pkgin_line(package)
-
     # e.g.
     #   vim-7.2.446;Vim editor (vi clone) without GUI
     match, name, version, status = *package.match(/([^\s;]+)-([^\s;]+)[;\s](=|>|<)?.+$/)
@@ -78,11 +78,11 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
   def latest
     package = parse_pkgsearch_line.detect{ |p| p[:status] == '<' }
     return properties[:ensure] if not package
+
     return package[:ensure]
   end
 
   def update
     pkgin("-y", :install, resource[:name])
   end
-
 end

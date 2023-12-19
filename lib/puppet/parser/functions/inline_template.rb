@@ -1,10 +1,10 @@
 # frozen_string_literal: true
+
 Puppet::Parser::Functions::newfunction(:inline_template, :type => :rvalue, :arity => -2, :doc =>
   "Evaluate a template string and return its value.  See
   [the templating docs](https://puppet.com/docs/puppet/latest/lang_template.html) for
   more information. Note that if multiple template strings are specified, their
   output is all concatenated and returned as the output of the function.") do |vals|
-
   if Puppet[:tasks]
     raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
       Puppet::Pops::Issues::FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING,

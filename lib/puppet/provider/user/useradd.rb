@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/provider/nameservice/objectadd'
 require 'date'
 require_relative '../../../puppet/util/libuser'
@@ -55,36 +56,43 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def exists?
     return !!localuid if @resource.forcelocal?
+
     super
   end
 
   def uid
      return localuid if @resource.forcelocal?
+
      get(:uid)
   end
 
   def gid
      return localgid if @resource.forcelocal?
+
      get(:gid)
   end
 
   def comment
      return localcomment if @resource.forcelocal?
+
      get(:comment)
   end
 
   def shell
     return localshell if @resource.forcelocal?
+
     get(:shell)
   end
 
   def home
     return localhome if @resource.forcelocal?
+
     get(:home)
   end
 
   def groups
      return localgroups if @resource.forcelocal?
+
      super
   end
 
@@ -113,6 +121,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   def localuid
     user = finduser(:account, resource[:name])
     return user[:uid] if user
+
     false
   end
 
@@ -196,7 +205,6 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
         :sensitive => has_sensitive_data?
       }
       output = execute(cmd, execute_options)
-
     rescue => detail
       tempfile.close
       tempfile.delete
@@ -280,6 +288,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     Puppet::Type.type(:user).validproperties.sort.each do |property|
       value = get_value_for_property(property)
       next if value.nil? || property == :password
+
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
       cmd << flag(property) << munge(property, value)
@@ -292,6 +301,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     return nil if property_manages_password_age?(property)
     return nil if property == :groups and @resource.forcelocal?
     return nil if property == :expiry and @resource.forcelocal?
+
     value = @resource.should(property)
     return nil if !value || value == ""
 

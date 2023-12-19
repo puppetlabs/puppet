@@ -1,10 +1,10 @@
 # frozen_string_literal: true
+
 # HP-UX packaging.
 
 require_relative '../../../puppet/provider/package'
 
 Puppet::Type.type(:package).provide :hpux, :parent => Puppet::Provider::Package do
-
   desc "HP-UX's packaging system."
 
   commands :swinstall => "/usr/sbin/swinstall",
@@ -23,6 +23,7 @@ Puppet::Type.type(:package).provide :hpux, :parent => Puppet::Provider::Package 
   # source and name are required
   def install
     raise ArgumentError, _("source must be provided to install HP-UX packages") unless resource[:source]
+
     args = standard_args + ["-s", resource[:source], resource[:name]]
     swinstall(*args)
   end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The standard init-based service type.  Many other service types are
 # customizations of this module.
 Puppet::Type.type(:service).provide :init, :parent => :base do
@@ -98,6 +99,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
         next if Puppet::FileSystem.directory?(fullpath)
         next unless Puppet::FileSystem.executable?(fullpath)
         next unless is_init?(fullpath)
+
         instances << new(:name => name, :path => path, :hasstatus => true)
       end
     end

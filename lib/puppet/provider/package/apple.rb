@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/provider/package'
 
 # OS X Packaging sucks.  We can install packages, but that's about it.

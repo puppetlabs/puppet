@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # GemSupport offers methods to find a gem's location by name or gem://gemname URI.
 #
 # TODO: The Puppet 3x, uses Puppet::Util::RubyGems to do this, and obtain paths, and avoids using ::Gems
@@ -9,7 +10,6 @@
 # and then trying to access those.
 #
 module Puppet::Pops::Loader::GemSupport
-
   # Produces the root directory of a gem given as an URI (gem://gemname/optional/path), or just the
   # gemname as a string.
   #
@@ -31,6 +31,7 @@ module Puppet::Pops::Loader::GemSupport
     unless spec
       raise ArgumentError, _("Gem not found %{uri}") % { uri: uri }
     end
+
     # if path given append that, else append given subdir
     if uri.path.empty?
       spec.gem_dir
@@ -47,6 +48,7 @@ module Puppet::Pops::Loader::GemSupport
     unless spec
       raise ArgumentError, _("Gem not found '%{gem_name}'") % { gem_name: gem_name }
     end
+
     spec.full_gem_path
   end
 end

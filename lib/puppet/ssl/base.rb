@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/ssl/openssl_loader'
 require_relative '../../puppet/ssl'
 require_relative '../../puppet/ssl/digest'
@@ -25,6 +26,7 @@ class Puppet::SSL::Base
 
   def self.wrapped_class
     raise(Puppet::DevError, _("%{name} has not declared what class it wraps") % { name: self }) unless defined?(@wrapped_class)
+
     @wrapped_class
   end
 
@@ -96,6 +98,7 @@ class Puppet::SSL::Base
   # Convert our thing to pem.
   def to_s
     return "" unless content
+
     content.to_pem
   end
 
@@ -106,6 +109,7 @@ class Puppet::SSL::Base
   # Provide the full text of the thing we're dealing with.
   def to_text
     return "" unless content
+
     content.to_text
   end
 

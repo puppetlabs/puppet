@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../puppet/indirector'
 
 # A class for managing nodes, including their facts and environment.
@@ -100,6 +101,7 @@ class Puppet::Node
 
   def initialize(name, options = {})
     raise ArgumentError, _("Node names cannot be nil") unless name
+
     @name = name
 
     classes = options[:classes]

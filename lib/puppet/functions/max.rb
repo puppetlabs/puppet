@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Returns the highest value among a variable number of arguments.
 # Takes at least one argument.
 #
@@ -133,7 +134,6 @@ Puppet::Functions.create_function(:max) do
   dispatch :on_any do
     repeated_param 'Any', :values
   end
-
 
   # All are Numeric - ok now, will be ok later
   def on_numeric(*args)

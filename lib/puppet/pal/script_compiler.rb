@@ -1,7 +1,7 @@
 # frozen_string_literal: true
+
 module Puppet
 module Pal
-
   class ScriptCompiler < Compiler
     # Returns the signature of the given plan name
     # @param plan_name [String] the name of the plan to get the signature of
@@ -13,6 +13,7 @@ module Pal
       if func
         return PlanSignature.new(func)
       end
+
       # Could not find plan
       nil
     end
@@ -46,6 +47,7 @@ module Pal
       if task
         return TaskSignature.new(task)
       end
+
       # Could not find task
       nil
     end
@@ -69,6 +71,5 @@ module Pal
       list_loadable_kind(:task, filter_regex, error_collector)
     end
   end
-
 end
 end

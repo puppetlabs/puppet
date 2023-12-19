@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This class is used to build {Puppet::Interface::Action actions}.
 # When an action is defined with
 # {Puppet::Interface::ActionManager#action} the block is evaluated
@@ -17,6 +18,7 @@ class Puppet::Interface::ActionBuilder
   # @api private
   def self.build(face, name, &block)
     raise "Action #{name.inspect} must specify a block" unless block
+
     new(face, name, &block).action
   end
 
@@ -67,6 +69,7 @@ class Puppet::Interface::ActionBuilder
       #TRANSLATORS 'when_rendering' is a method name and should not be translated
       raise ArgumentError, _('You must give a block to when_rendering')
     end
+
     @action.set_rendering_method_for(type, block)
   end
 
@@ -141,6 +144,7 @@ class Puppet::Interface::ActionBuilder
   # Metaprogram the simple DSL from the target class.
   Puppet::Interface::Action.instance_methods.grep(/=$/).each do |setter|
     next if setter =~ /^=/
+
     property = setter.to_s.chomp('=')
 
     unless method_defined? property
@@ -150,6 +154,7 @@ class Puppet::Interface::ActionBuilder
   end
 
   private
+
   def initialize(face, name, &block)
     @face   = face
     @action = Puppet::Interface::Action.new(face, name)

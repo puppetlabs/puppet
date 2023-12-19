@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The `convert_to(value, type)` is a convenience function that does the same as `new(type, value)`.
 # The difference in the argument ordering allows it to be used in chained style for
 # improved readability "left to right".

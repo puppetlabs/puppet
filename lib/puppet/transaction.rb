@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../puppet'
 require_relative '../puppet/util/tagging'
 require_relative '../puppet/util/skip_tags'
@@ -126,6 +127,7 @@ class Puppet::Transaction
       # We don't automatically assign unsuitable providers, so if there
       # is one, it must have been selected by the user.
       return if missing_tags?(resource)
+
       if resource.provider
         resource.err _("Provider %{name} is not functional on this host") % { name: resource.provider.class.name }
       else
@@ -331,7 +333,6 @@ class Puppet::Transaction
   # up-front at failure time because the graph may be mutated as we
   # walk it.
   def propagate_failure(resource)
-
     provider_class = resource.provider.class
     s = resource_status(resource)
     if prefetch_failed_providers[resource.type][provider_class.name] && !s.nil?
@@ -343,6 +344,7 @@ class Puppet::Transaction
     relationship_graph.direct_dependencies_of(resource).each do |dep|
       s = resource_status(dep)
       next if s.nil?
+
       failed.merge(s.failed_dependencies) if s.dependency_failed?
       failed.add(dep) if s.failed? || s.failed_to_restart?
     end
@@ -375,6 +377,7 @@ class Puppet::Transaction
     type_name = provider_class.resource_type.name
     return if @prefetched_providers[type_name][provider_class.name] ||
       @prefetch_failed_providers[type_name][provider_class.name]
+
     Puppet.debug { "Prefetching #{provider_class.name} resources for #{type_name}" }
     begin
       provider_class.prefetch(resources)

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/pops'
 
 module Puppet
@@ -7,7 +8,6 @@ module Parser
 # and makes use of the new evaluator.
 #
 class E4ParserAdapter
-
   def initialize
     @file = ''
     @string = ''

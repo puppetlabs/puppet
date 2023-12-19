@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Returns the data type of a given value with a given degree of generality.
 #
 # ```puppet

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/ffi/windows'
 
 module Puppet::Util::Windows
-
   # The Daemon class, based on the chef/win32-service implementation
   class Daemon
     include Puppet::FFI::Windows::Constants
@@ -121,7 +121,7 @@ module Puppet::Util::Windows
           dwState = SERVICE_PAUSED
         when SERVICE_CONTROL_CONTINUE
           dwState = SERVICE_RUNNING
-        #else
+          #else
           # TODO: Handle other control codes? Retain the current state?
         end
 

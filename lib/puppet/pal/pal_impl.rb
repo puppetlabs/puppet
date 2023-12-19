@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Puppet as a Library "PAL"
 
 # Yes, this requires all of puppet for now because 'settings' and many other things...
@@ -28,7 +29,6 @@ module Puppet
 #
 # @api public
 module Pal
-
   # Defines a context in which multiple operations in an env with a script compiler can be performed in a given block.
   # The calls that takes place to PAL inside of the given block are all with the same instance of the compiler.
   # The parameter `configured_by_env` makes it possible to either use the configuration in the environment, or specify
@@ -76,6 +76,7 @@ module Pal
         # TRANSLATORS: do not translate the variable names in this error message
         raise ArgumentError, _("manifest_file or code_string cannot be given when configured_by_env is true")
       end
+
       # Use the manifest setting
       manifest_file = Puppet[:manifest]
     else
@@ -182,6 +183,7 @@ module Pal
         # TRANSLATORS: do not translate the variable names in this error message
         raise ArgumentError, _("manifest_file or code_string cannot be given when configured_by_env is true")
       end
+
       # Use the manifest setting
       manifest_file = Puppet[:manifest]
     else
@@ -235,7 +237,7 @@ module Pal
       facts:         nil,
       variables:     {},
       &block
-    )
+  )
     assert_non_empty_string(env_name, _("temporary environment name"))
     # TRANSLATORS: do not translate variable name string in these assertions
     assert_optionally_empty_array(modulepath, 'modulepath')
@@ -249,7 +251,7 @@ module Pal
     in_environment_context(
       Puppet::Environments::Static.new(env), # The tmp env is the only known env
       env, facts, variables, &block
-      )
+    )
   end
 
   # Defines the context in which to perform puppet operations (evaluation, etc)
@@ -287,7 +289,7 @@ module Pal
       facts:         nil,
       variables:     {},
       &block
-    )
+  )
     # TRANSLATORS terms in the assertions below are names of terms in code
     assert_non_empty_string(env_name, 'env_name')
     assert_optionally_empty_array(modulepath, 'modulepath', true)
@@ -326,6 +328,7 @@ module Pal
       if env.nil?
         raise ArgumentError, _("No directory found for the environment '%{env_name}' on the path '%{envpath}'") % { env_name: env_name, envpath: envpath }
       end
+
       # A given modulepath should override the default
       mid_modulepath = modulepath.nil? ? env.modulepath : modulepath
       env_path = env.configuration.path_to_env
@@ -497,11 +500,9 @@ module Pal
             end
           end
         end
-
       rescue Puppet::Error
         # already logged and handled by the compiler, including Puppet::ParseErrorWithIssue
         raise
-
       rescue => detail
         Puppet.log_exception(detail)
         raise

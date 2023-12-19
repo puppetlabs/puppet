@@ -1,9 +1,9 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/ffi/windows'
 
 module Puppet::FFI::Windows
   module Functions
-
     extend FFI::Library
     include Puppet::FFI::Windows::Constants
 

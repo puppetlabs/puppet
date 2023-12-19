@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/transaction/report'
 require_relative '../../../puppet/indirector/code'
 require_relative '../../../puppet/reports'
@@ -49,6 +50,7 @@ class Puppet::Transaction::Report::Processor < Puppet::Indirector::Code
 
   def processors(&blk)
     return [] if Puppet[:reports] == "none"
+
     reports.each do |name|
       mod = Puppet::Reports.report(name)
       if mod

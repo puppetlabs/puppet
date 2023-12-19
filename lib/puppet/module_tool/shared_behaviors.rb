@@ -1,6 +1,6 @@
 # frozen_string_literal: true
-module Puppet::ModuleTool::Shared
 
+module Puppet::ModuleTool::Shared
   include Puppet::ModuleTool::Errors
 
   def get_local_constraints
@@ -54,6 +54,7 @@ module Puppet::ModuleTool::Shared
     if @conditions[mod].all? { |c| c[:queued] || c[:module] == :you }
       return :latest
     end
+
     return :best
   end
 
@@ -99,6 +100,7 @@ module Puppet::ModuleTool::Shared
 
       if !(forced? || @installed[mod].empty? || source.last[:name] == :you)
         next if range === SemanticPuppet::Version.parse(@installed[mod].first.version)
+
         action = :upgrade
       elsif @installed[mod].empty?
         action = :install

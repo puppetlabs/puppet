@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/util'
 require 'monitor'
 require_relative '../../puppet/parser/parser_factory'
@@ -23,7 +24,6 @@ end
 # logging functions. Logging functions are attached to the 'root' environment
 # when {Puppet::Parser::Functions.reset} is called.
 class Puppet::Node::Environment
-
   NO_MANIFEST = :no_manifest
 
   # The create() factory method should be used instead.
@@ -221,6 +221,7 @@ class Puppet::Node::Environment
   # @api private
   def conflicting_manifest_settings?
     return false if !Puppet[:disable_per_environment_manifest]
+
     original_manifest = configuration.raw_setting(:manifest)
     !original_manifest.nil? && !original_manifest.empty? && original_manifest != Puppet[:default_manifest]
   end
@@ -355,6 +356,7 @@ class Puppet::Node::Environment
           Puppet::FileSystem.basename_string(p)
         end.each do |name|
           next unless Puppet::Module.is_module_directory?(name, path)
+
           warn_about_mistaken_path(path, name)
           if not seen_modules[name]
             module_references << {:name => name, :path => File.join(path, name)}
@@ -453,6 +455,7 @@ class Puppet::Node::Environment
 
     modules.each do |mod|
       next unless mod.forge_name
+
       deps[mod.forge_name] ||= []
 
       mod.dependencies and mod.dependencies.each do |mod_dep|

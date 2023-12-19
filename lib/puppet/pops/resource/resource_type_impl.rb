@@ -1,9 +1,9 @@
 # frozen_string_literal: true
+
 require_relative 'param'
 
 module Puppet::Pops
 module Resource
-
 def self.register_ptypes(loader, ir)
   types = [Param, ResourceTypeImpl].map do |c|
     c.register_ptype(loader, ir)
@@ -73,6 +73,7 @@ class ResourceTypeImpl
     # Order is only maintained against other types, not arbitrary objects.
     # The natural order is based on the reference name used when comparing
     return nil unless other.is_a?(Puppet::CompilableResourceType)
+
     # against other type instances.
     self.ref <=> other.ref
   end
@@ -165,6 +166,7 @@ class ResourceTypeImpl
           #
           raise Puppet::DevError, _("you must specify title patterns when there are two or more key attributes")
         end
+
         @title_patterns_hash.nil? ? [] : @title_patterns_hash.map { |k,v| [ k, v.map { |n| [ n.to_sym] } ] }
       end
   end
@@ -202,16 +204,16 @@ class ResourceTypeImpl
     # This is what the Puppet::Type implementation does
     # None of this should be needed
 
-      #    # Make sure our parent class has been evaluated, if we have one.
-      #    if parent && !scope.catalog.resource(resource.type, parent)
-      #      parent_type(scope).ensure_in_catalog(scope)
-      #    end
+    #    # Make sure our parent class has been evaluated, if we have one.
+    #    if parent && !scope.catalog.resource(resource.type, parent)
+    #      parent_type(scope).ensure_in_catalog(scope)
+    #    end
 
     # This will never happen
 
-      #    if ['Class', 'Node'].include? resource.type
-      #      scope.catalog.tag(*resource.tags)
-      #    end
+    #    if ['Class', 'Node'].include? resource.type
+    #      scope.catalog.tag(*resource.tags)
+    #    end
   end
 
   # Being isomorphic in puppet means that the resource is managing a state
@@ -289,7 +291,6 @@ class ResourceTypeImpl
   def can_apply_to_target(target)
     raise NotImplementedError, "can_apply_to_target() - probably used when selecting a provider (device/host support)"
   end
-
 end
 end
 end

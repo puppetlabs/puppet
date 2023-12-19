@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
   Puppet::Type.type(:file).newproperty(:type) do
     require 'etc'

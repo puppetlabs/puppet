@@ -1,8 +1,8 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/provider/exec'
 
 Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
-
   confine    'os.name' => :windows
   defaultfor 'os.name' => :windows
 
@@ -42,6 +42,7 @@ Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
       elsif !File.file?(exe)
         raise ArgumentError, _("'%{exe}' is a %{klass}, not a file") % { exe: exe, klass: File.ftype(exe) }
       end
+
       return
     end
 

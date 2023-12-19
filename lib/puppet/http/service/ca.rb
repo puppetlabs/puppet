@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The CA service is used to handle certificate related REST requests.
 #
 # @api public

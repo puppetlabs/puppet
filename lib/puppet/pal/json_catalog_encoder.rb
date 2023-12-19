@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The JsonCatalogEncoder is a wrapper around a catalog produced by the Pal::CatalogCompiler.with_json_encoding
 # method.
 # It allows encoding the entire catalog or an individual resource as Rich Data Json.
@@ -53,8 +54,10 @@ class JsonCatalogEncoder
     #
     # TRANSLATORS 'type' and 'title' are internal parameter names - do not translate
     raise ArgumentError, _("Both type and title must be given") if type.nil? or title.nil?
+
     r = possibly_filtered_catalog.resource(type, title)
     return nil if r.nil?
+
     r.to_data_hash.to_json(:pretty => pretty)
   end
 

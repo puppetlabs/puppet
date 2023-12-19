@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The TypeDefinitionInstantiator instantiates a type alias or a type definition
 #
 module Puppet::Pops
@@ -90,6 +91,7 @@ class TypeDefinitionInstantiator
   # @api private
   def self.named_definition(te)
     return 'Object' if te.is_a?(Model::LiteralHash)
+
     te.is_a?(Model::AccessExpression) && (left = te.left_expr).is_a?(Model::QualifiedReference) ? left.cased_value : nil
   end
 

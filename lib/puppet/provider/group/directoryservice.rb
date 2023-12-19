@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/provider/nameservice/directoryservice'
 
 Puppet::Type.type(:group).provide :directoryservice, :parent => Puppet::Provider::NameService::DirectoryService do
@@ -19,5 +20,4 @@ Puppet::Type.type(:group).provide :directoryservice, :parent => Puppet::Provider
       return current.sort.uniq == should.sort.uniq
     end
   end
-
 end

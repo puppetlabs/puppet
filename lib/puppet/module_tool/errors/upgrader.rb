@@ -1,6 +1,6 @@
 # frozen_string_literal: true
-module Puppet::ModuleTool::Errors
 
+module Puppet::ModuleTool::Errors
   class UpgradeError < ModuleToolError
     def initialize(msg)
       @action = :upgrade

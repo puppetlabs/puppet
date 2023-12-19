@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # The version method and constant are isolated in puppet/version.rb so that a
 # simple `require 'puppet/version'` allows a rubygems gemspec or bundler
 # Gemfile to get the Puppet version of the gem install.
@@ -62,6 +63,7 @@ module Puppet
   def self.version
     version_file = File.join(File.dirname(__FILE__), 'VERSION')
     return @puppet_version if @puppet_version
+
     @puppet_version = read_version_file(version_file) || PUPPETVERSION
   end
 

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Evaluates an Embedded Puppet (EPP) template string and returns the rendered
 # text result as a String.
 #
@@ -47,7 +48,6 @@
 # @since 4.0.0
 #
 Puppet::Functions.create_function(:inline_epp, Puppet::Functions::InternalFunction) do
-
   dispatch :inline_epp do
     scope_param()
     param 'String', :template

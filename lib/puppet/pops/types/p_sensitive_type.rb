@@ -1,14 +1,13 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Types
-
 # A Puppet Language type that wraps sensitive information. The sensitive type is parameterized by
 # the wrapped value type.
 #
 #
 # @api public
 class PSensitiveType < PTypeWithContainedType
-
   class Sensitive
     def initialize(value)
       @value = value
@@ -51,7 +50,6 @@ class PSensitiveType < PTypeWithContainedType
 
   def self.new_function(type)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_Sensitive, type.loader) do
-
       dispatch :from_sensitive do
         param 'Sensitive', :value
       end
@@ -79,6 +77,5 @@ class PSensitiveType < PTypeWithContainedType
 
   DEFAULT = PSensitiveType.new
 end
-
 end
 end

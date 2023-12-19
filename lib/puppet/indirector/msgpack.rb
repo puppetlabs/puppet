@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/indirector/terminus'
 require_relative '../../puppet/util'
 
@@ -11,6 +12,7 @@ class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
     if ! Puppet.features.msgpack?
       raise _("MessagePack terminus not supported without msgpack library")
     end
+
     super
   end
 
@@ -33,6 +35,7 @@ class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
     unless detail.is_a? Errno::ENOENT
       raise Puppet::Error, _("Could not destroy %{name} %{request}: %{detail}") % { name: self.name, request: request.key, detail: detail }, detail.backtrace
     end
+
     1                           # emulate success...
   end
 

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Network::HTTP::Issues
   NO_INDIRECTION_REMOTE_REQUESTS = :NO_INDIRECTION_REMOTE_REQUESTS
   HANDLER_NOT_FOUND = :HANDLER_NOT_FOUND

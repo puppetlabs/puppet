@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Parser::Functions::newfunction(:inline_epp, :type => :rvalue, :arity => -2, :doc =>
 "Evaluates an Embedded Puppet (EPP) template string and returns the rendered
 text result as a String.
@@ -47,6 +48,5 @@ END
 
 - Since 3.5
 - Requires [future parser](https://puppet.com/docs/puppet/3.8/experiments_future.html) in Puppet 3.5 to 3.8") do |_arguments|
-
   Puppet::Parser::Functions::Error.is4x('inline_epp')
 end

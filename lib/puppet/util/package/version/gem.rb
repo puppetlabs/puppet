@@ -1,9 +1,11 @@
 # frozen_string_literal: true
+
 module Puppet::Util::Package::Version
   class Gem < ::Gem::Version
     def self.parse(version)
       raise ValidationFailure, version unless version.is_a? String
       raise ValidationFailure, version unless version =~ ANCHORED_VERSION_PATTERN
+
       new(version)
     end
 

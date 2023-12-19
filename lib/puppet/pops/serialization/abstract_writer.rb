@@ -1,9 +1,9 @@
 # frozen_string_literal: true
+
 require_relative 'extension'
 
 module Puppet::Pops
 module Serialization
-
 MAX_INTEGER =  0x7fffffffffffffff
 MIN_INTEGER = -0x8000000000000000
 
@@ -102,6 +102,7 @@ class AbstractWriter
   def write_tpl(ep, value)
     #TRANSLATORS 'Integers' is a Ruby class for numbers and should not be translated
     raise ArgumentError, _('Internal error. Integers cannot be tabulated in extension payload') if value.is_a?(Integer)
+
     if @tabulate
       index = @written[value]
       if index.nil?

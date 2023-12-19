@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/x509'
 
 # Class for loading and saving cert related objects. By default the provider
@@ -58,6 +59,7 @@ class Puppet::X509::CertProvider
     if !pem && required
       raise Puppet::Error, _("The CA certificates are missing from '%{path}'") % { path: @capath }
     end
+
     pem ? load_cacerts_from_pem(pem) : nil
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to load CA certificates from '%{capath}'") % {capath: @capath}, e)
@@ -104,6 +106,7 @@ class Puppet::X509::CertProvider
     if !pem && required
       raise Puppet::Error, _("The CRL is missing from '%{path}'") % { path: @crlpath }
     end
+
     pem ? load_crls_from_pem(pem) : nil
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to load CRLs from '%{crlpath}'") % {crlpath: @crlpath}, e)
@@ -212,6 +215,7 @@ class Puppet::X509::CertProvider
     if !pem && required
       raise Puppet::Error, _("The private key is missing from '%{path}'") % { path: path }
     end
+
     pem ? load_private_key_from_pem(pem, password: password) : nil
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to load private key for '%{name}'") % {name: name}, e)
@@ -275,6 +279,7 @@ class Puppet::X509::CertProvider
     if !pem && required
       raise Puppet::Error, _("The client certificate is missing from '%{path}'") % { path: path }
     end
+
     pem ? load_client_cert_from_pem(pem) : nil
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to load client certificate for '%{name}'") % {name: name}, e)
@@ -382,6 +387,7 @@ class Puppet::X509::CertProvider
   # @param name [String] the name associated with the cert related object
   def to_path(base, name)
     raise _("Certname %{name} must not contain unprintable or non-ASCII characters") % { name: name.inspect } unless name =~ VALID_CERTNAME
+
     File.join(base, "#{name.downcase}.pem")
   end
 

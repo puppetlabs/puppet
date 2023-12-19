@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This class is not actually public API, but the method
 # {Puppet::Interface::ActionManager#action action} is public when used
 # as part of the Faces DSL (i.e. from within a
@@ -81,6 +82,7 @@ module Puppet::Interface::ActionManager
     if default.length > 1
       raise "The actions #{default.map(&:name).join(", ")} cannot all be default"
     end
+
     default.first
   end
 

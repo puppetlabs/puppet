@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'hiera_puppet'
 
 module Puppet::Parser::Functions
@@ -86,7 +87,7 @@ for more information about Hiera lookup functions.
 
 - Since 4.0.0
     DOC
-) do |*_args|
+  ) do |*_args|
     Error.is4x('hiera_array')
   end
 end

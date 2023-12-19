@@ -29,6 +29,7 @@ Puppet::Functions.create_function(:yaml_data) do
         else
           msg = _("%{path}: file does not contain a valid yaml hash" % { path: path })
           raise Puppet::DataBinding::LookupError, msg if Puppet[:strict] == :error && data != false
+
           Puppet.warning(msg)
           {}
         end

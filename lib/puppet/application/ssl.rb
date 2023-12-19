@@ -1,9 +1,9 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/application'
 require_relative '../../puppet/ssl/oids'
 
 class Puppet::Application::Ssl < Puppet::Application
-
   run_mode :agent
 
   def summary
@@ -157,6 +157,7 @@ Or:
   puppet ssl clean --target <name>
 END
       end
+
       clean(certname)
     when 'bootstrap'
       if !Puppet::Util::Log.sendlevel?(:info)

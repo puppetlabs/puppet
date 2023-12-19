@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/checksums'
 require_relative '../../../puppet/util/diff'
 require 'date'
@@ -66,6 +67,7 @@ module Puppet
       begin
         if checksum?(current) || checksum?(desired)
           raise if !time_types.include?(sumtype(current).to_sym) || !time_types.include?(sumtype(desired).to_sym)
+
           current = sumdata(current)
           desired = sumdata(desired)
         end
@@ -78,6 +80,7 @@ module Puppet
     def retrieve_checksum(resource)
       stat = resource.stat
       return :absent unless stat
+
       ftype = stat.ftype
       # Don't even try to manage the content on directories or links
       return nil if ['directory', 'link', 'fifo', 'socket'].include?(ftype)
@@ -94,6 +97,5 @@ module Puppet
       resource.write(param)
       return_event
     end
-
   end
 end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 module Puppet::Pops
@@ -96,7 +97,6 @@ class TypeFormatter
       @ref_ctor = nil
     end
   end
-
 
   def append_default
     @bld << 'default'
@@ -331,7 +331,6 @@ class TypeFormatter
   def string_PPatternType(t)
     append_array('Pattern', t.patterns.empty?) { append_strings(t.patterns.map(&:regexp)) }
   end
-
 
   # @api private
   def string_PCollectionType(t)

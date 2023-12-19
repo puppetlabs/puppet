@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/provider/package'
 
 Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::Provider::Package do
@@ -65,6 +66,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
     if output =~ /^(\S+) - (\S+)/
       return { :ensure => $2 }
     end
+
     nil
   rescue Puppet::ExecutionFailure
     return {

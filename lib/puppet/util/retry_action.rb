@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Util::RetryAction
   class RetryException < Exception; end # rubocop:disable Lint/InheritException
   class RetryException::NoBlockGiven < RetryException; end
@@ -41,7 +42,6 @@ module Puppet::Util::RetryAction
       sleep(((2 ** failures) -1) * 0.1)
 
       retry
-
     end
   end
 end

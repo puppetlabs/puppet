@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'ffi'
 
 # Puppet::Util::Windows::EventLog needs to be requirable without having loaded
@@ -60,6 +61,7 @@ class Puppet::Util::Windows::EventLog
     unless args[:data].is_a?(String)
       raise ArgumentError, _("data must be a string, not %{class_name}") % { class_name: args[:data].class }
     end
+
     from_string_to_wide_string(args[:data]) do |message_ptr|
       FFI::MemoryPointer.new(:pointer) do |message_array_ptr|
         message_array_ptr.write_pointer(message_ptr)
@@ -103,6 +105,7 @@ class Puppet::Util::Windows::EventLog
   end
 
   private
+
   # For the purposes of allowing this class to be standalone, the following are
   # duplicate definitions from elsewhere in Puppet:
 

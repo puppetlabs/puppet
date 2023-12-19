@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet'
 require_relative '../../puppet/indirector'
 
@@ -301,12 +302,18 @@ class Puppet::Transaction::Report
 
     @resource_statuses = {}
     data['resource_statuses'].map do |key, rs|
-      @resource_statuses[key] = if rs == Puppet::Resource::EMPTY_HASH
-        nil
-      else
-        # Older versions contain tags that causes Psych to create instances directly
-        rs.is_a?(Puppet::Resource::Status) ? rs : Puppet::Resource::Status.from_data_hash(rs)
-      end
+      @resource_statuses[key] =
+        if rs == Puppet::Resource::EMPTY_HASH
+          nil
+        else
+          # Older versions contain tags that causes Psych to create instances
+          # directly
+          if rs.is_a?(Puppet::Resource::Status)
+            rs
+          else
+            Puppet::Resource::Status.from_data_hash(rs)
+          end
+        end
     end
   end
 
@@ -385,6 +392,7 @@ class Puppet::Transaction::Report
       }.each do |label|
         value = report[key][label]
         next if value == 0
+
         value = "%0.2f" % value if value.is_a?(Float)
         ret += "   %15s %s\n" % [Puppet::Util::Metric.labelize(label) + ":", value]
       end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/util/pidlock'
 require_relative '../../puppet/error'
 
@@ -42,6 +43,4 @@ module Puppet::Agent::Locker
     @lockfile
   end
   private :lockfile
-
-
 end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/indirector/terminus'
 
 # Manage a memory-cached list of instances.
@@ -13,6 +14,7 @@ class Puppet::Indirector::Memory < Puppet::Indirector::Terminus
 
   def destroy(request)
     raise ArgumentError.new(_("Could not find %{request} to destroy") % { request: request.key }) unless @instances.include?(request.key)
+
     @instances.delete(request.key)
   end
 

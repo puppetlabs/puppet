@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Uses the Puppet lookup system to retrieve a value for a given key. By default,
 # this returns the first value found (and fails compilation if no values are
 # available), but you can configure it to merge multiple values into one, fail
@@ -124,7 +125,6 @@
 #
 # @since 4.0.0
 Puppet::Functions.create_function(:lookup, Puppet::Functions::InternalFunction) do
-
   local_types do
     type 'NameType         = Variant[String, Array[String]]'
     type 'ValueType        = Type'
@@ -146,7 +146,6 @@ Puppet::Functions.create_function(:lookup, Puppet::Functions::InternalFunction) 
       default_values_hash => Optional[Hash[String,Any]],\
       merge               => Optional[MergeType]\
     }]"
-
   end
 
   dispatch :lookup_1 do

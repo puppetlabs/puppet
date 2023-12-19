@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # subscriptions are permanent associations determining how different
 # objects react to an event
 
@@ -6,7 +7,6 @@
 # It used to be a subclass of GRATR::Edge, but that class has weird hash
 # overrides that dramatically slow down the graphing.
 class Puppet::Relationship
-
   # FormatSupport for serialization methods
   include Puppet::Network::FormatSupport
   include Puppet::Util::PsychSupport
@@ -29,6 +29,7 @@ class Puppet::Relationship
   def event=(event)
     #TRANSLATORS 'NONE' should not be translated
     raise ArgumentError, _("You must pass a callback for non-NONE events") if event != :NONE and ! callback
+
     @event = event
   end
 

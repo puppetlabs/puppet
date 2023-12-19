@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Manage debian services.  Start/stop is the same as InitSvc, but enable/disable
 # is special.
 Puppet::Type.type(:service).provide :debian, :parent => :init do
@@ -68,9 +69,9 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
   end
 
   def statuscmd
-      # /usr/sbin/service provides an abstraction layer which is able to query services
-      # independent of the init system used.
-      # See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=775795
+    # /usr/sbin/service provides an abstraction layer which is able to query services
+    # independent of the init system used.
+    # See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=775795
     (@resource[:hasstatus] == :true) && [command(:service), @resource[:name], "status"]
   end
 end

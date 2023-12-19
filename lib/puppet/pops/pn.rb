@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module PN
   KEY_PATTERN = /^[A-Za-z_-][0-9A-Za-z_-]*$/
@@ -69,6 +70,7 @@ module PN
 
   class Indent
     attr_reader :current
+
     def initialize(indent = '  ', current = '')
       @indent = indent
       @current = current
@@ -120,6 +122,7 @@ module PN
 
   class Entry
     attr_reader :key, :value
+
     def initialize(key, value)
       @key = key
       @value = value

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Copyright (C) 2009 Thomas Bellman
 #
 # Permission is hereby granted, free of charge, to any person obtaining

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../puppet/util/logging'
 require_relative 'module/task'
 require_relative 'module/plan'
@@ -34,6 +35,7 @@ class Puppet::Module
   # of +path+, return +nil+
   def self.find(modname, environment = nil)
     return nil unless modname
+
     # Unless a specific environment is given, use the current environment
     env = environment ? Puppet.lookup(:environments).get!(environment) : Puppet.lookup(:current_environment)
     env.module(modname)
@@ -43,18 +45,21 @@ class Puppet::Module
     # it must be a directory
     fullpath = File.join(path, name)
     return false unless Puppet::FileSystem.directory?(fullpath)
+
     return is_module_directory_name?(name)
   end
 
   def self.is_module_directory_name?(name)
     # it must match an installed module name according to forge validator
     return true if name =~ /^[a-z][a-z0-9_]*$/
+
     return false
   end
 
   def self.is_module_namespaced_name?(name)
     # it must match the full module name according to forge validator
     return true if name =~ /^[a-zA-Z0-9]+[-][a-z][a-z0-9_]*$/
+
     return false
   end
 
@@ -131,6 +136,7 @@ class Puppet::Module
       end
 
       return nil unless Puppet::FileSystem.exist?(full_path)
+
       return full_path
     end
 
@@ -210,12 +216,14 @@ class Puppet::Module
     return @license_file if defined?(@license_file)
 
     return @license_file = nil unless path
+
     @license_file = File.join(path, "License")
   end
 
   def read_metadata
     md_file = metadata_file
     return {} if md_file.nil?
+
     content = File.read(md_file, :encoding => 'utf-8')
     content.empty? ? {} : Puppet::Util::Json.load(content)
   rescue Errno::ENOENT
@@ -250,6 +258,7 @@ class Puppet::Module
         unless value.is_a?(Array)
           raise MissingMetadata, "The value for the key dependencies in the file metadata.json of the module #{self.name} must be an array, not: '#{value}'"
         end
+
         value.each do |dep|
           name = dep['name']
           dep['name'] = name.tr('-', '/') unless name.nil?
@@ -289,6 +298,7 @@ class Puppet::Module
     return @metadata_file if defined?(@metadata_file)
 
     return @metadata_file = nil unless path
+
     @metadata_file = File.join(path, "metadata.json")
   end
 

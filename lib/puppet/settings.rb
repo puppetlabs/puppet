@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../puppet'
 require 'getoptlong'
 require_relative '../puppet/util/watched_file'
@@ -153,6 +154,7 @@ class Puppet::Settings
     @cache = Concurrent::Hash.new do |hash, key|
       @cache_lock.synchronize do
         break hash[key] if hash.key?(key)
+
         hash[key] = Concurrent::Hash.new
       end
     end
@@ -160,6 +162,7 @@ class Puppet::Settings
     @values = Concurrent::Hash.new do |hash, key|
       @values_lock.synchronize do
         break hash[key] if hash.key?(key)
+
         hash[key] = Concurrent::Hash.new
       end
     end
@@ -278,7 +281,6 @@ class Puppet::Settings
   #
   # @api private
   def clear_environment_settings(environment)
-
     if environment.nil?
       return
     end
@@ -381,7 +383,6 @@ class Puppet::Settings
     opt = opt.gsub(/\[no-\]/, '')
     [opt, val]
   end
-
 
   def app_defaults_initialized?
     @app_defaults_initialized
@@ -563,6 +564,7 @@ class Puppet::Settings
   def print_configs
     return print_config_options if value(:configprint) != ""
     return generate_config if value(:genconfig)
+
     generate_manifest if value(:genmanifest)
   end
 
@@ -584,6 +586,7 @@ class Puppet::Settings
   def preferred_run_mode=(mode)
     mode = mode.to_s.downcase.intern
     raise ValidationError, "Invalid run mode '#{mode}'" unless [:server, :master, :agent, :user].include?(mode)
+
     @preferred_run_mode_name = mode
     # Changing the run mode has far-reaching consequences. Flush any cached
     # settings so they will be re-generated.
@@ -768,6 +771,7 @@ class Puppet::Settings
       unless klass
         raise ArgumentError, _("Invalid setting type '%{type}'") % { type: type }
       end
+
       hash.delete(:type)
     else
       # The only implicit typing we still do for settings is to fall back to "String" type if they didn't explicitly
@@ -808,6 +812,7 @@ class Puppet::Settings
 
   def files
     return @files if @files
+
     @files = []
     [main_config_file, user_config_file].each do |path|
       if Puppet::FileSystem.exist?(path)
@@ -831,6 +836,7 @@ class Puppet::Settings
 
   def reuse
     return unless defined?(@used)
+
     new = @used
     @used = []
     self.use(*new)
@@ -1023,6 +1029,7 @@ class Puppet::Settings
       hash[:name] = name
       hash[:section] = section
       raise ArgumentError, _("Setting %{name} is already defined") % { name: name } if @config.include?(name)
+
       tryconfig = newsetting(hash)
       short = tryconfig.short
       if short
@@ -1030,6 +1037,7 @@ class Puppet::Settings
         if other
           raise ArgumentError, _("Setting %{name} is already using short name '%{short}'") % { name: other.name, short: short }
         end
+
         @shortnames[short] = tryconfig
       end
       @config[name] = tryconfig
@@ -1062,6 +1070,7 @@ class Puppet::Settings
       file = @config[key]
       next if file.value.nil?
       next unless (sections.nil? or sections.include?(file.section))
+
       resource = file.to_resource
       next unless resource
       next if catalog.resource(resource.ref)
@@ -1091,10 +1100,9 @@ own configured state, so they can be used to make Puppet a bit more self-managin
 The file format supports octothorpe-commented lines, but not partial-line comments.
 
 Generated on #{Time.now}.
-
 }.gsub(/^/, "# ")
 
-#         Add a section heading that matches our name.
+    #         Add a section heading that matches our name.
     str += "[#{preferred_run_mode}]\n"
     eachsection do |section|
       persection(section) do |obj|
@@ -1143,11 +1151,11 @@ Generated on #{Time.now}.
         if transaction.any_failed?
           report = transaction.report
           status_failures = report.resource_statuses.values.select { |r| r.failed? }
-          status_fail_msg = status_failures.
-            collect(&:events).
-            flatten.
-            select { |event| event.status == 'failure' }.
-            collect { |event| "#{event.resource}: #{event.message}" }.join("; ")
+          status_fail_msg = status_failures
+            .collect(&:events)
+            .flatten
+            .select { |event| event.status == 'failure' }
+            .collect { |event| "#{event.resource}: #{event.message}" }.join("; ")
 
           raise "Got #{status_failures.length} failure(s) while initializing: #{status_fail_msg}"
         end
@@ -1619,11 +1627,13 @@ Generated on #{Time.now}.
       if Puppet::Settings::EnvironmentConf::VALID_SETTINGS.include?(name) && conf
         return true
       end
+
       false
     end
 
     def lookup(name)
       return nil unless Puppet::Settings::EnvironmentConf::VALID_SETTINGS.include?(name)
+
       conf.send(name) if conf
     end
 

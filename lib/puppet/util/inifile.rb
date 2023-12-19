@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Module Puppet::IniConfig
 # A generic way to parse .ini style files and manipulate them in memory
 # One 'file' can be made up of several physical files. Changes to sections
@@ -95,17 +96,16 @@ module Puppet::Util::IniConfig
     end
 
     private
+
     def find_entry(key)
       @entries.each do |entry|
         return entry if entry.is_a?(Array) && entry[0] == key
       end
       nil
     end
-
   end
 
   class PhysicalFile
-
     # @!attribute [r] filetype
     #   @api private
     #   @return [Puppet::Util::FileType::FileTypeFlat]
@@ -139,6 +139,7 @@ module Puppet::Util::IniConfig
       if text.nil?
         raise IniParseError, _("Cannot read nonexistent file %{file}") % { file: @file.inspect }
       end
+
       parse(text)
     end
 
@@ -261,7 +262,6 @@ module Puppet::Util::IniConfig
   end
 
   class FileCollection
-
     attr_reader :files
 
     def initialize

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/transaction'
 
 # This class stores, routes, and responds to events generated while evaluating
@@ -6,7 +7,6 @@ require_relative '../../puppet/transaction'
 #
 # @api private
 class Puppet::Transaction::EventManager
-
   # @!attribute [r] transaction
   #   @return [Puppet::Transaction] The transaction associated with this event manager.
   attr_reader :transaction
@@ -118,6 +118,7 @@ class Puppet::Transaction::EventManager
   def queued_events(resource)
     callbacks = @event_queues[resource]
     return unless callbacks
+
     callbacks.each do |callback, events|
       yield callback, events unless events.empty?
     end

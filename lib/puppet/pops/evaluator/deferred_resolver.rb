@@ -1,9 +1,9 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/parser/script_compiler'
 
 module Puppet::Pops
 module Evaluator
-
 class DeferredValue
   def initialize(proc)
     @proc = proc
@@ -181,10 +181,10 @@ class DeferredResolver
 
   def map_arguments(args)
     return [] if args.nil?
+
     args.map {|v| resolve(v) }
   end
   private :map_arguments
-
 end
 end
 end

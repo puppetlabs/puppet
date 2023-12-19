@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/loaders'
 require_relative '../../puppet/pops'
 
@@ -9,7 +10,6 @@ require_relative '../../puppet/pops'
 # deal with possible errors in a cached environment.
 #
 class Puppet::Parser::CatalogCompiler < Puppet::Parser::Compiler
-
   # Evaluates the configured setup for a script + code in an environment with modules
   #
   def compile
@@ -19,7 +19,6 @@ class Puppet::Parser::CatalogCompiler < Puppet::Parser::Compiler
     Puppet.override(rich_data: true) do
       super
     end
-
   rescue Puppet::ParseErrorWithIssue => detail
     detail.node = node.name
     Puppet.log_exception(detail)

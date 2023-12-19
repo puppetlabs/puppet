@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'open-uri'
 require 'pathname'
 require 'fileutils'
@@ -15,7 +16,6 @@ require_relative '../../../puppet/network/uri'
 module Puppet::ModuleTool
   module Applications
     class Installer < Application
-
       include Puppet::ModuleTool::Errors
       include Puppet::Forge::Errors
       include Puppet::Network::Uri
@@ -187,7 +187,7 @@ module Puppet::ModuleTool
                     :requested_name => name,
                     :requested_version => options[:version] || graph.dependencies[name].max.version.to_s,
                     :unsatisfied => unsatisfied
-            )
+                  )
           end
 
           unless forced?
@@ -230,7 +230,6 @@ module Puppet::ModuleTool
           results[:result] = :success
           results[:installed_modules] = releases
           results[:graph] = [ build_install_graph(releases.first, releases) ]
-
         rescue ModuleToolError, ForgeError => err
           results[:error] = {
             :oneline   => err.message,

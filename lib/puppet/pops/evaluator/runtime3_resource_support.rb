@@ -1,13 +1,12 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Evaluator
-
 # @api private
 module Runtime3ResourceSupport
   CLASS_STRING = 'class'
 
   def self.create_resources(file, line, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
-
     env = scope.environment
     #    loader = Adapters::LoaderAdapter.loader_for_model_object(o, scope)
 
@@ -114,7 +113,6 @@ module Runtime3ResourceSupport
     krt.find_definition(type_name)
   end
   private_class_method :find_defined_resource_type
-
 end
 end
 end

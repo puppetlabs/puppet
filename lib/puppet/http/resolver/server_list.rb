@@ -1,10 +1,10 @@
 # frozen_string_literal: true
+
 # Use the server_list setting to resolve a service. This resolver is only used
 # if server_list is set either on the command line or in the configuration file.
 #
 # @api public
 class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
-
   # Create a server list resolver.
   #
   # @param [Puppet::HTTP::Client] client

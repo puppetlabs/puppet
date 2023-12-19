@@ -1,10 +1,10 @@
 # frozen_string_literal: true
+
 require 'time'
 
 require_relative '../../puppet/node'
 require_relative '../../puppet/indirector'
 require_relative '../../puppet/util/psych_support'
-
 
 # Manage a given node's facts.  This either accepts facts and stores them, or
 # returns facts for a given node.
@@ -79,6 +79,7 @@ class Puppet::Node::Facts
 
   def ==(other)
     return false unless self.name == other.name
+
     values == other.values
   end
 

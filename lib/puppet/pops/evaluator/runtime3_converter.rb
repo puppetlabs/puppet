@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops::Evaluator
 # Converts nested 4x supported values to 3x values. This is required because
 # resources and other objects do not know about the new type system, and does not support
@@ -67,6 +68,7 @@ class Runtime3Converter
 
   def convert_Integer(o, scope, undef_value)
     return o unless o < MIN_INTEGER || o > MAX_INTEGER
+
     range_end = o > MAX_INTEGER ? 'max' : 'min'
     raise Puppet::Error, "Use of a Ruby Integer outside of Puppet Integer #{range_end} range, got '#{"0x%x" % o}'"
   end
@@ -75,6 +77,7 @@ class Runtime3Converter
     # transform to same value float value if possible without any rounding error
     f = o.to_f
     return f unless f != o
+
     raise Puppet::Error, "Use of a Ruby BigDecimal value outside Puppet Float range, got '#{o}'"
   end
 
@@ -107,6 +110,7 @@ class Runtime3Converter
 
   def convert_Symbol(o, scope, undef_value)
     return o unless o == :undef
+
     !@inner ? undef_value : nil
   end
 
@@ -168,7 +172,6 @@ end
 # converter ensures that they are converted to String format
 # @api private
 class Runtime3FunctionArgumentConverter < Runtime3Converter
-
   def convert_Regexp(o, scope, undef_value)
     # Puppet 3x cannot handle parameter values that are regular expressions. Turn into regexp string in
     # source form
@@ -218,5 +221,4 @@ class Runtime3FunctionArgumentConverter < Runtime3Converter
 
   @instance = self.new
 end
-
 end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Daemontools service management
 #
 # author Brice Figureau <brice-puppet@daysofwonder.com>
@@ -110,6 +111,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
   def daemon
     path = resource[:path]
     raise Puppet::Error.new("#{self.class.name} must specify a path for daemon directory") unless path
+
     File.join(path, resource[:name])
   end
 

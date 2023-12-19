@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Puppet::Settings::TerminusSetting < Puppet::Settings::BaseSetting
   def munge(value)
     case value

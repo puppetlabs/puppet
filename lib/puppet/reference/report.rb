@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/reports'
 
 report = Puppet::Util::Reference.newreference :report, :doc => "All available transaction reports" do

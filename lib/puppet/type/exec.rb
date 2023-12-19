@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
   Type.newtype(:exec) do
     include Puppet::Util::Execution
@@ -95,6 +96,7 @@ module Puppet
       defaultto "0"
 
       attr_reader :output
+
       desc "The expected exit code(s).  An error will be returned if the
         executed command has some other exit code. Can be specified as an array
         of acceptable exit codes or a single value.
@@ -147,6 +149,7 @@ module Puppet
             debug("Exec try #{try+1}/#{tries}") if tries > 1
             @output, @status = provider.run(self.resource[:command])
             break if self.should.include?(@status.exitstatus.to_s)
+
             if try_sleep > 0 and tries > 1
               debug("Sleeping for #{try_sleep} seconds between tries")
               sleep try_sleep
@@ -353,9 +356,11 @@ module Puppet
           unless value =~ /^[\d]+$/
             raise ArgumentError, _("Tries must be an integer")
           end
+
           value = Integer(value)
         end
         raise ArgumentError, _("Tries must be an integer >= 1") if value < 1
+
         value
       end
 
@@ -370,15 +375,16 @@ module Puppet
           unless value =~ /^[-\d.]+$/
             raise ArgumentError, _("try_sleep must be a number")
           end
+
           value = Float(value)
         end
         raise ArgumentError, _("try_sleep cannot be a negative number") if value < 0
+
         value
       end
 
       defaultto 0
     end
-
 
     newcheck(:refreshonly) do
       desc <<-'EOT'
@@ -650,6 +656,7 @@ module Puppet
     def check_all_attributes(refreshing = false)
       self.class.checks.each { |check|
         next if refreshing and check == :refreshonly
+
         if @parameters.include?(check)
           val = @parameters[check].value
           val = [val] unless val.is_a? Array
@@ -695,6 +702,7 @@ module Puppet
     end
 
     private
+
     def set_sensitive_parameters(sensitive_parameters)
       # If any are sensitive, mark all as sensitive
       sensitive = false

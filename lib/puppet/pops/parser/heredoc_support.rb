@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Parser
 module HeredocSupport
@@ -8,7 +9,6 @@ module HeredocSupport
   # Produces groups for endtag (group 1), syntax (group 2), and escapes (group 3)
   #
   PATTERN_HEREDOC = %r{@\(([^:/\r\n\)]+)(?::[[:blank:]]*([a-z][a-zA-Z0-9_+]+)[[:blank:]]*)?(?:/((?:\w|[$])*)[[:blank:]]*)?\)}
-
 
   def heredoc
     scn = @scanner
@@ -86,6 +86,7 @@ module HeredocSupport
     while !scn.eos? do
       one_line = scn.scan_until(/(?:\n|\z)/)
       raise eof_error unless one_line
+
       md = one_line.match(endline_pattern)
       if md
         leading      = md[1]
@@ -93,7 +94,6 @@ module HeredocSupport
         remove_break = md[3] == '-'
         # Record position where next heredoc (from same line as current @()) should start scanning for content
         ctx[:newline_jump] = scn.pos
-
 
         # Process captured lines - remove leading, and trailing newline
         # get processed string and index of removed margin/leading size per line
@@ -148,7 +148,6 @@ module HeredocSupport
     result.gsub!(/\r?\n\z/m, '') if remove_break
     [result, margin_per_line]
   end
-
 end
 end
 end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/provider/nameservice/objectadd'
 require_relative '../../../puppet/util/libuser'
 
@@ -24,17 +25,20 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
 
   def exists?
     return !!localgid if @resource.forcelocal?
+
     super
   end
 
   def gid
     return localgid if @resource.forcelocal?
+
     get(:gid)
   end
 
   def localgid
     group = findgroup(:group_name, resource[:name])
     return group[:gid] if group
+
     false
   end
 
@@ -124,6 +128,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
 
   def members_to_s(current)
     return '' if current.nil? || !current.kind_of?(Array)
+
     current.join(',')
   end
 

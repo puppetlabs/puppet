@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Serialization
   # Class that can process an arbitrary object into a value that is assignable to `Data`.
@@ -271,6 +272,7 @@ module Serialization
             # Pop optional arguments that are default
             while args.size > required_count
               break unless pcore_type[names[args.size-1]].default_value?(args.last)
+
               args.pop
             end
             result = {

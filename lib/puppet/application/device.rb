@@ -1,11 +1,11 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/application'
 require_relative '../../puppet/configurer'
 require_relative '../../puppet/util/network_device'
 require_relative '../../puppet/ssl/oids'
 
 class Puppet::Application::Device < Puppet::Application
-
   run_mode :agent
 
   attr_accessor :args, :agent, :host
@@ -227,7 +227,6 @@ Licensed under the Apache 2.0 License
       HELP
   end
 
-
   def main
     if options[:resource] and !options[:target]
       raise _("resource command requires target")
@@ -235,6 +234,7 @@ Licensed under the Apache 2.0 License
     if options[:facts] and !options[:target]
       raise _("facts command requires target")
     end
+
     unless options[:apply].nil?
       raise _("missing argument: --target is required when using --apply") if options[:target].nil?
       raise _("%{file} does not exist, cannot apply") % { file: options[:apply] } unless File.file?(options[:apply])

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/windows'
 
 Puppet::Type.type(:group).provide :windows_adsi do
@@ -40,6 +41,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
 
   def members_to_s(users)
     return '' if users.nil? or !users.kind_of?(Array)
+
     users = users.map do |user_name|
       sid = Puppet::Util::Windows::SID.name_to_principal(user_name)
       if !sid

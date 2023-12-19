@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/ssl'
 require_relative '../../puppet/util/yaml'
 
@@ -7,7 +8,6 @@ require_relative '../../puppet/util/yaml'
 #
 # @api private
 class Puppet::SSL::CertificateRequestAttributes
-
   attr_reader :path, :custom_attributes, :extension_requests
 
   def initialize(path)
@@ -26,11 +26,13 @@ class Puppet::SSL::CertificateRequestAttributes
       if ! hash.is_a?(Hash)
         raise Puppet::Error, _("invalid CSR attributes, expected instance of Hash, received instance of %{klass}") % { klass: hash.class }
       end
+
       @custom_attributes = hash.delete('custom_attributes') || {}
       @extension_requests = hash.delete('extension_requests') || {}
       if not hash.keys.empty?
         raise Puppet::Error, _("unexpected attributes %{keys} in %{path}") % { keys: hash.keys.inspect, path: @path.inspect }
       end
+
       return true
     end
     return false

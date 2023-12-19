@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Calls an arbitrary Puppet function by name.
 #
 # This function takes one mandatory argument and one or more optional arguments:
@@ -77,5 +78,4 @@ Puppet::Functions.create_function(:call, Puppet::Functions::InternalFunction) do
   def call_deferred(scope, deferred)
     Puppet::Pops::Evaluator::DeferredResolver.resolve(deferred, scope.compiler)
   end
-
 end

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
+
 # This class is not actually public API, but the method
 # {Puppet::Interface::OptionManager#option option} is public when used
 # as part of the Faces DSL (i.e. from within a
 # {Puppet::Interface.define define} block).
 # @api public
 module Puppet::Interface::OptionManager
-
   # @api private
   def display_global_options(*args)
     @display_global_options ||= []
@@ -14,6 +14,7 @@ module Puppet::Interface::OptionManager
         #TRANSLATORS 'Puppet.settings' references to the Puppet settings options and should not be translated
         raise ArgumentError, _("Global option %{option} does not exist in Puppet.settings") % { option: refopt }
       end
+
       @display_global_options << refopt if refopt
     end
     @display_global_options.uniq!

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
+
 # Utility methods for interacting with POSIX objects; mostly user and group
 module Puppet::Util::POSIX
-
   # This is a list of environment variables that we will set when we want to override the POSIX locale
   LOCALE_ENV_VARS = ['LANG', 'LC_ALL', 'LC_MESSAGES', 'LANGUAGE',
                      'LC_COLLATE', 'LC_CTYPE', 'LC_MONETARY', 'LC_NUMERIC', 'LC_TIME']
@@ -34,6 +34,7 @@ module Puppet::Util::POSIX
     end
 
     private
+
     def get_groups_list(user)
       raise LoadError, "The 'getgrouplist' method is not available" unless Puppet::FFI::POSIX::Functions.respond_to?(:getgrouplist)
 
@@ -177,11 +178,13 @@ module Puppet::Util::POSIX
     if field.is_a?(Integer)
       name = get_posix_field(location, :name, field)
       return nil unless name
+
       id = get_posix_field(location, id_field, name)
       check_value = id
     else
       id = get_posix_field(location, id_field, field)
       return nil unless id
+
       name = get_posix_field(location, :name, id)
       check_value = name
     end

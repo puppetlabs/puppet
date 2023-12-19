@@ -1,14 +1,15 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/application'
 
 class Formatter
-
   def initialize(width)
     @width = width
   end
 
   def wrap(txt, opts)
     return "" unless txt && !txt.empty?
+
     work = (opts[:scrub] ? scrub(txt) : txt)
     indent = (opts[:indent] ? opts[:indent] : 0)
     textLen = @width - indent
@@ -48,17 +49,16 @@ class Formatter
       return text
     end
   end
-
 end
 
 class TypeDoc
-
   def initialize
     @format = Formatter.new(76)
     @types = {}
     Puppet::Type.loadall
     Puppet::Type.eachtype { |type|
       next if type.name == :component
+
       @types[type.name] = type
     }
   end
@@ -160,7 +160,6 @@ class TypeDoc
     list = type.providers.sort_by(&:to_s).join(", ")
     puts @format.wrap(list, :indent => 4)
   end
-
 end
 
 class Puppet::Application::Describe < Puppet::Application
@@ -250,5 +249,4 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
     handle_help(nil) unless options[:list] || options[:types].size > 0
     $stderr.puts "Warning: ignoring types when listing all types" if options[:list] && options[:types].size > 0
   end
-
 end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This module is an integral part of the Lexer.
 # It defines interpolation support
 # PERFORMANCE NOTE: There are 4 very similar methods in this module that are designed to be as
@@ -6,7 +7,6 @@
 # of passing parameters and evaluating conditional logic has a negative impact on performance.
 #
 module Puppet::Pops::Parser::InterpolationSupport
-
   PATTERN_VARIABLE       = %r{(::)?(\w+::)*\w+}
 
   # This is the starting point for a double quoted string with possible interpolation
@@ -246,5 +246,4 @@ module Puppet::Pops::Parser::InterpolationSupport
       lexer.enqueue(queue.shift)
     end
   end
-
 end

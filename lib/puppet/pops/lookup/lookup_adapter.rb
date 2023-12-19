@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative 'data_adapter'
 require_relative 'lookup_key'
 
@@ -10,7 +11,6 @@ module Lookup
 #
 # @api private
 class LookupAdapter < DataAdapter
-
   LOOKUP_OPTIONS_PREFIX = LOOKUP_OPTIONS + '.'
   LOOKUP_OPTIONS_PREFIX.freeze
   LOOKUP_OPTIONS_PATTERN_START = '^'
@@ -147,6 +147,7 @@ class LookupAdapter < DataAdapter
     end
   rescue Puppet::DataBinding::LookupError => detail
     raise detail unless detail.issue_code.nil?
+
     error = Puppet::Error.new(_("Lookup of key '%{key}' failed: %{detail}") % { key: lookup_invocation.top_key, detail: detail.message })
     error.set_backtrace(detail.backtrace)
     raise error
@@ -313,6 +314,7 @@ class LookupAdapter < DataAdapter
 
   def compile_patterns(options)
     return nil if options.nil?
+
     key_options = {}
     pattern_options = {}
     options.each_pair do |key, value|
@@ -353,12 +355,12 @@ class LookupAdapter < DataAdapter
             catch(:no_such_key) do
               module_opts = validate_lookup_options(lookup_in_module(LookupKey::LOOKUP_OPTIONS, meta_invocation, merge_strategy), module_name)
               opts = if opts.nil?
-                module_opts
-              elsif module_opts
-                merge_strategy.lookup([GLOBAL_ENV_MERGE, "Module #{lookup_invocation.module_name}"], meta_invocation) do |n|
-                  meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS,  n == GLOBAL_ENV_MERGE ? opts : module_opts) }
-                end
-              end
+                       module_opts
+                     elsif module_opts
+                       merge_strategy.lookup([GLOBAL_ENV_MERGE, "Module #{lookup_invocation.module_name}"], meta_invocation) do |n|
+                         meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS,  n == GLOBAL_ENV_MERGE ? opts : module_opts) }
+                       end
+                     end
             end
           end
           compile_patterns(opts)

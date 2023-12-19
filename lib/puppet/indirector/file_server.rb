@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/file_serving/configuration'
 require_relative '../../puppet/file_serving/fileset'
 require_relative '../../puppet/file_serving/terminus_helper'
@@ -30,6 +31,7 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
     # if not.
     path = mount.find(relative_path, request)
     return nil unless path
+
     path2instance(request, path)
   end
 

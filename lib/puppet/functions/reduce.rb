@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Applies a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # to every value in a data structure from the first argument, carrying over the returned
 # value of each iteration, and returns the result of the lambda's final iteration. This
@@ -127,7 +128,6 @@
 # @since 4.0.0
 #
 Puppet::Functions.create_function(:reduce) do
-
   dispatch :reduce_without_memo do
     param 'Iterable', :enumerable
     block_param 'Callable[2,2]', :block

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Loader
 # ===
 # A Loader is responsible for loading "entities" ("instantiable and executable objects in the puppet language" which
@@ -22,7 +23,6 @@
 #
 module Puppet::Pops
 module Loader
-
 ENVIRONMENT = 'environment'
 ENVIRONMENT_PRIVATE = 'environment private'
 
@@ -201,7 +201,6 @@ class Loader
   def inspect
     self.to_s
   end
-
 
   # An entry for one entity loaded by the loader.
   #

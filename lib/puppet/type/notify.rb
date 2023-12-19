@@ -1,7 +1,7 @@
 # frozen_string_literal: true
+
 #
 # Simple module for logging messages on the client-side
-
 
 module Puppet
   Type.newtype(:notify) do

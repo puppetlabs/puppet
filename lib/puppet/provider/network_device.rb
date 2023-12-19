@@ -2,7 +2,6 @@
 
 # This is the base class of all prefetched network device provider
 class Puppet::Provider::NetworkDevice < Puppet::Provider
-
   def self.device(url)
     raise "This provider doesn't implement the necessary device method"
   end

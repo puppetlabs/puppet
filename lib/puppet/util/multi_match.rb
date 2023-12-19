@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # MultiMatch allows multiple values to be tested at once in a case expression.
 # This class is needed since Array does not implement the === operator to mean
 # "each v === other.each v". 
@@ -27,9 +28,11 @@ class MultiMatch
     case other
     when MultiMatch
       return false unless other.values.size == values.size
+
       other.values.each_with_index {|v, i| return false unless lv[i] === v || v === lv[i]}
     when Array
       return false unless other.size == values.size
+
       other.each_with_index {|v, i| return false unless lv[i] === v || v === lv[i]}
     else
       false

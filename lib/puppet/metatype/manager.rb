@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet'
 require_relative '../../puppet/util/classgen'
 require_relative '../../puppet/node/environment'
@@ -38,8 +39,8 @@ module Manager
   # @return [Object] the last returned value from the block.
   def eachtype
     @types.each do |_name, type|
-      # Only consider types that have names
-      #if ! type.parameters.empty? or ! type.validproperties.empty?
+        # Only consider types that have names
+        #if ! type.parameters.empty? or ! type.validproperties.empty?
         yield type
       #end
     end

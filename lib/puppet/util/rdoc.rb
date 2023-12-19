@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/util'
 module Puppet::Util::RDoc
   module_function
@@ -6,7 +7,6 @@ module Puppet::Util::RDoc
   # launch a rdoc documentation process
   # with the files/dir passed in +files+
   def rdoc(outputdir, files, charset = nil)
-
     # then rdoc
     require 'rdoc/rdoc'
     require 'rdoc/options'

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/property'
 
 module Puppet
@@ -7,7 +8,6 @@ module Puppet
     # For an ordered list see {Puppet::Property::OrderedList}.
     #
     class List < Property
-
       def is_to_s(currentvalue) # rubocop:disable Naming/PredicateName
         currentvalue == :absent ? super(currentvalue) : currentvalue.join(delimiter)
       end

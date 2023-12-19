@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This implements a priority in which keys are given values that will keep them
 # in the same priority in which they priorities are requested. Nested
 # structures (those in which a key is contained within another key) are

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Types
 class PURIType < PAnyType
-
   # Tell evaluator that an members of instances of this type can be invoked using dot notation
   include TypeWithMembers
 
@@ -152,6 +152,7 @@ class PURIType < PAnyType
   def _assignable?(o, guard = nil)
     return false unless o.class == self.class
     return true if @parameters.nil?
+
     o_params = o.parameters || EMPTY_HASH
 
     eval = Parser::EvaluatingParser.singleton.evaluator

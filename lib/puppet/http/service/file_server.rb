@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/file_serving/metadata'
 
 # The FileServer service is used to retrieve file metadata and content.

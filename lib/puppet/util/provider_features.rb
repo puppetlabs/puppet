@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Provides feature definitions.
 require_relative '../../puppet/util/docs'
 require_relative '../../puppet/util'
@@ -62,6 +63,7 @@ module Puppet::Util::ProviderFeatures
   def feature(name, docs, hash = {})
     @features ||= {}
     raise Puppet::DevError, _("Feature %{name} is already defined") % { name: name } if @features.include?(name)
+
     begin
       obj = ProviderFeature.new(name, docs, **hash)
       @features[obj.name] = obj
@@ -79,6 +81,7 @@ module Puppet::Util::ProviderFeatures
     str = ''.dup
     @features ||= {}
     return nil if @features.empty?
+
     names = @features.keys.sort_by(&:to_s)
     names.each do |name|
       doc = @features[name].docs.gsub(/\n\s+/, " ")
@@ -128,6 +131,7 @@ module Puppet::Util::ProviderFeatures
       # Create a method that will list all functional features.
       @feature_module.send(:define_method, :features) do
         return false unless defined?(features)
+
         features.keys.find_all { |n| feature?(n) }.sort_by(&:to_s)
       end
 

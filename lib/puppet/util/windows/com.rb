@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'ffi'
 
 module Puppet::Util::Windows::COM
@@ -143,6 +144,7 @@ module Puppet::Util::Windows::COM
             if Puppet::Util::Windows::COM.FAILED(result = @vtbl[name].call(self, *args))
               raise Puppet::Util::Windows::Error.new(_("Failed to call %{klass}::%{name} with HRESULT: %{result}.") % { klass: self, name: name, result: result }, result)
             end
+
             result
           end
         end
@@ -184,6 +186,7 @@ module Puppet::Util::Windows::COM
             if Puppet::Util::Windows::COM.FAILED(result = @vtbl[name].call(self, *args))
               raise Puppet::Util::Windows::Error.new(_("Failed to call %{klass}::%{name} with HRESULT: %{result}.") % { klass: self, name: name, result: result }, result)
             end
+
             result
           end
         end
@@ -196,7 +199,6 @@ module Puppet::Util::Windows::COM
 
   IUnknown = Interface[
     FFI::WIN32::GUID['00000000-0000-0000-C000-000000000046'],
-
     QueryInterface: [[:pointer, :pointer], :hresult],
     AddRef: [[], :win32_ulong],
     Release: [[], :win32_ulong]

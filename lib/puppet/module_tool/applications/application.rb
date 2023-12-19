@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'net/http'
 require_relative '../../../puppet/util/json'
 require_relative '../../../puppet/util/colors'
@@ -34,6 +35,7 @@ module Puppet::ModuleTool
 
       def metadata(require_metadata = false)
         return @metadata if @metadata
+
         @metadata = Puppet::ModuleTool::Metadata.new
 
         unless @path

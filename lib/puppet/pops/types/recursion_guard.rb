@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Types
 # Keeps track of self recursion of conceptual 'this' and 'that' instances using two separate maps and

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
   Type.newtype(:schedule) do
     @doc = <<-'EOT'
@@ -382,6 +383,7 @@ module Puppet
         return true if @resource[:range]
 
         return true if value.has_key?(now.wday)
+
         false
       end
     end
@@ -400,7 +402,6 @@ module Puppet
       Puppet.debug "Creating default schedules"
 
             result << self.new(
-
         :name => "puppet",
         :period => :hourly,
 
@@ -409,7 +410,6 @@ module Puppet
 
       # And then one for every period
       @parameters.find { |p| p.name == :period }.value_collection.values.each { |value|
-
               result << self.new(
           :name => value.to_s,
           :period => value
@@ -420,7 +420,6 @@ module Puppet
     end
 
     def match?(previous = nil, now = nil)
-
       # If we've got a value, then convert it to a Time instance
       previous &&= Time.at(previous)
 

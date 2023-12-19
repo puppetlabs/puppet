@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This class provides a simple API for managing a lock file
 # whose contents are an (optional) String.  In addition
 # to querying the basic state (#locked?) of the lock, managing

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'hiera_puppet'
 
 # Provides the base class for the puppet functions hiera, hiera_array, hiera_hash, and hiera_include.

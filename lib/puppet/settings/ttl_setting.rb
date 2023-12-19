@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # A setting that represents a span of time to live, and evaluates to Numeric
 # seconds to live where 0 means shortest possible time to live, a positive numeric value means time
 # to live in seconds, and the symbolic entry 'unlimited' is an infinite amount of time.
@@ -38,6 +39,7 @@ class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
       if value < 0
         raise Puppet::Settings::ValidationError, _("Invalid negative 'time to live' %{value} - did you mean 'unlimited'?") % { value: value.inspect }
       end
+
       value
 
     when value == 'unlimited'

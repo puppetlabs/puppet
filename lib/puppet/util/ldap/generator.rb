@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/ldap'
 
 class Puppet::Util::Ldap::Generator

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'timeout'
 require_relative '../../puppet/file_system/uniquefile'
 
@@ -16,7 +17,6 @@ end
 # in classes that needs to execute system commands.
 # @api public
 module Puppet::Util::Execution
-
   # This is the full output from a process. The object itself (a String) is the
   # stdout of the process.
   #
@@ -312,15 +312,14 @@ module Puppet::Util::Execution
   #
   def self.ruby_path()
     File.join(RbConfig::CONFIG['bindir'],
-              RbConfig::CONFIG['ruby_install_name'] + RbConfig::CONFIG['EXEEXT']).
-      sub(/.*\s.*/m, '"\&"')
+              RbConfig::CONFIG['ruby_install_name'] + RbConfig::CONFIG['EXEEXT'])
+      .sub(/.*\s.*/m, '"\&"')
   end
 
   # Because some modules provide their own version of this method.
   class << self
     alias util_execute execute
   end
-
 
   # This is private method.
   # @comment see call to private_class_method after method definition
@@ -375,7 +374,6 @@ module Puppet::Util::Execution
   end
   private_class_method :execute_posix
 
-
   # This is private method.
   # @comment see call to private_class_method after method definition
   # @api private
@@ -391,7 +389,6 @@ module Puppet::Util::Execution
     end
   end
   private_class_method :execute_windows
-
 
   # This is private method.
   # @comment see call to private_class_method after method definition

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Factory is a helper class that makes construction of a Pops Model
 # much more convenient. It can be viewed as a small internal DSL for model
 # constructions.
@@ -645,6 +646,7 @@ class Factory
   def self.set_resource_form(expr, form)
     # Note: Validation handles illegal combinations
     return false unless expr.instance_of?(self) && expr.model_class <= AbstractResource
+
     expr['form'] = form
     return true
   end
@@ -994,6 +996,7 @@ class Factory
 
   class ArgsToNonCallError < RuntimeError
     attr_reader :args, :name_expr
+
     def initialize(args, name_expr)
       @args = args
       @name_expr = name_expr
@@ -1042,8 +1045,10 @@ class Factory
     # Returning nil means accepting the given as a potential resource expression
     return nil unless attribute_ops.is_a? Array
     return nil unless left.model_class <= QualifiedName
+
     keyed_entries = attribute_ops.map do |ao|
       return nil if ao[KEY_OPERATOR] == '+>'
+
       KEY_ENTRY(infer(ao['attribute_name']), ao['value_expr'])
     end
     a_hash = HASH(keyed_entries)

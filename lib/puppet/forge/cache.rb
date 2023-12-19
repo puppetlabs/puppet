@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'uri'
 
 require_relative '../../puppet/forge'
@@ -8,7 +9,6 @@ class Puppet::Forge
   #
   # Provides methods for reading files from local cache, filesystem or network.
   class Cache
-
     # Instantiate new cache for the +repository+ instance.
     def initialize(repository, options = {})
       @repository = repository

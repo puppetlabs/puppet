@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Types
 # Implements a standard visitor patter for the Puppet Type system.

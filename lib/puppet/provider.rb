@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # A Provider is an implementation of the actions that manage resources (of some type) on a system.
 # This class is the base class for all implementation of a Puppet Provider.
 #
@@ -267,6 +268,7 @@ class Puppet::Provider
   # @api private
   def self.default_match
     return nil if some_default_match(@notdefaults) # Blacklist means this provider cannot be a default
+
     some_default_match(@defaults)
   end
 
@@ -398,6 +400,7 @@ class Puppet::Provider
     [resource_type.validproperties, resource_type.parameters].flatten.each do |attr|
       attr = attr.intern
       next if attr == :name
+
       define_method(attr) do
         if @property_hash[attr].nil?
           :absent
@@ -574,6 +577,7 @@ class Puppet::Provider
   def <=>(other)
     # We can only have ordering against other providers.
     return nil unless other.is_a? Puppet::Provider
+
     # Otherwise, order by the providers class name.
     return self.class.name <=> other.class.name
   end

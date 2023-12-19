@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet
 module Pal
   # A CatalogCompiler is a compiler that builds a catalog of resources and dependencies as a side effect of
@@ -9,7 +10,6 @@ module Pal
   #
   # @api public
   class CatalogCompiler < Compiler
-
     # @api private
     def catalog
       internal_compiler.catalog
@@ -63,7 +63,6 @@ module Pal
       end
     end
 
-
     # Compiles the result of additional evaluation taking place in a PAL catalog compilation.
     # This will evaluate all lazy constructs until all have been evaluated, and will the validate
     # the result.
@@ -104,6 +103,5 @@ module Pal
       internal_compiler.evaluate_ast_node
     end
   end
-
 end
 end

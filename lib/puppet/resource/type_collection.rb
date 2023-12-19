@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/parser/type_loader'
 require_relative '../../puppet/util/file_watcher'
 require_relative '../../puppet/util/warnings'
@@ -73,6 +74,7 @@ class Puppet::Resource::TypeCollection
   def handle_hostclass_merge(instance)
     # Only main class (named '') can be merged (for purpose of merging top-scopes).
     return instance unless instance.name == ''
+
     if instance.type == :hostclass && (other = @hostclasses[instance.name]) && other.type == :hostclass
       other.merge(instance)
       # throw is used to signal merge - avoids dupe checks and adding it to hostclasses
@@ -219,12 +221,14 @@ class Puppet::Resource::TypeCollection
   def dupe_check(instance, hash)
     dupe = hash[instance.name]
     return unless dupe
+
     message = yield dupe
     instance.fail Puppet::ParseError, message
   end
 
   def dupe_check_singleton(instance, set)
     return if set.empty?
+
     message = yield set[0]
     instance.fail Puppet::ParseError, message
   end

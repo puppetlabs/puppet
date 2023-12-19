@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # included so we can test object types
 require_relative '../../puppet'
 require_relative '../../puppet/network/format_support'
@@ -51,6 +52,7 @@ class Puppet::Util::Metric
 
   def newvalue(name,value,label = nil)
     raise ArgumentError.new("metric name #{name.inspect} is not a string") unless name.is_a? String
+
     label ||= self.class.labelize(name)
     @values.push [name,label,value]
   end

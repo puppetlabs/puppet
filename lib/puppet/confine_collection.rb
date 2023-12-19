@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Manage a collection of confines, returning a boolean or
 # helpful information.
 require_relative '../puppet/confine'
@@ -26,6 +27,7 @@ class Puppet::ConfineCollection
   end
 
   attr_reader :label
+
   def initialize(label)
     @label = label
     @confines = []
@@ -40,8 +42,8 @@ class Puppet::ConfineCollection
     confines.each do |klass, list|
       value = klass.summarize(list)
       next if (value.respond_to?(:length) and value.length == 0) or (value == 0)
-      result[klass.name] = value
 
+      result[klass.name] = value
     end
     result
   end

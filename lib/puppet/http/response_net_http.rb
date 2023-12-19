@@ -1,9 +1,9 @@
 # frozen_string_literal: true
+
 # Adapts Net::HTTPResponse to Puppet::HTTP::Response
 #
 # @api public
 class Puppet::HTTP::ResponseNetHTTP < Puppet::HTTP::Response
-
   # Create a response associated with the URL.
   #
   # @param [URI] url

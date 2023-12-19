@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # User Puppet provider for AIX. It uses standard commands to manage users:
 #  mkuser, rmuser, lsuser, chuser
 #

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
+
 require_relative '../puppet/util/platform'
 
 module Puppet
-
   def self.default_diffargs
     '-u'
   end
@@ -31,6 +31,7 @@ module Puppet
 
   def self.default_cadir
     return "" if Puppet::Util::Platform.windows?
+
     old_ca_dir = "#{Puppet[:ssldir]}/ca"
     new_ca_dir = "/etc/puppetlabs/puppetserver/ca"
 
@@ -117,7 +118,7 @@ module Puppet
         :desc     => "The name of the application, if we are running as one.  The
           default is essentially $0 without the path or `.rb`.",
     }
-  )
+    )
 
   settings.define_settings(:main,
     :logdir => {
@@ -371,6 +372,7 @@ module Puppet
           paths = ENV['PATH'].split(File::PATH_SEPARATOR)
           Puppet::Util::Platform.default_paths.each do |path|
             next if paths.include?(path)
+
             ENV['PATH'] = ENV['PATH'] + File::PATH_SEPARATOR + path
           end
           value
@@ -813,7 +815,6 @@ Valid values are 0 (never cache) and 15 (15 second minimum wait time).
 
     settings.define_settings(
     :main,
-
     # We have to downcase the fqdn, because the current ssl stuff (as opposed to in master) doesn't have good facilities for
     # manipulating naming.
     :certname => {
@@ -1273,7 +1274,7 @@ EOT
     }
   )
 
-  # Define the config default.
+    # Define the config default.
 
     settings.define_settings(:application,
       :config_file_name => {
@@ -1298,7 +1299,7 @@ EOT
         :default    => nil,
         :desc       => "The address the agent should use to initiate requests.",
       },
-  )
+    )
 
   settings.define_settings(:environment,
     :manifest => {
@@ -2054,7 +2055,7 @@ EOT
     }
   )
 
-  # Central fact information.
+    # Central fact information.
 
     settings.define_settings(
     :main,
@@ -2135,7 +2136,7 @@ EOT
 
           For more info, see [the ENC documentation](https://puppet.com/docs/puppet/latest/nodes_external.html).",
     }
-    )
+  )
 
         settings.define_settings(
         :ldap,
@@ -2205,7 +2206,7 @@ EOT
           have one already set.  Generally, it should be the 'ou=Hosts'
           branch under your main directory.",
     }
-  )
+      )
 
   settings.define_settings(:server,
     :storeconfigs => {

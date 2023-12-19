@@ -1,8 +1,8 @@
 # frozen_string_literal: true
+
 require 'rdoc/code_objects'
 
 module RDoc
-
   # This modules contains various class that are used to hold information
   # about the various Puppet language structures we found while parsing.
   #
@@ -69,6 +69,7 @@ module RDoc
       if cls
         return cls
       end
+
       @node_container ||= add_module(NormalModule, "__nodes__")
       cls = @node_container.add_class(PuppetNode, name, superclass)
       @nodes[name] = cls if !@done_documenting
@@ -176,7 +177,6 @@ module RDoc
       end
       result
     end
-
   end
 
   # PuppetNode holds a puppet node

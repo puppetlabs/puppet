@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/file_serving/content'
 require_relative '../../../puppet/file_serving/metadata'
 require_relative '../../../puppet/file_serving/terminus_helper'
@@ -12,8 +13,8 @@ module Puppet
   # this state, during retrieval, modifies the appropriate other states
   # so that things get taken care of appropriately.
   Puppet::Type.type(:file).newparam(:source) do
-
     attr_accessor :source, :local
+
     desc <<-'EOT'
       A source file, which will be copied into place on the local system. This
       attribute is mutually exclusive with `content` and `target`. Allowed
@@ -186,6 +187,7 @@ module Puppet
       return @metadata if @metadata
 
       return nil unless value
+
       value.each do |source|
         begin
           options = {

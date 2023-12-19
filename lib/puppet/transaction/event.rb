@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/transaction'
 require_relative '../../puppet/util/tagging'
 require_relative '../../puppet/util/logging'
@@ -123,6 +124,7 @@ class Puppet::Transaction::Event
 
   def status=(value)
     raise ArgumentError, _("Event status can only be %{statuses}") % { statuses: EVENT_STATUSES.join(', ') } unless EVENT_STATUSES.include?(value)
+
     @status = value
   end
 

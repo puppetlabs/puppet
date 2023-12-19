@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/parameter/value'
 
 # A collection of values and regular expressions, used for specifying allowed values
@@ -12,7 +13,6 @@ require_relative '../../puppet/parameter/value'
 # @api private
 #
 class Puppet::Parameter::ValueCollection
-
   # Aliases the given existing _other_ value with the additional given _name_.
   # @return [void]
   # @api private
@@ -121,7 +121,7 @@ class Puppet::Parameter::ValueCollection
   # @option options [Symbol] :event The event that should be emitted when this value is set.
   # @todo Option :event original comment says "event should be returned...", is "returned" the correct word
   #   to use?
- # @option options [Symbol] :invalidate_refreshes True if a change on this property should invalidate and
+  # @option options [Symbol] :invalidate_refreshes True if a change on this property should invalidate and
   #   remove any scheduled refreshes (from notify or subscribe) targeted at the same resource. For example, if
   #   a change in this property takes into account any changes that a scheduled refresh would have performed,
   #   then the scheduled refresh would be deleted.

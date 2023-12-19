@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 Puppet::Util::Reference.newreference :metaparameter, :doc => "All Puppet metaparameters and all their details" do
   str = %{
 

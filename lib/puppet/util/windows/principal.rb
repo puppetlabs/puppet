@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/windows'
 
 module Puppet::Util::Windows::SID
@@ -59,7 +60,6 @@ module Puppet::Util::Windows::SID
             FFI::MemoryPointer.new(:dword, 1) do |sid_length_ptr|
               FFI::MemoryPointer.new(:dword, 1) do |domain_length_ptr|
                 FFI::MemoryPointer.new(:uint32, 1) do |name_use_enum_ptr|
-
                 sid_length_ptr.write_dword(MAXIMUM_SID_BYTE_LENGTH)
                 success = LookupAccountNameW(system_name_ptr, account_name_ptr, sid_ptr, sid_length_ptr,
                                              FFI::Pointer::NULL, domain_length_ptr, name_use_enum_ptr)
@@ -109,7 +109,6 @@ module Puppet::Util::Windows::SID
           FFI::MemoryPointer.new(:dword, 1) do |name_length_ptr|
             FFI::MemoryPointer.new(:dword, 1) do |domain_length_ptr|
               FFI::MemoryPointer.new(:uint32, 1) do |name_use_enum_ptr|
-
                 sid_ptr.write_array_of_uchar(sid_bytes)
 
                 if Puppet::Util::Windows::SID.IsValidSid(sid_ptr) == FFI::WIN32_FALSE
@@ -151,6 +150,7 @@ module Puppet::Util::Windows::SID
     # Sanitize the given account name for lookup to avoid known issues
     def self.sanitize_account_name(account_name)
       return account_name unless account_name.start_with?('APPLICATION PACKAGE AUTHORITY\\')
+
       account_name.split('\\').last
     end
     private_class_method :sanitize_account_name

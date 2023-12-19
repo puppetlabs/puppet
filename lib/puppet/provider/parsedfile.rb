@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet'
 require_relative '../../puppet/util/filetype'
 require_relative '../../puppet/util/fileparsing'
@@ -236,6 +237,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   # @param [Array<Puppet::Resource>] resources A list of resources using this class as a provider
   def self.match_providers_with_resources(resources)
     return unless resources
+
     matchers = resources.dup
     @records.each do |record|
       # Skip things like comments and blank lines
@@ -314,6 +316,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   # Is there an existing record with this name?
   def self.record?(name)
     return nil unless @records
+
     @records.find { |r| r[:name] == name }
   end
 
@@ -380,6 +383,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     targets = []
     # First get the default target
     raise Puppet::DevError, _("Parsed Providers must define a default target") unless self.default_target
+
     targets << self.default_target
 
     # Then get each of the file objects
@@ -471,6 +475,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   # Retrieve the current state from disk.
   def prefetch
     raise Puppet::DevError, _("Somehow got told to prefetch with no resource set") unless @resource
+
     self.class.prefetch(@resource[:name] => @resource)
   end
 

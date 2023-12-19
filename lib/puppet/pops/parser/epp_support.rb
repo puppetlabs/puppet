@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Parser
 # This module is an integral part of the Lexer.
@@ -6,7 +7,6 @@ module Parser
 #
 require 'strscan'
 module EppSupport
-
   TOKEN_RENDER_STRING = [:RENDER_STRING, nil, 0]
   TOKEN_RENDER_EXPR   = [:RENDER_EXPR, nil, 0]
 
@@ -183,6 +183,7 @@ module EppSupport
       @skip_leading = skip_leading
 
       return nil if scanner.eos?
+
       s = ''.dup
       until scanner.eos?
         part = @scanner.scan_until(/(<%)|\z/)
@@ -260,7 +261,6 @@ module EppSupport
       end
     end
   end
-
 end
 end
 end

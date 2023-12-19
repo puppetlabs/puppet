@@ -4,7 +4,6 @@ module Puppet::Pops::Types
   # Raised when an assertion of actual type against an expected type fails.
   #
   class TypeAssertionError < Puppet::Error
-
     # Returns the expected type
     # @return [PAnyType] expected type
     attr_reader :expected_type

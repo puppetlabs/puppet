@@ -1,8 +1,8 @@
 # frozen_string_literal: true
+
 # Handler of Epp call/evaluation from the epp and inline_epp functions
 #
 class Puppet::Pops::Evaluator::EppEvaluator
-
   def self.inline_epp(scope, epp_source, template_args = nil)
     unless epp_source.is_a?(String)
       #TRANSLATORS 'inline_epp()' is a method name and 'epp' refers to 'Embedded Puppet (EPP) template' and should not be translated

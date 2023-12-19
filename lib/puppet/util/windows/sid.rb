@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../../puppet/util/windows'
 
 module Puppet::Util::Windows
@@ -117,6 +118,7 @@ module Puppet::Util::Windows
         !ads_object.ole_respond_to?(:objectSID) || !ads_object.ole_respond_to?(:Name)
         raise Puppet::Error.new("ads_object must be an IAdsUser or IAdsGroup instance")
       end
+
       octet_string_to_principal(ads_object.objectSID)
     rescue Puppet::Util::Windows::Error => e
       # if the error is not a lookup / mapping problem, immediately re-raise
@@ -137,7 +139,6 @@ module Puppet::Util::Windows
     # e.g. 'BUILTIN\Administrators'. Returns nil if an account
     # for that SID does not exist.
     def sid_to_name(value)
-
       sid_bytes = []
       begin
         string_to_sid_ptr(value) do |ptr|
@@ -188,7 +189,6 @@ module Puppet::Util::Windows
     def string_to_sid_ptr(string_sid, &block)
       FFI::MemoryPointer.from_string_to_wide_string(string_sid) do |lpcwstr|
         FFI::MemoryPointer.new(:pointer, 1) do |sid_ptr_ptr|
-
           if ConvertStringSidToSidW(lpcwstr, sid_ptr_ptr) == FFI::WIN32_FALSE
             raise Puppet::Util::Windows::Error.new(_("Failed to convert string SID: %{string_sid}") % { string_sid: string_sid })
           end

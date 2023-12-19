@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Loader
 # The PuppetPlanInstantiator instantiates a Puppet::Functions::PuppetFunction given a Puppet Programming language
@@ -43,6 +44,7 @@ class PuppetPlanInstantiator
     unless the_plan_definition.is_a?(Model::PlanDefinition)
       raise ArgumentError, _("The code loaded from %{source_ref} does not define the plan '%{plan_name}' - no plan found.") % { source_ref: source_ref, plan_name: typed_name.name }
     end
+
     unless the_plan_definition.name == typed_name.name
       expected = typed_name.name
       actual = the_plan_definition.name

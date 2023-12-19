@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Network # :nodoc:
   # A struct-like class for passing around a client request.  It's mostly
   # just used for validation and authorization.

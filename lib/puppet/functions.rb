@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Functions in the puppet language can be written in Ruby and distributed in
 # puppet modules. The function is written by creating a file in the module's
 # `lib/puppet/functions/<modulename>` directory, where `<modulename>` is
@@ -272,6 +273,7 @@ module Puppet::Functions
     unless the_class.method_defined?(func_name)
       raise ArgumentError, _("Function Creation Error, cannot create a default dispatcher for function '%{func_name}', no method with this name found") % { func_name: func_name }
     end
+
     any_signature(*min_max_param(the_class.instance_method(func_name)))
   end
 
@@ -303,7 +305,6 @@ module Puppet::Functions
   #
   # @api public
   class Function < Puppet::Pops::Functions::Function
-
     # @api private
     def self.builder
       DispatcherBuilder.new(dispatcher, Puppet::Pops::Types::PCallableType::DEFAULT, loader)
@@ -350,6 +351,7 @@ module Puppet::Functions
       if loader.nil?
         raise ArgumentError, _("No loader present. Call create_loaded_function(:myname, loader,...), instead of 'create_function' if running tests")
       end
+
       aliases = LocalTypeAliasesBuilder.new(loader, name)
       aliases.instance_eval(&block)
       # Add the loaded types to the builder
@@ -386,7 +388,6 @@ module Puppet::Functions
     end
   end
 
-
   # Public api methods of the DispatcherBuilder are available within dispatch()
   # blocks declared in a Puppet::Function.create_function() call.
   #
@@ -413,6 +414,7 @@ module Puppet::Functions
     def param(type, name)
       internal_param(type, name)
       raise ArgumentError, _('A required parameter cannot be added after an optional parameter') if @min != @max
+
       @min += 1
       @max += 1
     end
@@ -462,6 +464,7 @@ module Puppet::Functions
     def required_repeated_param(type, name)
       internal_param(type, name, true)
       raise ArgumentError, _('A required repeated parameter cannot be added after an optional parameter') if @min != @max
+
       @min += 1
       @max = :default
     end
@@ -522,6 +525,7 @@ module Puppet::Functions
       unless type.is_a?(String) || type.is_a?(Puppet::Pops::Types::PAnyType)
         raise ArgumentError, _("Argument to 'return_type' must be a String reference to a Puppet Data Type. Got %{type_class}") % { type_class: type.class }
       end
+
       @return_type = type
     end
 
@@ -598,7 +602,6 @@ module Puppet::Functions
     end
     private :internal_type_parse
   end
-
 
   # The LocalTypeAliasBuilder is used by the 'local_types' method to collect the individual
   # type aliases given by the function's author.
@@ -681,7 +684,6 @@ module Puppet::Functions
   end
 
   class Function3x < InternalFunction
-
     # Table of optimized parameter names - 0 to 5 parameters
     PARAM_NAMES = [
       [],
@@ -739,7 +741,6 @@ module Puppet::Functions
       # When function is not an rvalue function, make sure it produces nil
       #
       the_class.class_eval do
-
         # Bypasses making the  call via the dispatcher to make sure errors
         # are reported exactly the same way as in 3x. The dispatcher is still needed as it is
         # used to support other features than calling.
@@ -800,7 +801,6 @@ module Puppet::Functions
       [from, to, names]
     end
   end
-
 
   # Injection and Weaving of parameters
   # ---

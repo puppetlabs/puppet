@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Puppet::Pops
 module Evaluator
 # A module with bindings between the new evaluator and the 3x runtime.
@@ -7,7 +8,6 @@ module Evaluator
 #
 # @api private
 module Runtime3Support
-
   NAME_SPACE_SEPARATOR = '::'
 
   # Fails the evaluation of _semantic_ with a given issue.
@@ -147,6 +147,7 @@ module Runtime3Support
     # is in the source.
     #
     raise ArgumentError, _("Internal error - attempt to create a local scope without a hash") unless hash.is_a?(Hash)
+
     scope.ephemeral_from(hash)
   end
 
@@ -253,10 +254,12 @@ module Runtime3Support
     if v.is_a?(Numeric)
       return v
     end
+
     n = Utils.to_n(v)
     unless n
       fail(Issues::NOT_NUMERIC, o, {:value => v})
     end
+
     # this point is reached if there was a conversion
     optionally_fail(Issues::NUMERIC_COERCION, o, {:before => v, :after => n})
     n
@@ -374,6 +377,7 @@ module Runtime3Support
       unless r.is_a?(Types::PResourceType) && r.type_name != 'class'
         fail(Issues::ILLEGAL_OVERRIDDEN_TYPE, o, {:actual => r} )
       end
+
       t = Runtime3ResourceSupport.find_resource_type(scope, r.type_name)
       resource = Puppet::Parser::Resource.new(
         t, r.title, {
@@ -435,6 +439,7 @@ module Runtime3Support
   #
   def is_parameter_of_resource?(scope, resource, name)
     return false unless name.is_a?(String)
+
     resource.valid_parameter?(name)
   end
 

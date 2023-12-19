@@ -1,9 +1,9 @@
 # frozen_string_literal: true
+
 require 'resolv'
 
 module Puppet::HTTP
   class DNS
-
     class CacheEntry
       attr_reader :records, :ttl, :resolution_time
 

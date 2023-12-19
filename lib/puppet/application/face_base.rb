@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../../puppet/application'
 require_relative '../../puppet/face'
 require 'optparse'
@@ -158,6 +159,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     Puppet.settings.each do |_name, object|
       object.optparse_args.each do |arg|
         next unless arg =~ /^-/
+
         # sadly, we have to emulate some of optparse here...
         pattern = /^#{arg.sub('[no-]', '').sub(/[ =].*$/, '')}(?:[ =].*)?$/
         pattern.match item and return object
@@ -170,8 +172,10 @@ class Puppet::Application::FaceBase < Puppet::Application
     self.class.option_parser_commands.each do |options, _function|
       options.each do |option|
         next unless option =~ /^-/
+
         pattern = /^#{option.sub('[no-]', '').sub(/[ =].*$/, '')}(?:[ =].*)?$/
         next unless pattern.match(item)
+
         return {
           :argument => option =~ /[ =]/,
           :optional => option =~ /[ =]\[/
@@ -204,7 +208,6 @@ class Puppet::Application::FaceBase < Puppet::Application
     # If we don't have a rendering format, set one early.
     self.render_as ||= (@action.render_as || :console)
   end
-
 
   def main
     status = false
@@ -266,11 +269,9 @@ class Puppet::Application::FaceBase < Puppet::Application
   # --kelsey 2012-02-14
   rescue SystemExit => detail
     status = detail.status
-
   rescue => detail
     Puppet.log_exception(detail)
     Puppet.err _("Try 'puppet help %{face} %{action}' for usage") % { face: @face.name, action: @action.name }
-
   ensure
     exit status
   end

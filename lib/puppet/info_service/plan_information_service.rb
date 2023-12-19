@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Puppet::InfoService::PlanInformationService
   require_relative '../../puppet/module'
 
