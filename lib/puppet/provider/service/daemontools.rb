@@ -41,7 +41,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
 
   EOT
 
-  commands :svc  => "/usr/bin/svc", :svstat => "/usr/bin/svstat"
+  commands :svc => "/usr/bin/svc", :svstat => "/usr/bin/svstat"
 
   class << self
     attr_writer :defpath

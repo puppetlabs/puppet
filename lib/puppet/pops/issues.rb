@@ -546,7 +546,7 @@ module Issues
     _("Illegal Resource Type expression, expected result to be a type name, or untitled Resource, got %{actual}") % { actual: actual }
   end
 
-  DUPLICATE_TITLE = issue :DUPLICATE_TITLE, :title  do
+  DUPLICATE_TITLE = issue :DUPLICATE_TITLE, :title do
     _("The title '%{title}' has already been used in this resource expression") % { title: title }
   end
 

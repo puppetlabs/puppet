@@ -87,7 +87,7 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
       tmp = doc
       tmp = scrub(tmp)
 
-      docs[sname]  = tmp
+      docs[sname] = tmp
     }
 
     str << markdown_header("Parameters", 4) + "\n"

@@ -3,7 +3,7 @@
 Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   START_ON = /^\s*start\s+on/
   COMMENTED_START_ON = /^\s*#+\s*start\s+on/
-  MANUAL   = /^\s*manual\s*$/
+  MANUAL = /^\s*manual\s*$/
 
   desc "Ubuntu service management with `upstart`.
 

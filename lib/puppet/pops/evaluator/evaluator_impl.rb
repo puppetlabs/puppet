@@ -1127,7 +1127,7 @@ class EvaluatorImpl
   end
 
   def string_Symbol(o, scope)
-    if :undef == o  # optimized comparison 1.44 vs 1.95
+    if :undef == o # optimized comparison 1.44 vs 1.95
       EMPTY_STRING
     else
       o.to_s

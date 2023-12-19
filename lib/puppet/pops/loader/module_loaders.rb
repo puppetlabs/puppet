@@ -48,9 +48,9 @@ module ModuleLoaders
     LibRootedFileBased.new(parent_loader,
                            loaders,
                            nil,
-                           puppet_lib,   # may or may not have a 'lib' above 'puppet'
+                           puppet_lib, # may or may not have a 'lib' above 'puppet'
                            'puppet_system',
-                           [:func_4x, :func_3x, :datatype]   # only load ruby functions and types from "puppet"
+                           [:func_4x, :func_3x, :datatype] # only load ruby functions and types from "puppet"
                           )
   end
 

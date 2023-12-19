@@ -849,7 +849,7 @@ BODY = HEADER + %{
 !INCLUDE!  <!-- banner header -->
 
   <div id="bodyContent">
-} +  METHOD_LIST + %{
+} + METHOD_LIST + %{
 
   </div>
 } + FOOTER

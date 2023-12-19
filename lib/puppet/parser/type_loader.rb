@@ -5,7 +5,7 @@ require 'forwardable'
 require_relative '../../puppet/parser/parser_factory'
 
 class Puppet::Parser::TypeLoader
-  extend  Forwardable
+  extend Forwardable
 
   class TypeLoaderError < StandardError; end
 

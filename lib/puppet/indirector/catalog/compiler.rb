@@ -240,7 +240,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
             basedir_meta = list_of_data.find {|meta| meta.relative_path == '.'}
             devfail "FileServing::Metadata search should always return the root search path" if basedir_meta.nil?
 
-            if ! inlineable_metadata?(basedir_meta, source,  environment_path)
+            if ! inlineable_metadata?(basedir_meta, source, environment_path)
               # If any source is not in the environment path, skip inlining this resource.
               log_file_outside_environment
               sources_in_environment = false

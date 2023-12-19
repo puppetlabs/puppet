@@ -23,7 +23,7 @@ class Hiera::PuppetFunction < Puppet::Functions::InternalFunction
       scope_param
       param 'String',:key
       param 'Any',   :default
-      optional_param 'Any',   :override
+      optional_param 'Any', :override
     end
 
     dispatch :hiera_block1 do

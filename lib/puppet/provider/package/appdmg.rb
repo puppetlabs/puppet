@@ -20,7 +20,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
   desc "Package management which copies application bundles to a target."
 
   confine 'os.name' => :darwin
-  confine :feature         => :cfpropertylist
+  confine :feature => :cfpropertylist
 
   commands :hdiutil => "/usr/bin/hdiutil"
   commands :curl => "/usr/bin/curl"

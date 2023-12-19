@@ -91,7 +91,7 @@ module Lookup
         mapped_vars.map do |var|
           # Need to use parent lookup invocation to avoid adding 'var' to the set of variables to track for changes. The
           # variable that 'var' stems from is added above.
-          path = scope.with_local_scope(var_key => var) {  datadir + interpolate(template, lookup_invocation, false) }
+          path = scope.with_local_scope(var_key => var) { datadir + interpolate(template, lookup_invocation, false) }
           ResolvedLocation.new(template, path, path.exist?)
         end
       end

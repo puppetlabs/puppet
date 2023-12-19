@@ -14,7 +14,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     To use the `forcelocal` parameter, you need to install the `libuser` package (providing
     `/usr/sbin/lgroupadd` and `/usr/sbin/luseradd`)."
 
-  commands :add => "useradd", :delete => "userdel", :modify => "usermod", :password => "chage", :chpasswd  => "chpasswd"
+  commands :add => "useradd", :delete => "userdel", :modify => "usermod", :password => "chage", :chpasswd => "chpasswd"
 
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos

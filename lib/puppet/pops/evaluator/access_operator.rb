@@ -51,7 +51,7 @@ class AccessOperator
                k1 = Utils.to_n(keys[0])
                bad_string_access_key_type(o, 0, k1.nil? ? keys[0] : k1) unless k1.is_a?(Integer)
                k2 = 1
-               k1 = k1 < 0 ? o.length + k1 : k1           # abs pos
+               k1 = k1 < 0 ? o.length + k1 : k1 # abs pos
                # if k1 is outside, a length of 1 always produces an empty string
                if k1 < 0
                  EMPTY_STRING

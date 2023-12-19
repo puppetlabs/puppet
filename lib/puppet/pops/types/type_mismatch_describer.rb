@@ -602,7 +602,7 @@ module Types
     # @return [Array<Mismatch>] An array of found errors. An empty array indicates no errors.
     def describe_struct_signature(params_struct, param_hash, missing_ok = false)
       param_type_hash = params_struct.hashed_elements
-      result =  param_hash.each_key.reject { |name| param_type_hash.include?(name) }.map { |name| InvalidParameter.new(nil, name) }
+      result = param_hash.each_key.reject { |name| param_type_hash.include?(name) }.map { |name| InvalidParameter.new(nil, name) }
 
       params_struct.elements.each do |elem|
         name = elem.name

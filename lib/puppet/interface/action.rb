@@ -23,11 +23,11 @@ class Puppet::Interface::Action
     # is a favour to our end users; if you happen to get that in a core face
     # report it as a bug, please. --daniel 2011-04-26
     @authors = []
-    @license  = 'All Rights Reserved'
+    @license = 'All Rights Reserved'
 
     # @options collects the added options in the order they're declared.
     # @options_hash collects the options keyed by alias for quick lookups.
-    @options        = []
+    @options = []
     @display_global_options = []
     @options_hash   = {}
     @when_rendering = {}

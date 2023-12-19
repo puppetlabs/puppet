@@ -380,7 +380,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     type_name = type.is_a?(Puppet::CompilableResourceType) || type.is_a?(Puppet::Resource::Type) ? type.name : type
     type_name, title = Puppet::Resource.type_and_title(type_name, title)
     type = type_name if type.is_a?(String)
-    title_key   = [type_name, title.to_s]
+    title_key = [type_name, title.to_s]
     result = @resource_table[title_key]
     if result.nil?
       # an instance has to be created in order to construct the unique key used when

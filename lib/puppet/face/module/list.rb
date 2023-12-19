@@ -93,7 +93,7 @@ Puppet::Face.define(:module, '1.0.0') do
                                  :label_unmet => true, :path => path, :label_invalid => false)
         else
           tree = []
-          modules.sort_by { |mod| mod.forge_name or mod.name  }.each do |mod|
+          modules.sort_by { |mod| mod.forge_name or mod.name }.each do |mod|
             tree << list_build_node(mod, path, :label_unmet => false,
                       :path => path, :label_invalid => true)
           end

@@ -220,7 +220,7 @@ module Serialization
           semantic = Puppet::Pops::SemanticError.new(issue, nil, {:file => file, :line => line})
         end
       end
-      optionally_fail(issue,  semantic, options)
+      optionally_fail(issue, semantic, options)
     end
   end
 end

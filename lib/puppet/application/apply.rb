@@ -22,7 +22,7 @@ class Puppet::Application::Apply < Puppet::Application
     Puppet[:write_catalog_summary] = arg
   end
 
-  option("--catalog catalog",  "-c catalog") do |arg|
+  option("--catalog catalog", "-c catalog") do |arg|
     options[:catalog] = arg
   end
 
@@ -204,11 +204,13 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def main
+    # rubocop:disable Layout/ExtraSpacing
     manifest          = get_manifest() # Get either a manifest or nil if apply should use content of Puppet[:code]
     splay                              # splay if needed
     facts             = get_facts()    # facts or nil
     node              = get_node()     # node or error
     apply_environment = get_configured_environment(node, manifest)
+    # rubocop:enable Layout/ExtraSpacing
 
     # TRANSLATORS "puppet apply" is a program command and should not be translated
     Puppet.override({:current_environment => apply_environment, :loaders => create_loaders(apply_environment)}, _("For puppet apply")) do

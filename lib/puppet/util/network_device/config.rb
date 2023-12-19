@@ -47,7 +47,7 @@ class Puppet::Util::NetworkDevice::Config
           when /^\s*#/ # skip comments
             file_line_count += 1
             next
-          when /^\s*$/  # skip blank lines
+          when /^\s*$/ # skip blank lines
             file_line_count += 1
             next
           when /^\[([\w.-]+)\]\s*$/ # [device.fqdn]

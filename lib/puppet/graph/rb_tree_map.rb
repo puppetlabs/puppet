@@ -355,7 +355,7 @@ class Puppet::Graph::RbTreeMap
     return nil if node.nil?
 
     case key <=> node.key
-    when  0 then return node
+    when 0 then return node
     when -1 then return get_recursive(node.left, key)
     when  1 then return get_recursive(node.right, key)
     end
@@ -380,7 +380,7 @@ class Puppet::Graph::RbTreeMap
     end
 
     case key <=> node.key
-    when  0 then node.value = value
+    when 0 then node.value = value
     when -1 then node.left = insert(node.left, key, value)
     when  1 then node.right = insert(node.right, key, value)
     end

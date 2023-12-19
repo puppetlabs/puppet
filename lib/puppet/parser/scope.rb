@@ -527,7 +527,7 @@ class Puppet::Parser::Scope
 
     begin
       throw(:undefined_variable, reason)
-    rescue  UNCAUGHT_THROW_EXCEPTION
+    rescue UNCAUGHT_THROW_EXCEPTION
       case Puppet[:strict]
       when :off
         # do nothing
@@ -659,7 +659,7 @@ class Puppet::Parser::Scope
 
   def qualified_scope(classname)
     klass = find_hostclass(classname)
-    raise _("class %{classname} could not be found") % { classname: classname }     unless klass
+    raise _("class %{classname} could not be found") % { classname: classname } unless klass
 
     kscope = class_scope(klass)
     raise _("class %{classname} has not been evaluated") % { classname: classname } unless kscope

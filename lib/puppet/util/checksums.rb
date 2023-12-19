@@ -67,7 +67,7 @@ module Puppet::Util::Checksums
     require 'digest/sha2'
 
     digest = Digest::SHA256.new
-    checksum_file(digest, filename,  lite)
+    checksum_file(digest, filename, lite)
   end
 
   def sha256_stream(lite = false, &block)
@@ -114,7 +114,7 @@ module Puppet::Util::Checksums
     require 'digest/sha2'
 
     digest = Digest::SHA384.new
-    checksum_file(digest, filename,  lite)
+    checksum_file(digest, filename, lite)
   end
 
   def sha384_stream(lite = false, &block)
@@ -141,7 +141,7 @@ module Puppet::Util::Checksums
     require 'digest/sha2'
 
     digest = Digest::SHA512.new
-    checksum_file(digest, filename,  lite)
+    checksum_file(digest, filename, lite)
   end
 
   def sha512_stream(lite = false, &block)
@@ -193,7 +193,7 @@ module Puppet::Util::Checksums
   # Calculate a checksum of a file's content using Digest::MD5.
   def md5_file(filename, lite = false)
     digest = Digest::MD5.new
-    checksum_file(digest, filename,  lite)
+    checksum_file(digest, filename, lite)
   end
 
   def md5_stream(lite = false, &block)

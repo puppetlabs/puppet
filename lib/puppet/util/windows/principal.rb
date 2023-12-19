@@ -22,7 +22,7 @@ module Puppet::Util::Windows::SID
       if (domain && !domain.empty? && @account_type == :SidTypeDomain)
         @domain_account = @domain
       elsif (domain && !domain.empty?)
-        @domain_account =  "#{domain}\\#{@account}"
+        @domain_account = "#{domain}\\#{@account}"
       else
         @domain_account = account
       end

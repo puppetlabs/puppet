@@ -164,7 +164,7 @@ class PAnyType < TypedModelObject
   # @param args [Array] the arguments to test
   # @param block [Proc] block, or nil if not called with a block
   # @return [Boolean] `true` if this instance is a callable that accepts the given _args_
-  def callable_with?(args,  block = nil)
+  def callable_with?(args, block = nil)
     false
   end
 
@@ -644,7 +644,7 @@ class PUnitType < PAnyType
   def self.new_function(type)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_unit, type.loader) do
       dispatch :from_args do
-        param          'Any',  :from
+        param 'Any', :from
       end
 
       def from_args(from)
@@ -855,9 +855,9 @@ OPTIONAL_FRACTION = '(?:\.\d+)?'
 OPTIONAL_EXPONENT = '(?:[eE]-?\d+)?'
 FLOAT_DEC = '(?:' + INTEGER_DEC + OPTIONAL_FRACTION + OPTIONAL_EXPONENT + ')'
 
-INTEGER_PATTERN          = '\A' + SIGN_PREFIX + '(?:' + INTEGER_DEC + '|' + INTEGER_HEX + '|' + INTEGER_OCT + '|' + INTEGER_BIN + ')\z'
+INTEGER_PATTERN = '\A' + SIGN_PREFIX + '(?:' + INTEGER_DEC + '|' + INTEGER_HEX + '|' + INTEGER_OCT + '|' + INTEGER_BIN + ')\z'
 INTEGER_PATTERN_LENIENT = '\A' + SIGN_PREFIX + '(?:' + INTEGER_DEC_OR_OCT + '|' + INTEGER_HEX + '|' + INTEGER_BIN + ')\z'
-FLOAT_PATTERN            = '\A' + SIGN_PREFIX + '(?:' + FLOAT_DEC + '|' + INTEGER_HEX + '|' + INTEGER_OCT + '|' + INTEGER_BIN + ')\z'
+FLOAT_PATTERN = '\A' + SIGN_PREFIX + '(?:' + FLOAT_DEC + '|' + INTEGER_HEX + '|' + INTEGER_OCT + '|' + INTEGER_BIN + ')\z'
 
 # @api public
 #
@@ -882,7 +882,7 @@ class PNumericType < PScalarDataType
       end
 
       dispatch :from_hash do
-        param          'NamedArgs',  :hash_args
+        param          'NamedArgs', :hash_args
       end
 
       argument_mismatch :on_error do
@@ -1040,7 +1040,7 @@ class PIntegerType < PNumericType
   # @return [Boolean] `true` if this range is adjacent to the other range
   # @api public
   def adjacent?(o)
-    o.is_a?(PIntegerType) &&  (@to + 1 == o.from || o.to + 1 == @from)
+    o.is_a?(PIntegerType) && (@to + 1 == o.from || o.to + 1 == @from)
   end
 
   # Concatenates this range with another range provided that the ranges intersect or
@@ -1104,17 +1104,17 @@ class PIntegerType < PNumericType
       end
 
       dispatch :from_args do
-        param          'Convertible',  :from
+        param          'Convertible', :from
         optional_param 'Radix',   :radix
         optional_param 'Boolean', :abs
       end
 
       dispatch :from_hash do
-        param          'NamedArgs',  :hash_args
+        param          'NamedArgs', :hash_args
       end
 
       argument_mismatch :on_error_hash do
-        param          'Hash',  :hash_args
+        param          'Hash', :hash_args
       end
 
       argument_mismatch :on_error do
@@ -1244,7 +1244,7 @@ class PFloatType < PNumericType
       end
 
       dispatch :from_hash do
-        param          'NamedArgs',  :hash_args
+        param          'NamedArgs', :hash_args
       end
 
       argument_mismatch :on_error do
@@ -1876,7 +1876,7 @@ class PBooleanType < PScalarDataType
   def self.new_function(type)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_boolean, type.loader) do
       dispatch :from_args do
-        param "Variant[Integer, Float, Boolean, Enum['false','true','yes','no','y','n',true]]",  :from
+        param "Variant[Integer, Float, Boolean, Enum['false','true','yes','no','y','n',true]]", :from
       end
 
       argument_mismatch :on_error do
@@ -2510,7 +2510,7 @@ class PCallableType < PAnyType
     # (it's lower bound), not its upper bound
     other_param_types = o.param_types
 
-    return false if other_param_types.nil? ||  !other_param_types.assignable?(@param_types, guard)
+    return false if other_param_types.nil? || !other_param_types.assignable?(@param_types, guard)
 
     # names are ignored, they are just information
     # Blocks must be compatible
@@ -2801,11 +2801,11 @@ class PHashType < PCollectionType
       end
 
       dispatch :from_tuples do
-        param           'KeyValueArray',  :from
+        param           'KeyValueArray', :from
       end
 
       dispatch :from_array do
-        param           'Any',  :from
+        param           'Any', :from
       end
 
       def from_tuples(tuple_array)
@@ -3060,7 +3060,7 @@ class PVariantType < PAnyType
       not_undefs = parts[0]
       if not_undefs.size > 1
         others = parts[1]
-        others <<  PNotUndefType.new(PVariantType.maybe_create(not_undefs.map { |not_undef| not_undef.type }).normalize)
+        others << PNotUndefType.new(PVariantType.maybe_create(not_undefs.map { |not_undef| not_undef.type }).normalize)
         array = others
       end
     end
@@ -3075,7 +3075,7 @@ class PVariantType < PAnyType
       enums = parts[0]
       if enums.size > 1
         others = parts[1]
-        others <<  PEnumType.new(enums.map { |enum| enum.is_a?(PStringType) ? enum.value : enum.values }.flatten.uniq)
+        others << PEnumType.new(enums.map { |enum| enum.is_a?(PStringType) ? enum.value : enum.values }.flatten.uniq)
         array = others
       end
     end
@@ -3089,7 +3089,7 @@ class PVariantType < PAnyType
         values = []
         enums.each { |enum| enum.values.each { |value| values << value.downcase }}
         values.uniq!
-        others <<  PEnumType.new(values, true)
+        others << PEnumType.new(values, true)
         array = others
       end
     end
@@ -3103,7 +3103,7 @@ class PVariantType < PAnyType
       patterns = parts[0]
       if patterns.size > 1
         others = parts[1]
-        others <<  PPatternType.new(patterns.map { |pattern| pattern.patterns }.flatten.uniq)
+        others << PPatternType.new(patterns.map { |pattern| pattern.patterns }.flatten.uniq)
         array = others
       end
     end

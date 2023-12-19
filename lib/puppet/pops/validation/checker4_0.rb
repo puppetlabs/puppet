@@ -753,7 +753,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def check_QueryExpression(o)
-    query(o.expr) if o.expr  # is optional
+    query(o.expr) if o.expr # is optional
   end
 
   def relation_Object(o)

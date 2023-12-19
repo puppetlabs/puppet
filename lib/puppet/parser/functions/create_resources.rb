@@ -92,7 +92,7 @@ ENDHEREDOC
 
   instances.map do |title, params|
     # Add support for iteration if title is an array
-    resource_titles = title.is_a?(Array) ? title  : [title]
+    resource_titles = title.is_a?(Array) ? title : [title]
     Puppet::Pops::Evaluator::Runtime3ResourceSupport.create_resources(
       file, line,
       self,

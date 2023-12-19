@@ -38,7 +38,7 @@ class Puppet::Resource
   CLASS_STRING = 'class'
   DEFINED_TYPE_STRING = 'defined_type'
   COMPILABLE_TYPE_STRING = 'compilable_type'
-  UNKNOWN_TYPE_STRING  = 'unknown'
+  UNKNOWN_TYPE_STRING = 'unknown'
 
   PCORE_TYPE_KEY = '__ptype'
   VALUE_KEY = 'value'
@@ -444,7 +444,7 @@ class Puppet::Resource
     attr_max = attr.inject(0) { |max,k| k.to_s.length > max ? k.to_s.length : max }
 
     attr.sort!
-    if attr.first != :ensure  && attr.include?(:ensure)
+    if attr.first != :ensure && attr.include?(:ensure)
       attr.delete(:ensure)
       attr.unshift(:ensure)
     end
@@ -479,7 +479,7 @@ class Puppet::Resource
     attr_max = attr.inject(0) { |max,k| k.to_s.length > max ? k.to_s.length : max }
 
     attr.sort!
-    if attr.first != :ensure  && attr.include?(:ensure)
+    if attr.first != :ensure && attr.include?(:ensure)
       attr.delete(:ensure)
       attr.unshift(:ensure)
     end
@@ -510,7 +510,7 @@ class Puppet::Resource
     elsif self.catalog && self.catalog.catalog_format >= 2
       typeklass = Puppet::Type.type(:component)
     else
-      typeklass =  Puppet::Type.type(self.type) || Puppet::Type.type(:component)
+      typeklass = Puppet::Type.type(self.type) || Puppet::Type.type(:component)
     end
 
     raise(Puppet::Error, "Resource type '#{self.type}' was not found") unless typeklass

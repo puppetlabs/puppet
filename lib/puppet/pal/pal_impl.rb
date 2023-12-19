@@ -280,7 +280,7 @@ module Pal
   #
   # @api public
   def self.in_environment(env_name,
-      modulepath:    nil,
+      modulepath: nil,
       pre_modulepath: [],
       post_modulepath: [],
       settings_hash: {},

@@ -182,7 +182,7 @@ class Puppet::Interface
 
         lines = @description.split("\n")
         first_paragraph_break = lines.index('') || 5
-        grab  = [5, first_paragraph_break].min
+        grab = [5, first_paragraph_break].min
         @short_description = lines[0, grab].join("\n")
         @short_description += ' [...]' if (grab < lines.length and first_paragraph_break >= 5)
       end

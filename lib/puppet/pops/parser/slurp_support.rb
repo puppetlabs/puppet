@@ -95,7 +95,7 @@ module SlurpSupport
           "\\u"
         when "\n"  ; ''
         when "\r\n"; ''
-        else      ch
+        else ch
         end
       else
         lex_warning(Issues::UNRECOGNIZED_ESCAPE, :ch => ch) unless ignore_invalid_escapes

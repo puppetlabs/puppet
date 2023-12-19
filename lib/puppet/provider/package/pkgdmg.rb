@@ -38,7 +38,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
       package, you must create a new DMG with a different filename."
 
   confine 'os.name' => :darwin
-  confine :feature         => :cfpropertylist
+  confine :feature => :cfpropertylist
   defaultfor 'os.name' => :darwin
   commands :installer => "/usr/sbin/installer"
   commands :hdiutil => "/usr/bin/hdiutil"

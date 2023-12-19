@@ -124,7 +124,7 @@ module JSON
         @io << '[]'
       else
         @io << '['
-        @nested <<  [false, n]
+        @nested << [false, n]
       end
     end
 
@@ -133,7 +133,7 @@ module JSON
         @io << '{}'
       else
         @io << '{'
-        @nested <<  [true, n * 2]
+        @nested << [true, n * 2]
       end
     end
 

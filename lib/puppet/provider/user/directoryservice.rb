@@ -19,7 +19,7 @@ Puppet::Type.type(:user).provide :directoryservice do
 
   # Provider confines and defaults
   confine    'os.name' => :darwin
-  confine    :feature         => :cfpropertylist
+  confine    :feature => :cfpropertylist
   defaultfor 'os.name' => :darwin
 
   # Need this to create getter/setter methods automagically
@@ -512,7 +512,7 @@ Puppet::Type.type(:user).provide :directoryservice do
 
   # Create the new user with dscl
   def create_new_user(username)
-    dscl '.', '-create',  "/Users/#{username}"
+    dscl '.', '-create', "/Users/#{username}"
   end
 
   # Get the next available uid on the system by getting a list of user ids,
@@ -579,7 +579,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # ShadowHashData key of a user's plist, or false if it doesn't exist.
   def get_shadow_hash_data(users_plist)
     if users_plist['ShadowHashData']
-      password_hash_plist  = users_plist['ShadowHashData'][0]
+      password_hash_plist = users_plist['ShadowHashData'][0]
       self.class.convert_binary_to_hash(password_hash_plist)
     else
       false

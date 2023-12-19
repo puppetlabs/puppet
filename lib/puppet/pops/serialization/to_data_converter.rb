@@ -290,7 +290,7 @@ module Serialization
 
     def pcore_type_to_data(pcore_type)
       type_name = pcore_type.name
-      if @type_by_reference  || type_name.start_with?('Pcore::')
+      if @type_by_reference || type_name.start_with?('Pcore::')
         type_name
       else
         with(PCORE_TYPE_KEY) { to_data(pcore_type) }
@@ -309,7 +309,7 @@ module Serialization
           semantic = Puppet::Pops::SemanticError.new(issue, nil, {:file => file, :line => line})
         end
       end
-      optionally_fail(issue,  semantic, options)
+      optionally_fail(issue, semantic, options)
     end
   end
 end

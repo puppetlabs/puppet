@@ -272,7 +272,7 @@ module TypeFactory
       case re
       when String
         re_t = PRegexpType.new(re)
-        re_t.regexp  # compile it to catch errors
+        re_t.regexp # compile it to catch errors
         re_t
 
       when Regexp

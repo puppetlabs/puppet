@@ -662,7 +662,7 @@ Puppet::Type.newtype(:file) do
     other_paths = existing_files
       .select { |r| (yield r) != parent_path}
       .collect { |r| (yield r).split(::File::Separator) }
-      .select  { |p| p[0,mypath.length]  == mypath }
+      .select  { |p| p[0,mypath.length] == mypath }
 
     return files if other_paths.empty?
 

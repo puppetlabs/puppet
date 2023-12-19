@@ -60,7 +60,7 @@ module Runtime3Support
 
     # Use a SemanticError as the sourcepos
     semantic = Puppet::Pops::SemanticError.new(issue, nil, options.merge({:file => file, :line => line}))
-    optionally_fail(issue,  semantic)
+    optionally_fail(issue, semantic)
     nil
   end
 
@@ -472,7 +472,7 @@ module Runtime3Support
   # Creates a diagnostic producer
   def diagnostic_producer
     Validation::DiagnosticProducer.new(
-      ExceptionRaisingAcceptor.new(),                   # Raises exception on all issues
+      ExceptionRaisingAcceptor.new(), # Raises exception on all issues
       SeverityProducer.new(), # All issues are errors
       Model::ModelLabelProvider.new())
   end

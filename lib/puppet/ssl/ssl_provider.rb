@@ -324,7 +324,7 @@ class Puppet::SSL::SSLProvider
       when OpenSSL::X509::V_ERR_CERT_NOT_YET_VALID
         _("The certificate '%{subject}' is not yet valid, verify time is synchronized") % { subject: subject(current_cert) }
       when OpenSSL::X509::V_ERR_CERT_HAS_EXPIRED
-        _("The certificate '%{subject}' has expired, verify time is synchronized") %  { subject: subject(current_cert) }
+        _("The certificate '%{subject}' has expired, verify time is synchronized") % { subject: subject(current_cert) }
       when OpenSSL::X509::V_ERR_CRL_NOT_YET_VALID
         _("The CRL issued by '%{issuer}' is not yet valid, verify time is synchronized") % { issuer: issuer(current_cert) }
       when OpenSSL::X509::V_ERR_CRL_HAS_EXPIRED

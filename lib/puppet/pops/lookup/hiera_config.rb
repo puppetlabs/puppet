@@ -163,7 +163,7 @@ class HieraConfig
     else
       issue = Issues::HIERA_UNSUPPORTED_VERSION
       raise Puppet::DataBinding::LookupError.new(
-        issue.format(:version => version),  config_path, nil, nil, nil, issue.issue_code)
+        issue.format(:version => version), config_path, nil, nil, nil, issue.issue_code)
     end
   end
 
@@ -184,7 +184,7 @@ class HieraConfig
 
   def fail(issue, args = EMPTY_HASH, line = nil)
     raise Puppet::DataBinding::LookupError.new(
-      issue.format(args.merge(:label => self)),  @config_path, line, nil, nil, issue.issue_code)
+      issue.format(args.merge(:label => self)), @config_path, line, nil, nil, issue.issue_code)
   end
 
   def has_default_hierarchy?
@@ -429,7 +429,7 @@ class HieraConfigV3 < HieraConfig
     data_providers.values
   end
 
-  DEFAULT_CONFIG_HASH =  {
+  DEFAULT_CONFIG_HASH = {
     KEY_BACKENDS => %w(yaml),
     KEY_HIERARCHY => %w(nodes/%{::trusted.certname} common),
     KEY_MERGE_BEHAVIOR => 'native'
@@ -764,7 +764,7 @@ class HieraConfigV5 < HieraConfig
         fail(Issues::HIERA_V3_BACKEND_NOT_GLOBAL, EMPTY_HASH, find_line_matching(/\s+#{KEY_V3_BACKEND}:/))
       end
 
-      if v3_backend == 'json' || v3_backend == 'yaml' || v3_backend == 'hocon' &&  Puppet.features.hocon?
+      if v3_backend == 'json' || v3_backend == 'yaml' || v3_backend == 'hocon' && Puppet.features.hocon?
         # Disallow use of backends that have corresponding "data_hash" functions in version 5
         fail(Issues::HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH, { :function_name => v3_backend },
              find_line_matching(/\s+#{KEY_V3_BACKEND}:\s*['"]?#{v3_backend}(?:[^\w]|$)/))

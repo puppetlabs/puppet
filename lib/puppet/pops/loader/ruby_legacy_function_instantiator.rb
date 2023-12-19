@@ -74,7 +74,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
 
   def self.assert_code(code_string, source_ref, result)
     ripped = Ripper.sexp(code_string)
-    return false if ripped.nil?  # Let the next real parse crash and tell where and what is wrong
+    return false if ripped.nil? # Let the next real parse crash and tell where and what is wrong
 
     ripped.each {|x| walk(x, source_ref, result) }
     true

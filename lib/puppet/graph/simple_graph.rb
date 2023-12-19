@@ -144,7 +144,7 @@ class Puppet::Graph::SimpleGraph
             end
             s[:scc] << this_scc
           end
-          recur.pop               # done with this node, finally.
+          recur.pop # done with this node, finally.
         end
 
       when :after_recursion then

@@ -81,7 +81,7 @@ module Interpolation
           scope = scope.real
         end
         lookup_invocation.with_scope(scope) do |sub_invocation|
-          sub_invocation.lookup(key) {  Lookup.lookup(key, nil, '', true, nil, sub_invocation) }
+          sub_invocation.lookup(key) { Lookup.lookup(key, nil, '', true, nil, sub_invocation) }
         end
       end
       scope_lookup = lambda do |key, lookup_invocation, subject|

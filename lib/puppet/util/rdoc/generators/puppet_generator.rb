@@ -64,7 +64,7 @@ module Generators
     end
 
     def initialize(options) #:not-new:
-      @options    = options
+      @options = options
       load_html_template
     end
 
@@ -396,7 +396,7 @@ module Generators
       resources.each do |r|
         row = {}
         if r.section == section and r.document_self
-          row["name"]        = CGI.escapeHTML(r.name)
+          row["name"] = CGI.escapeHTML(r.name)
           desc = r.description.strip
           row["m_desc"]      = desc unless desc.empty?
           row["aref"]        = r.aref

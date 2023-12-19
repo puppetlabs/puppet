@@ -9,7 +9,7 @@ module Puppet::Pops::Evaluator
 # Users should not create instances of this class. Instead the class methods {Runtime3Converter.convert},
 # {Runtime3Converter.map_args}, or {Runtime3Converter.instance} should be used
 class Runtime3Converter
-  MAX_INTEGER =  Puppet::Pops::MAX_INTEGER
+  MAX_INTEGER = Puppet::Pops::MAX_INTEGER
   MIN_INTEGER = Puppet::Pops::MIN_INTEGER
 
   # Converts 4x supported values to a 3x values. Same as calling Runtime3Converter.instance.map_args(...)

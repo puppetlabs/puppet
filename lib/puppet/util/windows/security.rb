@@ -87,7 +87,7 @@ module Puppet::Util::Windows::Security
   S_IRWXG = 0000070
   S_IRWXO = 0000007
   S_ISVTX = 0001000
-  S_IEXTRA = 02000000  # represents an extra ace
+  S_IEXTRA = 02000000 # represents an extra ace
   S_ISYSTEM_MISSING = 04000000
 
   # constants that are missing from Windows::Security
@@ -161,7 +161,7 @@ module Puppet::Util::Windows::Security
     get_security_descriptor(path).group
   end
 
-  FILE_PERSISTENT_ACLS           = 0x00000008
+  FILE_PERSISTENT_ACLS = 0x00000008
 
   def supports_acl?(path)
     supported = false
@@ -426,7 +426,7 @@ module Puppet::Util::Windows::Security
     nil
   end
 
-  ACL_REVISION                   = 2
+  ACL_REVISION = 2
 
   def add_access_allowed_ace(acl, mask, sid, inherit = nil)
     inherit ||= NO_INHERITANCE

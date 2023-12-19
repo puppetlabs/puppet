@@ -14,7 +14,7 @@ module Runtime3ResourceSupport
       # Resolve a 'class' and its titles
       resource_titles = resource_titles.collect do |a_title|
         hostclass = env.known_resource_types.find_hostclass(a_title)
-        hostclass ?  hostclass.name : a_title
+        hostclass ? hostclass.name : a_title
       end
       # resolved type is just the string CLASS
       resolved_type = CLASS_STRING

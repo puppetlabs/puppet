@@ -21,7 +21,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   commands :dseditgroup => "/usr/sbin/dseditgroup"
   commands :sw_vers => "/usr/bin/sw_vers"
   confine 'os.name' => :darwin
-  confine :feature         => :cfpropertylist
+  confine :feature => :cfpropertylist
   defaultfor 'os.name' => :darwin
 
   # There is no generalized mechanism for provider cache management, but we can
@@ -426,7 +426,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
         else
           exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
           exec_arg_vector << ns_to_ds_attribute_map[property.intern]
-          next if property == :password  # skip setting the password here
+          next if property == :password # skip setting the password here
 
           exec_arg_vector << value.to_s
           begin

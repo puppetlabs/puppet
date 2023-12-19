@@ -104,9 +104,11 @@ class Lexer2
   TOKEN_HEREDOC        = [:HEREDOC,     nil,  0].freeze
 
   # EPP_START is currently a marker token, may later get syntax
+  # rubocop:disable Layout/ExtraSpacing
   TOKEN_EPPSTART    = [:EPP_START,      nil,  0].freeze
   TOKEN_EPPEND      = [:EPP_END,       '%>',  2].freeze
   TOKEN_EPPEND_TRIM = [:EPP_END_TRIM, '-%>',  3].freeze
+  # rubocop:enable Layout/ExtraSpacing
 
   # This is used for unrecognized tokens, will always be a single character. This particular instance
   # is not used, but is kept here for documentation purposes.
@@ -169,7 +171,7 @@ class Lexer2
   PATTERN_CLASSREF       = %r{((::){0,1}[A-Z][\w]*)+}
   PATTERN_NAME           = %r{^((::)?[a-z][\w]*)(::[a-z][\w]*)*$}
 
-  PATTERN_BARE_WORD     = %r{((?:::){0,1}(?:[a-z_](?:[\w-]*[\w])?))+}
+  PATTERN_BARE_WORD      = %r{((?:::){0,1}(?:[a-z_](?:[\w-]*[\w])?))+}
 
   PATTERN_DOLLAR_VAR     = %r{\$(::)?(\w+::)*\w+}
   PATTERN_NUMBER         = %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b}
@@ -668,7 +670,7 @@ class Lexer2
       :line_lexical_start => 0
     }
     # Use of --tasks introduces the new keyword 'plan'
-    @taskm_keywords = Puppet[:tasks] ? { 'plan' => [:PLAN, 'plan',  4], 'apply' => [:APPLY, 'apply', 5] }.freeze : EMPTY_HASH
+    @taskm_keywords = Puppet[:tasks] ? { 'plan' => [:PLAN, 'plan', 4], 'apply' => [:APPLY, 'apply', 5] }.freeze : EMPTY_HASH
   end
 
   # Scans all of the content and returns it in an array
@@ -693,7 +695,7 @@ class Lexer2
     # This makes a small but notable difference since instance member access is avoided for
     # every token in the lexed content.
     #
-    scn   = @scanner
+    scn = @scanner
     lex_error_without_pos(Issues::NO_INPUT_TO_LEXER) unless scn
 
     ctx   = @lexing_context

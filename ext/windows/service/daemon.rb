@@ -13,7 +13,7 @@ require 'puppet/util/windows/eventlog'
 require 'puppet/util/windows/monkey_patches/process'
 
 class WindowsDaemon < Puppet::Util::Windows::Daemon
-  CREATE_NEW_CONSOLE          = 0x00000010
+  CREATE_NEW_CONSOLE = 0x00000010
 
   @run_thread = nil
   @LOG_TO_FILE = false

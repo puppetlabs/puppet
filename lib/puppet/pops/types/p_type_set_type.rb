@@ -174,7 +174,7 @@ class PTypeSetType < PMetaType
   def _pcore_init_hash
     result = super()
     result[Pcore::KEY_PCORE_URI] = @pcore_uri unless @pcore_uri.nil?
-    result[Pcore::KEY_PCORE_VERSION] =  @pcore_version.to_s
+    result[Pcore::KEY_PCORE_VERSION] = @pcore_version.to_s
     result[KEY_NAME_AUTHORITY] = @name_authority unless @name_authority.nil?
     result[KEY_NAME] = @name
     result[KEY_VERSION] = @version.to_s unless @version.nil?

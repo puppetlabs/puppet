@@ -695,7 +695,7 @@ class Factory
 
   def self.block(*args);                 new(BlockExpression, args.map { |arg| infer(arg) }); end
 
-  def self.string(*args);                new(ConcatenatedString, args.map { |arg| infer(arg) });           end
+  def self.string(*args);                new(ConcatenatedString, args.map { |arg| infer(arg) }); end
 
   def self.text(o);                      infer(o).text;                                  end
 
@@ -981,7 +981,7 @@ class Factory
     'err'     => true,
 
     'fail'    => true,
-    'import'  => true,  # discontinued, but transform it to make it call error reporting function
+    'import'  => true, # discontinued, but transform it to make it call error reporting function
     'break'   => true,
     'next'    => true,
     'return'  => true

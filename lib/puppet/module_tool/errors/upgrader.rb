@@ -45,7 +45,7 @@ module Puppet::ModuleTool::Errors
 
   class DowngradingUnsupportedError < UpgradeError
     def initialize(options)
-      @module_name    = options[:module_name]
+      @module_name = options[:module_name]
       @requested_version = options[:requested_version]
       @installed_version = options[:installed_version]
       @conditions        = options[:conditions]

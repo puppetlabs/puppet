@@ -5,7 +5,7 @@ module Puppet::Util::Package::Version
     include Comparable
 
     # Version string matching regexes
-    REGEX_EPOCH   = '(?:([0-9]+):)?'
+    REGEX_EPOCH = '(?:([0-9]+):)?'
     # alphanumerics and the characters . + - ~ , starts with a digit, ~ only of debian_revision is present
     REGEX_UPSTREAM_VERSION = '([\.\+~0-9a-zA-Z-]+?)'
     #alphanumerics and the characters + . ~

@@ -231,7 +231,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
       if output != ""
         raise Puppet::ExecutionFailure, "chpasswd said #{output}"
       end
-    rescue Puppet::ExecutionFailure  => detail
+    rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not set password on #{@resource.class.name}[#{@resource.name}]: #{detail}", detail.backtrace
     ensure
       if tempfile

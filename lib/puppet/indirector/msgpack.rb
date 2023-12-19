@@ -36,7 +36,7 @@ class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
       raise Puppet::Error, _("Could not destroy %{name} %{request}: %{detail}") % { name: self.name, request: request.key, detail: detail }, detail.backtrace
     end
 
-    1                           # emulate success...
+    1 # emulate success...
   end
 
   def search(request)

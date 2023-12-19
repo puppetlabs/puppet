@@ -22,7 +22,7 @@ module Puppet::Util::Package::Version
 
     def to_s
       version_found = ''.dup
-      version_found += "#{@epoch}:"   if @epoch
+      version_found += "#{@epoch}:" if @epoch
       version_found += @version
       version_found += "-#{@release}" if @release
       version_found

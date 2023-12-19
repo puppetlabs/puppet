@@ -45,7 +45,7 @@ class Puppet::InfoService::ClassInformationService
   end
 
   def result_of(f)
-    entry =  @file_to_result[f]
+    entry = @file_to_result[f]
     if entry.nil?
       @file_to_result[f] = entry = parse_file(f)
     end

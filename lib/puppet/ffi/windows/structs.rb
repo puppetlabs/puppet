@@ -116,7 +116,7 @@ module Puppet::FFI::Windows
     # } TOKEN_PRIVILEGES, *PTOKEN_PRIVILEGES;
     class TOKEN_PRIVILEGES < FFI::Struct
       layout :PrivilegeCount, :dword,
-             :Privileges, [LUID_AND_ATTRIBUTES, 1]    # placeholder for offset
+             :Privileges, [LUID_AND_ATTRIBUTES, 1] # placeholder for offset
     end
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/bb530717(v=vs.85).aspx

@@ -55,7 +55,7 @@ Puppet::Functions.create_function(:match) do
     # a puppet runtime (where this function is) without a reboot. If you model a function in a module after
     # this class, use a regular instance variable instead to enable reloading of the module without reboot
     #
-    @@match_visitor   ||= Puppet::Pops::Visitor.new(self, "match", 1, 1)
+    @@match_visitor ||= Puppet::Pops::Visitor.new(self, "match", 1, 1)
   end
 
   # Matches given string against given pattern and returns an Array with matches.

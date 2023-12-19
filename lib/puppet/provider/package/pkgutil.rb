@@ -66,7 +66,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     output = pkguti ["-a"]
 
     output.split("\n").collect do |line|
-      next if line =~ /^common\s+package/  # header of package list
+      next if line =~ /^common\s+package/ # header of package list
       next if noise?(line)
 
       if line =~ /\s*(\S+)\s+(\S+)\s+(.*)/
@@ -95,7 +95,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     end
 
     list = output.collect do |line|
-      next if line =~ /installed\s+catalog/  # header of package list
+      next if line =~ /installed\s+catalog/ # header of package list
       next if noise?(line)
 
       pkgsplit(line)

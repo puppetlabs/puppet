@@ -210,7 +210,7 @@ module Puppet::Util::Windows::Process
 
     # extract each instance of LUID_AND_ATTRIBUTES
     0.upto(privileges[:count] - 1) do |i|
-      privileges[:privileges] <<  LUID_AND_ATTRIBUTES.new(privilege_ptr[i])
+      privileges[:privileges] << LUID_AND_ATTRIBUTES.new(privilege_ptr[i])
     end
 
     privileges

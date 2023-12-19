@@ -61,7 +61,7 @@ class Puppet::Interface::ActionBuilder
   # @todo this needs more
   # @dsl Faces
   def when_rendering(type = nil, &block)
-    if type.nil? then           # the default error message sucks --daniel 2011-04-18
+    if type.nil? then # the default error message sucks --daniel 2011-04-18
       #TRANSLATORS 'when_rendering' is a method name and should not be translated
       raise ArgumentError, _('You must give a rendering format to when_rendering')
     end

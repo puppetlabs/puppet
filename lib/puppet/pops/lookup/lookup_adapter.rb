@@ -358,7 +358,7 @@ class LookupAdapter < DataAdapter
                        module_opts
                      elsif module_opts
                        merge_strategy.lookup([GLOBAL_ENV_MERGE, "Module #{lookup_invocation.module_name}"], meta_invocation) do |n|
-                         meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS,  n == GLOBAL_ENV_MERGE ? opts : module_opts) }
+                         meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS, n == GLOBAL_ENV_MERGE ? opts : module_opts) }
                        end
                      end
             end

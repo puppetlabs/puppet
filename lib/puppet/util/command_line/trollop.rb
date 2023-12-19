@@ -198,7 +198,7 @@ class Parser
           raise ArgumentError, _("multiple argument type cannot be deduced from an empty array for '%{value0}'") % { value0: opts[:default][0].class.name }
         end
 
-        case opts[:default][0]    # the first element determines the types
+        case opts[:default][0] # the first element determines the types
         when Integer; :ints
         when Numeric; :floats
         when String; :strings

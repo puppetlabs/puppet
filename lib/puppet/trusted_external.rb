@@ -21,7 +21,7 @@ module Puppet::TrustedExternal
       abs_path = Puppet::FileSystem.expand_path(file)
       executable_file = Puppet::FileSystem.file?(abs_path) && Puppet::FileSystem.executable?(abs_path)
       unless executable_file
-        Puppet.debug { _("Skipping non-executable file %{file}")  % { file: abs_path } }
+        Puppet.debug { _("Skipping non-executable file %{file}") % { file: abs_path } }
         next
       end
       basename = file.basename(file.extname).to_s

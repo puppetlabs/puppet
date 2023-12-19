@@ -22,7 +22,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
   # If NIM has not been configured, /etc/niminfo will not be present.
   # However, we have no way of knowing if the NIM server is not configured
   # properly.
-  confine  :exists => "/etc/niminfo"
+  confine :exists => "/etc/niminfo"
 
   has_feature :versionable
 

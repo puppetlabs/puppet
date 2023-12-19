@@ -252,7 +252,7 @@ module Puppet::ModuleTool
         @tarball_source ||= begin
           Puppet::ModuleTool::LocalTarball.new(@name)
         rescue Puppet::Module::Error => e
-          raise InvalidModuleError.new(@name, :action => @action, :error  => e)
+          raise InvalidModuleError.new(@name, :action => @action, :error => e)
         end
       end
 

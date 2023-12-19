@@ -1450,9 +1450,9 @@ Generated on #{Time.now}.
         end
       end
 
-      setting  = @defaults[name]
+      setting = @defaults[name]
       if setting.respond_to?(:alias_name)
-        val  = lookup(setting.alias_name)
+        val = lookup(setting.alias_name)
         return val if val
       end
 
