@@ -639,7 +639,7 @@ class PObjectType < PMetaType
           index = param_names.index(ip)
           if index.nil?
             raise Serialization::SerializationError,
-              "Initializer for class #{impl_class.name} parameter '#{ip}' does not match any of the the attributes of type #{name}"
+                  "Initializer for class #{impl_class.name} parameter '#{ip}' does not match any of the the attributes of type #{name}"
           end
           new_param_types << param_types[index]
         end

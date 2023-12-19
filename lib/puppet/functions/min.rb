@@ -147,7 +147,7 @@ Puppet::Functions.create_function(:min) do
     args.min do|a,b|
       if a.to_s =~ %r{\A^-?\d+([._eE]\d+)?\z} && b.to_s =~ %r{\A-?\d+([._eE]\d+)?\z}
         Puppet.warn_once('deprecations', 'min_function_numeric_coerce_string',
-          _("The min() function's auto conversion of String to Numeric is deprecated - change to convert input before calling, or use lambda"))
+                         _("The min() function's auto conversion of String to Numeric is deprecated - change to convert input before calling, or use lambda"))
         a.to_f <=> b.to_f
       else
         # case sensitive as in the stdlib function
@@ -233,11 +233,11 @@ Puppet::Functions.create_function(:min) do
       bs = b.to_s
       if as =~ %r{\A^-?\d+([._eE]\d+)?\z} && bs =~ %r{\A-?\d+([._eE]\d+)?\z}
         Puppet.warn_once('deprecations', 'min_function_numeric_coerce_string',
-          _("The min() function's auto conversion of String to Numeric is deprecated - change to convert input before calling, or use lambda"))
+                         _("The min() function's auto conversion of String to Numeric is deprecated - change to convert input before calling, or use lambda"))
         a.to_f <=> b.to_f
       else
         Puppet.warn_once('deprecations', 'min_function_string_coerce_any',
-          _("The min() function's auto conversion of Any to String is deprecated - change to convert input before calling, or use lambda"))
+                         _("The min() function's auto conversion of Any to String is deprecated - change to convert input before calling, or use lambda"))
         as <=> bs
       end
     end

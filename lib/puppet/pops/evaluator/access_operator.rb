@@ -439,7 +439,7 @@ class AccessOperator
     end
     keys.each_with_index do |x, index|
       fail(Issues::BAD_INTEGER_SLICE_TYPE, @semantic.keys[index],
-        {:actual => x.class}) unless (x.is_a?(Integer) || x == :default)
+           {:actual => x.class}) unless (x.is_a?(Integer) || x == :default)
     end
     Types::PIntegerType.new(*keys)
   end
@@ -451,7 +451,7 @@ class AccessOperator
     end
     keys.each_with_index do |x, index|
       fail(Issues::BAD_FLOAT_SLICE_TYPE, @semantic.keys[index],
-        {:actual => x.class}) unless (x.is_a?(Float) || x.is_a?(Integer) || x == :default)
+           {:actual => x.class}) unless (x.is_a?(Float) || x.is_a?(Integer) || x == :default)
     end
     from, to = keys
     from = from == :default || from.nil? ? nil : Float(from)
@@ -500,7 +500,7 @@ class AccessOperator
       size_t = collection_size_t(0, keys[0], keys[1])
     else
       fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic,
-        {:base_type => 'Collection-Type', :min => 1, :max => 2, :actual => keys.size})
+           {:base_type => 'Collection-Type', :min => 1, :max => 2, :actual => keys.size})
     end
     Types::PCollectionType.new(size_t)
   end
@@ -533,7 +533,7 @@ class AccessOperator
       end
     else
       fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic,
-        {:base_type => 'Array-Type', :min => 1, :max => 3, :actual => keys.size})
+           {:base_type => 'Array-Type', :min => 1, :max => 3, :actual => keys.size})
     end
     Types::PArrayType.new(type, size_t)
   end
@@ -545,7 +545,7 @@ class AccessOperator
     else
       keys.each_with_index do |x, index|
         fail(Issues::BAD_COLLECTION_SLICE_TYPE, @semantic.keys[start_index + index],
-          {:actual => x.class}) unless (x.is_a?(Integer) || x == :default)
+             {:actual => x.class}) unless (x.is_a?(Integer) || x == :default)
       end
       Types::PIntegerType.new(*keys)
     end
@@ -584,7 +584,7 @@ class AccessOperator
 
     if keys.size == 0
       fail(Issues::BAD_TYPE_SLICE_ARITY, blamed,
-        :base_type => o.to_s, :min => 1, :max => -1, :actual => 0)
+           :base_type => o.to_s, :min => 1, :max => -1, :actual => 0)
     end
 
     # Must know which concrete resource type to operate on in all cases.
@@ -634,7 +634,7 @@ class AccessOperator
       result = keys.map do |k|
         unless is_parameter_of_resource?(scope, resource, k)
           fail(Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,
-            {:type_name => o.type_name, :title => o.title, :param_name=>k})
+               {:type_name => o.type_name, :title => o.title, :param_name=>k})
         end
         get_resource_parameter_value(scope, resource, k)
       end
@@ -666,7 +666,7 @@ class AccessOperator
 
     if keys_orig_size == 0
       fail(Issues::BAD_TYPE_SLICE_ARITY, blamed,
-        :base_type => o.to_s, :min => 1, :max => -1, :actual => 0)
+           :base_type => o.to_s, :min => 1, :max => -1, :actual => 0)
     end
 
     # The result is an array if multiple classnames are given, or if classnames are specified with an array
@@ -704,7 +704,7 @@ class AccessOperator
             get_resource_parameter_value(scope, resource, k)
           else
             fail(Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,
-              {:type_name => 'Class', :title => o.class_name, :param_name=>k})
+                 {:type_name => 'Class', :title => o.class_name, :param_name=>k})
           end
         end
       else

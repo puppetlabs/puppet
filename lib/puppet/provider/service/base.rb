@@ -105,7 +105,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
       return @resource[:binary]
     else
       raise Puppet::Error,
-        "Services must specify a start command or a binary"
+            "Services must specify a start command or a binary"
     end
   end
 

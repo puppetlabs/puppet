@@ -222,10 +222,10 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
       return :degraded
     when "legacy_run"
       raise Puppet::Error,
-        "Cannot manage legacy services through SMF"
+            "Cannot manage legacy services through SMF"
     else
       raise Puppet::Error,
-        "Unmanageable state '#{state}' on service #{self.name}"
+            "Unmanageable state '#{state}' on service #{self.name}"
     end
   end
 

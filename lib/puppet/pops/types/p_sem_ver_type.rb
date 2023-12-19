@@ -9,10 +9,10 @@ module Types
 class PSemVerType < PScalarType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'ScalarType',
-       'ranges' => {
-         KEY_TYPE => PArrayType.new(PVariantType.new([PSemVerRangeType::DEFAULT,PStringType::NON_EMPTY])),
-         KEY_VALUE => []
-       }
+                 'ranges' => {
+                   KEY_TYPE => PArrayType.new(PVariantType.new([PSemVerRangeType::DEFAULT,PStringType::NON_EMPTY])),
+                   KEY_VALUE => []
+                 }
     )
   end
 

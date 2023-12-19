@@ -124,9 +124,9 @@ module Puppet::Util::Windows
 
             # RegEnumKeyEx cannot be called twice to properly size the buffer
             result = RegEnumKeyExW(key.hkey, index,
-              subkey_ptr, subkey_length_ptr,
-              FFI::Pointer::NULL, FFI::Pointer::NULL,
-              FFI::Pointer::NULL, filetime_ptr)
+                                   subkey_ptr, subkey_length_ptr,
+                                   FFI::Pointer::NULL, FFI::Pointer::NULL,
+                                   FFI::Pointer::NULL, filetime_ptr)
 
             break if result == ERROR_NO_MORE_ITEMS
 
@@ -157,9 +157,9 @@ module Puppet::Util::Windows
           subkey_length_ptr.write_dword(max_value_length)
 
           result = RegEnumValueW(key.hkey, index,
-            subkey_ptr, subkey_length_ptr,
-            FFI::Pointer::NULL, FFI::Pointer::NULL,
-            FFI::Pointer::NULL, FFI::Pointer::NULL
+                                 subkey_ptr, subkey_length_ptr,
+                                 FFI::Pointer::NULL, FFI::Pointer::NULL,
+                                 FFI::Pointer::NULL, FFI::Pointer::NULL
           )
 
           break if result == ERROR_NO_MORE_ITEMS
@@ -186,12 +186,12 @@ module Puppet::Util::Windows
         FFI::MemoryPointer.new(:dword) do |max_value_name_length_ptr|
 
           status = RegQueryInfoKeyW(key.hkey,
-            FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
-            FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
-            max_subkey_name_length_ptr, FFI::MemoryPointer::NULL,
-            FFI::MemoryPointer::NULL, max_value_name_length_ptr,
-            FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
-            FFI::MemoryPointer::NULL
+                                    FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
+                                    FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
+                                    max_subkey_name_length_ptr, FFI::MemoryPointer::NULL,
+                                    FFI::MemoryPointer::NULL, max_value_name_length_ptr,
+                                    FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
+                                    FFI::MemoryPointer::NULL
           )
 
           if status != FFI::ERROR_SUCCESS
@@ -269,13 +269,13 @@ module Puppet::Util::Windows
       FFI::MemoryPointer.new(:dword) do |type_ptr|
         FFI::MemoryPointer.new(:dword) do |length_ptr|
           result = RegQueryValueExW(key.hkey, name_ptr,
-            FFI::Pointer::NULL, type_ptr,
-            FFI::Pointer::NULL, length_ptr)
+                                    FFI::Pointer::NULL, type_ptr,
+                                    FFI::Pointer::NULL, length_ptr)
 
           FFI::MemoryPointer.new(:byte, length_ptr.read_dword) do |buffer_ptr|
             result = RegQueryValueExW(key.hkey, name_ptr,
-              FFI::Pointer::NULL, type_ptr,
-              buffer_ptr, length_ptr)
+                                      FFI::Pointer::NULL, type_ptr,
+                                      buffer_ptr, length_ptr)
 
             if result != FFI::ERROR_SUCCESS
               # buffer is raw bytes, *not* chars - less a NULL terminator
@@ -336,7 +336,7 @@ module Puppet::Util::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :RegEnumKeyExW,
-      [:handle, :dword, :lpwstr, :lpdword, :lpdword, :lpwstr, :lpdword, :pointer], :win32_long
+                            [:handle, :dword, :lpwstr, :lpdword, :lpdword, :lpwstr, :lpdword, :pointer], :win32_long
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724865(v=vs.85).aspx
     # LONG WINAPI RegEnumValue(
@@ -351,7 +351,7 @@ module Puppet::Util::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :RegEnumValueW,
-      [:handle, :dword, :lpwstr, :lpdword, :lpdword, :lpdword, :lpbyte, :lpdword], :win32_long
+                            [:handle, :dword, :lpwstr, :lpdword, :lpdword, :lpdword, :lpbyte, :lpdword], :win32_long
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724911(v=vs.85).aspx
     # LONG WINAPI RegQueryValueExW(
@@ -364,7 +364,7 @@ module Puppet::Util::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :RegQueryValueExW,
-      [:handle, :lpcwstr, :lpdword, :lpdword, :lpbyte, :lpdword], :win32_long
+                            [:handle, :lpcwstr, :lpdword, :lpdword, :lpbyte, :lpdword], :win32_long
 
     # LONG WINAPI RegDeleteValue(
     #   _In_      HKEY hKey,
@@ -372,7 +372,7 @@ module Puppet::Util::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :RegDeleteValueW,
-      [:handle, :lpcwstr], :win32_long
+                            [:handle, :lpcwstr], :win32_long
 
     # LONG WINAPI RegDeleteKeyEx(
     #   _In_        HKEY hKey,
@@ -382,7 +382,7 @@ module Puppet::Util::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :RegDeleteKeyExW,
-      [:handle, :lpcwstr, :win32_ulong, :dword], :win32_long
+                            [:handle, :lpcwstr, :win32_ulong, :dword], :win32_long
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724902(v=vs.85).aspx
     # LONG WINAPI RegQueryInfoKey(
@@ -401,7 +401,7 @@ module Puppet::Util::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :RegQueryInfoKeyW,
-      [:handle, :lpwstr, :lpdword, :lpdword, :lpdword, :lpdword, :lpdword,
-        :lpdword, :lpdword, :lpdword, :lpdword, :pointer], :win32_long
+                            [:handle, :lpwstr, :lpdword, :lpdword, :lpdword, :lpdword, :lpdword,
+                              :lpdword, :lpdword, :lpdword, :lpdword, :pointer], :win32_long
   end
 end

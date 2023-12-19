@@ -108,8 +108,8 @@ module HeredocSupport
         enqueue([:SUBLOCATE,
           LexerSupport::TokenValue.new([:SUBLOCATE,
             lines, lines.reduce(0) {|size, s| size + s.length} ],
-            heredoc_offset,
-            locator)])
+                                       heredoc_offset,
+                                       locator)])
 
         sublexer.lex_unquoted_string(str, locator, resulting_escapes, dqstring_style)
         sublexer.interpolate_uq_to(self)

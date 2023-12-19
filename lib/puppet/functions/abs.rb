@@ -46,7 +46,7 @@ Puppet::Functions.create_function(:abs) do
 
   def on_string(x)
     Puppet.warn_once('deprecations', 'abs_function_numeric_coerce_string',
-      _("The abs() function's auto conversion of String to Numeric is deprecated - change to convert input before calling"))
+                     _("The abs() function's auto conversion of String to Numeric is deprecated - change to convert input before calling"))
 
     # These patterns for conversion are backwards compatible with the stdlib
     # version of this function.

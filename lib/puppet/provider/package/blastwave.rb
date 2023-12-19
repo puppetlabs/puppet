@@ -16,7 +16,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
   def self.extended(mod)
     unless command(:pkgget) != "pkg-get"
       raise Puppet::Error,
-        _("The pkg-get command is missing; blastwave packaging unavailable")
+            _("The pkg-get command is missing; blastwave packaging unavailable")
     end
 
     unless Puppet::FileSystem.exist?("/var/pkg-get/admin")

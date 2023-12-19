@@ -467,10 +467,10 @@ class PTypeType < PTypeWithContainedType
 
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-       'type' => {
-         KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
-         KEY_VALUE => nil
-       }
+                 'type' => {
+                   KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
+                   KEY_VALUE => nil
+                 }
     )
   end
 
@@ -548,10 +548,10 @@ PType = PTypeType
 class PNotUndefType < PTypeWithContainedType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-       'type' => {
-         KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
-         KEY_VALUE => nil
-       }
+                 'type' => {
+                   KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
+                   KEY_VALUE => nil
+                 }
     )
   end
 
@@ -759,8 +759,8 @@ end
 class PEnumType < PScalarDataType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'ScalarDataType',
-      'values' => PArrayType.new(PStringType::NON_EMPTY),
-      'case_insensitive' => { 'type' => PBooleanType::DEFAULT, 'value' => false })
+                 'values' => PArrayType.new(PStringType::NON_EMPTY),
+                 'case_insensitive' => { 'type' => PBooleanType::DEFAULT, 'value' => false })
   end
 
   attr_reader :values, :case_insensitive
@@ -859,8 +859,8 @@ FLOAT_PATTERN            = '\A' + SIGN_PREFIX + '(?:' + FLOAT_DEC + '|' + INTEGE
 class PNumericType < PScalarDataType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'ScalarDataType',
-      'from' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil },
-      'to' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil }
+                 'from' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil },
+                 'to' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil }
     )
   end
 
@@ -1310,10 +1310,10 @@ end
 class PCollectionType < PAnyType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-      'size_type' => {
-        KEY_TYPE => POptionalType.new(PTypeType.new(PIntegerType::DEFAULT)),
-        KEY_VALUE => nil
-      }
+                 'size_type' => {
+                   KEY_TYPE => POptionalType.new(PTypeType.new(PIntegerType::DEFAULT)),
+                   KEY_VALUE => nil
+                 }
     )
   end
 
@@ -1402,10 +1402,10 @@ end
 class PIterableType < PTypeWithContainedType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-      'type' => {
-        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
-        KEY_VALUE => nil
-      }
+                 'type' => {
+                   KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
+                   KEY_VALUE => nil
+                 }
     )
   end
 
@@ -1462,10 +1462,10 @@ end
 class PIteratorType < PTypeWithContainedType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-      'type' => {
-        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
-        KEY_VALUE => nil
-      }
+                 'type' => {
+                   KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
+                   KEY_VALUE => nil
+                 }
     )
   end
 
@@ -1500,10 +1500,10 @@ end
 class PStringType < PScalarDataType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'ScalarDataType',
-      'size_type_or_value' => {
-        KEY_TYPE => POptionalType.new(PVariantType.new([PStringType::DEFAULT, PTypeType.new(PIntegerType::DEFAULT)])),
-      KEY_VALUE => nil
-    })
+                 'size_type_or_value' => {
+                   KEY_TYPE => POptionalType.new(PVariantType.new([PStringType::DEFAULT, PTypeType.new(PIntegerType::DEFAULT)])),
+                 KEY_VALUE => nil
+               })
   end
 
   attr_reader :size_type_or_value
@@ -1674,10 +1674,10 @@ end
 class PRegexpType < PScalarType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'ScalarType',
-      'pattern' => {
-        KEY_TYPE => PVariantType.new([PUndefType::DEFAULT, PStringType::DEFAULT, PRegexpType::DEFAULT]),
-        KEY_VALUE => nil
-      })
+                 'pattern' => {
+                   KEY_TYPE => PVariantType.new([PUndefType::DEFAULT, PStringType::DEFAULT, PRegexpType::DEFAULT]),
+                   KEY_VALUE => nil
+                 })
   end
 
 
@@ -1920,8 +1920,8 @@ end
 class PStructElement < TypedModelObject
   def self.register_ptype(loader, ir)
     @type = Pcore::create_object_type(loader, ir, self, 'Pcore::StructElement', nil,
-      'key_type' => PTypeType::DEFAULT,
-      'value_type' => PTypeType::DEFAULT)
+                                      'key_type' => PTypeType::DEFAULT,
+                                      'value_type' => PTypeType::DEFAULT)
   end
 
   attr_accessor :key_type, :value_type
@@ -2047,7 +2047,7 @@ class PStructType < PAnyType
         PTupleType.new([
           PVariantType.maybe_create(@elements.map {|se| se.key_type }),
           PVariantType.maybe_create(@elements.map {|se| se.value_type })],
-          PHashType::KEY_PAIR_TUPLE_SIZE))
+                       PHashType::KEY_PAIR_TUPLE_SIZE))
     end
   end
 
@@ -2147,11 +2147,11 @@ class PTupleType < PAnyType
 
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-      'types' => PArrayType.new(PTypeType::DEFAULT),
-      'size_type' => {
-        KEY_TYPE => POptionalType.new(PTypeType.new(PIntegerType::DEFAULT)),
-        KEY_VALUE => nil
-      }
+                 'types' => PArrayType.new(PTypeType::DEFAULT),
+                 'size_type' => {
+                   KEY_TYPE => POptionalType.new(PTypeType.new(PIntegerType::DEFAULT)),
+                   KEY_VALUE => nil
+                 }
     )
   end
 
@@ -2345,18 +2345,18 @@ end
 class PCallableType < PAnyType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-      'param_types' => {
-        KEY_TYPE => POptionalType.new(PTypeType.new(PTupleType::DEFAULT)),
-        KEY_VALUE => nil
-      },
-      'block_type' => {
-        KEY_TYPE => POptionalType.new(PTypeType.new(PCallableType::DEFAULT)),
-        KEY_VALUE => nil
-      },
-      'return_type' => {
-        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
-        KEY_VALUE => PAnyType::DEFAULT
-      }
+                 'param_types' => {
+                   KEY_TYPE => POptionalType.new(PTypeType.new(PTupleType::DEFAULT)),
+                   KEY_VALUE => nil
+                 },
+                 'block_type' => {
+                   KEY_TYPE => POptionalType.new(PTypeType.new(PCallableType::DEFAULT)),
+                   KEY_VALUE => nil
+                 },
+                 'return_type' => {
+                   KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
+                   KEY_VALUE => PAnyType::DEFAULT
+                 }
     )
   end
 
@@ -2510,10 +2510,10 @@ class PArrayType < PCollectionType
 
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'CollectionType',
-      'element_type' => {
-        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
-        KEY_VALUE => PAnyType::DEFAULT
-      }
+                 'element_type' => {
+                   KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
+                   KEY_VALUE => PAnyType::DEFAULT
+                 }
     )
   end
 
@@ -2660,14 +2660,14 @@ class PHashType < PCollectionType
 
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'CollectionType',
-      'key_type' => {
-        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
-        KEY_VALUE => PAnyType::DEFAULT
-      },
-      'value_type' => {
-        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
-        KEY_VALUE => PAnyType::DEFAULT
-      }
+                 'key_type' => {
+                   KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
+                   KEY_VALUE => PAnyType::DEFAULT
+                 },
+                 'value_type' => {
+                   KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
+                   KEY_VALUE => PAnyType::DEFAULT
+                 }
     )
   end
 
@@ -2694,7 +2694,7 @@ class PHashType < PCollectionType
     if Puppet[:strict] != :off
       #TRANSLATOR 'Puppet::Pops::Types::PHashType#element_type' and '#value_type' are class and method names and should not be translated
       Puppet.warn_once('deprecations', 'Puppet::Pops::Types::PHashType#element_type',
-        _('Puppet::Pops::Types::PHashType#element_type is deprecated, use #value_type instead'))
+                       _('Puppet::Pops::Types::PHashType#element_type is deprecated, use #value_type instead'))
     end
     @value_type
   end
@@ -3158,10 +3158,10 @@ class PClassType < PCatalogEntryType
 
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'CatalogEntryType',
-      'class_name' => {
-        KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
-        KEY_VALUE => nil
-      }
+                 'class_name' => {
+                   KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
+                   KEY_VALUE => nil
+                 }
     )
   end
 
@@ -3201,14 +3201,14 @@ class PResourceType < PCatalogEntryType
 
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'CatalogEntryType',
-      'type_name' => {
-        KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
-        KEY_VALUE => nil
-      },
-      'title' => {
-        KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
-        KEY_VALUE => nil
-      }
+                 'type_name' => {
+                   KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
+                   KEY_VALUE => nil
+                 },
+                 'title' => {
+                   KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
+                   KEY_VALUE => nil
+                 }
     )
   end
 
@@ -3246,10 +3246,10 @@ class POptionalType < PTypeWithContainedType
 
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-      'type' => {
-        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
-        KEY_VALUE => nil
-      }
+                 'type' => {
+                   KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
+                   KEY_VALUE => nil
+                 }
     )
   end
 
@@ -3355,12 +3355,12 @@ class PTypeAliasType < PAnyType
 
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-       'name' => PStringType::NON_EMPTY,
-       'type_expr' => PAnyType::DEFAULT,
-       'resolved_type' => {
-         KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
-         KEY_VALUE => nil
-       }
+                 'name' => PStringType::NON_EMPTY,
+                 'type_expr' => PAnyType::DEFAULT,
+                 'resolved_type' => {
+                   KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
+                   KEY_VALUE => nil
+                 }
     )
   end
 

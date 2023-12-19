@@ -22,47 +22,47 @@ module Puppet
       user resource will autorequire those role accounts."
 
     feature :allows_duplicates,
-      "The provider supports duplicate users with the same UID."
+            "The provider supports duplicate users with the same UID."
 
     feature :manages_homedir,
-      "The provider can create and remove home directories."
+            "The provider can create and remove home directories."
 
     feature :manages_passwords,
-      "The provider can modify user passwords, by accepting a password
+            "The provider can modify user passwords, by accepting a password
       hash."
 
     feature :manages_password_age,
-      "The provider can set age requirements and restrictions for
+            "The provider can set age requirements and restrictions for
       passwords."
 
     feature :manages_password_salt,
-      "The provider can set a password salt. This is for providers that
+            "The provider can set a password salt. This is for providers that
        implement PBKDF2 passwords with salt properties."
 
     feature :manages_solaris_rbac,
-      "The provider can manage normal users"
+            "The provider can manage normal users"
 
     feature :manages_roles,
-      "The provider can manage roles"
+            "The provider can manage roles"
 
     feature :manages_expiry,
-      "The provider can manage the expiry date for a user."
+            "The provider can manage the expiry date for a user."
 
    feature :system_users,
-     "The provider allows you to create system users with lower UIDs."
+           "The provider allows you to create system users with lower UIDs."
 
     feature :manages_aix_lam,
-      "The provider can manage AIX Loadable Authentication Module (LAM) system."
+            "The provider can manage AIX Loadable Authentication Module (LAM) system."
 
     feature :manages_local_users_and_groups,
-      "Allows local users to be managed on systems that also use some other
+            "Allows local users to be managed on systems that also use some other
        remote Name Service Switch (NSS) method of managing accounts."
 
     feature :manages_shell,
-      "The provider allows for setting shell and validates if possible"
+            "The provider allows for setting shell and validates if possible"
 
     feature :manages_loginclass,
-      "The provider can manage the login class for a user."
+            "The provider can manage the login class for a user."
 
     newproperty(:ensure, :parent => Puppet::Property::Ensure) do
       newvalue(:present, :event => :user_created) do

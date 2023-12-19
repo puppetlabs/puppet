@@ -34,20 +34,20 @@ module Puppet
       resource will autorequire those files."
 
     feature :reinstallable, "The provider can reinstall packages.",
-      :methods => [:reinstall]
+            :methods => [:reinstall]
     feature :installable, "The provider can install packages.",
-      :methods => [:install]
+            :methods => [:install]
     feature :uninstallable, "The provider can uninstall packages.",
-      :methods => [:uninstall]
+            :methods => [:uninstall]
     feature :upgradeable, "The provider can upgrade to the latest version of a
         package.  This feature is used by specifying `latest` as the
         desired value for the package.",
-      :methods => [:update, :latest]
+            :methods => [:update, :latest]
     feature :purgeable, "The provider can purge packages.  This generally means
         that all traces of the package are removed, including
         existing configuration files.  This feature is thus destructive
         and should be used with the utmost care.",
-      :methods => [:purge]
+            :methods => [:purge]
     feature :versionable, "The provider is capable of interrogating the
         package database for installed version(s), and can select
         which out of a set of available versions of a package to
@@ -57,7 +57,7 @@ module Puppet
         such that they are not automatically upgraded as a result of
         other package dependencies unless explicit action is taken by
         a user or another package.",
-      :methods => [:hold, :unhold]
+            :methods => [:hold, :unhold]
     feature :install_only, "The provider accepts options to only install packages never update (kernels, etc.)"
     feature :install_options, "The provider accepts options to be
       passed to the installer command."
@@ -65,12 +65,12 @@ module Puppet
       passed to the uninstaller command."
     feature :disableable, "The provider can disable packages. This feature is used by specifying `disabled` as the
       desired value for the package.",
-      :methods => [:disable]
+            :methods => [:disable]
     feature :supports_flavors, "The provider accepts flavors, which are specific variants of packages."
     feature :package_settings, "The provider accepts package_settings to be
       ensured for the given package. The meaning and format of these settings is
       provider-specific.",
-      :methods => [:package_settings_insync?, :package_settings, :package_settings=]
+            :methods => [:package_settings_insync?, :package_settings, :package_settings=]
     feature :virtual_packages, "The provider accepts virtual package names for install and uninstall."
 
     feature :targetable, "The provider accepts a targeted package management command."

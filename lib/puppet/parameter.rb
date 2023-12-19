@@ -86,7 +86,7 @@ class Puppet::Parameter
       else
         if value.nil?
           raise Puppet::DevError,
-            "Either a default value or block must be provided"
+                "Either a default value or block must be provided"
         end
         define_method(:default) do value end
       end

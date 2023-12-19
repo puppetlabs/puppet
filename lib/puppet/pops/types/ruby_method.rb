@@ -5,11 +5,11 @@ module Types
     # Register the Annotation type. This is the type that all custom Annotations will inherit from.
     def self.register_ptype(loader, ir)
       @type = Pcore::create_object_type(loader, ir, self, 'RubyMethod', 'Annotation',
-        'body' => PStringType::DEFAULT,
-        'parameters' => {
-          KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
-          KEY_VALUE => nil
-        }
+                                        'body' => PStringType::DEFAULT,
+                                        'parameters' => {
+                                          KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
+                                          KEY_VALUE => nil
+                                        }
       )
     end
 

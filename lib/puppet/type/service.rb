@@ -34,23 +34,23 @@ module Puppet
       * If you do neither, the service's stop and start commands will be used."
 
     feature :refreshable, "The provider can restart the service.",
-      :methods => [:restart]
+            :methods => [:restart]
 
     feature :enableable, "The provider can enable and disable the service.",
-      :methods => [:disable, :enable, :enabled?]
+            :methods => [:disable, :enable, :enabled?]
 
     feature :delayed_startable, "The provider can set service to delayed start",
-      :methods => [:delayed_start]
+            :methods => [:delayed_start]
 
     feature :manual_startable, "The provider can set service to manual start",
-      :methods => [:manual_start]
+            :methods => [:manual_start]
 
     feature :controllable, "The provider uses a control variable."
 
     feature :flaggable, "The provider can pass flags to the service."
 
     feature :maskable, "The provider can 'mask' the service.",
-      :methods => [:mask]
+            :methods => [:mask]
 
     feature :configurable_timeout, "The provider can specify a minumum timeout for syncing service properties"
 

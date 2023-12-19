@@ -233,8 +233,8 @@ class EvaluatorImpl
     if values.is_a?(Hash)
       lvalues.map do |lval|
         assign(lval,
-          values.fetch(lval) {|k| fail(Issues::MISSING_MULTI_ASSIGNMENT_KEY, o, :key =>k)},
-          o, scope)
+               values.fetch(lval) {|k| fail(Issues::MISSING_MULTI_ASSIGNMENT_KEY, o, :key =>k)},
+               o, scope)
       end
     elsif values.is_a?(Puppet::Pops::Types::PClassType)
       if Puppet[:tasks]

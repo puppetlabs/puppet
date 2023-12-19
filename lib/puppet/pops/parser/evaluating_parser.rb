@@ -103,7 +103,7 @@ class EvaluatingParser
     validation_result = validate(parse_result.model)
 
     IssueReporter.assert_and_report(validation_result,
-                                          :emit_warnings => true)
+                                    :emit_warnings => true)
     parse_result
   end
 

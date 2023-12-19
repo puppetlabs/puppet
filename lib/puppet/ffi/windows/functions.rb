@@ -40,8 +40,8 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :CreateProcessW,
-      [:lpcwstr, :lpwstr, :pointer, :pointer, :win32_bool,
-       :dword, :lpvoid, :lpcwstr, :pointer, :pointer], :bool
+                            [:lpcwstr, :lpwstr, :pointer, :pointer, :win32_bool,
+                             :dword, :lpvoid, :lpcwstr, :pointer, :pointer], :bool
 
     # https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-openprocess
     # HANDLE OpenProcess(
@@ -76,8 +76,8 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :CreateProcessWithLogonW,
-      [:lpcwstr, :lpcwstr, :lpcwstr, :dword, :lpcwstr, :lpwstr,
-       :dword, :lpvoid, :lpcwstr, :pointer, :pointer], :bool
+                            [:lpcwstr, :lpcwstr, :lpcwstr, :dword, :lpcwstr, :lpwstr,
+                             :dword, :lpvoid, :lpcwstr, :pointer, :pointer], :bool
 
     # https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/get-osfhandle?view=vs-2019
     # intptr_t _get_osfhandle(
@@ -103,7 +103,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :WaitForSingleObject,
-      [:handle, :dword], :dword, :blocking => true
+                            [:handle, :dword], :dword, :blocking => true
 
     # https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitformultipleobjects
     #   DWORD WaitForMultipleObjects(
@@ -114,7 +114,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :WaitForMultipleObjects,
-      [:dword, :phandle, :win32_bool, :dword], :dword
+                            [:dword, :phandle, :win32_bool, :dword], :dword
 
     # https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventw
     # HANDLE CreateEventW(
@@ -125,7 +125,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :CreateEventW,
-      [:pointer, :win32_bool, :win32_bool, :lpcwstr], :handle
+                            [:pointer, :win32_bool, :win32_bool, :lpcwstr], :handle
 
     # https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createthread
     # HANDLE CreateThread(
@@ -138,7 +138,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :CreateThread,
-      [:pointer, :size_t, :pointer, :lpvoid, :dword, :lpdword], :handle, :blocking => true
+                            [:pointer, :size_t, :pointer, :lpvoid, :dword, :lpdword], :handle, :blocking => true
 
     # https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-setevent
     # BOOL SetEvent(
@@ -146,7 +146,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :SetEvent,
-      [:handle], :win32_bool
+                            [:handle], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/ms683189(v=vs.85).aspx
     # BOOL WINAPI GetExitCodeProcess(
@@ -155,7 +155,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :GetExitCodeProcess,
-      [:handle, :lpdword], :win32_bool
+                            [:handle, :lpdword], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/ms683179(v=vs.85).aspx
     # HANDLE WINAPI GetCurrentProcess(void);
@@ -173,7 +173,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :FreeEnvironmentStringsW,
-      [:pointer], :win32_bool
+                            [:pointer], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/ms686206(v=vs.85).aspx
     # BOOL WINAPI SetEnvironmentVariableW(
@@ -182,7 +182,7 @@ module Puppet::FFI::Windows
     #   );
     ffi_lib :kernel32
     attach_function_private :SetEnvironmentVariableW,
-      [:lpcwstr, :lpcwstr], :win32_bool
+                            [:lpcwstr, :lpcwstr], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/ms684320(v=vs.85).aspx
     # HANDLE WINAPI OpenProcess(
@@ -192,7 +192,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :OpenProcess,
-      [:dword, :win32_bool, :dword], :handle
+                            [:dword, :win32_bool, :dword], :handle
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379295(v=vs.85).aspx
     # BOOL WINAPI OpenProcessToken(
@@ -202,7 +202,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :OpenProcessToken,
-      [:handle, :dword, :phandle], :win32_bool
+                            [:handle, :dword, :phandle], :win32_bool
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-queryfullprocessimagenamew
     # BOOL WINAPI QueryFullProcessImageName(
@@ -213,7 +213,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :QueryFullProcessImageNameW,
-      [:handle, :dword, :lpwstr, :pdword], :win32_bool
+                            [:handle, :dword, :lpwstr, :pdword], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/Windows/desktop/aa379180(v=vs.85).aspx
     # BOOL WINAPI LookupPrivilegeValue(
@@ -223,7 +223,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :LookupPrivilegeValueW,
-      [:lpcwstr, :lpcwstr, :pointer], :win32_bool
+                            [:lpcwstr, :lpcwstr, :pointer], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446671(v=vs.85).aspx
     # BOOL WINAPI GetTokenInformation(
@@ -235,7 +235,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :GetTokenInformation,
-      [:handle, TOKEN_INFORMATION_CLASS, :lpvoid, :dword, :pdword ], :win32_bool
+                            [:handle, TOKEN_INFORMATION_CLASS, :lpvoid, :dword, :pdword ], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724451(v=vs.85).aspx
     # BOOL WINAPI GetVersionEx(
@@ -243,7 +243,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :GetVersionExW,
-      [:pointer], :win32_bool
+                            [:pointer], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/dd318123(v=vs.85).aspx
     # LANGID GetSystemDefaultUILanguage(void);
@@ -258,7 +258,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :OpenSCManagerW,
-      [:lpcwstr, :lpcwstr, :dword], :handle
+                            [:lpcwstr, :lpcwstr, :dword], :handle
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-openservicew
     # SC_HANDLE OpenServiceW(
@@ -268,7 +268,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :OpenServiceW,
-      [:handle, :lpcwstr, :dword], :handle
+                            [:handle, :lpcwstr, :dword], :handle
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-closeservicehandle
     # BOOL CloseServiceHandle(
@@ -276,7 +276,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :CloseServiceHandle,
-      [:handle], :win32_bool
+                            [:handle], :win32_bool
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-queryservicestatusex
     # BOOL QueryServiceStatusEx(
@@ -291,7 +291,7 @@ module Puppet::FFI::Windows
     )
     ffi_lib :advapi32
     attach_function_private :QueryServiceStatusEx,
-      [:handle, SC_STATUS_TYPE, :lpbyte, :dword, :lpdword], :win32_bool
+                            [:handle, SC_STATUS_TYPE, :lpbyte, :dword, :lpdword], :win32_bool
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-queryserviceconfigw
     # BOOL QueryServiceConfigW(
@@ -302,7 +302,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :QueryServiceConfigW,
-      [:handle, :lpbyte, :dword, :lpdword], :win32_bool
+                            [:handle, :lpbyte, :dword, :lpdword], :win32_bool
 
     # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-queryserviceconfig2w
     # BOOL QueryServiceConfig2W(
@@ -314,7 +314,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :QueryServiceConfig2W,
-      [:handle, :dword, :lpbyte, :dword, :lpdword], :win32_bool
+                            [:handle, :dword, :lpbyte, :dword, :lpdword], :win32_bool
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-startservicew
     # BOOL StartServiceW(
@@ -324,7 +324,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :StartServiceW,
-      [:handle, :dword, :pointer], :win32_bool
+                            [:handle, :dword, :pointer], :win32_bool
 
     # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-startservicectrldispatcherw
     # BOOL StartServiceCtrlDispatcherW(
@@ -332,7 +332,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :StartServiceCtrlDispatcherW,
-      [:pointer], :win32_bool, :blocking => true
+                            [:pointer], :win32_bool, :blocking => true
 
     # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-setservicestatus
     # BOOL SetServiceStatus(
@@ -341,7 +341,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :SetServiceStatus,
-      [:handle, :pointer], :win32_bool
+                            [:handle, :pointer], :win32_bool
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-controlservice
     # BOOL ControlService(
@@ -351,7 +351,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :ControlService,
-      [:handle, :dword, :pointer], :win32_bool
+                            [:handle, :dword, :pointer], :win32_bool
 
     #   DWORD LphandlerFunctionEx(
     #   DWORD dwControl,
@@ -369,7 +369,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :RegisterServiceCtrlHandlerExW,
-      [:lpcwstr, :handler_ex, :lpvoid], :handle
+                            [:lpcwstr, :handler_ex, :lpvoid], :handle
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-changeserviceconfigw
     # BOOL ChangeServiceConfigW(
@@ -387,19 +387,19 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :ChangeServiceConfigW,
-      [
-        :handle,
-        :dword,
-        :dword,
-        :dword,
-        :lpcwstr,
-        :lpcwstr,
-        :lpdword,
-        :lpcwstr,
-        :lpcwstr,
-        :lpcwstr,
-        :lpcwstr
-      ], :win32_bool
+                            [
+                              :handle,
+                              :dword,
+                              :dword,
+                              :dword,
+                              :lpcwstr,
+                              :lpcwstr,
+                              :lpdword,
+                              :lpcwstr,
+                              :lpcwstr,
+                              :lpcwstr,
+                              :lpcwstr
+                            ], :win32_bool
 
     # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w
     # BOOL ChangeServiceConfig2W(
@@ -409,7 +409,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :ChangeServiceConfig2W,
-      [:handle, :dword, :lpvoid], :win32_bool
+                            [:handle, :dword, :lpvoid], :win32_bool
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-enumservicesstatusexw
     # BOOL EnumServicesStatusExW(
@@ -429,18 +429,18 @@ module Puppet::FFI::Windows
     )
     ffi_lib :advapi32
     attach_function_private :EnumServicesStatusExW,
-      [
-        :handle,
-        SC_ENUM_TYPE,
-        :dword,
-        :dword,
-        :lpbyte,
-        :dword,
-        :lpdword,
-        :lpdword,
-        :lpdword,
-        :lpcwstr
-      ], :win32_bool
+                            [
+                              :handle,
+                              SC_ENUM_TYPE,
+                              :dword,
+                              :dword,
+                              :lpbyte,
+                              :dword,
+                              :lpdword,
+                              :lpdword,
+                              :lpdword,
+                              :lpcwstr
+                            ], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365512(v=vs.85).aspx
     # BOOL WINAPI ReplaceFile(
@@ -455,7 +455,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :ReplaceFileW,
-      [:lpcwstr, :lpcwstr, :lpcwstr, :dword, :lpvoid, :lpvoid], :win32_bool
+                            [:lpcwstr, :lpcwstr, :lpcwstr, :dword, :lpvoid, :lpvoid], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365240(v=vs.85).aspx
     # BOOL WINAPI MoveFileEx(
@@ -465,7 +465,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :MoveFileExW,
-      [:lpcwstr, :lpcwstr, :dword], :win32_bool
+                            [:lpcwstr, :lpcwstr, :dword], :win32_bool
 
     # BOOLEAN WINAPI CreateSymbolicLink(
     #   _In_  LPTSTR lpSymlinkFileName, - symbolic link to be created
@@ -476,7 +476,7 @@ module Puppet::FFI::Windows
     begin
       ffi_lib :kernel32
       attach_function_private :CreateSymbolicLinkW,
-        [:lpwstr, :lpwstr, :dword], :boolean
+                              [:lpwstr, :lpwstr, :dword], :boolean
     rescue LoadError
     end
 
@@ -487,7 +487,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :GetCurrentDirectoryW,
-      [:dword, :lpwstr], :dword
+                            [:dword, :lpwstr], :dword
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364944(v=vs.85).aspx
     # DWORD WINAPI GetFileAttributes(
@@ -495,7 +495,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :GetFileAttributesW,
-      [:lpcwstr], :dword
+                            [:lpcwstr], :dword
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365535(v=vs.85).aspx
     # BOOL WINAPI SetFileAttributes(
@@ -504,7 +504,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :SetFileAttributesW,
-      [:lpcwstr, :dword], :win32_bool
+                            [:lpcwstr, :dword], :win32_bool
 
     # HANDLE WINAPI CreateFile(
     #   _In_      LPCTSTR lpFileName,
@@ -517,7 +517,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :CreateFileW,
-      [:lpcwstr, :dword, :dword, :pointer, :dword, :dword, :handle], :handle
+                            [:lpcwstr, :dword, :dword, :pointer, :dword, :dword, :handle], :handle
 
     # https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createdirectoryw
     # BOOL CreateDirectoryW(
@@ -526,7 +526,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :CreateDirectoryW,
-      [:lpcwstr, :pointer], :win32_bool
+                            [:lpcwstr, :pointer], :win32_bool
 
     # https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-removedirectoryw
     # BOOL RemoveDirectoryW(
@@ -534,7 +534,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :RemoveDirectoryW,
-      [:lpcwstr], :win32_bool
+                            [:lpcwstr], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa363216(v=vs.85).aspx
     # BOOL WINAPI DeviceIoControl(
@@ -549,7 +549,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :DeviceIoControl,
-      [:handle, :dword, :lpvoid, :dword, :lpvoid, :dword, :lpdword, :pointer], :win32_bool
+                            [:handle, :dword, :lpvoid, :dword, :lpvoid, :dword, :lpdword, :pointer], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364980(v=vs.85).aspx
     # DWORD WINAPI GetLongPathName(
@@ -559,7 +559,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :GetLongPathNameW,
-      [:lpcwstr, :lpwstr, :dword], :dword
+                            [:lpcwstr, :lpwstr, :dword], :dword
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364989(v=vs.85).aspx
     # DWORD WINAPI GetShortPathName(
@@ -569,7 +569,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :GetShortPathNameW,
-      [:lpcwstr, :lpwstr, :dword], :dword
+                            [:lpcwstr, :lpwstr, :dword], :dword
 
     # https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfullpathnamew
     # DWORD GetFullPathNameW(
@@ -580,7 +580,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :kernel32
     attach_function_private :GetFullPathNameW,
-      [:lpcwstr, :dword, :lpwstr, :pointer], :dword
+                            [:lpcwstr, :dword, :lpwstr, :pointer], :dword
 
     # https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shgetfolderpathw
     # SHFOLDERAPI SHGetFolderPathW(
@@ -592,7 +592,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :shell32
     attach_function_private :SHGetFolderPathW,
-      [:hwnd, :int, :handle, :dword, :lpwstr], :dword
+                            [:hwnd, :int, :handle, :dword, :lpwstr], :dword
 
     # https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shgetfolderlocation
     # SHSTDAPI SHGetFolderLocation(
@@ -604,7 +604,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :shell32
     attach_function_private :SHGetFolderLocation,
-      [:hwnd, :int, :handle, :dword, :pointer], :dword
+                            [:hwnd, :int, :handle, :dword, :pointer], :dword
 
     # https://docs.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shgetfileinfoa
     # DWORD_PTR SHGetFileInfoA(
@@ -616,7 +616,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :shell32
     attach_function_private :SHGetFileInfo,
-      [:dword, :dword, :pointer, :uint, :uint], :dword
+                            [:dword, :dword, :pointer, :uint, :uint], :dword
 
     # https://docs.microsoft.com/en-us/windows/win32/api/shlwapi/nf-shlwapi-pathisdirectoryemptyw
     # BOOL PathIsDirectoryEmptyW(
@@ -624,6 +624,6 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :shlwapi
     attach_function_private :PathIsDirectoryEmptyW,
-      [:lpcwstr], :win32_bool
+                            [:lpcwstr], :win32_bool
   end
 end

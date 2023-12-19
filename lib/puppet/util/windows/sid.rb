@@ -260,7 +260,7 @@ module Puppet::Util::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :IsValidSid,
-      [:pointer], :win32_bool
+                            [:pointer], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa376399(v=vs.85).aspx
     # BOOL ConvertSidToStringSid(
@@ -269,7 +269,7 @@ module Puppet::Util::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :ConvertSidToStringSidW,
-      [:pointer, :pointer], :win32_bool
+                            [:pointer, :pointer], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa376402(v=vs.85).aspx
     # BOOL WINAPI ConvertStringSidToSid(
@@ -278,7 +278,7 @@ module Puppet::Util::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :ConvertStringSidToSidW,
-      [:lpcwstr, :pointer], :win32_bool
+                            [:lpcwstr, :pointer], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446642(v=vs.85).aspx
     # DWORD WINAPI GetLengthSid(

@@ -68,20 +68,20 @@ module Puppet::ModuleTool
 
         if @installed.length > 1
           raise MultipleInstalledError,
-            :action            => :uninstall,
-            :module_name       => @name,
-            :installed_modules => @installed.sort_by { |mod| @environment.modulepath.index(mod.modulepath) }
+                :action            => :uninstall,
+                :module_name       => @name,
+                :installed_modules => @installed.sort_by { |mod| @environment.modulepath.index(mod.modulepath) }
         elsif @installed.empty?
           if @unfiltered.empty?
             raise NotInstalledError,
-              :action      => :uninstall,
-              :suggestions => @suggestions,
-              :module_name => @name
+                  :action      => :uninstall,
+                  :suggestions => @suggestions,
+                  :module_name => @name
           else
             raise NoVersionMatchesError,
-              :installed_modules => @unfiltered.sort_by { |mod| @environment.modulepath.index(mod[:path]) },
-              :version_range     => @options[:version],
-              :module_name       => @name
+                  :installed_modules => @unfiltered.sort_by { |mod| @environment.modulepath.index(mod[:path]) },
+                  :version_range     => @options[:version],
+                  :module_name       => @name
           end
         end
       end
@@ -100,19 +100,19 @@ module Puppet::ModuleTool
 
           if mod.has_metadata? && !changes.empty?
             raise LocalChangesError,
-              :action            => :uninstall,
-              :module_name       => (mod.forge_name || mod.name).tr('/', '-'),
-              :requested_version => @options[:version],
-              :installed_version => mod.version
+                  :action            => :uninstall,
+                  :module_name       => (mod.forge_name || mod.name).tr('/', '-'),
+                  :requested_version => @options[:version],
+                  :installed_version => mod.version
           end
         end
 
         if !@options[:force] && !mod.required_by.empty?
           raise ModuleIsRequiredError,
-            :module_name       => (mod.forge_name || mod.name).tr('/', '-'),
-            :required_by       => mod.required_by,
-            :requested_version => @options[:version],
-            :installed_version => mod.version
+                :module_name       => (mod.forge_name || mod.name).tr('/', '-'),
+                :required_by       => mod.required_by,
+                :requested_version => @options[:version],
+                :installed_version => mod.version
         end
       end
     end

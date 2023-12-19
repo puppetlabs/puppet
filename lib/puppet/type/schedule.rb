@@ -280,7 +280,7 @@ module Puppet
       validate do |value|
         unless value.is_a?(Integer) or value =~ /^\d+$/
           raise Puppet::Error,
-            _("Repeat must be a number")
+                _("Repeat must be a number")
         end
 
         # This implicitly assumes that 'periodmatch' is distance -- that
@@ -289,7 +289,7 @@ module Puppet
 
         if value != 1 and @resource[:periodmatch] != :distance
           raise Puppet::Error,
-            _("Repeat must be 1 unless periodmatch is 'distance', not '%{period}'") % { period: @resource[:periodmatch] }
+                _("Repeat must be 1 unless periodmatch is 'distance', not '%{period}'") % { period: @resource[:periodmatch] }
         end
       end
 

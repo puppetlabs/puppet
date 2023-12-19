@@ -74,10 +74,10 @@ module Puppet::ModuleTool
               else
                 changes = Checksummer.run(installed_modules[name].mod.path) rescue []
                 raise AlreadyInstalledError,
-                  :module_name       => name,
-                  :installed_version => installed_modules[name].version,
-                  :requested_version => options[:version] || :latest,
-                  :local_changes     => changes
+                      :module_name       => name,
+                      :installed_version => installed_modules[name].version,
+                      :requested_version => options[:version] || :latest,
+                      :local_changes     => changes
               end
             end
           end
@@ -205,11 +205,11 @@ module Puppet::ModuleTool
                 end
 
                 raise InstallConflictError,
-                  :requested_module  => name,
-                  :requested_version => options[:version] || 'latest',
-                  :dependency        => dependency,
-                  :directory         => installed_module.path,
-                  :metadata          => installed_module.metadata
+                      :requested_module  => name,
+                      :requested_version => options[:version] || 'latest',
+                      :dependency        => dependency,
+                      :directory         => installed_module.path,
+                      :metadata          => installed_module.metadata
               end
             end
           end
@@ -308,10 +308,10 @@ module Puppet::ModuleTool
 
         if !forced? && @installed.include?(@module_name)
           raise AlreadyInstalledError,
-            :module_name       => @module_name,
-            :installed_version => @installed[@module_name].first.version,
-            :requested_version => @version || (@conditions[@module_name].empty? ? :latest : :best),
-            :local_changes     => Puppet::ModuleTool::Applications::Checksummer.run(@installed[@module_name].first.path)
+                :module_name       => @module_name,
+                :installed_version => @installed[@module_name].first.version,
+                :requested_version => @version || (@conditions[@module_name].empty? ? :latest : :best),
+                :local_changes     => Puppet::ModuleTool::Applications::Checksummer.run(@installed[@module_name].first.path)
         end
 
         if @ignore_dependencies && @source == :filesystem
@@ -381,11 +381,11 @@ module Puppet::ModuleTool
               latest_version = versions.last[:vstring]
 
               raise InstallConflictError,
-                :requested_module  => @module_name,
-                :requested_version => @version || "latest: v#{latest_version}",
-                :dependency        => dependency,
-                :directory         => mod.path,
-                :metadata          => metadata
+                    :requested_module  => @module_name,
+                    :requested_version => @version || "latest: v#{latest_version}",
+                    :dependency        => dependency,
+                    :directory         => mod.path,
+                    :metadata          => metadata
             end
           end
 

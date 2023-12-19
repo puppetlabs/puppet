@@ -106,8 +106,8 @@ class LookupAdapter < DataAdapter
         convert_to[0] = Puppet::Pops::Types::TypeParser.singleton.parse(convert_to[0])
       rescue StandardError => e
         raise Puppet::DataBinding::LookupError,
-          _("Invalid data type in lookup_options for key '%{key}' could not parse '%{source}', error: '%{msg}") %
-            { key: key, source: convert_to[0], msg: e.message}
+              _("Invalid data type in lookup_options for key '%{key}' could not parse '%{source}', error: '%{msg}") %
+                { key: key, source: convert_to[0], msg: e.message}
       end
     end
     begin
@@ -117,8 +117,8 @@ class LookupAdapter < DataAdapter
       lookup_invocation.report_text { _("Applying convert_to lookup_option with arguments %{args}") % { args: args_string } }
     rescue StandardError => e
       raise Puppet::DataBinding::LookupError,
-        _("The convert_to lookup_option for key '%{key}' raised error: %{msg}") %
-          { key: key, msg: e.message}
+            _("The convert_to lookup_option for key '%{key}' raised error: %{msg}") %
+              { key: key, msg: e.message}
     end
     result
   end
@@ -139,7 +139,7 @@ class LookupAdapter < DataAdapter
       lookup_invocation.with(:global, terminus) do
         catch(:no_such_key) do
           return lookup_invocation.report_found(key, Puppet::DataBinding.indirection.find(key.root_key,
-            {:environment => environment, :variables => lookup_invocation.scope, :merge => merge_strategy}))
+                                                                                          {:environment => environment, :variables => lookup_invocation.scope, :merge => merge_strategy}))
         end
         lookup_invocation.report_not_found(key)
         throw :no_such_key
@@ -331,7 +331,7 @@ class LookupAdapter < DataAdapter
     else
       merge_strategy = Puppet::Pops::MergeStrategy.strategy(merge)
       key.dig(lookup_invocation,
-        merge_strategy.lookup(PROVIDER_STACK, lookup_invocation) { |m| send(m, key, lookup_invocation, merge_strategy) })
+              merge_strategy.lookup(PROVIDER_STACK, lookup_invocation) { |m| send(m, key, lookup_invocation, merge_strategy) })
     end
   end
 
@@ -430,7 +430,7 @@ class LookupAdapter < DataAdapter
       elsif mp_config.version >= 5
         unless provider_name.nil? || Puppet[:strict] == :off
           Puppet.warn_once('deprecations', "metadata.json#data_provider-#{module_name}",
-            _("Defining \"data_provider\": \"%{name}\" in metadata.json is deprecated. It is ignored since a '%{config}' with version >= 5 is present") % { name: provider_name, config: HieraConfig::CONFIG_FILE_NAME }, mod.metadata_file)
+                           _("Defining \"data_provider\": \"%{name}\" in metadata.json is deprecated. It is ignored since a '%{config}' with version >= 5 is present") % { name: provider_name, config: HieraConfig::CONFIG_FILE_NAME }, mod.metadata_file)
         end
         provider_name = nil
       end
@@ -479,11 +479,11 @@ class LookupAdapter < DataAdapter
       elsif ep_config.version >= 5
         unless provider_name.nil? || Puppet[:strict] == :off
           Puppet.warn_once('deprecations', 'environment.conf#data_provider',
-            _("Defining environment_data_provider='%{provider_name}' in environment.conf is deprecated") % { provider_name: provider_name }, env_path + 'environment.conf')
+                           _("Defining environment_data_provider='%{provider_name}' in environment.conf is deprecated") % { provider_name: provider_name }, env_path + 'environment.conf')
 
           unless provider_name == 'hiera'
             Puppet.warn_once('deprecations', 'environment.conf#data_provider_overridden',
-              _("The environment_data_provider='%{provider_name}' setting is ignored since '%{config_path}' version >= 5") % { provider_name: provider_name, config_path: config_path }, env_path + 'environment.conf')
+                             _("The environment_data_provider='%{provider_name}' setting is ignored since '%{config_path}' version >= 5") % { provider_name: provider_name, config_path: config_path }, env_path + 'environment.conf')
           end
         end
         provider_name = nil

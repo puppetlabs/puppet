@@ -38,12 +38,6 @@ Layout/AccessModifierIndentation:
 
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: with_first_argument, with_fixed_indentation
-Layout/ArgumentAlignment:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
 # SupportedStyles: with_first_element, with_fixed_indentation
 Layout/ArrayAlignment:
   Exclude:

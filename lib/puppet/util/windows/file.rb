@@ -46,7 +46,7 @@ module Puppet::Util::Windows::File
   def symlink(target, symlink)
     flags = File.directory?(target) ? 0x1 : 0x0
     result = CreateSymbolicLinkW(wide_string(symlink.to_s),
-      wide_string(target.to_s), flags)
+                                 wide_string(target.to_s), flags)
     return true if result != FFI::WIN32_FALSE
     raise Puppet::Util::Windows::Error.new(
       "CreateSymbolicLink(#{symlink}, #{target}, #{flags.to_s(8)})")
@@ -127,8 +127,8 @@ module Puppet::Util::Windows::File
     creation_disposition, flags_and_attributes, template_file_handle)
 
     result = CreateFileW(wide_string(file_name.to_s),
-      desired_access, share_mode, security_attributes, creation_disposition,
-      flags_and_attributes, template_file_handle)
+                         desired_access, share_mode, security_attributes, creation_disposition,
+                         flags_and_attributes, template_file_handle)
 
     return result unless result == INVALID_HANDLE_VALUE
     raise Puppet::Util::Windows::Error.new(

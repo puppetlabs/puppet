@@ -84,19 +84,19 @@ class HieraConfig
   def self.v4_function_config(config_root, function_name, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once('deprecations', 'legacy_provider_function',
-        _("Using of legacy data provider function '%{function_name}'. Please convert to a 'data_hash' function") % { function_name: function_name })
+                       _("Using of legacy data provider function '%{function_name}'. Please convert to a 'data_hash' function") % { function_name: function_name })
     end
     HieraConfigV5.new(config_root, nil,
-      {
-        KEY_VERSION => 5,
-        KEY_HIERARCHY => [
-          {
-            KEY_NAME => "Legacy function '#{function_name}'",
-            KEY_V4_DATA_HASH => function_name
-          }
-        ]
-      }.freeze,
-      owner
+                      {
+                        KEY_VERSION => 5,
+                        KEY_HIERARCHY => [
+                          {
+                            KEY_NAME => "Legacy function '#{function_name}'",
+                            KEY_V4_DATA_HASH => function_name
+                          }
+                        ]
+                      }.freeze,
+                      owner
     )
   end
 
@@ -428,7 +428,7 @@ class HieraConfigV3 < HieraConfig
   def validate_config(config, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once('deprecations', 'hiera.yaml',
-        _("%{config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5") % { config_path: @config_path }, config_path.to_s)
+                       _("%{config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5") % { config_path: @config_path }, config_path.to_s)
     end
     config[KEY_VERSION] ||= 3
     config[KEY_BACKENDS] ||= DEFAULT_CONFIG_HASH[KEY_BACKENDS]
@@ -514,10 +514,10 @@ class HieraConfigV4 < HieraConfig
       data_providers[name] = case
       when provider_name == 'json', provider_name == 'yaml'
         create_data_provider(name, parent_data_provider, KEY_DATA_HASH, "#{provider_name}_data", {},
-          resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, ".#{provider_name}"))
+                             resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, ".#{provider_name}"))
       when provider_name == 'hocon' &&  Puppet.features.hocon?
         create_data_provider(name, parent_data_provider, KEY_DATA_HASH, 'hocon_data', {},
-          resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, '.conf'))
+                             resolve_paths(datadir, original_paths, lookup_invocation, @config_path.nil?, '.conf'))
       else
         fail(Issues::HIERA_NO_PROVIDER_FOR_BACKEND, { :name => provider_name }, find_line_matching(/[^\w]#{provider_name}(?:[^\w]|$)/))
       end
@@ -528,7 +528,7 @@ class HieraConfigV4 < HieraConfig
   def validate_config(config, owner)
     unless Puppet[:strict] == :off
       Puppet.warn_once('deprecations', 'hiera.yaml',
-        _("%{config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5") % { config_path: @config_path }, config_path.to_s)
+                       _("%{config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5") % { config_path: @config_path }, config_path.to_s)
     end
     config[KEY_DATADIR] ||= 'data'
     config[KEY_HIERARCHY] ||= [{ KEY_NAME => 'common', KEY_BACKEND => 'yaml' }]
@@ -740,7 +740,7 @@ class HieraConfigV5 < HieraConfig
       if v3_backend == 'json' || v3_backend == 'yaml' || v3_backend == 'hocon' &&  Puppet.features.hocon?
         # Disallow use of backends that have corresponding "data_hash" functions in version 5
         fail(Issues::HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH, { :function_name => v3_backend },
-          find_line_matching(/\s+#{KEY_V3_BACKEND}:\s*['"]?#{v3_backend}(?:[^\w]|$)/))
+             find_line_matching(/\s+#{KEY_V3_BACKEND}:\s*['"]?#{v3_backend}(?:[^\w]|$)/))
       end
     end
 

@@ -90,7 +90,7 @@ Puppet::Face.define(:module, '1.0.0') do
           modules_by_num_requires = modules.sort_by {|m| m.required_by.size}
           @seen = {}
           tree = list_build_tree(modules_by_num_requires, [], nil,
-            :label_unmet => true, :path => path, :label_invalid => false)
+                                 :label_unmet => true, :path => path, :label_invalid => false)
         else
           tree = []
           modules.sort_by { |mod| mod.forge_name or mod.name  }.each do |mod|
@@ -229,7 +229,7 @@ Puppet::Face.define(:module, '1.0.0') do
           node[:dependencies] << { :text => str }
         end
         node[:dependencies] += list_build_tree(mod.dependencies_as_modules,
-          ancestors + [mod], mod, params)
+                                               ancestors + [mod], mod, params)
       end
 
       node

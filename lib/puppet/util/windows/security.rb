@@ -170,8 +170,8 @@ module Puppet::Util::Windows::Security
 
     FFI::MemoryPointer.new(:pointer, 1) do |flags_ptr|
       if GetVolumeInformationW(wide_string(root), FFI::Pointer::NULL, 0,
-          FFI::Pointer::NULL, FFI::Pointer::NULL,
-          flags_ptr, FFI::Pointer::NULL, 0) == FFI::WIN32_FALSE
+                               FFI::Pointer::NULL, FFI::Pointer::NULL,
+                               flags_ptr, FFI::Pointer::NULL, 0) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new(_("Failed to get volume information"))
       end
       supported = flags_ptr.read_dword & FILE_PERSISTENT_ACLS == FILE_PERSISTENT_ACLS
@@ -565,8 +565,8 @@ module Puppet::Util::Windows::Security
             # size is correct given we only have 1 LUID, otherwise would be:
             # [:PrivilegeCount].size + [:PrivilegeCount] * LUID_AND_ATTRIBUTES.size
             if AdjustTokenPrivileges(token, FFI::WIN32_FALSE,
-                token_privileges, token_privileges.size,
-                FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL) == FFI::WIN32_FALSE
+                                     token_privileges, token_privileges.size,
+                                     FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL) == FFI::WIN32_FALSE
               raise Puppet::Util::Windows::Error.new(_("Failed to adjust process privileges"))
             end
           end
@@ -704,7 +704,7 @@ module Puppet::Util::Windows::Security
   # );
   ffi_lib :kernel32
   attach_function_private :CreateFileW,
-    [:lpcwstr, :dword, :dword, :pointer, :dword, :dword, :handle], :handle
+                          [:lpcwstr, :dword, :dword, :pointer, :dword, :dword, :handle], :handle
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364993(v=vs.85).aspx
   # BOOL WINAPI GetVolumeInformation(
@@ -719,7 +719,7 @@ module Puppet::Util::Windows::Security
   # );
   ffi_lib :kernel32
   attach_function_private :GetVolumeInformationW,
-    [:lpcwstr, :lpwstr, :dword, :lpdword, :lpdword, :lpdword, :lpwstr, :dword], :win32_bool
+                          [:lpcwstr, :lpwstr, :dword, :lpdword, :lpdword, :lpdword, :lpwstr, :dword], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa374951(v=vs.85).aspx
   # BOOL WINAPI AddAccessAllowedAceEx(
@@ -731,7 +731,7 @@ module Puppet::Util::Windows::Security
   # );
   ffi_lib :advapi32
   attach_function_private :AddAccessAllowedAceEx,
-    [:pointer, :dword, :dword, :dword, :pointer], :win32_bool
+                          [:pointer, :dword, :dword, :dword, :pointer], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa374964(v=vs.85).aspx
   # BOOL WINAPI AddAccessDeniedAceEx(
@@ -743,7 +743,7 @@ module Puppet::Util::Windows::Security
   # );
   ffi_lib :advapi32
   attach_function_private :AddAccessDeniedAceEx,
-    [:pointer, :dword, :dword, :dword, :pointer], :win32_bool
+                          [:pointer, :dword, :dword, :dword, :pointer], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa374931(v=vs.85).aspx
   # typedef struct _ACL {
@@ -813,7 +813,7 @@ module Puppet::Util::Windows::Security
   # );
   ffi_lib :advapi32
   attach_function_private :GetAce,
-    [:pointer, :dword, :pointer], :win32_bool
+                          [:pointer, :dword, :pointer], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa375202(v=vs.85).aspx
   # BOOL WINAPI AdjustTokenPrivileges(
@@ -826,7 +826,7 @@ module Puppet::Util::Windows::Security
   # );
   ffi_lib :advapi32
   attach_function_private :AdjustTokenPrivileges,
-    [:handle, :win32_bool, :pointer, :dword, :pointer, :pdword], :win32_bool
+                          [:handle, :win32_bool, :pointer, :dword, :pointer, :pdword], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/hardware/ff556610(v=vs.85).aspx
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379561(v=vs.85).aspx
@@ -839,7 +839,7 @@ module Puppet::Util::Windows::Security
   # );
   ffi_lib :advapi32
   attach_function_private :GetSecurityDescriptorControl,
-    [:pointer, :lpword, :lpdword], :win32_bool
+                          [:pointer, :lpword, :lpdword], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa378853(v=vs.85).aspx
   # BOOL WINAPI InitializeAcl(
@@ -849,7 +849,7 @@ module Puppet::Util::Windows::Security
   # );
   ffi_lib :advapi32
   attach_function_private :InitializeAcl,
-    [:pointer, :dword, :dword], :win32_bool
+                          [:pointer, :dword, :dword], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379142(v=vs.85).aspx
   # BOOL WINAPI IsValidAcl(
@@ -857,7 +857,7 @@ module Puppet::Util::Windows::Security
   # );
   ffi_lib :advapi32
   attach_function_private :IsValidAcl,
-    [:pointer], :win32_bool
+                          [:pointer], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379593(v=vs.85).aspx
   SE_OBJECT_TYPE = enum(
@@ -889,7 +889,7 @@ module Puppet::Util::Windows::Security
   # );
   ffi_lib :advapi32
   attach_function_private :GetSecurityInfo,
-    [:handle, SE_OBJECT_TYPE, :dword, :pointer, :pointer, :pointer, :pointer, :pointer], :dword
+                          [:handle, SE_OBJECT_TYPE, :dword, :pointer, :pointer, :pointer, :pointer, :pointer], :dword
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379588(v=vs.85).aspx
   # DWORD WINAPI SetSecurityInfo(
@@ -904,5 +904,5 @@ module Puppet::Util::Windows::Security
   ffi_lib :advapi32
   # TODO: SECURITY_INFORMATION is actually a bitmask the size of a DWORD
   attach_function_private :SetSecurityInfo,
-    [:handle, SE_OBJECT_TYPE, :dword, :pointer, :pointer, :pointer, :pointer], :dword
+                          [:handle, SE_OBJECT_TYPE, :dword, :pointer, :pointer, :pointer, :pointer], :dword
 end

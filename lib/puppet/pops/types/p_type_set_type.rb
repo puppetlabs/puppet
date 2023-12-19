@@ -113,7 +113,7 @@ class PTypeSetType < PMetaType
     @pcore_version = PSemVerType.convert(init_hash[Pcore::KEY_PCORE_VERSION]).freeze
     unless Pcore::PARSABLE_PCORE_VERSIONS.include?(@pcore_version)
       raise ArgumentError,
-        "The pcore version for TypeSet '#{@name}' is not understood by this runtime. Expected range #{Pcore::PARSABLE_PCORE_VERSIONS}, got #{@pcore_version}"
+            "The pcore version for TypeSet '#{@name}' is not understood by this runtime. Expected range #{Pcore::PARSABLE_PCORE_VERSIONS}, got #{@pcore_version}"
     end
 
     @pcore_uri = init_hash[Pcore::KEY_PCORE_URI].freeze

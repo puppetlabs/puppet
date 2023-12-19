@@ -8,14 +8,14 @@ class PRuntimeType < PAnyType
 
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-      'runtime' => {
-        KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
-        KEY_VALUE => nil
-      },
-      'name_or_pattern' => {
-        KEY_TYPE => POptionalType.new(TYPE_NAME_OR_PATTERN),
-        KEY_VALUE => nil
-      }
+                 'runtime' => {
+                   KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
+                   KEY_VALUE => nil
+                 },
+                 'name_or_pattern' => {
+                   KEY_TYPE => POptionalType.new(TYPE_NAME_OR_PATTERN),
+                   KEY_VALUE => nil
+                 }
     )
   end
 

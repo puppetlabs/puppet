@@ -8,8 +8,8 @@ Puppet::Type.type(:package).provide :hpux, :parent => Puppet::Provider::Package 
   desc "HP-UX's packaging system."
 
   commands :swinstall => "/usr/sbin/swinstall",
-    :swlist => "/usr/sbin/swlist",
-    :swremove => "/usr/sbin/swremove"
+           :swlist => "/usr/sbin/swlist",
+           :swremove => "/usr/sbin/swremove"
 
   confine 'os.name' => "hp-ux"
 

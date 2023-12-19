@@ -6,14 +6,14 @@ module Types
 class PInitType < PTypeWithContainedType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
-      'type' => {
-        KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
-        KEY_VALUE => nil
-      },
-      'init_args' => {
-        KEY_TYPE => PArrayType::DEFAULT,
-        KEY_VALUE => EMPTY_ARRAY
-      }
+                 'type' => {
+                   KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
+                   KEY_VALUE => nil
+                 },
+                 'init_args' => {
+                   KEY_TYPE => PArrayType::DEFAULT,
+                   KEY_VALUE => EMPTY_ARRAY
+                 }
     )
   end
 

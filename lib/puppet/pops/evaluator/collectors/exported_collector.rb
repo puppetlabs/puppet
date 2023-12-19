@@ -49,7 +49,7 @@ class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Eva
         if existing
           unless existing.collector_id == item.collector_id
             raise Puppet::ParseError,
-              _("A duplicate resource was found while collecting exported resources, with the type and title %{title}") % { title: item.ref }
+                  _("A duplicate resource was found while collecting exported resources, with the type and title %{title}") % { title: item.ref }
           end
         else
           item.exported = false

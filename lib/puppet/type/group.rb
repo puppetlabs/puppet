@@ -14,16 +14,16 @@ module Puppet
       a group record."
 
     feature :manages_members,
-      "For directories where membership is an attribute of groups not users."
+            "For directories where membership is an attribute of groups not users."
 
     feature :manages_aix_lam,
-      "The provider can manage AIX Loadable Authentication Module (LAM) system."
+            "The provider can manage AIX Loadable Authentication Module (LAM) system."
 
     feature :system_groups,
-      "The provider allows you to create system groups with lower GIDs."
+            "The provider allows you to create system groups with lower GIDs."
 
     feature :manages_local_users_and_groups,
-      "Allows local groups to be managed on systems that also use some other
+            "Allows local groups to be managed on systems that also use some other
        remote Name Switch Service (NSS) method of managing accounts."
 
     ensurable do

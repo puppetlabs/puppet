@@ -60,7 +60,7 @@ module Puppet::Util::Windows::COM
   # );
   ffi_lib :ole32
   attach_function_private :CoCreateInstance,
-    [:pointer, :lpunknown, :dword, :pointer, :lpvoid], :hresult
+                          [:pointer, :lpunknown, :dword, :pointer, :lpvoid], :hresult
 
   # code modified from Unknownr project https://github.com/rpeev/Unknownr
   # licensed under MIT
