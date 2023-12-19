@@ -133,7 +133,6 @@ module SymbolicFileMode
           # Now, assign back the value.
           final_mode[who] = value
         end
-
       rescue Puppet::Error => e
         if part.inspect != modification.inspect
           rest = " at #{part.inspect}"

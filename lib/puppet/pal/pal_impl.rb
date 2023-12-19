@@ -497,11 +497,9 @@ module Pal
             end
           end
         end
-
       rescue Puppet::Error
         # already logged and handled by the compiler, including Puppet::ParseErrorWithIssue
         raise
-
       rescue => detail
         Puppet.log_exception(detail)
         raise

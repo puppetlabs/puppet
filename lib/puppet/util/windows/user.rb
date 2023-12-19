@@ -77,7 +77,6 @@ module Puppet::Util::Windows::User
     begin
       logon_user(name, password, domain) { |token| }
     rescue Puppet::Util::Windows::Error => detail
-
       authenticated_error_codes = Set[
         ERROR_ACCOUNT_RESTRICTION,
         ERROR_INVALID_LOGON_HOURS,

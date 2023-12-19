@@ -229,7 +229,6 @@ module Puppet::ModuleTool
           results[:result] = :success
           results[:installed_modules] = releases
           results[:graph] = [ build_install_graph(releases.first, releases) ]
-
         rescue ModuleToolError, ForgeError => err
           results[:error] = {
             :oneline   => err.message,

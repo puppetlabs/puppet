@@ -149,7 +149,6 @@ module Puppet::ModuleTool
         data['project_page'] ||= @data['project_page'] || source_uri.to_s
         data['issues_url'] ||= @data['issues_url'] || source_uri.to_s.sub(/\/*$/, '') + '/issues'
       end
-
     rescue URI::Error
       return
     end

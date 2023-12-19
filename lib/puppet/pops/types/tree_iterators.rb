@@ -168,7 +168,6 @@ class DepthFirstTreeIterator < TreeIterator
           redo unless @with_values
         end
         return [@current_path.dup, value]
-
       rescue StopIteration
         # end of current value's range of content
         # pop all until out of next values
@@ -226,7 +225,6 @@ class BreadthFirstTreeIterator < TreeIterator
           next unless @with_containers
         end
         return [@current_path.dup, value]
-
       rescue StopIteration
         # end of current value's range of content
         # shift all until out of next values

@@ -107,7 +107,6 @@ class Puppet::FileServing::Configuration
     rescue => detail
       Puppet.log_exception(detail, _("Error parsing fileserver configuration: %{detail}; using old configuration") % { detail: detail })
     end
-
   ensure
     # Make sure we've got our plugins and modules.
     mk_default_mounts

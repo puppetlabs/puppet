@@ -18,7 +18,6 @@ class Puppet::Parser::CatalogCompiler < Puppet::Parser::Compiler
     Puppet.override(rich_data: true) do
       super
     end
-
   rescue Puppet::ParseErrorWithIssue => detail
     detail.node = node.name
     Puppet.log_exception(detail)

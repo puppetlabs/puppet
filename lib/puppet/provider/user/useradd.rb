@@ -196,7 +196,6 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
         :sensitive => has_sensitive_data?
       }
       output = execute(cmd, execute_options)
-
     rescue => detail
       tempfile.close
       tempfile.delete

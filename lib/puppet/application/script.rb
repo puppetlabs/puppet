@@ -211,7 +211,6 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
           topscope.merge_settings(node.environment.name, false)
 
           compiler.compile()
-
         rescue Puppet::Error
           # already logged and handled by the compiler, including Puppet::ParseErrorWithIssue
           exit(1)
@@ -223,7 +222,6 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
         exit(1)
       end
     end
-
   ensure
     if @profiler
       Puppet::Util::Profiler.remove_profiler(@profiler)

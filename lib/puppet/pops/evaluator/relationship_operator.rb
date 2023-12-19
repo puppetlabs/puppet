@@ -171,7 +171,6 @@ class RelationshipOperator
         result = right
       end
       result
-
     rescue NotCatalogTypeError => e
       fail(Issues::NOT_CATALOG_TYPE, relationship_expression, {:type => @type_calculator.string(e.type)})
     rescue IllegalRelationshipOperandError => e

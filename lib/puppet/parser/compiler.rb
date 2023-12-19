@@ -349,7 +349,6 @@ class Puppet::Parser::Compiler
             # needs to be handled specifically as the error has the file/line/position where this
             # occurred rather than the resource
             fail(Puppet::Pops::Issues::RUNTIME_ERROR, detail, {:detail => detail.message}, detail)
-
           rescue Puppet::Error => e
             # PuppetError has the ability to wrap an exception, if so, use the wrapped exception's
             # call stack instead

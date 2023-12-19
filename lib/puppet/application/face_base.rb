@@ -265,11 +265,9 @@ class Puppet::Application::FaceBase < Puppet::Application
   # --kelsey 2012-02-14
   rescue SystemExit => detail
     status = detail.status
-
   rescue => detail
     Puppet.log_exception(detail)
     Puppet.err _("Try 'puppet help %{face} %{action}' for usage") % { face: @face.name, action: @action.name }
-
   ensure
     exit status
   end

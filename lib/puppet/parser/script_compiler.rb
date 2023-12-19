@@ -49,7 +49,6 @@ class Puppet::Parser::ScriptCompiler
         result
       end
     end
-
   rescue Puppet::ParseErrorWithIssue => detail
     detail.node = node_name
     Puppet.log_exception(detail)

@@ -110,7 +110,6 @@ module Puppet::Interface::FaceCollection
     path = @loader.expand(version ? ::File.join(version.to_s, name.to_s) : name)
     require path
     true
-
   rescue LoadError => e
     raise unless e.message =~ %r{-- #{path}$}
     # ...guess we didn't find the file; return a much better problem.

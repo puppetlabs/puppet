@@ -202,7 +202,6 @@ module Puppet::ModuleTool
           results[:base_dir] = releases.first.install_dir
           results[:affected_modules] = releases
           results[:graph] = [ build_install_graph(releases.first, releases) ]
-
         rescue VersionAlreadyInstalledError => e
           results[:result] = (e.newer_versions.empty? ? :noop : :failure)
           results[:error] = { :oneline => e.message, :multiline => e.multiline }
