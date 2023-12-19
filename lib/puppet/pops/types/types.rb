@@ -2051,8 +2051,8 @@ class PStructType < PAnyType
     else
       PIterableType.new(
         PTupleType.new([
-          PVariantType.maybe_create(@elements.map {|se| se.key_type }),
-          PVariantType.maybe_create(@elements.map {|se| se.value_type })],
+                         PVariantType.maybe_create(@elements.map {|se| se.key_type }),
+                         PVariantType.maybe_create(@elements.map {|se| se.value_type })],
                        PHashType::KEY_PAIR_TUPLE_SIZE))
     end
   end

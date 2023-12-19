@@ -24,23 +24,6 @@ I18n/RailsI18n/DecorateString:
 
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: special_inside_parentheses, consistent, align_brackets
-Layout/FirstArrayElementIndentation:
-  Exclude:
-    - 'lib/puppet/file_serving/mount/file.rb'
-    - 'lib/puppet/functions/lookup.rb'
-    - 'lib/puppet/pops/loader/static_loader.rb'
-    - 'lib/puppet/pops/model/ast.rb'
-    - 'lib/puppet/pops/model/pn_transformer.rb'
-    - 'lib/puppet/pops/resource/resource_type_impl.rb'
-    - 'lib/puppet/pops/types/iterable.rb'
-    - 'lib/puppet/pops/types/p_uri_type.rb'
-    - 'lib/puppet/pops/types/types.rb'
-    - 'lib/puppet/provider/nameservice/pw.rb'
-    - 'lib/puppet/type/file/content.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
 # SupportedStyles: special_inside_parentheses, consistent, align_braces
 Layout/FirstHashElementIndentation:
   Enabled: false
