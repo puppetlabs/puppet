@@ -42,6 +42,7 @@ class Puppet::Confine
 
   # Mark that this confine is used for testing binary existence.
   attr_accessor :for_binary
+
   def for_binary?
     for_binary
   end

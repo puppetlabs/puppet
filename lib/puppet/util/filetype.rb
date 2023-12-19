@@ -15,6 +15,7 @@ class Puppet::Util::FileType
 
   class << self
     attr_accessor :name
+
     include Puppet::Util::ClassGen
   end
 

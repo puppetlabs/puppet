@@ -179,6 +179,7 @@ module Validation
     # @return [LabelProvider]
     #
     attr_reader :label_provider
+
     # Initializes this producer.
     #
     # @param acceptor [Acceptor] a sink/collector of diagnostic results
@@ -229,6 +230,7 @@ module Validation
     attr_reader :exception
     attr_reader :file
     attr_reader :source_pos
+
     def initialize severity, issue, file, source_pos, arguments={}, exception=nil
       @severity = severity
       @issue = issue
@@ -362,6 +364,7 @@ module Validation
 
     # The number of :error severity issues
     attr_reader :error_count
+
     # Initializes this diagnostics acceptor.
     # By default, the acceptor is configured with a default severity producer.
     # @param severity_producer [SeverityProducer] the severity producer to use to determine severity of an issue

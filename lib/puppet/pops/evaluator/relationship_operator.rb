@@ -18,6 +18,7 @@ class RelationshipOperator
 
   class IllegalRelationshipOperandError < RuntimeError
     attr_reader :operand
+
     def initialize operand
       @operand = operand
     end
@@ -25,6 +26,7 @@ class RelationshipOperator
 
   class NotCatalogTypeError < RuntimeError
     attr_reader :type
+
     def initialize type
       @type = type
     end

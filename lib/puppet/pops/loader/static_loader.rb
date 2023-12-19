@@ -37,6 +37,7 @@ class StaticLoader < Loader
   }.freeze
 
   attr_reader :loaded
+
   def initialize
     @loaded = {}
     @runtime_3_initialized = false

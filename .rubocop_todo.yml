@@ -31,12 +31,6 @@ Layout/EmptyLineAfterMagicComment:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: AllowAliasSyntax, AllowedMethods.
-# AllowedMethods: alias_method, public, protected, private
-Layout/EmptyLinesAroundAttributeAccessor:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/EmptyLinesAroundBeginBody:
   Exclude:
     - 'lib/puppet/util/diff.rb'

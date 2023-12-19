@@ -14,6 +14,7 @@ module Puppet
   Puppet::Type.type(:file).newparam(:source) do
 
     attr_accessor :source, :local
+
     desc <<-'EOT'
       A source file, which will be copied into place on the local system. This
       attribute is mutually exclusive with `content` and `target`. Allowed

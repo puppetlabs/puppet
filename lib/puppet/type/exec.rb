@@ -95,6 +95,7 @@ module Puppet
       defaultto "0"
 
       attr_reader :output
+
       desc "The expected exit code(s).  An error will be returned if the
         executed command has some other exit code. Can be specified as an array
         of acceptable exit codes or a single value.

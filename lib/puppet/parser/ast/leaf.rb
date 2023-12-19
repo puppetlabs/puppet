@@ -5,6 +5,7 @@
 #
 class Puppet::Parser::AST::Leaf < Puppet::Parser::AST
   attr_accessor :value, :type
+
   # Return our value.
   def evaluate(scope)
     @value

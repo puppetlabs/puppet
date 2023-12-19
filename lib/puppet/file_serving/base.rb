@@ -44,6 +44,7 @@ class Puppet::FileServing::Base
 
   # Determine how we deal with links.
   attr_reader :links
+
   def links=(value)
     value = value.to_sym
     value = :manage if value == :ignore
@@ -54,6 +55,7 @@ class Puppet::FileServing::Base
 
   # Set our base path.
   attr_reader :path
+
   def path=(path)
     raise ArgumentError.new(_("Paths must be fully qualified")) unless Puppet::FileServing::Base.absolute?(path)
     @path = path
@@ -62,6 +64,7 @@ class Puppet::FileServing::Base
   # Set a relative path; this is used for recursion, and sets
   # the file's path relative to the initial recursion point.
   attr_reader :relative_path
+
   def relative_path=(path)
     raise ArgumentError.new(_("Relative paths must not be fully qualified")) if Puppet::FileServing::Base.absolute?(path)
     @relative_path = path

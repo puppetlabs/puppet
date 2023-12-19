@@ -23,6 +23,7 @@ module Issues
 
     # If this issue can have its severity lowered to :warning, :deprecation, or :ignored
     attr_writer :demotable
+
     # Configures the Issue with required arguments (bound by occurrence), and a block producing a message.
     def initialize issue_code, *args, &block
       @issue_code = issue_code

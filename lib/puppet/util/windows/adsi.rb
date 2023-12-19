@@ -250,6 +250,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     attr_reader :name
+
     def initialize(name, native_object = nil)
       @name = name
       @native_object = native_object

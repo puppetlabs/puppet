@@ -994,6 +994,7 @@ class Factory
 
   class ArgsToNonCallError < RuntimeError
     attr_reader :args, :name_expr
+
     def initialize(args, name_expr)
       @args = args
       @name_expr = name_expr

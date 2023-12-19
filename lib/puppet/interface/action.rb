@@ -57,6 +57,7 @@ class Puppet::Interface::Action
   # @return [Boolean]
   # @api private
   attr_accessor :default
+
   def default?
     !!@default
   end
@@ -141,6 +142,7 @@ class Puppet::Interface::Action
   # @api private
   # @return [Symbol]
   attr_reader :render_as
+
   def render_as=(value)
     @render_as = value.to_sym
   end
@@ -218,6 +220,7 @@ class Puppet::Interface::Action
   # The block that is executed when the action is invoked
   # @return [block]
   attr_reader :when_invoked
+
   def when_invoked=(block)
 
     internal_name = "#{@name} implementation, required on Ruby 1.8".to_sym

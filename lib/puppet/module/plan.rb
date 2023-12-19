@@ -5,6 +5,7 @@ class Puppet::Module
   class Plan
     class Error < Puppet::Error
       attr_accessor :kind, :details
+
       def initialize(message, kind, details = nil)
         super(message)
         @details = details || {}

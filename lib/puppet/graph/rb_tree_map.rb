@@ -198,6 +198,7 @@ class Puppet::Graph::RbTreeMap
 
   class Node # :nodoc: all
     attr_accessor :color, :key, :value, :left, :right
+
     def initialize(key, value)
       @key = key
       @value = value

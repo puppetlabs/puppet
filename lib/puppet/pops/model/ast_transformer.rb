@@ -11,6 +11,7 @@ class Puppet::Pops::Model::AstTransformer
   Model = Puppet::Pops::Model
 
   attr_reader :importer
+
   def initialize(source_file = "unknown-file", importer=nil)
     @@transform_visitor ||= Puppet::Pops::Visitor.new(nil,"transform",0,0)
     @@query_transform_visitor ||= Puppet::Pops::Visitor.new(nil,"query",0,0)
