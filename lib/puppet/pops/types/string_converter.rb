@@ -3,7 +3,6 @@ require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 module Puppet::Pops
 module Types
-
 # Converts Puppet runtime objects to String under the control of a Format.
 # Use from Puppet Language is via the function `new`.
 #

@@ -4,7 +4,6 @@ require_relative '../../../puppet/ffi/windows'
 
 module Puppet::FFI::Windows
   module Structs
-
     extend FFI::Library
     extend Puppet::FFI::Windows::APITypes
 

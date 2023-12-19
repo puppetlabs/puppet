@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 module Puppet::Pops::Types
 module Iterable
-
 class TreeIterator
   include Iterable
 

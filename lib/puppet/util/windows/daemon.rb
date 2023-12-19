@@ -2,7 +2,6 @@
 require_relative '../../../puppet/ffi/windows'
 
 module Puppet::Util::Windows
-
   # The Daemon class, based on the chef/win32-service implementation
   class Daemon
     include Puppet::FFI::Windows::Constants

@@ -3,7 +3,6 @@ require_relative '../../puppet/module_tool'
 require_relative '../../puppet/network/format_support'
 
 module Puppet::ModuleTool
-
   class Dependency
     include Puppet::Network::FormatSupport
 

@@ -6,7 +6,6 @@ require_relative '../puppet/error'
 require_relative '../puppet/application_support'
 
 module Puppet
-
 # Defines an abstract Puppet application.
 #
 # # Usage

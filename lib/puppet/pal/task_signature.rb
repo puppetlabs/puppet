@@ -59,6 +59,5 @@ module Pal
       @task
     end
   end
-
 end
 end

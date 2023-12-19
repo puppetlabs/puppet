@@ -27,5 +27,4 @@ module Puppet
       require_relative '../puppet/pops/loader/puppet_plan_instantiator'
     end
   end
-
 end

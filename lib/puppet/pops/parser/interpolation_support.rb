@@ -6,7 +6,6 @@
 # of passing parameters and evaluating conditional logic has a negative impact on performance.
 #
 module Puppet::Pops::Parser::InterpolationSupport
-
   PATTERN_VARIABLE       = %r{(::)?(\w+::)*\w+}
 
   # This is the starting point for a double quoted string with possible interpolation
@@ -246,5 +245,4 @@ module Puppet::Pops::Parser::InterpolationSupport
       lexer.enqueue(queue.shift)
     end
   end
-
 end

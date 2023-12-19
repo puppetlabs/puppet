@@ -4,7 +4,6 @@ require_relative 'type_with_members'
 
 module Puppet::Pops
 module Types
-
 KEY_ATTRIBUTES = 'attributes'
 KEY_CHECKS = 'checks'
 KEY_CONSTANTS = 'constants'

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 module Puppet
 module Pal
-
   class ScriptCompiler < Compiler
     # Returns the signature of the given plan name
     # @param plan_name [String] the name of the plan to get the signature of
@@ -69,6 +68,5 @@ module Pal
       list_loadable_kind(:task, filter_regex, error_collector)
     end
   end
-
 end
 end

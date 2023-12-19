@@ -31,12 +31,6 @@ Layout/EmptyLineAfterMagicComment:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: empty_lines, empty_lines_except_namespace, empty_lines_special, no_empty_lines
-Layout/EmptyLinesAroundModuleBody:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyleAlignWith, Severity.
 # SupportedStylesAlignWith: keyword, variable, start_of_line
 Layout/EndAlignment:

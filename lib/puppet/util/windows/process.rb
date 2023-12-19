@@ -361,5 +361,4 @@ module Puppet::Util::Windows::Process
     windows_major_version >= 6
   end
   module_function :supports_elevated_security?
-
 end

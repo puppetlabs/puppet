@@ -2,7 +2,6 @@
 require 'rdoc/code_objects'
 
 module RDoc
-
   # This modules contains various class that are used to hold information
   # about the various Puppet language structures we found while parsing.
   #

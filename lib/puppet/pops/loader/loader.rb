@@ -22,7 +22,6 @@
 #
 module Puppet::Pops
 module Loader
-
 ENVIRONMENT = 'environment'
 ENVIRONMENT_PRIVATE = 'environment private'
 

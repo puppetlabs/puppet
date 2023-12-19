@@ -15,7 +15,6 @@ require_relative 'puppet_object'
 
 module Puppet::Pops
 module Types
-
 # The EMPTY_xxx declarations is for backward compatibility. They should not be explicitly referenced
 
 # @api private

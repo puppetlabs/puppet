@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 module Puppet::Pops
 module Types
-
 # @api private
 class RubyGenerator < TypeFormatter
   RUBY_RESERVED_WORDS = {

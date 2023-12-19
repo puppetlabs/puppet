@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 module Puppet::Pops
 module Types
-
 # Base class for Parameterized Object implementations. The wrapper impersonates the base
 # object and extends it with methods to filter assignable types and instances based on parameter
 # values.

@@ -7,7 +7,6 @@ module Evaluator
 #
 # @api private
 module Runtime3Support
-
   NAME_SPACE_SEPARATOR = '::'
 
   # Fails the evaluation of _semantic_ with a given issue.

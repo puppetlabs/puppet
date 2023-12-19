@@ -4562,7 +4562,6 @@ class Program < PopsObject
   end
   alias == eql?
 end
-
 end
 
 module Model
@@ -4671,6 +4670,5 @@ def self.register_pcore_types
   Loaders.register_static_implementations(all_types)
 end
 end
-
 end
 end

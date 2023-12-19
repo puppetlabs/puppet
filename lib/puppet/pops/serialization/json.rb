@@ -3,7 +3,6 @@ require_relative '../../../puppet/util/json'
 
 module Puppet::Pops
 module Serialization
-
 require_relative 'time_factory'
 require_relative 'abstract_reader'
 require_relative 'abstract_writer'

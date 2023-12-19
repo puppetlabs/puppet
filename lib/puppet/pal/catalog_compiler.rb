@@ -102,6 +102,5 @@ module Pal
       internal_compiler.evaluate_ast_node
     end
   end
-
 end
 end

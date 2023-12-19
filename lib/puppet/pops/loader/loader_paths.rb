@@ -10,7 +10,6 @@
 module Puppet::Pops
 module Loader
 module LoaderPaths
-
   # Returns an array of SmartPath, each instantiated with a reference to the given loader (for root path resolution
   # and existence checks). The smart paths in the array appear in precedence order. The returned array may be
   # mutated.

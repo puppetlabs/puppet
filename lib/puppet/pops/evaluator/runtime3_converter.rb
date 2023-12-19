@@ -217,5 +217,4 @@ class Runtime3FunctionArgumentConverter < Runtime3Converter
 
   @instance = self.new
 end
-
 end

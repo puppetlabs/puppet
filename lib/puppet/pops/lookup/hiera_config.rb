@@ -6,7 +6,6 @@ require_relative 'location_resolver'
 
 module Puppet::Pops
 module Lookup
-
 # @api private
 class ScopeLookupCollectingInvocation < Invocation
   def initialize(scope)

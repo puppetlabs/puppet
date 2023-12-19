@@ -2,7 +2,6 @@
 require_relative '../../puppet/gettext/config'
 
 module Puppet::ModuleTranslations
-
   # @api private
   # Loads translation files for each of the specified modules,
   # if present. Requires the modules to have `forge_name` specified.

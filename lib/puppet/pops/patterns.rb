@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 # The Patterns module contains common regular expression patters for the Puppet DSL language
 module Puppet::Pops::Patterns
-
   # NUMERIC matches hex, octal, decimal, and floating point and captures several parts
   # 0 = entire matched number, leading and trailing whitespace and sign included
   # 1 = sign, +, - or nothing
@@ -57,5 +56,4 @@ module Puppet::Pops::Patterns
 
   # A Numeric var name must be the decimal number 0, or a decimal number not starting with 0
   NUMERIC_VAR_NAME = %r{\A(?:0|(?:[1-9][0-9]*))\z}
-
 end

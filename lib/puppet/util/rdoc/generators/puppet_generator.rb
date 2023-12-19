@@ -4,7 +4,6 @@ require_relative '../../../../puppet/util/rdoc/code_objects'
 require 'digest/md5'
 
 module Generators
-
   # This module holds all the classes needed to generate the HTML documentation
   # of a bunch of puppet manifests.
   #
@@ -895,5 +894,4 @@ module Generators
       gen_an_index(HtmlMethod.all_methods, 'Defines')
     end
   end
-
 end

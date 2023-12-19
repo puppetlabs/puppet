@@ -2,7 +2,6 @@
 require_relative '../puppet/util/platform'
 
 module Puppet
-
   def self.default_diffargs
     '-u'
   end

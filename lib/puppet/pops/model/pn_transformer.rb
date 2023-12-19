@@ -3,7 +3,6 @@ require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 module Puppet::Pops
 module Model
-
 class PNTransformer
   extend Puppet::Concurrent::ThreadLocalSingleton
 
@@ -380,6 +379,5 @@ class PNTransformer
     PN::Map.new(entries).as_call(name)
   end
 end
-
 end
 end

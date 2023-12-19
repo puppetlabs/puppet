@@ -3,7 +3,6 @@ require_relative '../../../puppet/concurrent/thread_local_singleton'
 
 module Puppet::Pops
 module Parser
-
 # Does not support "import" and parsing ruby files
 #
 class EvaluatingParser

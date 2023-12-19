@@ -3,7 +3,6 @@
 # @api private
 module Puppet::Pops
 module Types
-
 KEY_NAME = 'name'
 KEY_TYPE = 'type'
 KEY_VALUE = 'value'

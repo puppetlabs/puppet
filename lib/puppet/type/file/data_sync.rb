@@ -94,6 +94,5 @@ module Puppet
       resource.write(param)
       return_event
     end
-
   end
 end

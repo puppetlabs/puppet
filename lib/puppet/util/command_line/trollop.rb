@@ -17,7 +17,6 @@ module Puppet
 module Util
 class CommandLine
 module Trollop
-
 VERSION = "1.16.2"
 
 ## Thrown by Parser in the event of a commandline error. Not needed if
@@ -818,7 +817,6 @@ def die arg, msg=nil
 end
 
 module_function :options, :die, :with_standard_exception_handling
-
 end # module
 end
 end

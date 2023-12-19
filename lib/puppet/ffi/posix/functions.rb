@@ -3,7 +3,6 @@ require_relative '../../../puppet/ffi/posix'
 
 module Puppet::FFI::POSIX
   module Functions
-
     extend FFI::Library
 
     ffi_convention :stdcall

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 module Puppet::Pops
 module Loader
-
 # Runtime3TypeLoader
 # ===
 # Loads a resource type using the 3.x type loader

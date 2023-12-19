@@ -3,7 +3,6 @@ require_relative '../../../puppet/parser/script_compiler'
 
 module Puppet::Pops
 module Evaluator
-
 class DeferredValue
   def initialize(proc)
     @proc = proc

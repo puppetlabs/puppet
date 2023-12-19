@@ -5,7 +5,6 @@
 # {Puppet::Interface.define define} block).
 # @api public
 module Puppet::Interface::OptionManager
-
   # @api private
   def display_global_options(*args)
     @display_global_options ||= []

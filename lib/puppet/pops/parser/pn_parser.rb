@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 module Puppet::Pops
 module Parser
-
 class PNParser
   LIT_TRUE = 'true'
   LIT_FALSE = 'false'

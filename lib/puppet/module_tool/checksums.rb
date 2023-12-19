@@ -3,7 +3,6 @@ require 'digest/md5'
 require_relative '../../puppet/network/format_support'
 
 module Puppet::ModuleTool
-
   # = Checksums
   #
   # This class provides methods for generating checksums for data and adding

@@ -9,7 +9,6 @@ module Puppet::Network; end
 # @deprecated Use {Puppet::HTTP::Client} instead.
 #
 module Puppet::Network::HttpPool
-
   @http_client_class = Puppet::Network::HTTP::Connection
 
   def self.http_client_class

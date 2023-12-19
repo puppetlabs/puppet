@@ -9,7 +9,6 @@
 # and then trying to access those.
 #
 module Puppet::Pops::Loader::GemSupport
-
   # Produces the root directory of a gem given as an URI (gem://gemname/optional/path), or just the
   # gemname as a string.
   #

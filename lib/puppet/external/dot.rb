@@ -8,7 +8,6 @@
 # It also supports undirected edges.
 
 module DOT
-
   # These global vars are used to make nice graph source.
 
   $tab  = '    '

@@ -28,7 +28,6 @@ require_relative '../../puppet/ssl'
 #
 # @api private
 module Puppet::SSL::Oids
-
   # Note: When updating the following OIDs make sure to also update the OID
   # definitions here:
   # https://github.com/puppetlabs/puppetserver/blob/master/src/clj/puppetlabs/puppetserver/certificate_authority.clj#L122-L159

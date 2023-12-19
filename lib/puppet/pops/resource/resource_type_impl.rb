@@ -3,7 +3,6 @@ require_relative 'param'
 
 module Puppet::Pops
 module Resource
-
 def self.register_ptypes(loader, ir)
   types = [Param, ResourceTypeImpl].map do |c|
     c.register_ptype(loader, ir)

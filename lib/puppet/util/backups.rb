@@ -2,7 +2,6 @@
 require 'find'
 require 'fileutils'
 module Puppet::Util::Backups
-
   # Deal with backups.
   def perform_backup(file = nil)
     # if they specifically don't want a backup, then just say

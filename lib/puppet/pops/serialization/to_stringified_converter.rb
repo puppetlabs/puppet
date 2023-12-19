@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 module Puppet::Pops
 module Serialization
-
   # Class that can process an arbitrary object into a value that is assignable to `Data`
   # and where contents is converted from rich data to one of:
   # * Numeric (Integer, Float)

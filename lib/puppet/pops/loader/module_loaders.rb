@@ -20,7 +20,6 @@ module Loader
 # @api private
 #
 module ModuleLoaders
-
   # Wildcard module name for module loaders, makes loading possible from any namespace.
   NAMESPACE_WILDCARD = '*'
 

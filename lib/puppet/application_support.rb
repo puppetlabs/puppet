@@ -8,7 +8,6 @@ require_relative '../puppet/indirector'
 
 module Puppet
   module ApplicationSupport
-
     # Pushes a Puppet Context configured with a remote environment for an agent
     # (one that exists at the master end), and a regular environment for other
     # modes. The configuration is overridden with options from the command line

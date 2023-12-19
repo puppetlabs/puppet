@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 module Puppet::Pops
 module Types
-
 KEY_NAME_AUTHORITY = 'name_authority'
 KEY_TYPES = 'types'
 KEY_ALIAS = 'alias'

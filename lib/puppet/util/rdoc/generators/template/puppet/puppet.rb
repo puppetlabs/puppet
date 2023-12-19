@@ -22,7 +22,6 @@
 
 module RDoc
   module Page
-
     FONTS = "Verdana,Arial,Helvetica,sans-serif"
 
 STYLE = %{
@@ -1062,7 +1061,6 @@ INDEX = %{<?xml version="1.0" encoding="%charset%"?>
 </frameset>
 </html>
 }
-
   end # module Page
 end # class RDoc
 

@@ -9,7 +9,6 @@ module Puppet::Pops
 # * **DiagnosticFormatter** - produces human readable output for a Diagnostic
 #
 module Validation
-
   # This class is an abstract base implementation of a _model validation factory_ that creates a validator instance
   # and associates it with a fully configured DiagnosticProducer.
   #

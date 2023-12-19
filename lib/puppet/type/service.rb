@@ -6,7 +6,6 @@
 # which is why they have a search path for initscripts and such
 
 module Puppet
-
   Type.newtype(:service) do
     @doc = "Manage running services.  Service support unfortunately varies
       widely by platform --- some platforms have very little if any concept of a
