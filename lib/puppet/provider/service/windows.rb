@@ -47,18 +47,16 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
     start_type = Puppet::Util::Windows::Service.service_start_type(@resource[:name])
     debug("Service #{@resource[:name]} start type is #{start_type}")
     case start_type
-      when :SERVICE_AUTO_START,
-           :SERVICE_BOOT_START,
-           :SERVICE_SYSTEM_START
-        :true
-      when :SERVICE_DEMAND_START
-        :manual
-      when :SERVICE_DELAYED_AUTO_START
-        :delayed
-      when :SERVICE_DISABLED
-        :false
-      else
-        raise Puppet::Error.new(_("Unknown start type: %{start_type}") % { start_type: start_type })
+    when :SERVICE_AUTO_START, :SERVICE_BOOT_START, :SERVICE_SYSTEM_START
+      :true
+    when :SERVICE_DEMAND_START
+      :manual
+    when :SERVICE_DELAYED_AUTO_START
+      :delayed
+    when :SERVICE_DISABLED
+      :false
+    else
+      raise Puppet::Error.new(_("Unknown start type: %{start_type}") % { start_type: start_type })
     end
   rescue => detail
     raise Puppet::Error.new(_("Cannot get start type %{resource_name}, error was: %{detail}") % { resource_name: @resource[:name], detail: detail }, detail )
@@ -96,19 +94,15 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
 
     current_state = Puppet::Util::Windows::Service.service_state(@resource[:name])
     state = case current_state
-      when :SERVICE_STOPPED,
-           :SERVICE_STOP_PENDING
-        :stopped
-      when :SERVICE_PAUSED,
-           :SERVICE_PAUSE_PENDING
-        :paused
-      when :SERVICE_RUNNING,
-           :SERVICE_CONTINUE_PENDING,
-           :SERVICE_START_PENDING
-        :running
-      else
-        raise Puppet::Error.new(_("Unknown service state '%{current_state}' for service '%{resource_name}'") % { current_state: current_state, resource_name: @resource[:name] })
-    end
+            when :SERVICE_STOPPED, :SERVICE_STOP_PENDING
+              :stopped
+            when :SERVICE_PAUSED, :SERVICE_PAUSE_PENDING
+              :paused
+            when :SERVICE_RUNNING, :SERVICE_CONTINUE_PENDING, :SERVICE_START_PENDING
+              :running
+            else
+              raise Puppet::Error.new(_("Unknown service state '%{current_state}' for service '%{resource_name}'") % { current_state: current_state, resource_name: @resource[:name] })
+            end
     debug("Service #{@resource[:name]} is #{current_state}")
     state
   rescue => detail

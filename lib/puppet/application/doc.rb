@@ -112,7 +112,7 @@ COPYRIGHT
 ---------
 Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
-HELP
+    HELP
   end
 
   def handle_unknown( opt, arg )

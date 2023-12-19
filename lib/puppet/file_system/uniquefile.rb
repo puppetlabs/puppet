@@ -100,14 +100,14 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
 
   def make_tmpname(prefix_suffix, n)
     case prefix_suffix
-      when String
-        prefix = prefix_suffix
-        suffix = ""
-      when Array
-        prefix = prefix_suffix[0]
-        suffix = prefix_suffix[1]
-      else
-        raise ArgumentError, _("unexpected prefix_suffix: %{value}") % { value: prefix_suffix.inspect }
+    when String
+      prefix = prefix_suffix
+      suffix = ""
+    when Array
+      prefix = prefix_suffix[0]
+      suffix = prefix_suffix[1]
+    else
+      raise ArgumentError, _("unexpected prefix_suffix: %{value}") % { value: prefix_suffix.inspect }
     end
     t = Time.now.strftime("%Y%m%d")
     path = "#{prefix}#{t}-#{$$}-#{rand(0x100000000).to_s(36)}"

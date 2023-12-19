@@ -248,17 +248,17 @@ module Puppet::Util::Windows::User
     error_code = LsaNtStatusToWinError(status)
 
     error_reason = case error_code.to_s(16)
-    when '0' # ERROR_SUCCESS
-      return # Method call succeded
-    when '2' # ERROR_FILE_NOT_FOUND
-      return # No rights/privilleges assigned to given user
-    when '5' # ERROR_ACCESS_DENIED
-      "Access is denied. Please make sure that puppet is running as administrator."
-    when '521' # ERROR_NO_SUCH_PRIVILEGE
-      "One or more of the given rights/privilleges are incorrect."
-    when '6ba' # RPC_S_SERVER_UNAVAILABLE
-      "The RPC server is unavailable or given domain name is invalid."
-    end
+                   when '0' # ERROR_SUCCESS
+                     return # Method call succeded
+                   when '2' # ERROR_FILE_NOT_FOUND
+                     return # No rights/privilleges assigned to given user
+                   when '5' # ERROR_ACCESS_DENIED
+                     "Access is denied. Please make sure that puppet is running as administrator."
+                   when '521' # ERROR_NO_SUCH_PRIVILEGE
+                     "One or more of the given rights/privilleges are incorrect."
+                   when '6ba' # RPC_S_SERVER_UNAVAILABLE
+                     "The RPC server is unavailable or given domain name is invalid."
+                   end
 
     raise Puppet::Error.new("Calling `#{method_name}` returned 'Win32 Error Code 0x%08X'. #{error_reason}" % error_code)
   end

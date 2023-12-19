@@ -232,15 +232,15 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     end
 
     source = case source_uri.scheme
-    when nil then source
-    when /https?/i then source
-    when /ftp/i then source
-    when /file/i then source_uri.path
-    when /puppet/i
-      fail _("puppet:// URL is not supported by pacman")
-    else
-      fail _("Source %{source} is not supported by pacman") % { source: source }
-    end
+             when nil       then source
+             when /https?/i then source
+             when /ftp/i    then source
+             when /file/i   then source_uri.path
+             when /puppet/i
+               fail _("puppet:// URL is not supported by pacman")
+             else
+               fail _("Source %{source} is not supported by pacman") % { source: source }
+             end
     pacman "--noconfirm", "--noprogressbar", "-S"
     pacman "--noconfirm", "--noprogressbar", "-U", source
   end

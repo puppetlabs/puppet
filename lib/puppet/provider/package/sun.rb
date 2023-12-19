@@ -69,11 +69,11 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     begin
       pkgs = self.class.parse_pkginfo(pkginfo(*args))
       errmsg = case pkgs.size
-        when 0
-          'No message'
-        when 1
-           pkgs[0]['ERROR']
-      end
+               when 0
+                 'No message'
+               when 1
+                 pkgs[0]['ERROR']
+               end
       return self.class.namemap(pkgs[0]) if errmsg.nil?
       # according to commit 41356a7 some errors do not raise an exception
       # so even though pkginfo passed, we have to check the actual output

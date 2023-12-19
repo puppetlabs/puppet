@@ -4,12 +4,12 @@ class Puppet::Settings::ValueTranslator
   def [](value)
     # Handle different data types correctly
     return case value
-      when /^false$/i; false
-      when /^true$/i; true
-      when true; true
-      when false; false
-      else
-        value.gsub(/^["']|["']$/,'').sub(/\s+$/, '')
-    end
+           when /^false$/i; false
+           when /^true$/i; true
+           when true; true
+           when false; false
+           else
+             value.gsub(/^["']|["']$/,'').sub(/\s+$/, '')
+           end
   end
 end

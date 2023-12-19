@@ -469,32 +469,32 @@ module Lookup
 
     def push(qualifier_type, qualifier)
       node = case (qualifier_type)
-        when :global
-         ExplainGlobal.new(@current, qualifier)
-        when :location
-          ExplainLocation.new(@current, qualifier)
-        when :interpolate
-          ExplainInterpolate.new(@current, qualifier)
-        when :data_provider
-          ExplainDataProvider.new(@current, qualifier)
-        when :merge
-          ExplainMerge.new(@current, qualifier)
-        when :module
-          ExplainModule.new(@current, qualifier)
-        when :scope
-          ExplainScope.new(@current, qualifier)
-        when :sub_lookup
-          ExplainSubLookup.new(@current, qualifier)
-        when :segment
-          ExplainKeySegment.new(@current, qualifier)
-        when :meta, :data
-          ExplainTop.new(@current, qualifier_type, qualifier)
-        when :invalid_key
-          ExplainInvalidKey.new(@current, qualifier)
-        else
-          #TRANSLATORS 'Explain' is referring to the 'Explainer' class and should not be translated
-          raise ArgumentError, _("Unknown Explain type %{qualifier_type}") % { qualifier_type: qualifier_type }
-        end
+             when :global
+               ExplainGlobal.new(@current, qualifier)
+             when :location
+               ExplainLocation.new(@current, qualifier)
+             when :interpolate
+              ExplainInterpolate.new(@current, qualifier)
+             when :data_provider
+              ExplainDataProvider.new(@current, qualifier)
+             when :merge
+              ExplainMerge.new(@current, qualifier)
+             when :module
+               ExplainModule.new(@current, qualifier)
+             when :scope
+               ExplainScope.new(@current, qualifier)
+             when :sub_lookup
+               ExplainSubLookup.new(@current, qualifier)
+             when :segment
+              ExplainKeySegment.new(@current, qualifier)
+             when :meta, :data
+              ExplainTop.new(@current, qualifier_type, qualifier)
+             when :invalid_key
+               ExplainInvalidKey.new(@current, qualifier)
+             else
+               #TRANSLATORS 'Explain' is referring to the 'Explainer' class and should not be translated
+               raise ArgumentError, _("Unknown Explain type %{qualifier_type}") % { qualifier_type: qualifier_type }
+             end
       @current.branches << node
       @current = node
     end

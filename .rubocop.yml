@@ -22,6 +22,12 @@ Layout/ArgumentAlignment:
   Exclude:
     - 'lib/puppet/defaults.rb'
 
+# The confine statements in package providers unexpectedly affect this cop.
+Layout/BeginEndAlignment:
+  Enabled: true
+  Exclude:
+    - 'lib/puppet/provider/package/*.rb'
+
 # puppet uses symbol booleans in types and providers to work around long standing
 # bugs when trying to manage falsey pararameters and properties
 Lint/BooleanSymbol:

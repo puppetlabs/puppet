@@ -49,9 +49,9 @@ module Puppet::HTTP
       Puppet.debug "Searching for SRV records for domain: #{domain}"
 
       case service_name
-        when :puppet then service = '_x-puppet'
-        when :file   then service = '_x-puppet-fileserver'
-        else              service = "_x-puppet-#{service_name}"
+      when :puppet then service = '_x-puppet'
+      when :file   then service = '_x-puppet-fileserver'
+      else              service = "_x-puppet-#{service_name}"
       end
       record_name = "#{service}._tcp.#{domain}"
 

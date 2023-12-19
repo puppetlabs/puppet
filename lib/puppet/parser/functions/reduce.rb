@@ -132,7 +132,7 @@ $merged = $data.reduce( {} ) |$memo, $x| {
 ~~~
 
 - Since 4.0.0
-DOC
+  DOC
 ) do |_args|
   Puppet::Parser::Functions::Error.is4x('reduce')
 end

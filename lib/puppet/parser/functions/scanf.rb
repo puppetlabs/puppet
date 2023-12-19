@@ -31,7 +31,7 @@ You can also optionally pass a lambda to scanf, to do additional validation or p
 ```
 
 - Since 4.0.0
-DOC
+  DOC
 ) do |args|
   data = args[0]
   format = args[1]

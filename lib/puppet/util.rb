@@ -611,17 +611,17 @@ module Util
 
 
       effective_mode =
-      if !Puppet::Util::Platform.windows?
-        # Grab the current file mode, and fall back to the defaults.
+        if !Puppet::Util::Platform.windows?
+          # Grab the current file mode, and fall back to the defaults.
 
-        if Puppet::FileSystem.exist?(file)
-          stat = Puppet::FileSystem.lstat(file)
-          tempfile.chown(stat.uid, stat.gid)
-          stat.mode
-        else
-          mode
+          if Puppet::FileSystem.exist?(file)
+            stat = Puppet::FileSystem.lstat(file)
+            tempfile.chown(stat.uid, stat.gid)
+            stat.mode
+          else
+            mode
+          end
         end
-      end
 
       # OK, now allow the caller to write the content of the file.
       yield tempfile

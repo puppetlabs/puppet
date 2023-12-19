@@ -48,12 +48,12 @@ class Puppet::Provider::Package < Puppet::Provider
 
     options.collect do |val|
       case val
-        when Hash
-          val.keys.sort.collect do |k|
-            "#{k}=#{val[k]}"
-          end
-        else
-          val
+      when Hash
+        val.keys.sort.collect do |k|
+          "#{k}=#{val[k]}"
+        end
+      else
+        val
       end
     end.flatten
   end

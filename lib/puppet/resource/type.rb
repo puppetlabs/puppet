@@ -153,14 +153,14 @@ class Puppet::Resource::Type
   # values.
   def ensure_in_catalog(scope, parameters=nil)
     resource_type =
-    case type
-    when :definition
-      raise ArgumentError, _('Cannot create resources for defined resource types')
-    when :hostclass
-      :class
-    when :node
-      :node
-    end
+      case type
+      when :definition
+        raise ArgumentError, _('Cannot create resources for defined resource types')
+      when :hostclass
+        :class
+      when :node
+        :node
+      end
 
     # Do nothing if the resource already exists; this makes sure we don't
     # get multiple copies of the class resource, which helps provide the

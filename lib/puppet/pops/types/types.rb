@@ -828,13 +828,13 @@ class PEnumType < PScalarDataType
       return true if o.is_a?(PStringType) || o.is_a?(PEnumType) || o.is_a?(PPatternType)
     end
     case o
-      when PStringType
-        # if the contained string is found in the set of enums
-        instance?(o.value, guard)
-      when PEnumType
-        !o.values.empty? && (case_insensitive? || !o.case_insensitive?) && o.values.all? { |s| instance?(s, guard) }
-      else
-        false
+    when PStringType
+      # if the contained string is found in the set of enums
+      instance?(o.value, guard)
+    when PEnumType
+      !o.values.empty? && (case_insensitive? || !o.case_insensitive?) && o.values.all? { |s| instance?(s, guard) }
+    else
+      false
     end
   end
 end
@@ -1379,22 +1379,22 @@ class PCollectionType < PAnyType
   #
   def _assignable?(o, guard)
     case o
-      when PCollectionType
-        (@size_type || DEFAULT_SIZE).assignable?(o.size_type || DEFAULT_SIZE, guard)
-      when PTupleType
-        # compute the tuple's min/max size, and check if that size matches
-        size_s = size_type || DEFAULT_SIZE
-        size_o = o.size_type
-        if size_o.nil?
-          type_count = o.types.size
-          size_o = PIntegerType.new(type_count, type_count)
-        end
-        size_s.assignable?(size_o)
-      when PStructType
-        from = to = o.elements.size
-        (@size_type || DEFAULT_SIZE).assignable?(PIntegerType.new(from, to), guard)
-      else
-        false
+    when PCollectionType
+      (@size_type || DEFAULT_SIZE).assignable?(o.size_type || DEFAULT_SIZE, guard)
+    when PTupleType
+      # compute the tuple's min/max size, and check if that size matches
+      size_s = size_type || DEFAULT_SIZE
+      size_o = o.size_type
+      if size_o.nil?
+        type_count = o.types.size
+        size_o = PIntegerType.new(type_count, type_count)
+      end
+      size_s.assignable?(size_o)
+    when PStructType
+      from = to = o.elements.size
+      (@size_type || DEFAULT_SIZE).assignable?(PIntegerType.new(from, to), guard)
+    else
+      false
     end
   end
 end

@@ -158,17 +158,17 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # Also used to profile/log reasons for not inlining.
   def inlineable?(resource, sources)
     case
-      when resource[:ensure] == 'absent'
-        #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-        return Puppet::Util::Profiler.profile(_("Not inlining absent resource"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :absent]) { false }
-      when sources.empty?
-        #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-        return Puppet::Util::Profiler.profile(_("Not inlining resource without sources"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
-      when (not (sources.all? {|source| source =~ /^puppet:/}))
-        #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-        return Puppet::Util::Profiler.profile(_("Not inlining unsupported source scheme"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
-      else
-        return true
+    when resource[:ensure] == 'absent'
+      #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
+      return Puppet::Util::Profiler.profile(_("Not inlining absent resource"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :absent]) { false }
+    when sources.empty?
+      #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
+      return Puppet::Util::Profiler.profile(_("Not inlining resource without sources"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
+    when (not (sources.all? {|source| source =~ /^puppet:/}))
+      #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
+      return Puppet::Util::Profiler.profile(_("Not inlining unsupported source scheme"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
+    else
+      return true
     end
   end
 

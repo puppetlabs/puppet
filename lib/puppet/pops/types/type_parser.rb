@@ -371,20 +371,21 @@ class TypeParser
 
     when 'collection'
       size_type = case parameters.size
-        when 1
-          if parameters[0].is_a?(PIntegerType)
-            parameters[0]
-          else
-            assert_range_parameter(ast, parameters[0])
-            TypeFactory.range(parameters[0], :default)
-          end
-        when 2
-          assert_range_parameter(ast, parameters[0])
-          assert_range_parameter(ast, parameters[1])
-          TypeFactory.range(parameters[0], parameters[1])
-        else
-          raise_invalid_parameters_error('Collection', '1 to 2', parameters.size)
-        end
+                  when 1
+                    if parameters[0].is_a?(PIntegerType)
+                      parameters[0]
+                    else
+                    assert_range_parameter(ast, parameters[0])
+                    TypeFactory.range(parameters[0], :default)
+                    end
+                  when 2
+                    assert_range_parameter(ast, parameters[0])
+                    assert_range_parameter(ast, parameters[1])
+                    TypeFactory.range(parameters[0], parameters[1])
+                  else
+                    raise_invalid_parameters_error('Collection', '1 to 2',
+                                                   parameters.size)
+                  end
       TypeFactory.collection(size_type)
 
     when 'class'
@@ -541,21 +542,21 @@ class TypeParser
 
     when 'string'
       size_type =
-      case parameters.size
-      when 1
-        if parameters[0].is_a?(PIntegerType)
-          parameters[0]
-        else
+        case parameters.size
+        when 1
+          if parameters[0].is_a?(PIntegerType)
+            parameters[0]
+          else
+            assert_range_parameter(ast, parameters[0])
+            TypeFactory.range(parameters[0], :default)
+          end
+        when 2
           assert_range_parameter(ast, parameters[0])
-          TypeFactory.range(parameters[0], :default)
+          assert_range_parameter(ast, parameters[1])
+          TypeFactory.range(parameters[0], parameters[1])
+        else
+          raise_invalid_parameters_error('String', '1 to 2', parameters.size)
         end
-      when 2
-        assert_range_parameter(ast, parameters[0])
-        assert_range_parameter(ast, parameters[1])
-        TypeFactory.range(parameters[0], parameters[1])
-      else
-        raise_invalid_parameters_error('String', '1 to 2', parameters.size)
-      end
       TypeFactory.string(size_type)
 
     when 'sensitive'

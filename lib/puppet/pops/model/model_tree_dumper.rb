@@ -319,21 +319,21 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_IfExpression o
     result = ["if", do_dump(o.test), :indent, :break,
-      ["then", :indent, do_dump(o.then_expr), :dedent]]
+              ["then", :indent, do_dump(o.then_expr), :dedent]]
     result +=
-    [:break,
-      ["else", :indent, do_dump(o.else_expr), :dedent],
-      :dedent] unless is_nop? o.else_expr
+      [:break,
+       ["else", :indent, do_dump(o.else_expr), :dedent],
+       :dedent] unless is_nop? o.else_expr
     result
   end
 
   def dump_UnlessExpression o
     result = ["unless", do_dump(o.test), :indent, :break,
-      ["then", :indent, do_dump(o.then_expr), :dedent]]
+              ["then", :indent, do_dump(o.then_expr), :dedent]]
     result +=
-    [:break,
-      ["else", :indent, do_dump(o.else_expr), :dedent],
-      :dedent] unless is_nop? o.else_expr
+      [:break,
+       ["else", :indent, do_dump(o.else_expr), :dedent],
+       :dedent] unless is_nop? o.else_expr
     result
   end
 

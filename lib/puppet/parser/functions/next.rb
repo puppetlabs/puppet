@@ -33,7 +33,7 @@ Would notice the value `[10, 200, 30]`
 
 * Also see functions `return` and `break`
 * Since 4.8.0
-DOC
+  DOC
 ) do |_args|
   Puppet::Parser::Functions::Error.is4x('next')
 end

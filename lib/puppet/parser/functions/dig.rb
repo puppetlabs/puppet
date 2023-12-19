@@ -33,7 +33,7 @@ rather than failing catalog compilation. This allows you to check if data
 exists in a structure without mandating that it always exists.
 
 * Since 4.5.0
-DOC
+  DOC
 ) do |_args|
   Puppet::Parser::Functions::Error.is4x('dig')
 end

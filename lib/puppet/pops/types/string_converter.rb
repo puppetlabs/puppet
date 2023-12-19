@@ -619,36 +619,37 @@ class StringConverter
   def string_PDefaultType(val_type, val, format_map, _)
     f = get_format(val_type, format_map)
     apply_string_flags(f, case f.format
-    when :d, :s, :p
-      f.alt? ? '"default"' : 'default'
-    when :D
-      f.alt? ? '"Default"' : 'Default'
-    else
-      raise FormatError.new('Default', f.format, 'dDsp')
-    end)
+                          when :d, :s, :p
+                            f.alt? ? '"default"' : 'default'
+                          when :D
+                            f.alt? ? '"Default"' : 'Default'
+                          else
+                            raise FormatError.new('Default', f.format, 'dDsp')
+                          end)
   end
 
   # @api private
   def string_PUndefType(val_type, val, format_map, _)
     f = get_format(val_type, format_map)
     apply_string_flags(f, case f.format
-    when :n
-      f.alt? ? 'null' : 'nil'
-    when :u
-      f.alt? ? 'undefined' : 'undef'
-    when :d, :x, :X, :o, :b, :B, :e, :E, :f, :g, :G, :a, :A
-      'NaN'
-    when :v
-      'n/a'
-    when :V
-      'N/A'
-    when :s
-      f.alt? ? '""' : ''
-    when :p
-      f.alt? ? '"undef"' : 'undef'
-    else
-      raise FormatError.new('Undef', f.format, 'nudxXobBeEfgGaAvVsp')
-    end)
+                          when :n
+                            f.alt? ? 'null' : 'nil'
+                          when :u
+                            f.alt? ? 'undefined' : 'undef'
+                          when :d, :x, :X, :o, :b, :B, :e, :E, :f, :g, :G, :a, :A
+                            'NaN'
+                          when :v
+                            'n/a'
+                          when :V
+                            'N/A'
+                          when :s
+                            f.alt? ? '""' : ''
+                          when :p
+                            f.alt? ? '"undef"' : 'undef'
+                          else
+                            raise FormatError.new('Undef', f.format,
+                                                  'nudxXobBeEfgGaAvVsp')
+                          end)
   end
 
   # @api private

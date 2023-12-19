@@ -231,11 +231,10 @@ class Puppet::Property < Puppet::Parameter
     name == :ensure or return (name.to_s + "_changed").to_sym
 
     return (resource.type.to_s + case value
-    when :present; "_created"
-    when :absent; "_removed"
-    else
-      "_changed"
-    end).to_sym
+                                 when :present; "_created"
+                                 when :absent;  "_removed"
+                                 else           "_changed"
+                                 end).to_sym
   end
 
   # Produces an event describing a change of this property.
