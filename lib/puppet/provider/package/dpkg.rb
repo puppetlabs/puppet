@@ -188,5 +188,4 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       execute([:dpkg, "--set-selections"], :failonfail => false, :combine => false, :stdinfile => tmpfile.path.to_s)
     end
   end
-
 end

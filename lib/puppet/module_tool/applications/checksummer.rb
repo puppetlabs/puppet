@@ -15,7 +15,6 @@ module Puppet::ModuleTool
         changes = []
         sums = Puppet::ModuleTool::Checksums.new(@path)
         checksums.each do |child_path, canonical_checksum|
-
           # Avoid checksumming the checksums.json file
           next if File.basename(child_path) == "checksums.json"
 

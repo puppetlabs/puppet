@@ -26,7 +26,6 @@
 # Would both result in `['hello', 'hi']`
 #
 Puppet::Functions.create_function(:strip) do
-
   dispatch :on_numeric do
     param 'Numeric', :arg
   end

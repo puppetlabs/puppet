@@ -41,7 +41,6 @@ class Puppet::Parser::ScriptCompiler
 
     # TRANSLATORS, "For running script" is not user facing
     Puppet.override( @context_overrides , "For running script") do
-
       #TRANSLATORS "main" is a function name and should not be translated
       result = Puppet::Util::Profiler.profile(_("Script: Evaluated main"), [:script, :evaluate_main]) { evaluate_main }
       if block_given?

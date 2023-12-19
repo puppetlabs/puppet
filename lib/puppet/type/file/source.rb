@@ -12,7 +12,6 @@ module Puppet
   # this state, during retrieval, modifies the appropriate other states
   # so that things get taken care of appropriately.
   Puppet::Type.type(:file).newparam(:source) do
-
     attr_accessor :source, :local
 
     desc <<-'EOT'

@@ -34,5 +34,4 @@ Puppet::Functions.create_function(:ceiling) do
       raise(ArgumentError, _('ceiling(): cannot convert given value to a floating point value.'))
     end
   end
-
 end

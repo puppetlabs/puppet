@@ -26,6 +26,5 @@ This function uses the same version comparison algorithm used by Puppet's
 `package` type.
 
 ") do |args|
-
   return Puppet::Util::Package.versioncmp(args[0], args[1])
 end

@@ -19,5 +19,4 @@ Puppet::Type.type(:group).provide :directoryservice, :parent => Puppet::Provider
       return current.sort.uniq == should.sort.uniq
     end
   end
-
 end

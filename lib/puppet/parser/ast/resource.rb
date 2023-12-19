@@ -26,7 +26,6 @@ class Puppet::Parser::AST::Resource < Puppet::Parser::AST::Branch
     # instance.  This handles things like:
     # file { '/foo': owner => blah; '/bar': owner => blah }
     @instances.map do |instance|
-
       # Evaluate all of the specified params.
       paramobjects = instance.parameters.map { |param| param.safeevaluate(scope) }
 

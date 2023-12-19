@@ -11,7 +11,6 @@
 require_relative '../../../puppet/provider/package'
 
 Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
-
   has_feature :installable, :uninstallable, :versionable, :supports_flavors, :disableable
   #has_feature :upgradeable
   # it's not (yet) feasible to make this upgradeable since module streams don't

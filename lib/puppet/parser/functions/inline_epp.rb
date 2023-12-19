@@ -47,6 +47,5 @@ END
 
 - Since 3.5
 - Requires [future parser](https://puppet.com/docs/puppet/3.8/experiments_future.html) in Puppet 3.5 to 3.8") do |_arguments|
-
   Puppet::Parser::Functions::Error.is4x('inline_epp')
 end

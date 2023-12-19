@@ -35,6 +35,5 @@ parameter tag without default values. Puppet produces an error if the `epp`
 function fails to pass any required parameter.
 
 - Since 4.0.0") do |_args|
-
   Puppet::Parser::Functions::Error.is4x('epp')
 end

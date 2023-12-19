@@ -7,7 +7,6 @@ require_relative '../../../puppet/util/package/version/range'
 require_relative '../../../puppet/provider/package_targetable'
 
 Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package::Targetable do
-
   desc "Python packages via `pip`.
 
   This provider supports the `install_options` attribute, which allows command-line flags to be passed to pip.

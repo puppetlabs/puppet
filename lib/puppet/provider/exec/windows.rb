@@ -2,7 +2,6 @@
 require_relative '../../../puppet/provider/exec'
 
 Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
-
   confine    'os.name' => :windows
   defaultfor 'os.name' => :windows
 

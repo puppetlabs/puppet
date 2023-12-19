@@ -47,7 +47,6 @@
 # @since 4.0.0
 #
 Puppet::Functions.create_function(:inline_epp, Puppet::Functions::InternalFunction) do
-
   dispatch :inline_epp do
     scope_param()
     param 'String', :template

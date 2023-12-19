@@ -68,5 +68,4 @@ Puppet::Type.type(:service).provide :openrc, :parent => :base do
   def statuscmd
     ((@resource.provider.get(:hasstatus) == true) || (@resource[:hasstatus] == :true)) && [command(:rcservice), @resource[:name], :status]
   end
-
 end

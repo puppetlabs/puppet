@@ -4,7 +4,6 @@
 
 Puppet::Type.type(:package).provide :pip2,
                                     :parent => :pip do
-
   desc "Python packages via `pip2`.
 
   This provider supports the `install_options` attribute, which allows command-line flags to be passed to pip2.

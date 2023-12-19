@@ -498,7 +498,6 @@ class PObjectType < PMetaType
 
     # Create and return a #new_XXX function where the dispatchers are added programmatically.
     Puppet::Functions.create_loaded_function(:"new_#{name}", loader) do
-
       # The class that creates new instances must be available to the constructor methods
       # and is therefore declared as a variable and accessor on the class that represents
       # this added function.
@@ -769,7 +768,6 @@ class PObjectType < PMetaType
         raise Puppet::ParseError, _('equality_include_type = false cannot be combined with non empty equality specification') unless @equality_include_type
         parent_eq_attrs = nil
         equality.each do |attr_name|
-
           attr = parent_members[attr_name]
           if attr.nil?
             attr = @attributes[attr_name] || @functions[attr_name]

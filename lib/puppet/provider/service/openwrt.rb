@@ -33,5 +33,4 @@ Puppet::Type.type(:service).provide :openwrt, :parent => :init, :source => :init
   # As OpenWrt init script do not have status commands
   def statuscmd
   end
-
 end

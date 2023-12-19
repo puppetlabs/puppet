@@ -41,5 +41,4 @@ Puppet::Functions.create_function(:length) do
   def binary_length(bin)
     bin.length
   end
-
 end

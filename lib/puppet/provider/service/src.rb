@@ -3,7 +3,6 @@ require 'timeout'
 
 # AIX System Resource controller (SRC)
 Puppet::Type.type(:service).provide :src, :parent => :base do
-
   desc "Support for AIX's System Resource controller.
 
   Services are started/stopped based on the `stopsrc` and `startsrc`
@@ -143,6 +142,5 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
     self.debug(detail.message)
     return :stopped
   end
-
 end
 

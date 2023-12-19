@@ -59,7 +59,6 @@ module Puppet::Util::Windows::SID
             FFI::MemoryPointer.new(:dword, 1) do |sid_length_ptr|
               FFI::MemoryPointer.new(:dword, 1) do |domain_length_ptr|
                 FFI::MemoryPointer.new(:uint32, 1) do |name_use_enum_ptr|
-
                 sid_length_ptr.write_dword(MAXIMUM_SID_BYTE_LENGTH)
                 success = LookupAccountNameW(system_name_ptr, account_name_ptr, sid_ptr, sid_length_ptr,
                                              FFI::Pointer::NULL, domain_length_ptr, name_use_enum_ptr)
@@ -109,7 +108,6 @@ module Puppet::Util::Windows::SID
           FFI::MemoryPointer.new(:dword, 1) do |name_length_ptr|
             FFI::MemoryPointer.new(:dword, 1) do |domain_length_ptr|
               FFI::MemoryPointer.new(:uint32, 1) do |name_use_enum_ptr|
-
                 sid_ptr.write_array_of_uchar(sid_bytes)
 
                 if Puppet::Util::Windows::SID.IsValidSid(sid_ptr) == FFI::WIN32_FALSE

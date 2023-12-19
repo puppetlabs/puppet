@@ -239,5 +239,4 @@ Puppet::Face.define(:help, '0.0.1') do
   #  that you can't use the 'private' keyword inside of a Face definition.
   #  See #14205.
   #private :is_face_app?
-
 end

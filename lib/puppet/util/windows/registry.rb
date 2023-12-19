@@ -184,7 +184,6 @@ module Puppet::Util::Windows
 
       FFI::MemoryPointer.new(:dword) do |max_subkey_name_length_ptr|
         FFI::MemoryPointer.new(:dword) do |max_value_name_length_ptr|
-
           status = RegQueryInfoKeyW(key.hkey,
                                     FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
                                     FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,

@@ -188,7 +188,6 @@ module Puppet::Util::Windows
     def string_to_sid_ptr(string_sid, &block)
       FFI::MemoryPointer.from_string_to_wide_string(string_sid) do |lpcwstr|
         FFI::MemoryPointer.new(:pointer, 1) do |sid_ptr_ptr|
-
           if ConvertStringSidToSidW(lpcwstr, sid_ptr_ptr) == FFI::WIN32_FALSE
             raise Puppet::Util::Windows::Error.new(_("Failed to convert string SID: %{string_sid}") % { string_sid: string_sid })
           end

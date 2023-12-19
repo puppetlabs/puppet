@@ -3,7 +3,6 @@ require_relative '../../puppet/network/format_handler'
 require_relative '../../puppet/util/json'
 
 Puppet::Network::FormatHandler.create_serialized_formats(:msgpack, :weight => 20, :mime => "application/x-msgpack", :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
-
   confine :feature => :msgpack
 
   def intern(klass, text)
@@ -188,7 +187,6 @@ end
 Puppet::Network::FormatHandler.create(:flat,
                                       :mime   => 'text/x-flat-text',
                                       :weight => 0) do
-
   def flatten_hash(hash)
     hash.each_with_object({}) do |(k, v), h|
       if v.is_a? Hash

@@ -34,5 +34,4 @@ Puppet::Functions.create_function(:floor) do
       raise(ArgumentError, _('floor(): cannot convert given value to a floating point value.'))
     end
   end
-
 end

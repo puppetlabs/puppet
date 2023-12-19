@@ -141,7 +141,6 @@
 # @since 5.0.0
 #
 Puppet::Functions.create_function(:tree_each) do
-
   local_types do
     type "OptionsType  = Struct[{\
       container_type => Optional[Type],\

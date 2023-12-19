@@ -982,7 +982,6 @@
 # @since 4.5.0
 #
 Puppet::Functions.create_function(:new, Puppet::Functions::InternalFunction) do
-
   dispatch :new_instance do
     scope_param
     param          'Type', :type

@@ -36,7 +36,6 @@
 # @since 4.0.0
 #
 Puppet::Functions.create_function(:epp, Puppet::Functions::InternalFunction) do
-
   dispatch :epp do
     scope_param
     param 'String', :path

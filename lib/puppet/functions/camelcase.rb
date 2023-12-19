@@ -30,7 +30,6 @@
 # Would both result in `['AbcDef', 'BcdXyz']`
 #
 Puppet::Functions.create_function(:camelcase) do
-
   dispatch :on_numeric do
     param 'Numeric', :arg
   end

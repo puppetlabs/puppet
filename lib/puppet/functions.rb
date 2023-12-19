@@ -737,7 +737,6 @@ module Puppet::Functions
       # When function is not an rvalue function, make sure it produces nil
       #
       the_class.class_eval do
-
         # Bypasses making the  call via the dispatcher to make sure errors
         # are reported exactly the same way as in 3x. The dispatcher is still needed as it is
         # used to support other features than calling.

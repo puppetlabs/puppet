@@ -38,7 +38,6 @@ module Puppet
       end
 
       defaultto :present
-
     end
 
     newproperty(:gid) do

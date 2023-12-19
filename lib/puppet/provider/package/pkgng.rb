@@ -172,5 +172,4 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
   def install_options
     join_options(@resource[:install_options])
   end
-
 end

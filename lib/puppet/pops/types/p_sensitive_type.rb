@@ -51,7 +51,6 @@ class PSensitiveType < PTypeWithContainedType
 
   def self.new_function(type)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_Sensitive, type.loader) do
-
       dispatch :from_sensitive do
         param 'Sensitive', :value
       end

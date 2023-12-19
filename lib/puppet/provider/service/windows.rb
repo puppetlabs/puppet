@@ -2,7 +2,6 @@
 # Windows Service Control Manager (SCM) provider
 
 Puppet::Type.type(:service).provide :windows, :parent => :service do
-
   desc <<-EOT
     Support for Windows Service Control Manager (SCM). This provider can
     start, stop, enable, and disable services, and the SCM provides working
