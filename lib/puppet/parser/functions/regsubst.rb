@@ -28,7 +28,7 @@
 
 module Puppet::Parser::Functions
   newfunction(
-  :regsubst, :type => :rvalue,
+    :regsubst, :type => :rvalue,
   :arity => -4,
 
   :doc => "

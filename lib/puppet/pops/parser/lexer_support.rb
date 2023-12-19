@@ -68,13 +68,13 @@ module LexerSupport
   # @return [Puppet::ParseErrorWithIssue] the created error
   def create_lex_error(issue, args = {}, pos = nil)
     Puppet::ParseErrorWithIssue.new(
-        issue.format(args),
-        filename,
-        line(pos),
-        position(pos),
-        nil,
-        issue.issue_code,
-        args)
+      issue.format(args),
+      filename,
+      line(pos),
+      position(pos),
+      nil,
+      issue.issue_code,
+      args)
   end
 
   # Asserts that the given string value is a float, or an integer in decimal, octal or hex form.

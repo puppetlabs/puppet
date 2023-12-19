@@ -184,10 +184,10 @@ module Puppet::ModuleTool
             end
 
             raise NoVersionsSatisfyError, results.merge(
-                    :requested_name => name,
-                    :requested_version => options[:version] || graph.dependencies[name].max.version.to_s,
-                    :unsatisfied => unsatisfied
-                  )
+              :requested_name => name,
+              :requested_version => options[:version] || graph.dependencies[name].max.version.to_s,
+              :unsatisfied => unsatisfied
+            )
           end
 
           unless forced?

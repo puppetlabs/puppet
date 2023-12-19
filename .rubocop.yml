@@ -33,6 +33,11 @@ Layout/ElseAlignment:
   Exclude:
     - 'lib/puppet/provider/package/*.rb'
 
+# Formatting in defaults is unusual
+Layout/FirstArgumentIndentation:
+  Exclude:
+    - 'lib/puppet/defaults.rb'
+
 # puppet uses symbol booleans in types and providers to work around long standing
 # bugs when trying to manage falsey pararameters and properties
 Lint/BooleanSymbol:

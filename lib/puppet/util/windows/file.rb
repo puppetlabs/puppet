@@ -225,13 +225,13 @@ module Puppet::Util::Windows::File
   def self.open_symlink(link_name)
     begin
       yield handle = create_file(
-      link_name,
-      GENERIC_READ,
-      FILE_SHARE_READ,
-      nil, # security_attributes
-      OPEN_EXISTING,
-      FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
-      0) # template_file
+        link_name,
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        nil, # security_attributes
+        OPEN_EXISTING,
+        FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
+        0) # template_file
     ensure
       FFI::WIN32.CloseHandle(handle) if handle
     end

@@ -89,8 +89,8 @@ class Puppet::Util::Windows::AccessControlList
     if prepend_needed
       mask = Puppet::Util::Windows::File::STANDARD_RIGHTS_ALL | Puppet::Util::Windows::File::SPECIFIC_RIGHTS_ALL
       ace = Puppet::Util::Windows::AccessControlEntry.new(
-              Puppet::Util::Windows::SID::LocalSystem,
-              mask)
+        Puppet::Util::Windows::SID::LocalSystem,
+        mask)
       @aces << ace
     end
 

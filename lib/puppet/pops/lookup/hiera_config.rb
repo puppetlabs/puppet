@@ -495,12 +495,12 @@ class HieraConfigV4 < HieraConfig
       KEY_VERSION => tf.range(4, 4),
       tf.optional(KEY_DATADIR) => nes_t,
       tf.optional(KEY_HIERARCHY) => tf.array_of(tf.struct(
-        KEY_BACKEND => nes_t,
-        KEY_NAME => nes_t,
-        tf.optional(KEY_DATADIR) => nes_t,
-        tf.optional(KEY_PATH) => nes_t,
-        tf.optional(KEY_PATHS) => tf.array_of(nes_t)
-      ))
+                                                  KEY_BACKEND => nes_t,
+                                                  KEY_NAME => nes_t,
+                                                  tf.optional(KEY_DATADIR) => nes_t,
+                                                  tf.optional(KEY_PATH) => nes_t,
+                                                  tf.optional(KEY_PATHS) => tf.array_of(nes_t)
+                                                ))
     })
   end
 
@@ -578,23 +578,23 @@ class HieraConfigV5 < HieraConfig
     option_name_t = tf.pattern(/\A[A-Za-z](:?[0-9A-Za-z_-]*[0-9A-Za-z])?\z/)
 
     hierarchy_t = tf.array_of(tf.struct(
-      {
-        KEY_NAME => nes_t,
-        tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
-        tf.optional(KEY_DATA_HASH) => nes_t,
-        tf.optional(KEY_LOOKUP_KEY) => nes_t,
-        tf.optional(KEY_V3_BACKEND) => nes_t,
-        tf.optional(KEY_V4_DATA_HASH) => nes_t,
-        tf.optional(KEY_DATA_DIG) => nes_t,
-        tf.optional(KEY_PATH) => nes_t,
-        tf.optional(KEY_PATHS) => tf.array_of(nes_t, tf.range(1, :default)),
-        tf.optional(KEY_GLOB) => nes_t,
-        tf.optional(KEY_GLOBS) => tf.array_of(nes_t, tf.range(1, :default)),
-        tf.optional(KEY_URI) => uri_t,
-        tf.optional(KEY_URIS) => tf.array_of(uri_t, tf.range(1, :default)),
-        tf.optional(KEY_MAPPED_PATHS) => tf.array_of(nes_t, tf.range(3, 3)),
-        tf.optional(KEY_DATADIR) => nes_t
-      }))
+                                {
+                                  KEY_NAME => nes_t,
+                                  tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
+                                  tf.optional(KEY_DATA_HASH) => nes_t,
+                                  tf.optional(KEY_LOOKUP_KEY) => nes_t,
+                                  tf.optional(KEY_V3_BACKEND) => nes_t,
+                                  tf.optional(KEY_V4_DATA_HASH) => nes_t,
+                                  tf.optional(KEY_DATA_DIG) => nes_t,
+                                  tf.optional(KEY_PATH) => nes_t,
+                                  tf.optional(KEY_PATHS) => tf.array_of(nes_t, tf.range(1, :default)),
+                                  tf.optional(KEY_GLOB) => nes_t,
+                                  tf.optional(KEY_GLOBS) => tf.array_of(nes_t, tf.range(1, :default)),
+                                  tf.optional(KEY_URI) => uri_t,
+                                  tf.optional(KEY_URIS) => tf.array_of(uri_t, tf.range(1, :default)),
+                                  tf.optional(KEY_MAPPED_PATHS) => tf.array_of(nes_t, tf.range(3, 3)),
+                                  tf.optional(KEY_DATADIR) => nes_t
+                                }))
 
     @@CONFIG_TYPE = tf.struct({
       KEY_VERSION => tf.range(5, 5),

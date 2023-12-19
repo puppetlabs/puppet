@@ -44,11 +44,11 @@ Puppet::Functions.create_function(:dig) do
         t = Puppet::Pops::Types::TypeCalculator.infer(d)
         msg = _("The given data does not contain a Collection at %{walked_path}, got '%{type}'") % { walked_path: walked_path, type: t }
         error_data = Puppet::DataTypes::Error.new(
-            msg,
-            'SLICE_ERROR',
-            {'walked_path' => walked_path, 'value_type' => t},
-            'EXPECTED_COLLECTION'
-          )
+          msg,
+          'SLICE_ERROR',
+          {'walked_path' => walked_path, 'value_type' => t},
+          'EXPECTED_COLLECTION'
+        )
         raise Puppet::ErrorWithData.new(error_data, msg)
       end
 
@@ -57,11 +57,11 @@ Puppet::Functions.create_function(:dig) do
         t = Puppet::Pops::Types::TypeCalculator.infer(k)
         msg = _("The given data requires an Integer index at %{walked_path}, got '%{type}'") % { walked_path: walked_path, type: t }
         error_data = Puppet::DataTypes::Error.new(
-            msg,
-            'SLICE_ERROR',
-            {'walked_path' => walked_path, 'index_type' => t},
-            'EXPECTED_INTEGER_INDEX'
-          )
+          msg,
+          'SLICE_ERROR',
+          {'walked_path' => walked_path, 'index_type' => t},
+          'EXPECTED_INTEGER_INDEX'
+        )
         raise Puppet::ErrorWithData.new(error_data, msg)
       end
       d[k]

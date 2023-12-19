@@ -42,16 +42,16 @@ class Puppet::Parser::AST::Resource < Puppet::Parser::AST::Branch
       resource_titles.flatten.map do |resource_title|
         exceptwrap :type => Puppet::ParseError do
           resource = Puppet::Parser::Resource.new(
-          fully_qualified_type, resource_title,
-          :parameters => paramobjects,
-          :file => self.file,
-          :line => self.line,
-          :exported => self.exported,
-          :virtual => virt,
-          :source => scope.source,
-          :scope => scope,
-          :strict => true
-          ) # rubocop:disable Layout/ClosingParenthesisIndentation
+            fully_qualified_type, resource_title,
+            :parameters => paramobjects,
+            :file => self.file,
+            :line => self.line,
+            :exported => self.exported,
+            :virtual => virt,
+            :source => scope.source,
+            :scope => scope,
+            :strict => true
+          )
 
           if resource.resource_type.is_a? Puppet::Resource::Type
             resource.resource_type.instantiate_resource(scope, resource)

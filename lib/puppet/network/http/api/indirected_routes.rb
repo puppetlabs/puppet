@@ -207,8 +207,8 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     return formatter if formatter
 
     raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new(
-            _("No supported formats are acceptable (Accept: %{accepted_formats})") % { accepted_formats: formats.map(&:mime).join(', ') },
-            Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT)
+      _("No supported formats are acceptable (Accept: %{accepted_formats})") % { accepted_formats: formats.map(&:mime).join(', ') },
+      Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT)
   end
 
   # Return an array of response formatters that the client accepts and
@@ -249,7 +249,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       method = METHOD_MAP[http_method][plurality(indirection)]
       unless method
         raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        _("No support for plurality %{indirection} for %{http_method} operations") % { indirection: plurality(indirection), http_method: http_method })
+          _("No support for plurality %{indirection} for %{http_method} operations") % { indirection: plurality(indirection), http_method: http_method })
       end
 
     method

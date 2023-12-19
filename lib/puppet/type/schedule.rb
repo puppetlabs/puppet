@@ -402,18 +402,18 @@ module Puppet
       Puppet.debug "Creating default schedules"
 
             result << self.new(
-        :name => "puppet",
-        :period => :hourly,
+              :name => "puppet",
+              :period => :hourly,
 
-        :repeat => "2"
-      )
+              :repeat => "2"
+            )
 
       # And then one for every period
       @parameters.find { |p| p.name == :period }.value_collection.values.each { |value|
               result << self.new(
-          :name => value.to_s,
-          :period => value
-        )
+                :name => value.to_s,
+                :period => value
+              )
       }
 
       result

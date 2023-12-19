@@ -24,12 +24,6 @@ I18n/RailsI18n/DecorateString:
 
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: consistent, consistent_relative_to_receiver, special_for_inner_method_call, special_for_inner_method_call_in_parentheses
-Layout/FirstArgumentIndentation:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
 # SupportedStyles: special_inside_parentheses, consistent, align_brackets
 Layout/FirstArrayElementIndentation:
   Exclude:

@@ -99,13 +99,13 @@ module Puppet
       filename, line = Puppet::Pops::PuppetStack.top_of_stack
 
       self.new(
-            issue.format(args),
-            filename,
-            line,
-            nil,
-            nil,
-            issue.issue_code,
-            args)
+        issue.format(args),
+        filename,
+        line,
+        nil,
+        nil,
+        issue.issue_code,
+        args)
     end
   end
 

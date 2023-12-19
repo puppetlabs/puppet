@@ -136,8 +136,8 @@ module Puppet::Util::Windows::Process
             result = QueryFullProcessImageNameW(phandle, use_win32_path_format, exe_name_ptr, exe_name_length_ptr)
             if result == FFI::WIN32_FALSE
               raise Puppet::Util::Windows::Error.new(
-                      "QueryFullProcessImageNameW(phandle, #{use_win32_path_format}, " +
-                      "exe_name_ptr, #{max_chars}")
+                "QueryFullProcessImageNameW(phandle, #{use_win32_path_format}, " +
+                "exe_name_ptr, #{max_chars}")
             end
             image_name = exe_name_ptr.read_wide_string(exe_name_length_ptr.read_dword)
           end

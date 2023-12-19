@@ -2,7 +2,7 @@
 
 module Puppet::Parser::Functions
   newfunction(
-  :split, :type => :rvalue,
+    :split, :type => :rvalue,
   :arity => 2,
 
     :doc => "\

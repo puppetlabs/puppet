@@ -512,13 +512,13 @@ module Puppet::Util::Windows::Security
   # block with the opened file HANDLE.
   def open_file(path, access, &block)
     handle = CreateFileW(
-             wide_string(path),
-             access,
-             FILE::FILE_SHARE_READ | FILE::FILE_SHARE_WRITE,
-             FFI::Pointer::NULL, # security_attributes
-             FILE::OPEN_EXISTING,
-             FILE::FILE_FLAG_OPEN_REPARSE_POINT | FILE::FILE_FLAG_BACKUP_SEMANTICS,
-             FFI::Pointer::NULL_HANDLE) # template
+      wide_string(path),
+      access,
+      FILE::FILE_SHARE_READ | FILE::FILE_SHARE_WRITE,
+      FFI::Pointer::NULL, # security_attributes
+      FILE::OPEN_EXISTING,
+      FILE::FILE_FLAG_OPEN_REPARSE_POINT | FILE::FILE_FLAG_BACKUP_SEMANTICS,
+      FFI::Pointer::NULL_HANDLE) # template
 
     if handle == Puppet::Util::Windows::File::INVALID_HANDLE_VALUE
       raise Puppet::Util::Windows::Error.new(_("Failed to open '%{path}'") % { path: path })
