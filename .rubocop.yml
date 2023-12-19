@@ -17,8 +17,8 @@ AllCops:
     - 'lib/puppet/vendor/**/*'
     - 'lib/puppet/pops/parser/eparser.rb'
 
-# This cop would completely reformat defaults, so we skip it for now.
-Layout/ArgumentAlignment:
+# The formatting of defaults is unusual, so let's skip layout cops.
+Layout:
   Exclude:
     - 'lib/puppet/defaults.rb'
 
@@ -32,11 +32,6 @@ Layout/ElseAlignment:
   Enabled: true
   Exclude:
     - 'lib/puppet/provider/package/*.rb'
-
-# Formatting in defaults is unusual
-Layout/FirstArgumentIndentation:
-  Exclude:
-    - 'lib/puppet/defaults.rb'
 
 # puppet uses symbol booleans in types and providers to work around long standing
 # bugs when trying to manage falsey pararameters and properties
