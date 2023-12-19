@@ -4,7 +4,6 @@
 #
 # @api public
 class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
-
   # Create a server list resolver.
   #
   # @param [Puppet::HTTP::Client] client

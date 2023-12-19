@@ -3,7 +3,6 @@
 #
 # @api public
 class Puppet::HTTP::Resolver::SRV < Puppet::HTTP::Resolver
-
   # Create an DNS SRV resolver.
   #
   # @param [Puppet::HTTP::Client] client

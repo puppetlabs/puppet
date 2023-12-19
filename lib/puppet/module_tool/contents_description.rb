@@ -7,7 +7,6 @@ module Puppet::ModuleTool
   #
   # This class populates +Metadata+'s Puppet type information.
   class ContentsDescription
-
     # Instantiate object for string +module_path+.
     def initialize(module_path)
       @module_path = module_path

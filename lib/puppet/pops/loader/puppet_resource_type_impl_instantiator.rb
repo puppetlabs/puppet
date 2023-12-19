@@ -74,7 +74,6 @@ class PuppetResourceTypeImplInstantiator
     Adapters::LoaderAdapter.adapt(resource_type_impl).loader_name = loader.loader_name
     resource_type_impl
   end
-
 end
 end
 end

@@ -4,7 +4,6 @@
 #
 # @api public
 class Puppet::HTTP::Resolver::Settings < Puppet::HTTP::Resolver
-
   # Resolve a service using the default server and port settings for this service.
   #
   # @param [Puppet::HTTP::Session] session

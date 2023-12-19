@@ -85,7 +85,6 @@
 #
 # @api public
 class Puppet::HTTP::Client
-
   attr_reader :pool
 
   # Create a new http client instance. Use `Puppet.runtime[:http]` to get

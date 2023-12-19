@@ -10,7 +10,6 @@ module Lookup
 #
 # @api private
 class LookupAdapter < DataAdapter
-
   LOOKUP_OPTIONS_PREFIX = LOOKUP_OPTIONS + '.'
   LOOKUP_OPTIONS_PREFIX.freeze
   LOOKUP_OPTIONS_PATTERN_START = '^'

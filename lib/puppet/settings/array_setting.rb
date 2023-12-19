@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 class Puppet::Settings::ArraySetting < Puppet::Settings::BaseSetting
-
   def type
     :array
   end

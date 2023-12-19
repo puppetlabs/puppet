@@ -10,7 +10,6 @@ module Evaluator
 # module. Later when more is cleaned up this can be simplified further.
 #
 class RelationshipOperator
-
   # Provides access to the Puppet 3.x runtime (scope, etc.)
   # This separation has been made to make it easier to later migrate the evaluator to an improved runtime.
   #

@@ -10,7 +10,6 @@ require_relative '../../../puppet/module_tool/installed_modules'
 module Puppet::ModuleTool
   module Applications
     class Upgrader < Application
-
       include Puppet::ModuleTool::Errors
 
       def initialize(name, options)

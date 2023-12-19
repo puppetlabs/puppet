@@ -258,6 +258,5 @@ module Puppet::FileBucketFile
         end
       end
     end
-
   end
 end

@@ -12,7 +12,6 @@ require_relative '../../puppet/parameter/value'
 # @api private
 #
 class Puppet::Parameter::ValueCollection
-
   # Aliases the given existing _other_ value with the additional given _name_.
   # @return [void]
   # @api private

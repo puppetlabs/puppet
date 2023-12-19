@@ -9,7 +9,6 @@ module Pal
   #
   # @api public
   class CatalogCompiler < Compiler
-
     # @api private
     def catalog
       internal_compiler.catalog

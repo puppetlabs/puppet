@@ -168,7 +168,6 @@ end
 # converter ensures that they are converted to String format
 # @api private
 class Runtime3FunctionArgumentConverter < Runtime3Converter
-
   def convert_Regexp(o, scope, undef_value)
     # Puppet 3x cannot handle parameter values that are regular expressions. Turn into regexp string in
     # source form

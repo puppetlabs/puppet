@@ -116,7 +116,6 @@ module DOT
   # a root class for any element in dot notation
 
   class DOTSimpleElement
-
     attr_accessor :name
 
     def initialize(params = {})
@@ -131,7 +130,6 @@ module DOT
   # an element that has options ( node, edge, or graph )
 
   class DOTElement < DOTSimpleElement
-
     # attr_reader :parent
     attr_accessor :name, :options
 
@@ -158,14 +156,12 @@ module DOT
     #    @parent.delete( self ) if defined?( @parent ) and @parent
     #    @parent = thing
     #end
-
   end
 
   # This is used when we build nodes that have shape=record
   # ports don't have options :)
 
   class DOTPort < DOTSimpleElement
-
     attr_accessor :label
 
     def initialize(params = {})
@@ -231,7 +227,6 @@ module DOT
     def stringify(s)
       %("#{s.gsub('"', '\\"')}")
     end
-
   end
 
   # A subgraph element is the same to graph, but has another header in dot
@@ -274,24 +269,20 @@ module DOT
       }.join( "\n" ) + "\n"
       hdr + options + nodes + t + "}\n"
     end
-
   end
 
   # This is a graph.
 
   class DOTDigraph < DOTSubgraph
-
   def initialize(params = {}, option_list = GRAPH_OPTS)
     super(params, option_list)
     @dot_string = 'digraph'
   end
-
   end
 
   # This is an edge.
 
   class DOTEdge < DOTElement
-
     attr_accessor :from, :to
 
     def initialize(params = {}, option_list = EDGE_OPTS)
@@ -312,14 +303,11 @@ module DOT
             i[1] ? t + $tab + "#{i[0]} = \"#{i[1]}\"" : nil
         }.compact.join( "\n" ) + "\n#{t}]\n"
     end
-
   end
 
   class DOTDirectedEdge < DOTEdge
-
     def edge_link
       '->'
     end
-
   end
 end

@@ -3,7 +3,6 @@
 #
 # @api public
 class Puppet::HTTP::ResponseNetHTTP < Puppet::HTTP::Response
-
   # Create a response associated with the URL.
   #
   # @param [URI] url

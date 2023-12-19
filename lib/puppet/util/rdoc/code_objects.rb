@@ -176,7 +176,6 @@ module RDoc
       end
       result
     end
-
   end
 
   # PuppetNode holds a puppet node

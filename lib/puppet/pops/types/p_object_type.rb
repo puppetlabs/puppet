@@ -272,7 +272,6 @@ class PObjectType < PMetaType
   # Describes a named Attribute in an Object type
   # @api public
   class PAttribute < PAnnotatedMember
-
     # @return [String,nil] The attribute kind as defined by #TYPE_ATTRIBUTE_KIND, or `nil`
     attr_reader :kind
 
@@ -382,7 +381,6 @@ class PObjectType < PMetaType
   # Describes a named Function in an Object type
   # @api public
   class PFunction < PAnnotatedMember
-
     # @param name [String] The name of the attribute
     # @param container [PObjectType] The containing object type
     # @param init_hash [Hash{String=>Object}] Hash containing function options

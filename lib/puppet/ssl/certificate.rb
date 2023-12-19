@@ -92,5 +92,4 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
       raw_val
     end
   end
-
 end

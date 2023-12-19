@@ -15,7 +15,6 @@ require_relative '../../../puppet/network/uri'
 module Puppet::ModuleTool
   module Applications
     class Installer < Application
-
       include Puppet::ModuleTool::Errors
       include Puppet::Forge::Errors
       include Puppet::Network::Uri

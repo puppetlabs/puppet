@@ -42,7 +42,6 @@ class Puppet::Parser::Scope
   # Abstract base class for LocalScope and MatchScope
   #
   class Ephemeral
-
     attr_reader :parent
 
     def initialize(parent = nil)
@@ -75,7 +74,6 @@ class Puppet::Parser::Scope
   end
 
   class LocalScope < Ephemeral
-
     def initialize(parent=nil)
       super parent
       @symbols = {}
@@ -120,7 +118,6 @@ class Puppet::Parser::Scope
   end
 
   class MatchScope < Ephemeral
-
     attr_accessor :match_data
 
     def initialize(parent = nil, match_data = nil)
@@ -165,7 +162,6 @@ class Puppet::Parser::Scope
       # do not include match data ($0-$n)
       super
     end
-
   end
 
   # @api private

@@ -3,7 +3,6 @@
 # Instantiates resources of both native and user defined types.
 #
 class Puppet::Parser::AST::Resource < Puppet::Parser::AST::Branch
-
   attr_accessor :type, :instances, :exported, :virtual
 
   def initialize(argshash)

@@ -7,7 +7,6 @@
 #
 # @api private
 class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
-
   # Create an external http client.
   #
   # @param [Class] http_client_class The class to create to handle the request
@@ -85,5 +84,4 @@ class Puppet::HTTP::ExternalClient < Puppet::HTTP::Client
   def delete(url, headers: {}, params: {}, options: {})
     raise NotImplementedError
   end
-
 end

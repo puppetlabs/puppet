@@ -4,7 +4,6 @@ require_relative '../../puppet/file_serving/metadata'
 # Simplified metadata representation, suitable for the information
 # that is available from HTTP headers.
 class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
-
   def initialize(http_response, path = '/dev/null')
     super(path)
 

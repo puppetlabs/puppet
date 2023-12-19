@@ -7,7 +7,6 @@ require_relative '../../puppet/util/yaml'
 # as calculating corrective_change).
 # @api private
 class Puppet::Transaction::Persistence
-
   def self.allowed_classes
     @allowed_classes ||= [
       Symbol,

@@ -124,7 +124,6 @@ class TreeIterator
 end
 
 class DepthFirstTreeIterator < TreeIterator
-
   # Creates a DepthFirstTreeIterator that by default treats all Array, Hash and Object instances as
   # containers - the 'containers' option can be set to a type that denotes which types of values
   # should be treated as containers - a `Variant[Array, Hash]` would for instance not treat
@@ -249,7 +248,6 @@ class BreadthFirstTreeIterator < TreeIterator
     @recursed = true
   end
   private :shift_level
-
 end
 end
 end

@@ -2,7 +2,6 @@
 module Puppet::Pops
 module Types
 class PURIType < PAnyType
-
   # Tell evaluator that an members of instances of this type can be invoked using dot notation
   include TypeWithMembers
 

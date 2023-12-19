@@ -119,6 +119,5 @@ class Visitor
     end
     visit_this(receiver, thing, [arg1, arg2, arg3])
   end
-
 end
 end

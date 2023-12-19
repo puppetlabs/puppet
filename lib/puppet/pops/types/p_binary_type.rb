@@ -15,7 +15,6 @@ module Types
 #
 # @api public
 class PBinaryType < PAnyType
-
   # Represents a binary buffer
   # @api public
   class Binary
@@ -227,7 +226,6 @@ class PBinaryType < PAnyType
   def _assignable?(o, guard)
     o.class == self.class
   end
-
 end
 end
 end

@@ -4,7 +4,6 @@
 # @api public
 #
 class Puppet::HTTP::Service::Puppetserver < Puppet::HTTP::Service
-
   # Use `Puppet::HTTP::Session.route_to(:puppetserver)` to create or get an instance of this class.
   #
   # @param [Puppet::HTTP::Client] client

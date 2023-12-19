@@ -136,5 +136,4 @@ class Puppet::Pops::Functions::Function
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(function_name) ? result : nil
   end
-
 end

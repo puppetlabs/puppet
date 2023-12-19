@@ -40,7 +40,6 @@ require_relative '../puppet/util/character_encoding'
 # @api private
 module Puppet::Etc
   class << self
-
     # Etc::getgrent returns an Etc::Group struct object
     # On first call opens /etc/group and returns parse of first entry. Each subsquent call
     # returns new struct the next entry or nil if EOF. Call ::endgrent to close file.

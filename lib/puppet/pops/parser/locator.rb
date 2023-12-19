@@ -283,11 +283,9 @@ class Locator
     def char_length(offset, end_offset)
       raise "Should not be called"
     end
-
   end
 
   class LocatorForChars < AbstractLocator
-
     def offset_on_line(offset)
       line_offset = line_index[ line_for_offset(offset)-1 ]
       offset - line_offset
@@ -306,7 +304,6 @@ class Locator
     def extract_text(offset, length)
       string.slice(offset, length)
     end
-
   end
 
   # This implementation is for Ruby19 and Ruby20. It uses byteslice to get strings from byte based offsets.

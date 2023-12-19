@@ -209,5 +209,4 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
       Puppet.warning _("The current user does not have the necessary permission to manage symlinks.")
     end
   end
-
 end

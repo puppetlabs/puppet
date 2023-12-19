@@ -6,7 +6,6 @@ require_relative '../../puppet/transaction'
 #
 # @api private
 class Puppet::Transaction::EventManager
-
   # @!attribute [r] transaction
   #   @return [Puppet::Transaction] The transaction associated with this event manager.
   attr_reader :transaction

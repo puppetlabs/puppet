@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 class Puppet::Pops::Evaluator::Collectors::FixedSetCollector < Puppet::Pops::Evaluator::Collectors::AbstractCollector
-
   # Creates a FixedSetCollector using the AbstractCollector constructor
   # to set the scope. It is not possible for a collection to have
   # overrides in this case, since we have a fixed set of resources that

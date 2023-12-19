@@ -48,7 +48,6 @@ PARAM_RE = /^-(-|\.$|[^\d\.])/
 ## and consider calling it from within
 ## Trollop::with_standard_exception_handling.
 class Parser
-
   ## The set of values that indicate a flag option when passed as the
   ## +:type+ parameter of #opt.
   FLAG_TYPES = [:flag, :bool, :boolean]

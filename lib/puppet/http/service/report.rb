@@ -4,7 +4,6 @@
 # @api public
 #
 class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
-
   # @return [String] Default API for the report service
   API = '/puppet/v3'
 

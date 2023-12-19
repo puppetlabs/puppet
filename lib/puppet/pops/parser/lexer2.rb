@@ -770,7 +770,6 @@ class Lexer2
       true
     end
   end
-
 end
 end
 end

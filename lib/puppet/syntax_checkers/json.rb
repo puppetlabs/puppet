@@ -3,7 +3,6 @@
 # @api public
 require_relative '../../puppet/syntax_checkers'
 class Puppet::SyntaxCheckers::Json < Puppet::Plugins::SyntaxCheckers::SyntaxChecker
-
   # Checks the text for JSON syntax issues and reports them to the given acceptor.
   #
   # Error messages from the checker are capped at 100 chars from the source text.

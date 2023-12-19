@@ -5,7 +5,6 @@ require_relative '../../puppet/util/network_device'
 require_relative '../../puppet/ssl/oids'
 
 class Puppet::Application::Device < Puppet::Application
-
   run_mode :agent
 
   attr_accessor :args, :agent, :host

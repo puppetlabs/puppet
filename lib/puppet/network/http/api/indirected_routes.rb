@@ -2,7 +2,6 @@
 require_relative '../../../../puppet/network/http/api/indirection_type'
 
 class Puppet::Network::HTTP::API::IndirectedRoutes
-
   # How we map http methods and the indirection name in the URI
   # to an indirection method.
   METHOD_MAP = {

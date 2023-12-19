@@ -5,7 +5,6 @@ module Puppet::Pops
 module Lookup
 # @api private
 class ModuleDataProvider < ConfiguredDataProvider
-
   attr_reader :module_name
 
   def initialize(module_name, config = nil)

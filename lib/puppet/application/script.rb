@@ -5,7 +5,6 @@ require_relative '../../puppet/util/profiler/aggregate'
 require_relative '../../puppet/parser/script_compiler'
 
 class Puppet::Application::Script < Puppet::Application
-
   option("--debug","-d")
   option("--execute EXECUTE","-e") do |arg|
     options[:code] = arg

@@ -74,7 +74,6 @@ end
 # @api public
 #
 class PAnyType < TypedModelObject
-
   def self.register_ptype(loader, ir)
     @type = Pcore::create_object_type(loader, ir, self, 'Pcore::AnyType', 'Any', EMPTY_HASH)
   end
@@ -464,7 +463,6 @@ end
 # @api public
 #
 class PTypeType < PTypeWithContainedType
-
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
                  'type' => {
@@ -2506,7 +2504,6 @@ end
 # @api public
 #
 class PArrayType < PCollectionType
-
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'CollectionType',
                  'element_type' => {
@@ -2655,7 +2652,6 @@ end
 # @api public
 #
 class PHashType < PCollectionType
-
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'CollectionType',
                  'key_type' => {
@@ -3197,7 +3193,6 @@ PHostClassType = PClassType
 # @api public
 #
 class PResourceType < PCatalogEntryType
-
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'CatalogEntryType',
                  'type_name' => {
@@ -3242,7 +3237,6 @@ end
 # @api public
 #
 class POptionalType < PTypeWithContainedType
-
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
                  'type' => {
@@ -3302,7 +3296,6 @@ class POptionalType < PTypeWithContainedType
 end
 
 class PTypeReferenceType < PAnyType
-
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType', 'type_string' => PStringType::NON_EMPTY)
   end
@@ -3351,7 +3344,6 @@ end
 #
 # @api public
 class PTypeAliasType < PAnyType
-
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType',
                  'name' => PStringType::NON_EMPTY,

@@ -5,7 +5,6 @@ require_relative '../../../puppet/module_tool/checksums'
 module Puppet::ModuleTool
   module Applications
     class Checksummer < Application
-
       def initialize(path, options = {})
         @path = Pathname.new(path)
         super(options)

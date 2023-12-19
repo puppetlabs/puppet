@@ -7,7 +7,6 @@ require_relative '../../puppet/configurer'
 require_relative '../../puppet/ssl/oids'
 
 class Puppet::Application::Agent < Puppet::Application
-
   run_mode :agent
 
   def app_defaults

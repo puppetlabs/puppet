@@ -98,7 +98,6 @@ class Runtime3TypeLoader < BaseLoader
   def allow_shadowing?
     true
   end
-
 end
 end
 end

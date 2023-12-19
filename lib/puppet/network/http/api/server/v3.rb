@@ -8,7 +8,6 @@ module Puppet
       class API
         module Server
           class V3
-
             def self.wrap(&block)
               lambda do |request, response|
                 Puppet::Network::Authorization

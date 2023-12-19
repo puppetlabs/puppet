@@ -3,7 +3,6 @@
 # @api private
 #
 class Puppet::Pops::Lookup::KeyRecorder
-
   def initialize()
   end
 

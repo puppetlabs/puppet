@@ -7,7 +7,6 @@
 # @api public
 #
 class Puppet::Pops::Evaluator::CallableSignature
-
   # Returns the names of the parameters as an array of strings. This does not include the name
   # of an optional block parameter.
   #

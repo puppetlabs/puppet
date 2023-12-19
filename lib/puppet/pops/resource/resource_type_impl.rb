@@ -289,7 +289,6 @@ class ResourceTypeImpl
   def can_apply_to_target(target)
     raise NotImplementedError, "can_apply_to_target() - probably used when selecting a provider (device/host support)"
   end
-
 end
 end
 end

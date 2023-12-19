@@ -8,7 +8,6 @@ module Puppet
         module Server
           class V3
             class Environments
-
               def initialize(env_loader)
                 @env_loader = env_loader
               end

@@ -4,7 +4,6 @@ require_relative '../../puppet/pops'
 require_relative '../../puppet/pops/evaluator/json_strict_literal_evaluator'
 
 class Puppet::InfoService::ClassInformationService
-
   def initialize
     @file_to_result = {}
     @parser = Puppet::Pops::Parser::EvaluatingParser.new()

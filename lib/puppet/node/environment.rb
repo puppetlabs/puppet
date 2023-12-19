@@ -23,7 +23,6 @@ end
 # logging functions. Logging functions are attached to the 'root' environment
 # when {Puppet::Parser::Functions.reset} is called.
 class Puppet::Node::Environment
-
   NO_MANIFEST = :no_manifest
 
   # The create() factory method should be used instead.

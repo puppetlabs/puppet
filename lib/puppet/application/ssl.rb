@@ -3,7 +3,6 @@ require_relative '../../puppet/application'
 require_relative '../../puppet/ssl/oids'
 
 class Puppet::Application::Ssl < Puppet::Application
-
   run_mode :agent
 
   def summary

@@ -817,7 +817,6 @@ class TypeCalculator
   def common_numeric?(t1, t2)
     PNumericType::DEFAULT.assignable?(t1) && PNumericType::DEFAULT.assignable?(t2)
   end
-
 end
 end
 end

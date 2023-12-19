@@ -6,7 +6,6 @@
 # and what is loaded here overrides any child loaders (modules).
 #
 class Puppet::Pops::Loader::SimpleEnvironmentLoader < Puppet::Pops::Loader::BaseLoader
-
   attr_accessor :private_loader
 
   # Never finds anything, everything "loaded" is set externally
@@ -17,5 +16,4 @@ class Puppet::Pops::Loader::SimpleEnvironmentLoader < Puppet::Pops::Loader::Base
   def to_s()
     "(SimpleEnvironmentLoader '#{loader_name}')"
   end
-
 end

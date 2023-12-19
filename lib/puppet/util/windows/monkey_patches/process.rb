@@ -29,7 +29,6 @@ module Process
   SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX)
 
   class << self
-
     private :SetHandleInformation, :SetErrorMode, :CreateProcessW, :OpenProcess,
             :SetPriorityClass, :CreateProcessWithLogonW, :get_osfhandle, :get_errno
 

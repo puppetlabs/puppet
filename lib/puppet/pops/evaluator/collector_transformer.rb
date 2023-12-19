@@ -2,7 +2,6 @@
 module Puppet::Pops
 module Evaluator
 class CollectorTransformer
-
   def initialize
     @@query_visitor    ||= Visitor.new(nil, "query", 1, 1)
     @@match_visitor    ||= Visitor.new(nil, "match", 1, 1)

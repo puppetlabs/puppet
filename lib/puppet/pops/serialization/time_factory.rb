@@ -8,7 +8,6 @@ module Serialization
   # @deprecated No longer in use. Functionality replaced by Timestamp
   # @api private
   class TimeFactory
-
     NANO_DENOMINATOR = 10**9
 
     def self.at(*args)

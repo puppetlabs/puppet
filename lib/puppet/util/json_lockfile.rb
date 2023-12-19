@@ -41,5 +41,4 @@ class Puppet::Util::JsonLockfile < Puppet::Util::Lockfile
     Puppet.warning _("Unable to read lockfile data from %{path}: not in JSON") % { path: @file_path }
     nil
   end
-
 end

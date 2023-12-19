@@ -6,7 +6,6 @@
 # It used to be a subclass of GRATR::Edge, but that class has weird hash
 # overrides that dramatically slow down the graphing.
 class Puppet::Relationship
-
   # FormatSupport for serialization methods
   include Puppet::Network::FormatSupport
   include Puppet::Util::PsychSupport

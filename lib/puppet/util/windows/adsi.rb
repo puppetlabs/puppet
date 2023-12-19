@@ -590,7 +590,6 @@ module Puppet::Util::Windows::ADSI
   end
 
   class Group < ADSIObject
-
     # https://msdn.microsoft.com/en-us/library/aa706021.aspx
     # IADsGroup interface
     @object_class = 'group'
