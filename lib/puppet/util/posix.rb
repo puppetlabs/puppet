@@ -4,7 +4,7 @@ module Puppet::Util::POSIX
 
   # This is a list of environment variables that we will set when we want to override the POSIX locale
   LOCALE_ENV_VARS = ['LANG', 'LC_ALL', 'LC_MESSAGES', 'LANGUAGE',
-                           'LC_COLLATE', 'LC_CTYPE', 'LC_MONETARY', 'LC_NUMERIC', 'LC_TIME']
+                     'LC_COLLATE', 'LC_CTYPE', 'LC_MONETARY', 'LC_NUMERIC', 'LC_TIME']
 
   # This is a list of user-related environment variables that we will unset when we want to provide a pristine
   # environment for "exec" runs

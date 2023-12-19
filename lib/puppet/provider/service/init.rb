@@ -54,9 +54,9 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     # Prevent puppet failing on unsafe scripts from Yocto Linux
     if Puppet.runtime[:facter].value('os.family') == "cisco-wrlinux"
       excludes += %w{banner.sh bootmisc.sh checkroot.sh devpts.sh dmesg.sh
-                   hostname.sh mountall.sh mountnfs.sh populate-volatile.sh
-                   rmnologin.sh save-rtc.sh sendsigs sysfs.sh umountfs
-                   umountnfs.sh}
+                     hostname.sh mountall.sh mountnfs.sh populate-volatile.sh
+                     rmnologin.sh save-rtc.sh sendsigs sysfs.sh umountfs
+                     umountnfs.sh}
     end
     # Prevent puppet failing to get status of the new service introduced
     # by the fix for this (bug https://bugs.launchpad.net/ubuntu/+source/lightdm/+bug/982889)

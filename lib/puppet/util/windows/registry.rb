@@ -401,7 +401,8 @@ module Puppet::Util::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :RegQueryInfoKeyW,
-                            [:handle, :lpwstr, :lpdword, :lpdword, :lpdword, :lpdword, :lpdword,
-                              :lpdword, :lpdword, :lpdword, :lpdword, :pointer], :win32_long
+                            [:handle, :lpwstr, :lpdword, :lpdword, :lpdword,
+                             :lpdword, :lpdword, :lpdword, :lpdword, :lpdword,
+                             :lpdword, :pointer], :win32_long
   end
 end

@@ -106,10 +106,10 @@ module HeredocSupport
         # Emit a token that provides the grammar with location information about the lines on which the heredoc
         # content is based.
         enqueue([:SUBLOCATE,
-          LexerSupport::TokenValue.new([:SUBLOCATE,
-            lines, lines.reduce(0) {|size, s| size + s.length} ],
-                                       heredoc_offset,
-                                       locator)])
+                 LexerSupport::TokenValue.new([:SUBLOCATE,
+                                               lines, lines.reduce(0) {|size, s| size + s.length} ],
+                                              heredoc_offset,
+                                              locator)])
 
         sublexer.lex_unquoted_string(str, locator, resulting_escapes, dqstring_style)
         sublexer.interpolate_uq_to(self)
