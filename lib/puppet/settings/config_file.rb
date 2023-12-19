@@ -78,7 +78,7 @@ class Puppet::Settings::ConfigFile
   Meta = Struct.new(:owner, :group, :mode)
   NO_META = Meta.new(nil, nil, nil)
 
-private
+  private
 
   def unique_sections_in(ini, file, allowed_section_names)
     ini.section_lines.collect do |section|

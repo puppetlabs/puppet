@@ -560,7 +560,7 @@ class Parser
     exit(-1)
   end
 
-private
+  private
 
   ## yield successive arg, parameter pairs
   def each_arg args

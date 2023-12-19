@@ -24,20 +24,6 @@ I18n/RailsI18n/DecorateString:
 
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: outdent, indent
-Layout/AccessModifierIndentation:
-  Exclude:
-    - 'lib/puppet/module_tool/install_directory.rb'
-    - 'lib/puppet/pops/evaluator/collector_transformer.rb'
-    - 'lib/puppet/provider/service/init.rb'
-    - 'lib/puppet/provider/service/upstart.rb'
-    - 'lib/puppet/settings/config_file.rb'
-    - 'lib/puppet/settings/file_setting.rb'
-    - 'lib/puppet/util/command_line/trollop.rb'
-    - 'lib/puppet/util/run_mode.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
 # SupportedStyles: with_first_element, with_fixed_indentation
 Layout/ArrayAlignment:
   Exclude:

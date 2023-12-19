@@ -183,7 +183,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     (@resource[:hasstatus] == :true) && [initscript, :status]
   end
 
-private
+  private
 
   def self.is_init?(script = initscript)
     file = Puppet::FileSystem.pathname(script)
