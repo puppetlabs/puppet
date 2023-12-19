@@ -207,6 +207,10 @@ module Issues
     _("The numeric parameter name '$%{name}' cannot be used (clashes with numeric match result variables)") % { name: name }
   end
 
+  ILLEGAL_NONLITERAL_PARAMETER_TYPE = issue :ILLEGAL_NONLITERAL_PARAMETER_TYPE, :name, :type_class do
+    _("The parameter '$%{name}' must be a literal type, not %{type_class}") % { name: name, type_class: label.a_an(type_class) }
+  end
+
   # In certain versions of Puppet it may be allowed to assign to a not already assigned key
   # in an array or a hash. This is an optional validation that may be turned on to prevent accidental
   # mutation.

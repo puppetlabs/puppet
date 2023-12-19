@@ -471,6 +471,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     internal_check_parameter_name_uniqueness(o)
     internal_check_reserved_params(o)
     internal_check_no_idem_last(o)
+    internal_check_parameter_type_literal(o)
   end
 
   def check_ResourceTypeDefinition(o)
@@ -479,6 +480,18 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     internal_check_parameter_name_uniqueness(o)
     internal_check_reserved_params(o)
     internal_check_no_idem_last(o)
+  end
+
+  def internal_check_parameter_type_literal(o)
+    o.parameters.each do |p|
+      next unless p.type_expr
+
+      type = nil
+      catch :not_literal do
+        type = literal(p.type_expr)
+      end
+      acceptor.accept(Issues::ILLEGAL_NONLITERAL_PARAMETER_TYPE, p, {name: p.name, type_class: p.type_expr.class}) if type.nil?
+    end
   end
 
   def internal_check_return_type(o)

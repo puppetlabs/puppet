@@ -16,6 +16,8 @@ describe "Puppet::Pops::Evaluator::LiteralEvaluator" do
     '"a"'     => 'a',
     'a'       => 'a',
     'a::b'    => 'a::b',
+    'Integer[1]' => [1],
+    'File' => "file",
 
     # special values
     'default' => :default,
@@ -35,9 +37,9 @@ describe "Puppet::Pops::Evaluator::LiteralEvaluator" do
     expect(leval.literal(parser.parse_string('undef'))).to be_nil
   end
 
-  ['1+1', 'File', '[1,2, 1+2]', '{a=>1+1}', 'Integer[1]', '"x$y"', '"x${y}z"'].each do |source|
+  ['1+1', '[1,2, 1+2]', '{a=>1+1}', '"x$y"', '"x${y}z"', 'Integer[1-3]', 'Optional[[String]]'].each do |source|
     it "throws :not_literal for non literal expression '#{source}'" do
-      expect{leval.literal(parser.parse_string('1+1'))}.to throw_symbol(:not_literal)
+      expect{leval.literal(parser.parse_string(source))}.to throw_symbol(:not_literal)
     end
   end
 end
