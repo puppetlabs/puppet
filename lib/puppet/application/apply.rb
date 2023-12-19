@@ -234,12 +234,12 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
         # rule and gets logged.
         #
         catalog =
-        begin
-          Puppet::Resource::Catalog.indirection.find(node.name, :use_node => node)
-        rescue Puppet::Error
-          # already logged and handled by the compiler, including Puppet::ParseErrorWithIssue
-          exit(1)
-        end
+          begin
+            Puppet::Resource::Catalog.indirection.find(node.name, :use_node => node)
+          rescue Puppet::Error
+            # already logged and handled by the compiler, including Puppet::ParseErrorWithIssue
+            exit(1)
+          end
 
         # Resolve all deferred values and replace them / mutate the catalog
         Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(node.facts, catalog, apply_environment, Puppet[:preprocess_deferred])

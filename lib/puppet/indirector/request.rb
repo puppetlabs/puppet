@@ -36,11 +36,11 @@ class Puppet::Indirector::Request
 
   def environment=(env)
     @environment =
-    if env.is_a?(Puppet::Node::Environment)
-      env
-    else
-      Puppet.lookup(:environments).get!(env)
-    end
+      if env.is_a?(Puppet::Node::Environment)
+        env
+      else
+        Puppet.lookup(:environments).get!(env)
+      end
   end
 
   # LAK:NOTE This is a messy interface to the cache, and it's only

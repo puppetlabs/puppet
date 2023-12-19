@@ -23,25 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: IndentationWidth.
-Layout/AssignmentIndentation:
-  Exclude:
-    - 'lib/puppet/application/apply.rb'
-    - 'lib/puppet/ffi/windows/constants.rb'
-    - 'lib/puppet/indirector/request.rb'
-    - 'lib/puppet/parser/e4_parser_adapter.rb'
-    - 'lib/puppet/pops/evaluator/evaluator_impl.rb'
-    - 'lib/puppet/pops/model/model_tree_dumper.rb'
-    - 'lib/puppet/pops/parser/lexer_support.rb'
-    - 'lib/puppet/pops/types/type_parser.rb'
-    - 'lib/puppet/resource/type.rb'
-    - 'lib/puppet/settings.rb'
-    - 'lib/puppet/settings/environment_conf.rb'
-    - 'lib/puppet/type/resources.rb'
-    - 'lib/puppet/util.rb'
-    - 'lib/puppet/util/windows/daemon.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/ClosingParenthesisIndentation:
   Enabled: false
 

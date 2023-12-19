@@ -167,35 +167,35 @@ module LexerSupport
 
   def assert_not_bom(content)
     name, size =
-    case bom = get_bom(content)
+      case bom = get_bom(content)
 
-    when BOM_UTF_32_1, BOM_UTF_32_2
-      ['UTF-32', 4]
+      when BOM_UTF_32_1, BOM_UTF_32_2
+        ['UTF-32', 4]
 
-    when BOM_GB_18030
-      ['GB-18030', 4]
+      when BOM_GB_18030
+        ['GB-18030', 4]
 
-    when BOM_UTF_EBCDIC
-      ['UTF-EBCDIC', 4]
+      when BOM_UTF_EBCDIC
+        ['UTF-EBCDIC', 4]
 
-    when BOM_SCSU
-      ['SCSU', 3]
+      when BOM_SCSU
+        ['SCSU', 3]
 
-    when BOM_UTF_8
-      ['UTF-8', 3]
+      when BOM_UTF_8
+        ['UTF-8', 3]
 
-    when BOM_UTF_1
-      ['UTF-1', 3]
+      when BOM_UTF_1
+        ['UTF-1', 3]
 
-    when BOM_BOCU
-      ['BOCU', 3]
+      when BOM_BOCU
+        ['BOCU', 3]
 
-    when BOM_UTF_16_1, BOM_UTF_16_2
-      ['UTF-16', 2]
+      when BOM_UTF_16_1, BOM_UTF_16_2
+        ['UTF-16', 2]
 
-    else
-      return
-    end
+      else
+        return
+      end
 
     lex_error_without_pos(
       Puppet::Pops::Issues::ILLEGAL_BOM,

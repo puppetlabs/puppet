@@ -58,11 +58,11 @@ class Puppet::Settings::EnvironmentConf
     disable_per_environment_manifest = Puppet.settings.value(:disable_per_environment_manifest)
 
     fallback_manifest_directory =
-    if puppet_conf_manifest.absolute?
-      puppet_conf_manifest.to_s
-    else
-      File.join(@path_to_env, puppet_conf_manifest.to_s)
-    end
+      if puppet_conf_manifest.absolute?
+        puppet_conf_manifest.to_s
+      else
+        File.join(@path_to_env, puppet_conf_manifest.to_s)
+      end
 
     if disable_per_environment_manifest
       environment_conf_manifest = absolute(raw_setting(:manifest))

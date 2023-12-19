@@ -766,45 +766,45 @@ class EvaluatorImpl
 
     # Get the type name
     type_name =
-    if (tmp_name = o.type_name).is_a?(Model::QualifiedName)
-      tmp_name.value # already validated as a name
-    else
-      type_name_acceptable =
-      case o.type_name
-      when Model::QualifiedReference
-        true
-      when Model::AccessExpression
-        o.type_name.left_expr.is_a?(Model::QualifiedReference)
-      end
-
-      evaluated_name = evaluate(tmp_name, scope)
-      unless type_name_acceptable
-        actual = type_calculator.generalize(type_calculator.infer(evaluated_name)).to_s
-        fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual => actual})
-      end
-
-      # must be a CatalogEntry subtype
-      case evaluated_name
-      when Types::PClassType
-        unless evaluated_name.class_name.nil?
-          fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
-        end
-        'class'
-
-      when Types::PResourceType
-        unless evaluated_name.title().nil?
-          fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
-        end
-        evaluated_name.type_name # assume validated
-
-      when Types::PTypeReferenceType
-        fail(Issues::UNKNOWN_RESOURCE_TYPE, o.type_string, {:type_name => evaluated_name.to_s})
-
+      if (tmp_name = o.type_name).is_a?(Model::QualifiedName)
+        tmp_name.value # already validated as a name
       else
-        actual = type_calculator.generalize(type_calculator.infer(evaluated_name)).to_s
-        fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=>actual})
+        type_name_acceptable =
+          case o.type_name
+          when Model::QualifiedReference
+            true
+          when Model::AccessExpression
+            o.type_name.left_expr.is_a?(Model::QualifiedReference)
+          end
+
+        evaluated_name = evaluate(tmp_name, scope)
+        unless type_name_acceptable
+          actual = type_calculator.generalize(type_calculator.infer(evaluated_name)).to_s
+          fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual => actual})
+        end
+
+        # must be a CatalogEntry subtype
+        case evaluated_name
+        when Types::PClassType
+          unless evaluated_name.class_name.nil?
+            fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
+          end
+          'class'
+
+        when Types::PResourceType
+          unless evaluated_name.title().nil?
+            fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
+          end
+          evaluated_name.type_name # assume validated
+
+        when Types::PTypeReferenceType
+          fail(Issues::UNKNOWN_RESOURCE_TYPE, o.type_string, {:type_name => evaluated_name.to_s})
+
+        else
+          actual = type_calculator.generalize(type_calculator.infer(evaluated_name)).to_s
+          fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=>actual})
+        end
       end
-    end
 
     # This is a runtime check - the model is valid, but will have runtime issues when evaluated
     # and storeconfigs is not set.
@@ -919,12 +919,12 @@ class EvaluatorImpl
   def eval_ResourceDefaultsExpression(o, scope)
     type = evaluate(o.type_ref, scope)
     type_name =
-    if type.is_a?(Types::PResourceType) && !type.type_name.nil? && type.title.nil?
-      type.type_name # assume it is a valid name
-    else
-      actual = type_calculator.generalize(type_calculator.infer(type))
-      fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_ref, {:actual => actual})
-    end
+      if type.is_a?(Types::PResourceType) && !type.type_name.nil? && type.title.nil?
+        type.type_name # assume it is a valid name
+      else
+        actual = type_calculator.generalize(type_calculator.infer(type))
+        fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_ref, {:actual => actual})
+      end
     evaluated_parameters = o.operations.map {|op| evaluate(op, scope) }
     create_resource_defaults(o, scope, type_name, evaluated_parameters)
     # Produce the type

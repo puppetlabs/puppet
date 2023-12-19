@@ -92,8 +92,8 @@ Puppet::Type.newtype(:resources) do
   WINDOWS_SYSTEM_SID_REGEXES =
       # Administrator, Guest, Domain Admins, Schema Admins, Enterprise Admins.
       # https://support.microsoft.com/en-us/help/243330/well-known-security-identifiers-in-windows-operating-systems
-      [/S-1-5-21.+-500/, /S-1-5-21.+-501/, /S-1-5-21.+-512/, /S-1-5-21.+-518/,
-       /S-1-5-21.+-519/]
+    [/S-1-5-21.+-500/, /S-1-5-21.+-501/, /S-1-5-21.+-512/, /S-1-5-21.+-518/,
+     /S-1-5-21.+-519/]
 
   def check(resource)
     @checkmethod ||= "#{self[:name]}_check"

@@ -1507,20 +1507,20 @@ Generated on #{Time.now}.
         interpolated_value = value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |expression|
           varname = $2 || $1
           interpolated_expression =
-          if varname != ENVIRONMENT_SETTING || ok_to_interpolate_environment(setting_name)
-            if varname == ENVIRONMENT_SETTING && @environment
-              @environment
-            elsif varname == "run_mode"
-              @mode
-            elsif !(pval = interpolate(varname.to_sym)).nil?
-              pval
+            if varname != ENVIRONMENT_SETTING || ok_to_interpolate_environment(setting_name)
+              if varname == ENVIRONMENT_SETTING && @environment
+                @environment
+              elsif varname == "run_mode"
+                @mode
+              elsif !(pval = interpolate(varname.to_sym)).nil?
+                pval
+              else
+                raise InterpolationError, _("Could not find value for %{expression}") % { expression: expression }
+              end
             else
-              raise InterpolationError, _("Could not find value for %{expression}") % { expression: expression }
+              failed_environment_interpolation = true
+              expression
             end
-          else
-            failed_environment_interpolation = true
-            expression
-          end
           interpolated_expression
         end
         if failed_environment_interpolation
