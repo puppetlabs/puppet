@@ -196,7 +196,6 @@ module Puppet::Util::Windows::COM
 
   IUnknown = Interface[
     FFI::WIN32::GUID['00000000-0000-0000-C000-000000000046'],
-
     QueryInterface: [[:pointer, :pointer], :hresult],
     AddRef: [[], :win32_ulong],
     Release: [[], :win32_ulong]

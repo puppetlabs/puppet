@@ -31,19 +31,6 @@ Layout/EmptyLineAfterMagicComment:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Layout/EmptyLinesAroundArguments:
-  Exclude:
-    - 'lib/puppet/defaults.rb'
-    - 'lib/puppet/parser/functions/sprintf.rb'
-    - 'lib/puppet/settings.rb'
-    - 'lib/puppet/type.rb'
-    - 'lib/puppet/type/schedule.rb'
-    - 'lib/puppet/util/diff.rb'
-    - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
-    - 'lib/puppet/util/rdoc/generators/template/puppet/puppet.rb'
-    - 'lib/puppet/util/windows/com.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: AllowAliasSyntax, AllowedMethods.
 # AllowedMethods: alias_method, public, protected, private
 Layout/EmptyLinesAroundAttributeAccessor:

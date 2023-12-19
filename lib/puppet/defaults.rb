@@ -813,7 +813,6 @@ Valid values are 0 (never cache) and 15 (15 second minimum wait time).
 
     settings.define_settings(
     :main,
-
     # We have to downcase the fqdn, because the current ssl stuff (as opposed to in master) doesn't have good facilities for
     # manipulating naming.
     :certname => {

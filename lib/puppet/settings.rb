@@ -1090,7 +1090,6 @@ own configured state, so they can be used to make Puppet a bit more self-managin
 The file format supports octothorpe-commented lines, but not partial-line comments.
 
 Generated on #{Time.now}.
-
 }.gsub(/^/, "# ")
 
     #         Add a section heading that matches our name.
