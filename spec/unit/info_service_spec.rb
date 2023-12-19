@@ -313,6 +313,12 @@ describe "Puppet::InfoService" do
         CODE
         'json_unsafe.pp' => <<-CODE,
              class json_unsafe($arg1 = /.*/, $arg2 = default, $arg3 = {1 => 1}) {}
+        CODE
+        'non_literal.pp' => <<-CODE,
+            class oops(Integer[1-3] $bad_int) { }
+        CODE
+        'non_literal_2.pp' => <<-CODE,
+           class oops_2(Optional[[String]] $double_brackets) { }
           CODE
        })
     end
@@ -507,6 +513,19 @@ describe "Puppet::InfoService" do
                 ]}
             ]}} # end production env
          })
+     end
+
+     it "errors with a descriptive message if non-literal class parameter is given" do
+       files = ['non_literal.pp', 'non_literal_2.pp'].map {|f| File.join(code_dir, f) }
+       result = Puppet::InfoService.classes_per_environment({'production' => files })
+       expect(result).to eq({
+        "production"=>{
+           "#{code_dir}/non_literal.pp" =>
+           {:error=> "The parameter '$bad_int' must be a literal type, not a Puppet::Pops::Model::AccessExpression (file: #{code_dir}/non_literal.pp, line: 1, column: 37)"},
+           "#{code_dir}/non_literal_2.pp" =>
+           {:error=> "The parameter '$double_brackets' must be a literal type, not a Puppet::Pops::Model::AccessExpression (file: #{code_dir}/non_literal_2.pp, line: 1, column: 44)"}
+          } # end production env
+        })
      end
 
     it "produces no type entry if type is not given" do
