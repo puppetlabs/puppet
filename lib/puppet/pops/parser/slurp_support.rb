@@ -44,20 +44,20 @@ module SlurpSupport
     [str[0..(-1 - terminator.length)], terminator]
   end
 
-   # Copy from old lexer - can do much better
-   def slurp_uqstring
-     scn = @scanner
-     str = slurp(scn, @lexing_context[:uq_slurp_pattern], @lexing_context[:escapes], :ignore_invalid_escapes)
+  # Copy from old lexer - can do much better
+  def slurp_uqstring
+    scn = @scanner
+    str = slurp(scn, @lexing_context[:uq_slurp_pattern], @lexing_context[:escapes], :ignore_invalid_escapes)
 
-     # Terminator may be a single char '$', two characters '${', or empty string '' at the end of intput.
-     # Group match 1 holds this.
-     # The exceptional case is found by looking at the subgroup 1 of the most recent match made by the scanner (i.e. @scanner[1]).
-     # This is the last match made by the slurp method (having called scan_until on the scanner).
-     # If there is a terminating character is must be stripped and returned separately.
-     #
-     terminator = scn[1]
-     [str[0..(-1 - terminator.length)], terminator]
-   end
+    # Terminator may be a single char '$', two characters '${', or empty string '' at the end of intput.
+    # Group match 1 holds this.
+    # The exceptional case is found by looking at the subgroup 1 of the most recent match made by the scanner (i.e. @scanner[1]).
+    # This is the last match made by the slurp method (having called scan_until on the scanner).
+    # If there is a terminating character is must be stripped and returned separately.
+    #
+    terminator = scn[1]
+    [str[0..(-1 - terminator.length)], terminator]
+  end
 
   # Slurps a string from the given scanner until the given pattern and then replaces any escaped
   # characters given by escapes into their control-character equivalent or in case of line breaks, replaces the

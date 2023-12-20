@@ -49,8 +49,8 @@ module Puppet
     feature :manages_expiry,
             "The provider can manage the expiry date for a user."
 
-   feature :system_users,
-           "The provider allows you to create system users with lower UIDs."
+    feature :system_users,
+            "The provider allows you to create system users with lower UIDs."
 
     feature :manages_aix_lam,
             "The provider can manage AIX Loadable Authentication Module (LAM) system."

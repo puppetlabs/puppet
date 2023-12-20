@@ -125,11 +125,11 @@ class StringConverter
       @delimiters = nil
       DELIMITERS.each do |d|
         next unless flags.include?(d)
-          if !@delimiters.nil?
-            raise ArgumentError, "Only one of the delimiters [ { ( < | can be given in the format flags, got '#{fmt}'"
-          end
+        if !@delimiters.nil?
+          raise ArgumentError, "Only one of the delimiters [ { ( < | can be given in the format flags, got '#{fmt}'"
+        end
 
-          @delimiters = d
+        @delimiters = d
       end
 
       @width = match[2] ? match[2].to_i : nil

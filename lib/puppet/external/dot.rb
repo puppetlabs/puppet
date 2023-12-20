@@ -212,13 +212,13 @@ module DOT
           }.join( "| \\\n" ) + " \\\n" +
           t + $tab + '"' + "\n"
 
-        t + "#{@name} [\n" +
-        @options.to_a.collect{ |i|
-          i[1] && i[0] != 'label' ?
-            t + $tab + "#{i[0]} = #{i[1]}" : nil
-        }.compact.join( ",\n" ) + ( label != '' ? ",\n" : "\n" ) +
-        label +
-        t + "]\n"
+      t + "#{@name} [\n" +
+      @options.to_a.collect{ |i|
+        i[1] && i[0] != 'label' ?
+          t + $tab + "#{i[0]} = #{i[1]}" : nil
+      }.compact.join( ",\n" ) + ( label != '' ? ",\n" : "\n" ) +
+      label +
+      t + "]\n"
     end
 
     private

@@ -246,11 +246,11 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     raise Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError.new(
       _("No support for http method %{http_method}") % { http_method: http_method }) unless METHOD_MAP[http_method]
 
-      method = METHOD_MAP[http_method][plurality(indirection)]
-      unless method
-        raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-          _("No support for plurality %{indirection} for %{http_method} operations") % { indirection: plurality(indirection), http_method: http_method })
-      end
+    method = METHOD_MAP[http_method][plurality(indirection)]
+    unless method
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+        _("No support for plurality %{indirection} for %{http_method} operations") % { indirection: plurality(indirection), http_method: http_method })
+    end
 
     method
   end

@@ -95,7 +95,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
         end
         begin
           curl(*args)
-            Puppet.debug "Success: curl transferred [#{name}] (via: curl #{args.join(" ")})"
+          Puppet.debug "Success: curl transferred [#{name}] (via: curl #{args.join(" ")})"
         rescue Puppet::ExecutionFailure
           Puppet.debug "curl #{args.join(" ")} did not transfer [#{name}].  Falling back to local file." # This used to fall back to open-uri. -NF
           cached_source = source

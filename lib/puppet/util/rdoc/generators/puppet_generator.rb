@@ -497,10 +497,10 @@ module Generators
     def write_on(f)
       value_hash
 
-        template = TemplatePage.new(
-          RDoc::Page::BODYINC,
-          RDoc::Page::NODE_PAGE,
-          RDoc::Page::METHOD_LIST)
+      template = TemplatePage.new(
+        RDoc::Page::BODYINC,
+        RDoc::Page::NODE_PAGE,
+        RDoc::Page::METHOD_LIST)
       template.write_html_on(f, @values)
     end
 
@@ -738,10 +738,10 @@ module Generators
     def write_on(f)
       value_hash
 
-        template = TemplatePage.new(
-          RDoc::Page::BODYINC,
-          RDoc::Page::PLUGIN_PAGE,
-          RDoc::Page::PLUGIN_LIST)
+      template = TemplatePage.new(
+        RDoc::Page::BODYINC,
+        RDoc::Page::PLUGIN_PAGE,
+        RDoc::Page::PLUGIN_LIST)
       template.write_html_on(f, @values)
     end
 

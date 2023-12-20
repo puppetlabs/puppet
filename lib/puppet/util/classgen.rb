@@ -147,18 +147,18 @@ module Puppet::Util::ClassGen
   def handleclassconst(klass, name, options)
    const = genconst_string(name, options)
 
-    if const_defined?(const, false)
-      if options[:overwrite]
-        Puppet.info _("Redefining %{name} in %{klass}") % { name: name, klass: self }
-        remove_const(const)
-      else
-        raise Puppet::ConstantAlreadyDefined,
-              _("Class %{const} is already defined in %{klass}") % { const: const, klass: self }
-      end
-    end
-    const_set(const, klass)
+   if const_defined?(const, false)
+     if options[:overwrite]
+       Puppet.info _("Redefining %{name} in %{klass}") % { name: name, klass: self }
+       remove_const(const)
+     else
+       raise Puppet::ConstantAlreadyDefined,
+             _("Class %{const} is already defined in %{klass}") % { const: const, klass: self }
+     end
+   end
+   const_set(const, klass)
 
-    const
+   const
   end
 
   # Perform the initializations on the class.

@@ -70,25 +70,25 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
 
       File.open(cached_source) do |dmg|
         xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-mountrandom", "/tmp", dmg.path
-          ptable = Puppet::Util::Plist::parse_plist(xml_str)
-          # JJM Filter out all mount-paths into a single array, discard the rest.
-          mounts = ptable['system-entities'].collect { |entity|
-            entity['mount-point']
-          }.select { |mountloc|; mountloc }
-          begin
-            found_app = false
-            mounts.each do |fspath|
-              Dir.entries(fspath).select { |f|
-                f =~ /\.app$/i
-              }.each do |pkg|
-                found_app = true
-                installapp("#{fspath}/#{pkg}", name, source)
-              end
+        ptable = Puppet::Util::Plist::parse_plist(xml_str)
+        # JJM Filter out all mount-paths into a single array, discard the rest.
+        mounts = ptable['system-entities'].collect { |entity|
+          entity['mount-point']
+        }.select { |mountloc|; mountloc }
+        begin
+          found_app = false
+          mounts.each do |fspath|
+            Dir.entries(fspath).select { |f|
+              f =~ /\.app$/i
+            }.each do |pkg|
+              found_app = true
+              installapp("#{fspath}/#{pkg}", name, source)
             end
-            Puppet.debug "Unable to find .app in .appdmg. #{name} will not be installed." if !found_app
-          ensure
-            hdiutil "eject", mounts[0]
           end
+          Puppet.debug "Unable to find .app in .appdmg. #{name} will not be installed." if !found_app
+        ensure
+          hdiutil "eject", mounts[0]
+        end
       end
     ensure
       FileUtils.remove_entry_secure(tmpdir, true)

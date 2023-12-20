@@ -34,8 +34,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
   end
 
-defaultfor 'os.name' => :amazon
-defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
+  defaultfor 'os.name' => :amazon
+  defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
 
   def insync?(is)
     return false if [:purged, :absent].include?(is)

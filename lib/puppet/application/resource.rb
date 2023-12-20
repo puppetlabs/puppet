@@ -149,16 +149,16 @@ class Puppet::Application::Resource < Puppet::Application
 
       resources = find_or_save_resources(type, name, params)
 
-    if options[:to_yaml]
-      data = resources.map do |resource|
-        resource.prune_parameters(:parameters_to_include => @extra_params).to_hiera_hash
-      end.inject(:merge!)
-      text = YAML.dump(type.downcase => data)
-    else
-      text = resources.map do |resource|
-        resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest.force_encoding(Encoding.default_external)
-      end.join("\n")
-    end
+      if options[:to_yaml]
+        data = resources.map do |resource|
+          resource.prune_parameters(:parameters_to_include => @extra_params).to_hiera_hash
+        end.inject(:merge!)
+        text = YAML.dump(type.downcase => data)
+      else
+        text = resources.map do |resource|
+          resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest.force_encoding(Encoding.default_external)
+        end.join("\n")
+      end
 
       options[:edit] ?
         handle_editing(text) :
