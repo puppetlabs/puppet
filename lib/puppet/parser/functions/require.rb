@@ -1,11 +1,11 @@
-  # frozen_string_literal: true
+# frozen_string_literal: true
 
-  # Requires the specified classes
+# Requires the specified classes
 
-  Puppet::Parser::Functions::newfunction(
-    :require,
-    :arity => -2,
-    :doc => "Evaluate one or more classes,  adding the required class as a dependency.
+Puppet::Parser::Functions::newfunction(
+  :require,
+  :arity => -2,
+  :doc => "Evaluate one or more classes,  adding the required class as a dependency.
 
 The relationship metaparameters work well for specifying relationships
 between individual resources, but they can be clumsy for specifying
