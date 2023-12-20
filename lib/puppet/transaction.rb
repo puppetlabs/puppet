@@ -304,9 +304,11 @@ class Puppet::Transaction
     s = resource_status(resource)
     if s && s.dependency_failed?
       if @merge_dependency_warnings && is_puppet_class
-       	# Notes: Puppet::Resource::Status.failed_dependencies() is an Array of Puppet::Resource(s) and
-        #        Puppet::Resource.ref() calls Puppet::Resource.to_s() which is: "#{type}[#{title}]" and
-       	#        Puppet::Resource.resource_status(resource) calls Puppet::Resource.to_s()
+        # Notes: Puppet::Resource::Status.failed_dependencies() is an Array of
+        # Puppet::Resource(s) and Puppet::Resource.ref() calls
+        # Puppet::Resource.to_s() which is: "#{type}[#{title}]" and
+        # Puppet::Resource.resource_status(resource) calls
+        # Puppet::Resource.to_s()
         class_dependencies_to_be_notified = (s.failed_dependencies.map(&:ref) - @failed_class_dependencies_already_notified.to_a)
         class_dependencies_to_be_notified.each do |dep_ref|
           resource.notice _("Class dependency %{dep} has failures: %{status}") % { dep: dep_ref, status: resource_status(dep_ref).failed }
