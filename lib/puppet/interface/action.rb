@@ -95,10 +95,10 @@ class Puppet::Interface::Action
   def set_rendering_method_for(type, proc)
     unless proc.is_a? Proc
       msg = if proc.nil?
-              #TRANSLATORS 'set_rendering_method_for' and 'Proc' should not be translated
+              # TRANSLATORS 'set_rendering_method_for' and 'Proc' should not be translated
               _("The second argument to set_rendering_method_for must be a Proc")
             else
-              #TRANSLATORS 'set_rendering_method_for' and 'Proc' should not be translated
+              # TRANSLATORS 'set_rendering_method_for' and 'Proc' should not be translated
               _("The second argument to set_rendering_method_for must be a Proc, not %{class_name}") %
                   { class_name: proc.class.name }
             end
@@ -107,13 +107,13 @@ class Puppet::Interface::Action
 
     if proc.arity != 1 and proc.arity != (@positional_arg_count + 1)
       msg = if proc.arity < 0 then
-              #TRANSLATORS 'when_rendering', 'when_invoked' are method names and should not be translated
+              # TRANSLATORS 'when_rendering', 'when_invoked' are method names and should not be translated
               _("The when_rendering method for the %{face} face %{name} action takes either just one argument,"\
                   " the result of when_invoked, or the result plus the %{arg_count} arguments passed to the"\
                   " when_invoked block, not a variable number") %
                   { face: @face.name, name: name, arg_count: @positional_arg_count }
             else
-              #TRANSLATORS 'when_rendering', 'when_invoked' are method names and should not be translated
+              # TRANSLATORS 'when_rendering', 'when_invoked' are method names and should not be translated
               _("The when_rendering method for the %{face} face %{name} action takes either just one argument,"\
                   " the result of when_invoked, or the result plus the %{arg_count} arguments passed to the"\
                   " when_invoked block, not %{string}") %
@@ -233,7 +233,7 @@ class Puppet::Interface::Action
       # but will on 1.9.2, which treats it as "no arguments".  Which bites,
       # because this just begs for us to wind up in the horrible situation
       # where a 1.8 vs 1.9 error bites our end users. --daniel 2011-04-19
-      #TRANSLATORS 'when_invoked' should not be translated
+      # TRANSLATORS 'when_invoked' should not be translated
       raise ArgumentError, _("when_invoked requires at least one argument (options) for action %{name}") % { name: @name }
     elsif arity > 0 then
       range = Range.new(1, arity - 1)
@@ -315,7 +315,7 @@ class Puppet::Interface::Action
     @display_global_options ||= []
     [args].flatten.each do |refopt|
       unless Puppet.settings.include? refopt
-        #TRANSLATORS 'Puppet.settings' should not be translated
+        # TRANSLATORS 'Puppet.settings' should not be translated
         raise ArgumentError, _("Global option %{option} does not exist in Puppet.settings") % { option: refopt }
       end
 

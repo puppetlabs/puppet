@@ -115,7 +115,7 @@ module Util
 
         # Don't exit on failed group changes, since it's
         # not fatal
-        #exit(74)
+        # exit(74)
       end
     end
 
@@ -177,7 +177,7 @@ module Util
                args.pop
              end
 
-    #TRANSLATORS 'benchmark' is a method name and should not be translated
+    # TRANSLATORS 'benchmark' is a method name and should not be translated
     raise Puppet::DevError, _("Failed to provide level to benchmark") unless level
 
     unless level == :none or object.respond_to? level
@@ -220,11 +220,11 @@ module Util
           if e.to_s =~ /HOME/ and (ENV['HOME'].nil? || ENV['HOME'] == "")
             # if we get here they have a tilde in their PATH.  We'll issue a single warning about this and then
             # ignore this path element and carry on with our lives.
-            #TRANSLATORS PATH and HOME are environment variables and should not be translated
+            # TRANSLATORS PATH and HOME are environment variables and should not be translated
             Puppet::Util::Warnings.warnonce(_("PATH contains a ~ character, and HOME is not set; ignoring PATH element '%{dir}'.") % { dir: dir })
           elsif e.to_s =~ /doesn't exist|can't find user/
             # ...otherwise, we just skip the non-existent entry, and do nothing.
-            #TRANSLATORS PATH is an environment variable and should not be translated
+            # TRANSLATORS PATH is an environment variable and should not be translated
             Puppet::Util::Warnings.warnonce(_("Couldn't expand PATH containing a ~ character; ignoring PATH element '%{dir}'.") % { dir: dir })
           else
             raise
@@ -706,8 +706,8 @@ module Util
   #  code (e.g. webrick), and we have no idea what they might throw.
   rescue Exception => err
     ## NOTE: when debugging spec failures, these two lines can be very useful
-    #puts err.inspect
-    #puts Puppet::Util.pretty_backtrace(err.backtrace)
+    # puts err.inspect
+    # puts Puppet::Util.pretty_backtrace(err.backtrace)
     Puppet.log_exception(err, "#{message}: #{err}")
     Puppet::Util::Log.force_flushqueue()
     exit(code)

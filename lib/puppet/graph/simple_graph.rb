@@ -199,7 +199,7 @@ class Puppet::Graph::SimpleGraph
   # through the graph first, which are more likely to be interesting to the
   # user.  I think; it would be interesting to verify that. --daniel 2011-01-23
   def paths_in_cycle(cycle, max_paths = 1)
-    #TRANSLATORS "negative or zero" refers to the count of paths
+    # TRANSLATORS "negative or zero" refers to the count of paths
     raise ArgumentError, _("negative or zero max_paths") if max_paths < 1
 
     # Calculate our filtered outbound vertex lists...
@@ -212,7 +212,7 @@ class Puppet::Graph::SimpleGraph
 
     # frame struct is vertex, [path]
     stack = [[cycle.first, []]]
-    while frame = stack.shift do #rubocop:disable Lint/AssignmentInCondition
+    while frame = stack.shift do # rubocop:disable Lint/AssignmentInCondition
       if frame[1].member?(frame[0]) then
         found << frame[1] + [frame[0]]
         break if found.length >= max_paths
@@ -243,7 +243,7 @@ class Puppet::Graph::SimpleGraph
       filename = write_cycles_to_graph(cycles)
       message += _("Cycle graph written to %{filename}.") % { filename: filename }
     else
-      #TRANSLATORS '--graph' refers to a command line option and OmniGraffle and GraphViz are program names and should not be translated
+      # TRANSLATORS '--graph' refers to a command line option and OmniGraffle and GraphViz are program names and should not be translated
       message += _("Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz")
     end
     Puppet.err(message)

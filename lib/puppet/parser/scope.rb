@@ -1091,7 +1091,7 @@ class Puppet::Parser::Scope
         name.title.sub(/^([^:]{1,2})/, '::\1')
 
       when Puppet::Pops::Types::PClassType
-        #TRANSLATORS "Class" and "Type" are Puppet keywords and should not be translated
+        # TRANSLATORS "Class" and "Type" are Puppet keywords and should not be translated
         raise ArgumentError, _("Cannot use an unspecific Class[] Type") unless name.class_name
 
         name.class_name.sub(/^([^:]{1,2})/, '::\1')
@@ -1119,15 +1119,15 @@ class Puppet::Parser::Scope
 
   def assert_class_and_title(type_name, title)
     if type_name.nil? || type_name == ''
-      #TRANSLATORS "Resource" is a class name and should not be translated
+      # TRANSLATORS "Resource" is a class name and should not be translated
       raise ArgumentError, _("Cannot use an unspecific Resource[] where a Resource['class', name] is expected")
     end
     unless type_name =~ /^[Cc]lass$/
-      #TRANSLATORS "Resource" is a class name and should not be translated
+      # TRANSLATORS "Resource" is a class name and should not be translated
       raise ArgumentError, _("Cannot use a Resource[%{type_name}] where a Resource['class', name] is expected") % { type_name: type_name }
     end
     if title.nil?
-      #TRANSLATORS "Resource" is a class name and should not be translated
+      # TRANSLATORS "Resource" is a class name and should not be translated
       raise ArgumentError, _("Cannot use an unspecific Resource['class'] where a Resource['class', name] is expected")
     end
   end

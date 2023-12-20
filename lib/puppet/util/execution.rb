@@ -229,7 +229,7 @@ module Puppet::Util::Execution
             # below will use maximum CPU available.
 
             wait_flags = Process::WNOHANG
-            until results = Process.waitpid2(child_pid, wait_flags) #rubocop:disable Lint/AssignmentInCondition
+            until results = Process.waitpid2(child_pid, wait_flags) # rubocop:disable Lint/AssignmentInCondition
 
               # If not done, wait for data to read with a timeout
               # This timeout is selected to keep activity low while waiting on

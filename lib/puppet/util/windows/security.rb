@@ -242,7 +242,7 @@ module Puppet::Util::Windows::Security
       when well_known_app_packages_sid, well_known_system_sid
         # do nothing
       else
-        #puts "Warning, unable to map SID into POSIX mode: #{ace.sid}"
+        # puts "Warning, unable to map SID into POSIX mode: #{ace.sid}"
         mode |= S_IEXTRA
       end
 
@@ -253,11 +253,11 @@ module Puppet::Util::Windows::Security
       # if owner and group the same, then user and group modes are the OR of both
       if sd.owner == sd.group
         mode |= ((mode & S_IRWXG) << 3) | ((mode & S_IRWXU) >> 3)
-        #puts "owner: #{sd.group}, 0x#{ace.mask.to_s(16)}, #{mode.to_s(8)}"
+        # puts "owner: #{sd.group}, 0x#{ace.mask.to_s(16)}, #{mode.to_s(8)}"
       end
     end
 
-    #puts "get_mode: #{mode.to_s(8)}"
+    # puts "get_mode: #{mode.to_s(8)}"
     mode
   end
 
@@ -339,13 +339,13 @@ module Puppet::Util::Windows::Security
         # If owner and group are both SYSTEM but group is unmanaged the control rights of system will be set to FullControl by
         # the unmanaged group, so there is no need for the warning
         if managing_owner && (!isownergroup || managing_group)
-          #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+          # TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
           Puppet.warning _("Setting control rights for %{path} owner SYSTEM to less than Full Control rights. Setting SYSTEM rights to less than Full Control may have unintented consequences for operations on this file") % { path: path }
         elsif managing_owner && isownergroup
-          #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+          # TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
           Puppet.debug { _("%{path} owner and group both set to user SYSTEM, but group is not managed directly: SYSTEM user rights will be set to FullControl by group") % { path: path } }
         else
-          #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+          # TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
           Puppet.debug { _("An attempt to set mode %{mode} on item %{path} would result in the owner, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control") % { mode: mode.to_s(8), path: path } }
           owner_allow = FILE::FILE_ALL_ACCESS
         end
@@ -355,13 +355,13 @@ module Puppet::Util::Windows::Security
         # If owner and group are both SYSTEM but owner is unmanaged the control rights of system will be set to FullControl by
         # the unmanaged owner, so there is no need for the warning.
         if managing_group && (!isownergroup || managing_owner)
-          #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+          # TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
           Puppet.warning _("Setting control rights for %{path} group SYSTEM to less than Full Control rights. Setting SYSTEM rights to less than Full Control may have unintented consequences for operations on this file") % { path: path }
         elsif managing_group && isownergroup
-          #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+          # TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
           Puppet.debug { _("%{path} owner and group both set to user SYSTEM, but owner is not managed directly: SYSTEM user rights will be set to FullControl by owner") % { path: path } }
         else
-          #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+          # TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
           Puppet.debug { _("An attempt to set mode %{mode} on item %{path} would result in the group, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control") % { mode: mode.to_s(8), path: path } }
           group_allow = FILE::FILE_ALL_ACCESS
         end
@@ -482,7 +482,7 @@ module Puppet::Util::Windows::Security
 
         # ACE structures vary depending on the type. We are only concerned with
         # ACCESS_ALLOWED_ACE and ACCESS_DENIED_ACEs, which have the same layout
-        ace = GENERIC_ACCESS_ACE.new(ace_ptr.get_pointer(0)) #deref LPVOID *
+        ace = GENERIC_ACCESS_ACE.new(ace_ptr.get_pointer(0)) # deref LPVOID *
 
         ace_type = ace[:Header][:AceType]
         if ace_type != Puppet::Util::Windows::AccessControlEntry::ACCESS_ALLOWED_ACE_TYPE &&
@@ -595,8 +595,8 @@ module Puppet::Util::Windows::Security
                   owner_sid_ptr_ptr,
                   group_sid_ptr_ptr,
                   dacl_ptr_ptr,
-                  FFI::Pointer::NULL, #sacl
-                  sd_ptr_ptr) #sec desc
+                  FFI::Pointer::NULL, # sacl
+                  sd_ptr_ptr) # sec desc
                 raise Puppet::Util::Windows::Error.new(_("Failed to get security information")) if rv != FFI::ERROR_SUCCESS
 
                 # these 2 convenience params are not freed since they point inside sd_ptr
@@ -655,10 +655,10 @@ module Puppet::Util::Windows::Security
                 sd.dacl.each do |ace|
                   case ace.type
                   when Puppet::Util::Windows::AccessControlEntry::ACCESS_ALLOWED_ACE_TYPE
-                    #puts "ace: allow, sid #{Puppet::Util::Windows::SID.sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
+                    # puts "ace: allow, sid #{Puppet::Util::Windows::SID.sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
                     add_access_allowed_ace(acl_ptr, ace.mask, ace.sid, ace.flags)
                   when Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
-                    #puts "ace: deny, sid #{Puppet::Util::Windows::SID.sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
+                    # puts "ace: deny, sid #{Puppet::Util::Windows::SID.sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
                     add_access_denied_ace(acl_ptr, ace.mask, ace.sid, ace.flags)
                   else
                     raise "We should never get here"

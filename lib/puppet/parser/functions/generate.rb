@@ -13,7 +13,7 @@ Puppet::Parser::Functions::newfunction(:generate, :arity => -2, :type => :rvalue
     generators, so all shell metacharacters are passed directly to
     the generator, and all metacharacters are returned by the function.
     Consider cleaning white space from any string generated.") do |args|
-  #TRANSLATORS "fully qualified" refers to a fully qualified file system path
+  # TRANSLATORS "fully qualified" refers to a fully qualified file system path
   raise Puppet::ParseError, _("Generators must be fully qualified") unless Puppet::Util.absolute_path?(args[0])
 
   if Puppet::Util::Platform.windows?

@@ -309,7 +309,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def has_sensitive_data?(property = nil)
-    #Check for sensitive values?
+    # Check for sensitive values?
     properties = property ? [property] : Puppet::Type.type(:user).validproperties
     properties.any? do |prop|
       p = @resource.parameter(prop)

@@ -67,7 +67,7 @@ class CommandLine
     ## The complete set of legal values for the +:type+ parameter of #opt.
     TYPES = FLAG_TYPES + SINGLE_ARG_TYPES + MULTI_ARG_TYPES
 
-    INVALID_SHORT_ARG_REGEX = /[\d-]/ #:nodoc:
+    INVALID_SHORT_ARG_REGEX = /[\d-]/ # :nodoc:
 
     ## The values from the commandline that were not interpreted by #parse.
     attr_reader :leftovers
@@ -101,7 +101,7 @@ class CommandLine
       @stop_words = []
       @stop_on_unknown = false
 
-      #instance_eval(&b) if b # can't take arguments
+      # instance_eval(&b) if b # can't take arguments
       cloaker(&b).bind(self).call(*a) if b
     end
 
@@ -448,7 +448,7 @@ class CommandLine
       vals
     end
 
-    def parse_date_parameter param, arg #:nodoc:
+    def parse_date_parameter param, arg # :nodoc:
       begin
         begin
           time = Chronic.parse(param)
@@ -526,7 +526,7 @@ class CommandLine
       end
     end
 
-    def width #:nodoc:
+    def width # :nodoc:
       @width ||= if $stdout.tty?
                    begin
                      require 'curses'
@@ -817,7 +817,7 @@ class CommandLine
     if @last_parser
       @last_parser.die arg, msg
     else
-      #TRANSLATORS 'Trollop' is the name of a module and 'die' and 'options' are methods in it and should not be translated.
+      # TRANSLATORS 'Trollop' is the name of a module and 'die' and 'options' are methods in it and should not be translated.
       raise ArgumentError, _("Trollop::die can only be called after Trollop::options")
     end
   end

@@ -23,11 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: AllowDoxygenCommentStyle, AllowGemfileRubyComment.
-Layout/LeadingCommentSpace:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/LeadingEmptyLines:
   Exclude:
     - 'lib/puppet/functions/yaml_data.rb'

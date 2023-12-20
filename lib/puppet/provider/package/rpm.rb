@@ -78,9 +78,9 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   # a hash with entries :instance => fully versioned package name, and
   # :ensure => version-release
   def query
-    #NOTE: Prior to a fix for issue 1243, this method potentially returned a cached value
-    #IF YOU CALL THIS METHOD, IT WILL CALL RPM
-    #Use get(:property) to check if cached values are available
+    # NOTE: Prior to a fix for issue 1243, this method potentially returned a cached value
+    # IF YOU CALL THIS METHOD, IT WILL CALL RPM
+    # Use get(:property) to check if cached values are available
     cmd = ["-q", @resource[:name], "#{self.class.nosignature}", "#{self.class.nodigest}", "--qf", "#{self.class::NEVRA_FORMAT}"]
 
     begin

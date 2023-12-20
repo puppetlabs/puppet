@@ -23,7 +23,7 @@ class Puppet::Util::AtFork::Solaris
 
   {
     'libcontract.so.1' => [
-      #function name,            return value type, parameter types, ...
+      # function name,            return value type, parameter types, ...
       [:ct_ctl_abandon,          Fiddle::TYPE_INT,  Fiddle::TYPE_INT],
       [:ct_tmpl_activate,        Fiddle::TYPE_INT,  Fiddle::TYPE_INT],
       [:ct_tmpl_clear,           Fiddle::TYPE_INT,  Fiddle::TYPE_INT],

@@ -46,7 +46,7 @@ class Puppet::Util::Ldap::Manager
   # Open, yield, and close the connection.  Cannot be left
   # open, at this point.
   def connect
-    #TRANSLATORS '#connect' is a method name and and should not be translated, 'block' refers to a Ruby code block
+    # TRANSLATORS '#connect' is a method name and and should not be translated, 'block' refers to a Ruby code block
     raise ArgumentError, _("You must pass a block to #connect") unless block_given?
 
     unless @connection
@@ -90,7 +90,7 @@ class Puppet::Util::Ldap::Manager
 
   # Convert an ldap-style entry hash to a provider-style hash.
   def entry2provider(entry)
-    #TRANSLATOR 'dn' refers to a 'distinguished name' in LDAP (Lightweight Directory Access Protocol) and they should not be translated
+    # TRANSLATOR 'dn' refers to a 'distinguished name' in LDAP (Lightweight Directory Access Protocol) and they should not be translated
     raise ArgumentError, _("Could not get dn from ldap entry") unless entry["dn"]
 
     # DN is always a single-entry array.  Strip off the bits before the

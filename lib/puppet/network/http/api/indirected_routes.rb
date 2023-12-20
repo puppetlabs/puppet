@@ -236,7 +236,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       end
     end
 
-    #TRANSLATORS "mime-type" is a keyword and should not be translated
+    # TRANSLATORS "mime-type" is a keyword and should not be translated
     raise Puppet::Network::HTTP::Error::HTTPUnsupportedMediaTypeError.new(
       _("Client sent a mime-type (%{header}) that doesn't correspond to a format we support") % { header: request.headers['content-type'] },
       Puppet::Network::HTTP::Issues::UNSUPPORTED_MEDIA_TYPE)

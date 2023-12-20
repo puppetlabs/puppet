@@ -159,7 +159,7 @@ module Logging
     key = options[:key]
     file = options[:file]
     line = options[:line]
-    #TRANSLATORS the literals ":file", ":line", and ":key" should not be translated
+    # TRANSLATORS the literals ":file", ":line", and ":key" should not be translated
     raise Puppet::DevError, _("Need either :file and :line, or :key") if (key.nil?) && (file.nil? || line.nil?)
 
     key ||= "#{file}:#{line}"

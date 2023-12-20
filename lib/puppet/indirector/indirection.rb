@@ -67,7 +67,7 @@ class Puppet::Indirector::Indirection
 
   # Set the time-to-live for instances created through this indirection.
   def ttl=(value)
-    #TRANSLATORS "TTL" stands for "time to live" and refers to a duration of time
+    # TRANSLATORS "TTL" stands for "time to live" and refers to a duration of time
     raise ArgumentError, _("Indirection TTL must be an integer") unless value.is_a?(Integer)
 
     @ttl = value

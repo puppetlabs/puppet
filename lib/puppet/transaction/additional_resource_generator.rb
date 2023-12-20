@@ -62,7 +62,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
       return false if generated.empty?
     rescue => detail
       @resources_failed_to_generate = true
-      #TRANSLATORS eval_generate is a method name and should be left untranslated
+      # TRANSLATORS eval_generate is a method name and should be left untranslated
       resource.log_exception(detail, _("Failed to generate additional resources using 'eval_generate': %{detail}") % { detail: detail })
       return false
     end

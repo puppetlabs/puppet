@@ -134,7 +134,7 @@ module ModuleLoaders
       @loaders = loaders
       @loadables = loadables
       unless (loadables - LOADABLE_KINDS).empty?
-        #TRANSLATORS 'loadables' is a variable containing loadable modules and should not be translated
+        # TRANSLATORS 'loadables' is a variable containing loadable modules and should not be translated
         raise ArgumentError, _('given loadables are not of supported loadable kind')
       end
 

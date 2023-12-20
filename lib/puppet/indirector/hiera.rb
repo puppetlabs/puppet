@@ -10,7 +10,7 @@ require 'hiera/scope'
 class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   def initialize(*args)
     if ! Puppet.features.hiera?
-      #TRANSLATORS "Hiera" is the name of a code library and should not be translated
+      # TRANSLATORS "Hiera" is the name of a code library and should not be translated
       raise _("Hiera terminus not supported without hiera library")
     end
 
@@ -70,7 +70,7 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
         convert_merge(strategy)
       end
     else
-      #TRANSLATORS "merge" is a parameter name and should not be translated
+      # TRANSLATORS "merge" is a parameter name and should not be translated
       raise Puppet::DataBinding::LookupError, _("Unrecognized value for request 'merge' parameter: '%{merge}'") % { merge: merge }
     end
   end

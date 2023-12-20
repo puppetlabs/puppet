@@ -455,8 +455,8 @@ module Puppet
 
       validate do |value|
         if value.intern != :absent and value !~ /^\d{4}-\d{2}-\d{2}$/
-          #TRANSLATORS YYYY-MM-DD represents a date with a four-digit year, a two-digit month, and a two-digit day,
-          #TRANSLATORS separated by dashes.
+          # TRANSLATORS YYYY-MM-DD represents a date with a four-digit year, a two-digit month, and a two-digit day,
+          # TRANSLATORS separated by dashes.
           raise ArgumentError, _("Expiry dates must be YYYY-MM-DD or the string \"absent\"")
         end
       end
@@ -530,7 +530,7 @@ module Puppet
       end
     end
 
-    #autorequire the roles that the user has
+    # autorequire the roles that the user has
     autorequire(:user) do
       reqs = []
 

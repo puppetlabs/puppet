@@ -298,7 +298,7 @@ class Puppet::Resource
       @sensitive_parameters.replace(type.sensitive_parameters)
     else
       if type.is_a?(Hash)
-        #TRANSLATORS 'Puppet::Resource.new' should not be translated
+        # TRANSLATORS 'Puppet::Resource.new' should not be translated
         raise ArgumentError, _("Puppet::Resource.new does not take a hash as the first argument.") + ' ' +
           _("Did you mean (%{type}, %{title}) ?") %
               { type: (type[:type] || type["type"]).inspect, title: (type[:title] || type["title"]).inspect }

@@ -49,7 +49,7 @@ class Puppet::FileServing::Base
   def links=(value)
     value = value.to_sym
     value = :manage if value == :ignore
-    #TRANSLATORS ':link', ':manage', ':follow' should not be translated
+    # TRANSLATORS ':link', ':manage', ':follow' should not be translated
     raise(ArgumentError, _(":links can only be set to :manage or :follow")) unless [:manage, :follow].include?(value)
 
     @links = value

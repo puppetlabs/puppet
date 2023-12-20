@@ -203,11 +203,11 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
       resource_declaration = Puppet::Util::Errors.error_location(resource.file, resource.line)
       msg = if resource_declaration.empty?
-              #TRANSLATORS 'alias' should not be translated
+              # TRANSLATORS 'alias' should not be translated
               _("Cannot alias %{resource} to %{key}; resource %{newref} already declared") %
                   { resource: ref, key: key.inspect, newref: newref.inspect }
             else
-              #TRANSLATORS 'alias' should not be translated
+              # TRANSLATORS 'alias' should not be translated
               _("Cannot alias %{resource} to %{key} at %{resource_declaration}; resource %{newref} already declared") %
                   { resource: ref, key: key.inspect, resource_declaration: resource_declaration, newref: newref.inspect }
             end

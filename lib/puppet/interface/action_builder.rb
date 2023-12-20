@@ -62,11 +62,11 @@ class Puppet::Interface::ActionBuilder
   # @dsl Faces
   def when_rendering(type = nil, &block)
     if type.nil? then # the default error message sucks --daniel 2011-04-18
-      #TRANSLATORS 'when_rendering' is a method name and should not be translated
+      # TRANSLATORS 'when_rendering' is a method name and should not be translated
       raise ArgumentError, _('You must give a rendering format to when_rendering')
     end
     if block.nil? then
-      #TRANSLATORS 'when_rendering' is a method name and should not be translated
+      # TRANSLATORS 'when_rendering' is a method name and should not be translated
       raise ArgumentError, _('You must give a block to when_rendering')
     end
 
@@ -128,7 +128,7 @@ class Puppet::Interface::ActionBuilder
   # @api private
   def render_as(value = nil)
     if value.nil?
-      #TRANSLATORS 'render_as' is a method name and should not be translated
+      # TRANSLATORS 'render_as' is a method name and should not be translated
       raise ArgumentError, _("You must give a rendering format to render_as")
     end
 
@@ -160,7 +160,7 @@ class Puppet::Interface::ActionBuilder
     @action = Puppet::Interface::Action.new(face, name)
     instance_eval(&block)
     unless @action.when_invoked
-      #TRANSLATORS 'when_invoked' is a method name and should not be translated and 'block' is a Ruby code block
+      # TRANSLATORS 'when_invoked' is a method name and should not be translated and 'block' is a Ruby code block
       raise ArgumentError, _("actions need to know what to do when_invoked; please add the block")
     end
   end

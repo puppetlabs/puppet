@@ -174,7 +174,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def statuscmd
-    is_upstart? ? nil : super #this is because upstart is broken with its return codes
+    is_upstart? ? nil : super # this is because upstart is broken with its return codes
   end
 
   def status

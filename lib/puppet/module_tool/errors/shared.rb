@@ -31,7 +31,7 @@ module Puppet::ModuleTool::Errors
         message << _("  The requested version cannot satisfy all dependencies")
       end
 
-      #TRANSLATORS `puppet module %{action} --ignore-dependencies` is a command line and should not be translated
+      # TRANSLATORS `puppet module %{action} --ignore-dependencies` is a command line and should not be translated
       message << _("  Use `puppet module %{action} '%{module_name}' --ignore-dependencies` to %{action} only this module") % { action: @action, module_name: @requested_name }
       message.join("\n")
     end
@@ -90,10 +90,10 @@ module Puppet::ModuleTool::Errors
       end
 
       if @dependency
-        #TRANSLATORS `puppet module install --ignore-dependencies` is a command line and should not be translated
+        # TRANSLATORS `puppet module install --ignore-dependencies` is a command line and should not be translated
         message << _("    Use `puppet module install --ignore-dependencies` to install only this module")
       else
-        #TRANSLATORS `puppet module install --force` is a command line and should not be translated
+        # TRANSLATORS `puppet module install --force` is a command line and should not be translated
         message << _("    Use `puppet module install --force` to install this module anyway")
       end
       message.join("\n")
@@ -115,14 +115,14 @@ module Puppet::ModuleTool::Errors
       dependency_list = []
       dependency_list << _("You specified '%{name}' (%{version})") % { name: @source.first[:name], version: v(@requested_version) }
       dependency_list += @source[1..-1].map do |m|
-        #TRANSLATORS This message repeats as separate lines as a list under the heading "You specified '%{name}' (%{version})\n"
+        # TRANSLATORS This message repeats as separate lines as a list under the heading "You specified '%{name}' (%{version})\n"
         _("This depends on '%{name}' (%{version})") % { name: m[:name], version: v(m[:version]) }
       end
       message = []
       message << _("Could not install module '%{module_name}' (%{version})") % { module_name: @requested_module, version: v(@requested_version) }
       message << _("  No version of '%{module_name}' will satisfy dependencies") % { module_name: @module_name }
       message << dependency_list.map {|s| "    #{s}".join(",\n")}
-      #TRANSLATORS `puppet module install --force` is a command line and should not be translated
+      # TRANSLATORS `puppet module install --force` is a command line and should not be translated
       message << _("    Use `puppet module install --force` to install this module anyway")
       message.join("\n")
     end
@@ -158,10 +158,10 @@ module Puppet::ModuleTool::Errors
       message << _("Could not %{action} module '%{module_name}'") % { action: @action, module_name: @module_name }
       message << _("  Module '%{module_name}' is not installed") % { module_name: @module_name }
       message += @suggestions.map do |suggestion|
-        #TRANSLATORS `puppet module %{action} %{suggestion}` is a command line and should not be translated
+        # TRANSLATORS `puppet module %{action} %{suggestion}` is a command line and should not be translated
         _("    You may have meant `puppet module %{action} %{suggestion}`") % { action: @action, suggestion: suggestion }
       end
-      #TRANSLATORS `puppet module install` is a command line and should not be translated
+      # TRANSLATORS `puppet module install` is a command line and should not be translated
       message << _("    Use `puppet module install` to install this module") if @action == :upgrade
       message.join("\n")
     end
@@ -172,7 +172,7 @@ module Puppet::ModuleTool::Errors
       @module_name = options[:module_name]
       @modules     = options[:installed_modules]
       @action      = options[:action]
-      #TRANSLATORS "module path" refers to a set of directories where modules may be installed
+      # TRANSLATORS "module path" refers to a set of directories where modules may be installed
       super _("Could not %{action} '%{module_name}'; module appears in multiple places in the module path") % { action: @action, module_name: @module_name }
     end
 
@@ -181,10 +181,10 @@ module Puppet::ModuleTool::Errors
       message << _("Could not %{action} module '%{module_name}'") % { action: @action, module_name: @module_name }
       message << _("  Module '%{module_name}' appears multiple places in the module path") % { module_name: @module_name }
       message += @modules.map do |mod|
-        #TRANSLATORS This is repeats as separate lines as a list under "Module '%{module_name}' appears multiple places in the module path"
+        # TRANSLATORS This is repeats as separate lines as a list under "Module '%{module_name}' appears multiple places in the module path"
         _("    '%{module_name}' (%{version}) was found in %{path}") % { module_name: @module_name, version: v(mod.version), path: mod.modulepath }
       end
-      #TRANSLATORS `--modulepath` is command line option and should not be translated
+      # TRANSLATORS `--modulepath` is command line option and should not be translated
       message << _("    Use the `--modulepath` option to limit the search to specific directories")
       message.join("\n")
     end
@@ -203,7 +203,7 @@ module Puppet::ModuleTool::Errors
       message = []
       message << _("Could not %{action} module '%{module_name}' (%{version})") % { action: @action, module_name: @module_name, version: vstring }
       message << _("  Installed module has had changes made locally")
-      #TRANSLATORS `puppet module %{action} --ignore-changes` is a command line and should not be translated
+      # TRANSLATORS `puppet module %{action} --ignore-changes` is a command line and should not be translated
       message << _("    Use `puppet module %{action} --ignore-changes` to %{action} this module anyway") % { action: @action }
       message.join("\n")
     end

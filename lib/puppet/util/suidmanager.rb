@@ -28,7 +28,7 @@ module Puppet::Util::SUIDManager
     begin
       Process.groups = grouplist
     rescue Errno::EINVAL => e
-      #We catch Errno::EINVAL as some operating systems (OS X in particular) can
+      # We catch Errno::EINVAL as some operating systems (OS X in particular) can
       # cause troubles when using Process#groups= to change *this* user / process
       # list of supplementary groups membership.  This is done via Ruby's function
       # "static VALUE proc_setgroups(VALUE obj, VALUE ary)" which is effectively

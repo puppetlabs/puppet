@@ -32,7 +32,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # 10.8 Passwords use a PBKDF2 salt value
   has_features :manages_password_salt
 
-  #provider can set the user's shell
+  # provider can set the user's shell
   has_feature :manages_shell
 
   ##               ##

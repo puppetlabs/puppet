@@ -37,7 +37,7 @@ module Puppet::ModuleTool::Errors
           end
         end
       end
-      #TRANSLATORS `puppet module upgrade --force` is a command line option that should not be translated
+      # TRANSLATORS `puppet module upgrade --force` is a command line option that should not be translated
       message << _("    Use `puppet module upgrade --force` to upgrade only this module")
       message.join("\n")
     end

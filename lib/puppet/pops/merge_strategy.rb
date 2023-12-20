@@ -26,7 +26,7 @@ module Puppet::Pops
       if merge.is_a?(Hash)
         merge_strategy = merge['strategy']
         if merge_strategy.nil?
-          #TRANSLATORS 'merge' is a variable name and 'strategy' is a key and should not be translated
+          # TRANSLATORS 'merge' is a variable name and 'strategy' is a key and should not be translated
           raise ArgumentError, _("The hash given as 'merge' must contain the name of a strategy in string form for the key 'strategy'")
         end
 
@@ -56,7 +56,7 @@ module Puppet::Pops
     #
     def self.add_strategy(strategy_class)
       unless MergeStrategy > strategy_class
-        #TRANSLATORS 'MergeStrategies.add_strategy' is a method, 'stratgey_class' is a variable and 'MergeStrategy' is a class name and should not be translated
+        # TRANSLATORS 'MergeStrategies.add_strategy' is a method, 'stratgey_class' is a variable and 'MergeStrategy' is a class name and should not be translated
         raise ArgumentError, _("MergeStrategies.add_strategy 'strategy_class' must be a 'MergeStrategy' class. Got %{strategy_class}") %
             { strategy_class: strategy_class }
       end

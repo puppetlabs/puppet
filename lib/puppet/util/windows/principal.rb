@@ -95,7 +95,7 @@ module Puppet::Util::Windows::SID
     def self.lookup_account_sid(system_name = nil, sid_bytes)
       system_name_ptr = FFI::Pointer::NULL
       if (sid_bytes.nil? || (!sid_bytes.is_a? Array) || (sid_bytes.length == 0))
-        #TRANSLATORS `lookup_account_sid` is a variable name and should not be translated
+        # TRANSLATORS `lookup_account_sid` is a variable name and should not be translated
         raise Puppet::Util::Windows::Error.new(_('Byte array for lookup_account_sid must not be nil and must be at least 1 byte long'))
       end
 

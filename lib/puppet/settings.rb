@@ -360,7 +360,7 @@ class Puppet::Settings
 
     # remove run_mode options from the arguments so that later parses don't think
     # it is an unknown option.
-    while option_index = args.index('--run_mode') do #rubocop:disable Lint/AssignmentInCondition
+    while option_index = args.index('--run_mode') do # rubocop:disable Lint/AssignmentInCondition
       args.delete_at option_index
       args.delete_at option_index
     end
@@ -432,8 +432,8 @@ class Puppet::Settings
         setting.handle(self.value(setting.name))
       rescue InterpolationError => err
         raise InterpolationError, err.message, err.backtrace unless options[:ignore_interpolation_dependency_errors]
-        #swallow. We're not concerned if we can't call hooks because dependencies don't exist yet
-        #we'll get another chance after application defaults are initialized
+        # swallow. We're not concerned if we can't call hooks because dependencies don't exist yet
+        # we'll get another chance after application defaults are initialized
       end
     end
   end
@@ -536,7 +536,7 @@ class Puppet::Settings
     else
       val.split(/\s*,\s*/).sort.each do |v|
         if include?(v)
-          #if there is only one value, just print it for back compatibility
+          # if there is only one value, just print it for back compatibility
           if v == val
             puts value(val,env)
             break
@@ -1311,7 +1311,7 @@ Generated on #{Time.now}.
       message += " #{ref}"
       Puppet.deprecation_warning(message, "setting-#{name}")
     when setting.allowed_on_commandline?
-      #TRANSLATORS 'puppet.conf' is a file name and should not be translated
+      # TRANSLATORS 'puppet.conf' is a file name and should not be translated
       message = _("Setting %{name} is deprecated in puppet.conf.") % { name: name }
       message += " #{ref}"
       Puppet.deprecation_warning(message, "puppet-conf-setting-#{name}")
@@ -1532,7 +1532,7 @@ Generated on #{Time.now}.
           interpolated_expression
         end
         if failed_environment_interpolation
-          #TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
+          # TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
           Puppet.warning(_("You cannot interpolate $environment within '%{setting_name}' when using directory environments.") % { setting_name: setting_name } +
                              ' ' + _("Its value will remain %{value}.") % { value: interpolated_value })
         end

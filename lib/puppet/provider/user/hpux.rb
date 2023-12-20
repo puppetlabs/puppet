@@ -47,7 +47,7 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
 
   def password
     # Password management routine for trusted and non-trusted systems
-    #temp=""
+    # temp=""
     while ent = Etc.getpwent() do # rubocop:disable Lint/AssignmentInCondition
       if ent.name == resource.name
         temp=ent.name

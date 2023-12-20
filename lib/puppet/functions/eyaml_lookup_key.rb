@@ -28,7 +28,7 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
     # Can't do this with an argument_mismatch dispatcher since there is no way to declare a struct that at least
     # contains some keys but may contain other arbitrary keys.
     unless options.include?('path')
-      #TRANSLATORS 'eyaml_lookup_key':, 'path', 'paths' 'glob', 'globs', 'mapped_paths', and lookup_key should not be translated
+      # TRANSLATORS 'eyaml_lookup_key':, 'path', 'paths' 'glob', 'globs', 'mapped_paths', and lookup_key should not be translated
       raise ArgumentError,
             _("'eyaml_lookup_key': one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml"\
                   " when using this lookup_key function")

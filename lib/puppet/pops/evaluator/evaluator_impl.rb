@@ -749,10 +749,10 @@ class EvaluatorImpl
       line = 0
       # Add stack frame for "top scope" logic. See Puppet::Pops::PuppetStack
       return Puppet::Pops::PuppetStack.stack(file, line, self, 'evaluate', [o.body, scope])
-      #evaluate(o.body, scope)
+      # evaluate(o.body, scope)
     rescue Puppet::Pops::Evaluator::PuppetStopIteration => ex
       # breaking out of a file level program is not allowed
-      #TRANSLATOR break() is a method that should not be translated
+      # TRANSLATOR break() is a method that should not be translated
       raise Puppet::ParseError.new(_("break() from context where this is illegal"), ex.file, ex.line)
     end
   end

@@ -103,7 +103,7 @@ module Puppet::Util::ClassGen
     name = name.to_s.downcase.intern
 
     if type == Module
-      #evalmethod = :module_eval
+      # evalmethod = :module_eval
       evalmethod = :class_eval
       # Create the class, with the correct name.
       klass = Module.new do

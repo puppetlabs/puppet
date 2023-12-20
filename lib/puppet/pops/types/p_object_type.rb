@@ -177,7 +177,7 @@ class PObjectType < PMetaType
         raise Puppet::ParseError, _("%{member} attempts to override final %{label}") % { member: member.label, label: label }
       end
       unless member.override?
-        #TRANSLATOR 'override => true' is a puppet syntax and should not be translated
+        # TRANSLATOR 'override => true' is a puppet syntax and should not be translated
         raise Puppet::ParseError, _("%{member} attempts to override %{label} without having override => true") % { member: member.label, label: label }
       end
       unless @type.assignable?(member.type)
@@ -302,7 +302,7 @@ class PObjectType < PMetaType
       @kind = init_hash[KEY_KIND]
       if @kind == ATTRIBUTE_KIND_CONSTANT # final is implied
         if init_hash.include?(KEY_FINAL) && !@final
-          #TRANSLATOR 'final => false' is puppet syntax and should not be translated
+          # TRANSLATOR 'final => false' is puppet syntax and should not be translated
           raise Puppet::ParseError, _("%{label} of kind 'constant' cannot be combined with final => false") % { label: label }
         end
 
@@ -785,7 +785,7 @@ class PObjectType < PMetaType
     equality = [equality] if equality.is_a?(String)
     if equality.is_a?(Array)
       unless equality.empty?
-        #TRANSLATORS equality_include_type = false should not be translated
+        # TRANSLATORS equality_include_type = false should not be translated
         raise Puppet::ParseError, _('equality_include_type = false cannot be combined with non empty equality specification') unless @equality_include_type
 
         parent_eq_attrs = nil

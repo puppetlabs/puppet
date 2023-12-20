@@ -7,7 +7,7 @@ class Puppet::Settings::ServerListSetting < Puppet::Settings::ArraySetting
 
   def print(value)
     if value.is_a?(Array)
-      #turn into a string
+      # turn into a string
       value.map {|item| item.join(":") }.join(",")
     else
       value

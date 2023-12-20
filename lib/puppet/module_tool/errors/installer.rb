@@ -17,9 +17,9 @@ module Puppet::ModuleTool::Errors
       message << _("Could not install module '%{module_name}' (%{version})") % { module_name: @module_name, version: @requested_version }
       message << _("  Module '%{module_name}' (%{installed_version}) is already installed") % { module_name: @module_name, installed_version: @installed_version }
       message << _("    Installed module has had changes made locally") unless @local_changes.empty?
-      #TRANSLATORS `puppet module upgrade` is a command line and should not be translated
+      # TRANSLATORS `puppet module upgrade` is a command line and should not be translated
       message << _("    Use `puppet module upgrade` to install a different version")
-      #TRANSLATORS `puppet module install --force` is a command line and should not be translated
+      # TRANSLATORS `puppet module install --force` is a command line and should not be translated
       message << _("    Use `puppet module install --force` to re-install only this module")
       message.join("\n")
     end
@@ -54,7 +54,7 @@ module Puppet::ModuleTool::Errors
       message = []
       message << _("Could not install module '%{module_name}' (%{version})") % { module_name: @requested_module, version: @requested_version }
       message << _("  Path '%{directory}' exists but is not a directory.") % { directory: @directory }
-      #TRANSLATORS "mkdir -p '%{directory}'" is a command line example and should not be translated
+      # TRANSLATORS "mkdir -p '%{directory}'" is a command line example and should not be translated
       message << _("  A potential solution is to rename the path and then \"mkdir -p '%{directory}'\"") % { directory: @directory }
       message.join("\n")
     end

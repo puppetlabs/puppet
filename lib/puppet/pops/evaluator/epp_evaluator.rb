@@ -5,7 +5,7 @@
 class Puppet::Pops::Evaluator::EppEvaluator
   def self.inline_epp(scope, epp_source, template_args = nil)
     unless epp_source.is_a?(String)
-      #TRANSLATORS 'inline_epp()' is a method name and 'epp' refers to 'Embedded Puppet (EPP) template' and should not be translated
+      # TRANSLATORS 'inline_epp()' is a method name and 'epp' refers to 'Embedded Puppet (EPP) template' and should not be translated
       raise ArgumentError, _("inline_epp(): the first argument must be a String with the epp source text, got a %{class_name}") %
           { class_name: epp_source.class }
     end
@@ -15,7 +15,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
     begin
       result = parser.parse_string(epp_source, 'inlined-epp-text')
     rescue Puppet::ParseError => e
-      #TRANSLATORS 'inline_epp()' is a method name and 'EPP' refers to 'Embedded Puppet (EPP) template' and should not be translated
+      # TRANSLATORS 'inline_epp()' is a method name and 'EPP' refers to 'Embedded Puppet (EPP) template' and should not be translated
       raise ArgumentError, _("inline_epp(): Invalid EPP: %{detail}") % { detail: e.message }
     end
 
@@ -25,7 +25,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
 
   def self.epp(scope, file, env_name, template_args = nil)
     unless file.is_a?(String)
-      #TRANSLATORS 'epp()' is a method name and should not be translated
+      # TRANSLATORS 'epp()' is a method name and should not be translated
       raise ArgumentError, _("epp(): the first argument must be a String with the filename, got a %{class_name}") % { class_name: file.class }
     end
 
@@ -46,7 +46,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
     begin
       result = parser.parse_file(template_file)
     rescue Puppet::ParseError => e
-      #TRANSLATORS 'epp()' is a method name and 'EPP' refers to 'Embedded Puppet (EPP) template' and should not be translated
+      # TRANSLATORS 'epp()' is a method name and 'EPP' refers to 'Embedded Puppet (EPP) template' and should not be translated
       raise ArgumentError, _("epp(): Invalid EPP: %{detail}") % { detail: e.message }
     end
 
@@ -59,17 +59,17 @@ class Puppet::Pops::Evaluator::EppEvaluator
 
     body = parse_result.body
     unless body.is_a?(Puppet::Pops::Model::LambdaExpression)
-      #TRANSLATORS 'LambdaExpression' is a class name and should not be translated
+      # TRANSLATORS 'LambdaExpression' is a class name and should not be translated
       raise ArgumentError, _("%{function_name}(): the parser did not produce a LambdaExpression, got '%{class_name}'") %
           { function_name: func_name, class_name: body.class }
     end
     unless body.body.is_a?(Puppet::Pops::Model::EppExpression)
-      #TRANSLATORS 'EppExpression' is a class name and should not be translated
+      # TRANSLATORS 'EppExpression' is a class name and should not be translated
       raise ArgumentError, _("%{function_name}(): the parser did not produce an EppExpression, got '%{class_name}'") %
           { function_name: func_name, class_name: body.body.class }
     end
     unless parse_result.definitions.empty?
-      #TRANSLATORS 'EPP' refers to 'Embedded Puppet (EPP) template'
+      # TRANSLATORS 'EPP' refers to 'Embedded Puppet (EPP) template'
       raise ArgumentError, _("%{function_name}(): The EPP template contains illegal expressions (definitions)") %
           { function_name: func_name }
     end
@@ -110,7 +110,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
       [{}, false]
     else
       unless template_args.is_a?(Hash)
-        #TRANSLATORS 'template_args' is a variable name and should not be translated
+        # TRANSLATORS 'template_args' is a variable name and should not be translated
         raise ArgumentError, _("%{function_name}(): the template_args must be a Hash, got a %{class_name}") %
             { function_name: func_name, class_name: template_args.class }
       end

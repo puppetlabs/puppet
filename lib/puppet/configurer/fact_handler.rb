@@ -34,7 +34,7 @@ module Puppet::Configurer::FactHandler
   end
 
   def encode_facts(facts)
-    #facts = find_facts
+    # facts = find_facts
 
     # NOTE: :facts specified as parameters are URI encoded here,
     # then  encoded for a second time depending on their length:

@@ -96,7 +96,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
 
   # only looking for -G now
   def install
-    #TRANSLATORS Sun refers to the company name, do not translate
+    # TRANSLATORS Sun refers to the company name, do not translate
     raise Puppet::Error, _("Sun packages must specify a package source") unless @resource[:source]
 
     options = {

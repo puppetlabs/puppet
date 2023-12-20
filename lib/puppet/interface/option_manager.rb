@@ -11,7 +11,7 @@ module Puppet::Interface::OptionManager
     @display_global_options ||= []
     [args].flatten.each do |refopt|
       unless Puppet.settings.include?(refopt)
-        #TRANSLATORS 'Puppet.settings' references to the Puppet settings options and should not be translated
+        # TRANSLATORS 'Puppet.settings' references to the Puppet settings options and should not be translated
         raise ArgumentError, _("Global option %{option} does not exist in Puppet.settings") % { option: refopt }
       end
 

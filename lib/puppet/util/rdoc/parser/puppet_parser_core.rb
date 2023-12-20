@@ -230,8 +230,8 @@ module RDoc::PuppetParserCore
         context.force_documentation = true
         ""
       when "enddoc"
-        #context.done_documenting = true
-        #""
+        # context.done_documenting = true
+        # ""
         throw :enddoc
       when "main"
         options = Options.instance

@@ -8,7 +8,7 @@ module Puppet::Util::Package::Version
     REGEX_EPOCH = '(?:([0-9]+):)?'
     # alphanumerics and the characters . + - ~ , starts with a digit, ~ only of debian_revision is present
     REGEX_UPSTREAM_VERSION = '([\.\+~0-9a-zA-Z-]+?)'
-    #alphanumerics and the characters + . ~
+    # alphanumerics and the characters + . ~
     REGEX_DEBIAN_REVISION = '(?:-([\.\+~0-9a-zA-Z]*))?'
 
     REGEX_FULL    = REGEX_EPOCH + REGEX_UPSTREAM_VERSION + REGEX_DEBIAN_REVISION.freeze
@@ -99,7 +99,7 @@ module Puppet::Util::Package::Version
       mine ||= ''
       yours ||= ''
       while mine_index < mine.length && yours_index < yours.length && cmp == 0
-        #handle ~
+        # handle ~
         _mymatch, mytilde = *match_tildes(mine.slice(mine_index..-1))
         mytilde ||= ''
 

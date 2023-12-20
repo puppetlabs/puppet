@@ -26,7 +26,7 @@
 # }
 # $data = [1,2,3]
 # notice $data.map |$x| { break_if_even($x); $x*10 }
-#```
+# ```
 # Would notice the value `[10]`
 #
 # * Also see functions `next` and `return`

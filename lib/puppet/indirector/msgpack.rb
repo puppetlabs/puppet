@@ -66,7 +66,7 @@ class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
     rescue Errno::ENOENT
       return nil
     rescue => detail
-      #TRANSLATORS "MessagePack" is a program name and should not be translated
+      # TRANSLATORS "MessagePack" is a program name and should not be translated
       raise Puppet::Error, _("Could not read MessagePack data for %{indirection} %{key}: %{detail}") % { indirection: indirection.name, key: key, detail: detail }, detail.backtrace
     end
 

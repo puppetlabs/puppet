@@ -29,7 +29,7 @@ module Puppet
         return false if is == :absent
       else
         if resource[:ensure] == :present && has_contents && (s = resource.stat)
-          #TRANSLATORS 'Ensure' is an attribute and ':present' is a value and should not be translated
+          # TRANSLATORS 'Ensure' is an attribute and ':present' is a value and should not be translated
           resource.warning _("Ensure set to :present but file type is %{file_type} so no content will be synced") % { file_type: s.ftype}
         end
         return true

@@ -98,7 +98,7 @@ class Puppet::Property::Ensure < Puppet::Property
 
   # If they're talking about the thing at all, they generally want to
   # say it should exist.
-  #defaultto :present
+  # defaultto :present
   defaultto do
     if @resource.managed?
       :present

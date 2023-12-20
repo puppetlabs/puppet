@@ -160,7 +160,7 @@ Puppet::Type.newtype(:tidy) do
         multi = Integer($1)
         unit = :d
       else
-        #TRANSLATORS tidy is the name of a program and should not be translated
+        # TRANSLATORS tidy is the name of a program and should not be translated
         self.fail _("Invalid tidy age %{age}") % { age: age }
       end
 
@@ -200,7 +200,7 @@ Puppet::Type.newtype(:tidy) do
         multi = Integer($1)
         unit = :k
       else
-        #TRANSLATORS tidy is the name of a program and should not be translated
+        # TRANSLATORS tidy is the name of a program and should not be translated
         self.fail _("Invalid tidy size %{age}") % { age: age }
       end
 
@@ -294,7 +294,7 @@ Puppet::Type.newtype(:tidy) do
     found_files = files.find_all { |path| tidy?(path) }.collect { |path| mkfile(path) }
     result = found_files.each { |file| debug "Tidying #{file.ref}" }.sort { |a,b| b[:path] <=> a[:path] }
     if found_files.size > 0
-      #TRANSLATORS "Tidy" is a program name and should not be translated
+      # TRANSLATORS "Tidy" is a program name and should not be translated
       notice _("Tidying %{count} files") % { count: found_files.size }
     end
 
@@ -374,7 +374,7 @@ Puppet::Type.newtype(:tidy) do
       debug _("File does not exist")
       return nil
     rescue Errno::EACCES
-      #TRANSLATORS "stat" is a program name and should not be translated
+      # TRANSLATORS "stat" is a program name and should not be translated
       warning _("Could not stat; permission denied")
       return nil
     end

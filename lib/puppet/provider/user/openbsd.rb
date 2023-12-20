@@ -49,7 +49,7 @@ Puppet::Type.type(:user).provide :openbsd, :parent => :useradd do
           begin
             return unmunge(shadow_property, ent.send(method))
           rescue
-            #TRANSLATORS 'ruby-shadow' is a Ruby gem library
+            # TRANSLATORS 'ruby-shadow' is a Ruby gem library
             Puppet.warning _("ruby-shadow doesn't support %{method}") % { method: method }
           end
         end

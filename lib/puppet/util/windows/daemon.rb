@@ -121,7 +121,7 @@ module Puppet::Util::Windows
           dwState = SERVICE_PAUSED
         when SERVICE_CONTROL_CONTINUE
           dwState = SERVICE_RUNNING
-          #else
+          # else
           # TODO: Handle other control codes? Retain the current state?
         end
 

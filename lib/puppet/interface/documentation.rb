@@ -58,7 +58,7 @@ class Puppet::Interface
     # @dsl Faces
     attr_doc :summary do |value|
       value =~ /\n/ and
-        #TRANSLATORS 'Face' refers to a programming API in Puppet, 'summary' and 'description' are specifc attribute names and should not be translated
+        # TRANSLATORS 'Face' refers to a programming API in Puppet, 'summary' and 'description' are specifc attribute names and should not be translated
         raise ArgumentError, _("Face summary should be a single line; put the long text in 'description' instead.")
       value
     end
@@ -203,12 +203,12 @@ class Puppet::Interface
     def author(value = nil)
       unless value.nil? then
         unless value.is_a? String
-          #TRANSLATORS 'author' is an attribute name and should not be translated
+          # TRANSLATORS 'author' is an attribute name and should not be translated
           raise ArgumentError, _('author must be a string; use multiple statements for multiple authors')
         end
 
         if value =~ /\n/ then
-          #TRANSLATORS 'author' is an attribute name and should not be translated
+          # TRANSLATORS 'author' is an attribute name and should not be translated
           raise ArgumentError, _('author should be a single line; use multiple statements for multiple authors')
         end
 
@@ -229,7 +229,7 @@ class Puppet::Interface
       # I think it's a bug that this ends up being the exposed
       # version of `author` on ActionBuilder
       if Array(value).any? {|x| x =~ /\n/ } then
-        #TRANSLATORS 'author' is an attribute name and should not be translated
+        # TRANSLATORS 'author' is an attribute name and should not be translated
         raise ArgumentError, _('author should be a single line; use multiple statements')
       end
 
@@ -251,7 +251,7 @@ class Puppet::Interface
     # @dsl Faces
     def copyright(owner = nil, years = nil)
       if years.nil? and not owner.nil? then
-        #TRANSLATORS 'copyright' is an attribute name and should not be translated
+        # TRANSLATORS 'copyright' is an attribute name and should not be translated
         raise ArgumentError, _('copyright takes the owners names, then the years covered')
       end
 
@@ -277,7 +277,7 @@ class Puppet::Interface
       when String then @copyright_owner = value
       when Array  then @copyright_owner = value.join(", ")
       else
-        #TRANSLATORS 'copyright' is an attribute name and should not be translated
+        # TRANSLATORS 'copyright' is an attribute name and should not be translated
         raise ArgumentError, _("copyright owner must be a string or an array of strings")
       end
     end
@@ -314,7 +314,7 @@ class Puppet::Interface
           fault = "after #{future}"
         end
         if fault then
-          #TRANSLATORS 'copyright' is an attribute name and should not be translated
+          # TRANSLATORS 'copyright' is an attribute name and should not be translated
           raise ArgumentError, _("copyright with a year %{value} is very strange; did you accidentally add or subtract two years?") %
               { value: fault }
         end
@@ -330,13 +330,13 @@ class Puppet::Interface
             found = part.split(/-/)
             if found
               unless found.length == 2 and found.all? {|x| x.strip =~ /^\d+$/ }
-                #TRANSLATORS 'copyright' is an attribute name and should not be translated
+                # TRANSLATORS 'copyright' is an attribute name and should not be translated
                 raise ArgumentError, _("%{value} is not a good copyright year or range") % { value: part.inspect }
               end
 
               Range.new(found[0].to_i, found[1].to_i)
             else
-              #TRANSLATORS 'copyright' is an attribute name and should not be translated
+              # TRANSLATORS 'copyright' is an attribute name and should not be translated
               raise ArgumentError, _("%{value} is not a good copyright year or range") % { value: part.inspect }
             end
           end
@@ -355,7 +355,7 @@ class Puppet::Interface
         result
 
       else
-        #TRANSLATORS 'copyright' is an attribute name and should not be translated
+        # TRANSLATORS 'copyright' is an attribute name and should not be translated
         raise ArgumentError, _("%{value} is not a good copyright year, set, or range") % { value: input.inspect }
       end
     end

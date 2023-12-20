@@ -24,7 +24,7 @@ class Puppet::FileServing::Configuration
 
   attr_reader :mounts
 
-  #private :mounts
+  # private :mounts
 
   # Find the right mount.  Does some shenanigans to support old-style module
   # mounts.

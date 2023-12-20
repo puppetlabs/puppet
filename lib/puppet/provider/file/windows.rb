@@ -128,7 +128,7 @@ Puppet::Type.type(:file).provide :windows do
         else
           # If the SYSTEM account does _not_ have FullControl in this scenario, we should
           # force the resource out of sync no matter what.
-          #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+          # TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
           Puppet.debug { _("%{resource_name}: %{mode_part_type} set to SYSTEM. SYSTEM permissions cannot be set below FullControl ('7')") % { resource_name: resource[:name], mode_part_type: mode_part['type']} }
           return nil
         end

@@ -538,7 +538,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def internal_check_file_namespace(o)
     file = o.locator.file
-    return if file.nil? || file == '' #e.g. puppet apply -e '...'
+    return if file.nil? || file == '' # e.g. puppet apply -e '...'
 
     file_namespace = namespace_for_file(file)
     return if file_namespace == NO_NAMESPACE
@@ -552,13 +552,13 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def internal_check_top_construct_in_module(prog)
     return unless prog.is_a?(Model::Program) && !prog.body.nil?
 
-    #Check that this is a module autoloaded file
+    # Check that this is a module autoloaded file
     file = prog.locator.file
     return if file.nil?
     return if namespace_for_file(file) == NO_NAMESPACE
 
     body = prog.body
-    return if prog.body.is_a?(Model::Nop) #Ignore empty or comment-only files
+    return if prog.body.is_a?(Model::Nop) # Ignore empty or comment-only files
 
     if(body.is_a?(Model::BlockExpression))
       body.statements.each { |s| acceptor.accept(Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION, s) unless valid_top_construct?(s) }
@@ -599,12 +599,12 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
     return adapter.file_to_namespace[file] = NO_NAMESPACE if initial_manifest?(path, env.manifest)
 
-    #All auto-loaded files from modules come from a module search path dir
+    # All auto-loaded files from modules come from a module search path dir
     relative_path = get_module_relative_path(path, env.full_modulepath)
 
     return adapter.file_to_namespace[file] = NO_NAMESPACE if relative_path == NO_PATH
 
-    #If a file comes from a module, but isn't in the right place, always error
+    # If a file comes from a module, but isn't in the right place, always error
     names = dir_to_names(relative_path)
 
     return adapter.file_to_namespace[file] = (names == BAD_MODULE_FILE ? BAD_MODULE_FILE : names.join("::").freeze)
@@ -787,7 +787,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     end
   end
 
-  #relationship_side: resource
+  # relationship_side: resource
   #  | resourceref
   #  | collection
   #  | variable

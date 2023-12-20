@@ -85,7 +85,7 @@ class BaseLoader < Loader
       if typed_name.type == :type && !allow_shadowing?
         entry = loaded_entry(typed_name)
         if entry
-          fail_redefine(entry) unless entry.value.nil? #|| entry.value == value
+          fail_redefine(entry) unless entry.value.nil? # || entry.value == value
         end
       end
 

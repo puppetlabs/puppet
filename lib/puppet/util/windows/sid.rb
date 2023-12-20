@@ -246,7 +246,7 @@ module Puppet::Util::Windows
         name, # account
         sid_bytes, # sid_bytes
         name, # sid string
-        nil, #domain
+        nil, # domain
         # https://msdn.microsoft.com/en-us/library/cc245534.aspx?f=255&MSPPError=-2147217396
         # Indicates that the type of object could not be determined. For example, no object with that SID exists.
         :SidTypeUnknown)

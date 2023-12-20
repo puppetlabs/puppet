@@ -158,7 +158,7 @@ class RelationshipOperator
       # The result is the transformed source RHS unless it is empty, in which case the transformed LHS is returned.
       # This closes the gap created by an empty set of references in a chain of relationship
       # such that X -> [ ] -> Y results in  X -> Y.
-      #result = real[1].empty? ? real[0] : real[1]
+      # result = real[1].empty? ? real[0] : real[1]
       if real[1].empty?
         # right side empty, simply use the left (whatever it may be)
         result = real[0]

@@ -125,7 +125,7 @@ module Puppet::Util::Windows::File
   end
   module_function :set_attributes
 
-  #define INVALID_HANDLE_VALUE ((HANDLE)(LONG_PTR)-1)
+  # define INVALID_HANDLE_VALUE ((HANDLE)(LONG_PTR)-1)
   INVALID_HANDLE_VALUE = FFI::Pointer.new(-1).address
   def self.create_file(file_name, desired_access, share_mode, security_attributes,
     creation_disposition, flags_and_attributes, template_file_handle)

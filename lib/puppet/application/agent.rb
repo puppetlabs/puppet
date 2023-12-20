@@ -400,7 +400,7 @@ class Puppet::Application::Agent < Puppet::Application
   end
 
   def log_config
-    #skip also config reading and parsing if debug is not enabled
+    # skip also config reading and parsing if debug is not enabled
     return unless Puppet::Util::Log.sendlevel?(:debug)
 
     Puppet.settings.stringify_settings(:agent, :all).each_pair do |k,v|

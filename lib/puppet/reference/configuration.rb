@@ -45,7 +45,7 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
     end
 
     # Leave out the section information; it was apparently confusing people.
-    #str << "- **Section**: #{object.section}\n"
+    # str << "- **Section**: #{object.section}\n"
     unless val == ""
       str << "- *Default*: `#{val}`\n"
     end

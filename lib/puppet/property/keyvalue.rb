@@ -66,7 +66,7 @@ module Puppet
       def process_current_hash(current)
         return {} if current == :absent
 
-        #inclusive means we are managing everything so if it isn't in should, its gone
+        # inclusive means we are managing everything so if it isn't in should, its gone
         current.each_key { |key| current[key] = nil } if inclusive?
         current
       end
@@ -77,7 +77,7 @@ module Puppet
         members = hashify_should
         current = process_current_hash(retrieve)
 
-        #shared keys will get overwritten by members
+        # shared keys will get overwritten by members
         should_value = current.merge(members)
 
         # Figure out the keys that will actually change in our Puppet run.
@@ -108,7 +108,7 @@ module Puppet
       # @return [Hash] the hash from the provider, or `:absent`
       #
       def retrieve
-        #ok, some 'convention' if the keyvalue property is named properties, provider should implement a properties method
+        # ok, some 'convention' if the keyvalue property is named properties, provider should implement a properties method
         key_hash = provider.send(name) if provider
         if key_hash && key_hash != :absent
           return key_hash

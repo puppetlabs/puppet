@@ -25,7 +25,7 @@ module Puppet
         @resource[membership] == :inclusive
       end
 
-      #dearrayify was motivated because to simplify the implementation of the OrderedList property
+      # dearrayify was motivated because to simplify the implementation of the OrderedList property
       def dearrayify(array)
         array.sort.join(delimiter)
       end
@@ -34,7 +34,7 @@ module Puppet
         return nil unless @should
 
         members = @should
-        #inclusive means we are managing everything so if it isn't in should, its gone
+        # inclusive means we are managing everything so if it isn't in should, its gone
         members = add_should_with_current(members, retrieve) if ! inclusive?
 
         dearrayify(members)
@@ -45,7 +45,7 @@ module Puppet
       end
 
       def retrieve
-        #ok, some 'convention' if the list property is named groups, provider should implement a groups method
+        # ok, some 'convention' if the list property is named groups, provider should implement a groups method
         tmp = provider.send(name) if provider
         if tmp && tmp != :absent
           return tmp.instance_of?(Array) ? tmp : tmp.split(delimiter)

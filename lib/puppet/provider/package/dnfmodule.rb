@@ -13,7 +13,7 @@ require_relative '../../../puppet/provider/package'
 
 Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
   has_feature :installable, :uninstallable, :versionable, :supports_flavors, :disableable
-  #has_feature :upgradeable
+  # has_feature :upgradeable
   # it's not (yet) feasible to make this upgradeable since module streams don't
   # always have matching version types (i.e. idm has streams DL1 and client,
   # other modules have semver streams, others have string streams... we cannot

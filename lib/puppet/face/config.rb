@@ -17,7 +17,7 @@ Puppet::Face.define(:config, '0.0.1') do
   DEFAULT_SECTION_MARKER = Object.new
   DEFAULT_SECTION = "main"
   option "--section " + _("SECTION_NAME") do
-    default_to { DEFAULT_SECTION_MARKER } #Sentinel object for default detection during commands
+    default_to { DEFAULT_SECTION_MARKER } # Sentinel object for default detection during commands
     summary _("The section of the configuration file to interact with.")
     description <<-EOT
       The section of the puppet.conf configuration file to interact with.
@@ -100,9 +100,9 @@ Puppet::Face.define(:config, '0.0.1') do
     messages = []
     messages << _("No section specified; defaulting to '%{section_name}'.") %
       { section_name: section_name }
-    #TRANSLATORS '--section' is a command line option and should not be translated
+    # TRANSLATORS '--section' is a command line option and should not be translated
     messages << _("Set the config section by using the `--section` flag.")
-    #TRANSLATORS `puppet config --section user print foo` is a command line example and should not be translated
+    # TRANSLATORS `puppet config --section user print foo` is a command line example and should not be translated
     messages << _("For example, `puppet config --section user print foo`.")
     messages << _("For more information, see https://puppet.com/docs/puppet/latest/configuration.html")
 
@@ -201,7 +201,7 @@ Puppet::Face.define(:config, '0.0.1') do
   action(:delete) do
     summary _("Delete a Puppet setting.")
     arguments _("<setting>")
-    #TRANSLATORS 'main' is a specific section name and should not be translated
+    # TRANSLATORS 'main' is a specific section name and should not be translated
     description "Deletes a setting from the specified section. (The default is the section 'main')."
     notes <<-'EOT'
       By default, this action deletes the configuration setting from the 'main'
@@ -257,7 +257,7 @@ Puppet::Face.define(:config, '0.0.1') do
           end
         end
       else
-        #TRANSLATORS the 'puppet.conf' is a specific file and should not be translated
+        # TRANSLATORS the 'puppet.conf' is a specific file and should not be translated
         Puppet.warning(_("The puppet.conf file does not exist %{puppet_conf}") % { puppet_conf: path })
       end
       nil

@@ -4,7 +4,7 @@
 require 'timeout'
 require_relative '../puppet/util'
 require 'securerandom'
-#require 'puppet/parser/script_compiler'
+# require 'puppet/parser/script_compiler'
 require_relative '../puppet/pops/evaluator/deferred_resolver'
 
 class Puppet::Configurer
@@ -330,7 +330,7 @@ class Puppet::Configurer
             raise Puppet::Error, detail
           end
         else
-          #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+          # TRANSLATORS 'server_list' is the name of a setting and should not be translated
           Puppet.debug _("Selected puppet server from the `server_list` setting: %{server}:%{port}") % { server: server, port: port }
           report.server_used = "#{server}:#{port}"
         end
@@ -559,7 +559,7 @@ class Puppet::Configurer
       Puppet.debug(_("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
                    { host: e.response.url.host, port: e.response.url.port, code: e.response.code, reason: e.response.reason })
     rescue => detail
-      #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+      # TRANSLATORS 'server_list' is the name of a setting and should not be translated
       Puppet.debug _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail}
     end
     [nil, nil]

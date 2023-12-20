@@ -23,7 +23,7 @@ Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm d
 
   # What's the latest package version available?
   def latest
-    #up2date can only get a list of *all* available packages?
+    # up2date can only get a list of *all* available packages?
     output = up2date "--showall"
 
     if output =~ /^#{Regexp.escape @resource[:name]}-(\d+.*)\.\w+/
