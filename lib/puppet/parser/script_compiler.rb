@@ -109,7 +109,7 @@ class Puppet::Parser::ScriptCompiler
   # have to (TODO).
   #
   def newscope(parent, options = {})
-     raise _('having multiple named scopes is not supported when scripting')
+    raise _('having multiple named scopes is not supported when scripting')
   end
 
   private

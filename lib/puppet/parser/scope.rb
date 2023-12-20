@@ -283,20 +283,20 @@ class Puppet::Parser::Scope
   def exist?(name)
     # Note !! ensure the answer is boolean
     !! if name =~ /^(.*)::(.+)$/
-      class_name = $1
-      variable_name = $2
-      return true if class_name == '' && BUILT_IN_VARS.include?(variable_name)
+         class_name = $1
+         variable_name = $2
+         return true if class_name == '' && BUILT_IN_VARS.include?(variable_name)
 
-      # lookup class, but do not care if it is not evaluated since that will result
-      # in it not existing anyway. (Tests may run with just scopes and no evaluated classes which
-      # will result in class_scope for "" not returning topscope).
-      klass = find_hostclass(class_name)
-      other_scope = klass.nil? ? nil : class_scope(klass)
-      if other_scope.nil?
-        class_name == '' ? compiler.topscope.exist?(variable_name) : false
-      else
-        other_scope.exist?(variable_name)
-      end
+         # lookup class, but do not care if it is not evaluated since that will result
+         # in it not existing anyway. (Tests may run with just scopes and no evaluated classes which
+         # will result in class_scope for "" not returning topscope).
+         klass = find_hostclass(class_name)
+         other_scope = klass.nil? ? nil : class_scope(klass)
+         if other_scope.nil?
+           class_name == '' ? compiler.topscope.exist?(variable_name) : false
+         else
+           other_scope.exist?(variable_name)
+         end
     else # rubocop:disable Layout/ElseAlignment
       next_scope = inherited_scope || enclosing_scope
       effective_symtable(true).include?(name) || next_scope && next_scope.exist?(name) || BUILT_IN_VARS.include?(name)
@@ -579,13 +579,13 @@ class Puppet::Parser::Scope
   #
   # @return [Puppet::Parser::Scope] The scope or nil if there is no enclosing scope
   def enclosing_scope
-     if has_enclosing_scope?
+    if has_enclosing_scope?
       if parent.is_topscope? || parent.is_nodescope?
         parent
       else
         parent.enclosing_scope
       end
-     end
+    end
   end
 
   def is_classscope?

@@ -67,6 +67,6 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
       hash
     end
   rescue => detail
-      raise Puppet::Error, _("Could not load external node results for %{name}: %{detail}") % { name: name, detail: detail }, detail.backtrace
+    raise Puppet::Error, _("Could not load external node results for %{name}: %{detail}") % { name: name, detail: detail }, detail.backtrace
   end
 end

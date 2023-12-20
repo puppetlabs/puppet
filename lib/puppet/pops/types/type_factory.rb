@@ -285,7 +285,7 @@ module TypeFactory
         re.patterns
 
       else
-       raise ArgumentError, "Only String, Regexp, Pattern-Type, and Regexp-Type are allowed: got '#{re.class}"
+        raise ArgumentError, "Only String, Regexp, Pattern-Type, and Regexp-Type are allowed: got '#{re.class}"
       end
     end.flatten.uniq
     PPatternType.new(patterns)

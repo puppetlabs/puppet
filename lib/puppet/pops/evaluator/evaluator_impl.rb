@@ -525,48 +525,48 @@ class EvaluatorImpl
     right = evaluate(o.right_expr, scope)
 
     begin
-    # Left is a type
-    if left.is_a?(Types::PAnyType)
-      case o.operator
-      when '=='
-        @@type_calculator.equals(left,right)
+      # Left is a type
+      if left.is_a?(Types::PAnyType)
+        case o.operator
+        when '=='
+          @@type_calculator.equals(left,right)
 
-      when '!='
-        !@@type_calculator.equals(left,right)
+        when '!='
+          !@@type_calculator.equals(left,right)
 
-      when '<'
-        # left can be assigned to right, but they are not equal
-        @@type_calculator.assignable?(right, left) && ! @@type_calculator.equals(left,right)
-      when '<='
-        # left can be assigned to right
-        @@type_calculator.assignable?(right, left)
-      when '>'
-        # right can be assigned to left, but they are not equal
-        @@type_calculator.assignable?(left,right) && ! @@type_calculator.equals(left,right)
-      when '>='
-        # right can be assigned to left
-        @@type_calculator.assignable?(left, right)
+        when '<'
+          # left can be assigned to right, but they are not equal
+          @@type_calculator.assignable?(right, left) && ! @@type_calculator.equals(left,right)
+        when '<='
+          # left can be assigned to right
+          @@type_calculator.assignable?(right, left)
+        when '>'
+          # right can be assigned to left, but they are not equal
+          @@type_calculator.assignable?(left,right) && ! @@type_calculator.equals(left,right)
+        when '>='
+          # right can be assigned to left
+          @@type_calculator.assignable?(left, right)
+        else
+          fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
+        end
       else
-        fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
+        case o.operator
+        when '=='
+          @@compare_operator.equals(left,right)
+        when '!='
+          ! @@compare_operator.equals(left,right)
+        when '<'
+          @@compare_operator.compare(left,right) < 0
+        when '<='
+          @@compare_operator.compare(left,right) <= 0
+        when '>'
+          @@compare_operator.compare(left,right) > 0
+        when '>='
+          @@compare_operator.compare(left,right) >= 0
+        else
+          fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
+        end
       end
-    else
-      case o.operator
-      when '=='
-        @@compare_operator.equals(left,right)
-      when '!='
-        ! @@compare_operator.equals(left,right)
-      when '<'
-        @@compare_operator.compare(left,right) < 0
-      when '<='
-        @@compare_operator.compare(left,right) <= 0
-      when '>'
-        @@compare_operator.compare(left,right) > 0
-      when '>='
-        @@compare_operator.compare(left,right) >= 0
-      else
-        fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
-      end
-    end
     rescue ArgumentError => e
       fail(Issues::COMPARISON_NOT_POSSIBLE, o, {
              :operator => o.operator,
@@ -705,8 +705,8 @@ class EvaluatorImpl
             is_match?(test, evaluate(c, scope), c, co, scope)
           end
         end
-        result = evaluate(co.then_expr, scope)
-        true # the option was picked
+          result = evaluate(co.then_expr, scope)
+          true # the option was picked
         end
       end
         result # an option was picked, and produced a result
@@ -843,7 +843,7 @@ class EvaluatorImpl
           fail(Issues::ILLEGAL_TITLE_TYPE_AT, body.title, {:index => index, :actual => actual})
 
         elsif title == EMPTY_STRING
-         fail(Issues::EMPTY_STRING_TITLE_AT, body.title, {:index => index})
+          fail(Issues::EMPTY_STRING_TITLE_AT, body.title, {:index => index})
 
         elsif titles_to_body[title]
           fail(Issues::DUPLICATE_TITLE, o, {:title => title})

@@ -304,7 +304,7 @@ class Puppet::Module
 
   def hiera_conf_file
     unless defined?(@hiera_conf_file)
-       @hiera_conf_file = path.nil? ? nil : File.join(path, Puppet::Pops::Lookup::HieraConfig::CONFIG_FILE_NAME)
+      @hiera_conf_file = path.nil? ? nil : File.join(path, Puppet::Pops::Lookup::HieraConfig::CONFIG_FILE_NAME)
     end
     @hiera_conf_file
   end

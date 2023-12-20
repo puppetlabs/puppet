@@ -18,16 +18,16 @@ module LoaderPaths
     result = []
     case type
     when :function
-        # Only include support for the loadable items the loader states it can contain
-        if loader.loadables.include?(:func_4x)
-          result << FunctionPath4x.new(loader)
-        end
-        if loader.loadables.include?(:func_4xpp)
-          result << FunctionPathPP.new(loader)
-        end
-        if loader.loadables.include?(:func_3x)
-          result << FunctionPath3x.new(loader)
-        end
+      # Only include support for the loadable items the loader states it can contain
+      if loader.loadables.include?(:func_4x)
+        result << FunctionPath4x.new(loader)
+      end
+      if loader.loadables.include?(:func_4xpp)
+        result << FunctionPathPP.new(loader)
+      end
+      if loader.loadables.include?(:func_3x)
+        result << FunctionPath3x.new(loader)
+      end
     when :plan
       result << PlanPath.new(loader)
     when :task

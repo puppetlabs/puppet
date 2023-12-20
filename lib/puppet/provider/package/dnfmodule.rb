@@ -64,7 +64,7 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
 
   def query
     pkg = self.class.instances.find do |package|
-            @resource[:name] == package.name
+      @resource[:name] == package.name
     end
     pkg ? pkg.properties : nil
   end

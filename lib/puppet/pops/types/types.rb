@@ -3279,7 +3279,7 @@ class POptionalType < PTypeWithContainedType
   end
 
   def kind_of_callable?(optional=true, guard = nil)
-      optional && !@type.nil? && @type.kind_of_callable?(optional, guard)
+    optional && !@type.nil? && @type.kind_of_callable?(optional, guard)
   end
 
   def instance?(o, guard = nil)

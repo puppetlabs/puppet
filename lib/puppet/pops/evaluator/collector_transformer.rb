@@ -164,7 +164,7 @@ class CollectorTransformer
   end
 
   def query_ParenthesizedExpression(o, scope)
-   query(o.expr, scope)
+    query(o.expr, scope)
   end
 
   def query_Object(o, scope)
@@ -226,7 +226,7 @@ class CollectorTransformer
   end
 
   def match_ParenthesizedExpression(o, scope)
-   match(o.expr, scope)
+    match(o.expr, scope)
   end
 
   def match_Object(o, scope)

@@ -142,22 +142,22 @@ class Locator
       v = nil
 
       while low < high do
-          mid = low + ((high - low) / 2)
-          v = (ary[mid] > value)
-          if v == true
-            satisfied = true
-            smaller = true
-          elsif !v
-            smaller = false
-          else
-            raise TypeError, "wrong argument, must be boolean or nil, got '#{v.class}'"
-          end
+        mid = low + ((high - low) / 2)
+        v = (ary[mid] > value)
+        if v == true
+          satisfied = true
+          smaller = true
+        elsif !v
+          smaller = false
+        else
+          raise TypeError, "wrong argument, must be boolean or nil, got '#{v.class}'"
+        end
 
-          if smaller
-            high = mid
-          else
-            low = mid + 1;
-          end
+        if smaller
+          high = mid
+        else
+          low = mid + 1;
+        end
       end
 
       return nil if low == ary.length

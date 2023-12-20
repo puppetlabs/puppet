@@ -377,8 +377,8 @@ class TypeParser
                     if parameters[0].is_a?(PIntegerType)
                       parameters[0]
                     else
-                    assert_range_parameter(ast, parameters[0])
-                    TypeFactory.range(parameters[0], :default)
+                      assert_range_parameter(ast, parameters[0])
+                      TypeFactory.range(parameters[0], :default)
                     end
                   when 2
                     assert_range_parameter(ast, parameters[0])

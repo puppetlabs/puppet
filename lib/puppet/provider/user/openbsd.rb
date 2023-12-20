@@ -22,20 +22,20 @@ Puppet::Type.type(:user).provide :openbsd, :parent => :useradd do
   options :loginclass, :flag => '-L', :method => :sp_loginclass
   options :expiry, :method => :sp_expire,
                    :munge => proc { |value|
-      if value == :absent
-        ''
-      else
-        # OpenBSD uses a format like "january 1 1970"
-        Time.parse(value).strftime('%B %d %Y')
-      end
+                               if value == :absent
+                                 ''
+                               else
+                                 # OpenBSD uses a format like "january 1 1970"
+                                 Time.parse(value).strftime('%B %d %Y')
+                               end
                              },
                    :unmunge => proc { |value|
-      if value == -1
-        :absent
-      else
-        # Expiry is days after 1970-01-01
-        (Date.new(1970,1,1) + value).strftime('%Y-%m-%d')
-      end
+                                 if value == -1
+                                   :absent
+                                 else
+                                   # Expiry is days after 1970-01-01
+                                   (Date.new(1970,1,1) + value).strftime('%Y-%m-%d')
+                                 end
                                }
 
   [:expiry, :password, :loginclass].each do |shadow_property|

@@ -475,11 +475,11 @@ module Lookup
              when :location
                ExplainLocation.new(@current, qualifier)
              when :interpolate
-              ExplainInterpolate.new(@current, qualifier)
+               ExplainInterpolate.new(@current, qualifier)
              when :data_provider
-              ExplainDataProvider.new(@current, qualifier)
+               ExplainDataProvider.new(@current, qualifier)
              when :merge
-              ExplainMerge.new(@current, qualifier)
+               ExplainMerge.new(@current, qualifier)
              when :module
                ExplainModule.new(@current, qualifier)
              when :scope
@@ -487,9 +487,9 @@ module Lookup
              when :sub_lookup
                ExplainSubLookup.new(@current, qualifier)
              when :segment
-              ExplainKeySegment.new(@current, qualifier)
+               ExplainKeySegment.new(@current, qualifier)
              when :meta, :data
-              ExplainTop.new(@current, qualifier_type, qualifier)
+               ExplainTop.new(@current, qualifier_type, qualifier)
              when :invalid_key
                ExplainInvalidKey.new(@current, qualifier)
              else

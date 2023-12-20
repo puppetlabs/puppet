@@ -38,7 +38,7 @@ Puppet::Reports.register_report(:store) do
         fh.print to_yaml
       end
     rescue => detail
-       Puppet.log_exception(detail, "Could not write report for #{host} at #{file}: #{detail}")
+      Puppet.log_exception(detail, "Could not write report for #{host} at #{file}: #{detail}")
     end
 
     # Only testing cares about the return value

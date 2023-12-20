@@ -12,10 +12,10 @@ class Puppet::FileServing::Base
 
   # Does our file exist?
   def exist?
-      stat
-      return true
+    stat
+    return true
   rescue
-      return false
+    return false
   end
 
   # Return the full path to our file.  Fails if there's no path set.

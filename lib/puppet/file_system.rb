@@ -10,8 +10,8 @@ module Puppet::FileSystem
 
   # create instance of the file system implementation to use for the current platform
   @impl = if Puppet::Util::Platform.windows?
-           require_relative 'file_system/windows'
-           Puppet::FileSystem::Windows
+            require_relative 'file_system/windows'
+            Puppet::FileSystem::Windows
           elsif Puppet::Util::Platform.jruby?
             require_relative 'file_system/jruby'
             Puppet::FileSystem::JRuby

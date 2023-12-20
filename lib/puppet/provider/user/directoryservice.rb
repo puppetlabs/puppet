@@ -358,7 +358,7 @@ Puppet::Type.type(:user).provide :directoryservice do
       end
     else
       if value.length != 256
-         raise Puppet::Error, "OS X versions > 10.7 require a Salted SHA512 PBKDF2 password hash of 256 characters. Please check your password and try again."
+        raise Puppet::Error, "OS X versions > 10.7 require a Salted SHA512 PBKDF2 password hash of 256 characters. Please check your password and try again."
       end
 
       assert_full_pbkdf2_password
@@ -480,7 +480,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     missing = [:password, :salt, :iterations].select { |parameter| @resource[parameter].nil? }
 
     if !missing.empty?
-       raise Puppet::Error, "OS X versions > 10\.7 use PBKDF2 password hashes, which requires all three of salt, iterations, and password hash. This resource is missing: #{missing.join(', ')}."
+      raise Puppet::Error, "OS X versions > 10\.7 use PBKDF2 password hashes, which requires all three of salt, iterations, and password hash. This resource is missing: #{missing.join(', ')}."
     end
   end
 

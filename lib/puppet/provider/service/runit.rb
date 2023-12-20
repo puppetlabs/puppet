@@ -81,13 +81,13 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
 
   def start
     if enabled? != :true
-        enable
-        # Work around issue #4480
-        # runsvdir takes up to 5 seconds to recognize
-        # the symlink created by this call to enable
-        #TRANSLATORS 'runsvdir' is a linux service name and should not be translated
-        Puppet.info _("Waiting 5 seconds for runsvdir to discover service %{service}") % { service: self.service }
-        sleep 5
+      enable
+      # Work around issue #4480
+      # runsvdir takes up to 5 seconds to recognize
+      # the symlink created by this call to enable
+      #TRANSLATORS 'runsvdir' is a linux service name and should not be translated
+      Puppet.info _("Waiting 5 seconds for runsvdir to discover service %{service}") % { service: self.service }
+      sleep 5
     end
     sv "start", self.service
   end

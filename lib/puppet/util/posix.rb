@@ -157,12 +157,12 @@ module Puppet::Util::POSIX
 
   # Get the GID
   def gid(group)
-      get_posix_value(:group, :gid, group)
+    get_posix_value(:group, :gid, group)
   end
 
   # Get the UID
   def uid(user)
-      get_posix_value(:passwd, :uid, user)
+    get_posix_value(:passwd, :uid, user)
   end
 
   private

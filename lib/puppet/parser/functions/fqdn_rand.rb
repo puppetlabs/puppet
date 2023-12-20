@@ -21,26 +21,26 @@ Puppet::Parser::Functions::newfunction(:fqdn_rand, :arity => -2, :type => :rvalu
   have more than one such task and need several unrelated random numbers per
   node. (For example, `fqdn_rand(30)`, `fqdn_rand(30, 'expensive job 1')`, and
   `fqdn_rand(30, 'expensive job 2')` will produce totally different numbers.)") do |args|
-    max = args.shift.to_i
-    initial_seed = args.shift
-    downcase = !!args.shift
+  max = args.shift.to_i
+  initial_seed = args.shift
+  downcase = !!args.shift
 
-    fqdn = self['facts'].dig('networking', 'fqdn')
-    fqdn = fqdn.downcase if downcase
+  fqdn = self['facts'].dig('networking', 'fqdn')
+  fqdn = fqdn.downcase if downcase
 
-    # Puppet 5.4's fqdn_rand function produces a different value than earlier versions
-    # for the same set of inputs.
-    # This causes problems because the values are often written into service configuration files.
-    # When they change, services get notified and restart.
+  # Puppet 5.4's fqdn_rand function produces a different value than earlier versions
+  # for the same set of inputs.
+  # This causes problems because the values are often written into service configuration files.
+  # When they change, services get notified and restart.
 
-    # Restoring previous fqdn_rand behavior of calculating its seed value using MD5
-    # when running on a non-FIPS enabled platform and only using SHA256 on FIPS enabled
-    # platforms.
-    if Puppet::Util::Platform.fips_enabled?
-      seed = Digest::SHA256.hexdigest([fqdn,max,initial_seed].join(':')).hex
-    else
-      seed = Digest::MD5.hexdigest([fqdn,max,initial_seed].join(':')).hex
-    end
+  # Restoring previous fqdn_rand behavior of calculating its seed value using MD5
+  # when running on a non-FIPS enabled platform and only using SHA256 on FIPS enabled
+  # platforms.
+  if Puppet::Util::Platform.fips_enabled?
+    seed = Digest::SHA256.hexdigest([fqdn,max,initial_seed].join(':')).hex
+  else
+    seed = Digest::MD5.hexdigest([fqdn,max,initial_seed].join(':')).hex
+  end
 
-    Puppet::Util.deterministic_rand_int(seed,max)
+  Puppet::Util.deterministic_rand_int(seed,max)
 end

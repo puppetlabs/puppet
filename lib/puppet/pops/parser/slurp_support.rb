@@ -82,26 +82,26 @@ module SlurpSupport
     end
 
     begin
-    str.gsub!(/\\([^\r\n]|(?:\r?\n))/m) {
-      ch = $1
-      if escapes.include? ch
-        case ch
-        when 'r'   ; "\r"
-        when 'n'   ; "\n"
-        when 't'   ; "\t"
-        when 's'   ; ' '
-        when 'u'
-          lex_warning(Issues::ILLEGAL_UNICODE_ESCAPE)
-          "\\u"
-        when "\n"  ; ''
-        when "\r\n"; ''
-        else ch
+      str.gsub!(/\\([^\r\n]|(?:\r?\n))/m) {
+        ch = $1
+        if escapes.include? ch
+          case ch
+          when 'r'   ; "\r"
+          when 'n'   ; "\n"
+          when 't'   ; "\t"
+          when 's'   ; ' '
+          when 'u'
+            lex_warning(Issues::ILLEGAL_UNICODE_ESCAPE)
+            "\\u"
+          when "\n"  ; ''
+          when "\r\n"; ''
+          else ch
+          end
+        else
+          lex_warning(Issues::UNRECOGNIZED_ESCAPE, :ch => ch) unless ignore_invalid_escapes
+          "\\#{ch}"
         end
-      else
-        lex_warning(Issues::UNRECOGNIZED_ESCAPE, :ch => ch) unless ignore_invalid_escapes
-        "\\#{ch}"
-      end
-    }
+      }
     rescue ArgumentError => e
       # A invalid byte sequence may be the result of faulty input as well, but that could not possibly
       # have reached this far... Unfortunately there is no more specific error and a match on message is

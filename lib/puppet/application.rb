@@ -261,7 +261,7 @@ class Application
     # @param [String] class_name the fully qualified name of the class to try to load
     # @return [Class] the Class instance, or nil? if it could not be loaded.
     def try_load_class(class_name)
-        return self.const_defined?(class_name) ? const_get(class_name) : nil
+      return self.const_defined?(class_name) ? const_get(class_name) : nil
     end
     private :try_load_class
 

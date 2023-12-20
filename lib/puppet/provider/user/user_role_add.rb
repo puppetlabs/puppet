@@ -85,9 +85,9 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   end
 
   def run(cmd, msg)
-      execute(cmd)
+    execute(cmd)
   rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not #{msg} #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
+    raise Puppet::Error, "Could not #{msg} #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
   end
 
   def transition(type)

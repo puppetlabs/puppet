@@ -273,10 +273,10 @@ module DOT
   # This is a graph.
 
   class DOTDigraph < DOTSubgraph
-  def initialize(params = {}, option_list = GRAPH_OPTS)
-    super(params, option_list)
-    @dot_string = 'digraph'
-  end
+    def initialize(params = {}, option_list = GRAPH_OPTS)
+      super(params, option_list)
+      @dot_string = 'digraph'
+    end
   end
 
   # This is an edge.

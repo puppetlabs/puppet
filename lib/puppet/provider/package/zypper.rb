@@ -173,7 +173,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
     else
       options = [:remove, '--no-confirm']
       if major == 1 && minor < 6
-          options << '--force-resolution'
+        options << '--force-resolution'
       end
 
       options << @resource[:name]

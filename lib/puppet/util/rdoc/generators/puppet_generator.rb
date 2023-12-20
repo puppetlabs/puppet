@@ -70,11 +70,11 @@ module Generators
 
     # loads our own html template file
     def load_html_template
-        require_relative '../../../../puppet/util/rdoc/generators/template/puppet/puppet'
-        extend RDoc::Page
+      require_relative '../../../../puppet/util/rdoc/generators/template/puppet/puppet'
+      extend RDoc::Page
     rescue LoadError
-        $stderr.puts "Could not find Puppet template '#{template}'"
-        exit 99
+      $stderr.puts "Could not find Puppet template '#{template}'"
+      exit 99
     end
 
     def gen_method_index
@@ -196,13 +196,13 @@ module Generators
 
     # generate all the subdirectories, modules, classes and files
     def gen_sub_directories
-        super
-        File.makedirs(MODULE_DIR)
-        File.makedirs(NODE_DIR)
-        File.makedirs(PLUGIN_DIR)
+      super
+      File.makedirs(MODULE_DIR)
+      File.makedirs(NODE_DIR)
+      File.makedirs(PLUGIN_DIR)
     rescue
-        $stderr.puts $ERROR_INFO.message
-        exit 1
+      $stderr.puts $ERROR_INFO.message
+      exit 1
     end
 
     # generate the index of modules

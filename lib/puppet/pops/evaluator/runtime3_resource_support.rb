@@ -35,35 +35,35 @@ module Runtime3ResourceSupport
     # as this makes the created resource retain the type instance.
     #
     resource_titles.map do |resource_title|
-        resource = Puppet::Parser::Resource.new(
-          resolved_type, resource_title,
-          :parameters => evaluated_parameters,
-          :file => file,
-          :line => line,
-          :kind => Puppet::Resource.to_kind(resolved_type),
-          :exported => exported,
-          :virtual => virtual,
-          # WTF is this? Which source is this? The file? The name of the context ?
-          :source => scope.source,
-          :scope => scope,
-          :strict => true
-        )
+      resource = Puppet::Parser::Resource.new(
+        resolved_type, resource_title,
+        :parameters => evaluated_parameters,
+        :file => file,
+        :line => line,
+        :kind => Puppet::Resource.to_kind(resolved_type),
+        :exported => exported,
+        :virtual => virtual,
+        # WTF is this? Which source is this? The file? The name of the context ?
+        :source => scope.source,
+        :scope => scope,
+        :strict => true
+      )
 
-        # If this resource type supports inheritance (e.g. 'class') the parent chain must be walked
-        # This impl delegates to the resource type to figure out what is needed.
-        #
-        if resource.resource_type.is_a? Puppet::Resource::Type
-          resource.resource_type.instantiate_resource(scope, resource)
-        end
+      # If this resource type supports inheritance (e.g. 'class') the parent chain must be walked
+      # This impl delegates to the resource type to figure out what is needed.
+      #
+      if resource.resource_type.is_a? Puppet::Resource::Type
+        resource.resource_type.instantiate_resource(scope, resource)
+      end
 
-        scope.compiler.add_resource(scope, resource)
+      scope.compiler.add_resource(scope, resource)
 
-        # Classes are evaluated immediately
-        scope.compiler.evaluate_classes([resource_title], scope, false) if resolved_type == CLASS_STRING
+      # Classes are evaluated immediately
+      scope.compiler.evaluate_classes([resource_title], scope, false) if resolved_type == CLASS_STRING
 
-        # Turn the resource into a PTypeType (a reference to a resource type)
-        # weed out nil's
-        resource_to_ptype(resource)
+      # Turn the resource into a PTypeType (a reference to a resource type)
+      # weed out nil's
+      resource_to_ptype(resource)
     end
   end
 

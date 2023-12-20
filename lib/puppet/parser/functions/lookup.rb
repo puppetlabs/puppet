@@ -129,6 +129,6 @@ module Puppet::Parser::Functions
         })
     
   ENDHEREDOC
-  Error.is4x('lookup')
+    Error.is4x('lookup')
   end
 end

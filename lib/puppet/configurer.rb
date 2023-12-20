@@ -41,7 +41,7 @@ class Puppet::Configurer
 
   # Initialize and load storage
   def init_storage
-      Puppet::Util::Storage.load
+    Puppet::Util::Storage.load
   rescue => detail
     Puppet.log_exception(detail, _("Removing corrupt state file %{file}: %{detail}") % { file: Puppet[:statefile], detail: detail })
     begin

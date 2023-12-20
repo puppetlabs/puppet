@@ -173,7 +173,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
   def service_execute(type, command, fof = true, squelch = false, combine = true)
     if type == :start && Puppet.runtime[:facter].value('os.family') == "Solaris"
-        command = ["/usr/bin/ctrun -l child", command].flatten.join(" ")
+      command = ["/usr/bin/ctrun -l child", command].flatten.join(" ")
     end
     super(type, command, fof, squelch, combine)
   end

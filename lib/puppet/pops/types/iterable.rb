@@ -243,11 +243,11 @@ module Puppet::Pops::Types
 
       if block_given?
         begin
-        if block.arity == 1
-          loop { yield(r.next) }
-        else
-          loop { yield(*r.next) }
-        end
+          if block.arity == 1
+            loop { yield(r.next) }
+          else
+            loop { yield(*r.next) }
+          end
         rescue StopIteration
         end
         self
