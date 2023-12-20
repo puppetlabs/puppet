@@ -272,10 +272,6 @@ class Puppet::Application::Lookup < Puppet::Application
   def main
     keys = command_line.args
 
-    #unless options[:node]
-    #  raise "No node was given via the '--node' flag for the scope of the lookup.\n#{RUN_HELP}"
-    #end
-
     if (options[:sort_merged_arrays] || options[:merge_hash_arrays] || options[:prefix]) && options[:merge] != 'deep'
       raise _("The options %{deep_merge_opts} are only available with '--merge deep'\n%{run_help}") % { deep_merge_opts: DEEP_MERGE_OPTIONS, run_help: RUN_HELP }
     end
