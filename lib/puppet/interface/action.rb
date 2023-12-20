@@ -253,18 +253,18 @@ class Puppet::Interface::Action
 
     file    = __FILE__ + "+eval[wrapper]"
     line    = __LINE__ + 2 # <== points to the same line as 'def' in the wrapper.
-    wrapper = <<WRAPPER
-def #{@name}(#{decl.join(", ")})
-  #{optn}
-  args    = #{args}
-  action  = get_action(#{name.inspect})
-  args   << action.validate_and_clean(args.pop)
-  __invoke_decorations(:before, action, args, args.last)
-  rval = self.__send__(#{internal_name.inspect}, *args)
-  __invoke_decorations(:after, action, args, args.last)
-  return rval
-end
-WRAPPER
+    wrapper = <<~WRAPPER
+      def #{@name}(#{decl.join(", ")})
+        #{optn}
+        args    = #{args}
+        action  = get_action(#{name.inspect})
+        args   << action.validate_and_clean(args.pop)
+        __invoke_decorations(:before, action, args, args.last)
+        rval = self.__send__(#{internal_name.inspect}, *args)
+        __invoke_decorations(:after, action, args, args.last)
+        return rval
+      end
+    WRAPPER
 
     # It should be possible to rewrite this code to use `define_method`
     # instead of `class/instance_eval` since Ruby 1.8 is long dead.

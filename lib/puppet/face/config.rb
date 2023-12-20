@@ -144,15 +144,15 @@ Puppet::Face.define(:config, '0.0.1') do
       end
 
       if name == 'environment' && options[:section] == 'main'
-        Puppet.warning _(<<-EOM).chomp
-The environment should be set in either the `[user]`, `[agent]`, or `[server]`
-section. Variables set in the `[agent]` section are used when running
-`puppet agent`. Variables set in the `[user]` section are used when running
-various other puppet subcommands, like `puppet apply` and `puppet module`; these
-require the defined environment directory to exist locally. Set the config
-section by using the `--section` flag. For example,
-`puppet config --section user set environment foo`. For more information, see
-https://puppet.com/docs/puppet/latest/configuration.html#environment
+        Puppet.warning _(<<~EOM).chomp
+          The environment should be set in either the `[user]`, `[agent]`, or `[server]`
+          section. Variables set in the `[agent]` section are used when running
+          `puppet agent`. Variables set in the `[user]` section are used when running
+          various other puppet subcommands, like `puppet apply` and `puppet module`; these
+          require the defined environment directory to exist locally. Set the config
+          section by using the `--section` flag. For example,
+          `puppet config --section user set environment foo`. For more information, see
+          https://puppet.com/docs/puppet/latest/configuration.html#environment
         EOM
       end
 

@@ -620,9 +620,9 @@ Puppet::Type.type(:user).provide :directoryservice do
   # for information regarding the dsimport syntax
   def write_and_import_shadow_hash_data(data_plist)
     Tempfile.create("dsimport_#{@resource.name}", :encoding => Encoding::ASCII) do |dsimport_file|
-      dsimport_file.write <<-DSIMPORT
-0x0A 0x5C 0x3A 0x2C dsRecTypeStandard:Users 2 dsAttrTypeStandard:RecordName base64:dsAttrTypeNative:ShadowHashData
-#{@resource.name}:#{Base64.strict_encode64(data_plist)}
+      dsimport_file.write <<~DSIMPORT
+        0x0A 0x5C 0x3A 0x2C dsRecTypeStandard:Users 2 dsAttrTypeStandard:RecordName base64:dsAttrTypeNative:ShadowHashData
+        #{@resource.name}:#{Base64.strict_encode64(data_plist)}
       DSIMPORT
       dsimport_file.flush
       # Delete the user's existing ShadowHashData, since dsimport appends, not replaces

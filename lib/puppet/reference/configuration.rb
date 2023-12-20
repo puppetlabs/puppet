@@ -55,45 +55,45 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
   return str
 end
 
-config.header = <<EOT
-## Configuration settings
-
-* Each of these settings can be specified in `puppet.conf` or on the
-  command line.
-* Puppet Enterprise (PE) and open source Puppet share the configuration settings
-  documented here. However, PE defaults differ from open source defaults for some
-  settings, such as `node_terminus`, `storeconfigs`, `always_retry_plugins`,
-  `disable18n`, `environment_timeout` (when Code Manager is enabled), and the
-  Puppet Server JRuby `max-active-instances` setting. To verify PE configuration
-  defaults, check the `puppet.conf` or `pe-puppet-server.conf` file after
-  installation.
-* When using boolean settings on the command line, use `--setting` and
-  `--no-setting` instead of `--setting (true|false)`. (Using `--setting false`
-  results in "Error: Could not parse application options: needless argument".)
-* Settings can be interpolated as `$variables` in other settings; `$environment`
-  is special, in that puppet master will interpolate each agent node's
-  environment instead of its own.
-* Multiple values should be specified as comma-separated lists; multiple
-  directories should be separated with the system path separator (usually
-  a colon).
-* Settings that represent time intervals should be specified in duration format:
-  an integer immediately followed by one of the units 'y' (years of 365 days),
-  'd' (days), 'h' (hours), 'm' (minutes), or 's' (seconds). The unit cannot be
-  combined with other units, and defaults to seconds when omitted. Examples are
-  '3600' which is equivalent to '1h' (one hour), and '1825d' which is equivalent
-  to '5y' (5 years).
-* If you use the `splay` setting, note that the period that it waits changes
-  each time the Puppet agent is restarted.
-* Settings that take a single file or directory can optionally set the owner,
-  group, and mode for their value: `rundir = $vardir/run { owner = puppet,
-  group = puppet, mode = 644 }`
-* The Puppet executables ignores any setting that isn't relevant to
-  their function.
-
-See the [configuration guide][confguide] for more details.
-
-[confguide]: https://puppet.com/docs/puppet/latest/config_about_settings.html
-
-* * *
-
+config.header = <<~EOT
+  ## Configuration settings
+  
+  * Each of these settings can be specified in `puppet.conf` or on the
+    command line.
+  * Puppet Enterprise (PE) and open source Puppet share the configuration settings
+    documented here. However, PE defaults differ from open source defaults for some
+    settings, such as `node_terminus`, `storeconfigs`, `always_retry_plugins`,
+    `disable18n`, `environment_timeout` (when Code Manager is enabled), and the
+    Puppet Server JRuby `max-active-instances` setting. To verify PE configuration
+    defaults, check the `puppet.conf` or `pe-puppet-server.conf` file after
+    installation.
+  * When using boolean settings on the command line, use `--setting` and
+    `--no-setting` instead of `--setting (true|false)`. (Using `--setting false`
+    results in "Error: Could not parse application options: needless argument".)
+  * Settings can be interpolated as `$variables` in other settings; `$environment`
+    is special, in that puppet master will interpolate each agent node's
+    environment instead of its own.
+  * Multiple values should be specified as comma-separated lists; multiple
+    directories should be separated with the system path separator (usually
+    a colon).
+  * Settings that represent time intervals should be specified in duration format:
+    an integer immediately followed by one of the units 'y' (years of 365 days),
+    'd' (days), 'h' (hours), 'm' (minutes), or 's' (seconds). The unit cannot be
+    combined with other units, and defaults to seconds when omitted. Examples are
+    '3600' which is equivalent to '1h' (one hour), and '1825d' which is equivalent
+    to '5y' (5 years).
+  * If you use the `splay` setting, note that the period that it waits changes
+    each time the Puppet agent is restarted.
+  * Settings that take a single file or directory can optionally set the owner,
+    group, and mode for their value: `rundir = $vardir/run { owner = puppet,
+    group = puppet, mode = 644 }`
+  * The Puppet executables ignores any setting that isn't relevant to
+    their function.
+  
+  See the [configuration guide][confguide] for more details.
+  
+  [confguide]: https://puppet.com/docs/puppet/latest/config_about_settings.html
+  
+  * * *
+  
 EOT
