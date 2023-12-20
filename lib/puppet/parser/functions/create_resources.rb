@@ -102,10 +102,10 @@ ENDHEREDOC
       defaults.merge(params).map do |name, value|
         value = nil if value == :undef
         Puppet::Parser::Resource::Param.new(
-          :name   => name,
-          :value  => value, # wide open to various data types, must be correct
+          :name => name,
+          :value => value, # wide open to various data types, must be correct
           :source => self.source, # TODO: support :line => line, :file => file,
-          :add    => false
+          :add => false
         )
       end.compact
     )

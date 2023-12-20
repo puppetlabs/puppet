@@ -690,8 +690,8 @@ module Puppet
     end
 
     newparam(:forcelocal, :boolean => true,
-            :required_features => :manages_local_users_and_groups,
-            :parent => Puppet::Parameter::Boolean) do
+                          :required_features => :manages_local_users_and_groups,
+                          :parent => Puppet::Parameter::Boolean) do
       desc "Forces the management of local accounts when accounts are also
             being managed by some other Name Service Switch (NSS). For AIX, refer to the `ia_load_module` parameter.
             

@@ -169,7 +169,7 @@ defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
       :epoch => epoch,
       :version => version,
       :release => release,
-      :arch    => arch,
+      :arch => arch,
     }
   end
 

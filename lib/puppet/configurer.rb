@@ -670,7 +670,7 @@ class Puppet::Configurer
 
     Puppet.info(_("Uploading facts for %{node} to %{server}") % {
       node: facts.name,
-                  server: puppet.url.hostname})
+      server: puppet.url.hostname})
 
     puppet.put_facts(facts.name, facts: facts, environment: Puppet.lookup(:current_environment).name.to_s)
 
@@ -714,7 +714,7 @@ class Puppet::Configurer
         Puppet[:node_name_value],
         query_options.merge(
           :ignore_terminus => true,
-          :environment     => Puppet::Node::Environment.remote(@environment)
+          :environment => Puppet::Node::Environment.remote(@environment)
         )
       )
     end
@@ -730,12 +730,12 @@ class Puppet::Configurer
       result = Puppet::Resource::Catalog.indirection.find(
         Puppet[:node_name_value],
         query_options.merge(
-          :ignore_cache      => true,
+          :ignore_cache => true,
           # don't update cache until after environment converges
           :ignore_cache_save => true,
-          :environment       => Puppet::Node::Environment.remote(@environment),
+          :environment => Puppet::Node::Environment.remote(@environment),
           :check_environment => true,
-          :fail_on_404       => true,
+          :fail_on_404 => true,
           :facts_for_catalog => facts
         )
       )

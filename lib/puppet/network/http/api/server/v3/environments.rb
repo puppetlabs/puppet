@@ -14,19 +14,25 @@ module Puppet
               end
 
               def call(request, response)
-                response.respond_with(200, "application/json", Puppet::Util::Json.dump({
-                                                                                         "search_paths" => @env_loader.search_paths,
-                  "environments" => Hash[@env_loader.list.collect do |env|
-                    [env.name, {
-                      "settings" => {
-                        "modulepath" => env.full_modulepath,
-                        "manifest" => env.manifest,
-                        "environment_timeout" => timeout(env),
-                        "config_version" => env.config_version || '',
-                      }
-                    }]
-                  end]
-                                                                                       }))
+                response
+                  .respond_with(
+                    200,
+                    "application/json",
+                    Puppet::Util::Json
+                      .dump({
+                              "search_paths" => @env_loader.search_paths,
+                              "environments" => Hash[@env_loader.list.collect do |env|
+                                [env.name, {
+                                  "settings" => {
+                                    "modulepath" => env.full_modulepath,
+                                    "manifest" => env.manifest,
+                                    "environment_timeout" => timeout(env),
+                                    "config_version" => env.config_version || '',
+                                  }
+                                }]
+                              end]
+                            })
+                  )
               end
 
               private

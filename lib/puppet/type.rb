@@ -466,12 +466,12 @@ class Type
 
     param = genclass(
       name,
-      :parent     => options[:parent] || Puppet::Parameter,
+      :parent => options[:parent] || Puppet::Parameter,
       :attributes => options[:attributes],
-      :block      => block,
-      :prefix     => "Parameter",
-      :array      => @parameters,
-      :hash       => @paramhash
+      :block => block,
+      :prefix => "Parameter",
+      :array => @parameters,
+      :hash => @paramhash
     )
 
     handle_param_options(name, options)
@@ -1824,12 +1824,12 @@ class Type
 
     provider = genclass(
       name,
-      :parent     => parent,
-      :hash       => provider_hash,
-      :prefix     => "Provider",
-      :block      => block,
-      :include    => feature_module,
-      :extend     => feature_module,
+      :parent => parent,
+      :hash => provider_hash,
+      :prefix => "Provider",
+      :block => block,
+      :include => feature_module,
+      :extend => feature_module,
       :attributes => options
     )
 

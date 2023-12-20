@@ -97,11 +97,11 @@ module Pal
     # If manifest_file is nil, the #main method will use the env configured manifest
     # to do things in the block while a Script Compiler is in effect
     main(
-      manifest:                manifest_file,
-      facts:                   facts,
-      variables:               variables,
+      manifest: manifest_file,
+      facts: facts,
+      variables: variables,
       internal_compiler_class: :script,
-      set_local_facts:         set_local_facts,
+      set_local_facts: set_local_facts,
       &block
     )
   ensure
@@ -206,12 +206,12 @@ module Pal
     # If manifest_file is nil, the #main method will use the env configured manifest
     # to do things in the block while a Script Compiler is in effect
     main(
-      manifest:                manifest_file,
-      facts:                   facts,
-      variables:               variables,
-      target_variables:        target_variables,
+      manifest: manifest_file,
+      facts: facts,
+      variables: variables,
+      target_variables: target_variables,
       internal_compiler_class: :catalog,
-      set_local_facts:         false,
+      set_local_facts: false,
       &block
     )
   ensure

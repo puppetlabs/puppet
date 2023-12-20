@@ -416,9 +416,9 @@ class Puppet::Property < Puppet::Parameter
   #
   def log(msg)
     Puppet::Util::Log.create(
-      :level   => resource[:loglevel],
+      :level => resource[:loglevel],
       :message => msg,
-      :source  => self
+      :source => self
     )
   end
 

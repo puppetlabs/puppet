@@ -17,14 +17,14 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
   defaultfor 'os.name' => :aix
   confine 'os.name' => :aix
 
-  optional_commands :stopsrc  => "/usr/bin/stopsrc",
+  optional_commands :stopsrc => "/usr/bin/stopsrc",
                     :startsrc => "/usr/bin/startsrc",
-                    :refresh  => "/usr/bin/refresh",
-                    :lssrc    => "/usr/bin/lssrc",
-                    :lsitab   => "/usr/sbin/lsitab",
-                    :mkitab   => "/usr/sbin/mkitab",
-                    :rmitab   => "/usr/sbin/rmitab",
-                    :chitab   => "/usr/sbin/chitab"
+                    :refresh => "/usr/bin/refresh",
+                    :lssrc => "/usr/bin/lssrc",
+                    :lsitab => "/usr/sbin/lsitab",
+                    :mkitab => "/usr/sbin/mkitab",
+                    :rmitab => "/usr/sbin/rmitab",
+                    :chitab => "/usr/sbin/chitab"
 
   has_feature :refreshable
 

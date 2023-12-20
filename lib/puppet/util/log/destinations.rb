@@ -148,15 +148,15 @@ Puppet::Util::Log.newdesttype :console do
 
   def handle(msg)
     levels = {
-      :emerg   => { :name => 'Emergency', :color => :hred,     :stream => $stderr },
-      :alert   => { :name => 'Alert',     :color => :hred,     :stream => $stderr },
-      :crit    => { :name => 'Critical',  :color => :hred,     :stream => $stderr },
-      :err     => { :name => 'Error',     :color => :hred,     :stream => $stderr },
-      :warning => { :name => 'Warning',   :color => :hyellow,  :stream => $stderr },
+      :emerg => { :name => 'Emergency', :color => :hred,     :stream => $stderr },
+      :alert => { :name => 'Alert',     :color => :hred,     :stream => $stderr },
+      :crit => { :name => 'Critical', :color => :hred, :stream => $stderr },
+      :err => { :name => 'Error', :color => :hred, :stream => $stderr },
+      :warning => { :name => 'Warning', :color => :hyellow, :stream => $stderr },
 
-      :notice  => { :name => 'Notice',    :color => :reset,    :stream => $stdout },
-      :info    => { :name => 'Info',      :color => :green,    :stream => $stdout },
-      :debug   => { :name => 'Debug',     :color => :cyan,     :stream => $stdout },
+      :notice => { :name => 'Notice', :color => :reset, :stream => $stdout },
+      :info => { :name => 'Info', :color => :green, :stream => $stdout },
+      :debug => { :name => 'Debug', :color => :cyan, :stream => $stdout },
     }
 
     str = msg.respond_to?(:multiline) ? msg.multiline : msg.to_s
@@ -240,9 +240,9 @@ Puppet::Util::Log.newdesttype :eventlog do
     end
 
     @eventlog.report_event(
-      :event_type  => native_type,
-      :event_id    => native_id,
-      :data        => (msg.source && msg.source != 'Puppet' ? "#{msg.source}: " : '') + msg.to_s
+      :event_type => native_type,
+      :event_id => native_id,
+      :data => (msg.source && msg.source != 'Puppet' ? "#{msg.source}: " : '') + msg.to_s
     )
   end
 

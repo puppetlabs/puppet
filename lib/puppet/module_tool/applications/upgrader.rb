@@ -79,8 +79,8 @@ module Puppet::ModuleTool
             changes = Checksummer.run(mod.path) rescue []
             if mod.has_metadata? && !changes.empty?
               raise LocalChangesError,
-                    :action            => :upgrade,
-                    :module_name       => name,
+                    :action => :upgrade,
+                    :module_name => name,
                     :requested_version => results[:requested_version],
                     :installed_version => mod.version
             end
@@ -157,11 +157,11 @@ module Puppet::ModuleTool
               end
 
               raise InstallConflictError,
-                    :requested_module  => name,
+                    :requested_module => name,
                     :requested_version => options[:version] || 'latest',
-                    :dependency        => dependency,
-                    :directory         => mod.path,
-                    :metadata          => mod.metadata
+                    :dependency => dependency,
+                    :directory => mod.path,
+                    :metadata => mod.metadata
             end
           end
 
@@ -173,14 +173,14 @@ module Puppet::ModuleTool
               newer_versions = versions.select { |v| v > results[:installed_version] }
 
               raise VersionAlreadyInstalledError,
-                    :module_name       => name,
+                    :module_name => name,
                     :requested_version => results[:requested_version],
                     :installed_version => results[:installed_version],
-                    :newer_versions    => newer_versions,
+                    :newer_versions => newer_versions,
                     :possible_culprits => installed_modules_source.fetched.reject { |x| x == name }
             elsif child.version < results[:installed_version]
               raise DowngradingUnsupportedError,
-                    :module_name       => name,
+                    :module_name => name,
                     :requested_version => results[:requested_version],
                     :installed_version => results[:installed_version]
             end
@@ -208,7 +208,7 @@ module Puppet::ModuleTool
           results[:error] = { :oneline => e.message, :multiline => e.multiline }
         rescue => e
           results[:error] = {
-            :oneline   => e.message,
+            :oneline => e.message,
             :multiline => e.respond_to?(:multiline) ? e.multiline : [e.to_s, e.backtrace].join("\n")
           }
         ensure
@@ -269,13 +269,13 @@ module Puppet::ModuleTool
         end.compact
 
         return {
-          :release          => release,
-          :name             => release.name,
-          :path             => release.install_dir,
-          :dependencies     => dependencies.compact,
-          :version          => release.version,
+          :release => release,
+          :name => release.name,
+          :path => release.install_dir,
+          :dependencies => dependencies.compact,
+          :version => release.version,
           :previous_version => previous,
-          :action           => action,
+          :action => action,
         }
       end
 

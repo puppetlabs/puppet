@@ -596,7 +596,7 @@ module Puppet::Functions
       rescue StandardError => e
         raise ArgumentError, _("Parsing of type string '\"%{type_string}\"' failed with message: <%{message}>.\n") % {
           type_string: type_string,
-            message: e.message
+          message: e.message
         }
       end
     end

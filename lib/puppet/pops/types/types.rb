@@ -1508,7 +1508,7 @@ class PStringType < PScalarDataType
     create_ptype(loader, ir, 'ScalarDataType',
                  'size_type_or_value' => {
                    KEY_TYPE => POptionalType.new(PVariantType.new([PStringType::DEFAULT, PTypeType.new(PIntegerType::DEFAULT)])),
-                 KEY_VALUE => nil
+                   KEY_VALUE => nil
                  })
   end
 

@@ -3,7 +3,7 @@
 Puppet::Parser::Functions::newfunction(
   :fail,
   :arity => -1,
-  :doc   => <<DOC
+  :doc => <<DOC
 Fail with a parse error. Any parameters will be stringified,
 concatenated, and passed to the exception-handler.
 DOC

@@ -15,9 +15,9 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
   # The commands we are using on an AIX box are installed standard
   # (except nimclient) nimclient needs the bos.sysmgt.nim.client fileset.
-  commands    :nimclient  => "/usr/sbin/nimclient",
-              :lslpp      => "/usr/bin/lslpp",
-              :rpm        => "rpm"
+  commands    :nimclient => "/usr/sbin/nimclient",
+              :lslpp => "/usr/bin/lslpp",
+              :rpm => "rpm"
 
   # If NIM has not been configured, /etc/niminfo will not be present.
   # However, we have no way of knowing if the NIM server is not configured

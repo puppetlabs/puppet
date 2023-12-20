@@ -49,8 +49,8 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       'RealName' => :comment,
       'Password' => :password,
       'GeneratedUID' => :guid,
-      'IPAddress'    => :ip_address,
-      'ENetAddress'  => :en_address,
+      'IPAddress' => :ip_address,
+      'ENetAddress' => :en_address,
       'GroupMembership' => :members,
     }
   end

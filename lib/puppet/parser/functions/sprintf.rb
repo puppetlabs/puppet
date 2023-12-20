@@ -28,8 +28,8 @@
 
 Puppet::Parser::Functions::newfunction(
   :sprintf, :type => :rvalue,
-  :arity => -2,
-  :doc => "Perform printf-style formatting of text.
+            :arity => -2,
+            :doc => "Perform printf-style formatting of text.
 
   The first parameter is format string describing how the rest of the parameters should be formatted.
   See the documentation for the [`Kernel::sprintf` function](https://ruby-doc.org/core/Kernel.html)

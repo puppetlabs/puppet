@@ -219,14 +219,14 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       if resource[:recurse] == true || resource[:recurse] == 'true' || resource[:recurse] == 'remote'
         # Construct a hash mapping sources to arrays (list of files found recursively) of metadata
         options = {
-          :environment        => catalog.environment_instance,
-          :links              => resource[:links] ? resource[:links].to_sym : :manage,
-          :checksum_type      => resource[:checksum] ? resource[:checksum].to_sym : checksum_type.to_sym,
+          :environment => catalog.environment_instance,
+          :links => resource[:links] ? resource[:links].to_sym : :manage,
+          :checksum_type => resource[:checksum] ? resource[:checksum].to_sym : checksum_type.to_sym,
           :source_permissions => resource[:source_permissions] ? resource[:source_permissions].to_sym : :ignore,
-          :recurse            => true,
-          :recurselimit       => resource[:recurselimit],
-          :max_files          => resource[:max_files],
-          :ignore             => resource[:ignore],
+          :recurse => true,
+          :recurselimit => resource[:recurselimit],
+          :max_files => resource[:max_files],
+          :ignore => resource[:ignore],
         }
 
         sources_in_environment = true
@@ -270,9 +270,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
       else
         options = {
-          :environment        => catalog.environment_instance,
-          :links              => resource[:links] ? resource[:links].to_sym : :manage,
-          :checksum_type      => resource[:checksum] ? resource[:checksum].to_sym : checksum_type.to_sym,
+          :environment => catalog.environment_instance,
+          :links => resource[:links] ? resource[:links].to_sym : :manage,
+          :checksum_type => resource[:checksum] ? resource[:checksum].to_sym : checksum_type.to_sym,
           :source_permissions => resource[:source_permissions] ? resource[:source_permissions].to_sym : :ignore
         }
 
@@ -378,9 +378,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       node = nil
       begin
         node = Puppet::Node.indirection.find(name, :environment => environment,
-                                             :transaction_uuid => transaction_uuid,
-                                             :configured_environment => configured_environment,
-                                             :facts => facts)
+                                                   :transaction_uuid => transaction_uuid,
+                                                   :configured_environment => configured_environment,
+                                                   :facts => facts)
       rescue => detail
         message = _("Failed when searching for node %{name}: %{detail}") % { name: name, detail: detail }
         Puppet.log_exception(detail, message)
@@ -441,8 +441,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     # And then add the server name and IP
     {"servername" => "networking.fqdn",
-      "serverip"  => "networking.ip",
-      "serverip6" => "networking.ip6"
+     "serverip" => "networking.ip",
+     "serverip6" => "networking.ip6"
     }.each do |var, fact|
       value = Puppet.runtime[:facter].value(fact)
       if !value.nil?

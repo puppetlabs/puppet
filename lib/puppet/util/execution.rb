@@ -140,15 +140,15 @@ module Puppet::Util::Execution
     # set of overrides without affecting the default values for options that they don't pass in
     default_options = {
       :failonfail => NoOptionsSpecified.equal?(options),
-        :uid => nil,
-        :gid => nil,
-        :combine => NoOptionsSpecified.equal?(options),
-        :stdinfile => nil,
-        :squelch => false,
-        :override_locale => true,
-        :custom_environment => {},
-        :sensitive => false,
-        :suppress_window => false,
+      :uid => nil,
+      :gid => nil,
+      :combine => NoOptionsSpecified.equal?(options),
+      :stdinfile => nil,
+      :squelch => false,
+      :override_locale => true,
+      :custom_environment => {},
+      :sensitive => false,
+      :suppress_window => false,
     }
 
     options = default_options.merge(options)

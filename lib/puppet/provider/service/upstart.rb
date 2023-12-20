@@ -21,10 +21,10 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   defaultfor 'os.name' => :ubuntu, 'os.release.major' => ["10.04", "12.04", "14.04", "14.10"]
   defaultfor 'os.name' => :LinuxMint, 'os.release.major' => ["10", "11", "12", "13", "14", "15", "16", "17"]
 
-  commands :start   => "/sbin/start",
-           :stop    => "/sbin/stop",
+  commands :start => "/sbin/start",
+           :stop => "/sbin/stop",
            :restart => "/sbin/restart",
-           :status_exec  => "/sbin/status",
+           :status_exec => "/sbin/status",
            :initctl => "/sbin/initctl"
 
   # We only want to use upstart as our provider if the upstart daemon is running.

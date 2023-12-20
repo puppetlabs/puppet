@@ -18,8 +18,8 @@ class Puppet::Resource::Type
   # Map the names used in our documentation to the names used internally
   RESOURCE_KINDS_TO_EXTERNAL_NAMES = {
     :hostclass => "class",
-      :node => "node",
-      :definition => "defined_type"
+    :node => "node",
+    :definition => "defined_type"
   }
   RESOURCE_EXTERNAL_NAMES_TO_KINDS = RESOURCE_KINDS_TO_EXTERNAL_NAMES.invert
 

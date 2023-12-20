@@ -92,12 +92,12 @@ class IssueReporter
   def self.warning(semantic, issue, args)
     Puppet::Util::Log.create({
                                :level => :warning,
-      :message => issue.format(args),
-      :arguments => args,
-      :issue_code => issue.issue_code,
-      :file => semantic.file,
-      :line => semantic.line,
-      :pos => semantic.pos,
+                               :message => issue.format(args),
+                               :arguments => args,
+                               :issue_code => issue.issue_code,
+                               :file => semantic.file,
+                               :line => semantic.line,
+                               :pos => semantic.pos,
                              })
   end
 
@@ -127,12 +127,12 @@ class IssueReporter
     end
     Puppet::Util::Log.create({
                                :level => severity,
-        :message => formatter.format_message(diagnostic),
-        :arguments => diagnostic.arguments,
-        :issue_code => diagnostic.issue.issue_code,
-        :file => file,
-        :line => line,
-        :pos => pos,
+                               :message => formatter.format_message(diagnostic),
+                               :arguments => diagnostic.arguments,
+                               :issue_code => diagnostic.issue.issue_code,
+                               :file => file,
+                               :line => line,
+                               :pos => pos,
                              })
   end
   private_class_method :log_message

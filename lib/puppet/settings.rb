@@ -58,14 +58,14 @@ class Puppet::Settings
   # returns reasonable application default settings values for a given run_mode.
   def self.app_defaults_for_run_mode(run_mode)
     {
-      :name      => run_mode.to_s,
-        :run_mode  => run_mode.name,
-        :confdir   => run_mode.conf_dir,
-        :codedir   => run_mode.code_dir,
-        :vardir    => run_mode.var_dir,
-        :publicdir => run_mode.public_dir,
-        :rundir    => run_mode.run_dir,
-        :logdir    => run_mode.log_dir,
+      :name => run_mode.to_s,
+      :run_mode => run_mode.name,
+      :confdir => run_mode.conf_dir,
+      :codedir => run_mode.code_dir,
+      :vardir => run_mode.var_dir,
+      :publicdir => run_mode.public_dir,
+      :rundir => run_mode.run_dir,
+      :logdir => run_mode.log_dir,
     }
   end
 
@@ -734,26 +734,26 @@ class Puppet::Settings
   end
 
   SETTING_TYPES = {
-    :string     => StringSetting,
-      :file       => FileSetting,
-      :directory  => DirectorySetting,
-      :file_or_directory => FileOrDirectorySetting,
-      :path       => PathSetting,
-      :boolean    => BooleanSetting,
-      :integer    => IntegerSetting,
-      :port       => PortSetting,
-      :terminus   => TerminusSetting,
-      :duration   => DurationSetting,
-      :ttl        => TTLSetting,
-      :array      => ArraySetting,
-      :enum       => EnumSetting,
-      :symbolic_enum   => SymbolicEnumSetting,
-      :priority   => PrioritySetting,
-      :autosign   => AutosignSetting,
-      :server_list => ServerListSetting,
-      :http_extra_headers => HttpExtraHeadersSetting,
-      :certificate_revocation => CertificateRevocationSetting,
-      :alias => AliasSetting
+    :string => StringSetting,
+    :file => FileSetting,
+    :directory => DirectorySetting,
+    :file_or_directory => FileOrDirectorySetting,
+    :path => PathSetting,
+    :boolean => BooleanSetting,
+    :integer => IntegerSetting,
+    :port => PortSetting,
+    :terminus => TerminusSetting,
+    :duration => DurationSetting,
+    :ttl => TTLSetting,
+    :array => ArraySetting,
+    :enum => EnumSetting,
+    :symbolic_enum => SymbolicEnumSetting,
+    :priority => PrioritySetting,
+    :autosign => AutosignSetting,
+    :server_list => ServerListSetting,
+    :http_extra_headers => HttpExtraHeadersSetting,
+    :certificate_revocation => CertificateRevocationSetting,
+    :alias => AliasSetting
   }
 
   # Create a new setting.  The value is passed in because it's used to determine

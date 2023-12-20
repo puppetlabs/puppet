@@ -4,7 +4,7 @@ Puppet::Parser::Functions::newfunction(
   :find_file,
   :type => :rvalue,
   :arity => -2,
-:doc => <<-DOC
+  :doc => <<-DOC
 Finds an existing file from a module and returns its path.
 
 The argument to this function should be a String as a `<MODULE NAME>/<FILE>`
@@ -23,7 +23,7 @@ This function can also accept:
 The function returns `undef` if none of the given paths were found
 
 - since 4.8.0
-DOC
+  DOC
 ) do |_args|
   Puppet::Parser::Functions::Error.is4x('find_file')
 end

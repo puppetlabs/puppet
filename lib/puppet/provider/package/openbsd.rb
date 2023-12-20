@@ -11,8 +11,8 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     These options should be specified as an array where each element is either a
      string or a hash."
 
-  commands :pkginfo   => "pkg_info",
-           :pkgadd    => "pkg_add",
+  commands :pkginfo => "pkg_info",
+           :pkgadd => "pkg_add",
            :pkgdelete => "pkg_delete"
 
   defaultfor 'os.name' => :openbsd

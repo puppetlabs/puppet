@@ -10,17 +10,17 @@ class Puppet::Settings::PrioritySetting < Puppet::Settings::BaseSetting
       require_relative '../../puppet/util/windows/process'
       require_relative '../../puppet/ffi/windows/constants'
       {
-        :high    => Puppet::FFI::Windows::Constants::HIGH_PRIORITY_CLASS,
-        :normal  => Puppet::FFI::Windows::Constants::NORMAL_PRIORITY_CLASS,
-        :low     => Puppet::FFI::Windows::Constants::BELOW_NORMAL_PRIORITY_CLASS,
-        :idle    => Puppet::FFI::Windows::Constants::IDLE_PRIORITY_CLASS
+        :high => Puppet::FFI::Windows::Constants::HIGH_PRIORITY_CLASS,
+        :normal => Puppet::FFI::Windows::Constants::NORMAL_PRIORITY_CLASS,
+        :low => Puppet::FFI::Windows::Constants::BELOW_NORMAL_PRIORITY_CLASS,
+        :idle => Puppet::FFI::Windows::Constants::IDLE_PRIORITY_CLASS
       }
     else
       {
-        :high    => -10,
-        :normal  => 0,
-        :low     => 10,
-        :idle    => 19
+        :high => -10,
+        :normal => 0,
+        :low => 10,
+        :idle => 19
       }
     end
 

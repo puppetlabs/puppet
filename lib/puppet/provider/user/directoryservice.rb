@@ -44,17 +44,17 @@ Puppet::Type.type(:user).provide :directoryservice do
   # Apple will do next year...
   def self.ds_to_ns_attribute_map
     {
-      'RecordName'       => :name,
-      'PrimaryGroupID'   => :gid,
+      'RecordName' => :name,
+      'PrimaryGroupID' => :gid,
       'NFSHomeDirectory' => :home,
-      'UserShell'        => :shell,
-      'UniqueID'         => :uid,
-      'RealName'         => :comment,
-      'Password'         => :password,
-      'GeneratedUID'     => :guid,
-      'IPAddress'        => :ip_address,
-      'ENetAddress'      => :en_address,
-      'GroupMembership'  => :members,
+      'UserShell' => :shell,
+      'UniqueID' => :uid,
+      'RealName' => :comment,
+      'Password' => :password,
+      'GeneratedUID' => :guid,
+      'IPAddress' => :ip_address,
+      'ENetAddress' => :en_address,
+      'GroupMembership' => :members,
     }
   end
 

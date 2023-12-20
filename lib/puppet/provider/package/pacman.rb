@@ -187,8 +187,8 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   def self.to_resource_hash(name, version)
     {
-      :name     => name,
-      :ensure   => version,
+      :name => name,
+      :ensure => version,
       :provider => self.name
     }
   end

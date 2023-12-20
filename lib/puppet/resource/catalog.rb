@@ -479,16 +479,16 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     end
 
     {
-      'tags'      => tags.to_a,
-      'name'      => name,
-      'version'   => version,
-      'code_id'   => code_id,
+      'tags' => tags.to_a,
+      'name' => name,
+      'version' => version,
+      'code_id' => code_id,
       'catalog_uuid' => catalog_uuid,
       'catalog_format' => catalog_format,
-      'environment'  => environment.to_s,
+      'environment' => environment.to_s,
       'resources' => @resources.map { |v| @resource_table[v].to_data_hash },
-      'edges'     => edges.map { |e| e.to_data_hash },
-      'classes'   => classes,
+      'edges' => edges.map { |e| e.to_data_hash },
+      'classes' => classes,
     }.merge(metadata_hash.empty? ?
       {} : {'metadata' => metadata_hash}).merge(recursive_metadata_hash.empty? ?
         {} : {'recursive_metadata' => recursive_metadata_hash})

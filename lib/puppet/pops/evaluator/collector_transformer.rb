@@ -29,10 +29,10 @@ class CollectorTransformer
     if !o.operations.empty?
       overrides = {
         :parameters => o.operations.map{ |x| @@evaluator.evaluate(x, scope)}.flatten,
-        :file       => o.file,
-        :line       => o.line,
-        :source     => scope.source,
-        :scope      => scope
+        :file => o.file,
+        :line => o.line,
+        :source => scope.source,
+        :scope => scope
       }
     end
 

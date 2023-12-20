@@ -309,7 +309,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   def put_filebucket_file(path, body:, environment:)
     headers = add_puppet_headers({
                                    'Accept' => 'application/octet-stream',
-      'Content-Type' => 'application/octet-stream'
+                                   'Content-Type' => 'application/octet-stream'
                                  })
 
     response = @client.put(

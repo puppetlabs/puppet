@@ -972,19 +972,19 @@ class Factory
     'realize' => true,
     'include' => true,
     'contain' => true,
-    'tag'     => true,
+    'tag' => true,
 
-    'debug'   => true,
-    'info'    => true,
-    'notice'  => true,
+    'debug' => true,
+    'info' => true,
+    'notice' => true,
     'warning' => true,
-    'err'     => true,
+    'err' => true,
 
-    'fail'    => true,
-    'import'  => true, # discontinued, but transform it to make it call error reporting function
-    'break'   => true,
-    'next'    => true,
-    'return'  => true
+    'fail' => true,
+    'import' => true, # discontinued, but transform it to make it call error reporting function
+    'break' => true,
+    'next' => true,
+    'return' => true
   }.freeze
 
   # Returns true if the given name is a "statement keyword" (require, include, contain,

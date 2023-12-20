@@ -84,9 +84,9 @@ module Puppet::ModuleTool
 
         return {
           :module_name => module_name,
-          :author      => author,
-          :dir_name    => shortname,
-          :version     => version
+          :author => author,
+          :dir_name => shortname,
+          :version => version
         }
       end
     end

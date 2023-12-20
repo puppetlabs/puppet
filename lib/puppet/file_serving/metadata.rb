@@ -151,15 +151,15 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   def to_data_hash
     super.update(
       {
-        'owner'        => owner,
-        'group'        => group,
-        'mode'         => mode,
-        'checksum'     => {
-          'type'   => checksum_type,
-          'value'  => checksum
+        'owner' => owner,
+        'group' => group,
+        'mode' => mode,
+        'checksum' => {
+          'type' => checksum_type,
+          'value' => checksum
         },
-        'type'         => ftype,
-        'destination'  => destination,
+        'type' => ftype,
+        'destination' => destination,
       }.merge(content_uri ? {'content_uri' => content_uri} : {})
        .merge(source ? {'source' => source} : {})
     )

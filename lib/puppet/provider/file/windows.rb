@@ -103,16 +103,16 @@ Puppet::Type.type(:file).provide :windows do
   def munge_windows_system_group(current, should)
     [
       {
-        'type'        => 'group',
-        'resource'    => resource[:group],
+        'type' => 'group',
+        'resource' => resource[:group],
         'set_to_user' => group,
         'fullcontrol' => "070".to_i(8),
         'remove_mask' => "707".to_i(8),
         'should_mask' => (should[0].to_i(8) & "070".to_i(8)),
       },
       {
-        'type'        => 'owner',
-        'resource'    => resource[:owner],
+        'type' => 'owner',
+        'resource' => resource[:owner],
         'set_to_user' => owner,
         'fullcontrol' => "700".to_i(8),
         'remove_mask' => "077".to_i(8),

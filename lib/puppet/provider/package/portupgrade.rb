@@ -13,11 +13,11 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
   ## has_features is usually autodetected based on defs below.
   # has_features :installable, :uninstallable, :upgradeable
 
-  commands :portupgrade   => "/usr/local/sbin/portupgrade",
-           :portinstall   => "/usr/local/sbin/portinstall",
-           :portversion   => "/usr/local/sbin/portversion",
+  commands :portupgrade => "/usr/local/sbin/portupgrade",
+           :portinstall => "/usr/local/sbin/portinstall",
+           :portversion => "/usr/local/sbin/portversion",
            :portuninstall => "/usr/local/sbin/pkg_deinstall",
-           :portinfo      => "/usr/sbin/pkg_info"
+           :portinfo => "/usr/sbin/pkg_info"
 
   ## Activate this only once approved by someone important.
   # defaultfor 'os.name' => :freebsd

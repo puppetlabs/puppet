@@ -23,14 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: AllowMultipleStyles, EnforcedHashRocketStyle, EnforcedColonStyle, EnforcedLastArgumentHashStyle.
-# SupportedHashRocketStyles: key, separator, table
-# SupportedColonStyles: key, separator, table
-# SupportedLastArgumentHashStyles: always_inspect, always_ignore, ignore_implicit, ignore_explicit
-Layout/HashAlignment:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/HeredocIndentation:
   Enabled: false
 

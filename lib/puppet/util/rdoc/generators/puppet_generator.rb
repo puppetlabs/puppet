@@ -221,11 +221,11 @@ module Generators
       end
 
       values = {
-        "entries"    => res,
+        "entries" => res,
         'list_title' => CGI.escapeHTML(title),
-        'index_url'  => main_url,
-        'charset'    => @options.charset,
-        'style_url'  => style_url('', @options.css),
+        'index_url' => main_url,
+        'charset' => @options.charset,
+        'style_url' => style_url('', @options.css),
       }
 
       Puppet::FileSystem.open(filename, nil, "w:UTF-8") do |f|
@@ -287,15 +287,15 @@ module Generators
 
       values = {
         "module" => module_name,
-        "classes"    => res1,
+        "classes" => res1,
         'classes_title' => CGI.escapeHTML("Classes"),
         'defines_title' => CGI.escapeHTML("Defines"),
         'facts_title' => CGI.escapeHTML("Custom Facts"),
         'plugins_title' => CGI.escapeHTML("Plugins"),
         'nodes_title' => CGI.escapeHTML("Nodes"),
-        'index_url'  => main_url,
-        'charset'    => @options.charset,
-        'style_url'  => style_url('', @options.css),
+        'index_url' => main_url,
+        'charset' => @options.charset,
+        'style_url' => style_url('', @options.css),
       }
 
       values["defines"] = res2 if res2.size>0
@@ -571,8 +571,8 @@ module Generators
 
         if att.visibility == :public || att.visibility == :protected || @options.show_all
           entry = {
-            "name"   => CGI.escapeHTML(att.name),
-            "rw"     => att.rw,
+            "name" => CGI.escapeHTML(att.name),
+            "rw" => att.rw,
             "a_desc" => markup(att.comment, true)
           }
           unless att.visibility == :public || att.visibility == :protected

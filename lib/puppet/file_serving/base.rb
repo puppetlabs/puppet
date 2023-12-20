@@ -82,9 +82,9 @@ class Puppet::FileServing::Base
 
   def to_data_hash
     {
-      'path'          => @path,
+      'path' => @path,
       'relative_path' => @relative_path,
-      'links'         => @links.to_s
+      'links' => @links.to_s
     }
   end
 

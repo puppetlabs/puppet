@@ -323,10 +323,10 @@ module Runtime3Support
   def create_resource_parameter(o, scope, name, value, operator)
     file, line = extract_file_line(o)
     Puppet::Parser::Resource::Param.new(
-      :name   => name,
-      :value  => convert(value, scope, nil), # converted to 3x since 4x supports additional objects / types
+      :name => name,
+      :value => convert(value, scope, nil), # converted to 3x since 4x supports additional objects / types
       :source => scope.source, :line => line, :file => file,
-      :add    => operator == '+>'
+      :add => operator == '+>'
     )
   end
 
@@ -517,8 +517,8 @@ module Runtime3Support
       super
       IssueReporter.assert_and_report(self, {
                                         :message => "Evaluation Error:",
-        :emit_warnings => true,  # log warnings
-        :exception_class => Puppet::PreformattedError
+                                        :emit_warnings => true,  # log warnings
+                                        :exception_class => Puppet::PreformattedError
                                       })
       if errors?
         raise ArgumentError, _("Internal Error: Configuration of runtime error handling wrong: should have raised exception")

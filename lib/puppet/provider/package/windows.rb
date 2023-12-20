@@ -58,8 +58,8 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
 
   def self.to_hash(pkg)
     {
-      :name     => pkg.name,
-      :ensure   => pkg.version || :installed,
+      :name => pkg.name,
+      :ensure => pkg.version || :installed,
       :provider => :windows
     }
   end

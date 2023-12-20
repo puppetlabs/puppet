@@ -262,15 +262,15 @@ class AccessOperator
   def bad_access_key_type(lhs, key_index, actual, *expected_classes)
     fail(Issues::BAD_SLICE_KEY_TYPE, @semantic.keys[key_index], {
            :left_value => lhs,
-      :actual => bad_key_type_name(actual),
-      :expected_classes => expected_classes
+           :actual => bad_key_type_name(actual),
+           :expected_classes => expected_classes
          })
   end
 
   def bad_string_access_key_type(lhs, key_index, actual)
     fail(Issues::BAD_STRING_SLICE_KEY_TYPE, @semantic.keys[key_index], {
            :left_value => lhs,
-      :actual_type => bad_key_type_name(actual),
+           :actual_type => bad_key_type_name(actual),
          })
   end
 
@@ -290,7 +290,7 @@ class AccessOperator
     expected = expected_classes.map {|c| label_provider.label(c) }.join(' or ')
     fail(Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[key_index], {
            :type => type,
-      :message => _("Cannot use %{key} where %{expected} is expected") % { key: bad_key_type_name(actual), expected: expected }
+           :message => _("Cannot use %{key} where %{expected} is expected") % { key: bad_key_type_name(actual), expected: expected }
          })
   end
 
@@ -660,7 +660,7 @@ class AccessOperator
         index = keys_orig_size != keys.size ? i+1 : i
         fail(Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[index], {
                :type => o,
-          :message => "Cannot use #{bad_key_type_name(t)} where a resource title String is expected"
+               :message => "Cannot use #{bad_key_type_name(t)} where a resource title String is expected"
              })
       end
 

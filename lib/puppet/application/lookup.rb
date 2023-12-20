@@ -293,8 +293,8 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
       if merge == 'deep'
         merge_options = {'strategy' => 'deep',
-          'sort_merged_arrays' => !options[:sort_merged_arrays].nil?,
-          'merge_hash_arrays' => !options[:merge_hash_arrays].nil?}
+                         'sort_merged_arrays' => !options[:sort_merged_arrays].nil?,
+                         'merge_hash_arrays' => !options[:merge_hash_arrays].nil?}
 
         if options[:prefix]
           merge_options['knockout_prefix'] = options[:prefix]

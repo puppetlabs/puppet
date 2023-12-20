@@ -36,10 +36,10 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
         process.each_line do |line|
           match = /^(.*?)(?:_flags)?=(.*)$/.match(line)
           attributes_hash = {
-            :name      => match[1],
-            :flags     => match[2],
+            :name => match[1],
+            :flags => match[2],
             :hasstatus => true,
-            :provider  => :openbsd,
+            :provider => :openbsd,
           }
 
           instances << new(attributes_hash);

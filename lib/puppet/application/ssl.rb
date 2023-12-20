@@ -286,7 +286,7 @@ END
 
     paths = {
       'private key' => Puppet[:hostprivkey],
-      'public key'  => Puppet[:hostpubkey],
+      'public key' => Puppet[:hostpubkey],
       'certificate request' => Puppet[:hostcsr],
       'certificate' => Puppet[:hostcert],
       'private key password file' => Puppet[:passfile]

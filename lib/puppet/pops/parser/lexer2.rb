@@ -118,26 +118,26 @@ class Lexer2
   # Booleans are pre-calculated (rather than evaluating the strings "false" "true" repeatedly.
   #
   KEYWORDS = {
-    'case'     => [:CASE,     'case',     4],
-    'class'    => [:CLASS,    'class',    5],
-    'default'  => [:DEFAULT,  'default',  7],
-    'define'   => [:DEFINE,   'define',   6],
-    'if'       => [:IF,       'if',       2],
-    'elsif'    => [:ELSIF,    'elsif',    5],
-    'else'     => [:ELSE,     'else',     4],
+    'case' => [:CASE, 'case', 4],
+    'class' => [:CLASS, 'class', 5],
+    'default' => [:DEFAULT, 'default', 7],
+    'define' => [:DEFINE, 'define', 6],
+    'if' => [:IF, 'if', 2],
+    'elsif' => [:ELSIF,    'elsif', 5],
+    'else' => [:ELSE, 'else', 4],
     'inherits' => [:INHERITS, 'inherits', 8],
-    'node'     => [:NODE,     'node',     4],
-    'and'      => [:AND,      'and',      3],
-    'or'       => [:OR,       'or',       2],
-    'undef'    => [:UNDEF,    'undef',    5],
-    'false'    => [:BOOLEAN,  false,      5],
-    'true'     => [:BOOLEAN,  true,       4],
-    'in'       => [:IN,       'in',       2],
-    'unless'   => [:UNLESS,   'unless',   6],
+    'node' => [:NODE, 'node', 4],
+    'and' => [:AND, 'and', 3],
+    'or' => [:OR, 'or', 2],
+    'undef' => [:UNDEF,    'undef',    5],
+    'false' => [:BOOLEAN,  false,      5],
+    'true' => [:BOOLEAN, true, 4],
+    'in' => [:IN, 'in', 2],
+    'unless' => [:UNLESS, 'unless', 6],
     'function' => [:FUNCTION, 'function', 8],
-    'type'     => [:TYPE,     'type',     4],
-    'attr'     => [:ATTR,     'attr',     4],
-    'private'  => [:PRIVATE,  'private',  7],
+    'type' => [:TYPE,     'type',     4],
+    'attr' => [:ATTR,     'attr',     4],
+    'private' => [:PRIVATE, 'private', 7],
   }
 
   KEYWORDS.each {|_k,v| v[1].freeze; v.freeze }
@@ -185,8 +185,8 @@ class Lexer2
 
   def initialize()
     @selector = {
-      '.' =>  lambda { emit(TOKEN_DOT, @scanner.pos) },
-      ',' => lambda {  emit(TOKEN_COMMA, @scanner.pos) },
+      '.' => lambda { emit(TOKEN_DOT, @scanner.pos) },
+      ',' => lambda { emit(TOKEN_COMMA, @scanner.pos) },
       '[' => lambda do
         before = @scanner.pos
         # Must check the preceding character to see if it is whitespace.

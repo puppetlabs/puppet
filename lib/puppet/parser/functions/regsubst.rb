@@ -29,9 +29,9 @@
 module Puppet::Parser::Functions
   newfunction(
     :regsubst, :type => :rvalue,
-  :arity => -4,
+               :arity => -4,
 
-  :doc => "
+               :doc => "
 Perform regexp replacement on a string or array of strings.
 
 * *Parameters* (in order):

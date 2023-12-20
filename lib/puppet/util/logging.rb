@@ -58,15 +58,15 @@ module Logging
       backtrace = build_exception_trace(exception, combined_trace, puppet_trace)
       Puppet::Util::Log.create({
         :level => level,
-          :source => log_source,
-          :message => exception.basic_message,
-          :issue_code => exception.issue_code,
-          :backtrace => backtrace.empty? ? nil : backtrace,
-          :file => exception.file,
-          :line => exception.line,
-          :pos => exception.pos,
-          :environment => exception.environment,
-          :node => exception.node
+        :source => log_source,
+        :message => exception.basic_message,
+        :issue_code => exception.issue_code,
+        :backtrace => backtrace.empty? ? nil : backtrace,
+        :file => exception.file,
+        :line => exception.line,
+        :pos => exception.pos,
+        :environment => exception.environment,
+        :node => exception.node
       }.merge(log_metadata))
     else
       send_log(level, format_exception(exception, message, combined_trace, puppet_trace))

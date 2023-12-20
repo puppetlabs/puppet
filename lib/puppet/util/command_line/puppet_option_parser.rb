@@ -50,10 +50,10 @@ module Puppet
 
           options = {
             :long => long,
-              :short => short,
-              :required => false,
-              :callback => pass_only_last_value_on_to(block),
-              :multi => true,
+            :short => short,
+            :required => false,
+            :callback => pass_only_last_value_on_to(block),
+            :multi => true,
           }
 
           case type

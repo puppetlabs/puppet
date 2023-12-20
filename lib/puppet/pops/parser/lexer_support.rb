@@ -54,11 +54,11 @@ module LexerSupport
   def lex_warning(issue, args = {}, pos=nil)
     Puppet::Util::Log.create({
                                :level => :warning,
-        :message => issue.format(args),
-        :issue_code => issue.issue_code,
-        :file => filename,
-        :line => line(pos),
-        :pos => position(pos),
+                               :message => issue.format(args),
+                               :issue_code => issue.issue_code,
+                               :file => filename,
+                               :line => line(pos),
+                               :pos => position(pos),
                              })
   end
 
@@ -197,8 +197,8 @@ module LexerSupport
 
     lex_error_without_pos(
       Puppet::Pops::Issues::ILLEGAL_BOM,
-      { :format_name   => name,
-        :bytes  => "[#{bom.values[0,size].map {|b| "%X" % b}.join(" ")}]"
+      { :format_name => name,
+        :bytes => "[#{bom.values[0,size].map {|b| "%X" % b}.join(" ")}]"
       })
   end
 

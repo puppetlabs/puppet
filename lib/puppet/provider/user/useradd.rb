@@ -24,7 +24,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   options :password_warn_days, :flag => "-W", :method => :sp_warn
   options :password, :method => :sp_pwdp
   options :expiry, :method => :sp_expire,
-    :munge => proc { |value|
+                   :munge => proc { |value|
       if value == :absent
         if Puppet.runtime[:facter].value('os.name')=='SLES' && Puppet.runtime[:facter].value('os.release.major') == "11"
           -1
@@ -41,15 +41,15 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
           value
         end
       end
-    },
-    :unmunge => proc { |value|
+                             },
+                   :unmunge => proc { |value|
       if value == -1
         :absent
       else
         # Expiry is days after 1970-01-01
         (Date.new(1970,1,1) + value).strftime('%Y-%m-%d')
       end
-    }
+                               }
 
   optional_commands :localadd => "luseradd", :localdelete => "luserdel", :localmodify => "lusermod", :localpassword => "lchage"
   has_feature :manages_local_users_and_groups if Puppet.features.libuser?

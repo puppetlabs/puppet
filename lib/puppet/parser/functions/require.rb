@@ -5,7 +5,7 @@
   Puppet::Parser::Functions::newfunction(
     :require,
     :arity => -2,
-    :doc =>"Evaluate one or more classes,  adding the required class as a dependency.
+    :doc => "Evaluate one or more classes,  adding the required class as a dependency.
 
 The relationship metaparameters work well for specifying relationships
 between individual resources, but they can be clumsy for specifying

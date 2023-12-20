@@ -24,10 +24,10 @@ class Puppet::Util::Log
   def self.newdesttype(name, options = {}, &block)
     dest = genclass(
       name,
-      :parent     => Puppet::Util::Log::Destination,
-      :prefix     => "Dest",
-      :block      => block,
-      :hash       => @desttypes,
+      :parent => Puppet::Util::Log::Destination,
+      :prefix => "Dest",
+      :block => block,
+      :hash => @desttypes,
       :attributes => options
     )
     dest.match(dest.name)

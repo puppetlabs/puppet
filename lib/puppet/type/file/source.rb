@@ -191,10 +191,10 @@ module Puppet
       value.each do |source|
         begin
           options = {
-            :environment          => resource.catalog.environment_instance,
-            :links                => resource[:links],
-            :checksum_type        => resource[:checksum],
-            :source_permissions   => resource[:source_permissions]
+            :environment => resource.catalog.environment_instance,
+            :links => resource[:links],
+            :checksum_type => resource[:checksum],
+            :source_permissions => resource[:source_permissions]
           }
 
           data = Puppet::FileServing::Metadata.indirection.find(source, options)

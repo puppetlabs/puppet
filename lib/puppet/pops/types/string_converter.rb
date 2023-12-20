@@ -264,7 +264,7 @@ class StringConverter
   # (basically strings are quoted since they may contain a ','))
   #
   DEFAULT_CONTAINER_FORMATS = {
-    PAnyType::DEFAULT  => Format.new('%p').freeze, # quoted string (Ruby inspect)
+    PAnyType::DEFAULT => Format.new('%p').freeze, # quoted string (Ruby inspect)
   }.freeze
 
   DEFAULT_ARRAY_FORMAT                          = Format.new('%a')
@@ -283,13 +283,13 @@ class StringConverter
   DEFAULT_ARRAY_DELIMITERS                      = ['[', ']'].freeze
 
   DEFAULT_STRING_FORMATS = {
-    PObjectType::DEFAULT   => Format.new('%p').freeze,    # call with initialization hash
-    PFloatType::DEFAULT    => Format.new('%f').freeze,    # float
-    PNumericType::DEFAULT  => Format.new('%d').freeze,    # decimal number
-    PArrayType::DEFAULT    => DEFAULT_ARRAY_FORMAT.freeze,
-    PHashType::DEFAULT     => DEFAULT_HASH_FORMAT.freeze,
-    PBinaryType::DEFAULT   => Format.new('%B').freeze,    # strict base64 string unquoted
-    PAnyType::DEFAULT      => Format.new('%s').freeze,    # unquoted string
+    PObjectType::DEFAULT => Format.new('%p').freeze, # call with initialization hash
+    PFloatType::DEFAULT => Format.new('%f').freeze, # float
+    PNumericType::DEFAULT => Format.new('%d').freeze, # decimal number
+    PArrayType::DEFAULT => DEFAULT_ARRAY_FORMAT.freeze,
+    PHashType::DEFAULT => DEFAULT_HASH_FORMAT.freeze,
+    PBinaryType::DEFAULT => Format.new('%B').freeze, # strict base64 string unquoted
+    PAnyType::DEFAULT => Format.new('%s').freeze, # unquoted string
   }.freeze
 
   DEFAULT_PARAMETER_FORMAT = {

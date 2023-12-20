@@ -64,8 +64,8 @@ class Puppet::Parser::ScriptCompiler
   def context_overrides()
     {
       :current_environment => environment,
-      :global_scope => @topscope,             # 4x placeholder for new global scope
-      :loaders  => @loaders,                  # 4x loaders
+      :global_scope => @topscope, # 4x placeholder for new global scope
+      :loaders => @loaders, # 4x loaders
       :rich_data => true,
     }
   end

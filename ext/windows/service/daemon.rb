@@ -146,9 +146,9 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
       eventlog = nil
       eventlog = Puppet::Util::Windows::EventLog.open("Puppet")
       eventlog.report_event(
-        :event_type  => type,   # EVENTLOG_ERROR_TYPE, etc
-        :event_id    => id,     # 0x01 or 0x02, 0x03 etc.
-        :data        => message # "the message"
+        :event_type => type, # EVENTLOG_ERROR_TYPE, etc
+        :event_id => id, # 0x01 or 0x02, 0x03 etc.
+        :data => message # "the message"
       )
     rescue Exception
       # Ignore all errors

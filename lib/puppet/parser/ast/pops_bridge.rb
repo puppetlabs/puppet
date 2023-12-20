@@ -188,8 +188,8 @@ class Puppet::Parser::AST::PopsBridge
     def args_from_definition(o, modname, expr_class = Expression)
       args = {
         :arguments => o.parameters.collect {|p| instantiate_Parameter(p) },
-       :argument_types => create_type_map(o),
-       :module_name => modname
+        :argument_types => create_type_map(o),
+        :module_name => modname
       }
       unless is_nop?(o.body)
         args[:code] = expr_class.new(:value => o.body)

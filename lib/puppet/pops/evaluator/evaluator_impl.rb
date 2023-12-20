@@ -570,9 +570,9 @@ class EvaluatorImpl
     rescue ArgumentError => e
       fail(Issues::COMPARISON_NOT_POSSIBLE, o, {
              :operator => o.operator,
-        :left_value => left,
-        :right_value => right,
-        :detail => e.message}, e)
+             :left_value => left,
+             :right_value => right,
+             :detail => e.message}, e)
     end
   end
 
