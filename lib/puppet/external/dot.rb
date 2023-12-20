@@ -151,11 +151,6 @@ module DOT
     def each_option_pair
       @options.each_pair{ |key, val| yield key, val }
     end
-
-    #def parent=( thing )
-    #    @parent.delete( self ) if defined?( @parent ) and @parent
-    #    @parent = thing
-    #end
   end
 
   # This is used when we build nodes that have shape=record
