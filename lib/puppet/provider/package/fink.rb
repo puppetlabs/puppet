@@ -49,7 +49,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
 
   # What's the latest package version available?
   def latest
-    output = aptcache :policy,  @resource[:name]
+    output = aptcache :policy, @resource[:name]
 
     if output =~ /Candidate:\s+(\S+)\s/
       return $1

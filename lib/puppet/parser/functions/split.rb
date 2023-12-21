@@ -2,10 +2,10 @@
 
 module Puppet::Parser::Functions
   newfunction(
-  :split, :type => :rvalue,
-  :arity => 2,
+    :split, :type => :rvalue,
+            :arity => 2,
 
-    :doc => "\
+            :doc => "\
 Split a string variable into an array using the specified split regexp.
 
 *Example:*

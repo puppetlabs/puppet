@@ -14,7 +14,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     To use the `forcelocal` parameter, you need to install the `libuser` package (providing
     `/usr/sbin/lgroupadd` and `/usr/sbin/luseradd`)."
 
-  commands :add => "useradd", :delete => "userdel", :modify => "usermod", :password => "chage", :chpasswd  => "chpasswd"
+  commands :add => "useradd", :delete => "userdel", :modify => "usermod", :password => "chage", :chpasswd => "chpasswd"
 
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos
@@ -24,32 +24,32 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   options :password_warn_days, :flag => "-W", :method => :sp_warn
   options :password, :method => :sp_pwdp
   options :expiry, :method => :sp_expire,
-    :munge => proc { |value|
-      if value == :absent
-        if Puppet.runtime[:facter].value('os.name')=='SLES' && Puppet.runtime[:facter].value('os.release.major') == "11"
-          -1
-        else
-          ''
-        end
-      else
-        case Puppet.runtime[:facter].value('os.name')
-        when 'Solaris'
-          # Solaris uses %m/%d/%Y for useradd/usermod
-          expiry_year, expiry_month, expiry_day = value.split('-')
-          [expiry_month, expiry_day, expiry_year].join('/')
-        else
-          value
-        end
-      end
-    },
-    :unmunge => proc { |value|
-      if value == -1
-        :absent
-      else
-        # Expiry is days after 1970-01-01
-        (Date.new(1970,1,1) + value).strftime('%Y-%m-%d')
-      end
-    }
+                   :munge => proc { |value|
+                               if value == :absent
+                                 if Puppet.runtime[:facter].value('os.name')=='SLES' && Puppet.runtime[:facter].value('os.release.major') == "11"
+                                   -1
+                                 else
+                                   ''
+                                 end
+                               else
+                                 case Puppet.runtime[:facter].value('os.name')
+                                 when 'Solaris'
+                                   # Solaris uses %m/%d/%Y for useradd/usermod
+                                   expiry_year, expiry_month, expiry_day = value.split('-')
+                                   [expiry_month, expiry_day, expiry_year].join('/')
+                                 else
+                                   value
+                                 end
+                               end
+                             },
+                   :unmunge => proc { |value|
+                                 if value == -1
+                                   :absent
+                                 else
+                                   # Expiry is days after 1970-01-01
+                                   (Date.new(1970,1,1) + value).strftime('%Y-%m-%d')
+                                 end
+                               }
 
   optional_commands :localadd => "luseradd", :localdelete => "luserdel", :localmodify => "lusermod", :localpassword => "lchage"
   has_feature :manages_local_users_and_groups if Puppet.features.libuser?
@@ -61,21 +61,21 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def uid
-     return localuid if @resource.forcelocal?
+    return localuid if @resource.forcelocal?
 
-     get(:uid)
+    get(:uid)
   end
 
   def gid
-     return localgid if @resource.forcelocal?
+    return localgid if @resource.forcelocal?
 
-     get(:gid)
+    get(:gid)
   end
 
   def comment
-     return localcomment if @resource.forcelocal?
+    return localcomment if @resource.forcelocal?
 
-     get(:comment)
+    get(:comment)
   end
 
   def shell
@@ -91,9 +91,9 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def groups
-     return localgroups if @resource.forcelocal?
+    return localgroups if @resource.forcelocal?
 
-     super
+    super
   end
 
   def finduser(key, value)
@@ -236,11 +236,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # to ensure consistent behaviour of the useradd provider when
     # using both useradd and luseradd
     if (!@resource.allowdupe?) && @resource.forcelocal?
-       if @resource.should(:uid) && finduser(:uid, @resource.should(:uid).to_s)
-           raise(Puppet::Error, "UID #{@resource.should(:uid)} already exists, use allowdupe to force user creation")
-       end
+      if @resource.should(:uid) && finduser(:uid, @resource.should(:uid).to_s)
+        raise(Puppet::Error, "UID #{@resource.should(:uid)} already exists, use allowdupe to force user creation")
+      end
     elsif @resource.allowdupe? && (!@resource.forcelocal?)
-       return ["-o"]
+      return ["-o"]
     end
     []
   end
@@ -309,7 +309,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def has_sensitive_data?(property = nil)
-    #Check for sensitive values?
+    # Check for sensitive values?
     properties = property ? [property] : Puppet::Type.type(:user).validproperties
     properties.any? do |prop|
       p = @resource.parameter(prop)

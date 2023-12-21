@@ -125,7 +125,7 @@ module Puppet::Util::Windows::File
   end
   module_function :set_attributes
 
-  #define INVALID_HANDLE_VALUE ((HANDLE)(LONG_PTR)-1)
+  # define INVALID_HANDLE_VALUE ((HANDLE)(LONG_PTR)-1)
   INVALID_HANDLE_VALUE = FFI::Pointer.new(-1).address
   def self.create_file(file_name, desired_access, share_mode, security_attributes,
     creation_disposition, flags_and_attributes, template_file_handle)
@@ -225,13 +225,13 @@ module Puppet::Util::Windows::File
   def self.open_symlink(link_name)
     begin
       yield handle = create_file(
-      link_name,
-      GENERIC_READ,
-      FILE_SHARE_READ,
-      nil, # security_attributes
-      OPEN_EXISTING,
-      FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
-      0) # template_file
+        link_name,
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        nil, # security_attributes
+        OPEN_EXISTING,
+        FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
+        0) # template_file
     ensure
       FFI::WIN32.CloseHandle(handle) if handle
     end

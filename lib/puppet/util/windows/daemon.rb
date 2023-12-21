@@ -75,7 +75,7 @@ module Puppet::Util::Windows
 
     # Wraps SetServiceStatus.
     SetTheServiceStatus = Proc.new do |dwCurrentState, dwWin32ExitCode, dwCheckPoint, dwWaitHint|
-      ss = SERVICE_STATUS.new  # Current status of the service.
+      ss = SERVICE_STATUS.new # Current status of the service.
 
       # Disable control requests until the service is started.
       if dwCurrentState == SERVICE_START_PENDING
@@ -121,7 +121,7 @@ module Puppet::Util::Windows
           dwState = SERVICE_PAUSED
         when SERVICE_CONTROL_CONTINUE
           dwState = SERVICE_RUNNING
-          #else
+          # else
           # TODO: Handle other control codes? Retain the current state?
         end
 

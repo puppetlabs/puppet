@@ -8,7 +8,7 @@ module Model
 class PopsObject
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::PopsObject', {
-    })
+                                            })
   end
 
   include Types::PuppetObject
@@ -52,30 +52,33 @@ end
 
 class Positioned < PopsObject
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Positioned', {
-      'parent' => PopsObject._pcore_type,
-      'attributes' => {
-        'locator' => {
-          'type' => Parser::Locator::Locator19._pcore_type,
-          'kind' => 'reference'
-        },
-        'offset' => Types::PIntegerType::DEFAULT,
-        'length' => Types::PIntegerType::DEFAULT,
-        'file' => {
-          'type' => Types::PStringType::DEFAULT,
-          'kind' => 'derived'
-        },
-        'line' => {
-          'type' => Types::PIntegerType::DEFAULT,
-          'kind' => 'derived'
-        },
-        'pos' => {
-          'type' => Types::PIntegerType::DEFAULT,
-          'kind' => 'derived'
-        }
-      },
-      'equality' => []
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::Positioned',
+             {
+               'parent' => PopsObject._pcore_type,
+               'attributes' => {
+                 'locator' => {
+                   'type' => Parser::Locator::Locator19._pcore_type,
+                   'kind' => 'reference'
+                 },
+                 'offset' => Types::PIntegerType::DEFAULT,
+                 'length' => Types::PIntegerType::DEFAULT,
+                 'file' => {
+                   'type' => Types::PStringType::DEFAULT,
+                   'kind' => 'derived'
+                 },
+                 'line' => {
+                   'type' => Types::PIntegerType::DEFAULT,
+                   'kind' => 'derived'
+                 },
+                 'pos' => {
+                   'type' => Types::PIntegerType::DEFAULT,
+                   'kind' => 'derived'
+                 }
+               },
+               'equality' => []
+             })
   end
 
   def self.from_hash(init_hash)
@@ -133,28 +136,29 @@ end
 class Expression < Positioned
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Expression', {
-      'parent' => Positioned._pcore_type
-    })
+                                              'parent' => Positioned._pcore_type
+                                            })
   end
 end
 
 class Nop < Expression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Nop', {
-      'parent' => Expression._pcore_type
-    })
+                                              'parent' => Expression._pcore_type
+                                            })
   end
 end
 
 class BinaryExpression < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::BinaryExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'left_expr' => Expression._pcore_type,
-        'right_expr' => Expression._pcore_type
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType.new('Puppet::AST::BinaryExpression', {
+                               'parent' => Expression._pcore_type,
+                               'attributes' => {
+                                 'left_expr' => Expression._pcore_type,
+                                 'right_expr' => Expression._pcore_type
+                               }
+                             })
   end
 
   def self.from_hash(init_hash)
@@ -226,12 +230,13 @@ end
 
 class UnaryExpression < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::UnaryExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'expr' => Expression._pcore_type
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType.new('Puppet::AST::UnaryExpression', {
+                               'parent' => Expression._pcore_type,
+                               'attributes' => {
+                                 'expr' => Expression._pcore_type
+                               }
+                             })
   end
 
   def self.from_hash(init_hash)
@@ -293,8 +298,8 @@ end
 class ParenthesizedExpression < UnaryExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ParenthesizedExpression', {
-      'parent' => UnaryExpression._pcore_type
-    })
+                                              'parent' => UnaryExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -314,8 +319,8 @@ end
 class NotExpression < UnaryExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::NotExpression', {
-      'parent' => UnaryExpression._pcore_type
-    })
+                                              'parent' => UnaryExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -335,8 +340,8 @@ end
 class UnaryMinusExpression < UnaryExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::UnaryMinusExpression', {
-      'parent' => UnaryExpression._pcore_type
-    })
+                                              'parent' => UnaryExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -356,8 +361,8 @@ end
 class UnfoldExpression < UnaryExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::UnfoldExpression', {
-      'parent' => UnaryExpression._pcore_type
-    })
+                                              'parent' => UnaryExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -376,12 +381,13 @@ end
 
 class AssignmentExpression < BinaryExpression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AssignmentExpression', {
-      'parent' => BinaryExpression._pcore_type,
-      'attributes' => {
-        'operator' => Types::PEnumType.new(['+=', '-=', '='])
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType.new('Puppet::AST::AssignmentExpression', {
+                               'parent' => BinaryExpression._pcore_type,
+                               'attributes' => {
+                                 'operator' => Types::PEnumType.new(['+=', '-=', '='])
+                               }
+                             })
   end
 
   def self.from_hash(init_hash)
@@ -451,12 +457,14 @@ end
 
 class ArithmeticExpression < BinaryExpression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ArithmeticExpression', {
-      'parent' => BinaryExpression._pcore_type,
-      'attributes' => {
-        'operator' => Types::PEnumType.new(['%', '*', '+', '-', '/', '<<', '>>'])
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::ArithmeticExpression', {
+               'parent' => BinaryExpression._pcore_type,
+               'attributes' => {
+                 'operator' => Types::PEnumType.new(['%', '*', '+', '-', '/', '<<', '>>'])
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -527,11 +535,11 @@ end
 class RelationshipExpression < BinaryExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::RelationshipExpression', {
-      'parent' => BinaryExpression._pcore_type,
-      'attributes' => {
-        'operator' => Types::PEnumType.new(['->', '<-', '<~', '~>'])
-      }
-    })
+                                              'parent' => BinaryExpression._pcore_type,
+                                              'attributes' => {
+                                                'operator' => Types::PEnumType.new(['->', '<-', '<~', '~>'])
+                                              }
+                                            })
   end
 
   def self.from_hash(init_hash)
@@ -601,16 +609,18 @@ end
 
 class AccessExpression < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AccessExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'left_expr' => Expression._pcore_type,
-        'keys' => {
-          'type' => Types::PArrayType.new(Expression._pcore_type),
-          'value' => []
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::AccessExpression', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'left_expr' => Expression._pcore_type,
+                 'keys' => {
+                   'type' => Types::PArrayType.new(Expression._pcore_type),
+                   'value' => []
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -682,12 +692,14 @@ end
 
 class ComparisonExpression < BinaryExpression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ComparisonExpression', {
-      'parent' => BinaryExpression._pcore_type,
-      'attributes' => {
-        'operator' => Types::PEnumType.new(['!=', '<', '<=', '==', '>', '>='])
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::ComparisonExpression', {
+               'parent' => BinaryExpression._pcore_type,
+               'attributes' => {
+                 'operator' => Types::PEnumType.new(['!=', '<', '<=', '==', '>', '>='])
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -757,12 +769,14 @@ end
 
 class MatchExpression < BinaryExpression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::MatchExpression', {
-      'parent' => BinaryExpression._pcore_type,
-      'attributes' => {
-        'operator' => Types::PEnumType.new(['!~', '=~'])
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::MatchExpression', {
+               'parent' => BinaryExpression._pcore_type,
+               'attributes' => {
+                 'operator' => Types::PEnumType.new(['!~', '=~'])
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -833,8 +847,8 @@ end
 class InExpression < BinaryExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::InExpression', {
-      'parent' => BinaryExpression._pcore_type
-    })
+                                              'parent' => BinaryExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -859,8 +873,8 @@ end
 class BooleanExpression < BinaryExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::BooleanExpression', {
-      'parent' => BinaryExpression._pcore_type
-    })
+                                              'parent' => BinaryExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -885,8 +899,8 @@ end
 class AndExpression < BooleanExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AndExpression', {
-      'parent' => BooleanExpression._pcore_type
-    })
+                                              'parent' => BooleanExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -911,8 +925,8 @@ end
 class OrExpression < BooleanExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::OrExpression', {
-      'parent' => BooleanExpression._pcore_type
-    })
+                                              'parent' => BooleanExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -936,15 +950,17 @@ end
 
 class LiteralList < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralList', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'values' => {
-          'type' => Types::PArrayType.new(Expression._pcore_type),
-          'value' => []
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::LiteralList', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'values' => {
+                   'type' => Types::PArrayType.new(Expression._pcore_type),
+                   'value' => []
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -1005,13 +1021,15 @@ end
 
 class KeyedEntry < Positioned
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::KeyedEntry', {
-      'parent' => Positioned._pcore_type,
-      'attributes' => {
-        'key' => Expression._pcore_type,
-        'value' => Expression._pcore_type
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::KeyedEntry', {
+               'parent' => Positioned._pcore_type,
+               'attributes' => {
+                 'key' => Expression._pcore_type,
+                 'value' => Expression._pcore_type
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -1083,15 +1101,17 @@ end
 
 class LiteralHash < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralHash', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'entries' => {
-          'type' => Types::PArrayType.new(KeyedEntry._pcore_type),
-          'value' => []
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::LiteralHash', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'entries' => {
+                   'type' => Types::PArrayType.new(KeyedEntry._pcore_type),
+                   'value' => []
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -1152,15 +1172,17 @@ end
 
 class BlockExpression < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::BlockExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'statements' => {
-          'type' => Types::PArrayType.new(Expression._pcore_type),
-          'value' => []
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::BlockExpression', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'statements' => {
+                   'type' => Types::PArrayType.new(Expression._pcore_type),
+                   'value' => []
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -1222,23 +1244,25 @@ end
 class ApplyBlockExpression < BlockExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ApplyBlockExpression', {
-      'parent' => BlockExpression._pcore_type,
-    })
+                                              'parent' => BlockExpression._pcore_type,
+                                            })
   end
 end
 
 class CaseOption < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CaseOption', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'values' => Types::PArrayType.new(Expression._pcore_type, Types::PCollectionType::NOT_EMPTY_SIZE),
-        'then_expr' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::CaseOption', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'values' => Types::PArrayType.new(Expression._pcore_type, Types::PCollectionType::NOT_EMPTY_SIZE),
+                 'then_expr' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -1310,16 +1334,18 @@ end
 
 class CaseExpression < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CaseExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'test' => Expression._pcore_type,
-        'options' => {
-          'type' => Types::PArrayType.new(CaseOption._pcore_type),
-          'value' => []
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::CaseExpression', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'test' => Expression._pcore_type,
+                 'options' => {
+                   'type' => Types::PArrayType.new(CaseOption._pcore_type),
+                   'value' => []
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -1391,15 +1417,17 @@ end
 
 class QueryExpression < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::QueryExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'expr' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::QueryExpression', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'expr' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -1461,8 +1489,8 @@ end
 class ExportedQuery < QueryExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ExportedQuery', {
-      'parent' => QueryExpression._pcore_type
-    })
+                                              'parent' => QueryExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -1482,8 +1510,8 @@ end
 class VirtualQuery < QueryExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::VirtualQuery', {
-      'parent' => QueryExpression._pcore_type
-    })
+                                              'parent' => QueryExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -1503,21 +1531,23 @@ end
 class AbstractAttributeOperation < Positioned
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AbstractAttributeOperation', {
-      'parent' => Positioned._pcore_type
-    })
+                                              'parent' => Positioned._pcore_type
+                                            })
   end
 end
 
 class AttributeOperation < AbstractAttributeOperation
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AttributeOperation', {
-      'parent' => AbstractAttributeOperation._pcore_type,
-      'attributes' => {
-        'attribute_name' => Types::PStringType::DEFAULT,
-        'operator' => Types::PEnumType.new(['+>', '=>']),
-        'value_expr' => Expression._pcore_type
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::AttributeOperation', {
+               'parent' => AbstractAttributeOperation._pcore_type,
+               'attributes' => {
+                 'attribute_name' => Types::PStringType::DEFAULT,
+                 'operator' => Types::PEnumType.new(['+>', '=>']),
+                 'value_expr' => Expression._pcore_type
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -1590,12 +1620,14 @@ end
 
 class AttributesOperation < AbstractAttributeOperation
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AttributesOperation', {
-      'parent' => AbstractAttributeOperation._pcore_type,
-      'attributes' => {
-        'expr' => Expression._pcore_type
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::AttributesOperation', {
+               'parent' => AbstractAttributeOperation._pcore_type,
+               'attributes' => {
+                 'expr' => Expression._pcore_type
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -1656,17 +1688,19 @@ end
 
 class CollectExpression < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CollectExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'type_expr' => Expression._pcore_type,
-        'query' => QueryExpression._pcore_type,
-        'operations' => {
-          'type' => Types::PArrayType.new(AbstractAttributeOperation._pcore_type),
-          'value' => []
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::CollectExpression', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'type_expr' => Expression._pcore_type,
+                 'query' => QueryExpression._pcore_type,
+                 'operations' => {
+                   'type' => Types::PArrayType.new(AbstractAttributeOperation._pcore_type),
+                   'value' => []
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -1749,24 +1783,26 @@ end
 
 class Parameter < Positioned
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Parameter', {
-      'parent' => Positioned._pcore_type,
-      'attributes' => {
-        'name' => Types::PStringType::DEFAULT,
-        'value' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        },
-        'type_expr' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        },
-        'captures_rest' => {
-          'type' => Types::POptionalType.new(Types::PBooleanType::DEFAULT),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::Parameter', {
+               'parent' => Positioned._pcore_type,
+               'attributes' => {
+                 'name' => Types::PStringType::DEFAULT,
+                 'value' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 },
+                 'type_expr' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 },
+                 'captures_rest' => {
+                   'type' => Types::POptionalType.new(Types::PBooleanType::DEFAULT),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -1851,27 +1887,29 @@ end
 class Definition < Expression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Definition', {
-      'parent' => Expression._pcore_type
-    })
+                                              'parent' => Expression._pcore_type
+                                            })
   end
 end
 
 class NamedDefinition < Definition
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::NamedDefinition', {
-      'parent' => Definition._pcore_type,
-      'attributes' => {
-        'name' => Types::PStringType::DEFAULT,
-        'parameters' => {
-          'type' => Types::PArrayType.new(Parameter._pcore_type),
-          'value' => []
-        },
-        'body' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::NamedDefinition', {
+               'parent' => Definition._pcore_type,
+               'attributes' => {
+                 'name' => Types::PStringType::DEFAULT,
+                 'parameters' => {
+                   'type' => Types::PArrayType.new(Parameter._pcore_type),
+                   'value' => []
+                 },
+                 'body' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -1949,15 +1987,17 @@ end
 
 class FunctionDefinition < NamedDefinition
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::FunctionDefinition', {
-      'parent' => NamedDefinition._pcore_type,
-      'attributes' => {
-        'return_type' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::FunctionDefinition', {
+               'parent' => NamedDefinition._pcore_type,
+               'attributes' => {
+                 'return_type' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -2035,8 +2075,8 @@ end
 class ResourceTypeDefinition < NamedDefinition
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceTypeDefinition', {
-      'parent' => NamedDefinition._pcore_type
-    })
+                                              'parent' => NamedDefinition._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -2060,12 +2100,14 @@ end
 
 class QRefDefinition < Definition
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::QRefDefinition', {
-      'parent' => Definition._pcore_type,
-      'attributes' => {
-        'name' => Types::PStringType::DEFAULT
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::QRefDefinition', {
+               'parent' => Definition._pcore_type,
+               'attributes' => {
+                 'name' => Types::PStringType::DEFAULT
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -2113,15 +2155,17 @@ end
 
 class TypeAlias < QRefDefinition
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::TypeAlias', {
-      'parent' => QRefDefinition._pcore_type,
-      'attributes' => {
-        'type_expr' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::TypeAlias', {
+               'parent' => QRefDefinition._pcore_type,
+               'attributes' => {
+                 'type_expr' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -2184,19 +2228,21 @@ end
 
 class TypeMapping < Definition
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::TypeMapping', {
-      'parent' => Definition._pcore_type,
-      'attributes' => {
-        'type_expr' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        },
-        'mapping_expr' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::TypeMapping', {
+               'parent' => Definition._pcore_type,
+               'attributes' => {
+                 'type_expr' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 },
+                 'mapping_expr' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -2268,19 +2314,21 @@ end
 
 class TypeDefinition < QRefDefinition
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::TypeDefinition', {
-      'parent' => QRefDefinition._pcore_type,
-      'attributes' => {
-        'parent' => {
-          'type' => Types::POptionalType.new(Types::PStringType::DEFAULT),
-          'value' => nil
-        },
-        'body' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::TypeDefinition', {
+               'parent' => QRefDefinition._pcore_type,
+               'attributes' => {
+                 'parent' => {
+                   'type' => Types::POptionalType.new(Types::PStringType::DEFAULT),
+                   'value' => nil
+                 },
+                 'body' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -2349,20 +2397,22 @@ end
 
 class NodeDefinition < Definition
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::NodeDefinition', {
-      'parent' => Definition._pcore_type,
-      'attributes' => {
-        'parent' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        },
-        'host_matches' => Types::PArrayType.new(Expression._pcore_type, Types::PCollectionType::NOT_EMPTY_SIZE),
-        'body' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::NodeDefinition', {
+               'parent' => Definition._pcore_type,
+               'attributes' => {
+                 'parent' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 },
+                 'host_matches' => Types::PArrayType.new(Expression._pcore_type, Types::PCollectionType::NOT_EMPTY_SIZE),
+                 'body' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -2445,16 +2495,18 @@ end
 
 class HeredocExpression < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::HeredocExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'syntax' => {
-          'type' => Types::POptionalType.new(Types::PStringType::DEFAULT),
-          'value' => nil
-        },
-        'text_expr' => Expression._pcore_type
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::HeredocExpression', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'syntax' => {
+                   'type' => Types::POptionalType.new(Types::PStringType::DEFAULT),
+                   'value' => nil
+                 },
+                 'text_expr' => Expression._pcore_type
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -2521,15 +2573,17 @@ end
 
 class HostClassDefinition < NamedDefinition
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::HostClassDefinition', {
-      'parent' => NamedDefinition._pcore_type,
-      'attributes' => {
-        'parent_class' => {
-          'type' => Types::POptionalType.new(Types::PStringType::DEFAULT),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::HostClassDefinition', {
+               'parent' => NamedDefinition._pcore_type,
+               'attributes' => {
+                 'parent_class' => {
+                   'type' => Types::POptionalType.new(Types::PStringType::DEFAULT),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -2602,8 +2656,8 @@ end
 class PlanDefinition < FunctionDefinition
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::PlanDefinition', {
-      'parent' => FunctionDefinition._pcore_type
-    })
+                                              'parent' => FunctionDefinition._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -2632,23 +2686,25 @@ end
 
 class LambdaExpression < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LambdaExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'parameters' => {
-          'type' => Types::PArrayType.new(Parameter._pcore_type),
-          'value' => []
-        },
-        'body' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        },
-        'return_type' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::LambdaExpression', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'parameters' => {
+                   'type' => Types::PArrayType.new(Parameter._pcore_type),
+                   'value' => []
+                 },
+                 'body' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 },
+                 'return_type' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -2731,19 +2787,21 @@ end
 
 class ApplyExpression < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ApplyExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'arguments' => {
-          'type' => Types::PArrayType.new(Expression._pcore_type),
-          'value' => []
-        },
-        'body' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::ApplyExpression', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'arguments' => {
+                   'type' => Types::PArrayType.new(Expression._pcore_type),
+                   'value' => []
+                 },
+                 'body' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -2815,20 +2873,22 @@ end
 
 class IfExpression < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::IfExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'test' => Expression._pcore_type,
-        'then_expr' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        },
-        'else_expr' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::IfExpression', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'test' => Expression._pcore_type,
+                 'then_expr' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 },
+                 'else_expr' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -2912,8 +2972,8 @@ end
 class UnlessExpression < IfExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::UnlessExpression', {
-      'parent' => IfExpression._pcore_type
-    })
+                                              'parent' => IfExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -2942,24 +3002,26 @@ end
 
 class CallExpression < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CallExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'rval_required' => {
-          'type' => Types::PBooleanType::DEFAULT,
-          'value' => false
-        },
-        'functor_expr' => Expression._pcore_type,
-        'arguments' => {
-          'type' => Types::PArrayType.new(Expression._pcore_type),
-          'value' => []
-        },
-        'lambda' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::CallExpression', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'rval_required' => {
+                   'type' => Types::PBooleanType::DEFAULT,
+                   'value' => false
+                 },
+                 'functor_expr' => Expression._pcore_type,
+                 'arguments' => {
+                   'type' => Types::PArrayType.new(Expression._pcore_type),
+                   'value' => []
+                 },
+                 'lambda' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -3049,8 +3111,8 @@ end
 class CallFunctionExpression < CallExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CallFunctionExpression', {
-      'parent' => CallExpression._pcore_type
-    })
+                                              'parent' => CallExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -3080,8 +3142,8 @@ end
 class CallNamedFunctionExpression < CallExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CallNamedFunctionExpression', {
-      'parent' => CallExpression._pcore_type
-    })
+                                              'parent' => CallExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -3111,8 +3173,8 @@ end
 class CallMethodExpression < CallExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CallMethodExpression', {
-      'parent' => CallExpression._pcore_type
-    })
+                                              'parent' => CallExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -3142,28 +3204,30 @@ end
 class Literal < Expression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Literal', {
-      'parent' => Expression._pcore_type
-    })
+                                              'parent' => Expression._pcore_type
+                                            })
   end
 end
 
 class LiteralValue < Literal
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralValue', {
-      'parent' => Literal._pcore_type
-    })
+                                              'parent' => Literal._pcore_type
+                                            })
   end
 end
 
 class LiteralRegularExpression < LiteralValue
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralRegularExpression', {
-      'parent' => LiteralValue._pcore_type,
-      'attributes' => {
-        'value' => Types::PAnyType::DEFAULT,
-        'pattern' => Types::PStringType::DEFAULT
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::LiteralRegularExpression', {
+               'parent' => LiteralValue._pcore_type,
+               'attributes' => {
+                 'value' => Types::PAnyType::DEFAULT,
+                 'pattern' => Types::PStringType::DEFAULT
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -3217,12 +3281,14 @@ end
 
 class LiteralString < LiteralValue
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralString', {
-      'parent' => LiteralValue._pcore_type,
-      'attributes' => {
-        'value' => Types::PStringType::DEFAULT
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::LiteralString', {
+               'parent' => LiteralValue._pcore_type,
+               'attributes' => {
+                 'value' => Types::PStringType::DEFAULT
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -3271,23 +3337,25 @@ end
 class LiteralNumber < LiteralValue
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralNumber', {
-      'parent' => LiteralValue._pcore_type
-    })
+                                              'parent' => LiteralValue._pcore_type
+                                            })
   end
 end
 
 class LiteralInteger < LiteralNumber
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralInteger', {
-      'parent' => LiteralNumber._pcore_type,
-      'attributes' => {
-        'radix' => {
-          'type' => Types::PIntegerType::DEFAULT,
-          'value' => 10
-        },
-        'value' => Types::PIntegerType::DEFAULT
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::LiteralInteger', {
+               'parent' => LiteralNumber._pcore_type,
+               'attributes' => {
+                 'radix' => {
+                   'type' => Types::PIntegerType::DEFAULT,
+                   'value' => 10
+                 },
+                 'value' => Types::PIntegerType::DEFAULT
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -3341,12 +3409,14 @@ end
 
 class LiteralFloat < LiteralNumber
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralFloat', {
-      'parent' => LiteralNumber._pcore_type,
-      'attributes' => {
-        'value' => Types::PFloatType::DEFAULT
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::LiteralFloat', {
+               'parent' => LiteralNumber._pcore_type,
+               'attributes' => {
+                 'value' => Types::PFloatType::DEFAULT
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -3395,27 +3465,29 @@ end
 class LiteralUndef < Literal
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralUndef', {
-      'parent' => Literal._pcore_type
-    })
+                                              'parent' => Literal._pcore_type
+                                            })
   end
 end
 
 class LiteralDefault < Literal
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralDefault', {
-      'parent' => Literal._pcore_type
-    })
+                                              'parent' => Literal._pcore_type
+                                            })
   end
 end
 
 class LiteralBoolean < LiteralValue
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::LiteralBoolean', {
-      'parent' => LiteralValue._pcore_type,
-      'attributes' => {
-        'value' => Types::PBooleanType::DEFAULT
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::LiteralBoolean', {
+               'parent' => LiteralValue._pcore_type,
+               'attributes' => {
+                 'value' => Types::PBooleanType::DEFAULT
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -3464,8 +3536,8 @@ end
 class TextExpression < UnaryExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::TextExpression', {
-      'parent' => UnaryExpression._pcore_type
-    })
+                                              'parent' => UnaryExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -3484,15 +3556,17 @@ end
 
 class ConcatenatedString < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ConcatenatedString', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'segments' => {
-          'type' => Types::PArrayType.new(Expression._pcore_type),
-          'value' => []
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::ConcatenatedString', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'segments' => {
+                   'type' => Types::PArrayType.new(Expression._pcore_type),
+                   'value' => []
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -3553,12 +3627,14 @@ end
 
 class QualifiedName < LiteralValue
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::QualifiedName', {
-      'parent' => LiteralValue._pcore_type,
-      'attributes' => {
-        'value' => Types::PStringType::DEFAULT
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::QualifiedName', {
+               'parent' => LiteralValue._pcore_type,
+               'attributes' => {
+                 'value' => Types::PStringType::DEFAULT
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -3606,16 +3682,18 @@ end
 
 class ReservedWord < LiteralValue
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ReservedWord', {
-      'parent' => LiteralValue._pcore_type,
-      'attributes' => {
-        'word' => Types::PStringType::DEFAULT,
-        'future' => {
-          'type' => Types::POptionalType.new(Types::PBooleanType::DEFAULT),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::ReservedWord', {
+               'parent' => LiteralValue._pcore_type,
+               'attributes' => {
+                 'word' => Types::PStringType::DEFAULT,
+                 'future' => {
+                   'type' => Types::POptionalType.new(Types::PBooleanType::DEFAULT),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -3669,16 +3747,18 @@ end
 
 class QualifiedReference < LiteralValue
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::QualifiedReference', {
-      'parent' => LiteralValue._pcore_type,
-      'attributes' => {
-        'cased_value' => Types::PStringType::DEFAULT,
-        'value' => {
-          'type' => Types::PStringType::DEFAULT,
-          'kind' => 'derived'
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::QualifiedReference', {
+               'parent' => LiteralValue._pcore_type,
+               'attributes' => {
+                 'cased_value' => Types::PStringType::DEFAULT,
+                 'value' => {
+                   'type' => Types::PStringType::DEFAULT,
+                   'kind' => 'derived'
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -3731,8 +3811,8 @@ end
 class VariableExpression < UnaryExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::VariableExpression', {
-      'parent' => UnaryExpression._pcore_type
-    })
+                                              'parent' => UnaryExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -3751,19 +3831,21 @@ end
 
 class EppExpression < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::EppExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'parameters_specified' => {
-          'type' => Types::POptionalType.new(Types::PBooleanType::DEFAULT),
-          'value' => nil
-        },
-        'body' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::EppExpression', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'parameters_specified' => {
+                   'type' => Types::POptionalType.new(Types::PBooleanType::DEFAULT),
+                   'value' => nil
+                 },
+                 'body' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -3831,16 +3913,16 @@ end
 class RenderStringExpression < LiteralString
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::RenderStringExpression', {
-      'parent' => LiteralString._pcore_type
-    })
+                                              'parent' => LiteralString._pcore_type
+                                            })
   end
 end
 
 class RenderExpression < UnaryExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::RenderExpression', {
-      'parent' => UnaryExpression._pcore_type
-    })
+                                              'parent' => UnaryExpression._pcore_type
+                                            })
   end
 
   def _pcore_contents
@@ -3859,19 +3941,21 @@ end
 
 class ResourceBody < Positioned
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceBody', {
-      'parent' => Positioned._pcore_type,
-      'attributes' => {
-        'title' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        },
-        'operations' => {
-          'type' => Types::PArrayType.new(AbstractAttributeOperation._pcore_type),
-          'value' => []
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::ResourceBody', {
+               'parent' => Positioned._pcore_type,
+               'attributes' => {
+                 'title' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 },
+                 'operations' => {
+                   'type' => Types::PArrayType.new(AbstractAttributeOperation._pcore_type),
+                   'value' => []
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -3943,23 +4027,25 @@ end
 
 class AbstractResource < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::AbstractResource', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'form' => {
-          'type' => Types::PEnumType.new(['exported', 'regular', 'virtual']),
-          'value' => 'regular'
-        },
-        'virtual' => {
-          'type' => Types::PBooleanType::DEFAULT,
-          'kind' => 'derived'
-        },
-        'exported' => {
-          'type' => Types::PBooleanType::DEFAULT,
-          'kind' => 'derived'
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::AbstractResource', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'form' => {
+                   'type' => Types::PEnumType.new(['exported', 'regular', 'virtual']),
+                   'value' => 'regular'
+                 },
+                 'virtual' => {
+                   'type' => Types::PBooleanType::DEFAULT,
+                   'kind' => 'derived'
+                 },
+                 'exported' => {
+                   'type' => Types::PBooleanType::DEFAULT,
+                   'kind' => 'derived'
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -4015,16 +4101,18 @@ end
 
 class ResourceExpression < AbstractResource
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceExpression', {
-      'parent' => AbstractResource._pcore_type,
-      'attributes' => {
-        'type_name' => Expression._pcore_type,
-        'bodies' => {
-          'type' => Types::PArrayType.new(ResourceBody._pcore_type),
-          'value' => []
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::ResourceExpression', {
+               'parent' => AbstractResource._pcore_type,
+               'attributes' => {
+                 'type_name' => Expression._pcore_type,
+                 'bodies' => {
+                   'type' => Types::PArrayType.new(ResourceBody._pcore_type),
+                   'value' => []
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -4098,19 +4186,21 @@ end
 
 class ResourceDefaultsExpression < AbstractResource
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceDefaultsExpression', {
-      'parent' => AbstractResource._pcore_type,
-      'attributes' => {
-        'type_ref' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        },
-        'operations' => {
-          'type' => Types::PArrayType.new(AbstractAttributeOperation._pcore_type),
-          'value' => []
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::ResourceDefaultsExpression', {
+               'parent' => AbstractResource._pcore_type,
+               'attributes' => {
+                 'type_ref' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 },
+                 'operations' => {
+                   'type' => Types::PArrayType.new(AbstractAttributeOperation._pcore_type),
+                   'value' => []
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -4184,16 +4274,18 @@ end
 
 class ResourceOverrideExpression < AbstractResource
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ResourceOverrideExpression', {
-      'parent' => AbstractResource._pcore_type,
-      'attributes' => {
-        'resources' => Expression._pcore_type,
-        'operations' => {
-          'type' => Types::PArrayType.new(AbstractAttributeOperation._pcore_type),
-          'value' => []
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::ResourceOverrideExpression', {
+               'parent' => AbstractResource._pcore_type,
+               'attributes' => {
+                 'resources' => Expression._pcore_type,
+                 'operations' => {
+                   'type' => Types::PArrayType.new(AbstractAttributeOperation._pcore_type),
+                   'value' => []
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -4267,13 +4359,15 @@ end
 
 class SelectorEntry < Positioned
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::SelectorEntry', {
-      'parent' => Positioned._pcore_type,
-      'attributes' => {
-        'matching_expr' => Expression._pcore_type,
-        'value_expr' => Expression._pcore_type
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::SelectorEntry', {
+               'parent' => Positioned._pcore_type,
+               'attributes' => {
+                 'matching_expr' => Expression._pcore_type,
+                 'value_expr' => Expression._pcore_type
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -4345,16 +4439,18 @@ end
 
 class SelectorExpression < Expression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::SelectorExpression', {
-      'parent' => Expression._pcore_type,
-      'attributes' => {
-        'left_expr' => Expression._pcore_type,
-        'selectors' => {
-          'type' => Types::PArrayType.new(SelectorEntry._pcore_type),
-          'value' => []
-        }
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::SelectorExpression', {
+               'parent' => Expression._pcore_type,
+               'attributes' => {
+                 'left_expr' => Expression._pcore_type,
+                 'selectors' => {
+                   'type' => Types::PArrayType.new(SelectorEntry._pcore_type),
+                   'value' => []
+                 }
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -4426,9 +4522,11 @@ end
 
 class NamedAccessExpression < BinaryExpression
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::NamedAccessExpression', {
-      'parent' => BinaryExpression._pcore_type
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::NamedAccessExpression', {
+               'parent' => BinaryExpression._pcore_type
+             })
   end
 
   def _pcore_contents
@@ -4452,33 +4550,35 @@ end
 
 class Program < PopsObject
   def self._pcore_type
-    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::Program', {
-      'parent' => PopsObject._pcore_type,
-      'attributes' => {
-        'body' => {
-          'type' => Types::POptionalType.new(Expression._pcore_type),
-          'value' => nil
-        },
-        'definitions' => {
-          'type' => Types::PArrayType.new(Definition._pcore_type),
-          'kind' => 'reference',
-          'value' => []
-        },
-        'source_text' => {
-          'type' => Types::PStringType::DEFAULT,
-          'kind' => 'derived'
-        },
-        'source_ref' => {
-          'type' => Types::PStringType::DEFAULT,
-          'kind' => 'derived'
-        },
-        'line_offsets' => {
-          'type' => Types::PArrayType.new(Types::PIntegerType::DEFAULT),
-          'kind' => 'derived'
-        },
-        'locator' => Parser::Locator::Locator19._pcore_type
-      }
-    })
+    @_pcore_type ||=
+      Types::PObjectType
+        .new('Puppet::AST::Program', {
+               'parent' => PopsObject._pcore_type,
+               'attributes' => {
+                 'body' => {
+                   'type' => Types::POptionalType.new(Expression._pcore_type),
+                   'value' => nil
+                 },
+                 'definitions' => {
+                   'type' => Types::PArrayType.new(Definition._pcore_type),
+                   'kind' => 'reference',
+                   'value' => []
+                 },
+                 'source_text' => {
+                   'type' => Types::PStringType::DEFAULT,
+                   'kind' => 'derived'
+                 },
+                 'source_ref' => {
+                   'type' => Types::PStringType::DEFAULT,
+                   'kind' => 'derived'
+                 },
+                 'line_offsets' => {
+                   'type' => Types::PArrayType.new(Types::PIntegerType::DEFAULT),
+                   'kind' => 'derived'
+                 },
+                 'locator' => Parser::Locator::Locator19._pcore_type
+               }
+             })
   end
 
   def self.from_hash(init_hash)
@@ -4572,90 +4672,90 @@ def self.register_pcore_types
 
   @@pcore_ast_initialized = true
   all_types = [
-  Parser::Locator::Locator19,
-  Model::PopsObject,
-  Model::Positioned,
-  Model::Expression,
-  Model::Nop,
-  Model::BinaryExpression,
-  Model::UnaryExpression,
-  Model::ParenthesizedExpression,
-  Model::NotExpression,
-  Model::UnaryMinusExpression,
-  Model::UnfoldExpression,
-  Model::AssignmentExpression,
-  Model::ArithmeticExpression,
-  Model::RelationshipExpression,
-  Model::AccessExpression,
-  Model::ComparisonExpression,
-  Model::MatchExpression,
-  Model::InExpression,
-  Model::BooleanExpression,
-  Model::AndExpression,
-  Model::OrExpression,
-  Model::LiteralList,
-  Model::KeyedEntry,
-  Model::LiteralHash,
-  Model::BlockExpression,
-  Model::ApplyBlockExpression,
-  Model::CaseOption,
-  Model::CaseExpression,
-  Model::QueryExpression,
-  Model::ExportedQuery,
-  Model::VirtualQuery,
-  Model::AbstractAttributeOperation,
-  Model::AttributeOperation,
-  Model::AttributesOperation,
-  Model::CollectExpression,
-  Model::Parameter,
-  Model::Definition,
-  Model::NamedDefinition,
-  Model::FunctionDefinition,
-  Model::ResourceTypeDefinition,
-  Model::QRefDefinition,
-  Model::TypeAlias,
-  Model::TypeMapping,
-  Model::TypeDefinition,
-  Model::NodeDefinition,
-  Model::HeredocExpression,
-  Model::HostClassDefinition,
-  Model::PlanDefinition,
-  Model::LambdaExpression,
-  Model::ApplyExpression,
-  Model::IfExpression,
-  Model::UnlessExpression,
-  Model::CallExpression,
-  Model::CallFunctionExpression,
-  Model::CallNamedFunctionExpression,
-  Model::CallMethodExpression,
-  Model::Literal,
-  Model::LiteralValue,
-  Model::LiteralRegularExpression,
-  Model::LiteralString,
-  Model::LiteralNumber,
-  Model::LiteralInteger,
-  Model::LiteralFloat,
-  Model::LiteralUndef,
-  Model::LiteralDefault,
-  Model::LiteralBoolean,
-  Model::TextExpression,
-  Model::ConcatenatedString,
-  Model::QualifiedName,
-  Model::ReservedWord,
-  Model::QualifiedReference,
-  Model::VariableExpression,
-  Model::EppExpression,
-  Model::RenderStringExpression,
-  Model::RenderExpression,
-  Model::ResourceBody,
-  Model::AbstractResource,
-  Model::ResourceExpression,
-  Model::ResourceDefaultsExpression,
-  Model::ResourceOverrideExpression,
-  Model::SelectorEntry,
-  Model::SelectorExpression,
-  Model::NamedAccessExpression,
-  Model::Program]
+    Parser::Locator::Locator19,
+    Model::PopsObject,
+    Model::Positioned,
+    Model::Expression,
+    Model::Nop,
+    Model::BinaryExpression,
+    Model::UnaryExpression,
+    Model::ParenthesizedExpression,
+    Model::NotExpression,
+    Model::UnaryMinusExpression,
+    Model::UnfoldExpression,
+    Model::AssignmentExpression,
+    Model::ArithmeticExpression,
+    Model::RelationshipExpression,
+    Model::AccessExpression,
+    Model::ComparisonExpression,
+    Model::MatchExpression,
+    Model::InExpression,
+    Model::BooleanExpression,
+    Model::AndExpression,
+    Model::OrExpression,
+    Model::LiteralList,
+    Model::KeyedEntry,
+    Model::LiteralHash,
+    Model::BlockExpression,
+    Model::ApplyBlockExpression,
+    Model::CaseOption,
+    Model::CaseExpression,
+    Model::QueryExpression,
+    Model::ExportedQuery,
+    Model::VirtualQuery,
+    Model::AbstractAttributeOperation,
+    Model::AttributeOperation,
+    Model::AttributesOperation,
+    Model::CollectExpression,
+    Model::Parameter,
+    Model::Definition,
+    Model::NamedDefinition,
+    Model::FunctionDefinition,
+    Model::ResourceTypeDefinition,
+    Model::QRefDefinition,
+    Model::TypeAlias,
+    Model::TypeMapping,
+    Model::TypeDefinition,
+    Model::NodeDefinition,
+    Model::HeredocExpression,
+    Model::HostClassDefinition,
+    Model::PlanDefinition,
+    Model::LambdaExpression,
+    Model::ApplyExpression,
+    Model::IfExpression,
+    Model::UnlessExpression,
+    Model::CallExpression,
+    Model::CallFunctionExpression,
+    Model::CallNamedFunctionExpression,
+    Model::CallMethodExpression,
+    Model::Literal,
+    Model::LiteralValue,
+    Model::LiteralRegularExpression,
+    Model::LiteralString,
+    Model::LiteralNumber,
+    Model::LiteralInteger,
+    Model::LiteralFloat,
+    Model::LiteralUndef,
+    Model::LiteralDefault,
+    Model::LiteralBoolean,
+    Model::TextExpression,
+    Model::ConcatenatedString,
+    Model::QualifiedName,
+    Model::ReservedWord,
+    Model::QualifiedReference,
+    Model::VariableExpression,
+    Model::EppExpression,
+    Model::RenderStringExpression,
+    Model::RenderExpression,
+    Model::ResourceBody,
+    Model::AbstractResource,
+    Model::ResourceExpression,
+    Model::ResourceDefaultsExpression,
+    Model::ResourceOverrideExpression,
+    Model::SelectorEntry,
+    Model::SelectorExpression,
+    Model::NamedAccessExpression,
+    Model::Program]
 
   # Create and register a TypeSet that corresponds to all types in the AST model
   types_map = {}
@@ -4663,10 +4763,10 @@ def self.register_pcore_types
     types_map[type._pcore_type.simple_name] = type._pcore_type
   end
   type_set = Types::PTypeSetType.new({
-    'name' => 'Puppet::AST',
-    'pcore_version' => '1.0.0',
-    'types' => types_map
-  })
+                                       'name' => 'Puppet::AST',
+                                       'pcore_version' => '1.0.0',
+                                       'types' => types_map
+                                     })
   loc = Puppet::Util.path_to_uri("#{__FILE__}")
   Loaders.static_loader.set_entry(Loader::TypedName.new(:type, 'puppet::ast', Pcore::RUNTIME_NAME_AUTHORITY), type_set, URI("#{loc}?line=1"))
   Loaders.register_static_implementations(all_types)

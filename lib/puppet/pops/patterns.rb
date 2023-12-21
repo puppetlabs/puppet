@@ -45,7 +45,7 @@ module Puppet::Pops::Patterns
   CLASSREF_DECL = %r{\A[a-z][\w]*(?:::[a-z][\w]*)*\z}
 
   # DOLLAR_VAR matches a variable name including the initial $ character
-  DOLLAR_VAR     = %r{\$(::)?(\w+::)*\w+}
+  DOLLAR_VAR = %r{\$(::)?(\w+::)*\w+}
 
   # VAR_NAME matches the name part of a variable (The $ character is not included)
   # Note, that only the final segment may start with an underscore.

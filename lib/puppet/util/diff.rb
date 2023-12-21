@@ -50,16 +50,16 @@ module Puppet::Util::Diff
           context_lines,
           file_length_difference)
         file_length_difference = hunk.file_length_difference
-      next unless oldhunk
+        next unless oldhunk
 
-      # Hunks may overlap, which is why we need to be careful when our
-      # diff includes lines of context. Otherwise, we might print
-      # redundant lines.
-      if (context_lines > 0) and hunk.overlaps?(oldhunk)
-        hunk.unshift(oldhunk)
-      else
-        output << oldhunk.diff(format)
-      end
+        # Hunks may overlap, which is why we need to be careful when our
+        # diff includes lines of context. Otherwise, we might print
+        # redundant lines.
+        if (context_lines > 0) and hunk.overlaps?(oldhunk)
+          hunk.unshift(oldhunk)
+        else
+          output << oldhunk.diff(format)
+        end
       ensure
         oldhunk = hunk
         output << "\n"

@@ -4,7 +4,7 @@
 require 'timeout'
 require_relative '../puppet/util'
 require 'securerandom'
-#require 'puppet/parser/script_compiler'
+# require 'puppet/parser/script_compiler'
 require_relative '../puppet/pops/evaluator/deferred_resolver'
 
 class Puppet::Configurer
@@ -41,7 +41,7 @@ class Puppet::Configurer
 
   # Initialize and load storage
   def init_storage
-      Puppet::Util::Storage.load
+    Puppet::Util::Storage.load
   rescue => detail
     Puppet.log_exception(detail, _("Removing corrupt state file %{file}: %{detail}") % { file: Puppet[:statefile], detail: detail })
     begin
@@ -330,7 +330,7 @@ class Puppet::Configurer
             raise Puppet::Error, detail
           end
         else
-          #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+          # TRANSLATORS 'server_list' is the name of a setting and should not be translated
           Puppet.debug _("Selected puppet server from the `server_list` setting: %{server}:%{port}") % { server: server, port: port }
           report.server_used = "#{server}:#{port}"
         end
@@ -559,7 +559,7 @@ class Puppet::Configurer
       Puppet.debug(_("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
                    { host: e.response.url.host, port: e.response.url.port, code: e.response.code, reason: e.response.reason })
     rescue => detail
-      #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+      # TRANSLATORS 'server_list' is the name of a setting and should not be translated
       Puppet.debug _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail}
     end
     [nil, nil]
@@ -669,8 +669,8 @@ class Puppet::Configurer
     puppet = session.route_to(:puppet)
 
     Puppet.info(_("Uploading facts for %{node} to %{server}") % {
-                  node: facts.name,
-                  server: puppet.url.hostname})
+      node: facts.name,
+      server: puppet.url.hostname})
 
     puppet.put_facts(facts.name, facts: facts, environment: Puppet.lookup(:current_environment).name.to_s)
 
@@ -714,7 +714,7 @@ class Puppet::Configurer
         Puppet[:node_name_value],
         query_options.merge(
           :ignore_terminus => true,
-          :environment     => Puppet::Node::Environment.remote(@environment)
+          :environment => Puppet::Node::Environment.remote(@environment)
         )
       )
     end
@@ -730,12 +730,12 @@ class Puppet::Configurer
       result = Puppet::Resource::Catalog.indirection.find(
         Puppet[:node_name_value],
         query_options.merge(
-          :ignore_cache      => true,
+          :ignore_cache => true,
           # don't update cache until after environment converges
           :ignore_cache_save => true,
-          :environment       => Puppet::Node::Environment.remote(@environment),
+          :environment => Puppet::Node::Environment.remote(@environment),
           :check_environment => true,
-          :fail_on_404       => true,
+          :fail_on_404 => true,
           :facts_for_catalog => facts
         )
       )

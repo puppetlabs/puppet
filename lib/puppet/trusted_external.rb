@@ -21,7 +21,7 @@ module Puppet::TrustedExternal
       abs_path = Puppet::FileSystem.expand_path(file)
       executable_file = Puppet::FileSystem.file?(abs_path) && Puppet::FileSystem.executable?(abs_path)
       unless executable_file
-        Puppet.debug { _("Skipping non-executable file %{file}")  % { file: abs_path } }
+        Puppet.debug { _("Skipping non-executable file %{file}") % { file: abs_path } }
         next
       end
       basename = file.basename(file.extname).to_s
@@ -37,9 +37,9 @@ module Puppet::TrustedExternal
 
   def fetch_data(command, certname)
     result = Puppet::Util::Execution.execute([command, certname], {
-      :combine => false,
-      :failonfail => true,
-    })
+                                               :combine => false,
+                                               :failonfail => true,
+                                             })
     JSON.parse(result)
   end
   module_function :fetch_data

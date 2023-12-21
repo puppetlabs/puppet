@@ -80,7 +80,7 @@ class Puppet::Module
       # Partition matches on the first instance it finds of the parameter
       name = "#{mod.name}#{path.partition(mod.path).last}"
 
-      { "name" => name, "path" =>  path }
+      { "name" => name, "path" => path }
     end
     private_class_method :get_file_details
 
@@ -225,7 +225,7 @@ class Puppet::Module
     attr_reader :name, :module, :metadata_file
 
     # file paths must be relative to the modules task directory
-    def initialize(pup_module, task_name,  module_executables, metadata_file = nil)
+    def initialize(pup_module, task_name, module_executables, metadata_file = nil)
       if !Puppet::Module::Task.is_task_name?(task_name)
         raise InvalidName, _("Task names must start with a lowercase letter and be composed of only lowercase letters, numbers, and underscores")
       end

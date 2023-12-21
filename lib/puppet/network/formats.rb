@@ -84,7 +84,7 @@ Puppet::Network::FormatHandler.create(:s, :mime => "text/plain", :charset => Enc
 # By default, to_binary is called to render and from_binary called to intern. Note unlike
 # text-based formats (json, yaml, etc), we don't use to_data_hash for binary.
 Puppet::Network::FormatHandler.create(:binary, :mime => "application/octet-stream", :weight => 1,
-                                      :required_methods => [:render_method, :intern_method]) do
+                                               :required_methods => [:render_method, :intern_method]) do
 end
 
 # PSON is deprecated
@@ -147,7 +147,7 @@ end
 Puppet::Network::FormatHandler.create_serialized_formats(:dot, :required_methods => [:render_method])
 
 Puppet::Network::FormatHandler.create(:console,
-                                      :mime   => 'text/x-console-text',
+                                      :mime => 'text/x-console-text',
                                       :weight => 0) do
   def json
     @json ||= Puppet::Network::FormatHandler.format(:json)
@@ -189,7 +189,7 @@ Puppet::Network::FormatHandler.create(:console,
 end
 
 Puppet::Network::FormatHandler.create(:flat,
-                                      :mime   => 'text/x-flat-text',
+                                      :mime => 'text/x-flat-text',
                                       :weight => 0) do
   def flatten_hash(hash)
     hash.each_with_object({}) do |(k, v), h|

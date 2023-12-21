@@ -283,24 +283,24 @@ class Puppet::Parser::Scope
   def exist?(name)
     # Note !! ensure the answer is boolean
     !! if name =~ /^(.*)::(.+)$/
-      class_name = $1
-      variable_name = $2
-      return true if class_name == '' && BUILT_IN_VARS.include?(variable_name)
+         class_name = $1
+         variable_name = $2
+         return true if class_name == '' && BUILT_IN_VARS.include?(variable_name)
 
-      # lookup class, but do not care if it is not evaluated since that will result
-      # in it not existing anyway. (Tests may run with just scopes and no evaluated classes which
-      # will result in class_scope for "" not returning topscope).
-      klass = find_hostclass(class_name)
-      other_scope = klass.nil? ? nil : class_scope(klass)
-      if other_scope.nil?
-        class_name == '' ? compiler.topscope.exist?(variable_name) : false
-      else
-        other_scope.exist?(variable_name)
-      end
+         # lookup class, but do not care if it is not evaluated since that will result
+         # in it not existing anyway. (Tests may run with just scopes and no evaluated classes which
+         # will result in class_scope for "" not returning topscope).
+         klass = find_hostclass(class_name)
+         other_scope = klass.nil? ? nil : class_scope(klass)
+         if other_scope.nil?
+           class_name == '' ? compiler.topscope.exist?(variable_name) : false
+         else
+           other_scope.exist?(variable_name)
+         end
     else # rubocop:disable Layout/ElseAlignment
       next_scope = inherited_scope || enclosing_scope
       effective_symtable(true).include?(name) || next_scope && next_scope.exist?(name) || BUILT_IN_VARS.include?(name)
-    end
+    end # rubocop:disable Layout/EndAlignment
   end
 
   # Returns true if the given name is bound in the current (most nested) scope for assignments.
@@ -527,7 +527,7 @@ class Puppet::Parser::Scope
 
     begin
       throw(:undefined_variable, reason)
-    rescue  UNCAUGHT_THROW_EXCEPTION
+    rescue UNCAUGHT_THROW_EXCEPTION
       case Puppet[:strict]
       when :off
         # do nothing
@@ -579,13 +579,13 @@ class Puppet::Parser::Scope
   #
   # @return [Puppet::Parser::Scope] The scope or nil if there is no enclosing scope
   def enclosing_scope
-     if has_enclosing_scope?
+    if has_enclosing_scope?
       if parent.is_topscope? || parent.is_nodescope?
         parent
       else
         parent.enclosing_scope
       end
-     end
+    end
   end
 
   def is_classscope?
@@ -659,7 +659,7 @@ class Puppet::Parser::Scope
 
   def qualified_scope(classname)
     klass = find_hostclass(classname)
-    raise _("class %{classname} could not be found") % { classname: classname }     unless klass
+    raise _("class %{classname} could not be found") % { classname: classname } unless klass
 
     kscope = class_scope(klass)
     raise _("class %{classname} has not been evaluated") % { classname: classname } unless kscope
@@ -1091,7 +1091,7 @@ class Puppet::Parser::Scope
         name.title.sub(/^([^:]{1,2})/, '::\1')
 
       when Puppet::Pops::Types::PClassType
-        #TRANSLATORS "Class" and "Type" are Puppet keywords and should not be translated
+        # TRANSLATORS "Class" and "Type" are Puppet keywords and should not be translated
         raise ArgumentError, _("Cannot use an unspecific Class[] Type") unless name.class_name
 
         name.class_name.sub(/^([^:]{1,2})/, '::\1')
@@ -1119,15 +1119,15 @@ class Puppet::Parser::Scope
 
   def assert_class_and_title(type_name, title)
     if type_name.nil? || type_name == ''
-      #TRANSLATORS "Resource" is a class name and should not be translated
+      # TRANSLATORS "Resource" is a class name and should not be translated
       raise ArgumentError, _("Cannot use an unspecific Resource[] where a Resource['class', name] is expected")
     end
     unless type_name =~ /^[Cc]lass$/
-      #TRANSLATORS "Resource" is a class name and should not be translated
+      # TRANSLATORS "Resource" is a class name and should not be translated
       raise ArgumentError, _("Cannot use a Resource[%{type_name}] where a Resource['class', name] is expected") % { type_name: type_name }
     end
     if title.nil?
-      #TRANSLATORS "Resource" is a class name and should not be translated
+      # TRANSLATORS "Resource" is a class name and should not be translated
       raise ArgumentError, _("Cannot use an unspecific Resource['class'] where a Resource['class', name] is expected")
     end
   end

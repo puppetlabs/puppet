@@ -102,7 +102,7 @@ module Puppet::Util::RpmCompare
       # be more segments to compare"
       rc = segment1 <=> segment2
       return rc if rc != 0
-    end #end while loop
+    end # end while loop
 
     # if we haven't returned anything yet, "whichever version still has characters left over wins"
     return 1 if str1.length > str2.length

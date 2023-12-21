@@ -22,13 +22,13 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
   has_feature :install_options
 
   self::Namemap = {
-    "PKGINST"  => :name,
+    "PKGINST" => :name,
     "CATEGORY" => :category,
-    "ARCH"     => :platform,
-    "VERSION"  => :ensure,
-    "BASEDIR"  => :root,
-    "VENDOR"   => :vendor,
-    "DESC"     => :description,
+    "ARCH" => :platform,
+    "VERSION" => :ensure,
+    "BASEDIR" => :root,
+    "VENDOR" => :vendor,
+    "DESC" => :description,
   }
 
   def self.namemap(hash)
@@ -96,14 +96,14 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
 
   # only looking for -G now
   def install
-    #TRANSLATORS Sun refers to the company name, do not translate
+    # TRANSLATORS Sun refers to the company name, do not translate
     raise Puppet::Error, _("Sun packages must specify a package source") unless @resource[:source]
 
     options = {
-      :adminfile    => @resource[:adminfile],
+      :adminfile => @resource[:adminfile],
       :responsefile => @resource[:responsefile],
-      :source       => @resource[:source],
-      :cmd_options  => @resource[:install_options]
+      :source => @resource[:source],
+      :cmd_options => @resource[:install_options]
     }
     pkgadd prepare_cmd(options)
   end

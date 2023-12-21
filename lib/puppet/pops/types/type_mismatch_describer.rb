@@ -511,7 +511,7 @@ module Types
     end
 
     def tense_deprecated
-      #TRANSLATORS TypeMismatchDescriber is a class name and 'tense' is a method name and should not be translated
+      # TRANSLATORS TypeMismatchDescriber is a class name and 'tense' is a method name and should not be translated
       message = _("Passing a 'tense' argument to the TypeMismatchDescriber is deprecated and ignored.")
       message += ' ' + _("Everything is now reported using present tense")
       Puppet.warn_once('deprecations', 'typemismatch#tense', message)
@@ -602,7 +602,7 @@ module Types
     # @return [Array<Mismatch>] An array of found errors. An empty array indicates no errors.
     def describe_struct_signature(params_struct, param_hash, missing_ok = false)
       param_type_hash = params_struct.hashed_elements
-      result =  param_hash.each_key.reject { |name| param_type_hash.include?(name) }.map { |name| InvalidParameter.new(nil, name) }
+      result = param_hash.each_key.reject { |name| param_type_hash.include?(name) }.map { |name| InvalidParameter.new(nil, name) }
 
       params_struct.elements.each do |elem|
         name = elem.name

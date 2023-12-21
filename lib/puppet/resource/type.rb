@@ -17,9 +17,9 @@ class Puppet::Resource::Type
 
   # Map the names used in our documentation to the names used internally
   RESOURCE_KINDS_TO_EXTERNAL_NAMES = {
-      :hostclass => "class",
-      :node => "node",
-      :definition => "defined_type"
+    :hostclass => "class",
+    :node => "node",
+    :definition => "defined_type"
   }
   RESOURCE_EXTERNAL_NAMES_TO_KINDS = RESOURCE_KINDS_TO_EXTERNAL_NAMES.invert
 
@@ -415,7 +415,7 @@ class Puppet::Resource::Type
   def create_params_struct
     arg_types = argument_types
     type_factory = Puppet::Pops::Types::TypeFactory
-    members = { type_factory.optional(type_factory.string(NAME)) =>  type_factory.any }
+    members = { type_factory.optional(type_factory.string(NAME)) => type_factory.any }
 
     Puppet::Type.eachmetaparam do |name|
       # TODO: Once meta parameters are typed, this should change to reflect that type

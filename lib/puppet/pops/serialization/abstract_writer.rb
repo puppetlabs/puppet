@@ -100,7 +100,7 @@ class AbstractWriter
   #
   # @api private
   def write_tpl(ep, value)
-    #TRANSLATORS 'Integers' is a Ruby class for numbers and should not be translated
+    # TRANSLATORS 'Integers' is a Ruby class for numbers and should not be translated
     raise ArgumentError, _('Internal error. Integers cannot be tabulated in extension payload') if value.is_a?(Integer)
 
     if @tabulate

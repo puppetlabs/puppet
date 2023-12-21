@@ -261,7 +261,7 @@ class Application
     # @param [String] class_name the fully qualified name of the class to try to load
     # @return [Class] the Class instance, or nil? if it could not be loaded.
     def try_load_class(class_name)
-        return self.const_defined?(class_name) ? const_get(class_name) : nil
+      return self.const_defined?(class_name) ? const_get(class_name) : nil
     end
     private :try_load_class
 
@@ -365,8 +365,8 @@ class Application
   # @api public
   def app_defaults
     Puppet::Settings.app_defaults_for_run_mode(self.class.run_mode).merge(
-        :name => name
-      )
+      :name => name
+    )
   end
 
   # Initialize application defaults. It's usually not necessary to override this method.
@@ -504,8 +504,8 @@ class Application
   def log_runtime_environment(extra_info=nil)
     runtime_info = {
       'puppet_version' => Puppet.version,
-      'ruby_version'   => RUBY_VERSION,
-      'run_mode'       => self.class.run_mode.name
+      'ruby_version' => RUBY_VERSION,
+      'run_mode' => self.class.run_mode.name
     }
     unless Puppet::Util::Platform.jruby_fips?
       runtime_info['openssl_version'] = "'#{OpenSSL::OPENSSL_VERSION}'"

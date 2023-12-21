@@ -1623,7 +1623,7 @@ EOT
       :owner => "root",
       :mode => "0640",
       :desc => "The file in which puppet agent stores a list of the resources
-        associated with the retrieved configuration."  },
+        associated with the retrieved configuration." },
     :puppetdlog => {
       :default => "$logdir/puppetd.log",
       :type => :file,

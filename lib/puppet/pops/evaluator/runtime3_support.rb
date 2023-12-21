@@ -37,7 +37,7 @@ module Runtime3Support
     if except.nil? && diagnostic_producer.severity_producer[issue] == :error
       # Want a stacktrace, and it must be passed as an exception
       begin
-       raise EvaluationError.new()
+        raise EvaluationError.new()
       rescue EvaluationError => e
         except = e
       end
@@ -60,7 +60,7 @@ module Runtime3Support
 
     # Use a SemanticError as the sourcepos
     semantic = Puppet::Pops::SemanticError.new(issue, nil, options.merge({:file => file, :line => line}))
-    optionally_fail(issue,  semantic)
+    optionally_fail(issue, semantic)
     nil
   end
 
@@ -323,10 +323,10 @@ module Runtime3Support
   def create_resource_parameter(o, scope, name, value, operator)
     file, line = extract_file_line(o)
     Puppet::Parser::Resource::Param.new(
-      :name   => name,
-      :value  => convert(value, scope, nil), # converted to 3x since 4x supports additional objects / types
+      :name => name,
+      :value => convert(value, scope, nil), # converted to 3x since 4x supports additional objects / types
       :source => scope.source, :line => line, :file => file,
-      :add    => operator == '+>'
+      :add => operator == '+>'
     )
   end
 
@@ -472,7 +472,7 @@ module Runtime3Support
   # Creates a diagnostic producer
   def diagnostic_producer
     Validation::DiagnosticProducer.new(
-      ExceptionRaisingAcceptor.new(),                   # Raises exception on all issues
+      ExceptionRaisingAcceptor.new(), # Raises exception on all issues
       SeverityProducer.new(), # All issues are errors
       Model::ModelLabelProvider.new())
   end
@@ -516,10 +516,10 @@ module Runtime3Support
     def accept(diagnostic)
       super
       IssueReporter.assert_and_report(self, {
-        :message => "Evaluation Error:",
-        :emit_warnings => true,  # log warnings
-        :exception_class => Puppet::PreformattedError
-      })
+                                        :message => "Evaluation Error:",
+                                        :emit_warnings => true,  # log warnings
+                                        :exception_class => Puppet::PreformattedError
+                                      })
       if errors?
         raise ArgumentError, _("Internal Error: Configuration of runtime error handling wrong: should have raised exception")
       end

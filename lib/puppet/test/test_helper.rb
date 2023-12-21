@@ -53,9 +53,9 @@ module Puppet::Test
       Dir.mkdir("#{@environmentpath}/production")
       owner = Process.pid
       Puppet.push_context(Puppet.base_context({
-        :environmentpath => @environmentpath,
-        :basemodulepath => "",
-      }), "Initial for specs")
+                                                :environmentpath => @environmentpath,
+                                                :basemodulepath => "",
+                                              }), "Initial for specs")
       Puppet::Parser::Functions.reset
 
       ObjectSpace.define_finalizer(Puppet.lookup(:environments), proc {
@@ -118,10 +118,10 @@ module Puppet::Test
       indirections.each do |indirector|
         $saved_indirection_state[indirector.name] = {
           :@terminus_class => indirector.instance_variable_get(:@terminus_class).value,
-          :@cache_class    => indirector.instance_variable_get(:@cache_class).value,
+          :@cache_class => indirector.instance_variable_get(:@cache_class).value,
           # dup the termini hash so termini created and registered during
           # the test aren't stored in our saved_indirection_state
-          :@termini        => indirector.instance_variable_get(:@termini).dup
+          :@termini => indirector.instance_variable_get(:@termini).dup
         }
       end
 
@@ -171,7 +171,7 @@ module Puppet::Test
       Puppet.clear_deprecation_warnings
 
       # uncommenting and manipulating this can be useful when tracking down calls to deprecated code
-      #Puppet.log_deprecations_to_file("deprecations.txt", /^Puppet::Util.exec/)
+      # Puppet.log_deprecations_to_file("deprecations.txt", /^Puppet::Util.exec/)
 
       # Restore the indirector configuration.  See before hook.
       indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
@@ -206,13 +206,13 @@ module Puppet::Test
 
     def self.app_defaults_for_tests()
       {
-          :logdir     => "/dev/null",
-          :confdir    => "/dev/null",
-          :publicdir  => "/dev/null",
-          :codedir    => "/dev/null",
-          :vardir     => "/dev/null",
-          :rundir     => "/dev/null",
-          :hiera_config => "/dev/null",
+        :logdir => "/dev/null",
+        :confdir => "/dev/null",
+        :publicdir => "/dev/null",
+        :codedir => "/dev/null",
+        :vardir => "/dev/null",
+        :rundir => "/dev/null",
+        :hiera_config => "/dev/null",
       }
     end
     private_class_method :app_defaults_for_tests

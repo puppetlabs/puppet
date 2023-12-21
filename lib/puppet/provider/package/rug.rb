@@ -34,7 +34,7 @@ Puppet::Type.type(:package).provide :rug, :parent => :rpm do
 
   # What's the latest package version available?
   def latest
-    #rug can only get a list of *all* available packages?
+    # rug can only get a list of *all* available packages?
     output = rug "list-updates"
 
     if output =~ /#{Regexp.escape @resource[:name]}\s*\|\s*([^\s\|]+)/

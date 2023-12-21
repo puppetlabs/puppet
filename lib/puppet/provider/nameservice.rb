@@ -28,7 +28,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       objects = []
       begin
         method = Puppet::Etc.method(:"get#{section}ent")
-        while ent = method.call #rubocop:disable Lint/AssignmentInCondition
+        while ent = method.call # rubocop:disable Lint/AssignmentInCondition
           objects << new(:name => ent.name, :canonical_name => ent.canonical_name, :ensure => :present)
         end
       ensure
@@ -130,7 +130,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     when :user;   database = :passwd;  method = :uid
     when :group;  database = :group;   method = :gid
     else
-      #TRANSLATORS "autogen_id()" is a method name and should not be translated
+      # TRANSLATORS "autogen_id()" is a method name and should not be translated
       raise Puppet::DevError, _("autogen_id() does not support auto generation of id for resource type %{resource_type}") % { resource_type: resource_type }
     end
 
@@ -275,7 +275,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
   end
 
-  #Derived classes can override to declare sensitive data so a flag can be passed to execute
+  # Derived classes can override to declare sensitive data so a flag can be passed to execute
   def has_sensitive_data?(property = nil)
     false
   end

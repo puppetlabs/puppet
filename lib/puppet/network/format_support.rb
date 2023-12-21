@@ -13,21 +13,21 @@ module Puppet::Network::FormatSupport
     def convert_from(format, data)
       get_format(format).intern(self, data)
     rescue => err
-      #TRANSLATORS "intern" is a function name and should not be translated
+      # TRANSLATORS "intern" is a function name and should not be translated
       raise Puppet::Network::FormatHandler::FormatError, _("Could not intern from %{format}: %{err}") % { format: format, err: err }, err.backtrace
     end
 
     def convert_from_multiple(format, data)
       get_format(format).intern_multiple(self, data)
     rescue => err
-      #TRANSLATORS "intern_multiple" is a function name and should not be translated
+      # TRANSLATORS "intern_multiple" is a function name and should not be translated
       raise Puppet::Network::FormatHandler::FormatError, _("Could not intern_multiple from %{format}: %{err}") % { format: format, err: err }, err.backtrace
     end
 
     def render_multiple(format, instances)
       get_format(format).render_multiple(instances)
     rescue => err
-      #TRANSLATORS "render_multiple" is a function name and should not be translated
+      # TRANSLATORS "render_multiple" is a function name and should not be translated
       raise Puppet::Network::FormatHandler::FormatError, _("Could not render_multiple to %{format}: %{err}") % { format: format, err: err }, err.backtrace
     end
 
@@ -112,7 +112,7 @@ module Puppet::Network::FormatSupport
 
     self.class.get_format(format).render(self)
   rescue => err
-    #TRANSLATORS "render" is a function name and should not be translated
+    # TRANSLATORS "render" is a function name and should not be translated
     raise Puppet::Network::FormatHandler::FormatError, _("Could not render to %{format}: %{err}") % { format: format, err: err }, err.backtrace
   end
 
@@ -121,7 +121,7 @@ module Puppet::Network::FormatSupport
 
     self.class.get_format(format).mime
   rescue => err
-    #TRANSLATORS "mime" is a function name and should not be translated
+    # TRANSLATORS "mime" is a function name and should not be translated
     raise Puppet::Network::FormatHandler::FormatError, _("Could not mime to %{format}: %{err}") % { format: format, err: err }, err.backtrace
   end
 

@@ -24,7 +24,7 @@ class MultiMatch
   end
 
   def ===(other)
-    lv = @values  # local var is faster than instance var
+    lv = @values # local var is faster than instance var
     case other
     when MultiMatch
       return false unless other.values.size == values.size

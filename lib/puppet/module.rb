@@ -229,7 +229,7 @@ class Puppet::Module
   rescue Errno::ENOENT
     {}
   rescue Puppet::Util::Json::ParseError => e
-    #TRANSLATORS 'metadata.json' is a specific file name and should not be translated.
+    # TRANSLATORS 'metadata.json' is a specific file name and should not be translated.
     msg = _("%{name} has an invalid and unparsable metadata.json file. The parse error: %{error}") % { name: name, error: e.message }
     case Puppet[:strict]
     when :off
@@ -304,7 +304,7 @@ class Puppet::Module
 
   def hiera_conf_file
     unless defined?(@hiera_conf_file)
-       @hiera_conf_file = path.nil? ? nil : File.join(path, Puppet::Pops::Lookup::HieraConfig::CONFIG_FILE_NAME)
+      @hiera_conf_file = path.nil? ? nil : File.join(path, Puppet::Pops::Lookup::HieraConfig::CONFIG_FILE_NAME)
     end
     @hiera_conf_file
   end
@@ -326,7 +326,7 @@ class Puppet::Module
     subpath("facts.d")
   end
 
-  #@return [String]
+  # @return [String]
   def locale_directory
     subpath("locales")
   end

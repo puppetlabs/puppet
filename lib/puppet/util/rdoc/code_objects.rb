@@ -18,7 +18,7 @@ module RDoc
   # @api private
   module AddClassModuleComment
     def add_comment(comment, location = nil)
-        super
+      super
     end
   end
 

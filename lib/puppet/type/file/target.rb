@@ -28,7 +28,7 @@ module Puppet
       @resource[:ensure] = :link if ! @resource.should(:ensure)
 
       # Only call mklink if ensure didn't call us in the first place.
-      currentensure  = @resource.property(:ensure).retrieve
+      currentensure = @resource.property(:ensure).retrieve
       mklink if @resource.property(:ensure).safe_insync?(currentensure)
     end
 

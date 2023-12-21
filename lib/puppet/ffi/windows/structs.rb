@@ -116,7 +116,7 @@ module Puppet::FFI::Windows
     # } TOKEN_PRIVILEGES, *PTOKEN_PRIVILEGES;
     class TOKEN_PRIVILEGES < FFI::Struct
       layout :PrivilegeCount, :dword,
-             :Privileges, [LUID_AND_ATTRIBUTES, 1]    # placeholder for offset
+             :Privileges, [LUID_AND_ATTRIBUTES, 1] # placeholder for offset
     end
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/bb530717(v=vs.85).aspx
@@ -258,7 +258,7 @@ module Puppet::FFI::Windows
       )
     end
 
-	MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16384
+    MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16384
 
     # SYMLINK_REPARSE_DATA_BUFFER
     # https://msdn.microsoft.com/en-us/library/cc232006.aspx

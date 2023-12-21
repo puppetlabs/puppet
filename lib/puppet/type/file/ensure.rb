@@ -72,7 +72,7 @@ module Puppet
       end
     end
 
-    #aliasvalue(:present, :file)
+    # aliasvalue(:present, :file)
     newvalue(:present, :event => :file_created) do
       # Make a file if they want something, but this will match almost
       # anything.

@@ -70,7 +70,7 @@ module Puppet::Etc
       ::Etc.endpwent
     end
 
-    #effectively equivalent to IO#rewind of /etc/passwd
+    # effectively equivalent to IO#rewind of /etc/passwd
     def setpwent
       ::Etc.setpwent
     end
@@ -116,7 +116,7 @@ module Puppet::Etc
 
       setgrent
       begin
-        while cur_group = getgrent #rubocop:disable Lint/AssignmentInCondition
+        while cur_group = getgrent # rubocop:disable Lint/AssignmentInCondition
           yield cur_group
         end
       ensure

@@ -92,7 +92,7 @@ module Issues
     # @raise [Puppet::Error] if no label provider is found
     def label_provider
       label_provider = @data[:label]
-      #TRANSLATORS ":label" is a keyword and should not be translated
+      # TRANSLATORS ":label" is a keyword and should not be translated
       raise Puppet::Error, _('Label provider key :label must be set to produce the text of the message!') unless label_provider
 
       label_provider
@@ -101,7 +101,7 @@ module Issues
     # Returns the label provider given as a key in the hash passed to #format.
     #
     def semantic
-      #TRANSLATORS ":semantic" is a keyword and should not be translated
+      # TRANSLATORS ":semantic" is a keyword and should not be translated
       raise Puppet::Error, _('Label provider key :semantic must be set to produce the text of the message!') unless @data[:semantic]
 
       @data[:semantic]
@@ -546,7 +546,7 @@ module Issues
     _("Illegal Resource Type expression, expected result to be a type name, or untitled Resource, got %{actual}") % { actual: actual }
   end
 
-  DUPLICATE_TITLE = issue :DUPLICATE_TITLE, :title  do
+  DUPLICATE_TITLE = issue :DUPLICATE_TITLE, :title do
     _("The title '%{title}' has already been used in this resource expression") % { title: title }
   end
 
@@ -596,7 +596,7 @@ module Issues
   end
 
   DISCONTINUED_IMPORT = hard_issue :DISCONTINUED_IMPORT do
-    #TRANSLATORS "import" is a function name and should not be translated
+    # TRANSLATORS "import" is a function name and should not be translated
     _("Use of 'import' has been discontinued in favor of a manifest directory. See http://links.puppet.com/puppet-import-deprecation")
   end
 

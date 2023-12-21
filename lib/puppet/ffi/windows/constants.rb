@@ -72,7 +72,7 @@ module Puppet::FFI::Windows
     REPLACEFILE_IGNORE_MERGE_ERRORS   = 0x2
     REPLACEFILE_IGNORE_ACL_ERRORS     = 0x3
 
-    INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF #define INVALID_FILE_ATTRIBUTES (DWORD (-1))
+    INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF # define INVALID_FILE_ATTRIBUTES (DWORD (-1))
 
     IO_REPARSE_TAG_MOUNT_POINT  = 0xA0000003
     IO_REPARSE_TAG_HSM          = 0xC0000004
@@ -163,48 +163,48 @@ module Puppet::FFI::Windows
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379626(v=vs.85).aspx
     TOKEN_INFORMATION_CLASS = enum(
-        :TokenUser, 1,
-        :TokenGroups,
-        :TokenPrivileges,
-        :TokenOwner,
-        :TokenPrimaryGroup,
-        :TokenDefaultDacl,
-        :TokenSource,
-        :TokenType,
-        :TokenImpersonationLevel,
-        :TokenStatistics,
-        :TokenRestrictedSids,
-        :TokenSessionId,
-        :TokenGroupsAndPrivileges,
-        :TokenSessionReference,
-        :TokenSandBoxInert,
-        :TokenAuditPolicy,
-        :TokenOrigin,
-        :TokenElevationType,
-        :TokenLinkedToken,
-        :TokenElevation,
-        :TokenHasRestrictions,
-        :TokenAccessInformation,
-        :TokenVirtualizationAllowed,
-        :TokenVirtualizationEnabled,
-        :TokenIntegrityLevel,
-        :TokenUIAccess,
-        :TokenMandatoryPolicy,
-        :TokenLogonSid,
-        :TokenIsAppContainer,
-        :TokenCapabilities,
-        :TokenAppContainerSid,
-        :TokenAppContainerNumber,
-        :TokenUserClaimAttributes,
-        :TokenDeviceClaimAttributes,
-        :TokenRestrictedUserClaimAttributes,
-        :TokenRestrictedDeviceClaimAttributes,
-        :TokenDeviceGroups,
-        :TokenRestrictedDeviceGroups,
-        :TokenSecurityAttributes,
-        :TokenIsRestricted,
-        :MaxTokenInfoClass
-      )
+      :TokenUser, 1,
+      :TokenGroups,
+      :TokenPrivileges,
+      :TokenOwner,
+      :TokenPrimaryGroup,
+      :TokenDefaultDacl,
+      :TokenSource,
+      :TokenType,
+      :TokenImpersonationLevel,
+      :TokenStatistics,
+      :TokenRestrictedSids,
+      :TokenSessionId,
+      :TokenGroupsAndPrivileges,
+      :TokenSessionReference,
+      :TokenSandBoxInert,
+      :TokenAuditPolicy,
+      :TokenOrigin,
+      :TokenElevationType,
+      :TokenLinkedToken,
+      :TokenElevation,
+      :TokenHasRestrictions,
+      :TokenAccessInformation,
+      :TokenVirtualizationAllowed,
+      :TokenVirtualizationEnabled,
+      :TokenIntegrityLevel,
+      :TokenUIAccess,
+      :TokenMandatoryPolicy,
+      :TokenLogonSid,
+      :TokenIsAppContainer,
+      :TokenCapabilities,
+      :TokenAppContainerSid,
+      :TokenAppContainerNumber,
+      :TokenUserClaimAttributes,
+      :TokenDeviceClaimAttributes,
+      :TokenRestrictedUserClaimAttributes,
+      :TokenRestrictedDeviceClaimAttributes,
+      :TokenDeviceGroups,
+      :TokenRestrictedDeviceGroups,
+      :TokenSecurityAttributes,
+      :TokenIsRestricted,
+      :MaxTokenInfoClass
+    )
 
     # Service error codes
     # https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes--1000-1299-
@@ -230,23 +230,23 @@ module Puppet::FFI::Windows
     SERVICE_CONTROL_TIMECHANGE            = 0x00000010
     SERVICE_CONTROL_TRIGGEREVENT          = 0x00000020
     SERVICE_CONTROL_SIGNALS               = {
-      SERVICE_CONTROL_STOP                  => :SERVICE_CONTROL_STOP,
-      SERVICE_CONTROL_PAUSE                 => :SERVICE_CONTROL_PAUSE,
-      SERVICE_CONTROL_CONTINUE              => :SERVICE_CONTROL_CONTINUE,
-      SERVICE_CONTROL_INTERROGATE           => :SERVICE_CONTROL_INTERROGATE,
-      SERVICE_CONTROL_SHUTDOWN              => :SERVICE_CONTROL_SHUTDOWN,
-      SERVICE_CONTROL_PARAMCHANGE           => :SERVICE_CONTROL_PARAMCHANGE,
-      SERVICE_CONTROL_NETBINDADD            => :SERVICE_CONTROL_NETBINDADD,
-      SERVICE_CONTROL_NETBINDREMOVE         => :SERVICE_CONTROL_NETBINDREMOVE,
-      SERVICE_CONTROL_NETBINDENABLE         => :SERVICE_CONTROL_NETBINDENABLE,
-      SERVICE_CONTROL_NETBINDDISABLE        => :SERVICE_CONTROL_NETBINDDISABLE,
-      SERVICE_CONTROL_DEVICEEVENT           => :SERVICE_CONTROL_DEVICEEVENT,
+      SERVICE_CONTROL_STOP => :SERVICE_CONTROL_STOP,
+      SERVICE_CONTROL_PAUSE => :SERVICE_CONTROL_PAUSE,
+      SERVICE_CONTROL_CONTINUE => :SERVICE_CONTROL_CONTINUE,
+      SERVICE_CONTROL_INTERROGATE => :SERVICE_CONTROL_INTERROGATE,
+      SERVICE_CONTROL_SHUTDOWN => :SERVICE_CONTROL_SHUTDOWN,
+      SERVICE_CONTROL_PARAMCHANGE => :SERVICE_CONTROL_PARAMCHANGE,
+      SERVICE_CONTROL_NETBINDADD => :SERVICE_CONTROL_NETBINDADD,
+      SERVICE_CONTROL_NETBINDREMOVE => :SERVICE_CONTROL_NETBINDREMOVE,
+      SERVICE_CONTROL_NETBINDENABLE => :SERVICE_CONTROL_NETBINDENABLE,
+      SERVICE_CONTROL_NETBINDDISABLE => :SERVICE_CONTROL_NETBINDDISABLE,
+      SERVICE_CONTROL_DEVICEEVENT => :SERVICE_CONTROL_DEVICEEVENT,
       SERVICE_CONTROL_HARDWAREPROFILECHANGE => :SERVICE_CONTROL_HARDWAREPROFILECHANGE,
-      SERVICE_CONTROL_POWEREVENT            => :SERVICE_CONTROL_POWEREVENT,
-      SERVICE_CONTROL_SESSIONCHANGE         => :SERVICE_CONTROL_SESSIONCHANGE,
-      SERVICE_CONTROL_PRESHUTDOWN           => :SERVICE_CONTROL_PRESHUTDOWN,
-      SERVICE_CONTROL_TIMECHANGE            => :SERVICE_CONTROL_TIMECHANGE,
-      SERVICE_CONTROL_TRIGGEREVENT          => :SERVICE_CONTROL_TRIGGEREVENT
+      SERVICE_CONTROL_POWEREVENT => :SERVICE_CONTROL_POWEREVENT,
+      SERVICE_CONTROL_SESSIONCHANGE => :SERVICE_CONTROL_SESSIONCHANGE,
+      SERVICE_CONTROL_PRESHUTDOWN => :SERVICE_CONTROL_PRESHUTDOWN,
+      SERVICE_CONTROL_TIMECHANGE => :SERVICE_CONTROL_TIMECHANGE,
+      SERVICE_CONTROL_TRIGGEREVENT => :SERVICE_CONTROL_TRIGGEREVENT
     }
 
     # Service start type codes
@@ -292,11 +292,11 @@ module Puppet::FFI::Windows
     UNSAFE_PENDING_STATES    = [SERVICE_START_PENDING, SERVICE_STOP_PENDING]
     FINAL_STATES             = {
       SERVICE_CONTINUE_PENDING => SERVICE_RUNNING,
-      SERVICE_PAUSE_PENDING    => SERVICE_PAUSED,
-      SERVICE_START_PENDING    => SERVICE_RUNNING,
-      SERVICE_STOP_PENDING     => SERVICE_STOPPED
+      SERVICE_PAUSE_PENDING => SERVICE_PAUSED,
+      SERVICE_START_PENDING => SERVICE_RUNNING,
+      SERVICE_STOP_PENDING => SERVICE_STOPPED
     }
-    SERVICE_STATES           = {
+    SERVICE_STATES = {
       SERVICE_CONTINUE_PENDING => :SERVICE_CONTINUE_PENDING,
       SERVICE_PAUSE_PENDING => :SERVICE_PAUSE_PENDING,
       SERVICE_PAUSED => :SERVICE_PAUSED,

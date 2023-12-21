@@ -85,9 +85,13 @@ module Puppet::Pops::Types
         else
           if element_type.nil? && infer_elements
             tc = TypeCalculator.singleton
-            element_type = PTupleType.new([
-              PVariantType.maybe_create(o.keys.map {|e| tc.infer_set(e) }),
-              PVariantType.maybe_create(o.values.map {|e| tc.infer_set(e) })], PHashType::KEY_PAIR_TUPLE_SIZE)
+            element_type =
+              PTupleType
+                .new([
+                       PVariantType.maybe_create(o.keys.map {|e| tc.infer_set(e) }),
+                       PVariantType.maybe_create(o.values.map {|e| tc.infer_set(e) })
+                     ],
+                     PHashType::KEY_PAIR_TUPLE_SIZE)
           end
           HashIterator.new(element_type, o.each_pair)
         end
@@ -239,11 +243,11 @@ module Puppet::Pops::Types
 
       if block_given?
         begin
-        if block.arity == 1
-          loop { yield(r.next) }
-        else
-          loop { yield(*r.next) }
-        end
+          if block.arity == 1
+            loop { yield(r.next) }
+          else
+            loop { yield(*r.next) }
+          end
         rescue StopIteration
         end
         self

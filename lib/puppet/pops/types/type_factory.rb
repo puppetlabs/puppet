@@ -115,7 +115,7 @@ module TypeFactory
       size_type_or_value.nil? ? PStringType::DEFAULT : PStringType.new(size_type_or_value)
     else
       if Puppet[:strict] != :off
-        #TRANSLATORS 'TypeFactory#string' is a class and method name and should not be translated
+        # TRANSLATORS 'TypeFactory#string' is a class and method name and should not be translated
         message = _("Passing more than one argument to TypeFactory#string is deprecated")
         Puppet.warn_once('deprecations', "TypeFactory#string_multi_args", message)
       end
@@ -272,7 +272,7 @@ module TypeFactory
       case re
       when String
         re_t = PRegexpType.new(re)
-        re_t.regexp  # compile it to catch errors
+        re_t.regexp # compile it to catch errors
         re_t
 
       when Regexp
@@ -285,7 +285,7 @@ module TypeFactory
         re.patterns
 
       else
-       raise ArgumentError, "Only String, Regexp, Pattern-Type, and Regexp-Type are allowed: got '#{re.class}"
+        raise ArgumentError, "Only String, Regexp, Pattern-Type, and Regexp-Type are allowed: got '#{re.class}"
       end
     end.flatten.uniq
     PPatternType.new(patterns)

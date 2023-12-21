@@ -53,6 +53,6 @@ Puppet::Functions.create_function(:join) do
   end
 
   def join(arg, delimiter = '', puppet_formatting = false)
-      arg.join(delimiter)
+    arg.join(delimiter)
   end
 end

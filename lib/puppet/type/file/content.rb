@@ -51,15 +51,15 @@ module Puppet
         # XXX This is potentially dangerous because it means users can't write a file whose
         # entire contents are a plain checksum unless it is a Binary content.
         Puppet.puppet_deprecation_warning([
-            #TRANSLATORS "content" is an attribute and should not be translated
-            _('Using a checksum in a file\'s "content" property is deprecated.'),
-            #TRANSLATORS "filebucket" is a resource type and should not be translated. The quoted occurrence of "content" is an attribute and should not be translated.
-            _('The ability to use a checksum to retrieve content from the filebucket using the "content" property will be removed in a future release.'),
-            #TRANSLATORS "content" is an attribute and should not be translated.
-            _('The literal value of the "content" property will be written to the file.'),
-            #TRANSLATORS "static catalogs" should not be translated.
-            _('The checksum retrieval functionality is being replaced by the use of static catalogs.'),
-            _('See https://puppet.com/docs/puppet/latest/static_catalogs.html for more information.')].join(" "),
+          # TRANSLATORS "content" is an attribute and should not be translated
+          _('Using a checksum in a file\'s "content" property is deprecated.'),
+          # TRANSLATORS "filebucket" is a resource type and should not be translated. The quoted occurrence of "content" is an attribute and should not be translated.
+          _('The ability to use a checksum to retrieve content from the filebucket using the "content" property will be removed in a future release.'),
+          # TRANSLATORS "content" is an attribute and should not be translated.
+          _('The literal value of the "content" property will be written to the file.'),
+          # TRANSLATORS "static catalogs" should not be translated.
+          _('The checksum retrieval functionality is being replaced by the use of static catalogs.'),
+          _('See https://puppet.com/docs/puppet/latest/static_catalogs.html for more information.')].join(" "),
                                           :file => @resource.file,
                                           :line => @resource.line
                                          ) if !@actual_content && !resource.parameter(:source)

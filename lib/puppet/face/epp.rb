@@ -197,7 +197,7 @@ Puppet::Face.define(:epp, '0.0.1') do
 
         if !missing_files.empty?
           raise Puppet::Error, _("One or more file(s) specified did not exist:\n%{missing_files_list}") %
-              { missing_files_list:  missing_files.collect { |f| "   #{f}" }.join("\n") }
+              { missing_files_list: missing_files.collect { |f| "   #{f}" }.join("\n") }
         end
       end
       buffer.string

@@ -11,7 +11,7 @@ class CollectorTransformer
   end
 
   def transform(o, scope)
-    #TRANSLATORS 'CollectExpression' is a class name and should not be translated
+    # TRANSLATORS 'CollectExpression' is a class name and should not be translated
     raise ArgumentError, _("Expected CollectExpression") unless o.is_a? Model::CollectExpression
 
     raise "LHS is not a type" unless o.type_expr.is_a? Model::QualifiedReference
@@ -29,10 +29,10 @@ class CollectorTransformer
     if !o.operations.empty?
       overrides = {
         :parameters => o.operations.map{ |x| @@evaluator.evaluate(x, scope)}.flatten,
-        :file       => o.file,
-        :line       => o.line,
-        :source     => scope.source,
-        :scope      => scope
+        :file => o.file,
+        :line => o.line,
+        :source => scope.source,
+        :scope => scope
       }
     end
 
@@ -164,7 +164,7 @@ class CollectorTransformer
   end
 
   def query_ParenthesizedExpression(o, scope)
-   query(o.expr, scope)
+    query(o.expr, scope)
   end
 
   def query_Object(o, scope)
@@ -226,7 +226,7 @@ class CollectorTransformer
   end
 
   def match_ParenthesizedExpression(o, scope)
-   match(o.expr, scope)
+    match(o.expr, scope)
   end
 
   def match_Object(o, scope)

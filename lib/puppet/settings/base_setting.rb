@@ -36,12 +36,12 @@ class Puppet::Settings::BaseSetting
   # @param value [Symbol] One of {HOOK_TYPES}
   def call_hook=(value)
     if value.nil?
-      #TRANSLATORS ':%{name}', ':call_hook', and ':on_write_only' should not be translated
+      # TRANSLATORS ':%{name}', ':call_hook', and ':on_write_only' should not be translated
       Puppet.warning _("Setting :%{name} :call_hook is nil, defaulting to :on_write_only") % { name: name }
       value = :on_write_only
     end
     unless HOOK_TYPES.include?(value)
-      #TRANSLATORS 'call_hook' is a Puppet option name and should not be translated
+      # TRANSLATORS 'call_hook' is a Puppet option name and should not be translated
       raise ArgumentError, _("Invalid option %{value} for call_hook") % { value: value }
     end
 
@@ -96,12 +96,12 @@ class Puppet::Settings::BaseSetting
     # other warnings
     @name = args[:name] if args.include? :name
 
-    #set the default value for call_hook
+    # set the default value for call_hook
     @call_hook = :on_write_only if args[:hook] and not args[:call_hook]
     @has_hook = false
 
     if args[:call_hook] and not args[:hook]
-      #TRANSLATORS ':call_hook' and ':hook' are specific setting names and should not be translated
+      # TRANSLATORS ':call_hook' and ':hook' are specific setting names and should not be translated
       raise ArgumentError, _("Cannot reference :call_hook for :%{name} if no :hook is defined") % { name: @name }
     end
 
@@ -199,7 +199,7 @@ class Puppet::Settings::BaseSetting
 
   def deprecated=(deprecation)
     unless [:completely, :allowed_on_commandline].include?(deprecation)
-      #TRANSLATORS 'deprecated' is a Puppet setting and ':completely' and ':allowed_on_commandline' are possible values and should not be translated
+      # TRANSLATORS 'deprecated' is a Puppet setting and ':completely' and ':allowed_on_commandline' are possible values and should not be translated
       raise ArgumentError, _("Unsupported deprecated value '%{deprecation}'.") % { deprecation: deprecation } +
           ' ' + _("Supported values for deprecated are ':completely' or ':allowed_on_commandline'")
     end

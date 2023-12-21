@@ -595,8 +595,8 @@ module Puppet::Functions
         Puppet::Pops::Types::TypeParser.singleton.parse(type_string, loader)
       rescue StandardError => e
         raise ArgumentError, _("Parsing of type string '\"%{type_string}\"' failed with message: <%{message}>.\n") % {
-            type_string: type_string,
-            message: e.message
+          type_string: type_string,
+          message: e.message
         }
       end
     end
@@ -640,7 +640,7 @@ module Puppet::Functions
             assignment_string: assignment_string,
             message: e.message,
             ruby_file_location: rb_location
-        }
+          }
       end
       unless result.body.kind_of?(Puppet::Pops::Model::TypeAlias)
         rb_location = rb_location.gsub(/:in.*$/, '')

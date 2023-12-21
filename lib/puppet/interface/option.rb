@@ -129,7 +129,7 @@ class Puppet::Interface::Option
     end
 
     unless proc.is_a? Proc
-      #TRANSLATORS 'proc' is a Ruby block of code
+      # TRANSLATORS 'proc' is a Ruby block of code
       raise ArgumentError, _("default value for %{name} is a %{class_name}, not a proc") %
           { name: self, class_name: proc.class.name.inspect }
     end
@@ -154,7 +154,7 @@ class Puppet::Interface::Option
 
   def before_action=(proc)
     unless proc.is_a? Proc
-      #TRANSLATORS 'proc' is a Ruby block of code
+      # TRANSLATORS 'proc' is a Ruby block of code
       raise ArgumentError, _("before action hook for %{name} is a %{class_name}, not a proc") %
           { name: self, class_name: proc.class.name.inspect }
     end
@@ -166,7 +166,7 @@ class Puppet::Interface::Option
 
   def after_action=(proc)
     unless proc.is_a? Proc
-      #TRANSLATORS 'proc' is a Ruby block of code
+      # TRANSLATORS 'proc' is a Ruby block of code
       raise ArgumentError, _("after action hook for %{name} is a %{class_name}, not a proc") %
           { name: self, class_name: proc.class.name.inspect }
     end

@@ -74,10 +74,10 @@ module Puppet::ModuleTool
               else
                 changes = Checksummer.run(installed_modules[name].mod.path) rescue []
                 raise AlreadyInstalledError,
-                      :module_name       => name,
+                      :module_name => name,
                       :installed_version => installed_modules[name].version,
                       :requested_version => options[:version] || :latest,
-                      :local_changes     => changes
+                      :local_changes => changes
               end
             end
           end
@@ -184,10 +184,10 @@ module Puppet::ModuleTool
             end
 
             raise NoVersionsSatisfyError, results.merge(
-                    :requested_name => name,
-                    :requested_version => options[:version] || graph.dependencies[name].max.version.to_s,
-                    :unsatisfied => unsatisfied
-                  )
+              :requested_name => name,
+              :requested_version => options[:version] || graph.dependencies[name].max.version.to_s,
+              :unsatisfied => unsatisfied
+            )
           end
 
           unless forced?
@@ -205,11 +205,11 @@ module Puppet::ModuleTool
                 end
 
                 raise InstallConflictError,
-                      :requested_module  => name,
+                      :requested_module => name,
                       :requested_version => options[:version] || 'latest',
-                      :dependency        => dependency,
-                      :directory         => installed_module.path,
-                      :metadata          => installed_module.metadata
+                      :dependency => dependency,
+                      :directory => installed_module.path,
+                      :metadata => installed_module.metadata
               end
             end
           end
@@ -232,7 +232,7 @@ module Puppet::ModuleTool
           results[:graph] = [ build_install_graph(releases.first, releases) ]
         rescue ModuleToolError, ForgeError => err
           results[:error] = {
-            :oneline   => err.message,
+            :oneline => err.message,
             :multiline => err.multiline,
           }
         ensure
@@ -252,7 +252,7 @@ module Puppet::ModuleTool
         @tarball_source ||= begin
           Puppet::ModuleTool::LocalTarball.new(@name)
         rescue Puppet::Module::Error => e
-          raise InvalidModuleError.new(@name, :action => @action, :error  => e)
+          raise InvalidModuleError.new(@name, :action => @action, :error => e)
         end
       end
 
@@ -288,13 +288,13 @@ module Puppet::ModuleTool
         previous = installed_modules[release.name]
         previous = previous.version if previous
         return {
-          :release          => release,
-          :name             => release.name,
-          :path             => release.install_dir.to_s,
-          :dependencies     => dependencies.compact,
-          :version          => release.version,
+          :release => release,
+          :name => release.name,
+          :path => release.install_dir.to_s,
+          :dependencies => dependencies.compact,
+          :version => release.version,
           :previous_version => previous,
-          :action           => (previous.nil? || previous == release.version || forced? ? :install : :upgrade),
+          :action => (previous.nil? || previous == release.version || forced? ? :install : :upgrade),
         }
       end
 
@@ -307,10 +307,10 @@ module Puppet::ModuleTool
 
         if !forced? && @installed.include?(@module_name)
           raise AlreadyInstalledError,
-                :module_name       => @module_name,
+                :module_name => @module_name,
                 :installed_version => @installed[@module_name].first.version,
                 :requested_version => @version || (@conditions[@module_name].empty? ? :latest : :best),
-                :local_changes     => Puppet::ModuleTool::Applications::Checksummer.run(@installed[@module_name].first.path)
+                :local_changes => Puppet::ModuleTool::Applications::Checksummer.run(@installed[@module_name].first.path)
         end
 
         if @ignore_dependencies && @source == :filesystem
@@ -360,7 +360,7 @@ module Puppet::ModuleTool
           @environment.modules_by_path[options[:target_dir]].each do |mod|
             if mod.has_metadata?
               metadata = {
-                :name    => mod.forge_name.tr('/', '-'),
+                :name => mod.forge_name.tr('/', '-'),
                 :version => mod.version
               }
               next if release[:module] == metadata[:name]
@@ -370,7 +370,7 @@ module Puppet::ModuleTool
 
             if release[:module] =~ /-#{mod.name}$/
               dependency_info = {
-                :name    => release[:module],
+                :name => release[:module],
                 :version => release[:version][:vstring]
               }
               dependency = is_dependency ? dependency_info : nil
@@ -380,11 +380,11 @@ module Puppet::ModuleTool
               latest_version = versions.last[:vstring]
 
               raise InstallConflictError,
-                    :requested_module  => @module_name,
+                    :requested_module => @module_name,
                     :requested_version => @version || "latest: v#{latest_version}",
-                    :dependency        => dependency,
-                    :directory         => mod.path,
-                    :metadata          => metadata
+                    :dependency => dependency,
+                    :directory => mod.path,
+                    :metadata => metadata
             end
           end
 

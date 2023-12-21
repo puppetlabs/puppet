@@ -71,10 +71,10 @@ module Puppet::ModuleTool::Shared
       source.last[:dependency] = range
 
       @conditions[mod] << {
-        :module     => source.last[:name],
-        :version    => source.last[:version],
+        :module => source.last[:name],
+        :version => source.last[:version],
         :dependency => range,
-        :queued     => true
+        :queued => true
       }
 
       if forced?
@@ -91,11 +91,11 @@ module Puppet::ModuleTool::Shared
         req_module   = @module_name
         req_versions = @versions["#{@module_name}"].map { |v| v[:semver] }
         raise InvalidDependencyCycleError,
-              :module_name       => mod,
-              :source            => (source + [{ :name => mod, :version => source.last[:dependency] }]),
-              :requested_module  => req_module,
+              :module_name => mod,
+              :source => (source + [{ :name => mod, :version => source.last[:dependency] }]),
+              :requested_module => req_module,
               :requested_version => @version || annotated_version(req_module, req_versions),
-              :conditions        => @conditions
+              :conditions => @conditions
       end
 
       if !(forced? || @installed[mod].empty? || source.last[:name] == :you)
@@ -119,24 +119,24 @@ module Puppet::ModuleTool::Shared
         req_module   = @module_name
         req_versions = @versions["#{@module_name}"].map { |v| v[:semver] }
         raise NoVersionsSatisfyError,
-              :requested_name    => req_module,
+              :requested_name => req_module,
               :requested_version => @version || annotated_version(req_module, req_versions),
               :installed_version => @installed[@module_name].empty? ? nil : @installed[@module_name].first.version,
-              :dependency_name   => mod,
-              :conditions        => @conditions[mod],
-              :action            => @action
+              :dependency_name => mod,
+              :conditions => @conditions[mod],
+              :action => @action
       end
 
       seen[mod] = version
 
       {
-        :module           => mod,
-        :version          => version,
-        :action           => action,
+        :module => mod,
+        :version => version,
+        :action => action,
         :previous_version => @installed[mod].empty? ? nil : @installed[mod].first.version,
-        :file             => @urls["#{mod}@#{version[:vstring]}"],
-        :path             => action == :install ? @options[:target_dir] : (@installed[mod].empty? ? @options[:target_dir] : @installed[mod].first.modulepath),
-        :dependencies     => []
+        :file => @urls["#{mod}@#{version[:vstring]}"],
+        :path => action == :install ? @options[:target_dir] : (@installed[mod].empty? ? @options[:target_dir] : @installed[mod].first.modulepath),
+        :dependencies => []
       }
     end.compact
     dependencies.each do |mod|

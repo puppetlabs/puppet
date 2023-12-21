@@ -13,7 +13,7 @@ require_relative '../../../puppet/provider/package'
 
 Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
   has_feature :installable, :uninstallable, :versionable, :supports_flavors, :disableable
-  #has_feature :upgradeable
+  # has_feature :upgradeable
   # it's not (yet) feasible to make this upgradeable since module streams don't
   # always have matching version types (i.e. idm has streams DL1 and client,
   # other modules have semver streams, others have string streams... we cannot
@@ -40,7 +40,7 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
       # select only lines with actual packages since DNF clutters the output
       next unless line =~ /\[[eix]\][, ]/
 
-      line.gsub!(/\[d\]/, '')  # we don't care about the default flag
+      line.gsub!(/\[d\]/, '') # we don't care about the default flag
 
       flavor = if line.include?('[i]')
                  line.split('[i]').first.split.last
@@ -64,7 +64,7 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
 
   def query
     pkg = self.class.instances.find do |package|
-            @resource[:name] == package.name
+      @resource[:name] == package.name
     end
     pkg ? pkg.properties : nil
   end

@@ -173,7 +173,7 @@ class Puppet::Daemon
     end
 
     signal_loop = Puppet::Scheduler.create_job(SIGNAL_CHECK_INTERVAL) do
-      while method = @signals.shift #rubocop:disable Lint/AssignmentInCondition
+      while method = @signals.shift # rubocop:disable Lint/AssignmentInCondition
         Puppet.notice "Processing #{method}"
         send(method)
       end

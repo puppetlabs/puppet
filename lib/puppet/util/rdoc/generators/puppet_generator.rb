@@ -63,18 +63,18 @@ module Generators
       end
     end
 
-    def initialize(options) #:not-new:
-      @options    = options
+    def initialize(options) # :not-new:
+      @options = options
       load_html_template
     end
 
     # loads our own html template file
     def load_html_template
-        require_relative '../../../../puppet/util/rdoc/generators/template/puppet/puppet'
-        extend RDoc::Page
+      require_relative '../../../../puppet/util/rdoc/generators/template/puppet/puppet'
+      extend RDoc::Page
     rescue LoadError
-        $stderr.puts "Could not find Puppet template '#{template}'"
-        exit 99
+      $stderr.puts "Could not find Puppet template '#{template}'"
+      exit 99
     end
 
     def gen_method_index
@@ -196,13 +196,13 @@ module Generators
 
     # generate all the subdirectories, modules, classes and files
     def gen_sub_directories
-        super
-        File.makedirs(MODULE_DIR)
-        File.makedirs(NODE_DIR)
-        File.makedirs(PLUGIN_DIR)
+      super
+      File.makedirs(MODULE_DIR)
+      File.makedirs(NODE_DIR)
+      File.makedirs(PLUGIN_DIR)
     rescue
-        $stderr.puts $ERROR_INFO.message
-        exit 1
+      $stderr.puts $ERROR_INFO.message
+      exit 1
     end
 
     # generate the index of modules
@@ -221,11 +221,11 @@ module Generators
       end
 
       values = {
-        "entries"    => res,
+        "entries" => res,
         'list_title' => CGI.escapeHTML(title),
-        'index_url'  => main_url,
-        'charset'    => @options.charset,
-        'style_url'  => style_url('', @options.css),
+        'index_url' => main_url,
+        'charset' => @options.charset,
+        'style_url' => style_url('', @options.css),
       }
 
       Puppet::FileSystem.open(filename, nil, "w:UTF-8") do |f|
@@ -287,15 +287,15 @@ module Generators
 
       values = {
         "module" => module_name,
-        "classes"    => res1,
+        "classes" => res1,
         'classes_title' => CGI.escapeHTML("Classes"),
         'defines_title' => CGI.escapeHTML("Defines"),
         'facts_title' => CGI.escapeHTML("Custom Facts"),
         'plugins_title' => CGI.escapeHTML("Plugins"),
         'nodes_title' => CGI.escapeHTML("Nodes"),
-        'index_url'  => main_url,
-        'charset'    => @options.charset,
-        'style_url'  => style_url('', @options.css),
+        'index_url' => main_url,
+        'charset' => @options.charset,
+        'style_url' => style_url('', @options.css),
       }
 
       values["defines"] = res2 if res2.size>0
@@ -396,7 +396,7 @@ module Generators
       resources.each do |r|
         row = {}
         if r.section == section and r.document_self
-          row["name"]        = CGI.escapeHTML(r.name)
+          row["name"] = CGI.escapeHTML(r.name)
           desc = r.description.strip
           row["m_desc"]      = desc unless desc.empty?
           row["aref"]        = r.aref
@@ -497,10 +497,10 @@ module Generators
     def write_on(f)
       value_hash
 
-        template = TemplatePage.new(
-          RDoc::Page::BODYINC,
-          RDoc::Page::NODE_PAGE,
-          RDoc::Page::METHOD_LIST)
+      template = TemplatePage.new(
+        RDoc::Page::BODYINC,
+        RDoc::Page::NODE_PAGE,
+        RDoc::Page::METHOD_LIST)
       template.write_html_on(f, @values)
     end
 
@@ -571,8 +571,8 @@ module Generators
 
         if att.visibility == :public || att.visibility == :protected || @options.show_all
           entry = {
-            "name"   => CGI.escapeHTML(att.name),
-            "rw"     => att.rw,
+            "name" => CGI.escapeHTML(att.name),
+            "rw" => att.rw,
             "a_desc" => markup(att.comment, true)
           }
           unless att.visibility == :public || att.visibility == :protected
@@ -738,10 +738,10 @@ module Generators
     def write_on(f)
       value_hash
 
-        template = TemplatePage.new(
-          RDoc::Page::BODYINC,
-          RDoc::Page::PLUGIN_PAGE,
-          RDoc::Page::PLUGIN_LIST)
+      template = TemplatePage.new(
+        RDoc::Page::BODYINC,
+        RDoc::Page::PLUGIN_PAGE,
+        RDoc::Page::PLUGIN_LIST)
       template.write_html_on(f, @values)
     end
 

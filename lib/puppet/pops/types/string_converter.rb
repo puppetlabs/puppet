@@ -125,11 +125,11 @@ class StringConverter
       @delimiters = nil
       DELIMITERS.each do |d|
         next unless flags.include?(d)
-          if !@delimiters.nil?
-            raise ArgumentError, "Only one of the delimiters [ { ( < | can be given in the format flags, got '#{fmt}'"
-          end
+        if !@delimiters.nil?
+          raise ArgumentError, "Only one of the delimiters [ { ( < | can be given in the format flags, got '#{fmt}'"
+        end
 
-          @delimiters = d
+        @delimiters = d
       end
 
       @width = match[2] ? match[2].to_i : nil
@@ -264,7 +264,7 @@ class StringConverter
   # (basically strings are quoted since they may contain a ','))
   #
   DEFAULT_CONTAINER_FORMATS = {
-    PAnyType::DEFAULT  => Format.new('%p').freeze,   # quoted string (Ruby inspect)
+    PAnyType::DEFAULT => Format.new('%p').freeze, # quoted string (Ruby inspect)
   }.freeze
 
   DEFAULT_ARRAY_FORMAT                          = Format.new('%a')
@@ -283,13 +283,13 @@ class StringConverter
   DEFAULT_ARRAY_DELIMITERS                      = ['[', ']'].freeze
 
   DEFAULT_STRING_FORMATS = {
-    PObjectType::DEFAULT   => Format.new('%p').freeze,    # call with initialization hash
-    PFloatType::DEFAULT    => Format.new('%f').freeze,    # float
-    PNumericType::DEFAULT  => Format.new('%d').freeze,    # decimal number
-    PArrayType::DEFAULT    => DEFAULT_ARRAY_FORMAT.freeze,
-    PHashType::DEFAULT     => DEFAULT_HASH_FORMAT.freeze,
-    PBinaryType::DEFAULT   => Format.new('%B').freeze,    # strict base64 string unquoted
-    PAnyType::DEFAULT      => Format.new('%s').freeze,    # unquoted string
+    PObjectType::DEFAULT => Format.new('%p').freeze, # call with initialization hash
+    PFloatType::DEFAULT => Format.new('%f').freeze, # float
+    PNumericType::DEFAULT => Format.new('%d').freeze, # decimal number
+    PArrayType::DEFAULT => DEFAULT_ARRAY_FORMAT.freeze,
+    PHashType::DEFAULT => DEFAULT_HASH_FORMAT.freeze,
+    PBinaryType::DEFAULT => Format.new('%B').freeze, # strict base64 string unquoted
+    PAnyType::DEFAULT => Format.new('%s').freeze, # unquoted string
   }.freeze
 
   DEFAULT_PARAMETER_FORMAT = {
@@ -491,8 +491,8 @@ class StringConverter
         # add the format given for the exact type
         string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => {'format' => string_formats }}
       elsif Puppet::Pops::Types::PHashType::DEFAULT.assignable?(value_type)
-          # add the format given for the exact type
-          string_formats = { Puppet::Pops::Types::PHashType::DEFAULT => {'format' => string_formats }}
+        # add the format given for the exact type
+        string_formats = { Puppet::Pops::Types::PHashType::DEFAULT => {'format' => string_formats }}
       else
         # add the format given for the exact type
         string_formats = { value_type => string_formats }
@@ -823,23 +823,23 @@ class StringConverter
 
     when :c
       c_val = val.capitalize
-      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.tr('c', 's'), c_val)
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) : Kernel.format(f.orig_fmt.tr('c', 's'), c_val)
 
     when :C
       c_val = val.split('::').map {|s| s.capitalize }.join('::')
-      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.tr('C', 's'), c_val)
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) : Kernel.format(f.orig_fmt.tr('C', 's'), c_val)
 
     when :u
       c_val = val.upcase
-      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.tr('u', 's'), c_val)
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) : Kernel.format(f.orig_fmt.tr('u', 's'), c_val)
 
     when :d
       c_val = val.downcase
-      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.tr('d', 's'), c_val)
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) : Kernel.format(f.orig_fmt.tr('d', 's'), c_val)
 
-    when :t  # trim
+    when :t # trim
       c_val = val.strip
-      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.tr('t', 's'), c_val)
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) : Kernel.format(f.orig_fmt.tr('t', 's'), c_val)
 
     else
       raise FormatError.new('String', f.format, 'cCudspt')
@@ -1075,7 +1075,7 @@ class StringConverter
         padding = children_indentation.padding
       end
       buf << delims[0]
-      buf << cond_break  # break after opening delimiter if pretty printing
+      buf << cond_break # break after opening delimiter if pretty printing
       buf << val.map do |k,v|
         key_type = TypeCalculator.infer_set(k)
         val_type = TypeCalculator.infer_set(v)

@@ -626,7 +626,7 @@ module Time
 
       # States used by the #internal_parser function
       STATE_LITERAL = 0 # expects literal or '%'
-      STATE_PAD  = 1 # expects pad, width, or format character
+      STATE_PAD = 1 # expects pad, width, or format character
       STATE_WIDTH = 2 # expects width, or format character
 
       def internal_parse(str)
@@ -709,7 +709,7 @@ module Time
           end
         end
 
-        raise ArgumentError, bad_format_specifier(str, fstart, position)  unless state == STATE_LITERAL
+        raise ArgumentError, bad_format_specifier(str, fstart, position) unless state == STATE_LITERAL
 
         unless highest == -1
           hc = SEGMENT_CLASS_BY_ORDINAL[highest]

@@ -100,7 +100,7 @@ module Puppet
       validate do |values|
         values = [values] unless values.is_a?(Array)
         values.each { |value|
-          unless  value.is_a?(String) and
+          unless value.is_a?(String) and
               value =~ /\d+(:\d+){0,2}\s*-\s*\d+(:\d+){0,2}/
             self.fail _("Invalid range value '%{value}'") % { value: value }
           end
@@ -401,7 +401,7 @@ module Puppet
 
       Puppet.debug "Creating default schedules"
 
-            result << self.new(
+      result << self.new(
         :name => "puppet",
         :period => :hourly,
 
@@ -410,7 +410,7 @@ module Puppet
 
       # And then one for every period
       @parameters.find { |p| p.name == :period }.value_collection.values.each { |value|
-              result << self.new(
+        result << self.new(
           :name => value.to_s,
           :period => value
         )

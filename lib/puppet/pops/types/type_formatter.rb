@@ -156,10 +156,10 @@ class TypeFormatter
   end
 
   # @api private
-  def string_PScalarType(_)  ; @bld << 'Scalar'  ; end
+  def string_PScalarType(_) ; @bld << 'Scalar' ; end
 
   # @api private
-  def string_PScalarDataType(_)  ; @bld << 'ScalarData'  ; end
+  def string_PScalarDataType(_) ; @bld << 'ScalarData' ; end
 
   # @api private
   def string_PNumericType(_) ; @bld << 'Numeric' ; end
@@ -179,12 +179,12 @@ class TypeFormatter
 
   # @api private
   def string_PInitType(t)
-    append_array('Init', t.type.nil?)  { append_strings([t.type, *t.init_args]) }
+    append_array('Init', t.type.nil?) { append_strings([t.type, *t.init_args]) }
   end
 
   # @api private
   def string_PIterableType(t)
-    append_array('Iterable', t.element_type.nil?)  { append_string(t.element_type) }
+    append_array('Iterable', t.element_type.nil?) { append_string(t.element_type) }
   end
 
   # @api private
@@ -584,7 +584,7 @@ class TypeFormatter
   end
 
   # @api private
-  def string_FalseClass(t)   ; @bld << 'false'       ; end
+  def string_FalseClass(t) ; @bld << 'false' ; end
 
   # @api private
   def string_Hash(t)
@@ -600,7 +600,7 @@ class TypeFormatter
   def string_NilClass(t)     ; @bld << (@ruby ? 'nil' : 'undef') ; end
 
   # @api private
-  def string_Numeric(t)      ; @bld << t.to_s    ; end
+  def string_Numeric(t)      ; @bld << t.to_s ; end
 
   # @api private
   def string_Regexp(t)       ; @bld << PRegexpType.regexp_to_s_with_delimiters(t); end
@@ -624,10 +624,10 @@ class TypeFormatter
   def string_VersionRange(t) ; @bld << "'#{t}'"  ; end
 
   # @api private
-  def string_Timespan(t)    ; @bld << "'#{t}'"  ; end
+  def string_Timespan(t) ; @bld << "'#{t}'" ; end
 
   # @api private
-  def string_Timestamp(t)    ; @bld << "'#{t}'"  ; end
+  def string_Timestamp(t) ; @bld << "'#{t}'" ; end
 
   # Debugging to_s to reduce the amount of output
   def to_s

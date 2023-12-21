@@ -44,7 +44,7 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
 
   # What's the latest package version available?
   def latest
-    output = aptcache :showpkg,  @resource[:name]
+    output = aptcache :showpkg, @resource[:name]
 
     if output =~ /Versions:\s*\n((\n|.)+)^$/
       versions = $1

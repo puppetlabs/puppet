@@ -72,7 +72,7 @@ module Puppet::HTTP
         each_srv_record(domain, :puppet, &block)
       else
         each_priority(records) do |recs|
-          while next_rr = recs.delete(find_weighted_server(recs)) #rubocop:disable Lint/AssignmentInCondition
+          while next_rr = recs.delete(find_weighted_server(recs)) # rubocop:disable Lint/AssignmentInCondition
             Puppet.debug "Yielding next server of #{next_rr.target}:#{next_rr.port}"
             yield next_rr.target.to_s, next_rr.port
           end

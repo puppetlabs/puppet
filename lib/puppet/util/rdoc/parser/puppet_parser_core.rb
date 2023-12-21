@@ -125,7 +125,7 @@ module RDoc::PuppetParserCore
     container.module_name = name
     container.global=true if name == SITE
 
-    container, name  = get_class_or_module(container,name)
+    container, name = get_class_or_module(container,name)
     mod = container.add_module(RDoc::PuppetModule, name)
     mod.record_location(@top_level)
     mod.add_comment(comment, @top_level)
@@ -230,8 +230,8 @@ module RDoc::PuppetParserCore
         context.force_documentation = true
         ""
       when "enddoc"
-        #context.done_documenting = true
-        #""
+        # context.done_documenting = true
+        # ""
         throw :enddoc
       when "main"
         options = Options.instance

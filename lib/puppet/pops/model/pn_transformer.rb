@@ -247,9 +247,9 @@ class PNTransformer
 
   def transform_ResourceBody(e)
     PN::Map.new([
-      transform(e.title).with_name('title'),
-      transform(e.operations).with_name('ops')
-    ]).as_call('resource_body')
+                  transform(e.title).with_name('title'),
+                  transform(e.operations).with_name('ops')
+                ]).as_call('resource_body')
   end
 
   def transform_ResourceDefaultsExpression(e)

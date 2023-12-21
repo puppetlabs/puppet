@@ -17,9 +17,9 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
     match, name, version, status = *package.match(/([^\s;]+)-([^\s;]+)[;\s](=|>|<)?.+$/)
     if match
       {
-        :name     => name,
-        :status   => status,
-        :ensure   => version
+        :name => name,
+        :status => status,
+        :ensure => version
       }
     end
   end

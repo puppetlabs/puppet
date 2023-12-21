@@ -372,7 +372,7 @@ class TypeCalculator
     # when both are resources, reduce to Resource[T] or Resource[] (since one was not assignable to the other)
     if t1.is_a?(PResourceType) && t2.is_a?(PResourceType)
       # only Resource[] unless the type name is the same
-      return t1.type_name == t2.type_name ?  PResourceType.new(t1.type_name, nil) : PResourceType::DEFAULT
+      return t1.type_name == t2.type_name ? PResourceType.new(t1.type_name, nil) : PResourceType::DEFAULT
     end
 
     # Integers have range, expand the range to the common range
@@ -482,7 +482,7 @@ class TypeCalculator
   # Produces the superclasses of the given class, including the class
   def superclasses(c)
     result = [c]
-    while s = c.superclass #rubocop:disable Lint/AssignmentInCondition
+    while s = c.superclass # rubocop:disable Lint/AssignmentInCondition
       result << s
       c = s
     end

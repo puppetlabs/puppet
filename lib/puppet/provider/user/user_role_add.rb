@@ -45,11 +45,11 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     end
   end
 
-  #must override this to hand the keyvalue pairs
+  # must override this to hand the keyvalue pairs
   def add_properties
     cmd = []
     Puppet::Type.type(:user).validproperties.each do |property|
-      #skip the password because we can't create it with the solaris useradd
+      # skip the password because we can't create it with the solaris useradd
       next if [:ensure, :password, :password_min_age, :password_max_age, :password_warn_days].include?(property)
 
       # 1680 Now you can set the hashed passwords on solaris:lib/puppet/provider/user/user_role_add.rb
@@ -85,9 +85,9 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   end
 
   def run(cmd, msg)
-      execute(cmd)
+    execute(cmd)
   rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not #{msg} #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
+    raise Puppet::Error, "Could not #{msg} #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
   end
 
   def transition(type)
@@ -150,7 +150,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
 
   def keys
     if user_attributes
-      #we have to get rid of all the keys we are managing another way
+      # we have to get rid of all the keys we are managing another way
       remove_managed_attributes
     end
   end
@@ -174,8 +174,8 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   end
   private :target_file_path
 
-  #Read in /etc/shadow, find the line for this user (skipping comments, because who knows) and return it
-  #No abstraction, all esoteric knowledge of file formats, yay
+  # Read in /etc/shadow, find the line for this user (skipping comments, because who knows) and return it
+  # No abstraction, all esoteric knowledge of file formats, yay
   def shadow_entry
     return @shadow_entry if defined? @shadow_entry
 

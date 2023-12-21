@@ -26,7 +26,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   confine :false => Puppet.runtime[:facter].value('os.family') == 'RedHat'
 
   # We can't confine this here, because the init path can be overridden.
-  #confine :exists => defpath
+  # confine :exists => defpath
 
   # some init scripts are not safe to execute, e.g. we do not want
   # to suddenly run /etc/init.d/reboot.sh status and reboot our system. The
@@ -173,7 +173,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
   def service_execute(type, command, fof = true, squelch = false, combine = true)
     if type == :start && Puppet.runtime[:facter].value('os.family') == "Solaris"
-        command =  ["/usr/bin/ctrun -l child", command].flatten.join(" ")
+      command = ["/usr/bin/ctrun -l child", command].flatten.join(" ")
     end
     super(type, command, fof, squelch, combine)
   end

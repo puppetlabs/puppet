@@ -38,7 +38,7 @@ class Puppet::Resource
   CLASS_STRING = 'class'
   DEFINED_TYPE_STRING = 'defined_type'
   COMPILABLE_TYPE_STRING = 'compilable_type'
-  UNKNOWN_TYPE_STRING  = 'unknown'
+  UNKNOWN_TYPE_STRING = 'unknown'
 
   PCORE_TYPE_KEY = '__ptype'
   VALUE_KEY = 'value'
@@ -128,14 +128,17 @@ class Puppet::Resource
     end
 
     unless params.empty?
-      data['parameters'] = Puppet::Pops::Serialization::ToDataConverter.convert(params, {
-        :rich_data => Puppet.lookup(:rich_data),
-        :symbol_as_string => true,
-        :local_reference => false,
-        :type_by_reference => true,
-        :message_prefix => ref,
-        :semantic => self
-      })
+      data['parameters'] =
+        Puppet::Pops::Serialization::ToDataConverter
+          .convert(params,
+                   {
+                     :rich_data => Puppet.lookup(:rich_data),
+                     :symbol_as_string => true,
+                     :local_reference => false,
+                     :type_by_reference => true,
+                     :message_prefix => ref,
+                     :semantic => self
+                   })
     end
 
     data['sensitive_parameters'] = sensitive_parameters.map(&:to_s) unless sensitive_parameters.empty?
@@ -295,7 +298,7 @@ class Puppet::Resource
       @sensitive_parameters.replace(type.sensitive_parameters)
     else
       if type.is_a?(Hash)
-        #TRANSLATORS 'Puppet::Resource.new' should not be translated
+        # TRANSLATORS 'Puppet::Resource.new' should not be translated
         raise ArgumentError, _("Puppet::Resource.new does not take a hash as the first argument.") + ' ' +
           _("Did you mean (%{type}, %{title}) ?") %
               { type: (type[:type] || type["type"]).inspect, title: (type[:title] || type["title"]).inspect }
@@ -444,7 +447,7 @@ class Puppet::Resource
     attr_max = attr.inject(0) { |max,k| k.to_s.length > max ? k.to_s.length : max }
 
     attr.sort!
-    if attr.first != :ensure  && attr.include?(:ensure)
+    if attr.first != :ensure && attr.include?(:ensure)
       attr.delete(:ensure)
       attr.unshift(:ensure)
     end
@@ -479,7 +482,7 @@ class Puppet::Resource
     attr_max = attr.inject(0) { |max,k| k.to_s.length > max ? k.to_s.length : max }
 
     attr.sort!
-    if attr.first != :ensure  && attr.include?(:ensure)
+    if attr.first != :ensure && attr.include?(:ensure)
       attr.delete(:ensure)
       attr.unshift(:ensure)
     end
@@ -510,7 +513,7 @@ class Puppet::Resource
     elsif self.catalog && self.catalog.catalog_format >= 2
       typeklass = Puppet::Type.type(:component)
     else
-      typeklass =  Puppet::Type.type(self.type) || Puppet::Type.type(:component)
+      typeklass = Puppet::Type.type(self.type) || Puppet::Type.type(:component)
     end
 
     raise(Puppet::Error, "Resource type '#{self.type}' was not found") unless typeklass

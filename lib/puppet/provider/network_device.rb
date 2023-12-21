@@ -23,7 +23,7 @@ class Puppet::Provider::NetworkDevice < Puppet::Provider
     end
   rescue => detail
     # Preserving behavior introduced in #6907
-    #TRANSLATORS "prefetch" is a program name and should not be translated
+    # TRANSLATORS "prefetch" is a program name and should not be translated
     Puppet.log_exception(detail, _("Could not perform network device prefetch: %{detail}") % { detail: detail })
   end
 

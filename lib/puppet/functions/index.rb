@@ -123,7 +123,7 @@ Puppet::Functions.create_function(:index) do
   end
 
   def index_Hash_1(hash)
-    hash.each_pair { |x, y| return x if yield(y)  }
+    hash.each_pair { |x, y| return x if yield(y) }
     nil
   end
 

@@ -21,7 +21,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   commands :dseditgroup => "/usr/sbin/dseditgroup"
   commands :sw_vers => "/usr/bin/sw_vers"
   confine 'os.name' => :darwin
-  confine :feature         => :cfpropertylist
+  confine :feature => :cfpropertylist
   defaultfor 'os.name' => :darwin
 
   # There is no generalized mechanism for provider cache management, but we can
@@ -49,8 +49,8 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       'RealName' => :comment,
       'Password' => :password,
       'GeneratedUID' => :guid,
-      'IPAddress'    => :ip_address,
-      'ENetAddress'  => :en_address,
+      'IPAddress' => :ip_address,
+      'ENetAddress' => :en_address,
       'GroupMembership' => :members,
     }
   end
@@ -204,7 +204,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # zeroes. If someone attempts to use a password hash that worked with
     # a previous version of OS X, we will fail early and warn them.
     if password_hash.length != 136
-      #TRANSLATORS 'OS X 10.7' is an operating system and should not be translated, 'Salted SHA512' is the name of a hashing algorithm
+      # TRANSLATORS 'OS X 10.7' is an operating system and should not be translated, 'Salted SHA512' is the name of a hashing algorithm
       fail(_("OS X 10.7 requires a Salted SHA512 hash password of 136 characters.") +
            ' ' + _("Please check your password and try again."))
     end
@@ -426,7 +426,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
         else
           exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
           exec_arg_vector << ns_to_ds_attribute_map[property.intern]
-          next if property == :password  # skip setting the password here
+          next if property == :password # skip setting the password here
 
           exec_arg_vector << value.to_s
           begin

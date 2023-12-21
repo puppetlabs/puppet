@@ -49,8 +49,8 @@ module Puppet
     feature :manages_expiry,
             "The provider can manage the expiry date for a user."
 
-   feature :system_users,
-           "The provider allows you to create system users with lower UIDs."
+    feature :system_users,
+            "The provider allows you to create system users with lower UIDs."
 
     feature :manages_aix_lam,
             "The provider can manage AIX Loadable Authentication Module (LAM) system."
@@ -455,8 +455,8 @@ module Puppet
 
       validate do |value|
         if value.intern != :absent and value !~ /^\d{4}-\d{2}-\d{2}$/
-          #TRANSLATORS YYYY-MM-DD represents a date with a four-digit year, a two-digit month, and a two-digit day,
-          #TRANSLATORS separated by dashes.
+          # TRANSLATORS YYYY-MM-DD represents a date with a four-digit year, a two-digit month, and a two-digit day,
+          # TRANSLATORS separated by dashes.
           raise ArgumentError, _("Expiry dates must be YYYY-MM-DD or the string \"absent\"")
         end
       end
@@ -530,7 +530,7 @@ module Puppet
       end
     end
 
-    #autorequire the roles that the user has
+    # autorequire the roles that the user has
     autorequire(:user) do
       reqs = []
 
@@ -690,8 +690,8 @@ module Puppet
     end
 
     newparam(:forcelocal, :boolean => true,
-            :required_features => :manages_local_users_and_groups,
-            :parent => Puppet::Parameter::Boolean) do
+                          :required_features => :manages_local_users_and_groups,
+                          :parent => Puppet::Parameter::Boolean) do
       desc "Forces the management of local accounts when accounts are also
             being managed by some other Name Service Switch (NSS). For AIX, refer to the `ia_load_module` parameter.
             

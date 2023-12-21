@@ -33,7 +33,7 @@ class Puppet::Util::Windows::EventLog
   def initialize(source_name = 'Puppet')
     @eventlog_handle = RegisterEventSourceW(FFI::Pointer::NULL, wide_string(source_name))
     if @eventlog_handle == NULL_HANDLE
-      #TRANSLATORS 'Windows' is the operating system and 'RegisterEventSourceW' is a API call and should not be translated
+      # TRANSLATORS 'Windows' is the operating system and 'RegisterEventSourceW' is a API call and should not be translated
       raise EventLogError.new(_("RegisterEventSourceW failed to open Windows eventlog"), FFI.errno)
     end
   end
@@ -75,7 +75,7 @@ class Puppet::Util::Windows::EventLog
                                      num_strings, raw_data_size, message_array_ptr, raw_data)
 
         if report_result == WIN32_FALSE
-          #TRANSLATORS 'Windows' is the operating system and 'ReportEventW' is a API call and should not be translated
+          # TRANSLATORS 'Windows' is the operating system and 'ReportEventW' is a API call and should not be translated
           raise EventLogError.new(_("ReportEventW failed to report event to Windows eventlog"), FFI.errno)
         end
       end
@@ -118,7 +118,7 @@ class Puppet::Util::Windows::EventLog
   else
     class EventLogError < RuntimeError
       def initialize(msg, code)
-        #TRANSLATORS 'Win32' is the Windows API and should not be translated
+        # TRANSLATORS 'Win32' is the Windows API and should not be translated
         super(msg + ' ' + _("(Win32 error: %{detail})") % { detail: code})
       end
     end

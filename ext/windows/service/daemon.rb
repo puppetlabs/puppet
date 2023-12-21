@@ -13,7 +13,7 @@ require 'puppet/util/windows/eventlog'
 require 'puppet/util/windows/monkey_patches/process'
 
 class WindowsDaemon < Puppet::Util::Windows::Daemon
-  CREATE_NEW_CONSOLE          = 0x00000010
+  CREATE_NEW_CONSOLE = 0x00000010
 
   @run_thread = nil
   @LOG_TO_FILE = false
@@ -146,9 +146,9 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
       eventlog = nil
       eventlog = Puppet::Util::Windows::EventLog.open("Puppet")
       eventlog.report_event(
-        :event_type  => type,   # EVENTLOG_ERROR_TYPE, etc
-        :event_id    => id,     # 0x01 or 0x02, 0x03 etc.
-        :data        => message # "the message"
+        :event_type => type, # EVENTLOG_ERROR_TYPE, etc
+        :event_id => id, # 0x01 or 0x02, 0x03 etc.
+        :data => message # "the message"
       )
     rescue Exception
       # Ignore all errors

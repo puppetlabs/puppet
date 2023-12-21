@@ -97,7 +97,7 @@ class Puppet::Property < Puppet::Parameter
     #
     def array_matching=(value)
       value = value.intern if value.is_a?(String)
-      #TRANSLATORS 'Property#array_matching', 'first', and 'all' should not be translated
+      # TRANSLATORS 'Property#array_matching', 'first', and 'all' should not be translated
       raise ArgumentError, _("Supported values for Property#array_matching are 'first' and 'all'") unless [:first, :all].include?(value)
 
       @array_matching = value
@@ -369,7 +369,7 @@ class Puppet::Property < Puppet::Parameter
     rescue
       # Certain operations may fail, but we don't want to fail the transaction if we can
       # avoid it
-      #TRANSLATORS 'insync_values?' should not be translated
+      # TRANSLATORS 'insync_values?' should not be translated
       msg = _("Unknown failure using insync_values? on type: %{type} / property: %{name} to compare values %{should} and %{is}") %
           { type: self.resource.ref, name: self.name, should: should, is: is }
       Puppet.info(msg)
@@ -416,9 +416,9 @@ class Puppet::Property < Puppet::Parameter
   #
   def log(msg)
     Puppet::Util::Log.create(
-      :level   => resource[:loglevel],
+      :level => resource[:loglevel],
       :message => msg,
-      :source  => self
+      :source => self
     )
   end
 
@@ -595,7 +595,7 @@ class Puppet::Property < Puppet::Parameter
       features = Array(features)
       needed_features = features.collect { |f| f.to_s }.join(", ")
       unless provider.satisfies?(features)
-        #TRANSLATORS 'Provider' refers to a Puppet provider class
+        # TRANSLATORS 'Provider' refers to a Puppet provider class
         raise ArgumentError, _("Provider %{provider} must have features '%{needed_features}' to set '%{property}' to '%{value}'") %
             { provider: provider.class.name, needed_features: needed_features, property: self.class.name, value: value }
       end

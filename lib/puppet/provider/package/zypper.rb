@@ -46,8 +46,8 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
     avail_updates
   end
 
-  #on zypper versions <1.0, the version option returns 1
-  #some versions of zypper output on stderr
+  # on zypper versions <1.0, the version option returns 1
+  # some versions of zypper output on stderr
   def zypper_version
     cmd = [self.class.command(:zypper),"--version"]
     execute(cmd, { :failonfail => false, :combine => true})
@@ -105,17 +105,17 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
       wanted = "#{wanted}-#{should}"
     end
 
-    #This has been tested with following zypper versions
-    #SLE 10.4: 0.6.201
-    #SLE 11.3: 1.6.307
-    #SLE 12.0: 1.11.14
-    #Assume that this will work on newer zypper versions
+    # This has been tested with following zypper versions
+    # SLE 10.4: 0.6.201
+    # SLE 11.3: 1.6.307
+    # SLE 12.0: 1.11.14
+    # Assume that this will work on newer zypper versions
 
-    #extract version numbers and convert to integers
+    # extract version numbers and convert to integers
     major, minor, patch = zypper_version.scan(/\d+/).map{ |x| x.to_i }
     self.debug "Detected zypper version #{major}.#{minor}.#{patch}"
 
-    #zypper version < 1.0 does not support --quiet flag
+    # zypper version < 1.0 does not support --quiet flag
     if major < 1
       quiet = '--terse'
     else
@@ -131,7 +131,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
     options << '--no-gpg-checks' unless inst_opts.delete('--no-gpg-checks').nil?
     options << :install
 
-    #zypper 0.6.13 (OpenSuSE 10.2) does not support auto agree with licenses
+    # zypper 0.6.13 (OpenSuSE 10.2) does not support auto agree with licenses
     options << '--auto-agree-with-licenses' unless major < 1 and minor <= 6 and patch <= 13
     options << '--no-confirm'
     options += inst_opts unless inst_opts.empty?
@@ -165,7 +165,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
   end
 
   def uninstall
-    #extract version numbers and convert to integers
+    # extract version numbers and convert to integers
     major, minor, _ = zypper_version.scan(/\d+/).map{ |x| x.to_i }
 
     if major < 1
@@ -173,7 +173,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
     else
       options = [:remove, '--no-confirm']
       if major == 1 && minor < 6
-          options << '--force-resolution'
+        options << '--force-resolution'
       end
 
       options << @resource[:name]

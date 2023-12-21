@@ -196,9 +196,9 @@ class LookupAdapter < DataAdapter
             opts = nil
             lookup_invocation.with(:scope, "Searching for \"#{LookupKey::LOOKUP_OPTIONS}\"") do
               catch(:no_such_key) do
-              opts = compile_patterns(
-                validate_lookup_options(
-                  provider.key_lookup_in_default(LookupKey::LOOKUP_OPTIONS, meta_invocation, MergeStrategy.strategy(HASH)), k))
+                opts = compile_patterns(
+                  validate_lookup_options(
+                    provider.key_lookup_in_default(LookupKey::LOOKUP_OPTIONS, meta_invocation, MergeStrategy.strategy(HASH)), k))
               end
             end
             @module_default_lookup_options[k] = opts
@@ -358,7 +358,7 @@ class LookupAdapter < DataAdapter
                        module_opts
                      elsif module_opts
                        merge_strategy.lookup([GLOBAL_ENV_MERGE, "Module #{lookup_invocation.module_name}"], meta_invocation) do |n|
-                         meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS,  n == GLOBAL_ENV_MERGE ? opts : module_opts) }
+                         meta_invocation.with(:scope, n) { meta_invocation.report_found(LOOKUP_OPTIONS, n == GLOBAL_ENV_MERGE ? opts : module_opts) }
                        end
                      end
             end

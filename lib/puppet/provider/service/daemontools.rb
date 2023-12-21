@@ -41,7 +41,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
 
   EOT
 
-  commands :svc  => "/usr/bin/svc", :svstat => "/usr/bin/svstat"
+  commands :svc => "/usr/bin/svc", :svstat => "/usr/bin/svstat"
 
   class << self
     attr_writer :defpath
@@ -128,13 +128,13 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
   end
 
   def setupservice
-      if resource[:manifest]
-        Puppet.notice "Configuring #{resource[:name]}"
-        command = [ resource[:manifest], resource[:name] ]
-        system("#{command}")
-      end
+    if resource[:manifest]
+      Puppet.notice "Configuring #{resource[:name]}"
+      command = [ resource[:manifest], resource[:name] ]
+      system("#{command}")
+    end
   rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error.new( "Cannot config #{self.service} to enable it: #{detail}", detail)
+    raise Puppet::Error.new( "Cannot config #{self.service} to enable it: #{detail}", detail)
   end
 
   def enabled?

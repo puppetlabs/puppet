@@ -142,22 +142,22 @@ class Locator
       v = nil
 
       while low < high do
-          mid = low + ((high - low) / 2)
-          v = (ary[mid] > value)
-          if v == true
-            satisfied = true
-            smaller = true
-          elsif !v
-            smaller = false
-          else
-            raise TypeError, "wrong argument, must be boolean or nil, got '#{v.class}'"
-          end
+        mid = low + ((high - low) / 2)
+        v = (ary[mid] > value)
+        if v == true
+          satisfied = true
+          smaller = true
+        elsif !v
+          smaller = false
+        else
+          raise TypeError, "wrong argument, must be boolean or nil, got '#{v.class}'"
+        end
 
-          if smaller
-            high = mid
-          else
-            low = mid + 1;
-          end
+        if smaller
+          high = mid
+        else
+          low = mid + 1;
+        end
       end
 
       return nil if low == ary.length
@@ -320,15 +320,15 @@ class Locator
     # rubocop:disable Naming/MemoizedInstanceVariableName
     def self._pcore_type
       @type ||= Types::PObjectType.new('Puppet::AST::Locator', {
-        'attributes' => {
-          'string' => Types::PStringType::DEFAULT,
-          'file' => Types::PStringType::DEFAULT,
-          'line_index' => {
-            Types::KEY_TYPE => Types::POptionalType.new(Types::PArrayType.new(Types::PIntegerType::DEFAULT)),
-            Types::KEY_VALUE => nil
-          }
-        }
-      })
+                                         'attributes' => {
+                                           'string' => Types::PStringType::DEFAULT,
+                                           'file' => Types::PStringType::DEFAULT,
+                                           'line_index' => {
+                                             Types::KEY_TYPE => Types::POptionalType.new(Types::PArrayType.new(Types::PIntegerType::DEFAULT)),
+                                             Types::KEY_VALUE => nil
+                                           }
+                                         }
+                                       })
     end
     # rubocop:enable Naming/MemoizedInstanceVariableName
 

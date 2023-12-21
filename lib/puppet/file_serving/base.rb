@@ -12,10 +12,10 @@ class Puppet::FileServing::Base
 
   # Does our file exist?
   def exist?
-      stat
-      return true
+    stat
+    return true
   rescue
-      return false
+    return false
   end
 
   # Return the full path to our file.  Fails if there's no path set.
@@ -49,7 +49,7 @@ class Puppet::FileServing::Base
   def links=(value)
     value = value.to_sym
     value = :manage if value == :ignore
-    #TRANSLATORS ':link', ':manage', ':follow' should not be translated
+    # TRANSLATORS ':link', ':manage', ':follow' should not be translated
     raise(ArgumentError, _(":links can only be set to :manage or :follow")) unless [:manage, :follow].include?(value)
 
     @links = value
@@ -82,9 +82,9 @@ class Puppet::FileServing::Base
 
   def to_data_hash
     {
-      'path'          => @path,
+      'path' => @path,
       'relative_path' => @relative_path,
-      'links'         => @links.to_s
+      'links' => @links.to_s
     }
   end
 

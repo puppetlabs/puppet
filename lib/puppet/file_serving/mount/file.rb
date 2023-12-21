@@ -7,9 +7,9 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
     @localmap ||= {
       "h" => Puppet.runtime[:facter].value('networking.hostname'),
       "H" => [
-               Puppet.runtime[:facter].value('networking.hostname'),
-               Puppet.runtime[:facter].value('networking.domain')
-             ].join("."),
+        Puppet.runtime[:facter].value('networking.hostname'),
+        Puppet.runtime[:facter].value('networking.domain')
+      ].join("."),
       "d" => Puppet.runtime[:facter].value('networking.domain')
     }
   end

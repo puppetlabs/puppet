@@ -27,7 +27,7 @@ class Puppet::Relationship
   end
 
   def event=(event)
-    #TRANSLATORS 'NONE' should not be translated
+    # TRANSLATORS 'NONE' should not be translated
     raise ArgumentError, _("You must pass a callback for non-NONE events") if event != :NONE and ! callback
 
     @event = event

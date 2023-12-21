@@ -34,8 +34,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
   end
 
-defaultfor 'os.name' => :amazon
-defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
+  defaultfor 'os.name' => :amazon
+  defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
 
   def insync?(is)
     return false if [:purged, :absent].include?(is)
@@ -169,7 +169,7 @@ defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
       :epoch => epoch,
       :version => version,
       :release => release,
-      :arch    => arch,
+      :arch => arch,
     }
   end
 
@@ -378,12 +378,12 @@ defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
 
     values = options.map do | repo |
       value = if repo.is_a?(String)
-        next unless repo.include?('=')
+                next unless repo.include?('=')
 
-        Hash[*repo.strip.split('=')] # make it a hash
-      else
-        repo
-      end
+                Hash[*repo.strip.split('=')] # make it a hash
+              else
+                repo
+              end
       value[key]
     end
     values.compact.uniq

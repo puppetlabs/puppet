@@ -46,7 +46,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   defaultfor 'os.name' => :darwin
   confine 'os.name'    => :darwin
-  confine :feature            => :cfpropertylist
+  confine :feature => :cfpropertylist
 
   has_feature :enableable
   has_feature :refreshable
@@ -147,7 +147,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         if job.respond_to?(:key) && job.key?("Label")
           @label_to_path_map[job["Label"]] = filepath
         else
-          #TRANSLATORS 'plist' and label' should not be translated
+          # TRANSLATORS 'plist' and label' should not be translated
           Puppet.debug(_("The %{file} plist does not contain a 'label' key; Puppet is skipping it") % { file: filepath })
           next
         end
@@ -281,7 +281,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     # always add -w so it always starts the job, it is a noop if it is not needed, this means we do
     # not have to rescan all launchd plists.
     cmds << "-w"
-    if self.enabled? == :false  || self.status == :stopped # launchctl won't load disabled jobs
+    if self.enabled? == :false || self.status == :stopped # launchctl won't load disabled jobs
       did_enable_job = true
     end
     cmds << job_path

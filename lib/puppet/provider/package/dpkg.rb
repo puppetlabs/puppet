@@ -135,8 +135,8 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
           "-W",
           "--showformat",
           self.class::DPKG_QUERY_PROVIDES_FORMAT_STRING
-          #the regex searches for the resource[:name] in the dpkquery result in which the Provides field is also available
-          #it will search for the packages only in the brackets ex: [rubygems]
+          # the regex searches for the resource[:name] in the dpkquery result in which the Provides field is also available
+          # it will search for the packages only in the brackets ex: [rubygems]
         ).lines.find {|package| package.match(/[\[ ](#{Regexp.escape(@resource[:name])})[\],]/)}
         if output
           hash = self.class.parse_line(output,self.class::FIELDS_REGEX_WITH_PROVIDES)

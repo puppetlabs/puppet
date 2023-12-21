@@ -48,9 +48,9 @@ module ModuleLoaders
     LibRootedFileBased.new(parent_loader,
                            loaders,
                            nil,
-                           puppet_lib,   # may or may not have a 'lib' above 'puppet'
+                           puppet_lib, # may or may not have a 'lib' above 'puppet'
                            'puppet_system',
-                           [:func_4x, :func_3x, :datatype]   # only load ruby functions and types from "puppet"
+                           [:func_4x, :func_3x, :datatype] # only load ruby functions and types from "puppet"
                           )
   end
 
@@ -134,7 +134,7 @@ module ModuleLoaders
       @loaders = loaders
       @loadables = loadables
       unless (loadables - LOADABLE_KINDS).empty?
-        #TRANSLATORS 'loadables' is a variable containing loadable modules and should not be translated
+        # TRANSLATORS 'loadables' is a variable containing loadable modules and should not be translated
         raise ArgumentError, _('given loadables are not of supported loadable kind')
       end
 

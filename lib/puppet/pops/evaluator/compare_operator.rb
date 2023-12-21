@@ -101,13 +101,13 @@ class CompareOperator
   end
 
   def cmp_Timespan(a, b)
-    raise ArgumentError.new(_('Timespans are only comparable to Timespans, Integers, and Floats')) unless b.is_a?(Time::Timespan) ||  b.is_a?(Integer) || b.is_a?(Float)
+    raise ArgumentError.new(_('Timespans are only comparable to Timespans, Integers, and Floats')) unless b.is_a?(Time::Timespan) || b.is_a?(Integer) || b.is_a?(Float)
 
     a <=> b
   end
 
   def cmp_Timestamp(a, b)
-    raise ArgumentError.new(_('Timestamps are only comparable to Timestamps, Integers, and Floats')) unless b.is_a?(Time::Timestamp) ||  b.is_a?(Integer) || b.is_a?(Float)
+    raise ArgumentError.new(_('Timestamps are only comparable to Timestamps, Integers, and Floats')) unless b.is_a?(Time::Timestamp) || b.is_a?(Integer) || b.is_a?(Float)
 
     a <=> b
   end

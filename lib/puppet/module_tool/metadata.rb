@@ -15,15 +15,15 @@ module Puppet::ModuleTool
     attr_accessor :module_name
 
     DEFAULTS = {
-      'name'          => nil,
-      'version'       => nil,
-      'author'        => nil,
-      'summary'       => nil,
-      'license'       => 'Apache-2.0',
-      'source'        => '',
-      'project_page'  => nil,
-      'issues_url'    => nil,
-      'dependencies'  => Set.new.freeze,
+      'name' => nil,
+      'version' => nil,
+      'author' => nil,
+      'summary' => nil,
+      'license' => 'Apache-2.0',
+      'source' => '',
+      'project_page' => nil,
+      'issues_url' => nil,
+      'dependencies' => Set.new.freeze,
       'data_provider' => nil,
     }
 
@@ -181,7 +181,7 @@ module Puppet::ModuleTool
               _("the module name must begin with a letter")
             else
               _("the namespace contains non-alphanumeric characters")
-      end
+            end
 
       raise ArgumentError, _("Invalid 'name' field in metadata.json: %{err}") % { err: err }
     end

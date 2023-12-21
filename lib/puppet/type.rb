@@ -466,12 +466,12 @@ class Type
 
     param = genclass(
       name,
-      :parent     => options[:parent] || Puppet::Parameter,
+      :parent => options[:parent] || Puppet::Parameter,
       :attributes => options[:attributes],
-      :block      => block,
-      :prefix     => "Parameter",
-      :array      => @parameters,
-      :hash       => @paramhash
+      :block => block,
+      :prefix => "Parameter",
+      :array => @parameters,
+      :hash => @paramhash
     )
 
     handle_param_options(name, options)
@@ -1725,7 +1725,7 @@ class Type
 
     if defaults.length > 1
       Puppet.warning(_("Found multiple default providers for %{name}: %{provider_list}; using %{selected_provider}") %
-                         { name: self.name, provider_list:  defaults.collect { |i| i.name.to_s }.join(", "), selected_provider: defaults[0].name })
+                         { name: self.name, provider_list: defaults.collect { |i| i.name.to_s }.join(", "), selected_provider: defaults[0].name })
     end
 
     @defaultprovider = defaults.shift unless defaults.empty?
@@ -1824,12 +1824,12 @@ class Type
 
     provider = genclass(
       name,
-      :parent     => parent,
-      :hash       => provider_hash,
-      :prefix     => "Provider",
-      :block      => block,
-      :include    => feature_module,
-      :extend     => feature_module,
+      :parent => parent,
+      :hash => provider_hash,
+      :prefix => "Provider",
+      :block => block,
+      :include => feature_module,
+      :extend => feature_module,
       :attributes => options
     )
 

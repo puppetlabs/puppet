@@ -136,8 +136,8 @@ module Puppet::Util::Windows::Process
             result = QueryFullProcessImageNameW(phandle, use_win32_path_format, exe_name_ptr, exe_name_length_ptr)
             if result == FFI::WIN32_FALSE
               raise Puppet::Util::Windows::Error.new(
-                      "QueryFullProcessImageNameW(phandle, #{use_win32_path_format}, " +
-                      "exe_name_ptr, #{max_chars}")
+                "QueryFullProcessImageNameW(phandle, #{use_win32_path_format}, " +
+                "exe_name_ptr, #{max_chars}")
             end
             image_name = exe_name_ptr.read_wide_string(exe_name_length_ptr.read_dword)
           end
@@ -210,7 +210,7 @@ module Puppet::Util::Windows::Process
 
     # extract each instance of LUID_AND_ATTRIBUTES
     0.upto(privileges[:count] - 1) do |i|
-      privileges[:privileges] <<  LUID_AND_ATTRIBUTES.new(privilege_ptr[i])
+      privileges[:privileges] << LUID_AND_ATTRIBUTES.new(privilege_ptr[i])
     end
 
     privileges

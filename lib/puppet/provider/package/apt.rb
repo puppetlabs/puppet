@@ -182,7 +182,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
   # What's the latest package version available?
   def latest
-    output = aptcache :policy,  @resource[:name]
+    output = aptcache :policy, @resource[:name]
 
     if output =~ /Candidate:\s+(\S+)\s/
       return $1
@@ -234,7 +234,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
     return false unless is && is != :absent
 
-    #if 'should' is a range and 'is' a debian version we should check if 'should' includes 'is'
+    # if 'should' is a range and 'is' a debian version we should check if 'should' includes 'is'
     should = @resource[:ensure]
 
     return false unless is.is_a?(String) && should.is_a?(String)

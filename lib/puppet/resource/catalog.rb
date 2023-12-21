@@ -203,11 +203,11 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
       resource_declaration = Puppet::Util::Errors.error_location(resource.file, resource.line)
       msg = if resource_declaration.empty?
-              #TRANSLATORS 'alias' should not be translated
+              # TRANSLATORS 'alias' should not be translated
               _("Cannot alias %{resource} to %{key}; resource %{newref} already declared") %
                   { resource: ref, key: key.inspect, newref: newref.inspect }
             else
-              #TRANSLATORS 'alias' should not be translated
+              # TRANSLATORS 'alias' should not be translated
               _("Cannot alias %{resource} to %{key} at %{resource_declaration}; resource %{newref} already declared") %
                   { resource: ref, key: key.inspect, resource_declaration: resource_declaration, newref: newref.inspect }
             end
@@ -380,7 +380,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     type_name = type.is_a?(Puppet::CompilableResourceType) || type.is_a?(Puppet::Resource::Type) ? type.name : type
     type_name, title = Puppet::Resource.type_and_title(type_name, title)
     type = type_name if type.is_a?(String)
-    title_key   = [type_name, title.to_s]
+    title_key = [type_name, title.to_s]
     result = @resource_table[title_key]
     if result.nil?
       # an instance has to be created in order to construct the unique key used when
@@ -479,16 +479,16 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     end
 
     {
-      'tags'      => tags.to_a,
-      'name'      => name,
-      'version'   => version,
-      'code_id'   => code_id,
+      'tags' => tags.to_a,
+      'name' => name,
+      'version' => version,
+      'code_id' => code_id,
       'catalog_uuid' => catalog_uuid,
       'catalog_format' => catalog_format,
-      'environment'  => environment.to_s,
+      'environment' => environment.to_s,
       'resources' => @resources.map { |v| @resource_table[v].to_data_hash },
-      'edges'     => edges.map { |e| e.to_data_hash },
-      'classes'   => classes,
+      'edges' => edges.map { |e| e.to_data_hash },
+      'classes' => classes,
     }.merge(metadata_hash.empty? ?
       {} : {'metadata' => metadata_hash}).merge(recursive_metadata_hash.empty? ?
         {} : {'recursive_metadata' => recursive_metadata_hash})

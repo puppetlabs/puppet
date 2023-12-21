@@ -207,8 +207,8 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     return formatter if formatter
 
     raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new(
-            _("No supported formats are acceptable (Accept: %{accepted_formats})") % { accepted_formats: formats.map(&:mime).join(', ') },
-            Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT)
+      _("No supported formats are acceptable (Accept: %{accepted_formats})") % { accepted_formats: formats.map(&:mime).join(', ') },
+      Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT)
   end
 
   # Return an array of response formatters that the client accepts and
@@ -236,7 +236,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       end
     end
 
-    #TRANSLATORS "mime-type" is a keyword and should not be translated
+    # TRANSLATORS "mime-type" is a keyword and should not be translated
     raise Puppet::Network::HTTP::Error::HTTPUnsupportedMediaTypeError.new(
       _("Client sent a mime-type (%{header}) that doesn't correspond to a format we support") % { header: request.headers['content-type'] },
       Puppet::Network::HTTP::Issues::UNSUPPORTED_MEDIA_TYPE)
@@ -246,11 +246,11 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     raise Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError.new(
       _("No support for http method %{http_method}") % { http_method: http_method }) unless METHOD_MAP[http_method]
 
-      method = METHOD_MAP[http_method][plurality(indirection)]
-      unless method
-        raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+    method = METHOD_MAP[http_method][plurality(indirection)]
+    unless method
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
         _("No support for plurality %{indirection} for %{http_method} operations") % { indirection: plurality(indirection), http_method: http_method })
-      end
+    end
 
     method
   end

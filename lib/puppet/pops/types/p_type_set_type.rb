@@ -39,23 +39,27 @@ class PTypeSetType < PMetaType
   TYPE_STRING_OR_VERSION = TypeFactory.variant(PStringType::NON_EMPTY, TypeFactory.sem_ver)
   TYPE_STRING_OR_RANGE = TypeFactory.variant(PStringType::NON_EMPTY, TypeFactory.sem_ver_range)
 
-  TYPE_TYPE_REFERENCE_I12N = TypeFactory.struct({
-    KEY_NAME => Pcore::TYPE_QUALIFIED_REFERENCE,
-    KEY_VERSION_RANGE => TYPE_STRING_OR_RANGE,
-    TypeFactory.optional(KEY_NAME_AUTHORITY) => Pcore::TYPE_URI,
-    TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
-  })
+  TYPE_TYPE_REFERENCE_I12N =
+    TypeFactory
+      .struct({
+                KEY_NAME => Pcore::TYPE_QUALIFIED_REFERENCE,
+                KEY_VERSION_RANGE => TYPE_STRING_OR_RANGE,
+                TypeFactory.optional(KEY_NAME_AUTHORITY) => Pcore::TYPE_URI,
+                TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
+              })
 
-  TYPE_TYPESET_I12N = TypeFactory.struct({
-    TypeFactory.optional(Pcore::KEY_PCORE_URI) => Pcore::TYPE_URI,
-    Pcore::KEY_PCORE_VERSION => TYPE_STRING_OR_VERSION,
-    TypeFactory.optional(KEY_NAME_AUTHORITY) => Pcore::TYPE_URI,
-    TypeFactory.optional(KEY_NAME) => Pcore::TYPE_QUALIFIED_REFERENCE,
-    TypeFactory.optional(KEY_VERSION) => TYPE_STRING_OR_VERSION,
-    TypeFactory.optional(KEY_TYPES) => TypeFactory.hash_kv(Pcore::TYPE_SIMPLE_TYPE_NAME, PVariantType.new([PTypeType::DEFAULT, PObjectType::TYPE_OBJECT_I12N]), PCollectionType::NOT_EMPTY_SIZE),
-    TypeFactory.optional(KEY_REFERENCES) => TypeFactory.hash_kv(Pcore::TYPE_SIMPLE_TYPE_NAME, TYPE_TYPE_REFERENCE_I12N, PCollectionType::NOT_EMPTY_SIZE),
-    TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS,
-  })
+  TYPE_TYPESET_I12N =
+    TypeFactory
+      .struct({
+                TypeFactory.optional(Pcore::KEY_PCORE_URI) => Pcore::TYPE_URI,
+                Pcore::KEY_PCORE_VERSION => TYPE_STRING_OR_VERSION,
+                TypeFactory.optional(KEY_NAME_AUTHORITY) => Pcore::TYPE_URI,
+                TypeFactory.optional(KEY_NAME) => Pcore::TYPE_QUALIFIED_REFERENCE,
+                TypeFactory.optional(KEY_VERSION) => TYPE_STRING_OR_VERSION,
+                TypeFactory.optional(KEY_TYPES) => TypeFactory.hash_kv(Pcore::TYPE_SIMPLE_TYPE_NAME, PVariantType.new([PTypeType::DEFAULT, PObjectType::TYPE_OBJECT_I12N]), PCollectionType::NOT_EMPTY_SIZE),
+                TypeFactory.optional(KEY_REFERENCES) => TypeFactory.hash_kv(Pcore::TYPE_SIMPLE_TYPE_NAME, TYPE_TYPE_REFERENCE_I12N, PCollectionType::NOT_EMPTY_SIZE),
+                TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS,
+              })
 
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'AnyType', '_pcore_init_hash' => TYPE_TYPESET_I12N.resolve(loader))
@@ -174,7 +178,7 @@ class PTypeSetType < PMetaType
   def _pcore_init_hash
     result = super()
     result[Pcore::KEY_PCORE_URI] = @pcore_uri unless @pcore_uri.nil?
-    result[Pcore::KEY_PCORE_VERSION] =  @pcore_version.to_s
+    result[Pcore::KEY_PCORE_VERSION] = @pcore_version.to_s
     result[KEY_NAME_AUTHORITY] = @name_authority unless @name_authority.nil?
     result[KEY_NAME] = @name
     result[KEY_VERSION] = @version.to_s unless @version.nil?
@@ -356,13 +360,15 @@ class PTypeSetType < PMetaType
     o.is_a?(PTypeSetType)
   end
 
-  DEFAULT = self.new({
-    KEY_NAME => 'DefaultTypeSet',
-    KEY_NAME_AUTHORITY => Pcore::RUNTIME_NAME_AUTHORITY,
-    Pcore::KEY_PCORE_URI => Pcore::PCORE_URI,
-    Pcore::KEY_PCORE_VERSION => Pcore::PCORE_VERSION,
-    KEY_VERSION => SemanticPuppet::Version.new(0,0,0)
-  })
+  DEFAULT =
+    self
+      .new({
+             KEY_NAME => 'DefaultTypeSet',
+             KEY_NAME_AUTHORITY => Pcore::RUNTIME_NAME_AUTHORITY,
+             Pcore::KEY_PCORE_URI => Pcore::PCORE_URI,
+             Pcore::KEY_PCORE_VERSION => Pcore::PCORE_VERSION,
+             KEY_VERSION => SemanticPuppet::Version.new(0,0,0)
+           })
 
   protected
 

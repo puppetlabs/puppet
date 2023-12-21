@@ -151,11 +151,6 @@ module DOT
     def each_option_pair
       @options.each_pair{ |key, val| yield key, val }
     end
-
-    #def parent=( thing )
-    #    @parent.delete( self ) if defined?( @parent ) and @parent
-    #    @parent = thing
-    #end
   end
 
   # This is used when we build nodes that have shape=record
@@ -212,13 +207,13 @@ module DOT
           }.join( "| \\\n" ) + " \\\n" +
           t + $tab + '"' + "\n"
 
-        t + "#{@name} [\n" +
-        @options.to_a.collect{ |i|
-          i[1] && i[0] != 'label' ?
-            t + $tab + "#{i[0]} = #{i[1]}" : nil
-        }.compact.join( ",\n" ) + ( label != '' ? ",\n" : "\n" ) +
-        label +
-        t + "]\n"
+      t + "#{@name} [\n" +
+      @options.to_a.collect{ |i|
+        i[1] && i[0] != 'label' ?
+          t + $tab + "#{i[0]} = #{i[1]}" : nil
+      }.compact.join( ",\n" ) + ( label != '' ? ",\n" : "\n" ) +
+      label +
+      t + "]\n"
     end
 
     private
@@ -273,10 +268,10 @@ module DOT
   # This is a graph.
 
   class DOTDigraph < DOTSubgraph
-  def initialize(params = {}, option_list = GRAPH_OPTS)
-    super(params, option_list)
-    @dot_string = 'digraph'
-  end
+    def initialize(params = {}, option_list = GRAPH_OPTS)
+      super(params, option_list)
+      @dot_string = 'digraph'
+    end
   end
 
   # This is an edge.

@@ -53,13 +53,13 @@ module LexerSupport
 
   def lex_warning(issue, args = {}, pos=nil)
     Puppet::Util::Log.create({
-        :level => :warning,
-        :message => issue.format(args),
-        :issue_code => issue.issue_code,
-        :file => filename,
-        :line => line(pos),
-        :pos => position(pos),
-      })
+                               :level => :warning,
+                               :message => issue.format(args),
+                               :issue_code => issue.issue_code,
+                               :file => filename,
+                               :line => line(pos),
+                               :pos => position(pos),
+                             })
   end
 
   # @param issue [Issues::Issue] the issue
@@ -68,13 +68,13 @@ module LexerSupport
   # @return [Puppet::ParseErrorWithIssue] the created error
   def create_lex_error(issue, args = {}, pos = nil)
     Puppet::ParseErrorWithIssue.new(
-        issue.format(args),
-        filename,
-        line(pos),
-        position(pos),
-        nil,
-        issue.issue_code,
-        args)
+      issue.format(args),
+      filename,
+      line(pos),
+      position(pos),
+      nil,
+      issue.issue_code,
+      args)
   end
 
   # Asserts that the given string value is a float, or an integer in decimal, octal or hex form.
@@ -197,8 +197,8 @@ module LexerSupport
 
     lex_error_without_pos(
       Puppet::Pops::Issues::ILLEGAL_BOM,
-      { :format_name   => name,
-        :bytes  => "[#{bom.values[0,size].map {|b| "%X" % b}.join(" ")}]"
+      { :format_name => name,
+        :bytes => "[#{bom.values[0,size].map {|b| "%X" % b}.join(" ")}]"
       })
   end
 

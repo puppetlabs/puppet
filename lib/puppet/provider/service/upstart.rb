@@ -3,7 +3,7 @@
 Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   START_ON = /^\s*start\s+on/
   COMMENTED_START_ON = /^\s*#+\s*start\s+on/
-  MANUAL   = /^\s*manual\s*$/
+  MANUAL = /^\s*manual\s*$/
 
   desc "Ubuntu service management with `upstart`.
 
@@ -21,10 +21,10 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   defaultfor 'os.name' => :ubuntu, 'os.release.major' => ["10.04", "12.04", "14.04", "14.10"]
   defaultfor 'os.name' => :LinuxMint, 'os.release.major' => ["10", "11", "12", "13", "14", "15", "16", "17"]
 
-  commands :start   => "/sbin/start",
-           :stop    => "/sbin/stop",
+  commands :start => "/sbin/start",
+           :stop => "/sbin/stop",
            :restart => "/sbin/restart",
-           :status_exec  => "/sbin/status",
+           :status_exec => "/sbin/status",
            :initctl => "/sbin/initctl"
 
   # We only want to use upstart as our provider if the upstart daemon is running.
@@ -174,7 +174,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def statuscmd
-    is_upstart? ? nil : super #this is because upstart is broken with its return codes
+    is_upstart? ? nil : super # this is because upstart is broken with its return codes
   end
 
   def status

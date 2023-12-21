@@ -24,10 +24,10 @@ class Puppet::Util::Log
   def self.newdesttype(name, options = {}, &block)
     dest = genclass(
       name,
-      :parent     => Puppet::Util::Log::Destination,
-      :prefix     => "Dest",
-      :block      => block,
-      :hash       => @desttypes,
+      :parent => Puppet::Util::Log::Destination,
+      :prefix => "Dest",
+      :block => block,
+      :hash => @desttypes,
       :attributes => options
     )
     dest.match(dest.name)
@@ -63,7 +63,7 @@ class Puppet::Util::Log
     @destinations.keys.each { |dest|
       close(dest)
     }
-    #TRANSLATORS "Log.close_all" is a method name and should not be translated
+    # TRANSLATORS "Log.close_all" is a method name and should not be translated
     raise Puppet::DevError.new(_("Log.close_all failed to close %{destinations}") % { destinations: @destinations.keys.inspect }) if !@destinations.empty?
   end
 
@@ -372,16 +372,16 @@ class Puppet::Util::Log
   end
 
   def message=(msg)
-    #TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
+    # TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
     raise ArgumentError, _("Puppet::Util::Log requires a message") unless msg
 
     @message = msg.to_s
   end
 
   def level=(level)
-    #TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
+    # TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
     raise ArgumentError, _("Puppet::Util::Log requires a log level") unless level
-    #TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
+    # TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
     raise ArgumentError, _("Puppet::Util::Log requires a symbol or string") unless level.respond_to? "to_sym"
 
     @level = level.to_sym

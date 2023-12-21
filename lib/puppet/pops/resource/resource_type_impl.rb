@@ -90,7 +90,7 @@ class ResourceTypeImpl
     :before,
     :notify,
     :stage
-    ].freeze
+  ].freeze
 
   # Speed up lookup
   METAPARAMSET = Set.new(METAPARAMS).freeze

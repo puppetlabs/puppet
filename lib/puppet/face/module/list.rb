@@ -64,7 +64,7 @@ Puppet::Face.define(:module, '1.0.0') do
       modules_by_path = environment.modules_by_path
 
       {
-        :environment     => environment,
+        :environment => environment,
         :modules_by_path => modules_by_path,
         :unmet_dependencies => unmet_dependencies(environment),
       }
@@ -93,9 +93,9 @@ Puppet::Face.define(:module, '1.0.0') do
                                  :label_unmet => true, :path => path, :label_invalid => false)
         else
           tree = []
-          modules.sort_by { |mod| mod.forge_name or mod.name  }.each do |mod|
+          modules.sort_by { |mod| mod.forge_name or mod.name }.each do |mod|
             tree << list_build_node(mod, path, :label_unmet => false,
-                      :path => path, :label_invalid => true)
+                                               :path => path, :label_invalid => true)
           end
         end
 
@@ -135,7 +135,7 @@ Puppet::Face.define(:module, '1.0.0') do
             msg = _("'%{parent_name}' (%{parent_version}) requires '%{dependency_name}' (%{dependency_version})") % { parent_name: parent_name, parent_version: parent_version, dependency_name: dep_name, dependency_version: version_constraint }
             unmet_deps[type][dep[:name]][:errors] << msg
             unmet_deps[type][dep[:name]][:parent] = {
-              :name    => dep[:parent][:name],
+              :name => dep[:parent][:name],
               :version => parent_version
             }
             unmet_deps[type][dep[:name]][:version] = installed_version

@@ -57,14 +57,14 @@ module Pal
   # @yieldparam [Puppet::Pal::ScriptCompiler] compiler, a ScriptCompiler to perform operations on.
   #
   def self.with_script_compiler(
-      configured_by_env: false,
+    configured_by_env: false,
       manifest_file:     nil,
       code_string:       nil,
       facts:             {},
       variables:         {},
       set_local_facts:   true,
       &block
-    )
+  )
     # TRANSLATORS: do not translate variable name strings in these assertions
     assert_mutually_exclusive(manifest_file, code_string, 'manifest_file', 'code_string')
     assert_non_empty_string(manifest_file, 'manifest_file', true)
@@ -97,11 +97,11 @@ module Pal
     # If manifest_file is nil, the #main method will use the env configured manifest
     # to do things in the block while a Script Compiler is in effect
     main(
-      manifest:                manifest_file,
-      facts:                   facts,
-      variables:               variables,
+      manifest: manifest_file,
+      facts: facts,
+      variables: variables,
       internal_compiler_class: :script,
-      set_local_facts:         set_local_facts,
+      set_local_facts: set_local_facts,
       &block
     )
   ensure
@@ -206,12 +206,12 @@ module Pal
     # If manifest_file is nil, the #main method will use the env configured manifest
     # to do things in the block while a Script Compiler is in effect
     main(
-      manifest:                manifest_file,
-      facts:                   facts,
-      variables:               variables,
-      target_variables:        target_variables,
+      manifest: manifest_file,
+      facts: facts,
+      variables: variables,
+      target_variables: target_variables,
       internal_compiler_class: :catalog,
-      set_local_facts:         false,
+      set_local_facts: false,
       &block
     )
   ensure
@@ -280,7 +280,7 @@ module Pal
   #
   # @api public
   def self.in_environment(env_name,
-      modulepath:    nil,
+      modulepath: nil,
       pre_modulepath: [],
       post_modulepath: [],
       settings_hash: {},

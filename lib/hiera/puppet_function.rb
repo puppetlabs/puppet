@@ -23,7 +23,7 @@ class Hiera::PuppetFunction < Puppet::Functions::InternalFunction
       scope_param
       param 'String',:key
       param 'Any',   :default
-      optional_param 'Any',   :override
+      optional_param 'Any', :override
     end
 
     dispatch :hiera_block1 do
@@ -62,7 +62,7 @@ class Hiera::PuppetFunction < Puppet::Functions::InternalFunction
 
   def lookup(scope, key, default, has_default, override, &default_block)
     unless Puppet[:strict] == :off
-      #TRANSLATORS 'lookup' is a puppet function and should not be translated
+      # TRANSLATORS 'lookup' is a puppet function and should not be translated
       message = _("The function '%{class_name}' is deprecated in favor of using 'lookup'.") % { class_name: self.class.name }
       message += ' '+ _("See https://puppet.com/docs/puppet/%{minor_version}/deprecated_language.html") %
           { minor_version: Puppet.minor_version }

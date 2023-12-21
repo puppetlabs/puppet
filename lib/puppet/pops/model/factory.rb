@@ -695,7 +695,7 @@ class Factory
 
   def self.block(*args);                 new(BlockExpression, args.map { |arg| infer(arg) }); end
 
-  def self.string(*args);                new(ConcatenatedString, args.map { |arg| infer(arg) });           end
+  def self.string(*args);                new(ConcatenatedString, args.map { |arg| infer(arg) }); end
 
   def self.text(o);                      infer(o).text;                                  end
 
@@ -810,7 +810,7 @@ class Factory
       end
     else
       # Bad number should already have been caught by lexer - this should never happen
-      #TRANSLATORS 'NUMBER' refers to a method name and the 'name_or_numeric' was the passed in value and should not be translated
+      # TRANSLATORS 'NUMBER' refers to a method name and the 'name_or_numeric' was the passed in value and should not be translated
       raise ArgumentError, _("Internal Error, NUMBER token does not contain a valid number, %{name_or_numeric}") %
           { name_or_numeric: name_or_numeric }
     end
@@ -972,19 +972,19 @@ class Factory
     'realize' => true,
     'include' => true,
     'contain' => true,
-    'tag'     => true,
+    'tag' => true,
 
-    'debug'   => true,
-    'info'    => true,
-    'notice'  => true,
+    'debug' => true,
+    'info' => true,
+    'notice' => true,
     'warning' => true,
-    'err'     => true,
+    'err' => true,
 
-    'fail'    => true,
-    'import'  => true,  # discontinued, but transform it to make it call error reporting function
-    'break'   => true,
-    'next'    => true,
-    'return'  => true
+    'fail' => true,
+    'import' => true, # discontinued, but transform it to make it call error reporting function
+    'break' => true,
+    'next' => true,
+    'return' => true
   }.freeze
 
   # Returns true if the given name is a "statement keyword" (require, include, contain,

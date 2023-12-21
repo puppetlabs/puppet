@@ -370,7 +370,7 @@ module Puppet::Util::Windows
               FINAL_STATES[pending_state] == final_state
             end
             if possible_pending_states.include?(initial_state)
-              Puppet.debug _("There is already a pending transition to the %{final_state} state for the %{service_name} service.")  % { final_state: SERVICE_STATES[final_state], service_name: service_name }
+              Puppet.debug _("There is already a pending transition to the %{final_state} state for the %{service_name} service.") % { final_state: SERVICE_STATES[final_state], service_name: service_name }
               wait_on_pending_state(service, initial_state, timeout)
 
               next

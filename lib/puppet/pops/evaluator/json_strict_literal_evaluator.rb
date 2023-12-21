@@ -19,7 +19,7 @@
 #   * String with interpolation
 #
 class Puppet::Pops::Evaluator::JsonStrictLiteralEvaluator
-  #include Puppet::Pops::Utils
+  # include Puppet::Pops::Utils
 
   COMMA_SEPARATOR = ', '
 

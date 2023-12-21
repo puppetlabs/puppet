@@ -57,17 +57,17 @@ module Logging
       # Retain all detailed info and keep plain message and stacktrace separate
       backtrace = build_exception_trace(exception, combined_trace, puppet_trace)
       Puppet::Util::Log.create({
-          :level => level,
-          :source => log_source,
-          :message => exception.basic_message,
-          :issue_code => exception.issue_code,
-          :backtrace => backtrace.empty? ? nil : backtrace,
-          :file => exception.file,
-          :line => exception.line,
-          :pos => exception.pos,
-          :environment => exception.environment,
-          :node => exception.node
-        }.merge(log_metadata))
+        :level => level,
+        :source => log_source,
+        :message => exception.basic_message,
+        :issue_code => exception.issue_code,
+        :backtrace => backtrace.empty? ? nil : backtrace,
+        :file => exception.file,
+        :line => exception.line,
+        :pos => exception.pos,
+        :environment => exception.environment,
+        :node => exception.node
+      }.merge(log_metadata))
     else
       send_log(level, format_exception(exception, message, combined_trace, puppet_trace))
     end
@@ -159,7 +159,7 @@ module Logging
     key = options[:key]
     file = options[:file]
     line = options[:line]
-    #TRANSLATORS the literals ":file", ":line", and ":key" should not be translated
+    # TRANSLATORS the literals ":file", ":line", and ":key" should not be translated
     raise Puppet::DevError, _("Need either :file and :line, or :key") if (key.nil?) && (file.nil? || line.nil?)
 
     key ||= "#{file}:#{line}"

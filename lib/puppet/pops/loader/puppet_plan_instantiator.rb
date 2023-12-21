@@ -87,8 +87,8 @@ class PuppetPlanInstantiator
     Puppet::Functions.create_function(plan_definition.name, Puppet::Functions::PuppetFunction) do
       # TODO: should not create a new evaluator per function
       init_dispatch(Evaluator::Closure::Named.new(
-        plan_definition.name,
-        Evaluator::EvaluatorImpl.new(), plan_definition))
+                      plan_definition.name,
+                      Evaluator::EvaluatorImpl.new(), plan_definition))
     end
   end
 end

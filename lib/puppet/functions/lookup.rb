@@ -213,12 +213,12 @@ Puppet::Functions.create_function(:lookup, Puppet::Functions::InternalFunction) 
 
   def hash_args(options_hash)
     [
-        options_hash['value_type'],
-        options_hash['default_value'],
-        options_hash.include?('default_value'),
-        options_hash['override'] || {},
-        options_hash['default_values_hash'] || {},
-        options_hash['merge']
+      options_hash['value_type'],
+      options_hash['default_value'],
+      options_hash.include?('default_value'),
+      options_hash['override'] || {},
+      options_hash['default_values_hash'] || {},
+      options_hash['merge']
     ]
   end
 end

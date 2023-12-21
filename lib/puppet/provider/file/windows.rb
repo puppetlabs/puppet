@@ -103,16 +103,16 @@ Puppet::Type.type(:file).provide :windows do
   def munge_windows_system_group(current, should)
     [
       {
-        'type'        => 'group',
-        'resource'    => resource[:group],
+        'type' => 'group',
+        'resource' => resource[:group],
         'set_to_user' => group,
         'fullcontrol' => "070".to_i(8),
         'remove_mask' => "707".to_i(8),
         'should_mask' => (should[0].to_i(8) & "070".to_i(8)),
       },
       {
-        'type'        => 'owner',
-        'resource'    => resource[:owner],
+        'type' => 'owner',
+        'resource' => resource[:owner],
         'set_to_user' => owner,
         'fullcontrol' => "700".to_i(8),
         'remove_mask' => "077".to_i(8),
@@ -128,7 +128,7 @@ Puppet::Type.type(:file).provide :windows do
         else
           # If the SYSTEM account does _not_ have FullControl in this scenario, we should
           # force the resource out of sync no matter what.
-          #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+          # TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
           Puppet.debug { _("%{resource_name}: %{mode_part_type} set to SYSTEM. SYSTEM permissions cannot be set below FullControl ('7')") % { resource_name: resource[:name], mode_part_type: mode_part['type']} }
           return nil
         end

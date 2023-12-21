@@ -80,7 +80,7 @@ class Puppet::Parser::Compiler
     @catalog.add_resource(resource)
 
     if not resource.class? and resource[:stage]
-      #TRANSLATORS "stage" is a keyword in Puppet and should not be translated
+      # TRANSLATORS "stage" is a keyword in Puppet and should not be translated
       raise ArgumentError, _("Only classes can set 'stage'; normal resources like %{resource} cannot change run stage") % { resource: resource }
     end
 
@@ -130,7 +130,7 @@ class Puppet::Parser::Compiler
 
       Puppet::Util::Profiler.profile(_("Compile: Created settings scope"), [:compiler, :create_settings_scope]) { create_settings_scope }
 
-      #TRANSLATORS "main" is a function name and should not be translated
+      # TRANSLATORS "main" is a function name and should not be translated
       Puppet::Util::Profiler.profile(_("Compile: Evaluated main"), [:compiler, :evaluate_main]) { evaluate_main }
 
       Puppet::Util::Profiler.profile(_("Compile: Evaluated AST node"), [:compiler, :evaluate_ast_node]) { evaluate_ast_node }
@@ -167,8 +167,8 @@ class Puppet::Parser::Compiler
   def context_overrides()
     {
       :current_environment => environment,
-      :global_scope => @topscope,             # 4x placeholder for new global scope
-      :loaders  => @loaders,                  # 4x loaders
+      :global_scope => @topscope, # 4x placeholder for new global scope
+      :loaders => @loaders, # 4x loaders
     }
   end
 
@@ -207,7 +207,7 @@ class Puppet::Parser::Compiler
   # @api private
   def evaluate_ast_node
     krt = environment.known_resource_types
-    return unless krt.nodes? #ast_nodes?
+    return unless krt.nodes? # ast_nodes?
 
     # Now see if we can find the node.
     astnode = nil
@@ -457,7 +457,7 @@ class Puppet::Parser::Compiler
   def add_resource_metaparams
     main = catalog.resource(:class, :main)
     unless main
-      #TRANSLATORS "main" is a function name and should not be translated
+      # TRANSLATORS "main" is a function name and should not be translated
       raise _("Couldn't find main")
     end
 

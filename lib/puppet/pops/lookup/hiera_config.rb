@@ -163,7 +163,7 @@ class HieraConfig
     else
       issue = Issues::HIERA_UNSUPPORTED_VERSION
       raise Puppet::DataBinding::LookupError.new(
-        issue.format(:version => version),  config_path, nil, nil, nil, issue.issue_code)
+        issue.format(:version => version), config_path, nil, nil, nil, issue.issue_code)
     end
   end
 
@@ -184,7 +184,7 @@ class HieraConfig
 
   def fail(issue, args = EMPTY_HASH, line = nil)
     raise Puppet::DataBinding::LookupError.new(
-      issue.format(args.merge(:label => self)),  @config_path, line, nil, nil, issue.issue_code)
+      issue.format(args.merge(:label => self)), @config_path, line, nil, nil, issue.issue_code)
   end
 
   def has_default_hierarchy?
@@ -429,7 +429,7 @@ class HieraConfigV3 < HieraConfig
     data_providers.values
   end
 
-  DEFAULT_CONFIG_HASH =  {
+  DEFAULT_CONFIG_HASH = {
     KEY_BACKENDS => %w(yaml),
     KEY_HIERARCHY => %w(nodes/%{::trusted.certname} common),
     KEY_MERGE_BEHAVIOR => 'native'
@@ -491,17 +491,18 @@ class HieraConfigV4 < HieraConfig
     tf = Types::TypeFactory
     nes_t = Types::PStringType::NON_EMPTY
 
-    @@CONFIG_TYPE = tf.struct({
-      KEY_VERSION => tf.range(4, 4),
-      tf.optional(KEY_DATADIR) => nes_t,
-      tf.optional(KEY_HIERARCHY) => tf.array_of(tf.struct(
-        KEY_BACKEND => nes_t,
-        KEY_NAME => nes_t,
-        tf.optional(KEY_DATADIR) => nes_t,
-        tf.optional(KEY_PATH) => nes_t,
-        tf.optional(KEY_PATHS) => tf.array_of(nes_t)
-      ))
-    })
+    @@CONFIG_TYPE =
+      tf.struct({
+                  KEY_VERSION => tf.range(4, 4),
+                  tf.optional(KEY_DATADIR) => nes_t,
+                  tf.optional(KEY_HIERARCHY) => tf.array_of(tf.struct(
+                                                              KEY_BACKEND => nes_t,
+                                                              KEY_NAME => nes_t,
+                                                              tf.optional(KEY_DATADIR) => nes_t,
+                                                              tf.optional(KEY_PATH) => nes_t,
+                                                              tf.optional(KEY_PATHS) => tf.array_of(nes_t)
+                                                            ))
+                })
   end
 
   def create_configured_data_providers(lookup_invocation, parent_data_provider, _)
@@ -577,39 +578,41 @@ class HieraConfigV5 < HieraConfig
     # The option name must start with a letter and end with a letter or digit. May contain underscore and dash.
     option_name_t = tf.pattern(/\A[A-Za-z](:?[0-9A-Za-z_-]*[0-9A-Za-z])?\z/)
 
-    hierarchy_t = tf.array_of(tf.struct(
-      {
-        KEY_NAME => nes_t,
-        tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
-        tf.optional(KEY_DATA_HASH) => nes_t,
-        tf.optional(KEY_LOOKUP_KEY) => nes_t,
-        tf.optional(KEY_V3_BACKEND) => nes_t,
-        tf.optional(KEY_V4_DATA_HASH) => nes_t,
-        tf.optional(KEY_DATA_DIG) => nes_t,
-        tf.optional(KEY_PATH) => nes_t,
-        tf.optional(KEY_PATHS) => tf.array_of(nes_t, tf.range(1, :default)),
-        tf.optional(KEY_GLOB) => nes_t,
-        tf.optional(KEY_GLOBS) => tf.array_of(nes_t, tf.range(1, :default)),
-        tf.optional(KEY_URI) => uri_t,
-        tf.optional(KEY_URIS) => tf.array_of(uri_t, tf.range(1, :default)),
-        tf.optional(KEY_MAPPED_PATHS) => tf.array_of(nes_t, tf.range(3, 3)),
-        tf.optional(KEY_DATADIR) => nes_t
-      }))
+    hierarchy_t =
+      tf.array_of(tf.struct(
+                    {
+                      KEY_NAME => nes_t,
+                      tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
+                      tf.optional(KEY_DATA_HASH) => nes_t,
+                      tf.optional(KEY_LOOKUP_KEY) => nes_t,
+                      tf.optional(KEY_V3_BACKEND) => nes_t,
+                      tf.optional(KEY_V4_DATA_HASH) => nes_t,
+                      tf.optional(KEY_DATA_DIG) => nes_t,
+                      tf.optional(KEY_PATH) => nes_t,
+                      tf.optional(KEY_PATHS) => tf.array_of(nes_t, tf.range(1, :default)),
+                      tf.optional(KEY_GLOB) => nes_t,
+                      tf.optional(KEY_GLOBS) => tf.array_of(nes_t, tf.range(1, :default)),
+                      tf.optional(KEY_URI) => uri_t,
+                      tf.optional(KEY_URIS) => tf.array_of(uri_t, tf.range(1, :default)),
+                      tf.optional(KEY_MAPPED_PATHS) => tf.array_of(nes_t, tf.range(3, 3)),
+                      tf.optional(KEY_DATADIR) => nes_t
+                    }))
 
-    @@CONFIG_TYPE = tf.struct({
-      KEY_VERSION => tf.range(5, 5),
-      tf.optional(KEY_DEFAULTS) => tf.struct(
-        {
-          tf.optional(KEY_DATA_HASH) => nes_t,
-          tf.optional(KEY_LOOKUP_KEY) => nes_t,
-          tf.optional(KEY_DATA_DIG) => nes_t,
-          tf.optional(KEY_DATADIR) => nes_t,
-          tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
-        }),
-      tf.optional(KEY_HIERARCHY) => hierarchy_t,
-      tf.optional(KEY_PLAN_HIERARCHY) => hierarchy_t,
-      tf.optional(KEY_DEFAULT_HIERARCHY) => hierarchy_t
-    })
+    @@CONFIG_TYPE =
+      tf.struct({
+                  KEY_VERSION => tf.range(5, 5),
+                  tf.optional(KEY_DEFAULTS) => tf.struct(
+                    {
+                      tf.optional(KEY_DATA_HASH) => nes_t,
+                      tf.optional(KEY_LOOKUP_KEY) => nes_t,
+                      tf.optional(KEY_DATA_DIG) => nes_t,
+                      tf.optional(KEY_DATADIR) => nes_t,
+                      tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
+                    }),
+                  tf.optional(KEY_HIERARCHY) => hierarchy_t,
+                  tf.optional(KEY_PLAN_HIERARCHY) => hierarchy_t,
+                  tf.optional(KEY_DEFAULT_HIERARCHY) => hierarchy_t
+                })
   end
 
   def create_configured_data_providers(lookup_invocation, parent_data_provider, use_default_hierarchy)
@@ -686,16 +689,22 @@ class HieraConfigV5 < HieraConfig
       if(function_kind == KEY_V3_BACKEND)
         v3options = { :datadir => entry_datadir.to_s }
         options.each_pair { |k, v| v3options[k.to_sym] = v }
-        data_providers[name] = create_hiera3_backend_provider(name, function_name, parent_data_provider, entry_datadir, locations, {
-          :hierarchy =>
-            locations.nil? ? [] : locations.map do |loc|
-              path = loc.original_location
-              path.end_with?(".#{function_name}") ? path[0..-(function_name.length + 2)] : path
-            end,
-          function_name.to_sym => v3options,
-          :backends => [ function_name ],
-          :logger => 'puppet'
-        })
+        data_providers[name] =
+          create_hiera3_backend_provider(name,
+                                         function_name,
+                                         parent_data_provider,
+                                         entry_datadir,
+                                         locations,
+                                         {
+                                           :hierarchy =>
+                                             locations.nil? ? [] : locations.map do |loc|
+                                               path = loc.original_location
+                                               path.end_with?(".#{function_name}") ? path[0..-(function_name.length + 2)] : path
+                                             end,
+                                           function_name.to_sym => v3options,
+                                           :backends => [ function_name ],
+                                           :logger => 'puppet'
+                                         })
       else
         data_providers[name] = create_data_provider(name, parent_data_provider, function_kind, function_name, options, locations)
       end
@@ -764,7 +773,7 @@ class HieraConfigV5 < HieraConfig
         fail(Issues::HIERA_V3_BACKEND_NOT_GLOBAL, EMPTY_HASH, find_line_matching(/\s+#{KEY_V3_BACKEND}:/))
       end
 
-      if v3_backend == 'json' || v3_backend == 'yaml' || v3_backend == 'hocon' &&  Puppet.features.hocon?
+      if v3_backend == 'json' || v3_backend == 'yaml' || v3_backend == 'hocon' && Puppet.features.hocon?
         # Disallow use of backends that have corresponding "data_hash" functions in version 5
         fail(Issues::HIERA_V3_BACKEND_REPLACED_BY_DATA_HASH, { :function_name => v3_backend },
              find_line_matching(/\s+#{KEY_V3_BACKEND}:\s*['"]?#{v3_backend}(?:[^\w]|$)/))

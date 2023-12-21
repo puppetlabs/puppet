@@ -51,7 +51,7 @@ class Puppet::FileServing::Fileset
     end
 
     raise ArgumentError.new(_("Fileset paths must exist")) unless valid?(path)
-    #TRANSLATORS "recurse" and "recurselimit" are parameter names and should not be translated
+    # TRANSLATORS "recurse" and "recurselimit" are parameter names and should not be translated
     raise ArgumentError.new(_("Fileset recurse parameter must not be a number anymore, please use recurselimit")) if @recurse.is_a?(Integer)
   end
 
@@ -90,7 +90,7 @@ class Puppet::FileServing::Fileset
 
   def links=(links)
     links = links.to_sym
-    #TRANSLATORS ":links" is a parameter name and should not be translated
+    # TRANSLATORS ":links" is a parameter name and should not be translated
     raise(ArgumentError, _("Invalid :links value '%{links}'") % { links: links }) unless [:manage, :follow].include?(links)
 
     @links = links
@@ -164,7 +164,7 @@ class Puppet::FileServing::Fileset
 
     result = []
 
-    while entry = current_dirs.shift #rubocop:disable Lint/AssignmentInCondition
+    while entry = current_dirs.shift # rubocop:disable Lint/AssignmentInCondition
       if continue_recursion_at?(entry.depth + 1)
         entry.children.each do |child|
           result << child.path

@@ -62,7 +62,7 @@ class Puppet::Pops::Model::AstTransformer
   # Transforms pops expressions into AST 3.1 statements/expressions
   def transform(o)
     begin
-    @@transform_visitor.visit_this_0(self,o)
+      @@transform_visitor.visit_this_0(self,o)
     rescue StandardError => e
       loc_data = {}
       merge_location(loc_data, o)

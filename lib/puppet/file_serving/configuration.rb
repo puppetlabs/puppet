@@ -20,11 +20,11 @@ class Puppet::FileServing::Configuration
 
   Mount = Puppet::FileServing::Mount
 
-  private_class_method  :new
+  private_class_method :new
 
   attr_reader :mounts
 
-  #private :mounts
+  # private :mounts
 
   # Find the right mount.  Does some shenanigans to support old-style module
   # mounts.

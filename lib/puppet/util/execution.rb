@@ -139,16 +139,16 @@ module Puppet::Util::Execution
     # specifying these here rather than in the method signature to allow callers to pass in a partial
     # set of overrides without affecting the default values for options that they don't pass in
     default_options = {
-        :failonfail => NoOptionsSpecified.equal?(options),
-        :uid => nil,
-        :gid => nil,
-        :combine => NoOptionsSpecified.equal?(options),
-        :stdinfile => nil,
-        :squelch => false,
-        :override_locale => true,
-        :custom_environment => {},
-        :sensitive => false,
-        :suppress_window => false,
+      :failonfail => NoOptionsSpecified.equal?(options),
+      :uid => nil,
+      :gid => nil,
+      :combine => NoOptionsSpecified.equal?(options),
+      :stdinfile => nil,
+      :squelch => false,
+      :override_locale => true,
+      :custom_environment => {},
+      :sensitive => false,
+      :suppress_window => false,
     }
 
     options = default_options.merge(options)
@@ -229,7 +229,7 @@ module Puppet::Util::Execution
             # below will use maximum CPU available.
 
             wait_flags = Process::WNOHANG
-            until results = Process.waitpid2(child_pid, wait_flags) #rubocop:disable Lint/AssignmentInCondition
+            until results = Process.waitpid2(child_pid, wait_flags) # rubocop:disable Lint/AssignmentInCondition
 
               # If not done, wait for data to read with a timeout
               # This timeout is selected to keep activity low while waiting on

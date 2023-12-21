@@ -57,10 +57,10 @@ class Puppet::Reports
     name = name.intern
 
     mod = genmodule(name,
-                    :extend    => Puppet::Util::Docs,
-                    :hash      => instance_hash(:report),
+                    :extend => Puppet::Util::Docs,
+                    :hash => instance_hash(:report),
                     :overwrite => true,
-                    :block     => block)
+                    :block => block)
 
     mod.useyaml = true if options[:useyaml]
 

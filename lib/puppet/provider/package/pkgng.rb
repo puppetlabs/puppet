@@ -49,15 +49,15 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
 
   def self.parse_pkg_query_line(line)
     name, version, origin = line.chomp.split(' ', 3)
-    latest_version  = get_latest_version(origin) || version
+    latest_version = get_latest_version(origin) || version
 
     {
-      :ensure   => version,
-      :name     => name,
+      :ensure => version,
+      :name => name,
       :provider => self.name,
-      :origin   => origin,
-      :version  => version,
-      :latest   => latest_version
+      :origin => origin,
+      :version => version,
+      :latest => latest_version
     }
   end
 

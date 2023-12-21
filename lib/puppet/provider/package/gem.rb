@@ -144,8 +144,8 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
       gem_name = $1
       versions = $2.sub('default: ', '').split(/,\s*/)
       {
-        :name     => gem_name,
-        :ensure   => versions.map{|v| v.split[0]},
+        :name => gem_name,
+        :ensure => versions.map{|v| v.split[0]},
         :provider => name
       }
     else

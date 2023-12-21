@@ -58,14 +58,14 @@ class Puppet::Settings
   # returns reasonable application default settings values for a given run_mode.
   def self.app_defaults_for_run_mode(run_mode)
     {
-        :name      => run_mode.to_s,
-        :run_mode  => run_mode.name,
-        :confdir   => run_mode.conf_dir,
-        :codedir   => run_mode.code_dir,
-        :vardir    => run_mode.var_dir,
-        :publicdir => run_mode.public_dir,
-        :rundir    => run_mode.run_dir,
-        :logdir    => run_mode.log_dir,
+      :name => run_mode.to_s,
+      :run_mode => run_mode.name,
+      :confdir => run_mode.conf_dir,
+      :codedir => run_mode.code_dir,
+      :vardir => run_mode.var_dir,
+      :publicdir => run_mode.public_dir,
+      :rundir => run_mode.run_dir,
+      :logdir => run_mode.log_dir,
     }
   end
 
@@ -360,7 +360,7 @@ class Puppet::Settings
 
     # remove run_mode options from the arguments so that later parses don't think
     # it is an unknown option.
-    while option_index = args.index('--run_mode') do #rubocop:disable Lint/AssignmentInCondition
+    while option_index = args.index('--run_mode') do # rubocop:disable Lint/AssignmentInCondition
       args.delete_at option_index
       args.delete_at option_index
     end
@@ -432,8 +432,8 @@ class Puppet::Settings
         setting.handle(self.value(setting.name))
       rescue InterpolationError => err
         raise InterpolationError, err.message, err.backtrace unless options[:ignore_interpolation_dependency_errors]
-        #swallow. We're not concerned if we can't call hooks because dependencies don't exist yet
-        #we'll get another chance after application defaults are initialized
+        # swallow. We're not concerned if we can't call hooks because dependencies don't exist yet
+        # we'll get another chance after application defaults are initialized
       end
     end
   end
@@ -536,7 +536,7 @@ class Puppet::Settings
     else
       val.split(/\s*,\s*/).sort.each do |v|
         if include?(v)
-          #if there is only one value, just print it for back compatibility
+          # if there is only one value, just print it for back compatibility
           if v == val
             puts value(val,env)
             break
@@ -734,26 +734,26 @@ class Puppet::Settings
   end
 
   SETTING_TYPES = {
-      :string     => StringSetting,
-      :file       => FileSetting,
-      :directory  => DirectorySetting,
-      :file_or_directory => FileOrDirectorySetting,
-      :path       => PathSetting,
-      :boolean    => BooleanSetting,
-      :integer    => IntegerSetting,
-      :port       => PortSetting,
-      :terminus   => TerminusSetting,
-      :duration   => DurationSetting,
-      :ttl        => TTLSetting,
-      :array      => ArraySetting,
-      :enum       => EnumSetting,
-      :symbolic_enum   => SymbolicEnumSetting,
-      :priority   => PrioritySetting,
-      :autosign   => AutosignSetting,
-      :server_list => ServerListSetting,
-      :http_extra_headers => HttpExtraHeadersSetting,
-      :certificate_revocation => CertificateRevocationSetting,
-      :alias => AliasSetting
+    :string => StringSetting,
+    :file => FileSetting,
+    :directory => DirectorySetting,
+    :file_or_directory => FileOrDirectorySetting,
+    :path => PathSetting,
+    :boolean => BooleanSetting,
+    :integer => IntegerSetting,
+    :port => PortSetting,
+    :terminus => TerminusSetting,
+    :duration => DurationSetting,
+    :ttl => TTLSetting,
+    :array => ArraySetting,
+    :enum => EnumSetting,
+    :symbolic_enum => SymbolicEnumSetting,
+    :priority => PrioritySetting,
+    :autosign => AutosignSetting,
+    :server_list => ServerListSetting,
+    :http_extra_headers => HttpExtraHeadersSetting,
+    :certificate_revocation => CertificateRevocationSetting,
+    :alias => AliasSetting
   }
 
   # Create a new setting.  The value is passed in because it's used to determine
@@ -1311,7 +1311,7 @@ Generated on #{Time.now}.
       message += " #{ref}"
       Puppet.deprecation_warning(message, "setting-#{name}")
     when setting.allowed_on_commandline?
-      #TRANSLATORS 'puppet.conf' is a file name and should not be translated
+      # TRANSLATORS 'puppet.conf' is a file name and should not be translated
       message = _("Setting %{name} is deprecated in puppet.conf.") % { name: name }
       message += " #{ref}"
       Puppet.deprecation_warning(message, "puppet-conf-setting-#{name}")
@@ -1450,9 +1450,9 @@ Generated on #{Time.now}.
         end
       end
 
-      setting  = @defaults[name]
+      setting = @defaults[name]
       if setting.respond_to?(:alias_name)
-        val  = lookup(setting.alias_name)
+        val = lookup(setting.alias_name)
         return val if val
       end
 
@@ -1532,7 +1532,7 @@ Generated on #{Time.now}.
           interpolated_expression
         end
         if failed_environment_interpolation
-          #TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
+          # TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
           Puppet.warning(_("You cannot interpolate $environment within '%{setting_name}' when using directory environments.") % { setting_name: setting_name } +
                              ' ' + _("Its value will remain %{value}.") % { value: interpolated_value })
         end

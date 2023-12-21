@@ -7,9 +7,9 @@ Puppet::Type.type(:user).provide :openbsd, :parent => :useradd do
     will need to install Ruby's shadow password library (package known as
     `ruby-shadow`) if you wish to manage user passwords."
 
-  commands :add      => "useradd",
-           :delete   => "userdel",
-           :modify   => "usermod",
+  commands :add => "useradd",
+           :delete => "userdel",
+           :modify => "usermod",
            :password => "passwd"
 
   defaultfor 'os.name' => :openbsd
@@ -21,22 +21,22 @@ Puppet::Type.type(:user).provide :openbsd, :parent => :useradd do
   options :password, :method => :sp_pwdp
   options :loginclass, :flag => '-L', :method => :sp_loginclass
   options :expiry, :method => :sp_expire,
-    :munge => proc { |value|
-      if value == :absent
-        ''
-      else
-        # OpenBSD uses a format like "january 1 1970"
-        Time.parse(value).strftime('%B %d %Y')
-      end
-    },
-    :unmunge => proc { |value|
-      if value == -1
-        :absent
-      else
-        # Expiry is days after 1970-01-01
-        (Date.new(1970,1,1) + value).strftime('%Y-%m-%d')
-      end
-    }
+                   :munge => proc { |value|
+                               if value == :absent
+                                 ''
+                               else
+                                 # OpenBSD uses a format like "january 1 1970"
+                                 Time.parse(value).strftime('%B %d %Y')
+                               end
+                             },
+                   :unmunge => proc { |value|
+                                 if value == -1
+                                   :absent
+                                 else
+                                   # Expiry is days after 1970-01-01
+                                   (Date.new(1970,1,1) + value).strftime('%Y-%m-%d')
+                                 end
+                               }
 
   [:expiry, :password, :loginclass].each do |shadow_property|
     define_method(shadow_property) do
@@ -49,7 +49,7 @@ Puppet::Type.type(:user).provide :openbsd, :parent => :useradd do
           begin
             return unmunge(shadow_property, ent.send(method))
           rescue
-            #TRANSLATORS 'ruby-shadow' is a Ruby gem library
+            # TRANSLATORS 'ruby-shadow' is a Ruby gem library
             Puppet.warning _("ruby-shadow doesn't support %{method}") % { method: method }
           end
         end

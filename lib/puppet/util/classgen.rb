@@ -103,7 +103,7 @@ module Puppet::Util::ClassGen
     name = name.to_s.downcase.intern
 
     if type == Module
-      #evalmethod = :module_eval
+      # evalmethod = :module_eval
       evalmethod = :class_eval
       # Create the class, with the correct name.
       klass = Module.new do
@@ -145,7 +145,7 @@ module Puppet::Util::ClassGen
   # @api private
   #
   def handleclassconst(klass, name, options)
-   const = genconst_string(name, options)
+    const = genconst_string(name, options)
 
     if const_defined?(const, false)
       if options[:overwrite]

@@ -23,94 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyleAlignWith, Severity.
-# SupportedStylesAlignWith: keyword, variable, start_of_line
-Layout/EndAlignment:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: AllowForAlignment, AllowBeforeTrailingComments, ForceEqualSignAlignment.
-Layout/ExtraSpacing:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: consistent, consistent_relative_to_receiver, special_for_inner_method_call, special_for_inner_method_call_in_parentheses
-Layout/FirstArgumentIndentation:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: special_inside_parentheses, consistent, align_brackets
-Layout/FirstArrayElementIndentation:
-  Exclude:
-    - 'lib/puppet/file_serving/mount/file.rb'
-    - 'lib/puppet/functions/lookup.rb'
-    - 'lib/puppet/pops/loader/static_loader.rb'
-    - 'lib/puppet/pops/model/ast.rb'
-    - 'lib/puppet/pops/model/pn_transformer.rb'
-    - 'lib/puppet/pops/resource/resource_type_impl.rb'
-    - 'lib/puppet/pops/types/iterable.rb'
-    - 'lib/puppet/pops/types/p_uri_type.rb'
-    - 'lib/puppet/pops/types/types.rb'
-    - 'lib/puppet/provider/nameservice/pw.rb'
-    - 'lib/puppet/type/file/content.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: special_inside_parentheses, consistent, align_braces
-Layout/FirstHashElementIndentation:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: consistent, align_parentheses
-Layout/FirstParameterIndentation:
-  Exclude:
-    - 'lib/puppet/pal/pal_impl.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: AllowMultipleStyles, EnforcedHashRocketStyle, EnforcedColonStyle, EnforcedLastArgumentHashStyle.
-# SupportedHashRocketStyles: key, separator, table
-# SupportedColonStyles: key, separator, table
-# SupportedLastArgumentHashStyles: always_inspect, always_ignore, ignore_implicit, ignore_explicit
-Layout/HashAlignment:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-Layout/HeredocIndentation:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: normal, indented_internal_methods
-Layout/IndentationConsistency:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: IndentationWidth, EnforcedStyle.
-# SupportedStyles: spaces, tabs
-Layout/IndentationStyle:
-  Exclude:
-    - 'lib/puppet/ffi/windows/structs.rb'
-    - 'lib/puppet/transaction.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: Width, AllowedPatterns, IgnoredPatterns.
-Layout/IndentationWidth:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-Layout/InitialIndentation:
-  Exclude:
-    - 'lib/puppet/parser/functions/require.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: AllowDoxygenCommentStyle, AllowGemfileRubyComment.
-Layout/LeadingCommentSpace:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/LeadingEmptyLines:
   Exclude:
     - 'lib/puppet/functions/yaml_data.rb'
@@ -1565,4 +1477,4 @@ Style/ZeroLengthPredicate:
 # Configuration parameters: AllowHeredoc, AllowURI, URISchemes, IgnoreCopDirectives, AllowedPatterns, IgnoredPatterns.
 # URISchemes: http, https
 Layout/LineLength:
-  Max: 580
+  Enabled: false

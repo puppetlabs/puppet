@@ -53,8 +53,8 @@ module Puppet::HTTP::Proxy
       host, port = d.split(':')
       host = Regexp.escape(host).gsub('\*', '.*')
 
-      #If this no_proxy entry specifies a port, we want to match it against
-      #the destination port.  Otherwise just match hosts.
+      # If this no_proxy entry specifies a port, we want to match it against
+      # the destination port.  Otherwise just match hosts.
       if port
         no_proxy_regex  = %r(#{host}:#{port}$)
         dest_string     = "#{dest.host}:#{dest.port}"

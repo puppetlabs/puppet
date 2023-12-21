@@ -37,20 +37,26 @@ class PURIType < PAnyType
     TypeFactory.optional(OPAQUE) => PStringType::NON_EMPTY,
   )
 
-  TYPE_STRING_PARAM = TypeFactory.optional(PVariantType.new([
-    PStringType::NON_EMPTY,
-    PRegexpType::DEFAULT,
-    TypeFactory.type_type(PPatternType::DEFAULT),
-    TypeFactory.type_type(PEnumType::DEFAULT),
-    TypeFactory.type_type(PNotUndefType::DEFAULT),
-    TypeFactory.type_type(PUndefType::DEFAULT),
-  ]))
+  TYPE_STRING_PARAM =
+    TypeFactory
+      .optional(PVariantType
+        .new([
+               PStringType::NON_EMPTY,
+               PRegexpType::DEFAULT,
+               TypeFactory.type_type(PPatternType::DEFAULT),
+               TypeFactory.type_type(PEnumType::DEFAULT),
+               TypeFactory.type_type(PNotUndefType::DEFAULT),
+               TypeFactory.type_type(PUndefType::DEFAULT),
+             ]))
 
-  TYPE_INTEGER_PARAM = TypeFactory.optional(PVariantType.new([
-    PIntegerType.new(0),
-    TypeFactory.type_type(PNotUndefType::DEFAULT),
-    TypeFactory.type_type(PUndefType::DEFAULT),
-  ]))
+  TYPE_INTEGER_PARAM =
+    TypeFactory
+      .optional(PVariantType
+        .new([
+               PIntegerType.new(0),
+               TypeFactory.type_type(PNotUndefType::DEFAULT),
+               TypeFactory.type_type(PUndefType::DEFAULT),
+             ]))
 
   TYPE_URI_PARAM_HASH_TYPE = TypeFactory.struct(
     TypeFactory.optional(SCHEME) => TYPE_STRING_PARAM,

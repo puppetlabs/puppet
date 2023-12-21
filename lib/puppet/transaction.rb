@@ -304,9 +304,11 @@ class Puppet::Transaction
     s = resource_status(resource)
     if s && s.dependency_failed?
       if @merge_dependency_warnings && is_puppet_class
-       	# Notes: Puppet::Resource::Status.failed_dependencies() is an Array of Puppet::Resource(s) and
-        #        Puppet::Resource.ref() calls Puppet::Resource.to_s() which is: "#{type}[#{title}]" and
-       	#        Puppet::Resource.resource_status(resource) calls Puppet::Resource.to_s()
+        # Notes: Puppet::Resource::Status.failed_dependencies() is an Array of
+        # Puppet::Resource(s) and Puppet::Resource.ref() calls
+        # Puppet::Resource.to_s() which is: "#{type}[#{title}]" and
+        # Puppet::Resource.resource_status(resource) calls
+        # Puppet::Resource.to_s()
         class_dependencies_to_be_notified = (s.failed_dependencies.map(&:ref) - @failed_class_dependencies_already_notified.to_a)
         class_dependencies_to_be_notified.each do |dep_ref|
           resource.notice _("Class dependency %{dep} has failures: %{status}") % { dep: dep_ref, status: resource_status(dep_ref).failed }
@@ -382,7 +384,7 @@ class Puppet::Transaction
     begin
       provider_class.prefetch(resources)
     rescue LoadError, StandardError => detail
-      #TRANSLATORS `prefetch` is a function name and should not be translated
+      # TRANSLATORS `prefetch` is a function name and should not be translated
       message = _("Could not prefetch %{type_name} provider '%{name}': %{detail}") % { type_name: type_name, name: provider_class.name, detail: detail }
       Puppet.log_exception(detail, message)
       @prefetch_failed_providers[type_name][provider_class.name] = true
@@ -425,7 +427,7 @@ class Puppet::Transaction
         end
       end
     elsif resource_status(resource).failed? && @prefetch_failed_providers[resource.type][resource.provider.class.name]
-      #Do not try to evaluate a resource with a known failed provider
+      # Do not try to evaluate a resource with a known failed provider
       resource.warning _("Skipping because provider prefetch failed")
     elsif resource.virtual?
       resource.debug "Skipping because virtual"

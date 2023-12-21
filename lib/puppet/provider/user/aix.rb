@@ -67,7 +67,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
       return :absent if expires == '0'
 
       unless (match_obj = /\A(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)\z/.match(expires))
-        #TRANSLATORS 'AIX' is the name of an operating system and should not be translated
+        # TRANSLATORS 'AIX' is the name of an operating system and should not be translated
         Puppet.warning(_("Could not convert AIX expires date '%{expires}' on %{class_name}[%{resource_name}]") % { expires: expires, class_name: provider.resource.class.name, resource_name: provider.resource.name })
         return :absent
       end
@@ -231,7 +231,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
       if output != ""
         raise Puppet::ExecutionFailure, "chpasswd said #{output}"
       end
-    rescue Puppet::ExecutionFailure  => detail
+    rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not set password on #{@resource.class.name}[#{@resource.name}]: #{detail}", detail.backtrace
     ensure
       if tempfile

@@ -42,7 +42,7 @@ Puppet::Face.define(:help, '0.0.1') do
       end
 
       if args.length > 2
-        #TRANSLATORS 'puppet help' is a command line and should not be translated
+        # TRANSLATORS 'puppet help' is a command line and should not be translated
         raise ArgumentError, _("The 'puppet help' command takes two (optional) arguments: a subcommand and an action")
       end
 
@@ -52,7 +52,7 @@ Puppet::Face.define(:help, '0.0.1') do
           version = options[:version]
         else
           if args.length == 0
-            #TRANSLATORS '--version' is a command line option and should not be translated
+            # TRANSLATORS '--version' is a command line option and should not be translated
             raise ArgumentError, _("Supplying a '--version' only makes sense when a Faces subcommand is given")
           end
         end
@@ -211,7 +211,7 @@ Puppet::Face.define(:help, '0.0.1') do
     # depends on the implementation coincidence of how our pages are
     # formatted.  If we can't match the pattern we expect we return the empty
     # string to ensure we don't blow up in the summary. --daniel 2011-04-11
-    while line = help.shift do #rubocop:disable Lint/AssignmentInCondition
+    while line = help.shift do # rubocop:disable Lint/AssignmentInCondition
       md = /^puppet-#{appname}\([^\)]+\) -- (.*)$/.match(line)
       if md
         return md[1]
@@ -222,7 +222,7 @@ Puppet::Face.define(:help, '0.0.1') do
   # This should absolutely be a private method, but for some reason it appears
   #  that you can't use the 'private' keyword inside of a Face definition.
   #  See #14205.
-  #private :horribly_extract_summary_from
+  # private :horribly_extract_summary_from
 
   def exclude_from_docs?(appname)
     %w{face_base indirection_base report status}.include? appname
@@ -230,7 +230,7 @@ Puppet::Face.define(:help, '0.0.1') do
   # This should absolutely be a private method, but for some reason it appears
   #  that you can't use the 'private' keyword inside of a Face definition.
   #  See #14205.
-  #private :exclude_from_docs?
+  # private :exclude_from_docs?
 
   def is_face_app?(appname)
     clazz = Puppet::Application.find(appname)
@@ -240,5 +240,5 @@ Puppet::Face.define(:help, '0.0.1') do
   # This should probably be a private method, but for some reason it appears
   #  that you can't use the 'private' keyword inside of a Face definition.
   #  See #14205.
-  #private :is_face_app?
+  # private :is_face_app?
 end

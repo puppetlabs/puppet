@@ -13,15 +13,15 @@ Puppet::Parser::Functions::newfunction(:inline_template, :type => :rvalue, :arit
 
   require 'erb'
 
-    vals.collect do |string|
-      # Use a wrapper, so the template can't get access to the full
-      # Scope object.
+  vals.collect do |string|
+    # Use a wrapper, so the template can't get access to the full
+    # Scope object.
 
-      wrapper = Puppet::Parser::TemplateWrapper.new(self)
-      begin
-        wrapper.result(string)
-      rescue => detail
-        raise Puppet::ParseError, _("Failed to parse inline template: %{detail}") % { detail: detail }, detail.backtrace
-      end
-    end.join("")
+    wrapper = Puppet::Parser::TemplateWrapper.new(self)
+    begin
+      wrapper.result(string)
+    rescue => detail
+      raise Puppet::ParseError, _("Failed to parse inline template: %{detail}") % { detail: detail }, detail.backtrace
+    end
+  end.join("")
 end

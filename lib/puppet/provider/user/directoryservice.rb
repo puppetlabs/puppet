@@ -19,7 +19,7 @@ Puppet::Type.type(:user).provide :directoryservice do
 
   # Provider confines and defaults
   confine    'os.name' => :darwin
-  confine    :feature         => :cfpropertylist
+  confine    :feature => :cfpropertylist
   defaultfor 'os.name' => :darwin
 
   # Need this to create getter/setter methods automagically
@@ -32,7 +32,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # 10.8 Passwords use a PBKDF2 salt value
   has_features :manages_password_salt
 
-  #provider can set the user's shell
+  # provider can set the user's shell
   has_feature :manages_shell
 
   ##               ##
@@ -44,17 +44,17 @@ Puppet::Type.type(:user).provide :directoryservice do
   # Apple will do next year...
   def self.ds_to_ns_attribute_map
     {
-      'RecordName'       => :name,
-      'PrimaryGroupID'   => :gid,
+      'RecordName' => :name,
+      'PrimaryGroupID' => :gid,
       'NFSHomeDirectory' => :home,
-      'UserShell'        => :shell,
-      'UniqueID'         => :uid,
-      'RealName'         => :comment,
-      'Password'         => :password,
-      'GeneratedUID'     => :guid,
-      'IPAddress'        => :ip_address,
-      'ENetAddress'      => :en_address,
-      'GroupMembership'  => :members,
+      'UserShell' => :shell,
+      'UniqueID' => :uid,
+      'RealName' => :comment,
+      'Password' => :password,
+      'GeneratedUID' => :guid,
+      'IPAddress' => :ip_address,
+      'ENetAddress' => :en_address,
+      'GroupMembership' => :members,
     }
   end
 
@@ -358,7 +358,7 @@ Puppet::Type.type(:user).provide :directoryservice do
       end
     else
       if value.length != 256
-         raise Puppet::Error, "OS X versions > 10.7 require a Salted SHA512 PBKDF2 password hash of 256 characters. Please check your password and try again."
+        raise Puppet::Error, "OS X versions > 10.7 require a Salted SHA512 PBKDF2 password hash of 256 characters. Please check your password and try again."
       end
 
       assert_full_pbkdf2_password
@@ -480,7 +480,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     missing = [:password, :salt, :iterations].select { |parameter| @resource[parameter].nil? }
 
     if !missing.empty?
-       raise Puppet::Error, "OS X versions > 10\.7 use PBKDF2 password hashes, which requires all three of salt, iterations, and password hash. This resource is missing: #{missing.join(', ')}."
+      raise Puppet::Error, "OS X versions > 10\.7 use PBKDF2 password hashes, which requires all three of salt, iterations, and password hash. This resource is missing: #{missing.join(', ')}."
     end
   end
 
@@ -512,7 +512,7 @@ Puppet::Type.type(:user).provide :directoryservice do
 
   # Create the new user with dscl
   def create_new_user(username)
-    dscl '.', '-create',  "/Users/#{username}"
+    dscl '.', '-create', "/Users/#{username}"
   end
 
   # Get the next available uid on the system by getting a list of user ids,
@@ -579,7 +579,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # ShadowHashData key of a user's plist, or false if it doesn't exist.
   def get_shadow_hash_data(users_plist)
     if users_plist['ShadowHashData']
-      password_hash_plist  = users_plist['ShadowHashData'][0]
+      password_hash_plist = users_plist['ShadowHashData'][0]
       self.class.convert_binary_to_hash(password_hash_plist)
     else
       false
@@ -620,9 +620,9 @@ Puppet::Type.type(:user).provide :directoryservice do
   # for information regarding the dsimport syntax
   def write_and_import_shadow_hash_data(data_plist)
     Tempfile.create("dsimport_#{@resource.name}", :encoding => Encoding::ASCII) do |dsimport_file|
-      dsimport_file.write <<-DSIMPORT
-0x0A 0x5C 0x3A 0x2C dsRecTypeStandard:Users 2 dsAttrTypeStandard:RecordName base64:dsAttrTypeNative:ShadowHashData
-#{@resource.name}:#{Base64.strict_encode64(data_plist)}
+      dsimport_file.write <<~DSIMPORT
+        0x0A 0x5C 0x3A 0x2C dsRecTypeStandard:Users 2 dsAttrTypeStandard:RecordName base64:dsAttrTypeNative:ShadowHashData
+        #{@resource.name}:#{Base64.strict_encode64(data_plist)}
       DSIMPORT
       dsimport_file.flush
       # Delete the user's existing ShadowHashData, since dsimport appends, not replaces

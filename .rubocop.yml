@@ -17,8 +17,8 @@ AllCops:
     - 'lib/puppet/vendor/**/*'
     - 'lib/puppet/pops/parser/eparser.rb'
 
-# This cop would completely reformat defaults, so we skip it for now.
-Layout/ArgumentAlignment:
+# The formatting of defaults is unusual, so let's skip layout cops.
+Layout:
   Exclude:
     - 'lib/puppet/defaults.rb'
 
@@ -30,6 +30,12 @@ Layout/BeginEndAlignment:
 
 Layout/ElseAlignment:
   Enabled: true
+  Exclude:
+    - 'lib/puppet/provider/package/*.rb'
+
+# We don't mind when module and class keywords are aligned.
+Layout/IndentationWidth:
+  AllowedPatterns: ['^\s*module']
   Exclude:
     - 'lib/puppet/provider/package/*.rb'
 

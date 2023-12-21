@@ -525,54 +525,54 @@ class EvaluatorImpl
     right = evaluate(o.right_expr, scope)
 
     begin
-    # Left is a type
-    if left.is_a?(Types::PAnyType)
-      case o.operator
-      when '=='
-        @@type_calculator.equals(left,right)
+      # Left is a type
+      if left.is_a?(Types::PAnyType)
+        case o.operator
+        when '=='
+          @@type_calculator.equals(left,right)
 
-      when '!='
-        !@@type_calculator.equals(left,right)
+        when '!='
+          !@@type_calculator.equals(left,right)
 
-      when '<'
-        # left can be assigned to right, but they are not equal
-        @@type_calculator.assignable?(right, left) && ! @@type_calculator.equals(left,right)
-      when '<='
-        # left can be assigned to right
-        @@type_calculator.assignable?(right, left)
-      when '>'
-        # right can be assigned to left, but they are not equal
-        @@type_calculator.assignable?(left,right) && ! @@type_calculator.equals(left,right)
-      when '>='
-        # right can be assigned to left
-        @@type_calculator.assignable?(left, right)
+        when '<'
+          # left can be assigned to right, but they are not equal
+          @@type_calculator.assignable?(right, left) && ! @@type_calculator.equals(left,right)
+        when '<='
+          # left can be assigned to right
+          @@type_calculator.assignable?(right, left)
+        when '>'
+          # right can be assigned to left, but they are not equal
+          @@type_calculator.assignable?(left,right) && ! @@type_calculator.equals(left,right)
+        when '>='
+          # right can be assigned to left
+          @@type_calculator.assignable?(left, right)
+        else
+          fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
+        end
       else
-        fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
+        case o.operator
+        when '=='
+          @@compare_operator.equals(left,right)
+        when '!='
+          ! @@compare_operator.equals(left,right)
+        when '<'
+          @@compare_operator.compare(left,right) < 0
+        when '<='
+          @@compare_operator.compare(left,right) <= 0
+        when '>'
+          @@compare_operator.compare(left,right) > 0
+        when '>='
+          @@compare_operator.compare(left,right) >= 0
+        else
+          fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
+        end
       end
-    else
-      case o.operator
-      when '=='
-        @@compare_operator.equals(left,right)
-      when '!='
-        ! @@compare_operator.equals(left,right)
-      when '<'
-        @@compare_operator.compare(left,right) < 0
-      when '<='
-        @@compare_operator.compare(left,right) <= 0
-      when '>'
-        @@compare_operator.compare(left,right) > 0
-      when '>='
-        @@compare_operator.compare(left,right) >= 0
-      else
-        fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
-      end
-    end
     rescue ArgumentError => e
       fail(Issues::COMPARISON_NOT_POSSIBLE, o, {
-        :operator => o.operator,
-        :left_value => left,
-        :right_value => right,
-        :detail => e.message}, e)
+             :operator => o.operator,
+             :left_value => left,
+             :right_value => right,
+             :detail => e.message}, e)
     end
   end
 
@@ -705,8 +705,8 @@ class EvaluatorImpl
             is_match?(test, evaluate(c, scope), c, co, scope)
           end
         end
-        result = evaluate(co.then_expr, scope)
-        true # the option was picked
+          result = evaluate(co.then_expr, scope)
+          true # the option was picked
         end
       end
         result # an option was picked, and produced a result
@@ -749,10 +749,10 @@ class EvaluatorImpl
       line = 0
       # Add stack frame for "top scope" logic. See Puppet::Pops::PuppetStack
       return Puppet::Pops::PuppetStack.stack(file, line, self, 'evaluate', [o.body, scope])
-      #evaluate(o.body, scope)
+      # evaluate(o.body, scope)
     rescue Puppet::Pops::Evaluator::PuppetStopIteration => ex
       # breaking out of a file level program is not allowed
-      #TRANSLATOR break() is a method that should not be translated
+      # TRANSLATOR break() is a method that should not be translated
       raise Puppet::ParseError.new(_("break() from context where this is illegal"), ex.file, ex.line)
     end
   end
@@ -843,7 +843,7 @@ class EvaluatorImpl
           fail(Issues::ILLEGAL_TITLE_TYPE_AT, body.title, {:index => index, :actual => actual})
 
         elsif title == EMPTY_STRING
-         fail(Issues::EMPTY_STRING_TITLE_AT, body.title, {:index => index})
+          fail(Issues::EMPTY_STRING_TITLE_AT, body.title, {:index => index})
 
         elsif titles_to_body[title]
           fail(Issues::DUPLICATE_TITLE, o, {:title => title})
@@ -1127,7 +1127,7 @@ class EvaluatorImpl
   end
 
   def string_Symbol(o, scope)
-    if :undef == o  # optimized comparison 1.44 vs 1.95
+    if :undef == o # optimized comparison 1.44 vs 1.95
       EMPTY_STRING
     else
       o.to_s

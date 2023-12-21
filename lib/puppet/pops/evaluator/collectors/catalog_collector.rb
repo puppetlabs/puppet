@@ -20,7 +20,7 @@ class Puppet::Pops::Evaluator::Collectors::CatalogCollector < Puppet::Pops::Eval
     q = @query
 
     scope.compiler.resources.find_all do |resource|
-      resource.type == t && (q ?  q.call(resource) : true)
+      resource.type == t && (q ? q.call(resource) : true)
     end
   end
 

@@ -662,7 +662,7 @@ Puppet::Type.newtype(:file) do
     other_paths = existing_files
       .select { |r| (yield r) != parent_path}
       .collect { |r| (yield r).split(::File::Separator) }
-      .select  { |p| p[0,mypath.length]  == mypath }
+      .select  { |p| p[0,mypath.length] == mypath }
 
     return files if other_paths.empty?
 
@@ -826,7 +826,7 @@ Puppet::Type.newtype(:file) do
     # catalog validation (because that would be a breaking change from Puppet 4).
     if Puppet::Util::Platform.windows? && parameter(:source) &&
       [:use, :use_when_creating].include?(self[:source_permissions])
-      #TRANSLATORS "source_permissions => ignore" should not be translated
+      # TRANSLATORS "source_permissions => ignore" should not be translated
       err_msg = _("Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore.")
       if self[:owner] == nil || self[:group] == nil || self[:mode] == nil
         # Fail on Windows if source permissions are being used and the file resource
@@ -1065,7 +1065,7 @@ Puppet::Type.newtype(:file) do
   # @return [void]
   def backup_existing
     unless perform_backup
-      #TRANSLATORS refers to a file which could not be backed up
+      # TRANSLATORS refers to a file which could not be backed up
       raise Puppet::Error, _("Could not back up; will not remove")
     end
   end

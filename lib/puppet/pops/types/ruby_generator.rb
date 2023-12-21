@@ -366,7 +366,7 @@ class RubyGenerator < TypeFormatter
         if array_type?(cp.type)
           bld << '    @' << rname(cp.name) << ".each { |value| yield(value) }\n"
         else
-          bld << '    yield(@' << rname(cp.name) << ') unless @' << rname(cp.name)  << ".nil?\n"
+          bld << '    yield(@' << rname(cp.name) << ') unless @' << rname(cp.name) << ".nil?\n"
         end
       end
       bld << "  end\n\n  def _pcore_all_contents(path, &block)\n    path << self\n"
@@ -408,7 +408,7 @@ class RubyGenerator < TypeFormatter
       bld << "\n  def eql?(o)\n"
       bld << "    super &&\n" unless obj.parent.nil?
       bld << "    o.instance_of?(self.class) &&\n" if include_type
-      eq_names.each { |eqn| bld << '    @' << rname(eqn) << '.eql?(o.' <<  rname(eqn) << ") &&\n" }
+      eq_names.each { |eqn| bld << '    @' << rname(eqn) << '.eql?(o.' << rname(eqn) << ") &&\n" }
       bld.chomp!(" &&\n")
       bld << "\n  end\n  alias == eql?\n"
     end

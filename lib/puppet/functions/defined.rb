@@ -136,7 +136,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
         val.title.nil? ? type : scope.compiler.findresource(type, val.title)
 
       when Puppet::Pops::Types::PClassType
-        raise  ArgumentError, _('The given class type is a reference to all classes') if val.class_name.nil?
+        raise ArgumentError, _('The given class type is a reference to all classes') if val.class_name.nil?
 
         scope.compiler.findresource(:class, val.class_name)
 
@@ -151,7 +151,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
           # Interpreted as asking if a class (and nothing else) is defined without having to be included in the catalog
           # (this is the same as asking for just the class' name, but with the added certainty that it cannot be a defined type.
           #
-          raise  ArgumentError, _('The given class type is a reference to all classes') if val.type.class_name.nil?
+          raise ArgumentError, _('The given class type is a reference to all classes') if val.type.class_name.nil?
 
           Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_hostclass(scope, val.type.class_name)
         end

@@ -42,7 +42,7 @@ class Puppet::Parser::ScriptCompiler
 
     # TRANSLATORS, "For running script" is not user facing
     Puppet.override( @context_overrides , "For running script") do
-      #TRANSLATORS "main" is a function name and should not be translated
+      # TRANSLATORS "main" is a function name and should not be translated
       result = Puppet::Util::Profiler.profile(_("Script: Evaluated main"), [:script, :evaluate_main]) { evaluate_main }
       if block_given?
         yield self
@@ -64,8 +64,8 @@ class Puppet::Parser::ScriptCompiler
   def context_overrides()
     {
       :current_environment => environment,
-      :global_scope => @topscope,             # 4x placeholder for new global scope
-      :loaders  => @loaders,                  # 4x loaders
+      :global_scope => @topscope, # 4x placeholder for new global scope
+      :loaders => @loaders, # 4x loaders
       :rich_data => true,
     }
   end
@@ -109,7 +109,7 @@ class Puppet::Parser::ScriptCompiler
   # have to (TODO).
   #
   def newscope(parent, options = {})
-     raise _('having multiple named scopes is not supported when scripting')
+    raise _('having multiple named scopes is not supported when scripting')
   end
 
   private
