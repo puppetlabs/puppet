@@ -78,6 +78,8 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # Debian boxes, and the only thing that differs is that it can
   # install packages from remote sites.
 
+  # Double negation confuses Rubocop's Layout cops
+  # rubocop:disable Layout
   def checkforcdrom
     have_cdrom = begin
                    !!(File.read("/etc/apt/sources.list") =~ /^[^#]*cdrom:/)
@@ -85,6 +87,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
                    # This is basically pathological...
                    false
                  end
+  # rubocop:enable Layout
 
     if have_cdrom and @resource[:allowcdrom] != :true
       raise Puppet::Error,

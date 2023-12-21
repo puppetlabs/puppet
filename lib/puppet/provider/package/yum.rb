@@ -24,6 +24,9 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   commands :cmd => "yum", :rpm => "rpm"
 
+  # Mixing confine statements, control expressions, and exception handling
+  # confuses Rubocop's Layout cops, so we disable them entirely.
+  # rubocop:disable Layout
   if command('rpm')
     confine :true => begin
       rpm('--version')
@@ -33,6 +36,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         true
       end
   end
+  # rubocop:enable Layout
 
   defaultfor 'os.name' => :amazon
   defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
