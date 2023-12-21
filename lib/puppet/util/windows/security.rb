@@ -518,7 +518,8 @@ module Puppet::Util::Windows::Security
       FFI::Pointer::NULL, # security_attributes
       FILE::OPEN_EXISTING,
       FILE::FILE_FLAG_OPEN_REPARSE_POINT | FILE::FILE_FLAG_BACKUP_SEMANTICS,
-      FFI::Pointer::NULL_HANDLE) # template
+      FFI::Pointer::NULL_HANDLE
+    ) # template
 
     if handle == Puppet::Util::Windows::File::INVALID_HANDLE_VALUE
       raise Puppet::Util::Windows::Error.new(_("Failed to open '%{path}'") % { path: path })
@@ -596,7 +597,8 @@ module Puppet::Util::Windows::Security
                   group_sid_ptr_ptr,
                   dacl_ptr_ptr,
                   FFI::Pointer::NULL, # sacl
-                  sd_ptr_ptr) # sec desc
+                  sd_ptr_ptr
+                ) # sec desc
                 raise Puppet::Util::Windows::Error.new(_("Failed to get security information")) if rv != FFI::ERROR_SUCCESS
 
                 # these 2 convenience params are not freed since they point inside sd_ptr

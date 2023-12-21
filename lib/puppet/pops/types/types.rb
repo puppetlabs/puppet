@@ -471,8 +471,7 @@ class PTypeType < PTypeWithContainedType
                  'type' => {
                    KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
                    KEY_VALUE => nil
-                 }
-    )
+                 })
   end
 
   # Returns a new function that produces a Type instance
@@ -553,8 +552,7 @@ class PNotUndefType < PTypeWithContainedType
                  'type' => {
                    KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
                    KEY_VALUE => nil
-                 }
-    )
+                 })
   end
 
   def initialize(type = nil)
@@ -865,8 +863,7 @@ class PNumericType < PScalarDataType
   def self.register_ptype(loader, ir)
     create_ptype(loader, ir, 'ScalarDataType',
                  'from' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil },
-                 'to' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil }
-    )
+                 'to' => { KEY_TYPE => POptionalType.new(PNumericType::DEFAULT), KEY_VALUE => nil })
   end
 
   def self.new_function(type)
@@ -1320,8 +1317,7 @@ class PCollectionType < PAnyType
                  'size_type' => {
                    KEY_TYPE => POptionalType.new(PTypeType.new(PIntegerType::DEFAULT)),
                    KEY_VALUE => nil
-                 }
-    )
+                 })
   end
 
   attr_reader :size_type
@@ -1411,8 +1407,7 @@ class PIterableType < PTypeWithContainedType
                  'type' => {
                    KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
                    KEY_VALUE => nil
-                 }
-    )
+                 })
   end
 
   def element_type
@@ -1471,8 +1466,7 @@ class PIteratorType < PTypeWithContainedType
                  'type' => {
                    KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
                    KEY_VALUE => nil
-                 }
-    )
+                 })
   end
 
   def element_type
@@ -2054,7 +2048,8 @@ class PStructType < PAnyType
                          PVariantType.maybe_create(@elements.map {|se| se.key_type }),
                          PVariantType.maybe_create(@elements.map {|se| se.value_type })
                        ],
-                       PHashType::KEY_PAIR_TUPLE_SIZE))
+                       PHashType::KEY_PAIR_TUPLE_SIZE)
+      )
     end
   end
 
@@ -2159,8 +2154,7 @@ class PTupleType < PAnyType
                  'size_type' => {
                    KEY_TYPE => POptionalType.new(PTypeType.new(PIntegerType::DEFAULT)),
                    KEY_VALUE => nil
-                 }
-    )
+                 })
   end
 
   # If set, describes min and max required of the given types - if max > size of
@@ -2371,8 +2365,7 @@ class PCallableType < PAnyType
                  'return_type' => {
                    KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
                    KEY_VALUE => PAnyType::DEFAULT
-                 }
-    )
+                 })
   end
 
   # @return [PAnyType] The type for the values returned by this callable. Returns `nil` if return value is unconstrained
@@ -2529,8 +2522,7 @@ class PArrayType < PCollectionType
                  'element_type' => {
                    KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
                    KEY_VALUE => PAnyType::DEFAULT
-                 }
-    )
+                 })
   end
 
   attr_reader :element_type
@@ -2682,8 +2674,7 @@ class PHashType < PCollectionType
                  'value_type' => {
                    KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
                    KEY_VALUE => PAnyType::DEFAULT
-                 }
-    )
+                 })
   end
 
   attr_accessor :key_type, :value_type
@@ -3184,8 +3175,7 @@ class PClassType < PCatalogEntryType
                  'class_name' => {
                    KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
                    KEY_VALUE => nil
-                 }
-    )
+                 })
   end
 
   def initialize(class_name)
@@ -3231,8 +3221,7 @@ class PResourceType < PCatalogEntryType
                  'title' => {
                    KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
                    KEY_VALUE => nil
-                 }
-    )
+                 })
   end
 
   attr_reader :type_name, :title, :downcased_name
@@ -3271,8 +3260,7 @@ class POptionalType < PTypeWithContainedType
                  'type' => {
                    KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
                    KEY_VALUE => nil
-                 }
-    )
+                 })
   end
 
   def optional_type
@@ -3381,8 +3369,7 @@ class PTypeAliasType < PAnyType
                  'resolved_type' => {
                    KEY_TYPE => POptionalType.new(PTypeType::DEFAULT),
                    KEY_VALUE => nil
-                 }
-    )
+                 })
   end
 
   attr_reader :loader, :name

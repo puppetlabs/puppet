@@ -90,7 +90,8 @@ class Puppet::Util::Windows::AccessControlList
       mask = Puppet::Util::Windows::File::STANDARD_RIGHTS_ALL | Puppet::Util::Windows::File::SPECIFIC_RIGHTS_ALL
       ace = Puppet::Util::Windows::AccessControlEntry.new(
         Puppet::Util::Windows::SID::LocalSystem,
-        mask)
+        mask
+      )
       @aces << ace
     end
 

@@ -101,7 +101,8 @@ module Time
         hash[KEY_SECONDS] || 0,
         hash[KEY_MILLISECONDS] || 0,
         hash[KEY_MICROSECONDS] || 0,
-        hash[KEY_NANOSECONDS] || 0)
+        hash[KEY_NANOSECONDS] || 0
+      )
     end
 
     def self.parse(str, format = Format::DEFAULTS)

@@ -74,7 +74,8 @@ module Puppet::Util::Windows::Process
       phandle = OpenProcess(desired_access, inherit, process_id)
       if phandle == FFI::Pointer::NULL_HANDLE
         raise Puppet::Util::Windows::Error.new(
-          "OpenProcess(#{desired_access.to_s(8)}, #{inherit}, #{process_id})")
+          "OpenProcess(#{desired_access.to_s(8)}, #{inherit}, #{process_id})"
+        )
       end
 
       yield phandle
@@ -94,7 +95,8 @@ module Puppet::Util::Windows::Process
         result = OpenProcessToken(handle, desired_access, token_handle_ptr)
         if result == FFI::WIN32_FALSE
           raise Puppet::Util::Windows::Error.new(
-            "OpenProcessToken(#{handle}, #{desired_access.to_s(8)}, #{token_handle_ptr})")
+            "OpenProcessToken(#{handle}, #{desired_access.to_s(8)}, #{token_handle_ptr})"
+          )
         end
 
         yield token_handle = token_handle_ptr.read_handle
@@ -137,7 +139,8 @@ module Puppet::Util::Windows::Process
             if result == FFI::WIN32_FALSE
               raise Puppet::Util::Windows::Error.new(
                 "QueryFullProcessImageNameW(phandle, #{use_win32_path_format}, " +
-                "exe_name_ptr, #{max_chars}")
+                "exe_name_ptr, #{max_chars}"
+              )
             end
             image_name = exe_name_ptr.read_wide_string(exe_name_length_ptr.read_dword)
           end
@@ -159,7 +162,8 @@ module Puppet::Util::Windows::Process
 
       if result == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new(
-          "LookupPrivilegeValue(#{system_name}, #{name}, #{luid_ptr})")
+          "LookupPrivilegeValue(#{system_name}, #{name}, #{luid_ptr})"
+        )
       end
 
       yield LUID.new(luid_ptr)
@@ -178,7 +182,8 @@ module Puppet::Util::Windows::Process
 
       if return_length <= 0
         raise Puppet::Util::Windows::Error.new(
-          "GetTokenInformation(#{token_handle}, #{token_information}, nil, 0, #{return_length_ptr})")
+          "GetTokenInformation(#{token_handle}, #{token_information}, nil, 0, #{return_length_ptr})"
+        )
       end
 
       # re-call API with properly sized buffer for all results
@@ -189,7 +194,8 @@ module Puppet::Util::Windows::Process
         if result == FFI::WIN32_FALSE
           raise Puppet::Util::Windows::Error.new(
             "GetTokenInformation(#{token_handle}, #{token_information}, #{token_information_buf}, " +
-              "#{return_length}, #{return_length_ptr})")
+              "#{return_length}, #{return_length_ptr})"
+          )
         end
 
         yield token_information_buf

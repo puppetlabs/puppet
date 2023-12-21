@@ -12,8 +12,7 @@ class PSemVerType < PScalarType
                  'ranges' => {
                    KEY_TYPE => PArrayType.new(PVariantType.new([PSemVerRangeType::DEFAULT,PStringType::NON_EMPTY])),
                    KEY_VALUE => []
-                 }
-    )
+                 })
   end
 
   attr_reader :ranges

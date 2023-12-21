@@ -105,7 +105,8 @@ module Puppet
         nil,
         nil,
         issue.issue_code,
-        args)
+        args
+      )
     end
   end
 

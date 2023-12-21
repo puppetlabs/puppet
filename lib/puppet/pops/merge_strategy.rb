@@ -95,7 +95,8 @@ module Puppet::Pops
     def merge(e1, e2)
       checked_merge(
         assert_type('The first element of the merge', value_t, e1),
-        assert_type('The second element of the merge', value_t, e2))
+        assert_type('The second element of the merge', value_t, e2)
+      )
     end
 
     # TODO: API 5.0 Remove this method

@@ -112,7 +112,8 @@ module Puppet::Network::HTTP::Handler
     else
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
         _("No route for %{request} %{path}") % { request: request.method, path: request.path },
-        HANDLER_NOT_FOUND)
+        HANDLER_NOT_FOUND
+      )
     end
   end
 

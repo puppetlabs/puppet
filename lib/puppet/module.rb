@@ -466,7 +466,8 @@ class Puppet::Module
     rescue Puppet::FileSystem::PathPattern::InvalidPattern => error
       raise Puppet::Module::InvalidFilePattern.new(
         "The pattern \"#{pattern}\" to find manifests in the module \"#{name}\" " +
-        "is invalid and potentially unsafe.", error)
+        "is invalid and potentially unsafe.", error
+      )
     end
 
     relative_pattern.prefix_with(@absolute_path_to_manifests)

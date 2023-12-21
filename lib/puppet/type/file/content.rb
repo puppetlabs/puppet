@@ -62,8 +62,7 @@ module Puppet
           _('See https://puppet.com/docs/puppet/latest/static_catalogs.html for more information.')
         ].join(" "),
                                           :file => @resource.file,
-                                          :line => @resource.line
-                                         ) if !@actual_content && !resource.parameter(:source)
+                                          :line => @resource.line) if !@actual_content && !resource.parameter(:source)
         value
       else
         @actual_content = value.is_a?(Puppet::Pops::Types::PBinaryType::Binary) ? value.binary_buffer : value

@@ -79,7 +79,8 @@ Puppet::Functions.create_function(:assert_type) do
       else
         raise Puppet::Pops::Types::TypeAssertionError.new(
           Puppet::Pops::Types::TypeMismatchDescriber.singleton.describe_mismatch('assert_type():', type, inferred_type),
-          type, inferred_type)
+          type, inferred_type
+        )
       end
     end
     value

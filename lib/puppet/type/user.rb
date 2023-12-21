@@ -855,7 +855,8 @@ module Puppet
       names.map { |keyname|
         Puppet::Type.type(:ssh_authorized_key).new(
           :name => keyname,
-          :target => keyfile)
+          :target => keyfile
+        )
       }.reject { |res|
         catalog.resource_refs.include? res.ref
       }

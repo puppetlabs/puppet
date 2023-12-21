@@ -58,7 +58,8 @@ Get the third octet from the node's IP address:
 Put angle brackets around each octet in the node's IP address:
 
     $x = regsubst($ipaddress, '([0-9]+)', '<\\1>', 'G')
-") do |_args|
-  Error.is4x('regsubst')
-end
+"
+  ) do |_args|
+    Error.is4x('regsubst')
+  end
 end

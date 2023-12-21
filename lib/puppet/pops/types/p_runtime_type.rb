@@ -15,8 +15,7 @@ class PRuntimeType < PAnyType
                  'name_or_pattern' => {
                    KEY_TYPE => POptionalType.new(TYPE_NAME_OR_PATTERN),
                    KEY_VALUE => nil
-                 }
-    )
+                 })
   end
 
   attr_reader :runtime, :name_or_pattern

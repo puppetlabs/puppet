@@ -31,8 +31,7 @@ class Param
                                          }
                                        },
                                        EMPTY_HASH,
-                                       [Types::KEY_NAME]
-    )
+                                       [Types::KEY_NAME])
   end
 
   attr_reader :name

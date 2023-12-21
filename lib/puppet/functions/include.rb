@@ -42,7 +42,8 @@ Puppet::Functions.create_function(:include, Puppet::Functions::InternalFunction)
     if Puppet[:tasks]
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
         Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
-        {:operation => 'include'})
+        {:operation => 'include'}
+      )
     end
 
     classes = scope.transform_and_assert_classnames(classes.flatten)

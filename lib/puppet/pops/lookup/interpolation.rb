@@ -158,7 +158,8 @@ module Interpolation
 
   def fail(issue, args = EMPTY_HASH)
     raise Puppet::DataBinding::LookupError.new(
-      issue.format(args), nil, nil, nil, nil, issue.issue_code)
+      issue.format(args), nil, nil, nil, nil, issue.issue_code
+    )
   end
 end
 end

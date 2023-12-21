@@ -75,8 +75,7 @@ class PURIType < PAnyType
     create_ptype(loader, ir, 'AnyType',
                  {
                    'parameters' => { KEY_TYPE => TypeFactory.optional(TYPE_URI_PARAM_TYPE), KEY_VALUE => nil }
-                 }
-    )
+                 })
   end
 
   def self.new_function(type)

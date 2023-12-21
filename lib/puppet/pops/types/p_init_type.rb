@@ -13,8 +13,7 @@ class PInitType < PTypeWithContainedType
                  'init_args' => {
                    KEY_TYPE => PArrayType::DEFAULT,
                    KEY_VALUE => EMPTY_ARRAY
-                 }
-    )
+                 })
   end
 
   attr_reader :init_args

@@ -560,7 +560,8 @@ module Pal
   T_BOOLEAN = Puppet::Pops::Types::PBooleanType::DEFAULT
 
   T_GENERIC_TASK_HASH = Puppet::Pops::Types::TypeFactory.hash_kv(
-    Puppet::Pops::Types::TypeFactory.pattern(/\A[a-z][a-z0-9_]*\z/), Puppet::Pops::Types::TypeFactory.data)
+    Puppet::Pops::Types::TypeFactory.pattern(/\A[a-z][a-z0-9_]*\z/), Puppet::Pops::Types::TypeFactory.data
+  )
 
   def self.assert_type(type, value, what, allow_nil=false)
     Puppet::Pops::Types::TypeAsserter.assert_instance_of(nil, type, value, allow_nil) { _('Puppet Pal: %{what}') % {what: what} }

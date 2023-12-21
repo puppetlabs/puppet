@@ -53,7 +53,8 @@ module Puppet::Util::Windows::File
     return true if result != FFI::WIN32_FALSE
 
     raise Puppet::Util::Windows::Error.new(
-      "CreateSymbolicLink(#{symlink}, #{target}, #{flags.to_s(8)})")
+      "CreateSymbolicLink(#{symlink}, #{target}, #{flags.to_s(8)})"
+    )
   end
   module_function :symlink
 
@@ -139,7 +140,8 @@ module Puppet::Util::Windows::File
     raise Puppet::Util::Windows::Error.new(
       "CreateFile(#{file_name}, #{desired_access.to_s(8)}, #{share_mode.to_s(8)}, " +
         "#{security_attributes}, #{creation_disposition.to_s(8)}, " +
-        "#{flags_and_attributes.to_s(8)}, #{template_file_handle})")
+        "#{flags_and_attributes.to_s(8)}, #{template_file_handle})"
+    )
   end
 
   def self.get_reparse_point_data(handle, &block)
@@ -200,7 +202,8 @@ module Puppet::Util::Windows::File
         raise Puppet::Util::Windows::Error.new(
           "DeviceIoControl(#{handle}, #{io_control_code}, " +
           "#{in_buffer}, #{in_buffer ? in_buffer.size : ''}, " +
-          "#{out_buffer}, #{out_buffer ? out_buffer.size : ''}")
+          "#{out_buffer}, #{out_buffer ? out_buffer.size : ''}"
+        )
       end
     end
 
@@ -231,7 +234,8 @@ module Puppet::Util::Windows::File
         nil, # security_attributes
         OPEN_EXISTING,
         FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
-        0) # template_file
+        0
+      ) # template_file
     ensure
       FFI::WIN32.CloseHandle(handle) if handle
     end

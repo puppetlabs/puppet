@@ -242,7 +242,8 @@ module Generators
           gen_composite_index(
             file,
             RDoc::Page::COMBO_INDEX,
-            "#{MODULE_DIR}/fr_#{file["file"].context.module_name}.html")
+            "#{MODULE_DIR}/fr_#{file["file"].context.module_name}.html"
+          )
         end
       end
     end
@@ -500,7 +501,8 @@ module Generators
       template = TemplatePage.new(
         RDoc::Page::BODYINC,
         RDoc::Page::NODE_PAGE,
-        RDoc::Page::METHOD_LIST)
+        RDoc::Page::METHOD_LIST
+      )
       template.write_html_on(f, @values)
     end
 
@@ -741,7 +743,8 @@ module Generators
       template = TemplatePage.new(
         RDoc::Page::BODYINC,
         RDoc::Page::PLUGIN_PAGE,
-        RDoc::Page::PLUGIN_LIST)
+        RDoc::Page::PLUGIN_LIST
+      )
       template.write_html_on(f, @values)
     end
 

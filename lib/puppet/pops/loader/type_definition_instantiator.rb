@@ -53,7 +53,8 @@ class TypeDefinitionInstantiator
     loader.set_entry(
       typed_name,
       type,
-      type_definition.locator.to_uri(type_definition))
+      type_definition.locator.to_uri(type_definition)
+    )
     type
   end
 

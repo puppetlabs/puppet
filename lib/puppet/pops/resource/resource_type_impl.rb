@@ -41,7 +41,8 @@ class ResourceTypeImpl
                                          },
                                          'title_patterns_hash' => {
                                            Types::KEY_TYPE => Types::POptionalType.new(
-                                             Types::PHashType.new(Types::PRegexpType::DEFAULT, Types::PArrayType.new(Types::PStringType::NON_EMPTY))),
+                                             Types::PHashType.new(Types::PRegexpType::DEFAULT, Types::PArrayType.new(Types::PStringType::NON_EMPTY))
+                                           ),
                                            Types::KEY_VALUE => nil
                                          },
                                          'isomorphic' => {
@@ -54,8 +55,7 @@ class ResourceTypeImpl
                                          },
                                        },
                                        EMPTY_HASH,
-                                       [Types::KEY_NAME]
-    )
+                                       [Types::KEY_NAME])
   end
 
   def eql?(other)

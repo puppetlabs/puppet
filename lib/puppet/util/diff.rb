@@ -48,7 +48,8 @@ module Puppet::Util::Diff
         hunk = ::Diff::LCS::Hunk.new(
           data_old, data_new, piece,
           context_lines,
-          file_length_difference)
+          file_length_difference
+        )
         file_length_difference = hunk.file_length_difference
         next unless oldhunk
 

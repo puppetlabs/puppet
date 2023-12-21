@@ -642,7 +642,8 @@ class Puppet::Settings
               preferred_run_mode,
               env,
               value_sets,
-              @config).interpolate(setting.name))
+              @config
+            ).interpolate(setting.name))
           end
           break
         end
@@ -1185,7 +1186,8 @@ Generated on #{Time.now}.
       section,
       environment,
       value_sets_for(environment, section),
-      @config)
+      @config
+    )
   end
 
   # Find the correct value using our search path.

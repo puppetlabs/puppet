@@ -227,7 +227,8 @@ module Puppet
         loaders << Puppet::Environments::StaticPrivate.new(
           Puppet::Node::Environment.create(default_environment,
                                            modulepath,
-                                           Puppet::Node::Environment::NO_MANIFEST))
+                                           Puppet::Node::Environment::NO_MANIFEST)
+        )
       end
     end
 

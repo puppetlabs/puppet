@@ -70,7 +70,8 @@ class Puppet::FileBucket::Dipper
         file_diff = Puppet::FileBucket::File.indirection.find(
           source_path,
           :bucket_path => @local_path,
-          :diff_with => checksum_b)
+          :diff_with => checksum_b
+        )
       elsif file_b
         tmp_file = ::Tempfile.new('diff')
         begin
@@ -167,7 +168,8 @@ class Puppet::FileBucket::Dipper
       :bucket_path => @local_path,
       :list_all => true,
       :fromdate => fromdate,
-      :todate => todate)
+      :todate => todate
+    )
     raise Puppet::Error, _("File not found") unless file_bucket_list
 
     file_bucket_list.to_s

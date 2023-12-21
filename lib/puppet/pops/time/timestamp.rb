@@ -85,7 +85,8 @@ class Timestamp < TimeData
       end
       if parsed.nil?
         raise ArgumentError, _(
-          "Unable to parse '%{str}' using any of the formats %{formats}") % { str: str, formats: format.join(', ') }
+          "Unable to parse '%{str}' using any of the formats %{formats}"
+        ) % { str: str, formats: format.join(', ') }
       end
     else
       parsed = DateTime._strptime(str, format)
@@ -95,7 +96,8 @@ class Timestamp < TimeData
 
       if has_timezone && parsed.include?(:zone)
         raise ArgumentError, _(
-          'Using a Timezone designator in format specification is mutually exclusive to providing an explicit timezone argument')
+          'Using a Timezone designator in format specification is mutually exclusive to providing an explicit timezone argument'
+        )
       end
     end
     unless has_timezone

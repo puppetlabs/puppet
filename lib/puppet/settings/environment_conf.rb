@@ -143,7 +143,8 @@ class Puppet::Settings::EnvironmentConf
         _("Invalid sections in environment.conf at '%{path_to_conf_file}'. Environment conf may not have sections. The following sections are being ignored: '%{sections}'") % {
           path_to_conf_file: path_to_conf_file,
           sections: (section_keys - [:main]).join(',')
-        })
+        }
+      )
       valid = false
     end
 
@@ -155,7 +156,8 @@ class Puppet::Settings::EnvironmentConf
         _("Invalid settings in environment.conf at '%{path_to_conf_file}'. The following unknown setting(s) are being ignored: %{ignored_settings}") % {
           path_to_conf_file: path_to_conf_file,
           ignored_settings: extraneous_settings.join(', ')
-        })
+        }
+      )
       valid = false
     end
 

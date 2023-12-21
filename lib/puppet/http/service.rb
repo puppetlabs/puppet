@@ -121,8 +121,7 @@ class Puppet::HTTP::Service
   def build_url(api, server, port)
     URI::HTTPS.build(host: server,
                      port: port,
-                     path: api
-                    ).freeze
+                     path: api).freeze
   end
 
   def get_mime_types(model)
