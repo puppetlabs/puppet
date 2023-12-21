@@ -23,22 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Layout/LeadingEmptyLines:
-  Exclude:
-    - 'lib/puppet/functions/yaml_data.rb'
-    - 'lib/puppet/info_service.rb'
-    - 'lib/puppet/parser/abstract_compiler.rb'
-    - 'lib/puppet/pops/loader/loader_paths.rb'
-    - 'lib/puppet/pops/parser/code_merger.rb'
-    - 'lib/puppet/pops/parser/lexer_support.rb'
-    - 'lib/puppet/pops/types/type_assertion_error.rb'
-    - 'lib/puppet/pops/types/type_conversion_error.rb'
-    - 'lib/puppet/provider/network_device.rb'
-    - 'lib/puppet/type/component.rb'
-    - 'lib/puppet/type/file/ensure.rb'
-    - 'lib/puppet/util/network_device/transport/base.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: symmetrical, new_line, same_line
 Layout/MultilineArrayBraceLayout:
