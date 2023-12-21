@@ -81,10 +81,10 @@ describe 'Puppet::Type::Service::Provider::Windows',
   end
 
   describe "#status" do
-    it "should report a nonexistent service as absent" do
+    it "should report a nonexistent service as stopped" do
       allow(service_util).to receive(:exists?).with(resource[:name]).and_return(false)
 
-      expect(provider.status).to eql(:absent)
+      expect(provider.status).to eql(:stopped)
     end
 
     it "should report service as stopped when status cannot be retrieved" do

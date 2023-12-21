@@ -236,11 +236,8 @@ class Puppet::Application::Resource < Puppet::Application
           resource = Puppet::Resource.new( type, name, :parameters => params )
 
           # save returns [resource that was saved, transaction log from applying the resource]
-          save_result, report = Puppet::Resource.indirection.save(resource, key)
-          status = report.resource_statuses[resource.ref]
-          raise "Failed to manage resource #{resource.ref}" if status&.failed?
-
-          [ save_result ]
+          save_result = Puppet::Resource.indirection.save(resource, key)
+          [ save_result.first ]
         end
       else
         if type == "file"
