@@ -144,7 +144,7 @@ class Puppet::Configurer
   end
 
   def warn_fact_value_length(value, max_length)
-    Puppet.warning _("Fact value '%{value}' with the value length: '%{length}' exceeds the value length limit: %{max_length}") % { value: value, length:value.to_s.bytesize, max_length: max_length }
+    Puppet.warning _("Fact value '%{value}' with the value length: '%{length}' exceeds the value length limit: %{max_length}") % { value: value, length: value.to_s.bytesize, max_length: max_length }
   end
 
   def warn_fact_payload_size(payload, max_size)
