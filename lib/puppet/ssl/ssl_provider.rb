@@ -335,7 +335,8 @@ class Puppet::SSL::SSLProvider
         _("Invalid signature for CRL issued by '%{issuer}'") % { issuer: issuer(current_cert) }
       when OpenSSL::X509::V_ERR_UNABLE_TO_GET_ISSUER_CERT
         _("The issuer '%{issuer}' of certificate '%{subject}' is missing") % {
-          issuer: issuer(current_cert), subject: subject(current_cert) }
+          issuer: issuer(current_cert), subject: subject(current_cert)
+        }
       when OpenSSL::X509::V_ERR_UNABLE_TO_GET_CRL
         _("The CRL issued by '%{issuer}' is missing") % { issuer: issuer(current_cert) }
       when OpenSSL::X509::V_ERR_CERT_REVOKED
@@ -344,7 +345,8 @@ class Puppet::SSL::SSLProvider
         # error_string is labeled ASCII-8BIT, but is encoded based on Encoding.default_external
         err_utf8 = Puppet::Util::CharacterEncoding.convert_to_utf_8(store_context.error_string)
         _("Certificate '%{subject}' failed verification (%{err}): %{err_utf8}") % {
-          subject: subject(current_cert), err: store_context.error, err_utf8: err_utf8 }
+          subject: subject(current_cert), err: store_context.error, err_utf8: err_utf8
+        }
       end
 
     raise Puppet::SSL::CertVerifyError.new(message, store_context.error, current_cert)

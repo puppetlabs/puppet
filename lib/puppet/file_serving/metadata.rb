@@ -78,8 +78,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
 
     { :owner => 'S-1-5-32-544',
       :group => 'S-1-0-0',
-      :mode => 0644
-    }.each do |method, default_value|
+      :mode => 0644}.each do |method, default_value|
       define_method method do
         return default_value
       end

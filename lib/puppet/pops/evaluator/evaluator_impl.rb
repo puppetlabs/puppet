@@ -572,7 +572,8 @@ class EvaluatorImpl
              :operator => o.operator,
              :left_value => left,
              :right_value => right,
-             :detail => e.message}, e)
+             :detail => e.message
+           }, e)
     end
   end
 

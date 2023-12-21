@@ -25,22 +25,6 @@ I18n/RailsI18n/DecorateString:
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: symmetrical, new_line, same_line
-Layout/MultilineHashBraceLayout:
-  Exclude:
-    - 'lib/puppet/configurer.rb'
-    - 'lib/puppet/defaults.rb'
-    - 'lib/puppet/face/facts.rb'
-    - 'lib/puppet/file_serving/metadata.rb'
-    - 'lib/puppet/indirector/catalog/compiler.rb'
-    - 'lib/puppet/info_service/class_information_service.rb'
-    - 'lib/puppet/pops/evaluator/evaluator_impl.rb'
-    - 'lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb'
-    - 'lib/puppet/pops/parser/lexer_support.rb'
-    - 'lib/puppet/ssl/ssl_provider.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: symmetrical, new_line, same_line
 Layout/MultilineMethodCallBraceLayout:
   Enabled: false
 

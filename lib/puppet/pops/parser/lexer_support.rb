@@ -198,8 +198,7 @@ module LexerSupport
     lex_error_without_pos(
       Puppet::Pops::Issues::ILLEGAL_BOM,
       { :format_name => name,
-        :bytes => "[#{bom.values[0,size].map {|b| "%X" % b}.join(" ")}]"
-      })
+        :bytes => "[#{bom.values[0,size].map {|b| "%X" % b}.join(" ")}]"})
   end
 
   def get_bom(content)

@@ -670,7 +670,8 @@ class Puppet::Configurer
 
     Puppet.info(_("Uploading facts for %{node} to %{server}") % {
       node: facts.name,
-      server: puppet.url.hostname})
+      server: puppet.url.hostname
+    })
 
     puppet.put_facts(facts.name, facts: facts, environment: Puppet.lookup(:current_environment).name.to_s)
 

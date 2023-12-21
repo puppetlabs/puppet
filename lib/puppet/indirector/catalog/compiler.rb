@@ -442,8 +442,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     # And then add the server name and IP
     {"servername" => "networking.fqdn",
      "serverip" => "networking.ip",
-     "serverip6" => "networking.ip6"
-    }.each do |var, fact|
+     "serverip6" => "networking.ip6"}.each do |var, fact|
       value = Puppet.runtime[:facter].value(fact)
       if !value.nil?
         @server_facts[var] = value
