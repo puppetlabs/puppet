@@ -236,8 +236,7 @@ module Pal
       settings_hash: {},
       facts:         nil,
       variables:     {},
-      &block
-  )
+      &block)
     assert_non_empty_string(env_name, _("temporary environment name"))
     # TRANSLATORS: do not translate variable name string in these assertions
     assert_optionally_empty_array(modulepath, 'modulepath')
@@ -288,8 +287,7 @@ module Pal
       envpath:       nil,
       facts:         nil,
       variables:     {},
-      &block
-  )
+      &block)
     # TRANSLATORS terms in the assertions below are names of terms in code
     assert_non_empty_string(env_name, 'env_name')
     assert_optionally_empty_array(modulepath, 'modulepath', true)
