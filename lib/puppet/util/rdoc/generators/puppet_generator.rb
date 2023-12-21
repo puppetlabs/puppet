@@ -670,10 +670,10 @@ module Generators
       context.nodes.sort.each do |node|
         if node.document_self
           res <<
-          prefix <<
-          "Node " <<
-          href(url(node.viewer.path), "link", node.full_name) <<
-          "<br />\n"
+            prefix <<
+            "Node " <<
+            href(url(node.viewer.path), "link", node.full_name) <<
+            "<br />\n"
         end
       end
       res

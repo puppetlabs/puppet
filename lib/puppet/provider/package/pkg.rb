@@ -182,7 +182,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
         end
       }
       raise Puppet::DevError, _("No version of %{name} matching %{should} is installable, even though the package is currently installed") %
-          { name: name, should: should }
+                              { name: name, should: should }
     end
 
     false

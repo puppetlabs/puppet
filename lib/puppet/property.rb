@@ -371,7 +371,7 @@ class Puppet::Property < Puppet::Parameter
       # avoid it
       # TRANSLATORS 'insync_values?' should not be translated
       msg = _("Unknown failure using insync_values? on type: %{type} / property: %{name} to compare values %{should} and %{is}") %
-          { type: self.resource.ref, name: self.name, should: should, is: is }
+            { type: self.resource.ref, name: self.name, should: should, is: is }
       Puppet.info(msg)
 
       # Return nil, ie. unknown
@@ -597,7 +597,7 @@ class Puppet::Property < Puppet::Parameter
       unless provider.satisfies?(features)
         # TRANSLATORS 'Provider' refers to a Puppet provider class
         raise ArgumentError, _("Provider %{provider} must have features '%{needed_features}' to set '%{property}' to '%{value}'") %
-            { provider: provider.class.name, needed_features: needed_features, property: self.class.name, value: value }
+                             { provider: provider.class.name, needed_features: needed_features, property: self.class.name, value: value }
       end
     end
   end

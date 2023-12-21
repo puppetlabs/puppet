@@ -153,7 +153,7 @@ class Runtime3Converter
     else
       # TRANSLATORS 'PClassType' and 'PResourceType' are Puppet types and should not be translated
       raise ArgumentError, _("Cannot split the type %{class_name}, it represents neither a PClassType, nor a PResourceType.") %
-          { class_name: catalog_type.class }
+                           { class_name: catalog_type.class }
     end
   end
 

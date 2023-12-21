@@ -133,7 +133,7 @@ module Puppet::Interface::FaceCollection
     unless name.to_s =~ /^[-_a-z][-_a-z0-9]*$/i then
       # TRANSLATORS 'face' refers to a programming API in Puppet
       raise ArgumentError, _("%{name} (%{class_name}) is not a valid face name") %
-          { name: name.inspect, class_name: name.class }
+                           { name: name.inspect, class_name: name.class }
     end
 
     name.to_s.downcase.split(/[-_]/).join('_').to_sym

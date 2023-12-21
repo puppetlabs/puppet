@@ -139,7 +139,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
             Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
           rescue ArgumentError => e
             raise ArgumentError, _("Malformed dependency: %{name}.") % { name: dep['name'] } +
-                ' ' + _("Exception was: %{detail}") % { detail: e }
+                                 ' ' + _("Exception was: %{detail}") % { detail: e }
           end
         end
       else

@@ -273,8 +273,8 @@ class Locator
       # complex case when there is a margin
       transposed_offset = offset == 0 ? @leading_offset : offset + @leading_offset + @accumulated_margin[start_line]
       transposed_length = length +
-        @accumulated_margin[end_line] - @accumulated_margin[start_line] +    # the margins between start and end (0 is line 1)
-        (offset_on_line(offset) == 0 ? margin_per_line[start_line - 1] : 0)  # include start's margin in position 0
+                          @accumulated_margin[end_line] - @accumulated_margin[start_line] +    # the margins between start and end (0 is line 1)
+                          (offset_on_line(offset) == 0 ? margin_per_line[start_line - 1] : 0)  # include start's margin in position 0
       [transposed_offset, transposed_length]
     end
 

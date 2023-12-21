@@ -155,7 +155,7 @@ class PObjectType < PMetaType
       if parent_member.nil?
         if @override
           raise Puppet::ParseError, _("expected %{label} to override an inherited %{feature_type}, but no such %{feature_type} was found") %
-              { label: label, feature_type: feature_type }
+                                    { label: label, feature_type: feature_type }
         end
         self
       else
@@ -799,7 +799,7 @@ class PObjectType < PMetaType
             if parent_eq_attrs.include?(attr_name)
               including_parent = find_equality_definer_of(attr)
               raise Puppet::ParseError, _("%{label} equality is referencing %{attribute} which is included in equality of %{including_parent}") %
-                  { label: label, attribute: attr.label, including_parent: including_parent.label }
+                                        { label: label, attribute: attr.label, including_parent: including_parent.label }
             end
           end
 
@@ -809,11 +809,11 @@ class PObjectType < PMetaType
             end
 
             raise Puppet::ParseError, _("%{label} equality is referencing %{attribute}. Only attribute references are allowed") %
-                { label: label, attribute: attr.label }
+                                      { label: label, attribute: attr.label }
           end
           if attr.kind == ATTRIBUTE_KIND_CONSTANT
             raise Puppet::ParseError, _("%{label} equality is referencing constant %{attribute}.") % { label: label, attribute: attr.label } + ' ' +
-                _("Reference to constant is not allowed in equality")
+                                      _("Reference to constant is not allowed in equality")
           end
         end
       end

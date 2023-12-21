@@ -101,7 +101,7 @@ module Puppet
         values = [values] unless values.is_a?(Array)
         values.each { |value|
           unless value.is_a?(String) and
-              value =~ /\d+(:\d+){0,2}\s*-\s*\d+(:\d+){0,2}/
+                 value =~ /\d+(:\d+){0,2}\s*-\s*\d+(:\d+){0,2}/
             self.fail _("Invalid range value '%{value}'") % { value: value }
           end
         }
@@ -428,7 +428,7 @@ module Puppet
       # Pull them in order
       self.class.allattrs.each { |param|
         if @parameters.include?(param) and
-          @parameters[param].respond_to?(:match?)
+           @parameters[param].respond_to?(:match?)
           return false unless @parameters[param].match?(previous, now)
         end
       }

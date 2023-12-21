@@ -186,7 +186,7 @@ class Puppet::Indirector::Indirection
 
     unless Puppet::Indirector::Terminus.terminus_class(self.name, terminus_class)
       raise ArgumentError, _("Could not find terminus %{terminus_class} for indirection %{name}") %
-          { terminus_class: terminus_class, name: self.name }
+                           { terminus_class: terminus_class, name: self.name }
     end
   end
 
@@ -346,10 +346,10 @@ class Puppet::Indirector::Indirection
     unless terminus.authorized?(request)
       msg = if request.options.empty?
               _("Not authorized to call %{method} on %{description}") %
-                  { method: request.method, description: request.description }
+                { method: request.method, description: request.description }
             else
               _("Not authorized to call %{method} on %{description} with %{option}") %
-                  { method: request.method, description: request.description, option: request.options.inspect }
+                { method: request.method, description: request.description, option: request.options.inspect }
             end
       raise ArgumentError, msg
     end

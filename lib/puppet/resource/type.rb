@@ -210,7 +210,7 @@ class Puppet::Resource::Type
     return nil unless parent
 
     @parent_type ||= scope.environment.known_resource_types.send("find_#{type}", parent) ||
-      fail(Puppet::ParseError, _("Could not find parent resource type '%{parent}' of type %{parent_type} in %{env}") % { parent: parent, parent_type: type, env: scope.environment })
+                     fail(Puppet::ParseError, _("Could not find parent resource type '%{parent}' of type %{parent_type} in %{env}") % { parent: parent, parent_type: type, env: scope.environment })
   end
 
   # Validate and set any arguments passed by the resource as variables in the scope.

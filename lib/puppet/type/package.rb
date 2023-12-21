@@ -652,9 +652,9 @@ module Puppet
     # that support the reinstall_on_refresh parameter.
     def refresh
       if provider.reinstallable? &&
-        @parameters[:reinstall_on_refresh].value == :true &&
-        @parameters[:ensure].value != :purged &&
-        @parameters[:ensure].value != :absent
+         @parameters[:reinstall_on_refresh].value == :true &&
+         @parameters[:ensure].value != :purged &&
+         @parameters[:ensure].value != :absent
 
         provider.reinstall
       end

@@ -232,7 +232,7 @@ module Puppet::Util::Windows::Security
           end
         end
         if File.directory?(path) &&
-          (ace.mask & (FILE::FILE_WRITE_DATA | FILE::FILE_EXECUTE | FILE::FILE_DELETE_CHILD)) == (FILE::FILE_WRITE_DATA | FILE::FILE_EXECUTE)
+           (ace.mask & (FILE::FILE_WRITE_DATA | FILE::FILE_EXECUTE | FILE::FILE_DELETE_CHILD)) == (FILE::FILE_WRITE_DATA | FILE::FILE_EXECUTE)
           mode |= S_ISVTX;
         end
       when well_known_nobody_sid
@@ -287,16 +287,16 @@ module Puppet::Util::Windows::Security
     well_known_system_sid = Puppet::Util::Windows::SID::LocalSystem
 
     owner_allow = FILE::STANDARD_RIGHTS_ALL  |
-      FILE::FILE_READ_ATTRIBUTES |
-      FILE::FILE_WRITE_ATTRIBUTES
+                  FILE::FILE_READ_ATTRIBUTES |
+                  FILE::FILE_WRITE_ATTRIBUTES
     # this prevents a mode that is not 7 from taking ownership of a file based
     # on group membership and rewriting it / making it executable
     group_allow = FILE::STANDARD_RIGHTS_READ |
-      FILE::FILE_READ_ATTRIBUTES |
-      FILE::SYNCHRONIZE
+                  FILE::FILE_READ_ATTRIBUTES |
+                  FILE::SYNCHRONIZE
     other_allow = FILE::STANDARD_RIGHTS_READ |
-      FILE::FILE_READ_ATTRIBUTES |
-      FILE::SYNCHRONIZE
+                  FILE::FILE_READ_ATTRIBUTES |
+                  FILE::SYNCHRONIZE
     nobody_allow = 0
     system_allow = 0
 
@@ -403,7 +403,7 @@ module Puppet::Util::Windows::Security
     # TODO: system should be first?
     flags = !isdir ? 0 :
       Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE |
-      Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE
+        Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE
     dacl.allow(well_known_system_sid, system_allow, flags)
 
     # add inherit-only aces for child dirs and files that are created within the dir
@@ -486,7 +486,7 @@ module Puppet::Util::Windows::Security
 
         ace_type = ace[:Header][:AceType]
         if ace_type != Puppet::Util::Windows::AccessControlEntry::ACCESS_ALLOWED_ACE_TYPE &&
-          ace_type != Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
+           ace_type != Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
           Puppet.warning _("Unsupported access control entry type: 0x%{type}") % { type: ace_type.to_s(16) }
           next
         end
@@ -804,7 +804,7 @@ module Puppet::Util::Windows::Security
   # https://stackoverflow.com/a/1792930
   MAXIMUM_SID_BYTES_LENGTH = 68
   MAXIMUM_GENERIC_ACE_SIZE = GENERIC_ACCESS_ACE.offset_of(:SidStart) +
-    MAXIMUM_SID_BYTES_LENGTH
+                             MAXIMUM_SID_BYTES_LENGTH
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446634(v=vs.85).aspx
   # BOOL WINAPI GetAce(

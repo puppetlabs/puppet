@@ -664,12 +664,12 @@ class TypeParser
 
   def raise_invalid_type_specification_error(ast)
     raise Puppet::ParseError, _("The expression <%{expression}> is not a valid type specification.") %
-        { expression: original_text_of(ast) }
+                              { expression: original_text_of(ast) }
   end
 
   def raise_invalid_parameters_error(type, required, given)
     raise Puppet::ParseError, _("Invalid number of type parameters specified: %{type} requires %{required}, %{given} provided") %
-        { type: type, required: required, given: given }
+                              { type: type, required: required, given: given }
   end
 
   def raise_unparameterized_type_error(ast)

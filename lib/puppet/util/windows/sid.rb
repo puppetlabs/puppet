@@ -115,7 +115,7 @@ module Puppet::Util::Windows
     # removed from the domain
     def ads_to_principal(ads_object)
       if !ads_object || !ads_object.respond_to?(:ole_respond_to?) ||
-        !ads_object.ole_respond_to?(:objectSID) || !ads_object.ole_respond_to?(:Name)
+         !ads_object.ole_respond_to?(:objectSID) || !ads_object.ole_respond_to?(:Name)
         raise Puppet::Error.new("ads_object must be an IAdsUser or IAdsGroup instance")
       end
 
@@ -126,8 +126,8 @@ module Puppet::Util::Windows
 
       # if the Name property isn't formatted like a SID, OR
       if !valid_sid?(ads_object.Name) ||
-        # if the objectSID doesn't match the Name property, also raise
-        ((converted = octet_string_to_sid_string(ads_object.objectSID)) != ads_object.Name)
+         # if the objectSID doesn't match the Name property, also raise
+         ((converted = octet_string_to_sid_string(ads_object.objectSID)) != ads_object.Name)
         raise Puppet::Error.new("ads_object Name: #{ads_object.Name} invalid or does not match objectSID: #{ads_object.objectSID} (#{converted})", e)
       end
 

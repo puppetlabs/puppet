@@ -339,7 +339,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   def list_extra_flags(command_version)
     klass = self.class
     if klass.compare_pip_versions(command_version, '20.2.4') == 1 &&
-      klass.compare_pip_versions(command_version, '21.1') == -1
+       klass.compare_pip_versions(command_version, '21.1') == -1
       '--use-deprecated=legacy-resolver'
     end
   end

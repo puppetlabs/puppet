@@ -58,7 +58,7 @@ module Puppet::Pops
       unless MergeStrategy > strategy_class
         # TRANSLATORS 'MergeStrategies.add_strategy' is a method, 'stratgey_class' is a variable and 'MergeStrategy' is a class name and should not be translated
         raise ArgumentError, _("MergeStrategies.add_strategy 'strategy_class' must be a 'MergeStrategy' class. Got %{strategy_class}") %
-            { strategy_class: strategy_class }
+                             { strategy_class: strategy_class }
       end
       strategies[strategy_class.key] = strategy_class
       nil

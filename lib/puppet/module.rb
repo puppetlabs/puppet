@@ -452,9 +452,9 @@ class Puppet::Module
 
   def ==(other)
     self.name == other.name &&
-    self.version == other.version &&
-    self.path == other.path &&
-    self.environment == other.environment
+      self.version == other.version &&
+      self.path == other.path &&
+      self.environment == other.environment
   end
 
   private

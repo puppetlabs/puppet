@@ -109,7 +109,7 @@ class Puppet::Settings::BaseSetting
       method = param.to_s + "="
       unless self.respond_to? method
         raise ArgumentError, _("%{class_name} (setting '%{setting}') does not accept %{parameter}") %
-            { class_name: self.class, setting: args[:name], parameter: param }
+                             { class_name: self.class, setting: args[:name], parameter: param }
       end
 
       self.send(method, value)
@@ -201,7 +201,7 @@ class Puppet::Settings::BaseSetting
     unless [:completely, :allowed_on_commandline].include?(deprecation)
       # TRANSLATORS 'deprecated' is a Puppet setting and ':completely' and ':allowed_on_commandline' are possible values and should not be translated
       raise ArgumentError, _("Unsupported deprecated value '%{deprecation}'.") % { deprecation: deprecation } +
-          ' ' + _("Supported values for deprecated are ':completely' or ':allowed_on_commandline'")
+                           ' ' + _("Supported values for deprecated are ':completely' or ':allowed_on_commandline'")
     end
     @deprecated = deprecation
   end

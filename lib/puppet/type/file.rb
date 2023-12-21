@@ -825,7 +825,7 @@ Puppet::Type.newtype(:file) do
     # metadata in `copy_source_values`, but so it only fails the resource and not
     # catalog validation (because that would be a breaking change from Puppet 4).
     if Puppet::Util::Platform.windows? && parameter(:source) &&
-      [:use, :use_when_creating].include?(self[:source_permissions])
+       [:use, :use_when_creating].include?(self[:source_permissions])
       # TRANSLATORS "source_permissions => ignore" should not be translated
       err_msg = _("Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore.")
       if self[:owner] == nil || self[:group] == nil || self[:mode] == nil

@@ -7,7 +7,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
     unless epp_source.is_a?(String)
       # TRANSLATORS 'inline_epp()' is a method name and 'epp' refers to 'Embedded Puppet (EPP) template' and should not be translated
       raise ArgumentError, _("inline_epp(): the first argument must be a String with the epp source text, got a %{class_name}") %
-          { class_name: epp_source.class }
+                           { class_name: epp_source.class }
     end
 
     # Parse and validate the source
@@ -61,17 +61,17 @@ class Puppet::Pops::Evaluator::EppEvaluator
     unless body.is_a?(Puppet::Pops::Model::LambdaExpression)
       # TRANSLATORS 'LambdaExpression' is a class name and should not be translated
       raise ArgumentError, _("%{function_name}(): the parser did not produce a LambdaExpression, got '%{class_name}'") %
-          { function_name: func_name, class_name: body.class }
+                           { function_name: func_name, class_name: body.class }
     end
     unless body.body.is_a?(Puppet::Pops::Model::EppExpression)
       # TRANSLATORS 'EppExpression' is a class name and should not be translated
       raise ArgumentError, _("%{function_name}(): the parser did not produce an EppExpression, got '%{class_name}'") %
-          { function_name: func_name, class_name: body.body.class }
+                           { function_name: func_name, class_name: body.body.class }
     end
     unless parse_result.definitions.empty?
       # TRANSLATORS 'EPP' refers to 'Embedded Puppet (EPP) template'
       raise ArgumentError, _("%{function_name}(): The EPP template contains illegal expressions (definitions)") %
-          { function_name: func_name }
+                           { function_name: func_name }
     end
 
     parameters_specified = body.body.parameters_specified
@@ -112,7 +112,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
       unless template_args.is_a?(Hash)
         # TRANSLATORS 'template_args' is a variable name and should not be translated
         raise ArgumentError, _("%{function_name}(): the template_args must be a Hash, got a %{class_name}") %
-            { function_name: func_name, class_name: template_args.class }
+                             { function_name: func_name, class_name: template_args.class }
       end
       [template_args, true]
     end

@@ -100,7 +100,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
       errmsg = if version_specified
                  _("Unable to find package '%{package}' with version '%{version}' on lpp_source '%{source}'") %
-                     { package: pkg, version: version, source: source }
+                   { package: pkg, version: version, source: source }
                else
                  _("Unable to find package '%{package}' on lpp_source '%{source}'") % { package: pkg, source: source }
                end

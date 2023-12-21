@@ -195,8 +195,8 @@ class Puppet::Node::Environment
     paths_set        = configured_path && resolved_path
     munging_possible = paths_set && configured_path != resolved_path
     munging_desired  = munging_possible &&
-                         Puppet[:report_configured_environmentpath] &&
-                         filepath.to_s.start_with?(resolved_path)
+                       Puppet[:report_configured_environmentpath] &&
+                       filepath.to_s.start_with?(resolved_path)
 
     if munging_desired
       File.join(configured_path, filepath.delete_prefix(resolved_path))
@@ -540,9 +540,9 @@ class Puppet::Node::Environment
 
   def ==(other)
     return true if other.kind_of?(Puppet::Node::Environment) &&
-      self.name == other.name &&
-      self.full_modulepath == other.full_modulepath &&
-      self.manifest == other.manifest
+                   self.name == other.name &&
+                   self.full_modulepath == other.full_modulepath &&
+                   self.manifest == other.manifest
   end
 
   alias eql? ==

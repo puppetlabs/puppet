@@ -100,7 +100,7 @@ class Puppet::Interface::Action
             else
               # TRANSLATORS 'set_rendering_method_for' and 'Proc' should not be translated
               _("The second argument to set_rendering_method_for must be a Proc, not %{class_name}") %
-                  { class_name: proc.class.name }
+                { class_name: proc.class.name }
             end
       raise ArgumentError, msg
     end
@@ -111,13 +111,13 @@ class Puppet::Interface::Action
               _("The when_rendering method for the %{face} face %{name} action takes either just one argument,"\
                 " the result of when_invoked, or the result plus the %{arg_count} arguments passed to the"\
                 " when_invoked block, not a variable number") %
-                  { face: @face.name, name: name, arg_count: @positional_arg_count }
+                { face: @face.name, name: name, arg_count: @positional_arg_count }
             else
               # TRANSLATORS 'when_rendering', 'when_invoked' are method names and should not be translated
               _("The when_rendering method for the %{face} face %{name} action takes either just one argument,"\
                 " the result of when_invoked, or the result plus the %{arg_count} arguments passed to the"\
                 " when_invoked block, not %{string}") %
-                  { face: @face.name, name: name, arg_count: @positional_arg_count, string: proc.arity.to_s }
+                { face: @face.name, name: name, arg_count: @positional_arg_count, string: proc.arity.to_s }
             end
       raise ArgumentError, msg
     end
@@ -284,12 +284,12 @@ class Puppet::Interface::Action
       conflict = get_option(name)
       if conflict
         raise ArgumentError, _("Option %{option} conflicts with existing option %{conflict}") %
-            { option: option, conflict: conflict }
+                             { option: option, conflict: conflict }
       else
         conflict = @face.get_option(name)
         if conflict
           raise ArgumentError, _("Option %{option} conflicts with existing option %{conflict} on %{face}") %
-              { option: option, conflict: conflict, face: @face }
+                               { option: option, conflict: conflict, face: @face }
         end
       end
     end
@@ -367,7 +367,7 @@ class Puppet::Interface::Action
     unless overlap.empty?
       overlap_list = overlap.map {|k, v| "(#{k}, #{v.sort.join(', ')})" }.join(", ")
       raise ArgumentError, _("Multiple aliases for the same option passed: %{overlap_list}") %
-          { overlap_list: overlap_list }
+                           { overlap_list: overlap_list }
     end
 
     unless unknown.empty?

@@ -239,7 +239,7 @@ module ModuleLoaders
 
             # TRANSLATORS 'TypeSet' should not be translated
             raise ArgumentError, _("The code loaded from %{origin} does not define the TypeSet '%{module_name}'") %
-                { origin: origin, module_name: name_parts[0].capitalize }
+                                 { origin: origin, module_name: name_parts[0].capitalize }
           end
         else
           # anything else cannot possibly be in this module

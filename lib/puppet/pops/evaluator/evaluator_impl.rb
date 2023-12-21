@@ -944,7 +944,7 @@ class EvaluatorImpl
     #
     functor = o.functor_expr
     if functor.is_a?(Model::QualifiedReference) ||
-      functor.is_a?(Model::AccessExpression) && functor.left_expr.is_a?(Model::QualifiedReference)
+       functor.is_a?(Model::AccessExpression) && functor.left_expr.is_a?(Model::QualifiedReference)
       # instantiation
       type = evaluate(functor, scope)
       return call_function_with_block('new', unfold([type], o.arguments || [], scope), o, scope)

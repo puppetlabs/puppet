@@ -76,7 +76,7 @@ class Puppet::Network::Format
     return instances[0].class.send(render_multiple_method, instances) if instances[0].class.respond_to?(render_multiple_method)
 
     raise NotImplementedError, _("%{klass} does not respond to %{method}; can not render multiple instances to %{mime}") %
-        { klass: instances[0].class, method: render_multiple_method, mime: mime }
+                               { klass: instances[0].class, method: render_multiple_method, mime: mime }
   end
 
   def required_methods_present?(klass)

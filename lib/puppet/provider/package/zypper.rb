@@ -154,9 +154,9 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
   # What's the latest package version available?
   def latest
     return self.class.latest_package_version(@resource[:name]) ||
-      # zypper didn't find updates, pretend the current
-      # version is the latest
-      @property_hash[:ensure]
+           # zypper didn't find updates, pretend the current
+           # version is the latest
+           @property_hash[:ensure]
   end
 
   def update

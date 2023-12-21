@@ -316,7 +316,7 @@ class Puppet::Interface
         if fault then
           # TRANSLATORS 'copyright' is an attribute name and should not be translated
           raise ArgumentError, _("copyright with a year %{value} is very strange; did you accidentally add or subtract two years?") %
-              { value: fault }
+                               { value: fault }
         end
 
         input

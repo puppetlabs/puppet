@@ -99,7 +99,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     when Model::BlockExpression
       c = container(idx)
       if !c.is_a?(Model::Program) &&
-        (definition.is_a?(Model::FunctionDefinition) || definition.is_a?(Model::TypeAlias) || definition.is_a?(Model::TypeDefinition))
+         (definition.is_a?(Model::FunctionDefinition) || definition.is_a?(Model::TypeAlias) || definition.is_a?(Model::TypeDefinition))
 
         # not ok. These can never be nested in a block
         acceptor.accept(Issues::NOT_ABSOLUTE_TOP_LEVEL, definition)
@@ -280,7 +280,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_CallNamedFunctionExpression(o)
     functor = o.functor_expr
     if functor.is_a?(Model::QualifiedReference) ||
-      functor.is_a?(Model::AccessExpression) && functor.left_expr.is_a?(Model::QualifiedReference)
+       functor.is_a?(Model::AccessExpression) && functor.left_expr.is_a?(Model::QualifiedReference)
       # ok (a call to a type)
       return nil
     end

@@ -69,7 +69,7 @@ class Puppet::Settings::EnvironmentConf
       if environment_conf_manifest && fallback_manifest_directory != environment_conf_manifest
         # TRANSLATORS 'disable_per_environment_manifest' is a setting and 'environment.conf' is a file name and should not be translated
         message = _("The 'disable_per_environment_manifest' setting is true, but the environment located at %{path_to_env} has a manifest setting in its environment.conf of '%{environment_conf}' which does not match the default_manifest setting '%{puppet_conf}'.") %
-            { path_to_env: @path_to_env, environment_conf: environment_conf_manifest, puppet_conf: puppet_conf_manifest }
+                  { path_to_env: @path_to_env, environment_conf: environment_conf_manifest, puppet_conf: puppet_conf_manifest }
         message += ' ' + _("If this environment is expecting to find modules in '%{environment_conf}', they will not be available!") % { environment_conf: environment_conf_manifest }
         Puppet.err(message)
       end

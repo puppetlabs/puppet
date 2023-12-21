@@ -181,7 +181,7 @@ module Puppet::FileBucketFile
               # TRANSLATORS "FileBucket" should not be translated
               Puppet.err(_("Unable to verify existing FileBucket backup at '%{path}'.") % { path: contents_file.to_path })
               raise Puppet::FileBucket::BucketError, _("Existing backup and new file have different content but same checksum, %{value}. Verify existing backup and remove if incorrect.") %
-                { value: bucket_file.checksum }
+                                                     { value: bucket_file.checksum }
             else
               # PUP-1334 If the contents_file exists but does not match its
               # checksum, our backup has been corrupted. Warn about overwriting

@@ -185,7 +185,7 @@ class PInitType < PTypeWithContainedType
       end
       if param_tuples.empty?
         raise ArgumentError, _("The type '%{type}' does not represent a valid set of parameters for %{subject}.new()") %
-          { type: to_s, subject: @type.generalize.name }
+                             { type: to_s, subject: @type.generalize.name }
       end
       single_types.concat(param_tuples.map { |tuple| tuple.types[0] })
       other_tuples = EMPTY_ARRAY

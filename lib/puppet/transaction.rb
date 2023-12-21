@@ -247,8 +247,8 @@ class Puppet::Transaction
   def prefetch_if_necessary(resource)
     provider_class = resource.provider.class
     if !provider_class.respond_to?(:prefetch) or
-        prefetched_providers[resource.type][provider_class.name] or
-        prefetch_failed_providers[resource.type][provider_class.name]
+       prefetched_providers[resource.type][provider_class.name] or
+       prefetch_failed_providers[resource.type][provider_class.name]
       return
     end
 
@@ -378,7 +378,7 @@ class Puppet::Transaction
   def prefetch(provider_class, resources)
     type_name = provider_class.resource_type.name
     return if @prefetched_providers[type_name][provider_class.name] ||
-      @prefetch_failed_providers[type_name][provider_class.name]
+              @prefetch_failed_providers[type_name][provider_class.name]
 
     Puppet.debug { "Prefetching #{provider_class.name} resources for #{type_name}" }
     begin

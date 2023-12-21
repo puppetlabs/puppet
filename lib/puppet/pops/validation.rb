@@ -206,7 +206,7 @@ module Validation
       if semantic.is_a?(StandardError)
         unless semantic.respond_to?(:file) && semantic.respond_to?(:line) && semantic.respond_to?(:pos)
           raise Puppet::DevError, _("Issue %{issue_code}: Cannot pass a %{class_name} as a semantic object when it does not support #pos(), #file() and #line()") %
-              { issue_code: issue.issue_code, class_name: semantic.class }
+                                  { issue_code: issue.issue_code, class_name: semantic.class }
         end
       end
 

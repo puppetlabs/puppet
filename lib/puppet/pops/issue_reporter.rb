@@ -72,10 +72,10 @@ class IssueReporter
       end
       giving_up_message = if (emit_warnings && warnings.size > 0)
                             _("Language validation logged %{error_count} errors, and %{warning_count} warnings. Giving up") %
-                                { error_count: errors.size, warning_count: warnings.size }
+                              { error_count: errors.size, warning_count: warnings.size }
                           else
                             _("Language validation logged %{error_count} errors. Giving up") %
-                                { error_count: errors.size }
+                              { error_count: errors.size }
                           end
       exception = emit_exception.new(giving_up_message)
       exception.file = errors[0].file

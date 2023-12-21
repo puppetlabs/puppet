@@ -812,7 +812,7 @@ class Factory
       # Bad number should already have been caught by lexer - this should never happen
       # TRANSLATORS 'NUMBER' refers to a method name and the 'name_or_numeric' was the passed in value and should not be translated
       raise ArgumentError, _("Internal Error, NUMBER token does not contain a valid number, %{name_or_numeric}") %
-          { name_or_numeric: name_or_numeric }
+                           { name_or_numeric: name_or_numeric }
     end
   end
 

@@ -44,7 +44,7 @@ class Puppet::Module
     class TaskNotFound < Error
       def initialize(task_name, module_name)
         msg = _("Task %{task_name} not found in module %{module_name}.") %
-          {task_name: task_name, module_name: module_name}
+              {task_name: task_name, module_name: module_name}
         super(msg, 'puppet.tasks/task-not-found', { 'name' => task_name })
       end
     end
@@ -184,11 +184,11 @@ class Puppet::Module
       implementations = executables.select { |impl| File.basename(impl, '.*') == basename }
       if implementations.empty?
         msg = _('No source besides task metadata was found in directory %{directory} for task %{name}') %
-          { name: name, directory: directory }
+              { name: name, directory: directory }
         raise InvalidTask.new(msg, 'puppet.tasks/no-implementation')
       elsif implementations.length > 1
         msg =_("Multiple executables were found in directory %{directory} for task %{name}; define 'implementations' in metadata to differentiate between them") %
-          { name: name, directory: implementations[0] }
+             { name: name, directory: implementations[0] }
         raise InvalidTask.new(msg, 'puppet.tasks/multiple-implementations')
       end
 
@@ -265,7 +265,7 @@ class Puppet::Module
 
     def ==(other)
       self.name == other.name &&
-      self.module == other.module
+        self.module == other.module
     end
 
     def environment_name

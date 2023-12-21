@@ -99,7 +99,7 @@ Puppet::Face.define(:config, '0.0.1') do
   def warn_default_section(section_name)
     messages = []
     messages << _("No section specified; defaulting to '%{section_name}'.") %
-      { section_name: section_name }
+                { section_name: section_name }
     # TRANSLATORS '--section' is a command line option and should not be translated
     messages << _("Set the config section by using the `--section` flag.")
     # TRANSLATORS `puppet config --section user print foo` is a command line example and should not be translated

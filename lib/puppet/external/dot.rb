@@ -201,19 +201,19 @@ module DOT
             t + $tab + "label = #{stringify(@options['label'])}\n" :
             '' :
           t + $tab + 'label = "' + " \\\n" +
-          t + $tab2 + "#{stringify(@options['label'])}| \\\n" +
-          @ports.collect{ |i|
-            t + $tab2 + i.to_s
-          }.join( "| \\\n" ) + " \\\n" +
-          t + $tab + '"' + "\n"
+            t + $tab2 + "#{stringify(@options['label'])}| \\\n" +
+            @ports.collect{ |i|
+              t + $tab2 + i.to_s
+            }.join( "| \\\n" ) + " \\\n" +
+            t + $tab + '"' + "\n"
 
       t + "#{@name} [\n" +
-      @options.to_a.collect{ |i|
-        i[1] && i[0] != 'label' ?
-          t + $tab + "#{i[0]} = #{i[1]}" : nil
-      }.compact.join( ",\n" ) + ( label != '' ? ",\n" : "\n" ) +
-      label +
-      t + "]\n"
+        @options.to_a.collect{ |i|
+          i[1] && i[0] != 'label' ?
+            t + $tab + "#{i[0]} = #{i[1]}" : nil
+        }.compact.join( ",\n" ) + ( label != '' ? ",\n" : "\n" ) +
+        label +
+        t + "]\n"
     end
 
     private

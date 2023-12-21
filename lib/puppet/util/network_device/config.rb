@@ -57,7 +57,7 @@ class Puppet::Util::NetworkDevice::Config
               file_error_location = Puppet::Util::Errors.error_location(nil, file_line_count)
               device_error_location = Puppet::Util::Errors.error_location(nil, device.line)
               raise Puppet::Error, _("Duplicate device found at %{file_error_location}, already found at %{device_error_location}") %
-                  { file_error_location: file_error_location, device_error_location: device_error_location }
+                                   { file_error_location: file_error_location, device_error_location: device_error_location }
             end
             device = OpenStruct.new
             device.name = name
@@ -70,7 +70,7 @@ class Puppet::Util::NetworkDevice::Config
           else
             error_location_str = Puppet::Util::Errors.error_location(nil, file_line_count)
             raise Puppet::Error, _("Invalid entry at %{error_location}: %{file_text}") %
-                { error_location: error_location_str, file_text: line }
+                                 { error_location: error_location_str, file_text: line }
           end
         end
       end

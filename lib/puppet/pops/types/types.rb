@@ -2882,7 +2882,7 @@ class PHashType < PCollectionType
       # hash must accept the size of the struct
       o_elements = o.elements
       (size_type || DEFAULT_SIZE).instance?(o_elements.size, guard) &&
-          o_elements.all? {|e| @key_type.instance?(e.name, guard) && @value_type.assignable?(e.value_type, guard) }
+        o_elements.all? {|e| @key_type.instance?(e.name, guard) && @value_type.assignable?(e.value_type, guard) }
     else
       false
     end

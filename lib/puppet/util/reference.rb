@@ -35,7 +35,7 @@ class Puppet::Util::Reference
   def self.pdf(text)
     puts _("creating pdf")
     rst2latex = which('rst2latex') || which('rst2latex.py') ||
-      raise(_("Could not find rst2latex"))
+                raise(_("Could not find rst2latex"))
 
     cmd = %{#{rst2latex} /tmp/puppetdoc.txt > /tmp/puppetdoc.tex}
     Puppet::Util.replace_file("/tmp/puppetdoc.txt") {|f| f.puts text }
