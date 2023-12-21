@@ -23,17 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Layout/RescueEnsureAlignment:
-  Exclude:
-    - 'lib/puppet/provider/package/apt.rb'
-    - 'lib/puppet/provider/package/aptrpm.rb'
-    - 'lib/puppet/provider/package/dnf.rb'
-    - 'lib/puppet/provider/package/rpm.rb'
-    - 'lib/puppet/provider/package/tdnf.rb'
-    - 'lib/puppet/provider/package/yum.rb'
-    - 'lib/puppet/provider/service/daemontools.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/SpaceAfterColon:
   Exclude:
     - 'lib/puppet/configurer.rb'
