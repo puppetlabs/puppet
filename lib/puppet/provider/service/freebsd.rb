@@ -89,22 +89,22 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     append = "\# Added by Puppet\n#{rcvar}_enable=\"#{yesno}\"\n"
     # First, try the one-file-per-service style
     if Puppet::FileSystem.exist?(rcconf_dir)
-      File.open(rcconf_dir + "/#{service}", File::WRONLY | File::APPEND | File::CREAT, 0644) {
-        |f| f << append
-            self.debug("Appended to #{f.path}")
+      File.open(rcconf_dir + "/#{service}", File::WRONLY | File::APPEND | File::CREAT, 0644) { |f|
+        f << append
+        self.debug("Appended to #{f.path}")
       }
     else
       # Else, check the local rc file first, but don't create it
       if Puppet::FileSystem.exist?(rcconf_local)
-        File.open(rcconf_local, File::WRONLY | File::APPEND) {
-          |f| f << append
-              self.debug("Appended to #{f.path}")
+        File.open(rcconf_local, File::WRONLY | File::APPEND) { |f|
+          f << append
+          self.debug("Appended to #{f.path}")
         }
       else
         # At last use the standard rc.conf file
-        File.open(rcconf, File::WRONLY | File::APPEND | File::CREAT, 0644) {
-          |f| f << append
-              self.debug("Appended to #{f.path}")
+        File.open(rcconf, File::WRONLY | File::APPEND | File::CREAT, 0644) { |f|
+          f << append
+          self.debug("Appended to #{f.path}")
         }
       end
     end

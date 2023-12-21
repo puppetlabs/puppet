@@ -23,11 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Layout/MultilineBlockLayout:
-  Exclude:
-    - 'lib/puppet/provider/service/freebsd.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: symmetrical, new_line, same_line
 Layout/MultilineHashBraceLayout:
