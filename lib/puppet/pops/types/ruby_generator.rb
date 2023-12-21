@@ -171,7 +171,7 @@ class RubyGenerator < TypeFormatter
     module_segments = remove_common_namespace(namespace_segments, class_name)
     leaf_name = module_segments.pop
     module_segments.each { |segment| bld << 'module ' << segment << "\n" }
-    scoped_class_definition(obj,leaf_name, bld, class_name, *impl_subst)
+    scoped_class_definition(obj, leaf_name, bld, class_name, *impl_subst)
     module_segments.size.times { bld << "end\n" }
     module_segments << leaf_name
     module_segments.join(TypeFormatter::NAME_SEGMENT_SEPARATOR)

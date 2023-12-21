@@ -184,7 +184,7 @@ class StringConverter
     # Sorts format based on generality of types - most specific types before general
     #
     def self.sort_formats(format_map)
-      format_map = format_map.sort do |(a,_),(b,_)|
+      format_map = format_map.sort do |(a, _), (b, _)|
         ab = b.assignable?(a)
         ba = a.assignable?(b)
         if a == b
@@ -734,7 +734,7 @@ class StringConverter
     when :c
       char = [val].pack("U")
       char = f.alt? ? "\"#{char}\"" : char
-      Kernel.format(f.orig_fmt.tr('c','s'), char)
+      Kernel.format(f.orig_fmt.tr('c', 's'), char)
 
     when :s
       fmt = f.alt? ? 'p' : 's'
@@ -1076,7 +1076,7 @@ class StringConverter
       end
       buf << delims[0]
       buf << cond_break # break after opening delimiter if pretty printing
-      buf << val.map do |k,v|
+      buf << val.map do |k, v|
         key_type = TypeCalculator.infer_set(k)
         val_type = TypeCalculator.infer_set(v)
         key = _convert(key_type, k, is_container?(key_type) ? format_map : string_formats, children_indentation)
@@ -1132,7 +1132,7 @@ class StringConverter
 
   # Maps the inferred type of o to a formatting rule
   def get_format(val_t, format_options)
-    fmt = format_options.find {|k,_| k.assignable?(val_t) }
+    fmt = format_options.find {|k, _| k.assignable?(val_t) }
     return fmt[1] unless fmt.nil?
 
     return Format.new("%s")

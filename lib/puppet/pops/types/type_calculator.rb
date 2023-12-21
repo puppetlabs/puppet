@@ -107,7 +107,7 @@ class TypeCalculator
 
   # @api public
   def self.assignable?(t1, t2)
-    singleton.assignable?(t1,t2)
+    singleton.assignable?(t1, t2)
   end
 
   # Answers, does the given callable accept the arguments given in args (an array or a tuple)
@@ -168,8 +168,8 @@ class TypeCalculator
   # @api public
   #
   def initialize
-    @infer_visitor = Visitor.new(nil, 'infer',0,0)
-    @extract_visitor = Visitor.new(nil, 'extract',0,0)
+    @infer_visitor = Visitor.new(nil, 'infer', 0, 0)
+    @extract_visitor = Visitor.new(nil, 'extract', 0, 0)
   end
 
   # Answers 'can an instance of type t2 be assigned to a variable of type t'.
@@ -294,7 +294,7 @@ class TypeCalculator
   # @api public
   #
   def self.instance?(t, o)
-    singleton.instance?(t,o)
+    singleton.instance?(t, o)
   end
 
   # Answers 'is o an instance of type t'
@@ -440,7 +440,7 @@ class TypeCalculator
       return PScalarType::DEFAULT
     end
 
-    if common_data?(t1,t2)
+    if common_data?(t1, t2)
       return TypeFactory.data
     end
 
@@ -449,7 +449,7 @@ class TypeCalculator
       return PTypeType.new(common_type(t1.type, t2.type))
     end
 
-    if common_rich_data?(t1,t2)
+    if common_rich_data?(t1, t2)
       return TypeFactory.rich_data
     end
 
@@ -728,7 +728,7 @@ class TypeCalculator
     if o.empty?
       PHashType::EMPTY
     elsif o.keys.all? {|k| PStringType::NON_EMPTY.instance?(k) }
-      PStructType.new(o.each_pair.map { |k,v| PStructElement.new(PStringType.new(k), infer_set(v)) })
+      PStructType.new(o.each_pair.map { |k, v| PStructElement.new(PStringType.new(k), infer_set(v)) })
     else
       ktype = PVariantType.maybe_create(o.keys.map {|k| infer_set(k) })
       etype = PVariantType.maybe_create(o.values.map {|e| infer_set(e) })
@@ -755,7 +755,7 @@ class TypeCalculator
   # if range.to == nil max size == Infinity
   #
   def size_range(range)
-    return [1,1] if range.nil?
+    return [1, 1] if range.nil?
 
     from = range.from
     to = range.to
@@ -769,11 +769,11 @@ class TypeCalculator
     t.is_a?(PAnyType) && t.kind_of_callable?(optional)
   end
 
-  def max(a,b)
+  def max(a, b)
     a >=b ? a : b
   end
 
-  def min(a,b)
+  def min(a, b)
     a <= b ? a : b
   end
 

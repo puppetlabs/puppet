@@ -89,7 +89,7 @@ class Puppet::Util::Storage
       Puppet::Util.benchmark(:debug, "Pruned old state cache entries in %{seconds} seconds") do
         ttl_cutoff = Time.now - Puppet[:statettl]
 
-        @@state.reject! do |k,_v|
+        @@state.reject! do |k, _v|
           @@state[k][:checked] && @@state[k][:checked] < ttl_cutoff
         end
       end

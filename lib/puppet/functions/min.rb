@@ -144,7 +144,7 @@ Puppet::Functions.create_function(:min) do
   def on_string(*args)
     assert_arg_count(args)
 
-    args.min do|a,b|
+    args.min do|a, b|
       if a.to_s =~ %r{\A^-?\d+([._eE]\d+)?\z} && b.to_s =~ %r{\A-?\d+([._eE]\d+)?\z}
         Puppet.warn_once('deprecations', 'min_function_numeric_coerce_string',
                          _("The min() function's auto conversion of String to Numeric is deprecated - change to convert input before calling, or use lambda"))
@@ -172,7 +172,7 @@ Puppet::Functions.create_function(:min) do
   end
 
   def on_any_with_block(*args, &block)
-    args.min {|x,y| block.call(x,y) }
+    args.min {|x, y| block.call(x, y) }
   end
 
   def on_single_numeric_array(array, &block)

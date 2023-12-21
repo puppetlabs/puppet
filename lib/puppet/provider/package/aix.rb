@@ -124,7 +124,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     end
 
     begin
-      list = execute(cmd).scan(/^[^#][^:]*:([^:]*):([^:]*):[^:]*:[^:]*:([^:])/).collect { |n,e,s|
+      list = execute(cmd).scan(/^[^#][^:]*:([^:]*):([^:]*):[^:]*:[^:]*:([^:])/).collect { |n, e, s|
         e = :absent if [:broken, :inconsistent].include?(STATE_CODE[s])
         { :name => n, :ensure => e, :status => STATE_CODE[s], :provider => self.name }
       }

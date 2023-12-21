@@ -313,7 +313,7 @@ class Puppet::Transaction::ResourceHarness
                                      (resource[:audit] || []).map { |p| p.to_sym },
                                      [],
                                      status,
-                                     resource.parameters.select { |_n,p| p.is_a?(Puppet::Property) && !p.sensitive })
+                                     resource.parameters.select { |_n, p| p.is_a?(Puppet::Property) && !p.sensitive })
     end
 
     def resource_present?

@@ -59,8 +59,8 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
           self.warning _("Could not match version '%{version}'") % { version: version }
           nil
         end
-      }.reject { |vers| vers.nil? }.sort { |a,b|
-        versioncmp(a,b)
+      }.reject { |vers| vers.nil? }.sort { |a, b|
+        versioncmp(a, b)
       }
 
       if available_versions.length == 0

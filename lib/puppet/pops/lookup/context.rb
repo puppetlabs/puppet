@@ -152,15 +152,15 @@ class Context
         },
         {
           'not_found' => tf.callable([0, 0], tf.undef),
-          'explain' => tf.callable([0, 0, tf.callable(0,0)], tf.undef),
+          'explain' => tf.callable([0, 0, tf.callable(0, 0)], tf.undef),
           'interpolate' => tf.callable(1, 1),
           'cache' => tf.callable([key_type, tf.any], tf.any),
           'cache_all' => tf.callable([tf.hash_kv(key_type, tf.any)], tf.undef),
           'cache_has_key' => tf.callable([key_type], tf.boolean),
           'cached_value' => tf.callable([key_type], tf.any),
           'cached_entries' => tf.variant(
-            tf.callable([0, 0, tf.callable(1,1)], tf.undef),
-            tf.callable([0, 0, tf.callable(2,2)], tf.undef),
+            tf.callable([0, 0, tf.callable(1, 1)], tf.undef),
+            tf.callable([0, 0, tf.callable(2, 2)], tf.undef),
             tf.callable([0, 0], tf.iterable(tf.tuple([key_type, tf.any])))
           ),
           'cached_file_data' => tf.callable(tf.string, tf.optional(tf.callable([1, 1])))

@@ -9,7 +9,7 @@ module Puppet::HTTP::ResponseConverter
 
     # Copied from Net::HTTPResponse because it is private there.
     clazz = Net::HTTPResponse::CODE_TO_OBJ[str_code] or
-      Net::HTTPResponse::CODE_CLASS_TO_OBJ[str_code[0,1]] or
+      Net::HTTPResponse::CODE_CLASS_TO_OBJ[str_code[0, 1]] or
       Net::HTTPUnknownResponse
     result = clazz.new(nil, str_code, nil)
     result.body = response.body
@@ -17,7 +17,7 @@ module Puppet::HTTP::ResponseConverter
     # an instance of Net::HttpResponse from outside of the library and have
     # the body be readable, unless you do stupid things like this.
     result.instance_variable_set(:@read, true)
-    response.each_header do |k,v|
+    response.each_header do |k, v|
       result[k] = v
     end
     result

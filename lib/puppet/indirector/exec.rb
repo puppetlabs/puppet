@@ -35,6 +35,6 @@ class Puppet::Indirector::Exec < Puppet::Indirector::Terminus
 
   # Proxy the execution, so it's easier to test.
   def execute(command, arguments)
-    Puppet::Util::Execution.execute(command,arguments)
+    Puppet::Util::Execution.execute(command, arguments)
   end
 end

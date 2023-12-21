@@ -178,7 +178,7 @@ class Application
 
     # used to declare code that handle an option
     def option(*options, &block)
-      long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1' ).tr('-','_')
+      long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1' ).tr('-', '_')
       fname = "handle_#{long}".intern
       if (block_given?)
         define_method(fname, &block)
@@ -514,7 +514,7 @@ class Application
     runtime_info['default_encoding'] = Encoding.default_external
     runtime_info.merge!(extra_info) unless extra_info.nil?
 
-    Puppet.debug 'Runtime environment: ' + runtime_info.map{|k,v| k + '=' + v.to_s}.join(', ')
+    Puppet.debug 'Runtime environment: ' + runtime_info.map{|k, v| k + '=' + v.to_s}.join(', ')
   end
 
   # Options defined with the `option` method are parsed from settings and the command line.
@@ -576,7 +576,7 @@ class Application
   end
 
   def name
-    self.class.to_s.sub(/.*::/,"").downcase.to_sym
+    self.class.to_s.sub(/.*::/, "").downcase.to_sym
   end
 
   # Return the text to display when running `puppet help`.

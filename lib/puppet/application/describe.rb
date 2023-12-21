@@ -44,7 +44,7 @@ class Formatter
     # indent from every line.
     if text =~ /^(\s+)/
       indent = $1
-      return text.gsub(/^#{indent}/,'')
+      return text.gsub(/^#{indent}/, '')
     else
       return text
     end
@@ -126,7 +126,7 @@ class TypeDoc
       docs[name] = type.attrclass(name).doc if attrs.include?(kind) && name != :provider
     end
 
-    docs.sort { |a,b|
+    docs.sort { |a, b|
       a[0].to_s <=> b[0].to_s
     }.each { |name, doc|
       print "\n- **#{name}**"
@@ -169,9 +169,9 @@ class Puppet::Application::Describe < Puppet::Application
     options[:parameters] = false
   end
 
-  option("--providers","-p")
+  option("--providers", "-p")
   option("--list", "-l")
-  option("--meta","-m")
+  option("--meta", "-m")
 
   def summary
     _("Display help about resource types")

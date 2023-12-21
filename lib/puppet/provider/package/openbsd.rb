@@ -38,7 +38,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         process.each_line { |line|
           match = regex.match(line.split[0])
           if match
-            fields.zip(match.captures) { |field,value|
+            fields.zip(match.captures) { |field, value|
               hash[field] = value
             }
 
@@ -69,7 +69,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   def latest
     parse_pkgconf
 
-    if @resource[:source][-1,1] == ::File::SEPARATOR
+    if @resource[:source][-1, 1] == ::File::SEPARATOR
       e_vars = { 'PKG_PATH' => @resource[:source] }
     else
       e_vars = {}
@@ -155,7 +155,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
     parse_pkgconf
 
-    if @resource[:source][-1,1] == ::File::SEPARATOR
+    if @resource[:source][-1, 1] == ::File::SEPARATOR
       e_vars = { 'PKG_PATH' => @resource[:source] }
       full_name = get_full_name(latest)
     else

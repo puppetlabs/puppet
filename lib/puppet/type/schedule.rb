@@ -368,7 +368,7 @@ module Puppet
           when 0..6
             index = value
           else
-            index = weekdays[value[0,3].downcase]
+            index = weekdays[value[0, 3].downcase]
           end
           ret[index] = true
         end

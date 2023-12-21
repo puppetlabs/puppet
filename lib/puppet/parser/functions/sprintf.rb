@@ -54,7 +54,7 @@ Puppet::Parser::Functions::newfunction(
       # as that allows named arguments to be used in the format string.
       #
       result = {}
-      args[0].each_pair { |k,v| result[k.is_a?(String) ? k.to_sym : k] = v }
+      args[0].each_pair { |k, v| result[k.is_a?(String) ? k.to_sym : k] = v }
       return sprintf(fmt, result)
     end
     raise e

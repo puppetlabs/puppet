@@ -220,7 +220,7 @@ class Puppet::Resource
 
   # Iterate over each param/value pair, as required for Enumerable.
   def each
-    parameters.each { |p,v| yield p, v }
+    parameters.each { |p, v| yield p, v }
   end
 
   def include?(parameter)
@@ -444,7 +444,7 @@ class Puppet::Resource
   def to_hierayaml
     # Collect list of attributes to align => and move ensure first
     attr = parameters.keys
-    attr_max = attr.inject(0) { |max,k| k.to_s.length > max ? k.to_s.length : max }
+    attr_max = attr.inject(0) { |max, k| k.to_s.length > max ? k.to_s.length : max }
 
     attr.sort!
     if attr.first != :ensure && attr.include?(:ensure)
@@ -479,7 +479,7 @@ class Puppet::Resource
   def to_manifest
     # Collect list of attributes to align => and move ensure first
     attr = parameters.keys
-    attr_max = attr.inject(0) { |max,k| k.to_s.length > max ? k.to_s.length : max }
+    attr_max = attr.inject(0) { |max, k| k.to_s.length > max ? k.to_s.length : max }
 
     attr.sort!
     if attr.first != :ensure && attr.include?(:ensure)
@@ -492,7 +492,7 @@ class Puppet::Resource
       "  %-#{attr_max}s => %s,\n" % [k, Puppet::Parameter.format_value_for_display(v)]
     }.join
 
-    escaped = self.title.gsub(/'/,"\\\\'")
+    escaped = self.title.gsub(/'/, "\\\\'")
     "%s { '%s':\n%s}" % [self.type.to_s.downcase, escaped, attributes]
   end
 
@@ -642,7 +642,7 @@ class Puppet::Resource
       type.title_patterns.each do |regexp, symbols_and_lambdas|
         captures = regexp.match(title.to_s)  
         if captures
-          symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda,capture|
+          symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda, capture|
             symbol, proc = symbol_and_lambda
             # Many types pass "identity" as the proc; we might as well give
             # them a shortcut to delivering that without the extra cost.

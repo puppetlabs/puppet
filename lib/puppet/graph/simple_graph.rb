@@ -300,8 +300,8 @@ class Puppet::Graph::SimpleGraph
 
   # Add a new edge.  The graph user has to create the edge instance,
   # since they have to specify what kind of edge it is.
-  def add_edge(e,*a)
-    return add_relationship(e,*a) unless a.empty?
+  def add_edge(e, *a)
+    return add_relationship(e, *a) unless a.empty?
 
     e = Puppet::Relationship.from_data_hash(e) if e.is_a?(Hash)
     @upstream_from.clear
@@ -334,12 +334,12 @@ class Puppet::Graph::SimpleGraph
   end
 
   def each_edge
-    @in_to.each { |_t,ns| ns.each { |_s,es| es.each { |e| yield e }}}
+    @in_to.each { |_t, ns| ns.each { |_s, es| es.each { |e| yield e }}}
   end
 
   # Remove an edge from our graph.
   def remove_edge!(e)
-    if edge?(e.source,e.target)
+    if edge?(e.source, e.target)
       @upstream_from.clear
       @downstream_from.clear
       @in_to   [e.target].delete e.source if (@in_to   [e.target][e.source] -= [e]).empty?
@@ -428,14 +428,14 @@ class Puppet::Graph::SimpleGraph
   # This implementation is not particularly efficient; it's used in testing where clarity
   #   is more important than last-mile efficiency.
   #
-  def path_between(f,t)
+  def path_between(f, t)
     if f==t
       []
     elsif direct_dependents_of(f).include?(t)
-      [edges_between(f,t)]
+      [edges_between(f, t)]
     elsif dependents(f).include?(t)
       m = (dependents(f) & direct_dependencies_of(t)).first
-      path_between(f,m) + path_between(m,t)
+      path_between(f, m) + path_between(m, t)
     else
       nil
     end
@@ -448,7 +448,7 @@ class Puppet::Graph::SimpleGraph
   # rdot.rb. If an edge or vertex label is a kind of Hash then the keys
   # which match +dot+ properties will be used as well.
   def to_dot_graph(params = {})
-    params['name'] ||= self.class.name.tr(':','_')
+    params['name'] ||= self.class.name.tr(':', '_')
     fontsize   = params['fontsize'] ? params['fontsize'] : '8'
     graph      = (directed? ? DOT::DOTDigraph : DOT::DOTSubgraph).new(params)
     edge_klass = directed? ? DOT::DOTDirectedEdge : DOT::DOTEdge

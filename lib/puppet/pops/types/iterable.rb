@@ -144,7 +144,7 @@ module Puppet::Pops::Types
       case object
       when Iterable
         object.unbounded?
-      when String,Integer,Array,Hash,Enumerator,PIntegerType,PEnumType,Dir
+      when String, Integer, Array, Hash, Enumerator, PIntegerType, PEnumType, Dir
         false
       else
         TypeAsserter.assert_instance_of('', PIterableType::DEFAULT, object, false)

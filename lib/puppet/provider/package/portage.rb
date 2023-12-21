@@ -190,7 +190,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
       search_output = nil
       Puppet::Util.withenv :EIX_LIMIT => limit, :LASTVERSION => version_format, :LASTSLOTVERSIONS => slot_versions_format, :INSTALLEDVERSIONS => installed_versions_format, :STABLEVERSIONS => installable_versions_format do
-        search_output = eix(*(self.class.eix_search_arguments + ['--exact',search_field,search_value]))
+        search_output = eix(*(self.class.eix_search_arguments + ['--exact', search_field, search_value]))
       end
 
       packages = []

@@ -90,7 +90,7 @@ module Manager
       if @types.include?(name)
         if self.respond_to?(newmethod)
           # Remove the old newmethod
-          selfobj.send(:remove_method,newmethod)
+          selfobj.send(:remove_method, newmethod)
         end
       end
 

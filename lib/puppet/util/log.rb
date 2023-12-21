@@ -15,7 +15,7 @@ class Puppet::Util::Log
   include Puppet::Util::Tagging
   include Puppet::Network::FormatSupport
 
-  @levels = [:debug,:info,:notice,:warning,:err,:alert,:emerg,:crit]
+  @levels = [:debug, :info, :notice, :warning, :err, :alert, :emerg, :crit]
   @loglevel = 2
 
   @desttypes = {}

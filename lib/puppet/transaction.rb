@@ -55,9 +55,9 @@ class Puppet::Transaction
 
     @resource_harness = Puppet::Transaction::ResourceHarness.new(self)
 
-    @prefetched_providers = Hash.new { |h,k| h[k] = {} }
+    @prefetched_providers = Hash.new { |h, k| h[k] = {} }
 
-    @prefetch_failed_providers = Hash.new { |h,k| h[k] = {} }
+    @prefetch_failed_providers = Hash.new { |h, k| h[k] = {} }
 
     # With merge_dependency_warnings, notify and warn about class dependency failures ... just once per class. TJK 2019-09-09
     @merge_dependency_warnings = Puppet[:merge_dependency_warnings]

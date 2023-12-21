@@ -42,7 +42,7 @@ class Puppet::Util::Metric
     end
   end
 
-  def initialize(name,label = nil)
+  def initialize(name, label = nil)
     @name = name.to_s
 
     @label = label || self.class.labelize(name)
@@ -50,11 +50,11 @@ class Puppet::Util::Metric
     @values = []
   end
 
-  def newvalue(name,value,label = nil)
+  def newvalue(name, value, label = nil)
     raise ArgumentError.new("metric name #{name.inspect} is not a string") unless name.is_a? String
 
     label ||= self.class.labelize(name)
-    @values.push [name,label,value]
+    @values.push [name, label, value]
   end
 
   def values

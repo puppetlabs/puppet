@@ -23,7 +23,7 @@ class Puppet::SyntaxCheckers::Json < Puppet::Plugins::SyntaxCheckers::SyntaxChec
       Puppet::Util::Json.load(text)
     rescue => e
       # Cap the message to 100 chars and replace newlines
-      msg = _("JSON syntax checker: Cannot parse invalid JSON string. \"%{message}\"") % { message: e.message().slice(0,100).gsub(/\r?\n/, "\\n") }
+      msg = _("JSON syntax checker: Cannot parse invalid JSON string. \"%{message}\"") % { message: e.message().slice(0, 100).gsub(/\r?\n/, "\\n") }
 
       # TODO: improve the pops API to allow simpler diagnostic creation while still maintaining capabilities
       # and the issue code. (In this case especially, where there is only a single error message being issued).

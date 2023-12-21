@@ -16,12 +16,12 @@ class Hiera::PuppetFunction < Puppet::Functions::InternalFunction
 
     dispatch :hiera_no_default do
       scope_param
-      param 'String',:key
+      param 'String', :key
     end
 
     dispatch :hiera_with_default do
       scope_param
-      param 'String',:key
+      param 'String', :key
       param 'Any',   :default
       optional_param 'Any', :override
     end

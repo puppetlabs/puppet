@@ -138,7 +138,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
   def search(name)
     paths.each do |path|
-      fqname = File.join(path,name)
+      fqname = File.join(path, name)
       if Puppet::FileSystem.exist? fqname
         return fqname
       else
@@ -147,7 +147,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     end
 
     paths.each do |path|
-      fqname_sh = File.join(path,"#{name}.sh")
+      fqname_sh = File.join(path, "#{name}.sh")
       if Puppet::FileSystem.exist? fqname_sh
         return fqname_sh
       else

@@ -50,7 +50,7 @@ class PObjectType < PMetaType
   TYPE_CONSTANTS = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)
   TYPE_ATTRIBUTES = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
   TYPE_PARAMETERS = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
-  TYPE_ATTRIBUTE_CALLABLE = TypeFactory.callable(0,0)
+  TYPE_ATTRIBUTE_CALLABLE = TypeFactory.callable(0, 0)
 
   TYPE_FUNCTION_TYPE = PTypeType.new(PCallableType::DEFAULT)
 

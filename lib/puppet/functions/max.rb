@@ -145,7 +145,7 @@ Puppet::Functions.create_function(:max) do
   def on_string(*args)
     assert_arg_count(args)
 
-    args.max do|a,b|
+    args.max do|a, b|
       if a.to_s =~ %r{\A^-?\d+([._eE]\d+)?\z} && b.to_s =~ %r{\A-?\d+([._eE]\d+)?\z}
         Puppet.warn_once('deprecations', 'max_function_numeric_coerce_string',
                          _("The max() function's auto conversion of String to Numeric is deprecated - change to convert input before calling, or use lambda"))
@@ -173,7 +173,7 @@ Puppet::Functions.create_function(:max) do
   end
 
   def on_any_with_block(*args, &block)
-    args.max {|x,y| block.call(x,y) }
+    args.max {|x, y| block.call(x, y) }
   end
 
   def on_single_numeric_array(array, &block)

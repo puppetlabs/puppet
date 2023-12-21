@@ -132,7 +132,7 @@ class V3BackendFunctionProvider < DataDigFunctionProvider
       when 'deep', 'unconstrained_deep', 'reverse_deep'
         result = { :behavior => strategy == 'reverse_deep' ? :deep : :deeper }
         # Remaining entries must have symbolic keys
-        merge.each_pair { |k,v| result[k.to_sym] = v unless k == 'strategy' }
+        merge.each_pair { |k, v| result[k.to_sym] = v unless k == 'strategy' }
         result
       else
         convert_merge(strategy)

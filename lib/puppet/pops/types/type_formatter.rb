@@ -473,7 +473,7 @@ class TypeFormatter
   # @api private
   def string_PTypeSetType(t)
     append_array('TypeSet') do
-      append_hash(t._pcore_init_hash.each, proc { |k| @bld << symbolic_key(k) }) do |k,v|
+      append_hash(t._pcore_init_hash.each, proc { |k| @bld << symbolic_key(k) }) do |k, v|
         case k
         when KEY_TYPES
           old_ts = @type_set
@@ -694,13 +694,13 @@ class TypeFormatter
     begin
       @expanded = false
       append_array('Object') do
-        append_hash(hash, proc { |k| @bld << symbolic_key(k) }) do |k,v|
+        append_hash(hash, proc { |k| @bld << symbolic_key(k) }) do |k, v|
           case k
           when KEY_ATTRIBUTES, KEY_FUNCTIONS
             # Types might need to be output as type references
             append_hash(v) do |_, fv|
               if fv.is_a?(Hash)
-                append_hash(fv, proc { |fak| @bld << symbolic_key(fak) }) do |fak,fav|
+                append_hash(fv, proc { |fak| @bld << symbolic_key(fak) }) do |fak, fav|
                   case fak
                   when KEY_KIND
                     @bld << fav

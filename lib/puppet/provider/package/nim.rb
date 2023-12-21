@@ -245,7 +245,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     package_string = match.captures[1]
 
     case package_type_flag
-    when "I","S"
+    when "I", "S"
       parse_installp_package_string(package_string)
     when "R"
       parse_rpm_package_string(package_string)

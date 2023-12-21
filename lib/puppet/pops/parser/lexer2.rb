@@ -140,7 +140,7 @@ class Lexer2
     'private' => [:PRIVATE, 'private', 7],
   }
 
-  KEYWORDS.each {|_k,v| v[1].freeze; v.freeze }
+  KEYWORDS.each {|_k, v| v[1].freeze; v.freeze }
   KEYWORDS.freeze
 
   # Reverse lookup of keyword name to string
@@ -577,7 +577,7 @@ class Lexer2
         emit([:OTHER, scn.peek(0), 1], scn.pos)
       end
     end
-    @selector.each { |k,_v| k.freeze }
+    @selector.each { |k, _v| k.freeze }
     @selector.freeze
   end
 

@@ -145,7 +145,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
 
   def remove_managed_attributes
     managed = managed_attributes
-    user_attributes.select { |k,_v| !managed.include?(k) }.inject({}) { |hash, array| hash[array[0]] = array[1]; hash }
+    user_attributes.select { |k, _v| !managed.include?(k) }.inject({}) { |hash, array| hash[array[0]] = array[1]; hash }
   end
 
   def keys
@@ -157,7 +157,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
 
   def build_keys_cmd(keys_hash)
     cmd = []
-    keys_hash.each do |k,v|
+    keys_hash.each do |k, v|
       cmd << "-K" << "#{k}=#{v}"
     end
     cmd
@@ -232,7 +232,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
           line_arr = line.split(':')
           if line_arr[0] == @resource[:name]
             line_arr[1] = cryptopw
-            line_arr[2] = (Date.today - Date.new(1970,1,1)).to_i.to_s
+            line_arr[2] = (Date.today - Date.new(1970, 1, 1)).to_i.to_s
             line = line_arr.join(':')
           end
           fh.print line

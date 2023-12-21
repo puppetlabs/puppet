@@ -122,7 +122,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
   def unhold
     r = exec_cmd(command(:pkg), 'unfreeze', @resource[:name])
-    raise Puppet::Error, _("Unable to unfreeze %{package}") % { package: r[:out] } unless [0,4].include? r[:exit]
+    raise Puppet::Error, _("Unable to unfreeze %{package}") % { package: r[:out] } unless [0, 4].include? r[:exit]
   end
 
   def insync?(is)
@@ -280,7 +280,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   def update
     r = install(true)
     # 4 == /No updates available for this image./
-    return if [0,4].include? r[:exit]
+    return if [0, 4].include? r[:exit]
 
     raise Puppet::Error, _("Unable to update %{package}") % { package: r[:out] }
   end

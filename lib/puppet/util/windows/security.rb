@@ -214,19 +214,19 @@ module Puppet::Util::Windows::Security
 
       case ace.sid
       when sd.owner
-        MASK_TO_MODE.each_pair do |k,v|
+        MASK_TO_MODE.each_pair do |k, v|
           if (ace.mask & k) == k
             mode |= (v << 6)
           end
         end
       when sd.group
-        MASK_TO_MODE.each_pair do |k,v|
+        MASK_TO_MODE.each_pair do |k, v|
           if (ace.mask & k) == k
             mode |= (v << 3)
           end
         end
       when well_known_world_sid
-        MASK_TO_MODE.each_pair do |k,v|
+        MASK_TO_MODE.each_pair do |k, v|
           if (ace.mask & k) == k
             mode |= (v << 6) | (v << 3) | v
           end
@@ -300,7 +300,7 @@ module Puppet::Util::Windows::Security
     nobody_allow = 0
     system_allow = 0
 
-    MODE_TO_MASK.each do |k,v|
+    MODE_TO_MASK.each do |k, v|
       if ((mode >> 6) & k) == k
         owner_allow |= v
       end

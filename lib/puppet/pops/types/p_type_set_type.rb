@@ -367,7 +367,7 @@ class PTypeSetType < PMetaType
            KEY_NAME_AUTHORITY => Pcore::RUNTIME_NAME_AUTHORITY,
            Pcore::KEY_PCORE_URI => Pcore::PCORE_URI,
            Pcore::KEY_PCORE_VERSION => Pcore::PCORE_VERSION,
-           KEY_VERSION => SemanticPuppet::Version.new(0,0,0)
+           KEY_VERSION => SemanticPuppet::Version.new(0, 0, 0)
          })
 
   protected

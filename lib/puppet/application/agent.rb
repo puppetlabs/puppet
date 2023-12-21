@@ -41,7 +41,7 @@ class Puppet::Application::Agent < Puppet::Application
       :fingerprint => false,
       :sourceaddress => nil,
       :start_time => Time.now,
-    }.each do |opt,val|
+    }.each do |opt, val|
       options[opt] = val
     end
 
@@ -54,10 +54,10 @@ class Puppet::Application::Agent < Puppet::Application
   end
 
   option("--enable")
-  option("--debug","-d")
-  option("--fqdn FQDN","-f")
-  option("--test","-t")
-  option("--verbose","-v")
+  option("--debug", "-d")
+  option("--fqdn FQDN", "-f")
+  option("--test", "-t")
+  option("--verbose", "-v")
 
   option("--fingerprint")
   option("--digest DIGEST")
@@ -403,7 +403,7 @@ class Puppet::Application::Agent < Puppet::Application
     # skip also config reading and parsing if debug is not enabled
     return unless Puppet::Util::Log.sendlevel?(:debug)
 
-    Puppet.settings.stringify_settings(:agent, :all).each_pair do |k,v|
+    Puppet.settings.stringify_settings(:agent, :all).each_pair do |k, v|
       next if k.include?("password") || v.to_s.empty?
 
       Puppet.debug("Using setting: #{k}=#{v}")

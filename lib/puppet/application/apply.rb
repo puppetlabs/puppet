@@ -8,13 +8,13 @@ class Puppet::Application::Apply < Puppet::Application
   require_relative '../../puppet/util/splayer'
   include Puppet::Util::Splayer
 
-  option("--debug","-d")
-  option("--execute EXECUTE","-e") do |arg|
+  option("--debug", "-d")
+  option("--execute EXECUTE", "-e") do |arg|
     options[:code] = arg
   end
-  option("--loadclasses","-L")
-  option("--test","-t")
-  option("--verbose","-v")
+  option("--loadclasses", "-L")
+  option("--test", "-t")
+  option("--verbose", "-v")
   option("--use-nodes")
   option("--detailed-exitcodes")
 

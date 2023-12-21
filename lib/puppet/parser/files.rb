@@ -40,7 +40,7 @@ module Puppet::Parser::Files
   #
   # @api private
   def find_file(file, environment)
-    find_in_module(file, environment) do |mod,module_file|
+    find_in_module(file, environment) do |mod, module_file|
       mod.file(module_file)
     end
   end
@@ -61,7 +61,7 @@ module Puppet::Parser::Files
   #
   # @api private
   def find_template(template, environment)
-    find_in_module(template, environment) do |mod,template_file|
+    find_in_module(template, environment) do |mod, template_file|
       mod.template(template_file)
     end
   end

@@ -254,7 +254,7 @@ class CompareOperator
   def match_Hash(hash, left, scope)
     return false unless left.is_a?(Hash)
 
-    hash.all? {|x,y| match(left[x], y, scope) }
+    hash.all? {|x, y| match(left[x], y, scope) }
   end
 
   def match_Symbol(symbol, left, scope)

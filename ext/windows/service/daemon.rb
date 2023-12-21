@@ -38,7 +38,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
 
     if (@LOG_TO_FILE)
       FileUtils.mkdir_p(File.dirname(LOG_FILE))
-      args = args.gsub("--logtofile","")
+      args = args.gsub("--logtofile", "")
     end
 
     base_dir = File.expand_path(File.join(File.dirname(__FILE__), '..'))
@@ -141,7 +141,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
     end
   end
 
-  def report_windows_event(type,id,message)
+  def report_windows_event(type, id, message)
     begin
       eventlog = nil
       eventlog = Puppet::Util::Windows::EventLog.open("Puppet")
@@ -174,7 +174,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
     runinterval
   end
 
-  def parse_log_level(puppet_path,cmdline_debug)
+  def parse_log_level(puppet_path, cmdline_debug)
     begin
       loglevel = %x{ #{puppet_path} config --section agent --log_level notice print log_level }.chomp
       unless loglevel && respond_to?("log_#{loglevel}")
@@ -206,7 +206,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
       ].join(';').tr('/', '\\') + ';' + ENV['Path']
 
       # ENV that uses forward slashes
-      ENV['RUBYLIB'] = "#{File.join(base_dir, 'puppet','lib')};#{ENV['RUBYLIB']}"
+      ENV['RUBYLIB'] = "#{File.join(base_dir, 'puppet', 'lib')};#{ENV['RUBYLIB']}"
     rescue => e
       log_exception(e)
     end

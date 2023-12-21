@@ -91,7 +91,7 @@ module Puppet
   require_relative 'puppet/feature/base'
 
   # setting access and stuff
-  def self.[]=(param,value)
+  def self.[]=(param, value)
     @@settings[param] = value
   end
 

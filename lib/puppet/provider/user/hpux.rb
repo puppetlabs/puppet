@@ -26,12 +26,12 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
   has_features :manages_homedir, :allows_duplicates, :manages_passwords
 
   def deletecmd
-    super.insert(1,"-F")
+    super.insert(1, "-F")
   end
 
-  def modifycmd(param,value)
+  def modifycmd(param, value)
     cmd = super(param, value)
-    cmd.insert(1,"-F")
+    cmd.insert(1, "-F")
     if trusted then
       # Append an additional command to reset the password age to 0
       # until a workaround with expiry module can be found for trusted
@@ -83,7 +83,7 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
   def trusted
     # Check to see if the HP-UX box is running in trusted compute mode
     # UID for root should always be 0
-    trusted_sys = exec_getprpw('root','-m uid')
+    trusted_sys = exec_getprpw('root', '-m uid')
     if trusted_sys.chomp == "uid=0"
       return true
     else
@@ -91,7 +91,7 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
     end
   end
 
-  def exec_getprpw(user,opts)
+  def exec_getprpw(user, opts)
     Puppet::Util::Execution.execute("/usr/lbin/getprpw #{opts} #{user}", { :combine => true })
   end
 end

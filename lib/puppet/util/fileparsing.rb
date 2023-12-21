@@ -358,7 +358,7 @@ module Puppet::Util::FileParsing
         if regex == true
           regex = /\s+$/
         end
-        return line.sub(regex,'')
+        return line.sub(regex, '')
       else
         return line
       end

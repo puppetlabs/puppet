@@ -35,7 +35,7 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
 
       value = @resource.should(property)
       if value and value != ""
-        cmd << flag(property) << munge(property,value)
+        cmd << flag(property) << munge(property, value)
       end
     end
 

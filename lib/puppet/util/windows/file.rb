@@ -68,7 +68,7 @@ module Puppet::Util::Windows::File
       # return false if this path has been seen before.  This is protection against circular symlinks
       return false if seen_paths.include?(path.downcase)
 
-      result = get_attributes(path,false)
+      result = get_attributes(path, false)
 
       # return false for path not found
       return false if result == INVALID_FILE_ATTRIBUTES

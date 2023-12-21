@@ -35,7 +35,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
 
   # Proxy the execution, so it's easier to test.
   def execute(command, arguments)
-    Puppet::Util::Execution.execute(command,arguments)
+    Puppet::Util::Execution.execute(command, arguments)
   end
 
   # Turn our outputted objects into a Puppet::Node instance.

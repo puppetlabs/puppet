@@ -125,7 +125,7 @@ module Puppet::SSL::Oids
 
       oid_defns = []
       mapping[map_key].keys.each do |oid|
-        shortname, longname = mapping[map_key][oid].values_at("shortname","longname")
+        shortname, longname = mapping[map_key][oid].values_at("shortname", "longname")
         if shortname.nil? || longname.nil?
           raise Puppet::Error, _("Error loading ssl custom OIDs mapping file from '%{custom_oid_file}': incomplete definition of oid '%{oid}'") % { custom_oid_file: custom_oid_file, oid: oid }
         end

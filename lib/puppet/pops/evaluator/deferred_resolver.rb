@@ -122,7 +122,7 @@ class DeferredResolver
       x.map {|v| resolve(v) }
     elsif x.is_a?(Hash)
       result = {}
-      x.each_pair {|k,v| result[k] = resolve(v) }
+      x.each_pair {|k, v| result[k] = resolve(v) }
       result
     elsif x.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
       # rewrap in a new Sensitive after resolving any nested deferred values
@@ -142,7 +142,7 @@ class DeferredResolver
       x.map {|v| resolve_lazy_args(v) }
     elsif x.is_a?(Hash)
       result = {}
-      x.each_pair {|k,v| result[k] = resolve_lazy_args(v) }
+      x.each_pair {|k, v| result[k] = resolve_lazy_args(v) }
       result
     elsif x.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
       # rewrap in a new Sensitive after resolving any nested deferred values

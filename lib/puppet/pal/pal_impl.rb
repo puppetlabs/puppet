@@ -383,7 +383,7 @@ module Pal
     end
 
     rich_data_t = Puppet::Pops::Types::TypeFactory.rich_data
-    variables.each_pair do |k,v|
+    variables.each_pair do |k, v|
       unless k =~ Puppet::Pops::Patterns::VAR_NAME
         raise ArgumentError, _("Given variable '%{varname}' has illegal name") % { varname: k }
       end

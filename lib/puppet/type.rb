@@ -671,7 +671,7 @@ class Type
   # @raise [Puppet::Error] if the setting of the value fails, or if the given name is nil.
   # @raise [Puppet::ResourceError] when the parameter validation raises Puppet::Error or
   #   ArgumentError
-  def []=(name,value)
+  def []=(name, value)
     name = name.intern
 
     fail("no parameter named '#{name}'") unless self.class.validattr?(name)
@@ -2049,7 +2049,7 @@ class Type
   # @return [void]
   def self.eachautobefore
     @autobefores ||= {}
-    @autobefores.each { |type,block|
+    @autobefores.each { |type, block|
       yield(type, block)
     }
   end
@@ -2061,7 +2061,7 @@ class Type
   # @return [void]
   def self.eachautosubscribe
     @autosubscribes ||= {}
-    @autosubscribes.each { |type,block|
+    @autosubscribes.each { |type, block|
       yield(type, block)
     }
   end
@@ -2073,7 +2073,7 @@ class Type
   # @return [void]
   def self.eachautonotify
     @autonotifies ||= {}
-    @autonotifies.each { |type,block|
+    @autonotifies.each { |type, block|
       yield(type, block)
     }
   end
@@ -2224,7 +2224,7 @@ class Type
     @parameters = []
     @paramhash = {}
 
-    @paramdoc = Hash.new { |hash,key|
+    @paramdoc = Hash.new { |hash, key|
       key = key.intern if key.is_a?(String)
       if hash.include?(key)
         hash[key]

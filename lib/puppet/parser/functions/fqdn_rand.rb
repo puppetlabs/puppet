@@ -37,10 +37,10 @@ Puppet::Parser::Functions::newfunction(:fqdn_rand, :arity => -2, :type => :rvalu
   # when running on a non-FIPS enabled platform and only using SHA256 on FIPS enabled
   # platforms.
   if Puppet::Util::Platform.fips_enabled?
-    seed = Digest::SHA256.hexdigest([fqdn,max,initial_seed].join(':')).hex
+    seed = Digest::SHA256.hexdigest([fqdn, max, initial_seed].join(':')).hex
   else
-    seed = Digest::MD5.hexdigest([fqdn,max,initial_seed].join(':')).hex
+    seed = Digest::MD5.hexdigest([fqdn, max, initial_seed].join(':')).hex
   end
 
-  Puppet::Util.deterministic_rand_int(seed,max)
+  Puppet::Util.deterministic_rand_int(seed, max)
 end

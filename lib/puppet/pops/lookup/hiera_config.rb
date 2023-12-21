@@ -108,7 +108,7 @@ class HieraConfig
     case(struct)
     when Hash
       map = {}
-      struct.each_pair {|k,v| map[ k.is_a?(Symbol) ? k.to_s : k] = symkeys_to_string(v) }
+      struct.each_pair {|k, v| map[ k.is_a?(Symbol) ? k.to_s : k] = symkeys_to_string(v) }
       map
     when Array
       struct.map { |v| symkeys_to_string(v) }
@@ -361,7 +361,7 @@ class HieraConfigV3 < HieraConfig
 
     # This is a hash, not a type. Contained backends are added prior to validation
     @@CONFIG_TYPE = {
-      tf.optional(KEY_VERSION) => tf.range(3,3),
+      tf.optional(KEY_VERSION) => tf.range(3, 3),
       tf.optional(KEY_BACKENDS) => tf.variant(nes_t, tf.array_of(nes_t)),
       tf.optional(KEY_LOGGER) => nes_t,
       tf.optional(KEY_MERGE_BEHAVIOR) => tf.enum('deep', 'deeper', 'native'),

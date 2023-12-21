@@ -154,6 +154,6 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
       raise Puppet::Error.new(_("Mac OS X PKG DMGs must specify a package name."))
     end
 
-    self.class.installpkgdmg(source,name)
+    self.class.installpkgdmg(source, name)
   end
 end

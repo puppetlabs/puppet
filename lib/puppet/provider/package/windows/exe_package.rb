@@ -64,7 +64,7 @@ class Puppet::Provider::Package::Windows
     def self.install_command(resource)
       file_location = resource[:source]
       if file_location.start_with?('http://', 'https://')
-        tempfile = Tempfile.new(['','.exe'])
+        tempfile = Tempfile.new(['', '.exe'])
         begin
           uri = URI(Puppet::Util.uri_encode(file_location))
           client = Puppet.runtime[:http]
@@ -78,7 +78,7 @@ class Puppet::Provider::Package::Windows
             end
           end
         rescue => detail
-          raise Puppet::Error.new(_("Error when installing %{package}: %{detail}") % { package: resource[:name] ,detail: detail.message}, detail)
+          raise Puppet::Error.new(_("Error when installing %{package}: %{detail}") % { package: resource[:name] , detail: detail.message}, detail)
         ensure
           self.register(tempfile.path)
           tempfile.close()

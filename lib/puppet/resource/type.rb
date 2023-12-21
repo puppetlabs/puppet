@@ -196,7 +196,7 @@ class Puppet::Resource::Type
 
   def name
     if type == :node && name_is_regex?
-      "__node_regexp__#{@name.source.downcase.gsub(/[^-\w:.]/,'').sub(/^\.+/,'')}"
+      "__node_regexp__#{@name.source.downcase.gsub(/[^-\w:.]/, '').sub(/^\.+/, '')}"
     else
       @name
     end
@@ -237,7 +237,7 @@ class Puppet::Resource::Type
       scope[TITLE] = resource.title
       scope[NAME] =  resource.name
     end
-    scope.class_set(self.name,scope) if hostclass? || node?
+    scope.class_set(self.name, scope) if hostclass? || node?
 
     param_hash = scope.with_parameter_scope(resource.to_s, arguments.keys) do |param_scope|
       # Assign directly to the parameter scope to avoid scope parameter validation at this point. It

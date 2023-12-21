@@ -1617,7 +1617,7 @@ class PStringType < PScalarDataType
   NON_EMPTY = PStringType.new(PCollectionType::NOT_EMPTY_SIZE)
 
   # Iterates over each character of the string
-  ITERABLE_TYPE = PIterableType.new(PStringType.new(PIntegerType.new(1,1)))
+  ITERABLE_TYPE = PIterableType.new(PStringType.new(PIntegerType.new(1, 1)))
 
   protected
 
@@ -2465,11 +2465,11 @@ class PCallableType < PAnyType
   def block_range
     case block_type
     when POptionalType
-      [0,1]
+      [0, 1]
     when PVariantType, PCallableType
-      [1,1]
+      [1, 1]
     else
-      [0,0]
+      [0, 0]
     end
   end
 
@@ -2860,7 +2860,7 @@ class PHashType < PCollectionType
   end
 
   DEFAULT = PHashType.new(nil, nil)
-  KEY_PAIR_TUPLE_SIZE = PIntegerType.new(2,2)
+  KEY_PAIR_TUPLE_SIZE = PIntegerType.new(2, 2)
   DEFAULT_KEY_PAIR_TUPLE = PTupleType.new([PUnitType::DEFAULT, PUnitType::DEFAULT], KEY_PAIR_TUPLE_SIZE)
   EMPTY = PHashType.new(PUnitType::DEFAULT, PUnitType::DEFAULT, PIntegerType.new(0, 0))
 

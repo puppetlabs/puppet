@@ -10,7 +10,7 @@ class ModelLabelProvider
   include LabelProvider
 
   def initialize
-    @@label_visitor ||= Visitor.new(self,"label",0,0)
+    @@label_visitor ||= Visitor.new(self, "label", 0, 0)
   end
 
   # Produces a label for the given objects type/operator without article.

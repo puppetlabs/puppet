@@ -65,7 +65,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     if match
       hash = {}
 
-      self::FIELDS.zip(match.captures) do |field,value|
+      self::FIELDS.zip(match.captures) do |field, value|
         hash[field] = value
       end
 
@@ -139,7 +139,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
           # it will search for the packages only in the brackets ex: [rubygems]
         ).lines.find {|package| package.match(/[\[ ](#{Regexp.escape(@resource[:name])})[\],]/)}
         if output
-          hash = self.class.parse_line(output,self.class::FIELDS_REGEX_WITH_PROVIDES)
+          hash = self.class.parse_line(output, self.class::FIELDS_REGEX_WITH_PROVIDES)
           Puppet.info("Package #{@resource[:name]} is virtual, defaulting to #{hash[:name]}")
           @resource[:name] = hash[:name]
         end

@@ -104,7 +104,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   # Where is our override script?
   def overscript
-    @overscript ||= initscript.gsub(/\.conf$/,".override")
+    @overscript ||= initscript.gsub(/\.conf$/, ".override")
   end
 
   def search(name)

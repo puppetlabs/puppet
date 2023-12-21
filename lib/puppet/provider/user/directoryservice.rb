@@ -521,7 +521,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     dscl_output = dscl '.', '-list', '/Users', 'uid'
     # We're ok with throwing away negative uids here. Also, remove nil values.
     user_ids = dscl_output.split.compact.collect { |l| l.to_i if l =~ /^\d+$/ }
-    ids = user_ids.compact!.sort! { |a,b| a.to_f <=> b.to_f }
+    ids = user_ids.compact!.sort! { |a, b| a.to_f <=> b.to_f }
     # We're just looking for an unused id in our sorted array.
     ids.each_index do |i|
       next_id = ids[i] + 1

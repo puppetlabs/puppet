@@ -377,7 +377,7 @@ class Puppet::Settings
   def self.clean_opt(opt, val)
     # rewrite --[no-]option to --no-option if that's what was given
     if opt =~ /\[no-\]/ and !val
-      opt = opt.gsub(/\[no-\]/,'no-')
+      opt = opt.gsub(/\[no-\]/, 'no-')
     end
     # otherwise remove the [no-] prefix to not confuse everybody
     opt = opt.gsub(/\[no-\]/, '')
@@ -482,7 +482,7 @@ class Puppet::Settings
     end
 
     value &&= @translate[value]
-    str = opt.sub(/^--/,'')
+    str = opt.sub(/^--/, '')
 
     bool = true
     newstr = str.sub(/^no-/, '')
@@ -526,11 +526,11 @@ class Puppet::Settings
     if val == "all"
       hash = {}
       each do |name, _obj|
-        val = value(name,env)
+        val = value(name, env)
         val = val.inspect if val == ""
         hash[name] = val
       end
-      hash.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, v|
+      hash.sort { |a, b| a[0].to_s <=> b[0].to_s }.each do |name, v|
         puts "#{name} = #{v}"
       end
     else
@@ -538,10 +538,10 @@ class Puppet::Settings
         if include?(v)
           # if there is only one value, just print it for back compatibility
           if v == val
-            puts value(val,env)
+            puts value(val, env)
             break
           end
-          puts "#{v} = #{value(v,env)}"
+          puts "#{v} = #{value(v, env)}"
         else
           puts "invalid setting: #{v}"
           return false
@@ -1302,7 +1302,7 @@ Generated on #{Time.now}.
 
   def issue_deprecation_warning(setting, msg = nil)
     name = setting.name
-    ref = DEPRECATION_REFS.find { |params,_reference| params.include?(name) }
+    ref = DEPRECATION_REFS.find { |params, _reference| params.include?(name) }
     ref = ref[1] if ref
     case
     when msg

@@ -82,7 +82,7 @@ module Puppet::FileBucketFile
         end
       }
       # Build the output message. Sorted by names then by dates
-      bucket.sort.each { |filename,contents|
+      bucket.sort.each { |filename, contents|
         contents.each { |mtime, chksum|
           date = mtime.strftime("%F %T")
           msg += "#{chksum} #{date} #{filename}\n"

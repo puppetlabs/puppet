@@ -879,7 +879,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     else
       # name must be either a decimal string value, or a valid NAME
       name = o.expr.value
-      if name[0,1] =~ /[0-9]/
+      if name[0, 1] =~ /[0-9]/
         unless name =~ Patterns::NUMERIC_VAR_NAME
           acceptor.accept(Issues::ILLEGAL_NUMERIC_VAR_NAME, o, :name => name)
         end

@@ -69,9 +69,9 @@ module Puppet::Pops::LabelProvider
   private
 
   def first_letter_of(string)
-    char = string[0,1]
+    char = string[0, 1]
     if SKIPPED_CHARACTERS.include? char
-      char = string[1,1]
+      char = string[1, 1]
     end
 
     if char == ""

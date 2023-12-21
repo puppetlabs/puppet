@@ -292,7 +292,7 @@ Puppet::Type.newtype(:tidy) do
       files = [self[:path]]
     end
     found_files = files.find_all { |path| tidy?(path) }.collect { |path| mkfile(path) }
-    result = found_files.each { |file| debug "Tidying #{file.ref}" }.sort { |a,b| b[:path] <=> a[:path] }
+    result = found_files.each { |file| debug "Tidying #{file.ref}" }.sort { |a, b| b[:path] <=> a[:path] }
     if found_files.size > 0
       # TRANSLATORS "Tidy" is a program name and should not be translated
       notice _("Tidying %{count} files") % { count: found_files.size }
@@ -306,7 +306,7 @@ Puppet::Type.newtype(:tidy) do
     # so that a directory is emptied before we try to remove it.
     files_by_name = result.inject({}) { |hash, file| hash[file[:path]] = file; hash }
 
-    files_by_name.keys.sort { |a,b| b <=> a }.each do |path|
+    files_by_name.keys.sort { |a, b| b <=> a }.each do |path|
       dir = ::File.dirname(path)
       resource = files_by_name[dir]
       next unless resource

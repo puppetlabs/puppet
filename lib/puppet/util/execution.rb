@@ -27,7 +27,7 @@ module Puppet::Util::Execution
     attr_reader :exitstatus
 
     # @api private
-    def initialize(value,exitstatus)
+    def initialize(value, exitstatus)
       super(value)
       @exitstatus = exitstatus
     end

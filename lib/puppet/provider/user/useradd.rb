@@ -47,7 +47,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
                                    :absent
                                  else
                                    # Expiry is days after 1970-01-01
-                                   (Date.new(1970,1,1) + value).strftime('%Y-%m-%d')
+                                   (Date.new(1970, 1, 1) + value).strftime('%Y-%m-%d')
                                  end
                                }
 

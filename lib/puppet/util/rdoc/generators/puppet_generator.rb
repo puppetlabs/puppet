@@ -41,7 +41,7 @@ module Generators
       first = @markup.nil?
       res = old_markup(str, remove_para)
       if first and not @markup.nil?
-        @markup.add_special(/\b([a-z]\w+(::\w+)*)/,:CROSSREF)
+        @markup.add_special(/\b([a-z]\w+(::\w+)*)/, :CROSSREF)
         # we need to call it again, since we added a rule
         res = old_markup(str, remove_para)
       end
@@ -144,7 +144,7 @@ module Generators
         # generate nodes and plugins found
         classes.each do |k|
           if k.context.is_module?
-            k.context.each_node do |_name,node|
+            k.context.each_node do |_name, node|
               nodes << HTMLPuppetNode.new(node, toplevel, NODE_DIR, @options)
               @nodes << nodes.last
             end
@@ -216,7 +216,7 @@ module Generators
       res = []
       collection.sort.each do |f|
         if f.document_self
-          res << { "classlist" => CGI.escapeHTML("#{MODULE_DIR}/fr_#{f.index_name}.html"), "module" => CGI.escapeHTML("#{CLASS_DIR}/#{f.index_name}.html"),"name" => CGI.escapeHTML(f.index_name) }
+          res << { "classlist" => CGI.escapeHTML("#{MODULE_DIR}/fr_#{f.index_name}.html"), "module" => CGI.escapeHTML("#{CLASS_DIR}/#{f.index_name}.html"), "name" => CGI.escapeHTML(f.index_name) }
         end
       end
 
@@ -261,7 +261,7 @@ module Generators
 
       res2 = []
       collection['methods'].sort.each do |f|
-        res2 << { "href" => "../#{f.path}", "name" => f.index_name.sub(/\(.*\)$/,'') } if f.document_self
+        res2 << { "href" => "../#{f.path}", "name" => f.index_name.sub(/\(.*\)$/, '') } if f.document_self
       end
 
       module_name = []

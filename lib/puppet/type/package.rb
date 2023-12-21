@@ -407,7 +407,7 @@ module Puppet
         if provider.respond_to?(:package_settings_change_to_s)
           provider.package_settings_change_to_s(currentvalue, newvalue)
         else
-          super(currentvalue,newvalue)
+          super(currentvalue, newvalue)
         end
       end
     end

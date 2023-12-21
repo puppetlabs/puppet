@@ -614,7 +614,7 @@ module Time
       ]
 
       def bad_format_specifier(format, start, position)
-        _("Bad format specifier '%{expression}' in '%{format}', at position %{position}") % { expression: format[start,position-start], format: format, position: position }
+        _("Bad format specifier '%{expression}' in '%{format}', at position %{position}") % { expression: format[start, position-start], format: format, position: position }
       end
 
       def append_literal(bld, codepoint)

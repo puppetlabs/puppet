@@ -714,12 +714,12 @@ module Util
   end
   module_function :exit_on_fail
 
-  def deterministic_rand(seed,max)
+  def deterministic_rand(seed, max)
     deterministic_rand_int(seed, max).to_s
   end
   module_function :deterministic_rand
 
-  def deterministic_rand_int(seed,max)
+  def deterministic_rand_int(seed, max)
     Random.new(seed).rand(max)
   end
   module_function :deterministic_rand_int

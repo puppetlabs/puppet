@@ -32,7 +32,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
   }
 
   def self.namemap(hash)
-    self::Namemap.keys.inject({}) do |hsh,k|
+    self::Namemap.keys.inject({}) do |hsh, k|
       hsh.merge(self::Namemap[k] => hash[k])
     end
   end

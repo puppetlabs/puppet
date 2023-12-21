@@ -206,7 +206,7 @@ class Puppet::Transaction::Report
 
   # @api private
   def prune_internal_data
-    resource_statuses.delete_if {|_name,res| res.resource_type == 'Whit'}
+    resource_statuses.delete_if {|_name, res| res.resource_type == 'Whit'}
   end
 
   # @api private
@@ -220,7 +220,7 @@ class Puppet::Transaction::Report
     add_metric(:changes, {TOTAL => change_metric})
     add_metric(:events, calculate_event_metrics)
     @status = compute_status(resource_metrics, change_metric)
-    @noop_pending = @resource_statuses.any? { |_name,res| has_noop_events?(res) }
+    @noop_pending = @resource_statuses.any? { |_name, res| has_noop_events?(res) }
   end
 
   # @api private
@@ -380,7 +380,7 @@ class Puppet::Transaction::Report
     report.keys.sort_by(&:to_s).each do |key|
       ret += "#{Puppet::Util::Metric.labelize(key)}:\n"
 
-      report[key].keys.sort { |a,b|
+      report[key].keys.sort { |a, b|
         # sort by label
         if a == TOTAL
           1
@@ -463,7 +463,7 @@ class Puppet::Transaction::Report
   end
 
   def calculate_change_metric
-    resource_statuses.map { |_name, status| status.change_count || 0 }.inject(0) { |a,b| a+b }
+    resource_statuses.map { |_name, status| status.change_count || 0 }.inject(0) { |a, b| a+b }
   end
 
   def calculate_event_metrics

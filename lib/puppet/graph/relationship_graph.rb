@@ -171,7 +171,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
 
   def build_autorelation_dependencies(catalog)
     vertices.each do |vertex|
-      [:require,:subscribe].each do |rel_type|
+      [:require, :subscribe].each do |rel_type|
         vertex.send("auto#{rel_type}".to_sym, catalog).each do |edge|
           # don't let automatic relationships conflict with manual ones.
           next if edge?(edge.source, edge.target)
@@ -191,7 +191,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
         end
       end
 
-      [:before,:notify].each do |rel_type|
+      [:before, :notify].each do |rel_type|
         vertex.send("auto#{rel_type}".to_sym, catalog).each do |edge|
           # don't let automatic relationships conflict with manual ones.
           next if edge?(edge.target, edge.source)
@@ -245,8 +245,8 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     #   can "do the right thing" for references to other vertices that may or
     #   may not be containers.
     #
-    admissible = Hash.new { |_h,k| k }
-    completed  = Hash.new { |_h,k| k }
+    admissible = Hash.new { |_h, k| k }
+    completed  = Hash.new { |_h, k| k }
     containers.each { |x|
       admissible[x] = whit_class.new(:name => "admissible_#{x.ref}", :catalog => catalog)
       completed[x]  = whit_class.new(:name => "completed_#{x.ref}",  :catalog => catalog)
@@ -265,19 +265,19 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     #
     containers.each { |x|
       contents = catalog.adjacent(x, :direction => :out)
-      add_edge(admissible[x],completed[x]) if contents.empty? # (0)
+      add_edge(admissible[x], completed[x]) if contents.empty? # (0)
       contents.each { |v|
-        add_edge(admissible[x],admissible[v],Default_label) # (1)
+        add_edge(admissible[x], admissible[v], Default_label) # (1)
         add_edge(completed[v], completed[x], Default_label) # (2)
       }
       # (3) & (5)
-      adjacent(x,:direction => :in,:type => :edges).each { |e|
-        add_edge(completed[e.source],admissible[x],e.label)
+      adjacent(x, :direction => :in, :type => :edges).each { |e|
+        add_edge(completed[e.source], admissible[x], e.label)
         remove_edge! e
       }
       # (4) & (5)
-      adjacent(x,:direction => :out,:type => :edges).each { |e|
-        add_edge(completed[x],admissible[e.target],e.label)
+      adjacent(x, :direction => :out, :type => :edges).each { |e|
+        add_edge(completed[x], admissible[e.target], e.label)
         remove_edge! e
       }
     }

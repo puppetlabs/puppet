@@ -8,7 +8,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
 
     types << klass
   end
-  types.sort! { |a,b| a.name.to_s <=> b.name.to_s }
+  types.sort! { |a, b| a.name.to_s <=> b.name.to_s }
 
   command_line = Puppet::Util::CommandLine.new
   types.reject! { |type| ! command_line.args.include?(type.name.to_s) } unless command_line.args.empty?
