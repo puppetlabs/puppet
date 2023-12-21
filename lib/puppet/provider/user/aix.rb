@@ -60,7 +60,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
       return '0' if expiry == "0000-00-00" || expiry.to_sym == :absent
       
       DateTime.parse(expiry, "%Y-%m-%d %H:%M")
-        .strftime("%m%d%H%M%y")
+              .strftime("%m%d%H%M%y")
     end
 
     def expires_to_expiry(provider, expires)

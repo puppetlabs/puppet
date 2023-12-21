@@ -151,9 +151,9 @@ module Puppet
     dir = Puppet[:vendormoduledir]
     if dir && File.directory?(dir)
       Dir.entries(dir)
-        .reject { |f| f =~ /^\./ }
-        .map { |f| File.join(dir, f, "lib") }
-        .select { |d| FileTest.directory?(d) }
+         .reject { |f| f =~ /^\./ }
+         .map { |f| File.join(dir, f, "lib") }
+         .select { |d| FileTest.directory?(d) }
     else
       []
     end

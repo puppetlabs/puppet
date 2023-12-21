@@ -30,9 +30,9 @@ class Puppet::Network::HTTP::API
   def self.server_routes
     server_prefix = Regexp.new("^#{Puppet::Network::HTTP::SERVER_URL_PREFIX}/")
     Puppet::Network::HTTP::Route.path(server_prefix)
-      .any
-      .chain(Puppet::Network::HTTP::API::Server::V3.routes,
-             Puppet::Network::HTTP::API.not_found)
+                                .any
+                                .chain(Puppet::Network::HTTP::API::Server::V3.routes,
+                                       Puppet::Network::HTTP::API.not_found)
   end
 
   def self.master_routes

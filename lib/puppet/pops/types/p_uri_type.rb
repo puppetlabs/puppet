@@ -39,7 +39,7 @@ class PURIType < PAnyType
 
   TYPE_STRING_PARAM =
     TypeFactory
-      .optional(PVariantType
+    .optional(PVariantType
         .new([
                PStringType::NON_EMPTY,
                PRegexpType::DEFAULT,
@@ -51,7 +51,7 @@ class PURIType < PAnyType
 
   TYPE_INTEGER_PARAM =
     TypeFactory
-      .optional(PVariantType
+    .optional(PVariantType
         .new([
                PIntegerType.new(0),
                TypeFactory.type_type(PNotUndefType::DEFAULT),

@@ -316,16 +316,16 @@ module Puppet::Util::Windows::Process
 
     # pass :invalid => :replace to the Ruby String#encode to use replacement characters
     pairs = env_ptr.read_arbitrary_wide_string_up_to(65534, :double_null, { :invalid => :replace })
-      .split(?\x00)
-      .reject { |env_str| env_str.nil? || env_str.empty? || env_str[0] == '=' }
-      .reject do |env_str|
-        # reject any string containing the Unicode replacement character
-        if env_str.include?("\uFFFD")
-          Puppet.warning(_("Discarding environment variable %{string} which contains invalid bytes") % { string: env_str })
-          true
-        end
-      end
-      .map { |env_pair| env_pair.split('=', 2) }
+                   .split(?\x00)
+                   .reject { |env_str| env_str.nil? || env_str.empty? || env_str[0] == '=' }
+                   .reject do |env_str|
+                     # reject any string containing the Unicode replacement character
+                     if env_str.include?("\uFFFD")
+                       Puppet.warning(_("Discarding environment variable %{string} which contains invalid bytes") % { string: env_str })
+                       true
+                     end
+                   end
+                   .map { |env_pair| env_pair.split('=', 2) }
     Hash[ pairs ]
   ensure
     if env_ptr && ! env_ptr.null?

@@ -292,7 +292,7 @@ class Puppet::Interface
     def copyright_years=(value)
       years = munge_copyright_year value
       years = (years.is_a?(Array) ? years : [years])
-        .sort_by do |x| x.is_a?(Range) ? x.first : x end
+              .sort_by do |x| x.is_a?(Range) ? x.first : x end
 
       @copyright_years = years.map do |year|
         if year.is_a? Range then

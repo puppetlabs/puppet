@@ -1153,10 +1153,10 @@ Generated on #{Time.now}.
           report = transaction.report
           status_failures = report.resource_statuses.values.select { |r| r.failed? }
           status_fail_msg = status_failures
-            .collect(&:events)
-            .flatten
-            .select { |event| event.status == 'failure' }
-            .collect { |event| "#{event.resource}: #{event.message}" }.join("; ")
+                            .collect(&:events)
+                            .flatten
+                            .select { |event| event.status == 'failure' }
+                            .collect { |event| "#{event.resource}: #{event.message}" }.join("; ")
 
           raise "Got #{status_failures.length} failure(s) while initializing: #{status_fail_msg}"
         end

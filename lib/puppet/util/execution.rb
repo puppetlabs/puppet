@@ -313,7 +313,7 @@ module Puppet::Util::Execution
   def self.ruby_path()
     File.join(RbConfig::CONFIG['bindir'],
               RbConfig::CONFIG['ruby_install_name'] + RbConfig::CONFIG['EXEEXT'])
-      .sub(/.*\s.*/m, '"\&"')
+        .sub(/.*\s.*/m, '"\&"')
   end
 
   # Because some modules provide their own version of this method.

@@ -102,7 +102,7 @@ class Puppet::Module
     def self.plans_in_module(pup_module)
       # Search e.g. 'modules/<pup_module>/plans' for all plans
       plan_files = Dir.glob(File.join(pup_module.plans_directory, '*'))
-        .keep_if { |f| valid, _ = is_plans_filename?(f); valid }
+                      .keep_if { |f| valid, _ = is_plans_filename?(f); valid }
 
       plans = plan_files.group_by { |f| plan_name_from_path(f) }
 

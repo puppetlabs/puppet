@@ -69,9 +69,9 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
     # causing gemsplit to output:
     # Warning: Could not match *** LOCAL GEMS ***
     gem_list = list
-                 .lines
-                 .select { |x| x =~ /^(\S+)\s+\((.+)\)/ }
-                 .map { |set| gemsplit(set) }
+               .lines
+               .select { |x| x =~ /^(\S+)\s+\((.+)\)/ }
+               .map { |set| gemsplit(set) }
 
     if options[:justme]
       return gem_list.shift

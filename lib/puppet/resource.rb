@@ -130,15 +130,15 @@ class Puppet::Resource
     unless params.empty?
       data['parameters'] =
         Puppet::Pops::Serialization::ToDataConverter
-          .convert(params,
-                   {
-                     :rich_data => Puppet.lookup(:rich_data),
-                     :symbol_as_string => true,
-                     :local_reference => false,
-                     :type_by_reference => true,
-                     :message_prefix => ref,
-                     :semantic => self
-                   })
+        .convert(params,
+                 {
+                   :rich_data => Puppet.lookup(:rich_data),
+                   :symbol_as_string => true,
+                   :local_reference => false,
+                   :type_by_reference => true,
+                   :message_prefix => ref,
+                   :semantic => self
+                 })
     end
 
     data['sensitive_parameters'] = sensitive_parameters.map(&:to_s) unless sensitive_parameters.empty?

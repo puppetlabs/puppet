@@ -119,14 +119,14 @@ Puppet::Type.newtype(:resources) do
     return [] unless self.purge?
 
     resource_type.instances
-      .reject { |r| catalog.resource_refs.include? r.ref }
-      .select { |r| check(r) }
-      .select { |r| r.class.validproperty?(:ensure) }
-      .select { |r| able_to_ensure_absent?(r) }
-      .each { |resource|
-        resource.copy_metaparams(@parameters)
-        resource.purging
-      }
+                 .reject { |r| catalog.resource_refs.include? r.ref }
+                 .select { |r| check(r) }
+                 .select { |r| r.class.validproperty?(:ensure) }
+                 .select { |r| able_to_ensure_absent?(r) }
+                 .each { |resource|
+      resource.copy_metaparams(@parameters)
+      resource.purging
+    }
   end
 
   def resource_type

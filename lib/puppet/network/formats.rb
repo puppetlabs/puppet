@@ -163,7 +163,7 @@ Puppet::Network::FormatHandler.create(:console,
       datum.sort_by { |k,_v| k.to_s } .each do |key, value|
         output << key.to_s.ljust(column_a)
         output << json.render(value)
-          .chomp.gsub(/\n */) { |x| x + (' ' * column_a) }
+                      .chomp.gsub(/\n */) { |x| x + (' ' * column_a) }
         output << "\n"
       end
       return output

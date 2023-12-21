@@ -211,7 +211,7 @@ class Puppet::Module
 
     def self.tasks_in_module(pup_module)
       task_files = Dir.glob(File.join(pup_module.tasks_directory, '*'))
-        .keep_if { |f| is_tasks_file?(f) }
+                      .keep_if { |f| is_tasks_file?(f) }
 
       module_executables = task_files.reject(&method(:is_tasks_metadata_filename?)).map.to_a
 
