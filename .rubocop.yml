@@ -40,6 +40,9 @@ Layout/IndentationWidth:
   Exclude:
     - 'lib/puppet/provider/package/*.rb'
 
+Layout/LineEndStringConcatenationIndentation:
+  Enabled: true
+
 # puppet uses symbol booleans in types and providers to work around long standing
 # bugs when trying to manage falsey pararameters and properties
 Lint/BooleanSymbol:

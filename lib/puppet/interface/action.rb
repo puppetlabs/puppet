@@ -109,14 +109,14 @@ class Puppet::Interface::Action
       msg = if proc.arity < 0 then
               # TRANSLATORS 'when_rendering', 'when_invoked' are method names and should not be translated
               _("The when_rendering method for the %{face} face %{name} action takes either just one argument,"\
-                  " the result of when_invoked, or the result plus the %{arg_count} arguments passed to the"\
-                  " when_invoked block, not a variable number") %
+                " the result of when_invoked, or the result plus the %{arg_count} arguments passed to the"\
+                " when_invoked block, not a variable number") %
                   { face: @face.name, name: name, arg_count: @positional_arg_count }
             else
               # TRANSLATORS 'when_rendering', 'when_invoked' are method names and should not be translated
               _("The when_rendering method for the %{face} face %{name} action takes either just one argument,"\
-                  " the result of when_invoked, or the result plus the %{arg_count} arguments passed to the"\
-                  " when_invoked block, not %{string}") %
+                " the result of when_invoked, or the result plus the %{arg_count} arguments passed to the"\
+                " when_invoked block, not %{string}") %
                   { face: @face.name, name: name, arg_count: @positional_arg_count, string: proc.arity.to_s }
             end
       raise ArgumentError, msg
