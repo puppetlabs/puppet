@@ -176,7 +176,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
 
   def parse_log_level(puppet_path,cmdline_debug)
     begin
-      loglevel = %x{ #{puppet_path} config --section agent --log_level notice print log_level }.chomp
+      loglevel = "notice"
       unless loglevel && respond_to?("log_#{loglevel}")
         loglevel = :notice
         log_err("Failed to determine loglevel, defaulting to #{loglevel}")
