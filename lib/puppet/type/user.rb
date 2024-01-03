@@ -20,7 +20,15 @@ module Puppet
       provided in the `gid` attribute) or any group listed in the `groups`
       attribute then the user resource will autorequire that group. If Puppet
       is managing any role accounts corresponding to the user's roles, the
-      user resource will autorequire those role accounts."
+      user resource will autorequire those role accounts.
+      Only when the resource is ensured to be present.
+
+      **Autobefores:** If Puppet is managing the user's primary group (as
+      provided in the `gid` attribute) or any group listed in the `groups`
+      attribute then the user resource will autobefore that group. If Puppet
+      is managing any role accounts corresponding to the user's roles, the
+      user resource will autorequire those role accounts.
+      Only when the resource is ensured to be absent."
 
     feature :allows_duplicates,
             "The provider supports duplicate users with the same UID."
@@ -462,40 +470,47 @@ module Puppet
       end
     end
 
-    # Autorequire the group, if it's around
+    # Autorequire groups, if they're around
     autorequire(:group) do
       autos = []
 
-      # autorequire primary group, if managed
-      obj = @parameters[:gid]
-      groups = obj.shouldorig if obj
-      if groups
-        groups = groups.collect { |group|
-          if group.is_a?(String) && group =~/^\d+$/
-            Integer(group)
-          else
-            group
-          end
-        }
-        groups.each { |group|
-          case group
-          when Integer
-            resource = catalog.resources.find { |r| r.is_a?(Puppet::Type.type(:group)) && r.should(:gid) == group }
-            if resource
-              autos << resource
+      if self[:ensure] != :absent
+        if @parameters[:gid]&.shouldorig
+          groups_in_catalog = catalog.resources.filter { |r| r.is_a?(Puppet::Type.type(:group)) }
+          autos += @parameters[:gid].shouldorig.filter_map do |group|
+            if (group.is_a?(String) && group.match?(/^\d+$/)) || group.is_a?(Integer)
+              gid = Integer(group)
+              groups_in_catalog.find { |r| r.should(:gid) == gid }
+            else
+              group
             end
-          else
-            autos << group
           end
-        }
+        end
+
+        if @parameters[:groups]&.should
+          autos += @parameters[:groups].should.split(",")
+        end
       end
 
-      # autorequire groups, excluding primary group, if managed
-      obj = @parameters[:groups]
-      if obj
-        groups = obj.should
-        if groups
-          autos += groups.split(",")
+      autos
+    end
+
+    # Autobefore the primary group, if it's around. Otherwise group removal
+    # fails when that group is also ensured absent.
+    autobefore(:group) do
+      autos = []
+
+      if self[:ensure] == :absent
+        if @parameters[:gid]&.shouldorig
+          groups_in_catalog = catalog.resources.filter { |r| r.is_a?(Puppet::Type.type(:group)) }
+          autos += @parameters[:gid].shouldorig.filter_map do |group|
+            if (group.is_a?(String) && group.match?(/^\d+$/)) || group.is_a?(Integer)
+              gid = Integer(group)
+              groups_in_catalog.find { |r| r.should(:gid) == gid }
+            else
+              group
+            end
+          end
         end
       end
 
