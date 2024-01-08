@@ -139,7 +139,7 @@ class Puppet::Util::Log
       return
     end
 
-    raise Puppet::DevError, _("Unknown destination type %{dest}") % { dest: dest} unless type
+    raise Puppet::DevError, _("Unknown destination type %{dest}") % { dest: dest } unless type
 
     begin
       if type.instance_method(:initialize).arity == 1
@@ -180,7 +180,7 @@ class Puppet::Util::Log
 
     # We only select the last 10 callers in the stack to avoid being spammy
     message = _("Received a Log attribute with invalid encoding:%{log_message}") %
-              { log_message: Puppet::Util::CharacterEncoding.convert_to_utf_8(str.dump)}
+              { log_message: Puppet::Util::CharacterEncoding.convert_to_utf_8(str.dump) }
     message += '\n' + _("Backtrace:\n%{backtrace}") % { backtrace: caller(1, 10).join("\n") }
     message
   end
@@ -293,7 +293,7 @@ class Puppet::Util::Log
     #       as this is good enough, but does not reflect the true call-stack, but is a rough estimate
     #       of where the logging call originates from).
     #
-    Puppet::Util::Log.create({:level => level, :source => scope, :message => vals.join(" ")})
+    Puppet::Util::Log.create({ :level => level, :source => scope, :message => vals.join(" ") })
     nil
   end
 

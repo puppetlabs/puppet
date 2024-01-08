@@ -129,7 +129,7 @@ class Puppet::Indirector::Indirection
     when :terminus_setting
       @terminus_setting = Puppet::ThreadLocal.new(value)
     else
-      raise(ArgumentError, _("The setting %{setting} is not a valid indirection setting.") % {setting: setting})
+      raise(ArgumentError, _("The setting %{setting} is not a valid indirection setting.") % { setting: setting })
     end
   end
 
@@ -162,7 +162,7 @@ class Puppet::Indirector::Indirection
       if setting
         self.terminus_class = Puppet.settings[setting]
       else
-        raise Puppet::DevError, _("No terminus class nor terminus setting was provided for indirection %{name}") % { name: self.name}
+        raise Puppet::DevError, _("No terminus class nor terminus setting was provided for indirection %{name}") % { name: self.name }
       end
     end
     @terminus_class.value

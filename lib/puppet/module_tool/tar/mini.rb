@@ -11,7 +11,7 @@ class Puppet::ModuleTool::Tar::Mini
       args = [reader, destdir, find_valid_files(reader)]
       spec = Gem::Specification.find_by_name('minitar')
       if spec && spec.version >= Gem::Version.new('0.9')
-        args << {:fsync => false}
+        args << { :fsync => false }
       end
       Archive::Tar::Minitar.unpack(*args) do |action, name, stats|
         case action

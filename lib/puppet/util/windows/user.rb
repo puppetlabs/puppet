@@ -101,7 +101,7 @@ module Puppet::Util::Windows::User
         # try logon using network else try logon using interactive mode
         if logon_user_by_logon_type(name, domain, password, fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
           if logon_user_by_logon_type(name, domain, password, fLOGON32_LOGON_INTERACTIVE, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
-            raise Puppet::Util::Windows::Error.new(_("Failed to logon user %{name}") % {name: name.inspect})
+            raise Puppet::Util::Windows::Error.new(_("Failed to logon user %{name}") % { name: name.inspect })
           end
         end
 

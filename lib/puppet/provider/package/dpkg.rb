@@ -153,10 +153,10 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       hash = self.class.parse_line(output)
     rescue Puppet::ExecutionFailure
       # dpkg-query exits 1 if the package is not found.
-      return {:ensure => :purged, :status => 'missing', :name => @resource[:name], :error => 'ok'}
+      return { :ensure => :purged, :status => 'missing', :name => @resource[:name], :error => 'ok' }
     end
 
-    hash ||= {:ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok'}
+    hash ||= { :ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok' }
 
     if hash[:error] != "ok"
       raise Puppet::Error.new(

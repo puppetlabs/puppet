@@ -122,13 +122,13 @@ class Puppet::SSL::StateMachine
       if e.response.code == 304
         Puppet.info(_("CA certificate is unmodified, using existing CA certificate"))
       else
-        Puppet.info(_("Failed to refresh CA certificate, using existing CA certificate: %{message}") % {message: e.message})
+        Puppet.info(_("Failed to refresh CA certificate, using existing CA certificate: %{message}") % { message: e.message })
       end
 
       # return the original ssl_ctx
       [ssl_ctx, false]
     rescue Puppet::HTTP::HTTPError => e
-      Puppet.warning(_("Failed to refresh CA certificate, using existing CA certificate: %{message}") % {message: e.message})
+      Puppet.warning(_("Failed to refresh CA certificate, using existing CA certificate: %{message}") % { message: e.message })
 
       # return the original ssl_ctx
       [ssl_ctx, false]
@@ -220,13 +220,13 @@ class Puppet::SSL::StateMachine
       if e.response.code == 304
         Puppet.info(_("CRL is unmodified, using existing CRL"))
       else
-        Puppet.info(_("Failed to refresh CRL, using existing CRL: %{message}") % {message: e.message})
+        Puppet.info(_("Failed to refresh CRL, using existing CRL: %{message}") % { message: e.message })
       end
 
       # return the original ssl_ctx
       ssl_ctx
     rescue Puppet::HTTP::HTTPError => e
-      Puppet.warning(_("Failed to refresh CRL, using existing CRL: %{message}") % {message: e.message})
+      Puppet.warning(_("Failed to refresh CRL, using existing CRL: %{message}") % { message: e.message })
 
       # return the original ssl_ctx
       ssl_ctx
@@ -350,15 +350,15 @@ class Puppet::SSL::StateMachine
     rescue Puppet::SSL::SSLError => e
       Error.new(@machine, e.message, e)
     rescue OpenSSL::X509::CertificateError => e
-      Error.new(@machine, _("Failed to parse certificate: %{message}") % {message: e.message}, e)
+      Error.new(@machine, _("Failed to parse certificate: %{message}") % { message: e.message }, e)
     rescue Puppet::HTTP::ResponseError => e
       if e.response.code == 404
-        Puppet.info(_("Certificate for %{certname} has not been signed yet") % {certname: Puppet[:certname]})
+        Puppet.info(_("Certificate for %{certname} has not been signed yet") % { certname: Puppet[:certname] })
         $stdout.puts _("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}).") % { name: Puppet[:certname] }
         Wait.new(@machine)
       else
         to_error(_("Failed to retrieve certificate for %{certname}: %{message}") %
-                 {certname: Puppet[:certname], message: e.response.message}, e)
+                 { certname: Puppet[:certname], message: e.response.message }, e)
       end
     end
   end
@@ -409,10 +409,10 @@ class Puppet::SSL::StateMachine
         log_error(_("Exiting now because the waitforcert setting is set to 0."))
         exit(1)
       elsif Time.now.to_i > @machine.wait_deadline
-        log_error(_("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the maxwaitforcert timeout has been exceeded.") % {name: Puppet[:certname] })
+        log_error(_("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the maxwaitforcert timeout has been exceeded.") % { name: Puppet[:certname] })
         exit(1)
       else
-        Puppet.info(_("Will try again in %{time} seconds.") % {time: time})
+        Puppet.info(_("Will try again in %{time} seconds.") % { time: time })
 
         # close http/tls and session state before sleeping
         Puppet.runtime[:http].close
@@ -443,7 +443,7 @@ class Puppet::SSL::StateMachine
         LockFailure.new(@machine, _("Another puppet instance is already running and the maxwaitforlock timeout has been exceeded; exiting"))
       else
         Puppet.info _("Another puppet instance is already running; waiting for it to finish")
-        Puppet.info _("Will try again in %{time} seconds.") % {time: @machine.waitforlock}
+        Puppet.info _("Will try again in %{time} seconds.") % { time: @machine.waitforlock }
         Kernel.sleep @machine.waitforlock
 
         # try again

@@ -137,7 +137,7 @@ module Puppet
         next if value.is_a?(Hash)
 
         unless value.include?("#{separator}")
-          raise ArgumentError, _("Key/value pairs must be separated by '%{separator}'") % {separator: separator}
+          raise ArgumentError, _("Key/value pairs must be separated by '%{separator}'") % { separator: separator }
         end
       end
 

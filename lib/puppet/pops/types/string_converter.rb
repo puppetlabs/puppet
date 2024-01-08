@@ -489,10 +489,10 @@ class StringConverter
       # For Array and Hash, the format is given as a Hash where 'format' key is the format for the collection itself
       if Puppet::Pops::Types::PArrayType::DEFAULT.assignable?(value_type)
         # add the format given for the exact type
-        string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => {'format' => string_formats }}
+        string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => string_formats } }
       elsif Puppet::Pops::Types::PHashType::DEFAULT.assignable?(value_type)
         # add the format given for the exact type
-        string_formats = { Puppet::Pops::Types::PHashType::DEFAULT => {'format' => string_formats }}
+        string_formats = { Puppet::Pops::Types::PHashType::DEFAULT => { 'format' => string_formats } }
       else
         # add the format given for the exact type
         string_formats = { value_type => string_formats }
@@ -686,13 +686,13 @@ class StringConverter
     when :d, :x, :X, :o, :b, :B
       # Boolean in numeric form, formated by integer rule
       numeric_bool = val ? 1 : 0
-      string_formats = { Puppet::Pops::Types::PIntegerType::DEFAULT => f}
+      string_formats = { Puppet::Pops::Types::PIntegerType::DEFAULT => f }
       _convert(TypeCalculator.infer_set(numeric_bool), numeric_bool, string_formats, indentation)
 
     when :e, :E, :f, :g, :G, :a, :A
       # Boolean in numeric form, formated by float rule
       numeric_bool = val ? 1.0 : 0.0
-      string_formats = { Puppet::Pops::Types::PFloatType::DEFAULT => f}
+      string_formats = { Puppet::Pops::Types::PFloatType::DEFAULT => f }
       _convert(TypeCalculator.infer_set(numeric_bool), numeric_bool, string_formats, indentation)
 
     when :s

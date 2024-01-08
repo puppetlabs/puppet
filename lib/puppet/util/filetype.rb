@@ -94,9 +94,9 @@ class Puppet::Util::FileType
   def cronargs
     uid = Puppet::Util.uid(@path)
     if uid && uid == Puppet::Util::SUIDManager.uid
-      {:failonfail => true, :combine => true}
+      { :failonfail => true, :combine => true }
     else
-      {:failonfail => true, :combine => true, :uid => @path}
+      { :failonfail => true, :combine => true, :uid => @path }
     end
   end
 

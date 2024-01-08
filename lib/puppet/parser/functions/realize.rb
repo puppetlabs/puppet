@@ -11,7 +11,7 @@ Puppet::Parser::Functions::newfunction(:realize, :arity => -2, :doc => "Make a v
   if Puppet[:tasks]
     raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
       Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
-      {:operation => 'realize'}
+      { :operation => 'realize' }
     )
   end
 

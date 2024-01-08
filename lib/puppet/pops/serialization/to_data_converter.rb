@@ -306,7 +306,7 @@ module Serialization
           semantic = Puppet::Pops::SemanticError.new(issue, nil, EMPTY_HASH)
         else
           file, line = stacktrace
-          semantic = Puppet::Pops::SemanticError.new(issue, nil, {:file => file, :line => line})
+          semantic = Puppet::Pops::SemanticError.new(issue, nil, { :file => file, :line => line })
         end
       end
       optionally_fail(issue, semantic, options)

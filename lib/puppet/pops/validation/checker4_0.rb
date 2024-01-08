@@ -206,9 +206,9 @@ class Checker4_0 < Evaluator::LiteralEvaluator
       assign(o.left_expr)
       rvalue(o.right_expr)
     when '+=', '-='
-      acceptor.accept(Issues::APPENDS_DELETES_NO_LONGER_SUPPORTED, o, {:operator => o.operator})
+      acceptor.accept(Issues::APPENDS_DELETES_NO_LONGER_SUPPORTED, o, { :operator => o.operator })
     else
-      acceptor.accept(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
+      acceptor.accept(Issues::UNSUPPORTED_OPERATOR, o, { :operator => o.operator })
     end
   end
 
@@ -225,7 +225,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
       # Append operator use is constrained
       p = container
       unless p.is_a?(Model::CollectExpression) || p.is_a?(Model::ResourceOverrideExpression)
-        acceptor.accept(Issues::ILLEGAL_ATTRIBUTE_APPEND, o, {:name => o.attribute_name, :parent => p})
+        acceptor.accept(Issues::ILLEGAL_ATTRIBUTE_APPEND, o, { :name => o.attribute_name, :parent => p })
       end
     end
     rvalue(o.value_expr)
@@ -293,7 +293,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
       # helpful to point out this easy to make Epp error
       acceptor.accept(Issues::ILLEGAL_EPP_PARAMETERS, o)
     else
-      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature => 'function name', :container => o})
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.functor_expr, { :feature => 'function name', :container => o })
     end
   end
 
@@ -392,7 +392,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_NamedDefinition(o)
     top(o)
     if o.name !~ Patterns::CLASSREF_DECL
-      acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name => o.name})
+      acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, { :name => o.name })
     end
 
     internal_check_file_namespace(o)
@@ -403,7 +403,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_TypeAlias(o)
     top(o)
     if o.name !~ Patterns::CLASSREF_EXT_DECL
-      acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name => o.name})
+      acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, { :name => o.name })
     end
     internal_check_reserved_type_name(o, o.name)
     internal_check_type_ref(o, o.type_expr)
@@ -499,7 +499,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def internal_check_no_idem_last(o)
     violator = ends_with_idem(o.body)
     if violator
-      acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o}) unless resource_without_title?(violator)
+      acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, { :container => o }) unless resource_without_title?(violator)
     end
   end
 
@@ -507,7 +507,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     accepted_index = o.parameters.size() - 1
     o.parameters.each_with_index do |p, index|
       if p.captures_rest && index != accepted_index
-        acceptor.accept(Issues::CAPTURES_REST_NOT_LAST, p, {:param_name => p.name})
+        acceptor.accept(Issues::CAPTURES_REST_NOT_LAST, p, { :param_name => p.name })
       end
     end
   end
@@ -515,20 +515,20 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def internal_check_no_capture(o, container = o)
     o.parameters.each do |p|
       if p.captures_rest
-        acceptor.accept(Issues::CAPTURES_REST_NOT_SUPPORTED, p, {:container => container, :param_name => p.name})
+        acceptor.accept(Issues::CAPTURES_REST_NOT_SUPPORTED, p, { :container => container, :param_name => p.name })
       end
     end
   end
 
   def internal_check_reserved_type_name(o, name)
     if RESERVED_TYPE_NAMES[name]
-      acceptor.accept(Issues::RESERVED_TYPE_NAME, o, {:name => name})
+      acceptor.accept(Issues::RESERVED_TYPE_NAME, o, { :name => name })
     end
   end
 
   def internal_check_future_reserved_word(o, name)
     if FUTURE_RESERVED_WORDS[name]
-      acceptor.accept(Issues::FUTURE_RESERVED_WORD, o, {:word => name})
+      acceptor.accept(Issues::FUTURE_RESERVED_WORD, o, { :word => name })
     end
   end
 
@@ -545,7 +545,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
     # Downcasing here because check is case-insensitive
     if file_namespace == BAD_MODULE_FILE || !o.name.downcase.start_with?(file_namespace)
-      acceptor.accept(Issues::ILLEGAL_DEFINITION_LOCATION, o, {:name => o.name, :file => file})
+      acceptor.accept(Issues::ILLEGAL_DEFINITION_LOCATION, o, { :name => o.name, :file => file })
     end
   end
 
@@ -672,7 +672,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def internal_check_reserved_params(o)
     o.parameters.each do |p|
       if RESERVED_PARAMETERS[p.name]
-        acceptor.accept(Issues::RESERVED_PARAMETER, p, {:container => o, :param_name => p.name})
+        acceptor.accept(Issues::RESERVED_PARAMETER, p, { :container => o, :param_name => p.name })
       end
     end
   end
@@ -680,7 +680,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def internal_check_parameter_name_uniqueness(o)
     unique = Set.new
     o.parameters.each do |p|
-      acceptor.accept(Issues::DUPLICATE_PARAMETER, p, {:param_name => p.name}) unless unique.add?(p.name)
+      acceptor.accept(Issues::DUPLICATE_PARAMETER, p, { :param_name => p.name }) unless unique.add?(p.name)
     end
   end
 
@@ -707,7 +707,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_LiteralInteger(o)
     v = o.value
     if v < MIN_INTEGER || v > MAX_INTEGER
-      acceptor.accept(Issues::NUMERIC_OVERFLOW, o, {:value => v})
+      acceptor.accept(Issues::NUMERIC_OVERFLOW, o, { :value => v })
     end
   end
 
@@ -717,7 +717,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     o.entries.each do |entry|
       catch(:not_literal) do
         literal_key = literal(entry.key)
-        acceptor.accept(Issues::DUPLICATE_KEY, entry, {:key => literal_key}) if unique.add?(literal_key).nil?
+        acceptor.accept(Issues::DUPLICATE_KEY, entry, { :key => literal_key }) if unique.add?(literal_key).nil?
       end
     end
   end
@@ -728,7 +728,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     top(o)
     violator = ends_with_idem(o.body)
     if violator
-      acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o}) unless resource_without_title?(violator)
+      acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, { :container => o }) unless resource_without_title?(violator)
     end
     unless o.parent.nil?
       acceptor.accept(Issues::ILLEGAL_NODE_INHERITANCE, o.parent)
@@ -748,7 +748,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_QualifiedReference(o)
     # Is this a valid qualified name?
     if o.cased_value !~ Patterns::CLASSREF_EXT
-      acceptor.accept(Issues::ILLEGAL_CLASSREF, o, {:name => o.cased_value})
+      acceptor.accept(Issues::ILLEGAL_CLASSREF, o, { :name => o.cased_value })
     end
   end
 
@@ -948,7 +948,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def hostname_Object(o, semantic)
-    acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, {:feature => 'hostname', :container => semantic})
+    acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, { :feature => 'hostname', :container => semantic })
   end
 
   #---QUERY CHECKS

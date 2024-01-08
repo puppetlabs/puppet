@@ -77,7 +77,7 @@ module Manager
       unless options.is_a?(Hash)
         # TRANSLATORS 'Puppet::Type.newtype' should not be translated
         Puppet.warning(_("Puppet::Type.newtype(%{name}) now expects a hash as the second argument, not %{argument}") %
-                       { name: name, argument: options.inspect})
+                       { name: name, argument: options.inspect })
       end
 
       # First make sure we don't have a method sitting around

@@ -127,7 +127,7 @@ class RelationshipOperator
     # assert operator (should have been validated, but this logic makes assumptions which would
     # screw things up royally). Better safe than sorry.
     unless RELATIONSHIP_OPERATORS.include?(relationship_expression.operator)
-      fail(Issues::UNSUPPORTED_OPERATOR, relationship_expression, {:operator => relationship_expression.operator})
+      fail(Issues::UNSUPPORTED_OPERATOR, relationship_expression, { :operator => relationship_expression.operator })
     end
 
     begin
@@ -174,9 +174,9 @@ class RelationshipOperator
       end
       result
     rescue NotCatalogTypeError => e
-      fail(Issues::NOT_CATALOG_TYPE, relationship_expression, {:type => @type_calculator.string(e.type)})
+      fail(Issues::NOT_CATALOG_TYPE, relationship_expression, { :type => @type_calculator.string(e.type) })
     rescue IllegalRelationshipOperandError => e
-      fail(Issues::ILLEGAL_RELATIONSHIP_OPERAND_TYPE, relationship_expression, {:operand => e.operand})
+      fail(Issues::ILLEGAL_RELATIONSHIP_OPERAND_TYPE, relationship_expression, { :operand => e.operand })
     end
   end
 

@@ -37,7 +37,7 @@ module Puppet
       configured_environment = configured_environment.override_from_commandline(Puppet.settings)
 
       # Setup a new context using the app's configuration
-      Puppet.push_context({:current_environment => configured_environment},
+      Puppet.push_context({ :current_environment => configured_environment },
                           "Update current environment from application's configuration")
     end
 

@@ -661,7 +661,7 @@ class Puppet::Settings
       begin
         text = read_file(file)
       rescue => detail
-        message = _("Could not load %{file}: %{detail}") % { file: file, detail: detail}
+        message = _("Could not load %{file}: %{detail}") % { file: file, detail: detail }
         if require_config
           Puppet.log_and_raise(detail, message)
         else
@@ -943,7 +943,7 @@ class Puppet::Settings
     when :environment
       ValuesFromEnvironmentConf.new(source.name)
     else
-      raise Puppet::DevError, _("Unknown searchpath case: %{source_type} for the %{source} settings path element.") % { source_type: source.type, source: source}
+      raise Puppet::DevError, _("Unknown searchpath case: %{source_type} for the %{source} settings path element.") % { source_type: source.type, source: source }
     end
   end
 
@@ -1363,13 +1363,13 @@ Generated on #{Time.now}.
 
       user = setting.owner
       if user && user != "root" && catalog.resource(:user, user).nil?
-        resource = Puppet::Resource.new(:user, user, :parameters => {:ensure => :present})
+        resource = Puppet::Resource.new(:user, user, :parameters => { :ensure => :present })
         resource[:gid] = self[:group] if self[:group]
         catalog.add_resource resource
       end
       group = setting.group
       if group && !%w{root wheel}.include?(group) && catalog.resource(:group, group).nil?
-        catalog.add_resource Puppet::Resource.new(:group, group, :parameters => {:ensure => :present})
+        catalog.add_resource Puppet::Resource.new(:group, group, :parameters => { :ensure => :present })
       end
     end
   end

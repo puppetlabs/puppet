@@ -72,7 +72,7 @@ Puppet::Functions.create_function(:getvar, Puppet::Functions::InternalFunction) 
       navigation = navigation[1..-1]
     else
       unless navigation.empty?
-        raise ArgumentError, _("First character after var name in get string must be a '.' - got %{char}") % {char: navigation[0]}
+        raise ArgumentError, _("First character after var name in get string must be a '.' - got %{char}") % { char: navigation[0] }
       end
     end
     get_from_var_name(scope, matches[1], navigation, default_value, &block)

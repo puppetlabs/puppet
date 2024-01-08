@@ -218,9 +218,9 @@ class Puppet::SSL::SSLProvider
       chain.reverse.each_with_index do |cert, i|
         digest = Puppet::SSL::Digest.new(alg, cert.to_der)
         if i == chain.length - 1
-          Puppet.debug(_("Verified client certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_utf8, digest: digest})
+          Puppet.debug(_("Verified client certificate '%{subject}' fingerprint %{digest}") % { subject: cert.subject.to_utf8, digest: digest })
         else
-          Puppet.debug(_("Verified CA certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_utf8, digest: digest})
+          Puppet.debug(_("Verified CA certificate '%{subject}' fingerprint %{digest}") % { subject: cert.subject.to_utf8, digest: digest })
         end
       end
       ssl_context.crls.each do |crl|

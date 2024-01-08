@@ -296,7 +296,7 @@ class PObjectType < PMetaType
     def initialize(name, container, init_hash)
       super(name, container, TypeAsserter.assert_instance_of(nil, TYPE_ATTRIBUTE, init_hash) { "initializer for #{self.class.label(container, name)}" })
       if name == Serialization::PCORE_TYPE_KEY || name == Serialization::PCORE_VALUE_KEY
-        raise Puppet::ParseError, _("The attribute '%{name}' is reserved and cannot be used") % { name: name}
+        raise Puppet::ParseError, _("The attribute '%{name}' is reserved and cannot be used") % { name: name }
       end
 
       @kind = init_hash[KEY_KIND]

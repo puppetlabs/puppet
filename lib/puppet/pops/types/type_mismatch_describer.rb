@@ -614,7 +614,7 @@ module Types
               result << describe(value_type, df_return_type, [ParameterPathElement.new(name)]) unless value_type.generalize.assignable?(df_return_type.generalize)
             else
               warning_text = _("Deferred function %{function_name} has no return_type, unable to guarantee value type during compilation.") %
-                             {function_name: value.name }
+                             { function_name: value.name }
               Puppet.warn_once('deprecations',
                                "#{value.name}_deferred_warning",
                                warning_text)

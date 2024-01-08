@@ -53,22 +53,22 @@ class Puppet::InfoService::ClassInformationService
   end
 
   def parse_file(f)
-    return {:error => _("The file %{f} does not exist") % { f: f }} unless Puppet::FileSystem.exist?(f)
+    return { :error => _("The file %{f} does not exist") % { f: f } } unless Puppet::FileSystem.exist?(f)
 
     begin
       parse_result = @parser.parse_file(f)
-      {:classes =>
+      { :classes =>
         parse_result.definitions.select { |d| d.is_a?(Puppet::Pops::Model::HostClassDefinition) }.map do |d|
-          {:name => d.name,
-           :params => d.parameters.map { |p| extract_param(p) }}
-        end}
+          { :name => d.name,
+            :params => d.parameters.map { |p| extract_param(p) } }
+        end }
     rescue StandardError => e
-      {:error => e.message }
+      { :error => e.message }
     end
   end
 
   def extract_param(p)
-    extract_default(extract_type({:name => p.name}, p), p)
+    extract_default(extract_type({ :name => p.name }, p), p)
   end
 
   def extract_type(structure, p)

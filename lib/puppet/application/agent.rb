@@ -426,13 +426,13 @@ class Puppet::Application::Agent < Puppet::Application
       end
     end
   rescue => e
-    Puppet.log_exception(e, _("Failed to generate fingerprint: %{message}") % {message: e.message})
+    Puppet.log_exception(e, _("Failed to generate fingerprint: %{message}") % { message: e.message })
     exit(1)
   end
 
   def onetime(daemon)
     begin
-      exitstatus = daemon.agent.run({:job_id => options[:job_id], :start_time => options[:start_time], :waitforcert => options[:waitforcert]})
+      exitstatus = daemon.agent.run({ :job_id => options[:job_id], :start_time => options[:start_time], :waitforcert => options[:waitforcert] })
     rescue => detail
       Puppet.log_exception(detail)
     end

@@ -29,7 +29,7 @@ class Puppet::Provider::Exec < Puppet::Provider
       end
 
       if value.nil? || value.empty?
-        msg = _("Empty environment setting '%{var}'") % {var: var}
+        msg = _("Empty environment setting '%{var}'") % { var: var }
         Puppet.warn_once('undefined_variables', "empty_env_var_#{var}", msg, resource.file, resource.line)
       end
 

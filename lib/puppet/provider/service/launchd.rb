@@ -209,7 +209,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     i = 1
     overrides = nil
     loop do
-      Puppet.debug(_("Reading overrides plist, attempt %{i}") % {i: i}) if i > 1
+      Puppet.debug(_("Reading overrides plist, attempt %{i}") % { i: i }) if i > 1
       overrides = read_plist(launchd_overrides)
       break unless overrides.nil?
       raise Puppet::Error.new(_('Unable to read overrides plist, too many attempts')) if i == 20

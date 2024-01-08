@@ -83,16 +83,16 @@ module LexerSupport
   #
   def assert_numeric(value, pos)
     if value =~ /^0[xX]/
-      lex_error(Issues::INVALID_HEX_NUMBER, {:value => value}, pos)     unless value =~ /^0[xX][0-9A-Fa-f]+$/
+      lex_error(Issues::INVALID_HEX_NUMBER, { :value => value }, pos)     unless value =~ /^0[xX][0-9A-Fa-f]+$/
 
     elsif value =~ /^0[^.]/
-      lex_error(Issues::INVALID_OCTAL_NUMBER, {:value => value}, pos)   unless value =~ /^0[0-7]+$/
+      lex_error(Issues::INVALID_OCTAL_NUMBER, { :value => value }, pos)   unless value =~ /^0[0-7]+$/
 
     elsif value =~ /^\d+[eE.]/
-      lex_error(Issues::INVALID_DECIMAL_NUMBER, {:value => value}, pos) unless value =~ /^\d+(?:\.\d+)?(?:[eE]-?\d+)?$/
+      lex_error(Issues::INVALID_DECIMAL_NUMBER, { :value => value }, pos) unless value =~ /^\d+(?:\.\d+)?(?:[eE]-?\d+)?$/
 
     else
-      lex_error(Issues::ILLEGAL_NUMBER, {:value => value}, pos) unless value =~ /^\d+$/
+      lex_error(Issues::ILLEGAL_NUMBER, { :value => value }, pos) unless value =~ /^\d+$/
     end
   end
 
@@ -199,7 +199,7 @@ module LexerSupport
     lex_error_without_pos(
       Puppet::Pops::Issues::ILLEGAL_BOM,
       { :format_name => name,
-        :bytes => "[#{bom.values[0, size].map { |b| "%X" % b }.join(" ")}]"}
+        :bytes => "[#{bom.values[0, size].map { |b| "%X" % b }.join(" ")}]" }
     )
   end
 

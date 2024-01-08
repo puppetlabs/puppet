@@ -176,7 +176,7 @@ class Puppet::Node
 
   def add_server_facts(facts)
     # Append the current environment to the list of server facts
-    @server_facts = facts.merge({ "environment" => self.environment.name.to_s})
+    @server_facts = facts.merge({ "environment" => self.environment.name.to_s })
 
     # Merge the server facts into the parameters for the node
     merge(facts)

@@ -36,7 +36,7 @@ class TreeIterator
     @recursed = false
     @containers_t = options['container_type'] || DEFAULT_CONTAINERS
     unless DEFAULT_CONTAINERS.assignable?(@containers_t)
-      raise ArgumentError, _("Only Array, Hash, and Object types can be used as container types. Got %{type}") % {type: @containers_t}
+      raise ArgumentError, _("Only Array, Hash, and Object types can be used as container types. Got %{type}") % { type: @containers_t }
     end
 
     @with_root       = extract_option(options, 'include_root', true)

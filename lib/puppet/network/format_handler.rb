@@ -20,7 +20,7 @@ module Puppet::Network::FormatHandler
 
   def self.create_serialized_formats(name, options = {}, &block)
     ["application/x-#{name}", "application/#{name}", "text/x-#{name}", "text/#{name}"].each { |mime_type|
-      create name, {:mime => mime_type}.update(options), &block
+      create name, { :mime => mime_type }.update(options), &block
     }
   end
 
@@ -66,7 +66,7 @@ module Puppet::Network::FormatHandler
     end
 
     if out.nil?
-      raise ArgumentError, _("No format matches the given format name or mime-type (%{format})") % {format: format}
+      raise ArgumentError, _("No format matches the given format name or mime-type (%{format})") % { format: format }
     end
 
     out.name

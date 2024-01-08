@@ -122,7 +122,7 @@ class Locator
       offset     = char_offset(reported_offset)
       length     = char_length(reported_offset, end_offset)
       start_line = line_for_offset(reported_offset)
-      { :line => start_line, :pos => pos, :offset => offset, :length => length}
+      { :line => start_line, :pos => pos, :offset => offset, :length => length }
     end
 
     # Returns the index of the smallest item for which the item > the given value

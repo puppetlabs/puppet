@@ -359,7 +359,7 @@ class Puppet::Node::Environment
 
           warn_about_mistaken_path(path, name)
           if not seen_modules[name]
-            module_references << {:name => name, :path => File.join(path, name)}
+            module_references << { :name => name, :path => File.join(path, name) }
             seen_modules[name] = true
           end
         end

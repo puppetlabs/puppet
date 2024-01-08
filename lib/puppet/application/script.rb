@@ -169,7 +169,7 @@ class Puppet::Application::Script < Puppet::Application
     node.environment = apply_environment
 
     # TRANSLATION, the string "For puppet script" is not user facing
-    Puppet.override({:current_environment => apply_environment}, "For puppet script") do
+    Puppet.override({ :current_environment => apply_environment }, "For puppet script") do
       # Merge in the facts.
       node.merge(facts.values) if facts
 

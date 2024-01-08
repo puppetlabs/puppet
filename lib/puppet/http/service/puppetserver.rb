@@ -36,7 +36,7 @@ class Puppet::HTTP::Service::Puppetserver < Puppet::HTTP::Service
       response = @client.get(
         with_base_url(request_path),
         headers: add_puppet_headers({}),
-        options: {ssl_context: ssl_context}
+        options: { ssl_context: ssl_context }
       )
 
       process_response(response)

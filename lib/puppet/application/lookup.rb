@@ -288,16 +288,16 @@ class Puppet::Application::Lookup < Puppet::Application
       end
 
       if merge == 'deep'
-        merge_options = {'strategy' => 'deep',
-                         'sort_merged_arrays' => !options[:sort_merged_arrays].nil?,
-                         'merge_hash_arrays' => !options[:merge_hash_arrays].nil?}
+        merge_options = { 'strategy' => 'deep',
+                          'sort_merged_arrays' => !options[:sort_merged_arrays].nil?,
+                          'merge_hash_arrays' => !options[:merge_hash_arrays].nil? }
 
         if options[:prefix]
           merge_options['knockout_prefix'] = options[:prefix]
         end
 
       else
-        merge_options = {'strategy' => merge}
+        merge_options = { 'strategy' => merge }
       end
     end
 
@@ -364,7 +364,7 @@ class Puppet::Application::Lookup < Puppet::Application
       if TRUSTED_INFORMATION_FACTS.any? { |key| given_facts.key? key }
         unless TRUSTED_INFORMATION_FACTS.all? { |key| given_facts.key? key }
           raise _("When overriding any of the %{trusted_facts_list} facts with %{fact_file} "\
-                  "given via the --facts flag, they must all be overridden.") % { fact_file: fact_file, trusted_facts_list: TRUSTED_INFORMATION_FACTS.join(',')}
+                  "given via the --facts flag, they must all be overridden.") % { fact_file: fact_file, trusted_facts_list: TRUSTED_INFORMATION_FACTS.join(',') }
         end
       end
     end
@@ -421,7 +421,7 @@ class Puppet::Application::Lookup < Puppet::Application
     facts.add_extra_values(given_facts) if given_facts
 
     if facts.values.empty?
-      raise _("No facts available for target node: %{node}") % { node: node}
+      raise _("No facts available for target node: %{node}") % { node: node }
     end
 
     facts

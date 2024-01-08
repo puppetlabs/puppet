@@ -8,7 +8,7 @@ Puppet::Parser::Functions::newfunction(:tagged, :type => :rvalue, :arity => -2, 
   if Puppet[:tasks]
     raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
       Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
-      {:operation => 'tagged'}
+      { :operation => 'tagged' }
     )
   end
 

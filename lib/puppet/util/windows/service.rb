@@ -111,7 +111,7 @@ module Puppet::Util::Windows
         end
       end
       if state.nil?
-        raise Puppet::Error.new(_("Unknown Service state '%{current_state}' for '%{service_name}'") % { current_state: state.to_s, service_name: service_name})
+        raise Puppet::Error.new(_("Unknown Service state '%{current_state}' for '%{service_name}'") % { current_state: state.to_s, service_name: service_name })
       end
 
       state
@@ -139,7 +139,7 @@ module Puppet::Util::Windows
         end
       end
       if start_type.nil?
-        raise Puppet::Error.new(_("Unknown start type '%{start_type}' for '%{service_name}'") % { start_type: start_type.to_s, service_name: service_name})
+        raise Puppet::Error.new(_("Unknown start type '%{start_type}' for '%{service_name}'") % { start_type: start_type.to_s, service_name: service_name })
       end
 
       start_type

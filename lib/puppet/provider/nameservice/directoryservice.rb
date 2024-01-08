@@ -226,7 +226,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
         converted_hash_plist = convert_binary_to_hash(password_hash_plist)
       else
         users_plist['ShadowHashData'] = ''.dup
-        converted_hash_plist = {'SALTED-SHA512' => ''.dup}
+        converted_hash_plist = { 'SALTED-SHA512' => ''.dup }
       end
 
       # converted_hash_plist['SALTED-SHA512'] expects a Base64 encoded

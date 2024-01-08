@@ -525,7 +525,7 @@ class Lexer2
           end
           assert_numeric(invalid_number, before)
           scn.pos = before + 1
-          lex_error(Issues::ILLEGAL_NUMBER, {:value => invalid_number})
+          lex_error(Issues::ILLEGAL_NUMBER, { :value => invalid_number })
         end
       end
     end

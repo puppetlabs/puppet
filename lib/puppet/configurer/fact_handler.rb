@@ -44,9 +44,9 @@ module Puppet::Configurer::FactHandler
     # so it's only important that encoding method here return original values
     # correctly when CGI.unescape called against it (in compiler code)
     if Puppet[:preferred_serialization_format] == "pson"
-      {:facts_format => :pson, :facts => Puppet::Util.uri_query_encode(facts.render(:pson)) }
+      { :facts_format => :pson, :facts => Puppet::Util.uri_query_encode(facts.render(:pson)) }
     else
-      {:facts_format => 'application/json', :facts => Puppet::Util.uri_query_encode(facts.render(:json)) }
+      { :facts_format => 'application/json', :facts => Puppet::Util.uri_query_encode(facts.render(:json)) }
     end
   end
 end

@@ -93,7 +93,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     # Pip list would also show pip installed version, but "pip list" doesn't exist for older versions of pip (E.G v1.0)
     # Not needed when "pip freeze --all" is available.
     if compare_pip_versions(command_version, '8.1.0') == -1
-      packages << new({:ensure => command_version, :name => File.basename(command), :provider => name, :command => command})
+      packages << new({ :ensure => command_version, :name => File.basename(command), :provider => name, :command => command })
     end
 
     packages
@@ -103,7 +103,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   # _package_==_version_ or _package_===_version_
   def self.parse(line)
     if line.chomp =~ /^([^=]+)===?([^=]+)$/
-      {:ensure => $2, :name => $1, :provider => name}
+      { :ensure => $2, :name => $1, :provider => name }
     end
   end
 

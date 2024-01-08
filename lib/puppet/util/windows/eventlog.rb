@@ -119,7 +119,7 @@ class Puppet::Util::Windows::EventLog
     class EventLogError < RuntimeError
       def initialize(msg, code)
         # TRANSLATORS 'Win32' is the Windows API and should not be translated
-        super(msg + ' ' + _("(Win32 error: %{detail})") % { detail: code})
+        super(msg + ' ' + _("(Win32 error: %{detail})") % { detail: code })
       end
     end
   end

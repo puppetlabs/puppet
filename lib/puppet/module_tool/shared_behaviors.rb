@@ -4,7 +4,7 @@ module Puppet::ModuleTool::Shared
   include Puppet::ModuleTool::Errors
 
   def get_local_constraints
-    @local      = Hash.new { |h, k| h[k] = { } }
+    @local      = Hash.new { |h, k| h[k] = {} }
     @conditions = Hash.new { |h, k| h[k] = [] }
     @installed  = Hash.new { |h, k| h[k] = [] }
 
@@ -26,7 +26,7 @@ module Puppet::ModuleTool::Shared
   end
 
   def get_remote_constraints(forge)
-    @remote   = Hash.new { |h, k| h[k] = { } }
+    @remote   = Hash.new { |h, k| h[k] = {} }
     @urls     = {}
     @versions = Hash.new { |h, k| h[k] = [] }
 
@@ -66,7 +66,7 @@ module Puppet::ModuleTool::Shared
     end
   end
 
-  def resolve_constraints(dependencies, source = [{:name => :you}], seen = {}, action = @action)
+  def resolve_constraints(dependencies, source = [{ :name => :you }], seen = {}, action = @action)
     dependencies = dependencies.map do |mod, range|
       source.last[:dependency] = range
 
@@ -159,7 +159,7 @@ module Puppet::ModuleTool::Shared
       end
 
       [
-        { (release[:path] ||= default_path) => cache_path},
+        { (release[:path] ||= default_path) => cache_path },
         *download_tarballs(release[:dependencies], default_path, forge)
       ]
     end.flatten

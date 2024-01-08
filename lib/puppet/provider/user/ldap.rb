@@ -110,7 +110,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
         new = :absent if new.empty?
       end
 
-      group_manager.update(group, {:ensure => :present, :members => current}, {:ensure => :present, :members => new})
+      group_manager.update(group, { :ensure => :present, :members => current }, { :ensure => :present, :members => new })
     end
   end
 
@@ -127,9 +127,9 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
 
   def group_properties(values)
     if values.empty? or values == :absent
-      {:ensure => :present}
+      { :ensure => :present }
     else
-      {:ensure => :present, :members => values}
+      { :ensure => :present, :members => values }
     end
   end
 end

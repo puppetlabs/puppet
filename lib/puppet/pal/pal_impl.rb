@@ -446,7 +446,7 @@ module Pal
     node.environment = apply_environment
 
     # TRANSLATORS, the string "For puppet PAL" is not user facing
-    Puppet.override({:current_environment => apply_environment}, "For puppet PAL") do
+    Puppet.override({ :current_environment => apply_environment }, "For puppet PAL") do
       begin
         node.sanitize()
         compiler = create_internal_compiler(internal_compiler_class, node)
@@ -562,7 +562,7 @@ module Pal
   )
 
   def self.assert_type(type, value, what, allow_nil = false)
-    Puppet::Pops::Types::TypeAsserter.assert_instance_of(nil, type, value, allow_nil) { _('Puppet Pal: %{what}') % {what: what} }
+    Puppet::Pops::Types::TypeAsserter.assert_instance_of(nil, type, value, allow_nil) { _('Puppet Pal: %{what}') % { what: what } }
   end
 
   def self.assert_non_empty_string(s, what, allow_nil = false)

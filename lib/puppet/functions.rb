@@ -192,7 +192,7 @@ module Puppet::Functions
       loader = block.binding.eval('loader_injected_arg if defined?(loader_injected_arg)')
       create_loaded_function(func_name, loader, function_base, &block)
     rescue StandardError => e
-      raise ArgumentError, _("Function Load Error for function '%{function_name}': %{message}") % {function_name: func_name, message: e.message}
+      raise ArgumentError, _("Function Load Error for function '%{function_name}': %{message}") % { function_name: func_name, message: e.message }
     end
   end
 
@@ -279,7 +279,7 @@ module Puppet::Functions
 
   # @api private
   def self.min_max_param(method)
-    result = {:req => 0, :opt => 0, :rest => 0 }
+    result = { :req => 0, :opt => 0, :rest => 0 }
     # count per parameter kind, and get array of names
     names = method.parameters.map { |p| result[p[0]] += 1; p[1].to_s }
     from = result[:req]

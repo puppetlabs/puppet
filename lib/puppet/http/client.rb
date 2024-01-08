@@ -154,18 +154,18 @@ class Puppet::HTTP::Client
       end
     end
   rescue Net::OpenTimeout => e
-    raise_error(_("Request to %{uri} timed out connect operation after %{elapsed} seconds") % {uri: uri, elapsed: elapsed(start)}, e, connected)
+    raise_error(_("Request to %{uri} timed out connect operation after %{elapsed} seconds") % { uri: uri, elapsed: elapsed(start) }, e, connected)
   rescue Net::ReadTimeout => e
-    raise_error(_("Request to %{uri} timed out read operation after %{elapsed} seconds") % {uri: uri, elapsed: elapsed(start)}, e, connected)
+    raise_error(_("Request to %{uri} timed out read operation after %{elapsed} seconds") % { uri: uri, elapsed: elapsed(start) }, e, connected)
   rescue EOFError => e
-    raise_error(_("Request to %{uri} interrupted after %{elapsed} seconds") % {uri: uri, elapsed: elapsed(start)}, e, connected)
+    raise_error(_("Request to %{uri} interrupted after %{elapsed} seconds") % { uri: uri, elapsed: elapsed(start) }, e, connected)
   rescue Puppet::SSL::SSLError
     raise
   rescue Puppet::HTTP::HTTPError
     raise
   rescue => e
     raise_error(_("Request to %{uri} failed after %{elapsed} seconds: %{message}") %
-                {uri: uri, elapsed: elapsed(start), message: e.message}, e, connected)
+                { uri: uri, elapsed: elapsed(start), message: e.message }, e, connected)
   end
 
   # These options apply to all HTTP request methods

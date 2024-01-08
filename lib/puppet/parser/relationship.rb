@@ -3,7 +3,7 @@
 class Puppet::Parser::Relationship
   attr_accessor :source, :target, :type
 
-  PARAM_MAP = {:relationship => :before, :subscription => :notify}
+  PARAM_MAP = { :relationship => :before, :subscription => :notify }
 
   def arrayify(resources, left)
     case resources

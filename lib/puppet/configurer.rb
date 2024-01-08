@@ -186,7 +186,7 @@ class Puppet::Configurer
     return if max_size.zero?
 
     warn_fact_payload_size(payload, max_size) if payload > max_size
-    Puppet.debug _("The size of the payload is %{payload}") % {payload: payload}
+    Puppet.debug _("The size of the payload is %{payload}") % { payload: payload }
   end
 
   def parse_fact_name_and_value_limits(object, path = [])
@@ -216,7 +216,7 @@ class Puppet::Configurer
 
     parse_fact_name_and_value_limits(facts)
     check_total_number_limit(@number_of_facts)
-    Puppet.debug _("The total number of facts registered is %{number_of_facts}") % {number_of_facts: @number_of_facts}
+    Puppet.debug _("The total number of facts registered is %{number_of_facts}") % { number_of_facts: @number_of_facts }
   end
 
   def get_facts(options)
@@ -273,7 +273,7 @@ class Puppet::Configurer
   end
 
   def prepare_and_retrieve_catalog_from_cache(options = {})
-    result = retrieve_catalog_from_cache({:transaction_uuid => @transaction_uuid, :static_catalog => @static_catalog})
+    result = retrieve_catalog_from_cache({ :transaction_uuid => @transaction_uuid, :static_catalog => @static_catalog })
     Puppet.info _("Using cached catalog from environment '%{catalog_env}'") % { catalog_env: result.environment } if result
     result
   end
@@ -560,7 +560,7 @@ class Puppet::Configurer
                    { host: e.response.url.host, port: e.response.url.port, code: e.response.code, reason: e.response.reason })
     rescue => detail
       # TRANSLATORS 'server_list' is the name of a setting and should not be translated
-      Puppet.debug _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail}
+      Puppet.debug _("Unable to connect to server from server_list setting: %{detail}") % { detail: detail }
     end
     [nil, nil]
   end

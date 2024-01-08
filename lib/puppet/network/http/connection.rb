@@ -140,7 +140,7 @@ class Puppet::Network::HTTP::Connection
   # @param headers [Hash{String => String}]
   # @!macro common_options
   # @api public
-  def delete(path, headers = {'Depth' => 'Infinity'}, options = {})
+  def delete(path, headers = { 'Depth' => 'Infinity' }, options = {})
     headers ||= {}
     options[:ssl_context] ||= resolve_ssl_context
     options[:redirect_limit] ||= @redirect_limit

@@ -59,7 +59,7 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
     end
 
     custom_exts.map do |ext|
-      {'oid' => ext.oid, 'value' => get_ext_val(ext.oid)}
+      { 'oid' => ext.oid, 'value' => get_ext_val(ext.oid) }
     end
   end
 

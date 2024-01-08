@@ -120,7 +120,7 @@ class Puppet::Provider::Ldap < Puppet::Provider
   # Return (and look up if necessary) the desired state.
   def properties
     if @property_hash.empty?
-      @property_hash = query || {:ensure => :absent}
+      @property_hash = query || { :ensure => :absent }
       @property_hash[:ensure] = :absent if @property_hash.empty?
     end
     @property_hash.dup

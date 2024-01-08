@@ -401,7 +401,7 @@ Puppet::Type.newtype(:file) do
   end
 
   # Autorequire the owner and group of the file.
-  {:user => :owner, :group => :group}.each do |type, property|
+  { :user => :owner, :group => :group }.each do |type, property|
     autorequire(type) do
       if @parameters.include?(property)
         # The user/group property automatically converts to IDs

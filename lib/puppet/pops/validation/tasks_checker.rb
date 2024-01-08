@@ -22,7 +22,7 @@ class TasksChecker < Checker4_0
       if o.query.is_a?(Puppet::Pops::Model::VirtualQuery)
         super(o)
       else
-        acceptor.accept(Issues::EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING, o, {:klass => o})
+        acceptor.accept(Issues::EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING, o, { :klass => o })
       end
     else
       illegalTasksExpression(o)
@@ -79,12 +79,12 @@ class TasksChecker < Checker4_0
 
   def check_ApplyExpression(o)
     if in_ApplyExpression?
-      acceptor.accept(Issues::EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING, o, {:klass => o})
+      acceptor.accept(Issues::EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING, o, { :klass => o })
     end
   end
 
   def illegalTasksExpression(o)
-    acceptor.accept(Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING, o, {:klass => o})
+    acceptor.accept(Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING, o, { :klass => o })
   end
 
   def resource_without_title?(o)

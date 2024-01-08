@@ -8,7 +8,7 @@ class Puppet::Application::Doc < Puppet::Application
   attr_accessor :unknown_args, :manifest
 
   def preinit
-    {:references => [], :mode => :text, :format => :to_markdown }.each do |name, value|
+    { :references => [], :mode => :text, :format => :to_markdown }.each do |name, value|
       options[name] = value
     end
     @unknown_args = []
@@ -117,7 +117,7 @@ class Puppet::Application::Doc < Puppet::Application
   end
 
   def handle_unknown( opt, arg )
-    @unknown_args << {:opt => opt, :arg => arg }
+    @unknown_args << { :opt => opt, :arg => arg }
     true
   end
 

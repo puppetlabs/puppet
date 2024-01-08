@@ -17,7 +17,7 @@ Puppet::Parser::Functions::newfunction(:template, :type => :rvalue, :arity => -2
   if Puppet[:tasks]
     raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
       Puppet::Pops::Issues::FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING,
-      {:feature => 'ERB template'}
+      { :feature => 'ERB template' }
     )
   end
   vals.collect do |file|

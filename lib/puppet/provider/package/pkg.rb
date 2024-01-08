@@ -48,9 +48,9 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     (
       case flags[0..0]
       when 'i'
-        {:status => 'installed'}
+        { :status => 'installed' }
       when '-'
-        {:status => 'known'}
+        { :status => 'known' }
       else
         raise ArgumentError, _('Unknown format %{resource_name}: %{full_flags}[%{bad_flag}]') %
             { resource_name: self.name, full_flags: flags, bad_flag: flags[0..0] }
@@ -58,7 +58,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     ).merge(
       case flags[1..1]
       when 'f'
-        {:mark => :hold}
+        { :mark => :hold }
       when '-'
         {}
       else
@@ -89,9 +89,9 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   def self.pkg_state(state)
     case state
     when /installed/
-      {:status => 'installed'}
+      { :status => 'installed' }
     when /known/
-      {:status => 'known'}
+      { :status => 'known' }
     else
       raise ArgumentError, _('Unknown format %{resource_name}: %{state}') % { resource_name: self.name, state: state }
     end
@@ -104,16 +104,16 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
      # FMRI                                                                         IFO
      # pkg://omnios/SUNWcs@0.5.11,5.11-0.151008:20131204T022241Z                    ---
      when %r'^pkg://([^/]+)/([^@]+)@(\S+) +(...)$'
-       {:publisher => $1, :name => $2, :ensure => $3}.merge ifo_flag($4)
+       { :publisher => $1, :name => $2, :ensure => $3 }.merge ifo_flag($4)
 
      # FMRI                                                             STATE      UFOXI
      # pkg://solaris/SUNWcs@0.5.11,5.11-0.151.0.1:20101105T001108Z      installed  u----
      when %r'^pkg://([^/]+)/([^@]+)@(\S+) +(\S+) +(.....)$'
-       {:publisher => $1, :name => $2, :ensure => $3}.merge pkg_state($4).merge(ufoxi_flag($5))
+       { :publisher => $1, :name => $2, :ensure => $3 }.merge pkg_state($4).merge(ufoxi_flag($5))
 
      else
        raise ArgumentError, _('Unknown line format %{resource_name}: %{parse_line}') % { resource_name: self.name, parse_line: line }
-     end).merge({:provider => self.name})
+     end).merge({ :provider => self.name })
   end
 
   def hold
@@ -288,13 +288,13 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   # list a specific package
   def query
     r = exec_cmd(command(:pkg), 'list', '-Hv', @resource[:name])
-    return {:ensure => :absent, :name => @resource[:name]} if r[:exit] != 0
+    return { :ensure => :absent, :name => @resource[:name] } if r[:exit] != 0
 
     self.class.parse_line(r[:out])
   end
 
   def exec_cmd(*cmd)
     output = Puppet::Util::Execution.execute(cmd, :failonfail => false, :combine => true)
-    {:out => output, :exit => output.exitstatus}
+    { :out => output, :exit => output.exitstatus }
   end
 end

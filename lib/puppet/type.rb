@@ -710,7 +710,7 @@ class Type
     if @parameters.has_key?(attr)
       @parameters.delete(attr)
     else
-      raise Puppet::DevError.new(_("Undefined attribute '%{attribute}' in %{name}") % { attribute: attr, name: self})
+      raise Puppet::DevError.new(_("Undefined attribute '%{attribute}' in %{name}") % { attribute: attr, name: self })
     end
   end
 
@@ -747,7 +747,7 @@ class Type
   # @param options [Hash] options merged with a fixed set of options defined by this method, passed on to {Puppet::Transaction::Event}.
   # @return [Puppet::Transaction::Event] the created event
   def event(options = {})
-    Puppet::Transaction::Event.new(**{:resource => self, :file => file, :line => line, :tags => tags}.merge(options))
+    Puppet::Transaction::Event.new(**{ :resource => self, :file => file, :line => line, :tags => tags }.merge(options))
   end
 
   # @return [Object, nil] Returns the 'should' (wanted state) value for a specified property, or nil if the
@@ -1584,7 +1584,7 @@ class Type
   # so that if both params are used, those ones win.  It's a hackish
   # solution, but it works.
 
-  newmetaparam(:require, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :NONE}) do
+  newmetaparam(:require, :parent => RelationshipMetaparam, :attributes => { :direction => :in, :events => :NONE }) do
     desc "One or more resources that this resource depends on, expressed as
       [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
@@ -1598,7 +1598,7 @@ class Type
       [the language page on relationships](https://puppet.com/docs/puppet/latest/lang_relationships.html)."
   end
 
-  newmetaparam(:subscribe, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :ALL_EVENTS, :callback => :refresh}) do
+  newmetaparam(:subscribe, :parent => RelationshipMetaparam, :attributes => { :direction => :in, :events => :ALL_EVENTS, :callback => :refresh }) do
     desc "One or more resources that this resource depends on, expressed as
       [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
@@ -1616,7 +1616,7 @@ class Type
       [the language page on relationships](https://puppet.com/docs/puppet/latest/lang_relationships.html)."
   end
 
-  newmetaparam(:before, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :NONE}) do
+  newmetaparam(:before, :parent => RelationshipMetaparam, :attributes => { :direction => :out, :events => :NONE }) do
     desc "One or more resources that depend on this resource, expressed as
       [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
@@ -1630,7 +1630,7 @@ class Type
       [the language page on relationships](https://puppet.com/docs/puppet/latest/lang_relationships.html)."
   end
 
-  newmetaparam(:notify, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :ALL_EVENTS, :callback => :refresh}) do
+  newmetaparam(:notify, :parent => RelationshipMetaparam, :attributes => { :direction => :out, :events => :ALL_EVENTS, :callback => :refresh }) do
     desc "One or more resources that depend on this resource, expressed as
       [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
@@ -1885,7 +1885,7 @@ class Type
         provider_class = provider_class.class.name if provider_class.is_a?(Puppet::Provider)
 
         unless @resource.class.provider(provider_class)
-          raise ArgumentError, _("Invalid %{resource} provider '%{provider_class}'") % { resource: @resource.class.name, provider_class: provider_class}
+          raise ArgumentError, _("Invalid %{resource} provider '%{provider_class}'") % { resource: @resource.class.name, provider_class: provider_class }
         end
       end
 

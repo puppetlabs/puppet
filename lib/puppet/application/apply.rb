@@ -213,7 +213,7 @@ class Puppet::Application::Apply < Puppet::Application
     # rubocop:enable Layout/ExtraSpacing
 
     # TRANSLATORS "puppet apply" is a program command and should not be translated
-    Puppet.override({:current_environment => apply_environment, :loaders => create_loaders(apply_environment)}, _("For puppet apply")) do
+    Puppet.override({ :current_environment => apply_environment, :loaders => create_loaders(apply_environment) }, _("For puppet apply")) do
       configure_node_facts(node, facts)
 
       # Allow users to load the classes that puppet agent creates.
@@ -340,7 +340,7 @@ class Puppet::Application::Apply < Puppet::Application
     configured_environment = get_configured_environment(node)
 
     # TRANSLATORS "puppet apply" is a program command and should not be translated
-    Puppet.override({:current_environment => configured_environment}, _("For puppet apply")) do
+    Puppet.override({ :current_environment => configured_environment }, _("For puppet apply")) do
       configure_node_facts(node, facts)
 
       # NOTE: Does not set rich_data = true automatically (which would ensure always reading catalog with rich data

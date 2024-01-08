@@ -76,7 +76,7 @@ module Puppet::Util::Execution
     # the user/system locale to "C" (via environment variables LANG and LC_*)
     # it enables to have non localized output for some commands and therefore
     # a predictable output
-    english_env = ENV.to_hash.merge( {'LANG' => 'C', 'LC_ALL' => 'C'} )
+    english_env = ENV.to_hash.merge( { 'LANG' => 'C', 'LC_ALL' => 'C' } )
     output = Puppet::Util.withenv(english_env) do
       # We are intentionally using 'pipe' with open to launch a process
       open("| #{command_str} 2>&1") do |pipe| # rubocop:disable Security/Open

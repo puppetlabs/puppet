@@ -469,7 +469,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     # The 'record' could be a resource or a record, depending on how the provider
     # is initialized.  If we got an empty property hash (probably because the resource
     # is just being initialized), then we want to set up some defaults.
-    @property_hash = self.class.record?(resource[:name]) || {:record_type => self.class.name, :ensure => :absent} if @property_hash.empty?
+    @property_hash = self.class.record?(resource[:name]) || { :record_type => self.class.name, :ensure => :absent } if @property_hash.empty?
   end
 
   # Retrieve the current state from disk.

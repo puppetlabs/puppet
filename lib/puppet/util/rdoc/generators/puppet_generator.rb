@@ -271,12 +271,12 @@ module Generators
         module_name << { "href" => "../" + CGI.escapeHTML(f.path), "name" => CGI.escapeHTML(f.index_name) }
         unless f.facts.nil?
           f.facts.each do |fact|
-            res3 << {"href" => "../" + CGI.escapeHTML(AllReferences["PLUGIN(#{fact.name})"].path), "name" => CGI.escapeHTML(fact.name)}
+            res3 << { "href" => "../" + CGI.escapeHTML(AllReferences["PLUGIN(#{fact.name})"].path), "name" => CGI.escapeHTML(fact.name) }
           end
         end
         unless f.plugins.nil?
           f.plugins.each do |plugin|
-            res4 << {"href" => "../" + CGI.escapeHTML(AllReferences["PLUGIN(#{plugin.name})"].path), "name" => CGI.escapeHTML(plugin.name)}
+            res4 << { "href" => "../" + CGI.escapeHTML(AllReferences["PLUGIN(#{plugin.name})"].path), "name" => CGI.escapeHTML(plugin.name) }
           end
         end
       end

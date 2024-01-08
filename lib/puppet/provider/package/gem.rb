@@ -77,13 +77,13 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
     validate_command(command)
     cmd = [command] << command_options
 
-    custom_environment = {'HOME' => ENV['HOME']}.merge(custom_environment)
+    custom_environment = { 'HOME' => ENV['HOME'] }.merge(custom_environment)
 
     if Puppet::Util::Platform.windows?
       custom_environment[:PATH] = windows_path_without_puppet_bin
     end
 
-    execute(cmd, {:failonfail => true, :combine => true, :custom_environment => custom_environment})
+    execute(cmd, { :failonfail => true, :combine => true, :custom_environment => custom_environment })
   end
 
   def self.instances(target_command = nil)

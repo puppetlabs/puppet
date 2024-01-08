@@ -161,9 +161,9 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
       # fixed component in the sequence.
       case ext_values.length
       when 2
-        {"oid" => ext_values[0].value, "value" => value}
+        { "oid" => ext_values[0].value, "value" => value }
       when 3
-        {"oid" => ext_values[0].value, "value" => value, "critical" => ext_values[1].value}
+        { "oid" => ext_values[0].value, "value" => value, "critical" => ext_values[1].value }
       else
         raise Puppet::Error, _("In %{attr}, expected extension record %{index} to have two or three items, but found %{count}") % { attr: attribute.oid, index: index, count: ext_values.length }
       end
@@ -196,7 +196,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     end
 
     x509_attributes.map do |attr|
-      {"oid" => attr.oid, "value" => attr.value.value.first.value}
+      { "oid" => attr.oid, "value" => attr.value.value.first.value }
     end
   end
 

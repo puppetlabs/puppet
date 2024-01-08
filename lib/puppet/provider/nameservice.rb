@@ -92,7 +92,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
     def verify(name, error, &block)
       name = name.intern if name.is_a? String
-      @checks[name] = {:error => error, :block => block}
+      @checks[name] = { :error => error, :block => block }
     end
 
     private
@@ -106,7 +106,7 @@ class Puppet::Provider::NameService < Puppet::Provider
   # with DirectoryServices
   def autogen(field)
     field = field.intern
-    id_generators = {:user => :uid, :group => :gid}
+    id_generators = { :user => :uid, :group => :gid }
     if id_generators[@resource.class.name] == field
       return self.class.autogen_id(field, @resource.class.name)
     else
@@ -160,9 +160,9 @@ class Puppet::Provider::NameService < Puppet::Provider
 
     begin
       sensitive = has_sensitive_data?
-      execute(self.addcmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive})
+      execute(self.addcmd, { :failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive })
       if feature?(:manages_password_age) && (cmd = passcmd)
-        execute(cmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive})
+        execute(cmd, { :failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive })
       end
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not create %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
@@ -177,7 +177,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     begin
-      execute(self.deletecmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment})
+      execute(self.deletecmd, { :failonfail => true, :combine => true, :custom_environment => @custom_environment })
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not delete %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
@@ -269,7 +269,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
     sensitive = has_sensitive_data?(param)
     begin
-      execute(cmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive})
+      execute(cmd, { :failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive })
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not set %{param} on %{resource}[%{name}]: %{detail}") % { param: param, resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end

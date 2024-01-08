@@ -680,7 +680,7 @@ module Puppet
         when "none", :none
           :none
         else
-          raise ArgumentError, _('Invalid hold value %{value}. %{doc}') % { value: value.inspect, doc: mark_doc}
+          raise ArgumentError, _('Invalid hold value %{value}. %{doc}') % { value: value.inspect, doc: mark_doc }
         end
       end
 

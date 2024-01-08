@@ -175,7 +175,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     if hash
       hash
     else
-      {:ensure => :absent}
+      { :ensure => :absent }
     end
   end
 

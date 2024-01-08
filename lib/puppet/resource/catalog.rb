@@ -490,8 +490,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       'edges' => edges.map { |e| e.to_data_hash },
       'classes' => classes,
     }.merge(metadata_hash.empty? ?
-      {} : {'metadata' => metadata_hash}).merge(recursive_metadata_hash.empty? ?
-        {} : {'recursive_metadata' => recursive_metadata_hash})
+      {} : { 'metadata' => metadata_hash }).merge(recursive_metadata_hash.empty? ?
+        {} : { 'recursive_metadata' => recursive_metadata_hash })
   end
 
   # Convert our catalog into a RAL catalog.
@@ -512,7 +512,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     # environment set in the catalog (if it is set)
     # See PUP-3755
     if environment_instance
-      Puppet.override({:current_environment => environment_instance}) do
+      Puppet.override({ :current_environment => environment_instance }) do
         to_catalog :to_resource, &block
       end
     else

@@ -45,7 +45,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
                 when /degraded/; :degraded
                 else :stopped
                 end
-      new({:name => fmri, :ensure => status})
+      new({ :name => fmri, :ensure => status })
     end
 
     service_instances

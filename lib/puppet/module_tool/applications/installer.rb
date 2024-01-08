@@ -315,7 +315,7 @@ module Puppet::ModuleTool
 
         if @ignore_dependencies && @source == :filesystem
           @urls   = {}
-          @remote = { "#{@module_name}@#{@version}" => { } }
+          @remote = { "#{@module_name}@#{@version}" => {} }
           @versions = {
             @module_name => [
               { :vstring => @version, :semver => SemanticPuppet::Version.parse(@version) }

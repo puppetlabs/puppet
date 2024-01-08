@@ -454,17 +454,17 @@ class Puppet::Graph::SimpleGraph
     edge_klass = directed? ? DOT::DOTDirectedEdge : DOT::DOTEdge
     vertices.each do |v|
       name = v.ref
-      params = {'name' => stringify(name),
-                'fontsize' => fontsize,
-                'label' => name}
+      params = { 'name' => stringify(name),
+                 'fontsize' => fontsize,
+                 'label' => name }
       v_label = v.ref
       params.merge!(v_label) if v_label and v_label.kind_of? Hash
       graph << DOT::DOTNode.new(params)
     end
     edges.each do |e|
-      params = {'from' => stringify(e.source.ref),
-                'to' => stringify(e.target.ref),
-                'fontsize' => fontsize }
+      params = { 'from' => stringify(e.source.ref),
+                 'to' => stringify(e.target.ref),
+                 'fontsize' => fontsize }
       e_label = e.ref
       params.merge!(e_label) if e_label and e_label.kind_of? Hash
       graph << edge_klass.new(params)

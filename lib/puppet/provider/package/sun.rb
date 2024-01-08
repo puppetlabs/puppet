@@ -81,7 +81,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
       # so even though pkginfo passed, we have to check the actual output
       raise Puppet::Error, _("Unable to get information about package %{name} because of: %{errmsg}") % { name: @resource[:name], errmsg: errmsg }
     rescue Puppet::ExecutionFailure
-      return {:ensure => :absent}
+      return { :ensure => :absent }
     end
   end
 

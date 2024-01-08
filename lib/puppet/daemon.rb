@@ -90,7 +90,7 @@ class Puppet::Daemon
   end
 
   def reload
-    agent.run({:splay => false})
+    agent.run({ :splay => false })
   rescue Puppet::LockError
     Puppet.notice "Not triggering already-running agent"
   end
@@ -116,7 +116,7 @@ class Puppet::Daemon
 
     # extended signals not supported under windows
     if !Puppet::Util::Platform.windows?
-      signals = {:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs }
+      signals = { :HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs }
       signals.each do |signal, method|
         Signal.trap(signal) do
           Puppet.notice "Caught #{signal}; storing #{method}"
@@ -127,7 +127,7 @@ class Puppet::Daemon
   end
 
   # Stop everything
-  def stop(args = {:exit => true})
+  def stop(args = { :exit => true })
     Puppet::Application.stop!
 
     remove_pidfile

@@ -68,7 +68,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         # name and modulepath to be the same. When using versioned environment dirs the
         # same "environment" can have different modulepaths so simply compare names here.
         if node.environment.name != request.environment.name
-          Puppet.warning _("Requested environment '%{request_env}' did not match server specified environment '%{server_env}'") % {request_env: request.environment.name, server_env: node.environment.name}
+          Puppet.warning _("Requested environment '%{request_env}' did not match server specified environment '%{server_env}'") % { request_env: request.environment.name, server_env: node.environment.name }
           return Puppet::Resource::Catalog.new(node.name, node.environment)
         end
       end
@@ -440,9 +440,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     @server_facts["serverversion"] = Puppet.version.to_s
 
     # And then add the server name and IP
-    {"servername" => "networking.fqdn",
-     "serverip" => "networking.ip",
-     "serverip6" => "networking.ip6"}.each do |var, fact|
+    { "servername" => "networking.fqdn",
+      "serverip" => "networking.ip",
+      "serverip6" => "networking.ip6" }.each do |var, fact|
       value = Puppet.runtime[:facter].value(fact)
       if !value.nil?
         @server_facts[var] = value

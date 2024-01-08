@@ -71,10 +71,10 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
         end
       rescue Puppet::HTTP::HTTPError => detail
         if index < @server_list_setting.value.length - 1
-          Puppet.warning(_("Unable to connect to server from server_list setting: %{detail}") % {detail: detail} +
+          Puppet.warning(_("Unable to connect to server from server_list setting: %{detail}") % { detail: detail } +
                              ' ' + _("Trying with next server from server_list."))
         else
-          Puppet.log_exception(detail, _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail})
+          Puppet.log_exception(detail, _("Unable to connect to server from server_list setting: %{detail}") % { detail: detail })
         end
       end
     end

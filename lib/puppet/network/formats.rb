@@ -257,13 +257,13 @@ end
 
 Puppet::Network::FormatHandler.create(:rich_data_json, mime: 'application/vnd.puppet.rich+json', charset: Encoding::UTF_8, weight: 30) do
   def intern(klass, text)
-    Puppet.override({:rich_data => true}) do
+    Puppet.override({ :rich_data => true }) do
       data_to_instance(klass, Puppet::Util::Json.load(text))
     end
   end
 
   def intern_multiple(klass, text)
-    Puppet.override({:rich_data => true}) do
+    Puppet.override({ :rich_data => true }) do
       Puppet::Util::Json.load(text).collect do |data|
         data_to_instance(klass, data)
       end
@@ -271,19 +271,19 @@ Puppet::Network::FormatHandler.create(:rich_data_json, mime: 'application/vnd.pu
   end
 
   def render(instance)
-    Puppet.override({:rich_data => true}) do
+    Puppet.override({ :rich_data => true }) do
       instance.to_json
     end
   end
 
   def render_multiple(instances)
-    Puppet.override({:rich_data => true}) do
+    Puppet.override({ :rich_data => true }) do
       Puppet::Util::Json.dump(instances)
     end
   end
 
   def data_to_instance(klass, data)
-    Puppet.override({:rich_data => true}) do
+    Puppet.override({ :rich_data => true }) do
       return data if data.is_a?(klass)
 
       klass.from_data_hash(data)

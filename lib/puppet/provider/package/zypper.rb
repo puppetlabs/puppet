@@ -50,7 +50,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
   # some versions of zypper output on stderr
   def zypper_version
     cmd = [self.class.command(:zypper), "--version"]
-    execute(cmd, { :failonfail => false, :combine => true})
+    execute(cmd, { :failonfail => false, :combine => true })
   end
 
   def best_version(should)

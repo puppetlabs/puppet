@@ -42,7 +42,7 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
       begin
         Puppet::FileSystem.unlink(path)
       rescue => detail
-        raise Puppet::Error.new(_("Error when unlinking %{path}: %{detail}") % { path: path, detail: detail.message}, detail)
+        raise Puppet::Error.new(_("Error when unlinking %{path}: %{detail}") % { path: path, detail: detail.message }, detail)
       end
     end if @paths
   end
