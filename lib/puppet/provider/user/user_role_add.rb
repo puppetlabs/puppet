@@ -112,7 +112,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   end
 
   def destroy
-    run(deletecmd, "delete "+ (is_role? ? "role" : "user"))
+    run(deletecmd, "delete " + (is_role? ? "role" : "user"))
   end
 
   def create_role

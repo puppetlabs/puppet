@@ -211,8 +211,8 @@ module Puppet::Parser::Functions
         if args[0].is_a? Array
           if arity >= 0 and args[0].size != arity
             raise ArgumentError, _("%{name}(): Wrong number of arguments given (%{arg_count} for %{arity})") % { name: name, arg_count: args[0].size, arity: arity }
-          elsif arity < 0 and args[0].size < (arity+1).abs
-            raise ArgumentError, _("%{name}(): Wrong number of arguments given (%{arg_count} for minimum %{min_arg_count})") % { name: name, arg_count: args[0].size, min_arg_count: (arity+1).abs }
+          elsif arity < 0 and args[0].size < (arity + 1).abs
+            raise ArgumentError, _("%{name}(): Wrong number of arguments given (%{arg_count} for minimum %{min_arg_count})") % { name: name, arg_count: args[0].size, min_arg_count: (arity + 1).abs }
           end
 
           r = Puppet::Pops::Evaluator::Runtime3FunctionArgumentConverter.convert_return(self.send(real_fname, args[0]))

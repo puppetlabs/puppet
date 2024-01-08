@@ -234,7 +234,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       # hex value. We need to convert the provided hex value to a Base64
       # encoded string to nest it in the converted hash plist.
       converted_hash_plist['SALTED-SHA512'] = \
-        password_hash.unpack('a2'*(password_hash.size/2)).collect { |i| i.hex.chr }.join
+        password_hash.unpack('a2' * (password_hash.size / 2)).collect { |i| i.hex.chr }.join
 
       # Finally, we can convert the nested plist back to binary, embed it
       # into the user's plist, and convert the resultant plist back to
@@ -302,7 +302,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # We're just looking for an unused id in our sorted array.
     ids.each_index do |i|
       next_id = ids[i] + 1
-      return next_id if ids[i+1] != next_id and next_id >= min_id
+      return next_id if ids[i + 1] != next_id and next_id >= min_id
     end
   end
 

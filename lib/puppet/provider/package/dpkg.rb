@@ -49,7 +49,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   self::DPKG_QUERY_PROVIDES_FORMAT_STRING = %Q{'${Status} ${Package} ${Version} [${Provides}]\\n'}
   self::FIELDS_REGEX = %r{^'?(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
   self::FIELDS_REGEX_WITH_PROVIDES = %r{^'?(\S+) +(\S+) +(\S+) (\S+) (\S*) \[.*\]$}
-  self::FIELDS= [:desired, :error, :status, :name, :ensure]
+  self::FIELDS = [:desired, :error, :status, :name, :ensure]
 
   def self.defaultto_allow_virtual
     false

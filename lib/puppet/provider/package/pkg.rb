@@ -247,7 +247,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
           raise Puppet::Error, _("Pkg could not install %{name} after %{tries} tries. Aborting run") % { name: name, tries: tries }
         end
 
-        sleep 2 ** tries
+        sleep 2**tries
         tries += 1
         r = exec_cmd(command(:pkg), command, *args, name)
       end

@@ -228,7 +228,7 @@ class EvaluatorImpl
     if values.is_a?(Hash)
       lvalues.map do |lval|
         assign(lval,
-               values.fetch(lval) {|k| fail(Issues::MISSING_MULTI_ASSIGNMENT_KEY, o, :key =>k)},
+               values.fetch(lval) {|k| fail(Issues::MISSING_MULTI_ASSIGNMENT_KEY, o, :key => k)},
                o, scope)
       end
     elsif values.is_a?(Puppet::Pops::Types::PClassType)
@@ -260,7 +260,7 @@ class EvaluatorImpl
     else
       values = [values] unless values.is_a?(Array)
       if values.size != lvalues.size
-        fail(Issues::ILLEGAL_MULTI_ASSIGNMENT_SIZE, o, :expected =>lvalues.size, :actual => values.size)
+        fail(Issues::ILLEGAL_MULTI_ASSIGNMENT_SIZE, o, :expected => lvalues.size, :actual => values.size)
       end
 
       lvalues.zip(values).map { |lval, val| assign(lval, val, o, scope) }
@@ -787,14 +787,14 @@ class EvaluatorImpl
         case evaluated_name
         when Types::PClassType
           unless evaluated_name.class_name.nil?
-            fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
+            fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual => evaluated_name.to_s})
           end
 
           'class'
 
         when Types::PResourceType
           unless evaluated_name.title().nil?
-            fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
+            fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual => evaluated_name.to_s})
           end
 
           evaluated_name.type_name # assume validated
@@ -804,7 +804,7 @@ class EvaluatorImpl
 
         else
           actual = type_calculator.generalize(type_calculator.infer(evaluated_name)).to_s
-          fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=>actual})
+          fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual => actual})
         end
       end
 
@@ -959,7 +959,7 @@ class EvaluatorImpl
       # helpful to point out this easy to make Epp error
       fail(Issues::ILLEGAL_EPP_PARAMETERS, o)
     else
-      fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
+      fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature => 'function name', :container => o})
     end
     name = o.functor_expr.value
     call_function_with_block(name, unfold([], o.arguments, scope), o, scope)
@@ -969,13 +969,13 @@ class EvaluatorImpl
   #
   def eval_CallMethodExpression(o, scope)
     unless o.functor_expr.is_a? Model::NamedAccessExpression
-      fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function accessor', :container => o})
+      fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature => 'function accessor', :container => o})
     end
 
     receiver = unfold([], [o.functor_expr.left_expr], scope)
     name = o.functor_expr.right_expr
     unless name.is_a? Model::QualifiedName
-      fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
+      fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature => 'function name', :container => o})
     end
 
     name = name.value # the string function name

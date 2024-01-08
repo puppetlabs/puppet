@@ -214,7 +214,7 @@ Puppet::Network::FormatHandler.create(:flat,
   end
 
   def flatten_array(array)
-    a={}
+    a = {}
     array.each_with_index do |el, i|
       if el.is_a? Hash
         flatten_hash(el).map do |el_k, el_v|

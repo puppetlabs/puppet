@@ -101,9 +101,9 @@ module Puppet
 
   def self.debug=(value)
     if value
-      Puppet::Util::Log.level=(:debug)
+      Puppet::Util::Log.level = (:debug)
     else
-      Puppet::Util::Log.level=(:notice)
+      Puppet::Util::Log.level = (:notice)
     end
   end
 

@@ -232,10 +232,10 @@ class Puppet::Resource::Type
 
     if @type == :hostclass
       scope[TITLE] = resource.title.to_s.downcase
-      scope[NAME] =  resource.name.to_s.downcase
+      scope[NAME] = resource.name.to_s.downcase
     else
       scope[TITLE] = resource.title
-      scope[NAME] =  resource.name
+      scope[NAME] = resource.name
     end
     scope.class_set(self.name, scope) if hostclass? || node?
 

@@ -770,7 +770,7 @@ class TypeCalculator
   end
 
   def max(a, b)
-    a >=b ? a : b
+    a >= b ? a : b
   end
 
   def min(a, b)

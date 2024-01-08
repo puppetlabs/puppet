@@ -187,8 +187,8 @@ class Puppet::Module
               { name: name, directory: directory }
         raise InvalidTask.new(msg, 'puppet.tasks/no-implementation')
       elsif implementations.length > 1
-        msg =_("Multiple executables were found in directory %{directory} for task %{name}; define 'implementations' in metadata to differentiate between them") %
-             { name: name, directory: implementations[0] }
+        msg = _("Multiple executables were found in directory %{directory} for task %{name}; define 'implementations' in metadata to differentiate between them") %
+              { name: name, directory: implementations[0] }
         raise InvalidTask.new(msg, 'puppet.tasks/multiple-implementations')
       end
 

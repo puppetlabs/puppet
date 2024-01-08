@@ -34,7 +34,7 @@ class AccessOperator
       access_func = type['[]']
       return access_func.invoke(o, scope, keys) unless access_func.nil?
     end
-    fail(Issues::OPERATOR_NOT_APPLICABLE, @semantic.left_expr, :operator=>'[]', :left_value => o)
+    fail(Issues::OPERATOR_NOT_APPLICABLE, @semantic.left_expr, :operator => '[]', :left_value => o)
   end
 
   def access_Binary(o, scope, keys)
@@ -84,7 +84,7 @@ class AccessOperator
     keys.flatten!
     unless keys.size == 1
       blamed = keys.size == 0 ? @semantic : @semantic.keys[1]
-      fail(Issues::BAD_TYPE_SLICE_ARITY, blamed, :base_type => o, :min=>1, :actual => keys.size)
+      fail(Issues::BAD_TYPE_SLICE_ARITY, blamed, :base_type => o, :min => 1, :actual => keys.size)
     end
     assert_keys(keys, o, 1, 1, String, Regexp)
     Types::TypeFactory.regexp(*keys)
@@ -182,14 +182,14 @@ class AccessOperator
 
   def access_PTimestampType(o, scope, keys)
     keys.flatten!
-    fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min=>0, :max => 2, :actual => keys.size) if keys.size > 2
+    fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min => 0, :max => 2, :actual => keys.size) if keys.size > 2
 
     Types::TypeFactory.timestamp(*keys)
   end
 
   def access_PTimespanType(o, scope, keys)
     keys.flatten!
-    fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min=>0, :max => 2, :actual => keys.size) if keys.size > 2
+    fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min => 0, :max => 2, :actual => keys.size) if keys.size > 2
 
     Types::TypeFactory.timespan(*keys)
   end
@@ -210,7 +210,7 @@ class AccessOperator
   def access_PCallableType(o, scope, keys)
     if keys.size > 0 && keys[0].is_a?(Array)
       unless keys.size == 2
-        fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min=>2, :max => 2, :actual => keys.size)
+        fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min => 2, :max => 2, :actual => keys.size)
       end
 
       unless keys[1].is_a?(Types::PAnyType)
@@ -249,7 +249,7 @@ class AccessOperator
   def assert_keys(keys, o, min, max, *allowed_classes)
     size = keys.size
     unless size.between?(min, max || Float::INFINITY)
-      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min=>1, :max => max, :actual => keys.size)
+      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min => 1, :max => max, :actual => keys.size)
     end
 
     keys.each_with_index do |k, i|
@@ -617,7 +617,7 @@ class AccessOperator
 
     # type name must conform
     if type_name !~ Patterns::CLASSREF_EXT
-      fail(Issues::ILLEGAL_CLASSREF, blamed, {:name=>type_name})
+      fail(Issues::ILLEGAL_CLASSREF, blamed, {:name => type_name})
     end
 
     # The result is an array if multiple titles are given, or if titles are specified with an array
@@ -647,7 +647,7 @@ class AccessOperator
       result = keys.map do |k|
         unless is_parameter_of_resource?(scope, resource, k)
           fail(Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,
-               {:type_name => o.type_name, :title => o.title, :param_name=>k})
+               {:type_name => o.type_name, :title => o.title, :param_name => k})
         end
         get_resource_parameter_value(scope, resource, k)
       end
@@ -657,7 +657,7 @@ class AccessOperator
     keys = [:no_title] if keys.size < 1 # if there was only a type_name and it was consumed
     result = keys.each_with_index.map do |t, i|
       unless t.is_a?(String) || t == :no_title
-        index = keys_orig_size != keys.size ? i+1 : i
+        index = keys_orig_size != keys.size ? i + 1 : i
         fail(Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[index], {
                :type => o,
                :message => "Cannot use #{bad_key_type_name(t)} where a resource title String is expected"
@@ -705,7 +705,7 @@ class AccessOperator
         # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
         name = name[2..-1] if name[0, 2] == NS
 
-        fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c}) unless name =~ Patterns::NAME
+        fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name => c}) unless name =~ Patterns::NAME
 
         Types::PClassType.new(name)
       end
@@ -718,7 +718,7 @@ class AccessOperator
             get_resource_parameter_value(scope, resource, k)
           else
             fail(Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,
-                 {:type_name => 'Class', :title => o.class_name, :param_name=>k})
+                 {:type_name => 'Class', :title => o.class_name, :param_name => k})
           end
         end
       else

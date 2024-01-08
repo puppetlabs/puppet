@@ -225,7 +225,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
       # Append operator use is constrained
       p = container
       unless p.is_a?(Model::CollectExpression) || p.is_a?(Model::ResourceOverrideExpression)
-        acceptor.accept(Issues::ILLEGAL_ATTRIBUTE_APPEND, o, {:name=>o.attribute_name, :parent=>p})
+        acceptor.accept(Issues::ILLEGAL_ATTRIBUTE_APPEND, o, {:name => o.attribute_name, :parent => p})
       end
     end
     rvalue(o.value_expr)
@@ -244,7 +244,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
       # but it is not for a real program.
       parent2 = p.nil? ? o : container(-2)
       unless parent2.is_a?(Model::AbstractResource)
-        acceptor.accept(Issues::UNSUPPORTED_OPERATOR_IN_CONTEXT, parent2, :operator=>'* =>')
+        acceptor.accept(Issues::UNSUPPORTED_OPERATOR_IN_CONTEXT, parent2, :operator => '* =>')
       end
     end
     rvalue(o.expr)
@@ -293,7 +293,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
       # helpful to point out this easy to make Epp error
       acceptor.accept(Issues::ILLEGAL_EPP_PARAMETERS, o)
     else
-      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature => 'function name', :container => o})
     end
   end
 
@@ -340,7 +340,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def check_CollectExpression(o)
     unless o.type_expr.is_a? Model::QualifiedReference
-      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.type_expr, :feature=> 'type name', :container => o)
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.type_expr, :feature => 'type name', :container => o)
     end
   end
 
@@ -349,7 +349,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_NamedAccessExpression(o)
     name = o.right_expr
     unless name.is_a? Model::QualifiedName
-      acceptor.accept(Issues::ILLEGAL_EXPRESSION, name, :feature=> 'function name', :container => container)
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, name, :feature => 'function name', :container => container)
     end
   end
 
@@ -392,7 +392,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_NamedDefinition(o)
     top(o)
     if o.name !~ Patterns::CLASSREF_DECL
-      acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name=>o.name})
+      acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name => o.name})
     end
 
     internal_check_file_namespace(o)
@@ -403,7 +403,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_TypeAlias(o)
     top(o)
     if o.name !~ Patterns::CLASSREF_EXT_DECL
-      acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name=>o.name})
+      acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name => o.name})
     end
     internal_check_reserved_type_name(o, o.name)
     internal_check_type_ref(o, o.type_expr)
@@ -504,7 +504,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def internal_check_capture_last(o)
-    accepted_index = o.parameters.size() -1
+    accepted_index = o.parameters.size() - 1
     o.parameters.each_with_index do |p, index|
       if p.captures_rest && index != accepted_index
         acceptor.accept(Issues::CAPTURES_REST_NOT_LAST, p, {:param_name => p.name})
@@ -748,7 +748,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_QualifiedReference(o)
     # Is this a valid qualified name?
     if o.cased_value !~ Patterns::CLASSREF_EXT
-      acceptor.accept(Issues::ILLEGAL_CLASSREF, o, {:name=>o.cased_value})
+      acceptor.accept(Issues::ILLEGAL_CLASSREF, o, {:name => o.cased_value})
     end
   end
 

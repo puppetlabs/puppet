@@ -463,7 +463,7 @@ class Puppet::Transaction::Report
   end
 
   def calculate_change_metric
-    resource_statuses.map { |_name, status| status.change_count || 0 }.inject(0) { |a, b| a+b }
+    resource_statuses.map { |_name, status| status.change_count || 0 }.inject(0) { |a, b| a + b }
   end
 
   def calculate_event_metrics

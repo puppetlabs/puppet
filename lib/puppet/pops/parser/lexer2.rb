@@ -364,7 +364,7 @@ class Lexer2
               value << more
             end
             regex = value.sub(PATTERN_REGEX_A, '').sub(PATTERN_REGEX_Z, '').gsub(PATTERN_REGEX_ESC, '/')
-            emit_completed([:REGEX, Regexp.new(regex), scn.pos-before], before)
+            emit_completed([:REGEX, Regexp.new(regex), scn.pos - before], before)
           else
             emit(TOKEN_DIV, before)
           end
@@ -425,7 +425,7 @@ class Lexer2
             value = scn.scan(PATTERN_CLASSREF)
             if value && scn.peek(2) != '::'
               after = scn.pos
-              emit_completed([:CLASSREF, value.freeze, after-before], before)
+              emit_completed([:CLASSREF, value.freeze, after - before], before)
             else
               # move to faulty position ('::<uc-letter>' was ok)
               scn.pos = scn.pos + 3

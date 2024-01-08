@@ -90,7 +90,7 @@ module Types
   # @api private
   class SignaturePathElement < VariantPathElement
     def to_s
-      "#{key+1}."
+      "#{key + 1}."
     end
   end
 
@@ -300,7 +300,7 @@ module Types
           e = "#{e[0]} or #{e[1]}"
           multi = true
         else
-          e = "#{e[0..e.size-2].join(', ')}, or #{e[e.size-1]}"
+          e = "#{e[0..e.size - 2].join(', ')}, or #{e[e.size - 1]}"
           multi = true
         end
       else

@@ -998,7 +998,7 @@ class StringConverter
           # if break on each (and breaking will not occur because next is an array or hash)
           # or, if indenting, and previous was an array or hash, then break and continue on next line
           # indented.
-          if (sz_break && !is_a_or_h?(v)) || (format.alt? && i > 0 && is_a_or_h?(val[i-1]) && !is_a_or_h?(v))
+          if (sz_break && !is_a_or_h?(v)) || (format.alt? && i > 0 && is_a_or_h?(val[i - 1]) && !is_a_or_h?(v))
             buf.rstrip! unless buf[-1] == "\n"
             buf << "\n"
             buf << children_indentation.padding

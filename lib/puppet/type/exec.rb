@@ -146,7 +146,7 @@ module Puppet
         begin
           tries.times do |try|
             # Only add debug messages for tries > 1 to reduce log spam.
-            debug("Exec try #{try+1}/#{tries}") if tries > 1
+            debug("Exec try #{try + 1}/#{tries}") if tries > 1
             @output, @status = provider.run(self.resource[:command])
             break if self.should.include?(@status.exitstatus.to_s)
 

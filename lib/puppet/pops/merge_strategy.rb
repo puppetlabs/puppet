@@ -184,7 +184,7 @@ module Puppet::Pops
       # @return [Types::PStructType] the puppet type
       #
       def options_t
-        @options_t ||=Types::TypeParser.singleton.parse("Struct[{strategy=>Optional[Pattern[/#{key}/]]}]")
+        @options_t ||= Types::TypeParser.singleton.parse("Struct[{strategy=>Optional[Pattern[/#{key}/]]}]")
       end
     end
 

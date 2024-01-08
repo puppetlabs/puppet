@@ -482,7 +482,7 @@ module Time
 
           n = group.to_i
           p = 9 - group.length
-          p <= 0 ? n : n * 10 ** p
+          p <= 0 ? n : n * 10**p
         end
 
         def create_format
@@ -522,7 +522,7 @@ module Time
         def multiplier
           width = @width || @default_width
           if width < 9
-            10 ** (9 - width)
+            10**(9 - width)
           else
             1
           end
@@ -533,8 +533,8 @@ module Time
           width = @width || @default_width
           if width < 9
             # Truncate digits to the right, i.e. let %6N reflect microseconds
-            ns /= 10 ** (9 - width)
-            ns %= 10 ** width unless use_total?
+            ns /= 10**(9 - width)
+            ns %= 10**width unless use_total?
           else
             ns %= NSECS_PER_SEC unless use_total?
           end
@@ -614,7 +614,7 @@ module Time
       ]
 
       def bad_format_specifier(format, start, position)
-        _("Bad format specifier '%{expression}' in '%{format}', at position %{position}") % { expression: format[start, position-start], format: format, position: position }
+        _("Bad format specifier '%{expression}' in '%{format}', at position %{position}") % { expression: format[start, position - start], format: format, position: position }
       end
 
       def append_literal(bld, codepoint)

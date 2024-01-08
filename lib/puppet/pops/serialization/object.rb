@@ -50,7 +50,7 @@ class ObjectWriter
 
     # Pop optional arguments that are default
     while args.size > required_count
-      break unless type[names[args.size-1]].default_value?(args.last)
+      break unless type[names[args.size - 1]].default_value?(args.last)
 
       args.pop
     end

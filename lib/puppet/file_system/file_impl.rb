@@ -54,7 +54,7 @@ class Puppet::FileSystem::FileImpl
     written = false
     while !written
       ::File.open(path, options, mode) do |rf|
-        if rf.flock(::File::LOCK_EX|::File::LOCK_NB)
+        if rf.flock(::File::LOCK_EX | ::File::LOCK_NB)
           Puppet.debug{ _("Locked '%{path}'") % { path: path } }
           yield rf
           written = true

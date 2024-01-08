@@ -471,7 +471,7 @@ module Puppet
       groups = obj.shouldorig if obj
       if groups
         groups = groups.collect { |group|
-          if group.is_a?(String) && group =~/^\d+$/
+          if group.is_a?(String) && group =~ /^\d+$/
             Integer(group)
           else
             group
@@ -681,7 +681,7 @@ module Puppet
             newer."
 
       munge do |value|
-        if value.is_a?(String) and value =~/^[-0-9]+$/
+        if value.is_a?(String) and value =~ /^[-0-9]+$/
           Integer(value)
         else
           value

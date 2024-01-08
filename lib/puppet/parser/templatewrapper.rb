@@ -33,7 +33,7 @@ class Puppet::Parser::TemplateWrapper
   # @api private
   def script_line
     identifier = Regexp.escape(@__file__ || "(erb)")
-    (caller.find { |l| l =~ /#{identifier}:/ }||"")[/:(\d+):/, 1]
+    (caller.find { |l| l =~ /#{identifier}:/ } || "")[/:(\d+):/, 1]
   end
   private :script_line
 

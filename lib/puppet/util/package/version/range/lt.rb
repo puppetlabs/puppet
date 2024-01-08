@@ -4,7 +4,7 @@ require_relative '../../../../../puppet/util/package/version/range/simple'
 
 module Puppet::Util::Package::Version
   class Range
-    class Lt< Simple
+    class Lt < Simple
       def to_s
         "<#{@version}"
       end

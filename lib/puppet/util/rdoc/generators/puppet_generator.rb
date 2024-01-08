@@ -255,7 +255,7 @@ module Generators
       res1 = []
       collection['classes'].sort.each do |f|
         if f.document_self
-          res1 << { "href" => "../"+CGI.escapeHTML(f.path), "name" => CGI.escapeHTML(f.index_name) } unless f.context.is_module?
+          res1 << { "href" => "../" + CGI.escapeHTML(f.path), "name" => CGI.escapeHTML(f.index_name) } unless f.context.is_module?
         end
       end
 
@@ -268,22 +268,22 @@ module Generators
       res3 = []
       res4 = []
       collection['modules'].sort.each do |f|
-        module_name << { "href" => "../"+CGI.escapeHTML(f.path), "name" => CGI.escapeHTML(f.index_name) }
+        module_name << { "href" => "../" + CGI.escapeHTML(f.path), "name" => CGI.escapeHTML(f.index_name) }
         unless f.facts.nil?
           f.facts.each do |fact|
-            res3 << {"href" => "../"+CGI.escapeHTML(AllReferences["PLUGIN(#{fact.name})"].path), "name" => CGI.escapeHTML(fact.name)}
+            res3 << {"href" => "../" + CGI.escapeHTML(AllReferences["PLUGIN(#{fact.name})"].path), "name" => CGI.escapeHTML(fact.name)}
           end
         end
         unless f.plugins.nil?
           f.plugins.each do |plugin|
-            res4 << {"href" => "../"+CGI.escapeHTML(AllReferences["PLUGIN(#{plugin.name})"].path), "name" => CGI.escapeHTML(plugin.name)}
+            res4 << {"href" => "../" + CGI.escapeHTML(AllReferences["PLUGIN(#{plugin.name})"].path), "name" => CGI.escapeHTML(plugin.name)}
           end
         end
       end
 
       res5 = []
       collection['nodes'].sort.each do |f|
-        res5 << { "href" => "../"+CGI.escapeHTML(f.path), "name" => CGI.escapeHTML(f.name) } if f.document_self
+        res5 << { "href" => "../" + CGI.escapeHTML(f.path), "name" => CGI.escapeHTML(f.name) } if f.document_self
       end
 
       values = {
@@ -299,10 +299,10 @@ module Generators
         'style_url' => style_url('', @options.css),
       }
 
-      values["defines"] = res2 if res2.size>0
-      values["facts"] = res3 if res3.size>0
-      values["plugins"] = res4 if res4.size>0
-      values["nodes"] = res5 if res5.size>0
+      values["defines"] = res2 if res2.size > 0
+      values["facts"] = res3 if res3.size > 0
+      values["plugins"] = res4 if res4.size > 0
+      values["nodes"] = res5 if res5.size > 0
 
       Puppet::FileSystem.open(filename, nil, "w:UTF-8") do |f|
         template.write_html_on(f, values)
@@ -385,7 +385,7 @@ module Generators
       resources.each do |r|
         res << {
           "name" => CGI.escapeHTML(r.name),
-          "aref" => Puppet::Util.uri_encode(path_prefix)+"\#"+Puppet::Util.uri_query_encode(r.aref)
+          "aref" => Puppet::Util.uri_encode(path_prefix) + "\#" + Puppet::Util.uri_query_encode(r.aref)
         }
       end
       res

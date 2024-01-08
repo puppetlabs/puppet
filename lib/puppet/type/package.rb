@@ -346,7 +346,7 @@ module Puppet
       [ [ /(.*)/m, [ [:name] ] ] ]
     end
 
-    newproperty(:package_settings, :required_features=>:package_settings) do
+    newproperty(:package_settings, :required_features => :package_settings) do
       desc "Settings that can change the contents or configuration of a package.
 
         The formatting and effects of package_settings are provider-specific; any
@@ -661,7 +661,7 @@ module Puppet
     end
 
     newproperty(:mark, :required_features => :holdable) do
-      mark_doc='Valid values are: hold/none'
+      mark_doc = 'Valid values are: hold/none'
       desc <<-EOT
         Set to hold to tell Debian apt/Solaris pkg to hold the package version
 

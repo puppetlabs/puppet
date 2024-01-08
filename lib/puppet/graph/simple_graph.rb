@@ -283,7 +283,7 @@ class Puppet::Graph::SimpleGraph
 
     @upstream_from.clear
     @downstream_from.clear
-    (@in_to[v].values+@out_from[v].values).flatten.each { |e| remove_edge!(e) }
+    (@in_to[v].values + @out_from[v].values).flatten.each { |e| remove_edge!(e) }
     @in_to.delete(v)
     @out_from.delete(v)
   end
@@ -378,7 +378,7 @@ class Puppet::Graph::SimpleGraph
   # A different way of walking a tree, and a much faster way than the
   # one that comes with GRATR.
   def tree_from_vertex(start, direction = :out)
-    predecessor={}
+    predecessor = {}
     walk(start, direction) do |parent, child|
       predecessor[child] = parent
     end
@@ -429,7 +429,7 @@ class Puppet::Graph::SimpleGraph
   #   is more important than last-mile efficiency.
   #
   def path_between(f, t)
-    if f==t
+    if f == t
       []
     elsif direct_dependents_of(f).include?(t)
       [edges_between(f, t)]

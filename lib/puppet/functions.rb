@@ -547,7 +547,7 @@ module Puppet::Functions
         if repeat
           @weaving << -@names.size()
         else
-          @weaving << @names.size()-1
+          @weaving << @names.size() - 1
         end
       else
         raise ArgumentError, _("Parameter 'type' must be a String reference to a Puppet Data Type. Got %{type_class}") % { type_class: type.class }
@@ -644,7 +644,7 @@ module Puppet::Functions
       end
       unless result.body.kind_of?(Puppet::Pops::Model::TypeAlias)
         rb_location = rb_location.gsub(/:in.*$/, '')
-        raise ArgumentError, _("Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'.\n"+
+        raise ArgumentError, _("Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'.\n" +
         "Called from <%{ruby_file_location}>") % {
           assignment_string: assignment_string,
           ruby_file_location: rb_location
@@ -797,7 +797,7 @@ module Puppet::Functions
       end
       # Names of parameters, up to 5 are optimized and use frozen version
       # Note that (0..count-1) produces expected empty array for count == 0, 0-n for count >= 1
-      names = count <= 5 ? PARAM_NAMES[count] : (0..count-1).map {|n| "p#{n}" }
+      names = count <= 5 ? PARAM_NAMES[count] : (0..count - 1).map {|n| "p#{n}" }
       [from, to, names]
     end
   end
@@ -857,7 +857,7 @@ module Puppet::Functions
     def inject(injection_name)
       @injections << injection_name
       # mark what should be picked for this position when dispatching
-      @weaving << [@injections.size()-1]
+      @weaving << [@injections.size() - 1]
     end
   end
 end

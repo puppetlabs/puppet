@@ -71,7 +71,7 @@ module Puppet::ModuleTool::Errors
     def multiline
       message = []
       message << _("Could not install module '%{module_name}' (%{version})") % { module_name: @requested_module, version: @requested_version }
-      message << _("  Permission is denied when trying to create directory '%{directory}'.")  % { directory: @directory }
+      message << _("  Permission is denied when trying to create directory '%{directory}'.") % { directory: @directory }
       message << _('  A potential solution is to check the ownership and permissions of parent directories.')
       message.join("\n")
     end

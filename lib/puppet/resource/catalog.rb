@@ -89,7 +89,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     s = ref.index('[')
     e = ref.rindex(']')
     if s && e && e > s
-      a = [ref[0, s], ref[s+1, e-s-1]]
+      a = [ref[0, s], ref[s + 1, e - s - 1]]
     else
       a = [nil, nil]
     end
@@ -119,7 +119,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
         raise ArgumentError, _("Cannot add resource %{resource_1} after %{resource_2} because %{resource_2} is not yet in the catalog") %
                              { resource_1: resource.ref, resource_2: other.ref }
       end
-      add_one_resource(resource, idx+1)
+      add_one_resource(resource, idx + 1)
     end
   end
 

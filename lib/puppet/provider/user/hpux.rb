@@ -50,7 +50,7 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
     # temp=""
     while ent = Etc.getpwent() do # rubocop:disable Lint/AssignmentInCondition
       if ent.name == resource.name
-        temp=ent.name
+        temp = ent.name
         break
       end
     end
@@ -62,12 +62,12 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
     ent = Etc.getpwnam(resource.name)
     if ent.passwd == "*"
       # Either no password or trusted password, check trusted
-      file_name="/tcb/files/auth/#{resource.name.chars.first}/#{resource.name}"
+      file_name = "/tcb/files/auth/#{resource.name.chars.first}/#{resource.name}"
       if File.file?(file_name)
         # Found the tcb user for the specific user, now get passwd
         File.open(file_name).each do |line|
           if ( line =~ /u_pwd/ )
-            temp_passwd=line.split(":")[1].split("=")[1]
+            temp_passwd = line.split(":")[1].split("=")[1]
             ent.passwd = temp_passwd
             return ent.passwd
           end

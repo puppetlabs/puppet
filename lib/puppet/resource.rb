@@ -228,7 +228,7 @@ class Puppet::Resource
   end
 
   %w{exported virtual strict}.each do |m|
-    define_method(m+"?") do
+    define_method(m + "?") do
       self.send(m)
     end
   end

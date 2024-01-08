@@ -20,7 +20,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   USER_AGENT = "PMT/1.1.1 (v3; Net::HTTP)"
 
   # From https://forgeapi.puppet.com/#!/release/getReleases
-  MODULE_RELEASE_EXCLUSIONS=%w[readme changelog license uri module tags supported file_size downloads created_at updated_at deleted_at].join(',').freeze
+  MODULE_RELEASE_EXCLUSIONS = %w[readme changelog license uri module tags supported file_size downloads created_at updated_at deleted_at].join(',').freeze
 
   attr_reader :host, :repository
 

@@ -72,7 +72,7 @@ module HeredocSupport
     end
     # offset 0 for the heredoc, and its line number
     heredoc_offset = scn.pos
-    heredoc_line = locator.line_for_offset(heredoc_offset)-1
+    heredoc_line = locator.line_for_offset(heredoc_offset) - 1
 
     # Compute message to emit if there is no end (to make it refer to the opening heredoc position).
     eof_error = create_lex_error(Issues::HEREDOC_WITHOUT_END_TAGGED_LINE)

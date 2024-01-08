@@ -201,7 +201,7 @@ module Serialization
         elsif !key.is_a?(String)
           key = unknown_key_to_string(key)
         end
-        if key == "__ptype" || key =="__pvalue"
+        if key == "__ptype" || key == "__pvalue"
           key = "reserved key: #{key}"
         end
         with(key) { result[key] = to_data(value) }

@@ -298,7 +298,7 @@ class PAnyType < TypedModelObject
   def self.simple_name
     @simple_name ||= (
       n = name
-      n[n.rindex(DOUBLE_COLON)+3..n.size-5].freeze
+      n[n.rindex(DOUBLE_COLON) + 3..n.size - 5].freeze
     )
   end
 
@@ -1069,7 +1069,7 @@ class PIntegerType < PNumericType
   def size
     return Float::INFINITY if @from == -Float::INFINITY || @to == Float::INFINITY
 
-    1+(to-from).abs
+    1 + (to - from).abs
   end
 
   # Returns the range as an array ordered so the smaller number is always first.
@@ -2287,9 +2287,9 @@ class PTupleType < PAnyType
 
     types_size = @types.size
     from, to = @size_type.range
-    min = from - (types_size-1)
+    min = from - (types_size - 1)
     min = min <= 0 ? 0 : min
-    max = to - (types_size-1)
+    max = to - (types_size - 1)
     [min, max]
   end
 
@@ -2827,7 +2827,7 @@ class PHashType < PCollectionType
             end
           else
             r = path[0..-2].reduce(result) {|memo, idx| (memo.is_a?(Array) || memo.has_key?(idx)) ? memo[idx] : memo[idx] = {}}
-            r[path[-1]]= (all_hashes ? PHashType.array_as_hash(value) : value)
+            r[path[-1]] = (all_hashes ? PHashType.array_as_hash(value) : value)
           end
         end
         result
