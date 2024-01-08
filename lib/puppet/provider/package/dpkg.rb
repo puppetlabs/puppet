@@ -7,7 +7,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     and not `apt`, you must specify the source of any packages you want
     to manage."
 
-  has_feature :holdable, :virtual_packages, :install_options
+  has_feature :holdable, :virtual_packages, :install_options, :uninstall_options
   commands :dpkg => "/usr/bin/dpkg"
   commands :dpkg_deb => "/usr/bin/dpkg-deb"
   commands :dpkgquery => "/usr/bin/dpkg-query"
@@ -172,7 +172,11 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   end
 
   def uninstall
-    dpkg "-r", @resource[:name]
+    flags = "-r"
+    if @resource[:uninstall_options]
+      flags += @resource[:uninstall_options]
+    end
+    dpkg *flags, @resource[:name]
   end
 
   def purge
