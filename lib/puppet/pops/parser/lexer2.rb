@@ -495,7 +495,7 @@ class Lexer2
 
     [ ' ', "\t", "\r" ].each { |c| @selector[c] = lambda { @scanner.skip(PATTERN_WS); nil } }
 
-    [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].each do |c|
+    ('0'..'9').each do |c|
       @selector[c] = lambda do
         scn = @scanner
         before = scn.pos
@@ -529,8 +529,7 @@ class Lexer2
         end
       end
     end
-    ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-     'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '_'].each do |c|
+    ('a'..'z').to_a.push('_').each do |c|
       @selector[c] = lambda do
         scn = @scanner
         before = scn.pos
@@ -552,8 +551,7 @@ class Lexer2
       end
     end
 
-    ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-     'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'].each do |c|
+    ('A'..'Z').each do |c|
       @selector[c] = lambda do
         scn = @scanner
         before = scn.pos
