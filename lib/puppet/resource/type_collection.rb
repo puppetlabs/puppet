@@ -196,7 +196,7 @@ class Puppet::Resource::TypeCollection
 
         result = send(type, fqname)
         unless result
-          if @notfound[ fqname ] && Puppet[ :ignoremissingtypes ]
+          if @notfound[fqname] && Puppet[:ignoremissingtypes]
             # do not try to autoload if we already tried and it wasn't conclusive
             # as this is a time consuming operation. Warn the user.
             # Check first if debugging is on since the call to debug_once is expensive
@@ -206,7 +206,7 @@ class Puppet::Resource::TypeCollection
           else
             fqname = munge_name(fqname)
             result = loader.try_load_fqname(type, fqname)
-            @notfound[ fqname ] = result.nil?
+            @notfound[fqname] = result.nil?
           end
         end
         result

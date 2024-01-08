@@ -23,24 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBrackets.
-# SupportedStyles: space, no_space
-# SupportedStylesForEmptyBrackets: space, no_space
-Layout/SpaceInsideReferenceBrackets:
-  Exclude:
-    - 'lib/puppet/application.rb'
-    - 'lib/puppet/functions/unique.rb'
-    - 'lib/puppet/parser/scope.rb'
-    - 'lib/puppet/pops/evaluator/access_operator.rb'
-    - 'lib/puppet/pops/evaluator/deferred_resolver.rb'
-    - 'lib/puppet/pops/lookup/hiera_config.rb'
-    - 'lib/puppet/pops/parser/locator.rb'
-    - 'lib/puppet/pops/types/string_converter.rb'
-    - 'lib/puppet/resource/type_collection.rb'
-    - 'lib/puppet/util/windows/adsi.rb'
-    - 'lib/puppet/util/windows/process.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: space, no_space
 Layout/SpaceInsideStringInterpolation:

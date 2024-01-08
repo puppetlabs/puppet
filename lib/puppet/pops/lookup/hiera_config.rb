@@ -108,7 +108,7 @@ class HieraConfig
     case (struct)
     when Hash
       map = {}
-      struct.each_pair { |k, v| map[ k.is_a?(Symbol) ? k.to_s : k] = symkeys_to_string(v) }
+      struct.each_pair { |k, v| map[k.is_a?(Symbol) ? k.to_s : k] = symkeys_to_string(v) }
       map
     when Array
       struct.map { |v| symkeys_to_string(v) }

@@ -102,7 +102,7 @@ class DeferredResolver
             mark_sensitive_parameters(r, k)
           end
         end
-        overrides[ k ] = resolved
+        overrides[k] = resolved
       end
       r.parameters.merge!(overrides) unless overrides.empty?
     end

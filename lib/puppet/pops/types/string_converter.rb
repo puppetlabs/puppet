@@ -237,7 +237,7 @@ class StringConverter
     # @returns [Array<String>] a tuple with left, right delimiters
     #
     def delimiter_pair(default = StringConverter::DEFAULT_ARRAY_DELIMITERS)
-      DELIMITER_MAP[ @delimiters || @plus ] || default
+      DELIMITER_MAP[@delimiters || @plus] || default
     end
 
     def to_s

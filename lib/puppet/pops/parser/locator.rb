@@ -291,7 +291,7 @@ class Locator
 
   class LocatorForChars < AbstractLocator
     def offset_on_line(offset)
-      line_offset = line_index[ line_for_offset(offset) - 1 ]
+      line_offset = line_index[line_for_offset(offset) - 1]
       offset - line_offset
     end
 
@@ -335,7 +335,7 @@ class Locator
     # Returns the offset on line (first offset on a line is 0).
     # Ruby 19 is multibyte but has no character position methods, must use byteslice
     def offset_on_line(offset)
-      line_offset = line_index[ line_for_offset(offset) - 1 ]
+      line_offset = line_index[line_for_offset(offset) - 1]
       @string.byteslice(line_offset, offset - line_offset).length
     end
 

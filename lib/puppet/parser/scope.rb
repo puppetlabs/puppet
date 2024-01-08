@@ -111,7 +111,7 @@ class Puppet::Parser::Scope
         if (v == :undef || v.nil?) && !include_undef
           target.delete(k)
         else
-          target[ k ] = v
+          target[k] = v
         end
       end
       target
@@ -609,8 +609,8 @@ class Puppet::Parser::Scope
     # not found - search inherited scope for class
     leaf_index = fqn.rindex('::')
     unless leaf_index.nil?
-      leaf_name = fqn[ (leaf_index + 2)..-1 ]
-      class_name = fqn[ 0, leaf_index ]
+      leaf_name = fqn[(leaf_index + 2)..-1]
+      class_name = fqn[0, leaf_index]
       begin
         qs = qualified_scope(class_name)
         unless qs.nil?

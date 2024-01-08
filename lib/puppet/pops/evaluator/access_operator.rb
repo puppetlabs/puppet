@@ -56,7 +56,7 @@ class AccessOperator
                if k1 < 0
                  EMPTY_STRING
                else
-                 o[ k1, k2 ]
+                 o[k1, k2]
                end
              when 2
                k1 = Utils.to_n(keys[0])
@@ -70,7 +70,7 @@ class AccessOperator
                  k2 = k2 + k1
                  k1 = 0
                end
-               o[ k1, k2 ]
+               o[k1, k2]
              else
                fail(Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, { :actual => keys.size })
              end
@@ -120,7 +120,7 @@ class AccessOperator
         k1 = 0
       end
       # Help ruby always return empty array when asking for a sub array
-      result = o[ k1, k2 ]
+      result = o[k1, k2]
       result.nil? ? [] : result
     else
       fail(Issues::BAD_ARRAY_SLICE_ARITY, @semantic.left_expr, { :actual => keys.size })
