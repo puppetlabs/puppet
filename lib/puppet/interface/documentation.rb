@@ -79,7 +79,7 @@ class Puppet::Interface
 
         options.each do |option|
           option = get_option(option)
-          wrap = option.required? ? %w{ < > } : %w{ [ ] }
+          wrap = option.required? ? %w{< >} : %w{[ ]}
 
           s.group(0, *wrap) do
             option.optparse.each do |item|
@@ -96,7 +96,7 @@ class Puppet::Interface
         end
 
         display_global_options.sort.each do |option|
-          wrap = %w{ [ ] }
+          wrap = %w{[ ]}
           s.group(0, *wrap) do
             type = Puppet.settings.setting(option).default
             type ||= Puppet.settings.setting(option).type.to_s.upcase
