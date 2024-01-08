@@ -56,7 +56,7 @@ class ClassLoader
 
     # Although not expected to be the first choice for getting a concrete class for these
     # types, these are of value if the calling logic just has a reference to type.
-    #
+    # rubocop:disable Layout/SpaceBeforeSemicolon
     when PArrayType    ; Array
     when PTupleType    ; Array
     when PHashType     ; Hash
@@ -69,6 +69,7 @@ class ClassLoader
     when PFloatType    ; Float
     when PUndefType    ; NilClass
     when PCallableType ; Proc
+    # rubocop:enable Layout/SpaceBeforeSemicolon
     else
       nil
     end

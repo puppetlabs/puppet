@@ -3,7 +3,7 @@
 require_relative '../../../puppet/http'
 
 # This will be raised if too many redirects happen for a given HTTP request
-class Puppet::Network::HTTP::RedirectionLimitExceededException < Puppet::Error ; end
+class Puppet::Network::HTTP::RedirectionLimitExceededException < Puppet::Error; end
 
 # This class provides simple methods for issuing various types of HTTP
 # requests.  It's interface is intended to mirror Ruby's Net::HTTP

@@ -281,7 +281,7 @@ module Puppet::Functions
   def self.min_max_param(method)
     result = {:req => 0, :opt => 0, :rest => 0 }
     # count per parameter kind, and get array of names
-    names = method.parameters.map { |p| result[p[0]] += 1 ; p[1].to_s }
+    names = method.parameters.map { |p| result[p[0]] += 1; p[1].to_s }
     from = result[:req]
     to = result[:rest] > 0 ? :default : from + result[:opt]
     [from, to, names]

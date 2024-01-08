@@ -86,14 +86,14 @@ module SlurpSupport
         ch = $1
         if escapes.include? ch
           case ch
-          when 'r'   ; "\r"
-          when 'n'   ; "\n"
-          when 't'   ; "\t"
-          when 's'   ; ' '
+          when 'r'; "\r"
+          when 'n'; "\n"
+          when 't'; "\t"
+          when 's'; ' '
           when 'u'
             lex_warning(Issues::ILLEGAL_UNICODE_ESCAPE)
             "\\u"
-          when "\n"  ; ''
+          when "\n"; ''
           when "\r\n"; ''
           else ch
           end

@@ -142,13 +142,13 @@ class TypeFormatter
   end
 
   # @api private
-  def string_PAnyType(_)     ; @bld << 'Any'     ; end
+  def string_PAnyType(_); @bld << 'Any'; end
 
   # @api private
-  def string_PUndefType(_)   ; @bld << 'Undef'   ; end
+  def string_PUndefType(_); @bld << 'Undef'; end
 
   # @api private
-  def string_PDefaultType(_) ; @bld << 'Default' ; end
+  def string_PDefaultType(_); @bld << 'Default'; end
 
   # @api private
   def string_PBooleanType(t)
@@ -156,16 +156,16 @@ class TypeFormatter
   end
 
   # @api private
-  def string_PScalarType(_) ; @bld << 'Scalar' ; end
+  def string_PScalarType(_); @bld << 'Scalar'; end
 
   # @api private
-  def string_PScalarDataType(_) ; @bld << 'ScalarData' ; end
+  def string_PScalarDataType(_); @bld << 'ScalarData'; end
 
   # @api private
-  def string_PNumericType(_) ; @bld << 'Numeric' ; end
+  def string_PNumericType(_); @bld << 'Numeric'; end
 
   # @api private
-  def string_PBinaryType(_)  ; @bld << 'Binary' ; end
+  def string_PBinaryType(_); @bld << 'Binary'; end
 
   # @api private
   def string_PIntegerType(t)
@@ -584,7 +584,7 @@ class TypeFormatter
   end
 
   # @api private
-  def string_FalseClass(t) ; @bld << 'false' ; end
+  def string_FalseClass(t); @bld << 'false'; end
 
   # @api private
   def string_Hash(t)
@@ -597,13 +597,13 @@ class TypeFormatter
   end
 
   # @api private
-  def string_NilClass(t)     ; @bld << (@ruby ? 'nil' : 'undef') ; end
+  def string_NilClass(t); @bld << (@ruby ? 'nil' : 'undef'); end
 
   # @api private
-  def string_Numeric(t)      ; @bld << t.to_s ; end
+  def string_Numeric(t); @bld << t.to_s; end
 
   # @api private
-  def string_Regexp(t)       ; @bld << PRegexpType.regexp_to_s_with_delimiters(t); end
+  def string_Regexp(t); @bld << PRegexpType.regexp_to_s_with_delimiters(t); end
 
   # @api private
   def string_String(t)
@@ -612,22 +612,22 @@ class TypeFormatter
   end
 
   # @api private
-  def string_Symbol(t)       ; @bld << t.to_s    ; end
+  def string_Symbol(t); @bld << t.to_s; end
 
   # @api private
-  def string_TrueClass(t)    ; @bld << 'true'    ; end
+  def string_TrueClass(t); @bld << 'true'; end
 
   # @api private
-  def string_Version(t)      ; @bld << "'#{t}'"  ; end
+  def string_Version(t); @bld << "'#{t}'"; end
 
   # @api private
-  def string_VersionRange(t) ; @bld << "'#{t}'"  ; end
+  def string_VersionRange(t); @bld << "'#{t}'"; end
 
   # @api private
-  def string_Timespan(t) ; @bld << "'#{t}'" ; end
+  def string_Timespan(t); @bld << "'#{t}'"; end
 
   # @api private
-  def string_Timestamp(t) ; @bld << "'#{t}'" ; end
+  def string_Timestamp(t); @bld << "'#{t}'"; end
 
   # Debugging to_s to reduce the amount of output
   def to_s

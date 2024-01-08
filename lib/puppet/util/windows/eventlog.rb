@@ -10,7 +10,7 @@ require 'ffi'
 # - Define Puppet::Util::Windows
 # - Replicate logic that exists elsewhere in puppet/util/windows
 # - Raise generic RuntimeError instead of Puppet::Util::Windows::Error if its not defined
-module Puppet; module Util; module Windows ; end ; end ; end
+module Puppet; module Util; module Windows; end; end; end
 
 class Puppet::Util::Windows::EventLog
   extend FFI::Library

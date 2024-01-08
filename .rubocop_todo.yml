@@ -23,20 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Layout/SpaceBeforeSemicolon:
-  Exclude:
-    - 'lib/puppet/functions.rb'
-    - 'lib/puppet/network/http/connection.rb'
-    - 'lib/puppet/pops/model/model_label_provider.rb'
-    - 'lib/puppet/pops/parser/slurp_support.rb'
-    - 'lib/puppet/pops/types/class_loader.rb'
-    - 'lib/puppet/pops/types/type_formatter.rb'
-    - 'lib/puppet/settings/errors.rb'
-    - 'lib/puppet/util/network_device/base.rb'
-    - 'lib/puppet/util/windows.rb'
-    - 'lib/puppet/util/windows/eventlog.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBrackets.
 # SupportedStyles: space, no_space, compact
 # SupportedStylesForEmptyBrackets: space, no_space
