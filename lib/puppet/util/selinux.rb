@@ -46,7 +46,7 @@ module Puppet::Util::SELinux
 
   # Retrieve and return the default context of the file.  If we don't have
   # SELinux support or if the SELinux call fails to file a default then return nil.
-  def get_selinux_default_context(file, resource_ensure=nil)
+  def get_selinux_default_context(file, resource_ensure = nil)
     return nil unless selinux_support?
     # If the filesystem has no support for SELinux labels, return a default of nil
     # instead of what matchpathcon would return
@@ -154,7 +154,7 @@ module Puppet::Util::SELinux
   # Puppet uses.  This will set the file's SELinux context to the policy's
   # default context (if any) if it differs from the context currently on
   # the file.
-  def set_selinux_default_context(file, resource_ensure=nil)
+  def set_selinux_default_context(file, resource_ensure = nil)
     new_context = get_selinux_default_context(file, resource_ensure)
     return nil unless new_context
 

@@ -15,7 +15,7 @@ module Puppet::Pops
 class Visitor
   attr_reader :receiver, :message, :min_args, :max_args, :cache
 
-  def initialize(receiver, message, min_args=0, max_args=nil)
+  def initialize(receiver, message, min_args = 0, max_args = nil)
     raise ArgumentError.new("min_args must be >= 0") if min_args < 0
     raise ArgumentError.new("max_args must be >= min_args or nil") if max_args && max_args < min_args
 

@@ -286,7 +286,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   # for automatically assigning uids and gids to accounts, so we set up these
   # methods for consumption by functionality like --mkusers
   # By default we restrict to a reasonably sane range for system accounts
-  def self.next_system_id(id_type, min_id=20)
+  def self.next_system_id(id_type, min_id = 20)
     dscl_args = ['.', '-list']
     if id_type == 'uid'
       dscl_args << '/Users' << 'uid'

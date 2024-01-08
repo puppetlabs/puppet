@@ -126,7 +126,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     end
   end
 
-  def initialize(path, data={})
+  def initialize(path, data = {})
     @owner       = data.delete('owner')
     @group       = data.delete('group')
     @mode        = data.delete('mode')

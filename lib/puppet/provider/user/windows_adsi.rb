@@ -10,7 +10,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
 
   has_features :manages_homedir, :manages_passwords, :manages_roles
 
-  def initialize(value={})
+  def initialize(value = {})
     super(value)
     @deleted = false
   end

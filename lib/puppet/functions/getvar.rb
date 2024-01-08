@@ -58,7 +58,7 @@ Puppet::Functions.create_function(:getvar, Puppet::Functions::InternalFunction) 
     optional_block_param 'Callable', :block
   end
 
-  def invalid_variable_error(navigation, default_value=nil, &block)
+  def invalid_variable_error(navigation, default_value = nil, &block)
     _("The given string does not start with a valid variable name")
   end
 

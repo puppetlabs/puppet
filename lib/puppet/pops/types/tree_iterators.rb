@@ -27,7 +27,7 @@ class TreeIterator
   # @option options [Boolean] :include_values ('true') If non containers (values) should be included in the iteration
   # @option options [Boolean] :include_refs ('false') If (non containment) referenced values in Objects should be included 
   #
-  def initialize(enum, options=EMPTY_HASH)
+  def initialize(enum, options = EMPTY_HASH)
     @root = enum
     @element_t = nil
     @value_stack = [enum]

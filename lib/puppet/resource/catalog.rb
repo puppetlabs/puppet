@@ -136,7 +136,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     adjacent(resource, :direction => :in)[0]
   end
 
-  def add_one_resource(resource, idx=-1)
+  def add_one_resource(resource, idx = -1)
     title_key = title_key_for_ref(resource.ref)
     if @resource_table[title_key]
       fail_on_duplicate_type_and_title(resource, title_key)

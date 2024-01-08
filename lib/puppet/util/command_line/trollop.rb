@@ -145,7 +145,7 @@ class CommandLine
     ## If you want a multi-value, multi-occurrence argument with a default
     ## value, you must specify +:type+ as well.
 
-    def opt name, desc="", opts={}
+    def opt name, desc = "", opts = {}
       raise ArgumentError, _("you already have an argument named '%{name}'") % { name: name } if @specs.member? name
 
       ## fill in :type
@@ -261,7 +261,7 @@ class CommandLine
     ## Sets the version string. If set, the user can request the version
     ## on the commandline. Should probably be of the form "<program name>
     ## <version number>".
-    def version s=nil; @version = s if s; @version end
+    def version s = nil; @version = s if s; @version end
 
     ## Adds text to the help display. Can be interspersed with calls to
     ## #opt to build a multi-section help page.
@@ -307,7 +307,7 @@ class CommandLine
     ## but you can call it directly if you need more control.
     ##
     ## throws CommandlineError, HelpNeeded, and VersionNeeded exceptions.
-    def parse cmdline=ARGV
+    def parse cmdline = ARGV
       vals = {}
       required = {}
 
@@ -462,7 +462,7 @@ class CommandLine
     end
 
     ## Print the help message to +stream+.
-    def educate stream=$stdout
+    def educate stream = $stdout
       width # just calculate it now; otherwise we have to be careful not to
       # call this unless the cursor's at the beginning of a line.
 
@@ -542,7 +542,7 @@ class CommandLine
                  end
     end
 
-    def wrap str, opts={} # :nodoc:
+    def wrap str, opts = {} # :nodoc:
       if str == ""
         [""]
       else
@@ -685,7 +685,7 @@ class CommandLine
       end
     end
 
-    def wrap_line str, opts={}
+    def wrap_line str, opts = {}
       prefix = opts[:prefix] || 0
       width = opts[:width] || (self.width - 1)
       start = 0
@@ -749,7 +749,7 @@ class CommandLine
   ##   p opts # => {:monkey_given=>true, :monkey=>true, :goat=>true, :num_limbs=>4, :help=>false, :num_thumbs=>nil}
   ##
   ## See more examples at http://trollop.rubyforge.org.
-  def options args=ARGV, *a, &b
+  def options args = ARGV, *a, &b
     @last_parser = Parser.new(*a, &b)
     with_standard_exception_handling(@last_parser) { @last_parser.parse args }
   end
@@ -813,7 +813,7 @@ class CommandLine
   ##   end
   ##
   ##   Trollop::die "need at least one filename" if ARGV.empty?
-  def die arg, msg=nil
+  def die arg, msg = nil
     if @last_parser
       @last_parser.die arg, msg
     else

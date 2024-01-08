@@ -23,7 +23,7 @@ module Puppet::Agent::Disabler
   end
 
   # Stop the daemon from making any catalog runs.
-  def disable(msg=nil)
+  def disable(msg = nil)
     data = {}
     Puppet.notice _("Disabling Puppet.")
     if (!msg.nil?)

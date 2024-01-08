@@ -18,7 +18,7 @@ module Runtime3Support
   # @return [!] this method does not return
   # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError?)
   #
-  def fail(issue, semantic, options={}, except=nil)
+  def fail(issue, semantic, options = {}, except = nil)
     optionally_fail(issue, semantic, options, except)
     # an error should have been raised since fail always fails
     raise ArgumentError, _("Internal Error: Configuration of runtime error handling wrong: should have raised exception")
@@ -33,7 +33,7 @@ module Runtime3Support
   # @return [!] this method does not return
   # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError?)
   #
-  def optionally_fail(issue, semantic, options={}, except=nil)
+  def optionally_fail(issue, semantic, options = {}, except = nil)
     if except.nil? && diagnostic_producer.severity_producer[issue] == :error
       # Want a stacktrace, and it must be passed as an exception
       begin
@@ -54,7 +54,7 @@ module Runtime3Support
   # @return [!] this method may not return, nil if it does
   # @raise [Puppet::ParseError] an evaluation error initialized from the arguments
   #
-  def runtime_issue(issue, options={})
+  def runtime_issue(issue, options = {})
     # Get position from puppet runtime stack
     file, line = Puppet::Pops::PuppetStack.top_of_stack
 

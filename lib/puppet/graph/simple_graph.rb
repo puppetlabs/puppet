@@ -477,7 +477,7 @@ class Puppet::Graph::SimpleGraph
   end
 
   # Output the dot format as a string
-  def to_dot(params={}) to_dot_graph(params).to_s; end
+  def to_dot(params = {}) to_dot_graph(params).to_s; end
 
   # Produce the graph files if requested.
   def write_graph(name)

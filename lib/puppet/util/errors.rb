@@ -41,7 +41,7 @@ module Puppet::Util::Errors
   # @param column [String] the column number for the error (nil or "",  for not known)
   # @return [String] description of file, line, and column
   #
-  def self.error_location(file, line=nil, column=nil)
+  def self.error_location(file, line = nil, column = nil)
     file = nil if (file.is_a?(String) && file.empty?)
     line = nil if (line.is_a?(String) && line.empty?)
     column = nil if (column.is_a?(String) && column.empty?)
@@ -69,7 +69,7 @@ module Puppet::Util::Errors
   # @param column [String] the column number for the error (nil or "",  for not known)
   # @return [String] description of file, line, and column
   #
-  def self.error_location_with_space(file, line=nil, column=nil)
+  def self.error_location_with_space(file, line = nil, column = nil)
     error_location_str = error_location(file, line, column)
     if error_location_str.empty?
       ''

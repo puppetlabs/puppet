@@ -224,7 +224,7 @@ class Puppet::Transaction::Report
   end
 
   # @api private
-  def initialize(configuration_version=nil, environment=nil, transaction_uuid=nil, job_id=nil, start_time=Time.now)
+  def initialize(configuration_version = nil, environment = nil, transaction_uuid = nil, job_id = nil, start_time = Time.now)
     @metrics = {}
     @logs = []
     @resource_statuses = {}

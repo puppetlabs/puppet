@@ -134,7 +134,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # the cache will be refreshed if refresh is true.
   #
   # @api private
-  def self.make_label_to_path_map(refresh=false)
+  def self.make_label_to_path_map(refresh = false)
     return @label_to_path_map if @label_to_path_map and not refresh
 
     @label_to_path_map = {}
@@ -160,7 +160,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # are found on the system. The key of the hash is the job id and the value
   # is the path to the file. If a label is passed, we return the job id and
   # path for that specific job.
-  def self.jobsearch(label=nil)
+  def self.jobsearch(label = nil)
     by_label = make_label_to_path_map
 
     if label

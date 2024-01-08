@@ -134,7 +134,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
     end
   end
 
-  def add_resource(res, parent_resource, priority=nil)
+  def add_resource(res, parent_resource, priority = nil)
     if @catalog.resource(res.ref).nil?
       res.merge_tags_from(parent_resource)
       if parent_resource.depthfirst?
@@ -157,7 +157,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
   # add correct edge for depth- or breadth- first traversal of
   # generated resource. Skip generating the edge if there is already
   # some sort of edge between the two resources.
-  def add_generated_directed_dependency(parent, child, label=nil)
+  def add_generated_directed_dependency(parent, child, label = nil)
     if parent.depthfirst?
       source = child
       target = parent
@@ -213,7 +213,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
 
   # Copy an important relationships from the parent to the newly-generated
   # child resource.
-  def add_conditional_directed_dependency(parent, child, label=nil)
+  def add_conditional_directed_dependency(parent, child, label = nil)
     @relationship_graph.add_vertex(child)
     edge = parent.depthfirst? ? [child, parent] : [parent, child]
     if @relationship_graph.edge?(*edge.reverse)

@@ -65,7 +65,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
   end
   protected :_close
 
-  def close(unlink_now=false)
+  def close(unlink_now = false)
     if unlink_now
       close!
     else

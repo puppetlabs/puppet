@@ -44,7 +44,7 @@ module Issues
     # in the given `hash`.
     # @api public
     #
-    def format(hash ={})
+    def format(hash = {})
       # Create a Message Data where all hash keys become methods for convenient interpolation
       # in issue text.
       msgdata = MessageData.new(*arg_names)

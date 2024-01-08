@@ -68,7 +68,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     excludes
   end
 
-  def self.get_services(exclude=[])
+  def self.get_services(exclude = [])
     instances = []
     execpipe("#{command(:initctl)} list") { |process|
       process.each_line { |line|

@@ -210,7 +210,7 @@ Puppet::Face.define(:module, '1.0.0') do
   #     │ └── bodepd-create_resources (v0.0.1)
   #     └── puppetlabs-sqlite (v0.0.1)
   #
-  def list_build_tree(list, ancestors=[], parent=nil, params={})
+  def list_build_tree(list, ancestors = [], parent = nil, params = {})
     list.map do |mod|
       next if @seen[(mod.forge_name or mod.name)]
 

@@ -191,7 +191,7 @@ module Validation
       @label_provider     = label_provider
     end
 
-    def accept(issue, semantic, arguments={}, except=nil)
+    def accept(issue, semantic, arguments = {}, except = nil)
       return unless will_accept? issue
 
       # Set label provider unless caller provided a special label provider
@@ -230,7 +230,7 @@ module Validation
     attr_reader :file
     attr_reader :source_pos
 
-    def initialize severity, issue, file, source_pos, arguments={}, exception=nil
+    def initialize severity, issue, file, source_pos, arguments = {}, exception = nil
       @severity = severity
       @issue = issue
       @file = file

@@ -58,7 +58,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   # @param line [String] one line of dpkg-query output
   # @return [Hash,nil] a hash of FIELDS or nil if we failed to match
   # @api private
-  def self.parse_line(line, regex=self::FIELDS_REGEX)
+  def self.parse_line(line, regex = self::FIELDS_REGEX)
     hash = nil
 
     match = regex.match(line)

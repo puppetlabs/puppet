@@ -73,7 +73,7 @@ class Puppet::Parser::ScriptCompiler
   # Create a script compiler for the given environment where errors are logged as coming
   # from the given node_name
   #
-  def initialize(environment, node_name, for_agent=false)
+  def initialize(environment, node_name, for_agent = false)
     @environment = environment
     @node_name = node_name
 

@@ -37,7 +37,7 @@ module Generators
   module MarkUp
     alias :old_markup :markup
 
-    def new_markup(str, remove_para=false)
+    def new_markup(str, remove_para = false)
       first = @markup.nil?
       res = old_markup(str, remove_para)
       if first and not @markup.nil?
@@ -378,7 +378,7 @@ module Generators
       @resources = list.collect {|m| HTMLPuppetResource.new(m, self, @options) }
     end
 
-    def build_resource_summary_list(path_prefix='')
+    def build_resource_summary_list(path_prefix = '')
       collect_resources unless @resources
       resources = @resources.sort
       res = []
@@ -889,7 +889,7 @@ module Generators
       @context.document_self
     end
 
-    def find_symbol(symbol, method=nil)
+    def find_symbol(symbol, method = nil)
       res = @context.parent.find_symbol(symbol, method)
       res && res.viewer
     end

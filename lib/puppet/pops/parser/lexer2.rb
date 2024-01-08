@@ -615,7 +615,7 @@ class Lexer2
     lex_string(string, nil)
   end
 
-  def lex_string(string, path=nil)
+  def lex_string(string, path = nil)
     initvars
     assert_not_bom(string)
     @scanner = StringScanner.new(string)

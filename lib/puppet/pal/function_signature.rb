@@ -27,7 +27,7 @@ module Pal
     # @return [Boolean] true if the function can be called with given args + block, and false otherwise
     # @api public
     #
-    def callable_with?(args, callable=nil)
+    def callable_with?(args, callable = nil)
       signatures = @func.dispatcher.to_type
       callables = signatures.is_a?(Puppet::Pops::Types::PVariantType) ? signatures.types : [signatures]
 

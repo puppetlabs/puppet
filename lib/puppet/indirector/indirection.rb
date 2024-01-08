@@ -193,7 +193,7 @@ class Puppet::Indirector::Indirection
   # Expire a cached object, if one is cached.  Note that we don't actually
   # remove it, we expire it and write it back out to disk.  This way people
   # can still use the expired object if they want.
-  def expire(key, options={})
+  def expire(key, options = {})
     request = request(:expire, key, nil, options)
 
     return nil unless cache? && !request.ignore_cache_save?
@@ -215,7 +215,7 @@ class Puppet::Indirector::Indirection
 
   # Search for an instance in the appropriate terminus, caching the
   # results if caching is configured..
-  def find(key, options={})
+  def find(key, options = {})
     request = request(:find, key, nil, options)
     terminus = prepare(request)
 
@@ -258,7 +258,7 @@ class Puppet::Indirector::Indirection
 
   # Search for an instance in the appropriate terminus, and return a
   # boolean indicating whether the instance was found.
-  def head(key, options={})
+  def head(key, options = {})
     request = request(:head, key, nil, options)
     terminus = prepare(request)
 
@@ -285,7 +285,7 @@ class Puppet::Indirector::Indirection
   end
 
   # Remove something via the terminus.
-  def destroy(key, options={})
+  def destroy(key, options = {})
     request = request(:destroy, key, nil, options)
     terminus = prepare(request)
 
@@ -300,7 +300,7 @@ class Puppet::Indirector::Indirection
   end
 
   # Search for more than one instance.  Should always return an array.
-  def search(key, options={})
+  def search(key, options = {})
     request = request(:search, key, nil, options)
     terminus = prepare(request)
 
@@ -319,7 +319,7 @@ class Puppet::Indirector::Indirection
 
   # Save the instance in the appropriate terminus.  This method is
   # normally an instance method on the indirected class.
-  def save(instance, key = nil, options={})
+  def save(instance, key = nil, options = {})
     request = request(:save, key, instance, options)
     terminus = prepare(request)
 

@@ -30,7 +30,7 @@ module RDoc
 
     attr_accessor :facts, :plugins
 
-    def initialize(name, superclass=nil)
+    def initialize(name, superclass = nil)
       @facts = []
       @plugins = []
       @nodes = {}
@@ -144,7 +144,7 @@ module RDoc
     # or class1::class2#method. Since our definitions are mapped to RDoc methods
     # but are written class1::class2::define we need to perform the lookup by
     # ourselves.
-    def find_symbol(symbol, method=nil)
+    def find_symbol(symbol, method = nil)
       result = super(symbol)
       if not result and symbol =~ /::/
         modules = symbol.split(/::/)

@@ -252,7 +252,7 @@ module Util
   label = '[^\\\\/]+'
   AbsolutePathWindows = %r!^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))!io
   AbsolutePathPosix   = %r!^/!
-  def absolute_path?(path, platform=nil)
+  def absolute_path?(path, platform = nil)
     unless path.is_a?(String)
       Puppet.warning("Cannot check if #{path} is an absolute path because it is a '#{path.class}' and not a String'")
       return false
@@ -469,7 +469,7 @@ module Util
   end
   module_function :uri_unescape
 
-  def safe_posix_fork(stdin=$stdin, stdout=$stdout, stderr=$stderr, &block)
+  def safe_posix_fork(stdin = $stdin, stdout = $stdout, stderr = $stderr, &block)
     child_pid = Kernel.fork do
       STDIN.reopen(stdin)
       STDOUT.reopen(stdout)

@@ -34,7 +34,7 @@ module LexerSupport
   end
 
   # Raises a Puppet::ParserErrorWithIssue with the given issue and arguments
-  def lex_error(issue, args = {}, pos=nil)
+  def lex_error(issue, args = {}, pos = nil)
     raise create_lex_error(issue, args, pos)
   end
 
@@ -51,7 +51,7 @@ module LexerSupport
     @locator.pos_on_line(pos || @scanner.pos)
   end
 
-  def lex_warning(issue, args = {}, pos=nil)
+  def lex_warning(issue, args = {}, pos = nil)
     Puppet::Util::Log.create({
                                :level => :warning,
                                :message => issue.format(args),

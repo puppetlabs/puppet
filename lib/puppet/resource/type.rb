@@ -153,7 +153,7 @@ class Puppet::Resource::Type
   # classes and nodes.  No parameters are be supplied--if this is a
   # parameterized class, then all parameters take on their default
   # values.
-  def ensure_in_catalog(scope, parameters=nil)
+  def ensure_in_catalog(scope, parameters = nil)
     resource_type =
       case type
       when :definition

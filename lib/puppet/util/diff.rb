@@ -27,7 +27,7 @@ module Puppet::Util::Diff
   # return diff string of two input strings
   # format defaults to unified
   # context defaults to 3 lines
-  def lcs_diff(data_old, data_new, format=:unified, context_lines=3)
+  def lcs_diff(data_old, data_new, format = :unified, context_lines = 3)
     unless Puppet.features.diff?
       Puppet.warning _("Cannot provide diff without the diff/lcs Ruby library")
       return ""

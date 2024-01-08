@@ -653,7 +653,7 @@ class PUnitType < PAnyType
 
   DEFAULT = PUnitType.new
 
-  def assignable?(o, guard=nil)
+  def assignable?(o, guard = nil)
     true
   end
 
@@ -1749,7 +1749,7 @@ class PRegexpType < PScalarType
     self.class == o.class && @pattern == o.pattern
   end
 
-  def instance?(o, guard=nil)
+  def instance?(o, guard = nil)
     o.is_a?(Regexp) && @pattern.nil? || regexp == o
   end
 
@@ -2445,7 +2445,7 @@ class PCallableType < PAnyType
     required_callable_t.assignable?(self, guard)
   end
 
-  def kind_of_callable?(optional=true, guard = nil)
+  def kind_of_callable?(optional = true, guard = nil)
     true
   end
 
@@ -3267,7 +3267,7 @@ class POptionalType < PTypeWithContainedType
     @type
   end
 
-  def kind_of_callable?(optional=true, guard = nil)
+  def kind_of_callable?(optional = true, guard = nil)
     optional && !@type.nil? && @type.kind_of_callable?(optional, guard)
   end
 
@@ -3412,7 +3412,7 @@ class PTypeAliasType < PAnyType
     resolved_type.check_self_recursion(originator) unless originator.equal?(self)
   end
 
-  def kind_of_callable?(optional=true, guard = nil)
+  def kind_of_callable?(optional = true, guard = nil)
     guarded_recursion(guard, false) { |g| resolved_type.kind_of_callable?(optional, g) }
   end
 

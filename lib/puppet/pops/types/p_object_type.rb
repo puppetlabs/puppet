@@ -931,7 +931,7 @@ class PObjectType < PMetaType
     @name.nil? ? [@parent, @type_parameters, @attributes, @functions].hash : @name.hash
   end
 
-  def kind_of_callable?(optional=true, guard = nil)
+  def kind_of_callable?(optional = true, guard = nil)
     @parent.nil? ? false : @parent.kind_of_callable?(optional, guard)
   end
 

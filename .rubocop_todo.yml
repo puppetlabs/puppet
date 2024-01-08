@@ -23,12 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: space, no_space
-Layout/SpaceAroundEqualsInParameterDefault:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/SpaceAroundKeyword:
   Exclude:
     - 'lib/puppet/functions/max.rb'

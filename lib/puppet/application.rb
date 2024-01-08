@@ -501,7 +501,7 @@ class Application
   #   to log. Intended to be passed to super by subclasses.
   # @return [void]
   # @api public
-  def log_runtime_environment(extra_info=nil)
+  def log_runtime_environment(extra_info = nil)
     runtime_info = {
       'puppet_version' => Puppet.version,
       'ruby_version' => RUBY_VERSION,

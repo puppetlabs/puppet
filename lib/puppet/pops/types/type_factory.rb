@@ -604,7 +604,7 @@ module TypeFactory
   # Generic creator of a RuntimeType - allows creating the type with nil or
   # String runtime_type_name.  Also see ruby_type(o) and ruby(o).
   #
-  def self.runtime(runtime=nil, runtime_type_name = nil)
+  def self.runtime(runtime = nil, runtime_type_name = nil)
     runtime = runtime.to_sym if runtime.is_a?(String)
     PRuntimeType.new(runtime, runtime_type_name)
   end

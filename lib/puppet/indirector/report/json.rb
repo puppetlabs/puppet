@@ -9,7 +9,7 @@ class Puppet::Transaction::Report::Json < Puppet::Indirector::JSON
   desc "Store last report as a flat file, serialized using JSON."
 
   # Force report to be saved there
-  def path(name, ext='.json')
+  def path(name, ext = '.json')
     Puppet[:lastrunreport]
   end
 

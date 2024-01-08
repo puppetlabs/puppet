@@ -8,7 +8,7 @@ module Puppet::Scheduler
 
   module_function
 
-  def create_job(interval, splay=false, splay_limit=0, &block)
+  def create_job(interval, splay = false, splay_limit = 0, &block)
     if splay
       Puppet::Scheduler::SplayJob.new(interval, splay_limit, &block)
     else

@@ -58,7 +58,7 @@ module EppSupport
     yield [false, false]
   end
 
-  def interpolate_epp(skip_leading=false)
+  def interpolate_epp(skip_leading = false)
     scn = @scanner
     ctx = @lexing_context
     eppscanner = EppScanner.new(scn)
@@ -178,7 +178,7 @@ module EppSupport
     #
     # @return [String, nil] the scanned and processed text, or nil if at the end of the input.
     #
-    def scan(skip_leading=false)
+    def scan(skip_leading = false)
       @mode = :text
       @skip_leading = skip_leading
 

@@ -62,7 +62,7 @@ module Puppet::Util::SUIDManager
   # Runs block setting euid and egid if provided then restoring original ids.
   # If running on Windows or without root, the block will be run with the
   # current euid/egid.
-  def asuser(new_uid=nil, new_gid=nil)
+  def asuser(new_uid = nil, new_gid = nil)
     return yield if Puppet::Util::Platform.windows?
     return yield unless root?
     return yield unless new_uid or new_gid
@@ -83,7 +83,7 @@ module Puppet::Util::SUIDManager
   # the primary group of the supplied gid will be used. If only gid is
   # supplied, only gid will be changed. This method will fail if used on
   # Windows.
-  def change_privileges(uid=nil, gid=nil, permanently=false)
+  def change_privileges(uid = nil, gid = nil, permanently = false)
     return unless uid or gid
 
     unless gid
@@ -99,7 +99,7 @@ module Puppet::Util::SUIDManager
   # Changes the egid of the process if `permanently` is not set, otherwise
   # changes gid. This method will fail if used on Windows, or attempting to
   # change to a different gid without root.
-  def change_group(group, permanently=false)
+  def change_group(group, permanently = false)
     gid = convert_xid(:gid, group)
     raise Puppet::Error, _("No such group %{group}") % { group: group } unless gid
 
@@ -115,7 +115,7 @@ module Puppet::Util::SUIDManager
 
   # As change_group, but operates on uids. If changing user permanently,
   # supplementary groups will be set the to default groups for the new uid.
-  def change_user(user, permanently=false)
+  def change_user(user, permanently = false)
     uid = convert_xid(:uid, user)
     raise Puppet::Error, _("No such user %{user}") % { user: user } unless uid
 

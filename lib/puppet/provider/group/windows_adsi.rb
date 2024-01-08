@@ -11,7 +11,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
 
   has_features :manages_members
 
-  def initialize(value={})
+  def initialize(value = {})
     super(value)
     @deleted = false
   end
