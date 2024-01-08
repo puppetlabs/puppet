@@ -7,7 +7,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     and not `apt`, you must specify the source of any packages you want
     to manage."
 
-  has_feature :holdable, :virtual_packages
+  has_feature :holdable, :virtual_packages, :install_options
   commands :dpkg => "/usr/bin/dpkg"
   commands :dpkg_deb => "/usr/bin/dpkg-deb"
   commands :dpkgquery => "/usr/bin/dpkg-query"
@@ -93,6 +93,10 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     end
 
     args = []
+
+    if @resource[:install_options]
+      args << @resource[:install_options]
+    end
 
     if @resource[:configfiles] == :keep
       args << '--force-confold'
