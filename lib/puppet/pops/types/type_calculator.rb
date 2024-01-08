@@ -386,7 +386,7 @@ class TypeCalculator
     end
 
     if t1.is_a?(PStringType) && (t2.is_a?(PStringType) || t2.is_a?(PEnumType))
-      if(t2.is_a?(PEnumType))
+      if (t2.is_a?(PEnumType))
         return t1.value.nil? ? PEnumType::DEFAULT : PEnumType.new(t2.values | [t1.value])
       end
 
@@ -465,7 +465,7 @@ class TypeCalculator
       c2 = ClassLoader.provide_from_type(t2)
       if c1 && c2
         c2_superclasses = superclasses(c2)
-        superclasses(c1).each do|c1_super|
+        superclasses(c1).each do |c1_super|
           c2_superclasses.each do |c2_super|
             if c1_super == c2_super
               return PRuntimeType.new(:ruby, c1_super.name)

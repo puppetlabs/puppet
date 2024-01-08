@@ -105,7 +105,7 @@ class HieraConfig
   end
 
   def self.symkeys_to_string(struct)
-    case(struct)
+    case (struct)
     when Hash
       map = {}
       struct.each_pair {|k, v| map[ k.is_a?(Symbol) ? k.to_s : k] = symkeys_to_string(v) }
@@ -690,7 +690,7 @@ class HieraConfigV5 < HieraConfig
 
       options = he[KEY_OPTIONS] || defaults[KEY_OPTIONS]
       options = options.nil? ? EMPTY_HASH : interpolate(options, lookup_invocation, false)
-      if(function_kind == KEY_V3_BACKEND)
+      if (function_kind == KEY_V3_BACKEND)
         v3options = { :datadir => entry_datadir.to_s }
         options.each_pair { |k, v| v3options[k.to_sym] = v }
         data_providers[name] =

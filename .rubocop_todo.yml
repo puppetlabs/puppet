@@ -23,21 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Layout/SpaceAroundKeyword:
-  Exclude:
-    - 'lib/puppet/functions/max.rb'
-    - 'lib/puppet/functions/min.rb'
-    - 'lib/puppet/pops/evaluator/evaluator_impl.rb'
-    - 'lib/puppet/pops/lookup/global_data_provider.rb'
-    - 'lib/puppet/pops/lookup/hiera_config.rb'
-    - 'lib/puppet/pops/parser/slurp_support.rb'
-    - 'lib/puppet/pops/types/p_object_type.rb'
-    - 'lib/puppet/pops/types/type_calculator.rb'
-    - 'lib/puppet/pops/validation/checker4_0.rb'
-    - 'lib/puppet/util/diff.rb'
-    - 'lib/puppet/util/windows/daemon.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/SpaceAroundMethodCallOperator:
   Exclude:
     - 'lib/puppet/network/formats.rb'
