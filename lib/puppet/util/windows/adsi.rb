@@ -35,7 +35,7 @@ module Puppet::Util::Windows::ADSI
       begin
         WIN32OLE.connect(uri)
       rescue WIN32OLERuntimeError => e
-        raise Puppet::Error.new( _("ADSI connection error: %{e}") % { e: e }, e )
+        raise Puppet::Error.new(_("ADSI connection error: %{e}") % { e: e }, e)
       end
     end
 
@@ -72,7 +72,7 @@ module Puppet::Util::Windows::ADSI
       "WinNT://#{host}"
     end
 
-    def wmi_resource_uri( host = '.' )
+    def wmi_resource_uri(host = '.')
       "winmgmts:{impersonationLevel=impersonate}!//#{host}/root/cimv2"
     end
 
@@ -97,7 +97,7 @@ module Puppet::Util::Windows::ADSI
     # used for IAdsGroup::Add / IAdsGroup::Remove.  These URIs are not useable
     # to resolve an account with WIN32OLE.connect
     def sid_uri(sid)
-      raise Puppet::Error.new( _("Must use a valid SID::Principal") ) if !sid.kind_of?(Puppet::Util::Windows::SID::Principal)
+      raise Puppet::Error.new(_("Must use a valid SID::Principal")) if !sid.kind_of?(Puppet::Util::Windows::SID::Principal)
 
       "WinNT://#{sid.sid}"
     end
@@ -162,7 +162,7 @@ module Puppet::Util::Windows::ADSI
 
       def parse_name(name)
         if name =~ /\//
-          raise Puppet::Error.new( _("Value must be in DOMAIN\\%{object_class} style syntax") % { object_class: @object_class } )
+          raise Puppet::Error.new(_("Value must be in DOMAIN\\%{object_class} style syntax") % { object_class: @object_class })
         end
 
         matches = name.scan(/((.*)\\)?(.*)/)
@@ -195,7 +195,7 @@ module Puppet::Util::Windows::ADSI
 
         sids = names.map do |name|
           sid = Puppet::Util::Windows::SID.name_to_principal(name, allow_unresolved)
-          raise Puppet::Error.new( _("Could not resolve name: %{name}") % { name: name } ) if !sid
+          raise Puppet::Error.new(_("Could not resolve name: %{name}") % { name: name }) if !sid
 
           [sid.sid, sid]
         end
@@ -297,7 +297,7 @@ module Puppet::Util::Windows::ADSI
           )
         end
 
-        raise Puppet::Error.new( _("%{object_class} update failed: %{error}") % { object_class: object_class.capitalize, error: e }, e )
+        raise Puppet::Error.new(_("%{object_class} update failed: %{error}") % { object_class: object_class.capitalize, error: e }, e)
       end
       self
     end
@@ -609,7 +609,7 @@ module Puppet::Util::Windows::ADSI
 
       def create(name)
         # Windows error 2224: The account already exists.
-        raise Puppet::Error.new( _("Cannot create group if user '%{name}' exists.") % { name: name } ) if Puppet::Util::Windows::ADSI::User.exists?(name)
+        raise Puppet::Error.new(_("Cannot create group if user '%{name}' exists.") % { name: name }) if Puppet::Util::Windows::ADSI::User.exists?(name)
 
         new(name, Puppet::Util::Windows::ADSI.create(name, @object_class))
       end

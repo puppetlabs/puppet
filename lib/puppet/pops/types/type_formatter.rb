@@ -194,7 +194,7 @@ class TypeFormatter
 
   # @api private
   def string_PFloatType(t)
-    append_array('Float', t.unbounded? ) { append_elements(range_array_part(t)) }
+    append_array('Float', t.unbounded?) { append_elements(range_array_part(t)) }
   end
 
   # @api private
@@ -335,7 +335,7 @@ class TypeFormatter
   # @api private
   def string_PCollectionType(t)
     range = range_array_part(t.size_type)
-    append_array('Collection', range.empty? ) { append_elements(range) }
+    append_array('Collection', range.empty?) { append_elements(range) }
   end
 
   def string_Object(t)

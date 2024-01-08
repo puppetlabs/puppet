@@ -11,7 +11,7 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
     false
   end
 
-  def find( request )
+  def find(request)
     # find by name
     res   = type(request).instances.find { |o| o.name == resource_name(request) }
     res ||= type(request).new(:name => resource_name(request), :audit => type(request).properties.collect { |s| s.name })
@@ -19,7 +19,7 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
     res.to_resource
   end
 
-  def search( request )
+  def search(request)
     conditions = request.options.dup
     conditions[:name] = resource_name(request) if resource_name(request)
 
@@ -35,7 +35,7 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
     end.sort_by(&:title)
   end
 
-  def save( request )
+  def save(request)
     # In RAL-land, to "save" means to actually try to change machine state
     res = request.instance
     ral_res = res.to_ral
@@ -53,16 +53,16 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
   # File["/etc/hosts"]. To handle, assume the type name does
   # _not_ have any slashes in it, and split only on the first.
 
-  def type_name( request )
+  def type_name(request)
     request.key.split('/', 2)[0]
   end
 
-  def resource_name( request )
+  def resource_name(request)
     name = request.key.split('/', 2)[1]
     name unless name == ""
   end
 
-  def type( request )
+  def type(request)
     Puppet::Type.type(type_name(request)) or raise Puppet::Error, _("Could not find type %{request_type}") % { request_type: type_name(request) }
   end
 end

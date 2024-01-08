@@ -116,12 +116,12 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
         end
         return :true
       rescue Puppet::ExecutionFailure => detail
-        raise Puppet::Error.new("Unable to restart service #{@resource[:name]}, error was: #{detail}", detail )
+        raise Puppet::Error.new("Unable to restart service #{@resource[:name]}, error was: #{detail}", detail)
       end
     end
     self.fail("No such service found")
   rescue Puppet::ExecutionFailure => detail
-    raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}", detail )
+    raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}", detail)
   end
 
   def status

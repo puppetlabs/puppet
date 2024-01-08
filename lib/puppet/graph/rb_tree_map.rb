@@ -300,15 +300,15 @@ class Puppet::Graph::RbTreeMap
 
   def delete_recursive(node, key)
     if (key <=> node.key) == -1
-      node.move_red_left if ( !isred(node.left) && !isred(node.left.left) )
+      node.move_red_left if (!isred(node.left) && !isred(node.left.left))
       node.left, result = delete_recursive(node.left, key)
     else
       node.rotate_right if isred(node.left)
-      if ( ( (key <=> node.key) == 0) && node.right.nil? )
+      if (((key <=> node.key) == 0) && node.right.nil?)
         return nil, node.value
       end
 
-      if ( !isred(node.right) && !isred(node.right.left) )
+      if (!isred(node.right) && !isred(node.right.left))
         node.move_red_right
       end
       if (key <=> node.key) == 0
@@ -329,7 +329,7 @@ class Puppet::Graph::RbTreeMap
       return nil, node.value
     end
 
-    if ( !isred(node.left) && !isred(node.left.left) )
+    if (!isred(node.left) && !isred(node.left.left))
       node.move_red_left
     end
     node.left, result = delete_min_recursive(node.left)
@@ -343,7 +343,7 @@ class Puppet::Graph::RbTreeMap
     end
     return nil, node.value if node.right.nil?
 
-    if ( !isred(node.right) && !isred(node.right.left) )
+    if (!isred(node.right) && !isred(node.right.left))
       node.move_red_right
     end
     node.right, result = delete_max_recursive(node.right)

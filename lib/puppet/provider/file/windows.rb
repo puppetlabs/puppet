@@ -124,7 +124,7 @@ Puppet::Type.type(:file).provide :windows do
           # Since the group is LocalSystem, and the permissions are FullControl,
           # replace the value returned with the value expected. This will treat
           # this specific situation as "insync"
-          current = ( (current.to_i(8) & mode_part['remove_mask']) | mode_part['should_mask'] ).to_s(8).rjust(4, '0')
+          current = ((current.to_i(8) & mode_part['remove_mask']) | mode_part['should_mask']).to_s(8).rjust(4, '0')
         else
           # If the SYSTEM account does _not_ have FullControl in this scenario, we should
           # force the resource out of sync no matter what.

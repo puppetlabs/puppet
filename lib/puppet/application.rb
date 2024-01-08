@@ -109,7 +109,7 @@ class Application
   require_relative '../puppet/util'
   include Puppet::Util
 
-  DOCPATTERN = ::File.expand_path(::File.dirname(__FILE__) + "/util/command_line/*" )
+  DOCPATTERN = ::File.expand_path(::File.dirname(__FILE__) + "/util/command_line/*")
   CommandLineArgs = Struct.new(:subcommand_name, :args)
 
   @loader = Puppet::Util::Autoload.new(self, 'puppet/application')
@@ -178,7 +178,7 @@ class Application
 
     # used to declare code that handle an option
     def option(*options, &block)
-      long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1' ).tr('-', '_')
+      long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1').tr('-', '_')
       fname = "handle_#{long}".intern
       if (block_given?)
         define_method(fname, &block)

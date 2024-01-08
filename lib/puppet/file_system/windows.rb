@@ -114,8 +114,8 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
   end
 
   def read_preserve_line_endings(path)
-    contents = path.read( :mode => 'rb', :encoding => 'bom|utf-8')
-    contents = path.read( :mode => 'rb', :encoding => "bom|#{Encoding::default_external.name}") unless contents.valid_encoding?
+    contents = path.read(:mode => 'rb', :encoding => 'bom|utf-8')
+    contents = path.read(:mode => 'rb', :encoding => "bom|#{Encoding::default_external.name}") unless contents.valid_encoding?
     contents = path.read unless contents.valid_encoding?
 
     contents

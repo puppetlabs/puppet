@@ -136,14 +136,14 @@ class Puppet::Module
         last_char = file[-1] == '/'
         if File.directory?(path)
           unless last_char
-            msg = _("Directories specified in task metadata must include a trailing slash: %{dir}" % { dir: file } )
+            msg = _("Directories specified in task metadata must include a trailing slash: %{dir}" % { dir: file })
             raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
           end
           dir_files = Dir.glob("#{path}**/*").select { |f| File.file?(f) }
           dir_files.map { |f| get_file_details(f, pup_module) }
         else
           if last_char
-            msg = _("Files specified in task metadata cannot include a trailing slash: %{file}" % { file: file } )
+            msg = _("Files specified in task metadata cannot include a trailing slash: %{file}" % { file: file })
             raise InvalidMetadata.new(msg, 'puppet.task/invalid-metadata')
           end
           get_file_details(path, pup_module)
@@ -172,7 +172,7 @@ class Puppet::Module
           path = executables.find { |real_impl| File.basename(real_impl) == impl['name'] }
           unless path
             msg = _("Task metadata for task %{name} specifies missing implementation %{implementation}" % { name: name, implementation: impl['name'] })
-            raise InvalidTask.new(msg, 'puppet.tasks/missing-implementation', { missing: [impl['name']] } )
+            raise InvalidTask.new(msg, 'puppet.tasks/missing-implementation', { missing: [impl['name']] })
           end
           { "name" => impl['name'], "path" => path }
         end

@@ -16,7 +16,7 @@ class Puppet::HTTP::Resolver::ServerList < Puppet::HTTP::Resolver
   #   used to resolve. If a service is not included in this array, this resolver
   #   will return nil.
   #
-  def initialize(client, server_list_setting:, default_port:, services: )
+  def initialize(client, server_list_setting:, default_port:, services:)
     @client = client
     @server_list_setting = server_list_setting
     @default_port = default_port

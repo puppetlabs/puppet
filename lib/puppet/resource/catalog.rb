@@ -85,7 +85,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # Returns [typename, title] when given a String with "Type[title]".
   # Returns [nil, nil] if '[' ']' not detected.
   #
-  def title_key_for_ref( ref )
+  def title_key_for_ref(ref)
     s = ref.index('[')
     e = ref.rindex(']')
     if s && e && e > s
@@ -395,7 +395,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   def resource_refs
-    resource_keys.collect { |type, name| name.is_a?( String ) ? "#{type}[#{name}]" : nil }.compact
+    resource_keys.collect { |type, name| name.is_a?(String) ? "#{type}[#{name}]" : nil }.compact
   end
 
   def resource_keys

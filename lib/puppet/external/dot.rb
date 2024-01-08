@@ -165,7 +165,7 @@ module DOT
     end
 
     def to_s
-      ( @name && @name != "" ? "<#{@name}>" : "" ) + "#{@label}"
+      (@name && @name != "" ? "<#{@name}>" : "") + "#{@label}"
     end
   end
 
@@ -204,14 +204,14 @@ module DOT
             t + $tab2 + "#{stringify(@options['label'])}| \\\n" +
             @ports.collect { |i|
               t + $tab2 + i.to_s
-            }.join( "| \\\n" ) + " \\\n" +
+            }.join("| \\\n") + " \\\n" +
             t + $tab + '"' + "\n"
 
       t + "#{@name} [\n" +
         @options.to_a.collect { |i|
           i[1] && i[0] != 'label' ?
             t + $tab + "#{i[0]} = #{i[1]}" : nil
-        }.compact.join( ",\n" ) + ( label != '' ? ",\n" : "\n" ) +
+        }.compact.join(",\n") + (label != '' ? ",\n" : "\n") +
         label +
         t + "]\n"
     end
@@ -242,7 +242,7 @@ module DOT
     end
 
     def push(thing)
-      @nodes.push( thing )
+      @nodes.push(thing)
     end
 
     def pop
@@ -256,11 +256,11 @@ module DOT
         val && name != 'label' ?
           t + $tab + "#{name} = #{val}" :
           name ? t + $tab + "#{name} = \"#{val}\"" : nil
-      }.compact.join( "\n" ) + "\n"
+      }.compact.join("\n") + "\n"
 
       nodes = @nodes.collect { |i|
-        i.to_s( t + $tab )
-      }.join( "\n" ) + "\n"
+        i.to_s(t + $tab)
+      }.join("\n") + "\n"
       hdr + options + nodes + t + "}\n"
     end
   end
@@ -295,7 +295,7 @@ module DOT
           i[1] && i[0] != 'label' ?
             t + $tab + "#{i[0]} = #{i[1]}" :
             i[1] ? t + $tab + "#{i[0]} = \"#{i[1]}\"" : nil
-        }.compact.join( "\n" ) + "\n#{t}]\n"
+        }.compact.join("\n") + "\n#{t}]\n"
     end
   end
 

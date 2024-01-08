@@ -116,13 +116,13 @@ class Puppet::Parser::Compiler
   def_delegator :@catalog, :classes, :classlist
 
   def with_context_overrides(description = '', &block)
-    Puppet.override( @context_overrides, description, &block)
+    Puppet.override(@context_overrides, description, &block)
   end
 
   # Compiler our catalog.  This mostly revolves around finding and evaluating classes.
   # This is the main entry into our catalog.
   def compile
-    Puppet.override( @context_overrides, _("For compiling %{node}") % { node: node.name }) do
+    Puppet.override(@context_overrides, _("For compiling %{node}") % { node: node.name }) do
       @catalog.environment_instance = environment
 
       # Set the client's parameters into the top scope.
@@ -531,7 +531,7 @@ class Puppet::Parser::Compiler
     # It cannot survive the initvars method, and is later reinstated
     # as part of compiling...
     #
-    Puppet.override( @context_overrides, _("For initializing compiler")) do
+    Puppet.override(@context_overrides, _("For initializing compiler")) do
       # THE MAGIC STARTS HERE ! This triggers parsing, loading etc.
       @catalog.version = environment.known_resource_types.version
       @loaders.pre_load

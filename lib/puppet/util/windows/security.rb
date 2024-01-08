@@ -387,7 +387,7 @@ module Puppet::Util::Windows::Security
 
     # if any ACE allows write, then clear readonly bit, but do this before we overwrite
     # the DACl and lose our ability to set the attribute
-    if ((owner_allow | group_allow | other_allow ) & FILE::FILE_WRITE_DATA) == FILE::FILE_WRITE_DATA
+    if ((owner_allow | group_allow | other_allow) & FILE::FILE_WRITE_DATA) == FILE::FILE_WRITE_DATA
       FILE.remove_attributes(path, FILE::FILE_ATTRIBUTE_READONLY)
     end
 

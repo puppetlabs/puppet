@@ -132,7 +132,7 @@ class Puppet::Interface::Action
     # retrieve it, to rotate through the dance of getting a suitable method
     # object out of the whole process. --daniel 2011-04-18
     @when_rendering[type] =
-      @face.__send__( :__add_method, __render_method_name_for(type), proc)
+      @face.__send__(:__add_method, __render_method_name_for(type), proc)
   end
 
   # @return [void]

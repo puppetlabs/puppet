@@ -224,7 +224,7 @@ class Puppet::Resource
   end
 
   def include?(parameter)
-    super || parameters.keys.include?( parameter_name(parameter) )
+    super || parameters.keys.include?(parameter_name(parameter))
   end
 
   %w{exported virtual strict}.each do |m|

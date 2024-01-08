@@ -520,7 +520,7 @@ module Puppet::Util::Windows
               bytes_pointer
             )
             if success == FFI::WIN32_FALSE
-              raise Puppet::Util::Windows::Error.new(_("Service query for %{parameter_name} failed") % { parameter_name: SERVICE_CONFIG_TYPES[info_level] } )
+              raise Puppet::Util::Windows::Error.new(_("Service query for %{parameter_name} failed") % { parameter_name: SERVICE_CONFIG_TYPES[info_level] })
             end
 
             yield config
@@ -544,7 +544,7 @@ module Puppet::Util::Windows
             value,  # lpInfo
           )
           if success == FFI::WIN32_FALSE
-            raise Puppet::Util::windows::Error.new(_("Failed to update service %{change} configuration") % { change: change } )
+            raise Puppet::Util::windows::Error.new(_("Failed to update service %{change} configuration") % { change: change })
           end
         end
       end

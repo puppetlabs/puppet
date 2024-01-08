@@ -1869,7 +1869,7 @@ class Type
         # its indentation with scrub. But we don't need to manually scrub the
         # provider's doc string, since markdown_definitionlist sanitizes its inputs.
         scrub(@doc) + "Available providers are:\n\n" + parenttype.providers.sort_by(&:to_s).collect { |i|
-          markdown_definitionlist( i, scrub(parenttype().provider(i).doc) )
+          markdown_definitionlist(i, scrub(parenttype().provider(i).doc))
         }.join
       end
 

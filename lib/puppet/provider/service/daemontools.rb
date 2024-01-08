@@ -122,7 +122,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
         return :running
       end
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error.new( "Could not get status for service #{resource.ref}: #{detail}", detail)
+      raise Puppet::Error.new("Could not get status for service #{resource.ref}: #{detail}", detail)
     end
     :stopped
   end
@@ -134,7 +134,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
       system("#{command}")
     end
   rescue Puppet::ExecutionFailure => detail
-    raise Puppet::Error.new( "Cannot config #{self.service} to enable it: #{detail}", detail)
+    raise Puppet::Error.new("Cannot config #{self.service} to enable it: #{detail}", detail)
   end
 
   def enabled?
@@ -160,7 +160,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
       end
     end
   rescue Puppet::ExecutionFailure
-    raise Puppet::Error.new( "No daemon directory found for #{self.service}", $!)
+    raise Puppet::Error.new("No daemon directory found for #{self.service}", $!)
   end
 
   def disable
@@ -176,7 +176,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
         end
       end
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new( "No daemon directory found for #{self.service}", $!)
+      raise Puppet::Error.new("No daemon directory found for #{self.service}", $!)
     end
     self.stop
   end

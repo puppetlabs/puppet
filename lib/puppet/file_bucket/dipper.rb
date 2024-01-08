@@ -177,7 +177,7 @@ class Puppet::FileBucket::Dipper
 
   private
 
-  def absolutize_path( path )
+  def absolutize_path(path)
     Pathname.new(path).realpath
   end
 end

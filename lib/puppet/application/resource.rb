@@ -231,9 +231,9 @@ class Puppet::Application::Resource < Puppet::Application
     Puppet.override(stringify_rich: true) do
       if name
         if params.empty?
-          [Puppet::Resource.indirection.find( key )]
+          [Puppet::Resource.indirection.find(key)]
         else
-          resource = Puppet::Resource.new( type, name, :parameters => params )
+          resource = Puppet::Resource.new(type, name, :parameters => params)
 
           # save returns [resource that was saved, transaction log from applying the resource]
           save_result = Puppet::Resource.indirection.save(resource, key)
@@ -244,7 +244,7 @@ class Puppet::Application::Resource < Puppet::Application
           raise _("Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc")
         end
 
-        Puppet::Resource.indirection.search( key, {} )
+        Puppet::Resource.indirection.search(key, {})
       end
     end
   end

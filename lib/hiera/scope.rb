@@ -46,7 +46,7 @@ class Hiera
         # do nothing
       when :warning
         Puppet.warn_once(Puppet::Parser::Scope::UNDEFINED_VARIABLES_KIND, _("Variable: %{name}") % { name: key },
-                         _("Undefined variable '%{name}'; %{reason}") % { name: key, reason: reason } )
+                         _("Undefined variable '%{name}'; %{reason}") % { name: key, reason: reason })
       when :error
         raise ArgumentError, _("Undefined variable '%{name}'; %{reason}") % { name: key, reason: reason }
       end

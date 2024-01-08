@@ -622,7 +622,7 @@ module Generators
         res["full_path"]     = full_path
         res["full_path_url"] = aref_to(f.viewer.path) if f.document_self
 
-        res["cvsurl"] = cvs_url( @options.webcvs, full_path ) if @options.webcvs
+        res["cvsurl"] = cvs_url(@options.webcvs, full_path) if @options.webcvs
 
         files << res
       end
@@ -801,7 +801,7 @@ module Generators
         res["full_path"]     = full_path
         res["full_path_url"] = aref_to(f.viewer.path) if f.document_self
 
-        res["cvsurl"] = cvs_url( @options.webcvs, full_path ) if @options.webcvs
+        res["cvsurl"] = cvs_url(@options.webcvs, full_path) if @options.webcvs
 
         files << res
       end

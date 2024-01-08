@@ -65,7 +65,7 @@ module Puppet::Util::Plist
 
       begin
         if plist_data =~ bad_xml_doctype
-          plist_data.gsub!( bad_xml_doctype, plist_xml_doctype )
+          plist_data.gsub!(bad_xml_doctype, plist_xml_doctype)
           Puppet.debug("Had to fix plist with incorrect DOCTYPE declaration: #{file_path}")
         end
       rescue ArgumentError => e

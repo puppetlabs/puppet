@@ -54,7 +54,7 @@ module Puppet
       #
       # @todo this code duplicates {Puppet::Settings#which\_configuration\_file}
       #   as described in {https://projects.puppetlabs.com/issues/16637 #16637}
-      def which_dir( system, user )
+      def which_dir(system, user)
         if Puppet.features.root?
           File.expand_path(system)
         else

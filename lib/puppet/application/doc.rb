@@ -116,7 +116,7 @@ class Puppet::Application::Doc < Puppet::Application
     HELP
   end
 
-  def handle_unknown( opt, arg )
+  def handle_unknown(opt, arg)
     @unknown_args << { :opt => opt, :arg => arg }
     true
   end

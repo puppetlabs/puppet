@@ -80,14 +80,14 @@ module Runtime3Support
     # TODO: Improve the messy implementation in Scope.
     #
     if name == "server_facts"
-      fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, { :name => name } )
+      fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, { :name => name })
     end
 
     if scope.bound?(name)
       if Puppet::Parser::Scope::RESERVED_VARIABLE_NAMES.include?(name)
-        fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, { :name => name } )
+        fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, { :name => name })
       else
-        fail(Issues::ILLEGAL_REASSIGNMENT, o, { :name => name } )
+        fail(Issues::ILLEGAL_REASSIGNMENT, o, { :name => name })
       end
     end
     scope.setvar(name, value)
@@ -375,7 +375,7 @@ module Runtime3Support
     evaluated_parameters = evaluated_parameters.flatten
     evaluated_resources.each do |r|
       unless r.is_a?(Types::PResourceType) && r.type_name != 'class'
-        fail(Issues::ILLEGAL_OVERRIDDEN_TYPE, o, { :actual => r } )
+        fail(Issues::ILLEGAL_OVERRIDDEN_TYPE, o, { :actual => r })
       end
 
       t = Runtime3ResourceSupport.find_resource_type(scope, r.type_name)
