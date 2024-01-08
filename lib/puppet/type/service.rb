@@ -305,7 +305,7 @@ module Puppet
 
     validate do
       if @parameters[:logonpassword] && @parameters[:logonaccount].nil?
-        raise Puppet::Error.new(_"The 'logonaccount' parameter is mandatory when setting 'logonpassword'.")
+        raise Puppet::Error.new(_("The 'logonaccount' parameter is mandatory when setting 'logonpassword'."))
       end
     end
   end
