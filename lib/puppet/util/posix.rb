@@ -204,4 +204,3 @@ module Puppet::Util::POSIX
     end
   end
 end
-

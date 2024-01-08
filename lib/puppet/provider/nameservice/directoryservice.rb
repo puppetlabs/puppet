@@ -519,4 +519,3 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     @property_value_cache_hash
   end
 end
-

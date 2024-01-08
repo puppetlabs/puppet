@@ -138,4 +138,3 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
   def stopcmd
   end
 end
-

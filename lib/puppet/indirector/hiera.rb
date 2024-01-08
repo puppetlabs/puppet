@@ -99,4 +99,3 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
     self.class.hiera
   end
 end
-

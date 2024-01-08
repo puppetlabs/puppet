@@ -47,4 +47,3 @@ module TypeAsserter
   private_class_method :report_type_mismatch
 end
 end
-

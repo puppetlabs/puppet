@@ -16,4 +16,3 @@ class Puppet::Confine::Feature < Puppet::Confine
     "feature #{value} is missing"
   end
 end
-

@@ -80,4 +80,3 @@ class Puppet::Util::Profiler::Aggregate < Puppet::Util::Profiler::WallClock
     end
   end
 end
-

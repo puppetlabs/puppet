@@ -140,4 +140,3 @@ module Puppet
     defaultto { self.retrieve_default_context(:selrange) }
   end
 end
-

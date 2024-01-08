@@ -138,4 +138,3 @@ module Puppet::Network::FormatSupport
   # If the method exists it will be called from to_msgpack and other serialization methods.
   # @return [Hash]
 end
-

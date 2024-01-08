@@ -221,4 +221,3 @@ module Puppet::Util::ClassGen
     end
   end
 end
-

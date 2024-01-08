@@ -91,4 +91,3 @@ module Puppet::Parser::Functions
     Error.is4x('hiera_array')
   end
 end
-

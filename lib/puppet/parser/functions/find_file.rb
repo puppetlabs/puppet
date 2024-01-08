@@ -27,4 +27,3 @@ Puppet::Parser::Functions::newfunction(
 ) do |_args|
   Puppet::Parser::Functions::Error.is4x('find_file')
 end
-

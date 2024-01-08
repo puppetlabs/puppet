@@ -34,4 +34,3 @@ class Puppet::Util::Profiler::WallClock < Puppet::Util::Profiler::Logging
     end
   end
 end
-

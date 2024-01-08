@@ -181,4 +181,3 @@ module Puppet::Util::ProviderFeatures
     @features[name]
   end
 end
-

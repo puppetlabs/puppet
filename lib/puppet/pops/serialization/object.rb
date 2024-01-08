@@ -71,4 +71,3 @@ class ObjectWriter
 end
 end
 end
-

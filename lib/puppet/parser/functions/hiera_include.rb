@@ -100,4 +100,3 @@ module Puppet::Parser::Functions
     Error.is4x('hiera_include')
   end
 end
-

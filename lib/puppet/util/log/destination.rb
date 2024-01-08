@@ -48,4 +48,3 @@ class Puppet::Util::Log::Destination
     define_method(:initialize, &block)
   end
 end
-

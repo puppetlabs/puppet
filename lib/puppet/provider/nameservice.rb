@@ -295,4 +295,3 @@ class Puppet::Provider::NameService < Puppet::Provider
     current == desired.force_encoding(current.encoding)
   end
 end
-

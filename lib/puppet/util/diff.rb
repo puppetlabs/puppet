@@ -80,4 +80,3 @@ module Puppet::Util::Diff
     tempfile.delete
   end
 end
-

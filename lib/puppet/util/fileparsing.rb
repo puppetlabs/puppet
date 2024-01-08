@@ -408,4 +408,3 @@ module Puppet::Util::FileParsing
     @record_types[type.intern]
   end
 end
-

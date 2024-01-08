@@ -39,5 +39,3 @@ class Puppet::Parser::Compiler
     end
   end
 end
-
-

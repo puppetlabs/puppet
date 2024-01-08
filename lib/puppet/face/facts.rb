@@ -174,4 +174,3 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
     end
   end
 end
-

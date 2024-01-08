@@ -105,4 +105,3 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
     Puppet::FileSystem.unlink(self.service) if Puppet::FileSystem.symlink?(self.service)
   end
 end
-

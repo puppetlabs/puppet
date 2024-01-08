@@ -145,4 +145,3 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
     return :stopped
   end
 end
-

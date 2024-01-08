@@ -50,4 +50,3 @@ Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService:
     super(param, value)
   end
 end
-

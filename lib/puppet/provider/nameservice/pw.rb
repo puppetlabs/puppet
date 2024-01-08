@@ -20,4 +20,3 @@ class Puppet::Provider::NameService
     end
   end
 end
-

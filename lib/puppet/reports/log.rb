@@ -13,4 +13,3 @@ Puppet::Reports.register_report(:log) do
     end
   end
 end
-

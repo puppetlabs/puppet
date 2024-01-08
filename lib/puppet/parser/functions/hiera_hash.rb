@@ -101,4 +101,3 @@ module Puppet::Parser::Functions
     Error.is4x('hiera_hash')
   end
 end
-

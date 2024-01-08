@@ -36,4 +36,3 @@ class Puppet::Util::Watcher::PeriodicWatcher
     end
   end
 end
-

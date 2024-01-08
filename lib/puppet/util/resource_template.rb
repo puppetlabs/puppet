@@ -61,4 +61,3 @@ class Puppet::Util::ResourceTemplate
     end
   end
 end
-

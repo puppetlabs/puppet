@@ -107,4 +107,3 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     expiry
   end
 end
-

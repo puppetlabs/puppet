@@ -65,4 +65,3 @@ module Puppet::Util::RubyGems
     def clear_paths; end
   end
 end
-
