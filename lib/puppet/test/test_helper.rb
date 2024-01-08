@@ -137,7 +137,8 @@ module Puppet::Test
           ssl_context: Puppet::SSL::SSLContext.new(cacerts: []).freeze,
           http_session: proc { Puppet.runtime[:http].create_session }
         },
-        "Context for specs")
+        "Context for specs"
+      )
 
       # trigger `require 'facter'`
       Puppet.runtime[:facter]

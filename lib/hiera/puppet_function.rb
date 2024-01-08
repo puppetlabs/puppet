@@ -16,12 +16,12 @@ class Hiera::PuppetFunction < Puppet::Functions::InternalFunction
 
     dispatch :hiera_no_default do
       scope_param
-      param 'String',:key
+      param 'String', :key
     end
 
     dispatch :hiera_with_default do
       scope_param
-      param 'String',:key
+      param 'String', :key
       param 'Any',   :default
       optional_param 'Any', :override
     end
@@ -65,7 +65,7 @@ class Hiera::PuppetFunction < Puppet::Functions::InternalFunction
       # TRANSLATORS 'lookup' is a puppet function and should not be translated
       message = _("The function '%{class_name}' is deprecated in favor of using 'lookup'.") % { class_name: self.class.name }
       message += ' '+ _("See https://puppet.com/docs/puppet/%{minor_version}/deprecated_language.html") %
-          { minor_version: Puppet.minor_version }
+                      { minor_version: Puppet.minor_version }
       Puppet.warn_once('deprecations', self.class.name, message)
     end
     lookup_invocation = Puppet::Pops::Lookup::Invocation.new(scope, {}, {})

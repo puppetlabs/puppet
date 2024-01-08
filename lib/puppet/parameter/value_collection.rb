@@ -138,7 +138,7 @@ class Puppet::Parameter::ValueCollection
       message = _("Property option :call is deprecated and no longer used.")
       message += ' ' + _("Please remove it.")
       Puppet.deprecation_warning(message)
-      options = options.reject { |k,_v| k == :call }
+      options = options.reject { |k, _v| k == :call }
     end
 
     value = Puppet::Parameter::Value.new(name)

@@ -82,7 +82,7 @@ Puppet::Functions.create_function(:getvar, Puppet::Functions::InternalFunction) 
   #
   def get_from_var_name(scope, var_string, navigation, default_value = nil, &block)
     catch(:undefined_variable) do
-      return call_function_with_scope(scope,'get', scope.lookupvar(var_string), navigation, default_value, &block)
+      return call_function_with_scope(scope, 'get', scope.lookupvar(var_string), navigation, default_value, &block)
     end
     default_value
   end

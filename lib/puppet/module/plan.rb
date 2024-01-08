@@ -43,7 +43,7 @@ class Puppet::Module
     class PlanNotFound < Error
       def initialize(plan_name, module_name)
         msg = _("Plan %{plan_name} not found in module %{module_name}.") %
-          {plan_name: plan_name, module_name: module_name}
+              {plan_name: plan_name, module_name: module_name}
         super(msg, 'puppet.plans/plan-not-found', { 'name' => plan_name })
       end
     end
@@ -102,7 +102,7 @@ class Puppet::Module
     def self.plans_in_module(pup_module)
       # Search e.g. 'modules/<pup_module>/plans' for all plans
       plan_files = Dir.glob(File.join(pup_module.plans_directory, '*'))
-        .keep_if { |f| valid, _ = is_plans_filename?(f); valid }
+                      .keep_if { |f| valid, _ = is_plans_filename?(f); valid }
 
       plans = plan_files.group_by { |f| plan_name_from_path(f) }
 
@@ -144,7 +144,7 @@ class Puppet::Module
 
     def ==(other)
       self.name == other.name &&
-      self.module == other.module
+        self.module == other.module
     end
 
     def environment_name

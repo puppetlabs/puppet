@@ -30,7 +30,7 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
   def formatter
     header = headers['content-type']
     if header
-      header.gsub!(/\s*;.*$/,'') # strip any charset
+      header.gsub!(/\s*;.*$/, '') # strip any charset
       format = Puppet::Network::FormatHandler.mime(header)
 
       return format if valid_network_format?(format)
@@ -38,12 +38,14 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
       # TRANSLATORS "mime-type" is a keyword and should not be translated
       raise Puppet::Network::HTTP::Error::HTTPUnsupportedMediaTypeError.new(
         _("Client sent a mime-type (%{header}) that doesn't correspond to a format we support") % { header: headers['content-type'] },
-        Puppet::Network::HTTP::Issues::UNSUPPORTED_MEDIA_TYPE)
+        Puppet::Network::HTTP::Issues::UNSUPPORTED_MEDIA_TYPE
+      )
     end
 
     raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
       _("No Content-Type header was received, it isn't possible to unserialize the request"),
-      Puppet::Network::HTTP::Issues::MISSING_HEADER_FIELD)
+      Puppet::Network::HTTP::Issues::MISSING_HEADER_FIELD
+    )
   end
 
   def response_formatters_for(supported_formats, default_accepted_formats = nil)
@@ -55,7 +57,8 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
 
     formats = Puppet::Network::FormatHandler.most_suitable_formats_for(
       accepted_formats.split(/\s*,\s*/),
-      supported_formats)
+      supported_formats
+    )
 
     formats.find_all do |format|
       # we are only passed supported_formats that are suitable
@@ -67,7 +70,8 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
 
     raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new(
       _("No supported formats are acceptable (Accept: %{accepted_formats})") % { accepted_formats: accepted_formats },
-      Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT)
+      Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT
+    )
   end
 
   private

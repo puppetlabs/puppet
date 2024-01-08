@@ -81,7 +81,7 @@ Puppet::Face.define(:module, '1.0.0') do
         tree = Puppet::ModuleTool.build_tree(return_value[:graph], return_value[:base_dir])
 
         "#{return_value[:base_dir]}\n" +
-        Puppet::ModuleTool.format_tree(tree)
+          Puppet::ModuleTool.format_tree(tree)
       end
     end
   end

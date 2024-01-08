@@ -85,10 +85,10 @@ class Puppet::Settings::ConfigFile
       if !allowed_section_names.empty? && !allowed_section_names.include?(section.name)
         error_location_str = Puppet::Util::Errors.error_location(file, section.line_number)
         message = _("Illegal section '%{name}' in config file at %{error_location}.") %
-            { name: section.name, error_location: error_location_str }
+                  { name: section.name, error_location: error_location_str }
         # TRANSLATORS 'puppet.conf' is the name of the puppet configuration file and should not be translated.
         message += ' ' + _("The only valid puppet.conf sections are: [%{allowed_sections_list}].") %
-            { allowed_sections_list: allowed_section_names.join(", ") }
+                         { allowed_sections_list: allowed_section_names.join(", ") }
         message += ' ' + _("Please use the directory environments feature to specify environments.")
         message += ' ' + _("(See https://puppet.com/docs/puppet/latest/environments_about.html)")
         raise(Puppet::Error, message)

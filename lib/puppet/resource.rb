@@ -130,15 +130,15 @@ class Puppet::Resource
     unless params.empty?
       data['parameters'] =
         Puppet::Pops::Serialization::ToDataConverter
-          .convert(params,
-                   {
-                     :rich_data => Puppet.lookup(:rich_data),
-                     :symbol_as_string => true,
-                     :local_reference => false,
-                     :type_by_reference => true,
-                     :message_prefix => ref,
-                     :semantic => self
-                   })
+        .convert(params,
+                 {
+                   :rich_data => Puppet.lookup(:rich_data),
+                   :symbol_as_string => true,
+                   :local_reference => false,
+                   :type_by_reference => true,
+                   :message_prefix => ref,
+                   :semantic => self
+                 })
     end
 
     data['sensitive_parameters'] = sensitive_parameters.map(&:to_s) unless sensitive_parameters.empty?
@@ -220,7 +220,7 @@ class Puppet::Resource
 
   # Iterate over each param/value pair, as required for Enumerable.
   def each
-    parameters.each { |p,v| yield p, v }
+    parameters.each { |p, v| yield p, v }
   end
 
   def include?(parameter)
@@ -300,8 +300,8 @@ class Puppet::Resource
       if type.is_a?(Hash)
         # TRANSLATORS 'Puppet::Resource.new' should not be translated
         raise ArgumentError, _("Puppet::Resource.new does not take a hash as the first argument.") + ' ' +
-          _("Did you mean (%{type}, %{title}) ?") %
-              { type: (type[:type] || type["type"]).inspect, title: (type[:title] || type["title"]).inspect }
+                             _("Did you mean (%{type}, %{title}) ?") %
+                             { type: (type[:type] || type["type"]).inspect, title: (type[:title] || type["title"]).inspect }
       end
 
       # In order to avoid an expensive search of 'known_resource_types" and
@@ -444,7 +444,7 @@ class Puppet::Resource
   def to_hierayaml
     # Collect list of attributes to align => and move ensure first
     attr = parameters.keys
-    attr_max = attr.inject(0) { |max,k| k.to_s.length > max ? k.to_s.length : max }
+    attr_max = attr.inject(0) { |max, k| k.to_s.length > max ? k.to_s.length : max }
 
     attr.sort!
     if attr.first != :ensure && attr.include?(:ensure)
@@ -479,7 +479,7 @@ class Puppet::Resource
   def to_manifest
     # Collect list of attributes to align => and move ensure first
     attr = parameters.keys
-    attr_max = attr.inject(0) { |max,k| k.to_s.length > max ? k.to_s.length : max }
+    attr_max = attr.inject(0) { |max, k| k.to_s.length > max ? k.to_s.length : max }
 
     attr.sort!
     if attr.first != :ensure && attr.include?(:ensure)
@@ -492,7 +492,7 @@ class Puppet::Resource
       "  %-#{attr_max}s => %s,\n" % [k, Puppet::Parameter.format_value_for_display(v)]
     }.join
 
-    escaped = self.title.gsub(/'/,"\\\\'")
+    escaped = self.title.gsub(/'/, "\\\\'")
     "%s { '%s':\n%s}" % [self.type.to_s.downcase, escaped, attributes]
   end
 
@@ -584,7 +584,7 @@ class Puppet::Resource
 
   def self.extract_type_and_title(argtype, argtitle)
     if (argtype.nil? || argtype == :component || argtype == :whit) &&
-          argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                  then [ $1,                 $2            ]
+       argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                  then [ $1, $2 ]
     elsif argtitle.nil? && argtype.is_a?(String) &&
           argtype =~ /^([^\[\]]+)\[(.+)\]$/m                   then [ $1,                 $2            ]
     elsif argtitle                                             then [ argtype,            argtitle      ]
@@ -642,7 +642,7 @@ class Puppet::Resource
       type.title_patterns.each do |regexp, symbols_and_lambdas|
         captures = regexp.match(title.to_s)  
         if captures
-          symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda,capture|
+          symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda, capture|
             symbol, proc = symbol_and_lambda
             # Many types pass "identity" as the proc; we might as well give
             # them a shortcut to delivering that without the extra cost.

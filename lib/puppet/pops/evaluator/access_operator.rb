@@ -61,7 +61,7 @@ class AccessOperator
              when 2
                k1 = Utils.to_n(keys[0])
                k2 = Utils.to_n(keys[1])
-               [k1, k2].each_with_index { |k,i| bad_string_access_key_type(o, i, k.nil? ? keys[i] : k) unless k.is_a?(Integer) }
+               [k1, k2].each_with_index { |k, i| bad_string_access_key_type(o, i, k.nil? ? keys[i] : k) unless k.is_a?(Integer) }
 
                k1 = k1 < 0 ? o.length + k1 : k1           # abs pos (negative is count from end)
                k2 = k2 < 0 ? o.length - k1 + k2 + 1 : k2  # abs length (negative k2 is length from pos to end count)
@@ -108,7 +108,7 @@ class AccessOperator
       k1 = coerce_numeric(keys[0], @semantic.keys[0], scope)
       k2 = coerce_numeric(keys[1], @semantic.keys[1], scope)
 
-      [k1, k2].each_with_index { |k,i| bad_access_key_type(o, i, k, Integer) unless k.is_a?(Integer) }
+      [k1, k2].each_with_index { |k, i| bad_access_key_type(o, i, k, Integer) unless k.is_a?(Integer) }
 
       # Help confused Ruby do the right thing (it truncates to the right, but negative index + length can never overlap
       # the available range.
@@ -481,7 +481,7 @@ class AccessOperator
       return Types::PHashType.new(nil, nil, Types::PIntegerType.new(*keys))
     end
 
-    keys[0,2].each_with_index do |k, index|
+    keys[0, 2].each_with_index do |k, index|
       unless k.is_a?(Types::PAnyType)
         fail(Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[index], {:base_type => 'Hash-Type', :actual => k.class})
       end
@@ -703,7 +703,7 @@ class AccessOperator
 
         name = c.downcase
         # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
-        name = name[2..-1] if name[0,2] == NS
+        name = name[2..-1] if name[0, 2] == NS
 
         fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c}) unless name =~ Patterns::NAME
 

@@ -31,37 +31,37 @@ class PObjectType < PMetaType
 
   TYPE_ATTRIBUTE =
     TypeFactory
-      .struct({
-                KEY_TYPE => PTypeType::DEFAULT,
-                TypeFactory.optional(KEY_FINAL) => PBooleanType::DEFAULT,
-                TypeFactory.optional(KEY_OVERRIDE) => PBooleanType::DEFAULT,
-                TypeFactory.optional(KEY_KIND) => TYPE_ATTRIBUTE_KIND,
-                KEY_VALUE => PAnyType::DEFAULT,
-                TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
-              })
+    .struct({
+              KEY_TYPE => PTypeType::DEFAULT,
+              TypeFactory.optional(KEY_FINAL) => PBooleanType::DEFAULT,
+              TypeFactory.optional(KEY_OVERRIDE) => PBooleanType::DEFAULT,
+              TypeFactory.optional(KEY_KIND) => TYPE_ATTRIBUTE_KIND,
+              KEY_VALUE => PAnyType::DEFAULT,
+              TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
+            })
 
   TYPE_PARAMETER =
     TypeFactory
-      .struct({
-                KEY_TYPE => PTypeType::DEFAULT,
-                TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
-              })
+    .struct({
+              KEY_TYPE => PTypeType::DEFAULT,
+              TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
+            })
 
   TYPE_CONSTANTS = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, PAnyType::DEFAULT)
   TYPE_ATTRIBUTES = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
   TYPE_PARAMETERS = TypeFactory.hash_kv(Pcore::TYPE_MEMBER_NAME, TypeFactory.not_undef)
-  TYPE_ATTRIBUTE_CALLABLE = TypeFactory.callable(0,0)
+  TYPE_ATTRIBUTE_CALLABLE = TypeFactory.callable(0, 0)
 
   TYPE_FUNCTION_TYPE = PTypeType.new(PCallableType::DEFAULT)
 
   TYPE_FUNCTION =
     TypeFactory
-      .struct({
-                KEY_TYPE => TYPE_FUNCTION_TYPE,
-                TypeFactory.optional(KEY_FINAL) => PBooleanType::DEFAULT,
-                TypeFactory.optional(KEY_OVERRIDE) => PBooleanType::DEFAULT,
-                TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
-              })
+    .struct({
+              KEY_TYPE => TYPE_FUNCTION_TYPE,
+              TypeFactory.optional(KEY_FINAL) => PBooleanType::DEFAULT,
+              TypeFactory.optional(KEY_OVERRIDE) => PBooleanType::DEFAULT,
+              TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
+            })
 
   TYPE_FUNCTIONS = TypeFactory.hash_kv(PVariantType.new([Pcore::TYPE_MEMBER_NAME, PStringType.new('[]')]), TypeFactory.not_undef)
 
@@ -71,18 +71,18 @@ class PObjectType < PMetaType
 
   TYPE_OBJECT_I12N =
     TypeFactory
-      .struct({
-                TypeFactory.optional(KEY_NAME) => TYPE_OBJECT_NAME,
-                TypeFactory.optional(KEY_PARENT) => PTypeType::DEFAULT,
-                TypeFactory.optional(KEY_TYPE_PARAMETERS) => TYPE_PARAMETERS,
-                TypeFactory.optional(KEY_ATTRIBUTES) => TYPE_ATTRIBUTES,
-                TypeFactory.optional(KEY_CONSTANTS) => TYPE_CONSTANTS,
-                TypeFactory.optional(KEY_FUNCTIONS) => TYPE_FUNCTIONS,
-                TypeFactory.optional(KEY_EQUALITY) => TYPE_EQUALITY,
-                TypeFactory.optional(KEY_EQUALITY_INCLUDE_TYPE) => PBooleanType::DEFAULT,
-                TypeFactory.optional(KEY_CHECKS) => TYPE_CHECKS,
-                TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
-              })
+    .struct({
+              TypeFactory.optional(KEY_NAME) => TYPE_OBJECT_NAME,
+              TypeFactory.optional(KEY_PARENT) => PTypeType::DEFAULT,
+              TypeFactory.optional(KEY_TYPE_PARAMETERS) => TYPE_PARAMETERS,
+              TypeFactory.optional(KEY_ATTRIBUTES) => TYPE_ATTRIBUTES,
+              TypeFactory.optional(KEY_CONSTANTS) => TYPE_CONSTANTS,
+              TypeFactory.optional(KEY_FUNCTIONS) => TYPE_FUNCTIONS,
+              TypeFactory.optional(KEY_EQUALITY) => TYPE_EQUALITY,
+              TypeFactory.optional(KEY_EQUALITY_INCLUDE_TYPE) => PBooleanType::DEFAULT,
+              TypeFactory.optional(KEY_CHECKS) => TYPE_CHECKS,
+              TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS
+            })
 
   def self.register_ptype(loader, ir)
     type = create_ptype(loader, ir, 'AnyType', '_pcore_init_hash' => TYPE_OBJECT_I12N)
@@ -155,7 +155,7 @@ class PObjectType < PMetaType
       if parent_member.nil?
         if @override
           raise Puppet::ParseError, _("expected %{label} to override an inherited %{feature_type}, but no such %{feature_type} was found") %
-              { label: label, feature_type: feature_type }
+                                    { label: label, feature_type: feature_type }
         end
         self
       else
@@ -799,7 +799,7 @@ class PObjectType < PMetaType
             if parent_eq_attrs.include?(attr_name)
               including_parent = find_equality_definer_of(attr)
               raise Puppet::ParseError, _("%{label} equality is referencing %{attribute} which is included in equality of %{including_parent}") %
-                  { label: label, attribute: attr.label, including_parent: including_parent.label }
+                                        { label: label, attribute: attr.label, including_parent: including_parent.label }
             end
           end
 
@@ -809,11 +809,11 @@ class PObjectType < PMetaType
             end
 
             raise Puppet::ParseError, _("%{label} equality is referencing %{attribute}. Only attribute references are allowed") %
-                { label: label, attribute: attr.label }
+                                      { label: label, attribute: attr.label }
           end
           if attr.kind == ATTRIBUTE_KIND_CONSTANT
             raise Puppet::ParseError, _("%{label} equality is referencing constant %{attribute}.") % { label: label, attribute: attr.label } + ' ' +
-                _("Reference to constant is not allowed in equality")
+                                      _("Reference to constant is not allowed in equality")
           end
         end
       end

@@ -39,7 +39,7 @@ class PURIType < PAnyType
 
   TYPE_STRING_PARAM =
     TypeFactory
-      .optional(PVariantType
+    .optional(PVariantType
         .new([
                PStringType::NON_EMPTY,
                PRegexpType::DEFAULT,
@@ -51,7 +51,7 @@ class PURIType < PAnyType
 
   TYPE_INTEGER_PARAM =
     TypeFactory
-      .optional(PVariantType
+    .optional(PVariantType
         .new([
                PIntegerType.new(0),
                TypeFactory.type_type(PNotUndefType::DEFAULT),
@@ -75,8 +75,7 @@ class PURIType < PAnyType
     create_ptype(loader, ir, 'AnyType',
                  {
                    'parameters' => { KEY_TYPE => TypeFactory.optional(TYPE_URI_PARAM_TYPE), KEY_VALUE => nil }
-                 }
-    )
+                 })
   end
 
   def self.new_function(type)

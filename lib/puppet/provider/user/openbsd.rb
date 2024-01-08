@@ -34,7 +34,7 @@ Puppet::Type.type(:user).provide :openbsd, :parent => :useradd do
                                    :absent
                                  else
                                    # Expiry is days after 1970-01-01
-                                   (Date.new(1970,1,1) + value).strftime('%Y-%m-%d')
+                                   (Date.new(1970, 1, 1) + value).strftime('%Y-%m-%d')
                                  end
                                }
 

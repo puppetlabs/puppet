@@ -335,7 +335,7 @@ class Factory
   #
   def infer_Hash(o)
     @model_class = LiteralHash
-    @init_hash['entries'] = o.sort_by { |k,_| k.to_s }.map { |k, v| Factory.new(KeyedEntry, Factory.infer(k), Factory.infer(v)) }
+    @init_hash['entries'] = o.sort_by { |k, _| k.to_s }.map { |k, v| Factory.new(KeyedEntry, Factory.infer(k), Factory.infer(v)) }
     @unfolded = false
   end
 
@@ -697,13 +697,13 @@ class Factory
 
   def self.string(*args);                new(ConcatenatedString, args.map { |arg| infer(arg) }); end
 
-  def self.text(o);                      infer(o).text;                                  end
+  def self.text(o);                      infer(o).text; end
 
-  def self.IF(test_e,then_e,else_e);     new(IfExpression, test_e, then_e, else_e);      end
+  def self.IF(test_e, then_e, else_e);     new(IfExpression, test_e, then_e, else_e);      end
 
-  def self.UNLESS(test_e,then_e,else_e); new(UnlessExpression, test_e, then_e, else_e);  end
+  def self.UNLESS(test_e, then_e, else_e); new(UnlessExpression, test_e, then_e, else_e);  end
 
-  def self.CASE(test_e,*options);        new(CaseExpression, test_e, options);           end
+  def self.CASE(test_e, *options); new(CaseExpression, test_e, options); end
 
   def self.WHEN(values_list, block);     new(CaseOption, values_list, block);            end
 
@@ -812,7 +812,7 @@ class Factory
       # Bad number should already have been caught by lexer - this should never happen
       # TRANSLATORS 'NUMBER' refers to a method name and the 'name_or_numeric' was the passed in value and should not be translated
       raise ArgumentError, _("Internal Error, NUMBER token does not contain a valid number, %{name_or_numeric}") %
-          { name_or_numeric: name_or_numeric }
+                           { name_or_numeric: name_or_numeric }
     end
   end
 

@@ -92,7 +92,7 @@ Puppet::Functions.create_function(:any) do
   end
 
   def any_Hash_2(hash)
-    hash.each_pair.any? { |x,y| yield(x, y) }
+    hash.each_pair.any? { |x, y| yield(x, y) }
   end
 
   def any_Enumerable_1(enumerable)

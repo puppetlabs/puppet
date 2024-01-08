@@ -34,8 +34,7 @@ module ModuleLoaders
                            NAMESPACE_WILDCARD,
                            Puppet[:libdir],
                            'cached_puppet_lib',
-                           [:func_4x, :func_3x, :datatype]
-                          )
+                           [:func_4x, :func_3x, :datatype])
   end
 
   def self.system_loader_from(parent_loader, loaders)
@@ -50,8 +49,7 @@ module ModuleLoaders
                            nil,
                            puppet_lib, # may or may not have a 'lib' above 'puppet'
                            'puppet_system',
-                           [:func_4x, :func_3x, :datatype] # only load ruby functions and types from "puppet"
-                          )
+                           [:func_4x, :func_3x, :datatype]) # only load ruby functions and types from "puppet"
   end
 
   def self.environment_loader_from(parent_loader, loaders, env_path)
@@ -62,8 +60,7 @@ module ModuleLoaders
                     loaders,
                     ENVIRONMENT,
                     env_path,
-                    ENVIRONMENT
-                   )
+                    ENVIRONMENT)
     end
   end
 
@@ -72,8 +69,7 @@ module ModuleLoaders
                                  loaders,
                                  module_name,
                                  module_path,
-                                 module_name
-                                )
+                                 module_name)
   end
 
   def self.pcore_resource_type_loader_from(parent_loader, loaders, environment_path)
@@ -81,8 +77,7 @@ module ModuleLoaders
                                  loaders,
                                  nil,
                                  environment_path,
-                                 'pcore_resource_types'
-                                )
+                                 'pcore_resource_types')
   end
 
   class EmptyLoader < BaseLoader
@@ -163,7 +158,8 @@ module ModuleLoaders
                   Issues::LOADER_FAILURE.format(:type => type),
                   'PUPPET_LOADER_FAILURE',
                   { 'original_error' => e.message },
-                  Issues::LOADER_FAILURE.issue_code)
+                  Issues::LOADER_FAILURE.issue_code
+                )
                 error_collector << err unless error_collector.include?(err)
               end
             end
@@ -243,7 +239,7 @@ module ModuleLoaders
 
             # TRANSLATORS 'TypeSet' should not be translated
             raise ArgumentError, _("The code loaded from %{origin} does not define the TypeSet '%{module_name}'") %
-                { origin: origin, module_name: name_parts[0].capitalize }
+                                 { origin: origin, module_name: name_parts[0].capitalize }
           end
         else
           # anything else cannot possibly be in this module

@@ -12,6 +12,9 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
   commands :aptcache => "apt-cache"
   commands :rpm => "rpm"
 
+  # Mixing confine statements, control expressions, and exception handling
+  # confuses Rubocop's Layout cops, so we disable them entirely.
+  # rubocop:disable Layout
   if command('rpm')
     confine :true => begin
       rpm('-ql', 'rpm')
@@ -21,6 +24,7 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
         true
       end
   end
+  # rubocop:enable Layout
 
   # Install a package using 'apt-get'.  This function needs to support
   # installing a specific version.
@@ -55,8 +59,8 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
           self.warning _("Could not match version '%{version}'") % { version: version }
           nil
         end
-      }.reject { |vers| vers.nil? }.sort { |a,b|
-        versioncmp(a,b)
+      }.reject { |vers| vers.nil? }.sort { |a, b|
+        versioncmp(a, b)
       }
 
       if available_versions.length == 0

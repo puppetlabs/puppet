@@ -144,7 +144,7 @@ class Puppet::Configurer
   end
 
   def warn_fact_value_length(value, max_length)
-    Puppet.warning _("Fact value '%{value}' with the value length: '%{length}' exceeds the value length limit: %{max_length}") % { value: value, length:value.to_s.bytesize, max_length: max_length }
+    Puppet.warning _("Fact value '%{value}' with the value length: '%{length}' exceeds the value length limit: %{max_length}") % { value: value, length: value.to_s.bytesize, max_length: max_length }
   end
 
   def warn_fact_payload_size(payload, max_size)
@@ -670,7 +670,8 @@ class Puppet::Configurer
 
     Puppet.info(_("Uploading facts for %{node} to %{server}") % {
       node: facts.name,
-      server: puppet.url.hostname})
+      server: puppet.url.hostname
+    })
 
     puppet.put_facts(facts.name, facts: facts, environment: Puppet.lookup(:current_environment).name.to_s)
 

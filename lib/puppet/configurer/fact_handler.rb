@@ -20,7 +20,7 @@ module Puppet::Configurer::FactHandler
         facts.name = Puppet[:node_name_value]
       end
       facts
-    rescue SystemExit,NoMemoryError
+    rescue SystemExit, NoMemoryError
       raise
     rescue Exception => detail
       message = _("Could not retrieve local facts: %{detail}") % { detail: detail }

@@ -407,7 +407,7 @@ module Puppet
         if provider.respond_to?(:package_settings_change_to_s)
           provider.package_settings_change_to_s(currentvalue, newvalue)
         else
-          super(currentvalue,newvalue)
+          super(currentvalue, newvalue)
         end
       end
     end
@@ -652,9 +652,9 @@ module Puppet
     # that support the reinstall_on_refresh parameter.
     def refresh
       if provider.reinstallable? &&
-        @parameters[:reinstall_on_refresh].value == :true &&
-        @parameters[:ensure].value != :purged &&
-        @parameters[:ensure].value != :absent
+         @parameters[:reinstall_on_refresh].value == :true &&
+         @parameters[:ensure].value != :purged &&
+         @parameters[:ensure].value != :absent
 
         provider.reinstall
       end

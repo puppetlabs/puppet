@@ -52,7 +52,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
   # find the service dir on this node
   def servicedir
     unless @servicedir
-      ["/service", "/etc/service","/var/service"].each do |path|
+      ["/service", "/etc/service", "/var/service"].each do |path|
         if Puppet::FileSystem.exist?(path)
           @servicedir = path
           break

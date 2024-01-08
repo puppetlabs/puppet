@@ -16,6 +16,10 @@ Puppet::Type.type(:package).provide :tdnf, :parent => :dnf do
   # never try to use RPM on a machine without it. We think this
   # has probably become obsolete with the way `commands` work, so
   # we should investigate removing it at some point.
+  #
+  # Mixing confine statements, control expressions, and exception handling
+  # confuses Rubocop's Layout cops, so we disable them entirely.
+  # rubocop:disable Layout
   if command('rpm')
     confine :true => begin
       rpm('--version')
@@ -25,6 +29,7 @@ Puppet::Type.type(:package).provide :tdnf, :parent => :dnf do
         true
       end
   end
+  # rubocop:enable Layout
 
   defaultfor 'os.name' => "PhotonOS" 
 end

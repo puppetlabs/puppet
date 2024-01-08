@@ -15,7 +15,7 @@ class Puppet::Util::Log
   include Puppet::Util::Tagging
   include Puppet::Network::FormatSupport
 
-  @levels = [:debug,:info,:notice,:warning,:err,:alert,:emerg,:crit]
+  @levels = [:debug, :info, :notice, :warning, :err, :alert, :emerg, :crit]
   @loglevel = 2
 
   @desttypes = {}
@@ -180,7 +180,7 @@ class Puppet::Util::Log
 
     # We only select the last 10 callers in the stack to avoid being spammy
     message = _("Received a Log attribute with invalid encoding:%{log_message}") %
-        { log_message: Puppet::Util::CharacterEncoding.convert_to_utf_8(str.dump)}
+              { log_message: Puppet::Util::CharacterEncoding.convert_to_utf_8(str.dump)}
     message += '\n' + _("Backtrace:\n%{backtrace}") % { backtrace: caller(1, 10).join("\n") }
     message
   end
@@ -258,7 +258,8 @@ class Puppet::Util::Log
   def self.setup_default
     Log.newdestination(
       (Puppet.features.syslog?   ? :syslog   :
-      (Puppet.features.eventlog? ? :eventlog : Puppet[:puppetdlog])))
+      (Puppet.features.eventlog? ? :eventlog : Puppet[:puppetdlog]))
+    )
   end
 
   # Is the passed level a valid log level?

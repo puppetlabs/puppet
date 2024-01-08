@@ -189,7 +189,7 @@ module Puppet::Util::Windows
       end
     end
 
-    ThreadProc = FFI::Function.new(:ulong,[:pointer]) do |lpParameter|
+    ThreadProc = FFI::Function.new(:ulong, [:pointer]) do |lpParameter|
       ste = FFI::MemoryPointer.new(SERVICE_TABLE_ENTRYW, 2)
 
       s = SERVICE_TABLE_ENTRYW.new(ste[0])

@@ -52,7 +52,7 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
 
   }
 
-  types.sort_by(&:to_s).each { |name,type|
+  types.sort_by(&:to_s).each { |name, type|
     str << "
 
 ----------------

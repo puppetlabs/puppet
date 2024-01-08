@@ -391,7 +391,7 @@ class Puppet::Parser::Scope
     # All of the defaults set for types.  It's a hash of hashes,
     # with the first key being the type, then the second key being
     # the parameter.
-    @defaults = Hash.new { |dhash,type|
+    @defaults = Hash.new { |dhash, type|
       dhash[type] = {}
     }
 
@@ -436,7 +436,7 @@ class Puppet::Parser::Scope
 
     # first collect the values from the parents
     if parent
-      parent.lookupdefaults(type).each { |var,value|
+      parent.lookupdefaults(type).each { |var, value|
         values[var] = value
       }
     end
@@ -444,7 +444,7 @@ class Puppet::Parser::Scope
     # then override them with any current values
     # this should probably be done differently
     if @defaults.include?(type)
-      @defaults[type].each { |var,value|
+      @defaults[type].each { |var, value|
         values[var] = value
       }
     end
@@ -470,7 +470,7 @@ class Puppet::Parser::Scope
     krt.find_definition(name) || krt.find_hostclass(name)
   end
 
-  def undef_as(x,v)
+  def undef_as(x, v)
     if v.nil? or v == :undef
       x
     else
@@ -749,7 +749,7 @@ class Puppet::Parser::Scope
       val.map {|entry| transform_setting(entry) }
     elsif val.is_a?(Hash)
       result = {}
-      val.each {|k,v| result[transform_setting(k)] = transform_setting(v) }
+      val.each {|k, v| result[transform_setting(k)] = transform_setting(v) }
       result
     else
       # not ideal, but required as there are settings values that are special
@@ -1015,13 +1015,13 @@ class Puppet::Parser::Scope
     when Hash
       # Create local scope ephemeral and set all values from hash
       new_ephemeral(true)
-      match.each {|k,v| setvar(k, v, :file => file, :line => line, :ephemeral => true) }
+      match.each {|k, v| setvar(k, v, :file => file, :line => line, :ephemeral => true) }
       # Must always have an inner match data scope (that starts out as transparent)
       # In 3x slightly wasteful, since a new nested scope is created for a match
       # (TODO: Fix that problem)
       new_ephemeral(false)
     else
-      raise(ArgumentError,_("Invalid regex match data. Got a %{klass}") % { klass: match.class }) unless match.is_a?(MatchData)
+      raise(ArgumentError, _("Invalid regex match data. Got a %{klass}") % { klass: match.class }) unless match.is_a?(MatchData)
 
       # Create a match ephemeral and set values from match data
       new_match_scope(match)

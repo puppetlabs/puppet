@@ -107,7 +107,7 @@ class LookupAdapter < DataAdapter
       rescue StandardError => e
         raise Puppet::DataBinding::LookupError,
               _("Invalid data type in lookup_options for key '%{key}' could not parse '%{source}', error: '%{msg}") %
-                { key: key, source: convert_to[0], msg: e.message}
+              { key: key, source: convert_to[0], msg: e.message}
       end
     end
     begin
@@ -118,7 +118,7 @@ class LookupAdapter < DataAdapter
     rescue StandardError => e
       raise Puppet::DataBinding::LookupError,
             _("The convert_to lookup_option for key '%{key}' raised error: %{msg}") %
-              { key: key, msg: e.message}
+            { key: key, msg: e.message}
     end
     result
   end
@@ -198,7 +198,9 @@ class LookupAdapter < DataAdapter
               catch(:no_such_key) do
                 opts = compile_patterns(
                   validate_lookup_options(
-                    provider.key_lookup_in_default(LookupKey::LOOKUP_OPTIONS, meta_invocation, MergeStrategy.strategy(HASH)), k))
+                    provider.key_lookup_in_default(LookupKey::LOOKUP_OPTIONS, meta_invocation, MergeStrategy.strategy(HASH)), k
+                  )
+                )
               end
             end
             @module_default_lookup_options[k] = opts

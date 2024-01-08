@@ -65,7 +65,7 @@ class Puppet::SSL::Base
   def self.from_instance(instance, name = nil)
     unless instance.is_a?(wrapped_class)
       raise ArgumentError, _("Object must be an instance of %{class_name}, %{actual_class} given") %
-          { class_name: wrapped_class, actual_class: instance.class }
+                           { class_name: wrapped_class, actual_class: instance.class }
     end
     if name.nil? and !instance.respond_to?(:subject)
       raise ArgumentError, _("Name must be supplied if it cannot be determined from the instance")

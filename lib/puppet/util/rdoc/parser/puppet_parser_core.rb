@@ -74,7 +74,7 @@ module RDoc::PuppetParserCore
       name = $2
       Puppet.debug "rdoc: module #{name} into #{modpath} ?"
       environment.modulepath.each do |mp|
-        if File.identical?(modpath,mp)
+        if File.identical?(modpath, mp)
           Puppet.debug "rdoc: found module #{name}"
           return name
         end
@@ -90,7 +90,7 @@ module RDoc::PuppetParserCore
         previous = dirname
         while (dirname = File.dirname(previous)) != previous
           previous = dirname
-          return nil if File.identical?(dirname,mp)
+          return nil if File.identical?(dirname, mp)
         end
       end
     end
@@ -106,7 +106,7 @@ module RDoc::PuppetParserCore
     %w{README README.rdoc}.each do |rfile|
       readme = File.join(File.dirname(File.dirname(@input_file_name)), rfile)
       # module README should be UTF-8, not default system encoding
-      comment = File.open(readme,"r:UTF-8") { |f| f.read } if FileTest.readable?(readme)
+      comment = File.open(readme, "r:UTF-8") { |f| f.read } if FileTest.readable?(readme)
     end
     look_for_directives_in(container, comment) unless comment.empty?
 
@@ -125,7 +125,7 @@ module RDoc::PuppetParserCore
     container.module_name = name
     container.global=true if name == SITE
 
-    container, name = get_class_or_module(container,name)
+    container, name = get_class_or_module(container, name)
     mod = container.add_module(RDoc::PuppetModule, name)
     mod.record_location(@top_level)
     mod.add_comment(comment, @top_level)
@@ -156,7 +156,7 @@ module RDoc::PuppetParserCore
         if line =~ /^[ \t]*# ?(.*)$/
           comments += $1 + "\n"
         elsif line =~ /^[ \t]*(Facter.add|Puppet\.runtime\[:facter\].add)\(['"](.*?)['"]\)/
-          current_fact = RDoc::Fact.new($1,{})
+          current_fact = RDoc::Fact.new($1, {})
           look_for_directives_in(container, comments) unless comments.empty?
           current_fact.comment = comments
           parsed_facts << current_fact

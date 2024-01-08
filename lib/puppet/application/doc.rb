@@ -8,17 +8,17 @@ class Puppet::Application::Doc < Puppet::Application
   attr_accessor :unknown_args, :manifest
 
   def preinit
-    {:references => [], :mode => :text, :format => :to_markdown }.each do |name,value|
+    {:references => [], :mode => :text, :format => :to_markdown }.each do |name, value|
       options[name] = value
     end
     @unknown_args = []
     @manifest = false
   end
 
-  option("--all","-a")
-  option("--outputdir OUTPUTDIR","-o")
-  option("--verbose","-v")
-  option("--debug","-d")
+  option("--all", "-a")
+  option("--outputdir OUTPUTDIR", "-o")
+  option("--verbose", "-v")
+  option("--debug", "-d")
   option("--charset CHARSET")
 
   option("--format FORMAT", "-f") do |arg|

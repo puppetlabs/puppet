@@ -38,7 +38,7 @@ class Puppet::Application::Device < Puppet::Application
       :facts => false,
       :target => nil,
       :to_yaml => false,
-    }.each do |opt,val|
+    }.each do |opt, val|
       options[opt] = val
     end
 
@@ -46,11 +46,11 @@ class Puppet::Application::Device < Puppet::Application
   end
 
   option("--centrallogging")
-  option("--debug","-d")
-  option("--resource","-r")
-  option("--facts","-f")
-  option("--to_yaml","-y")
-  option("--verbose","-v")
+  option("--debug", "-d")
+  option("--resource", "-r")
+  option("--facts", "-f")
+  option("--to_yaml", "-y")
+  option("--verbose", "-v")
 
   option("--detailed-exitcodes") do |_arg|
     options[:detailed_exitcodes] = true
@@ -72,7 +72,7 @@ class Puppet::Application::Device < Puppet::Application
     options[:waitforcert] = arg.to_i
   end
 
-  option("--port PORT","-p") do |arg|
+  option("--port PORT", "-p") do |arg|
     @args[:Port] = arg
   end
 
@@ -261,7 +261,7 @@ class Puppet::Application::Device < Puppet::Application
           exit(1)
         end
       end
-      devices.collect do |_devicename,device|
+      devices.collect do |_devicename, device|
         # TODO when we drop support for ruby < 2.5 we can remove the extra block here
         begin
           device_url = URI.parse(device.url)

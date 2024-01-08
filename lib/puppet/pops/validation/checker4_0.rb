@@ -99,7 +99,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     when Model::BlockExpression
       c = container(idx)
       if !c.is_a?(Model::Program) &&
-        (definition.is_a?(Model::FunctionDefinition) || definition.is_a?(Model::TypeAlias) || definition.is_a?(Model::TypeDefinition))
+         (definition.is_a?(Model::FunctionDefinition) || definition.is_a?(Model::TypeAlias) || definition.is_a?(Model::TypeDefinition))
 
         # not ok. These can never be nested in a block
         acceptor.accept(Issues::NOT_ABSOLUTE_TOP_LEVEL, definition)
@@ -280,7 +280,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_CallNamedFunctionExpression(o)
     functor = o.functor_expr
     if functor.is_a?(Model::QualifiedReference) ||
-      functor.is_a?(Model::AccessExpression) && functor.left_expr.is_a?(Model::QualifiedReference)
+       functor.is_a?(Model::AccessExpression) && functor.left_expr.is_a?(Model::QualifiedReference)
       # ok (a call to a type)
       return nil
     end
@@ -879,7 +879,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     else
       # name must be either a decimal string value, or a valid NAME
       name = o.expr.value
-      if name[0,1] =~ /[0-9]/
+      if name[0, 1] =~ /[0-9]/
         unless name =~ Patterns::NUMERIC_VAR_NAME
           acceptor.accept(Issues::ILLEGAL_NUMERIC_VAR_NAME, o, :name => name)
         end

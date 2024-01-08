@@ -5,13 +5,13 @@ require_relative '../../puppet/application'
 class Puppet::Application::Filebucket < Puppet::Application
   environment_mode :not_required
 
-  option("--bucket BUCKET","-b")
-  option("--debug","-d")
-  option("--fromdate FROMDATE","-f")
-  option("--todate TODATE","-t")
-  option("--local","-l")
-  option("--remote","-r")
-  option("--verbose","-v")
+  option("--bucket BUCKET", "-b")
+  option("--debug", "-d")
+  option("--fromdate FROMDATE", "-f")
+  option("--todate TODATE", "-t")
+  option("--local", "-l")
+  option("--remote", "-r")
+  option("--verbose", "-v")
 
   attr :args
 

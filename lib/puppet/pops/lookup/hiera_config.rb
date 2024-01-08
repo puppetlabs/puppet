@@ -96,8 +96,7 @@ class HieraConfig
                           }
                         ]
                       }.freeze,
-                      owner
-    )
+                      owner)
   end
 
   def self.config_exist?(config_root)
@@ -109,7 +108,7 @@ class HieraConfig
     case(struct)
     when Hash
       map = {}
-      struct.each_pair {|k,v| map[ k.is_a?(Symbol) ? k.to_s : k] = symkeys_to_string(v) }
+      struct.each_pair {|k, v| map[ k.is_a?(Symbol) ? k.to_s : k] = symkeys_to_string(v) }
       map
     when Array
       struct.map { |v| symkeys_to_string(v) }
@@ -163,7 +162,8 @@ class HieraConfig
     else
       issue = Issues::HIERA_UNSUPPORTED_VERSION
       raise Puppet::DataBinding::LookupError.new(
-        issue.format(:version => version), config_path, nil, nil, nil, issue.issue_code)
+        issue.format(:version => version), config_path, nil, nil, nil, issue.issue_code
+      )
     end
   end
 
@@ -184,7 +184,8 @@ class HieraConfig
 
   def fail(issue, args = EMPTY_HASH, line = nil)
     raise Puppet::DataBinding::LookupError.new(
-      issue.format(args.merge(:label => self)), @config_path, line, nil, nil, issue.issue_code)
+      issue.format(args.merge(:label => self)), @config_path, line, nil, nil, issue.issue_code
+    )
   end
 
   def has_default_hierarchy?
@@ -360,7 +361,7 @@ class HieraConfigV3 < HieraConfig
 
     # This is a hash, not a type. Contained backends are added prior to validation
     @@CONFIG_TYPE = {
-      tf.optional(KEY_VERSION) => tf.range(3,3),
+      tf.optional(KEY_VERSION) => tf.range(3, 3),
       tf.optional(KEY_BACKENDS) => tf.variant(nes_t, tf.array_of(nes_t)),
       tf.optional(KEY_LOGGER) => nes_t,
       tf.optional(KEY_MERGE_BEHAVIOR) => tf.enum('deep', 'deeper', 'native'),
@@ -376,7 +377,8 @@ class HieraConfigV3 < HieraConfig
         Hiera::Scope.new(scope),
         lookup_invocation.override_values,
         lookup_invocation.default_values,
-        lookup_invocation.explainer)
+        lookup_invocation.explainer
+      )
     end
 
     default_datadir = File.join(Puppet.settings[:codedir], 'environments', '%{::environment}', 'hieradata')
@@ -596,7 +598,8 @@ class HieraConfigV5 < HieraConfig
                       tf.optional(KEY_URIS) => tf.array_of(uri_t, tf.range(1, :default)),
                       tf.optional(KEY_MAPPED_PATHS) => tf.array_of(nes_t, tf.range(3, 3)),
                       tf.optional(KEY_DATADIR) => nes_t
-                    }))
+                    }
+                  ))
 
     @@CONFIG_TYPE =
       tf.struct({
@@ -608,7 +611,8 @@ class HieraConfigV5 < HieraConfig
                       tf.optional(KEY_DATA_DIG) => nes_t,
                       tf.optional(KEY_DATADIR) => nes_t,
                       tf.optional(KEY_OPTIONS) => tf.hash_kv(option_name_t, tf.data),
-                    }),
+                    }
+                  ),
                   tf.optional(KEY_HIERARCHY) => hierarchy_t,
                   tf.optional(KEY_PLAN_HIERARCHY) => hierarchy_t,
                   tf.optional(KEY_DEFAULT_HIERARCHY) => hierarchy_t

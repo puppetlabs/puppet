@@ -17,8 +17,7 @@ class PObjectTypeExtension < PAnyType
                  },
                  'init_parameters' => {
                    KEY_TYPE => PArrayType::DEFAULT
-                 }
-    )
+                 })
   end
 
   attr_reader :base_type, :parameters

@@ -529,20 +529,20 @@ class EvaluatorImpl
       if left.is_a?(Types::PAnyType)
         case o.operator
         when '=='
-          @@type_calculator.equals(left,right)
+          @@type_calculator.equals(left, right)
 
         when '!='
-          !@@type_calculator.equals(left,right)
+          !@@type_calculator.equals(left, right)
 
         when '<'
           # left can be assigned to right, but they are not equal
-          @@type_calculator.assignable?(right, left) && ! @@type_calculator.equals(left,right)
+          @@type_calculator.assignable?(right, left) && ! @@type_calculator.equals(left, right)
         when '<='
           # left can be assigned to right
           @@type_calculator.assignable?(right, left)
         when '>'
           # right can be assigned to left, but they are not equal
-          @@type_calculator.assignable?(left,right) && ! @@type_calculator.equals(left,right)
+          @@type_calculator.assignable?(left, right) && ! @@type_calculator.equals(left, right)
         when '>='
           # right can be assigned to left
           @@type_calculator.assignable?(left, right)
@@ -552,17 +552,17 @@ class EvaluatorImpl
       else
         case o.operator
         when '=='
-          @@compare_operator.equals(left,right)
+          @@compare_operator.equals(left, right)
         when '!='
-          ! @@compare_operator.equals(left,right)
+          ! @@compare_operator.equals(left, right)
         when '<'
-          @@compare_operator.compare(left,right) < 0
+          @@compare_operator.compare(left, right) < 0
         when '<='
-          @@compare_operator.compare(left,right) <= 0
+          @@compare_operator.compare(left, right) <= 0
         when '>'
-          @@compare_operator.compare(left,right) > 0
+          @@compare_operator.compare(left, right) > 0
         when '>='
-          @@compare_operator.compare(left,right) >= 0
+          @@compare_operator.compare(left, right) >= 0
         else
           fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
         end
@@ -572,7 +572,8 @@ class EvaluatorImpl
              :operator => o.operator,
              :left_value => left,
              :right_value => right,
-             :detail => e.message}, e)
+             :detail => e.message
+           }, e)
     end
   end
 
@@ -622,7 +623,7 @@ class EvaluatorImpl
     end
 
     matched = pattern.match(left) # nil, or MatchData
-    set_match_data(matched,scope) # creates ephemeral
+    set_match_data(matched, scope) # creates ephemeral
 
     # convert match result to Boolean true, or false
     o.operator == '=~' ? !!matched : !matched
@@ -665,7 +666,7 @@ class EvaluatorImpl
   #
   def eval_LiteralHash o, scope
     # optimized
-    o.entries.reduce({}) {|h,entry| h[evaluate(entry.key, scope)] = evaluate(entry.value, scope); h }
+    o.entries.reduce({}) {|h, entry| h[evaluate(entry.key, scope)] = evaluate(entry.value, scope); h }
   end
 
   # Evaluates all statements and produces the last evaluated value
@@ -724,7 +725,7 @@ class EvaluatorImpl
     if o.query.is_a?(Model::ExportedQuery)
       optionally_fail(Issues::RT_NO_STORECONFIGS, o);
     end
-    CollectorTransformer.new().transform(o,scope)
+    CollectorTransformer.new().transform(o, scope)
   end
 
   def eval_ParenthesizedExpression(o, scope)
@@ -915,7 +916,7 @@ class EvaluatorImpl
       actual = type_calculator.generalize(type_calculator.infer(hashed_params)).to_s
       fail(Issues::TYPE_MISMATCH, o.expr, {:expected => 'Hash', :actual => actual})
     end
-    hashed_params.map { |k,v| create_resource_parameter(o, scope, k, v, '=>') }
+    hashed_params.map { |k, v| create_resource_parameter(o, scope, k, v, '=>') }
   end
 
   # Sets default parameter values for a type, produces the type
@@ -943,7 +944,7 @@ class EvaluatorImpl
     #
     functor = o.functor_expr
     if functor.is_a?(Model::QualifiedReference) ||
-      functor.is_a?(Model::AccessExpression) && functor.left_expr.is_a?(Model::QualifiedReference)
+       functor.is_a?(Model::AccessExpression) && functor.left_expr.is_a?(Model::QualifiedReference)
       # instantiation
       type = evaluate(functor, scope)
       return call_function_with_block('new', unfold([type], o.arguments || [], scope), o, scope)
@@ -1139,7 +1140,7 @@ class EvaluatorImpl
   end
 
   def string_Hash(o, scope)
-    "{#{o.map {|k,v| "#{string(k, scope)} => #{string(v, scope)}"}.join(COMMA_SEPARATOR)}}"
+    "{#{o.map {|k, v| "#{string(k, scope)} => #{string(v, scope)}"}.join(COMMA_SEPARATOR)}}"
   end
 
   def string_Regexp(o, scope)

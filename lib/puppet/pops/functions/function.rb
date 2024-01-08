@@ -109,7 +109,7 @@ class Puppet::Pops::Functions::Function
     the_loader = loader
     unless the_loader
       raise ArgumentError, _("Function %{class_name}(): cannot call function '%{function_name}' - no loader specified") %
-          { class_name: self.class.name, function_name: function_name }
+                           { class_name: self.class.name, function_name: function_name }
     end
 
     func = the_loader.load(:function, function_name)
@@ -125,7 +125,7 @@ class Puppet::Pops::Functions::Function
     func_3x = Puppet::Parser::Functions.function(function_name, loader_scope.environment) if loader_scope.is_a?(Puppet::Parser::Scope)
     unless func_3x
       raise ArgumentError, _("Function %{class_name}(): Unknown function: '%{function_name}'") %
-          { class_name: self.class.name, function_name: function_name }
+                           { class_name: self.class.name, function_name: function_name }
     end
 
     # Call via 3x API

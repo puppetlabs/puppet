@@ -32,7 +32,7 @@ class Puppet::Pops::Parser::EppParser < Puppet::Pops::Parser::Parser
   def _parse()
     begin
       @yydebug = false
-      main = yyparse(@lexer,:scan_epp)
+      main = yyparse(@lexer, :scan_epp)
       # #Commented out now because this hides problems in the racc grammar while developing
       # # TODO include this when test coverage is good enough.
       #      rescue Puppet::ParseError => except

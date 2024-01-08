@@ -28,7 +28,7 @@ class Puppet::InfoService::TaskInformationService
     pup_module = Puppet::Module.find(module_name, environment_name)
     if pup_module.nil?
       raise Puppet::Module::MissingModule, _("Module %{module_name} not found in environment %{environment_name}.") %
-                                            {module_name: module_name, environment_name: environment_name}
+                                           {module_name: module_name, environment_name: environment_name}
     end
 
     task = pup_module.tasks.find { |t| t.name == task_name }

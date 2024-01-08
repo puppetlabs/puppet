@@ -149,7 +149,7 @@ class BaseLoader < Loader
   end
 
   def format_uri(uri)
-    (uri.scheme == 'puppet' ? 'by ' : 'at ') + uri.to_s.sub(/^puppet:/,'')
+    (uri.scheme == 'puppet' ? 'by ' : 'at ') + uri.to_s.sub(/^puppet:/, '')
   end
 
   # loads in priority order:

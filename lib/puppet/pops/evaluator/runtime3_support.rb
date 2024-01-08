@@ -474,7 +474,8 @@ module Runtime3Support
     Validation::DiagnosticProducer.new(
       ExceptionRaisingAcceptor.new(), # Raises exception on all issues
       SeverityProducer.new(), # All issues are errors
-      Model::ModelLabelProvider.new())
+      Model::ModelLabelProvider.new()
+    )
   end
 
   # Configure the severity of failures

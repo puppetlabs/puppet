@@ -41,7 +41,8 @@ class ResourceTypeImpl
                                          },
                                          'title_patterns_hash' => {
                                            Types::KEY_TYPE => Types::POptionalType.new(
-                                             Types::PHashType.new(Types::PRegexpType::DEFAULT, Types::PArrayType.new(Types::PStringType::NON_EMPTY))),
+                                             Types::PHashType.new(Types::PRegexpType::DEFAULT, Types::PArrayType.new(Types::PStringType::NON_EMPTY))
+                                           ),
                                            Types::KEY_VALUE => nil
                                          },
                                          'isomorphic' => {
@@ -54,8 +55,7 @@ class ResourceTypeImpl
                                          },
                                        },
                                        EMPTY_HASH,
-                                       [Types::KEY_NAME]
-    )
+                                       [Types::KEY_NAME])
   end
 
   def eql?(other)
@@ -155,7 +155,7 @@ class ResourceTypeImpl
           # TechDebt: The case of having one namevar and an empty title patterns is unspecified behavior in puppet.
           # Here, it may lead to an empty map which may or may not trigger the wanted/expected behavior.
           #
-          @title_patterns_hash.map { |k,v| [ k, v.map { |n| [ n.to_sym ] } ] }
+          @title_patterns_hash.map { |k, v| [ k, v.map { |n| [ n.to_sym ] } ] }
         end
       else
         if @title_patterns_hash.nil? || @title_patterns_hash.empty?
@@ -167,7 +167,7 @@ class ResourceTypeImpl
           raise Puppet::DevError, _("you must specify title patterns when there are two or more key attributes")
         end
 
-        @title_patterns_hash.nil? ? [] : @title_patterns_hash.map { |k,v| [ k, v.map { |n| [ n.to_sym] } ] }
+        @title_patterns_hash.nil? ? [] : @title_patterns_hash.map { |k, v| [ k, v.map { |n| [ n.to_sym] } ] }
       end
   end
 

@@ -105,7 +105,8 @@ module Puppet
         nil,
         nil,
         issue.issue_code,
-        args)
+        args
+      )
     end
   end
 
@@ -133,7 +134,7 @@ module Puppet
     include ExternalFileError
     attr_reader :error_data
 
-    def initialize(error_data, message, file: nil, line: nil, pos: nil, original:nil)
+    def initialize(error_data, message, file: nil, line: nil, pos: nil, original: nil)
       super(message, file, line, pos, original)
       @error_data = error_data
     end

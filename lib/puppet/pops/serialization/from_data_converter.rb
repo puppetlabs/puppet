@@ -220,7 +220,7 @@ module Serialization
         build(pcore_type.create(value))
       else
         raise SerializationError, _('Cannot create a %{type_name} from a %{arg_class}') %
-            { :type_name => pcore_type.name, :arg_class => value.class.name }
+                                  { :type_name => pcore_type.name, :arg_class => value.class.name }
       end
     end
   end

@@ -91,7 +91,7 @@ module Puppet
   require_relative 'puppet/feature/base'
 
   # setting access and stuff
-  def self.[]=(param,value)
+  def self.[]=(param, value)
     @@settings[param] = value
   end
 
@@ -151,9 +151,9 @@ module Puppet
     dir = Puppet[:vendormoduledir]
     if dir && File.directory?(dir)
       Dir.entries(dir)
-        .reject { |f| f =~ /^\./ }
-        .map { |f| File.join(dir, f, "lib") }
-        .select { |d| FileTest.directory?(d) }
+         .reject { |f| f =~ /^\./ }
+         .map { |f| File.join(dir, f, "lib") }
+         .select { |d| FileTest.directory?(d) }
     else
       []
     end
@@ -227,7 +227,8 @@ module Puppet
         loaders << Puppet::Environments::StaticPrivate.new(
           Puppet::Node::Environment.create(default_environment,
                                            modulepath,
-                                           Puppet::Node::Environment::NO_MANIFEST))
+                                           Puppet::Node::Environment::NO_MANIFEST)
+        )
       end
     end
 

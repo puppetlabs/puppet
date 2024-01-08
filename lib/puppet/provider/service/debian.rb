@@ -21,8 +21,8 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
 
   confine :false => Puppet::FileSystem.exist?('/proc/1/comm') && Puppet::FileSystem.read('/proc/1/comm').include?('systemd')
 
-  defaultfor 'os.name' => :cumuluslinux, 'os.release.major' => ['1','2']
-  defaultfor 'os.name' => :debian, 'os.release.major' => ['5','6','7']
+  defaultfor 'os.name' => :cumuluslinux, 'os.release.major' => ['1', '2']
+  defaultfor 'os.name' => :debian, 'os.release.major' => ['5', '6', '7']
   defaultfor 'os.name' => :devuan
 
   # Remove the symlinks

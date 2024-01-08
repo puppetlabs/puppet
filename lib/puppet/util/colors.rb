@@ -91,8 +91,8 @@ module Puppet::Util::Colors
 
   def console_color(color, str)
     Colormap[color][:console] +
-    str.gsub(RESET[:console], Colormap[color][:console]) +
-    RESET[:console]
+      str.gsub(RESET[:console], Colormap[color][:console]) +
+      RESET[:console]
   end
 
   def html_color(color, str)

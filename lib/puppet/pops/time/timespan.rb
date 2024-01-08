@@ -101,7 +101,8 @@ module Time
         hash[KEY_SECONDS] || 0,
         hash[KEY_MILLISECONDS] || 0,
         hash[KEY_MICROSECONDS] || 0,
-        hash[KEY_NANOSECONDS] || 0)
+        hash[KEY_NANOSECONDS] || 0
+      )
     end
 
     def self.parse(str, format = Format::DEFAULTS)
@@ -613,7 +614,7 @@ module Time
       ]
 
       def bad_format_specifier(format, start, position)
-        _("Bad format specifier '%{expression}' in '%{format}', at position %{position}") % { expression: format[start,position-start], format: format, position: position }
+        _("Bad format specifier '%{expression}' in '%{format}', at position %{position}") % { expression: format[start, position-start], format: format, position: position }
       end
 
       def append_literal(bld, codepoint)

@@ -17,8 +17,8 @@ class Puppet::Provider::Package::Windows
 
     def self.reg_value_names_to_load
       REG_DISPLAY_VALUE_NAMES |
-      MsiPackage::REG_VALUE_NAMES |
-      ExePackage::REG_VALUE_NAMES
+        MsiPackage::REG_VALUE_NAMES |
+        ExePackage::REG_VALUE_NAMES
     end
 
     # Enumerate each package. The appropriate package subclass

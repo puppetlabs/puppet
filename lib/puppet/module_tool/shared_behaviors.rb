@@ -4,9 +4,9 @@ module Puppet::ModuleTool::Shared
   include Puppet::ModuleTool::Errors
 
   def get_local_constraints
-    @local      = Hash.new { |h,k| h[k] = { } }
-    @conditions = Hash.new { |h,k| h[k] = [] }
-    @installed  = Hash.new { |h,k| h[k] = [] }
+    @local      = Hash.new { |h, k| h[k] = { } }
+    @conditions = Hash.new { |h, k| h[k] = [] }
+    @installed  = Hash.new { |h, k| h[k] = [] }
 
     @environment.modules_by_path.values.flatten.each do |mod|
       mod_name = (mod.forge_name || mod.name).tr('/', '-')
@@ -26,9 +26,9 @@ module Puppet::ModuleTool::Shared
   end
 
   def get_remote_constraints(forge)
-    @remote   = Hash.new { |h,k| h[k] = { } }
+    @remote   = Hash.new { |h, k| h[k] = { } }
     @urls     = {}
-    @versions = Hash.new { |h,k| h[k] = [] }
+    @versions = Hash.new { |h, k| h[k] = [] }
 
     Puppet.notice _("Downloading from %{uri} ...") % { uri: forge.uri }
     author, modname = Puppet::ModuleTool.username_and_modname_from(@module_name)

@@ -140,7 +140,7 @@ class Puppet::Node::Facts
   def sanitize_fact(fact)
     if fact.is_a? Hash then
       ret = {}
-      fact.each_pair { |k,v| ret[sanitize_fact k]=sanitize_fact v }
+      fact.each_pair { |k, v| ret[sanitize_fact k]=sanitize_fact v }
       ret
     elsif fact.is_a? Array then
       fact.collect { |i| sanitize_fact i }

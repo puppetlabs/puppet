@@ -49,7 +49,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
   # on zypper versions <1.0, the version option returns 1
   # some versions of zypper output on stderr
   def zypper_version
-    cmd = [self.class.command(:zypper),"--version"]
+    cmd = [self.class.command(:zypper), "--version"]
     execute(cmd, { :failonfail => false, :combine => true})
   end
 
@@ -154,9 +154,9 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
   # What's the latest package version available?
   def latest
     return self.class.latest_package_version(@resource[:name]) ||
-      # zypper didn't find updates, pretend the current
-      # version is the latest
-      @property_hash[:ensure]
+           # zypper didn't find updates, pretend the current
+           # version is the latest
+           @property_hash[:ensure]
   end
 
   def update

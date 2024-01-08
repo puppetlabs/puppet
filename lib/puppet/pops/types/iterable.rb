@@ -87,11 +87,11 @@ module Puppet::Pops::Types
             tc = TypeCalculator.singleton
             element_type =
               PTupleType
-                .new([
-                       PVariantType.maybe_create(o.keys.map {|e| tc.infer_set(e) }),
-                       PVariantType.maybe_create(o.values.map {|e| tc.infer_set(e) })
-                     ],
-                     PHashType::KEY_PAIR_TUPLE_SIZE)
+              .new([
+                     PVariantType.maybe_create(o.keys.map {|e| tc.infer_set(e) }),
+                     PVariantType.maybe_create(o.values.map {|e| tc.infer_set(e) })
+                   ],
+                   PHashType::KEY_PAIR_TUPLE_SIZE)
           end
           HashIterator.new(element_type, o.each_pair)
         end
@@ -144,7 +144,7 @@ module Puppet::Pops::Types
       case object
       when Iterable
         object.unbounded?
-      when String,Integer,Array,Hash,Enumerator,PIntegerType,PEnumType,Dir
+      when String, Integer, Array, Hash, Enumerator, PIntegerType, PEnumType, Dir
         false
       else
         TypeAsserter.assert_instance_of('', PIterableType::DEFAULT, object, false)

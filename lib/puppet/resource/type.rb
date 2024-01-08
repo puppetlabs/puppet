@@ -196,7 +196,7 @@ class Puppet::Resource::Type
 
   def name
     if type == :node && name_is_regex?
-      "__node_regexp__#{@name.source.downcase.gsub(/[^-\w:.]/,'').sub(/^\.+/,'')}"
+      "__node_regexp__#{@name.source.downcase.gsub(/[^-\w:.]/, '').sub(/^\.+/, '')}"
     else
       @name
     end
@@ -210,7 +210,7 @@ class Puppet::Resource::Type
     return nil unless parent
 
     @parent_type ||= scope.environment.known_resource_types.send("find_#{type}", parent) ||
-      fail(Puppet::ParseError, _("Could not find parent resource type '%{parent}' of type %{parent_type} in %{env}") % { parent: parent, parent_type: type, env: scope.environment })
+                     fail(Puppet::ParseError, _("Could not find parent resource type '%{parent}' of type %{parent_type} in %{env}") % { parent: parent, parent_type: type, env: scope.environment })
   end
 
   # Validate and set any arguments passed by the resource as variables in the scope.
@@ -237,7 +237,7 @@ class Puppet::Resource::Type
       scope[TITLE] = resource.title
       scope[NAME] =  resource.name
     end
-    scope.class_set(self.name,scope) if hostclass? || node?
+    scope.class_set(self.name, scope) if hostclass? || node?
 
     param_hash = scope.with_parameter_scope(resource.to_s, arguments.keys) do |param_scope|
       # Assign directly to the parameter scope to avoid scope parameter validation at this point. It

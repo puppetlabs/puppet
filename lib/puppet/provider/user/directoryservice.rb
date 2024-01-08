@@ -459,14 +459,14 @@ Puppet::Type.type(:user).provide :directoryservice do
           dscl '.', '-change', "/Users/#{resource.name}", self.class.ns_to_ds_attribute_map[setter_method.intern], @property_hash[setter_method.intern], value
         rescue Puppet::ExecutionFailure => e
           raise Puppet::Error, "Cannot set the #{setter_method} value of '#{value}' for user " +
-               "#{@resource.name} due to the following error: #{e.inspect}", e.backtrace
+                               "#{@resource.name} due to the following error: #{e.inspect}", e.backtrace
         end
       else
         begin
           dscl '.', '-create', "/Users/#{resource.name}", self.class.ns_to_ds_attribute_map[setter_method.intern], value
         rescue Puppet::ExecutionFailure => e
           raise Puppet::Error, "Cannot set the #{setter_method} value of '#{value}' for user " +
-               "#{@resource.name} due to the following error: #{e.inspect}", e.backtrace
+                               "#{@resource.name} due to the following error: #{e.inspect}", e.backtrace
         end
       end
     end
@@ -521,7 +521,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     dscl_output = dscl '.', '-list', '/Users', 'uid'
     # We're ok with throwing away negative uids here. Also, remove nil values.
     user_ids = dscl_output.split.compact.collect { |l| l.to_i if l =~ /^\d+$/ }
-    ids = user_ids.compact!.sort! { |a,b| a.to_f <=> b.to_f }
+    ids = user_ids.compact!.sort! { |a, b| a.to_f <=> b.to_f }
     # We're just looking for an unused id in our sorted array.
     ids.each_index do |i|
       next_id = ids[i] + 1

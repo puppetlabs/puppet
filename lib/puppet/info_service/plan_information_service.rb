@@ -20,7 +20,7 @@ class Puppet::InfoService::PlanInformationService
     pup_module = Puppet::Module.find(module_name, environment_name)
     if pup_module.nil?
       raise Puppet::Module::MissingModule, _("Module %{module_name} not found in environment %{environment_name}.") %
-                                            {module_name: module_name, environment_name: environment_name}
+                                           {module_name: module_name, environment_name: environment_name}
     end
 
     plan = pup_module.plans.find { |t| t.name == plan_name }

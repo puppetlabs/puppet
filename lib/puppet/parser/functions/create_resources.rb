@@ -56,7 +56,8 @@ ENDHEREDOC
   if Puppet[:tasks]
     raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
       Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
-      {:operation => 'create_resources'})
+      {:operation => 'create_resources'}
+    )
   end
 
   raise ArgumentError, (_("create_resources(): wrong number of arguments (%{count}; must be 2 or 3)") % { count: args.length }) if args.length > 3

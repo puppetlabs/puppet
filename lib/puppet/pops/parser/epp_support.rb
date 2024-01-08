@@ -188,7 +188,7 @@ module EppSupport
       until scanner.eos?
         part = @scanner.scan_until(/(<%)|\z/)
         if @skip_leading
-          part.sub!(/^[ \t]*\r?(?:\n|\z)?/,'')
+          part.sub!(/^[ \t]*\r?(?:\n|\z)?/, '')
           @skip_leading = false
         end
         # The spec for %%> is to transform it into a literal %>. This is done here, as %%> otherwise would go

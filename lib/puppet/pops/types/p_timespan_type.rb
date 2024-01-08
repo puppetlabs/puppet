@@ -102,8 +102,7 @@ module Types
     def self.register_ptype(loader, ir)
       create_ptype(loader, ir, 'ScalarType',
                    'from' => { KEY_TYPE => POptionalType.new(PTimespanType::DEFAULT), KEY_VALUE => nil },
-                   'to' => { KEY_TYPE => POptionalType.new(PTimespanType::DEFAULT), KEY_VALUE => nil }
-      )
+                   'to' => { KEY_TYPE => POptionalType.new(PTimespanType::DEFAULT), KEY_VALUE => nil })
     end
 
     def self.new_function(type)

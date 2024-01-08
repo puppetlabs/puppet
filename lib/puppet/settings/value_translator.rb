@@ -10,7 +10,7 @@ class Puppet::Settings::ValueTranslator
            when true; true
            when false; false
            else
-             value.gsub(/^["']|["']$/,'').sub(/\s+$/, '')
+             value.gsub(/^["']|["']$/, '').sub(/\s+$/, '')
            end
   end
 end

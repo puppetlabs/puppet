@@ -21,7 +21,7 @@ module Puppet::Pops::Parser::InterpolationSupport
     before = scn.pos
     # skip the leading " by doing a scan since the slurp_dqstring uses last matched when there is an error
     scn.scan(/"/)
-    value,terminator = slurp_dqstring()
+    value, terminator = slurp_dqstring()
     text = value
     after = scn.pos
     loop do
@@ -47,7 +47,7 @@ module Puppet::Pops::Parser::InterpolationSupport
         else
           # false $ variable start
           text += terminator
-          value,terminator = slurp_dqstring()
+          value, terminator = slurp_dqstring()
           text += value
           after = scn.pos
         end
@@ -62,7 +62,7 @@ module Puppet::Pops::Parser::InterpolationSupport
     scn = @scanner
     ctx = @lexing_context
     before = scn.pos
-    value,terminator = slurp_dqstring
+    value, terminator = slurp_dqstring
     text = value
     after = scn.pos
     loop do
@@ -89,7 +89,7 @@ module Puppet::Pops::Parser::InterpolationSupport
         else
           # false $ variable start
           text += terminator
-          value,terminator = slurp_dqstring
+          value, terminator = slurp_dqstring
           text += value
           after = scn.pos
         end
@@ -107,7 +107,7 @@ module Puppet::Pops::Parser::InterpolationSupport
     scn = @scanner
     ctx = @lexing_context
     before = scn.pos
-    value,terminator = slurp_uqstring()
+    value, terminator = slurp_uqstring()
     text = value
     after = scn.pos
     loop do
@@ -134,7 +134,7 @@ module Puppet::Pops::Parser::InterpolationSupport
         else
           # false $ variable start
           text += terminator
-          value,terminator = slurp_uqstring()
+          value, terminator = slurp_uqstring()
           text += value
           after = scn.pos
         end
@@ -148,7 +148,7 @@ module Puppet::Pops::Parser::InterpolationSupport
     scn = @scanner
     ctx = @lexing_context
     before = scn.pos
-    value,terminator = slurp_uqstring
+    value, terminator = slurp_uqstring
     text = value
     after = scn.pos
     loop do
@@ -175,7 +175,7 @@ module Puppet::Pops::Parser::InterpolationSupport
         else
           # false $ variable start
           text += terminator
-          value,terminator = slurp_uqstring
+          value, terminator = slurp_uqstring
           text += value
           after = scn.pos
         end

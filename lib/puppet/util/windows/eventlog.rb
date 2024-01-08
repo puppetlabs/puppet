@@ -92,11 +92,11 @@ class Puppet::Util::Windows::EventLog
     # @api public
     def to_native(level)
       case level
-      when :debug,:info,:notice
+      when :debug, :info, :notice
         [EVENTLOG_INFORMATION_TYPE, 0x01]
       when :warning
         [EVENTLOG_WARNING_TYPE, 0x02]
-      when :err,:alert,:emerg,:crit
+      when :err, :alert, :emerg, :crit
         [EVENTLOG_ERROR_TYPE, 0x03]
       else
         raise ArgumentError, _("Invalid log level %{level}") % { level: level }

@@ -58,7 +58,7 @@ module Puppet::Pops
       unless MergeStrategy > strategy_class
         # TRANSLATORS 'MergeStrategies.add_strategy' is a method, 'stratgey_class' is a variable and 'MergeStrategy' is a class name and should not be translated
         raise ArgumentError, _("MergeStrategies.add_strategy 'strategy_class' must be a 'MergeStrategy' class. Got %{strategy_class}") %
-            { strategy_class: strategy_class }
+                             { strategy_class: strategy_class }
       end
       strategies[strategy_class.key] = strategy_class
       nil
@@ -95,7 +95,8 @@ module Puppet::Pops
     def merge(e1, e2)
       checked_merge(
         assert_type('The first element of the merge', value_t, e1),
-        assert_type('The second element of the merge', value_t, e2))
+        assert_type('The second element of the merge', value_t, e2)
+      )
     end
 
     # TODO: API 5.0 Remove this method
@@ -370,7 +371,7 @@ module Puppet::Pops
 
     def checked_merge(e1, e2)
       dm_options = { :preserve_unmergeables => false }
-      options.each_pair { |k,v| dm_options[k.to_sym] = v unless k == 'strategy' }
+      options.each_pair { |k, v| dm_options[k.to_sym] = v unless k == 'strategy' }
       # e2 (the destination) is deep cloned to avoid that the passed in object mutates
       DeepMerge.deep_merge!(e1, deep_clone(e2), dm_options)
     end

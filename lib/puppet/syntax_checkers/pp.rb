@@ -23,7 +23,7 @@ class Puppet::SyntaxCheckers::PP < Puppet::Plugins::SyntaxCheckers::SyntaxChecke
       Puppet::Pops::Parser::EvaluatingParser.singleton.parse_string(text)
     rescue => e
       # Cap the message to 100 chars and replace newlines
-      msg = _("PP syntax checker: \"%{message}\"") % { message: e.message().slice(0,500).gsub(/\r?\n/, "\\n") }
+      msg = _("PP syntax checker: \"%{message}\"") % { message: e.message().slice(0, 500).gsub(/\r?\n/, "\\n") }
 
       # TODO: improve the pops API to allow simpler diagnostic creation while still maintaining capabilities
       # and the issue code. (In this case especially, where there is only a single error message being issued).

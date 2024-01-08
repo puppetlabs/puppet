@@ -219,7 +219,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
     if @relationship_graph.edge?(*edge.reverse)
       parent.debug "Skipping automatic relationship to #{child}"
     else
-      @relationship_graph.add_relationship(edge[0],edge[1],label)
+      @relationship_graph.add_relationship(edge[0], edge[1], label)
     end
   end
 end

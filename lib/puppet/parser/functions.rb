@@ -262,7 +262,7 @@ module Puppet::Parser::Functions
 
     ret = ''.dup
 
-    merged_functions(environment).sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
+    merged_functions(environment).sort { |a, b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
       ret << "#{name}\n#{"-" * name.to_s.length}\n"
       if hash[:doc]
         ret << Puppet::Util::Docs.scrub(hash[:doc])

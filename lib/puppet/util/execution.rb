@@ -27,7 +27,7 @@ module Puppet::Util::Execution
     attr_reader :exitstatus
 
     # @api private
-    def initialize(value,exitstatus)
+    def initialize(value, exitstatus)
       super(value)
       @exitstatus = exitstatus
     end
@@ -313,7 +313,7 @@ module Puppet::Util::Execution
   def self.ruby_path()
     File.join(RbConfig::CONFIG['bindir'],
               RbConfig::CONFIG['ruby_install_name'] + RbConfig::CONFIG['EXEEXT'])
-      .sub(/.*\s.*/m, '"\&"')
+        .sub(/.*\s.*/m, '"\&"')
   end
 
   # Because some modules provide their own version of this method.

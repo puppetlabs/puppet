@@ -6,12 +6,12 @@ require_relative '../../puppet/util/profiler/aggregate'
 require_relative '../../puppet/parser/script_compiler'
 
 class Puppet::Application::Script < Puppet::Application
-  option("--debug","-d")
-  option("--execute EXECUTE","-e") do |arg|
+  option("--debug", "-d")
+  option("--execute EXECUTE", "-e") do |arg|
     options[:code] = arg
   end
-  option("--test","-t")
-  option("--verbose","-v")
+  option("--test", "-t")
+  option("--verbose", "-v")
 
   option("--logdest LOGDEST", "-l") do |arg|
     handle_logdest_arg(arg)

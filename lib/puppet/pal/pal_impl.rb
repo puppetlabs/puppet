@@ -58,12 +58,12 @@ module Pal
   #
   def self.with_script_compiler(
     configured_by_env: false,
-      manifest_file:     nil,
-      code_string:       nil,
-      facts:             {},
-      variables:         {},
-      set_local_facts:   true,
-      &block
+    manifest_file:     nil,
+    code_string:       nil,
+    facts:             {},
+    variables:         {},
+    set_local_facts:   true,
+    &block
   )
     # TRANSLATORS: do not translate variable name strings in these assertions
     assert_mutually_exclusive(manifest_file, code_string, 'manifest_file', 'code_string')
@@ -165,12 +165,12 @@ module Pal
   #
   def self.with_catalog_compiler(
     configured_by_env: false,
-      manifest_file:     nil,
-      code_string:       nil,
-      facts:             {},
-      variables:         {},
-      target_variables:  {},
-      &block
+    manifest_file:     nil,
+    code_string:       nil,
+    facts:             {},
+    variables:         {},
+    target_variables:  {},
+    &block
   )
     # TRANSLATORS: do not translate variable name strings in these assertions
     assert_mutually_exclusive(manifest_file, code_string, 'manifest_file', 'code_string')
@@ -232,12 +232,11 @@ module Pal
   # @yieldparam [Puppet::Pal] context, a context that responds to Puppet::Pal methods
   #
   def self.in_tmp_environment(env_name,
-      modulepath:    [],
-      settings_hash: {},
-      facts:         nil,
-      variables:     {},
-      &block
-  )
+                              modulepath:    [],
+                              settings_hash: {},
+                              facts:         nil,
+                              variables:     {},
+                              &block)
     assert_non_empty_string(env_name, _("temporary environment name"))
     # TRANSLATORS: do not translate variable name string in these assertions
     assert_optionally_empty_array(modulepath, 'modulepath')
@@ -280,16 +279,15 @@ module Pal
   #
   # @api public
   def self.in_environment(env_name,
-      modulepath: nil,
-      pre_modulepath: [],
-      post_modulepath: [],
-      settings_hash: {},
-      env_dir:       nil,
-      envpath:       nil,
-      facts:         nil,
-      variables:     {},
-      &block
-  )
+                          modulepath: nil,
+                          pre_modulepath: [],
+                          post_modulepath: [],
+                          settings_hash: {},
+                          env_dir:       nil,
+                          envpath:       nil,
+                          facts:         nil,
+                          variables:     {},
+                          &block)
     # TRANSLATORS terms in the assertions below are names of terms in code
     assert_non_empty_string(env_name, 'env_name')
     assert_optionally_empty_array(modulepath, 'modulepath', true)
@@ -385,7 +383,7 @@ module Pal
     end
 
     rich_data_t = Puppet::Pops::Types::TypeFactory.rich_data
-    variables.each_pair do |k,v|
+    variables.each_pair do |k, v|
       unless k =~ Puppet::Pops::Patterns::VAR_NAME
         raise ArgumentError, _("Given variable '%{varname}' has illegal name") % { varname: k }
       end
@@ -560,7 +558,8 @@ module Pal
   T_BOOLEAN = Puppet::Pops::Types::PBooleanType::DEFAULT
 
   T_GENERIC_TASK_HASH = Puppet::Pops::Types::TypeFactory.hash_kv(
-    Puppet::Pops::Types::TypeFactory.pattern(/\A[a-z][a-z0-9_]*\z/), Puppet::Pops::Types::TypeFactory.data)
+    Puppet::Pops::Types::TypeFactory.pattern(/\A[a-z][a-z0-9_]*\z/), Puppet::Pops::Types::TypeFactory.data
+  )
 
   def self.assert_type(type, value, what, allow_nil=false)
     Puppet::Pops::Types::TypeAsserter.assert_instance_of(nil, type, value, allow_nil) { _('Puppet Pal: %{what}') % {what: what} }

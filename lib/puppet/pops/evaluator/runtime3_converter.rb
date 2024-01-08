@@ -100,7 +100,7 @@ class Runtime3Converter
   def convert_Hash(o, scope, undef_value)
     result = {}
     ic = @inner_converter
-    o.each {|k,v| result[ic.convert(k, scope, undef_value)] = ic.convert(v, scope, undef_value) }
+    o.each {|k, v| result[ic.convert(k, scope, undef_value)] = ic.convert(v, scope, undef_value) }
     result
   end
 
@@ -153,7 +153,7 @@ class Runtime3Converter
     else
       # TRANSLATORS 'PClassType' and 'PResourceType' are Puppet types and should not be translated
       raise ArgumentError, _("Cannot split the type %{class_name}, it represents neither a PClassType, nor a PResourceType.") %
-          { class_name: catalog_type.class }
+                           { class_name: catalog_type.class }
     end
   end
 
@@ -212,7 +212,7 @@ class Runtime3FunctionArgumentConverter < Runtime3Converter
       val3x.map {|v| convert_return(v) }
     elsif val3x.is_a?(Hash)
       hsh = {}
-      val3x.each_pair {|k,v| hsh[convert_return(k)] = convert_return(v)}
+      val3x.each_pair {|k, v| hsh[convert_return(k)] = convert_return(v)}
       hsh
     else
       val3x

@@ -71,8 +71,8 @@ class Puppet::Util::Windows::AccessControlList
           # flags except those affecting inheritance of the
           # ACE we're creating.
           inherit_mask = Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE |
-            Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE |
-            Puppet::Util::Windows::AccessControlEntry::INHERIT_ONLY_ACE
+                         Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE |
+                         Puppet::Util::Windows::AccessControlEntry::INHERIT_ONLY_ACE
           explicit_ace = Puppet::Util::Windows::AccessControlEntry.new(new_sid, ace.mask, ace.flags & inherit_mask, ace.type)
           aces_to_prepend << explicit_ace
         else
@@ -90,7 +90,8 @@ class Puppet::Util::Windows::AccessControlList
       mask = Puppet::Util::Windows::File::STANDARD_RIGHTS_ALL | Puppet::Util::Windows::File::SPECIFIC_RIGHTS_ALL
       ace = Puppet::Util::Windows::AccessControlEntry.new(
         Puppet::Util::Windows::SID::LocalSystem,
-        mask)
+        mask
+      )
       @aces << ace
     end
 

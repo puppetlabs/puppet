@@ -11,10 +11,10 @@ class Puppet::Application::Resource < Puppet::Application
     @extra_params = [:provider]
   end
 
-  option("--debug","-d")
-  option("--verbose","-v")
-  option("--edit","-e")
-  option("--to_yaml","-y")
+  option("--debug", "-d")
+  option("--verbose", "-v")
+  option("--edit", "-e")
+  option("--to_yaml", "-y")
 
   option("--types", "-t") do |_arg|
     env = Puppet.lookup(:environments).get(Puppet[:environment]) || create_default_environment

@@ -102,7 +102,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       idx = @resources.index(other_title_key)
       if idx.nil?
         raise ArgumentError, _("Cannot add resource %{resource_1} before %{resource_2} because %{resource_2} is not yet in the catalog") %
-            { resource_1: resource.ref, resource_2: other.ref }
+                             { resource_1: resource.ref, resource_2: other.ref }
       end
       add_one_resource(resource, idx)
     end
@@ -117,7 +117,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       idx = @resources.index(other_title_key)
       if idx.nil?
         raise ArgumentError, _("Cannot add resource %{resource_1} after %{resource_2} because %{resource_2} is not yet in the catalog") %
-            { resource_1: resource.ref, resource_2: other.ref }
+                             { resource_1: resource.ref, resource_2: other.ref }
       end
       add_one_resource(resource, idx+1)
     end
@@ -205,11 +205,11 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       msg = if resource_declaration.empty?
               # TRANSLATORS 'alias' should not be translated
               _("Cannot alias %{resource} to %{key}; resource %{newref} already declared") %
-                  { resource: ref, key: key.inspect, newref: newref.inspect }
+                { resource: ref, key: key.inspect, newref: newref.inspect }
             else
               # TRANSLATORS 'alias' should not be translated
               _("Cannot alias %{resource} to %{key} at %{resource_declaration}; resource %{newref} already declared") %
-                  { resource: ref, key: key.inspect, resource_declaration: resource_declaration, newref: newref.inspect }
+                { resource: ref, key: key.inspect, resource_declaration: resource_declaration, newref: newref.inspect }
             end
       msg += Puppet::Util::Errors.error_location_with_space(existing.file, existing.line)
       raise ArgumentError, msg
@@ -435,14 +435,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
         source = result.resource(edge.source)
         unless source
           raise ArgumentError, _("Could not intern from data: Could not find relationship source %{source} for %{target}") %
-              { source: edge.source.inspect, target: edge.target.to_s }
+                               { source: edge.source.inspect, target: edge.target.to_s }
         end
         edge.source = source
 
         target = result.resource(edge.target)
         unless target
           raise ArgumentError, _("Could not intern from data: Could not find relationship target %{target} for %{source}") %
-              { target: edge.target.inspect, source: edge.source.to_s }
+                               { target: edge.target.inspect, source: edge.source.to_s }
         end
         edge.target = target
 

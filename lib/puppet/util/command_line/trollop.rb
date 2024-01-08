@@ -469,20 +469,20 @@ class CommandLine
       left = {}
       @specs.each do |name, spec|
         left[name] = "--#{spec[:long]}" +
-          (spec[:short] && spec[:short] != :none ? ", -#{spec[:short]}" : "") +
-          case spec[:type]
-          when :flag; ""
-          when :int; " <i>"
-          when :ints; " <i+>"
-          when :string; " <s>"
-          when :strings; " <s+>"
-          when :float; " <f>"
-          when :floats; " <f+>"
-          when :io; " <filename/uri>"
-          when :ios; " <filename/uri+>"
-          when :date; " <date>"
-          when :dates; " <date+>"
-          end
+                     (spec[:short] && spec[:short] != :none ? ", -#{spec[:short]}" : "") +
+                     case spec[:type]
+                     when :flag; ""
+                     when :int; " <i>"
+                     when :ints; " <i+>"
+                     when :string; " <s>"
+                     when :strings; " <s+>"
+                     when :float; " <f>"
+                     when :floats; " <f+>"
+                     when :io; " <filename/uri>"
+                     when :ios; " <filename/uri+>"
+                     when :date; " <date>"
+                     when :dates; " <date+>"
+                     end
       end
 
       leftcol_width = left.values.map { |s| s.length }.max || 0

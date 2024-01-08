@@ -160,8 +160,7 @@ module Puppet::Util::Windows
           result = RegEnumValueW(key.hkey, index,
                                  subkey_ptr, subkey_length_ptr,
                                  FFI::Pointer::NULL, FFI::Pointer::NULL,
-                                 FFI::Pointer::NULL, FFI::Pointer::NULL
-          )
+                                 FFI::Pointer::NULL, FFI::Pointer::NULL)
 
           break if result == ERROR_NO_MORE_ITEMS
 
@@ -191,8 +190,7 @@ module Puppet::Util::Windows
                                     max_subkey_name_length_ptr, FFI::MemoryPointer::NULL,
                                     FFI::MemoryPointer::NULL, max_value_name_length_ptr,
                                     FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL,
-                                    FFI::MemoryPointer::NULL
-          )
+                                    FFI::MemoryPointer::NULL)
 
           if status != FFI::ERROR_SUCCESS
             msg = _("Failed to query registry %{key} for sizes") % { key: key.keyname }

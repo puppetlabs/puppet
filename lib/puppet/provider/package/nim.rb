@@ -100,7 +100,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
       errmsg = if version_specified
                  _("Unable to find package '%{package}' with version '%{version}' on lpp_source '%{source}'") %
-                     { package: pkg, version: version, source: source }
+                   { package: pkg, version: version, source: source }
                else
                  _("Unable to find package '%{package}' on lpp_source '%{source}'") % { package: pkg, source: source }
                end
@@ -245,7 +245,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     package_string = match.captures[1]
 
     case package_type_flag
-    when "I","S"
+    when "I", "S"
       parse_installp_package_string(package_string)
     when "R"
       parse_rpm_package_string(package_string)

@@ -50,7 +50,8 @@ Puppet::Functions.create_function(:require, Puppet::Functions::InternalFunction)
     if Puppet[:tasks]
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
         Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
-        {:operation => 'require'})
+        {:operation => 'require'}
+      )
     end
 
     # Make call patterns uniform and protected against nested arrays, also make

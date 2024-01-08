@@ -64,7 +64,7 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
       if strategy == 'deep'
         result = { :behavior => :deeper }
         # Remaining entries must have symbolic keys
-        merge.each_pair { |k,v| result[k.to_sym] = v unless k == 'strategy' }
+        merge.each_pair { |k, v| result[k.to_sym] = v unless k == 'strategy' }
         result
       else
         convert_merge(strategy)

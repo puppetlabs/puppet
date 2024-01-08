@@ -30,11 +30,11 @@ module RDoc
 
     attr_accessor :facts, :plugins
 
-    def initialize(name,superclass=nil)
+    def initialize(name, superclass=nil)
       @facts = []
       @plugins = []
       @nodes = {}
-      super(name,superclass)
+      super(name, superclass)
     end
 
     def add_plugin(plugin)
@@ -64,7 +64,7 @@ module RDoc
 
     # Adds a module called __nodes__ and adds nodes to it as classes
     #
-    def add_node(name,superclass)
+    def add_node(name, superclass)
       cls = @nodes[name]
       if cls
         return cls
@@ -102,7 +102,7 @@ module RDoc
     attr_accessor :resource_list, :requires, :childs, :realizes
 
     def initialize(name, superclass)
-      super(name,superclass)
+      super(name, superclass)
       @resource_list = []
       @requires = []
       @realizes = []

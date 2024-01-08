@@ -53,7 +53,8 @@ module Puppet::Util::Windows::File
     return true if result != FFI::WIN32_FALSE
 
     raise Puppet::Util::Windows::Error.new(
-      "CreateSymbolicLink(#{symlink}, #{target}, #{flags.to_s(8)})")
+      "CreateSymbolicLink(#{symlink}, #{target}, #{flags.to_s(8)})"
+    )
   end
   module_function :symlink
 
@@ -67,7 +68,7 @@ module Puppet::Util::Windows::File
       # return false if this path has been seen before.  This is protection against circular symlinks
       return false if seen_paths.include?(path.downcase)
 
-      result = get_attributes(path,false)
+      result = get_attributes(path, false)
 
       # return false for path not found
       return false if result == INVALID_FILE_ATTRIBUTES
@@ -128,7 +129,7 @@ module Puppet::Util::Windows::File
   # define INVALID_HANDLE_VALUE ((HANDLE)(LONG_PTR)-1)
   INVALID_HANDLE_VALUE = FFI::Pointer.new(-1).address
   def self.create_file(file_name, desired_access, share_mode, security_attributes,
-    creation_disposition, flags_and_attributes, template_file_handle)
+                       creation_disposition, flags_and_attributes, template_file_handle)
 
     result = CreateFileW(wide_string(file_name.to_s),
                          desired_access, share_mode, security_attributes, creation_disposition,
@@ -139,7 +140,8 @@ module Puppet::Util::Windows::File
     raise Puppet::Util::Windows::Error.new(
       "CreateFile(#{file_name}, #{desired_access.to_s(8)}, #{share_mode.to_s(8)}, " +
         "#{security_attributes}, #{creation_disposition.to_s(8)}, " +
-        "#{flags_and_attributes.to_s(8)}, #{template_file_handle})")
+        "#{flags_and_attributes.to_s(8)}, #{template_file_handle})"
+    )
   end
 
   def self.get_reparse_point_data(handle, &block)
@@ -200,7 +202,8 @@ module Puppet::Util::Windows::File
         raise Puppet::Util::Windows::Error.new(
           "DeviceIoControl(#{handle}, #{io_control_code}, " +
           "#{in_buffer}, #{in_buffer ? in_buffer.size : ''}, " +
-          "#{out_buffer}, #{out_buffer ? out_buffer.size : ''}")
+          "#{out_buffer}, #{out_buffer ? out_buffer.size : ''}"
+        )
       end
     end
 
@@ -231,7 +234,8 @@ module Puppet::Util::Windows::File
         nil, # security_attributes
         OPEN_EXISTING,
         FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
-        0) # template_file
+        0
+      ) # template_file
     ensure
       FFI::WIN32.CloseHandle(handle) if handle
     end

@@ -42,7 +42,7 @@ class Puppet::Interface::Option
         dup = dups[name]
         if dup
           raise ArgumentError, _("%{option}: duplicates existing alias %{duplicate} in %{parent}") %
-              { option: item.inspect, duplicate: dup.inspect, parent: @parent }
+                               { option: item.inspect, duplicate: dup.inspect, parent: @parent }
         else
           dups[name] = item
         end
@@ -131,7 +131,7 @@ class Puppet::Interface::Option
     unless proc.is_a? Proc
       # TRANSLATORS 'proc' is a Ruby block of code
       raise ArgumentError, _("default value for %{name} is a %{class_name}, not a proc") %
-          { name: self, class_name: proc.class.name.inspect }
+                           { name: self, class_name: proc.class.name.inspect }
     end
     @default = proc
   end
@@ -156,7 +156,7 @@ class Puppet::Interface::Option
     unless proc.is_a? Proc
       # TRANSLATORS 'proc' is a Ruby block of code
       raise ArgumentError, _("before action hook for %{name} is a %{class_name}, not a proc") %
-          { name: self, class_name: proc.class.name.inspect }
+                           { name: self, class_name: proc.class.name.inspect }
     end
     @before_action =
       @parent.__send__(:__add_method, __decoration_name(:before), proc)
@@ -168,7 +168,7 @@ class Puppet::Interface::Option
     unless proc.is_a? Proc
       # TRANSLATORS 'proc' is a Ruby block of code
       raise ArgumentError, _("after action hook for %{name} is a %{class_name}, not a proc") %
-          { name: self, class_name: proc.class.name.inspect }
+                           { name: self, class_name: proc.class.name.inspect }
     end
     @after_action =
       @parent.__send__(:__add_method, __decoration_name(:after), proc)

@@ -95,7 +95,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       end
       if !missing_files.empty?
         raise Puppet::Error, _("One or more file(s) specified did not exist:\n%{missing_files_list}") %
-            { missing_files_list: missing_files.map { |f| "   #{f}" }.join("\n") }
+                             { missing_files_list: missing_files.map { |f| "   #{f}" }.join("\n") }
       else
         # Exit with 1 if there were errors
         raise Puppet::Error, _("Errors while validating epp") unless status
@@ -180,7 +180,7 @@ Puppet::Face.define(:epp, '0.0.1') do
           raise Puppet::Error, _("No input to parse given on command line or stdin")
         end
       else
-        templates, missing_files = args.reduce([[],[]]) do |memo, file|
+        templates, missing_files = args.reduce([[], []]) do |memo, file|
           template_file = effective_template(file, compiler.environment)
           if template_file.nil?
             memo[1] << file
@@ -197,7 +197,7 @@ Puppet::Face.define(:epp, '0.0.1') do
 
         if !missing_files.empty?
           raise Puppet::Error, _("One or more file(s) specified did not exist:\n%{missing_files_list}") %
-              { missing_files_list: missing_files.collect { |f| "   #{f}" }.join("\n") }
+                               { missing_files_list: missing_files.collect { |f| "   #{f}" }.join("\n") }
         end
       end
       buffer.string

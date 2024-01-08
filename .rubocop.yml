@@ -15,6 +15,7 @@ AllCops:
     - 'tasks/**/*'
     - 'ext/suse/puppet.spec'
     - 'lib/puppet/vendor/**/*'
+    - 'lib/puppet/pops/model/ast.rb'
     - 'lib/puppet/pops/parser/eparser.rb'
 
 # The formatting of defaults is unusual, so let's skip layout cops.
@@ -22,22 +23,12 @@ Layout:
   Exclude:
     - 'lib/puppet/defaults.rb'
 
-# The confine statements in package providers unexpectedly affect this cop.
-Layout/BeginEndAlignment:
-  Enabled: true
-  Exclude:
-    - 'lib/puppet/provider/package/*.rb'
-
-Layout/ElseAlignment:
-  Enabled: true
-  Exclude:
-    - 'lib/puppet/provider/package/*.rb'
-
 # We don't mind when module and class keywords are aligned.
 Layout/IndentationWidth:
   AllowedPatterns: ['^\s*module']
-  Exclude:
-    - 'lib/puppet/provider/package/*.rb'
+
+Layout/LineEndStringConcatenationIndentation:
+  Enabled: true
 
 # puppet uses symbol booleans in types and providers to work around long standing
 # bugs when trying to manage falsey pararameters and properties

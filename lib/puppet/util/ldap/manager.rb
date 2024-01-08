@@ -145,7 +145,7 @@ class Puppet::Util::Ldap::Manager
         value = values[generator.source]
         unless value
           raise ArgumentError, _("%{source} must be defined to generate %{name}") %
-              { source: generator.source, name: generator.name }
+                               { source: generator.source, name: generator.name }
         end
         result = generator.generate(value)
       else

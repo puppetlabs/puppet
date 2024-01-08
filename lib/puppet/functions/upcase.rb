@@ -81,7 +81,7 @@ Puppet::Functions.create_function(:upcase) do
 
   def on_hash(h)
     result = {}
-    h.each_pair {|k,v| result[do_upcase(k)] = do_upcase(v) }
+    h.each_pair {|k, v| result[do_upcase(k)] = do_upcase(v) }
     result
   end
 

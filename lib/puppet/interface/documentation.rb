@@ -292,7 +292,7 @@ class Puppet::Interface
     def copyright_years=(value)
       years = munge_copyright_year value
       years = (years.is_a?(Array) ? years : [years])
-        .sort_by do |x| x.is_a?(Range) ? x.first : x end
+              .sort_by do |x| x.is_a?(Range) ? x.first : x end
 
       @copyright_years = years.map do |year|
         if year.is_a? Range then
@@ -316,7 +316,7 @@ class Puppet::Interface
         if fault then
           # TRANSLATORS 'copyright' is an attribute name and should not be translated
           raise ArgumentError, _("copyright with a year %{value} is very strange; did you accidentally add or subtract two years?") %
-              { value: fault }
+                               { value: fault }
         end
 
         input

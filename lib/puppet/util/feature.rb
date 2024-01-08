@@ -89,7 +89,7 @@ class Puppet::Util::Feature
     if block_given?
       begin
         result = yield
-      rescue StandardError,ScriptError => detail
+      rescue StandardError, ScriptError => detail
         warn _("Failed to load feature test for %{name}: %{detail}") % { name: name, detail: detail }
         result = nil
       end

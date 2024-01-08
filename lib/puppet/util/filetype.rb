@@ -41,7 +41,7 @@ class Puppet::Util::FileType
           val = real_read
           @loaded = Time.now
           if val
-            return val.gsub(/# HEADER.*\n/,'')
+            return val.gsub(/# HEADER.*\n/, '')
           else
             return ""
           end

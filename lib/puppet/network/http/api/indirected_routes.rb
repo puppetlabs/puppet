@@ -63,7 +63,8 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
     if indirection_name !~ /^\w+$/
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        _("The indirection name must be purely alphanumeric, not '%{indirection_name}'") % { indirection_name: indirection_name })
+        _("The indirection name must be purely alphanumeric, not '%{indirection_name}'") % { indirection_name: indirection_name }
+      )
     end
 
     # this also depluralizes the indirection_name if it is a search
@@ -73,24 +74,28 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     # request
     if url_prefix != IndirectionType.url_prefix_for(indirection_name)
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        _("Indirection '%{indirection_name}' does not match url prefix '%{url_prefix}'") % { indirection_name: indirection_name, url_prefix: url_prefix })
+        _("Indirection '%{indirection_name}' does not match url prefix '%{url_prefix}'") % { indirection_name: indirection_name, url_prefix: url_prefix }
+      )
     end
 
     indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
     if !indirection
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
         _("Could not find indirection '%{indirection_name}'") % { indirection_name: indirection_name },
-        Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND)
+        Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND
+      )
     end
 
     if !environment
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        _("An environment parameter must be specified"))
+        _("An environment parameter must be specified")
+      )
     end
 
     if ! Puppet::Node::Environment.valid_name?(environment)
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        _("The environment must be purely alphanumeric, not '%{environment}'") % { environment: environment })
+        _("The environment must be purely alphanumeric, not '%{environment}'") % { environment: environment }
+      )
     end
 
     configured_environment = Puppet.lookup(:environments).get(environment)
@@ -101,14 +106,16 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
     if configured_environment.nil? && indirection.terminus.require_environment?
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
-        _("Could not find environment '%{environment}'") % { environment: environment })
+        _("Could not find environment '%{environment}'") % { environment: environment }
+      )
     end
 
     params.delete(:bucket_path)
 
     if key == "" or key.nil?
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        _("No request key specified in %{uri}") % { uri: uri })
+        _("No request key specified in %{uri}") % { uri: uri }
+      )
     end
 
     [indirection, method, key, params]
@@ -194,7 +201,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
         true
       rescue Puppet::Network::FormatHandler::FormatError => err
         msg = _("Failed to serialize %{model} for '%{key}': %{detail}") %
-        {model: model, key: key, detail: err}
+              {model: model, key: key, detail: err}
         if Puppet[:allow_pson_serialization]
           Puppet.warning(msg)
         else
@@ -208,7 +215,8 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
     raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new(
       _("No supported formats are acceptable (Accept: %{accepted_formats})") % { accepted_formats: formats.map(&:mime).join(', ') },
-      Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT)
+      Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT
+    )
   end
 
   # Return an array of response formatters that the client accepts and
@@ -232,24 +240,28 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
         return model_class.convert_from(formatter.name.to_s, data)
       rescue => e
         raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-          _("The request body is invalid: %{message}") % { message: e.message })
+          _("The request body is invalid: %{message}") % { message: e.message }
+        )
       end
     end
 
     # TRANSLATORS "mime-type" is a keyword and should not be translated
     raise Puppet::Network::HTTP::Error::HTTPUnsupportedMediaTypeError.new(
       _("Client sent a mime-type (%{header}) that doesn't correspond to a format we support") % { header: request.headers['content-type'] },
-      Puppet::Network::HTTP::Issues::UNSUPPORTED_MEDIA_TYPE)
+      Puppet::Network::HTTP::Issues::UNSUPPORTED_MEDIA_TYPE
+    )
   end
 
   def indirection_method(http_method, indirection)
     raise Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError.new(
-      _("No support for http method %{http_method}") % { http_method: http_method }) unless METHOD_MAP[http_method]
+      _("No support for http method %{http_method}") % { http_method: http_method }
+    ) unless METHOD_MAP[http_method]
 
     method = METHOD_MAP[http_method][plurality(indirection)]
     unless method
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        _("No support for plurality %{indirection} for %{http_method} operations") % { indirection: plurality(indirection), http_method: http_method })
+        _("No support for plurality %{indirection} for %{http_method} operations") % { indirection: plurality(indirection), http_method: http_method }
+      )
     end
 
     method

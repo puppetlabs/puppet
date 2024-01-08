@@ -158,7 +158,8 @@ module Puppet::DataTypes
 
       created_type = Puppet::Pops::Types::PObjectType.new(
         @type_name,
-        Puppet::Pops::Parser::EvaluatingParser.new.parse_string("{ #{@interface} }").body)
+        Puppet::Pops::Parser::EvaluatingParser.new.parse_string("{ #{@interface} }").body
+      )
 
       if !@implementation_class.nil?
         if @implementation_class < Puppet::Pops::Types::PuppetObject

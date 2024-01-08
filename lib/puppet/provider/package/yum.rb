@@ -24,6 +24,9 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   commands :cmd => "yum", :rpm => "rpm"
 
+  # Mixing confine statements, control expressions, and exception handling
+  # confuses Rubocop's Layout cops, so we disable them entirely.
+  # rubocop:disable Layout
   if command('rpm')
     confine :true => begin
       rpm('--version')
@@ -33,6 +36,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         true
       end
   end
+  # rubocop:enable Layout
 
   defaultfor 'os.name' => :amazon
   defaultfor 'os.family' => :redhat, 'os.release.major' => (4..7).to_a
@@ -268,7 +272,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         self.debug "Installing directly from #{wanted}"
       end
       should = nil
-    when false,:absent
+    when false, :absent
       # pass
       should = nil
     else
@@ -284,7 +288,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         wanted += "-#{should}"
         if wanted.scan(self.class::ARCH_REGEX)
           self.debug "Detected Arch argument in package! - Moving arch to end of version string"
-          wanted.gsub!(/(.+)(#{self.class::ARCH_REGEX})(.+)/,'\1\3\2')
+          wanted.gsub!(/(.+)(#{self.class::ARCH_REGEX})(.+)/, '\1\3\2')
         end
       end
       current_package = self.query

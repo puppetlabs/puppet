@@ -98,7 +98,7 @@ module Puppet::HTTP
       # We generate a random number 5, and iterate through the records, adding
       # the current record's weight to the accumulator until the weight of the
       # current record plus previous records is greater than the random number.
-      total_weight = records.inject(0) { |sum,record|
+      total_weight = records.inject(0) { |sum, record|
         sum + weight(record)
       }
       current_weight = 0

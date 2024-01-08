@@ -80,7 +80,8 @@ module Puppet::Util::Windows::SID
                     # necessary when accounts like . or '' are passed in
                     return lookup_account_sid(
                       system_name,
-                      sid_ptr.read_bytes(sid_length_ptr.read_dword).unpack('C*'))
+                      sid_ptr.read_bytes(sid_length_ptr.read_dword).unpack('C*')
+                    )
                   end
                 end
               end
@@ -135,7 +136,8 @@ module Puppet::Util::Windows::SID
                       sid_bytes,
                       Puppet::Util::Windows::SID.sid_ptr_to_string(sid_ptr),
                       domain_ptr.read_wide_string(domain_length_ptr.read_dword),
-                      SID_NAME_USE[name_use_enum_ptr.read_uint32])
+                      SID_NAME_USE[name_use_enum_ptr.read_uint32]
+                    )
                   end
                 end
               end

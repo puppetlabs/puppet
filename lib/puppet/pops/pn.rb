@@ -213,7 +213,7 @@ module PN
     def format(indent, b)
       local_indent = indent ? indent.increase : nil
       b << '{'
-      @entries.each_with_index do |e,i|
+      @entries.each_with_index do |e, i|
         if indent
           b << "\n" << local_indent.current
         elsif i > 0

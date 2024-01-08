@@ -59,7 +59,7 @@ module Utils
           radix = 10
           if match[3].to_s.length > 0
             radix = 16
-          elsif match[4].to_s.length > 1 && match[4][0,1] == '0'
+          elsif match[4].to_s.length > 1 && match[4][0, 1] == '0'
             radix = 8
           end
           # Ruby 1.8.7 does not have a second argument to Kernel method that creates an

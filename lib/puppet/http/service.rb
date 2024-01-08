@@ -121,8 +121,7 @@ class Puppet::HTTP::Service
   def build_url(api, server, port)
     URI::HTTPS.build(host: server,
                      port: port,
-                     path: api
-                    ).freeze
+                     path: api).freeze
   end
 
   def get_mime_types(model)
@@ -134,7 +133,7 @@ class Puppet::HTTP::Service
     header = response['Content-Type']
     raise Puppet::HTTP::ProtocolError.new(_("No content type in http response; cannot parse")) unless header
 
-    header.gsub!(/\s*;.*$/,'') # strip any charset
+    header.gsub!(/\s*;.*$/, '') # strip any charset
 
     formatter = Puppet::Network::FormatHandler.mime(header)
     raise Puppet::HTTP::ProtocolError.new("Content-Type is unsupported") if EXCLUDED_FORMATS.include?(formatter.name)

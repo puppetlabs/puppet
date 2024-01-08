@@ -10,8 +10,7 @@ module Types
                                         'parameters' => {
                                           KEY_TYPE => POptionalType.new(PStringType::NON_EMPTY),
                                           KEY_VALUE => nil
-                                        }
-      )
+                                        })
     end
 
     def self.from_hash(init_hash)

@@ -31,6 +31,9 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
   commands :rpm => "rpm"
 
+  # Mixing confine statements, control expressions, and exception handling
+  # confuses Rubocop's Layout cops, so we disable them entirely.
+  # rubocop:disable Layout
   if command('rpm')
     confine :true => begin
       rpm('--version')
@@ -40,6 +43,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         true
       end
   end
+  # rubocop:enable Layout
 
   def self.current_version
     return @current_version unless @current_version.nil?

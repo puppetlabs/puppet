@@ -58,7 +58,7 @@ module Puppet::Interface::OptionManager
       conflict = get_option(name)
       if conflict
         raise ArgumentError, _("Option %{option} conflicts with existing option %{conflict}") %
-            { option: option, conflict: conflict }
+                             { option: option, conflict: conflict }
       end
 
       actions.each do |action|
@@ -66,7 +66,7 @@ module Puppet::Interface::OptionManager
         conflict = action.get_option(name)
         if conflict
           raise ArgumentError, _("Option %{option} conflicts with existing option %{conflict} on %{action}") %
-              { option: option, conflict: conflict, action: action }
+                               { option: option, conflict: conflict, action: action }
         end
       end
     end
