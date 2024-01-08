@@ -342,7 +342,7 @@ class Puppet::Graph::SimpleGraph
     if edge?(e.source, e.target)
       @upstream_from.clear
       @downstream_from.clear
-      @in_to   [e.target].delete e.source if (@in_to   [e.target][e.source] -= [e]).empty?
+      @in_to[e.target].delete e.source if (@in_to[e.target][e.source] -= [e]).empty?
       @out_from[e.source].delete e.target if (@out_from[e.source][e.target] -= [e]).empty?
     end
   end
