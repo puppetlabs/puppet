@@ -23,19 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: AllowForAlignment.
-Layout/SpaceBeforeFirstArg:
-  Exclude:
-    - 'lib/puppet/file_serving/configuration.rb'
-    - 'lib/puppet/functions/defined.rb'
-    - 'lib/puppet/parser/type_loader.rb'
-    - 'lib/puppet/pops/types/types.rb'
-    - 'lib/puppet/provider/package/aix.rb'
-    - 'lib/puppet/provider/package/nim.rb'
-    - 'lib/puppet/provider/package/rug.rb'
-    - 'lib/puppet/type/service.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/SpaceBeforeSemicolon:
   Exclude:
     - 'lib/puppet/functions.rb'
