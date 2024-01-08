@@ -37,7 +37,7 @@ Puppet::Functions.create_function(:dig) do
 
   def dig(data, *args)
     walked_path = []
-    args.reduce(data) do | d, k |
+    args.reduce(data) do |d, k|
       return nil if d.nil? || k.nil?
 
       if !(d.is_a?(Array) || d.is_a?(Hash))

@@ -167,7 +167,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     # The alias setting logic checks, and does not error if the alias is set to an already set alias
     # for the same resource (i.e. it is ok if alias == title
     explicit_aliases = [resource[:alias]].flatten.compact
-    explicit_aliases.each {| given_alias | self.alias(resource, given_alias) }
+    explicit_aliases.each {|given_alias| self.alias(resource, given_alias) }
 
     # Skip creating uniqueness key alias and checking collisions for non-isomorphic resources.
     return unless resource.respond_to?(:isomorphic?) and resource.isomorphic?

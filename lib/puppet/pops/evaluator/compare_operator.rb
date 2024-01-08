@@ -248,7 +248,7 @@ class CompareOperator
     return false unless left.is_a?(Array)
     return false unless left.length == array.length
 
-    array.each_with_index.all? { | pattern, index| match(left[index], pattern, scope) }
+    array.each_with_index.all? { |pattern, index| match(left[index], pattern, scope) }
   end
 
   def match_Hash(hash, left, scope)

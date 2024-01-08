@@ -104,7 +104,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         return match[2]
       end
 
-      vcmp = version.split('.').map{|s|s.to_i} <=> match[2].split('.').map{|s|s.to_i}
+      vcmp = version.split('.').map{|s| s.to_i} <=> match[2].split('.').map{|s| s.to_i}
       if vcmp > 0
         # The locally installed package may actually be newer than what a mirror
         # has. Log it at debug, but ignore it otherwise.

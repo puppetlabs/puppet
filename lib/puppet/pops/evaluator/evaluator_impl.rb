@@ -819,7 +819,7 @@ class EvaluatorImpl
     body_to_params = {}
 
     # titles are evaluated before attribute operations
-    o.bodies.map do | body |
+    o.bodies.map do |body|
       titles = evaluate(body.title, scope)
 
       # Title may not be nil
@@ -879,7 +879,7 @@ class EvaluatorImpl
     # evaluating the ResourceExpression.
     #
     defaults_hash = body_to_params[titles_to_body[:default]] || {}
-    o.bodies.map do | body |
+    o.bodies.map do |body|
       titles = body_to_titles[body]
       params = defaults_hash.merge(body_to_params[body] || {})
       create_resources(o, scope, virtual, exported, type_name, titles, params.values)

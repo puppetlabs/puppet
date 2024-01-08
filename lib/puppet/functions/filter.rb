@@ -123,7 +123,7 @@ Puppet::Functions.create_function(:filter) do
     enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
     if enum.hash_style?
       result = {}
-      enum.each {| k, v| result[k] = v if yield(k, v) }
+      enum.each {|k, v| result[k] = v if yield(k, v) }
       result
     else
       result = []

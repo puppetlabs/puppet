@@ -154,7 +154,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       # unfortunately it doesn't consider downgrades 'available' (eg. with
       # installed foo@1.0, list -a foo@0.9 would fail).
       name = @resource[:name]
-      potential_matches = pkg(:list, '-Hvfa', "#{name}@#{should}").split("\n").map{|l|self.class.parse_line(l)}
+      potential_matches = pkg(:list, '-Hvfa', "#{name}@#{should}").split("\n").map{|l| self.class.parse_line(l)}
       n = potential_matches.length
       if n > 1
         warning(_("Implicit version %{should} has %{n} possible matches") % { should: should, n: n })

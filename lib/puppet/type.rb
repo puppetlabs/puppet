@@ -1117,7 +1117,7 @@ class Type
     # is the first property, which is important for skipping 'retrieve' on
     # all the properties if the resource is absent.
     ensure_state = false
-    return properties.inject({}) do | prophash, property|
+    return properties.inject({}) do |prophash, property|
       if property.name == :ensure
         ensure_state = property.retrieve
         prophash[property] = ensure_state

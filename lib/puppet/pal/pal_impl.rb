@@ -480,7 +480,7 @@ module Pal
         # TODO: The compiler instances should be available under non PAL use as well!
         # TRANSLATORS: Do not translate, symbolic name
         Puppet.override(overrides, "PAL::with_#{internal_compiler_class}_compiler") do
-          compiler.compile do | _compiler_yield |
+          compiler.compile do |_compiler_yield|
             # In case the variables passed to the compiler are PCore types defined in modules, they
             # need to be deserialized and added from within the this scope, so that loaders are
             # available during deserizlization.
