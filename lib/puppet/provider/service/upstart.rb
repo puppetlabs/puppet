@@ -180,7 +180,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   def status
     if (@resource[:hasstatus] == :false) ||
        @resource[:status] ||
-       ! is_upstart?
+       !is_upstart?
       return super
     end
 

@@ -183,7 +183,7 @@ module Puppet::Util::Execution
     null_file = Puppet::Util::Platform.windows? ? 'NUL' : '/dev/null'
 
     cwd = options[:cwd]
-    if cwd && ! Puppet::FileSystem.directory?(cwd)
+    if cwd && !Puppet::FileSystem.directory?(cwd)
       raise ArgumentError, _("Working directory %{cwd} does not exist!") % { cwd: cwd }
     end
 

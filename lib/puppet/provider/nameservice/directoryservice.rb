@@ -485,7 +485,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     #      This method returns and sets @infohash
     # I'm not re-factoring the name "getinfo" because this method will be
     # most likely called by nameservice.rb, which I didn't write.
-    if refresh or (! defined?(@property_value_cache_hash) or ! @property_value_cache_hash)
+    if refresh or (!defined?(@property_value_cache_hash) or !@property_value_cache_hash)
       # JJM 2007-07-24: OK, there's a bit of magic that's about to
       # happen... Let's see how strong my grip has become... =)
       #

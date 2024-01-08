@@ -122,7 +122,7 @@ module Puppet::Util::Windows::COM
 
       self
     ensure
-      instance.Release if instance && ! instance.null?
+      instance.Release if instance && !instance.null?
     end
   end
 

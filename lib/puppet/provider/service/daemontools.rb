@@ -74,7 +74,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     # or don't contain a run file
     Dir.entries(path).reject { |e|
       fullpath = File.join(path, e)
-      e =~ /^\./ or ! FileTest.directory?(fullpath) or ! Puppet::FileSystem.exist?(File.join(fullpath, "run"))
+      e =~ /^\./ or !FileTest.directory?(fullpath) or !Puppet::FileSystem.exist?(File.join(fullpath, "run"))
     }.collect do |name|
       new(:name => name, :path => path)
     end
@@ -149,12 +149,12 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
   end
 
   def enable
-    if ! FileTest.directory?(self.daemon)
+    if !FileTest.directory?(self.daemon)
       Puppet.notice "No daemon dir, calling setupservice for #{resource[:name]}"
       self.setupservice
     end
     if self.daemon
-      if ! Puppet::FileSystem.symlink?(self.service)
+      if !Puppet::FileSystem.symlink?(self.service)
         Puppet.notice "Enabling #{self.service}: linking #{self.daemon} -> #{self.service}"
         Puppet::FileSystem.symlink(self.daemon, self.service)
       end
@@ -165,7 +165,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
 
   def disable
     begin
-      if ! FileTest.directory?(self.daemon)
+      if !FileTest.directory?(self.daemon)
         Puppet.notice "No daemon dir, calling setupservice for #{resource[:name]}"
         self.setupservice
       end

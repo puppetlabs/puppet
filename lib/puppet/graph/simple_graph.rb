@@ -125,7 +125,7 @@ class Puppet::Graph::SimpleGraph
       when :children then
         if frame[:children].length > 0 then
           child = frame[:children].shift
-          if ! s[:index][child] then
+          if !s[:index][child] then
             # Never seen, need to recurse.
             frame[:step] = :after_recursion
             frame[:child] = child
@@ -171,7 +171,7 @@ class Puppet::Graph::SimpleGraph
 
     # we usually have a disconnected graph, must walk all possible roots
     vertices.each do |vertex|
-      if ! state[:index][vertex] then
+      if !state[:index][vertex] then
         tarjan vertex, state
       end
     end

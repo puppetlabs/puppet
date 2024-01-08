@@ -320,7 +320,7 @@ class EvaluatorImpl
   end
 
   def eval_NotExpression(o, scope)
-    ! is_true?(evaluate(o.expr, scope), o.expr)
+    !is_true?(evaluate(o.expr, scope), o.expr)
   end
 
   def eval_UnaryMinusExpression(o, scope)
@@ -536,13 +536,13 @@ class EvaluatorImpl
 
         when '<'
           # left can be assigned to right, but they are not equal
-          @@type_calculator.assignable?(right, left) && ! @@type_calculator.equals(left, right)
+          @@type_calculator.assignable?(right, left) && !@@type_calculator.equals(left, right)
         when '<='
           # left can be assigned to right
           @@type_calculator.assignable?(right, left)
         when '>'
           # right can be assigned to left, but they are not equal
-          @@type_calculator.assignable?(left, right) && ! @@type_calculator.equals(left, right)
+          @@type_calculator.assignable?(left, right) && !@@type_calculator.equals(left, right)
         when '>='
           # right can be assigned to left
           @@type_calculator.assignable?(left, right)
@@ -554,7 +554,7 @@ class EvaluatorImpl
         when '=='
           @@compare_operator.equals(left, right)
         when '!='
-          ! @@compare_operator.equals(left, right)
+          !@@compare_operator.equals(left, right)
         when '<'
           @@compare_operator.compare(left, right) < 0
         when '<='

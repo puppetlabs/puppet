@@ -148,7 +148,7 @@ Puppet::Face.define(:parser, '0.0.1') do
       if options[:e]
         dump_parse(options[:e], 'command-line-string', options, false)
       elsif args.empty?
-        if ! STDIN.tty?
+        if !STDIN.tty?
           dump_parse(STDIN.read, 'stdin', options, false)
         else
           raise Puppet::Error, _("No input to parse given on command line or stdin")

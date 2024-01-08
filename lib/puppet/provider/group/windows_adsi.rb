@@ -61,7 +61,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def member_valid?(user_name)
-    ! Puppet::Util::Windows::SID.name_to_principal(user_name).nil?
+    !Puppet::Util::Windows::SID.name_to_principal(user_name).nil?
   end
 
   def group

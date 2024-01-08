@@ -100,7 +100,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
       current = ldap_group[:members]
 
       if form == :add
-        if current.is_a?(Array) and ! current.empty?
+        if current.is_a?(Array) and !current.empty?
           new = current + [name]
         else
           new = [name]

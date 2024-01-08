@@ -92,7 +92,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       )
     end
 
-    if ! Puppet::Node::Environment.valid_name?(environment)
+    if !Puppet::Node::Environment.valid_name?(environment)
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
         _("The environment must be purely alphanumeric, not '%{environment}'") % { environment: environment }
       )

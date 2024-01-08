@@ -174,7 +174,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       if options[:e]
         buffer.print dump_parse(options[:e], 'command-line-string', options, false)
       elsif args.empty?
-        if ! STDIN.tty?
+        if !STDIN.tty?
           buffer.print dump_parse(STDIN.read, 'stdin', options, false)
         else
           raise Puppet::Error, _("No input to parse given on command line or stdin")
@@ -342,7 +342,7 @@ Puppet::Face.define(:epp, '0.0.1') do
         if options[:e]
           buffer.print render_inline(options[:e], compiler, options)
         elsif args.empty?
-          if ! STDIN.tty?
+          if !STDIN.tty?
             buffer.print render_inline(STDIN.read, compiler, options)
           else
             raise Puppet::Error, _("No input to process given on command line or stdin")

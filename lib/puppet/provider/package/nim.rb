@@ -62,7 +62,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
     pkg = @resource[:name]
 
-    version_specified = (useversion and (! @resource.should(:ensure).is_a? Symbol))
+    version_specified = (useversion and (!@resource.should(:ensure).is_a? Symbol))
 
     # This is unfortunate for a couple of reasons.  First, because of a subtle
     # difference in the command-line syntax for installing an RPM vs an

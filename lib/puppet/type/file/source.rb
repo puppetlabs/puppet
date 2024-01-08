@@ -251,7 +251,7 @@ module Puppet
     end
 
     def found?
-      ! (metadata.nil? or metadata.ftype.nil?)
+      !(metadata.nil? or metadata.ftype.nil?)
     end
 
     def copy_source_value(metadata_method)

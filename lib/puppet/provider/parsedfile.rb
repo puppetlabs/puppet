@@ -72,7 +72,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
       modified(record[:target] || default_target)
     end
 
-    return unless defined?(@modified) and ! @modified.empty?
+    return unless defined?(@modified) and !@modified.empty?
 
     flushed = []
     begin

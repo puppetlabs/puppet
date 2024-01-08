@@ -99,7 +99,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
     pkg = @resource[:name]
 
-    pkg += " #{@resource.should(:ensure)}" if (! @resource.should(:ensure).is_a? Symbol) and useversion
+    pkg += " #{@resource.should(:ensure)}" if (!@resource.should(:ensure).is_a? Symbol) and useversion
 
     output = installp "-acgwXY", "-d", source, pkg
 

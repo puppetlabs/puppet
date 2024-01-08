@@ -19,7 +19,7 @@ Puppet::Reports.register_report(:store) do
 
     dir = File.join(Puppet[:reportdir], host)
 
-    if ! Puppet::FileSystem.exist?(dir)
+    if !Puppet::FileSystem.exist?(dir)
       FileUtils.mkdir_p(dir)
       FileUtils.chmod_R(0750, dir)
     end

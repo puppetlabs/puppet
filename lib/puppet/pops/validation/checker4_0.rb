@@ -1078,7 +1078,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def idem_BlockExpression(o)
     # productive if there is at least one productive expression
-    ! o.statements.any? {|expr| !idem(expr) }
+    !o.statements.any? {|expr| !idem(expr) }
   end
 
   # Returns true even though there may be interpolated expressions that have side effect.
@@ -1113,7 +1113,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def idem_CaseExpression(o)
     return false if !idem(o.test)
 
-    ! o.options.any? {|opt| !idem(opt) }
+    !o.options.any? {|opt| !idem(opt) }
   end
 
   # An option is idem if values and the then_expression are idem

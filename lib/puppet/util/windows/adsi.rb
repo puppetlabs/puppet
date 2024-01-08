@@ -25,7 +25,7 @@ module Puppet::Util::Windows::ADSI
 
     def connectable?(uri)
       begin
-        !! connect(uri)
+        !!connect(uri)
       rescue
         false
       end
@@ -451,7 +451,7 @@ module Puppet::Util::Windows::ADSI
 
     def userflag_set?(flag)
       flag_value = ADS_USERFLAGS[flag] || 0
-      ! (self['UserFlags'] & flag_value).zero?
+      !(self['UserFlags'] & flag_value).zero?
     end
 
     # Common helper for set_userflags and unset_userflags.

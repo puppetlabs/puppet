@@ -35,7 +35,7 @@ module Puppet
         return true
       end
 
-      return true if ! resource.replace?
+      return true if !resource.replace?
 
       is_insync = yield(is)
 

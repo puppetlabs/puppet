@@ -1368,7 +1368,7 @@ Generated on #{Time.now}.
         catalog.add_resource resource
       end
       group = setting.group
-      if group && ! %w{root wheel}.include?(group) && catalog.resource(:group, group).nil?
+      if group && !%w{root wheel}.include?(group) && catalog.resource(:group, group).nil?
         catalog.add_resource Puppet::Resource.new(:group, group, :parameters => {:ensure => :present})
       end
     end

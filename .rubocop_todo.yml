@@ -23,10 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Layout/SpaceAfterNot:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/SpaceAfterSemicolon:
   Exclude:
     - 'lib/puppet/util/retry_action.rb'

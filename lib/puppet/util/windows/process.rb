@@ -328,7 +328,7 @@ module Puppet::Util::Windows::Process
                    .map { |env_pair| env_pair.split('=', 2) }
     Hash[ pairs ]
   ensure
-    if env_ptr && ! env_ptr.null?
+    if env_ptr && !env_ptr.null?
       if FreeEnvironmentStringsW(env_ptr) == FFI::WIN32_FALSE
         Puppet.debug "FreeEnvironmentStringsW memory leak"
       end
@@ -337,7 +337,7 @@ module Puppet::Util::Windows::Process
   module_function :get_environment_strings
 
   def set_environment_variable(name, val)
-    raise Puppet::Util::Windows::Error(_('environment variable name must not be nil or empty')) if ! name || name.empty?
+    raise Puppet::Util::Windows::Error(_('environment variable name must not be nil or empty')) if !name || name.empty?
 
     FFI::MemoryPointer.from_string_to_wide_string(name) do |name_ptr|
       if (val.nil?)

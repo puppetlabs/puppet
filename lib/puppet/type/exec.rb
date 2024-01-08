@@ -451,7 +451,7 @@ module Puppet
       def check(value)
         # TRANSLATORS 'creates' is a parameter name and should not be translated
         debug(_("Checking that 'creates' path '%{creates_path}' exists") % { creates_path: value })
-        ! Puppet::FileSystem.exist?(value)
+        !Puppet::FileSystem.exist?(value)
       end
     end
 

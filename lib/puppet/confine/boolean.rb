@@ -36,7 +36,7 @@ class Puppet::Confine
       return @cached_value unless @cached_value.nil?
 
       # Double negate to coerce the value into a Boolean
-      calculated_value = !! @values.first.call
+      calculated_value = !!@values.first.call
       if calculated_value == passing_value
         @cached_value = [calculated_value]
       end

@@ -43,7 +43,7 @@ class StringConverter
     end
 
     def breaks?
-      is_indenting? && level > 0 && ! first?
+      is_indenting? && level > 0 && !first?
     end
 
     def padding

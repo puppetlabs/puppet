@@ -275,7 +275,7 @@ module Util
               raise Puppet::DevError, _("unknown platform %{platform} in absolute_path") % { platform: platform }
             end
 
-    !! (path =~ regex)
+    !!(path =~ regex)
   end
   module_function :absolute_path?
 

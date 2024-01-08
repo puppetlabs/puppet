@@ -122,7 +122,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     # Check if the general/complete property is defined. If it is undefined,
     # then svccfg will not print anything to the console.
     property_defn = svccfg("-s", fmri, "listprop", "general/complete").chomp
-    @complete_service = ! property_defn.empty?
+    @complete_service = !property_defn.empty?
   end
 
   def enable

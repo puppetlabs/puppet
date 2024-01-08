@@ -26,7 +26,7 @@ class Puppet::Indirector::Request
   # Is this an authenticated request?
   def authenticated?
     # Double negative, so we just get true or false
-    ! ! authenticated
+    !!authenticated
   end
 
   def environment
@@ -87,7 +87,7 @@ class Puppet::Indirector::Request
       end
     end
 
-    @key = @instance.name if ! @key and @instance
+    @key = @instance.name if !@key and @instance
   end
 
   # Look up the indirection based on the name provided.

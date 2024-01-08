@@ -269,7 +269,7 @@ class Puppet::Util::Ldap::Manager
 
   # Is this a complete ldap configuration?
   def valid?
-    location and objectclasses and ! objectclasses.empty? and puppet2ldap
+    location and objectclasses and !objectclasses.empty? and puppet2ldap
   end
 
   private

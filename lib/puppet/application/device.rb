@@ -375,7 +375,7 @@ class Puppet::Application::Device < Puppet::Application
       end
     end
 
-    if ! returns or returns.compact.empty?
+    if !returns or returns.compact.empty?
       exit(1)
     elsif options[:detailed_exitcodes]
       # Bitwise OR the return codes together, puppet style

@@ -25,7 +25,7 @@ module Puppet
 
     # Anything else, basically
     newvalue(/./) do
-      @resource[:ensure] = :link if ! @resource.should(:ensure)
+      @resource[:ensure] = :link if !@resource.should(:ensure)
 
       # Only call mklink if ensure didn't call us in the first place.
       currentensure = @resource.property(:ensure).retrieve
@@ -65,7 +65,7 @@ module Puppet
     def insync?(currentvalue)
       if [:nochange, :notlink].include?(self.should) or @resource.recurse?
         return true
-      elsif ! @resource.replace? and Puppet::FileSystem.exist?(@resource[:path])
+      elsif !@resource.replace? and Puppet::FileSystem.exist?(@resource[:path])
         return true
       else
         return super(currentvalue)

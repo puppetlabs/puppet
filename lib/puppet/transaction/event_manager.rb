@@ -77,7 +77,7 @@ class Puppet::Transaction::EventManager
       end
       @events << event if received
 
-      queue_events_for_resource(resource, resource, :refresh, [event]) if resource.self_refresh? and ! resource.deleting?
+      queue_events_for_resource(resource, resource, :refresh, [event]) if resource.self_refresh? and !resource.deleting?
     end
 
     dequeue_events_for_resource(resource, :refresh) if events.detect { |e| e.invalidate_refreshes }

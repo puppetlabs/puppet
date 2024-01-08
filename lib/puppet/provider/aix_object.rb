@@ -420,7 +420,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # Collects the current property values of all mapped properties +
   # the attributes property.
   def object_info(refresh = false)
-    return @object_info if @object_info && ! refresh
+    return @object_info if @object_info && !refresh
 
     @object_info = nil
 
@@ -457,7 +457,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
 
   # Check that the AIX object exists
   def exists?
-    ! object_info.nil?
+    !object_info.nil?
   end
 
   # Creates a new instance of the resource
