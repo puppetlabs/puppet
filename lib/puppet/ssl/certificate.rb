@@ -20,7 +20,7 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
   end
 
   def self.subject_alt_names_for(cert)
-    alts = cert.extensions.find{|ext| ext.oid == "subjectAltName"}
+    alts = cert.extensions.find {|ext| ext.oid == "subjectAltName"}
     return [] unless alts
 
     alts.value.split(/\s*,\s*/)

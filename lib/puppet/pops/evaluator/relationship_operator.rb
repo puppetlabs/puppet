@@ -90,7 +90,7 @@ class RelationshipOperator
 
   # Array content needs to be transformed
   def transform_Array(o, scope)
-    o.map{|x| transform(x, scope) }
+    o.map {|x| transform(x, scope) }
   end
 
   # Asserts (and returns) the type if it is a PCatalogEntryType

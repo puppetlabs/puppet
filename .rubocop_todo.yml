@@ -23,13 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBraces.
-# SupportedStyles: space, no_space
-# SupportedStylesForEmptyBraces: space, no_space
-Layout/SpaceBeforeBlockBraces:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Layout/SpaceBeforeComma:
   Exclude:
     - 'lib/puppet/application/lookup.rb'

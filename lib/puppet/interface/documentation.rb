@@ -233,7 +233,7 @@ class Puppet::Interface
         raise ArgumentError, _('author should be a single line; use multiple statements')
       end
 
-      @authors = Array(value).map{|x| Puppet::Interface::DocGen.strip_whitespace(x) }
+      @authors = Array(value).map {|x| Puppet::Interface::DocGen.strip_whitespace(x) }
     end
     alias :authors= :author=
 

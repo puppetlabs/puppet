@@ -138,18 +138,18 @@ module DOT
       @name   = params['name']   ? params['name']   : nil
       @parent = params['parent'] ? params['parent'] : nil
       @options = {}
-      option_list.each{ |i|
+      option_list.each { |i|
         @options[i] = params[i] if params[i]
       }
       @options['label'] ||= @name if @name != 'node'
     end
 
     def each_option
-      @options.each{ |i| yield i }
+      @options.each { |i| yield i }
     end
 
     def each_option_pair
-      @options.each_pair{ |key, val| yield key, val }
+      @options.each_pair { |key, val| yield key, val }
     end
   end
 
@@ -202,13 +202,13 @@ module DOT
             '' :
           t + $tab + 'label = "' + " \\\n" +
             t + $tab2 + "#{stringify(@options['label'])}| \\\n" +
-            @ports.collect{ |i|
+            @ports.collect { |i|
               t + $tab2 + i.to_s
             }.join( "| \\\n" ) + " \\\n" +
             t + $tab + '"' + "\n"
 
       t + "#{@name} [\n" +
-        @options.to_a.collect{ |i|
+        @options.to_a.collect { |i|
           i[1] && i[0] != 'label' ?
             t + $tab + "#{i[0]} = #{i[1]}" : nil
         }.compact.join( ",\n" ) + ( label != '' ? ",\n" : "\n" ) +
@@ -234,7 +234,7 @@ module DOT
     end
 
     def each_node
-      @nodes.each{ |i| yield i }
+      @nodes.each { |i| yield i }
     end
 
     def <<(thing)
@@ -252,13 +252,13 @@ module DOT
     def to_s(t = '')
       hdr = t + "#{@dot_string} #{@name} {\n"
 
-      options = @options.to_a.collect{ |name, val|
+      options = @options.to_a.collect { |name, val|
         val && name != 'label' ?
           t + $tab + "#{name} = #{val}" :
           name ? t + $tab + "#{name} = \"#{val}\"" : nil
       }.compact.join( "\n" ) + "\n"
 
-      nodes = @nodes.collect{ |i|
+      nodes = @nodes.collect { |i|
         i.to_s( t + $tab )
       }.join( "\n" ) + "\n"
       hdr + options + nodes + t + "}\n"
@@ -291,7 +291,7 @@ module DOT
 
     def to_s(t = '')
       t + "#{@from} #{edge_link} #{to} [\n" +
-        @options.to_a.collect{ |i|
+        @options.to_a.collect { |i|
           i[1] && i[0] != 'label' ?
             t + $tab + "#{i[0]} = #{i[1]}" :
             i[1] ? t + $tab + "#{i[0]} = \"#{i[1]}\"" : nil

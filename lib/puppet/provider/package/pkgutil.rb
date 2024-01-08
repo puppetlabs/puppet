@@ -154,7 +154,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     # get passed to pkgutil via one or more -t options
     if resource[:source]
       sources = [resource[:source]].flatten
-      pkguti(*[sources.map{|src| [ "-t", src ]}, *args].flatten)
+      pkguti(*[sources.map {|src| [ "-t", src ]}, *args].flatten)
     else
       pkguti(*args.flatten)
     end

@@ -35,7 +35,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   defaultfor 'os.family' => :solaris, :kernelrelease => ['5.11', '5.12']
 
   def self.instances
-    pkg(:list, '-Hv').split("\n").map{|l| new(parse_line(l))}
+    pkg(:list, '-Hv').split("\n").map {|l| new(parse_line(l))}
   end
 
   # The IFO flag field is just what it names, the first field can have either
@@ -154,12 +154,12 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       # unfortunately it doesn't consider downgrades 'available' (eg. with
       # installed foo@1.0, list -a foo@0.9 would fail).
       name = @resource[:name]
-      potential_matches = pkg(:list, '-Hvfa', "#{name}@#{should}").split("\n").map{|l| self.class.parse_line(l)}
+      potential_matches = pkg(:list, '-Hvfa', "#{name}@#{should}").split("\n").map {|l| self.class.parse_line(l)}
       n = potential_matches.length
       if n > 1
         warning(_("Implicit version %{should} has %{n} possible matches") % { should: should, n: n })
       end
-      potential_matches.each{ |p|
+      potential_matches.each { |p|
         command = is == :absent ? 'install' : 'update'
         options = ['-n']
         options.concat(join_options(@resource[:install_options])) if @resource[:install_options]

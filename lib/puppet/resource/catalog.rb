@@ -395,7 +395,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   def resource_refs
-    resource_keys.collect{ |type, name| name.is_a?( String ) ? "#{type}[#{name}]" : nil}.compact
+    resource_keys.collect { |type, name| name.is_a?( String ) ? "#{type}[#{name}]" : nil}.compact
   end
 
   def resource_keys

@@ -27,7 +27,7 @@ require_relative '../../puppet/provider/package'
 class Puppet::Provider::Package::Targetable < Puppet::Provider::Package
   # Prefetch our package list, yo.
   def self.prefetch(packages)
-    catalog_packages = packages.values.first.catalog.resources.select{ |p| p.provider.class == self }
+    catalog_packages = packages.values.first.catalog.resources.select { |p| p.provider.class == self }
     package_commands = catalog_packages.map { |catalog_package| catalog_package::original_parameters[:command] }.uniq
     package_commands.each do |command|
       instances(command).each do |instance|

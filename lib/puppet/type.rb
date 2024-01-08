@@ -443,7 +443,7 @@ class Type
   # @return [Object] an object that is a _uniqueness_key_ for this object
   #
   def uniqueness_key
-    self.class.key_attributes.sort_by { |attribute_name| attribute_name.to_s }.map{ |attribute_name| self[attribute_name] }
+    self.class.key_attributes.sort_by { |attribute_name| attribute_name.to_s }.map { |attribute_name| self[attribute_name] }
   end
 
   # Creates a new parameter.

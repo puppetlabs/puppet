@@ -21,7 +21,7 @@ module Puppet::Util::Windows::User
   # This account is not recognized by the security subsystem, so you cannot specify its name in a call to the `LookupAccountName` function.
   # https://docs.microsoft.com/en-us/windows/win32/services/localsystem-account
   def localsystem?(name)
-    ["LocalSystem", ".\\LocalSystem", "#{Puppet::Util::Windows::ADSI.computer_name}\\LocalSystem"].any?{ |s| s.casecmp(name) == 0 }
+    ["LocalSystem", ".\\LocalSystem", "#{Puppet::Util::Windows::ADSI.computer_name}\\LocalSystem"].any? { |s| s.casecmp(name) == 0 }
   end
   module_function :localsystem?
 

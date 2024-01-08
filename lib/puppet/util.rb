@@ -486,7 +486,7 @@ module Util
           end
         end
       rescue Errno::ENOENT, Errno::ENOTDIR # /proc/self/fd not found, /proc/self not a dir
-        3.upto(256){|fd| IO::new(fd).close rescue nil}
+        3.upto(256) {|fd| IO::new(fd).close rescue nil}
       end
 
       block.call if block

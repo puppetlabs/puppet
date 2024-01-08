@@ -107,7 +107,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
   private_class_method :walk
 
   def self.find_identity(rast)
-    rast.find{|x| x.is_a?(Array) && x[0] == :@ident }
+    rast.find {|x| x.is_a?(Array) && x[0] == :@ident }
   end
   private_class_method :find_identity
 

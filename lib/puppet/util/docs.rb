@@ -125,7 +125,7 @@ module Puppet::Util::Docs
       text = text.gsub(/^#{indent}/, '')
     end
     # Clean trailing space
-    text.lines.map{|line| line.rstrip}.join("\n").rstrip
+    text.lines.map {|line| line.rstrip}.join("\n").rstrip
   end
 
   module_function :scrub
