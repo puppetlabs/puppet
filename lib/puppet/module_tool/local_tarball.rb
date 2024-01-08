@@ -20,9 +20,9 @@ module Puppet::ModuleTool
 
     def fetch(name)
       if @release.name == name
-        [ @release ]
+        [@release]
       else
-        [ ]
+        []
       end
     end
 

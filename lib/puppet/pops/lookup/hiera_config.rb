@@ -448,7 +448,7 @@ class HieraConfigV3 < HieraConfig
     config[KEY_MERGE_BEHAVIOR] ||= DEFAULT_CONFIG_HASH[KEY_MERGE_BEHAVIOR]
     config[KEY_DEEP_MERGE_OPTIONS] ||= {}
 
-    backends = [ config[KEY_BACKENDS] ].flatten
+    backends = [config[KEY_BACKENDS]].flatten
 
     # Create the final struct used for validation (backends are included as keys to arbitrary configs in the form of a hash)
     tf = Types::TypeFactory
@@ -706,7 +706,7 @@ class HieraConfigV5 < HieraConfig
                                                path.end_with?(".#{function_name}") ? path[0..-(function_name.length + 2)] : path
                                              end,
                                            function_name.to_sym => v3options,
-                                           :backends => [ function_name ],
+                                           :backends => [function_name],
                                            :logger => 'puppet'
                                          })
       else

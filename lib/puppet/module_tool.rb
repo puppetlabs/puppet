@@ -179,7 +179,7 @@ module Puppet
         parsed_range = SemanticPuppet::VersionRange::EMPTY_RANGE
       end
 
-      [ dep_name, parsed_range, range ]
+      [dep_name, parsed_range, range]
     end
   end
 end

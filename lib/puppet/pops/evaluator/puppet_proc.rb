@@ -49,11 +49,11 @@ class Puppet::Pops::Evaluator::PuppetProc < Proc
     @closure.parameters.map do |param|
       sym = param.name.to_sym
       if param.captures_rest
-        [ :rest, sym ]
+        [:rest, sym]
       elsif param.value
-        [ :opt, sym ]
+        [:opt, sym]
       else
-        [ :req, sym ]
+        [:req, sym]
       end
     end
   end

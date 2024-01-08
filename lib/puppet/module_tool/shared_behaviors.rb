@@ -175,7 +175,7 @@ module Puppet::ModuleTool::Shared
     # problems at install time, we should reject any solution that
     # depends on multiple nodes with the same "module name".
     graph.add_graph_constraint('PMT') do |nodes|
-      names = nodes.map { |x| x.dependency_names + [ x.name ] }.flatten
+      names = nodes.map { |x| x.dependency_names + [x.name] }.flatten
       names = names.map { |x| x.tr('/', '-') }.uniq
       names = names.map { |x| x[/-(.*)/, 1] }
       names.length == names.uniq.length

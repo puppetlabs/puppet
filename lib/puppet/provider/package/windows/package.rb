@@ -13,7 +13,7 @@ class Puppet::Provider::Package::Windows
 
     attr_reader :name, :version
 
-    REG_DISPLAY_VALUE_NAMES = [ 'DisplayName', 'QuietDisplayName' ]
+    REG_DISPLAY_VALUE_NAMES = ['DisplayName', 'QuietDisplayName']
 
     def self.reg_value_names_to_load
       REG_DISPLAY_VALUE_NAMES |

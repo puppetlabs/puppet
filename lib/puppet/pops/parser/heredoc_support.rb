@@ -107,7 +107,7 @@ module HeredocSupport
         # content is based.
         enqueue([:SUBLOCATE,
                  LexerSupport::TokenValue.new([:SUBLOCATE,
-                                               lines, lines.reduce(0) {|size, s| size + s.length} ],
+                                               lines, lines.reduce(0) {|size, s| size + s.length}],
                                               heredoc_offset,
                                               locator)])
 

@@ -26,7 +26,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
   # AIX supports versionable packages with and without a NIM server
   has_feature :versionable
 
-  confine 'os.name' => [ :aix ]
+  confine 'os.name' => [:aix]
   defaultfor 'os.name' => :aix
 
   attr_accessor :latest_info
@@ -41,7 +41,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
   }.freeze
 
   def self.srclistcmd(source)
-    [ command(:installp), "-L", "-d", source ]
+    [command(:installp), "-L", "-d", source]
   end
 
   def self.prefetch(packages)

@@ -69,7 +69,7 @@ module Puppet::FileBucketFile
           filestat = Time.parse(item.stat.mtime.to_s)
           if from <= filestat and filestat <= to
             filenames.each do |filename|
-              bucket[filename] += [[ item.stat.mtime, item.parent.basename ]]
+              bucket[filename] += [[item.stat.mtime, item.parent.basename]]
             end
           end
         end

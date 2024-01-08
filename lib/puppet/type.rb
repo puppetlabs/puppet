@@ -260,7 +260,7 @@ class Type
   # @api private
   #
   def self.can_apply_to(target)
-    [ target == :device ? :device : :host, :both ].include?(apply_to)
+    [target == :device ? :device : :host, :both].include?(apply_to)
   end
 
   # Processes the options for a named parameter.
@@ -431,7 +431,7 @@ class Type
     case key_attributes.length
     when 0; []
     when 1;
-      [ [ /(.*)/m, [ [key_attributes.first] ] ] ]
+      [[/(.*)/m, [[key_attributes.first]]]]
     else
       raise Puppet::DevError, _("you must specify title patterns when there are two or more key attributes")
     end

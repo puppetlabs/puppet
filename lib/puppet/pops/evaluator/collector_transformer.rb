@@ -101,7 +101,7 @@ class CollectorTransformer
         if right_code.is_a?(Array)
           tags = right_code
         else
-          tags = [ right_code ]
+          tags = [right_code]
         end
         tags = tags.collect do |t|
           raise ArgumentError, _('Cannot transform a number to a tag') if t.is_a?(Numeric)

@@ -41,7 +41,7 @@ module Puppet::ModuleTool
     def release_name
       return nil unless @data['name'] && @data['version']
 
-      [ dashed_name, @data['version'] ].join('-')
+      [dashed_name, @data['version']].join('-')
     end
 
     alias :name :module_name

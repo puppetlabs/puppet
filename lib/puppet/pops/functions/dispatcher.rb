@@ -10,7 +10,7 @@ class Puppet::Pops::Functions::Dispatcher
 
   # @api private
   def initialize()
-    @dispatchers = [ ]
+    @dispatchers = []
   end
 
   # Answers if dispatching has been defined

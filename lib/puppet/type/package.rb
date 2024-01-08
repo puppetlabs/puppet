@@ -343,7 +343,7 @@ module Puppet
     def self.title_patterns
       # This is the default title pattern for all types, except hard-wired to
       # set only name.
-      [ [ /(.*)/m, [ [:name] ] ] ]
+      [[/(.*)/m, [[:name]]]]
     end
 
     newproperty(:package_settings, :required_features => :package_settings) do

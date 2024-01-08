@@ -7,7 +7,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   commands :pkgin => "pkgin"
 
-  defaultfor 'os.name' => [ :smartos, :netbsd ]
+  defaultfor 'os.name' => [:smartos, :netbsd]
 
   has_feature :installable, :uninstallable, :upgradeable, :versionable
 

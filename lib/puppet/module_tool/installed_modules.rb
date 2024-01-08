@@ -44,9 +44,9 @@ module Puppet::ModuleTool
 
       if @modules.key? name
         @fetched << name
-        [ @modules[name] ]
+        [@modules[name]]
       else
-        [ ]
+        []
       end
     end
 

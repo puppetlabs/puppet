@@ -13,7 +13,7 @@ class Puppet::Settings::BooleanSetting < Puppet::Settings::BaseSetting
 
   def optparse_args
     if short
-      ["--[no-]#{name}", "-#{short}", desc, :NONE ]
+      ["--[no-]#{name}", "-#{short}", desc, :NONE]
     else
       ["--[no-]#{name}", desc, :NONE]
     end

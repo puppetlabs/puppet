@@ -45,7 +45,7 @@ Puppet::Type.newtype(:file) do
   def self.title_patterns
     # strip trailing slashes from path but allow the root directory, including
     # for example "/" or "C:/"
-    [ [ %r{^(/|.+:/|.*[^/])/*\Z}m, [ [ :path ] ] ] ]
+    [[%r{^(/|.+:/|.*[^/])/*\Z}m, [[:path]]]]
   end
 
   newparam(:path) do

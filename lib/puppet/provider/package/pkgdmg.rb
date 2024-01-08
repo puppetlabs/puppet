@@ -87,7 +87,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
     begin
       if %r{\A[A-Za-z][A-Za-z0-9+\-\.]*://} =~ cached_source
         cached_source = File.join(tmpdir, "#{name}#{ext}")
-        args = [ "-o", cached_source, "-C", "-", "-L", "-s", "--fail", "--url", source ]
+        args = ["-o", cached_source, "-C", "-", "-L", "-s", "--fail", "--url", source]
         if http_proxy_host and http_proxy_port
           args << "--proxy" << "#{http_proxy_host}:#{http_proxy_port}"
         elsif http_proxy_host and not http_proxy_port

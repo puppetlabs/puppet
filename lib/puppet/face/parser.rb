@@ -84,7 +84,7 @@ Puppet::Face.define(:parser, '0.0.1') do
 
     when_rendering :json do |errors|
       unless errors.empty?
-        ignore_error_keys = [ :arguments, :environment, :node ]
+        ignore_error_keys = [:arguments, :environment, :node]
 
         data = errors.map do |file, error|
           file_errors = error.to_h.reject { |k, _| ignore_error_keys.include?(k) }

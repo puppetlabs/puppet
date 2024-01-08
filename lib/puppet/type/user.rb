@@ -733,11 +733,11 @@ module Puppet
       newvalues(:true, :false)
 
       validate do |value|
-        if [ :true, :false ].include? value.to_s.intern
+        if [:true, :false].include? value.to_s.intern
           return
         end
 
-        value = [ value ] if value.is_a?(String)
+        value = [value] if value.is_a?(String)
         if value.is_a?(Array)
           value.each do |entry|
             raise ArgumentError, _("Each entry for purge_ssh_keys must be a string, not a %{klass}") % { klass: entry.class } unless entry.is_a?(String)
@@ -758,10 +758,10 @@ module Puppet
           []
         when :true, true, "true"
           home = homedir
-          home ? [ "#{home}/.ssh/authorized_keys" ] : []
+          home ? ["#{home}/.ssh/authorized_keys"] : []
         else
           # value can be a string or array - munge each value
-          [ value ].flatten.map do |entry|
+          [value].flatten.map do |entry|
             authorized_keys_path(entry)
           end.compact
         end

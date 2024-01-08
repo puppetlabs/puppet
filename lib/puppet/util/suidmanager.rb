@@ -10,7 +10,7 @@ module Puppet::Util::SUIDManager
 
   # Note groups= is handled specially due to a bug in OS X 10.6, 10.7,
   # and probably upcoming releases...
-  to_delegate_to_process = [ :euid=, :euid, :egid=, :egid, :uid=, :uid, :gid=, :gid, :groups ]
+  to_delegate_to_process = [:euid=, :euid, :egid=, :egid, :uid=, :uid, :gid=, :gid, :groups]
 
   to_delegate_to_process.each do |method|
     def_delegator Process, method

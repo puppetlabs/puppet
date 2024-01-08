@@ -239,17 +239,17 @@ module Puppet::Util::Windows
         begin
           result = case type
                    when Win32::Registry::REG_SZ, Win32::Registry::REG_EXPAND_SZ
-                     [ type, data_ptr.read_wide_string(string_length, Encoding::UTF_8, true) ]
+                     [type, data_ptr.read_wide_string(string_length, Encoding::UTF_8, true)]
                    when Win32::Registry::REG_MULTI_SZ
-                     [ type, data_ptr.read_wide_string(string_length).split(/\0/) ]
+                     [type, data_ptr.read_wide_string(string_length).split(/\0/)]
                    when Win32::Registry::REG_BINARY
-                     [ type, data_ptr.read_bytes(byte_length) ]
+                     [type, data_ptr.read_bytes(byte_length)]
                    when Win32::Registry::REG_DWORD
-                     [ type, data_ptr.read_dword ]
+                     [type, data_ptr.read_dword]
                    when Win32::Registry::REG_DWORD_BIG_ENDIAN
-                     [ type, data_ptr.order(:big).read_dword ]
+                     [type, data_ptr.order(:big).read_dword]
                    when Win32::Registry::REG_QWORD
-                     [ type, data_ptr.read_qword ]
+                     [type, data_ptr.read_qword]
                    else
                      raise TypeError, _("Type %{type} is not supported.") % { type: type }
                    end

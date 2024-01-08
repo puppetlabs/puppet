@@ -525,7 +525,7 @@ class Puppet::Resource
     # this is potential namespace conflict
     # between the notion of an "indirector name"
     # and a "resource name"
-    [ type, title ].join('/')
+    [type, title].join('/')
   end
 
   def missing_arguments
@@ -584,11 +584,11 @@ class Puppet::Resource
 
   def self.extract_type_and_title(argtype, argtitle)
     if (argtype.nil? || argtype == :component || argtype == :whit) &&
-       argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                  then [ $1, $2 ]
+       argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                  then [$1, $2]
     elsif argtitle.nil? && argtype.is_a?(String) &&
-          argtype =~ /^([^\[\]]+)\[(.+)\]$/m                   then [ $1,                 $2            ]
-    elsif argtitle                                             then [ argtype,            argtitle      ]
-    elsif argtype.is_a?(Puppet::Type)                          then [ argtype.class.name, argtype.title ]
+          argtype =~ /^([^\[\]]+)\[(.+)\]$/m                   then [$1,                 $2]
+    elsif argtitle                                             then [argtype,            argtitle]
+    elsif argtype.is_a?(Puppet::Type)                          then [argtype.class.name, argtype.title]
     else  raise ArgumentError, _("No title provided and %{type} is not a valid resource reference") % { type: argtype.inspect } # rubocop:disable Lint/ElseLayout
     end
   end

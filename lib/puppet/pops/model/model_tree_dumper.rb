@@ -61,7 +61,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     o.operations do |ao|
       result << :break << do_dump(ao)
     end
-    result += [:dedent, :dedent ]
+    result += [:dedent, :dedent]
     result
   end
 
@@ -290,7 +290,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_ReservedWord o
-    [ 'reserved', o.word ]
+    ['reserved', o.word]
   end
 
   # Produces parameters as name, or (= name value)
@@ -372,7 +372,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   def dump_CaseOption o
     result = ["when"]
     result << o.values.collect {|x| do_dump(x) }
-    result << ["then", do_dump(o.then_expr) ]
+    result << ["then", do_dump(o.then_expr)]
     result
   end
 

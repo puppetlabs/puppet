@@ -386,7 +386,7 @@ class Puppet::Parser::Scope
     #    @symtable = Ephemeral.new(nil, true)
     @symtable = LocalScope.new(nil)
 
-    @ephemeral = [ MatchScope.new(@symtable, nil) ]
+    @ephemeral = [MatchScope.new(@symtable, nil)]
 
     # All of the defaults set for types.  It's a hash of hashes,
     # with the first key being the type, then the second key being
@@ -965,7 +965,7 @@ class Puppet::Parser::Scope
   def without_ephemeral_scopes
     save_ephemeral = @ephemeral
     begin
-      @ephemeral = [ @symtable ]
+      @ephemeral = [@symtable]
       yield(self)
     ensure
       @ephemeral = save_ephemeral

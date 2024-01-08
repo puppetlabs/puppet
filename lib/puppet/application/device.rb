@@ -399,7 +399,7 @@ class Puppet::Application::Device < Puppet::Application
     key = [type, name].join('/')
 
     if name
-      [ Puppet::Resource.indirection.find( key ) ]
+      [Puppet::Resource.indirection.find( key )]
     else
       Puppet::Resource.indirection.search( key, {} )
     end

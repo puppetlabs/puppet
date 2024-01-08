@@ -636,7 +636,7 @@ class Puppet::Settings
           # will have associated hooks that it ends up being less work this
           # way overall.
           if setting.call_hook_on_initialize?
-            @hooks_to_call_on_application_initialization |= [ setting ]
+            @hooks_to_call_on_application_initialization |= [setting]
           else
             setting.handle(ChainedValues.new(
               preferred_run_mode,
@@ -1050,7 +1050,7 @@ class Puppet::Settings
         if tryconfig.call_hook_on_define?
           call << tryconfig
         elsif tryconfig.call_hook_on_initialize?
-          @hooks_to_call_on_application_initialization |= [ tryconfig ]
+          @hooks_to_call_on_application_initialization |= [tryconfig]
         end
       end
 

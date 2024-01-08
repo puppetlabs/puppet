@@ -119,7 +119,7 @@ class ClassLoader
     # TODO:this is not perfect - it will not produce the correct mix if a mix of styles are used
     # The alternative is to test many additional paths.
     #
-    [fq_named_parts.map {|part| de_camel(part)}.join('/'), fq_named_parts.join('/').downcase ]
+    [fq_named_parts.map {|part| de_camel(part)}.join('/'), fq_named_parts.join('/').downcase]
   end
   private_class_method :paths_for_name
 

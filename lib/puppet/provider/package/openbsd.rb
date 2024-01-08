@@ -31,7 +31,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       execpipe(listcmd) do |process|
         # our regex for matching pkg_info output
         regex = /^(.*)-(\d[^-]*)[-]?([\w-]*)(.*)$/
-        fields = [:name, :ensure, :flavor ]
+        fields = [:name, :ensure, :flavor]
         hash = {}
 
         # now turn each returned line into a package object
@@ -194,7 +194,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         use_version = get_version
       end
 
-      [ @resource[:name], use_version, @resource[:flavor]].join('-').gsub(/-+$/, '')
+      [@resource[:name], use_version, @resource[:flavor]].join('-').gsub(/-+$/, '')
     end
   end
 

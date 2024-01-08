@@ -493,7 +493,7 @@ class Lexer2
       '' => lambda { nil } # when the peek(1) returns empty
     }
 
-    [ ' ', "\t", "\r" ].each { |c| @selector[c] = lambda { @scanner.skip(PATTERN_WS); nil } }
+    [' ', "\t", "\r"].each { |c| @selector[c] = lambda { @scanner.skip(PATTERN_WS); nil } }
 
     ('0'..'9').each do |c|
       @selector[c] = lambda do

@@ -349,7 +349,7 @@ class EvaluatorImpl
   # @return <Array<Object, Object>> array with result of evaluating left and right expressions
   #
   def eval_BinaryExpression o, scope
-    [ evaluate(o.left_expr, scope), evaluate(o.right_expr, scope) ]
+    [evaluate(o.left_expr, scope), evaluate(o.right_expr, scope)]
   end
 
   # Evaluates assignment with operators =, +=, -= and

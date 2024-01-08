@@ -181,7 +181,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     #     This method spits out proper DSCL commands for us.
     #     We EXPECT name to be @resource[:name] when called from an instance object.
 
-    command_vector = [ command(:dscl), "-plist", "." ]
+    command_vector = [command(:dscl), "-plist", "."]
 
     # JJM: The actual action to perform. See "man dscl".
     #      Common actions: -create, -delete, -merge, -append, -passwd

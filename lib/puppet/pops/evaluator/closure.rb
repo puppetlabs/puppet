@@ -361,7 +361,7 @@ module Evaluator
 
     # Produces information about parameters compatible with a 4x Function (which can have multiple signatures)
     def signatures
-      [ self ]
+      [self]
     end
 
     ANY_NUMBER_RANGE = [0, Float::INFINITY]

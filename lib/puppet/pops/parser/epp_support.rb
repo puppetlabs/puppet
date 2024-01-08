@@ -47,7 +47,7 @@ module EppSupport
     until queue.empty? && scn.eos? do
       token = queue.shift || lex_token
       if token
-        yield [ ctx[:after] = token[0], token[1] ]
+        yield [ctx[:after] = token[0], token[1]]
       end
     end
     if ctx[:epp_open_position]

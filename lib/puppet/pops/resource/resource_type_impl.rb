@@ -150,12 +150,12 @@ class ResourceTypeImpl
         nil
       when 1
         if @title_patterns_hash.nil?
-          [ [ /(.*)/m, [ [@key_attributes.first] ] ] ]
+          [[/(.*)/m, [[@key_attributes.first]]]]
         else
           # TechDebt: The case of having one namevar and an empty title patterns is unspecified behavior in puppet.
           # Here, it may lead to an empty map which may or may not trigger the wanted/expected behavior.
           #
-          @title_patterns_hash.map { |k, v| [ k, v.map { |n| [ n.to_sym ] } ] }
+          @title_patterns_hash.map { |k, v| [k, v.map { |n| [n.to_sym] }] }
         end
       else
         if @title_patterns_hash.nil? || @title_patterns_hash.empty?
@@ -167,7 +167,7 @@ class ResourceTypeImpl
           raise Puppet::DevError, _("you must specify title patterns when there are two or more key attributes")
         end
 
-        @title_patterns_hash.nil? ? [] : @title_patterns_hash.map { |k, v| [ k, v.map { |n| [ n.to_sym] } ] }
+        @title_patterns_hash.nil? ? [] : @title_patterns_hash.map { |k, v| [k, v.map { |n| [n.to_sym] }] }
       end
   end
 
