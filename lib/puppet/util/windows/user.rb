@@ -332,6 +332,7 @@ module Puppet::Util::Windows::User
                           [:handle, :pointer, :pbool], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379650(v=vs.85).aspx
+  # rubocop:disable Layout/SpaceBeforeComma
   WELL_KNOWN_SID_TYPE = enum(
     :WinNullSid                                   , 0,
     :WinWorldSid                                  , 1,
@@ -429,6 +430,7 @@ module Puppet::Util::Windows::User
     :WinCapabilityEnterpriseAuthenticationSid     , 93,
     :WinCapabilityRemovableStorageSid             , 94
   )
+  # rubocop:enable Layout/SpaceBeforeComma
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446585(v=vs.85).aspx
   # BOOL WINAPI CreateWellKnownSid(

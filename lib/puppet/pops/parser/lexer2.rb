@@ -72,6 +72,7 @@ class Lexer2
   TOKEN_TIMES        = [:TIMES,        '*',   1].freeze
   TOKEN_MODULO       = [:MODULO,       '%',   1].freeze
 
+  # rubocop:disable Layout/SpaceBeforeComma
   TOKEN_NOT          = [:NOT,          '!',   1].freeze
   TOKEN_DOT          = [:DOT,          '.',   1].freeze
   TOKEN_PIPE         = [:PIPE,         '|',   1].freeze
@@ -82,6 +83,7 @@ class Lexer2
   TOKEN_SEMIC        = [:SEMIC,        ';',   1].freeze
   TOKEN_QMARK        = [:QMARK,        '?',   1].freeze
   TOKEN_TILDE        = [:TILDE,        '~',   1].freeze # lexed but not an operator in Puppet
+  # rubocop:enable Layout/SpaceBeforeComma
 
   TOKEN_REGEXP       = [:REGEXP,       nil,   0].freeze
 

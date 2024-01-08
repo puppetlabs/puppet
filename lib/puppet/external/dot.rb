@@ -46,7 +46,7 @@ module DOT
     'shape',       # default: ellipse; node shape; see Section 2.1 and Appendix E
     'shapefile',   # external EPSF or SVG custom shape file
     'sides',       # default: 4; number of sides for shape=polygon
-    'skew' ,       # default: 0.0; skewing of node for shape=polygon
+    'skew',        # default: 0.0; skewing of node for shape=polygon
     'style',       # graphics options, e.g. bold, dotted, filled; cf. Section 2.3
     'toplabel',    # auxiliary label for nodes of shape M*
     'URL',         # URL associated with node (format-dependent)

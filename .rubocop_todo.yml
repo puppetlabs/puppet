@@ -23,22 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Layout/SpaceBeforeComma:
-  Exclude:
-    - 'lib/puppet/application/lookup.rb'
-    - 'lib/puppet/external/dot.rb'
-    - 'lib/puppet/face/parser.rb'
-    - 'lib/puppet/indirector/file_bucket_file/file.rb'
-    - 'lib/puppet/parser/compiler.rb'
-    - 'lib/puppet/parser/script_compiler.rb'
-    - 'lib/puppet/pops/lookup/global_data_provider.rb'
-    - 'lib/puppet/pops/parser/lexer2.rb'
-    - 'lib/puppet/provider/package/windows.rb'
-    - 'lib/puppet/provider/package/windows/exe_package.rb'
-    - 'lib/puppet/util/windows/monkey_patches/process.rb'
-    - 'lib/puppet/util/windows/user.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: AllowForAlignment.
 Layout/SpaceBeforeFirstArg:
   Exclude:

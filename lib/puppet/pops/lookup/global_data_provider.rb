@@ -21,7 +21,7 @@ class GlobalDataProvider < ConfiguredDataProvider
           # Confine to global scope unless an environment data provider has been defined (same as for hiera_xxx functions)
           adapter = lookup_invocation.lookup_adapter
           hiera_invocation.set_global_only unless adapter.global_only? || adapter.has_environment_data_provider?(lookup_invocation)
-          hiera_invocation.lookup(key, lookup_invocation.module_name) { unchecked_key_lookup(key , hiera_invocation, merge) }
+          hiera_invocation.lookup(key, lookup_invocation.module_name) { unchecked_key_lookup(key, hiera_invocation, merge) }
         end
       end
 

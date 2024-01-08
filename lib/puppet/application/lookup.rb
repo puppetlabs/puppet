@@ -364,7 +364,7 @@ class Puppet::Application::Lookup < Puppet::Application
       if TRUSTED_INFORMATION_FACTS.any? { |key| given_facts.key? key }
         unless TRUSTED_INFORMATION_FACTS.all? { |key| given_facts.key? key }
           raise _("When overriding any of the %{trusted_facts_list} facts with %{fact_file} "\
-                  "given via the --facts flag, they must all be overridden.") % { fact_file: fact_file , trusted_facts_list: TRUSTED_INFORMATION_FACTS.join(',')}
+                  "given via the --facts flag, they must all be overridden.") % { fact_file: fact_file, trusted_facts_list: TRUSTED_INFORMATION_FACTS.join(',')}
         end
       end
     end
