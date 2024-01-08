@@ -23,12 +23,6 @@ I18n/RailsI18n/DecorateString:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Layout/SpaceInsideRangeLiteral:
-  Exclude:
-    - 'lib/puppet/pops/validation/checker4_0.rb'
-    - 'lib/puppet/util/command_line/trollop.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBrackets.
 # SupportedStyles: space, no_space
 # SupportedStylesForEmptyBrackets: space, no_space

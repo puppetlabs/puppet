@@ -651,14 +651,14 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # and from the manifests dir there.  This may never get used...
     return BAD_MODULE_FILE unless dir == 'manifests' || dir == 'functions' || dir == 'types' || dir == 'plans'
 
-    names = path_components[2 .. -2] # Directories inside module
+    names = path_components[2..-2] # Directories inside module
     names.unshift(path_components[0]) # Name of the module itself
 
     # Do not include name of module init file at top level of module
     # e.g. <module name>/manifests/init.pp
     filename = path_components[-1]
     if !(path_components.length == 3 && filename == 'init.pp')
-      names.push(filename[0 .. -4]) # Remove .pp from filename
+      names.push(filename[0..-4]) # Remove .pp from filename
     end
 
     names
