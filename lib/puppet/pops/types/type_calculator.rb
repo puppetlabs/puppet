@@ -493,14 +493,14 @@ class TypeCalculator
   # @api public
   #
   def reduce_type(enumerable)
-    enumerable.reduce(nil) {|memo, t| common_type(memo, t) }
+    enumerable.reduce(nil) { |memo, t| common_type(memo, t) }
   end
 
   # Reduce an enumerable of objects to a single common type
   # @api public
   #
   def infer_and_reduce_type(enumerable)
-    reduce_type(enumerable.map {|o| infer(o) })
+    reduce_type(enumerable.map { |o| infer(o) })
   end
 
   # The type of all modules is PTypeType
@@ -720,18 +720,18 @@ class TypeCalculator
     if o.empty?
       PArrayType::EMPTY
     else
-      PTupleType.new(o.map {|x| infer_set(x) })
+      PTupleType.new(o.map { |x| infer_set(x) })
     end
   end
 
   def infer_set_Hash(o)
     if o.empty?
       PHashType::EMPTY
-    elsif o.keys.all? {|k| PStringType::NON_EMPTY.instance?(k) }
+    elsif o.keys.all? { |k| PStringType::NON_EMPTY.instance?(k) }
       PStructType.new(o.each_pair.map { |k, v| PStructElement.new(PStringType.new(k), infer_set(v)) })
     else
-      ktype = PVariantType.maybe_create(o.keys.map {|k| infer_set(k) })
-      etype = PVariantType.maybe_create(o.values.map {|e| infer_set(e) })
+      ktype = PVariantType.maybe_create(o.keys.map { |k| infer_set(k) })
+      etype = PVariantType.maybe_create(o.values.map { |e| infer_set(e) })
       PHashType.new(unwrap_single_variant(ktype), unwrap_single_variant(etype), size_as_type(o))
     end
   end

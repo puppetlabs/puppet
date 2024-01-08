@@ -89,7 +89,7 @@ class Puppet::Pops::Model::AstTransformer
 
   # Transforms Array of host matching expressions into a (Ruby) array of AST::HostName
   def hostname_Array(o)
-    o.collect {|x| ast x, AST::HostName, :value => hostname(x) }
+    o.collect { |x| ast x, AST::HostName, :value => hostname(x) }
   end
 
   def hostname_LiteralValue(o)

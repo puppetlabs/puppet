@@ -59,7 +59,7 @@ module Puppet::Util::Tagging
   # @return [Boolean] true if this instance is tagged with at least one of the provided tags
   #
   def tagged?(*tags)
-    raw_tagged?(tags.collect {|t| t.to_s.downcase})
+    raw_tagged?(tags.collect { |t| t.to_s.downcase })
   end
 
   # Answers if this resource is tagged with at least one of the tags given in downcased string form.

@@ -142,12 +142,12 @@ class Lexer2
     'private' => [:PRIVATE, 'private', 7],
   }
 
-  KEYWORDS.each {|_k, v| v[1].freeze; v.freeze }
+  KEYWORDS.each { |_k, v| v[1].freeze; v.freeze }
   KEYWORDS.freeze
 
   # Reverse lookup of keyword name to string
   KEYWORD_NAMES = {}
-  KEYWORDS.each {|k, v| KEYWORD_NAMES[v[0]] = k }
+  KEYWORDS.each { |k, v| KEYWORD_NAMES[v[0]] = k }
   KEYWORD_NAMES.freeze
 
   PATTERN_WS        = %r{[[:blank:]\r]+}
@@ -678,7 +678,7 @@ class Lexer2
   #
   def fullscan
     result = []
-    scan {|token| result.push(token) }
+    scan { |token| result.push(token) }
     result
   end
 

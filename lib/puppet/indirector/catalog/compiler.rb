@@ -138,7 +138,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # If no match is found, return nil.
   def common_checksum_type(agent_checksum_type)
     if agent_checksum_type
-      agent_checksum_types = agent_checksum_type.split('.').map {|type| type.to_sym}
+      agent_checksum_types = agent_checksum_type.split('.').map { |type| type.to_sym }
       checksum_type = agent_checksum_types.drop_while do |type|
         not known_checksum_types.include? type
       end.first
@@ -168,7 +168,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     when sources.empty?
       # TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
       return Puppet::Util::Profiler.profile(_("Not inlining resource without sources"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
-    when (not (sources.all? {|source| source =~ /^puppet:/}))
+    when (not (sources.all? { |source| source =~ /^puppet:/ }))
       # TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
       return Puppet::Util::Profiler.profile(_("Not inlining unsupported source scheme"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
     else
@@ -237,7 +237,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
           list_of_data = Puppet::FileServing::Metadata.indirection.search(source, options)
           if list_of_data
-            basedir_meta = list_of_data.find {|meta| meta.relative_path == '.'}
+            basedir_meta = list_of_data.find { |meta| meta.relative_path == '.' }
             devfail "FileServing::Metadata search should always return the root search path" if basedir_meta.nil?
 
             if !inlineable_metadata?(basedir_meta, source, environment_path)

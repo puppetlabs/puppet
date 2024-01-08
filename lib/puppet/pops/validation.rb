@@ -393,29 +393,29 @@ module Validation
 
     # Returns the diagnosed errors in the order they were reported.
     def errors
-      @diagnostics.select {|d| d.severity == :error }
+      @diagnostics.select { |d| d.severity == :error }
     end
 
     # Returns the diagnosed warnings in the order they were reported.
     # (This includes :warning and :deprecation severity)
     def warnings
-      @diagnostics.select {|d| d.severity == :warning || d.severity == :deprecation }
+      @diagnostics.select { |d| d.severity == :warning || d.severity == :deprecation }
     end
 
     def errors_and_warnings
-      @diagnostics.select {|d| d.severity != :ignore }
+      @diagnostics.select { |d| d.severity != :ignore }
     end
 
     # Returns the ignored diagnostics in the order they were reported (if reported at all)
     def ignored
-      @diagnostics.select {|d| d.severity == :ignore }
+      @diagnostics.select { |d| d.severity == :ignore }
     end
 
     # Add a diagnostic, or all diagnostics from another acceptor to the set of diagnostics
     # @param diagnostic [Diagnostic, Acceptor] diagnostic(s) that should be accepted
     def accept(diagnostic)
       if diagnostic.is_a?(Acceptor)
-        diagnostic.diagnostics.each {|d| _accept(d)}
+        diagnostic.diagnostics.each { |d| _accept(d) }
       else
         _accept(diagnostic)
       end

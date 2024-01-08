@@ -36,7 +36,7 @@ module Parallel
           files[file] = (files[file] || 0) + count
           @total_examples += count
           files
-        end.sort_by { |_, v| v}
+        end.sort_by { |_, v| v }
 
         # Group the spec files
         @groups = []

@@ -87,7 +87,7 @@ Puppet::Face.define(:module, '1.0.0') do
           # The modules with fewest things depending on them will be the
           # parent of the tree.  Can't assume to start with 0 dependencies
           # since dependencies may be cyclical.
-          modules_by_num_requires = modules.sort_by {|m| m.required_by.size}
+          modules_by_num_requires = modules.sort_by { |m| m.required_by.size }
           @seen = {}
           tree = list_build_tree(modules_by_num_requires, [], nil,
                                  :label_unmet => true, :path => path, :label_invalid => false)
@@ -117,7 +117,7 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     # Prepare the unmet dependencies for display on the console.
-    environment.modules.sort_by {|mod| mod.name}.each do |mod|
+    environment.modules.sort_by { |mod| mod.name }.each do |mod|
       unmet_grouped = Hash.new { |h, k| h[k] = [] }
       unmet_grouped = mod.unmet_dependencies.inject(unmet_grouped) do |acc, dep|
         acc[dep[:reason]] << dep

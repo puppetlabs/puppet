@@ -260,7 +260,7 @@ class Puppet::Parser::Scope
     end
 
     def to_hash
-      Hash[@params.select {|_, access| access.assigned? }.map { |name, access| [name, access.value] }]
+      Hash[@params.select { |_, access| access.assigned? }.map { |name, access| [name, access.value] }]
     end
   end
 
@@ -535,7 +535,7 @@ class Puppet::Parser::Scope
         Puppet.warn_once(UNDEFINED_VARIABLES_KIND, _("Variable: %{name}") % { name: name },
                          _("Undefined variable '%{name}'; %{reason}") % { name: name, reason: reason } )
       when :error
-        if Puppet.lookup(:avoid_hiera_interpolation_errors) {false}
+        if Puppet.lookup(:avoid_hiera_interpolation_errors) { false }
           Puppet.warn_once(UNDEFINED_VARIABLES_KIND, _("Variable: %{name}") % { name: name },
                            _("Interpolation failed with '%{name}', but compilation continuing; %{reason}") % { name: name, reason: reason } )
         else
@@ -746,10 +746,10 @@ class Puppet::Parser::Scope
     if val.is_a?(String) || val.is_a?(Numeric) || true == val || false == val || nil == val
       val
     elsif val.is_a?(Array)
-      val.map {|entry| transform_setting(entry) }
+      val.map { |entry| transform_setting(entry) }
     elsif val.is_a?(Hash)
       result = {}
-      val.each {|k, v| result[transform_setting(k)] = transform_setting(v) }
+      val.each { |k, v| result[transform_setting(k)] = transform_setting(v) }
       result
     else
       # not ideal, but required as there are settings values that are special
@@ -834,10 +834,10 @@ class Puppet::Parser::Scope
   def deep_freeze(object)
     case object
     when Array
-      object.each {|v| deep_freeze(v) }
+      object.each { |v| deep_freeze(v) }
       object.freeze
     when Hash
-      object.each {|k, v| deep_freeze(k); deep_freeze(v) }
+      object.each { |k, v| deep_freeze(k); deep_freeze(v) }
       object.freeze
     when NilClass, Numeric, TrueClass, FalseClass
       # do nothing
@@ -895,7 +895,7 @@ class Puppet::Parser::Scope
     env_path = nil
     env_path = environment.configuration.path_to_env unless (environment.nil? || environment.configuration.nil?)
     # check module paths first since they may be in the environment (i.e. they are longer)
-    module_path = environment.full_modulepath.detect {|m_path| path.start_with?(m_path) }
+    module_path = environment.full_modulepath.detect { |m_path| path.start_with?(m_path) }
     if module_path
       path = "<module>" + path[module_path.length..-1]
     elsif env_path && path && path.start_with?(env_path)
@@ -1015,7 +1015,7 @@ class Puppet::Parser::Scope
     when Hash
       # Create local scope ephemeral and set all values from hash
       new_ephemeral(true)
-      match.each {|k, v| setvar(k, v, :file => file, :line => line, :ephemeral => true) }
+      match.each { |k, v| setvar(k, v, :file => file, :line => line, :ephemeral => true) }
       # Must always have an inner match data scope (that starts out as transparent)
       # In 3x slightly wasteful, since a new nested scope is created for a match
       # (TODO: Fix that problem)

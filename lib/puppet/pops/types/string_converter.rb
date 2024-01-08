@@ -173,7 +173,7 @@ class StringConverter
 
       # drop all formats in lower than is more generic in higher. Lower must never
       # override higher
-      lower = lower.reject { |lk, _| higher.keys.any? { |hk| hk != lk && hk.assignable?(lk) }}
+      lower = lower.reject { |lk, _| higher.keys.any? { |hk| hk != lk && hk.assignable?(lk) } }
 
       merged = (lower.keys + higher.keys).uniq.map do |k|
         [k, merge(lower[k], higher[k])]
@@ -555,7 +555,7 @@ class StringConverter
 
   def validate_container_input(fmt)
     if (fmt.keys - FMT_KEYS).size > 0
-      raise ArgumentError, "only #{FMT_KEYS.map {|k| "'#{k}'"}.join(', ')} are allowed in a container format, got #{fmt}"
+      raise ArgumentError, "only #{FMT_KEYS.map { |k| "'#{k}'" }.join(', ')} are allowed in a container format, got #{fmt}"
     end
 
     result                          = Format.new(fmt['format'])
@@ -826,7 +826,7 @@ class StringConverter
       f.alt? ? apply_string_flags(f, puppet_quote(c_val)) : Kernel.format(f.orig_fmt.tr('c', 's'), c_val)
 
     when :C
-      c_val = val.split('::').map {|s| s.capitalize }.join('::')
+      c_val = val.split('::').map { |s| s.capitalize }.join('::')
       f.alt? ? apply_string_flags(f, puppet_quote(c_val)) : Kernel.format(f.orig_fmt.tr('C', 's'), c_val)
 
     when :u
@@ -1132,7 +1132,7 @@ class StringConverter
 
   # Maps the inferred type of o to a formatting rule
   def get_format(val_t, format_options)
-    fmt = format_options.find {|k, _| k.assignable?(val_t) }
+    fmt = format_options.find { |k, _| k.assignable?(val_t) }
     return fmt[1] unless fmt.nil?
 
     return Format.new("%s")

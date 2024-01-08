@@ -184,7 +184,7 @@ class Puppet::Parameter::ValueCollection
   def validate(value)
     return if empty?
 
-    unless @values.detect {|_name, v| v.match?(value)}
+    unless @values.detect { |_name, v| v.match?(value) }
       str = _("Invalid value %{value}.") % { value: value.inspect }
       str += " " + _("Valid values are %{value_list}.") % { value_list: values.join(", ") } unless values.empty?
       str += " " + _("Valid values match %{pattern}.") % { pattern: regexes.join(", ") } unless regexes.empty?

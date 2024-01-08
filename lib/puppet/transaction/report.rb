@@ -206,7 +206,7 @@ class Puppet::Transaction::Report
 
   # @api private
   def prune_internal_data
-    resource_statuses.delete_if {|_name, res| res.resource_type == 'Whit'}
+    resource_statuses.delete_if { |_name, res| res.resource_type == 'Whit' }
   end
 
   # @api private

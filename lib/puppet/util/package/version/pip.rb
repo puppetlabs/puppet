@@ -113,7 +113,7 @@ module Puppet::Util::Package::Version
     end
 
     def parse_local_version(local_version)
-      local_version.split(/[\\._-]/).map {|part| part =~ /[0-9]+/ && part !~ /[a-zA-Z]+/ ? part.to_i : part.downcase} if local_version
+      local_version.split(/[\\._-]/).map { |part| part =~ /[0-9]+/ && part !~ /[a-zA-Z]+/ ? part.to_i : part.downcase } if local_version
     end
 
     def compose_key(epoch, release, pre, post, dev, local)
@@ -138,7 +138,7 @@ module Puppet::Util::Package::Version
       if !local
         local_key = [[-Float::INFINITY, ""]]
       else
-        local_key = local.map {|i| (i.is_a? Integer) ? [i, ""] : [-Float::INFINITY, i]}
+        local_key = local.map { |i| (i.is_a? Integer) ? [i, ""] : [-Float::INFINITY, i] }
       end
 
       [epoch, release_key, pre_key, post_key, dev_key, local_key]

@@ -77,7 +77,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
     ripped = Ripper.sexp(code_string)
     return false if ripped.nil? # Let the next real parse crash and tell where and what is wrong
 
-    ripped.each {|x| walk(x, source_ref, result) }
+    ripped.each { |x| walk(x, source_ref, result) }
     true
   end
   private_class_method :assert_code
@@ -102,12 +102,12 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
         url: "https://puppet.com/docs/puppet/latest/functions_refactor_legacy.html"
       }
     end
-    x.each {|v| walk(v, source_ref, result) }
+    x.each { |v| walk(v, source_ref, result) }
   end
   private_class_method :walk
 
   def self.find_identity(rast)
-    rast.find {|x| x.is_a?(Array) && x[0] == :@ident }
+    rast.find { |x| x.is_a?(Array) && x[0] == :@ident }
   end
   private_class_method :find_identity
 
@@ -120,7 +120,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
   # Returns an Array; a tuple with method name and line number or "<unknown>" if either is missing, or format is not the expected
   #
   def self.extract_name_line(x)
-    (x.is_a?(Array) ? [x[1], x[2].is_a?(Array) ? x[2][1] : nil] : [nil, nil]).map {|v| v.nil? ? UNKNOWN : v }
+    (x.is_a?(Array) ? [x[1], x[2].is_a?(Array) ? x[2][1] : nil] : [nil, nil]).map { |v| v.nil? ? UNKNOWN : v }
   end
   private_class_method :extract_name_line
 end

@@ -110,7 +110,7 @@ module JSON
         obj.each { |x| write(x) }
       when Hash
         write_map_header(obj.size)
-        obj.each_pair {|k, v| write(k); write(v) }
+        obj.each_pair { |k, v| write(k); write(v) }
       when nil
         write_nil
       else

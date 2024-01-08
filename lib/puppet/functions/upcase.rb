@@ -76,12 +76,12 @@ Puppet::Functions.create_function(:upcase) do
   end
 
   def on_array(a)
-    a.map {|x| do_upcase(x) }
+    a.map { |x| do_upcase(x) }
   end
 
   def on_hash(h)
     result = {}
-    h.each_pair {|k, v| result[do_upcase(k)] = do_upcase(v) }
+    h.each_pair { |k, v| result[do_upcase(k)] = do_upcase(v) }
     result
   end
 

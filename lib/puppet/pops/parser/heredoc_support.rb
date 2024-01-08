@@ -107,7 +107,7 @@ module HeredocSupport
         # content is based.
         enqueue([:SUBLOCATE,
                  LexerSupport::TokenValue.new([:SUBLOCATE,
-                                               lines, lines.reduce(0) {|size, s| size + s.length}],
+                                               lines, lines.reduce(0) { |size, s| size + s.length }],
                                               heredoc_offset,
                                               locator)])
 
@@ -137,8 +137,8 @@ module HeredocSupport
       # The specification says that leading space up to the margin marker should be removed, but this implementation
       # simply leaves lines that have text in the margin untouched.
       #
-      processed_lines = lines.collect {|s| s.gsub(leading_pattern, '') }
-      margin_per_line = Array.new(processed_lines.length) {|x| lines[x].length - processed_lines[x].length }
+      processed_lines = lines.collect { |s| s.gsub(leading_pattern, '') }
+      margin_per_line = Array.new(processed_lines.length) { |x| lines[x].length - processed_lines[x].length }
       lines = processed_lines
     else
       # Array with a 0 per line

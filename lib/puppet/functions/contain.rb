@@ -42,7 +42,7 @@ Puppet::Functions.create_function(:contain, Puppet::Functions::InternalFunction)
     # names absolute if so desired.
     classes = scope.transform_and_assert_classnames(classes.flatten)
 
-    result = classes.map {|name| Puppet::Pops::Types::TypeFactory.host_class(name) }
+    result = classes.map { |name| Puppet::Pops::Types::TypeFactory.host_class(name) }
     containing_resource = scope.resource
 
     # This is the same as calling the include function but faster and does not rely on the include

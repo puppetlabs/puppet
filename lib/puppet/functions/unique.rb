@@ -111,8 +111,8 @@ Puppet::Functions.create_function(:unique) do
   end
 
   def unique_hash(hash, &block)
-    block = lambda {|v| v } unless block_given?
-    result = Hash.new {|h, k| h[k] = {:keys => [], :values => []} }
+    block = lambda { |v| v } unless block_given?
+    result = Hash.new { |h, k| h[k] = {:keys => [], :values => []} }
     hash.each_pair do |k, v|
       rc = result[ block.call(v) ]
       rc[:keys] << k
@@ -120,7 +120,7 @@ Puppet::Functions.create_function(:unique) do
     end
     # reduce the set of possibly duplicated value entries
     inverted = {}
-    result.each_pair {|_k, v| inverted[v[:keys]] = v[:values].uniq }
+    result.each_pair { |_k, v| inverted[v[:keys]] = v[:values].uniq }
     inverted
   end
 

@@ -1828,7 +1828,7 @@ class PPatternType < PScalarDataType
         # all strings in String/Enum type must match one of the patterns in Pattern type,
         # or Pattern represents all Patterns == all Strings
         regexps = @patterns.map { |p| p.regexp }
-        regexps.empty? || o.values.all? { |s| regexps.any? {|re| re.match(s) } }
+        regexps.empty? || o.values.all? { |s| regexps.any? { |re| re.match(s) } }
       end
     when PPatternType
       @patterns.empty?
@@ -2027,7 +2027,7 @@ class PStructType < PAnyType
 
   # rubocop:disable Naming/MemoizedInstanceVariableName
   def hashed_elements
-    @hashed ||= @elements.reduce({}) {|memo, e| memo[e.name] = e; memo }
+    @hashed ||= @elements.reduce({}) { |memo, e| memo[e.name] = e; memo }
   end
   # rubocop:enable Naming/MemoizedInstanceVariableName
 
@@ -2045,8 +2045,8 @@ class PStructType < PAnyType
     else
       PIterableType.new(
         PTupleType.new([
-                         PVariantType.maybe_create(@elements.map {|se| se.key_type }),
-                         PVariantType.maybe_create(@elements.map {|se| se.value_type })
+                         PVariantType.maybe_create(@elements.map { |se| se.key_type }),
+                         PVariantType.maybe_create(@elements.map { |se| se.value_type })
                        ],
                        PHashType::KEY_PAIR_TUPLE_SIZE)
       )
@@ -2583,7 +2583,7 @@ class PArrayType < PCollectionType
   def instance?(o, guard = nil)
     # The inferred type of a class derived from Array is either Runtime or Object. It's not assignable to the Array type.
     return false unless o.instance_of?(Array)
-    return false unless o.all? {|element| @element_type.instance?(element, guard) }
+    return false unless o.all? { |element| @element_type.instance?(element, guard) }
 
     size_t = size_type
     size_t.nil? || size_t.instance?(o.size, guard)
@@ -2735,7 +2735,7 @@ class PHashType < PCollectionType
     # The inferred type of a class derived from Hash is either Runtime or Object. It's not assignable to the Hash type.
     return false unless o.instance_of?(Hash)
 
-    if o.keys.all? {|key| @key_type.instance?(key, guard) } && o.values.all? {|value| @value_type.instance?(value, guard) }
+    if o.keys.all? { |key| @key_type.instance?(key, guard) } && o.values.all? { |value| @value_type.instance?(value, guard) }
       size_t = size_type
       size_t.nil? || size_t.instance?(o.size, guard)
     else
@@ -2773,7 +2773,7 @@ class PHashType < PCollectionType
     return value unless value.is_a?(Array)
 
     result = {}
-    value.each_with_index {|v, idx| result[idx] = array_as_hash(v) }
+    value.each_with_index { |v, idx| result[idx] = array_as_hash(v) }
     result
   end
 
@@ -2821,12 +2821,12 @@ class PHashType < PCollectionType
             # An array must be changed to a hash first as this is the root
             # (Cannot return an array from a Hash.new)
             if value.is_a?(Array)
-              value.each_with_index {|v, idx| result[idx] = v }
+              value.each_with_index { |v, idx| result[idx] = v }
             else
               result.merge!(value)
             end
           else
-            r = path[0..-2].reduce(result) {|memo, idx| (memo.is_a?(Array) || memo.has_key?(idx)) ? memo[idx] : memo[idx] = {}}
+            r = path[0..-2].reduce(result) { |memo, idx| (memo.is_a?(Array) || memo.has_key?(idx)) ? memo[idx] : memo[idx] = {} }
             r[path[-1]] = (all_hashes ? PHashType.array_as_hash(value) : value)
           end
         end
@@ -2882,7 +2882,7 @@ class PHashType < PCollectionType
       # hash must accept the size of the struct
       o_elements = o.elements
       (size_type || DEFAULT_SIZE).instance?(o_elements.size, guard) &&
-        o_elements.all? {|e| @key_type.instance?(e.name, guard) && @value_type.assignable?(e.value_type, guard) }
+        o_elements.all? { |e| @key_type.instance?(e.name, guard) && @value_type.assignable?(e.value_type, guard) }
     else
       false
     end
@@ -3048,7 +3048,7 @@ class PVariantType < PAnyType
   # @api private
   def swap_not_undefs(array)
     if array.size > 1
-      parts = array.partition {|t| t.is_a?(PNotUndefType) }
+      parts = array.partition { |t| t.is_a?(PNotUndefType) }
       not_undefs = parts[0]
       if not_undefs.size > 1
         others = parts[1]
@@ -3063,7 +3063,7 @@ class PVariantType < PAnyType
   def merge_enums(array)
     # Merge case sensitive enums and strings
     if array.size > 1
-      parts = array.partition {|t| t.is_a?(PEnumType) && !t.values.empty? && !t.case_insensitive? || t.is_a?(PStringType) && !t.value.nil? }
+      parts = array.partition { |t| t.is_a?(PEnumType) && !t.values.empty? && !t.case_insensitive? || t.is_a?(PStringType) && !t.value.nil? }
       enums = parts[0]
       if enums.size > 1
         others = parts[1]
@@ -3074,12 +3074,12 @@ class PVariantType < PAnyType
 
     # Merge case insensitive enums
     if array.size > 1
-      parts = array.partition {|t| t.is_a?(PEnumType) && !t.values.empty? && t.case_insensitive? }
+      parts = array.partition { |t| t.is_a?(PEnumType) && !t.values.empty? && t.case_insensitive? }
       enums = parts[0]
       if enums.size > 1
         others = parts[1]
         values = []
-        enums.each { |enum| enum.values.each { |value| values << value.downcase }}
+        enums.each { |enum| enum.values.each { |value| values << value.downcase } }
         values.uniq!
         others << PEnumType.new(values, true)
         array = others
@@ -3091,7 +3091,7 @@ class PVariantType < PAnyType
   # @api private
   def merge_patterns(array)
     if array.size > 1
-      parts = array.partition {|t| t.is_a?(PPatternType) }
+      parts = array.partition { |t| t.is_a?(PPatternType) }
       patterns = parts[0]
       if patterns.size > 1
         others = parts[1]
@@ -3105,7 +3105,7 @@ class PVariantType < PAnyType
   # @api private
   def merge_numbers(clazz, array)
     if array.size > 1
-      parts = array.partition {|t| t.is_a?(clazz) }
+      parts = array.partition { |t| t.is_a?(clazz) }
       ranges = parts[0]
       array = merge_ranges(ranges) + parts[1] if ranges.size > 1
     end
@@ -3114,7 +3114,7 @@ class PVariantType < PAnyType
 
   def merge_version_ranges(array)
     if array.size > 1
-      parts = array.partition {|t| t.is_a?(PSemVerType) }
+      parts = array.partition { |t| t.is_a?(PSemVerType) }
       ranges = parts[0]
       array = [PSemVerType.new(ranges.map(&:ranges).flatten)] + parts[1] if ranges.size > 1
     end

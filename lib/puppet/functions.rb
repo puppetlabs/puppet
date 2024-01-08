@@ -797,7 +797,7 @@ module Puppet::Functions
       end
       # Names of parameters, up to 5 are optimized and use frozen version
       # Note that (0..count-1) produces expected empty array for count == 0, 0-n for count >= 1
-      names = count <= 5 ? PARAM_NAMES[count] : (0..count - 1).map {|n| "p#{n}" }
+      names = count <= 5 ? PARAM_NAMES[count] : (0..count - 1).map { |n| "p#{n}" }
       [from, to, names]
     end
   end

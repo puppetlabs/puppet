@@ -378,7 +378,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     if age_limits.empty?
       nil
     else
-      [cmd, age_limits.collect { |property| [flag(property), @resource.should(property)]}, @resource[:name]].flatten
+      [cmd, age_limits.collect { |property| [flag(property), @resource.should(property)] }, @resource[:name]].flatten
     end
   end
 

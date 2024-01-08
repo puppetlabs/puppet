@@ -340,7 +340,7 @@ class Puppet::Property < Puppet::Parameter
       #
       # return is.zip(@should).all? {|a, b| property_matches?(a, b) }
     else
-      return @should.any? {|want| property_matches?(is, want) }
+      return @should.any? { |want| property_matches?(is, want) }
     end
   end
 

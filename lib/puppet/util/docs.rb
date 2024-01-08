@@ -22,7 +22,7 @@ module Puppet::Util::Docs
   def doc
     extra = methods.find_all { |m| m.to_s =~ /^dochook_.+/ }.sort.collect { |m|
       self.send(m)
-    }.delete_if {|r| r.nil? }.collect {|r| "* #{r}"}.join("\n")
+    }.delete_if { |r| r.nil? }.collect { |r| "* #{r}" }.join("\n")
 
     if @doc
       scrub(@doc) + (extra.empty? ? '' : "\n\n#{extra}")
@@ -125,7 +125,7 @@ module Puppet::Util::Docs
       text = text.gsub(/^#{indent}/, '')
     end
     # Clean trailing space
-    text.lines.map {|line| line.rstrip}.join("\n").rstrip
+    text.lines.map { |line| line.rstrip }.join("\n").rstrip
   end
 
   module_function :scrub

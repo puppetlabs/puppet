@@ -19,7 +19,7 @@ class Puppet::Util::Windows::RootCerts
   # @yieldparam cert [OpenSSL::X509::Certificate] each root certificate
   # @api public
   def each
-    @roots.each {|cert| yield cert}
+    @roots.each { |cert| yield cert }
   end
 
   # Returns a new instance.

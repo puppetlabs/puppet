@@ -375,7 +375,7 @@ module Generators
   module ResourceContainer
     def collect_resources
       list = @context.resource_list
-      @resources = list.collect {|m| HTMLPuppetResource.new(m, self, @options) }
+      @resources = list.collect { |m| HTMLPuppetResource.new(m, self, @options) }
     end
 
     def build_resource_summary_list(path_prefix = '')
@@ -680,11 +680,11 @@ module Generators
     end
 
     def build_facts_summary_list
-      potentially_referenced_list(context.facts) {|fn| ["PLUGIN(#{fn})"] }
+      potentially_referenced_list(context.facts) { |fn| ["PLUGIN(#{fn})"] }
     end
 
     def build_plugins_summary_list
-      potentially_referenced_list(context.plugins) {|fn| ["PLUGIN(#{fn})"] }
+      potentially_referenced_list(context.plugins) { |fn| ["PLUGIN(#{fn})"] }
     end
 
     def facts

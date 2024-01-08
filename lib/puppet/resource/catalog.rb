@@ -167,7 +167,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     # The alias setting logic checks, and does not error if the alias is set to an already set alias
     # for the same resource (i.e. it is ok if alias == title
     explicit_aliases = [resource[:alias]].flatten.compact
-    explicit_aliases.each {|given_alias| self.alias(resource, given_alias) }
+    explicit_aliases.each { |given_alias| self.alias(resource, given_alias) }
 
     # Skip creating uniqueness key alias and checking collisions for non-isomorphic resources.
     return unless resource.respond_to?(:isomorphic?) and resource.isomorphic?
@@ -395,7 +395,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   def resource_refs
-    resource_keys.collect { |type, name| name.is_a?( String ) ? "#{type}[#{name}]" : nil}.compact
+    resource_keys.collect { |type, name| name.is_a?( String ) ? "#{type}[#{name}]" : nil }.compact
   end
 
   def resource_keys
@@ -458,7 +458,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     if recursive_metadata
       result.recursive_metadata = recursive_metadata.inject({}) do |h, (title, source_to_meta_hash)|
         h[title] = source_to_meta_hash.inject({}) do |inner_h, (source, metas)|
-          inner_h[source] = metas.map {|meta| Puppet::FileServing::Metadata.from_data_hash(meta)}
+          inner_h[source] = metas.map { |meta| Puppet::FileServing::Metadata.from_data_hash(meta) }
           inner_h
         end
         h
@@ -472,7 +472,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     metadata_hash = metadata.inject({}) { |h, (k, v)| h[k] = v.to_data_hash; h }
     recursive_metadata_hash = recursive_metadata.inject({}) do |h, (title, source_to_meta_hash)|
       h[title] = source_to_meta_hash.inject({}) do |inner_h, (source, metas)|
-        inner_h[source] = metas.map {|meta| meta.to_data_hash}
+        inner_h[source] = metas.map { |meta| meta.to_data_hash }
         inner_h
       end
       h

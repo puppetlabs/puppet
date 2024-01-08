@@ -77,15 +77,15 @@ module RDoc
     end
 
     def each_fact
-      @facts.each {|c| yield c}
+      @facts.each { |c| yield c }
     end
 
     def each_plugin
-      @plugins.each {|c| yield c}
+      @plugins.each { |c| yield c }
     end
 
     def each_node
-      @nodes.each {|c| yield c}
+      @nodes.each { |c| yield c }
     end
 
     def nodes

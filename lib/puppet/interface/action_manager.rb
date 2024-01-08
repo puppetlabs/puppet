@@ -78,7 +78,7 @@ module Puppet::Interface::ActionManager
   # @return [Puppet::Interface::Action]
   # @api private
   def get_default_action
-    default = actions.map {|x| get_action(x) }.select {|x| x.default }
+    default = actions.map { |x| get_action(x) }.select { |x| x.default }
     if default.length > 1
       raise "The actions #{default.map(&:name).join(", ")} cannot all be default"
     end

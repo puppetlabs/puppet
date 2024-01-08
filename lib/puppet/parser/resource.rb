@@ -224,7 +224,7 @@ class Puppet::Parser::Resource < Puppet::Resource
         case param.name
         when :before, :subscribe, :notify, :require
           if value.is_a?(Array)
-            value = value.flatten.reject {|v| v.nil? || :undef == v }
+            value = value.flatten.reject { |v| v.nil? || :undef == v }
           end
           result[param.name] = value
         else

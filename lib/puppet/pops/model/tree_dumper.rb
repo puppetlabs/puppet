@@ -46,7 +46,7 @@ class Puppet::Pops::Model::TreeDumper
       @indent_count -= 1
     when Array
       result << '('
-      result += x.collect {|a| format_r(a) }.flatten
+      result += x.collect { |a| format_r(a) }.flatten
       result << ')'
     when Symbol
       result << x.to_s # Allows Symbols in arrays e.g. ["text", =>, "text"]

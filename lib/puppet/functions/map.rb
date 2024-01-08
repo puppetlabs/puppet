@@ -92,7 +92,7 @@ Puppet::Functions.create_function(:map) do
   def map_Hash_1(hash)
     result = []
     begin
-      hash.each {|x, y| result << yield([x, y]) }
+      hash.each { |x, y| result << yield([x, y]) }
     rescue StopIteration
     end
     result
@@ -101,7 +101,7 @@ Puppet::Functions.create_function(:map) do
   def map_Hash_2(hash)
     result = []
     begin
-      hash.each {|x, y| result << yield(x, y) }
+      hash.each { |x, y| result << yield(x, y) }
     rescue StopIteration
     end
     result

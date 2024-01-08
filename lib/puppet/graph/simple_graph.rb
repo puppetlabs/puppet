@@ -205,7 +205,7 @@ class Puppet::Graph::SimpleGraph
     # Calculate our filtered outbound vertex lists...
     adj = {}
     cycle.each do |vertex|
-      adj[vertex] = adjacent(vertex).select {|s| cycle.member? s}
+      adj[vertex] = adjacent(vertex).select { |s| cycle.member? s }
     end
 
     found = []
@@ -236,7 +236,7 @@ class Puppet::Graph::SimpleGraph
 
     cycles.each do |cycle|
       paths = paths_in_cycle(cycle)
-      message += paths.map { |path| '(' + path.join(' => ') + ')'}.join('\n') + '\n'
+      message += paths.map { |path| '(' + path.join(' => ') + ')' }.join('\n') + '\n'
     end
 
     if Puppet[:graph] then
@@ -334,7 +334,7 @@ class Puppet::Graph::SimpleGraph
   end
 
   def each_edge
-    @in_to.each { |_t, ns| ns.each { |_s, es| es.each { |e| yield e }}}
+    @in_to.each { |_t, ns| ns.each { |_s, es| es.each { |e| yield e } } }
   end
 
   # Remove an edge from our graph.

@@ -315,7 +315,7 @@ class PObjectType < PMetaType
         end
 
         v = init_hash[KEY_VALUE]
-        @value = v == :default ? v : TypeAsserter.assert_instance_of(nil, type, v) {"#{label} #{KEY_VALUE}" }
+        @value = v == :default ? v : TypeAsserter.assert_instance_of(nil, type, v) { "#{label} #{KEY_VALUE}" }
       else
         raise Puppet::ParseError, _("%{label} of kind 'constant' requires a value") % { label: label } if @kind == ATTRIBUTE_KIND_CONSTANT
 

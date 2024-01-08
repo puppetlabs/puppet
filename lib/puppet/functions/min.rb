@@ -172,7 +172,7 @@ Puppet::Functions.create_function(:min) do
   end
 
   def on_any_with_block(*args, &block)
-    args.min {|x, y| block.call(x, y) }
+    args.min { |x, y| block.call(x, y) }
   end
 
   def on_single_numeric_array(array, &block)

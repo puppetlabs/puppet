@@ -28,7 +28,7 @@ module Manager
   #
   def clear_misses
     unless @types.nil?
-      @types.delete_if {|_, v| v.nil? }
+      @types.delete_if { |_, v| v.nil? }
     end
   end
 

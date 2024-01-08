@@ -142,8 +142,8 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
 
     # Prefer the standard extReq, but accept the Microsoft specific version as
     # a fallback, if the standard version isn't found.
-    attribute   = @content.attributes.find {|x| x.oid == "extReq" }
-    attribute ||= @content.attributes.find {|x| x.oid == "msExtReq" }
+    attribute   = @content.attributes.find { |x| x.oid == "extReq" }
+    attribute ||= @content.attributes.find { |x| x.oid == "msExtReq" }
     return [] unless attribute
 
     extensions = unpack_extension_request(attribute)
@@ -172,8 +172,8 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
 
   def subject_alt_names
     @subject_alt_names ||= request_extensions
-                           .select {|x| x["oid"] == "subjectAltName" }
-                           .map {|x| x["value"].split(/\s*,\s*/) }
+                           .select { |x| x["oid"] == "subjectAltName" }
+                           .map { |x| x["value"].split(/\s*,\s*/) }
                            .flatten
                            .sort
                            .uniq

@@ -1314,7 +1314,7 @@ class Type
       and the second run will log the edit made by Puppet.)"
 
     validate do |list|
-      list = Array(list).collect {|p| p.to_sym}
+      list = Array(list).collect { |p| p.to_sym }
       unless list == [:all]
         list.each do |param|
           next if @resource.class.validattr?(param)

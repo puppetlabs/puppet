@@ -49,7 +49,7 @@ Puppet::Functions.create_function(:rstrip) do
   end
 
   def on_iterable(a)
-    a.map {|x| do_rstrip(x) }
+    a.map { |x| do_rstrip(x) }
   end
 
   def do_rstrip(x)

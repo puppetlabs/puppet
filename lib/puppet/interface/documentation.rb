@@ -228,12 +228,12 @@ class Puppet::Interface
     def author=(value)
       # I think it's a bug that this ends up being the exposed
       # version of `author` on ActionBuilder
-      if Array(value).any? {|x| x =~ /\n/ } then
+      if Array(value).any? { |x| x =~ /\n/ } then
         # TRANSLATORS 'author' is an attribute name and should not be translated
         raise ArgumentError, _('author should be a single line; use multiple statements')
       end
 
-      @authors = Array(value).map {|x| Puppet::Interface::DocGen.strip_whitespace(x) }
+      @authors = Array(value).map { |x| Puppet::Interface::DocGen.strip_whitespace(x) }
     end
     alias :authors= :author=
 
@@ -329,7 +329,7 @@ class Puppet::Interface
           else
             found = part.split(/-/)
             if found
-              unless found.length == 2 and found.all? {|x| x.strip =~ /^\d+$/ }
+              unless found.length == 2 and found.all? { |x| x.strip =~ /^\d+$/ }
                 # TRANSLATORS 'copyright' is an attribute name and should not be translated
                 raise ArgumentError, _("%{value} is not a good copyright year or range") % { value: part.inspect }
               end

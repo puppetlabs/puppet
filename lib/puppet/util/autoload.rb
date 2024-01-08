@@ -117,7 +117,7 @@ class Puppet::Util::Autoload
     end
 
     def files_to_load(path, env)
-      search_directories(env).map {|dir| files_in_dir(dir, path) }.flatten.uniq
+      search_directories(env).map { |dir| files_in_dir(dir, path) }.flatten.uniq
     end
 
     # @api private

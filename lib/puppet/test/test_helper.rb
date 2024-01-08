@@ -195,7 +195,7 @@ module Puppet::Test
 
       # Restore the load_path late, to avoid messing with stubs from the test.
       $LOAD_PATH.clear
-      $old_load_path.each {|x| $LOAD_PATH << x }
+      $old_load_path.each { |x| $LOAD_PATH << x }
 
       Puppet.rollback_context(ROLLBACK_MARK)
     end

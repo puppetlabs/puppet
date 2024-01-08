@@ -20,7 +20,7 @@ module Puppet
         return true
       end
 
-      checksum_insync?(resource.parameter(:source), is, true) {|inner| super(inner)}
+      checksum_insync?(resource.parameter(:source), is, true) { |inner| super(inner) }
     end
 
     def property_matches?(current, desired)

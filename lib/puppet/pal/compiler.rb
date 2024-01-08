@@ -213,7 +213,7 @@ module Pal
       if filter_regex.nil?
         loader.discover(kind, error_collector)
       else
-        loader.discover(kind, error_collector) {|f| f.name =~ filter_regex }
+        loader.discover(kind, error_collector) { |f| f.name =~ filter_regex }
       end
     end
 

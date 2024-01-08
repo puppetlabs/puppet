@@ -173,7 +173,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def assign_LiteralList(o, via_index)
-    o.values.each {|x| assign(x) }
+    o.values.each { |x| assign(x) }
   end
 
   def assign_Object(o, via_index)
@@ -701,7 +701,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def check_LiteralList(o)
-    o.values.each {|v| rvalue(v) }
+    o.values.each { |v| rvalue(v) }
   end
 
   def check_LiteralInteger(o)
@@ -783,7 +783,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     else
       # recursively check all contents unless it's a lambda expression. A lambda may contain
       # local assignments
-      o._pcore_contents {|model| internal_check_illegal_assignment(model) } unless o.is_a?(Model::LambdaExpression)
+      o._pcore_contents { |model| internal_check_illegal_assignment(model) } unless o.is_a?(Model::LambdaExpression)
     end
   end
 
@@ -848,7 +848,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_SelectorExpression(o)
     rvalue(o.left_expr)
     # There can only be one LiteralDefault case option value
-    defaults = o.selectors.select {|v| v.matching_expr.is_a?(Model::LiteralDefault) }
+    defaults = o.selectors.select { |v| v.matching_expr.is_a?(Model::LiteralDefault) }
     unless defaults.size <= 1
       # Flag the second default as 'unreachable'
       acceptor.accept(Issues::DUPLICATE_DEFAULT, defaults[1].matching_expr, :container => o)
@@ -895,7 +895,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   # Transforms Array of host matching expressions into a (Ruby) array of AST::HostName
   def hostname_Array(o, semantic)
-    o.each {|x| hostname(x, semantic) }
+    o.each { |x| hostname(x, semantic) }
   end
 
   def hostname_String(o, semantic)
@@ -914,7 +914,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def hostname_ConcatenatedString(o, semantic)
     # Puppet 3.1. only accepts a concatenated string without interpolated expressions
-    the_expr = o.segments.index {|s| s.is_a?(Model::TextExpression) }
+    the_expr = o.segments.index { |s| s.is_a?(Model::TextExpression) }
     if the_expr
       acceptor.accept(Issues::ILLEGAL_HOSTNAME_INTERPOLATION, o.segments[the_expr].expr)
     elsif o.segments.size() != 1
@@ -1078,7 +1078,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def idem_BlockExpression(o)
     # productive if there is at least one productive expression
-    !o.statements.any? {|expr| !idem(expr) }
+    !o.statements.any? { |expr| !idem(expr) }
   end
 
   # Returns true even though there may be interpolated expressions that have side effect.
@@ -1106,14 +1106,14 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def idem_IfExpression(o)
-    [o.test, o.then_expr, o.else_expr].all? {|e| idem(e) }
+    [o.test, o.then_expr, o.else_expr].all? { |e| idem(e) }
   end
 
   # Case expression is idem, if test, and all options are idem
   def idem_CaseExpression(o)
     return false if !idem(o.test)
 
-    !o.options.any? {|opt| !idem(opt) }
+    !o.options.any? { |opt| !idem(opt) }
   end
 
   # An option is idem if values and the then_expression are idem

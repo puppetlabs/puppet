@@ -365,7 +365,7 @@ class Puppet::Interface::Action
     end
 
     unless overlap.empty?
-      overlap_list = overlap.map {|k, v| "(#{k}, #{v.sort.join(', ')})" }.join(", ")
+      overlap_list = overlap.map { |k, v| "(#{k}, #{v.sort.join(', ')})" }.join(", ")
       raise ArgumentError, _("Multiple aliases for the same option passed: %{overlap_list}") %
                            { overlap_list: overlap_list }
     end
@@ -377,7 +377,7 @@ class Puppet::Interface::Action
 
     # Inject default arguments and check for missing mandating options.
     missing = []
-    options.map {|x| get_option(x) }.each do |option|
+    options.map { |x| get_option(x) }.each do |option|
       name = option.name
       next if result.has_key? name
 

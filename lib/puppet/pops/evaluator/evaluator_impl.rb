@@ -192,7 +192,7 @@ class EvaluatorImpl
 
   # An array is assignable if all entries are lvalues
   def lvalue_LiteralList(o, scope)
-    o.values.map {|x| lvalue(x, scope) }
+    o.values.map { |x| lvalue(x, scope) }
   end
 
   # Assign value to named variable.
@@ -228,7 +228,7 @@ class EvaluatorImpl
     if values.is_a?(Hash)
       lvalues.map do |lval|
         assign(lval,
-               values.fetch(lval) {|k| fail(Issues::MISSING_MULTI_ASSIGNMENT_KEY, o, :key => k)},
+               values.fetch(lval) { |k| fail(Issues::MISSING_MULTI_ASSIGNMENT_KEY, o, :key => k) },
                o, scope)
       end
     elsif values.is_a?(Puppet::Pops::Types::PClassType)
@@ -509,9 +509,9 @@ class EvaluatorImpl
     keys = o.keys || []
     if left.is_a?(Types::PClassType)
       # Evaluate qualified references without errors no undefined types
-      keys = keys.map {|key| key.is_a?(Model::QualifiedReference) ? Types::TypeParser.singleton.interpret(key) : evaluate(key, scope) }
+      keys = keys.map { |key| key.is_a?(Model::QualifiedReference) ? Types::TypeParser.singleton.interpret(key) : evaluate(key, scope) }
     else
-      keys = keys.map {|key| evaluate(key, scope) }
+      keys = keys.map { |key| evaluate(key, scope) }
       # Resource[File] becomes File
       return keys[0] if Types::PResourceType::DEFAULT == left && keys.size == 1 && keys[0].is_a?(Types::PResourceType)
     end
@@ -666,13 +666,13 @@ class EvaluatorImpl
   #
   def eval_LiteralHash o, scope
     # optimized
-    o.entries.reduce({}) {|h, entry| h[evaluate(entry.key, scope)] = evaluate(entry.value, scope); h }
+    o.entries.reduce({}) { |h, entry| h[evaluate(entry.key, scope)] = evaluate(entry.value, scope); h }
   end
 
   # Evaluates all statements and produces the last evaluated value
   #
   def eval_BlockExpression o, scope
-    o.statements.reduce(nil) {|_memo, s| evaluate(s, scope)}
+    o.statements.reduce(nil) { |_memo, s| evaluate(s, scope) }
   end
 
   # Performs optimized search over case option values, lazily evaluating each
@@ -701,7 +701,7 @@ class EvaluatorImpl
           when Model::UnfoldExpression
             # not ideal for error reporting, since it is not known which unfolded result
             # that caused an error - the entire unfold expression is blamed (i.e. the var c, passed to is_match?)
-            evaluate(c, scope).any? {|v| is_match?(test, v, c, co, scope) }
+            evaluate(c, scope).any? { |v| is_match?(test, v, c, co, scope) }
           else
             is_match?(test, evaluate(c, scope), c, co, scope)
           end
@@ -930,7 +930,7 @@ class EvaluatorImpl
         actual = type_calculator.generalize(type_calculator.infer(type))
         fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_ref, {:actual => actual})
       end
-    evaluated_parameters = o.operations.map {|op| evaluate(op, scope) }
+    evaluated_parameters = o.operations.map { |op| evaluate(op, scope) }
     create_resource_defaults(o, scope, type_name, evaluated_parameters)
     # Produce the type
     type
@@ -1028,7 +1028,7 @@ class EvaluatorImpl
         when Model::UnfoldExpression
           # not ideal for error reporting, since it is not known which unfolded result
           # that caused an error - the entire unfold expression is blamed (i.e. the var c, passed to is_match?)
-          evaluate(me, scope).any? {|v| is_match?(test, v, me, s, scope) }
+          evaluate(me, scope).any? { |v| is_match?(test, v, me, s, scope) }
         else
           is_match?(test, evaluate(me, scope), me, s, scope)
         end
@@ -1102,7 +1102,7 @@ class EvaluatorImpl
   # Evaluates double quoted strings that may contain interpolation
   #
   def eval_ConcatenatedString o, scope
-    o.segments.collect {|expr| string(evaluate(expr, scope), scope)}.join
+    o.segments.collect { |expr| string(evaluate(expr, scope), scope) }.join
   end
 
   # If the wrapped expression is a QualifiedName, it is taken as the name of a variable in scope.
@@ -1136,11 +1136,11 @@ class EvaluatorImpl
   end
 
   def string_Array(o, scope)
-    "[#{o.map {|e| string(e, scope)}.join(COMMA_SEPARATOR)}]"
+    "[#{o.map { |e| string(e, scope) }.join(COMMA_SEPARATOR)}]"
   end
 
   def string_Hash(o, scope)
-    "{#{o.map {|k, v| "#{string(k, scope)} => #{string(v, scope)}"}.join(COMMA_SEPARATOR)}}"
+    "{#{o.map { |k, v| "#{string(k, scope)} => #{string(v, scope)}" }.join(COMMA_SEPARATOR)}}"
   end
 
   def string_Regexp(o, scope)
@@ -1267,14 +1267,14 @@ class EvaluatorImpl
           when Hash  then y.to_a
           else            [y]
           end
-      y.each {|e| result.delete(e) }
+      y.each { |e| result.delete(e) }
     when Hash
       y = case y
           when Array then y
           when Hash  then y.keys
           else            [y]
           end
-      y.each {|e| result.delete(e) }
+      y.each { |e| result.delete(e) }
     else
       raise ArgumentError.new(_("Can only delete from an Array or Hash."))
     end

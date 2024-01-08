@@ -240,7 +240,7 @@ class Locator
       # The last entry is duplicated since there will be  the line "after last line" that would otherwise require
       # conditional logic.
       #
-      @accumulated_margin = margin_per_line.reduce([0]) {|memo, val| memo << memo[-1] + val; memo }
+      @accumulated_margin = margin_per_line.reduce([0]) { |memo, val| memo << memo[-1] + val; memo }
       @accumulated_margin << @accumulated_margin[-1]
     end
 

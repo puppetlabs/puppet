@@ -65,7 +65,7 @@ Puppet::Face.define(:parser, '0.0.1') do
       end
 
       unless missing_files.empty?
-        raise Puppet::Error, _("One or more file(s) specified did not exist:\n%{files}") % { files: missing_files.collect {|f| " " * 3 + f + "\n"} }
+        raise Puppet::Error, _("One or more file(s) specified did not exist:\n%{files}") % { files: missing_files.collect { |f| " " * 3 + f + "\n" } }
       end
 
       parse_errors

@@ -95,7 +95,7 @@ module Puppet::ModuleTool
             raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
           elsif results[:requested_version] != :latest
             requested = Puppet::Module.parse_range(results[:requested_version])
-            unless available_versions.any? {|m| requested.include? m.version}
+            unless available_versions.any? { |m| requested.include? m.version }
               raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
             end
           end

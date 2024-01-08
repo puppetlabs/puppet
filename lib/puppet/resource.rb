@@ -147,7 +147,7 @@ class Puppet::Resource
 
   def self.value_to_json_data(value)
     if value.is_a?(Array)
-      value.map {|v| value_to_json_data(v) }
+      value.map { |v| value_to_json_data(v) }
     elsif value.is_a?(Hash)
       result = {}
       value.each_pair { |k, v| result[value_to_json_data(k)] = value_to_json_data(v) }

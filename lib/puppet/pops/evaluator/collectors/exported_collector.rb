@@ -42,7 +42,7 @@ class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Eva
       found = Puppet::Resource.indirection
                               .search(@type, :host => @scope.compiler.node.name, :filter => @equery, :scope => @scope)
 
-      found_resources = found.map {|x| x.is_a?(Puppet::Parser::Resource) ? x : x.to_resource(@scope)}
+      found_resources = found.map { |x| x.is_a?(Puppet::Parser::Resource) ? x : x.to_resource(@scope) }
 
       found_resources.each do |item|
         existing = @scope.findresource(item.resource_type, item.title)

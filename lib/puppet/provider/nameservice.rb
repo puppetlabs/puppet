@@ -62,7 +62,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       @resource_type.validproperties.each do |prop|
         next if prop == :ensure
 
-        define_method(prop) { get(prop) || :absent} unless public_method_defined?(prop)
+        define_method(prop) { get(prop) || :absent } unless public_method_defined?(prop)
         define_method(prop.to_s + "=") { |*vals| set(prop, *vals) } unless public_method_defined?(prop.to_s + "=")
       end
     end
@@ -141,8 +141,8 @@ class Puppet::Provider::NameService < Puppet::Provider
       # other, more convenient enumerator for these, so we fake one with this
       # loop.  Thanks, Ruby, for your awesome abstractions. --daniel 2012-03-23
       highest = []
-      Puppet::Etc.send(database) {|entry| highest << entry.send(method) }
-      highest = highest.reject {|x| x > 65000 }.max
+      Puppet::Etc.send(database) { |entry| highest << entry.send(method) }
+      highest = highest.reject { |x| x > 65000 }.max
 
       @prevauto = highest || 1000
     end

@@ -256,7 +256,7 @@ class Puppet::Transaction
 
     if provider_class == resource.class.defaultprovider
       providerless_resources = resources_by_provider(resource.type, nil)
-      providerless_resources.values.each {|res| res.provider = provider_class.name}
+      providerless_resources.values.each { |res| res.provider = provider_class.name }
       resources.merge! providerless_resources
     end
 

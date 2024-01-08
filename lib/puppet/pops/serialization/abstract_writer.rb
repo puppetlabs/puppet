@@ -93,7 +93,7 @@ class AbstractWriter
   def write_tpl_qname(ep, qname)
     names = qname.split('::')
     ep.write(names.size)
-    names.each {|n| write_tpl(ep, n)}
+    names.each { |n| write_tpl(ep, n) }
   end
 
   # Called from extension callbacks only

@@ -354,7 +354,7 @@ module Puppet::ModuleTool
       # install into the same directory 'foo'.
       #
       def resolve_install_conflicts(graph, is_dependency = false)
-        Puppet.debug("Resolving conflicts for #{graph.map {|n| n[:module]}.join(',')}")
+        Puppet.debug("Resolving conflicts for #{graph.map { |n| n[:module] }.join(',')}")
 
         graph.each do |release|
           @environment.modules_by_path[options[:target_dir]].each do |mod|

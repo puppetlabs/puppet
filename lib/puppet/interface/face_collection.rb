@@ -11,9 +11,9 @@ module Puppet::Interface::FaceCollection
       names = @loader.files_to_load(Puppet.lookup(:current_environment)).map do |fn|
         ::File.basename(fn, '.rb')
       end.uniq
-      names.each {|name| self[name, :current]}
+      names.each { |name| self[name, :current] }
     end
-    @faces.keys.select {|name| @faces[name].length > 0 }
+    @faces.keys.select { |name| @faces[name].length > 0 }
   end
 
   def self.[](name, version)

@@ -157,7 +157,7 @@ module TypeFactory
   # @api public
   #
   def self.variant(*types)
-    PVariantType.maybe_create(types.map {|v| type_of(v) })
+    PVariantType.maybe_create(types.map { |v| type_of(v) })
   end
 
   # Produces the Struct type, either a non parameterized instance representing
@@ -241,7 +241,7 @@ module TypeFactory
   end
 
   def self.tuple(types = [], size_type = nil)
-    PTupleType.new(types.map {|elem| type_of(elem) }, size_type)
+    PTupleType.new(types.map { |elem| type_of(elem) }, size_type)
   end
 
   # Produces the Boolean type
@@ -349,7 +349,7 @@ module TypeFactory
       size_type = nil
     end
 
-    types = params.map {|p| type_of(p) }
+    types = params.map { |p| type_of(p) }
 
     # If the specification requires types, and none were given, a Unit type is used
     if types.empty? && !size_type.nil? && size_type.range[1] > 0

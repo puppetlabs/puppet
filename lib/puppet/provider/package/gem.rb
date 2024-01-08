@@ -120,8 +120,8 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
 
     begin
       list = execute_gem_command(options[:command], command_options).lines
-                                                                    .map {|set| gemsplit(set) }
-                                                                    .reject {|x| x.nil? }
+                                                                    .map { |set| gemsplit(set) }
+                                                                    .reject { |x| x.nil? }
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not list gems: %{detail}") % { detail: detail }, detail.backtrace
     end
@@ -145,7 +145,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
       versions = $2.sub('default: ', '').split(/,\s*/)
       {
         :name => gem_name,
-        :ensure => versions.map {|v| v.split[0]},
+        :ensure => versions.map { |v| v.split[0] },
         :provider => name
       }
     else

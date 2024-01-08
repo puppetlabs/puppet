@@ -71,7 +71,7 @@ class Puppet::Parser::TypeLoader
         imported_types = import_from_modules(filename)
         result = imported_types.find { |t| t.type == type and t.name == fqname }
         if result
-          Puppet.debug {"Automatically imported #{fqname} from #{filename} into #{environment}"}
+          Puppet.debug { "Automatically imported #{fqname} from #{filename} into #{environment}" }
           return result
         end
       rescue TypeLoaderError
@@ -113,7 +113,7 @@ class Puppet::Parser::TypeLoader
       # for information and it should not abort.
       # There is currently one user in indirector/resourcetype/parser
       #
-      if Puppet.lookup(:squelch_parse_errors) {|| false }
+      if Puppet.lookup(:squelch_parse_errors) { || false }
         begin
           loaded_asts << parse_file(file)
         rescue => e

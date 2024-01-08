@@ -173,7 +173,7 @@ Puppet::Functions.create_function(:max) do
   end
 
   def on_any_with_block(*args, &block)
-    args.max {|x, y| block.call(x, y) }
+    args.max { |x, y| block.call(x, y) }
   end
 
   def on_single_numeric_array(array, &block)

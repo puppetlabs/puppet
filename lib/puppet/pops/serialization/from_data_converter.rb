@@ -158,10 +158,10 @@ module Serialization
         if pcore_type && (pcore_type.is_a?(String) || pcore_type.is_a?(Hash))
           @pcore_type_procs[pcore_type].call(value, pcore_type)
         else
-          build({}) { value.each_pair { |key, elem| with(key) { convert(elem) }}}
+          build({}) { value.each_pair { |key, elem| with(key) { convert(elem) } } }
         end
       elsif value.is_a?(Array)
-        build([]) { value.each_with_index { |elem, idx| with(idx) { convert(elem)}}}
+        build([]) { value.each_with_index { |elem, idx| with(idx) { convert(elem) } } }
       else
         build(value)
       end

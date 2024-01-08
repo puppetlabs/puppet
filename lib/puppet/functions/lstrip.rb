@@ -49,7 +49,7 @@ Puppet::Functions.create_function(:lstrip) do
   end
 
   def on_iterable(a)
-    a.map {|x| do_lstrip(x) }
+    a.map { |x| do_lstrip(x) }
   end
 
   def do_lstrip(x)

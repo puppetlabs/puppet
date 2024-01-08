@@ -116,7 +116,7 @@ module Puppet::Util::FileParsing
         else
           details[field].to_s
         end
-      }.reject { |c| c.nil?}.join(joinchar)
+      }.reject { |c| c.nil? }.join(joinchar)
     end
 
     # Customize this so we can do a bit of validation.

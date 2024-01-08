@@ -518,7 +518,7 @@ class Loaders
     end
 
     def all_module_loaders
-      @all_module_loaders ||= @index.values.map {|md| md.public_loader }
+      @all_module_loaders ||= @index.values.map { |md| md.public_loader }
     end
 
     def resolve(module_data)

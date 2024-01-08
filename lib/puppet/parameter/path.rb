@@ -30,7 +30,7 @@ class Puppet::Parameter::Path < Puppet::Parameter
       fail _("%{name} only accepts a single path, not an array of paths") % { name: name }
     end
 
-    fail(_("%{name} must be a fully qualified path") % { name: name }) unless Array(paths).all? {|path| absolute_path?(path)}
+    fail(_("%{name} must be a fully qualified path") % { name: name }) unless Array(paths).all? { |path| absolute_path?(path) }
 
     paths
   end

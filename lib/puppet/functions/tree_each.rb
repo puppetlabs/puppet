@@ -171,12 +171,12 @@ Puppet::Functions.create_function(:tree_each) do
   end
 
   def tree_Enumerable1(enum, options = {}, &block)
-    iterator(enum, options).each {|_, v| yield(v) }
+    iterator(enum, options).each { |_, v| yield(v) }
     enum
   end
 
   def tree_Enumerable2(enum, options = {}, &block)
-    iterator(enum, options).each {|path, v| yield(path, v) }
+    iterator(enum, options).each { |path, v| yield(path, v) }
     enum
   end
 

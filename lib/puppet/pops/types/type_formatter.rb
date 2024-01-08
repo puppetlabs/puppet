@@ -295,7 +295,7 @@ class TypeFormatter
 
   def append_callable_params(t)
     # translate to string, and skip Unit types
-    append_strings(t.param_types.types.reject {|t2| t2.class == PUnitType }, true)
+    append_strings(t.param_types.types.reject { |t2| t2.class == PUnitType }, true)
 
     if t.param_types.types.empty?
       append_strings([0, 0], true)
@@ -311,7 +311,7 @@ class TypeFormatter
 
   # @api private
   def string_PStructType(t)
-    append_array('Struct', t.elements.empty?) { append_hash(Hash[t.elements.map {|e| struct_element_pair(e) }]) }
+    append_array('Struct', t.elements.empty?) { append_hash(Hash[t.elements.map { |e| struct_element_pair(e) }]) }
   end
 
   # @api private

@@ -8,7 +8,7 @@ def self.register_ptypes(loader, ir)
   types = [Param, ResourceTypeImpl].map do |c|
     c.register_ptype(loader, ir)
   end
-  types.each {|t| t.resolve(loader) }
+  types.each { |t| t.resolve(loader) }
 end
 
 class ResourceTypeImpl
@@ -118,7 +118,7 @@ class ResourceTypeImpl
     @attr_types = {}
 
     # Add all meta params
-    METAPARAMS.each {|p| @attr_types[p] = :meta }
+    METAPARAMS.each { |p| @attr_types[p] = :meta }
 
     @property_set = Set.new(properties.map do |p|
       symname = p.name.to_sym

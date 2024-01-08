@@ -86,7 +86,7 @@ Puppet::Type.type(:file).provide :windows do
   end
 
   def validate
-    if [:owner, :group, :mode].any? {|p| resource[p]} and !supports_acl?(resource[:path])
+    if [:owner, :group, :mode].any? { |p| resource[p] } and !supports_acl?(resource[:path])
       resource.fail(_("Can only manage owner, group, and mode on filesystems that support Windows ACLs, such as NTFS"))
     end
   end

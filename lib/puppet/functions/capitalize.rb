@@ -52,7 +52,7 @@ Puppet::Functions.create_function(:capitalize) do
   end
 
   def on_iterable(a)
-    a.map {|x| do_capitalize(x) }
+    a.map { |x| do_capitalize(x) }
   end
 
   def do_capitalize(x)

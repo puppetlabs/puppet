@@ -356,7 +356,7 @@ module Puppet::Util::Windows::ADSI
       # WIN32OLE objects aren't enumerable, so no map
       groups = []
       # Setting WIN32OLE.codepage ensures values are returned as UTF-8
-      native_object.Groups.each {|g| groups << g.Name} rescue nil
+      native_object.Groups.each { |g| groups << g.Name } rescue nil
       groups
     end
 

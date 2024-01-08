@@ -8,7 +8,7 @@ module Puppet::ModuleTool
       def initialize(name, options)
         @name        = name
         @options     = options
-        @errors      = Hash.new {|h, k| h[k] = {}}
+        @errors      = Hash.new { |h, k| h[k] = {} }
         @unfiltered  = []
         @installed   = []
         @suggestions = []

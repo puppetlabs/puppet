@@ -317,7 +317,7 @@ module Puppet::Environments
     end
 
     def clear_all
-      @loaders.each {|loader| loader.clear_all}
+      @loaders.each { |loader| loader.clear_all }
     end
   end
 
@@ -372,7 +372,7 @@ module Puppet::Environments
       removed_envs = cached_envs - loader_envs
 
       removed_envs.each do |env_name|
-        Puppet.debug { "Environment no longer exists '#{env_name}'"}
+        Puppet.debug { "Environment no longer exists '#{env_name}'" }
         clear(env_name)
       end
 
@@ -409,7 +409,7 @@ module Puppet::Environments
       name = name.to_sym
       entry = @cache[name]
       if entry
-        Puppet.debug {"Found in cache #{name.inspect} #{entry.label}"}
+        Puppet.debug { "Found in cache #{name.inspect} #{entry.label}" }
         # found in cache
         entry.touch
       elsif (env = @loader.get(name))
@@ -423,7 +423,7 @@ module Puppet::Environments
 
     # Adds a cache entry to the cache
     def add_entry(name, cache_entry)
-      Puppet.debug {"Caching environment #{name.inspect} #{cache_entry.label}"}
+      Puppet.debug { "Caching environment #{name.inspect} #{cache_entry.label}" }
       @cache[name] = cache_entry
       @cache_expiration_service.created(cache_entry.value)
     end
@@ -431,7 +431,7 @@ module Puppet::Environments
 
     def clear_entry(name, entry)
       @cache.delete(name)
-      Puppet.debug {"Evicting cache entry for environment #{name.inspect}"}
+      Puppet.debug { "Evicting cache entry for environment #{name.inspect}" }
       @cache_expiration_service.evicted(name.to_sym)
       Puppet::GettextConfig.delete_text_domain(name)
       Puppet.settings.clear_environment_settings(name)

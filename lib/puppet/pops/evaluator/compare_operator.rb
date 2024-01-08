@@ -81,14 +81,14 @@ class CompareOperator
   def equals_Array(a, b)
     return false unless b.is_a?(Array) && a.size == b.size
 
-    a.each_index {|i| return false unless equals(a.slice(i), b.slice(i)) }
+    a.each_index { |i| return false unless equals(a.slice(i), b.slice(i)) }
     true
   end
 
   def equals_Hash(a, b)
     return false unless b.is_a?(Hash) && a.size == b.size
 
-    a.each {|ak, av| return false unless equals(b[ak], av)}
+    a.each { |ak, av| return false unless equals(b[ak], av) }
     true
   end
 
@@ -186,10 +186,10 @@ class CompareOperator
     when String, SemanticPuppet::Version
       a.any? { |element| match(b, element, scope) }
     when Types::PAnyType
-      a.each {|element| return true if b.instance?(element) }
+      a.each { |element| return true if b.instance?(element) }
       return false
     else
-      a.each {|element| return true if equals(element, b) }
+      a.each { |element| return true if equals(element, b) }
       return false
     end
   end
@@ -254,7 +254,7 @@ class CompareOperator
   def match_Hash(hash, left, scope)
     return false unless left.is_a?(Hash)
 
-    hash.all? {|x, y| match(left[x], y, scope) }
+    hash.all? { |x, y| match(left[x], y, scope) }
   end
 
   def match_Symbol(symbol, left, scope)

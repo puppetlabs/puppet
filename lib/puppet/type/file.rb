@@ -432,7 +432,7 @@ Puppet::Type.newtype(:file) do
     end
     creator_count += 1 if @parameters.include?(:source)
 
-    self.fail _("You cannot specify more than one of %{creators}") % { creators: CREATORS.collect { |p| p.to_s}.join(", ") } if creator_count > 1
+    self.fail _("You cannot specify more than one of %{creators}") % { creators: CREATORS.collect { |p| p.to_s }.join(", ") } if creator_count > 1
 
     self.fail _("You cannot specify a remote recursion without a source") if !self[:source] && self[:recurse] == :remote
 
@@ -660,7 +660,7 @@ Puppet::Type.newtype(:file) do
     # REVISIT: is this Windows safe?  AltSeparator?
     mypath = parent_path.split(::File::Separator)
     other_paths = existing_files
-                  .select { |r| (yield r) != parent_path}
+                  .select { |r| (yield r) != parent_path }
                   .collect { |r| (yield r).split(::File::Separator) }
                   .select  { |p| p[0, mypath.length] == mypath }
 

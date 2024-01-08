@@ -58,7 +58,7 @@ Puppet::Functions.create_function(:chop) do
   end
 
   def on_iterable(a)
-    a.map {|x| do_chop(x) }
+    a.map { |x| do_chop(x) }
   end
 
   def do_chop(x)

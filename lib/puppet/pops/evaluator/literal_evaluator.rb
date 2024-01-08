@@ -74,7 +74,7 @@ class LiteralEvaluator
   end
 
   def literal_LiteralList(o)
-    o.values.map {|v| literal(v) }
+    o.values.map { |v| literal(v) }
   end
 
   def literal_LiteralHash(o)

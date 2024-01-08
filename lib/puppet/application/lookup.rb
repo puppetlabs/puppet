@@ -283,7 +283,7 @@ class Puppet::Application::Lookup < Puppet::Application
     unless merge.nil?
       strategies = Puppet::Pops::MergeStrategy.strategy_keys
       unless strategies.include?(merge.to_sym)
-        strategies = strategies.map {|k| "'#{k}'"}
+        strategies = strategies.map { |k| "'#{k}'" }
         raise _("The --merge option only accepts %{strategies}, or %{last_strategy}\n%{run_help}") % { strategies: strategies[0...-1].join(', '), last_strategy: strategies.last, run_help: RUN_HELP }
       end
 

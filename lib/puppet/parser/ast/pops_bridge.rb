@@ -129,7 +129,7 @@ class Puppet::Parser::AST::PopsBridge
       when Puppet::Pops::Model::Program
         is_definition?(o.body)
       when Puppet::Pops::Model::BlockExpression
-        o.statements.all {|s| is_definition?(s) }
+        o.statements.all { |s| is_definition?(s) }
       when Puppet::Pops::Model::Definition
         true
       else
@@ -152,7 +152,7 @@ class Puppet::Parser::AST::PopsBridge
       return result unless definition.parameters.size > 0
 
       # No need to do anything if there are no typed parameters
-      typed_parameters = definition.parameters.select {|p| p.type_expr }
+      typed_parameters = definition.parameters.select { |p| p.type_expr }
       return result if typed_parameters.empty?
 
       # If there are typed parameters, they need to be evaluated to produce the corresponding type
@@ -178,7 +178,7 @@ class Puppet::Parser::AST::PopsBridge
         # when running tests that run a partial setup.
         # This is bad if the logic is trying to compile, but a warning can not be issues since it is a normal
         # use case that there is no scope when requesting the type in order to just get the parameters.
-        Puppet.debug {_("Instantiating Resource with type checked parameters - scope is missing, skipping type checking.")}
+        Puppet.debug { _("Instantiating Resource with type checked parameters - scope is missing, skipping type checking.") }
         nil
       end
       scope
@@ -187,7 +187,7 @@ class Puppet::Parser::AST::PopsBridge
     # Produces a hash with data for Definition and HostClass
     def args_from_definition(o, modname, expr_class = Expression)
       args = {
-        :arguments => o.parameters.collect {|p| instantiate_Parameter(p) },
+        :arguments => o.parameters.collect { |p| instantiate_Parameter(p) },
         :argument_types => create_type_map(o),
         :module_name => modname
       }

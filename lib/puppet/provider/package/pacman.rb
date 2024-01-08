@@ -116,7 +116,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
       # Replace the list of packages with a version string consisting of packages that make up the group
       groups.each do |name, packages|
-        groups[name] = packages.sort.map {|package| "#{package} #{installed_packages[package]}"}.join ', '
+        groups[name] = packages.sort.map { |package| "#{package} #{installed_packages[package]}" }.join ', '
       end
     rescue Puppet::ExecutionFailure
       # pacman returns an expected non-zero exit code when the filter name is not a group

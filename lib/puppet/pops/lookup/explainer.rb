@@ -15,7 +15,7 @@ module Lookup
 
     def to_hash
       hash = {}
-      hash[:branches] = @branches.map {|b| b.to_hash} unless @branches.nil? || @branches.empty?
+      hash[:branches] = @branches.map { |b| b.to_hash } unless @branches.nil? || @branches.empty?
       hash
     end
 
@@ -170,7 +170,7 @@ module Lookup
     def dump_on(io, indent, first_indent)
       io << first_indent << 'Searching for "' << key << "\"\n"
       indent = increase_indent(indent)
-      branches.each {|b| b.dump_on(io, indent, indent)}
+      branches.each { |b| b.dump_on(io, indent, indent) }
     end
   end
 
@@ -246,7 +246,7 @@ module Lookup
     def dump_on(io, indent, first_indent)
       io << first_indent << 'Interpolation on "' << @expression << "\"\n"
       indent = increase_indent(indent)
-      branches.each {|b| b.dump_on(io, indent, indent)}
+      branches.each { |b| b.dump_on(io, indent, indent) }
     end
 
     def to_hash
@@ -280,7 +280,7 @@ module Lookup
         dump_value(io, indent, options)
         io << "\n"
       end
-      branches.each {|b| b.dump_on(io, indent, indent)}
+      branches.each { |b| b.dump_on(io, indent, indent) }
       if @event == :result
         io << indent << 'Merged result: '
         dump_value(io, indent, @value)
@@ -321,7 +321,7 @@ module Lookup
     def dump_on(io, indent, first_indent)
       io << first_indent << 'Data Binding "' << @binding_terminus.to_s << "\"\n"
       indent = increase_indent(indent)
-      branches.each {|b| b.dump_on(io, indent, indent)}
+      branches.each { |b| b.dump_on(io, indent, indent) }
       dump_outcome(io, indent)
     end
 
@@ -349,7 +349,7 @@ module Lookup
         path = @provider.config_path
         io << indent << 'Using configuration "' << path.to_s << "\"\n" unless path.nil?
       end
-      branches.each {|b| b.dump_on(io, indent, indent)}
+      branches.each { |b| b.dump_on(io, indent, indent) }
       dump_outcome(io, indent)
     end
 
@@ -381,7 +381,7 @@ module Lookup
       io << indent << type_name << ' "' << location.to_s << "\"\n"
       indent = increase_indent(indent)
       io << indent << 'Original ' << type_name.downcase << ': "' << @location.original_location << "\"\n"
-      branches.each {|b| b.dump_on(io, indent, indent)}
+      branches.each { |b| b.dump_on(io, indent, indent) }
       io << indent << type_name << " not found\n" if @event == :location_not_found
       dump_outcome(io, indent)
     end
@@ -413,7 +413,7 @@ module Lookup
     def dump_on(io, indent, first_indent)
       io << indent << 'Sub key: "' << @sub_key.join('.') << "\"\n"
       indent = increase_indent(indent)
-      branches.each {|b| b.dump_on(io, indent, indent)}
+      branches.each { |b| b.dump_on(io, indent, indent) }
       dump_outcome(io, indent)
     end
 
@@ -446,7 +446,7 @@ module Lookup
     def dump_on(io, indent, first_indent)
       io << indent << @name << "\n"
       indent = increase_indent(indent)
-      branches.each {|b| b.dump_on(io, indent, indent)}
+      branches.each { |b| b.dump_on(io, indent, indent) }
       dump_outcome(io, indent)
     end
 

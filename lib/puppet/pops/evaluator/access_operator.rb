@@ -253,7 +253,7 @@ class AccessOperator
     end
 
     keys.each_with_index do |k, i|
-      unless allowed_classes.any? {|clazz| k.is_a?(clazz) }
+      unless allowed_classes.any? { |clazz| k.is_a?(clazz) }
         bad_type_specialization_key_type(o, i, k, *allowed_classes)
       end
     end
@@ -287,7 +287,7 @@ class AccessOperator
 
   def bad_type_specialization_key_type(type, key_index, actual, *expected_classes)
     label_provider = Model::ModelLabelProvider.new()
-    expected = expected_classes.map {|c| label_provider.label(c) }.join(' or ')
+    expected = expected_classes.map { |c| label_provider.label(c) }.join(' or ')
     fail(Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[key_index], {
            :type => type,
            :message => _("Cannot use %{key} where %{expected} is expected") % { key: bad_key_type_name(actual), expected: expected }

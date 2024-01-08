@@ -15,7 +15,7 @@ module EppSupport
   #
   def fullscan_epp
     result = []
-    scan_epp {|token, value| result.push([token, value]) }
+    scan_epp { |token, value| result.push([token, value]) }
     result
   end
 
