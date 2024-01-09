@@ -171,7 +171,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
 
     # This helper splits a list separated by sep into its corresponding
     # items. Note that a key precondition here is that none of the items
-    # in the list contain sep. 
+    # in the list contain sep.
     #
     # Let A be the return value. Then one of our postconditions is:
     #   A.join(sep) == list
@@ -301,7 +301,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # that need our provider instance.
   def mappings
     return @mappings if @mappings
-    
+
     @mappings = {}
     self.class.mappings.each do |type, mapped_objects|
       @mappings[type] = {}
@@ -360,7 +360,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # Modifies the AIX object by setting its new attributes.
   def modify_object(new_attributes)
     execute(modifycmd(new_attributes))
-    object_info(true) 
+    object_info(true)
   end
 
   # Gets a Puppet property's value from object_info
@@ -402,7 +402,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     properties, attributes = conflicts.keys.map do |key|
       conflicts[key].map! { |name| "'#{name}'" }.join(', ')
     end
-      
+
     detail = _("attributes is setting the %{properties} properties via. the %{attributes} attributes, respectively! Please specify these property values in the resource declaration instead.") % { properties: properties, attributes: attributes }
 
     raise Puppet::Error, _("Could not set attributes on %{resource}[%{name}]: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }

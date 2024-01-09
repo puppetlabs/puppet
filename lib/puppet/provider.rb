@@ -127,7 +127,7 @@ class Puppet::Provider
   def self.command(name)
     name = name.intern
 
-    command = @commands[name] if defined?(@commands)    
+    command = @commands[name] if defined?(@commands)
     command = superclass.command(name) if !command && superclass.respond_to?(:command)
 
     unless command

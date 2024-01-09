@@ -48,7 +48,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
       end
 
       unless func_info[:name] == "function_#{typed_name.name()}"
-        raise ArgumentError, _("The code loaded from %{source_ref} produced mis-matched name, expected 'function_%{type_name}', got '%{created_name}'") % { 
+        raise ArgumentError, _("The code loaded from %{source_ref} produced mis-matched name, expected 'function_%{type_name}', got '%{created_name}'") % {
           source_ref: source_ref, type_name: typed_name.name, created_name: func_info[:name]
         }
       end

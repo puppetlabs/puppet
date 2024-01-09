@@ -2,7 +2,7 @@
 
 # Makes iteration continue with the next value, optionally with a given value for this iteration.
 # If a value is not given it defaults to `undef`
-# 
+#
 # @example Using the `next()` function
 #
 # ```puppet

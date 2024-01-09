@@ -5,7 +5,7 @@ require_relative '../../../puppet/ffi/posix'
 module Puppet::FFI::POSIX
   module Constants
     extend FFI::Library
-  
+
     # Maximum number of supplementary groups (groups
     # that a user can be in plus its primary group)
     # (64 + 1 primary group)

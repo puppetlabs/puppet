@@ -167,7 +167,7 @@ module Puppet::Util::POSIX
 
   private
 
-  # Get the specified id_field of a given field (user or group), 
+  # Get the specified id_field of a given field (user or group),
   # whether an ID name is provided
   def get_posix_value(location, id_field, field)
     begin

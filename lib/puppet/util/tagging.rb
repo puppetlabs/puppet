@@ -34,7 +34,7 @@ module Puppet::Util::Tagging
 
   # Add a name to the current tag set. Silently ignore names that does not
   # represent valid tags.
-  # 
+  #
   # Use this method instead of doing this:
   #
   #  tag(name) if is_valid?(name)

@@ -101,7 +101,7 @@ class Puppet::Application::FaceBase < Puppet::Application
               # employed in the long form of the option. --jeffmccune 2012-09-18
               index += 1 unless item =~ /^--#{option.name}=/
             end
-          else 
+          else
             option = find_application_argument(item)
             if option
               index += 1 if (option[:argument] and not option[:optional])

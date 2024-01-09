@@ -31,7 +31,7 @@ module Pal
       if block_given?
         tm = Puppet::Pops::Types::TypeMismatchDescriber.singleton
         error = if params.nil?
-                  tm.describe_mismatch('', params_type, 
+                  tm.describe_mismatch('', params_type,
                                        Puppet::Pops::Types::TypeCalculator
                                          .infer_set(args_hash))
                 else

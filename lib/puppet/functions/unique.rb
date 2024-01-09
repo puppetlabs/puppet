@@ -58,7 +58,7 @@
 # ['aBc', 'AbC', 'bbb'].unique |$x| { String($x,'%d') }
 #
 # # will produce {[a] => [10], [b, c, d, e] => [11, 12, 100]}
-# {a => 10, b => 11, c => 12, d => 100, e => 11}.unique |$v| { if $v > 10 { big } else { $v } } 
+# {a => 10, b => 11, c => 12, d => 100, e => 11}.unique |$v| { if $v > 10 { big } else { $v } }
 # ```
 #
 # Note that for `Hash` the result is slightly different than for the other data types. For those the result contains the
@@ -66,7 +66,7 @@
 # equality lambda (or the default value equality if no lambda was given). This makes the `unique` function more versatile for hashes
 # in general, while requiring that the simple computation of "hash's unique set of values" is performed as `$hsh.map |$k, $v| { $v }.unique`.
 # (A unique set of hash keys is in general meaningless (since they are unique by definition) - although if processed with a different
-# lambda for equality that would be different. First map the hash to an array of its keys if such a unique computation is wanted). 
+# lambda for equality that would be different. First map the hash to an array of its keys if such a unique computation is wanted).
 # If the more advanced clustering is wanted for one of the other data types, simply transform it into a `Hash` as shown in the
 # following example.
 #

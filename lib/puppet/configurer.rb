@@ -155,7 +155,7 @@ class Puppet::Configurer
     max_length = Puppet[:fact_name_length_soft_limit]
     return if max_length.zero?
 
-    # rough byte size estimations of fact path as a postgresql btree index 
+    # rough byte size estimations of fact path as a postgresql btree index
     size_as_btree_index = 8 + (number_of_dots * 2) + name.to_s.bytesize
     warn_fact_name_length(name, max_length) if size_as_btree_index > max_length
   end

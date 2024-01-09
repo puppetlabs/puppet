@@ -5,12 +5,12 @@ module Serialization
   # Class that can process an arbitrary object into a value that is assignable to `Data`
   # and where contents is converted from rich data to one of:
   # * Numeric (Integer, Float)
-  # * Boolean 
+  # * Boolean
   # * Undef (nil)
   # * String
   # * Array
   # * Hash
-  # 
+  #
   # The conversion is lossy - the result cannot be deserialized to produce the original data types.
   # All rich values are transformed to strings..
   # Hashes with rich keys are transformed to use string representation of such keys.

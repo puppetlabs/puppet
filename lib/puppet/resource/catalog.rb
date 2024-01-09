@@ -411,7 +411,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   def self.from_data_hash(data)
     result = new(data['name'], Puppet::Node::Environment::NONE)
 
-    result.tag(*data['tags']) if data['tags'] 
+    result.tag(*data['tags']) if data['tags']
     result.version = data['version'] if data['version']
     result.code_id = data['code_id'] if data['code_id']
     result.catalog_uuid = data['catalog_uuid'] if data['catalog_uuid']

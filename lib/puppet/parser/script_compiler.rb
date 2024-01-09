@@ -103,7 +103,7 @@ class Puppet::Parser::ScriptCompiler
   # or in the top scope itself (notably, the $settings:: namespace is initialized
   # as just a set of variables in that namespace - there is no named scope for 'settings'
   # when scripting.
-  # 
+  #
   # Keeping this method here to get specific error as being unsure if there are functions/logic
   # that will call this. The AbstractCompiler defines this method, but maybe it does not
   # have to (TODO).

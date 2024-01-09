@@ -83,11 +83,11 @@ class Puppet::Resource::TypeCollection
   end
 
   # Replaces the known settings with a new instance (that must be named 'settings').
-  # This is primarily needed for testing purposes. Also see PUP-5954 as it makes 
+  # This is primarily needed for testing purposes. Also see PUP-5954 as it makes
   # it illegal to merge classes other than the '' (main) class. Prior to this change
   # settings where always merged rather than being defined from scratch for many testing scenarios
   # not having a complete side effect free setup for compilation.
-  # 
+  #
   def replace_settings(instance)
     @hostclasses['settings'] = instance
   end

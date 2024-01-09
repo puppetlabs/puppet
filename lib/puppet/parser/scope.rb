@@ -902,7 +902,7 @@ class Puppet::Parser::Scope
       path = "<env>" + path[env_path.length..-1]
     end
     # Make the output appear as "Scope(path, line)"
-    "Scope(#{[path, detail[1]].join(', ')})" 
+    "Scope(#{[path, detail[1]].join(', ')})"
   end
 
   alias_method :inspect, :to_s

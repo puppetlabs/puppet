@@ -6,7 +6,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   desc "OpenSolaris image packaging system. See pkg(5) for more information.
 
     This provider supports the `install_options` attribute, which allows
-    command-line flags to be passed to pkg. These options should be specified as an 
+    command-line flags to be passed to pkg. These options should be specified as an
     array where each element is either a string or a hash."
 
   # https://docs.oracle.com/cd/E19963-01/html/820-6572/managepkgs.html

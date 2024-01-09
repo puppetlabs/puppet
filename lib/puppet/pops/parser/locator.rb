@@ -250,7 +250,7 @@ class Locator
 
     # Returns array with transposed (local) offset and (local) length. The transposed values
     # take the margin into account such that it is added to the content to the right
-    # 
+    #
     # Using X to denote margin and where end of line is explicitly shown as \n:
     # ```
     # XXXXabc\n

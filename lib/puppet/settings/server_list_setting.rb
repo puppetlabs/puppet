@@ -13,10 +13,10 @@ class Puppet::Settings::ServerListSetting < Puppet::Settings::ArraySetting
       value
     end
   end
-  
+
   def munge(value)
-    servers = super 
-    servers.map! { |server| 
+    servers = super
+    servers.map! { |server|
       case server
       when String
         server.split(':')

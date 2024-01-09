@@ -503,8 +503,8 @@ class Puppet::Resource
   # Convert our resource to a RAL resource instance. Creates component
   # instances for resource types that are not of a compilable_type kind. In case
   # the resource doesn’t exist and it’s compilable_type kind, raise an error.
-  # There are certain cases where a resource won't be in a catalog, such as 
-  # when we create a resource directly by using Puppet::Resource.new(...), so we 
+  # There are certain cases where a resource won't be in a catalog, such as
+  # when we create a resource directly by using Puppet::Resource.new(...), so we
   # must check its kind before deciding whether the catalog format is of an older
   # version or not.
   def to_ral
@@ -640,7 +640,7 @@ class Puppet::Resource
     type = resource_type
     if type.respond_to?(:title_patterns) && !type.title_patterns.nil?
       type.title_patterns.each do |regexp, symbols_and_lambdas|
-        captures = regexp.match(title.to_s)  
+        captures = regexp.match(title.to_s)
         if captures
           symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda, capture|
             symbol, proc = symbol_and_lambda

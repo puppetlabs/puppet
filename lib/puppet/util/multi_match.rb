@@ -2,7 +2,7 @@
 
 # MultiMatch allows multiple values to be tested at once in a case expression.
 # This class is needed since Array does not implement the === operator to mean
-# "each v === other.each v". 
+# "each v === other.each v".
 #
 # This class is useful in situations when the Puppet Type System cannot be used
 # (e.g. in Logging, since it needs to be able to log very early in the initialization
@@ -12,7 +12,7 @@
 # NOT_NIL
 # TUPLE
 # TRIPLE
-# 
+#
 # which test against single NOT_NIL value, Array with two NOT_NIL, and Array with three NOT_NIL
 #
 module Puppet::Util

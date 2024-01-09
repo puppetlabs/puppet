@@ -178,7 +178,7 @@
 # ```
 #
 # - Since 4.8.0
-# 
+#
 Puppet::Functions.create_function(:strftime) do
   dispatch :format_timespan do
     param 'Timespan', :time_object

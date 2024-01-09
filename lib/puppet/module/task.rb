@@ -87,13 +87,13 @@ class Puppet::Module
     # Find task's required lib files and retrieve paths for both 'files' and 'implementation:files' metadata keys
     def self.find_extra_files(metadata, envname = nil)
       return [] if metadata.nil?
-      
+
       files = metadata.fetch('files', [])
       unless files.is_a?(Array)
         msg = _("The 'files' task metadata expects an array, got %{files}.") % { files: files }
         raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
       end
-      impl_files = metadata.fetch('implementations', []).flat_map do |impl| 
+      impl_files = metadata.fetch('implementations', []).flat_map do |impl|
         file_array = impl.fetch('files', [])
         unless file_array.is_a?(Array)
           msg = _("The 'files' task metadata expects an array, got %{files}.") % { files: file_array }
