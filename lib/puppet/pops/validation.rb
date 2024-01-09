@@ -243,7 +243,7 @@ module Validation
 
     # Two diagnostics are considered equal if the have the same issue, location and severity
     # (arguments and exception are ignored)
-    # rubocop:disable Layout/ExtraSpacing
+    # rubocop:disable Layout
     def ==(o)
       self.class            == o.class             &&
         same_position?(o)                          &&
@@ -252,7 +252,7 @@ module Validation
         severity            == o.severity
     end
     alias eql? ==
-    # rubocop:enable Layout/ExtraSpacing
+    # rubocop:enable Layout
 
     # Position is equal if the diagnostic is not located or if referring to the same offset
     def same_position?(o)
