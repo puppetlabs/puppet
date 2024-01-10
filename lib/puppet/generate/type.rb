@@ -49,7 +49,7 @@ module Puppet
         # @return [Boolean] Returns true if the output is up-to-date or false if not.
         def up_to_date?(outputdir)
           f = effective_output_path(outputdir)
-          Puppet::FileSystem::exist?(f) && (Puppet::FileSystem::stat(@path) <=> Puppet::FileSystem::stat(f)) <= 0
+          Puppet::FileSystem::exist?(f) && (Puppet::FileSystem::stat(@path) <=> Puppet::FileSystem::stat(f)) == 0
         end
 
         # Gets the filename of the output file.
@@ -240,6 +240,7 @@ module Puppet
             Puppet::FileSystem.open(effective_output_path, nil, 'w:UTF-8') do |file|
               file.write(result)
             end
+            Puppet::FileSystem.touch(effective_output_path, mtime: Puppet::FileSystem::stat(input.path).mtime)
           rescue Exception => e
             @bad_input = true
             Puppet.log_exception(e, _("Failed to generate '%{effective_output_path}': %{message}") % { effective_output_path: effective_output_path, message: e.message })
