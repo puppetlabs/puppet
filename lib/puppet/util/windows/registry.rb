@@ -17,6 +17,8 @@ module Puppet::Util::Windows
 
     ERROR_NO_MORE_ITEMS = 259
 
+    WCHAR_SIZE = FFI.type_size(:wchar)
+
     def root(name)
       Win32::Registry.const_get(name)
     rescue NameError
@@ -234,7 +236,7 @@ module Puppet::Util::Windows
 
         string_length = 0
         # buffer is raw bytes, *not* chars - less a NULL terminator
-        string_length = (byte_length / FFI.type_size(:wchar)) - 1 if byte_length > 0
+        string_length = (byte_length / WCHAR_SIZE) - 1 if byte_length > 0
 
         begin
           result = case type
@@ -278,7 +280,7 @@ module Puppet::Util::Windows
 
             if result != FFI::ERROR_SUCCESS
               # buffer is raw bytes, *not* chars - less a NULL terminator
-              name_length = (name_ptr.size / FFI.type_size(:wchar)) - 1 if name_ptr.size > 0
+              name_length = (name_ptr.size / WCHAR_SIZE) - 1 if name_ptr.size > 0
               msg = _("Failed to read registry value %{value} at %{key}") % { value: name_ptr.read_wide_string(name_length), key: key.keyname }
               raise Puppet::Util::Windows::Error.new(msg, result)
             end
