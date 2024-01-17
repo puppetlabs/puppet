@@ -491,7 +491,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
       catch :not_literal do
         type = literal(p.type_expr)
       end
-      acceptor.accept(Issues::ILLEGAL_NONLITERAL_PARAMETER_TYPE, p, {name: p.name, type_class: p.type_expr.class}) if type.nil?
+      acceptor.accept(Issues::ILLEGAL_NONLITERAL_PARAMETER_TYPE, p, { name: p.name, type_class: p.type_expr.class }) if type.nil?
     end
   end
 
