@@ -20,7 +20,7 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
   end
 
   def self.subject_alt_names_for(cert)
-    alts = cert.extensions.find{|ext| ext.oid == "subjectAltName"}
+    alts = cert.extensions.find { |ext| ext.oid == "subjectAltName" }
     return [] unless alts
 
     alts.value.split(/\s*,\s*/)
@@ -59,7 +59,7 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
     end
 
     custom_exts.map do |ext|
-      {'oid' => ext.oid, 'value' => get_ext_val(ext.oid)}
+      { 'oid' => ext.oid, 'value' => get_ext_val(ext.oid) }
     end
   end
 

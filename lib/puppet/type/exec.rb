@@ -19,18 +19,18 @@ module Puppet
         during a noop Puppet run.
       * The exec has `refreshonly => true`, which allows Puppet to run the
         command only when some other resource is changed. (See the notes on refreshing
-        below.) 
-        
+        below.)
+
       The state managed by an `exec` resource represents whether the specified command
       _needs to be_ executed during the catalog run. The target state is always that
       the command does not need to be executed. If the initial state is that the
       command _does_ need to be executed, then successfully executing the command
       transitions it to the target state.
-      
+
       The `unless`, `onlyif`, and `creates` properties check the initial state of the
       resource. If one or more of these properties is specified, the exec might not
       need to run. If the exec does not need to run, then the system is already in
-      the target state. In such cases, the exec is considered successful without 
+      the target state. In such cases, the exec is considered successful without
       actually executing its command.
 
       A caution: There's a widespread tendency to use collections of execs to
@@ -146,7 +146,7 @@ module Puppet
         begin
           tries.times do |try|
             # Only add debug messages for tries > 1 to reduce log spam.
-            debug("Exec try #{try+1}/#{tries}") if tries > 1
+            debug("Exec try #{try + 1}/#{tries}") if tries > 1
             @output, @status = provider.run(self.resource[:command])
             break if self.should.include?(@status.exitstatus.to_s)
 
@@ -451,7 +451,7 @@ module Puppet
       def check(value)
         # TRANSLATORS 'creates' is a parameter name and should not be translated
         debug(_("Checking that 'creates' path '%{creates_path}' exists") % { creates_path: value })
-        ! Puppet::FileSystem.exist?(value)
+        !Puppet::FileSystem.exist?(value)
       end
     end
 

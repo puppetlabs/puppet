@@ -125,7 +125,7 @@ Puppet::Face.define(:help, '0.0.1') do
     face = Puppet::Face[facename.to_sym, version]
     if actionname
       action = face.get_action(actionname.to_sym)
-      if ! action
+      if !action
         fail ArgumentError, _("Unable to load action %{actionname} from %{face}") % { actionname: actionname, face: face }
       end
     end
@@ -175,7 +175,7 @@ Puppet::Face.define(:help, '0.0.1') do
         rescue StandardError, LoadError
           error_message = _("!%{sub_command}! Subcommand unavailable due to error.") % { sub_command: appname }
           error_message += ' ' + _("Check error logs.")
-          result << [ error_message, '', '  ' ]
+          result << [error_message, '', '  ']
         end
       else
         begin
@@ -187,7 +187,7 @@ Puppet::Face.define(:help, '0.0.1') do
         rescue StandardError, LoadError
           error_message = _("!%{sub_command}! Subcommand unavailable due to error.") % { sub_command: appname }
           error_message += ' ' + _("Check error logs.")
-          result << [ error_message, '', '  ' ]
+          result << [error_message, '', '  ']
         end
       end
     end

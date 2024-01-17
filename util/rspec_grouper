@@ -36,7 +36,7 @@ module Parallel
           files[file] = (files[file] || 0) + count
           @total_examples += count
           files
-        end.sort_by { |_, v| v}
+        end.sort_by { |_, v| v }
 
         # Group the spec files
         @groups = []
@@ -88,7 +88,7 @@ if __FILE__ == $0
       # Create a temp directory and write out group files
       tmpdir = Dir.mktmpdir
       groups.each_with_index do |group, index|
-        path = File.join(tmpdir, "group#{index+1}")
+        path = File.join(tmpdir, "group#{index + 1}")
         file = File.new(path, 'w')
         paths << path
         file.puts group

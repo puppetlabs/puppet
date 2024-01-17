@@ -8,7 +8,7 @@ Puppet::Parser::Functions::newfunction(:inline_template, :type => :rvalue, :arit
   if Puppet[:tasks]
     raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
       Puppet::Pops::Issues::FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING,
-      {:feature => 'ERB inline_template'}
+      { :feature => 'ERB inline_template' }
     )
   end
 

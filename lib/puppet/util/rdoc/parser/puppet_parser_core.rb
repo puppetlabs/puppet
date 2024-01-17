@@ -123,7 +123,7 @@ module RDoc::PuppetParserCore
     Puppet.debug "rdoc: scanning for #{name}"
 
     container.module_name = name
-    container.global=true if name == SITE
+    container.global = true if name == SITE
 
     container, name = get_class_or_module(container, name)
     mod = container.add_module(RDoc::PuppetModule, name)
@@ -165,7 +165,7 @@ module RDoc::PuppetParserCore
         elsif line =~ /^[ \t]*confine[ \t]*:(.*?)[ \t]*=>[ \t]*(.*)$/
           current_fact.confine = { :type => $1, :value => $2 } unless current_fact.nil?
         else # unknown line type
-          comments =""
+          comments = ""
         end
       end
     end
@@ -205,7 +205,7 @@ module RDoc::PuppetParserCore
         elsif line =~ /module Puppet::Parser::Functions/
           # skip
         else # unknown line type
-          comments =""
+          comments = ""
         end
       end
     end

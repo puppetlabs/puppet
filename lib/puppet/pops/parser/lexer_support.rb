@@ -34,7 +34,7 @@ module LexerSupport
   end
 
   # Raises a Puppet::ParserErrorWithIssue with the given issue and arguments
-  def lex_error(issue, args = {}, pos=nil)
+  def lex_error(issue, args = {}, pos = nil)
     raise create_lex_error(issue, args, pos)
   end
 
@@ -51,7 +51,7 @@ module LexerSupport
     @locator.pos_on_line(pos || @scanner.pos)
   end
 
-  def lex_warning(issue, args = {}, pos=nil)
+  def lex_warning(issue, args = {}, pos = nil)
     Puppet::Util::Log.create({
                                :level => :warning,
                                :message => issue.format(args),
@@ -83,16 +83,16 @@ module LexerSupport
   #
   def assert_numeric(value, pos)
     if value =~ /^0[xX]/
-      lex_error(Issues::INVALID_HEX_NUMBER, {:value => value}, pos)     unless value =~ /^0[xX][0-9A-Fa-f]+$/
+      lex_error(Issues::INVALID_HEX_NUMBER, { :value => value }, pos)     unless value =~ /^0[xX][0-9A-Fa-f]+$/
 
     elsif value =~ /^0[^.]/
-      lex_error(Issues::INVALID_OCTAL_NUMBER, {:value => value}, pos)   unless value =~ /^0[0-7]+$/
+      lex_error(Issues::INVALID_OCTAL_NUMBER, { :value => value }, pos)   unless value =~ /^0[0-7]+$/
 
     elsif value =~ /^\d+[eE.]/
-      lex_error(Issues::INVALID_DECIMAL_NUMBER, {:value => value}, pos) unless value =~ /^\d+(?:\.\d+)?(?:[eE]-?\d+)?$/
+      lex_error(Issues::INVALID_DECIMAL_NUMBER, { :value => value }, pos) unless value =~ /^\d+(?:\.\d+)?(?:[eE]-?\d+)?$/
 
     else
-      lex_error(Issues::ILLEGAL_NUMBER, {:value => value}, pos) unless value =~ /^\d+$/
+      lex_error(Issues::ILLEGAL_NUMBER, { :value => value }, pos) unless value =~ /^\d+$/
     end
   end
 
@@ -153,14 +153,14 @@ module LexerSupport
   BOM_UTF_8      = MM.new(0xEF, 0xBB, 0xBF,        MM_ANY)
   BOM_UTF_16_1   = MM.new(0xFE, 0xFF,              MM_ANY, MM_ANY)
   BOM_UTF_16_2   = MM.new(0xFF, 0xFE,              MM_ANY, MM_ANY)
-  BOM_UTF_32_1   = MM.new(0x00, 0x00, 0xFE, 0xFF   )
-  BOM_UTF_32_2   = MM.new(0xFF, 0xFE, 0x00, 0x00   )
+  BOM_UTF_32_1   = MM.new(0x00, 0x00, 0xFE, 0xFF)
+  BOM_UTF_32_2   = MM.new(0xFF, 0xFE, 0x00, 0x00)
 
-  BOM_UTF_1      = MM.new(0xF7, 0x64, 0x4C,        MM_ANY)
-  BOM_UTF_EBCDIC = MM.new(0xDD, 0x73, 0x66, 0x73   )
+  BOM_UTF_1      = MM.new(0xF7, 0x64, 0x4C, MM_ANY)
+  BOM_UTF_EBCDIC = MM.new(0xDD, 0x73, 0x66, 0x73)
   BOM_SCSU       = MM.new(0x0E, 0xFE, 0xFF,        MM_ANY)
   BOM_BOCU       = MM.new(0xFB, 0xEE, 0x28,        MM_ANY)
-  BOM_GB_18030   = MM.new(0x84, 0x31, 0x95, 0x33   )
+  BOM_GB_18030   = MM.new(0x84, 0x31, 0x95, 0x33)
 
   LONGEST_BOM    = 4
 
@@ -199,7 +199,7 @@ module LexerSupport
     lex_error_without_pos(
       Puppet::Pops::Issues::ILLEGAL_BOM,
       { :format_name => name,
-        :bytes => "[#{bom.values[0, size].map {|b| "%X" % b}.join(" ")}]"}
+        :bytes => "[#{bom.values[0, size].map { |b| "%X" % b }.join(" ")}]" }
     )
   end
 

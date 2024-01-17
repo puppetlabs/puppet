@@ -74,7 +74,7 @@ Puppet::Functions.create_function(:match) do
   # @return [Array<Array<String, nil>>] Array with matches (see {#match}), non matching entries produce a nil entry
   #
   def enumerable_match(array, pattern)
-    array.map {|s| match(s, pattern) }
+    array.map { |s| match(s, pattern) }
   end
 
   protected
@@ -99,7 +99,7 @@ Puppet::Functions.create_function(:match) do
   def match_PVariantType(var_t, s)
     # Find first matching type (or error out if one of the variants is not acceptable)
     result = nil
-    var_t.types.find {|t| result = match(s, t) }
+    var_t.types.find { |t| result = match(s, t) }
     result
   end
 
@@ -113,14 +113,14 @@ Puppet::Functions.create_function(:match) do
     # Since we want the actual match result (not just a boolean), an iteration over
     # Pattern's regular expressions is needed. (They are of PRegexpType)
     result = nil
-    pattern_t.patterns.find {|pattern| result = match(s, pattern) }
+    pattern_t.patterns.find { |pattern| result = match(s, pattern) }
     result
   end
 
   # Returns the first matching entry
   def match_Array(array, s)
     result = nil
-    array.flatten.find {|entry| result = match(s, entry) }
+    array.flatten.find { |entry| result = match(s, entry) }
     result
   end
 

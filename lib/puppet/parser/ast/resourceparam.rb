@@ -20,7 +20,7 @@ class Puppet::Parser::AST::ResourceParam < Puppet::Parser::AST::Branch
     return Puppet::Parser::Resource::Param.new(
       :name => @param,
       :value => value.nil? ? :undef : value,
-      :source => scope.source, 
+      :source => scope.source,
       :line => self.line,
       :file => self.file,
       :add => self.add

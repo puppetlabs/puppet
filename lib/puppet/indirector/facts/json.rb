@@ -9,7 +9,7 @@ class Puppet::Node::Facts::Json < Puppet::Indirector::JSON
     return deserialized facts from disk."
 
   include Puppet::Indirector::FactSearch
-  
+
   def search(request)
     node_names = []
     Dir.glob(json_dir_path).each do |file|

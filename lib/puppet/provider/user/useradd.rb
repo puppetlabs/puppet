@@ -26,7 +26,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   options :expiry, :method => :sp_expire,
                    :munge => proc { |value|
                                if value == :absent
-                                 if Puppet.runtime[:facter].value('os.name')=='SLES' && Puppet.runtime[:facter].value('os.release.major') == "11"
+                                 if Puppet.runtime[:facter].value('os.name') == 'SLES' && Puppet.runtime[:facter].value('os.release.major') == "11"
                                    -1
                                  else
                                    ''
@@ -378,7 +378,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     if age_limits.empty?
       nil
     else
-      [cmd, age_limits.collect { |property| [flag(property), @resource.should(property)]}, @resource[:name]].flatten
+      [cmd, age_limits.collect { |property| [flag(property), @resource.should(property)] }, @resource[:name]].flatten
     end
   end
 

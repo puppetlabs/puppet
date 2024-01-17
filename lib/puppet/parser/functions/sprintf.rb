@@ -34,7 +34,7 @@ Puppet::Parser::Functions::newfunction(
   The first parameter is format string describing how the rest of the parameters should be formatted.
   See the documentation for the [`Kernel::sprintf` function](https://ruby-doc.org/core/Kernel.html)
   in Ruby for details.
-  
+
   To use [named format](https://idiosyncratic-ruby.com/49-what-the-format.html) arguments, provide a
   hash containing the target string values as the argument to be formatted. For example:
 

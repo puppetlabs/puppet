@@ -10,7 +10,7 @@ require 'ffi'
 # - Define Puppet::Util::Windows
 # - Replicate logic that exists elsewhere in puppet/util/windows
 # - Raise generic RuntimeError instead of Puppet::Util::Windows::Error if its not defined
-module Puppet; module Util; module Windows ; end ; end ; end
+module Puppet; module Util; module Windows; end; end; end
 
 class Puppet::Util::Windows::EventLog
   extend FFI::Library
@@ -119,7 +119,7 @@ class Puppet::Util::Windows::EventLog
     class EventLogError < RuntimeError
       def initialize(msg, code)
         # TRANSLATORS 'Win32' is the Windows API and should not be translated
-        super(msg + ' ' + _("(Win32 error: %{detail})") % { detail: code})
+        super(msg + ' ' + _("(Win32 error: %{detail})") % { detail: code })
       end
     end
   end

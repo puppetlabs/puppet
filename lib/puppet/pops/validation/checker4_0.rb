@@ -173,7 +173,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def assign_LiteralList(o, via_index)
-    o.values.each {|x| assign(x) }
+    o.values.each { |x| assign(x) }
   end
 
   def assign_Object(o, via_index)
@@ -206,9 +206,9 @@ class Checker4_0 < Evaluator::LiteralEvaluator
       assign(o.left_expr)
       rvalue(o.right_expr)
     when '+=', '-='
-      acceptor.accept(Issues::APPENDS_DELETES_NO_LONGER_SUPPORTED, o, {:operator => o.operator})
+      acceptor.accept(Issues::APPENDS_DELETES_NO_LONGER_SUPPORTED, o, { :operator => o.operator })
     else
-      acceptor.accept(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
+      acceptor.accept(Issues::UNSUPPORTED_OPERATOR, o, { :operator => o.operator })
     end
   end
 
@@ -225,7 +225,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
       # Append operator use is constrained
       p = container
       unless p.is_a?(Model::CollectExpression) || p.is_a?(Model::ResourceOverrideExpression)
-        acceptor.accept(Issues::ILLEGAL_ATTRIBUTE_APPEND, o, {:name=>o.attribute_name, :parent=>p})
+        acceptor.accept(Issues::ILLEGAL_ATTRIBUTE_APPEND, o, { :name => o.attribute_name, :parent => p })
       end
     end
     rvalue(o.value_expr)
@@ -244,7 +244,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
       # but it is not for a real program.
       parent2 = p.nil? ? o : container(-2)
       unless parent2.is_a?(Model::AbstractResource)
-        acceptor.accept(Issues::UNSUPPORTED_OPERATOR_IN_CONTEXT, parent2, :operator=>'* =>')
+        acceptor.accept(Issues::UNSUPPORTED_OPERATOR_IN_CONTEXT, parent2, :operator => '* =>')
       end
     end
     rvalue(o.expr)
@@ -293,7 +293,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
       # helpful to point out this easy to make Epp error
       acceptor.accept(Issues::ILLEGAL_EPP_PARAMETERS, o)
     else
-      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.functor_expr, { :feature => 'function name', :container => o })
     end
   end
 
@@ -340,7 +340,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def check_CollectExpression(o)
     unless o.type_expr.is_a? Model::QualifiedReference
-      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.type_expr, :feature=> 'type name', :container => o)
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.type_expr, :feature => 'type name', :container => o)
     end
   end
 
@@ -349,7 +349,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_NamedAccessExpression(o)
     name = o.right_expr
     unless name.is_a? Model::QualifiedName
-      acceptor.accept(Issues::ILLEGAL_EXPRESSION, name, :feature=> 'function name', :container => container)
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, name, :feature => 'function name', :container => container)
     end
   end
 
@@ -392,7 +392,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_NamedDefinition(o)
     top(o)
     if o.name !~ Patterns::CLASSREF_DECL
-      acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name=>o.name})
+      acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, { :name => o.name })
     end
 
     internal_check_file_namespace(o)
@@ -403,7 +403,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_TypeAlias(o)
     top(o)
     if o.name !~ Patterns::CLASSREF_EXT_DECL
-      acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name=>o.name})
+      acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, { :name => o.name })
     end
     internal_check_reserved_type_name(o, o.name)
     internal_check_type_ref(o, o.type_expr)
@@ -512,15 +512,15 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def internal_check_no_idem_last(o)
     violator = ends_with_idem(o.body)
     if violator
-      acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o}) unless resource_without_title?(violator)
+      acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, { :container => o }) unless resource_without_title?(violator)
     end
   end
 
   def internal_check_capture_last(o)
-    accepted_index = o.parameters.size() -1
+    accepted_index = o.parameters.size() - 1
     o.parameters.each_with_index do |p, index|
       if p.captures_rest && index != accepted_index
-        acceptor.accept(Issues::CAPTURES_REST_NOT_LAST, p, {:param_name => p.name})
+        acceptor.accept(Issues::CAPTURES_REST_NOT_LAST, p, { :param_name => p.name })
       end
     end
   end
@@ -528,20 +528,20 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def internal_check_no_capture(o, container = o)
     o.parameters.each do |p|
       if p.captures_rest
-        acceptor.accept(Issues::CAPTURES_REST_NOT_SUPPORTED, p, {:container => container, :param_name => p.name})
+        acceptor.accept(Issues::CAPTURES_REST_NOT_SUPPORTED, p, { :container => container, :param_name => p.name })
       end
     end
   end
 
   def internal_check_reserved_type_name(o, name)
     if RESERVED_TYPE_NAMES[name]
-      acceptor.accept(Issues::RESERVED_TYPE_NAME, o, {:name => name})
+      acceptor.accept(Issues::RESERVED_TYPE_NAME, o, { :name => name })
     end
   end
 
   def internal_check_future_reserved_word(o, name)
     if FUTURE_RESERVED_WORDS[name]
-      acceptor.accept(Issues::FUTURE_RESERVED_WORD, o, {:word => name})
+      acceptor.accept(Issues::FUTURE_RESERVED_WORD, o, { :word => name })
     end
   end
 
@@ -558,7 +558,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
     # Downcasing here because check is case-insensitive
     if file_namespace == BAD_MODULE_FILE || !o.name.downcase.start_with?(file_namespace)
-      acceptor.accept(Issues::ILLEGAL_DEFINITION_LOCATION, o, {:name => o.name, :file => file})
+      acceptor.accept(Issues::ILLEGAL_DEFINITION_LOCATION, o, { :name => o.name, :file => file })
     end
   end
 
@@ -573,7 +573,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     body = prog.body
     return if prog.body.is_a?(Model::Nop) # Ignore empty or comment-only files
 
-    if(body.is_a?(Model::BlockExpression))
+    if (body.is_a?(Model::BlockExpression))
       body.statements.each { |s| acceptor.accept(Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION, s) unless valid_top_construct?(s) }
     else
       acceptor.accept(Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION, body) unless valid_top_construct?(body)
@@ -664,14 +664,14 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # and from the manifests dir there.  This may never get used...
     return BAD_MODULE_FILE unless dir == 'manifests' || dir == 'functions' || dir == 'types' || dir == 'plans'
 
-    names = path_components[2 .. -2] # Directories inside module
+    names = path_components[2..-2] # Directories inside module
     names.unshift(path_components[0]) # Name of the module itself
 
     # Do not include name of module init file at top level of module
     # e.g. <module name>/manifests/init.pp
     filename = path_components[-1]
     if !(path_components.length == 3 && filename == 'init.pp')
-      names.push(filename[0 .. -4]) # Remove .pp from filename
+      names.push(filename[0..-4]) # Remove .pp from filename
     end
 
     names
@@ -685,7 +685,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def internal_check_reserved_params(o)
     o.parameters.each do |p|
       if RESERVED_PARAMETERS[p.name]
-        acceptor.accept(Issues::RESERVED_PARAMETER, p, {:container => o, :param_name => p.name})
+        acceptor.accept(Issues::RESERVED_PARAMETER, p, { :container => o, :param_name => p.name })
       end
     end
   end
@@ -693,7 +693,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def internal_check_parameter_name_uniqueness(o)
     unique = Set.new
     o.parameters.each do |p|
-      acceptor.accept(Issues::DUPLICATE_PARAMETER, p, {:param_name => p.name}) unless unique.add?(p.name)
+      acceptor.accept(Issues::DUPLICATE_PARAMETER, p, { :param_name => p.name }) unless unique.add?(p.name)
     end
   end
 
@@ -714,13 +714,13 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def check_LiteralList(o)
-    o.values.each {|v| rvalue(v) }
+    o.values.each { |v| rvalue(v) }
   end
 
   def check_LiteralInteger(o)
     v = o.value
     if v < MIN_INTEGER || v > MAX_INTEGER
-      acceptor.accept(Issues::NUMERIC_OVERFLOW, o, {:value => v})
+      acceptor.accept(Issues::NUMERIC_OVERFLOW, o, { :value => v })
     end
   end
 
@@ -730,7 +730,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     o.entries.each do |entry|
       catch(:not_literal) do
         literal_key = literal(entry.key)
-        acceptor.accept(Issues::DUPLICATE_KEY, entry, {:key => literal_key}) if unique.add?(literal_key).nil?
+        acceptor.accept(Issues::DUPLICATE_KEY, entry, { :key => literal_key }) if unique.add?(literal_key).nil?
       end
     end
   end
@@ -741,7 +741,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     top(o)
     violator = ends_with_idem(o.body)
     if violator
-      acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o}) unless resource_without_title?(violator)
+      acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, { :container => o }) unless resource_without_title?(violator)
     end
     unless o.parent.nil?
       acceptor.accept(Issues::ILLEGAL_NODE_INHERITANCE, o.parent)
@@ -761,7 +761,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_QualifiedReference(o)
     # Is this a valid qualified name?
     if o.cased_value !~ Patterns::CLASSREF_EXT
-      acceptor.accept(Issues::ILLEGAL_CLASSREF, o, {:name=>o.cased_value})
+      acceptor.accept(Issues::ILLEGAL_CLASSREF, o, { :name => o.cased_value })
     end
   end
 
@@ -796,7 +796,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     else
       # recursively check all contents unless it's a lambda expression. A lambda may contain
       # local assignments
-      o._pcore_contents {|model| internal_check_illegal_assignment(model) } unless o.is_a?(Model::LambdaExpression)
+      o._pcore_contents { |model| internal_check_illegal_assignment(model) } unless o.is_a?(Model::LambdaExpression)
     end
   end
 
@@ -861,7 +861,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_SelectorExpression(o)
     rvalue(o.left_expr)
     # There can only be one LiteralDefault case option value
-    defaults = o.selectors.select {|v| v.matching_expr.is_a?(Model::LiteralDefault) }
+    defaults = o.selectors.select { |v| v.matching_expr.is_a?(Model::LiteralDefault) }
     unless defaults.size <= 1
       # Flag the second default as 'unreachable'
       acceptor.accept(Issues::DUPLICATE_DEFAULT, defaults[1].matching_expr, :container => o)
@@ -908,7 +908,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   # Transforms Array of host matching expressions into a (Ruby) array of AST::HostName
   def hostname_Array(o, semantic)
-    o.each {|x| hostname(x, semantic) }
+    o.each { |x| hostname(x, semantic) }
   end
 
   def hostname_String(o, semantic)
@@ -927,7 +927,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def hostname_ConcatenatedString(o, semantic)
     # Puppet 3.1. only accepts a concatenated string without interpolated expressions
-    the_expr = o.segments.index {|s| s.is_a?(Model::TextExpression) }
+    the_expr = o.segments.index { |s| s.is_a?(Model::TextExpression) }
     if the_expr
       acceptor.accept(Issues::ILLEGAL_HOSTNAME_INTERPOLATION, o.segments[the_expr].expr)
     elsif o.segments.size() != 1
@@ -961,7 +961,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def hostname_Object(o, semantic)
-    acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, {:feature => 'hostname', :container => semantic})
+    acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, { :feature => 'hostname', :container => semantic })
   end
 
   #---QUERY CHECKS
@@ -1091,7 +1091,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def idem_BlockExpression(o)
     # productive if there is at least one productive expression
-    ! o.statements.any? {|expr| !idem(expr) }
+    !o.statements.any? { |expr| !idem(expr) }
   end
 
   # Returns true even though there may be interpolated expressions that have side effect.
@@ -1119,14 +1119,14 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def idem_IfExpression(o)
-    [o.test, o.then_expr, o.else_expr].all? {|e| idem(e) }
+    [o.test, o.then_expr, o.else_expr].all? { |e| idem(e) }
   end
 
   # Case expression is idem, if test, and all options are idem
   def idem_CaseExpression(o)
     return false if !idem(o.test)
 
-    ! o.options.any? {|opt| !idem(opt) }
+    !o.options.any? { |opt| !idem(opt) }
   end
 
   # An option is idem if values and the then_expression are idem

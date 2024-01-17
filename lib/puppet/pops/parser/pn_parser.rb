@@ -140,7 +140,7 @@ class PNParser
     while @token != end_token && @token != TOKEN_END
       elements << parse_next
     end
-    parse_error(_("missing '%{token}' to end list") % { token: end_token.chr(Encoding::UTF_8) } ) unless @token == end_token
+    parse_error(_("missing '%{token}' to end list") % { token: end_token.chr(Encoding::UTF_8) }) unless @token == end_token
     next_token
     elements
   end

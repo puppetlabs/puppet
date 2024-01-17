@@ -3,7 +3,7 @@
 module Puppet::Util::RetryAction
   class RetryException < Exception; end # rubocop:disable Lint/InheritException
   class RetryException::NoBlockGiven < RetryException; end
-  class RetryException::NoRetriesGiven < RetryException;end
+  class RetryException::NoRetriesGiven < RetryException; end
   class RetryException::RetriesExceeded < RetryException; end
 
   # Execute the supplied block retrying with exponential backoff.
@@ -39,7 +39,7 @@ module Puppet::Util::RetryAction
 
       # Increase the amount of time that we sleep after every
       # failed retry attempt.
-      sleep(((2 ** failures) -1) * 0.1)
+      sleep(((2**failures) - 1) * 0.1)
 
       retry
     end

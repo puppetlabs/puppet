@@ -21,7 +21,7 @@ module Puppet::Network::HTTP::Handler
     routes.each { |r| dupes[r.path_matcher] = (dupes[r.path_matcher] || 0) + 1 }
     dupes = dupes.collect { |pm, count| pm if count > 1 }.compact
     if dupes.count > 0
-      raise ArgumentError, _("Given multiple routes with identical path regexes: %{regexes}") % { regexes: dupes.map{ |rgx| rgx.inspect }.join(', ') }
+      raise ArgumentError, _("Given multiple routes with identical path regexes: %{regexes}") % { regexes: dupes.map { |rgx| rgx.inspect }.join(', ') }
     end
 
     @routes = routes

@@ -10,9 +10,9 @@ Puppet::Parser::Functions::newfunction(
     local to the lambda, you can use the `with` function to create private blocks
     of code within a class using variables whose values cannot be accessed outside
     of the lambda.
-    
+
     **Example**: Using `with`
-    
+
     ~~~ puppet
     # Concatenate three strings into a single string formatted as a list.
     $fruit = with("apples", "oranges", "bananas") |$x, $y, $z| {
@@ -22,7 +22,7 @@ Puppet::Parser::Functions::newfunction(
     # $fruit contains "apples, oranges, and bananas"
     # $check_var is undefined, as the value of $x is local to the lambda.
     ~~~
-    
+
     - Since 4.0.0
   DOC
 ) do |_args|

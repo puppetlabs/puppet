@@ -58,7 +58,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
 
     def expiry_to_expires(expiry)
       return '0' if expiry == "0000-00-00" || expiry.to_sym == :absent
-      
+
       DateTime.parse(expiry, "%Y-%m-%d %H:%M")
               .strftime("%m%d%H%M%y")
     end
@@ -112,7 +112,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
           property_to_attribute: method(:gid_to_pgrp),
           attribute_to_property: method(:pgrp_to_gid)
 
-  mapping puppet_property: :groups, 
+  mapping puppet_property: :groups,
           property_to_attribute: method(:groups_property_to_attribute),
           attribute_to_property: method(:groups_attribute_to_property)
 

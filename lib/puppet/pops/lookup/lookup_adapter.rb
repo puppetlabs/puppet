@@ -107,7 +107,7 @@ class LookupAdapter < DataAdapter
       rescue StandardError => e
         raise Puppet::DataBinding::LookupError,
               _("Invalid data type in lookup_options for key '%{key}' could not parse '%{source}', error: '%{msg}") %
-              { key: key, source: convert_to[0], msg: e.message}
+              { key: key, source: convert_to[0], msg: e.message }
       end
     end
     begin
@@ -118,7 +118,7 @@ class LookupAdapter < DataAdapter
     rescue StandardError => e
       raise Puppet::DataBinding::LookupError,
             _("The convert_to lookup_option for key '%{key}' raised error: %{msg}") %
-            { key: key, msg: e.message}
+            { key: key, msg: e.message }
     end
     result
   end
@@ -139,7 +139,7 @@ class LookupAdapter < DataAdapter
       lookup_invocation.with(:global, terminus) do
         catch(:no_such_key) do
           return lookup_invocation.report_found(key, Puppet::DataBinding.indirection.find(key.root_key,
-                                                                                          {:environment => environment, :variables => lookup_invocation.scope, :merge => merge_strategy}))
+                                                                                          { :environment => environment, :variables => lookup_invocation.scope, :merge => merge_strategy }))
         end
         lookup_invocation.report_not_found(key)
         throw :no_such_key

@@ -153,7 +153,7 @@ class Puppet::Resource::Type
   # classes and nodes.  No parameters are be supplied--if this is a
   # parameterized class, then all parameters take on their default
   # values.
-  def ensure_in_catalog(scope, parameters=nil)
+  def ensure_in_catalog(scope, parameters = nil)
     resource_type =
       case type
       when :definition
@@ -175,7 +175,7 @@ class Puppet::Resource::Type
       resource = scope.catalog.resource(resource_type, name)
       return resource unless resource.nil?
     elsif parameters.is_a?(Hash)
-      parameters = parameters.map {|k, v| Puppet::Parser::Resource::Param.new(:name => k, :value => v, :source => self)}
+      parameters = parameters.map { |k, v| Puppet::Parser::Resource::Param.new(:name => k, :value => v, :source => self) }
     end
     resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self, :parameters => parameters)
     instantiate_resource(scope, resource)
@@ -232,10 +232,10 @@ class Puppet::Resource::Type
 
     if @type == :hostclass
       scope[TITLE] = resource.title.to_s.downcase
-      scope[NAME] =  resource.name.to_s.downcase
+      scope[NAME] = resource.name.to_s.downcase
     else
       scope[TITLE] = resource.title
-      scope[NAME] =  resource.name
+      scope[NAME] = resource.name
     end
     scope.class_set(self.name, scope) if hostclass? || node?
 
@@ -251,7 +251,7 @@ class Puppet::Resource::Type
     validate_resource_hash(resource, param_hash)
 
     # Assign parameter values to current scope
-    param_hash.each { |param, value| exceptwrap { scope[param] = value }}
+    param_hash.each { |param, value| exceptwrap { scope[param] = value } }
   end
 
   # Lookup and inject parameters from external scope

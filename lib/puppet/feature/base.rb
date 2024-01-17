@@ -51,7 +51,7 @@ Puppet.features.add(:minitar, :libs => ["archive/tar/minitar"])
 
 # We can manage symlinks
 Puppet.features.add(:manages_symlinks) do
-  if ! Puppet::Util::Platform.windows?
+  if !Puppet::Util::Platform.windows?
     true
   else
     module WindowsSymlink

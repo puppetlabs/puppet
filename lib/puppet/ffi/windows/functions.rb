@@ -235,7 +235,7 @@ module Puppet::FFI::Windows
     # );
     ffi_lib :advapi32
     attach_function_private :GetTokenInformation,
-                            [:handle, TOKEN_INFORMATION_CLASS, :lpvoid, :dword, :pdword ], :win32_bool
+                            [:handle, TOKEN_INFORMATION_CLASS, :lpvoid, :dword, :pdword], :win32_bool
 
     # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724451(v=vs.85).aspx
     # BOOL WINAPI GetVersionEx(

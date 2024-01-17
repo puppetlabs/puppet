@@ -181,7 +181,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     #     This method spits out proper DSCL commands for us.
     #     We EXPECT name to be @resource[:name] when called from an instance object.
 
-    command_vector = [ command(:dscl), "-plist", "." ]
+    command_vector = [command(:dscl), "-plist", "."]
 
     # JJM: The actual action to perform. See "man dscl".
     #      Common actions: -create, -delete, -merge, -append, -passwd
@@ -226,7 +226,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
         converted_hash_plist = convert_binary_to_hash(password_hash_plist)
       else
         users_plist['ShadowHashData'] = ''.dup
-        converted_hash_plist = {'SALTED-SHA512' => ''.dup}
+        converted_hash_plist = { 'SALTED-SHA512' => ''.dup }
       end
 
       # converted_hash_plist['SALTED-SHA512'] expects a Base64 encoded
@@ -234,7 +234,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       # hex value. We need to convert the provided hex value to a Base64
       # encoded string to nest it in the converted hash plist.
       converted_hash_plist['SALTED-SHA512'] = \
-        password_hash.unpack('a2'*(password_hash.size/2)).collect { |i| i.hex.chr }.join
+        password_hash.unpack('a2' * (password_hash.size / 2)).collect { |i| i.hex.chr }.join
 
       # Finally, we can convert the nested plist back to binary, embed it
       # into the user's plist, and convert the resultant plist back to
@@ -286,7 +286,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   # for automatically assigning uids and gids to accounts, so we set up these
   # methods for consumption by functionality like --mkusers
   # By default we restrict to a reasonably sane range for system accounts
-  def self.next_system_id(id_type, min_id=20)
+  def self.next_system_id(id_type, min_id = 20)
     dscl_args = ['.', '-list']
     if id_type == 'uid'
       dscl_args << '/Users' << 'uid'
@@ -302,7 +302,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # We're just looking for an unused id in our sorted array.
     ids.each_index do |i|
       next_id = ids[i] + 1
-      return next_id if ids[i+1] != next_id and next_id >= min_id
+      return next_id if ids[i + 1] != next_id and next_id >= min_id
     end
   end
 
@@ -485,7 +485,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     #      This method returns and sets @infohash
     # I'm not re-factoring the name "getinfo" because this method will be
     # most likely called by nameservice.rb, which I didn't write.
-    if refresh or (! defined?(@property_value_cache_hash) or ! @property_value_cache_hash)
+    if refresh or (!defined?(@property_value_cache_hash) or !@property_value_cache_hash)
       # JJM 2007-07-24: OK, there's a bit of magic that's about to
       # happen... Let's see how strong my grip has become... =)
       #
@@ -519,4 +519,3 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     @property_value_cache_hash
   end
 end
-

@@ -105,10 +105,10 @@ class HieraConfig
   end
 
   def self.symkeys_to_string(struct)
-    case(struct)
+    case (struct)
     when Hash
       map = {}
-      struct.each_pair {|k, v| map[ k.is_a?(Symbol) ? k.to_s : k] = symkeys_to_string(v) }
+      struct.each_pair { |k, v| map[k.is_a?(Symbol) ? k.to_s : k] = symkeys_to_string(v) }
       map
     when Array
       struct.map { |v| symkeys_to_string(v) }
@@ -448,7 +448,7 @@ class HieraConfigV3 < HieraConfig
     config[KEY_MERGE_BEHAVIOR] ||= DEFAULT_CONFIG_HASH[KEY_MERGE_BEHAVIOR]
     config[KEY_DEEP_MERGE_OPTIONS] ||= {}
 
-    backends = [ config[KEY_BACKENDS] ].flatten
+    backends = [config[KEY_BACKENDS]].flatten
 
     # Create the final struct used for validation (backends are included as keys to arbitrary configs in the form of a hash)
     tf = Types::TypeFactory
@@ -690,7 +690,7 @@ class HieraConfigV5 < HieraConfig
 
       options = he[KEY_OPTIONS] || defaults[KEY_OPTIONS]
       options = options.nil? ? EMPTY_HASH : interpolate(options, lookup_invocation, false)
-      if(function_kind == KEY_V3_BACKEND)
+      if (function_kind == KEY_V3_BACKEND)
         v3options = { :datadir => entry_datadir.to_s }
         options.each_pair { |k, v| v3options[k.to_sym] = v }
         data_providers[name] =
@@ -706,7 +706,7 @@ class HieraConfigV5 < HieraConfig
                                                path.end_with?(".#{function_name}") ? path[0..-(function_name.length + 2)] : path
                                              end,
                                            function_name.to_sym => v3options,
-                                           :backends => [ function_name ],
+                                           :backends => [function_name],
                                            :logger => 'puppet'
                                          })
       else

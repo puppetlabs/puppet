@@ -16,7 +16,7 @@ class Puppet::Pops::Migration::MigrationChecker
   # Produces a hash of available migrations; a map from a symbolic name in string form to a brief description.
   # This version has no such supported migrations.
   def available_migrations()
-    { }
+    {}
   end
 
   # For 3.8/4.0

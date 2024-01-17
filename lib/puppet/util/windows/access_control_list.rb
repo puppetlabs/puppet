@@ -27,7 +27,7 @@ class Puppet::Util::Windows::AccessControlList
   #
   # @yieldparam ace [Hash] the ace
   def each
-    @aces.each {|ace| yield ace}
+    @aces.each { |ace| yield ace }
   end
 
   # Allow the +sid+ to access a resource with the specified access +mask+.

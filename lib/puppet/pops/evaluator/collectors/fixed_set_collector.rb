@@ -9,7 +9,7 @@ class Puppet::Pops::Evaluator::Collectors::FixedSetCollector < Puppet::Pops::Eva
   # @param [Array] resources the fixed set of resources we want to realize
   def initialize(scope, resources)
     super(scope)
-    @resources = resources.is_a?(Array)? resources.dup : [resources]
+    @resources = resources.is_a?(Array) ? resources.dup : [resources]
   end
 
   # Collects a fixed set of resources and realizes them. Used

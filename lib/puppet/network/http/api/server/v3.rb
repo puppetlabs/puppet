@@ -21,11 +21,11 @@ module Puppet
 
             INDIRECTED = Puppet::Network::HTTP::Route
                          .path(/.*/)
-                         .any(wrap { Puppet::Network::HTTP::API::IndirectedRoutes.new } )
+                         .any(wrap { Puppet::Network::HTTP::API::IndirectedRoutes.new })
 
             ENVIRONMENTS = Puppet::Network::HTTP::Route
                            .path(%r{^/environments$})
-                           .get(wrap { Environments.new(Puppet.lookup(:environments)) } )
+                           .get(wrap { Environments.new(Puppet.lookup(:environments)) })
 
             def self.routes
               Puppet::Network::HTTP::Route.path(%r{v3})

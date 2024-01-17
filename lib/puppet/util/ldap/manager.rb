@@ -57,7 +57,7 @@ class Puppet::Util::Ldap::Manager
       else
         ssl = false
       end
-      options = {:ssl => ssl}
+      options = { :ssl => ssl }
       user = Puppet[:ldapuser]
       if user && user != ""
         options[:user] = user
@@ -98,7 +98,7 @@ class Puppet::Util::Ldap::Manager
     # name.
     name = entry["dn"].dup.pop.split(",").shift.split("=").pop
 
-    result = {:name => name}
+    result = { :name => name }
 
     @ldap2puppet.each do |ldap, puppet|
       result[puppet] = entry[ldap.to_s] || :absent
@@ -269,7 +269,7 @@ class Puppet::Util::Ldap::Manager
 
   # Is this a complete ldap configuration?
   def valid?
-    location and objectclasses and ! objectclasses.empty? and puppet2ldap
+    location and objectclasses and !objectclasses.empty? and puppet2ldap
   end
 
   private

@@ -76,4 +76,3 @@ module HieraPuppet
     end
   end
 end
-

@@ -57,7 +57,7 @@ end
 
 config.header = <<~EOT
   ## Configuration settings
-  
+
   * Each of these settings can be specified in `puppet.conf` or on the
     command line.
   * Puppet Enterprise (PE) and open source Puppet share the configuration settings
@@ -89,11 +89,11 @@ config.header = <<~EOT
     group = puppet, mode = 644 }`
   * The Puppet executables ignores any setting that isn't relevant to
     their function.
-  
+
   See the [configuration guide][confguide] for more details.
-  
+
   [confguide]: https://puppet.com/docs/puppet/latest/config_about_settings.html
-  
+
   * * *
-  
+
 EOT

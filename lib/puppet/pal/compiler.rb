@@ -193,7 +193,7 @@ module Pal
     def create(data_type, *arguments)
       t = data_type.is_a?(String) ? type(data_type) : data_type
       unless t.is_a?(Puppet::Pops::Types::PAnyType)
-        raise ArgumentError, _("Given data_type value is not a data type, got '%{type}'") % {type: t.class}
+        raise ArgumentError, _("Given data_type value is not a data type, got '%{type}'") % { type: t.class }
       end
 
       call_function('new', t, *arguments)
@@ -213,7 +213,7 @@ module Pal
       if filter_regex.nil?
         loader.discover(kind, error_collector)
       else
-        loader.discover(kind, error_collector) {|f| f.name =~ filter_regex }
+        loader.discover(kind, error_collector) { |f| f.name =~ filter_regex }
       end
     end
 

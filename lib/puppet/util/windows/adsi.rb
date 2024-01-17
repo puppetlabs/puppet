@@ -25,7 +25,7 @@ module Puppet::Util::Windows::ADSI
 
     def connectable?(uri)
       begin
-        !! connect(uri)
+        !!connect(uri)
       rescue
         false
       end
@@ -35,7 +35,7 @@ module Puppet::Util::Windows::ADSI
       begin
         WIN32OLE.connect(uri)
       rescue WIN32OLERuntimeError => e
-        raise Puppet::Error.new( _("ADSI connection error: %{e}") % { e: e }, e )
+        raise Puppet::Error.new(_("ADSI connection error: %{e}") % { e: e }, e)
       end
     end
 
@@ -72,7 +72,7 @@ module Puppet::Util::Windows::ADSI
       "WinNT://#{host}"
     end
 
-    def wmi_resource_uri( host = '.' )
+    def wmi_resource_uri(host = '.')
       "winmgmts:{impersonationLevel=impersonate}!//#{host}/root/cimv2"
     end
 
@@ -97,7 +97,7 @@ module Puppet::Util::Windows::ADSI
     # used for IAdsGroup::Add / IAdsGroup::Remove.  These URIs are not useable
     # to resolve an account with WIN32OLE.connect
     def sid_uri(sid)
-      raise Puppet::Error.new( _("Must use a valid SID::Principal") ) if !sid.kind_of?(Puppet::Util::Windows::SID::Principal)
+      raise Puppet::Error.new(_("Must use a valid SID::Principal")) if !sid.kind_of?(Puppet::Util::Windows::SID::Principal)
 
       "WinNT://#{sid.sid}"
     end
@@ -162,7 +162,7 @@ module Puppet::Util::Windows::ADSI
 
       def parse_name(name)
         if name =~ /\//
-          raise Puppet::Error.new( _("Value must be in DOMAIN\\%{object_class} style syntax") % { object_class: @object_class } )
+          raise Puppet::Error.new(_("Value must be in DOMAIN\\%{object_class} style syntax") % { object_class: @object_class })
         end
 
         matches = name.scan(/((.*)\\)?(.*)/)
@@ -195,12 +195,12 @@ module Puppet::Util::Windows::ADSI
 
         sids = names.map do |name|
           sid = Puppet::Util::Windows::SID.name_to_principal(name, allow_unresolved)
-          raise Puppet::Error.new( _("Could not resolve name: %{name}") % { name: name } ) if !sid
+          raise Puppet::Error.new(_("Could not resolve name: %{name}") % { name: name }) if !sid
 
           [sid.sid, sid]
         end
 
-        Hash[ sids ]
+        Hash[sids]
       end
 
       def delete(name)
@@ -297,7 +297,7 @@ module Puppet::Util::Windows::ADSI
           )
         end
 
-        raise Puppet::Error.new( _("%{object_class} update failed: %{error}") % { object_class: object_class.capitalize, error: e }, e )
+        raise Puppet::Error.new(_("%{object_class} update failed: %{error}") % { object_class: object_class.capitalize, error: e }, e)
       end
       self
     end
@@ -356,7 +356,7 @@ module Puppet::Util::Windows::ADSI
       # WIN32OLE objects aren't enumerable, so no map
       groups = []
       # Setting WIN32OLE.codepage ensures values are returned as UTF-8
-      native_object.Groups.each {|g| groups << g.Name} rescue nil
+      native_object.Groups.each { |g| groups << g.Name } rescue nil
       groups
     end
 
@@ -397,7 +397,7 @@ module Puppet::Util::Windows::ADSI
 
       desired_groups = desired_groups.split(',').map(&:strip)
 
-      current_hash = Hash[ self.group_sids.map { |sid| [sid.sid, sid] } ]
+      current_hash = Hash[self.group_sids.map { |sid| [sid.sid, sid] }]
       desired_hash = self.class.name_sid_hash(desired_groups)
 
       # First we add the user to all the groups it should be in but isn't
@@ -451,7 +451,7 @@ module Puppet::Util::Windows::ADSI
 
     def userflag_set?(flag)
       flag_value = ADS_USERFLAGS[flag] || 0
-      ! (self['UserFlags'] & flag_value).zero?
+      !(self['UserFlags'] & flag_value).zero?
     end
 
     # Common helper for set_userflags and unset_userflags.
@@ -609,7 +609,7 @@ module Puppet::Util::Windows::ADSI
 
       def create(name)
         # Windows error 2224: The account already exists.
-        raise Puppet::Error.new( _("Cannot create group if user '%{name}' exists.") % { name: name } ) if Puppet::Util::Windows::ADSI::User.exists?(name)
+        raise Puppet::Error.new(_("Cannot create group if user '%{name}' exists.") % { name: name }) if Puppet::Util::Windows::ADSI::User.exists?(name)
 
         new(name, Puppet::Util::Windows::ADSI.create(name, @object_class))
       end
@@ -638,7 +638,7 @@ module Puppet::Util::Windows::ADSI
     def set_members(desired_members, inclusive = true)
       return if desired_members.nil?
 
-      current_hash = Hash[ self.member_sids.map { |sid| [sid.sid, sid] } ]
+      current_hash = Hash[self.member_sids.map { |sid| [sid.sid, sid] }]
       desired_hash = self.class.name_sid_hash(desired_members)
 
       # First we add all missing members

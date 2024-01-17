@@ -111,7 +111,7 @@ module Puppet::Util::Windows
         end
       end
       if state.nil?
-        raise Puppet::Error.new(_("Unknown Service state '%{current_state}' for '%{service_name}'") % { current_state: state.to_s, service_name: service_name})
+        raise Puppet::Error.new(_("Unknown Service state '%{current_state}' for '%{service_name}'") % { current_state: state.to_s, service_name: service_name })
       end
 
       state
@@ -139,7 +139,7 @@ module Puppet::Util::Windows
         end
       end
       if start_type.nil?
-        raise Puppet::Error.new(_("Unknown start type '%{start_type}' for '%{service_name}'") % { start_type: start_type.to_s, service_name: service_name})
+        raise Puppet::Error.new(_("Unknown start type '%{start_type}' for '%{service_name}'") % { start_type: start_type.to_s, service_name: service_name })
       end
 
       start_type
@@ -520,7 +520,7 @@ module Puppet::Util::Windows
               bytes_pointer
             )
             if success == FFI::WIN32_FALSE
-              raise Puppet::Util::Windows::Error.new(_("Service query for %{parameter_name} failed") % { parameter_name: SERVICE_CONFIG_TYPES[info_level] } )
+              raise Puppet::Util::Windows::Error.new(_("Service query for %{parameter_name} failed") % { parameter_name: SERVICE_CONFIG_TYPES[info_level] })
             end
 
             yield config
@@ -544,7 +544,7 @@ module Puppet::Util::Windows
             value,  # lpInfo
           )
           if success == FFI::WIN32_FALSE
-            raise Puppet::Util::windows::Error.new(_("Failed to update service %{change} configuration") % { change: change } )
+            raise Puppet::Util::windows::Error.new(_("Failed to update service %{change} configuration") % { change: change })
           end
         end
       end

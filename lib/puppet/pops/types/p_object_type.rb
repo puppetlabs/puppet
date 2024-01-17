@@ -261,7 +261,7 @@ class PObjectType < PMetaType
     # @api private
     def create_dispatch(instance)
       # TODO: Assumes Ruby implementation for now
-      if(callable_type.is_a?(PVariantType))
+      if (callable_type.is_a?(PVariantType))
         callable_type.types.map do |ct|
           Functions::Dispatch.new(ct, RubyGenerator.protect_reserved_name(name), [], false, ct.block_type.nil? ? nil : 'block')
         end
@@ -296,7 +296,7 @@ class PObjectType < PMetaType
     def initialize(name, container, init_hash)
       super(name, container, TypeAsserter.assert_instance_of(nil, TYPE_ATTRIBUTE, init_hash) { "initializer for #{self.class.label(container, name)}" })
       if name == Serialization::PCORE_TYPE_KEY || name == Serialization::PCORE_VALUE_KEY
-        raise Puppet::ParseError, _("The attribute '%{name}' is reserved and cannot be used") % { name: name}
+        raise Puppet::ParseError, _("The attribute '%{name}' is reserved and cannot be used") % { name: name }
       end
 
       @kind = init_hash[KEY_KIND]
@@ -315,7 +315,7 @@ class PObjectType < PMetaType
         end
 
         v = init_hash[KEY_VALUE]
-        @value = v == :default ? v : TypeAsserter.assert_instance_of(nil, type, v) {"#{label} #{KEY_VALUE}" }
+        @value = v == :default ? v : TypeAsserter.assert_instance_of(nil, type, v) { "#{label} #{KEY_VALUE}" }
       else
         raise Puppet::ParseError, _("%{label} of kind 'constant' requires a value") % { label: label } if @kind == ATTRIBUTE_KIND_CONSTANT
 
@@ -931,7 +931,7 @@ class PObjectType < PMetaType
     @name.nil? ? [@parent, @type_parameters, @attributes, @functions].hash : @name.hash
   end
 
-  def kind_of_callable?(optional=true, guard = nil)
+  def kind_of_callable?(optional = true, guard = nil)
     @parent.nil? ? false : @parent.kind_of_callable?(optional, guard)
   end
 

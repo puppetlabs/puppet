@@ -20,7 +20,7 @@
 # ```puppet
 # abs(Numeric($str_val))
 # ```
-# 
+#
 # It is worth noting that `Numeric` can convert to absolute value
 # directly as in the following examples:
 #

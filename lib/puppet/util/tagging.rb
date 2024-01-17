@@ -34,7 +34,7 @@ module Puppet::Util::Tagging
 
   # Add a name to the current tag set. Silently ignore names that does not
   # represent valid tags.
-  # 
+  #
   # Use this method instead of doing this:
   #
   #  tag(name) if is_valid?(name)
@@ -59,7 +59,7 @@ module Puppet::Util::Tagging
   # @return [Boolean] true if this instance is tagged with at least one of the provided tags
   #
   def tagged?(*tags)
-    raw_tagged?(tags.collect {|t| t.to_s.downcase})
+    raw_tagged?(tags.collect { |t| t.to_s.downcase })
   end
 
   # Answers if this resource is tagged with at least one of the tags given in downcased string form.

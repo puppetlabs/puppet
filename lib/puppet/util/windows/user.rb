@@ -21,7 +21,7 @@ module Puppet::Util::Windows::User
   # This account is not recognized by the security subsystem, so you cannot specify its name in a call to the `LookupAccountName` function.
   # https://docs.microsoft.com/en-us/windows/win32/services/localsystem-account
   def localsystem?(name)
-    ["LocalSystem", ".\\LocalSystem", "#{Puppet::Util::Windows::ADSI.computer_name}\\LocalSystem"].any?{ |s| s.casecmp(name) == 0 }
+    ["LocalSystem", ".\\LocalSystem", "#{Puppet::Util::Windows::ADSI.computer_name}\\LocalSystem"].any? { |s| s.casecmp(name) == 0 }
   end
   module_function :localsystem?
 
@@ -101,7 +101,7 @@ module Puppet::Util::Windows::User
         # try logon using network else try logon using interactive mode
         if logon_user_by_logon_type(name, domain, password, fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
           if logon_user_by_logon_type(name, domain, password, fLOGON32_LOGON_INTERACTIVE, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
-            raise Puppet::Util::Windows::Error.new(_("Failed to logon user %{name}") % {name: name.inspect})
+            raise Puppet::Util::Windows::Error.new(_("Failed to logon user %{name}") % { name: name.inspect })
           end
         end
 
@@ -332,6 +332,7 @@ module Puppet::Util::Windows::User
                           [:handle, :pointer, :pbool], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379650(v=vs.85).aspx
+  # rubocop:disable Layout/SpaceBeforeComma
   WELL_KNOWN_SID_TYPE = enum(
     :WinNullSid                                   , 0,
     :WinWorldSid                                  , 1,
@@ -429,6 +430,7 @@ module Puppet::Util::Windows::User
     :WinCapabilityEnterpriseAuthenticationSid     , 93,
     :WinCapabilityRemovableStorageSid             , 94
   )
+  # rubocop:enable Layout/SpaceBeforeComma
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446585(v=vs.85).aspx
   # BOOL WINAPI CreateWellKnownSid(

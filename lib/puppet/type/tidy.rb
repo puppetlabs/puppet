@@ -110,7 +110,7 @@ Puppet::Type.newtype(:tidy) do
     def tidy?(path, stat)
       basename = File.basename(path)
       flags = File::FNM_DOTMATCH | File::FNM_PATHNAME
-      return(value.find {|pattern| File.fnmatch(pattern, basename, flags) } ? true : false)
+      return(value.find { |pattern| File.fnmatch(pattern, basename, flags) } ? true : false)
     end
   end
 
@@ -328,7 +328,7 @@ Puppet::Type.newtype(:tidy) do
 
     basename = File.basename(path)
     flags = File::FNM_DOTMATCH | File::FNM_PATHNAME
-    if self[:matches].find {|pattern| File.fnmatch(pattern, basename, flags) }
+    if self[:matches].find { |pattern| File.fnmatch(pattern, basename, flags) }
       return true
     else
       debug "No specified patterns match #{path}, not tidying"
@@ -345,12 +345,12 @@ Puppet::Type.newtype(:tidy) do
     stat = self.stat(path)
     return false unless stat
 
-    return false if stat.ftype == "directory" and ! rmdirs?
+    return false if stat.ftype == "directory" and !rmdirs?
 
     # The 'matches' parameter isn't OR'ed with the other tests --
     # it's just used to reduce the list of files we can match.
     param = parameter(:matches)
-    return false if param && ! param.tidy?(path, stat)
+    return false if param && !param.tidy?(path, stat)
 
     tested = false
     [:age, :size].each do |name|

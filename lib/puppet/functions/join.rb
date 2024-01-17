@@ -30,7 +30,7 @@
 # be made.
 #
 # @example Joining the result of a reverse_each converted to an array
-# 
+#
 # ```puppet
 # [1,2,3].reverse_each.convert_to(Array).join(', ')
 # # would result in: "3, 2, 1"

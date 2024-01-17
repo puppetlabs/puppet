@@ -31,7 +31,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   has_feature :refreshable
 
   def self.instances
-    service_instances = svcs("-H", "-o", "state,fmri" ).split("\n")
+    service_instances = svcs("-H", "-o", "state,fmri").split("\n")
 
     # Puppet does not manage services in the legacy_run state, so filter those out.
     service_instances.reject! { |line| line =~ /^legacy_run/ }
@@ -45,7 +45,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
                 when /degraded/; :degraded
                 else :stopped
                 end
-      new({:name => fmri, :ensure => status})
+      new({ :name => fmri, :ensure => status })
     end
 
     service_instances
@@ -76,7 +76,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     Puppet.notice("Importing #{@resource[:manifest]} for #{@resource[:name]}")
     svccfg(:import, @resource[:manifest])
   rescue Puppet::ExecutionFailure => detail
-    raise Puppet::Error.new( "Cannot config #{@resource[:name]} to enable it: #{detail}", detail )
+    raise Puppet::Error.new("Cannot config #{@resource[:name]} to enable it: #{detail}", detail)
   end
 
   # Returns the service's FMRI. We fail if multiple FMRIs correspond to
@@ -122,7 +122,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     # Check if the general/complete property is defined. If it is undefined,
     # then svccfg will not print anything to the console.
     property_defn = svccfg("-s", fmri, "listprop", "general/complete").chomp
-    @complete_service = ! property_defn.empty?
+    @complete_service = !property_defn.empty?
   end
 
   def enable

@@ -159,8 +159,8 @@ Puppet::Network::FormatHandler.create(:console,
     # Simple hash to table
     if datum.is_a?(Hash) && datum.keys.all? { |x| x.is_a?(String) || x.is_a?(Numeric) }
       output = ''.dup
-      column_a = datum.empty? ? 2 : datum.map{ |k, _v| k.to_s.length }.max + 2
-      datum.sort_by { |k, _v| k.to_s } .each do |key, value|
+      column_a = datum.empty? ? 2 : datum.map { |k, _v| k.to_s.length }.max + 2
+      datum.sort_by { |k, _v| k.to_s }.each do |key, value|
         output << key.to_s.ljust(column_a)
         output << json.render(value)
                       .chomp.gsub(/\n */) { |x| x + (' ' * column_a) }
@@ -214,7 +214,7 @@ Puppet::Network::FormatHandler.create(:flat,
   end
 
   def flatten_array(array)
-    a={}
+    a = {}
     array.each_with_index do |el, i|
       if el.is_a? Hash
         flatten_hash(el).map do |el_k, el_v|
@@ -257,13 +257,13 @@ end
 
 Puppet::Network::FormatHandler.create(:rich_data_json, mime: 'application/vnd.puppet.rich+json', charset: Encoding::UTF_8, weight: 30) do
   def intern(klass, text)
-    Puppet.override({:rich_data => true}) do
+    Puppet.override({ :rich_data => true }) do
       data_to_instance(klass, Puppet::Util::Json.load(text))
     end
   end
 
   def intern_multiple(klass, text)
-    Puppet.override({:rich_data => true}) do
+    Puppet.override({ :rich_data => true }) do
       Puppet::Util::Json.load(text).collect do |data|
         data_to_instance(klass, data)
       end
@@ -271,19 +271,19 @@ Puppet::Network::FormatHandler.create(:rich_data_json, mime: 'application/vnd.pu
   end
 
   def render(instance)
-    Puppet.override({:rich_data => true}) do
+    Puppet.override({ :rich_data => true }) do
       instance.to_json
     end
   end
 
   def render_multiple(instances)
-    Puppet.override({:rich_data => true}) do
+    Puppet.override({ :rich_data => true }) do
       Puppet::Util::Json.dump(instances)
     end
   end
 
   def data_to_instance(klass, data)
-    Puppet.override({:rich_data => true}) do
+    Puppet.override({ :rich_data => true }) do
       return data if data.is_a?(klass)
 
       klass.from_data_hash(data)

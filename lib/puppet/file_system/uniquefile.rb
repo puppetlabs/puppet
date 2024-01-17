@@ -28,7 +28,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
 
   def initialize(basename, *rest)
     create_tmpname(basename, *rest) do |tmpname, _n, opts|
-      mode = File::RDWR|File::CREAT|File::EXCL
+      mode = File::RDWR | File::CREAT | File::EXCL
       perm = 0600
       if opts
         mode |= opts.delete(:mode) || 0
@@ -41,7 +41,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
         @tmpfile = File.open(tmpname, mode, opts)
         @tmpname = tmpname
       end
-      @mode = mode & ~(File::CREAT|File::EXCL)
+      @mode = mode & ~(File::CREAT | File::EXCL)
       perm or opts.freeze
       @opts = opts
     end
@@ -65,7 +65,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
   end
   protected :_close
 
-  def close(unlink_now=false)
+  def close(unlink_now = false)
     if unlink_now
       close!
     else
@@ -153,7 +153,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
 
   def tmpdir
     tmp = '.'
-    for dir in [ ENV['TMPDIR'], ENV['TMP'], ENV['TEMP'], @@systmpdir, '/tmp']
+    for dir in [ENV['TMPDIR'], ENV['TMP'], ENV['TEMP'], @@systmpdir, '/tmp']
       stat = File.stat(dir) if dir
       if stat && stat.directory? && stat.writable?
         tmp = dir

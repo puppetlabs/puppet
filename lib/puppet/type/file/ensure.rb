@@ -145,10 +145,10 @@ module Puppet
     def check
       basedir = File.dirname(@resource[:path])
 
-      if ! Puppet::FileSystem.exist?(basedir)
+      if !Puppet::FileSystem.exist?(basedir)
         raise Puppet::Error,
               "Can not create #{@resource.title}; parent directory does not exist"
-      elsif ! FileTest.directory?(basedir)
+      elsif !FileTest.directory?(basedir)
         raise Puppet::Error,
               "Can not create #{@resource.title}; #{dirname} is not a directory"
       end
@@ -193,4 +193,3 @@ module Puppet
     end
   end
 end
-

@@ -446,7 +446,7 @@ module Pal
     node.environment = apply_environment
 
     # TRANSLATORS, the string "For puppet PAL" is not user facing
-    Puppet.override({:current_environment => apply_environment}, "For puppet PAL") do
+    Puppet.override({ :current_environment => apply_environment }, "For puppet PAL") do
       begin
         node.sanitize()
         compiler = create_internal_compiler(internal_compiler_class, node)
@@ -480,7 +480,7 @@ module Pal
         # TODO: The compiler instances should be available under non PAL use as well!
         # TRANSLATORS: Do not translate, symbolic name
         Puppet.override(overrides, "PAL::with_#{internal_compiler_class}_compiler") do
-          compiler.compile do | _compiler_yield |
+          compiler.compile do |_compiler_yield|
             # In case the variables passed to the compiler are PCore types defined in modules, they
             # need to be deserialized and added from within the this scope, so that loaders are
             # available during deserizlization.
@@ -561,15 +561,15 @@ module Pal
     Puppet::Pops::Types::TypeFactory.pattern(/\A[a-z][a-z0-9_]*\z/), Puppet::Pops::Types::TypeFactory.data
   )
 
-  def self.assert_type(type, value, what, allow_nil=false)
-    Puppet::Pops::Types::TypeAsserter.assert_instance_of(nil, type, value, allow_nil) { _('Puppet Pal: %{what}') % {what: what} }
+  def self.assert_type(type, value, what, allow_nil = false)
+    Puppet::Pops::Types::TypeAsserter.assert_instance_of(nil, type, value, allow_nil) { _('Puppet Pal: %{what}') % { what: what } }
   end
 
-  def self.assert_non_empty_string(s, what, allow_nil=false)
+  def self.assert_non_empty_string(s, what, allow_nil = false)
     assert_type(T_STRING, s, what, allow_nil)
   end
 
-  def self.assert_optionally_empty_array(a, what, allow_nil=false)
+  def self.assert_optionally_empty_array(a, what, allow_nil = false)
     assert_type(T_STRING_ARRAY, a, what, allow_nil)
   end
   private_class_method :assert_optionally_empty_array

@@ -50,7 +50,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
   # some versions of zypper output on stderr
   def zypper_version
     cmd = [self.class.command(:zypper), "--version"]
-    execute(cmd, { :failonfail => false, :combine => true})
+    execute(cmd, { :failonfail => false, :combine => true })
   end
 
   def best_version(should)
@@ -112,7 +112,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
     # Assume that this will work on newer zypper versions
 
     # extract version numbers and convert to integers
-    major, minor, patch = zypper_version.scan(/\d+/).map{ |x| x.to_i }
+    major, minor, patch = zypper_version.scan(/\d+/).map { |x| x.to_i }
     self.debug "Detected zypper version #{major}.#{minor}.#{patch}"
 
     # zypper version < 1.0 does not support --quiet flag
@@ -166,7 +166,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
 
   def uninstall
     # extract version numbers and convert to integers
-    major, minor, _ = zypper_version.scan(/\d+/).map{ |x| x.to_i }
+    major, minor, _ = zypper_version.scan(/\d+/).map { |x| x.to_i }
 
     if major < 1
       super

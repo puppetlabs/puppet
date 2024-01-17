@@ -260,7 +260,7 @@ class Type
   # @api private
   #
   def self.can_apply_to(target)
-    [ target == :device ? :device : :host, :both ].include?(apply_to)
+    [target == :device ? :device : :host, :both].include?(apply_to)
   end
 
   # Processes the options for a named parameter.
@@ -431,7 +431,7 @@ class Type
     case key_attributes.length
     when 0; []
     when 1;
-      [ [ /(.*)/m, [ [key_attributes.first] ] ] ]
+      [[/(.*)/m, [[key_attributes.first]]]]
     else
       raise Puppet::DevError, _("you must specify title patterns when there are two or more key attributes")
     end
@@ -443,7 +443,7 @@ class Type
   # @return [Object] an object that is a _uniqueness_key_ for this object
   #
   def uniqueness_key
-    self.class.key_attributes.sort_by { |attribute_name| attribute_name.to_s }.map{ |attribute_name| self[attribute_name] }
+    self.class.key_attributes.sort_by { |attribute_name| attribute_name.to_s }.map { |attribute_name| self[attribute_name] }
   end
 
   # Creates a new parameter.
@@ -710,7 +710,7 @@ class Type
     if @parameters.has_key?(attr)
       @parameters.delete(attr)
     else
-      raise Puppet::DevError.new(_("Undefined attribute '%{attribute}' in %{name}") % { attribute: attr, name: self})
+      raise Puppet::DevError.new(_("Undefined attribute '%{attribute}' in %{name}") % { attribute: attr, name: self })
     end
   end
 
@@ -747,7 +747,7 @@ class Type
   # @param options [Hash] options merged with a fixed set of options defined by this method, passed on to {Puppet::Transaction::Event}.
   # @return [Puppet::Transaction::Event] the created event
   def event(options = {})
-    Puppet::Transaction::Event.new(**{:resource => self, :file => file, :line => line, :tags => tags}.merge(options))
+    Puppet::Transaction::Event.new(**{ :resource => self, :file => file, :line => line, :tags => tags }.merge(options))
   end
 
   # @return [Object, nil] Returns the 'should' (wanted state) value for a specified property, or nil if the
@@ -785,8 +785,8 @@ class Type
       raise Puppet::Error, "Resource type #{self.class.name} does not support parameter #{name}"
     end
 
-    if provider and ! provider.class.supports_parameter?(klass)
-      missing = klass.required_features.find_all { |f| ! provider.class.feature?(f) }
+    if provider and !provider.class.supports_parameter?(klass)
+      missing = klass.required_features.find_all { |f| !provider.class.feature?(f) }
       debug "Provider %s does not support features %s; not managing attribute %s" % [provider.class.name, missing.join(", "), name]
       return nil
     end
@@ -859,7 +859,7 @@ class Type
     return unless parameter
 
     value = parameter.default
-    if value and ! value.nil?
+    if value and !value.nil?
       parameter.value = value
     else
       @parameters.delete(parameter.name)
@@ -961,7 +961,7 @@ class Type
       @managed = false
       properties.each { |property|
         s = property.should
-        if s and ! property.class.unmanaged
+        if s and !property.class.unmanaged
           @managed = true
           break
         end
@@ -1053,7 +1053,7 @@ class Type
   # @return [Puppet::Resource] array of all property values (mix of types)
   # @raise [fail???] if there is a provider and it is not suitable for the host this is evaluated for.
   def retrieve
-    fail "Provider #{provider.class.name} is not functional on this host" if self.provider.is_a?(Puppet::Provider) and ! provider.class.suitable?
+    fail "Provider #{provider.class.name} is not functional on this host" if self.provider.is_a?(Puppet::Provider) and !provider.class.suitable?
 
     result = Puppet::Resource.new(self.class, title)
 
@@ -1117,7 +1117,7 @@ class Type
     # is the first property, which is important for skipping 'retrieve' on
     # all the properties if the resource is absent.
     ensure_state = false
-    return properties.inject({}) do | prophash, property|
+    return properties.inject({}) do |prophash, property|
       if property.name == :ensure
         ensure_state = property.retrieve
         prophash[property] = ensure_state
@@ -1137,7 +1137,7 @@ class Type
   def noop?
     # If we're not a host_config, we're almost certainly part of
     # Settings, and we want to ignore 'noop'
-    return false if catalog and ! catalog.host_config?
+    return false if catalog and !catalog.host_config?
 
     if defined?(@noop)
       @noop
@@ -1314,7 +1314,7 @@ class Type
       and the second run will log the edit made by Puppet.)"
 
     validate do |list|
-      list = Array(list).collect {|p| p.to_sym}
+      list = Array(list).collect { |p| p.to_sym }
       unless list == [:all]
         list.each do |param|
           next if @resource.class.validattr?(param)
@@ -1584,7 +1584,7 @@ class Type
   # so that if both params are used, those ones win.  It's a hackish
   # solution, but it works.
 
-  newmetaparam(:require, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :NONE}) do
+  newmetaparam(:require, :parent => RelationshipMetaparam, :attributes => { :direction => :in, :events => :NONE }) do
     desc "One or more resources that this resource depends on, expressed as
       [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
@@ -1598,7 +1598,7 @@ class Type
       [the language page on relationships](https://puppet.com/docs/puppet/latest/lang_relationships.html)."
   end
 
-  newmetaparam(:subscribe, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :ALL_EVENTS, :callback => :refresh}) do
+  newmetaparam(:subscribe, :parent => RelationshipMetaparam, :attributes => { :direction => :in, :events => :ALL_EVENTS, :callback => :refresh }) do
     desc "One or more resources that this resource depends on, expressed as
       [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
@@ -1616,7 +1616,7 @@ class Type
       [the language page on relationships](https://puppet.com/docs/puppet/latest/lang_relationships.html)."
   end
 
-  newmetaparam(:before, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :NONE}) do
+  newmetaparam(:before, :parent => RelationshipMetaparam, :attributes => { :direction => :out, :events => :NONE }) do
     desc "One or more resources that depend on this resource, expressed as
       [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
@@ -1630,7 +1630,7 @@ class Type
       [the language page on relationships](https://puppet.com/docs/puppet/latest/lang_relationships.html)."
   end
 
-  newmetaparam(:notify, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :ALL_EVENTS, :callback => :refresh}) do
+  newmetaparam(:notify, :parent => RelationshipMetaparam, :attributes => { :direction => :out, :events => :ALL_EVENTS, :callback => :refresh }) do
     desc "One or more resources that depend on this resource, expressed as
       [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
@@ -1869,7 +1869,7 @@ class Type
         # its indentation with scrub. But we don't need to manually scrub the
         # provider's doc string, since markdown_definitionlist sanitizes its inputs.
         scrub(@doc) + "Available providers are:\n\n" + parenttype.providers.sort_by(&:to_s).collect { |i|
-          markdown_definitionlist( i, scrub(parenttype().provider(i).doc) )
+          markdown_definitionlist(i, scrub(parenttype().provider(i).doc))
         }.join
       end
 
@@ -1885,7 +1885,7 @@ class Type
         provider_class = provider_class.class.name if provider_class.is_a?(Puppet::Provider)
 
         unless @resource.class.provider(provider_class)
-          raise ArgumentError, _("Invalid %{resource} provider '%{provider_class}'") % { resource: @resource.class.name, provider_class: provider_class}
+          raise ArgumentError, _("Invalid %{resource} provider '%{provider_class}'") % { resource: @resource.class.name, provider_class: provider_class }
         end
       end
 

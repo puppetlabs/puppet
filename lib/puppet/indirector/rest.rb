@@ -50,7 +50,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   # body, decompressed if necessary
   def parse_response(response)
     if response['content-type']
-      [ response['content-type'].gsub(/\s*;.*$/, ''), response.body ]
+      [response['content-type'].gsub(/\s*;.*$/, ''), response.body]
     else
       raise _("No content type in http response; cannot parse")
     end

@@ -328,7 +328,7 @@ module Puppet::Util::Windows::Security
     isownergroup = sd.owner == sd.group
 
     # caller is NOT managing SYSTEM by using group or owner, so set to FULL
-    if ! [sd.owner, sd.group].include? well_known_system_sid
+    if ![sd.owner, sd.group].include? well_known_system_sid
       # we don't check S_ISYSTEM_MISSING bit, but automatically carry over existing SYSTEM perms
       # by default set SYSTEM perms to full
       system_allow = FILE::FILE_ALL_ACCESS
@@ -387,7 +387,7 @@ module Puppet::Util::Windows::Security
 
     # if any ACE allows write, then clear readonly bit, but do this before we overwrite
     # the DACl and lose our ability to set the attribute
-    if ((owner_allow | group_allow | other_allow ) & FILE::FILE_WRITE_DATA) == FILE::FILE_WRITE_DATA
+    if ((owner_allow | group_allow | other_allow) & FILE::FILE_WRITE_DATA) == FILE::FILE_WRITE_DATA
       FILE.remove_attributes(path, FILE::FILE_ATTRIBUTE_READONLY)
     end
 

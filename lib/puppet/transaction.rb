@@ -256,7 +256,7 @@ class Puppet::Transaction
 
     if provider_class == resource.class.defaultprovider
       providerless_resources = resources_by_provider(resource.type, nil)
-      providerless_resources.values.each {|res| res.provider = provider_class.name}
+      providerless_resources.values.each { |res| res.provider = provider_class.name }
       resources.merge! providerless_resources
     end
 
@@ -355,7 +355,7 @@ class Puppet::Transaction
 
   # Should we ignore tags?
   def ignore_tags?
-    ! @catalog.host_config?
+    !@catalog.host_config?
   end
 
   def resources_by_provider(type_name, provider_name)
@@ -407,7 +407,7 @@ class Puppet::Transaction
       resource.debug "Skipping with skip tags #{skip_tags.join(", ")}"
     elsif missing_tags?(resource)
       resource.debug "Not tagged with #{tags.join(", ")}"
-    elsif ! scheduled?(resource)
+    elsif !scheduled?(resource)
       resource.debug "Not scheduled"
     elsif failed_dependencies?(resource)
       # When we introduced the :whit into the graph, to reduce the combinatorial

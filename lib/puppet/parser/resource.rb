@@ -201,7 +201,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   # if we ever receive a parameter named 'tag', set
   # the resource tags with its value.
   def set_parameter(param, value = nil)
-    if ! param.is_a?(Puppet::Parser::Resource::Param)
+    if !param.is_a?(Puppet::Parser::Resource::Param)
       param = param.name if param.is_a?(Puppet::Pops::Resource::Param)
       param = Puppet::Parser::Resource::Param.new(
         :name => param, :value => value, :source => self.source
@@ -224,7 +224,7 @@ class Puppet::Parser::Resource < Puppet::Resource
         case param.name
         when :before, :subscribe, :notify, :require
           if value.is_a?(Array)
-            value = value.flatten.reject {|v| v.nil? || :undef == v }
+            value = value.flatten.reject { |v| v.nil? || :undef == v }
           end
           result[param.name] = value
         else

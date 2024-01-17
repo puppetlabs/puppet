@@ -94,14 +94,14 @@ Puppet::Functions.create_function(:filter) do
   end
 
   def filter_Hash_1(hash)
-    result = hash.select {|x, y| yield([x, y]) }
+    result = hash.select { |x, y| yield([x, y]) }
     # Ruby 1.8.7 returns Array
     result = Hash[result] unless result.is_a? Hash
     result
   end
 
   def filter_Hash_2(hash)
-    result = hash.select {|x, y| yield(x, y) }
+    result = hash.select { |x, y| yield(x, y) }
     # Ruby 1.8.7 returns Array
     result = Hash[result] unless result.is_a? Hash
     result
@@ -123,7 +123,7 @@ Puppet::Functions.create_function(:filter) do
     enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
     if enum.hash_style?
       result = {}
-      enum.each {| k, v| result[k] = v if yield(k, v) }
+      enum.each { |k, v| result[k] = v if yield(k, v) }
       result
     else
       result = []

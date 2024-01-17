@@ -116,7 +116,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       * 'pn' is the Puppet Extended S-Expression Notation.
       * 'json' outputs the same graph as 'pn' but with JSON syntax.
 
-      The output will be "pretty printed" when the option --pretty is given together with --format 'pn' or 'json'. 
+      The output will be "pretty printed" when the option --pretty is given together with --format 'pn' or 'json'.
       This option has no effect on the 'old' format.
 
       The command accepts one or more templates (.epp) files, or an -e followed by the template
@@ -174,7 +174,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       if options[:e]
         buffer.print dump_parse(options[:e], 'command-line-string', options, false)
       elsif args.empty?
-        if ! STDIN.tty?
+        if !STDIN.tty?
           buffer.print dump_parse(STDIN.read, 'stdin', options, false)
         else
           raise Puppet::Error, _("No input to parse given on command line or stdin")
@@ -342,7 +342,7 @@ Puppet::Face.define(:epp, '0.0.1') do
         if options[:e]
           buffer.print render_inline(options[:e], compiler, options)
         elsif args.empty?
-          if ! STDIN.tty?
+          if !STDIN.tty?
             buffer.print render_inline(STDIN.read, compiler, options)
           else
             raise Puppet::Error, _("No input to process given on command line or stdin")

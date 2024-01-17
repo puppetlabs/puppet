@@ -60,9 +60,9 @@ module Puppet
         This property behaves differently depending on the platform;
         wherever possible, it relies on local tools to enable or disable
         a given service. Default values depend on the platform.
-        
+
         If you don't specify a value for the `enable` attribute, Puppet leaves
-        that aspect of the service alone and your operating system determines 
+        that aspect of the service alone and your operating system determines
         the behavior."
 
       newvalue(:true, :event => :service_enabled) do
@@ -305,7 +305,7 @@ module Puppet
 
     validate do
       if @parameters[:logonpassword] && @parameters[:logonaccount].nil?
-        raise Puppet::Error.new(_"The 'logonaccount' parameter is mandatory when setting 'logonpassword'.")
+        raise Puppet::Error.new(_("The 'logonaccount' parameter is mandatory when setting 'logonpassword'."))
       end
     end
   end

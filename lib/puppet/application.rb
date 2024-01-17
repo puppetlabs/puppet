@@ -109,7 +109,7 @@ class Application
   require_relative '../puppet/util'
   include Puppet::Util
 
-  DOCPATTERN = ::File.expand_path(::File.dirname(__FILE__) + "/util/command_line/*" )
+  DOCPATTERN = ::File.expand_path(::File.dirname(__FILE__) + "/util/command_line/*")
   CommandLineArgs = Struct.new(:subcommand_name, :args)
 
   @loader = Puppet::Util::Autoload.new(self, 'puppet/application')
@@ -178,7 +178,7 @@ class Application
 
     # used to declare code that handle an option
     def option(*options, &block)
-      long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1' ).tr('-', '_')
+      long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1').tr('-', '_')
       fname = "handle_#{long}".intern
       if (block_given?)
         define_method(fname, &block)
@@ -287,7 +287,7 @@ class Application
       return @run_mode if @run_mode and not mode_name
 
       require_relative '../puppet/util/run_mode'
-      @run_mode = Puppet::Util::RunMode[ mode_name || Puppet.settings.preferred_run_mode ]
+      @run_mode = Puppet::Util::RunMode[mode_name || Puppet.settings.preferred_run_mode]
     end
 
     # Sets environment_mode name. When acting as a compiler, the environment mode
@@ -501,7 +501,7 @@ class Application
   #   to log. Intended to be passed to super by subclasses.
   # @return [void]
   # @api public
-  def log_runtime_environment(extra_info=nil)
+  def log_runtime_environment(extra_info = nil)
     runtime_info = {
       'puppet_version' => Puppet.version,
       'ruby_version' => RUBY_VERSION,
@@ -514,7 +514,7 @@ class Application
     runtime_info['default_encoding'] = Encoding.default_external
     runtime_info.merge!(extra_info) unless extra_info.nil?
 
-    Puppet.debug 'Runtime environment: ' + runtime_info.map{|k, v| k + '=' + v.to_s}.join(', ')
+    Puppet.debug 'Runtime environment: ' + runtime_info.map { |k, v| k + '=' + v.to_s }.join(', ')
   end
 
   # Options defined with the `option` method are parsed from settings and the command line.

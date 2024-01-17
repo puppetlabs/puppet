@@ -33,7 +33,7 @@ class Puppet::Parser::Compiler
       raise(Puppet::Error, errmsg.join(' '))
     end
 
-    new(node, :code_id => code_id).compile {|resulting_catalog| resulting_catalog.to_resource }
+    new(node, :code_id => code_id).compile { |resulting_catalog| resulting_catalog.to_resource }
   rescue Puppet::ParseErrorWithIssue => detail
     detail.node = node.name
     Puppet.log_exception(detail)
@@ -116,13 +116,13 @@ class Puppet::Parser::Compiler
   def_delegator :@catalog, :classes, :classlist
 
   def with_context_overrides(description = '', &block)
-    Puppet.override( @context_overrides , description, &block)
+    Puppet.override(@context_overrides, description, &block)
   end
 
   # Compiler our catalog.  This mostly revolves around finding and evaluating classes.
   # This is the main entry into our catalog.
   def compile
-    Puppet.override( @context_overrides , _("For compiling %{node}") % { node: node.name }) do
+    Puppet.override(@context_overrides, _("For compiling %{node}") % { node: node.name }) do
       @catalog.environment_instance = environment
 
       # Set the client's parameters into the top scope.
@@ -186,7 +186,7 @@ class Puppet::Parser::Compiler
   # parameters won't conflict even if the class has already been included.
   def evaluate_node_classes
     if @node.classes.is_a? Hash
-      classes_with_params, classes_without_params = @node.classes.partition {|_name, params| params and !params.empty?}
+      classes_with_params, classes_without_params = @node.classes.partition { |_name, params| params and !params.empty? }
 
       # The results from Hash#partition are arrays of pairs rather than hashes,
       # so we have to convert to the forms evaluate_classes expects (Hash, and
@@ -350,11 +350,11 @@ class Puppet::Parser::Compiler
           rescue Puppet::Pops::Evaluator::PuppetStopIteration => detail
             # needs to be handled specifically as the error has the file/line/position where this
             # occurred rather than the resource
-            fail(Puppet::Pops::Issues::RUNTIME_ERROR, detail, {:detail => detail.message}, detail)
+            fail(Puppet::Pops::Issues::RUNTIME_ERROR, detail, { :detail => detail.message }, detail)
           rescue Puppet::Error => e
             # PuppetError has the ability to wrap an exception, if so, use the wrapped exception's
             # call stack instead
-            fail(Puppet::Pops::Issues::RUNTIME_ERROR, resource, {:detail => e.message}, e.original || e)
+            fail(Puppet::Pops::Issues::RUNTIME_ERROR, resource, { :detail => e.message }, e.original || e)
           end
         end
         !urs.empty?
@@ -531,7 +531,7 @@ class Puppet::Parser::Compiler
     # It cannot survive the initvars method, and is later reinstated
     # as part of compiling...
     #
-    Puppet.override( @context_overrides , _("For initializing compiler")) do
+    Puppet.override(@context_overrides, _("For initializing compiler")) do
       # THE MAGIC STARTS HERE ! This triggers parsing, loading etc.
       @catalog.version = environment.known_resource_types.version
       @loaders.pre_load

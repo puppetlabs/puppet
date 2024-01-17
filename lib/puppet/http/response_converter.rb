@@ -23,4 +23,3 @@ module Puppet::HTTP::ResponseConverter
     result
   end
 end
-

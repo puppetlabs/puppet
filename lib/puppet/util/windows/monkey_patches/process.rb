@@ -184,7 +184,7 @@ module Process
       raise TypeError unless int_priority.is_a?(Integer)
 
       int = Process.pid if int == 0
-      handle = OpenProcess(PROCESS_SET_INFORMATION, 0 , int)
+      handle = OpenProcess(PROCESS_SET_INFORMATION, 0, int)
 
       if handle == 0
         raise SystemCallError, FFI.errno, "OpenProcess"

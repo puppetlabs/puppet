@@ -24,7 +24,7 @@ class Puppet::Agent
 
   attr_reader :client_class, :client, :should_fork
 
-  def initialize(client_class, should_fork=true)
+  def initialize(client_class, should_fork = true)
     @should_fork = can_fork? && should_fork
     @client_class = client_class
   end
@@ -99,13 +99,13 @@ class Puppet::Agent
               nil
             else
               Puppet.info _("Another puppet instance is already running; --waitforlock flag used, waiting for running instance to finish.")
-              Puppet.info _("Will try again in %{time} seconds.") % {time: Puppet[:waitforlock]}
+              Puppet.info _("Will try again in %{time} seconds.") % { time: Puppet[:waitforlock] }
               sleep Puppet[:waitforlock]
               retry
             end
           rescue RunTimeoutError => detail
             Puppet.log_exception(detail, _("Execution of %{client_class} did not complete within %{runtimeout} seconds and was terminated.") %
-              {client_class: client_class, runtimeout: Puppet[:runtimeout]})
+              { client_class: client_class, runtimeout: Puppet[:runtimeout] })
             nil
           rescue StandardError => detail
             Puppet.log_exception(detail, _("Could not run %{client_class}: %{detail}") % { client_class: client_class, detail: detail })

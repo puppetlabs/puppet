@@ -45,7 +45,7 @@ Puppet::Type.newtype(:file) do
   def self.title_patterns
     # strip trailing slashes from path but allow the root directory, including
     # for example "/" or "C:/"
-    [ [ %r{^(/|.+:/|.*[^/])/*\Z}m, [ [ :path ] ] ] ]
+    [[%r{^(/|.+:/|.*[^/])/*\Z}m, [[:path]]]]
   end
 
   newparam(:path) do
@@ -110,17 +110,17 @@ Puppet::Type.newtype(:file) do
       something like an out-of-band rsync task to synchronize the content on all
       primary servers.
 
-      > **Note**: Enabling and using the backup option, and by extension the 
-        filebucket resource, requires appropriate planning and management to ensure 
-        that sufficient disk space is available for the file backups. Generally, you 
+      > **Note**: Enabling and using the backup option, and by extension the
+        filebucket resource, requires appropriate planning and management to ensure
+        that sufficient disk space is available for the file backups. Generally, you
         can implement this using one of the following two options:
-        - Use a `find` command and `crontab` entry to retain only the last X days 
+        - Use a `find` command and `crontab` entry to retain only the last X days
         of file backups. For example:
-        
+
         ```
         find /opt/puppetlabs/server/data/puppetserver/bucket -type f -mtime +45 -atime +45 -print0 | xargs -0 rm
         ```
-        
+
         - Restrict the directory to a maximum size after which the oldest items are removed.
     EOT
 
@@ -401,7 +401,7 @@ Puppet::Type.newtype(:file) do
   end
 
   # Autorequire the owner and group of the file.
-  {:user => :owner, :group => :group}.each do |type, property|
+  { :user => :owner, :group => :group }.each do |type, property|
     autorequire(type) do
       if @parameters.include?(property)
         # The user/group property automatically converts to IDs
@@ -432,7 +432,7 @@ Puppet::Type.newtype(:file) do
     end
     creator_count += 1 if @parameters.include?(:source)
 
-    self.fail _("You cannot specify more than one of %{creators}") % { creators: CREATORS.collect { |p| p.to_s}.join(", ") } if creator_count > 1
+    self.fail _("You cannot specify more than one of %{creators}") % { creators: CREATORS.collect { |p| p.to_s }.join(", ") } if creator_count > 1
 
     self.fail _("You cannot specify a remote recursion without a source") if !self[:source] && self[:recurse] == :remote
 
@@ -470,7 +470,7 @@ Puppet::Type.newtype(:file) do
 
   # Determine the user to write files as.
   def asuser
-    if self.should(:owner) && ! self.should(:owner).is_a?(Symbol)
+    if self.should(:owner) && !self.should(:owner).is_a?(Symbol)
       writeable = Puppet::Util::SUIDManager.asuser(self.should(:owner)) {
         FileTest.writable?(::File.dirname(self[:path]))
       }
@@ -660,7 +660,7 @@ Puppet::Type.newtype(:file) do
     # REVISIT: is this Windows safe?  AltSeparator?
     mypath = parent_path.split(::File::Separator)
     other_paths = existing_files
-                  .select { |r| (yield r) != parent_path}
+                  .select { |r| (yield r) != parent_path }
                   .collect { |r| (yield r).split(::File::Separator) }
                   .select  { |p| p[0, mypath.length] == mypath }
 
@@ -752,7 +752,7 @@ Puppet::Type.newtype(:file) do
           data.source = "#{source}/#{data.relative_path}"
         end
       end
-      break result if result and ! result.empty? and sourceselect == :first
+      break result if result and !result.empty? and sourceselect == :first
 
       result
     end.flatten.compact
@@ -964,7 +964,7 @@ Puppet::Type.newtype(:file) do
       end
     else
       umask = mode ? 000 : 022
-      Puppet::Util.withumask(umask) { ::File.open(self[:path], 'wb', mode_int ) { |f| property.write(f) if property } }
+      Puppet::Util.withumask(umask) { ::File.open(self[:path], 'wb', mode_int) { |f| property.write(f) if property } }
     end
 
     # make sure all of the modes are actually correct

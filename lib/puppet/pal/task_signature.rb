@@ -31,13 +31,13 @@ module Pal
       if block_given?
         tm = Puppet::Pops::Types::TypeMismatchDescriber.singleton
         error = if params.nil?
-                  tm.describe_mismatch('', params_type, 
+                  tm.describe_mismatch('', params_type,
                                        Puppet::Pops::Types::TypeCalculator
                                          .infer_set(args_hash))
                 else
                   tm.describe_struct_signature(params_type, args_hash)
                     .flatten
-                    .map {|e| e.format }
+                    .map { |e| e.format }
                     .join("\n")
                 end
         yield "Task #{@task.name}:\n#{error}"

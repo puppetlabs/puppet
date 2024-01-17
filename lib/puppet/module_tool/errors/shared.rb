@@ -121,7 +121,7 @@ module Puppet::ModuleTool::Errors
       message = []
       message << _("Could not install module '%{module_name}' (%{version})") % { module_name: @requested_module, version: v(@requested_version) }
       message << _("  No version of '%{module_name}' will satisfy dependencies") % { module_name: @module_name }
-      message << dependency_list.map {|s| "    #{s}".join(",\n")}
+      message << dependency_list.map { |s| "    #{s}".join(",\n") }
       # TRANSLATORS `puppet module install --force` is a command line and should not be translated
       message << _("    Use `puppet module install --force` to install this module anyway")
       message.join("\n")

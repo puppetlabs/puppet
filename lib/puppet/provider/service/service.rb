@@ -67,4 +67,3 @@ Puppet::Type.type(:service).provide :service do
     service_execute(type, cmd, fof)
   end
 end
-

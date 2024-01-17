@@ -7,7 +7,7 @@ require_relative '../puppet'
 # Puppet Resource Types written in Ruby use a meta programmed Ruby Class as the type. Those classes
 # are subtypes of Puppet::Type. Meta data (Pcore/puppet language) based resource types uses instances of
 # a class instead.
-# 
+#
 module Puppet::CompilableResourceType
   # All 3.x resource types implemented in Ruby using Puppet::Type respond true.
   # Other kinds of implementations should reimplement and return false.

@@ -73,7 +73,7 @@ module Puppet
     # Checksums need to invert how changes are printed.
     def change_to_s(currentvalue, newvalue)
       # Our "new" checksum value is provided by the source.
-      source = resource.parameter(:source) 
+      source = resource.parameter(:source)
       tmp = source.checksum if source
       if tmp
         newvalue = tmp
@@ -105,7 +105,7 @@ module Puppet
       end
 
       contents_prop = resource.parameter(:source) || self
-      checksum_insync?(contents_prop, is, !resource[:content].nil?) {|inner| super(inner)}
+      checksum_insync?(contents_prop, is, !resource[:content].nil?) { |inner| super(inner) }
     end
 
     def property_matches?(current, desired)

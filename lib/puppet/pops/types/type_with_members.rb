@@ -41,4 +41,3 @@ class AttrReader
 end
 end
 end
-

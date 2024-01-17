@@ -192,4 +192,3 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     !Puppet::FileSystem.symlink?(file) || Puppet::FileSystem.readlink(file) != "/lib/init/upstart-job"
   end
 end
-

@@ -6,28 +6,28 @@ module Puppet::Parser::Functions
     this returns the first value found (and fails compilation if no values are
     available), but you can configure it to merge multiple values into one, fail
     gracefully, and more.
-    
+
     When looking up a key, Puppet will search up to three tiers of data, in the
     following order:
-    
+
     1. Hiera.
     2. The current environment's data provider.
     3. The indicated module's data provider, if the key is of the form
        `<MODULE NAME>::<SOMETHING>`.
-    
+
     #### Arguments
-    
+
     You must provide the name of a key to look up, and can optionally provide other
     arguments. You can combine these arguments in the following ways:
-    
+
     * `lookup( <NAME>, [<VALUE TYPE>], [<MERGE BEHAVIOR>], [<DEFAULT VALUE>] )`
     * `lookup( [<NAME>], <OPTIONS HASH> )`
     * `lookup( as above ) |$key| { # lambda returns a default value }`
-    
+
     Arguments in `[square brackets]` are optional.
-    
+
     The arguments accepted by `lookup` are as follows:
-    
+
     1. `<NAME>` (string or array) --- The name of the key to look up.
         * This can also be an array of keys. If Puppet doesn't find anything for the
         first key, it will try again with the subsequent ones, only resorting to a
@@ -64,24 +64,24 @@ module Puppet::Parser::Functions
         will check for the requested key in the overrides hash _first;_ if found, it
         returns that value as the _final_ value, ignoring merge behavior. Defaults
         to an empty hash.
-    
+
     Finally, `lookup` can take a lambda, which must accept a single parameter.
     This is yet another way to set a default value for the lookup; if no results are
     found, Puppet will pass the requested key to the lambda and use its result as
     the default value.
-    
+
     #### Merge Behaviors
-    
+
     Puppet lookup uses a hierarchy of data sources, and a given key might have
     values in multiple sources. By default, Puppet returns the first value it finds,
     but it can also continue searching and merge all the values together.
-    
+
     > **Note:** Data sources can use the special `lookup_options` metadata key to
     request a specific merge behavior for a key. The `lookup` function will use that
     requested behavior unless you explicitly specify one.
-    
+
     The valid merge behaviors are:
-    
+
     * `'first'` --- Returns the first value found, with no merging. Puppet lookup's
     default behavior.
     * `'unique'` (called "array merge" in classic Hiera) --- Combines any number of
@@ -106,28 +106,28 @@ module Puppet::Parser::Functions
         merged together. Defaults to `false`.
         * `'merge_hash_arrays'` (boolean) --- Whether to merge hashes within arrays.
         Defaults to `false`.
-    
+
     #### Examples
-    
+
     Look up a key and return the first value found:
-    
+
         lookup('ntp::service_name')
-    
+
     Do a unique merge lookup of class names, then add all of those classes to the
     catalog (like `hiera_include`):
-    
+
         lookup('classes', Array[String], 'unique').include
-    
+
     Do a deep hash merge lookup of user data, but let higher priority sources
     remove values by prefixing them with `--`:
-    
+
         lookup( { 'name'  => 'users',
                   'merge' => {
                     'strategy'        => 'deep',
                     'knockout_prefix' => '--',
                   },
         })
-    
+
   ENDHEREDOC
     Error.is4x('lookup')
   end

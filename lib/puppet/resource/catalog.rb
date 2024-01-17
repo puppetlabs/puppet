@@ -85,11 +85,11 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # Returns [typename, title] when given a String with "Type[title]".
   # Returns [nil, nil] if '[' ']' not detected.
   #
-  def title_key_for_ref( ref )
+  def title_key_for_ref(ref)
     s = ref.index('[')
     e = ref.rindex(']')
     if s && e && e > s
-      a = [ref[0, s], ref[s+1, e-s-1]]
+      a = [ref[0, s], ref[s + 1, e - s - 1]]
     else
       a = [nil, nil]
     end
@@ -119,7 +119,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
         raise ArgumentError, _("Cannot add resource %{resource_1} after %{resource_2} because %{resource_2} is not yet in the catalog") %
                              { resource_1: resource.ref, resource_2: other.ref }
       end
-      add_one_resource(resource, idx+1)
+      add_one_resource(resource, idx + 1)
     end
   end
 
@@ -136,7 +136,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     adjacent(resource, :direction => :in)[0]
   end
 
-  def add_one_resource(resource, idx=-1)
+  def add_one_resource(resource, idx = -1)
     title_key = title_key_for_ref(resource.ref)
     if @resource_table[title_key]
       fail_on_duplicate_type_and_title(resource, title_key)
@@ -167,7 +167,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     # The alias setting logic checks, and does not error if the alias is set to an already set alias
     # for the same resource (i.e. it is ok if alias == title
     explicit_aliases = [resource[:alias]].flatten.compact
-    explicit_aliases.each {| given_alias | self.alias(resource, given_alias) }
+    explicit_aliases.each { |given_alias| self.alias(resource, given_alias) }
 
     # Skip creating uniqueness key alias and checking collisions for non-isomorphic resources.
     return unless resource.respond_to?(:isomorphic?) and resource.isomorphic?
@@ -395,7 +395,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   def resource_refs
-    resource_keys.collect{ |type, name| name.is_a?( String ) ? "#{type}[#{name}]" : nil}.compact
+    resource_keys.collect { |type, name| name.is_a?(String) ? "#{type}[#{name}]" : nil }.compact
   end
 
   def resource_keys
@@ -411,7 +411,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   def self.from_data_hash(data)
     result = new(data['name'], Puppet::Node::Environment::NONE)
 
-    result.tag(*data['tags']) if data['tags'] 
+    result.tag(*data['tags']) if data['tags']
     result.version = data['version'] if data['version']
     result.code_id = data['code_id'] if data['code_id']
     result.catalog_uuid = data['catalog_uuid'] if data['catalog_uuid']
@@ -458,7 +458,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     if recursive_metadata
       result.recursive_metadata = recursive_metadata.inject({}) do |h, (title, source_to_meta_hash)|
         h[title] = source_to_meta_hash.inject({}) do |inner_h, (source, metas)|
-          inner_h[source] = metas.map {|meta| Puppet::FileServing::Metadata.from_data_hash(meta)}
+          inner_h[source] = metas.map { |meta| Puppet::FileServing::Metadata.from_data_hash(meta) }
           inner_h
         end
         h
@@ -472,7 +472,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     metadata_hash = metadata.inject({}) { |h, (k, v)| h[k] = v.to_data_hash; h }
     recursive_metadata_hash = recursive_metadata.inject({}) do |h, (title, source_to_meta_hash)|
       h[title] = source_to_meta_hash.inject({}) do |inner_h, (source, metas)|
-        inner_h[source] = metas.map {|meta| meta.to_data_hash}
+        inner_h[source] = metas.map { |meta| meta.to_data_hash }
         inner_h
       end
       h
@@ -490,8 +490,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       'edges' => edges.map { |e| e.to_data_hash },
       'classes' => classes,
     }.merge(metadata_hash.empty? ?
-      {} : {'metadata' => metadata_hash}).merge(recursive_metadata_hash.empty? ?
-        {} : {'recursive_metadata' => recursive_metadata_hash})
+      {} : { 'metadata' => metadata_hash }).merge(recursive_metadata_hash.empty? ?
+        {} : { 'recursive_metadata' => recursive_metadata_hash })
   end
 
   # Convert our catalog into a RAL catalog.
@@ -512,7 +512,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     # environment set in the catalog (if it is set)
     # See PUP-3755
     if environment_instance
-      Puppet.override({:current_environment => environment_instance}) do
+      Puppet.override({ :current_environment => environment_instance }) do
         to_catalog :to_resource, &block
       end
     else

@@ -43,7 +43,7 @@ class StringConverter
     end
 
     def breaks?
-      is_indenting? && level > 0 && ! first?
+      is_indenting? && level > 0 && !first?
     end
 
     def padding
@@ -89,7 +89,7 @@ class StringConverter
 
     FMT_PATTERN_STR = '^%([\s\[+#0{<(|-]*)([1-9][0-9]*)?(?:\.([0-9]+))?([a-zA-Z])$'
     FMT_PATTERN = Regexp.compile(FMT_PATTERN_STR)
-    DELIMITERS  = [ '[', '{', '(', '<', '|',]
+    DELIMITERS  = ['[', '{', '(', '<', '|',]
     DELIMITER_MAP = {
       '[' => ['[', ']'],
       '{' => ['{', '}'],
@@ -173,7 +173,7 @@ class StringConverter
 
       # drop all formats in lower than is more generic in higher. Lower must never
       # override higher
-      lower = lower.reject { |lk, _| higher.keys.any? { |hk| hk != lk && hk.assignable?(lk) }}
+      lower = lower.reject { |lk, _| higher.keys.any? { |hk| hk != lk && hk.assignable?(lk) } }
 
       merged = (lower.keys + higher.keys).uniq.map do |k|
         [k, merge(lower[k], higher[k])]
@@ -237,7 +237,7 @@ class StringConverter
     # @returns [Array<String>] a tuple with left, right delimiters
     #
     def delimiter_pair(default = StringConverter::DEFAULT_ARRAY_DELIMITERS)
-      DELIMITER_MAP[ @delimiters || @plus ] || default
+      DELIMITER_MAP[@delimiters || @plus] || default
     end
 
     def to_s
@@ -489,10 +489,10 @@ class StringConverter
       # For Array and Hash, the format is given as a Hash where 'format' key is the format for the collection itself
       if Puppet::Pops::Types::PArrayType::DEFAULT.assignable?(value_type)
         # add the format given for the exact type
-        string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => {'format' => string_formats }}
+        string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => string_formats } }
       elsif Puppet::Pops::Types::PHashType::DEFAULT.assignable?(value_type)
         # add the format given for the exact type
-        string_formats = { Puppet::Pops::Types::PHashType::DEFAULT => {'format' => string_formats }}
+        string_formats = { Puppet::Pops::Types::PHashType::DEFAULT => { 'format' => string_formats } }
       else
         # add the format given for the exact type
         string_formats = { value_type => string_formats }
@@ -535,7 +535,7 @@ class StringConverter
       raise ArgumentError, "expected a hash with type to format mappings, got instance of '#{fmt.class}'"
     end
 
-    fmt.reduce({}) do | result, entry|
+    fmt.reduce({}) do |result, entry|
       key, value = entry
       unless key.is_a?(Types::PAnyType)
         raise ArgumentError, "top level keys in the format hash must be data types, got instance of '#{key.class}'"
@@ -555,7 +555,7 @@ class StringConverter
 
   def validate_container_input(fmt)
     if (fmt.keys - FMT_KEYS).size > 0
-      raise ArgumentError, "only #{FMT_KEYS.map {|k| "'#{k}'"}.join(', ')} are allowed in a container format, got #{fmt}"
+      raise ArgumentError, "only #{FMT_KEYS.map { |k| "'#{k}'" }.join(', ')} are allowed in a container format, got #{fmt}"
     end
 
     result                          = Format.new(fmt['format'])
@@ -686,13 +686,13 @@ class StringConverter
     when :d, :x, :X, :o, :b, :B
       # Boolean in numeric form, formated by integer rule
       numeric_bool = val ? 1 : 0
-      string_formats = { Puppet::Pops::Types::PIntegerType::DEFAULT => f}
+      string_formats = { Puppet::Pops::Types::PIntegerType::DEFAULT => f }
       _convert(TypeCalculator.infer_set(numeric_bool), numeric_bool, string_formats, indentation)
 
     when :e, :E, :f, :g, :G, :a, :A
       # Boolean in numeric form, formated by float rule
       numeric_bool = val ? 1.0 : 0.0
-      string_formats = { Puppet::Pops::Types::PFloatType::DEFAULT => f}
+      string_formats = { Puppet::Pops::Types::PFloatType::DEFAULT => f }
       _convert(TypeCalculator.infer_set(numeric_bool), numeric_bool, string_formats, indentation)
 
     when :s
@@ -826,7 +826,7 @@ class StringConverter
       f.alt? ? apply_string_flags(f, puppet_quote(c_val)) : Kernel.format(f.orig_fmt.tr('c', 's'), c_val)
 
     when :C
-      c_val = val.split('::').map {|s| s.capitalize }.join('::')
+      c_val = val.split('::').map { |s| s.capitalize }.join('::')
       f.alt? ? apply_string_flags(f, puppet_quote(c_val)) : Kernel.format(f.orig_fmt.tr('C', 's'), c_val)
 
     when :u
@@ -968,7 +968,7 @@ class StringConverter
       # compute widest run in the array, skip nested arrays and hashes
       # then if size > width, set flag if a break on each element should be performed
       if format.alt? && format.width
-        widest = val.each_with_index.reduce([0]) do | memo, v_i |
+        widest = val.each_with_index.reduce([0]) do |memo, v_i|
           # array or hash breaks
           if is_a_or_h?(v_i[0])
             memo << 0
@@ -998,7 +998,7 @@ class StringConverter
           # if break on each (and breaking will not occur because next is an array or hash)
           # or, if indenting, and previous was an array or hash, then break and continue on next line
           # indented.
-          if (sz_break && !is_a_or_h?(v)) || (format.alt? && i > 0 && is_a_or_h?(val[i-1]) && !is_a_or_h?(v))
+          if (sz_break && !is_a_or_h?(v)) || (format.alt? && i > 0 && is_a_or_h?(val[i - 1]) && !is_a_or_h?(v))
             buf.rstrip! unless buf[-1] == "\n"
             buf << "\n"
             buf << children_indentation.padding
@@ -1047,7 +1047,7 @@ class StringConverter
     string_formats = format.container_string_formats || DEFAULT_CONTAINER_FORMATS
     delims         = format.delimiter_pair(DEFAULT_HASH_DELIMITERS)
 
-    if format.alt? 
+    if format.alt?
       sep = sep.rstrip unless sep[-1] == "\n"
       sep = "#{sep}\n"
     end
@@ -1132,7 +1132,7 @@ class StringConverter
 
   # Maps the inferred type of o to a formatting rule
   def get_format(val_t, format_options)
-    fmt = format_options.find {|k, _| k.assignable?(val_t) }
+    fmt = format_options.find { |k, _| k.assignable?(val_t) }
     return fmt[1] unless fmt.nil?
 
     return Format.new("%s")

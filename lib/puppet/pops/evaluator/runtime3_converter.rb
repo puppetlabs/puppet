@@ -48,7 +48,7 @@ class Runtime3Converter
   # @return [Array] The converted values
   #
   def map_args(args, scope, undef_value)
-    args.map {|a| convert(a, scope, undef_value) }
+    args.map { |a| convert(a, scope, undef_value) }
   end
 
   # Converts a 4x supported value to a 3x value.
@@ -94,13 +94,13 @@ class Runtime3Converter
 
   def convert_Array(o, scope, undef_value)
     ic = @inner_converter
-    o.map {|x| ic.convert(x, scope, undef_value) }
+    o.map { |x| ic.convert(x, scope, undef_value) }
   end
 
   def convert_Hash(o, scope, undef_value)
     result = {}
     ic = @inner_converter
-    o.each {|k, v| result[ic.convert(k, scope, undef_value)] = ic.convert(v, scope, undef_value) }
+    o.each { |k, v| result[ic.convert(k, scope, undef_value)] = ic.convert(v, scope, undef_value) }
     result
   end
 
@@ -209,10 +209,10 @@ class Runtime3FunctionArgumentConverter < Runtime3Converter
     if val3x == :undef
       nil
     elsif val3x.is_a?(Array)
-      val3x.map {|v| convert_return(v) }
+      val3x.map { |v| convert_return(v) }
     elsif val3x.is_a?(Hash)
       hsh = {}
-      val3x.each_pair {|k, v| hsh[convert_return(k)] = convert_return(v)}
+      val3x.each_pair { |k, v| hsh[convert_return(k)] = convert_return(v) }
       hsh
     else
       val3x

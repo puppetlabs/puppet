@@ -29,7 +29,7 @@ class Puppet::Transaction::Persistence
 
   def initialize
     @old_data = {}
-    @new_data = {"resources" => {}}
+    @new_data = { "resources" => {} }
   end
 
   # Obtain the full raw data from the persistence store.

@@ -38,7 +38,7 @@ class Puppet::Util::Reference
                 raise(_("Could not find rst2latex"))
 
     cmd = %{#{rst2latex} /tmp/puppetdoc.txt > /tmp/puppetdoc.tex}
-    Puppet::Util.replace_file("/tmp/puppetdoc.txt") {|f| f.puts text }
+    Puppet::Util.replace_file("/tmp/puppetdoc.txt") { |f| f.puts text }
     # There used to be an attempt to use secure_open / replace_file to secure
     # the target, too, but that did nothing: the race was still here.  We can
     # get exactly the same benefit from running this effort:

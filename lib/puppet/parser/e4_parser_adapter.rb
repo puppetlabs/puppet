@@ -20,7 +20,7 @@ class E4ParserAdapter
   end
 
   def parse(string = nil)
-    self.string= string if string
+    self.string = string if string
     parser = Pops::Parser::EvaluatingParser.singleton
     model =
       if @use == :string

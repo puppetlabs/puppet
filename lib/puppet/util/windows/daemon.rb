@@ -82,8 +82,8 @@ module Puppet::Util::Windows
         ss[:dwControlsAccepted] = 0
       else
         ss[:dwControlsAccepted] =
-          SERVICE_ACCEPT_STOP|SERVICE_ACCEPT_SHUTDOWN|
-          SERVICE_ACCEPT_PAUSE_CONTINUE|SERVICE_ACCEPT_PARAMCHANGE
+          SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN |
+          SERVICE_ACCEPT_PAUSE_CONTINUE | SERVICE_ACCEPT_PARAMCHANGE
       end
 
       # Initialize ss structure.
@@ -155,7 +155,7 @@ module Puppet::Util::Windows
         end
 
         # Args passed to Service.start
-        if(dwArgc > 1)
+        if (dwArgc > 1)
           @@Argv = argv[1..-1]
         else
           @@Argv = nil
@@ -177,11 +177,11 @@ module Puppet::Util::Windows
         SetEvent(@@hStartEvent)
 
         # Main loop for the service.
-        while(WaitForSingleObject(@@hStopEvent, 1000) != WAIT_OBJECT_0) do
+        while (WaitForSingleObject(@@hStopEvent, 1000) != WAIT_OBJECT_0) do
         end
 
         # Main loop for the service.
-        while(WaitForSingleObject(@@hStopCompletedEvent, 1000) != WAIT_OBJECT_0) do
+        while (WaitForSingleObject(@@hStopCompletedEvent, 1000) != WAIT_OBJECT_0) do
         end
       ensure
         # Stop the service.
@@ -281,7 +281,7 @@ module Puppet::Util::Windows
 
       thr = Thread.new do
         begin
-          while(WaitForSingleObject(@@hStopEvent, 1000) == WAIT_TIMEOUT)
+          while (WaitForSingleObject(@@hStopEvent, 1000) == WAIT_TIMEOUT)
             # Check to see if anything interesting has been signaled
             case @@waiting_control_code
             when SERVICE_CONTROL_PAUSE

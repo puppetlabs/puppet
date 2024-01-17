@@ -231,9 +231,9 @@ module Puppet
         * OS X 10.8 and higher use salted SHA512 PBKDF2 hashes. When managing passwords
           on these systems, the `salt` and `iterations` attributes need to be specified as
           well as the password.
-        * macOS 10.15 and higher require the salt to be 32-bytes. Since Puppet's user 
+        * macOS 10.15 and higher require the salt to be 32-bytes. Since Puppet's user
           resource requires the value to be hex encoded, the length of the salt's
-          string must be 64. 
+          string must be 64.
         * Windows passwords can be managed only in cleartext, because there is no Windows
           API for setting the password hash.
 
@@ -471,7 +471,7 @@ module Puppet
       groups = obj.shouldorig if obj
       if groups
         groups = groups.collect { |group|
-          if group.is_a?(String) && group =~/^\d+$/
+          if group.is_a?(String) && group =~ /^\d+$/
             Integer(group)
           else
             group
@@ -633,16 +633,16 @@ module Puppet
     end
 
     newproperty(:attributes, :parent => Puppet::Property::KeyValue, :required_features => :manages_aix_lam) do
-      desc "Specify AIX attributes for the user in an array or hash of attribute = value pairs. 
-      
+      desc "Specify AIX attributes for the user in an array or hash of attribute = value pairs.
+
       For example:
-      
+
       ```
       ['minage=0', 'maxage=5', 'SYSTEM=compat']
       ```
-      
-      or 
-    
+
+      or
+
      ```
      attributes => { 'minage' => '0', 'maxage' => '5', 'SYSTEM' => 'compat' }
      ```
@@ -681,7 +681,7 @@ module Puppet
             newer."
 
       munge do |value|
-        if value.is_a?(String) and value =~/^[-0-9]+$/
+        if value.is_a?(String) and value =~ /^[-0-9]+$/
           Integer(value)
         else
           value
@@ -694,7 +694,7 @@ module Puppet
                           :parent => Puppet::Parameter::Boolean) do
       desc "Forces the management of local accounts when accounts are also
             being managed by some other Name Service Switch (NSS). For AIX, refer to the `ia_load_module` parameter.
-            
+
             This option relies on your operating system's implementation of `luser*` commands, such as `luseradd` , and `lgroupadd`, `lusermod`. The `forcelocal` option could behave unpredictably in some circumstances. If the tools it depends on are not available, it might have no effect at all."
       defaultto false
     end
@@ -715,7 +715,7 @@ module Puppet
       desc "Whether to purge authorized SSH keys for this user if they are not managed
         with the `ssh_authorized_key` resource type. This parameter is a noop if the
         ssh_authorized_key type is not available.
-        
+
         Allowed values are:
 
         * `false` (default) --- don't purge SSH keys for this user.
@@ -733,11 +733,11 @@ module Puppet
       newvalues(:true, :false)
 
       validate do |value|
-        if [ :true, :false ].include? value.to_s.intern
+        if [:true, :false].include? value.to_s.intern
           return
         end
 
-        value = [ value ] if value.is_a?(String)
+        value = [value] if value.is_a?(String)
         if value.is_a?(Array)
           value.each do |entry|
             raise ArgumentError, _("Each entry for purge_ssh_keys must be a string, not a %{klass}") % { klass: entry.class } unless entry.is_a?(String)
@@ -758,10 +758,10 @@ module Puppet
           []
         when :true, true, "true"
           home = homedir
-          home ? [ "#{home}/.ssh/authorized_keys" ] : []
+          home ? ["#{home}/.ssh/authorized_keys"] : []
         else
           # value can be a string or array - munge each value
-          [ value ].flatten.map do |entry|
+          [value].flatten.map do |entry|
             authorized_keys_path(entry)
           end.compact
         end

@@ -116,7 +116,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
       # Replace the list of packages with a version string consisting of packages that make up the group
       groups.each do |name, packages|
-        groups[name] = packages.sort.map {|package| "#{package} #{installed_packages[package]}"}.join ', '
+        groups[name] = packages.sort.map { |package| "#{package} #{installed_packages[package]}" }.join ', '
       end
     rescue Puppet::ExecutionFailure
       # pacman returns an expected non-zero exit code when the filter name is not a group
@@ -137,7 +137,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     resource_name = @resource[:name]
 
     # If target is a group, construct the group version
-    return pacman("-Sp", "--print-format", "%n %v", resource_name).lines.map{ |line| line.chomp }.sort.join(', ') if self.class.group?(resource_name)
+    return pacman("-Sp", "--print-format", "%n %v", resource_name).lines.map { |line| line.chomp }.sort.join(', ') if self.class.group?(resource_name)
 
     # Start by querying with pacman first
     # If that fails, retry using yaourt against the AUR

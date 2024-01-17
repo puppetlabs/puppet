@@ -51,7 +51,7 @@ module Puppet
         # passed in a hash for our property's should value, the should_value
         # parameter will be a single element array so we just extract our value
         # directly.
-        if ! @should.empty? && @should.first.is_a?(Hash)
+        if !@should.empty? && @should.first.is_a?(Hash)
           return @should.first
         end
 
@@ -88,7 +88,7 @@ module Puppet
         # changed_or_new_keys once (since this property will only be synced once).
         #
         @changed_or_new_keys ||= should_value.keys.select do |key|
-          ! current.key?(key) || current[key] != should_value[key]
+          !current.key?(key) || current[key] != should_value[key]
         end
 
         should_value
@@ -137,7 +137,7 @@ module Puppet
         next if value.is_a?(Hash)
 
         unless value.include?("#{separator}")
-          raise ArgumentError, _("Key/value pairs must be separated by '%{separator}'") % {separator: separator}
+          raise ArgumentError, _("Key/value pairs must be separated by '%{separator}'") % { separator: separator }
         end
       end
 

@@ -359,7 +359,7 @@ class Puppet::Node::Environment
 
           warn_about_mistaken_path(path, name)
           if not seen_modules[name]
-            module_references << {:name => name, :path => File.join(path, name)}
+            module_references << { :name => name, :path => File.join(path, name) }
             seen_modules[name] = true
           end
         end
@@ -597,7 +597,7 @@ class Puppet::Node::Environment
       elsif File.directory?(file)
         # JRuby does not properly perform Dir.glob operations with wildcards, (see PUP-11788 and https://github.com/jruby/jruby/issues/7836).
         # We sort the results because Dir.glob order is inconsistent in Ruby < 3 (see PUP-10115).
-        parse_results = Puppet::FileSystem::PathPattern.absolute(File.join(file, '**/*')).glob.select {|globbed_file| globbed_file.end_with?('.pp')}.sort.map do | file_to_parse |
+        parse_results = Puppet::FileSystem::PathPattern.absolute(File.join(file, '**/*')).glob.select { |globbed_file| globbed_file.end_with?('.pp') }.sort.map do |file_to_parse|
           parser.file = file_to_parse
           parser.parse
         end

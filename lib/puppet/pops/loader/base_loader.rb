@@ -176,4 +176,3 @@ class BaseLoader < Loader
 end
 end
 end
-

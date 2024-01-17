@@ -6,7 +6,7 @@
 #
 class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   def dump_Array o
-    o.collect {|e| do_dump(e) }
+    o.collect { |e| do_dump(e) }
   end
 
   def dump_LiteralFloat o
@@ -61,7 +61,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     o.operations do |ao|
       result << :break << do_dump(ao)
     end
-    result += [:dedent, :dedent ]
+    result += [:dedent, :dedent]
     result
   end
 
@@ -122,11 +122,11 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_LiteralList o
-    ["[]"] + o.values.collect {|x| do_dump(x)}
+    ["[]"] + o.values.collect { |x| do_dump(x) }
   end
 
   def dump_LiteralHash o
-    ["{}"] + o.entries.collect {|x| do_dump(x)}
+    ["{}"] + o.entries.collect { |x| do_dump(x) }
   end
 
   def dump_KeyedEntry o
@@ -143,7 +143,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_LambdaExpression o
     result = ["lambda"]
-    result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    result << ["parameters"] + o.parameters.collect { |p| do_dump(p) } if o.parameters.size() > 0
     result << ['return_type', do_dump(o.return_type)] unless o.return_type.nil?
     if o.body
       result << do_dump(o.body)
@@ -200,14 +200,14 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_BlockExpression o
     result = ["block", :indent]
-    o.statements.each {|x| result << :break; result << do_dump(x) }
+    o.statements.each { |x| result << :break; result << do_dump(x) }
     result << :dedent << :break
     result
   end
 
   # Interpolated strings are shown as (cat seg0 seg1 ... segN)
   def dump_ConcatenatedString o
-    ["cat"] + o.segments.collect {|x| do_dump(x)}
+    ["cat"] + o.segments.collect { |x| do_dump(x) }
   end
 
   def dump_HeredocExpression(o)
@@ -217,7 +217,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   def dump_HostClassDefinition o
     result = ["class", o.name]
     result << ["inherits", o.parent_class] if o.parent_class
-    result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    result << ["parameters"] + o.parameters.collect { |p| do_dump(p) } if o.parameters.size() > 0
     if o.body
       result << do_dump(o.body)
     else
@@ -228,7 +228,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_PlanDefinition o
     result = ["plan", o.name]
-    result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    result << ["parameters"] + o.parameters.collect { |p| do_dump(p) } if o.parameters.size() > 0
     if o.body
       result << do_dump(o.body)
     else
@@ -239,7 +239,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_NodeDefinition o
     result = ["node"]
-    result << ["matches"] + o.host_matches.collect {|m| do_dump(m) }
+    result << ["matches"] + o.host_matches.collect { |m| do_dump(m) }
     result << ["parent", do_dump(o.parent)] if o.parent
     if o.body
       result << do_dump(o.body)
@@ -252,7 +252,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   def dump_NamedDefinition o
     # the nil must be replaced with a string
     result = [nil, o.name]
-    result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    result << ["parameters"] + o.parameters.collect { |p| do_dump(p) } if o.parameters.size() > 0
     if o.body
       result << do_dump(o.body)
     else
@@ -263,7 +263,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_FunctionDefinition o
     result = ['function', o.name]
-    result << ['parameters'] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    result << ['parameters'] + o.parameters.collect { |p| do_dump(p) } if o.parameters.size() > 0
     result << ['return_type', do_dump(o.return_type)] unless o.return_type.nil?
     if o.body
       result << do_dump(o.body)
@@ -281,7 +281,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_ResourceOverrideExpression o
     form = o.form == 'regular' ? '' : o.form + '-'
-    result = [form+'override', do_dump(o.resources), :indent]
+    result = [form + 'override', do_dump(o.resources), :indent]
     o.operations.each do |p|
       result << :break << do_dump(p)
     end
@@ -290,7 +290,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_ReservedWord o
-    [ 'reserved', o.word ]
+    ['reserved', o.word]
   end
 
   # Produces parameters as name, or (= name value)
@@ -343,7 +343,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   #
   def dump_CallNamedFunctionExpression o
     result = [o.rval_required ? "call" : "invoke", do_dump(o.functor_expr)]
-    o.arguments.collect {|a| result << do_dump(a) }
+    o.arguments.collect { |a| result << do_dump(a) }
     result << do_dump(o.lambda) if o.lambda
     result
   end
@@ -356,7 +356,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_CallMethodExpression o
     result = [o.rval_required ? "call-method" : "invoke-method", do_dump(o.functor_expr)]
-    o.arguments.collect {|a| result << do_dump(a) }
+    o.arguments.collect { |a| result << do_dump(a) }
     result << do_dump(o.lambda) if o.lambda
     result
   end
@@ -371,8 +371,8 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_CaseOption o
     result = ["when"]
-    result << o.values.collect {|x| do_dump(x) }
-    result << ["then", do_dump(o.then_expr) ]
+    result << o.values.collect { |x| do_dump(x) }
+    result << ["then", do_dump(o.then_expr)]
     result
   end
 
@@ -399,7 +399,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_ResourceDefaultsExpression o
     form = o.form == 'regular' ? '' : o.form + '-'
-    result = [form+'resource-defaults', do_dump(o.type_ref), :indent]
+    result = [form + 'resource-defaults', do_dump(o.type_ref), :indent]
     o.operations.each do |p|
       result << :break << do_dump(p)
     end
@@ -409,7 +409,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_ResourceExpression o
     form = o.form == 'regular' ? '' : o.form + '-'
-    result = [form+'resource', do_dump(o.type_name), :indent]
+    result = [form + 'resource', do_dump(o.type_name), :indent]
     o.bodies.each do |b|
       result << :break << do_dump(b)
     end
@@ -418,7 +418,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_SelectorExpression o
-    ["?", do_dump(o.left_expr)] + o.selectors.collect {|x| do_dump(x) }
+    ["?", do_dump(o.left_expr)] + o.selectors.collect { |x| do_dump(x) }
   end
 
   def dump_SelectorEntry o

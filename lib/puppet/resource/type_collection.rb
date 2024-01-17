@@ -83,11 +83,11 @@ class Puppet::Resource::TypeCollection
   end
 
   # Replaces the known settings with a new instance (that must be named 'settings').
-  # This is primarily needed for testing purposes. Also see PUP-5954 as it makes 
+  # This is primarily needed for testing purposes. Also see PUP-5954 as it makes
   # it illegal to merge classes other than the '' (main) class. Prior to this change
   # settings where always merged rather than being defined from scratch for many testing scenarios
   # not having a complete side effect free setup for compilation.
-  # 
+  #
   def replace_settings(instance)
     @hostclasses['settings'] = instance
   end
@@ -196,7 +196,7 @@ class Puppet::Resource::TypeCollection
 
         result = send(type, fqname)
         unless result
-          if @notfound[ fqname ] && Puppet[ :ignoremissingtypes ]
+          if @notfound[fqname] && Puppet[:ignoremissingtypes]
             # do not try to autoload if we already tried and it wasn't conclusive
             # as this is a time consuming operation. Warn the user.
             # Check first if debugging is on since the call to debug_once is expensive
@@ -206,7 +206,7 @@ class Puppet::Resource::TypeCollection
           else
             fqname = munge_name(fqname)
             result = loader.try_load_fqname(type, fqname)
-            @notfound[ fqname ] = result.nil?
+            @notfound[fqname] = result.nil?
           end
         end
         result

@@ -147,7 +147,7 @@ class Puppet::Resource
 
   def self.value_to_json_data(value)
     if value.is_a?(Array)
-      value.map{|v| value_to_json_data(v) }
+      value.map { |v| value_to_json_data(v) }
     elsif value.is_a?(Hash)
       result = {}
       value.each_pair { |k, v| result[value_to_json_data(k)] = value_to_json_data(v) }
@@ -224,11 +224,11 @@ class Puppet::Resource
   end
 
   def include?(parameter)
-    super || parameters.keys.include?( parameter_name(parameter) )
+    super || parameters.keys.include?(parameter_name(parameter))
   end
 
   %w{exported virtual strict}.each do |m|
-    define_method(m+"?") do
+    define_method(m + "?") do
       self.send(m)
     end
   end
@@ -503,8 +503,8 @@ class Puppet::Resource
   # Convert our resource to a RAL resource instance. Creates component
   # instances for resource types that are not of a compilable_type kind. In case
   # the resource doesn’t exist and it’s compilable_type kind, raise an error.
-  # There are certain cases where a resource won't be in a catalog, such as 
-  # when we create a resource directly by using Puppet::Resource.new(...), so we 
+  # There are certain cases where a resource won't be in a catalog, such as
+  # when we create a resource directly by using Puppet::Resource.new(...), so we
   # must check its kind before deciding whether the catalog format is of an older
   # version or not.
   def to_ral
@@ -525,7 +525,7 @@ class Puppet::Resource
     # this is potential namespace conflict
     # between the notion of an "indirector name"
     # and a "resource name"
-    [ type, title ].join('/')
+    [type, title].join('/')
   end
 
   def missing_arguments
@@ -584,11 +584,11 @@ class Puppet::Resource
 
   def self.extract_type_and_title(argtype, argtitle)
     if (argtype.nil? || argtype == :component || argtype == :whit) &&
-       argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                  then [ $1, $2 ]
+       argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                  then [$1, $2]
     elsif argtitle.nil? && argtype.is_a?(String) &&
-          argtype =~ /^([^\[\]]+)\[(.+)\]$/m                   then [ $1,                 $2            ]
-    elsif argtitle                                             then [ argtype,            argtitle      ]
-    elsif argtype.is_a?(Puppet::Type)                          then [ argtype.class.name, argtype.title ]
+          argtype =~ /^([^\[\]]+)\[(.+)\]$/m                   then [$1,                 $2]
+    elsif argtitle                                             then [argtype,            argtitle]
+    elsif argtype.is_a?(Puppet::Type)                          then [argtype.class.name, argtype.title]
     else  raise ArgumentError, _("No title provided and %{type} is not a valid resource reference") % { type: argtype.inspect } # rubocop:disable Lint/ElseLayout
     end
   end
@@ -640,7 +640,7 @@ class Puppet::Resource
     type = resource_type
     if type.respond_to?(:title_patterns) && !type.title_patterns.nil?
       type.title_patterns.each do |regexp, symbols_and_lambdas|
-        captures = regexp.match(title.to_s)  
+        captures = regexp.match(title.to_s)
         if captures
           symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda, capture|
             symbol, proc = symbol_and_lambda

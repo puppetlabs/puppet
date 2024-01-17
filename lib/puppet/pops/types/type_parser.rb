@@ -406,7 +406,7 @@ class TypeParser
         else
           tps = interpret_any(@parser.parse_string(type_str[param_start..-1]).model, context)
           raise_invalid_parameters_error(type.to_s, '1', tps.size) unless tps.size == 1
-          type = type_str[0..param_start-1]
+          type = type_str[0..param_start - 1]
           parameters = [type] + tps
         end
       end
@@ -457,13 +457,13 @@ class TypeParser
         assert_range_parameter(ast, parameters[-1])
         max = parameters[-1]
         max = max == :default ? nil : max
-        parameters = parameters[0, length-2]
+        parameters = parameters[0, length - 2]
         size_type = TypeFactory.range(min, max)
       elsif TypeFactory.is_range_parameter?(parameters[-1])
         min = parameters[-1]
         min = (min == :default || min == 'default') ? 0 : min
         max = nil
-        parameters = parameters[0, length-1]
+        parameters = parameters[0, length - 1]
         size_type = TypeFactory.range(min, max)
       end
       TypeFactory.tuple(parameters, size_type)

@@ -10,7 +10,7 @@ class Puppet::Pops::Functions::Dispatcher
 
   # @api private
   def initialize()
-    @dispatchers = [ ]
+    @dispatchers = []
   end
 
   # Answers if dispatching has been defined
@@ -62,7 +62,7 @@ class Puppet::Pops::Functions::Dispatcher
     # make a copy to make sure it can be contained by someone else (even if it is not contained here, it
     # should be treated as immutable).
     #
-    callables = dispatchers.map { | dispatch | dispatch.type }
+    callables = dispatchers.map { |dispatch| dispatch.type }
 
     # multiple signatures, produce a Variant type of Callable1-n (must copy them)
     # single signature, produce single Callable

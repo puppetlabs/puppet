@@ -7,7 +7,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   commands :pkgin => "pkgin"
 
-  defaultfor 'os.name' => [ :smartos, :netbsd ]
+  defaultfor 'os.name' => [:smartos, :netbsd]
 
   has_feature :installable, :uninstallable, :upgradeable, :versionable
 
@@ -48,7 +48,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
       end
     end
 
-    packages.first.update( :ensure => :absent )
+    packages.first.update(:ensure => :absent)
   end
 
   def parse_pkgsearch_line
@@ -59,8 +59,8 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
     # Remove the last three lines of help text.
     packages.slice!(-4, 4)
 
-    pkglist = packages.map{ |line| self.class.parse_pkgin_line(line) }
-    pkglist.select{ |package| resource[:name] == package[:name] }
+    pkglist = packages.map { |line| self.class.parse_pkgin_line(line) }
+    pkglist.select { |package| resource[:name] == package[:name] }
   end
 
   def install
@@ -76,7 +76,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
   end
 
   def latest
-    package = parse_pkgsearch_line.detect{ |p| p[:status] == '<' }
+    package = parse_pkgsearch_line.detect { |p| p[:status] == '<' }
     return properties[:ensure] if not package
 
     return package[:ensure]

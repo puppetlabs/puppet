@@ -10,7 +10,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
 
   has_features :manages_homedir, :manages_passwords, :manages_roles
 
-  def initialize(value={})
+  def initialize(value = {})
     super(value)
     @deleted = false
   end
@@ -141,7 +141,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
     # populated with a password (as is the case with `puppet resource user`)
     return nil if @resource[:password].nil?
 
-    user.password_is?( @resource[:password] ) ? @resource[:password] : nil
+    user.password_is?(@resource[:password]) ? @resource[:password] : nil
   end
 
   def password=(value)

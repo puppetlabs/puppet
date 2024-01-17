@@ -95,7 +95,7 @@ module Puppet::ModuleTool
             raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
           elsif results[:requested_version] != :latest
             requested = Puppet::Module.parse_range(results[:requested_version])
-            unless available_versions.any? {|m| requested.include? m.version}
+            unless available_versions.any? { |m| requested.include? m.version }
               raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
             end
           end
@@ -202,7 +202,7 @@ module Puppet::ModuleTool
           results[:result] = :success
           results[:base_dir] = releases.first.install_dir
           results[:affected_modules] = releases
-          results[:graph] = [ build_install_graph(releases.first, releases) ]
+          results[:graph] = [build_install_graph(releases.first, releases)]
         rescue VersionAlreadyInstalledError => e
           results[:result] = (e.newer_versions.empty? ? :noop : :failure)
           results[:error] = { :oneline => e.message, :multiline => e.multiline }

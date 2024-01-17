@@ -94,7 +94,7 @@ module Interpolation
           else
             scope = lookup_invocation.scope
             val = nil
-            if (default_key_exists = lookup_invocation.default_values.include?(root_key) )
+            if (default_key_exists = lookup_invocation.default_values.include?(root_key))
               catch(:undefined_variable) { val = scope[root_key] }
             else
               val = scope[root_key]

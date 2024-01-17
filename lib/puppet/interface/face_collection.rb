@@ -11,9 +11,9 @@ module Puppet::Interface::FaceCollection
       names = @loader.files_to_load(Puppet.lookup(:current_environment)).map do |fn|
         ::File.basename(fn, '.rb')
       end.uniq
-      names.each {|name| self[name, :current]}
+      names.each { |name| self[name, :current] }
     end
-    @faces.keys.select {|name| @faces[name].length > 0 }
+    @faces.keys.select { |name| @faces[name].length > 0 }
   end
 
   def self.[](name, version)
@@ -34,7 +34,7 @@ module Puppet::Interface::FaceCollection
       # ...we need to search for it bound to an o{lder,ther} version.  Since
       # we load all actions when the face is first references, this will be in
       # memory in the known set of versions of the face.
-      (@faces[name].keys - [ :current ]).sort.reverse_each do |vers|
+      (@faces[name].keys - [:current]).sort.reverse_each do |vers|
         action = @faces[name][vers].get_action(action_name)
         break if action
       end
@@ -48,7 +48,7 @@ module Puppet::Interface::FaceCollection
     return nil unless @faces.has_key? name
     return @faces[name][:current] if pattern == :current
 
-    versions = @faces[name].keys - [ :current ]
+    versions = @faces[name].keys - [:current]
     range = pattern.is_a?(SemanticPuppet::Version) ? SemanticPuppet::VersionRange.new(pattern, pattern) : SemanticPuppet::VersionRange.parse(pattern)
     found = find_matching(range, versions)
     return @faces[name][found]

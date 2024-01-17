@@ -8,15 +8,15 @@ class Puppet::Settings::ServerListSetting < Puppet::Settings::ArraySetting
   def print(value)
     if value.is_a?(Array)
       # turn into a string
-      value.map {|item| item.join(":") }.join(",")
+      value.map { |item| item.join(":") }.join(",")
     else
       value
     end
   end
-  
+
   def munge(value)
-    servers = super 
-    servers.map! { |server| 
+    servers = super
+    servers.map! { |server|
       case server
       when String
         server.split(':')

@@ -125,7 +125,7 @@ class Puppet::Graph::SimpleGraph
       when :children then
         if frame[:children].length > 0 then
           child = frame[:children].shift
-          if ! s[:index][child] then
+          if !s[:index][child] then
             # Never seen, need to recurse.
             frame[:step] = :after_recursion
             frame[:child] = child
@@ -171,7 +171,7 @@ class Puppet::Graph::SimpleGraph
 
     # we usually have a disconnected graph, must walk all possible roots
     vertices.each do |vertex|
-      if ! state[:index][vertex] then
+      if !state[:index][vertex] then
         tarjan vertex, state
       end
     end
@@ -205,7 +205,7 @@ class Puppet::Graph::SimpleGraph
     # Calculate our filtered outbound vertex lists...
     adj = {}
     cycle.each do |vertex|
-      adj[vertex] = adjacent(vertex).select{|s| cycle.member? s}
+      adj[vertex] = adjacent(vertex).select { |s| cycle.member? s }
     end
 
     found = []
@@ -236,7 +236,7 @@ class Puppet::Graph::SimpleGraph
 
     cycles.each do |cycle|
       paths = paths_in_cycle(cycle)
-      message += paths.map{ |path| '(' + path.join(' => ') + ')'}.join('\n') + '\n'
+      message += paths.map { |path| '(' + path.join(' => ') + ')' }.join('\n') + '\n'
     end
 
     if Puppet[:graph] then
@@ -283,7 +283,7 @@ class Puppet::Graph::SimpleGraph
 
     @upstream_from.clear
     @downstream_from.clear
-    (@in_to[v].values+@out_from[v].values).flatten.each { |e| remove_edge!(e) }
+    (@in_to[v].values + @out_from[v].values).flatten.each { |e| remove_edge!(e) }
     @in_to.delete(v)
     @out_from.delete(v)
   end
@@ -334,7 +334,7 @@ class Puppet::Graph::SimpleGraph
   end
 
   def each_edge
-    @in_to.each { |_t, ns| ns.each { |_s, es| es.each { |e| yield e }}}
+    @in_to.each { |_t, ns| ns.each { |_s, es| es.each { |e| yield e } } }
   end
 
   # Remove an edge from our graph.
@@ -342,7 +342,7 @@ class Puppet::Graph::SimpleGraph
     if edge?(e.source, e.target)
       @upstream_from.clear
       @downstream_from.clear
-      @in_to   [e.target].delete e.source if (@in_to   [e.target][e.source] -= [e]).empty?
+      @in_to[e.target].delete e.source if (@in_to[e.target][e.source] -= [e]).empty?
       @out_from[e.source].delete e.target if (@out_from[e.source][e.target] -= [e]).empty?
     end
   end
@@ -378,7 +378,7 @@ class Puppet::Graph::SimpleGraph
   # A different way of walking a tree, and a much faster way than the
   # one that comes with GRATR.
   def tree_from_vertex(start, direction = :out)
-    predecessor={}
+    predecessor = {}
     walk(start, direction) do |parent, child|
       predecessor[child] = parent
     end
@@ -429,7 +429,7 @@ class Puppet::Graph::SimpleGraph
   #   is more important than last-mile efficiency.
   #
   def path_between(f, t)
-    if f==t
+    if f == t
       []
     elsif direct_dependents_of(f).include?(t)
       [edges_between(f, t)]
@@ -454,17 +454,17 @@ class Puppet::Graph::SimpleGraph
     edge_klass = directed? ? DOT::DOTDirectedEdge : DOT::DOTEdge
     vertices.each do |v|
       name = v.ref
-      params = {'name' => stringify(name),
-                'fontsize' => fontsize,
-                'label' => name}
+      params = { 'name' => stringify(name),
+                 'fontsize' => fontsize,
+                 'label' => name }
       v_label = v.ref
       params.merge!(v_label) if v_label and v_label.kind_of? Hash
       graph << DOT::DOTNode.new(params)
     end
     edges.each do |e|
-      params = {'from' => stringify(e.source.ref),
-                'to' => stringify(e.target.ref),
-                'fontsize' => fontsize }
+      params = { 'from' => stringify(e.source.ref),
+                 'to' => stringify(e.target.ref),
+                 'fontsize' => fontsize }
       e_label = e.ref
       params.merge!(e_label) if e_label and e_label.kind_of? Hash
       graph << edge_klass.new(params)
@@ -477,7 +477,7 @@ class Puppet::Graph::SimpleGraph
   end
 
   # Output the dot format as a string
-  def to_dot(params={}) to_dot_graph(params).to_s; end
+  def to_dot(params = {}) to_dot_graph(params).to_s; end
 
   # Produce the graph files if requested.
   def write_graph(name)

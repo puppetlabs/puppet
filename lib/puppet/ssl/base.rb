@@ -118,7 +118,7 @@ class Puppet::SSL::Base
     digest(mds).to_hex
   end
 
-  def digest(algorithm=nil)
+  def digest(algorithm = nil)
     unless algorithm
       algorithm = digest_algorithm
     end

@@ -374,7 +374,7 @@ class Factory
     @init_hash['return_type'] = return_type unless return_type.nil?
   end
 
-  def build_PlanDefinition(o, name, parameters, body, return_type=nil)
+  def build_PlanDefinition(o, name, parameters, body, return_type = nil)
     @init_hash[KEY_PARAMETERS] = parameters
     b = f_build_body(body)
     @init_hash[KEY_BODY] = b unless b.nil?
@@ -721,9 +721,9 @@ class Factory
 
   def self.LIST(entries);                new(LiteralList, entries);                      end
 
-  def self.PARAM(name, expr=nil);        new(Parameter, name, expr);                     end
+  def self.PARAM(name, expr = nil); new(Parameter, name, expr); end
 
-  def self.NODE(hosts, parent, body);    new(NodeDefinition, hosts, parent, body);       end
+  def self.NODE(hosts, parent, body); new(NodeDefinition, hosts, parent, body); end
 
   # Parameters
 
@@ -788,7 +788,7 @@ class Factory
     LAMBDA(params, new(EppExpression, parameters_specified, body), nil)
   end
 
-  def self.RESERVED(name, future=false)
+  def self.RESERVED(name, future = false)
     new(ReservedWord, name, future)
   end
 

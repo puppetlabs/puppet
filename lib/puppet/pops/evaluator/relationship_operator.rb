@@ -90,7 +90,7 @@ class RelationshipOperator
 
   # Array content needs to be transformed
   def transform_Array(o, scope)
-    o.map{|x| transform(x, scope) }
+    o.map { |x| transform(x, scope) }
   end
 
   # Asserts (and returns) the type if it is a PCatalogEntryType
@@ -127,7 +127,7 @@ class RelationshipOperator
     # assert operator (should have been validated, but this logic makes assumptions which would
     # screw things up royally). Better safe than sorry.
     unless RELATIONSHIP_OPERATORS.include?(relationship_expression.operator)
-      fail(Issues::UNSUPPORTED_OPERATOR, relationship_expression, {:operator => relationship_expression.operator})
+      fail(Issues::UNSUPPORTED_OPERATOR, relationship_expression, { :operator => relationship_expression.operator })
     end
 
     begin
@@ -143,7 +143,7 @@ class RelationshipOperator
       # into an array, and thus the resulting left and right must be flattened individually
       # Once flattened, the operands should be sets (to remove duplicate entries)
       #
-      real = left_right_evaluated.collect {|x| [x].flatten.collect {|y| transform(y, scope) }}
+      real = left_right_evaluated.collect { |x| [x].flatten.collect { |y| transform(y, scope) } }
       real[0].flatten!
       real[1].flatten!
       real[0].uniq!
@@ -153,7 +153,7 @@ class RelationshipOperator
       source, target = reverse_operator?(relationship_expression) ? real.reverse : real
 
       # Add the relationships to the catalog
-      source.each {|s| target.each {|t| add_relationship(s, t, RELATION_TYPE[relationship_expression.operator], scope) }}
+      source.each { |s| target.each { |t| add_relationship(s, t, RELATION_TYPE[relationship_expression.operator], scope) } }
 
       # The result is the transformed source RHS unless it is empty, in which case the transformed LHS is returned.
       # This closes the gap created by an empty set of references in a chain of relationship
@@ -174,9 +174,9 @@ class RelationshipOperator
       end
       result
     rescue NotCatalogTypeError => e
-      fail(Issues::NOT_CATALOG_TYPE, relationship_expression, {:type => @type_calculator.string(e.type)})
+      fail(Issues::NOT_CATALOG_TYPE, relationship_expression, { :type => @type_calculator.string(e.type) })
     rescue IllegalRelationshipOperandError => e
-      fail(Issues::ILLEGAL_RELATIONSHIP_OPERAND_TYPE, relationship_expression, {:operand => e.operand})
+      fail(Issues::ILLEGAL_RELATIONSHIP_OPERAND_TYPE, relationship_expression, { :operand => e.operand })
     end
   end
 

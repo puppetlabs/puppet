@@ -15,7 +15,7 @@ module EppSupport
   #
   def fullscan_epp
     result = []
-    scan_epp {|token, value| result.push([token, value]) }
+    scan_epp { |token, value| result.push([token, value]) }
     result
   end
 
@@ -47,7 +47,7 @@ module EppSupport
     until queue.empty? && scn.eos? do
       token = queue.shift || lex_token
       if token
-        yield [ ctx[:after] = token[0], token[1] ]
+        yield [ctx[:after] = token[0], token[1]]
       end
     end
     if ctx[:epp_open_position]
@@ -58,7 +58,7 @@ module EppSupport
     yield [false, false]
   end
 
-  def interpolate_epp(skip_leading=false)
+  def interpolate_epp(skip_leading = false)
     scn = @scanner
     ctx = @lexing_context
     eppscanner = EppScanner.new(scn)
@@ -178,7 +178,7 @@ module EppSupport
     #
     # @return [String, nil] the scanned and processed text, or nil if at the end of the input.
     #
-    def scan(skip_leading=false)
+    def scan(skip_leading = false)
       @mode = :text
       @skip_leading = skip_leading
 

@@ -8,7 +8,7 @@ class Puppet::Application::Doc < Puppet::Application
   attr_accessor :unknown_args, :manifest
 
   def preinit
-    {:references => [], :mode => :text, :format => :to_markdown }.each do |name, value|
+    { :references => [], :mode => :text, :format => :to_markdown }.each do |name, value|
       options[name] = value
     end
     @unknown_args = []
@@ -33,7 +33,7 @@ class Puppet::Application::Doc < Puppet::Application
 
   option("--mode MODE", "-m") do |arg|
     require_relative '../../puppet/util/reference'
-    if Puppet::Util::Reference.modes.include?(arg) or arg.intern==:rdoc
+    if Puppet::Util::Reference.modes.include?(arg) or arg.intern == :rdoc
       options[:mode] = arg.intern
     else
       raise _("Invalid output mode %{arg}") % { arg: arg }
@@ -57,67 +57,67 @@ class Puppet::Application::Doc < Puppet::Application
 
   def help
     <<~HELP
-      
+
       puppet-doc(8) -- #{summary}
       ========
-      
+
       SYNOPSIS
       --------
       Generates a reference for all Puppet types. Largely meant for internal
       Puppet Inc. use. (Deprecated)
-      
-      
+
+
       USAGE
       -----
       puppet doc [-h|--help] [-l|--list]
         [-r|--reference <reference-name>]
-      
-      
+
+
       DESCRIPTION
       -----------
       This deprecated command generates a Markdown document to stdout
       describing all installed Puppet types or all allowable arguments to
       puppet executables. It is largely meant for internal use and is used to
       generate the reference document available on the Puppet Inc. web site.
-      
+
       For Puppet module documentation (and all other use cases) this command
       has been superseded by the "puppet-strings"
       module - see https://github.com/puppetlabs/puppetlabs-strings for more information.
-      
+
       This command (puppet-doc) will be removed once the
       puppetlabs internal documentation processing pipeline is completely based
       on puppet-strings.
-      
+
       OPTIONS
       -------
-      
+
       * --help:
         Print this help message
-      
+
       * --reference:
         Build a particular reference. Get a list of references by running
         'puppet doc --list'.
-      
-      
+
+
       EXAMPLE
       -------
           $ puppet doc -r type > /tmp/type_reference.markdown
-      
-      
+
+
       AUTHOR
       ------
       Luke Kanies
-      
-      
+
+
       COPYRIGHT
       ---------
       Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
-      
+
     HELP
   end
 
-  def handle_unknown( opt, arg )
-    @unknown_args << {:opt => opt, :arg => arg }
+  def handle_unknown(opt, arg)
+    @unknown_args << { :opt => opt, :arg => arg }
     true
   end
 
@@ -217,7 +217,7 @@ class Puppet::Application::Doc < Puppet::Application
     if @unknown_args.size > 0
       @unknown_args.each do |option|
         # force absolute path for modulepath when passed on commandline
-        if option[:opt]=="--modulepath"
+        if option[:opt] == "--modulepath"
           option[:arg] = option[:arg].split(::File::PATH_SEPARATOR).collect { |p| ::File.expand_path(p) }.join(::File::PATH_SEPARATOR)
         end
         Puppet.settings.handlearg(option[:opt], option[:arg])

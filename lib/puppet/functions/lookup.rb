@@ -186,7 +186,7 @@ Puppet::Functions.create_function(:lookup, Puppet::Functions::InternalFunction) 
     optional_block_param 'BlockType',                     :block
   end
 
-  def lookup_1(scope, name, value_type=nil, merge=nil)
+  def lookup_1(scope, name, value_type = nil, merge = nil)
     do_lookup(scope, name, value_type, nil, false, {}, {}, merge)
   end
 
@@ -194,7 +194,7 @@ Puppet::Functions.create_function(:lookup, Puppet::Functions::InternalFunction) 
     do_lookup(scope, name, value_type, default_value, true, {}, {}, merge)
   end
 
-  def lookup_3(scope, name, value_type=nil, merge=nil, &block)
+  def lookup_3(scope, name, value_type = nil, merge = nil, &block)
     do_lookup(scope, name, value_type, nil, false, {}, {}, merge, &block)
   end
 

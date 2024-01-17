@@ -20,4 +20,3 @@ class Object
     class_eval { define_method name, &blk }
   end
 end
-

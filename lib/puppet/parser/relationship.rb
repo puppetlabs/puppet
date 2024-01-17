@@ -3,7 +3,7 @@
 class Puppet::Parser::Relationship
   attr_accessor :source, :target, :type
 
-  PARAM_MAP = {:relationship => :before, :subscription => :notify}
+  PARAM_MAP = { :relationship => :before, :subscription => :notify }
 
   def arrayify(resources, left)
     case resources
@@ -46,7 +46,7 @@ class Puppet::Parser::Relationship
       raise ArgumentError, _("Could not find resource '%{target}' for relationship from '%{source}'") % { target: target.to_s, source: source.to_s }
     end
 
-    Puppet.debug {"Adding relationship from #{source} to #{target} with '#{param_name}'"}
+    Puppet.debug { "Adding relationship from #{source} to #{target} with '#{param_name}'" }
     if source_resource[rel_param].class != Array
       source_resource[rel_param] = [source_resource[rel_param]].compact
     end

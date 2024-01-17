@@ -75,7 +75,7 @@ class Puppet::Parser::Scope
   end
 
   class LocalScope < Ephemeral
-    def initialize(parent=nil)
+    def initialize(parent = nil)
       super parent
       @symbols = {}
     end
@@ -111,7 +111,7 @@ class Puppet::Parser::Scope
         if (v == :undef || v.nil?) && !include_undef
           target.delete(k)
         else
-          target[ k ] = v
+          target[k] = v
         end
       end
       target
@@ -260,7 +260,7 @@ class Puppet::Parser::Scope
     end
 
     def to_hash
-      Hash[@params.select {|_, access| access.assigned? }.map { |name, access| [name, access.value] }]
+      Hash[@params.select { |_, access| access.assigned? }.map { |name, access| [name, access.value] }]
     end
   end
 
@@ -271,7 +271,7 @@ class Puppet::Parser::Scope
   #
   def include?(name)
     catch(:undefined_variable) {
-      return ! self[name].nil?
+      return !self[name].nil?
     }
     false
   end
@@ -282,21 +282,21 @@ class Puppet::Parser::Scope
   #
   def exist?(name)
     # Note !! ensure the answer is boolean
-    !! if name =~ /^(.*)::(.+)$/
-         class_name = $1
-         variable_name = $2
-         return true if class_name == '' && BUILT_IN_VARS.include?(variable_name)
+    !!if name =~ /^(.*)::(.+)$/
+        class_name = $1
+        variable_name = $2
+        return true if class_name == '' && BUILT_IN_VARS.include?(variable_name)
 
-         # lookup class, but do not care if it is not evaluated since that will result
-         # in it not existing anyway. (Tests may run with just scopes and no evaluated classes which
-         # will result in class_scope for "" not returning topscope).
-         klass = find_hostclass(class_name)
-         other_scope = klass.nil? ? nil : class_scope(klass)
-         if other_scope.nil?
-           class_name == '' ? compiler.topscope.exist?(variable_name) : false
-         else
-           other_scope.exist?(variable_name)
-         end
+        # lookup class, but do not care if it is not evaluated since that will result
+        # in it not existing anyway. (Tests may run with just scopes and no evaluated classes which
+        # will result in class_scope for "" not returning topscope).
+        klass = find_hostclass(class_name)
+        other_scope = klass.nil? ? nil : class_scope(klass)
+        if other_scope.nil?
+          class_name == '' ? compiler.topscope.exist?(variable_name) : false
+        else
+          other_scope.exist?(variable_name)
+        end
     else # rubocop:disable Layout/ElseAlignment
       next_scope = inherited_scope || enclosing_scope
       effective_symtable(true).include?(name) || next_scope && next_scope.exist?(name) || BUILT_IN_VARS.include?(name)
@@ -386,7 +386,7 @@ class Puppet::Parser::Scope
     #    @symtable = Ephemeral.new(nil, true)
     @symtable = LocalScope.new(nil)
 
-    @ephemeral = [ MatchScope.new(@symtable, nil) ]
+    @ephemeral = [MatchScope.new(@symtable, nil)]
 
     # All of the defaults set for types.  It's a hash of hashes,
     # with the first key being the type, then the second key being
@@ -519,7 +519,7 @@ class Puppet::Parser::Scope
   #
   UNCAUGHT_THROW_EXCEPTION = defined?(UncaughtThrowError) ? UncaughtThrowError : ArgumentError
 
-  def variable_not_found(name, reason=nil)
+  def variable_not_found(name, reason = nil)
     # Built in variables and numeric variables always exist
     if BUILT_IN_VARS.include?(name) || name =~ Puppet::Pops::Patterns::NUMERIC_VAR_NAME
       return nil
@@ -533,11 +533,11 @@ class Puppet::Parser::Scope
         # do nothing
       when :warning
         Puppet.warn_once(UNDEFINED_VARIABLES_KIND, _("Variable: %{name}") % { name: name },
-                         _("Undefined variable '%{name}'; %{reason}") % { name: name, reason: reason } )
+                         _("Undefined variable '%{name}'; %{reason}") % { name: name, reason: reason })
       when :error
-        if Puppet.lookup(:avoid_hiera_interpolation_errors){false}
+        if Puppet.lookup(:avoid_hiera_interpolation_errors) { false }
           Puppet.warn_once(UNDEFINED_VARIABLES_KIND, _("Variable: %{name}") % { name: name },
-                           _("Interpolation failed with '%{name}', but compilation continuing; %{reason}") % { name: name, reason: reason } )
+                           _("Interpolation failed with '%{name}', but compilation continuing; %{reason}") % { name: name, reason: reason })
         else
           raise ArgumentError, _("Undefined variable '%{name}'; %{reason}") % { name: name, reason: reason }
         end
@@ -609,8 +609,8 @@ class Puppet::Parser::Scope
     # not found - search inherited scope for class
     leaf_index = fqn.rindex('::')
     unless leaf_index.nil?
-      leaf_name = fqn[ (leaf_index+2)..-1 ]
-      class_name = fqn[ 0, leaf_index ]
+      leaf_name = fqn[(leaf_index + 2)..-1]
+      class_name = fqn[0, leaf_index]
       begin
         qs = qualified_scope(class_name)
         unless qs.nil?
@@ -653,7 +653,7 @@ class Puppet::Parser::Scope
   end
 
   def has_enclosing_scope?
-    ! parent.nil?
+    !parent.nil?
   end
   private :has_enclosing_scope?
 
@@ -720,7 +720,7 @@ class Puppet::Parser::Scope
   # Merge all settings for the given _env_name_ into this scope
   # @param env_name [Symbol] the name of the environment
   # @param set_in_this_scope [Boolean] if the settings variables should also be set in this instance of scope
-  def merge_settings(env_name, set_in_this_scope=true)
+  def merge_settings(env_name, set_in_this_scope = true)
     settings = Puppet.settings
     table = effective_symtable(false)
     global_table = compiler.qualified_variables
@@ -746,10 +746,10 @@ class Puppet::Parser::Scope
     if val.is_a?(String) || val.is_a?(Numeric) || true == val || false == val || nil == val
       val
     elsif val.is_a?(Array)
-      val.map {|entry| transform_setting(entry) }
+      val.map { |entry| transform_setting(entry) }
     elsif val.is_a?(Hash)
       result = {}
-      val.each {|k, v| result[transform_setting(k)] = transform_setting(v) }
+      val.each { |k, v| result[transform_setting(k)] = transform_setting(v) }
       result
     else
       # not ideal, but required as there are settings values that are special
@@ -834,10 +834,10 @@ class Puppet::Parser::Scope
   def deep_freeze(object)
     case object
     when Array
-      object.each {|v| deep_freeze(v) }
+      object.each { |v| deep_freeze(v) }
       object.freeze
     when Hash
-      object.each {|k, v| deep_freeze(k); deep_freeze(v) }
+      object.each { |k, v| deep_freeze(k); deep_freeze(v) }
       object.freeze
     when NilClass, Numeric, TrueClass, FalseClass
       # do nothing
@@ -895,14 +895,14 @@ class Puppet::Parser::Scope
     env_path = nil
     env_path = environment.configuration.path_to_env unless (environment.nil? || environment.configuration.nil?)
     # check module paths first since they may be in the environment (i.e. they are longer)
-    module_path = environment.full_modulepath.detect {|m_path| path.start_with?(m_path) }
+    module_path = environment.full_modulepath.detect { |m_path| path.start_with?(m_path) }
     if module_path
       path = "<module>" + path[module_path.length..-1]
     elsif env_path && path && path.start_with?(env_path)
       path = "<env>" + path[env_path.length..-1]
     end
     # Make the output appear as "Scope(path, line)"
-    "Scope(#{[path, detail[1]].join(', ')})" 
+    "Scope(#{[path, detail[1]].join(', ')})"
   end
 
   alias_method :inspect, :to_s
@@ -965,7 +965,7 @@ class Puppet::Parser::Scope
   def without_ephemeral_scopes
     save_ephemeral = @ephemeral
     begin
-      @ephemeral = [ @symtable ]
+      @ephemeral = [@symtable]
       yield(self)
     ensure
       @ephemeral = save_ephemeral
@@ -1015,7 +1015,7 @@ class Puppet::Parser::Scope
     when Hash
       # Create local scope ephemeral and set all values from hash
       new_ephemeral(true)
-      match.each {|k, v| setvar(k, v, :file => file, :line => line, :ephemeral => true) }
+      match.each { |k, v| setvar(k, v, :file => file, :line => line, :ephemeral => true) }
       # Must always have an inner match data scope (that starts out as transparent)
       # In 3x slightly wasteful, since a new nested scope is created for a match
       # (TODO: Fix that problem)

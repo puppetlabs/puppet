@@ -34,8 +34,8 @@ module Puppet::ModuleTool
 
     def to_data_hash
       result = { :name => @full_module_name }
-      result[:version_requirement] = @version_requirement if @version_requirement && ! @version_requirement.nil?
-      result[:repository] = @repository.to_s if @repository && ! @repository.nil?
+      result[:version_requirement] = @version_requirement if @version_requirement && !@version_requirement.nil?
+      result[:repository] = @repository.to_s if @repository && !@repository.nil?
       result
     end
   end

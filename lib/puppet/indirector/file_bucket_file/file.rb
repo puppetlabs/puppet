@@ -60,7 +60,7 @@ module Puppet::FileBucketFile
         raise Puppet::Error, _("Error while parsing 'fromdate'")
       end
       # Setting hash's default value to [], needed by the following loop
-      bucket = Hash.new {[]}
+      bucket = Hash.new { [] }
       msg = ''.dup
       # Get all files with mtime between 'from' and 'to'
       Pathname.new(request.options[:bucket_path]).find { |item|
@@ -69,7 +69,7 @@ module Puppet::FileBucketFile
           filestat = Time.parse(item.stat.mtime.to_s)
           if from <= filestat and filestat <= to
             filenames.each do |filename|
-              bucket[filename] += [[ item.stat.mtime , item.parent.basename ]]
+              bucket[filename] += [[item.stat.mtime, item.parent.basename]]
             end
           end
         end
@@ -234,7 +234,7 @@ module Puppet::FileBucketFile
     # @api private
     def verify_identical_file(contents_file, bucket_file)
       (bucket_file.to_binary.bytesize == Puppet::FileSystem.size(contents_file)) &&
-        (bucket_file.stream() {|s| Puppet::FileSystem.compare_stream(contents_file, s) })
+        (bucket_file.stream() { |s| Puppet::FileSystem.compare_stream(contents_file, s) })
     end
 
     # @param contents_file [Pathname] Opaque file path to intended backup

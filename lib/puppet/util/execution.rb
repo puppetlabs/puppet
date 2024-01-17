@@ -76,7 +76,7 @@ module Puppet::Util::Execution
     # the user/system locale to "C" (via environment variables LANG and LC_*)
     # it enables to have non localized output for some commands and therefore
     # a predictable output
-    english_env = ENV.to_hash.merge( {'LANG' => 'C', 'LC_ALL' => 'C'} )
+    english_env = ENV.to_hash.merge({ 'LANG' => 'C', 'LC_ALL' => 'C' })
     output = Puppet::Util.withenv(english_env) do
       # We are intentionally using 'pipe' with open to launch a process
       open("| #{command_str} 2>&1") do |pipe| # rubocop:disable Security/Open
@@ -183,7 +183,7 @@ module Puppet::Util::Execution
     null_file = Puppet::Util::Platform.windows? ? 'NUL' : '/dev/null'
 
     cwd = options[:cwd]
-    if cwd && ! Puppet::FileSystem.directory?(cwd)
+    if cwd && !Puppet::FileSystem.directory?(cwd)
       raise ArgumentError, _("Working directory %{cwd} does not exist!") % { cwd: cwd }
     end
 
@@ -211,13 +211,13 @@ module Puppet::Util::Execution
       execution_stub = Puppet::Util::ExecutionStub.current_value
       if execution_stub
         child_pid = execution_stub.call(*exec_args)
-        [stdin, stdout, stderr].each {|io| io.close rescue nil}
+        [stdin, stdout, stderr].each { |io| io.close rescue nil }
         return child_pid
       elsif Puppet.features.posix?
         child_pid = nil
         begin
           child_pid = execute_posix(*exec_args)
-          [stdin, stdout, stderr].each {|io| io.close rescue nil}
+          [stdin, stdout, stderr].each { |io| io.close rescue nil }
           if options[:squelch]
             exit_status = Process.waitpid2(child_pid).last.exitstatus
           else
@@ -275,7 +275,7 @@ module Puppet::Util::Execution
       elsif Puppet::Util::Platform.windows?
         process_info = execute_windows(*exec_args)
         begin
-          [stdin, stderr].each {|io| io.close rescue nil}
+          [stdin, stderr].each { |io| io.close rescue nil }
           exit_status = Puppet::Util::Windows::Process.wait_process(process_info.process_handle)
 
           # read output in if required
@@ -294,7 +294,7 @@ module Puppet::Util::Execution
       end
     ensure
       # Make sure all handles are closed in case an exception was thrown attempting to execute.
-      [stdin, stdout, stderr].each {|io| io.close rescue nil}
+      [stdin, stdout, stderr].each { |io| io.close rescue nil }
       if !options[:squelch]
         # if we opened a pipe, we need to clean it up.
         reader.close if reader

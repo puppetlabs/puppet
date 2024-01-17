@@ -107,4 +107,3 @@ class Puppet::Property::Ensure < Puppet::Property
     end
   end
 end
-

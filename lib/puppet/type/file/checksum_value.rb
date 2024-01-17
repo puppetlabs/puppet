@@ -9,7 +9,7 @@ module Puppet
     include Puppet::DataSync
 
     desc "The checksum of the source contents. Only md5, sha256, sha224, sha384 and sha512
-      are supported when specifying this parameter. If this parameter is set, 
+      are supported when specifying this parameter. If this parameter is set,
       source_permissions will be assumed to be false, and ownership and permissions
       will not be read from source."
 
@@ -20,7 +20,7 @@ module Puppet
         return true
       end
 
-      checksum_insync?(resource.parameter(:source), is, true) {|inner| super(inner)}
+      checksum_insync?(resource.parameter(:source), is, true) { |inner| super(inner) }
     end
 
     def property_matches?(current, desired)

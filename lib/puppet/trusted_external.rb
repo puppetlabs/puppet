@@ -6,7 +6,7 @@ module Puppet::TrustedExternal
     command = Puppet[:trusted_external_command]
     return nil unless command
 
-    Puppet.debug { _("Retrieving trusted external data from %{command}") % {command: command} }
+    Puppet.debug { _("Retrieving trusted external data from %{command}") % { command: command } }
     setting_type = Puppet.settings.setting(:trusted_external_command).type
     if setting_type == :file
       return fetch_data(command, certname)

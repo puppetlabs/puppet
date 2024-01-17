@@ -43,7 +43,7 @@ module Puppet::Util::Plist
         Puppet.debug "Plist #{file_path} ill-formatted, converting with plutil"
         begin
           plist = Puppet::Util::Execution.execute(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', file_path],
-                                                  {:failonfail => true, :combine => true})
+                                                  { :failonfail => true, :combine => true })
           return parse_plist(plist)
         rescue Puppet::ExecutionFailure => detail
           message = _("Cannot read file %{file_path}; Puppet is skipping it.") % { file_path: file_path }
@@ -65,7 +65,7 @@ module Puppet::Util::Plist
 
       begin
         if plist_data =~ bad_xml_doctype
-          plist_data.gsub!( bad_xml_doctype, plist_xml_doctype )
+          plist_data.gsub!(bad_xml_doctype, plist_xml_doctype)
           Puppet.debug("Had to fix plist with incorrect DOCTYPE declaration: #{file_path}")
         end
       rescue ArgumentError => e

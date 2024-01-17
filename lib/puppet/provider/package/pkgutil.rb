@@ -22,12 +22,12 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     end
 
     correct_wgetopts = false
-    [ "/opt/csw/etc/pkgutil.conf", "/etc/opt/csw/pkgutil.conf" ].each do |confpath|
+    ["/opt/csw/etc/pkgutil.conf", "/etc/opt/csw/pkgutil.conf"].each do |confpath|
       File.open(confpath) do |conf|
-        conf.each_line {|line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*(-nv|-q|--no-verbose|--quiet)/ }
+        conf.each_line { |line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*(-nv|-q|--no-verbose|--quiet)/ }
       end
     end
-    if ! correct_wgetopts
+    if !correct_wgetopts
       Puppet.notice _("It is highly recommended that you set 'wgetopts=-nv' in your pkgutil.conf.")
     end
   end
@@ -154,7 +154,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     # get passed to pkgutil via one or more -t options
     if resource[:source]
       sources = [resource[:source]].flatten
-      pkguti(*[sources.map{|src| [ "-t", src ]}, *args].flatten)
+      pkguti(*[sources.map { |src| ["-t", src] }, *args].flatten)
     else
       pkguti(*args.flatten)
     end
@@ -175,7 +175,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     if hash
       hash
     else
-      {:ensure => :absent}
+      { :ensure => :absent }
     end
   end
 

@@ -233,4 +233,3 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     error_return << "journalctl log for #{name}:\n#{journalctl_output}"
   end
 end
-

@@ -7,7 +7,7 @@ require_relative '../../puppet/error'
 module Puppet::Util
 module Logging
   def send_log(level, message)
-    Puppet::Util::Log.create({:level => level, :source => log_source, :message => message}.merge(log_metadata))
+    Puppet::Util::Log.create({ :level => level, :source => log_source, :message => message }.merge(log_metadata))
   end
 
   # Create a method for each log level.
@@ -183,7 +183,7 @@ module Logging
 
     $unique_warnings ||= {}
     if $unique_warnings.length < 100 then
-      if (! $unique_warnings.has_key?(key)) then
+      if (!$unique_warnings.has_key?(key)) then
         $unique_warnings[key] = message
         call_trace = if file == :default and line == :default
                        # Suppress the file and line number output
@@ -240,7 +240,7 @@ module Logging
     Puppet::FileSystem.open(deprecations_file, nil, "a:UTF-8") do |f|
       if ($deprecation_warnings) then
         $deprecation_warnings.each do |offender, message|
-          if (! $logged_deprecation_warnings.has_key?(offender)) then
+          if (!$logged_deprecation_warnings.has_key?(offender)) then
             $logged_deprecation_warnings[offender] = true
             if ((pattern.nil?) || (message =~ pattern)) then
               f.puts(message)

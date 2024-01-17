@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Puppet::Parser::AbstractCompiler
-  # Returns the catalog for a compilation. Must return a Puppet::Resource::Catalog or fail with an 
+  # Returns the catalog for a compilation. Must return a Puppet::Resource::Catalog or fail with an
   # error if the specific compiler does not support catalog operations.
   #
   def catalog

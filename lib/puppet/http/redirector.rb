@@ -78,6 +78,6 @@ class Puppet::HTTP::Redirector
 
     URI.parse(location)
   rescue URI::InvalidURIError => e
-    raise Puppet::HTTP::ProtocolError.new(_("Location URI is invalid: %{detail}") % { detail: e.message}, e)
+    raise Puppet::HTTP::ProtocolError.new(_("Location URI is invalid: %{detail}") % { detail: e.message }, e)
   end
 end

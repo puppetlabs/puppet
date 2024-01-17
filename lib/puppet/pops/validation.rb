@@ -191,7 +191,7 @@ module Validation
       @label_provider     = label_provider
     end
 
-    def accept(issue, semantic, arguments={}, except=nil)
+    def accept(issue, semantic, arguments = {}, except = nil)
       return unless will_accept? issue
 
       # Set label provider unless caller provided a special label provider
@@ -230,7 +230,7 @@ module Validation
     attr_reader :file
     attr_reader :source_pos
 
-    def initialize severity, issue, file, source_pos, arguments={}, exception=nil
+    def initialize severity, issue, file, source_pos, arguments = {}, exception = nil
       @severity = severity
       @issue = issue
       @file = file
@@ -243,7 +243,7 @@ module Validation
 
     # Two diagnostics are considered equal if the have the same issue, location and severity
     # (arguments and exception are ignored)
-    # rubocop:disable Layout/ExtraSpacing
+    # rubocop:disable Layout
     def ==(o)
       self.class            == o.class             &&
         same_position?(o)                          &&
@@ -252,7 +252,7 @@ module Validation
         severity            == o.severity
     end
     alias eql? ==
-    # rubocop:enable Layout/ExtraSpacing
+    # rubocop:enable Layout
 
     # Position is equal if the diagnostic is not located or if referring to the same offset
     def same_position?(o)
@@ -393,29 +393,29 @@ module Validation
 
     # Returns the diagnosed errors in the order they were reported.
     def errors
-      @diagnostics.select {|d| d.severity == :error }
+      @diagnostics.select { |d| d.severity == :error }
     end
 
     # Returns the diagnosed warnings in the order they were reported.
     # (This includes :warning and :deprecation severity)
     def warnings
-      @diagnostics.select {|d| d.severity == :warning || d.severity == :deprecation }
+      @diagnostics.select { |d| d.severity == :warning || d.severity == :deprecation }
     end
 
     def errors_and_warnings
-      @diagnostics.select {|d| d.severity != :ignore }
+      @diagnostics.select { |d| d.severity != :ignore }
     end
 
     # Returns the ignored diagnostics in the order they were reported (if reported at all)
     def ignored
-      @diagnostics.select {|d| d.severity == :ignore }
+      @diagnostics.select { |d| d.severity == :ignore }
     end
 
     # Add a diagnostic, or all diagnostics from another acceptor to the set of diagnostics
     # @param diagnostic [Diagnostic, Acceptor] diagnostic(s) that should be accepted
     def accept(diagnostic)
       if diagnostic.is_a?(Acceptor)
-        diagnostic.diagnostics.each {|d| _accept(d)}
+        diagnostic.diagnostics.each { |d| _accept(d) }
       else
         _accept(diagnostic)
       end

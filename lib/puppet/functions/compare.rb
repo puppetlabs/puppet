@@ -105,7 +105,7 @@ Puppet::Functions.create_function(:compare) do
       end
       unless ignore_case.size == 1
         # TRANSLATORS 'compare' is a name
-        return _("compare(): Accepts at most 3 arguments, got %{actual_number}") % {actual_number: 2 + ignore_case.size}
+        return _("compare(): Accepts at most 3 arguments, got %{actual_number}") % { actual_number: 2 + ignore_case.size }
       end
       unless ignore_case[0].is_a?(Boolean)
         # TRANSLATORS 'compare' is a name

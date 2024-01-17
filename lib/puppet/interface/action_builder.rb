@@ -135,7 +135,7 @@ class Puppet::Interface::ActionBuilder
     formats = Puppet::Network::FormatHandler.formats
     unless formats.include? value
       raise ArgumentError, _("%{value} is not a valid rendering format: %{formats_list}") %
-                           { value: value.inspect, formats_list: formats.sort.join(", ")}
+                           { value: value.inspect, formats_list: formats.sort.join(", ") }
     end
 
     @action.render_as = value

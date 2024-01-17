@@ -85,17 +85,17 @@ module SymbolicFileMode
         # the original mode, the final mode, or the current snapshot of the
         # mode, for added fun.
         snapshot_mode = {}
-        final_mode.each {|k, v| snapshot_mode[k] = v }
+        final_mode.each { |k, v| snapshot_mode[k] = v }
 
         to.gsub('a', 'ugo').split('').uniq.each do |who|
           value = snapshot_mode[who]
 
           action = '!'
           actions = {
-            '!' => lambda {|_, _| raise Puppet::Error, _('Missing operation (-, =, or +)') },
-            '=' => lambda {|m, v| m | v },
-            '+' => lambda {|m, v| m | v },
-            '-' => lambda {|m, v| m & ~v },
+            '!' => lambda { |_, _| raise Puppet::Error, _('Missing operation (-, =, or +)') },
+            '=' => lambda { |m, v| m | v },
+            '+' => lambda { |m, v| m | v },
+            '-' => lambda { |m, v| m & ~v },
           }
 
           dsl.split('').each do |op|

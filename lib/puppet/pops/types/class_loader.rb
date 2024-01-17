@@ -56,7 +56,7 @@ class ClassLoader
 
     # Although not expected to be the first choice for getting a concrete class for these
     # types, these are of value if the calling logic just has a reference to type.
-    #
+    # rubocop:disable Layout/SpaceBeforeSemicolon
     when PArrayType    ; Array
     when PTupleType    ; Array
     when PHashType     ; Hash
@@ -69,6 +69,7 @@ class ClassLoader
     when PFloatType    ; Float
     when PUndefType    ; NilClass
     when PCallableType ; Proc
+    # rubocop:enable Layout/SpaceBeforeSemicolon
     else
       nil
     end
@@ -89,7 +90,7 @@ class ClassLoader
     unless result.is_a?(Module)
       # Attempt to load it using the auto loader
       loaded_path = nil
-      if paths_for_name(name_path).find {|path| loaded_path = path; @autoloader.load(path, Puppet.lookup(:current_environment)) }
+      if paths_for_name(name_path).find { |path| loaded_path = path; @autoloader.load(path, Puppet.lookup(:current_environment)) }
         result = find_class(name_path)
         unless result.is_a?(Module)
           raise RuntimeError, "Loading of #{name} using relative path: '#{loaded_path}' did not create expected class"
@@ -118,7 +119,7 @@ class ClassLoader
     # TODO:this is not perfect - it will not produce the correct mix if a mix of styles are used
     # The alternative is to test many additional paths.
     #
-    [fq_named_parts.map {|part| de_camel(part)}.join('/'), fq_named_parts.join('/').downcase ]
+    [fq_named_parts.map { |part| de_camel(part) }.join('/'), fq_named_parts.join('/').downcase]
   end
   private_class_method :paths_for_name
 

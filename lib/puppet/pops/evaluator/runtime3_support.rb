@@ -18,7 +18,7 @@ module Runtime3Support
   # @return [!] this method does not return
   # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError?)
   #
-  def fail(issue, semantic, options={}, except=nil)
+  def fail(issue, semantic, options = {}, except = nil)
     optionally_fail(issue, semantic, options, except)
     # an error should have been raised since fail always fails
     raise ArgumentError, _("Internal Error: Configuration of runtime error handling wrong: should have raised exception")
@@ -33,7 +33,7 @@ module Runtime3Support
   # @return [!] this method does not return
   # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError?)
   #
-  def optionally_fail(issue, semantic, options={}, except=nil)
+  def optionally_fail(issue, semantic, options = {}, except = nil)
     if except.nil? && diagnostic_producer.severity_producer[issue] == :error
       # Want a stacktrace, and it must be passed as an exception
       begin
@@ -54,12 +54,12 @@ module Runtime3Support
   # @return [!] this method may not return, nil if it does
   # @raise [Puppet::ParseError] an evaluation error initialized from the arguments
   #
-  def runtime_issue(issue, options={})
+  def runtime_issue(issue, options = {})
     # Get position from puppet runtime stack
     file, line = Puppet::Pops::PuppetStack.top_of_stack
 
     # Use a SemanticError as the sourcepos
-    semantic = Puppet::Pops::SemanticError.new(issue, nil, options.merge({:file => file, :line => line}))
+    semantic = Puppet::Pops::SemanticError.new(issue, nil, options.merge({ :file => file, :line => line }))
     optionally_fail(issue, semantic)
     nil
   end
@@ -80,14 +80,14 @@ module Runtime3Support
     # TODO: Improve the messy implementation in Scope.
     #
     if name == "server_facts"
-      fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
+      fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, { :name => name })
     end
 
     if scope.bound?(name)
       if Puppet::Parser::Scope::RESERVED_VARIABLE_NAMES.include?(name)
-        fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
+        fail(Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, { :name => name })
       else
-        fail(Issues::ILLEGAL_REASSIGNMENT, o, {:name => name} )
+        fail(Issues::ILLEGAL_REASSIGNMENT, o, { :name => name })
       end
     end
     scope.setvar(name, value)
@@ -110,7 +110,7 @@ module Runtime3Support
     # if not set by a match expression.
     #
     unless name =~ Puppet::Pops::Patterns::NUMERIC_VAR_NAME
-      optionally_fail(Puppet::Pops::Issues::UNKNOWN_VARIABLE, o, {:name => name})
+      optionally_fail(Puppet::Pops::Issues::UNKNOWN_VARIABLE, o, { :name => name })
     end
     nil # in case unknown variable is configured as a warning or ignore
   end
@@ -257,11 +257,11 @@ module Runtime3Support
 
     n = Utils.to_n(v)
     unless n
-      fail(Issues::NOT_NUMERIC, o, {:value => v})
+      fail(Issues::NOT_NUMERIC, o, { :value => v })
     end
 
     # this point is reached if there was a conversion
-    optionally_fail(Issues::NUMERIC_COERCION, o, {:before => v, :after => n})
+    optionally_fail(Issues::NUMERIC_COERCION, o, { :before => v, :after => n })
     n
   end
 
@@ -310,7 +310,7 @@ module Runtime3Support
       end
     end
     # Call via 3x API if function exists there without having been autoloaded
-    fail(Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
+    fail(Issues::UNKNOWN_FUNCTION, o, { :name => name }) unless Puppet::Parser::Functions.function(name)
 
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
@@ -375,7 +375,7 @@ module Runtime3Support
     evaluated_parameters = evaluated_parameters.flatten
     evaluated_resources.each do |r|
       unless r.is_a?(Types::PResourceType) && r.type_name != 'class'
-        fail(Issues::ILLEGAL_OVERRIDDEN_TYPE, o, {:actual => r} )
+        fail(Issues::ILLEGAL_OVERRIDDEN_TYPE, o, { :actual => r })
       end
 
       t = Runtime3ResourceSupport.find_resource_type(scope, r.type_name)

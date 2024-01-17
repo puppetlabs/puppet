@@ -17,11 +17,11 @@ module SlurpSupport
   SLURP_DQ_PATTERN  = /(?:[^\\]|^)(?:[\\]{2})*(["]|[$]\{?)/
   SLURP_UQ_PATTERN  = /(?:[^\\]|^)(?:[\\]{2})*([$]\{?|\z)/
   # unquoted, no escapes
-  SLURP_UQNE_PATTERN  = /(\$\{?|\z)/m
+  SLURP_UQNE_PATTERN = /(\$\{?|\z)/m
   SLURP_ALL_PATTERN = /.*(\z)/m
-  SQ_ESCAPES = %w{ \\ ' }
-  DQ_ESCAPES = %w{ \\  $ ' " r n t s u}+["\r\n", "\n"]
-  UQ_ESCAPES = %w{ \\  $ r n t s u}+["\r\n", "\n"]
+  SQ_ESCAPES = %w{\\ '}
+  DQ_ESCAPES = %w{\\  $ ' " r n t s u} + ["\r\n", "\n"]
+  UQ_ESCAPES = %w{\\  $ r n t s u} + ["\r\n", "\n"]
 
   def slurp_sqstring
     # skip the leading '
@@ -76,7 +76,7 @@ module SlurpSupport
     # If later a \u is found it is warned not to be a unicode escape
     if escapes.include?('u')
       # gsub must be repeated to cater for adjacent escapes
-      while(str.gsub!(/((?:[^\\]|^)(?:[\\]{2})*)\\u(?:([\da-fA-F]{4})|\{([\da-fA-F]{1,6})\})/m) { $1 + [($2 || $3).hex].pack("U") })
+      while (str.gsub!(/((?:[^\\]|^)(?:[\\]{2})*)\\u(?:([\da-fA-F]{4})|\{([\da-fA-F]{1,6})\})/m) { $1 + [($2 || $3).hex].pack("U") })
         # empty block. Everything happens in the gsub block
       end
     end
@@ -86,14 +86,14 @@ module SlurpSupport
         ch = $1
         if escapes.include? ch
           case ch
-          when 'r'   ; "\r"
-          when 'n'   ; "\n"
-          when 't'   ; "\t"
-          when 's'   ; ' '
+          when 'r'; "\r"
+          when 'n'; "\n"
+          when 't'; "\t"
+          when 's'; ' '
           when 'u'
             lex_warning(Issues::ILLEGAL_UNICODE_ESCAPE)
             "\\u"
-          when "\n"  ; ''
+          when "\n"; ''
           when "\r\n"; ''
           else ch
           end

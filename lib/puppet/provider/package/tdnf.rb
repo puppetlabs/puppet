@@ -31,5 +31,5 @@ Puppet::Type.type(:package).provide :tdnf, :parent => :dnf do
   end
   # rubocop:enable Layout
 
-  defaultfor 'os.name' => "PhotonOS" 
+  defaultfor 'os.name' => "PhotonOS"
 end

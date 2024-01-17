@@ -52,7 +52,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     hash
   end
 
-  def initialize(value={})
+  def initialize(value = {})
     super(value)
     @property_flush = {}
   end

@@ -13,7 +13,7 @@ class Puppet::Pops::Model::AstTransformer
 
   attr_reader :importer
 
-  def initialize(source_file = "unknown-file", importer=nil)
+  def initialize(source_file = "unknown-file", importer = nil)
     @@transform_visitor ||= Puppet::Pops::Visitor.new(nil, "transform", 0, 0)
     @@query_transform_visitor ||= Puppet::Pops::Visitor.new(nil, "query", 0, 0)
     @@hostname_transform_visitor ||= Puppet::Pops::Visitor.new(nil, "hostname", 0, 0)
@@ -31,7 +31,7 @@ class Puppet::Pops::Model::AstTransformer
   # @param klass [Class<Puppet::Parser::AST>] the ast class to create an instance of
   # @param hash [Hash] hash with options for the class to create
   #
-  def ast(o, klass, hash={})
+  def ast(o, klass, hash = {})
     # create and pass hash with file and line information
     # PUP-3274 - still needed since hostname transformation requires AST::HostName, and AST::Regexp
     klass.new(**merge_location(hash, o))
@@ -89,7 +89,7 @@ class Puppet::Pops::Model::AstTransformer
 
   # Transforms Array of host matching expressions into a (Ruby) array of AST::HostName
   def hostname_Array(o)
-    o.collect {|x| ast x, AST::HostName, :value => hostname(x) }
+    o.collect { |x| ast x, AST::HostName, :value => hostname(x) }
   end
 
   def hostname_LiteralValue(o)

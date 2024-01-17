@@ -49,7 +49,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   self::DPKG_QUERY_PROVIDES_FORMAT_STRING = %Q{'${Status} ${Package} ${Version} [${Provides}]\\n'}
   self::FIELDS_REGEX = %r{^'?(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
   self::FIELDS_REGEX_WITH_PROVIDES = %r{^'?(\S+) +(\S+) +(\S+) (\S+) (\S*) \[.*\]$}
-  self::FIELDS= [:desired, :error, :status, :name, :ensure]
+  self::FIELDS = [:desired, :error, :status, :name, :ensure]
 
   def self.defaultto_allow_virtual
     false
@@ -58,7 +58,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   # @param line [String] one line of dpkg-query output
   # @return [Hash,nil] a hash of FIELDS or nil if we failed to match
   # @api private
-  def self.parse_line(line, regex=self::FIELDS_REGEX)
+  def self.parse_line(line, regex = self::FIELDS_REGEX)
     hash = nil
 
     match = regex.match(line)
@@ -121,7 +121,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     end
     output = dpkg_deb "--show", source
     matches = /^(\S+)\t(\S+)$/.match(output).captures
-    warning _("source doesn't contain named package, but %{name}") % { name: matches[0] } unless matches[0].match( Regexp.escape(@resource[:name]) )
+    warning _("source doesn't contain named package, but %{name}") % { name: matches[0] } unless matches[0].match(Regexp.escape(@resource[:name]))
     matches[1]
   end
 
@@ -137,7 +137,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
           self.class::DPKG_QUERY_PROVIDES_FORMAT_STRING
           # the regex searches for the resource[:name] in the dpkquery result in which the Provides field is also available
           # it will search for the packages only in the brackets ex: [rubygems]
-        ).lines.find {|package| package.match(/[\[ ](#{Regexp.escape(@resource[:name])})[\],]/)}
+        ).lines.find { |package| package.match(/[\[ ](#{Regexp.escape(@resource[:name])})[\],]/) }
         if output
           hash = self.class.parse_line(output, self.class::FIELDS_REGEX_WITH_PROVIDES)
           Puppet.info("Package #{@resource[:name]} is virtual, defaulting to #{hash[:name]}")
@@ -153,10 +153,10 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       hash = self.class.parse_line(output)
     rescue Puppet::ExecutionFailure
       # dpkg-query exits 1 if the package is not found.
-      return {:ensure => :purged, :status => 'missing', :name => @resource[:name], :error => 'ok'}
+      return { :ensure => :purged, :status => 'missing', :name => @resource[:name], :error => 'ok' }
     end
 
-    hash ||= {:ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok'}
+    hash ||= { :ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok' }
 
     if hash[:error] != "ok"
       raise Puppet::Error.new(

@@ -74,7 +74,7 @@ module Puppet::Pops::Types
         else
           if element_type.nil? && infer_elements
             tc = TypeCalculator.singleton
-            element_type = PVariantType.maybe_create(o.map {|e| tc.infer_set(e) })
+            element_type = PVariantType.maybe_create(o.map { |e| tc.infer_set(e) })
           end
           Iterator.new(element_type, o.each)
         end
@@ -88,8 +88,8 @@ module Puppet::Pops::Types
             element_type =
               PTupleType
               .new([
-                     PVariantType.maybe_create(o.keys.map {|e| tc.infer_set(e) }),
-                     PVariantType.maybe_create(o.values.map {|e| tc.infer_set(e) })
+                     PVariantType.maybe_create(o.keys.map { |e| tc.infer_set(e) }),
+                     PVariantType.maybe_create(o.values.map { |e| tc.infer_set(e) })
                    ],
                    PHashType::KEY_PAIR_TUPLE_SIZE)
           end

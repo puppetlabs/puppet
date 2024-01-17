@@ -9,7 +9,7 @@ require_relative '../../puppet/util'
 # implementations, since it is ~ 30 times faster
 class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
   def initialize(*args)
-    if ! Puppet.features.msgpack?
+    if !Puppet.features.msgpack?
       raise _("MessagePack terminus not supported without msgpack library")
     end
 
@@ -24,7 +24,7 @@ class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
     filename = path(request.key)
     FileUtils.mkdir_p(File.dirname(filename))
 
-    Puppet::FileSystem.replace_file(filename, 0660) {|f| f.print to_msgpack(request.instance) }
+    Puppet::FileSystem.replace_file(filename, 0660) { |f| f.print to_msgpack(request.instance) }
   rescue TypeError => detail
     Puppet.log_exception(detail, _("Could not save %{name} %{request}: %{detail}") % { name: self.name, request: request.key, detail: detail })
   end

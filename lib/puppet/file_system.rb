@@ -288,7 +288,7 @@ module Puppet::FileSystem
   # @api public
   #
   def self.unlink(*paths)
-    @impl.unlink(*(paths.map {|p| assert_path(p) }))
+    @impl.unlink(*(paths.map { |p| assert_path(p) }))
   end
 
   # @return [File::Stat] object for the named file.

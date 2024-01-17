@@ -306,7 +306,7 @@ module Puppet::Util::IniConfig
     alias [] get_section
 
     def include?(name)
-      !! get_section(name)
+      !!get_section(name)
     end
 
     def add_section(name, file)

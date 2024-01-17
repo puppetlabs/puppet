@@ -15,7 +15,7 @@ module Puppet::Network::HTTP::Error
     end
 
     def to_json
-      Puppet::Util::Json.dump({:message => message, :issue_kind => @issue_kind})
+      Puppet::Util::Json.dump({ :message => message, :issue_kind => @issue_kind })
     end
   end
 
@@ -69,7 +69,7 @@ module Puppet::Network::HTTP::Error
     end
 
     def to_json
-      Puppet::Util::Json.dump({:message => message, :issue_kind => @issue_kind})
+      Puppet::Util::Json.dump({ :message => message, :issue_kind => @issue_kind })
     end
   end
 end

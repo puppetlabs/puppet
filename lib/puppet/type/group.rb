@@ -125,7 +125,7 @@ module Puppet
         newvalue = munge_members_value(newvalue)
 
         if @resource[:auth_membership]
-          newvalue.uniq.sort 
+          newvalue.uniq.sort
         else
           (currentvalue + newvalue).uniq.sort
         end
@@ -218,7 +218,7 @@ module Puppet
                           :parent => Puppet::Parameter::Boolean) do
       desc "Forces the management of local accounts when accounts are also
             being managed by some other Name Switch Service (NSS). For AIX, refer to the `ia_load_module` parameter.
-            
+
             This option relies on your operating system's implementation of `luser*` commands, such as `luseradd` , `lgroupadd`, and `lusermod`. The `forcelocal` option could behave unpredictably in some circumstances. If the tools it depends on are not available, it might have no effect at all."
       defaultto false
     end

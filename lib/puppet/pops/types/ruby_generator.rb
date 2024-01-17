@@ -291,7 +291,7 @@ class RubyGenerator < TypeFormatter
       derived_attrs.each do |a|
         bld << "\n  def " << rname(a.name) << "\n"
         code_annotation = RubyMethod.annotate(a)
-        ruby_body = code_annotation.nil? ? nil: code_annotation.body
+        ruby_body = code_annotation.nil? ? nil : code_annotation.body
         if ruby_body.nil?
           bld << "    raise Puppet::Error, \"no method is implemented for derived #{a.label}\"\n"
         else

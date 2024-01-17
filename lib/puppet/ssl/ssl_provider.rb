@@ -218,16 +218,16 @@ class Puppet::SSL::SSLProvider
       chain.reverse.each_with_index do |cert, i|
         digest = Puppet::SSL::Digest.new(alg, cert.to_der)
         if i == chain.length - 1
-          Puppet.debug(_("Verified client certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_utf8, digest: digest})
+          Puppet.debug(_("Verified client certificate '%{subject}' fingerprint %{digest}") % { subject: cert.subject.to_utf8, digest: digest })
         else
-          Puppet.debug(_("Verified CA certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_utf8, digest: digest})
+          Puppet.debug(_("Verified CA certificate '%{subject}' fingerprint %{digest}") % { subject: cert.subject.to_utf8, digest: digest })
         end
       end
       ssl_context.crls.each do |crl|
         oid_values = Hash[crl.extensions.map { |ext| [ext.oid, ext.value] }]
         crlNumber = oid_values['crlNumber'] || 'unknown'
         authKeyId = (oid_values['authorityKeyIdentifier'] || 'unknown').chomp
-        Puppet.debug("Using CRL '#{crl.issuer.to_utf8}' authorityKeyIdentifier '#{authKeyId}' crlNumber '#{crlNumber }'")
+        Puppet.debug("Using CRL '#{crl.issuer.to_utf8}' authorityKeyIdentifier '#{authKeyId}' crlNumber '#{crlNumber}'")
       end
     end
   end

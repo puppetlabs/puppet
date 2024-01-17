@@ -42,7 +42,7 @@ class Puppet::Parser::CatalogCompiler < Puppet::Parser::Compiler
   end
 
   # Evaluates added constructs that are lazily evaluated until all of them have been evaluated.
-  # 
+  #
   def evaluate_additions
     evaluate_generators
     finish

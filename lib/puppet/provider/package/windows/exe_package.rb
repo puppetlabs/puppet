@@ -78,7 +78,7 @@ class Puppet::Provider::Package::Windows
             end
           end
         rescue => detail
-          raise Puppet::Error.new(_("Error when installing %{package}: %{detail}") % { package: resource[:name] , detail: detail.message}, detail)
+          raise Puppet::Error.new(_("Error when installing %{package}: %{detail}") % { package: resource[:name], detail: detail.message }, detail)
         ensure
           self.register(tempfile.path)
           tempfile.close()

@@ -110,7 +110,7 @@ module Puppet
       # Provide a boolean method for each of the states.
       STATES.each do |attr|
         define_method("#{attr}?") do
-          !! send(attr)
+          !!send(attr)
         end
       end
 

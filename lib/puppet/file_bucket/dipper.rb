@@ -32,7 +32,7 @@ class Puppet::FileBucket::Dipper
   end
 
   def local?
-    !! @local_path
+    !!@local_path
   end
 
   # Backs up a file to the file bucket
@@ -137,11 +137,11 @@ class Puppet::FileBucket::Dipper
       if newcontents
         newsum = newcontents.checksum_data
         changed = nil
-        if Puppet::FileSystem.exist?(file_handle) and ! Puppet::FileSystem.writable?(file_handle)
+        if Puppet::FileSystem.exist?(file_handle) and !Puppet::FileSystem.writable?(file_handle)
           changed = Puppet::FileSystem.stat(file_handle).mode
           ::File.chmod(changed | 0200, file)
         end
-        ::File.open(file, ::File::WRONLY|::File::TRUNC|::File::CREAT) { |of|
+        ::File.open(file, ::File::WRONLY | ::File::TRUNC | ::File::CREAT) { |of|
           of.binmode
           newcontents.stream do |source_stream|
             FileUtils.copy_stream(source_stream, of)
@@ -177,7 +177,7 @@ class Puppet::FileBucket::Dipper
 
   private
 
-  def absolutize_path( path )
+  def absolutize_path(path)
     Pathname.new(path).realpath
   end
 end

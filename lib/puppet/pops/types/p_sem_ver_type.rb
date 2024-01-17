@@ -24,7 +24,7 @@ class PSemVerType < PScalarType
   end
 
   def instance?(o, guard = nil)
-    o.is_a?(SemanticPuppet::Version) && (@ranges.empty? || @ranges.any? {|range| range.include?(o) })
+    o.is_a?(SemanticPuppet::Version) && (@ranges.empty? || @ranges.any? { |range| range.include?(o) })
   end
 
   def eql?(o)

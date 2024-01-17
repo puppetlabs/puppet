@@ -72,6 +72,7 @@ class Lexer2
   TOKEN_TIMES        = [:TIMES,        '*',   1].freeze
   TOKEN_MODULO       = [:MODULO,       '%',   1].freeze
 
+  # rubocop:disable Layout/SpaceBeforeComma
   TOKEN_NOT          = [:NOT,          '!',   1].freeze
   TOKEN_DOT          = [:DOT,          '.',   1].freeze
   TOKEN_PIPE         = [:PIPE,         '|',   1].freeze
@@ -82,6 +83,7 @@ class Lexer2
   TOKEN_SEMIC        = [:SEMIC,        ';',   1].freeze
   TOKEN_QMARK        = [:QMARK,        '?',   1].freeze
   TOKEN_TILDE        = [:TILDE,        '~',   1].freeze # lexed but not an operator in Puppet
+  # rubocop:enable Layout/SpaceBeforeComma
 
   TOKEN_REGEXP       = [:REGEXP,       nil,   0].freeze
 
@@ -140,12 +142,12 @@ class Lexer2
     'private' => [:PRIVATE, 'private', 7],
   }
 
-  KEYWORDS.each {|_k, v| v[1].freeze; v.freeze }
+  KEYWORDS.each { |_k, v| v[1].freeze; v.freeze }
   KEYWORDS.freeze
 
   # Reverse lookup of keyword name to string
   KEYWORD_NAMES = {}
-  KEYWORDS.each {|k, v| KEYWORD_NAMES[v[0]] = k }
+  KEYWORDS.each { |k, v| KEYWORD_NAMES[v[0]] = k }
   KEYWORD_NAMES.freeze
 
   PATTERN_WS        = %r{[[:blank:]\r]+}
@@ -364,7 +366,7 @@ class Lexer2
               value << more
             end
             regex = value.sub(PATTERN_REGEX_A, '').sub(PATTERN_REGEX_Z, '').gsub(PATTERN_REGEX_ESC, '/')
-            emit_completed([:REGEX, Regexp.new(regex), scn.pos-before], before)
+            emit_completed([:REGEX, Regexp.new(regex), scn.pos - before], before)
           else
             emit(TOKEN_DIV, before)
           end
@@ -425,7 +427,7 @@ class Lexer2
             value = scn.scan(PATTERN_CLASSREF)
             if value && scn.peek(2) != '::'
               after = scn.pos
-              emit_completed([:CLASSREF, value.freeze, after-before], before)
+              emit_completed([:CLASSREF, value.freeze, after - before], before)
             else
               # move to faulty position ('::<uc-letter>' was ok)
               scn.pos = scn.pos + 3
@@ -491,9 +493,9 @@ class Lexer2
       '' => lambda { nil } # when the peek(1) returns empty
     }
 
-    [ ' ', "\t", "\r" ].each { |c| @selector[c] = lambda { @scanner.skip(PATTERN_WS); nil } }
+    [' ', "\t", "\r"].each { |c| @selector[c] = lambda { @scanner.skip(PATTERN_WS); nil } }
 
-    [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].each do |c|
+    ('0'..'9').each do |c|
       @selector[c] = lambda do
         scn = @scanner
         before = scn.pos
@@ -523,12 +525,11 @@ class Lexer2
           end
           assert_numeric(invalid_number, before)
           scn.pos = before + 1
-          lex_error(Issues::ILLEGAL_NUMBER, {:value => invalid_number})
+          lex_error(Issues::ILLEGAL_NUMBER, { :value => invalid_number })
         end
       end
     end
-    ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-     'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '_'].each do |c|
+    ('a'..'z').to_a.push('_').each do |c|
       @selector[c] = lambda do
         scn = @scanner
         before = scn.pos
@@ -550,8 +551,7 @@ class Lexer2
       end
     end
 
-    ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-     'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'].each do |c|
+    ('A'..'Z').each do |c|
       @selector[c] = lambda do
         scn = @scanner
         before = scn.pos
@@ -615,7 +615,7 @@ class Lexer2
     lex_string(string, nil)
   end
 
-  def lex_string(string, path=nil)
+  def lex_string(string, path = nil)
     initvars
     assert_not_bom(string)
     @scanner = StringScanner.new(string)
@@ -678,7 +678,7 @@ class Lexer2
   #
   def fullscan
     result = []
-    scan {|token| result.push(token) }
+    scan { |token| result.push(token) }
     result
   end
 

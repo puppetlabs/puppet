@@ -116,7 +116,7 @@ module Puppet::Util::FileParsing
         else
           details[field].to_s
         end
-      }.reject { |c| c.nil?}.join(joinchar)
+      }.reject { |c| c.nil? }.join(joinchar)
     end
 
     # Customize this so we can do a bit of validation.
@@ -163,7 +163,7 @@ module Puppet::Util::FileParsing
 
   # Try to match a specific text line.
   def handle_text_line(line, record)
-    line =~ record.match ? {:record_type => record.name, :line => line} : nil
+    line =~ record.match ? { :record_type => record.name, :line => line } : nil
   end
 
   # Try to match a record.
@@ -220,7 +220,7 @@ module Puppet::Util::FileParsing
           end
         end
 
-        if record.rollup and ! line_fields.empty?
+        if record.rollup and !line_fields.empty?
           last_field = record.fields[-1]
           val = ([ret[last_field]] + line_fields).join(record.joiner)
           ret[last_field] = val
@@ -311,7 +311,7 @@ module Puppet::Util::FileParsing
 
   # Are there any record types defined?
   def records?
-    defined?(@record_types) and ! @record_types.empty?
+    defined?(@record_types) and !@record_types.empty?
   end
 
   # Define a new type of text record.
@@ -408,4 +408,3 @@ module Puppet::Util::FileParsing
     @record_types[type.intern]
   end
 end
-

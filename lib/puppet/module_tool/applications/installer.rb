@@ -229,7 +229,7 @@ module Puppet::ModuleTool
 
           results[:result] = :success
           results[:installed_modules] = releases
-          results[:graph] = [ build_install_graph(releases.first, releases) ]
+          results[:graph] = [build_install_graph(releases.first, releases)]
         rescue ModuleToolError, ForgeError => err
           results[:error] = {
             :oneline => err.message,
@@ -315,7 +315,7 @@ module Puppet::ModuleTool
 
         if @ignore_dependencies && @source == :filesystem
           @urls   = {}
-          @remote = { "#{@module_name}@#{@version}" => { } }
+          @remote = { "#{@module_name}@#{@version}" => {} }
           @versions = {
             @module_name => [
               { :vstring => @version, :semver => SemanticPuppet::Version.parse(@version) }
@@ -354,7 +354,7 @@ module Puppet::ModuleTool
       # install into the same directory 'foo'.
       #
       def resolve_install_conflicts(graph, is_dependency = false)
-        Puppet.debug("Resolving conflicts for #{graph.map {|n| n[:module]}.join(',')}")
+        Puppet.debug("Resolving conflicts for #{graph.map { |n| n[:module] }.join(',')}")
 
         graph.each do |release|
           @environment.modules_by_path[options[:target_dir]].each do |mod|

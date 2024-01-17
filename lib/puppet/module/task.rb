@@ -44,7 +44,7 @@ class Puppet::Module
     class TaskNotFound < Error
       def initialize(task_name, module_name)
         msg = _("Task %{task_name} not found in module %{module_name}.") %
-              {task_name: task_name, module_name: module_name}
+              { task_name: task_name, module_name: module_name }
         super(msg, 'puppet.tasks/task-not-found', { 'name' => task_name })
       end
     end
@@ -87,16 +87,16 @@ class Puppet::Module
     # Find task's required lib files and retrieve paths for both 'files' and 'implementation:files' metadata keys
     def self.find_extra_files(metadata, envname = nil)
       return [] if metadata.nil?
-      
+
       files = metadata.fetch('files', [])
       unless files.is_a?(Array)
-        msg = _("The 'files' task metadata expects an array, got %{files}.") % {files: files}
+        msg = _("The 'files' task metadata expects an array, got %{files}.") % { files: files }
         raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
       end
-      impl_files = metadata.fetch('implementations', []).flat_map do |impl| 
+      impl_files = metadata.fetch('implementations', []).flat_map do |impl|
         file_array = impl.fetch('files', [])
         unless file_array.is_a?(Array)
-          msg = _("The 'files' task metadata expects an array, got %{files}.") % {files: file_array}
+          msg = _("The 'files' task metadata expects an array, got %{files}.") % { files: file_array }
           raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
         end
         file_array
@@ -112,13 +112,13 @@ class Puppet::Module
         pup_module = Puppet::Module.find(module_name, envname)
         if pup_module.nil?
           msg = _("Could not find module %{module_name} containing task file %{filename}" %
-                  {module_name: module_name, filename: endpath})
+                  { module_name: module_name, filename: endpath })
           raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
         end
 
         unless MOUNTS.include? mount
           msg = _("Files must be saved in module directories that Puppet makes available via mount points: %{mounts}" %
-                  {mounts: MOUNTS.join(', ')})
+                  { mounts: MOUNTS.join(', ') })
           raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
         end
 
@@ -136,14 +136,14 @@ class Puppet::Module
         last_char = file[-1] == '/'
         if File.directory?(path)
           unless last_char
-            msg = _("Directories specified in task metadata must include a trailing slash: %{dir}" % { dir: file } )
+            msg = _("Directories specified in task metadata must include a trailing slash: %{dir}" % { dir: file })
             raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
           end
           dir_files = Dir.glob("#{path}**/*").select { |f| File.file?(f) }
           dir_files.map { |f| get_file_details(f, pup_module) }
         else
           if last_char
-            msg = _("Files specified in task metadata cannot include a trailing slash: %{file}" % { file: file } )
+            msg = _("Files specified in task metadata cannot include a trailing slash: %{file}" % { file: file })
             raise InvalidMetadata.new(msg, 'puppet.task/invalid-metadata')
           end
           get_file_details(path, pup_module)
@@ -172,7 +172,7 @@ class Puppet::Module
           path = executables.find { |real_impl| File.basename(real_impl) == impl['name'] }
           unless path
             msg = _("Task metadata for task %{name} specifies missing implementation %{implementation}" % { name: name, implementation: impl['name'] })
-            raise InvalidTask.new(msg, 'puppet.tasks/missing-implementation', { missing: [impl['name']] } )
+            raise InvalidTask.new(msg, 'puppet.tasks/missing-implementation', { missing: [impl['name']] })
           end
           { "name" => impl['name'], "path" => path }
         end
@@ -187,8 +187,8 @@ class Puppet::Module
               { name: name, directory: directory }
         raise InvalidTask.new(msg, 'puppet.tasks/no-implementation')
       elsif implementations.length > 1
-        msg =_("Multiple executables were found in directory %{directory} for task %{name}; define 'implementations' in metadata to differentiate between them") %
-             { name: name, directory: implementations[0] }
+        msg = _("Multiple executables were found in directory %{directory} for task %{name}; define 'implementations' in metadata to differentiate between them") %
+              { name: name, directory: implementations[0] }
         raise InvalidTask.new(msg, 'puppet.tasks/multiple-implementations')
       end
 
@@ -244,7 +244,7 @@ class Puppet::Module
         content.empty? ? {} : Puppet::Util::Json.load(content)
       end
     rescue SystemCallError, IOError => err
-      msg = _("Error reading metadata: %{message}" % {message: err.message})
+      msg = _("Error reading metadata: %{message}" % { message: err.message })
       raise InvalidMetadata.new(msg, 'puppet.tasks/unreadable-metadata')
     rescue Puppet::Util::Json::ParseError => err
       raise InvalidMetadata.new(err.message, 'puppet.tasks/unparseable-metadata')

@@ -257,8 +257,8 @@ class Puppet::Property < Puppet::Parameter
   def event(options = {})
     attrs = { :name => event_name, :desired_value => should, :property => self, :source_description => path }.merge(options)
     value = self.class.value_collection.match?(should) if should
-    
-    attrs[:invalidate_refreshes] = true if value && value.invalidate_refreshes 
+
+    attrs[:invalidate_refreshes] = true if value && value.invalidate_refreshes
     attrs[:redacted] = @sensitive
     resource.event attrs
   end
@@ -340,7 +340,7 @@ class Puppet::Property < Puppet::Parameter
       #
       # return is.zip(@should).all? {|a, b| property_matches?(a, b) }
     else
-      return @should.any? {|want| property_matches?(is, want) }
+      return @should.any? { |want| property_matches?(is, want) }
     end
   end
 

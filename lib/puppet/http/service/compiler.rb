@@ -149,7 +149,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   #    report submission.
   # @param [String] job_id The id of the orchestrator job that triggered this run.
   # @param [Hash] options A hash of options beyond direct input to catalogs. Options:
-  #    - prefer_requested_environment Whether to always override a node's classified 
+  #    - prefer_requested_environment Whether to always override a node's classified
   #      environment with the one supplied in the request. If this is true and no environment
   #      is supplied, fall back to the classified environment, or finally, 'production'.
   #    - capture_logs Whether to return the errors and warnings that occurred during
@@ -195,7 +195,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
     rescue => err
       raise Puppet::HTTP::SerializationError.new("Failed to deserialize catalog from puppetserver response: #{err.message}", err)
     end
-    
+
     logs = response_body['logs'] || []
     [response, catalog, logs]
   end

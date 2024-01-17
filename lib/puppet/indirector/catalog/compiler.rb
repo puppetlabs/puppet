@@ -68,7 +68,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         # name and modulepath to be the same. When using versioned environment dirs the
         # same "environment" can have different modulepaths so simply compare names here.
         if node.environment.name != request.environment.name
-          Puppet.warning _("Requested environment '%{request_env}' did not match server specified environment '%{server_env}'") % {request_env: request.environment.name, server_env: node.environment.name}
+          Puppet.warning _("Requested environment '%{request_env}' did not match server specified environment '%{server_env}'") % { request_env: request.environment.name, server_env: node.environment.name }
           return Puppet::Resource::Catalog.new(node.name, node.environment)
         end
       end
@@ -138,7 +138,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # If no match is found, return nil.
   def common_checksum_type(agent_checksum_type)
     if agent_checksum_type
-      agent_checksum_types = agent_checksum_type.split('.').map {|type| type.to_sym}
+      agent_checksum_types = agent_checksum_type.split('.').map { |type| type.to_sym }
       checksum_type = agent_checksum_types.drop_while do |type|
         not known_checksum_types.include? type
       end.first
@@ -168,7 +168,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     when sources.empty?
       # TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
       return Puppet::Util::Profiler.profile(_("Not inlining resource without sources"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
-    when (not (sources.all? {|source| source =~ /^puppet:/}))
+    when (not (sources.all? { |source| source =~ /^puppet:/ }))
       # TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
       return Puppet::Util::Profiler.profile(_("Not inlining unsupported source scheme"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
     else
@@ -237,10 +237,10 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
           list_of_data = Puppet::FileServing::Metadata.indirection.search(source, options)
           if list_of_data
-            basedir_meta = list_of_data.find {|meta| meta.relative_path == '.'}
+            basedir_meta = list_of_data.find { |meta| meta.relative_path == '.' }
             devfail "FileServing::Metadata search should always return the root search path" if basedir_meta.nil?
 
-            if ! inlineable_metadata?(basedir_meta, source, environment_path)
+            if !inlineable_metadata?(basedir_meta, source, environment_path)
               # If any source is not in the environment path, skip inlining this resource.
               log_file_outside_environment
               sources_in_environment = false
@@ -440,9 +440,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     @server_facts["serverversion"] = Puppet.version.to_s
 
     # And then add the server name and IP
-    {"servername" => "networking.fqdn",
-     "serverip" => "networking.ip",
-     "serverip6" => "networking.ip6"}.each do |var, fact|
+    { "servername" => "networking.fqdn",
+      "serverip" => "networking.ip",
+      "serverip6" => "networking.ip6" }.each do |var, fact|
       value = Puppet.runtime[:facter].value(fact)
       if !value.nil?
         @server_facts[var] = value

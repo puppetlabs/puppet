@@ -114,7 +114,7 @@ class Locator
 
     # Returns the position on line (first position on a line is 1)
     def pos_on_line(offset)
-      offset_on_line(offset) +1
+      offset_on_line(offset) + 1
     end
 
     def to_location_hash(reported_offset, end_offset)
@@ -122,7 +122,7 @@ class Locator
       offset     = char_offset(reported_offset)
       length     = char_length(reported_offset, end_offset)
       start_line = line_for_offset(reported_offset)
-      { :line => start_line, :pos => pos, :offset => offset, :length => length}
+      { :line => start_line, :pos => pos, :offset => offset, :length => length }
     end
 
     # Returns the index of the smallest item for which the item > the given value
@@ -240,7 +240,7 @@ class Locator
       # The last entry is duplicated since there will be  the line "after last line" that would otherwise require
       # conditional logic.
       #
-      @accumulated_margin = margin_per_line.reduce([0]) {|memo, val| memo << memo[-1] + val; memo }
+      @accumulated_margin = margin_per_line.reduce([0]) { |memo, val| memo << memo[-1] + val; memo }
       @accumulated_margin << @accumulated_margin[-1]
     end
 
@@ -250,7 +250,7 @@ class Locator
 
     # Returns array with transposed (local) offset and (local) length. The transposed values
     # take the margin into account such that it is added to the content to the right
-    # 
+    #
     # Using X to denote margin and where end of line is explicitly shown as \n:
     # ```
     # XXXXabc\n
@@ -268,7 +268,7 @@ class Locator
 
       # compute local start and end line
       start_line = line_for_offset(offset)
-      end_line = line_for_offset(offset+length)
+      end_line = line_for_offset(offset + length)
 
       # complex case when there is a margin
       transposed_offset = offset == 0 ? @leading_offset : offset + @leading_offset + @accumulated_margin[start_line]
@@ -291,7 +291,7 @@ class Locator
 
   class LocatorForChars < AbstractLocator
     def offset_on_line(offset)
-      line_offset = line_index[ line_for_offset(offset)-1 ]
+      line_offset = line_index[line_for_offset(offset) - 1]
       offset - line_offset
     end
 
@@ -335,8 +335,8 @@ class Locator
     # Returns the offset on line (first offset on a line is 0).
     # Ruby 19 is multibyte but has no character position methods, must use byteslice
     def offset_on_line(offset)
-      line_offset = line_index[ line_for_offset(offset)-1 ]
-      @string.byteslice(line_offset, offset-line_offset).length
+      line_offset = line_index[line_for_offset(offset) - 1]
+      @string.byteslice(line_offset, offset - line_offset).length
     end
 
     # Returns the character offset for a given byte offset

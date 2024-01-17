@@ -35,7 +35,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
   end
 
   def latest
-    output = opkg( "list", @resource[:name])
+    output = opkg("list", @resource[:name])
     matches = /^(\S+) - (\S+)/.match(output).captures
     matches[1]
   end
@@ -46,14 +46,14 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
     opkg('update') if package_lists.size <= 2
 
     if @resource[:source]
-      opkg( '--force-overwrite', 'install', @resource[:source] )
+      opkg('--force-overwrite', 'install', @resource[:source])
     else
-      opkg( '--force-overwrite', 'install', @resource[:name] )
+      opkg('--force-overwrite', 'install', @resource[:name])
     end
   end
 
   def uninstall
-    opkg( 'remove', @resource[:name] )
+    opkg('remove', @resource[:name])
   end
 
   def update
@@ -62,7 +62,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
 
   def query
     # list out our specific package
-    output = opkg( 'list-installed', @resource[:name] )
+    output = opkg('list-installed', @resource[:name])
     if output =~ /^(\S+) - (\S+)/
       return { :ensure => $2 }
     end

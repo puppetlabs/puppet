@@ -142,8 +142,8 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
 
     # Prefer the standard extReq, but accept the Microsoft specific version as
     # a fallback, if the standard version isn't found.
-    attribute   = @content.attributes.find {|x| x.oid == "extReq" }
-    attribute ||= @content.attributes.find {|x| x.oid == "msExtReq" }
+    attribute   = @content.attributes.find { |x| x.oid == "extReq" }
+    attribute ||= @content.attributes.find { |x| x.oid == "msExtReq" }
     return [] unless attribute
 
     extensions = unpack_extension_request(attribute)
@@ -161,9 +161,9 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
       # fixed component in the sequence.
       case ext_values.length
       when 2
-        {"oid" => ext_values[0].value, "value" => value}
+        { "oid" => ext_values[0].value, "value" => value }
       when 3
-        {"oid" => ext_values[0].value, "value" => value, "critical" => ext_values[1].value}
+        { "oid" => ext_values[0].value, "value" => value, "critical" => ext_values[1].value }
       else
         raise Puppet::Error, _("In %{attr}, expected extension record %{index} to have two or three items, but found %{count}") % { attr: attribute.oid, index: index, count: ext_values.length }
       end
@@ -172,8 +172,8 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
 
   def subject_alt_names
     @subject_alt_names ||= request_extensions
-                           .select {|x| x["oid"] == "subjectAltName" }
-                           .map {|x| x["value"].split(/\s*,\s*/) }
+                           .select { |x| x["oid"] == "subjectAltName" }
+                           .map { |x| x["value"].split(/\s*,\s*/) }
                            .flatten
                            .sort
                            .uniq
@@ -196,7 +196,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     end
 
     x509_attributes.map do |attr|
-      {"oid" => attr.oid, "value" => attr.value.value.first.value}
+      { "oid" => attr.oid, "value" => attr.value.value.first.value }
     end
   end
 

@@ -41,7 +41,7 @@ module Puppet::ModuleTool
     def release_name
       return nil unless @data['name'] && @data['version']
 
-      [ dashed_name, @data['version'] ].join('-')
+      [dashed_name, @data['version']].join('-')
     end
 
     alias :name :module_name
@@ -64,7 +64,7 @@ module Puppet::ModuleTool
     # Validates the name and version_requirement for a dependency, then creates
     # the Dependency and adds it.
     # Returns the Dependency that was added.
-    def add_dependency(name, version_requirement=nil, repository=nil)
+    def add_dependency(name, version_requirement = nil, repository = nil)
       validate_name(name)
       validate_version_range(version_requirement) if version_requirement
 

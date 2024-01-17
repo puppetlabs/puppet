@@ -65,7 +65,7 @@ Puppet::Face.define(:parser, '0.0.1') do
       end
 
       unless missing_files.empty?
-        raise Puppet::Error, _("One or more file(s) specified did not exist:\n%{files}") % { files: missing_files.collect {|f| " " * 3 + f + "\n"} }
+        raise Puppet::Error, _("One or more file(s) specified did not exist:\n%{files}") % { files: missing_files.collect { |f| " " * 3 + f + "\n" } }
       end
 
       parse_errors
@@ -84,7 +84,7 @@ Puppet::Face.define(:parser, '0.0.1') do
 
     when_rendering :json do |errors|
       unless errors.empty?
-        ignore_error_keys = [ :arguments, :environment, :node ]
+        ignore_error_keys = [:arguments, :environment, :node]
 
         data = errors.map do |file, error|
           file_errors = error.to_h.reject { |k, _| ignore_error_keys.include?(k) }
@@ -148,7 +148,7 @@ Puppet::Face.define(:parser, '0.0.1') do
       if options[:e]
         dump_parse(options[:e], 'command-line-string', options, false)
       elsif args.empty?
-        if ! STDIN.tty?
+        if !STDIN.tty?
           dump_parse(STDIN.read, 'stdin', options, false)
         else
           raise Puppet::Error, _("No input to parse given on command line or stdin")
@@ -213,7 +213,7 @@ Puppet::Face.define(:parser, '0.0.1') do
     env = Puppet.lookup(:current_environment)
     loaders = Puppet::Pops::Loaders.new(env)
 
-    Puppet.override( {:loaders => loaders } , _('For puppet parser validate')) do
+    Puppet.override({ :loaders => loaders }, _('For puppet parser validate')) do
       begin
         validation_environment = manifest ? env.override_with(:manifest => manifest) : env
         validation_environment.check_for_reparse

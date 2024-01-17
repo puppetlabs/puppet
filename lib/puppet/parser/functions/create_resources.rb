@@ -2,7 +2,7 @@
 
 Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => <<-'ENDHEREDOC') do |args|
     Converts a hash into a set of resources and adds them to the catalog.
-    
+
     **Note**: Use this function selectively. It's generally better to write resources in
      [Puppet](https://puppet.com/docs/puppet/latest/lang_resources.html), as
      resources created with `create_resource` are difficult to read and troubleshoot.
@@ -56,7 +56,7 @@ ENDHEREDOC
   if Puppet[:tasks]
     raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
       Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
-      {:operation => 'create_resources'}
+      { :operation => 'create_resources' }
     )
   end
 

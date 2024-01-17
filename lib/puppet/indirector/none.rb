@@ -8,4 +8,3 @@ class Puppet::Indirector::None < Puppet::Indirector::Terminus
     return nil
   end
 end
-

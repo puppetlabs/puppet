@@ -17,7 +17,7 @@ class Puppet::Node::Facts
 
   # We want to expire any cached nodes if the facts are saved.
   module NodeExpirer
-    def save(instance, key = nil, options={})
+    def save(instance, key = nil, options = {})
       Puppet::Node.indirection.expire(instance.name, options)
       super
     end
@@ -140,7 +140,7 @@ class Puppet::Node::Facts
   def sanitize_fact(fact)
     if fact.is_a? Hash then
       ret = {}
-      fact.each_pair { |k, v| ret[sanitize_fact k]=sanitize_fact v }
+      fact.each_pair { |k, v| ret[sanitize_fact k] = sanitize_fact v }
       ret
     elsif fact.is_a? Array then
       fact.collect { |i| sanitize_fact i }

@@ -90,7 +90,7 @@ module LoaderPaths
       n = ''.dup
       unless extension.empty?
         # Remove extension
-        relative_path = relative_path[0..-(extension.length+1)]
+        relative_path = relative_path[0..-(extension.length + 1)]
       end
       relative_path.split('/').each do |segment|
         n << '::' if n.size > 0
@@ -157,7 +157,7 @@ module LoaderPaths
       n << module_name unless module_name.nil?
       unless extension.empty?
         # Remove extension
-        relative_path = relative_path[0..-(extension.length+1)]
+        relative_path = relative_path[0..-(extension.length + 1)]
       end
       relative_path.split('/').each do |segment|
         n << '::' if n.size > 0
@@ -354,7 +354,7 @@ module LoaderPaths
         n = ''.dup
         n << module_name unless module_name.nil?
         ext = @extensions.find { |extension| relative_path.end_with?(extension) }
-        relative_path = relative_path[0..-(ext.length+1)]
+        relative_path = relative_path[0..-(ext.length + 1)]
 
         relative_path.split('/').each do |segment|
           n << '::' if n.size > 0
@@ -411,4 +411,3 @@ module LoaderPaths
 end
 end
 end
-

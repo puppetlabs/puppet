@@ -59,7 +59,7 @@ Puppet::Type.type(:service).provide :openrc, :parent => :base do
   end
 
   def startcmd
-    [command(:rcservice), @resource[:name], :start ]
+    [command(:rcservice), @resource[:name], :start]
   end
 
   def stopcmd

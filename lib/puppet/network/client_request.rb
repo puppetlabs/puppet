@@ -28,4 +28,3 @@ module Puppet::Network # :nodoc:
     end
   end
 end
-

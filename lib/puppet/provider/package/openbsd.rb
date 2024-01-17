@@ -31,7 +31,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       execpipe(listcmd) do |process|
         # our regex for matching pkg_info output
         regex = /^(.*)-(\d[^-]*)[-]?([\w-]*)(.*)$/
-        fields = [:name, :ensure, :flavor ]
+        fields = [:name, :ensure, :flavor]
         hash = {}
 
         # now turn each returned line into a package object
@@ -81,7 +81,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       query = @resource[:name]
     end
 
-    output = Puppet::Util.withenv(e_vars) {pkginfo "-Q", query}
+    output = Puppet::Util.withenv(e_vars) { pkginfo "-Q", query }
     version = properties[:ensure]
 
     if output.nil? or output.size == 0 or output =~ /Error from /
@@ -89,7 +89,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       return version
     else
       # Remove all fuzzy matches first.
-      output = output.split.select {|p| p =~ /^#{resource[:name]}-(\d[^-]*)[-]?(\w*)/ }.join
+      output = output.split.select { |p| p =~ /^#{resource[:name]}-(\d[^-]*)[-]?(\w*)/ }.join
       debug "pkg_info -Q for #{resource[:name]}: #{output}"
     end
 
@@ -104,7 +104,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         return match[2]
       end
 
-      vcmp = version.split('.').map{|s|s.to_i} <=> match[2].split('.').map{|s|s.to_i}
+      vcmp = version.split('.').map { |s| s.to_i } <=> match[2].split('.').map { |s| s.to_i }
       if vcmp > 0
         # The locally installed package may actually be newer than what a mirror
         # has. Log it at debug, but ignore it otherwise.
@@ -194,7 +194,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         use_version = get_version
       end
 
-      [ @resource[:name], use_version, @resource[:flavor]].join('-').gsub(/-+$/, '')
+      [@resource[:name], use_version, @resource[:flavor]].join('-').gsub(/-+$/, '')
     end
   end
 

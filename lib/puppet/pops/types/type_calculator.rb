@@ -386,7 +386,7 @@ class TypeCalculator
     end
 
     if t1.is_a?(PStringType) && (t2.is_a?(PStringType) || t2.is_a?(PEnumType))
-      if(t2.is_a?(PEnumType))
+      if (t2.is_a?(PEnumType))
         return t1.value.nil? ? PEnumType::DEFAULT : PEnumType.new(t2.values | [t1.value])
       end
 
@@ -465,7 +465,7 @@ class TypeCalculator
       c2 = ClassLoader.provide_from_type(t2)
       if c1 && c2
         c2_superclasses = superclasses(c2)
-        superclasses(c1).each do|c1_super|
+        superclasses(c1).each do |c1_super|
           c2_superclasses.each do |c2_super|
             if c1_super == c2_super
               return PRuntimeType.new(:ruby, c1_super.name)
@@ -493,14 +493,14 @@ class TypeCalculator
   # @api public
   #
   def reduce_type(enumerable)
-    enumerable.reduce(nil) {|memo, t| common_type(memo, t) }
+    enumerable.reduce(nil) { |memo, t| common_type(memo, t) }
   end
 
   # Reduce an enumerable of objects to a single common type
   # @api public
   #
   def infer_and_reduce_type(enumerable)
-    reduce_type(enumerable.map {|o| infer(o) })
+    reduce_type(enumerable.map { |o| infer(o) })
   end
 
   # The type of all modules is PTypeType
@@ -720,18 +720,18 @@ class TypeCalculator
     if o.empty?
       PArrayType::EMPTY
     else
-      PTupleType.new(o.map {|x| infer_set(x) })
+      PTupleType.new(o.map { |x| infer_set(x) })
     end
   end
 
   def infer_set_Hash(o)
     if o.empty?
       PHashType::EMPTY
-    elsif o.keys.all? {|k| PStringType::NON_EMPTY.instance?(k) }
+    elsif o.keys.all? { |k| PStringType::NON_EMPTY.instance?(k) }
       PStructType.new(o.each_pair.map { |k, v| PStructElement.new(PStringType.new(k), infer_set(v)) })
     else
-      ktype = PVariantType.maybe_create(o.keys.map {|k| infer_set(k) })
-      etype = PVariantType.maybe_create(o.values.map {|e| infer_set(e) })
+      ktype = PVariantType.maybe_create(o.keys.map { |k| infer_set(k) })
+      etype = PVariantType.maybe_create(o.values.map { |e| infer_set(e) })
       PHashType.new(unwrap_single_variant(ktype), unwrap_single_variant(etype), size_as_type(o))
     end
   end
@@ -770,7 +770,7 @@ class TypeCalculator
   end
 
   def max(a, b)
-    a >=b ? a : b
+    a >= b ? a : b
   end
 
   def min(a, b)

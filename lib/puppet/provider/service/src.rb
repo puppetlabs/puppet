@@ -54,7 +54,7 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
   end
 
   def enabled?
-    output = execute([command(:lsitab), @resource[:name]], {:failonfail => false, :combine => true})
+    output = execute([command(:lsitab), @resource[:name]], { :failonfail => false, :combine => true })
     output.exitstatus == 0 ? :true : :false
   end
 
@@ -116,12 +116,12 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
         end
         return :true
       rescue Puppet::ExecutionFailure => detail
-        raise Puppet::Error.new("Unable to restart service #{@resource[:name]}, error was: #{detail}", detail )
+        raise Puppet::Error.new("Unable to restart service #{@resource[:name]}, error was: #{detail}", detail)
       end
     end
     self.fail("No such service found")
   rescue Puppet::ExecutionFailure => detail
-    raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}", detail )
+    raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}", detail)
   end
 
   def status
@@ -145,4 +145,3 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
     return :stopped
   end
 end
-

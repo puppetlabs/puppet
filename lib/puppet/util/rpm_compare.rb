@@ -118,7 +118,7 @@ module Puppet::Util::RpmCompare
     epoch_index = full_version.index(':')
     if epoch_index
       epoch = full_version[0, epoch_index]
-      full_version = full_version[epoch_index+1, full_version.length]
+      full_version = full_version[epoch_index + 1, full_version.length]
     else
       epoch = nil
     end
@@ -131,7 +131,7 @@ module Puppet::Util::RpmCompare
     release_index = full_version.index('-')
     if release_index
       version = full_version[0, release_index]
-      release = full_version[release_index+1, full_version.length]
+      release = full_version[release_index + 1, full_version.length]
       arch = release.scan(ARCH_REGEX)[0]
       if arch
         architecture = arch.delete('.')
@@ -149,7 +149,7 @@ module Puppet::Util::RpmCompare
   # found in python/header-py.c, as used by rpm.
   def compare_values(s1, s2)
     return 0 if s1.nil? && s2.nil?
-    return 1 if ( not s1.nil? ) && s2.nil?
+    return 1 if (not s1.nil?) && s2.nil?
     return -1 if s1.nil? && (not s2.nil?)
 
     return rpmvercmp(s1, s2)

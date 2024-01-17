@@ -34,7 +34,7 @@ Puppet::Functions.create_function(:contain, Puppet::Functions::InternalFunction)
     if Puppet[:tasks]
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
         Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
-        {:operation => 'contain'}
+        { :operation => 'contain' }
       )
     end
 
@@ -42,13 +42,13 @@ Puppet::Functions.create_function(:contain, Puppet::Functions::InternalFunction)
     # names absolute if so desired.
     classes = scope.transform_and_assert_classnames(classes.flatten)
 
-    result = classes.map {|name| Puppet::Pops::Types::TypeFactory.host_class(name) }
+    result = classes.map { |name| Puppet::Pops::Types::TypeFactory.host_class(name) }
     containing_resource = scope.resource
 
     # This is the same as calling the include function but faster and does not rely on the include
     # function.
     (scope.compiler.evaluate_classes(classes, scope, false) || []).each do |resource|
-      if ! scope.catalog.edge?(containing_resource, resource)
+      if !scope.catalog.edge?(containing_resource, resource)
         scope.catalog.add_edge(containing_resource, resource)
       end
     end

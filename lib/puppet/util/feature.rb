@@ -120,11 +120,11 @@ class Puppet::Util::Feature
     rescue LoadError
       # Expected case. Required library insn't installed.
       debug_once(_("Could not find library '%{lib}' required to enable feature '%{name}'") %
-        {lib: lib, name: name})
+        { lib: lib, name: name })
       false
     rescue StandardError, ScriptError => detail
       debug_once(_("Exception occurred while loading library '%{lib}' required to enable feature '%{name}': %{detail}") %
-        {lib: lib, name: name, detail: detail})
+        { lib: lib, name: name, detail: detail })
       false
     end
   end

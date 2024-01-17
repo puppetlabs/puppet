@@ -3,7 +3,7 @@
 module Puppet::Pops::Loader::UriHelper
   # Raises an exception if specified gem can not be located
   #
-  def path_for_uri(uri, subdir='lib')
+  def path_for_uri(uri, subdir = 'lib')
     case uri.scheme
     when "gem"
       begin

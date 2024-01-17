@@ -31,7 +31,7 @@ class Puppet::Parser::ScriptCompiler
   attr_reader :node_name
 
   def with_context_overrides(description = '', &block)
-    Puppet.override( @context_overrides , description, &block)
+    Puppet.override(@context_overrides, description, &block)
   end
 
   # Evaluates the configured setup for a script + code in an environment with modules
@@ -41,7 +41,7 @@ class Puppet::Parser::ScriptCompiler
     Puppet[:strict] = :error
 
     # TRANSLATORS, "For running script" is not user facing
-    Puppet.override( @context_overrides , "For running script") do
+    Puppet.override(@context_overrides, "For running script") do
       # TRANSLATORS "main" is a function name and should not be translated
       result = Puppet::Util::Profiler.profile(_("Script: Evaluated main"), [:script, :evaluate_main]) { evaluate_main }
       if block_given?
@@ -73,7 +73,7 @@ class Puppet::Parser::ScriptCompiler
   # Create a script compiler for the given environment where errors are logged as coming
   # from the given node_name
   #
-  def initialize(environment, node_name, for_agent=false)
+  def initialize(environment, node_name, for_agent = false)
     @environment = environment
     @node_name = node_name
 
@@ -103,7 +103,7 @@ class Puppet::Parser::ScriptCompiler
   # or in the top scope itself (notably, the $settings:: namespace is initialized
   # as just a set of variables in that namespace - there is no named scope for 'settings'
   # when scripting.
-  # 
+  #
   # Keeping this method here to get specific error as being unsure if there are functions/logic
   # that will call this. The AbstractCompiler defines this method, but maybe it does not
   # have to (TODO).

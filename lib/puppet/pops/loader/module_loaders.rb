@@ -465,7 +465,7 @@ module ModuleLoaders
     end
 
     def meaningful_to_search?(smart_path)
-      ! add_to_index(smart_path).empty?
+      !add_to_index(smart_path).empty?
     end
 
     def to_s()

@@ -197,4 +197,3 @@ module Adaptable
   end
 end
 end
-

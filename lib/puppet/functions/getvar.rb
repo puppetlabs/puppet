@@ -58,7 +58,7 @@ Puppet::Functions.create_function(:getvar, Puppet::Functions::InternalFunction) 
     optional_block_param 'Callable', :block
   end
 
-  def invalid_variable_error(navigation, default_value=nil, &block)
+  def invalid_variable_error(navigation, default_value = nil, &block)
     _("The given string does not start with a valid variable name")
   end
 
@@ -72,7 +72,7 @@ Puppet::Functions.create_function(:getvar, Puppet::Functions::InternalFunction) 
       navigation = navigation[1..-1]
     else
       unless navigation.empty?
-        raise ArgumentError, _("First character after var name in get string must be a '.' - got %{char}") % {char: navigation[0]}
+        raise ArgumentError, _("First character after var name in get string must be a '.' - got %{char}") % { char: navigation[0] }
       end
     end
     get_from_var_name(scope, matches[1], navigation, default_value, &block)

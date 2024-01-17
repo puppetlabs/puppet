@@ -22,7 +22,7 @@ class Puppet::Transaction::ResourceHarness
       context = ResourceApplicationContext.from_resource(resource, status)
       perform_changes(resource, context)
 
-      if status.changed? && ! resource.noop?
+      if status.changed? && !resource.noop?
         cache(resource, :synced, Time.now)
         resource.flush if resource.respond_to?(:flush)
       end

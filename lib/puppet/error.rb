@@ -5,7 +5,7 @@ module Puppet
   class Error < RuntimeError
     attr_accessor :original
 
-    def initialize(message, original=nil)
+    def initialize(message, original = nil)
       super(message.scrub)
       @original = original
     end
@@ -20,7 +20,7 @@ module Puppet
     # May be called with 3 arguments for message, file, line, and exception, or
     # 4 args including the position on the line.
     #
-    def initialize(message, file=nil, line=nil, pos=nil, original=nil)
+    def initialize(message, file = nil, line = nil, pos = nil, original = nil)
       if pos.kind_of? Exception
         original = pos
         pos = nil
@@ -68,7 +68,7 @@ module Puppet
     # @param issue_code [Symbol] The issue code
     # @param arguments [Hash{Symbol=>Object}] Issue arguments
     #
-    def initialize(message, file=nil, line=nil, pos=nil, original=nil, issue_code= nil, arguments = nil)
+    def initialize(message, file = nil, line = nil, pos = nil, original = nil, issue_code = nil, arguments = nil)
       super(message, file, line, pos, original)
       @issue_code = issue_code
       @basic_message = message

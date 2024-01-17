@@ -44,7 +44,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
     response = @client.get(
       with_base_url("/certificate/#{name}"),
       headers: headers,
-      options: {ssl_context: ssl_context}
+      options: { ssl_context: ssl_context }
     )
 
     process_response(response)
@@ -70,7 +70,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
     response = @client.get(
       with_base_url("/certificate_revocation_list/ca"),
       headers: headers,
-      options: {ssl_context: ssl_context}
+      options: { ssl_context: ssl_context }
     )
 
     process_response(response)
@@ -121,7 +121,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
       with_base_url('/certificate_renewal'),
       '', # Puppet::HTTP::Client.post requires a body, the API endpoint does not
       headers: headers,
-      options: {ssl_context: ssl_context}
+      options: { ssl_context: ssl_context }
     )
 
     raise ArgumentError.new(_('SSL context must contain a client certificate.')) unless ssl_context.client_cert

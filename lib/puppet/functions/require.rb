@@ -50,7 +50,7 @@ Puppet::Functions.create_function(:require, Puppet::Functions::InternalFunction)
     if Puppet[:tasks]
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
         Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
-        {:operation => 'require'}
+        { :operation => 'require' }
       )
     end
 
@@ -58,7 +58,7 @@ Puppet::Functions.create_function(:require, Puppet::Functions::InternalFunction)
     # names absolute if so desired.
     classes = scope.transform_and_assert_classnames(classes.flatten)
 
-    result = classes.map {|name| Puppet::Pops::Types::TypeFactory.host_class(name) }
+    result = classes.map { |name| Puppet::Pops::Types::TypeFactory.host_class(name) }
 
     # This is the same as calling the include function (but faster) since it again
     # would otherwise need to perform the optional absolute name transformation

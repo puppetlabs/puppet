@@ -37,7 +37,7 @@ Puppet::Functions.create_function(:dig) do
 
   def dig(data, *args)
     walked_path = []
-    args.reduce(data) do | d, k |
+    args.reduce(data) do |d, k|
       return nil if d.nil? || k.nil?
 
       if !(d.is_a?(Array) || d.is_a?(Hash))
@@ -46,7 +46,7 @@ Puppet::Functions.create_function(:dig) do
         error_data = Puppet::DataTypes::Error.new(
           msg,
           'SLICE_ERROR',
-          {'walked_path' => walked_path, 'value_type' => t},
+          { 'walked_path' => walked_path, 'value_type' => t },
           'EXPECTED_COLLECTION'
         )
         raise Puppet::ErrorWithData.new(error_data, msg)
@@ -59,7 +59,7 @@ Puppet::Functions.create_function(:dig) do
         error_data = Puppet::DataTypes::Error.new(
           msg,
           'SLICE_ERROR',
-          {'walked_path' => walked_path, 'index_type' => t},
+          { 'walked_path' => walked_path, 'index_type' => t },
           'EXPECTED_INTEGER_INDEX'
         )
         raise Puppet::ErrorWithData.new(error_data, msg)

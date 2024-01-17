@@ -30,6 +30,10 @@ Layout/IndentationWidth:
 Layout/LineEndStringConcatenationIndentation:
   Enabled: true
 
+# Explicitly enables this cop new in 1.7
+Layout/SpaceBeforeBrackets:
+  Enabled: true
+
 # puppet uses symbol booleans in types and providers to work around long standing
 # bugs when trying to manage falsey pararameters and properties
 Lint/BooleanSymbol:

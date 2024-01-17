@@ -3,7 +3,7 @@
 require_relative '../../../puppet/http'
 
 # This will be raised if too many redirects happen for a given HTTP request
-class Puppet::Network::HTTP::RedirectionLimitExceededException < Puppet::Error ; end
+class Puppet::Network::HTTP::RedirectionLimitExceededException < Puppet::Error; end
 
 # This class provides simple methods for issuing various types of HTTP
 # requests.  It's interface is intended to mirror Ruby's Net::HTTP
@@ -140,7 +140,7 @@ class Puppet::Network::HTTP::Connection
   # @param headers [Hash{String => String}]
   # @!macro common_options
   # @api public
-  def delete(path, headers = {'Depth' => 'Infinity'}, options = {})
+  def delete(path, headers = { 'Depth' => 'Infinity' }, options = {})
     headers ||= {}
     options[:ssl_context] ||= resolve_ssl_context
     options[:redirect_limit] ||= @redirect_limit

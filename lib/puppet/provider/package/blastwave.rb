@@ -98,7 +98,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
     if hash
       hash
     else
-      {:ensure => :absent}
+      { :ensure => :absent }
     end
   end
 

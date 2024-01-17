@@ -43,7 +43,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     end
   end
 
-  def add_relationship(f, t, label=nil)
+  def add_relationship(f, t, label = nil)
     super(f, t, label)
     @ready.delete(@prioritizer.priority_of(t))
   end

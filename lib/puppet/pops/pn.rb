@@ -237,4 +237,3 @@ end
 
 require_relative 'model/pn_transformer'
 require_relative 'parser/pn_parser'
-

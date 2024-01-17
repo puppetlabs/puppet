@@ -30,7 +30,7 @@ module Puppet::Pops::Evaluator::ExternalSyntaxSupport
   #
   def checker_for_syntax(_, syntax)
     checkers_hash = Puppet.lookup(:plugins)[Puppet::Plugins::SyntaxCheckers::SYNTAX_CHECKERS_KEY]
-    checkers_hash[lookup_keys_for_syntax(syntax).find {|x| checkers_hash[x] }]
+    checkers_hash[lookup_keys_for_syntax(syntax).find { |x| checkers_hash[x] }]
   end
 
   # Returns an array of possible syntax names

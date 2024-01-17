@@ -28,7 +28,7 @@ module Manager
   #
   def clear_misses
     unless @types.nil?
-      @types.delete_if {|_, v| v.nil? }
+      @types.delete_if { |_, v| v.nil? }
     end
   end
 
@@ -77,7 +77,7 @@ module Manager
       unless options.is_a?(Hash)
         # TRANSLATORS 'Puppet::Type.newtype' should not be translated
         Puppet.warning(_("Puppet::Type.newtype(%{name}) now expects a hash as the second argument, not %{argument}") %
-                       { name: name, argument: options.inspect})
+                       { name: name, argument: options.inspect })
       end
 
       # First make sure we don't have a method sitting around
@@ -118,7 +118,7 @@ module Manager
 
       # If they've got all the necessary methods defined and they haven't
       # already added the property, then do so now.
-      klass.ensurable if klass.ensurable? and ! klass.validproperty?(:ensure)
+      klass.ensurable if klass.ensurable? and !klass.validproperty?(:ensure)
 
       # Now set up autoload any providers that might exist for this type.
 
@@ -196,4 +196,3 @@ module Manager
   end
 end
 end
-

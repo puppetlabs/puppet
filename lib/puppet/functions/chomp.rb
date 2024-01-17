@@ -48,7 +48,7 @@ Puppet::Functions.create_function(:chomp) do
   end
 
   def on_iterable(a)
-    a.map {|x| do_chomp(x) }
+    a.map { |x| do_chomp(x) }
   end
 
   def do_chomp(x)

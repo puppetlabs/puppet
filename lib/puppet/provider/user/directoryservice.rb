@@ -517,7 +517,7 @@ Puppet::Type.type(:user).provide :directoryservice do
 
   # Get the next available uid on the system by getting a list of user ids,
   # sorting them, grabbing the last one, and adding a 1. Scientific stuff here.
-  def next_system_id(min_id=20)
+  def next_system_id(min_id = 20)
     dscl_output = dscl '.', '-list', '/Users', 'uid'
     # We're ok with throwing away negative uids here. Also, remove nil values.
     user_ids = dscl_output.split.compact.collect { |l| l.to_i if l =~ /^\d+$/ }
@@ -525,7 +525,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     # We're just looking for an unused id in our sorted array.
     ids.each_index do |i|
       next_id = ids[i] + 1
-      return next_id if ids[i+1] != next_id and next_id >= min_id
+      return next_id if ids[i + 1] != next_id and next_id >= min_id
     end
   end
 
