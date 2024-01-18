@@ -73,7 +73,7 @@ class LiteralEvaluator
   def literal_AccessExpression(o)
     # to prevent parameters with [[]] like Optional[[String]]
     throw :not_literal if o.keys.size == 1 && o.keys[0].is_a?(Model::LiteralList)
-    o.keys.map {|v| literal(v) }
+    o.keys.map { |v| literal(v) }
   end
 
   def literal_ConcatenatedString(o)
