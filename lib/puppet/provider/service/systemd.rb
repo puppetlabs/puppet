@@ -16,13 +16,13 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   confine :true => Puppet::FileSystem.exist?('/proc/1/comm') && Puppet::FileSystem.read('/proc/1/comm').include?('systemd')
 
   defaultfor 'os.family' => [:archlinux]
-  defaultfor 'os.name' => :redhat
-  defaultfor 'os.family' => :redhat, 'os.release.major' => ["7", "8", "9"]
+  defaultfor 'os.family' => :redhat
   notdefaultfor 'os.name' => :redhat, 'os.release.major' => (4..6).to_a # Use the "RedHat" service provider
   defaultfor 'os.family' => :redhat, 'os.name' => :fedora
   defaultfor 'os.family' => :suse
   defaultfor 'os.family' => :coreos
   defaultfor 'os.family' => :gentoo
+  notdefaultfor 'os.name' => :amazon, 'os.release.major' => ["2017", "2018"]
   defaultfor 'os.name' => :amazon, 'os.release.major' => ["2", "2023"]
   defaultfor 'os.name' => :debian
   notdefaultfor 'os.name' => :debian, 'os.release.major' => ["5", "6", "7"] # These are using the "debian" method

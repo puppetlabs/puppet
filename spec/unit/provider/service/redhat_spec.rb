@@ -21,6 +21,7 @@ describe 'Puppet::Type::Service::Provider::Redhat',
 
   [4, 5, 6].each do |ver|
     it "should be the default provider on rhel#{ver}" do
+      allow(Facter).to receive(:value).with('os.name').and_return(:redhat)
       allow(Facter).to receive(:value).with('os.release.major').and_return(ver)
       expect(provider_class.default?).to be_truthy
     end
