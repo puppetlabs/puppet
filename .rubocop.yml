@@ -1,7 +1,8 @@
 inherit_from: .rubocop_todo.yml
 
 require:
-  rubocop-i18n
+  - rubocop-i18n
+  - rubocop-performance
 
 AllCops:
   TargetRubyVersion: 2.5
@@ -154,3 +155,21 @@ Naming/VariableName:
 
 Naming/VariableNumber:
   Enabled: false
+
+Performance/AncestorsInclude: # new in 1.7
+  Enabled: true
+
+Performance/BigDecimalWithNumericArgument: # new in 1.7
+  Enabled: true
+
+Performance/ConcurrentMonotonicTime: # new in 1.12
+  Enabled: true
+
+Performance/MapCompact: # new in 1.11
+  Enabled: true
+
+Performance/RedundantSortBlock: # new in 1.7
+  Enabled: true
+
+Performance/ReverseFirst: # new in 1.7
+  Enabled: true
