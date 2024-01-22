@@ -3,6 +3,7 @@ inherit_from: .rubocop_todo.yml
 require:
   - rubocop-i18n
   - rubocop-performance
+  - rubocop-rake
 
 AllCops:
   TargetRubyVersion: 2.5
