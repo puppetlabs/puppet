@@ -721,7 +721,9 @@ module Puppet
         * An array of file paths --- look for keys in all of the files listed. Purge
           any keys that aren't managed as `ssh_authorized_key` resources. If any of
           these paths starts with `~` or `%h`, that token will be replaced with
-          the user's home directory."
+          the user's home directory.
+        * A hash that contains a key of `target` containing the aforementioned possible values
+          and a key of `options` containing keys for the parameters of ssh_authorized_key"
 
       defaultto :false
 
@@ -743,12 +745,26 @@ module Puppet
           end
           return
         end
-        raise ArgumentError, _("purge_ssh_keys must be true, false, or an array of file names, not %{value}") % { value: value.inspect }
+        if value.is_a?(Hash)
+          if value.key?('options') and value.key?('target')
+            return
+          end
+          raise ArgumentError, _("purge_ssh_keys must have 'options' and 'value' key if it is a hash") % { value: value.inspect }
+        end
+        raise ArgumentError, _("purge_ssh_keys must be true, false, an array of file names or hash with options and values, not %{value}") % { value: value.inspect }
       end
 
       munge do |value|
         # Resolve string, boolean and symbol forms of true and false to a
         # single representation.
+
+        if Hash === value
+          $ssh_authorized_key_options = value["options"]
+          target_value = value["target"]
+        else
+          target_value = value
+        end
+
         case value
         when :false, false, "false"
           []
@@ -757,7 +773,7 @@ module Puppet
           home ? [ "#{home}/.ssh/authorized_keys" ] : []
         else
           # value can be a string or array - munge each value
-          [ value ].flatten.map do |entry|
+          [ target_value ].flatten.map do |entry|
             authorized_keys_path(entry)
           end.compact
         end
@@ -811,6 +827,11 @@ module Puppet
         flatten.each do |res|
           res[:ensure] = :absent
           res[:user] = self[:name]
+          if !$ssh_authorized_key_options.empty?
+            $ssh_authorized_key_options.keys.each do | option |
+              res[option.to_sym] = $ssh_authorized_key_options[option]
+            end
+          end
           res.copy_metaparams(@parameters)
         end
     end
