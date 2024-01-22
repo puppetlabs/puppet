@@ -4,6 +4,7 @@ require:
   - rubocop-i18n
   - rubocop-performance
   - rubocop-rake
+  - rubocop-rspec
 
 AllCops:
   TargetRubyVersion: 2.5
@@ -173,4 +174,28 @@ Performance/RedundantSortBlock: # new in 1.7
   Enabled: true
 
 Performance/ReverseFirst: # new in 1.7
+  Enabled: true
+
+RSpec/BeEq: # new in 2.9.0
+  Enabled: true
+
+RSpec/BeNil: # new in 2.9.0
+  Enabled: true
+
+RSpec/ExcessiveDocstringSpacing: # new in 2.5
+  Enabled: true
+
+RSpec/IdenticalEqualityAssertion: # new in 2.4
+  Enabled: true
+
+RSpec/SubjectDeclaration: # new in 2.5
+  Enabled: true
+
+RSpec/VerifiedDoubleReference: # new in 2.10.0
+  Enabled: true
+
+RSpec/FactoryBot/SyntaxMethods: # new in 2.7
+  Enabled: true
+
+RSpec/Rails/AvoidSetupHook: # new in 2.4
   Enabled: true
