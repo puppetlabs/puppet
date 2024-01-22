@@ -18,7 +18,7 @@ describe 'Puppet::Type::Service::Provider::Systemd',
     Puppet::Util::Execution::ProcessOutput.new('', 0)
   end
 
-  osfamilies = [ 'archlinux', 'coreos', 'gentoo' ]
+  osfamilies = %w[archlinux coreos gentoo]
 
   osfamilies.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
@@ -38,7 +38,7 @@ describe 'Puppet::Type::Service::Provider::Systemd',
     end
   end
 
-  [ 4, 5, 6 ].each do |ver|
+  [4, 5, 6].each do |ver|
     it "should not be the default provider on rhel#{ver}" do
       allow(Facter).to receive(:value).with('os.family').and_return(:redhat)
       allow(Facter).to receive(:value).with('os.name').and_return(:redhat)
@@ -47,7 +47,7 @@ describe 'Puppet::Type::Service::Provider::Systemd',
     end
   end
 
-  [ 17, 18, 19, 20, 21, 22, 23 ].each do |ver|
+  (17..23).to_a.each do |ver|
     it "should be the default provider on fedora#{ver}" do
       allow(Facter).to receive(:value).with('os.family').and_return(:redhat)
       allow(Facter).to receive(:value).with('os.name').and_return(:fedora)
@@ -56,7 +56,7 @@ describe 'Puppet::Type::Service::Provider::Systemd',
     end
   end
 
-  [ 2, 2023 ].each do |ver|
+  [2, 2023].each do |ver|
     it "should be the default provider on Amazon Linux #{ver}" do
       allow(Facter).to receive(:value).with('os.family').and_return(:redhat)
       allow(Facter).to receive(:value).with('os.name').and_return(:amazon)
@@ -144,7 +144,7 @@ describe 'Puppet::Type::Service::Provider::Systemd',
     expect(provider_class).not_to be_default
   end
 
-  [ '15.04', '15.10', '16.04', '16.10', '17.04', '17.10', '18.04' ].each do |ver|
+  %w[15.04 15.10 16.04 16.10 17.04 17.10 18.04].each do |ver|
     it "should be the default provider on ubuntu#{ver}" do
       allow(Facter).to receive(:value).with('os.family').and_return(:debian)
       allow(Facter).to receive(:value).with('os.name').and_return(:ubuntu)
@@ -153,7 +153,7 @@ describe 'Puppet::Type::Service::Provider::Systemd',
     end
   end
 
-  [ '10', '11', '12', '13', '14', '15', '16', '17' ].each do |ver|
+  ('10'..'17').to_a.each do |ver|
     it "should not be the default provider on LinuxMint#{ver}" do
       allow(Facter).to receive(:value).with('os.family').and_return(:debian)
       allow(Facter).to receive(:value).with('os.name').and_return(:LinuxMint)
@@ -162,7 +162,7 @@ describe 'Puppet::Type::Service::Provider::Systemd',
     end
   end
 
-  [ '18', '19' ].each do |ver|
+  ['18', '19'].each do |ver|
     it "should be the default provider on LinuxMint#{ver}" do
       allow(Facter).to receive(:value).with('os.family').and_return(:debian)
       allow(Facter).to receive(:value).with('os.name').and_return(:LinuxMint)
@@ -171,7 +171,7 @@ describe 'Puppet::Type::Service::Provider::Systemd',
     end
   end
 
-  [:enabled?, :daemon_reload?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
+  %i[enabled? daemon_reload? enable disable start stop status restart].each do |method|
     it "should have a #{method} method" do
       expect(provider).to respond_to(method)
     end
@@ -335,6 +335,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
 
     it "should consider nonexistent services to be disabled" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'doesnotexist'))
+      allow(Facter).to receive(:value).with('os.family').and_return('debian')
       expect(provider).to receive(:execute).with(['/bin/systemctl','is-enabled', '--', 'doesnotexist'], {:failonfail => false})
                             .and_return(Puppet::Util::Execution::ProcessOutput.new("", 1))
       expect(provider).to receive(:execute).with(["/usr/sbin/invoke-rc.d", "--quiet", "--query", "doesnotexist", "start"], {:failonfail => false})
