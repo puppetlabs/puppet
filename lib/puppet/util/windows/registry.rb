@@ -17,6 +17,8 @@ module Puppet::Util::Windows
 
     ERROR_NO_MORE_ITEMS = 259
 
+    WCHAR_SIZE = FFI.type_size(:wchar)
+
     def root(name)
       Win32::Registry.const_get(name)
     rescue NameError
@@ -234,7 +236,7 @@ module Puppet::Util::Windows
 
         string_length = 0
         # buffer is raw bytes, *not* chars - less a NULL terminator
-        string_length = (byte_length / FFI.type_size(:wchar)) - 1 if byte_length > 0
+        string_length = (byte_length / WCHAR_SIZE) - 1 if byte_length > 0
 
         begin
           result = case type
@@ -271,14 +273,47 @@ module Puppet::Util::Windows
                                     FFI::Pointer::NULL, type_ptr,
                                     FFI::Pointer::NULL, length_ptr)
 
-          FFI::MemoryPointer.new(:byte, length_ptr.read_dword) do |buffer_ptr|
+          # The call to RegQueryValueExW below is potentially unsafe:
+          # https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regqueryvalueexw
+          #
+          #   "If the data has the REG_SZ, REG_MULTI_SZ or REG_EXPAND_SZ type,
+          #   the string may not have been stored with the proper terminating
+          #   null characters. Therefore, even if the function returns
+          #   ERROR_SUCCESS, the application should ensure that the string is
+          #   properly terminated before using it; otherwise, it may overwrite a
+          #   buffer. (Note that REG_MULTI_SZ strings should have two
+          #   terminating null characters.)"
+          #
+          # Since we don't know if the values will be properly null terminated,
+          # extend the buffer to guarantee we can append one or two wide null
+          # characters, without overwriting any data.
+          base_bytes_len = length_ptr.read_dword
+          pad_bytes_len = case type_ptr.read_dword
+                          when Win32::Registry::REG_SZ, Win32::Registry::REG_EXPAND_SZ
+                            WCHAR_SIZE
+                          when Win32::Registry::REG_MULTI_SZ
+                            WCHAR_SIZE * 2
+                          else
+                            0
+                          end
+
+          FFI::MemoryPointer.new(:byte, base_bytes_len + pad_bytes_len) do |buffer_ptr|
             result = RegQueryValueExW(key.hkey, name_ptr,
                                       FFI::Pointer::NULL, type_ptr,
                                       buffer_ptr, length_ptr)
 
-            if result != FFI::ERROR_SUCCESS
+            # Ensure buffer is null terminated with 1 or 2 wchar nulls, depending on the type
+            if result == FFI::ERROR_SUCCESS
+              case type_ptr.read_dword
+              when Win32::Registry::REG_SZ, Win32::Registry::REG_EXPAND_SZ
+                buffer_ptr.put_uint16(base_bytes_len, 0)
+              when Win32::Registry::REG_MULTI_SZ
+                buffer_ptr.put_uint16(base_bytes_len, 0)
+                buffer_ptr.put_uint16(base_bytes_len + WCHAR_SIZE, 0)
+              end
+            else
               # buffer is raw bytes, *not* chars - less a NULL terminator
-              name_length = (name_ptr.size / FFI.type_size(:wchar)) - 1 if name_ptr.size > 0
+              name_length = (name_ptr.size / WCHAR_SIZE) - 1 if name_ptr.size > 0
               msg = _("Failed to read registry value %{value} at %{key}") % { value: name_ptr.read_wide_string(name_length), key: key.keyname }
               raise Puppet::Util::Windows::Error.new(msg, result)
             end
