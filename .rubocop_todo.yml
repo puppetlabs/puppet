@@ -25,7 +25,22 @@ I18n/RailsI18n/DecorateString:
 # Configuration parameters: AllowedMethods.
 # AllowedMethods: enums
 Lint/ConstantDefinitionInBlock:
-  Enabled: false
+  Exclude:
+    - 'lib/puppet/face/config.rb'
+    - 'lib/puppet/face/help.rb'
+    - 'lib/puppet/face/node/clean.rb'
+    - 'lib/puppet/provider/package/aix.rb'
+    - 'lib/puppet/provider/package/apt.rb'
+    - 'lib/puppet/provider/package/gem.rb'
+    - 'lib/puppet/provider/package/pip.rb'
+    - 'lib/puppet/provider/package/yum.rb'
+    - 'lib/puppet/provider/service/upstart.rb'
+    - 'lib/puppet/provider/user/directoryservice.rb'
+    - 'lib/puppet/type/file.rb'
+    - 'lib/puppet/type/file/source.rb'
+    - 'lib/puppet/type/resources.rb'
+    - 'lib/puppet/type/schedule.rb'
+    - 'lib/puppet/type/tidy.rb'
 
 Lint/MissingSuper:
   Enabled: false
@@ -83,6 +98,90 @@ Lint/ToJSON:
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: AllowUnusedKeywordArguments, IgnoreEmptyMethods, IgnoreNotImplementedMethods.
 Lint/UnusedMethodArgument:
+  Enabled: false
+
+Performance/BlockGivenWithExplicitBlock: # new in 1.9
+  Enabled: false
+
+Performance/CollectionLiteralInLoop: # new in 1.8
+  Enabled: false
+
+Performance/ConstantRegexp: # new in 1.9
+  Enabled: false
+
+# This cop supports safe auto-correction (--auto-correct).
+Performance/Count:
+  Exclude:
+    - 'lib/puppet/confine/any.rb'
+    - 'lib/puppet/confine/false.rb'
+    - 'lib/puppet/confine/true.rb'
+    - 'lib/puppet/graph/relationship_graph.rb'
+    - 'lib/puppet/provider.rb'
+
+# This cop supports unsafe auto-correction (--auto-correct-all).
+Performance/InefficientHashSearch:
+  Exclude:
+    - 'lib/puppet/face/node/clean.rb'
+    - 'lib/puppet/provider/nameservice/directoryservice.rb'
+    - 'lib/puppet/provider/user/directoryservice.rb'
+    - 'lib/puppet/resource.rb'
+    - 'lib/puppet/util/windows/adsi.rb'
+
+Performance/MethodObjectAsBlock: # new in 1.9
+  Enabled: false
+
+# This cop supports safe auto-correction (--auto-correct).
+Performance/RedundantBlockCall:
+  Exclude:
+    - 'lib/puppet/application.rb'
+    - 'lib/puppet/context.rb'
+    - 'lib/puppet/file_bucket/file.rb'
+    - 'lib/puppet/functions/max.rb'
+    - 'lib/puppet/functions/min.rb'
+    - 'lib/puppet/gettext/stubs.rb'
+    - 'lib/puppet/network/http/api/server/v3.rb'
+    - 'lib/puppet/pal/pal_impl.rb'
+    - 'lib/puppet/pops/adaptable.rb'
+    - 'lib/puppet/pops/lookup/invocation.rb'
+    - 'lib/puppet/pops/model/factory.rb'
+    - 'lib/puppet/util.rb'
+
+Performance/RedundantEqualityComparisonBlock: # new in 1.10
+  Enabled: false
+
+# This cop supports unsafe auto-correction (--auto-correct-all).
+# Configuration parameters: MaxKeyValuePairs.
+Performance/RedundantMerge:
+  Exclude:
+    - 'lib/puppet/x509/cert_provider.rb'
+
+Performance/RedundantSplitRegexpArgument: # new in 1.10
+  Enabled: false
+
+Performance/RedundantStringChars: # new in 1.7
+  Enabled: false
+
+# This cop supports safe auto-correction (--auto-correct).
+Performance/RegexpMatch:
+  Enabled: false
+
+Performance/SortReverse: # new in 1.7
+  Enabled: false
+
+Performance/Squeeze: # new in 1.7
+  Enabled: false
+
+Performance/StringIdentifierArgument: # new in 1.13
+  Enabled: false
+
+Performance/StringInclude: # new in 1.7
+  Enabled: false
+
+Performance/Sum: # new in 1.8
+  Enabled: false
+
+# This cop supports safe auto-correction (--auto-correct).
+Performance/UnfreezeString:
   Enabled: false
 
 # Configuration parameters: EnforcedStyle, AllowModifiersOnSymbols.
@@ -280,7 +379,6 @@ Style/EmptyBlockParameter:
 # This cop supports safe auto-correction (--auto-correct).
 Style/EmptyCaseCondition:
   Exclude:
-    - 'lib/puppet/pops/lookup/hiera_config.rb'
     - 'lib/puppet/pops/serialization/serializer.rb'
     - 'lib/puppet/pops/types/type_calculator.rb'
     - 'lib/puppet/settings.rb'
@@ -298,7 +396,6 @@ Style/EmptyElse:
 # This cop supports safe auto-correction (--auto-correct).
 Style/EmptyLiteral:
   Exclude:
-    - 'lib/puppet/indirector/face.rb'
     - 'lib/puppet/parser/scope.rb'
     - 'lib/puppet/pops/puppet_stack.rb'
     - 'lib/puppet/pops/visitor.rb'
@@ -326,11 +423,6 @@ Style/Encoding:
     - 'lib/puppet/type/file.rb'
     - 'lib/puppet/type/package.rb'
     - 'lib/puppet/util/windows/service.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/EvalWithLocation:
-  Exclude:
-    - 'lib/puppet/interface/action_builder.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
 Style/EvenOdd:
@@ -511,7 +603,6 @@ Style/MethodDefParentheses:
   Exclude:
     - 'lib/puppet/pops/evaluator/evaluator_impl.rb'
     - 'lib/puppet/pops/evaluator/relationship_operator.rb'
-    - 'lib/puppet/pops/evaluator/runtime3_support.rb'
     - 'lib/puppet/pops/issues.rb'
     - 'lib/puppet/pops/label_provider.rb'
     - 'lib/puppet/pops/model/factory.rb'
@@ -622,7 +713,6 @@ Style/NestedModifier:
 Style/NestedParenthesizedCalls:
   Exclude:
     - 'lib/puppet/provider/user/directoryservice.rb'
-    - 'lib/puppet/type/service.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
 Style/NestedTernaryOperator:
@@ -648,7 +738,6 @@ Style/Next:
 # SupportedStyles: predicate, comparison
 Style/NilComparison:
   Exclude:
-    - 'lib/puppet/pops/model/ast.rb'
     - 'lib/puppet/pops/types/type_factory.rb'
     - 'lib/puppet/pops/types/types.rb'
     - 'lib/puppet/provider/package/dnfmodule.rb'
@@ -681,7 +770,7 @@ Style/NumericLiteralPrefix:
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: Strict, AllowedNumbers.
 Style/NumericLiterals:
-  MinDigits: 20
+  MinDigits: 11
 
 # This cop supports unsafe auto-correction (--auto-correct-all).
 # Configuration parameters: EnforcedStyle, IgnoredMethods.
@@ -832,7 +921,6 @@ Style/RedundantException:
 # Configuration parameters: SafeForConstants.
 Style/RedundantFetchBlock:
   Exclude:
-    - 'lib/puppet/pops/model/ast.rb'
     - 'lib/puppet/pops/types/p_sem_ver_range_type.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
@@ -1187,4 +1275,4 @@ Style/ZeroLengthPredicate:
 # Configuration parameters: AllowHeredoc, AllowURI, URISchemes, IgnoreCopDirectives, AllowedPatterns, IgnoredPatterns.
 # URISchemes: http, https
 Layout/LineLength:
-  Enabled: false
+  Max: 582
