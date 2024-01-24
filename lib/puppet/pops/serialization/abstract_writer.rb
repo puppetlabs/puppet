@@ -4,7 +4,7 @@ require_relative 'extension'
 
 module Puppet::Pops
 module Serialization
-MAX_INTEGER =  0x7fffffffffffffff
+MAX_INTEGER = 0x7fffffffffffffff
 MIN_INTEGER = -0x8000000000000000
 
 # Abstract class for protocol specific writers such as MsgPack or JSON

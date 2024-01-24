@@ -153,7 +153,7 @@ module Puppet::Util::ProviderFeatures
       @features.each do |name, feature|
         method = name.to_s + "?"
         @feature_module.send(:define_method, method) do
-          (is_a?(Class) ?  declared_feature?(name) : self.class.declared_feature?(name)) or feature.available?(self)
+          (is_a?(Class) ? declared_feature?(name) : self.class.declared_feature?(name)) or feature.available?(self)
         end
       end
 
