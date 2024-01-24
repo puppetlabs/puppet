@@ -156,7 +156,7 @@ module Puppet::Util::Windows
 
         # Args passed to Service.start
         if (dwArgc > 1)
-          @@Argv = argv[1..-1]
+          @@Argv = argv[1..]
         else
           @@Argv = nil
         end

@@ -95,7 +95,7 @@ class Dispatch < Evaluator::CallableSignature
           # parameter values in the received
           if knit < 0
             idx = -knit - 1
-            new_args += args[idx..-1] if idx < args.size
+            new_args += args[idx..] if idx < args.size
           else
             new_args << args[knit] if knit < args.size
           end

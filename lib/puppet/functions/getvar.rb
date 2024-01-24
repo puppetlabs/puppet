@@ -69,7 +69,7 @@ Puppet::Functions.create_function(:getvar, Puppet::Functions::InternalFunction) 
     matches = navigation.match(/^((::)?(\w+::)*\w+)(.*)\z/)
     navigation = matches[4]
     if navigation[0] == '.'
-      navigation = navigation[1..-1]
+      navigation = navigation[1..]
     else
       unless navigation.empty?
         raise ArgumentError, _("First character after var name in get string must be a '.' - got %{char}") % { char: navigation[0] }

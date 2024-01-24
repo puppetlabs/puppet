@@ -36,8 +36,8 @@ module Puppet::Util::RpmCompare
       # "handle the tilde separator, it sorts before everything else"
       if str1 =~ /^~/ && str2 =~ /^~/
         # if they both have ~, strip it
-        str1 = str1[1..-1]
-        str2 = str2[1..-1]
+        str1 = str1[1..]
+        str2 = str2[1..]
         next
       elsif str1 =~ /^~/
         return -1

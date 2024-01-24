@@ -106,7 +106,7 @@ module Puppet::ModuleTool::Errors
       @requested_module  = options[:requested_module]
       @requested_version = options[:requested_version]
       @conditions        = options[:conditions]
-      @source            = options[:source][1..-1]
+      @source            = options[:source][1..]
 
       super _("'%{module_name}' (%{version}) requested; Invalid dependency cycle") % { module_name: @requested_module, version: v(@requested_version) }
     end
@@ -114,7 +114,7 @@ module Puppet::ModuleTool::Errors
     def multiline
       dependency_list = []
       dependency_list << _("You specified '%{name}' (%{version})") % { name: @source.first[:name], version: v(@requested_version) }
-      dependency_list += @source[1..-1].map do |m|
+      dependency_list += @source[1..].map do |m|
         # TRANSLATORS This message repeats as separate lines as a list under the heading "You specified '%{name}' (%{version})\n"
         _("This depends on '%{name}' (%{version})") % { name: m[:name], version: v(m[:version]) }
       end

@@ -192,7 +192,7 @@ class Puppet::Resource::TypeCollection
     @environment.lock.synchronize do
       @lock.synchronize do
         # Name is always absolute, but may start with :: which must be removed
-        fqname = (name[0, 2] == COLON_COLON ? name[2..-1] : name)
+        fqname = (name[0, 2] == COLON_COLON ? name[2..] : name)
 
         result = send(type, fqname)
         unless result

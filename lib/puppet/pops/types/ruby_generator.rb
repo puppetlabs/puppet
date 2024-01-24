@@ -116,7 +116,7 @@ class RubyGenerator < TypeFormatter
     start_module(common_prefix, comment, bld)
     class_names = []
     names_by_prefix.each_pair do |seg_array, index_and_name_array|
-      added_to_common_prefix = seg_array[common_prefix.length..-1]
+      added_to_common_prefix = seg_array[common_prefix.length..]
       added_to_common_prefix.each { |name| bld << 'module ' << name << "\n" }
       index_and_name_array.each do |idx, name, full_name|
         scoped_class_definition(object_types[idx], name, bld, full_name, *impl_subst)

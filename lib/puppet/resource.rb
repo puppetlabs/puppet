@@ -643,7 +643,7 @@ class Puppet::Resource
       type.title_patterns.each do |regexp, symbols_and_lambdas|
         captures = regexp.match(title.to_s)
         if captures
-          symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda, capture|
+          symbols_and_lambdas.zip(captures[1..]).each do |symbol_and_lambda, capture|
             symbol, proc = symbol_and_lambda
             # Many types pass "identity" as the proc; we might as well give
             # them a shortcut to delivering that without the extra cost.
