@@ -78,7 +78,7 @@ class Puppet::Parameter::Value
   #
   def convert(value)
     case value
-    when Symbol, ''             # can't intern an empty string
+    when Symbol, '' # can't intern an empty string
       value
     when String
       value.intern

@@ -125,7 +125,7 @@ class Lexer2
     'default' => [:DEFAULT, 'default', 7],
     'define' => [:DEFINE, 'define', 6],
     'if' => [:IF, 'if', 2],
-    'elsif' => [:ELSIF,    'elsif', 5],
+    'elsif' => [:ELSIF, 'elsif', 5],
     'else' => [:ELSE, 'else', 4],
     'inherits' => [:INHERITS, 'inherits', 8],
     'node' => [:NODE, 'node', 4],
