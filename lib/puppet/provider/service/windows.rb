@@ -90,7 +90,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
   end
 
   def status
-    return :stopped unless Puppet::Util::Windows::Service.exists?(@resource[:name])
+    return :absent unless Puppet::Util::Windows::Service.exists?(@resource[:name])
 
     current_state = Puppet::Util::Windows::Service.service_state(@resource[:name])
     state = case current_state

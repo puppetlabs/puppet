@@ -165,6 +165,20 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     end
   end
 
+  # override base#status
+  def status
+    if exist?
+      status = service_command(:status, false)
+      if status.exitstatus == 0
+        return :running
+      else
+        return :stopped
+      end
+    else
+      return :absent
+    end
+  end
+
   def enable
     self.unmask
     systemctl_change_enable(:enable)

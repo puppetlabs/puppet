@@ -40,6 +40,15 @@ Puppet::Type.newtype(:resources) do
     end
   end
 
+  newparam(:is_active, :boolean => true, :parent => Puppet::Parameter::Boolean) do
+    desc "Whether the resource is active. Defaults to false."
+    Puppet.debug "yo"
+    puts "wat"
+#    require binding.irb
+    puts "hello"
+    defaultto false
+  end
+
   newparam(:unless_system_user) do
     desc "This keeps system users from being purged.  By default, it
       does not purge users whose UIDs are less than the minimum UID for the system (typically 500 or 1000), but you can specify

@@ -231,13 +231,16 @@ class Puppet::Application::Resource < Puppet::Application
     Puppet.override(stringify_rich: true) do
       if name
         if params.empty?
-          [Puppet::Resource.indirection.find(key)]
+          [ Puppet::Resource.indirection.find( key ) ]
         else
           resource = Puppet::Resource.new(type, name, :parameters => params)
 
           # save returns [resource that was saved, transaction log from applying the resource]
-          save_result = Puppet::Resource.indirection.save(resource, key)
-          [save_result.first]
+          save_result, report = Puppet::Resource.indirection.save(resource, key)
+          status = report.resource_statuses[resource.ref]
+          raise "Failed to manage resource #{resource.ref}" if status&.failed?
+
+          [ save_result ]
         end
       else
         if type == "file"
