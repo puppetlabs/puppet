@@ -13,7 +13,7 @@ class Puppet::Application::Filebucket < Puppet::Application
   option("--remote", "-r")
   option("--verbose", "-v")
 
-  attr :args
+  attr_reader :args
 
   def summary
     _("Store and retrieve files in a filebucket")
