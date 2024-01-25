@@ -208,10 +208,10 @@ module DOT
             t + $tab + '"' + "\n"
 
       t + "#{@name} [\n" +
-        @options.to_a.collect { |i|
+        @options.to_a.filter_map { |i|
           i[1] && i[0] != 'label' ?
             t + $tab + "#{i[0]} = #{i[1]}" : nil
-        }.compact.join(",\n") + (label != '' ? ",\n" : "\n") +
+        }.join(",\n") + (label != '' ? ",\n" : "\n") +
         label +
         t + "]\n"
     end
@@ -252,11 +252,11 @@ module DOT
     def to_s(t = '')
       hdr = t + "#{@dot_string} #{@name} {\n"
 
-      options = @options.to_a.collect { |name, val|
+      options = @options.to_a.filter_map { |name, val|
         val && name != 'label' ?
           t + $tab + "#{name} = #{val}" :
           name ? t + $tab + "#{name} = \"#{val}\"" : nil
-      }.compact.join("\n") + "\n"
+      }.join("\n") + "\n"
 
       nodes = @nodes.collect { |i|
         i.to_s(t + $tab)
@@ -291,11 +291,11 @@ module DOT
 
     def to_s(t = '')
       t + "#{@from} #{edge_link} #{to} [\n" +
-        @options.to_a.collect { |i|
+        @options.to_a.filter_map { |i|
           i[1] && i[0] != 'label' ?
             t + $tab + "#{i[0]} = #{i[1]}" :
             i[1] ? t + $tab + "#{i[0]} = \"#{i[1]}\"" : nil
-        }.compact.join("\n") + "\n#{t}]\n"
+        }.join("\n") + "\n#{t}]\n"
     end
   end
 

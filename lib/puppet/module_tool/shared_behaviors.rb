@@ -67,7 +67,7 @@ module Puppet::ModuleTool::Shared
   end
 
   def resolve_constraints(dependencies, source = [{ :name => :you }], seen = {}, action = @action)
-    dependencies = dependencies.map do |mod, range|
+    dependencies = dependencies.filter_map do |mod, range|
       source.last[:dependency] = range
 
       @conditions[mod] << {
@@ -138,7 +138,7 @@ module Puppet::ModuleTool::Shared
         :path => action == :install ? @options[:target_dir] : (@installed[mod].empty? ? @options[:target_dir] : @installed[mod].first.modulepath),
         :dependencies => []
       }
-    end.compact
+    end
     dependencies.each do |mod|
       deps = @remote["#{mod[:module]}@#{mod[:version][:vstring]}"].sort_by(&:first)
       mod[:dependencies] = resolve_constraints(deps, source + [{ :name => mod[:module], :version => mod[:version][:vstring] }], seen, :install)

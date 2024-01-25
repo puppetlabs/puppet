@@ -761,9 +761,9 @@ module Puppet
           home ? ["#{home}/.ssh/authorized_keys"] : []
         else
           # value can be a string or array - munge each value
-          [value].flatten.map do |entry|
+          [value].flatten.filter_map do |entry|
             authorized_keys_path(entry)
-          end.compact
+          end
         end
       end
 

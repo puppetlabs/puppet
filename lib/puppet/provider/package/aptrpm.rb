@@ -52,16 +52,14 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
 
     if output =~ /Versions:\s*\n((\n|.)+)^$/
       versions = $1
-      available_versions = versions.split(/\n/).collect { |version|
+      available_versions = versions.split(/\n/).filter_map { |version|
         if version =~ /^([^\(]+)\(/
           $1
         else
           self.warning _("Could not match version '%{version}'") % { version: version }
           nil
         end
-      }.reject { |vers| vers.nil? }.sort { |a, b|
-        versioncmp(a, b)
-      }
+      }.sort { |a, b| versioncmp(a, b) }
 
       if available_versions.length == 0
         self.debug "No latest version"

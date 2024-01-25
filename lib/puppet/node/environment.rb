@@ -365,14 +365,14 @@ class Puppet::Node::Environment
         end
       end
 
-      @modules = module_references.collect do |reference|
+      @modules = module_references.filter_map do |reference|
         begin
           Puppet::Module.new(reference[:name], reference[:path], self)
         rescue Puppet::Module::Error => e
           Puppet.log_exception(e)
           nil
         end
-      end.compact
+      end
     end
     @modules
   end
