@@ -199,3 +199,7 @@ RSpec/FactoryBot/SyntaxMethods: # new in 2.7
 
 RSpec/Rails/AvoidSetupHook: # new in 2.4
   Enabled: true
+
+Style/AutoResourceCleanup:
+  Enabled: true
+
