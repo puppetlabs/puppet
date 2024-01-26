@@ -241,7 +241,7 @@ describe Puppet::Type.type(:package).provider(:dnfmodule) do
       it "does not try to disable if package is already disabled" do
         allow(described_class).to receive(:command).with(:dnf).and_return(dnf_path)
         allow(Puppet::Util::Execution).to receive(:execute)
-          .with("/usr/bin/dnf module list -d 0 -e 1")
+          .with("/usr/bin/dnf module list -y -d 0 -e 1")
           .and_return("baz 1.2 [d][x] common [d], complete  Package Description")
         resource[:ensure] = :disabled
         expect(provider).to be_insync(:disabled)
@@ -254,7 +254,7 @@ describe Puppet::Type.type(:package).provider(:dnfmodule) do
 
     it "returns an array of enabled modules" do
       allow(Puppet::Util::Execution).to receive(:execute)
-        .with("/usr/bin/dnf module list -d 0 -e 1")
+        .with("/usr/bin/dnf module list -y -d 0 -e 1")
         .and_return(packages)
 
       enabled_packages = described_class.instances.map { |package| package.properties }
