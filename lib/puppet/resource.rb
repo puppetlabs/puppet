@@ -282,9 +282,10 @@ class Puppet::Resource
       @title = src.title
 
       src.to_hash.each do |p, v|
-        if v.is_a?(Puppet::Resource)
+        case v
+        when Puppet::Resource
           v = v.copy_as_resource
-        elsif v.is_a?(Array)
+        when Array
           # flatten resource references arrays
           v = v.flatten if v.flatten.find { |av| av.is_a?(Puppet::Resource) }
           v = v.collect do |av|

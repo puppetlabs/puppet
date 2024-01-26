@@ -121,9 +121,10 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     output = Puppet::Util::Execution.execute(args, :failonfail => false, :combine => false)
 
     updates = {}
-    if output.exitstatus == 100
+    case output.exitstatus
+    when 100
       updates = parse_updates(output)
-    elsif output.exitstatus == 0
+    when 0
       self.debug "#{command(:cmd)} check-update exited with 0; no package updates available."
     else
       self.warning _("Could not check for updates, '%{cmd} check-update' exited with %{status}") % { cmd: command(:cmd), status: output.exitstatus }

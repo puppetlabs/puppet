@@ -52,9 +52,10 @@ Puppet::Functions.create_function(:abs) do
     # These patterns for conversion are backwards compatible with the stdlib
     # version of this function.
     #
-    if x =~ %r{^-?(?:\d+)(?:\.\d+){1}$}
+    case x
+    when %r{^-?(?:\d+)(?:\.\d+){1}$}
       x.to_f.abs
-    elsif x =~ %r{^-?\d+$}
+    when %r{^-?\d+$}
       x.to_i.abs
     else
       raise(ArgumentError, 'abs(): Requires float or integer to work with - was given non decimal string')

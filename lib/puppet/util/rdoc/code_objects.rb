@@ -46,10 +46,11 @@ module RDoc
       meth.document_self = true
       meth.singleton = false
       meth.comment = plugin.comment
-      if type == 'function'
+      case type
+      when 'function'
         @function_container ||= add_module(NormalModule, "__functions__")
         @function_container.add_method(meth)
-      elsif type == 'type'
+      when 'type'
         @type_container ||= add_module(NormalModule, "__types__")
         @type_container.add_method(meth)
       end

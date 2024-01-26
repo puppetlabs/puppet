@@ -256,15 +256,16 @@ class TypeCalculator
   def infer(o)
     # Optimize the most common cases into direct calls.
     # Explicit if/elsif/else is faster than case
-    if o.is_a?(String)
+    case o
+    when String
       infer_String(o)
-    elsif o.is_a?(Integer) # need subclasses for Ruby < 2.4
+    when Integer # need subclasses for Ruby < 2.4
       infer_Integer(o)
-    elsif o.is_a?(Array)
+    when Array
       infer_Array(o)
-    elsif o.is_a?(Hash)
+    when Hash
       infer_Hash(o)
-    elsif o.is_a?(Evaluator::PuppetProc)
+    when Evaluator::PuppetProc
       infer_PuppetProc(o)
     else
       @infer_visitor.visit_this_0(self, o)

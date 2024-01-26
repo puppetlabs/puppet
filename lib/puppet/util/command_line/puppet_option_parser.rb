@@ -40,9 +40,10 @@ module Puppet
 
         def on(*args, &block)
           # The 2nd element is an optional "short" representation.
-          if args.length == 3
+          case args.length
+          when 3
             long, desc, type = args
-          elsif args.length == 4
+          when 4
             long, short, desc, type = args
           else
             raise ArgumentError, _("this method only takes 3 or 4 arguments. Given: %{args}") % { args: args.inspect }

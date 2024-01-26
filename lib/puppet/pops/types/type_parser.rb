@@ -563,9 +563,10 @@ class TypeParser
       TypeFactory.string(size_type)
 
     when 'sensitive'
-      if parameters.size == 0
+      case parameters.size
+      when 0
         TypeFactory.sensitive
-      elsif parameters.size == 1
+      when 1
         param = parameters[0]
         assert_type(ast, param)
         TypeFactory.sensitive(param)
@@ -644,9 +645,10 @@ class TypeParser
   private
 
   def create_resource(name, parameters)
-    if parameters.size == 1
+    case parameters.size
+    when 1
       TypeFactory.resource(name)
-    elsif parameters.size == 2
+    when 2
       TypeFactory.resource(name, parameters[1])
     else
       raise_invalid_parameters_error('Resource', '1 or 2', parameters.size)

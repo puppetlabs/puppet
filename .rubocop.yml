@@ -205,3 +205,6 @@ Style/AutoResourceCleanup:
 
 Style/CaseEquality:
   Enabled: true
+
+Style/CaseLikeIf:
+  Enabled: true

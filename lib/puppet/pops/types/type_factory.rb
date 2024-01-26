@@ -560,11 +560,12 @@ module TypeFactory
   # a classname.
   #
   def self.type_of(o)
-    if o.is_a?(Class)
+    case o
+    when Class
       @type_calculator.type(o)
-    elsif o.is_a?(PAnyType)
+    when PAnyType
       o
-    elsif o.is_a?(String)
+    when String
       PRuntimeType.new(:ruby, o)
     else
       @type_calculator.infer_generic(o)

@@ -116,11 +116,12 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # @return [Puppet::Node::Facts] facts object deserialized from supplied string
   # @api private
   def convert_wire_facts(facts, format)
-    if format == 'pson'
+    case format
+    when 'pson'
       # We unescape here because the corresponding code in Puppet::Configurer::FactHandler encodes with Puppet::Util.uri_query_encode
       # PSON is deprecated, but continue to accept from older agents
       return Puppet::Node::Facts.convert_from('pson', CGI.unescape(facts))
-    elsif format == 'application/json'
+    when 'application/json'
       return Puppet::Node::Facts.convert_from('json', CGI.unescape(facts))
     else
       raise ArgumentError, _("Unsupported facts format")

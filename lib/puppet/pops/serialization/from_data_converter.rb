@@ -20,9 +20,10 @@ module Serialization
     def resolve
       unless @resolved
         @resolved = true
-        if @values.is_a?(Array)
+        case @values
+        when Array
           @values.each_with_index { |v, idx| @values[idx] = v.resolve if v.is_a?(Builder) }
-        elsif @values.is_a?(Hash)
+        when Hash
           @values.each_pair { |k, v| @values[k] = v.resolve if v.is_a?(Builder) }
         end
       end
@@ -153,14 +154,15 @@ module Serialization
     #
     # @api public
     def convert(value)
-      if value.is_a?(Hash)
+      case value
+      when Hash
         pcore_type = value[PCORE_TYPE_KEY]
         if pcore_type && (pcore_type.is_a?(String) || pcore_type.is_a?(Hash))
           @pcore_type_procs[pcore_type].call(value, pcore_type)
         else
           build({}) { value.each_pair { |key, elem| with(key) { convert(elem) } } }
         end
-      elsif value.is_a?(Array)
+      when Array
         build([]) { value.each_with_index { |elem, idx| with(idx) { convert(elem) } } }
       else
         build(value)
@@ -207,7 +209,8 @@ module Serialization
     end
 
     def pcore_type_hash_to_value(pcore_type, value)
-      if value.is_a?(Hash)
+      case value
+      when Hash
         # Complex object
         if value.empty?
           build(pcore_type.create)
@@ -216,7 +219,7 @@ module Serialization
         else
           build_object(ObjectArrayBuilder.new(pcore_type.allocate)) { value.each_pair { |key, elem| with(key) { convert(elem) } } }
         end
-      elsif value.is_a?(String)
+      when String
         build(pcore_type.create(value))
       else
         raise SerializationError, _('Cannot create a %{type_name} from a %{arg_class}') %

@@ -677,9 +677,10 @@ module Types
       params_tuple = signature.type.param_types
       params_size_t = params_tuple.size_type || TypeFactory.range(*params_tuple.size_range)
 
-      if args_tuple.is_a?(PTupleType)
+      case args_tuple
+      when PTupleType
         arg_types = args_tuple.types
-      elsif args_tuple.is_a?(PArrayType)
+      when PArrayType
         arg_types = Array.new(params_tuple.types.size, args_tuple.element_type || PUndefType::DEFAULT)
       else
         return [TypeMismatch.new(path, params_tuple, args_tuple)]
@@ -798,7 +799,8 @@ module Types
     def describe_PArrayType(expected, original, actual, path)
       descriptions = []
       element_type = expected.element_type || PAnyType::DEFAULT
-      if actual.is_a?(PTupleType)
+      case actual
+      when PTupleType
         types = actual.types
         expected_size = expected.size_type || PCollectionType::DEFAULT_SIZE
         actual_size = actual.size_type || PIntegerType.new(types.size, types.size)
@@ -809,7 +811,7 @@ module Types
         else
           descriptions << SizeMismatch.new(path, expected_size, actual_size)
         end
-      elsif actual.is_a?(PArrayType)
+      when PArrayType
         expected_size = expected.size_type
         actual_size = actual.size_type || PCollectionType::DEFAULT_SIZE
         if expected_size.nil? || expected_size.assignable?(actual_size)
@@ -827,7 +829,8 @@ module Types
       descriptions = []
       key_type = expected.key_type || PAnyType::DEFAULT
       value_type = expected.value_type || PAnyType::DEFAULT
-      if actual.is_a?(PStructType)
+      case actual
+      when PStructType
         elements = actual.elements
         expected_size = expected.size_type || PCollectionType::DEFAULT_SIZE
         actual_size = PIntegerType.new(elements.count { |a| !a.key_type.assignable?(PUndefType::DEFAULT) }, elements.size)
@@ -839,7 +842,7 @@ module Types
         else
           descriptions << SizeMismatch.new(path, expected_size, actual_size)
         end
-      elsif actual.is_a?(PHashType)
+      when PHashType
         expected_size = expected.size_type
         actual_size = actual.size_type || PCollectionType::DEFAULT_SIZE
         if expected_size.nil? || expected_size.assignable?(actual_size)
@@ -856,7 +859,8 @@ module Types
     def describe_PStructType(expected, original, actual, path)
       elements = expected.elements
       descriptions = []
-      if actual.is_a?(PStructType)
+      case actual
+      when PStructType
         h2 = actual.hashed_elements.clone
         elements.each do |e1|
           key = e1.name
@@ -869,7 +873,7 @@ module Types
           end
         end
         h2.each_key { |key| descriptions << ExtraneousKey.new(path, key) }
-      elsif actual.is_a?(PHashType)
+      when PHashType
         actual_size = actual.size_type || PCollectionType::DEFAULT_SIZE
         expected_size = PIntegerType.new(elements.count { |e| !e.key_type.assignable?(PUndefType::DEFAULT) }, elements.size)
         if expected_size.assignable?(actual_size)
@@ -896,7 +900,8 @@ module Types
 
       expected_size = expected.size_type || TypeFactory.range(*expected.size_range)
 
-      if actual.is_a?(PTupleType)
+      case actual
+      when PTupleType
         actual_size = actual.size_type || TypeFactory.range(*actual.size_range)
 
         # not assignable if the number of types in actual is outside number of types in expected
@@ -913,7 +918,7 @@ module Types
         else
           [size_mismatch_class.new(path, expected_size, actual_size)]
         end
-      elsif actual.is_a?(PArrayType)
+      when PArrayType
         t2_entry = actual.element_type
 
         if t2_entry.nil?
