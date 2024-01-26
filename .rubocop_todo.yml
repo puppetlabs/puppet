@@ -22,6 +22,15 @@ I18n/GetText/DecorateStringFormattingUsingPercent:
 I18n/RailsI18n/DecorateString:
   Enabled: false
 
+Lint/AmbiguousAssignment: # new in 1.7
+  Enabled: false
+
+Lint/AmbiguousOperatorPrecedence: # new in 1.21
+  Enabled: false
+
+Lint/AmbiguousRange: # new in 1.19
+  Enabled: false
+
 # Configuration parameters: AllowedMethods.
 # AllowedMethods: enums
 Lint/ConstantDefinitionInBlock:
@@ -42,7 +51,49 @@ Lint/ConstantDefinitionInBlock:
     - 'lib/puppet/type/schedule.rb'
     - 'lib/puppet/type/tidy.rb'
 
+Lint/ConstantOverwrittenInRescue: # new in 1.31
+  Enabled: false
+
+Lint/DeprecatedConstants: # new in 1.8
+  Enabled: false
+
+Lint/DuplicateBranch: # new in 1.3
+  Enabled: false
+
+Lint/DuplicateMagicComment: # new in 1.37
+  Enabled: false
+
+Lint/DuplicateMatchPattern: # new in 1.50
+  Enabled: false
+
+Lint/DuplicateRegexpCharacterClassElement: # new in 1.1
+  Enabled: false
+
+Lint/EmptyBlock: # new in 1.1
+  Enabled: false
+
+Lint/EmptyClass: # new in 1.3
+  Enabled: false
+
+Lint/EmptyInPattern: # new in 1.16
+  Enabled: false
+
+Lint/IncompatibleIoSelectWithFiberScheduler: # new in 1.21
+  Enabled: false
+
+Lint/ItWithoutArgumentsInBlock: # new in 1.59
+  Enabled: false
+
+Lint/LambdaWithoutLiteralBlock: # new in 1.8
+  Enabled: false
+
+Lint/LiteralAssignmentInCondition: # new in 1.58
+  Enabled: false
+
 Lint/MissingSuper:
+  Enabled: false
+
+Lint/MixedCaseRange: # new in 1.53
   Enabled: false
 
 Lint/NestedMethodDefinition:
@@ -58,6 +109,33 @@ Lint/NestedMethodDefinition:
     - 'lib/puppet/pops/types/p_uri_type.rb'
     - 'lib/puppet/pops/types/types.rb'
     - 'lib/puppet/type.rb'
+
+Lint/NonAtomicFileOperation: # new in 1.31
+  Enabled: false
+
+Lint/NoReturnInBeginEndBlocks: # new in 1.2
+  Enabled: false
+
+Lint/NumberedParameterAssignment: # new in 1.9
+  Enabled: false
+
+Lint/OrAssignmentToConstant: # new in 1.9
+  Enabled: false
+
+Lint/RedundantDirGlobSort: # new in 1.8
+  Enabled: false
+
+Lint/RedundantRegexpQuantifiers: # new in 1.53
+  Enabled: false
+
+Lint/RefinementImportMethods: # new in 1.27
+  Enabled: false
+
+Lint/RequireRangeParentheses: # new in 1.32
+  Enabled: false
+
+Lint/RequireRelativeSelfPath: # new in 1.22
+  Enabled: false
 
 Lint/RescueException:
   Exclude:
@@ -88,6 +166,12 @@ Lint/SuppressedException:
     - 'lib/puppet/util/execution.rb'
     - 'util/rspec_grouper'
 
+Lint/SymbolConversion: # new in 1.9
+  Enabled: false
+
+Lint/ToEnumArguments: # new in 1.1
+  Enabled: false
+
 # This cop supports safe auto-correction (--auto-correct).
 Lint/ToJSON:
   Exclude:
@@ -95,9 +179,24 @@ Lint/ToJSON:
     - 'lib/puppet/network/http/error.rb'
     - 'lib/puppet/pops/serialization/json.rb'
 
+Lint/TripleQuotes: # new in 1.9
+  Enabled: false
+
+Lint/UnexpectedBlockArity: # new in 1.5
+  Enabled: false
+
+Lint/UnmodifiedReduceAccumulator: # new in 1.1
+  Enabled: false
+
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: AllowUnusedKeywordArguments, IgnoreEmptyMethods, IgnoreNotImplementedMethods.
 Lint/UnusedMethodArgument:
+  Enabled: false
+
+Lint/UselessRescue: # new in 1.43
+  Enabled: false
+
+Lint/UselessRuby2Keywords: # new in 1.23
   Enabled: false
 
 Performance/BlockGivenWithExplicitBlock: # new in 1.9
