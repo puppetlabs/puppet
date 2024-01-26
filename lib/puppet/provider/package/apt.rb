@@ -90,8 +90,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # rubocop:enable Layout
 
     if have_cdrom and @resource[:allowcdrom] != :true
-      raise Puppet::Error,
-            _("/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure.")
+      raise Puppet::Error, _("/etc/apt/sources.list contains a cdrom source; not installing.  Use 'allowcdrom' to override this failure.")
     end
   end
 
