@@ -203,3 +203,5 @@ RSpec/Rails/AvoidSetupHook: # new in 2.4
 Style/AutoResourceCleanup:
   Enabled: true
 
+Style/CaseEquality:
+  Enabled: true
