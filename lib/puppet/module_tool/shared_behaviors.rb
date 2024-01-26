@@ -39,7 +39,7 @@ module Puppet::ModuleTool::Shared
       releases.each do |rel|
         semver = SemanticPuppet::Version.parse(rel['version']) rescue SemanticPuppet::Version::MIN
         @versions[mod_name] << { :vstring => rel['version'], :semver => semver }
-        @versions[mod_name].sort! { |a, b| a[:semver] <=> b[:semver] }
+        @versions[mod_name].sort_by! { |a| a[:semver] }
         @urls["#{mod_name}@#{rel['version']}"] = rel['file']
         d = @remote["#{mod_name}@#{rel['version']}"]
         (rel['dependencies'] || []).each do |name, conditions|
