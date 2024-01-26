@@ -453,10 +453,12 @@ class Puppet::Resource
       attr.unshift(:ensure)
     end
 
+    # rubocop:disable Lint/FormatParameterMismatch
     attributes = attr.collect { |k|
       v = parameters[k]
       "    %-#{attr_max}s: %s\n" % [k, Puppet::Parameter.format_value_for_display(v)]
     }.join
+    # rubocop:enable Lint/FormatParameterMismatch
 
     "  %s:\n%s" % [self.title, attributes]
   end
@@ -488,10 +490,12 @@ class Puppet::Resource
       attr.unshift(:ensure)
     end
 
+    # rubocop:disable Lint/FormatParameterMismatch
     attributes = attr.collect { |k|
       v = parameters[k]
       "  %-#{attr_max}s => %s,\n" % [k, Puppet::Parameter.format_value_for_display(v)]
     }.join
+    # rubocop:enable Lint/FormatParameterMismatch
 
     escaped = self.title.gsub(/'/, "\\\\'")
     "%s { '%s':\n%s}" % [self.type.to_s.downcase, escaped, attributes]
