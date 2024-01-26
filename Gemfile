@@ -47,11 +47,11 @@ group(:test) do
   gem 'webrick', '~> 1.7', require: false
   gem 'yard', require: false
 
-  gem 'rubocop', '1.28.0', require: false, platforms: [:ruby]
+  gem 'rubocop', '~> 1.0', require: false, platforms: [:ruby]
   gem 'rubocop-i18n', '~> 3.0', require: false, platforms: [:ruby]
-  gem 'rubocop-performance', '1.13.3', require: false, platforms: [:ruby]
-  gem 'rubocop-rake', '0.6.0', require: false, platforms: [:ruby]
-  gem 'rubocop-rspec', '2.10.0', require: false, platforms: [:ruby]
+  gem 'rubocop-performance', '~> 1.0', require: false, platforms: [:ruby]
+  gem 'rubocop-rake', '~> 0.6', require: false, platforms: [:ruby]
+  gem 'rubocop-rspec', '~> 2.0', require: false, platforms: [:ruby]
 end
 
 group(:development, optional: true) do
