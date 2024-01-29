@@ -381,16 +381,18 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   def scan_options(options, key)
     return [] unless options.is_a?(Enumerable)
 
-    values = options.map do |repo|
-      value = if repo.is_a?(String)
-                next unless repo.include?('=')
+    values =
+      options.map do |repo|
+        value =
+          if repo.is_a?(String)
+            next unless repo.include?('=')
 
-                Hash[*repo.strip.split('=')] # make it a hash
-              else
-                repo
-              end
-      value[key]
-    end
+            Hash[*repo.strip.split('=')] # make it a hash
+          else
+            repo
+          end
+        value[key]
+      end
     values.compact.uniq
   end
 end

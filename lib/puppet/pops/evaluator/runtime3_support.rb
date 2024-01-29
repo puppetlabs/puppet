@@ -518,7 +518,7 @@ module Runtime3Support
       super
       IssueReporter.assert_and_report(self, {
                                         :message => "Evaluation Error:",
-                                        :emit_warnings => true,  # log warnings
+                                        :emit_warnings => true, # log warnings
                                         :exception_class => Puppet::PreformattedError
                                       })
       if errors?

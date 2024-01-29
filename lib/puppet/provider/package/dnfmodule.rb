@@ -122,7 +122,7 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
 
   def uninstall
     execute([command(:dnf), 'module', 'remove', '-d', '0', '-e', self.class.error_level, '-y', @resource[:name]])
-    reset  # reset module to the default stream
+    reset # reset module to the default stream
   end
 
   def disable(args = @resource[:name])

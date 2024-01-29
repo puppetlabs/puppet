@@ -254,15 +254,15 @@ module Validation
     alias eql? ==
     # rubocop:enable Layout
 
+    def hash
+      @hash ||= [file, source_pos.offset, issue.issue_code, severity].hash
+    end
+
     # Position is equal if the diagnostic is not located or if referring to the same offset
     def same_position?(o)
       source_pos.nil? && o.source_pos.nil? || source_pos.offset == o.source_pos.offset
     end
     private :same_position?
-
-    def hash
-      @hash ||= [file, source_pos.offset, issue.issue_code, severity].hash
-    end
   end
 
   # Formats a diagnostic for output.

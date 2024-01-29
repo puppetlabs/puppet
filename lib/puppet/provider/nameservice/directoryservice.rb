@@ -511,7 +511,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       # list, then report on the remaining list. Pretty whacky, ehh?
       type_properties = [:name] + self.class.resource_type.validproperties
       type_properties.delete(:ensure) if type_properties.include? :ensure
-      type_properties << :guid  # append GeneratedUID so we just get the report here
+      type_properties << :guid # append GeneratedUID so we just get the report here
       @property_value_cache_hash = self.class.single_report(@resource[:name], *type_properties)
       [:uid, :gid].each do |param|
         @property_value_cache_hash[param] = @property_value_cache_hash[param].to_i if @property_value_cache_hash and @property_value_cache_hash.include?(param)

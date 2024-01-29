@@ -187,7 +187,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     match_obj[1]
   end
 
-  #- **password**
+  # - **password**
   #    The user's password, in whatever encrypted format the local machine
   #    requires. Be sure to enclose any value that includes a dollar sign ($)
   #    in single quotes (').  Requires features manages_passwords.
@@ -312,49 +312,49 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   end
 
   # UNSUPPORTED
-  #- **profile_membership**
+  # - **profile_membership**
   #    Whether specified roles should be treated as the only roles
   #    of which the user is a member or whether they should merely
   #    be treated as the minimum membership list.  Valid values are
   #    `inclusive`, `minimum`.
   # UNSUPPORTED
-  #- **profiles**
+  # - **profiles**
   #    The profiles the user has.  Multiple profiles should be
   #    specified as an array.  Requires features manages_solaris_rbac.
   # UNSUPPORTED
-  #- **project**
+  # - **project**
   #    The name of the project associated with a user  Requires features
   #    manages_solaris_rbac.
   # UNSUPPORTED
-  #- **role_membership**
+  # - **role_membership**
   #    Whether specified roles should be treated as the only roles
   #    of which the user is a member or whether they should merely
   #    be treated as the minimum membership list.  Valid values are
   #    `inclusive`, `minimum`.
   # UNSUPPORTED
-  #- **roles**
+  # - **roles**
   #    The roles the user has.  Multiple roles should be
   #    specified as an array.  Requires features manages_roles.
   # UNSUPPORTED
-  #- **key_membership**
+  # - **key_membership**
   #    Whether specified key value pairs should be treated as the only
   #    attributes
   #    of the user or whether they should merely
   #    be treated as the minimum list.  Valid values are `inclusive`,
   #    `minimum`.
   # UNSUPPORTED
-  #- **keys**
+  # - **keys**
   #    Specify user attributes in an array of keyvalue pairs  Requires features
   #    manages_solaris_rbac.
   # UNSUPPORTED
-  #- **allowdupe**
+  # - **allowdupe**
   #  Whether to allow duplicate UIDs.  Valid values are `true`, `false`.
   # UNSUPPORTED
-  #- **auths**
+  # - **auths**
   #    The auths the user has.  Multiple auths should be
   #    specified as an array.  Requires features manages_solaris_rbac.
   # UNSUPPORTED
-  #- **auth_membership**
+  # - **auth_membership**
   #    Whether specified auths should be treated as the only auths
   #    of which the user is a member or whether they should merely
   #    be treated as the minimum membership list.  Valid values are

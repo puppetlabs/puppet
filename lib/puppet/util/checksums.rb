@@ -168,7 +168,7 @@ module Puppet::Util::Checksums
     require_relative '../../puppet/ssl/openssl_loader'
 
     digest = OpenSSL::Digest.new('SHA224')
-    checksum_file(digest, filename,  lite)
+    checksum_file(digest, filename, lite)
   end
 
   def sha224_stream(lite = false, &block)

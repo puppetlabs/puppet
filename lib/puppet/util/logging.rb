@@ -77,7 +77,7 @@ module Logging
     built_trace = format_backtrace(exception, combined_trace, puppet_trace)
 
     if exception.respond_to?(:original)
-      original =  exception.original
+      original = exception.original
       unless original.nil?
         built_trace << _('Wrapped exception:')
         built_trace << original.message
