@@ -91,7 +91,7 @@ Puppet::Util::Log.newdesttype :file do
       end
     end
 
-    file = File.open(path, File::WRONLY | File::CREAT | File::APPEND)
+    file = File.new(path, File::WRONLY | File::CREAT | File::APPEND)
     file.puts('[') if need_array_start
 
     @file = file

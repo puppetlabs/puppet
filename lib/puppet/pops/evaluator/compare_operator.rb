@@ -61,9 +61,10 @@ class CompareOperator
   end
 
   def cmp_Numeric(a, b)
-    if b.is_a?(Numeric)
+    case b
+    when Numeric
       a <=> b
-    elsif b.is_a?(Time::Timespan) || b.is_a?(Time::Timestamp)
+    when Time::Timespan, Time::Timestamp
       -(b <=> a) # compare other way and invert result
     else
       raise ArgumentError.new(_("A Numeric is not comparable to non Numeric"))
@@ -218,9 +219,10 @@ class CompareOperator
 
   # Matches against semvers and strings
   def match_Version(version, left, scope)
-    if left.is_a?(SemanticPuppet::Version)
+    case left
+    when SemanticPuppet::Version
       version == left
-    elsif left.is_a? String
+    when String
       begin
         version == SemanticPuppet::Version.parse(left)
       rescue ArgumentError

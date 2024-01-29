@@ -121,9 +121,10 @@ class Puppet::Settings
     newhash = {}
     hash.each do |key, val|
       key = key.to_s
-      if val.is_a? Hash
+      case val
+      when Hash
         newhash[key] = stringifyhash(val)
-      elsif val.is_a? Symbol
+      when Symbol
         newhash[key] = val.to_s
       else
         newhash[key] = val
@@ -475,9 +476,10 @@ class Puppet::Settings
   def handlearg(opt, value = nil)
     @cache.clear
 
-    if value.is_a?(FalseClass)
+    case value
+    when FalseClass
       value = "false"
-    elsif value.is_a?(TrueClass)
+    when TrueClass
       value = "true"
     end
 

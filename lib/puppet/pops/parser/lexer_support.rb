@@ -82,13 +82,14 @@ module LexerSupport
   # An error is raised if the given value does not comply.
   #
   def assert_numeric(value, pos)
-    if value =~ /^0[xX]/
+    case value
+    when /^0[xX]/
       lex_error(Issues::INVALID_HEX_NUMBER, { :value => value }, pos)     unless value =~ /^0[xX][0-9A-Fa-f]+$/
 
-    elsif value =~ /^0[^.]/
+    when /^0[^.]/
       lex_error(Issues::INVALID_OCTAL_NUMBER, { :value => value }, pos)   unless value =~ /^0[0-7]+$/
 
-    elsif value =~ /^\d+[eE.]/
+    when /^\d+[eE.]/
       lex_error(Issues::INVALID_DECIMAL_NUMBER, { :value => value }, pos) unless value =~ /^\d+(?:\.\d+)?(?:[eE]-?\d+)?$/
 
     else

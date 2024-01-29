@@ -138,16 +138,14 @@ class Puppet::Node::Facts
   end
 
   def sanitize_fact(fact)
-    if fact.is_a? Hash then
+    case fact
+    when Hash
       ret = {}
       fact.each_pair { |k, v| ret[sanitize_fact k] = sanitize_fact v }
       ret
-    elsif fact.is_a? Array then
+    when Array
       fact.collect { |i| sanitize_fact i }
-    elsif fact.is_a? Numeric \
-      or fact.is_a? TrueClass \
-      or fact.is_a? FalseClass \
-      or fact.is_a? String
+    when Numeric, TrueClass, FalseClass, String
       fact
     else
       result = fact.to_s

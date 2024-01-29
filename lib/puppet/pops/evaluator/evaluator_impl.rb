@@ -225,13 +225,14 @@ class EvaluatorImpl
   end
 
   def assign_Array(lvalues, values, o, scope)
-    if values.is_a?(Hash)
+    case values
+    when Hash
       lvalues.map do |lval|
         assign(lval,
                values.fetch(lval) { |k| fail(Issues::MISSING_MULTI_ASSIGNMENT_KEY, o, :key => k) },
                o, scope)
       end
-    elsif values.is_a?(Puppet::Pops::Types::PClassType)
+    when Puppet::Pops::Types::PClassType
       if Puppet[:tasks]
         fail(Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING, o, { :operation => _('multi var assignment from class') })
       end

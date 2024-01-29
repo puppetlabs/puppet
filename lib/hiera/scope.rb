@@ -20,11 +20,12 @@ class Hiera
     end
 
     def [](key)
-      if key == CALLING_CLASS
+      case key
+      when CALLING_CLASS
         ans = find_hostclass(@real)
-      elsif key == CALLING_CLASS_PATH
+      when CALLING_CLASS_PATH
         ans = find_hostclass(@real).gsub(/::/, '/')
-      elsif key == CALLING_MODULE
+      when CALLING_MODULE
         ans = safe_lookupvar(MODULE_NAME)
       else
         ans = safe_lookupvar(key)

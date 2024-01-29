@@ -288,9 +288,10 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   # By default we restrict to a reasonably sane range for system accounts
   def self.next_system_id(id_type, min_id = 20)
     dscl_args = ['.', '-list']
-    if id_type == 'uid'
+    case id_type
+    when 'uid'
       dscl_args << '/Users' << 'uid'
-    elsif id_type == 'gid'
+    when 'gid'
       dscl_args << '/Groups' << 'gid'
     else
       fail(_("Invalid id_type %{id_type}. Only 'uid' and 'gid' supported") % { id_type: id_type })

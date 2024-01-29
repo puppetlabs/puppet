@@ -489,9 +489,10 @@ class PTypeType < PTypeWithContainedType
   end
 
   def instance?(o, guard = nil)
-    if o.is_a?(PAnyType)
+    case o
+    when PAnyType
       type.nil? || type.assignable?(o, guard)
-    elsif o.is_a?(Module) || o.is_a?(Puppet::Resource) || o.is_a?(Puppet::Parser::Resource)
+    when Module, Puppet::Resource, Puppet::Parser::Resource
       @type.nil? ? true : assignable?(TypeCalculator.infer(o))
     else
       false
@@ -1577,9 +1578,10 @@ class PStringType < PScalarDataType
   end
 
   def derived_size_type
-    if @size_type_or_value.is_a?(PIntegerType)
+    case @size_type_or_value
+    when PIntegerType
       @size_type_or_value
-    elsif @size_type_or_value.is_a?(String)
+    when String
       sz = @size_type_or_value.size
       PIntegerType.new(sz, sz)
     else
@@ -2101,7 +2103,8 @@ class PStructType < PAnyType
 
   # @api private
   def _assignable?(o, guard)
-    if o.is_a?(Types::PStructType)
+    case o
+    when Types::PStructType
       h2 = o.hashed_elements
       matched = 0
       elements.all? do |e1|
@@ -2113,7 +2116,7 @@ class PStructType < PAnyType
           e1.key_type.assignable?(e2.key_type, guard) && e1.value_type.assignable?(e2.value_type, guard)
         end
       end && matched == h2.size
-    elsif o.is_a?(Types::PHashType)
+    when Types::PHashType
       required = 0
       required_elements_assignable = elements.all? do |e|
         key_type = e.key_type
@@ -2645,7 +2648,8 @@ class PArrayType < PCollectionType
   # Array is assignable if o is an Array and o's element type is assignable, or if o is a Tuple
   # @api private
   def _assignable?(o, guard)
-    if o.is_a?(PTupleType)
+    case o
+    when PTupleType
       o_types = o.types
       size_s = size_type || DEFAULT_SIZE
       size_o = o.size_type
@@ -2654,7 +2658,7 @@ class PArrayType < PCollectionType
         size_o = PIntegerType.new(type_count, type_count)
       end
       size_s.assignable?(size_o) && o_types.all? { |ot| @element_type.assignable?(ot, guard) }
-    elsif o.is_a?(PArrayType)
+    when PArrayType
       super && @element_type.assignable?(o.element_type, guard)
     else
       false

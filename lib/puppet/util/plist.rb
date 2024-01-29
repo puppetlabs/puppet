@@ -130,11 +130,12 @@ module Puppet::Util::Plist
     end
 
     def to_format(format)
-      if format.to_sym == :xml
+      case format.to_sym
+      when :xml
         CFPropertyList::List::FORMAT_XML
-      elsif format.to_sym == :binary
+      when :binary
         CFPropertyList::List::FORMAT_BINARY
-      elsif format.to_sym == :plain
+      when :plain
         CFPropertyList::List::FORMAT_PLAIN
       else
         raise FormatError.new "Unknown plist format #{format}"

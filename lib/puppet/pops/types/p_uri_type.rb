@@ -105,12 +105,13 @@ class PURIType < PAnyType
   attr_reader :parameters
 
   def initialize(parameters = nil)
-    if parameters.is_a?(String)
+    case parameters
+    when String
       parameters = TypeAsserter.assert_instance_of('URI-Type parameter', Pcore::TYPE_URI, parameters, true)
       @parameters = uri_to_hash(URI.parse(parameters))
-    elsif parameters.is_a?(URI)
+    when URI
       @parameters = uri_to_hash(parameters)
-    elsif parameters.is_a?(Hash)
+    when Hash
       params = TypeAsserter.assert_instance_of('URI-Type parameter', TYPE_URI_PARAM_TYPE, parameters, true)
       @parameters = params.empty? ? nil : params
     end

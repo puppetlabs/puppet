@@ -29,7 +29,7 @@ describe Puppet::Util::SELinux do
     end
 
     it "should return nil if /proc/mounts does not exist" do
-      allow(File).to receive(:open).with("/proc/mounts").and_raise("No such file or directory - /proc/mounts")
+      allow(File).to receive(:new).with("/proc/mounts").and_raise("No such file or directory - /proc/mounts")
       expect(read_mounts).to eq(nil)
     end
   end
@@ -37,8 +37,8 @@ describe Puppet::Util::SELinux do
   describe "read_mounts" do
     before :each do
       fh = double('fh', :close => nil)
-      allow(File).to receive(:open).and_call_original()
-      allow(File).to receive(:open).with("/proc/mounts").and_return(fh)
+      allow(File).to receive(:new).and_call_original()
+      allow(File).to receive(:new).with("/proc/mounts").and_return(fh)
       times_fh_called = 0
       expect(fh).to receive(:read_nonblock) do
         times_fh_called += 1
@@ -304,7 +304,7 @@ describe Puppet::Util::SELinux do
   describe "set_selinux_context" do
     before :each do
       fh = double('fh', :close => nil)
-      allow(File).to receive(:open).with("/proc/mounts").and_return(fh)
+      allow(File).to receive(:new).with("/proc/mounts").and_return(fh)
       times_fh_called = 0
       allow(fh).to receive(:read_nonblock) do
         times_fh_called += 1

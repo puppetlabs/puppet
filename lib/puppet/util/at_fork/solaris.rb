@@ -64,7 +64,7 @@ class Puppet::Util::AtFork::Solaris
 
   def activate_new_contract_template
     begin
-      tmpl = File.open(CTFS_PR_TEMPLATE, File::RDWR)
+      tmpl = File.new(CTFS_PR_TEMPLATE, File::RDWR)
 
       begin
         tmpl_fd = tmpl.fileno
@@ -109,7 +109,7 @@ class Puppet::Util::AtFork::Solaris
 
   def get_latest_child_contract_id
     begin
-      stat = File.open(CTFS_PR_LATEST, File::RDONLY)
+      stat = File.new(CTFS_PR_LATEST, File::RDONLY)
 
       begin
         stathdl = Fiddle::Pointer.new(0)
@@ -133,7 +133,7 @@ class Puppet::Util::AtFork::Solaris
     return if ctid.nil?
 
     begin
-      ctl = File.open(File.join(CTFS_PR_ROOT, ctid.to_s, %q(ctl)), File::WRONLY)
+      ctl = File.new(File.join(CTFS_PR_ROOT, ctid.to_s, %q(ctl)), File::WRONLY)
 
       begin
         raise_if_error { ct_ctl_abandon(ctl.fileno) }

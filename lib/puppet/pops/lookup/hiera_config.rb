@@ -232,13 +232,14 @@ class HieraConfig
       quote = nil
       stripped = ''.dup
       line.each_codepoint do |cp|
-        if cp == 0x22 || cp == 0x27 # double or single quote
+        case cp
+        when 0x22, 0x27 # double or single quote
           if quote == cp
             quote = nil
           elsif quote.nil?
             quote = cp
           end
-        elsif cp == 0x23 # unquoted hash mark
+        when 0x23 # unquoted hash mark
           break
         end
         stripped << cp

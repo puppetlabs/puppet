@@ -153,10 +153,11 @@ module Puppet::Util::Execution
 
     options = default_options.merge(options)
 
-    if command.is_a?(Array)
+    case command
+    when Array
       command = command.flatten.map(&:to_s)
       command_str = command.join(" ")
-    elsif command.is_a?(String)
+    when String
       command_str = command
     end
 

@@ -254,9 +254,10 @@ class Lexer2
       '@' => lambda do
         scn = @scanner
         la = scn.peek(2)
-        if la[1] == '@'
+        case la[1]
+        when '@'
           emit(TOKEN_ATAT, scn.pos) # TODO; Check if this is good for the grammar
-        elsif la[1] == '('
+        when '('
           heredoc
         else
           emit(TOKEN_AT, scn.pos)

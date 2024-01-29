@@ -121,9 +121,10 @@ module Puppet
 
       def add_event(event)
         @events << event
-        if event.status == 'failure'
+        case event.status
+        when 'failure'
           self.failed = true
-        elsif event.status == 'success'
+        when 'success'
           @change_count += 1
           @changed = true
         end

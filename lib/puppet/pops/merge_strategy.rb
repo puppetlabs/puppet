@@ -377,11 +377,12 @@ module Puppet::Pops
     end
 
     def deep_clone(value)
-      if value.is_a?(Hash)
+      case value
+      when Hash
         result = value.clone
         value.each { |k, v| result[k] = deep_clone(v) }
         result
-      elsif value.is_a?(Array)
+      when Array
         value.map { |v| deep_clone(v) }
       else
         value

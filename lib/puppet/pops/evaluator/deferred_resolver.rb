@@ -92,12 +92,13 @@ class DeferredResolver
         # If the value is instance of Sensitive - assign the unwrapped value
         # and mark it as sensitive if not already marked
         #
-        if resolved.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+        case resolved
+        when Puppet::Pops::Types::PSensitiveType::Sensitive
           resolved = resolved.unwrap
           mark_sensitive_parameters(r, k)
         # If the value is a DeferredValue and it has an argument of type PSensitiveType, mark it as sensitive
         # The DeferredValue.resolve method will unwrap it during catalog application
-        elsif resolved.is_a?(Puppet::Pops::Evaluator::DeferredValue)
+        when Puppet::Pops::Evaluator::DeferredValue
           if v.arguments.any? { |arg| arg.is_a?(Puppet::Pops::Types::PSensitiveType) }
             mark_sensitive_parameters(r, k)
           end
@@ -136,15 +137,16 @@ class DeferredResolver
   end
 
   def resolve_lazy_args(x)
-    if x.is_a?(DeferredValue)
+    case x
+    when DeferredValue
       x.resolve
-    elsif x.is_a?(Array)
+    when Array
       x.map { |v| resolve_lazy_args(v) }
-    elsif x.is_a?(Hash)
+    when Hash
       result = {}
       x.each_pair { |k, v| result[k] = resolve_lazy_args(v) }
       result
-    elsif x.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+    when Puppet::Pops::Types::PSensitiveType::Sensitive
       # rewrap in a new Sensitive after resolving any nested deferred values
       Puppet::Pops::Types::PSensitiveType::Sensitive.new(resolve_lazy_args(x.unwrap))
     else

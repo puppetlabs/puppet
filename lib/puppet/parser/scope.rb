@@ -743,11 +743,12 @@ class Puppet::Parser::Scope
   end
 
   def transform_setting(val)
-    if val.is_a?(String) || val.is_a?(Numeric) || true == val || false == val || nil == val
+    case val
+    when String, Numeric, true, false, nil
       val
-    elsif val.is_a?(Array)
+    when Array
       val.map { |entry| transform_setting(entry) }
-    elsif val.is_a?(Hash)
+    when Hash
       result = {}
       val.each { |k, v| result[transform_setting(k)] = transform_setting(v) }
       result

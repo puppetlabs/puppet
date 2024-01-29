@@ -193,11 +193,12 @@ Puppet::Network::FormatHandler.create(:flat,
                                       :weight => 0) do
   def flatten_hash(hash)
     hash.each_with_object({}) do |(k, v), h|
-      if v.is_a? Hash
+      case v
+      when Hash
         flatten_hash(v).map do |h_k, h_v|
           h["#{k}.#{h_k}"] = h_v
         end
-      elsif v.is_a? Array
+      when Array
         v.each_with_index do |el, i|
           if el.is_a? Hash
             flatten_hash(el).map do |el_k, el_v|
@@ -240,10 +241,11 @@ Puppet::Network::FormatHandler.create(:flat,
     return datum if datum.is_a?(String) || datum.is_a?(Numeric)
 
     # Simple hash
-    if datum.is_a?(Hash)
+    case datum
+    when Hash
       data = flatten_hash(datum)
       return construct_output(data)
-    elsif datum.is_a?(Array)
+    when Array
       data = flatten_array(datum)
       return construct_output(data)
     end

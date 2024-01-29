@@ -24,23 +24,24 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
 
     # Now print the data about the item.
     val = object.default
-    if name.to_s == 'vardir'
+    case name.to_s
+    when 'vardir'
       val = 'Unix/Linux: /opt/puppetlabs/puppet/cache -- Windows: C:\ProgramData\PuppetLabs\puppet\cache -- Non-root user: ~/.puppetlabs/opt/puppet/cache'
-    elsif name.to_s == 'publicdir'
+    when 'publicdir'
       val = 'Unix/Linux: /opt/puppetlabs/puppet/public -- Windows: C:\ProgramData\PuppetLabs\puppet\public -- Non-root user: ~/.puppetlabs/opt/puppet/public'
-    elsif name.to_s == 'confdir'
+    when 'confdir'
       val = 'Unix/Linux: /etc/puppetlabs/puppet -- Windows: C:\ProgramData\PuppetLabs\puppet\etc -- Non-root user: ~/.puppetlabs/etc/puppet'
-    elsif name.to_s == 'codedir'
+    when 'codedir'
       val = 'Unix/Linux: /etc/puppetlabs/code -- Windows: C:\ProgramData\PuppetLabs\code -- Non-root user: ~/.puppetlabs/etc/code'
-    elsif name.to_s == 'rundir'
+    when 'rundir'
       val = 'Unix/Linux: /var/run/puppetlabs -- Windows: C:\ProgramData\PuppetLabs\puppet\var\run -- Non-root user: ~/.puppetlabs/var/run'
-    elsif name.to_s == 'logdir'
+    when 'logdir'
       val = 'Unix/Linux: /var/log/puppetlabs/puppet -- Windows: C:\ProgramData\PuppetLabs\puppet\var\log -- Non-root user: ~/.puppetlabs/var/log'
-    elsif name.to_s == 'hiera_config'
+    when 'hiera_config'
       val = '$confdir/hiera.yaml. However, for backwards compatibility, if a file exists at $codedir/hiera.yaml, Puppet uses that instead.'
-    elsif name.to_s == 'certname'
+    when 'certname'
       val = "the Host's fully qualified domain name, as determined by Facter"
-    elsif name.to_s == 'srv_domain'
+    when 'srv_domain'
       val = 'example.com'
     end
 
