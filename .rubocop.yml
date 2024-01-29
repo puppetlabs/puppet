@@ -208,3 +208,9 @@ Style/CaseEquality:
 
 Style/CaseLikeIf:
   Enabled: true
+
+Style/ClassCheck:
+  Enabled: true
+
+Style/ClassEqualityComparison:
+  Enabled: true

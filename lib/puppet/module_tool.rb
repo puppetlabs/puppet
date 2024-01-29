@@ -48,7 +48,7 @@ module Puppet
     # @return [Pathname, nil] the root path of the module directory or nil if
     #   we cannot find one
     def self.find_module_root(path)
-      path = Pathname.new(path) if path.class == String
+      path = Pathname.new(path) if path.instance_of?(String)
 
       path.expand_path.ascend do |p|
         return p if is_module_root?(p)
@@ -63,7 +63,7 @@ module Puppet
     # @param path [Pathname, String] path to analyse
     # @return [Boolean] true if the path is a module root, false otherwise
     def self.is_module_root?(path)
-      path = Pathname.new(path) if path.class == String
+      path = Pathname.new(path) if path.instance_of?(String)
 
       FileTest.file?(path + 'metadata.json')
     end

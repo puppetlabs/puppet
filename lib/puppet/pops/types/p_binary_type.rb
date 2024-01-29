@@ -225,7 +225,7 @@ class PBinaryType < PAnyType
   protected
 
   def _assignable?(o, guard)
-    o.class == self.class
+    o.instance_of?(self.class)
   end
 end
 end

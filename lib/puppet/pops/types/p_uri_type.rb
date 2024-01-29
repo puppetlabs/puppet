@@ -156,7 +156,7 @@ class PURIType < PAnyType
   protected
 
   def _assignable?(o, guard = nil)
-    return false unless o.class == self.class
+    return false unless o.instance_of?(self.class)
     return true if @parameters.nil?
 
     o_params = o.parameters || EMPTY_HASH

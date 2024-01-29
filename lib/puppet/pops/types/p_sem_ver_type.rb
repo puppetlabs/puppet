@@ -119,7 +119,7 @@ class PSemVerType < PScalarType
   protected
 
   def _assignable?(o, guard)
-    return false unless o.class == self.class
+    return false unless o.instance_of?(self.class)
     return true if @ranges.empty?
     return false if o.ranges.empty?
 

@@ -899,7 +899,7 @@ Puppet::Type.newtype(:file) do
     method = :stat
 
     # Files are the only types that support links
-    if (self.class.name == :file and self[:links] != :follow) or self.class.name == :tidy
+    if (self.instance_of?(Puppet::Type::File) and self[:links] != :follow)
       method = :lstat
     end
 
