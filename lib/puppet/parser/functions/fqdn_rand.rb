@@ -3,7 +3,7 @@
 require 'digest/md5'
 require 'digest/sha2'
 
-Puppet::Parser::Functions::newfunction(:fqdn_rand, :arity => -2, :type => :rvalue, :doc =>
+Puppet::Parser::Functions.newfunction(:fqdn_rand, :arity => -2, :type => :rvalue, :doc =>
   "Usage: `fqdn_rand(MAX, [SEED], [DOWNCASE])`. MAX is required and must be a positive
   integer; SEED is optional and may be any number or string; DOWNCASE is optional
   and should be a boolean true or false.

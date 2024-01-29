@@ -28,34 +28,34 @@ class ResourceTypeImpl
 
   def self.register_ptype(loader, ir)
     param_ref = Types::PTypeReferenceType.new('Puppet::Resource::Param')
-    @ptype = Pcore::create_object_type(loader, ir, self, 'Puppet::Resource::ResourceType3', nil,
-                                       {
-                                         Types::KEY_NAME => Types::PStringType::NON_EMPTY,
-                                         'properties' => {
-                                           Types::KEY_TYPE => Types::PArrayType.new(param_ref),
-                                           Types::KEY_VALUE => EMPTY_ARRAY
-                                         },
-                                         'parameters' => {
-                                           Types::KEY_TYPE => Types::PArrayType.new(param_ref),
-                                           Types::KEY_VALUE => EMPTY_ARRAY
-                                         },
-                                         'title_patterns_hash' => {
-                                           Types::KEY_TYPE => Types::POptionalType.new(
-                                             Types::PHashType.new(Types::PRegexpType::DEFAULT, Types::PArrayType.new(Types::PStringType::NON_EMPTY))
-                                           ),
-                                           Types::KEY_VALUE => nil
-                                         },
-                                         'isomorphic' => {
-                                           Types::KEY_TYPE => Types::PBooleanType::DEFAULT,
-                                           Types::KEY_VALUE => true
-                                         },
-                                         'capability' => {
-                                           Types::KEY_TYPE => Types::PBooleanType::DEFAULT,
-                                           Types::KEY_VALUE => false
-                                         },
-                                       },
-                                       EMPTY_HASH,
-                                       [Types::KEY_NAME])
+    @ptype = Pcore.create_object_type(loader, ir, self, 'Puppet::Resource::ResourceType3', nil,
+                                      {
+                                        Types::KEY_NAME => Types::PStringType::NON_EMPTY,
+                                        'properties' => {
+                                          Types::KEY_TYPE => Types::PArrayType.new(param_ref),
+                                          Types::KEY_VALUE => EMPTY_ARRAY
+                                        },
+                                        'parameters' => {
+                                          Types::KEY_TYPE => Types::PArrayType.new(param_ref),
+                                          Types::KEY_VALUE => EMPTY_ARRAY
+                                        },
+                                        'title_patterns_hash' => {
+                                          Types::KEY_TYPE => Types::POptionalType.new(
+                                            Types::PHashType.new(Types::PRegexpType::DEFAULT, Types::PArrayType.new(Types::PStringType::NON_EMPTY))
+                                          ),
+                                          Types::KEY_VALUE => nil
+                                        },
+                                        'isomorphic' => {
+                                          Types::KEY_TYPE => Types::PBooleanType::DEFAULT,
+                                          Types::KEY_VALUE => true
+                                        },
+                                        'capability' => {
+                                          Types::KEY_TYPE => Types::PBooleanType::DEFAULT,
+                                          Types::KEY_VALUE => false
+                                        },
+                                      },
+                                      EMPTY_HASH,
+                                      [Types::KEY_NAME])
   end
 
   def eql?(other)

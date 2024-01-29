@@ -25,8 +25,8 @@ module Pal
     #
     def call_function(function_name, *args, &block)
       # TRANSLATORS: do not translate variable name strings in these assertions
-      Pal::assert_non_empty_string(function_name, 'function_name', false)
-      Pal::assert_type(Pal::T_ANY_ARRAY, args, 'args', false)
+      Pal.assert_non_empty_string(function_name, 'function_name', false)
+      Pal.assert_type(Pal::T_ANY_ARRAY, args, 'args', false)
       internal_evaluator.evaluator.external_call_function(function_name, args, topscope, &block)
     end
 

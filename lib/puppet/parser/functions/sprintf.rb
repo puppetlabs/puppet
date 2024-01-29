@@ -26,7 +26,7 @@
 # other dealings in this Software without prior written authorization
 # from Thomas Bellman.
 
-Puppet::Parser::Functions::newfunction(
+Puppet::Parser::Functions.newfunction(
   :sprintf, :type => :rvalue,
             :arity => -2,
             :doc => "Perform printf-style formatting of text.

@@ -544,7 +544,7 @@ module Puppet::Util::Windows
             value,  # lpInfo
           )
           if success == FFI::WIN32_FALSE
-            raise Puppet::Util::windows::Error.new(_("Failed to update service %{change} configuration") % { change: change })
+            raise Puppet::Util.windows::Error.new(_("Failed to update service %{change} configuration") % { change: change })
           end
         end
       end

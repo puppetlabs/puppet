@@ -125,7 +125,7 @@ class Puppet::FileBucket::File
     end
 
     def to_binary
-      Puppet::FileSystem::binread(@path)
+      Puppet::FileSystem.binread(@path)
     end
   end
 end

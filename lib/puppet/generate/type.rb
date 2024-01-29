@@ -49,7 +49,7 @@ module Puppet
         # @return [Boolean] Returns true if the output is up-to-date or false if not.
         def up_to_date?(outputdir)
           f = effective_output_path(outputdir)
-          Puppet::FileSystem::exist?(f) && (Puppet::FileSystem::stat(@path) <=> Puppet::FileSystem::stat(f)) <= 0
+          Puppet::FileSystem.exist?(f) && (Puppet::FileSystem.stat(@path) <=> Puppet::FileSystem.stat(f)) <= 0
         end
 
         # Gets the filename of the output file.

@@ -28,7 +28,7 @@ class Puppet::SyntaxCheckers::PP < Puppet::Plugins::SyntaxCheckers::SyntaxChecke
       # TODO: improve the pops API to allow simpler diagnostic creation while still maintaining capabilities
       # and the issue code. (In this case especially, where there is only a single error message being issued).
       #
-      issue = Puppet::Pops::Issues::issue(:ILLEGAL_PP) { msg }
+      issue = Puppet::Pops::Issues.issue(:ILLEGAL_PP) { msg }
       acceptor.accept(Puppet::Pops::Validation::Diagnostic.new(:error, issue, source_pos.file, source_pos, {}))
     end
   end

@@ -508,7 +508,7 @@ class TypeCalculator
   # @api private
   #
   def infer_Module(o)
-    PTypeType::new(PRuntimeType.new(:ruby, o.name))
+    PTypeType.new(PRuntimeType.new(:ruby, o.name))
   end
 
   # @api private

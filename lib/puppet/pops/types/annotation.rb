@@ -10,7 +10,7 @@ module Types
 
     # Register the Annotation type. This is the type that all custom Annotations will inherit from.
     def self.register_ptype(loader, ir)
-      @type = Pcore::create_object_type(loader, ir, self, 'Annotation', nil, EMPTY_HASH)
+      @type = Pcore.create_object_type(loader, ir, self, 'Annotation', nil, EMPTY_HASH)
     end
 
     def self._pcore_type

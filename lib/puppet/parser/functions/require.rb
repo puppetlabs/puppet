@@ -2,7 +2,7 @@
 
 # Requires the specified classes
 
-Puppet::Parser::Functions::newfunction(
+Puppet::Parser::Functions.newfunction(
   :require,
   :arity => -2,
   :doc => "Evaluate one or more classes,  adding the required class as a dependency.

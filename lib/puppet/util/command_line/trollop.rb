@@ -530,9 +530,9 @@ class CommandLine
       @width ||= if $stdout.tty?
                    begin
                      require 'curses'
-                     Curses::init_screen
-                     x = Curses::cols
-                     Curses::close_screen
+                     Curses.init_screen
+                     x = Curses.cols
+                     Curses.close_screen
                      x
                    rescue Exception
                      80

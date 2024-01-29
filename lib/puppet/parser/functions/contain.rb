@@ -3,7 +3,7 @@
 # Called within a class definition, establishes a containment
 # relationship with another class
 
-Puppet::Parser::Functions::newfunction(
+Puppet::Parser::Functions.newfunction(
   :contain,
   :arity => -2,
   :doc => "Contain one or more classes inside the current class. If any of

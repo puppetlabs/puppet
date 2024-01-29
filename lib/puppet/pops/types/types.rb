@@ -51,7 +51,7 @@ class TypedModelObject < Object
   end
 
   def self.create_ptype(loader, ir, parent_name, attributes_hash = EMPTY_HASH)
-    @type = Pcore::create_object_type(loader, ir, self, "Pcore::#{simple_name}Type", "Pcore::#{parent_name}", attributes_hash)
+    @type = Pcore.create_object_type(loader, ir, self, "Pcore::#{simple_name}Type", "Pcore::#{parent_name}", attributes_hash)
   end
 
   def self.register_ptypes(loader, ir)
@@ -77,7 +77,7 @@ end
 #
 class PAnyType < TypedModelObject
   def self.register_ptype(loader, ir)
-    @type = Pcore::create_object_type(loader, ir, self, 'Pcore::AnyType', 'Any', EMPTY_HASH)
+    @type = Pcore.create_object_type(loader, ir, self, 'Pcore::AnyType', 'Any', EMPTY_HASH)
   end
 
   def self.create(*args)
@@ -1921,9 +1921,9 @@ end
 #
 class PStructElement < TypedModelObject
   def self.register_ptype(loader, ir)
-    @type = Pcore::create_object_type(loader, ir, self, 'Pcore::StructElement', nil,
-                                      'key_type' => PTypeType::DEFAULT,
-                                      'value_type' => PTypeType::DEFAULT)
+    @type = Pcore.create_object_type(loader, ir, self, 'Pcore::StructElement', nil,
+                                     'key_type' => PTypeType::DEFAULT,
+                                     'value_type' => PTypeType::DEFAULT)
   end
 
   attr_accessor :key_type, :value_type
