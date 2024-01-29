@@ -102,7 +102,7 @@ class CommandLine
       @stop_on_unknown = false
 
       # instance_eval(&b) if b # can't take arguments
-      cloaker(&b).bind(self).call(*a) if b
+      cloaker(&b).bind_call(self, *a) if b
     end
 
     ## Define an option. +name+ is the option name, a unique identifier

@@ -211,7 +211,7 @@ Puppet::Face.define(:module, '1.0.0') do
   #     └── puppetlabs-sqlite (v0.0.1)
   #
   def list_build_tree(list, ancestors = [], parent = nil, params = {})
-    list.map do |mod|
+    list.filter_map do |mod|
       next if @seen[(mod.forge_name or mod.name)]
 
       node = list_build_node(mod, parent, params)
@@ -232,7 +232,7 @@ Puppet::Face.define(:module, '1.0.0') do
       end
 
       node
-    end.compact
+    end
   end
 
   # Prepare a module object for print in a tree view.  Each node in the tree

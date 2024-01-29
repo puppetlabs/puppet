@@ -395,7 +395,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   def resource_refs
-    resource_keys.collect { |type, name| name.is_a?(String) ? "#{type}[#{name}]" : nil }.compact
+    resource_keys.filter_map { |type, name| name.is_a?(String) ? "#{type}[#{name}]" : nil }
   end
 
   def resource_keys
@@ -540,11 +540,11 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     # https://puppet.com/docs/puppet/latest/configuration.html#resourcefile
     resourcefile = Puppet.settings.setting(:resourcefile)
     Puppet::FileSystem.open(resourcefile.value, resourcefile.mode.to_i(8), "w:UTF-8") do |f|
-      to_print = resources.map do |resource|
+      to_print = resources.filter_map do |resource|
         next unless resource.managed?
 
         "#{resource.ref.downcase}"
-      end.compact
+      end
       f.puts to_print.join("\n")
     end
   rescue => detail

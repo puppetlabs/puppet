@@ -86,13 +86,13 @@ module Puppet::Network::FormatHandler
   def self.most_suitable_formats_for(accepted, supported)
     accepted.collect do |format|
       format.to_s.sub(/;q=.*$/, '')
-    end.collect do |format|
+    end.filter_map do |format|
       if format == ALL_MEDIA_TYPES
         supported.first
       else
         format_to_canonical_name_or_nil(format)
       end
-    end.compact.find_all do |format|
+    end.find_all do |format|
       supported.include?(format)
     end.collect do |format|
       format_for(format)

@@ -1378,7 +1378,7 @@ Generated on #{Time.now}.
 
   # Yield each search source in turn.
   def value_sets_for(environment, mode)
-    searchpath(environment, mode).collect { |source| searchpath_values(source) }.compact
+    searchpath(environment, mode).filter_map { |source| searchpath_values(source) }
   end
 
   # Read the file in.

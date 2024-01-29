@@ -109,9 +109,9 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
           hdiutil_info = Puppet::Util::Plist.parse_plist(xml_str)
           raise Puppet::Error.new(_("No disk entities returned by mount at %{path}") % { path: dmg.path }) unless hdiutil_info.has_key?("system-entities")
 
-          mounts = hdiutil_info["system-entities"].collect { |entity|
+          mounts = hdiutil_info["system-entities"].filter_map { |entity|
             entity["mount-point"]
-          }.compact
+          }
           begin
             mounts.each do |mountpoint|
               Dir.entries(mountpoint).select { |f|

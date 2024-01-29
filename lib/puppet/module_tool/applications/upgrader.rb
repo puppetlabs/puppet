@@ -257,7 +257,7 @@ module Puppet::ModuleTool
 
         graphed << release
 
-        dependencies = release.dependencies.values.map do |deps|
+        dependencies = release.dependencies.values.filter_map do |deps|
           dep = (deps & installed).first
           if dep == installed_modules[dep.name]
             next
@@ -266,7 +266,7 @@ module Puppet::ModuleTool
           if dep && !graphed.include?(dep)
             build_install_graph(dep, installed, graphed)
           end
-        end.compact
+        end
 
         return {
           :release => release,

@@ -728,7 +728,7 @@ class Type
   # included since they are a subclass of parameter.
   # @return [Array<Puppet::Parameter>] Array of parameter objects ( or subclass thereof )
   def parameters_with_value
-    self.class.allattrs.collect { |attr| parameter(attr) }.compact
+    self.class.allattrs.filter_map { |attr| parameter(attr) }
   end
 
   # Iterates over all parameters with value currently set.
@@ -923,7 +923,7 @@ class Type
   #   ruby file adding a new type with new properties?
   #
   def properties
-    self.class.properties.collect { |prop| @parameters[prop.name] }.compact
+    self.class.properties.filter_map { |prop| @parameters[prop.name] }
   end
 
   # Returns true if the type's notion of name is the identity of a resource.
@@ -1188,13 +1188,13 @@ class Type
   def self.providers_by_source
     # Put the default provider first (can be nil), then the rest of the suitable providers.
     sources = []
-    [defaultprovider, suitableprovider].flatten.uniq.collect do |provider|
+    [defaultprovider, suitableprovider].flatten.uniq.filter_map do |provider|
       next if provider.nil?
       next if sources.include?(provider.source)
 
       sources << provider.source
       provider
-    end.compact
+    end
   end
 
   # Converts a simple hash into a Resource instance.

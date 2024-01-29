@@ -100,7 +100,7 @@ ENDHEREDOC
       virtual, exported,
       type_name,
       resource_titles,
-      defaults.merge(params).map do |name, value|
+      defaults.merge(params).filter_map do |name, value|
         value = nil if value == :undef
         Puppet::Parser::Resource::Param.new(
           :name => name,
@@ -108,7 +108,7 @@ ENDHEREDOC
           :source => self.source, # TODO: support :line => line, :file => file,
           :add => false
         )
-      end.compact
+      end
     )
   end.flatten.compact
 end

@@ -409,7 +409,7 @@ module ModuleLoaders
             # whichever ones exist. Otherwise, find all paths that *might* be
             # related to origin
             if origin.is_a?(Array)
-              origins = origin.map { |ori| existing_path(ori) }.compact
+              origins = origin.filter_map { |ori| existing_path(ori) }
               return [origins, sp] unless origins.empty?
             else
               origins = candidate_paths(origin)

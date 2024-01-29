@@ -103,7 +103,7 @@ module Puppet
         mod[:text] += " [#{mod[:path]}]" unless mod[:path].to_s == dir.to_s
 
         deps = (mod[:dependencies] || [])
-        deps.sort! { |a, b| a[:name] <=> b[:name] }
+        deps.sort_by! { |a| a[:name] }
         build_tree(deps, dir)
       end
     end
