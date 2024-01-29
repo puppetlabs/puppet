@@ -74,7 +74,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       else
         Puppet.warning _("Cannot match %{line}") % { line: line }
       end
-    end.reject { |h| h.nil? }
+    end.compact
   end
 
   # Turn our pkgutil -c listing into a hash for a single package.
@@ -99,7 +99,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       next if noise?(line)
 
       pkgsplit(line)
-    end.reject { |h| h.nil? }
+    end.compact
 
     if hash[:justme]
       # Single queries may have been for an alias so return the name requested

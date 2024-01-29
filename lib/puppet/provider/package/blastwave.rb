@@ -47,7 +47,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
       next if line =~ /localrev\s+remoterev/
 
       blastsplit(line)
-    end.reject { |h| h.nil? }
+    end.compact
 
     if hash[:justme]
       return list[0]

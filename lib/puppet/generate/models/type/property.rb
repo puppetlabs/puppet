@@ -61,7 +61,7 @@ module Puppet
             enum    = strings.empty? ? nil : "Enum[#{strings.join(', ')}]"
             pattern = regexes.empty? ? nil : "Pattern[#{regexes.join(', ')}]"
             boolean = strings.include?('\'true\'') || strings.include?('\'false\'') ? 'Boolean' : nil
-            variant = [boolean, enum, pattern].reject { |t| t.nil? }
+            variant = [boolean, enum, pattern].compact
             return variant[0] if variant.size == 1
 
             "Variant[#{variant.join(', ')}]"

@@ -214,3 +214,9 @@ Style/ClassCheck:
 
 Style/ClassEqualityComparison:
   Enabled: true
+
+Style/ClassMethods:
+  Enabled: true
+
+Style/CollectionCompact:
+  Enabled: true

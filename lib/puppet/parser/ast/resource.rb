@@ -61,6 +61,6 @@ class Puppet::Parser::AST::Resource < Puppet::Parser::AST::Branch
           resource
         end
       end
-    end.flatten.reject { |resource| resource.nil? }
+    end.flatten.compact
   end
 end
