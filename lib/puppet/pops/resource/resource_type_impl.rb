@@ -190,7 +190,7 @@ class ResourceTypeImpl
   #
   # This implementation does nothing - it is assumed that the catalog is already validated
   # via the relationship validator (done late in the game).
-  def finish()
+  def finish
     # Do nothing.
   end
 

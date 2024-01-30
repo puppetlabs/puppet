@@ -229,3 +229,6 @@ Style/CombinableLoops:
 
 Style/ColonMethodDefinition:
   Enabled: true
+
+Style/DefWithParentheses:
+  Enabled: true

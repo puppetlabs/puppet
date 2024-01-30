@@ -71,7 +71,7 @@ class Locator
   # Returns the line index - an array of line offsets for the start position of each line, starting at 0 for
   # the first line.
   #
-  def line_index()
+  def line_index
   end
 
   # Common byte based impl that works for all rubies (stringscanner is byte based

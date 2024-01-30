@@ -185,7 +185,7 @@ class Lexer2
 
   attr_reader :locator
 
-  def initialize()
+  def initialize
     @selector = {
       '.' => lambda { emit(TOKEN_DOT, @scanner.pos) },
       ',' => lambda { emit(TOKEN_COMMA, @scanner.pos) },
@@ -600,7 +600,7 @@ class Lexer2
   # Clears the lexer state (it is not required to call this as it will be garbage collected
   # and the next lex call (lex_string, lex_file) will reset the internal state.
   #
-  def clear()
+  def clear
     # not really needed, but if someone wants to ensure garbage is collected as early as possible
     @scanner = nil
     @locator = nil

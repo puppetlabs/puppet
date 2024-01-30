@@ -4,7 +4,7 @@
 # @api private
 #
 class Puppet::Pops::Migration::MigrationChecker
-  def initialize()
+  def initialize
   end
 
   # rubocop:disable Naming/MemoizedInstanceVariableName
@@ -15,7 +15,7 @@ class Puppet::Pops::Migration::MigrationChecker
 
   # Produces a hash of available migrations; a map from a symbolic name in string form to a brief description.
   # This version has no such supported migrations.
-  def available_migrations()
+  def available_migrations
     {}
   end
 

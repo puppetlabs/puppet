@@ -163,7 +163,7 @@ module Evaluator
     CLOSURE_NAME = 'lambda'
 
     # @api public
-    def closure_name()
+    def closure_name
       CLOSURE_NAME
     end
 
@@ -285,7 +285,7 @@ module Evaluator
       end
     end
 
-    def create_callable_type()
+    def create_callable_type
       types = []
       from = 0
       to = 0

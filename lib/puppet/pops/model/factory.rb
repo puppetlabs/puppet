@@ -116,7 +116,7 @@ class Factory
   end
 
   # Polymorphic interpolate
-  def interpolate()
+  def interpolate
     INTERPOLATION_VISITOR.visit_this_class(self, @model_class, EMPTY_ARRAY)
   end
 

@@ -227,7 +227,7 @@ class Puppet::Parser::AST::PopsBridge
       end
     end
 
-    def code()
+    def code
       Expression.new(:value => @value)
     end
 

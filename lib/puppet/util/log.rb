@@ -223,7 +223,7 @@ class Puppet::Util::Log
   #  the program is about to exit--most likely in a horrific
   #  error scenario.
   # @return nil
-  def Log.force_flushqueue()
+  def Log.force_flushqueue
     if (@destinations.empty? and !(@queued.empty?))
       newdestination(:console)
     end

@@ -160,7 +160,7 @@ Puppet::Face.define(:help, '0.0.1') do
   # @return [Array] An Array of Arrays.  The outer array contains one entry per application; each
   #  element in the outer array is a pair whose first element is a String containing the application
   #  name, and whose second element is a String containing the summary for that application.
-  def all_application_summaries()
+  def all_application_summaries
     available_application_names_special_sort().inject([]) do |result, appname|
       next result if exclude_from_docs?(appname)
 
@@ -196,7 +196,7 @@ Puppet::Face.define(:help, '0.0.1') do
   COMMON = 'Common:'
   SPECIALIZED = 'Specialized:'
   BLANK = "\n"
-  def available_application_names_special_sort()
+  def available_application_names_special_sort
     full_list = Puppet::Application.available_application_names
     a_list = full_list & %w{apply agent config help lookup module resource}
     a_list = a_list.sort

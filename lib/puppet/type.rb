@@ -986,7 +986,7 @@ class Type
   # Removes this object (FROM WHERE?)
   # @todo removes if from where?
   # @return [void]
-  def remove()
+  def remove
     # This is hackish (mmm, cut and paste), but it works for now, and it's
     # better than warnings.
     @parameters.each do |_name, obj|

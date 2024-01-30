@@ -370,7 +370,7 @@ module Validation
     #
     # TODO add semantic_label_provider
     #
-    def initialize()
+    def initialize
       @diagnostics = []
       @error_count = 0
       @warning_count = 0

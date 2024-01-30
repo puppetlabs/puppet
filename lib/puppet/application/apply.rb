@@ -366,7 +366,7 @@ class Puppet::Application::Apply < Puppet::Application
 
   # Returns facts or nil
   #
-  def get_facts()
+  def get_facts
     facts = nil
     unless Puppet[:node_name_fact].empty?
       # Collect our facts.
@@ -381,7 +381,7 @@ class Puppet::Application::Apply < Puppet::Application
 
   # Returns the node or raises and error if node not found.
   #
-  def get_node()
+  def get_node
     node = Puppet::Node.indirection.find(Puppet[:node_name_value])
     raise _("Could not find node %{node}") % { node: Puppet[:node_name_value] } unless node
 
@@ -390,7 +390,7 @@ class Puppet::Application::Apply < Puppet::Application
 
   # Returns either a manifest (filename) or nil if apply should use content of Puppet[:code]
   #
-  def get_manifest()
+  def get_manifest
     manifest = nil
     # Set our code or file to use.
     if options[:code] or command_line.args.length == 0

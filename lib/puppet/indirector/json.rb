@@ -50,7 +50,7 @@ class Puppet::Indirector::JSON < Puppet::Indirector::Terminus
 
   private
 
-  def data_dir()
+  def data_dir
     Puppet.run_mode.server? ? Puppet[:server_datadir] : Puppet[:client_datadir]
   end
 

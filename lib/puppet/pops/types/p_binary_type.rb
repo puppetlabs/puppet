@@ -125,7 +125,7 @@ class PBinaryType < PAnyType
       self.eql?(o)
     end
 
-    def length()
+    def length
       @binary_buffer.length
     end
   end

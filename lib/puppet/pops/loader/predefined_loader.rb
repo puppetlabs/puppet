@@ -9,7 +9,7 @@ class PredefinedLoader < BaseLoader
     nil
   end
 
-  def to_s()
+  def to_s
     "(PredefinedLoader '#{loader_name}')"
   end
 

@@ -58,7 +58,7 @@ class Puppet::Daemon
 
   # Close stdin/stdout/stderr so that we can finish our transition into 'daemon' mode.
   # @return nil
-  def self.close_streams()
+  def self.close_streams
     Puppet.debug("Closing streams for daemon mode")
     begin
       $stdin.reopen "/dev/null"
@@ -76,7 +76,7 @@ class Puppet::Daemon
   end
 
   # Convenience signature for calling Puppet::Daemon.close_streams
-  def close_streams()
+  def close_streams
     Puppet::Daemon.close_streams
   end
 

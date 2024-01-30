@@ -11,7 +11,7 @@ class EvaluatingParser
 
   attr_reader :parser
 
-  def initialize()
+  def initialize
     @parser = Parser.new()
   end
 
@@ -47,7 +47,7 @@ class EvaluatingParser
     evaluate(scope, parse_file(file))
   end
 
-  def clear()
+  def clear
     @acceptor = nil
   end
 
@@ -89,7 +89,7 @@ class EvaluatingParser
     resulting_acceptor
   end
 
-  def acceptor()
+  def acceptor
     Validation::Acceptor.new
   end
 
@@ -157,7 +157,7 @@ class EvaluatingParser
   end
 
   class EvaluatingEppParser < EvaluatingParser
-    def initialize()
+    def initialize
       @parser = EppParser.new()
     end
   end

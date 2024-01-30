@@ -35,7 +35,7 @@ module Puppet::Test
     # Call this method once, as early as possible, such as before loading tests
     # that call Puppet.
     # @return nil
-    def self.initialize()
+    def self.initialize
       # This meta class instance variable is used as a guard to ensure that
       # before_each, and after_each are only called once. This problem occurs
       # when there are more than one puppet test infrastructure orchestrator in use.
@@ -69,7 +69,7 @@ module Puppet::Test
     # Call this method once, when beginning a test run--prior to running
     #  any individual tests.
     # @return nil
-    def self.before_all_tests()
+    def self.before_all_tests
       # The process environment is a shared, persistent resource.
       $old_env = ENV.to_hash
     end
@@ -77,7 +77,7 @@ module Puppet::Test
     # Call this method once, at the end of a test run, when no more tests
     #  will be run.
     # @return nil
-    def self.after_all_tests()
+    def self.after_all_tests
     end
 
     # The name of the rollback mark used in the Puppet.context. This is what
@@ -87,7 +87,7 @@ module Puppet::Test
 
     # Call this method once per test, prior to execution of each individual test.
     # @return nil
-    def self.before_each_test()
+    def self.before_each_test
       # When using both rspec-puppet and puppet-rspec-helper, there are two packages trying
       # to be helpful and orchestrate the callback sequence. We let only the first win, the
       # second callback results in a no-op.
@@ -156,7 +156,7 @@ module Puppet::Test
 
     # Call this method once per test, after execution of each individual test.
     # @return nil
-    def self.after_each_test()
+    def self.after_each_test
       # Ensure that a matching tear down only happens once per completed setup
       # (see #before_each_test).
       return unless @@reentry_count == 1
@@ -205,7 +205,7 @@ module Puppet::Test
     #  of this class!)
     #########################################################################################
 
-    def self.app_defaults_for_tests()
+    def self.app_defaults_for_tests
       {
         :logdir => "/dev/null",
         :confdir => "/dev/null",
@@ -218,7 +218,7 @@ module Puppet::Test
     end
     private_class_method :app_defaults_for_tests
 
-    def self.initialize_settings_before_each()
+    def self.initialize_settings_before_each
       Puppet.settings.preferred_run_mode = "user"
       # Initialize "app defaults" settings to a good set of test values
       Puppet.settings.initialize_app_defaults(app_defaults_for_tests)

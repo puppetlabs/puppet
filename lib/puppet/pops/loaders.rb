@@ -365,11 +365,11 @@ class Loaders
     nil
   end
 
-  def create_puppet_system_loader()
+  def create_puppet_system_loader
     Loader::ModuleLoaders.system_loader_from(static_loader, self)
   end
 
-  def create_puppet_cache_loader()
+  def create_puppet_cache_loader
     Loader::ModuleLoaders.cached_loader_from(puppet_system_loader, self)
   end
 

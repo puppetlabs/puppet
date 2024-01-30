@@ -311,7 +311,7 @@ module Puppet::Util::Execution
   # @return [String] the path to the Ruby executable
   # @api private
   #
-  def self.ruby_path()
+  def self.ruby_path
     File.join(RbConfig::CONFIG['bindir'],
               RbConfig::CONFIG['ruby_install_name'] + RbConfig::CONFIG['EXEEXT'])
         .sub(/.*\s.*/m, '"\&"')
