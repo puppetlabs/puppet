@@ -341,7 +341,10 @@ Style/CommentedKeyword:
 Style/ConditionalAssignment:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
+# Enabling this would require reworking Puppet's use of DateTime's #rfc2822, #httptime, and _strptime
+Style/DateTime:
+  Enabled: false
+
 Style/DefWithParentheses:
   Enabled: false
 
