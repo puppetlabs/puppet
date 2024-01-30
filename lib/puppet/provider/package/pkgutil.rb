@@ -65,7 +65,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
   def self.availlist
     output = pkguti ["-a"]
 
-    output.split("\n").collect do |line|
+    output.split("\n").filter_map do |line|
       next if line =~ /^common\s+package/ # header of package list
       next if noise?(line)
 
@@ -74,7 +74,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       else
         Puppet.warning _("Cannot match %{line}") % { line: line }
       end
-    end.compact
+    end
   end
 
   # Turn our pkgutil -c listing into a hash for a single package.
@@ -94,12 +94,12 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       return nil
     end
 
-    list = output.collect do |line|
+    list = output.filter_map do |line|
       next if line =~ /installed\s+catalog/ # header of package list
       next if noise?(line)
 
       pkgsplit(line)
-    end.compact
+    end
 
     if hash[:justme]
       # Single queries may have been for an alias so return the name requested

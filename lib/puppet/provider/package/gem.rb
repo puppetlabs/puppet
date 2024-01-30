@@ -120,8 +120,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
 
     begin
       list = execute_gem_command(options[:command], command_options).lines
-                                                                    .map { |set| gemsplit(set) }
-                                                                    .compact
+                                                                    .filter_map { |set| gemsplit(set) }
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not list gems: %{detail}") % { detail: detail }, detail.backtrace
     end

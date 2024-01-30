@@ -20,9 +20,9 @@ module Puppet::Util::Docs
 
   # Generate the full doc string.
   def doc
-    extra = methods.find_all { |m| m.to_s =~ /^dochook_.+/ }.sort.collect { |m|
+    extra = methods.find_all { |m| m.to_s =~ /^dochook_.+/ }.sort.filter_map { |m|
       self.send(m)
-    }.compact.collect { |r| "* #{r}" }.join("\n")
+    }.collect { |r| "* #{r}" }.join("\n")
 
     if @doc
       scrub(@doc) + (extra.empty? ? '' : "\n\n#{extra}")
