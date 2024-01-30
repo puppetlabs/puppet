@@ -292,3 +292,6 @@ Style/GlobalStdStream:
 
 Style/GlobalVars:
   Enabled: true
+
+Style/HashAsLastArrayItem:
+  Enabled: true
