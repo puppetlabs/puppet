@@ -247,3 +247,6 @@ Style/EachForSimpleLoop:
 
 Style/EachWithObject:
   Enabled: true
+
+Style/EmptyBlockParameter:
+  Enabled: true
