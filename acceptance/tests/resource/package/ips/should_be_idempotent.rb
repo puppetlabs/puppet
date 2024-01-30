@@ -32,8 +32,8 @@ agents.each do |agent|
 
   step "IPS: should be idempotent (present)"
   apply_manifest_on(agent, 'package {mypkg : ensure=>present}') do
-    assert_no_match( /created/, result.stdout, "err: #{agent}")
-    assert_no_match( /changed/, result.stdout, "err: #{agent}")
+    refute_match( /created/, result.stdout, "err: #{agent}")
+    refute_match( /changed/, result.stdout, "err: #{agent}")
   end
   send_pkg agent, :pkg => 'mypkg@0.0.2'
 
@@ -42,7 +42,7 @@ agents.each do |agent|
 
   step "IPS: ask for latest version again: should be idempotent (latest)"
   apply_manifest_on(agent, 'package {mypkg : ensure=>latest}') do
-    assert_no_match( /created/, result.stdout, "err: #{agent}")
+    refute_match( /created/, result.stdout, "err: #{agent}")
   end
 
   step "IPS: ask for specific version"
@@ -53,14 +53,14 @@ agents.each do |agent|
 
   step "IPS: ask for specific version again: should be idempotent (version)"
   apply_manifest_on(agent, 'package {mypkg : ensure=>"0.0.3"}') do
-    assert_no_match( /created/, result.stdout, "err: #{agent}")
-    assert_no_match( /changed/, result.stdout, "err: #{agent}")
+    refute_match( /created/, result.stdout, "err: #{agent}")
+    refute_match( /changed/, result.stdout, "err: #{agent}")
   end
 
   step "IPS: ensure removed."
   apply_manifest_on(agent, 'package {mypkg : ensure=>absent}')
   on(agent, "pkg list -v mypkg", :acceptable_exit_codes => [1]) do
-    assert_no_match( /mypkg/, result.stdout, "err: #{agent}")
+    refute_match( /mypkg/, result.stdout, "err: #{agent}")
   end
 
 end

@@ -25,7 +25,7 @@ agents.each do |agent|
   file = "#{parent}/file.txt"
   on(agent, "echo foobar > #{file}")
   on(agent, "#{file}", :acceptable_exit_codes => (1..255)) do
-    assert_no_match(/foobar/, stdout)
+    refute_match(/foobar/, stdout)
   end
 
   step "set execute bit on file if explicitly specified"

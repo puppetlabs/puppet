@@ -23,13 +23,13 @@ agents.each do |agent|
   manifest = "file { '#{target}': content => '{sha256}notahash' }"
 
   apply_manifest_on(agent, manifest) do
-    assert_no_match(/content changed/, stdout, "#{agent}: shouldn't have overwrote the file")
+    refute_match(/content changed/, stdout, "#{agent}: shouldn't have overwrote the file")
   end
 
   test_name "verify valid but unbucketed hashes should not change the file"
   manifest = "file { '#{target}': content => '{md5}13ad7345d56b566a4408ffdcd877bc78' }"
   apply_manifest_on(agent, manifest) do
-    assert_no_match(/content changed/, stdout, "#{agent}: shouldn't have overwrote the file")
+    refute_match(/content changed/, stdout, "#{agent}: shouldn't have overwrote the file")
   end
 
   test_name "verify that an empty file can be retrieved from the filebucket"

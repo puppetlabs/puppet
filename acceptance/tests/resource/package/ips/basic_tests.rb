@@ -31,7 +31,7 @@ agents.each do |agent|
   step "IPS: basic ensure we are clean"
   apply_manifest_on(agent, 'package {mypkg : ensure=>absent}')
   on(agent, "pkg list -v mypkg", :acceptable_exit_codes => [1]) do
-    assert_no_match( /mypkg@0.0.1/, result.stdout, "err: #{agent}")
+    refute_match( /mypkg@0.0.1/, result.stdout, "err: #{agent}")
   end
 
   step "IPS: basic - it should create"
@@ -47,7 +47,7 @@ agents.each do |agent|
   step "IPS: do not upgrade until latest is mentioned"
   send_pkg agent,:pkg => 'mypkg@0.0.2'
   apply_manifest_on(agent, 'package {mypkg : ensure=>present}') do
-    assert_no_match( /ensure: created/, result.stdout, "err: #{agent}")
+    refute_match( /ensure: created/, result.stdout, "err: #{agent}")
   end
 
   step "IPS: verify it was not upgraded"
@@ -74,6 +74,6 @@ agents.each do |agent|
   step "IPS: ensure removed."
   apply_manifest_on(agent, 'package {mypkg : ensure=>absent}')
   on(agent, "pkg list -v mypkg", :acceptable_exit_codes => [1]) do
-    assert_no_match( /mypkg@0.0.1/, result.stdout, "err: #{agent}")
+    refute_match( /mypkg@0.0.1/, result.stdout, "err: #{agent}")
   end
 end

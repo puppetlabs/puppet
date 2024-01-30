@@ -179,7 +179,7 @@ test_name "The source attribute" do
 
       step "second run should not update file"
       on(agent, puppet('agent', "--test"), :acceptable_exit_codes => [0,2]) do
-        assert_no_match(/content changed.*(md5|sha256)/, stdout, "Shouldn't have overwritten any files")
+        refute_match(/content changed.*(md5|sha256)/, stdout, "Shouldn't have overwritten any files")
 
         # When using ctime/mtime, the agent compares the values from its
         # local file with the values on the master to determine if the
@@ -255,7 +255,7 @@ test_name "The source attribute" do
 
     step "second run should not update any files"
     apply_manifest_on agent, local_apply_manifest do
-      assert_no_match(/content changed/, stdout, "Shouldn't have overwrote any files")
+      refute_match(/content changed/, stdout, "Shouldn't have overwrote any files")
     end
 
     # changes in source file producing updates is tested elsewhere
@@ -266,11 +266,11 @@ test_name "The source attribute" do
 
     if fips_host_present
       apply_manifest_on agent, "file { '#{localsource_testdir}/targetsha256lite': source => '#{source}', ensure => present, checksum => sha256lite }" do
-        assert_no_match(/(content changed|defined content)/, stdout, "Shouldn't have overwrote any files")
+        refute_match(/(content changed|defined content)/, stdout, "Shouldn't have overwrote any files")
       end
     else
       apply_manifest_on agent, "file { '#{localsource_testdir}/targetmd5lite': source => '#{source}', ensure => present, checksum => md5lite } file { '#{localsource_testdir}/targetsha256lite': source => '#{source}', ensure => present, checksum => sha256lite }" do
-        assert_no_match(/(content changed|defined content)/, stdout, "Shouldn't have overwrote any files")
+        refute_match(/(content changed|defined content)/, stdout, "Shouldn't have overwrote any files")
       end
     end
 
@@ -294,7 +294,7 @@ test_name "The source attribute" do
 
     step "second run should not update any files using apply with puppet:/// URI source"
     on agent, puppet( %{apply --modulepath=#{localsource_testdir} #{localsource_test_manifest}} ) do
-      assert_no_match(/content changed/, stdout, "Shouldn't have overwrote any files")
+      refute_match(/content changed/, stdout, "Shouldn't have overwrote any files")
     end
   end
 

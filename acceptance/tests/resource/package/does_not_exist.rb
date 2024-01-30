@@ -22,7 +22,7 @@ test_name "Puppet returns only resource package declaration when querying an uni
     agents.each do |agent|
       step "test puppet apply" do
         on(agent, puppet('apply', '-e', %Q|"package {'not-installed-on-this-host': ensure => purged }"|)) do
-          assert_no_match(/warning/i, stdout)
+          refute_match(/warning/i, stdout)
         end
       end
     end

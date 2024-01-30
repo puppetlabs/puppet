@@ -54,7 +54,7 @@ test_name "Binary Diff Output of Content Attribute" do
 
         on(agent, puppet('apply','--show_diff'), :stdin => manifest) do
           assert_match(/content: content changed '{sha256}#{initial_sha_checksum}' to '{sha256}#{updated_sha_checksum}'/, stdout, "#{agent}: checksum of binary file not matched after update")
-          assert_no_match(/content: Received a Log attribute with invalid encoding:/, stdout, "#{agent}: Received a Log attribute with invalid encoding")
+          refute_match(/content: Received a Log attribute with invalid encoding:/, stdout, "#{agent}: Received a Log attribute with invalid encoding")
           if initial_bin_data.valid_encoding? && updated_bin_data.valid_encoding?
             assert_match(/^- ?#{initial_bin_data}$/, stdout, "#{agent}: initial utf-8 data not found in binary diff")
             assert_match(/^\+ ?#{updated_bin_data}$/, stdout, "#{agent}: updated utf-8 data not found in binary diff")

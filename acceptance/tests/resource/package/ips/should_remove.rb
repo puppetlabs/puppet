@@ -33,7 +33,7 @@ agents.each do |agent|
   apply_manifest_on(agent, 'package {mypkg : ensure=>absent}')
 
   on(agent, "pkg list -v mypkg", :acceptable_exit_codes => [1]) do
-    assert_no_match( /mypkg@0.0.1/, result.stdout, "err: #{agent}")
+    refute_match( /mypkg@0.0.1/, result.stdout, "err: #{agent}")
   end
 
 end

@@ -61,7 +61,7 @@ test_name 'should manage purge_ssh_keys' do
       end
 
       on(agent, "cat #{authorized_keys_path}") do |result|
-        assert_no_match(/ssh-rsa my-key #{name}@example.com/, result.stdout)
+        refute_match(/ssh-rsa my-key #{name}@example.com/, result.stdout)
       end
     end
 
@@ -91,7 +91,7 @@ test_name 'should manage purge_ssh_keys' do
       end
 
       on(agent, "cat #{authorized_keys_path}") do |result|
-        assert_no_match(/ssh-rsa my-key #{name}@example.com/, result.stdout)
+        refute_match(/ssh-rsa my-key #{name}@example.com/, result.stdout)
       end
     end
 
@@ -120,7 +120,7 @@ test_name 'should manage purge_ssh_keys' do
       end
 
       on(agent, "cat #{authorized_keys_path}") do |result|
-        assert_no_match(/ssh-rsa my-key #{name}@example.com/, result.stdout)
+        refute_match(/ssh-rsa my-key #{name}@example.com/, result.stdout)
       end
     end
   end

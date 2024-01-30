@@ -26,7 +26,7 @@ agents.each do |agent|
   }.join("\n")
   apply_manifest_on agent, manifest do
     checksums.each do |checksum_type|
-      assert_no_match(/content changed/, stdout, "#{agent}: shouldn't have overwrote #{target+checksum_type}")
+      refute_match(/content changed/, stdout, "#{agent}: shouldn't have overwrote #{target+checksum_type}")
     end
   end
 

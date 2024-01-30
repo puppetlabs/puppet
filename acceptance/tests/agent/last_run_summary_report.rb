@@ -74,7 +74,7 @@ test_name "The 'last_run_summary.yaml' report has the right location and permiss
 
     step "Check that '#{statedir}' exists and has no 'last_run_summary.yaml' file" do
       on(agent, "ls #{statedir}",:acceptable_exit_codes => [0]) do |result|
-        assert_no_match(/last_run_summary.yaml/, result.stdout)
+        refute_match(/last_run_summary.yaml/, result.stdout)
       end
     end
     

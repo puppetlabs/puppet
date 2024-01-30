@@ -58,7 +58,7 @@ test_name "gem provider should install and uninstall" do
         package_manifest = resource_manifest('package', package, { ensure: 'absent', provider: 'gem' } )
         apply_manifest_on(agent, package_manifest, :catch_failures => true) do
           list = on(agent, "#{system_gem_command} list").stdout
-          assert_no_match(/#{package} \(/, list)
+          refute_match(/#{package} \(/, list)
         end
         on(agent, "#{system_gem_command} uninstall #{package}")
       end
@@ -106,7 +106,7 @@ test_name "gem provider should install and uninstall" do
       package_manifest = resource_manifest('package', package, { ensure: 'absent', provider: 'gem', command: puppet_gem_command } )
       apply_manifest_on(agent, package_manifest, :catch_failures => true) do
         list = on(agent, "#{puppet_gem_command} list").stdout
-        assert_no_match(/#{package} \(/, list)
+        refute_match(/#{package} \(/, list)
       end
       on(agent, "#{puppet_gem_command} uninstall #{package}")
     end
