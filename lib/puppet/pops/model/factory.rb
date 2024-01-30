@@ -1007,7 +1007,7 @@ class Factory
   # expression, or expression list.
   #
   def self.transform_calls(expressions)
-    expressions.reduce([]) do |memo, expr|
+    expressions.each_with_object([]) do |expr, memo|
       name = memo[-1]
       if name.instance_of?(Factory) && name.model_class <= QualifiedName && name_is_statement?(name[KEY_VALUE])
         if expr.is_a?(Array)
@@ -1035,7 +1035,6 @@ class Factory
           expr['rval_required'] = false
         end
       end
-      memo
     end
   end
 

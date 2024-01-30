@@ -54,10 +54,9 @@ class Puppet::Transaction::EventManager
 
     # Do some basic normalization so we're not doing so many
     # graph queries for large sets of events.
-    events.inject({}) do |collection, event|
+    events.each_with_object({}) do |event, collection|
       collection[event.name] ||= []
       collection[event.name] << event
-      collection
     end.collect do |_name, list|
       # It doesn't matter which event we use - they all have the same source
       # and name here.

@@ -171,10 +171,9 @@ module Puppet::Network::HTTP::Handler
   end
 
   def decode_params(params)
-    params.select { |key, _| allowed_parameter?(key) }.inject({}) do |result, ary|
+    params.select { |key, _| allowed_parameter?(key) }.each_with_object({}) do |ary, result|
       param, value = ary
       result[param.to_sym] = parse_parameter_value(param, value)
-      result
     end
   end
 

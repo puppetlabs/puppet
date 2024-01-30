@@ -74,11 +74,10 @@ class Puppet::Pops::Evaluator::JsonStrictLiteralEvaluator
   end
 
   def literal_LiteralHash(o)
-    o.entries.reduce({}) do |result, entry|
+    o.entries.each_with_object({}) do |entry, result|
       key = literal(entry.key)
       throw :not_literal unless key.is_a?(String)
       result[key] = literal(entry.value)
-      result
     end
   end
 end

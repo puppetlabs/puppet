@@ -667,7 +667,7 @@ class EvaluatorImpl
   #
   def eval_LiteralHash o, scope
     # optimized
-    o.entries.reduce({}) { |h, entry| h[evaluate(entry.key, scope)] = evaluate(entry.value, scope); h }
+    o.entries.each_with_object({}) { |entry, h| h[evaluate(entry.key, scope)] = evaluate(entry.value, scope); }
   end
 
   # Evaluates all statements and produces the last evaluated value
@@ -861,7 +861,7 @@ class EvaluatorImpl
 
       # Store evaluated parameters in a hash associated with the body, but do not yet create resource
       # since the entry containing :defaults may appear later
-      body_to_params[body] = body.operations.reduce({}) do |param_memo, op|
+      body_to_params[body] = body.operations.each_with_object({}) do |op, param_memo|
         params = evaluate(op, scope)
         params = [params] unless params.is_a?(Array)
         params.each do |p|
@@ -871,7 +871,6 @@ class EvaluatorImpl
 
           param_memo[p.name] = p
         end
-        param_memo
       end
     end
 

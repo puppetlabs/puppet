@@ -290,9 +290,8 @@ module Logging
   end
 
   def log_metadata
-    [:file, :line, :tags].inject({}) do |result, attr|
+    [:file, :line, :tags].each_with_object({}) do |attr, result|
       result[attr] = send(attr) if respond_to?(attr)
-      result
     end
   end
 

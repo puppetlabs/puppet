@@ -701,11 +701,10 @@ Puppet::Type.newtype(:file) do
     result = perform_recursion(self[:path])
     return {} unless result
 
-    result.inject({}) do |hash, meta|
+    result.each_with_object({}) do |meta, hash|
       next hash if meta.relative_path == "."
 
       hash[meta.relative_path] = newchild(meta.relative_path)
-      hash
     end
   end
 

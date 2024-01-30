@@ -68,7 +68,7 @@ class Puppet::Indirector::Request
     self.indirection_name = indirection_name
     self.method = method
 
-    options = options.inject({}) { |hash, ary| hash[ary[0].to_sym] = ary[1]; hash }
+    options = options.each_with_object({}) { |ary, hash| hash[ary[0].to_sym] = ary[1]; }
 
     set_attributes(options)
 

@@ -16,6 +16,6 @@ class Puppet::Confine::Exists < Puppet::Confine
   end
 
   def summary
-    result.zip(values).inject([]) { |array, args| val, f = args; array << f unless val; array }
+    result.zip(values).each_with_object([]) { |args, array| val, f = args; array << f unless val; }
   end
 end

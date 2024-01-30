@@ -56,10 +56,9 @@ module Puppet
         end
 
         # Here, should is an array of key/value pairs.
-        @should.inject({}) do |hash, key_value|
+        @should.each_with_object({}) do |key_value, hash|
           tmp = key_value.split(separator)
           hash[tmp[0].strip.intern] = tmp[1]
-          hash
         end
       end
 

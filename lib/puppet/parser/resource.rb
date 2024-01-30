@@ -216,7 +216,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   alias []= set_parameter
 
   def to_hash
-    parse_title.merge(@parameters.reduce({}) do |result, (_, param)|
+    parse_title.merge(@parameters.each_with_object({}) do |(_, param), result|
       value = param.value
       value = (:undef == value) ? nil : value
 
@@ -231,7 +231,6 @@ class Puppet::Parser::Resource < Puppet::Resource
           result[param.name] = value
         end
       end
-      result
     end)
   end
 

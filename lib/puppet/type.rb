@@ -1117,7 +1117,7 @@ class Type
     # is the first property, which is important for skipping 'retrieve' on
     # all the properties if the resource is absent.
     ensure_state = false
-    return properties.inject({}) do |prophash, property|
+    return properties.each_with_object({}) do |property, prophash|
       if property.name == :ensure
         ensure_state = property.retrieve
         prophash[property] = ensure_state
@@ -1128,7 +1128,6 @@ class Type
           prophash[property] = property.retrieve
         end
       end
-      prophash
     end
   end
 
@@ -1203,7 +1202,7 @@ class Type
   # @return [Puppet::Resource] the resource created from the hash
   # @raise [Puppet::Error] if a title is missing in the given hash
   def self.hash2resource(hash)
-    hash = hash.inject({}) { |result, ary| result[ary[0].to_sym] = ary[1]; result }
+    hash = hash.each_with_object({}) { |ary, result| result[ary[0].to_sym] = ary[1]; }
 
     title = hash.delete(:title)
     title ||= hash[:name]

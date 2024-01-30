@@ -244,3 +244,6 @@ Style/DoubleCopDisableDirective:
 
 Style/EachForSimpleLoop:
   Enabled: true
+
+Style/EachWithObject:
+  Enabled: true

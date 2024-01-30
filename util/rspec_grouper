@@ -30,12 +30,11 @@ module Parallel
 
         # Populate a map of spec file => example count, sorted ascending by count
         # NOTE: this uses a private API of RSpec and is may break if the gem is updated
-        @files = ::RSpec.world.example_groups.inject({}) do |files, group|
+        @files = ::RSpec.world.example_groups.each_with_object({}) do |group, files|
           file = group.metadata[:example_group_block].source_location[0]
           count = count_examples(group)
           files[file] = (files[file] || 0) + count
           @total_examples += count
-          files
         end.sort_by { |_, v| v }
 
         # Group the spec files

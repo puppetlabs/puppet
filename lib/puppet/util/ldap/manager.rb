@@ -178,7 +178,7 @@ class Puppet::Util::Ldap::Manager
     @puppet2ldap = attributes
 
     # and the ldap attributes as the keys.
-    @ldap2puppet = attributes.inject({}) { |map, ary| map[ary[1]] = ary[0]; map }
+    @ldap2puppet = attributes.each_with_object({}) { |ary, map| map[ary[1]] = ary[0]; }
 
     self
   end
@@ -277,10 +277,9 @@ class Puppet::Util::Ldap::Manager
   # Convert a hash of attributes to ldap-like forms.  This mostly means
   # getting rid of :ensure and making sure everything's an array of strings.
   def ldap_convert(attributes)
-    attributes.reject { |param, value| value == :absent or param == :ensure }.inject({}) do |result, ary|
+    attributes.reject { |param, value| value == :absent or param == :ensure }.each_with_object({}) do |ary, result|
       value = (ary[1].is_a?(Array) ? ary[1] : [ary[1]]).collect { |v| v.to_s }
       result[ldap_name(ary[0])] = value
-      result
     end
   end
 end

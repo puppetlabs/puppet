@@ -12,7 +12,7 @@ class Puppet::Confine::Variable < Puppet::Confine
   # Only returns failed values, not all required values.
   def self.summarize(confines)
     result = Hash.new { |hash, key| hash[key] = [] }
-    confines.inject(result) { |total, confine| total[confine.name] += confine.values unless confine.valid?; total }
+    confines.each_with_object(result) { |confine, total| total[confine.name] += confine.values unless confine.valid?; }
   end
 
   # This is set by ConfineCollection.

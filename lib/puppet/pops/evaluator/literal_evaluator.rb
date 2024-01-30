@@ -87,9 +87,8 @@ class LiteralEvaluator
   end
 
   def literal_LiteralHash(o)
-    o.entries.reduce({}) do |result, entry|
+    o.entries.each_with_object({}) do |entry, result|
       result[literal(entry.key)] = literal(entry.value)
-      result
     end
   end
 end
