@@ -87,6 +87,7 @@ task(:gen_cert_fixtures) do
   # Create Intermediate CA & CRL "Test CA Subauthority" issued by "Test CA"
   inter = ca.create_intermediate_cert('Test CA Subauthority', ca.ca_cert, ca.key)
   save(dir, 'intermediate.pem', inter[:cert])
+  save(dir, 'intermediate-key.pem', inter[:private_key])
   inter_crl = ca.create_crl(inter[:cert], inter[:private_key])
 
   # Create a leaf/entity key and cert for host "signed" and issued by "Test CA Subauthority"
