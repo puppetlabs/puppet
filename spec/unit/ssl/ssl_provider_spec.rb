@@ -391,6 +391,9 @@ describe Puppet::SSL::SSLProvider do
 
     it 'raises if cert is not valid yet', unless: Puppet::Util::Platform.jruby? do
       client_cert.not_before = Time.now + (5 * 60 * 60)
+      int_key = key_fixture('intermediate-key.pem')
+      client_cert.sign(int_key, OpenSSL::Digest::SHA256.new)
+
       expect {
         subject.create_context(**config.merge(client_cert: client_cert))
       }.to raise_error(Puppet::SSL::CertVerifyError,
@@ -399,6 +402,9 @@ describe Puppet::SSL::SSLProvider do
 
     it 'raises if cert is expired', unless: Puppet::Util::Platform.jruby? do
       client_cert.not_after = Time.at(0)
+      int_key = key_fixture('intermediate-key.pem')
+      client_cert.sign(int_key, OpenSSL::Digest::SHA256.new)
+
       expect {
         subject.create_context(**config.merge(client_cert: client_cert))
       }.to raise_error(Puppet::SSL::CertVerifyError,
