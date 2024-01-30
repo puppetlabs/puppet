@@ -232,3 +232,6 @@ Style/ColonMethodDefinition:
 
 Style/DefWithParentheses:
   Enabled: true
+
+Style/Dir:
+  Enabled: true
