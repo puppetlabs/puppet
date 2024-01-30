@@ -277,3 +277,6 @@ Style/FileRead:
 
 Style/FileWrite:
   Enabled: true
+
+Style/FloatDivision:
+  Enabled: true
