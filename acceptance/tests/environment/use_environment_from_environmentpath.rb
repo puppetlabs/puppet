@@ -180,7 +180,7 @@ file {
       end
 
       run_with_environment(agent, "production", :expected_exit_code => 2) do |tmpdir, catalog_result|
-        assert_no_match(/module-atmp/, catalog_result.stdout, "module-atmp was included despite the default environment being loaded")
+        refute_match(/module-atmp/, catalog_result.stdout, "module-atmp was included despite the default environment being loaded")
 
         assert_match(/environment fact from module-globalmod/, catalog_result.stdout)
 

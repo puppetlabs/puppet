@@ -31,7 +31,7 @@ MANIFEST
 
     step "Create multiple tidy resources with same path" do
       apply_manifest_on(agent, manifest) do |result|
-        assert_no_match(/Error:/, result.stderr, "Unexpected error was detected")
+        refute_match(/Error:/, result.stderr, "Unexpected error was detected")
       end
     end
 

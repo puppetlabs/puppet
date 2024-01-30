@@ -120,9 +120,9 @@ MANIFEST
       assert_service_properties_on(agent, mock_service_nofail[:name], StartName: fresh_user)
       on(agent, puppet("resource service #{mock_service_nofail[:name]} logonaccount=S-1-5-19")) do |result|
         assert_match(/Service\[#{mock_service_nofail[:name]}\]\/logonaccount: logonaccount changed '.\\#{fresh_user}' to '#{Regexp.escape(local_service_locale_name)}'/, result.stdout)
-        assert_no_match(/Transitioning the #{mock_service_nofail[:name]} service from SERVICE_RUNNING to SERVICE_STOPPED/, result.stdout, 
+        refute_match(/Transitioning the #{mock_service_nofail[:name]} service from SERVICE_RUNNING to SERVICE_STOPPED/, result.stdout, 
           "Expected no service restarts since ensure isn't being managed as 'running'.")
-        assert_no_match(/Successfully started the #{mock_service_nofail[:name]} service/, result.stdout)
+        refute_match(/Successfully started the #{mock_service_nofail[:name]} service/, result.stdout)
       end
       assert_service_properties_on(agent, mock_service_nofail[:name], StartName: local_service_locale_name)
     end
@@ -152,10 +152,10 @@ MANIFEST
     step 'Verify that there are no restarts if logonaccount does not change, even though ensure is managed as running' do
       assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
       on(agent, puppet("resource service #{mock_service_nofail[:name]} logonaccount=LocalSystem ensure=running --debug")) do |result|
-        assert_no_match(/Service\[#{mock_service_nofail[:name]}\]\/logonaccount: logonaccount changed/, result.stdout)
-        assert_no_match(/Service\[#{mock_service_nofail[:name]}\]\/ensure: ensure changed/, result.stdout)
-        assert_no_match(/Transitioning the #{mock_service_nofail[:name]} service from SERVICE_RUNNING to SERVICE_STOPPED/, result.stdout)
-        assert_no_match(/Successfully started the #{mock_service_nofail[:name]} service/, result.stdout)
+        refute_match(/Service\[#{mock_service_nofail[:name]}\]\/logonaccount: logonaccount changed/, result.stdout)
+        refute_match(/Service\[#{mock_service_nofail[:name]}\]\/ensure: ensure changed/, result.stdout)
+        refute_match(/Transitioning the #{mock_service_nofail[:name]} service from SERVICE_RUNNING to SERVICE_STOPPED/, result.stdout)
+        refute_match(/Successfully started the #{mock_service_nofail[:name]} service/, result.stdout)
       end
       assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
     end

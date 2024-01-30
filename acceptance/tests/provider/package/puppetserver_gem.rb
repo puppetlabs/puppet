@@ -31,7 +31,7 @@ test_name "puppetserver_gem provider should install and uninstall" do
     package_manifest = resource_manifest('package', package, { ensure: 'absent', provider: 'puppetserver_gem' } )
     apply_manifest_on(master, package_manifest, catch_failures: true) do
       list = on(master, "puppetserver gem list").stdout
-      assert_no_match(/#{package} \(/, list)
+      refute_match(/#{package} \(/, list)
     end
   end
 end

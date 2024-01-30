@@ -24,7 +24,7 @@ def launchctl_assert_status(host, service, expect_running)
     if expect_running
       assert_match(/#{service}/, stdout, 'Service was not found in launchctl list')
     else
-      assert_no_match(/#{service}/, stdout, 'Service was not expected in launchctl list')
+      refute_match(/#{service}/, stdout, 'Service was not expected in launchctl list')
     end
   end
 end

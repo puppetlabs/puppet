@@ -45,7 +45,7 @@ test_name "test the yum package provider" do
   end
 
   def verify_absent(hosts, pkg)
-    verify_state(hosts, pkg, '(?:purged|absent)', :assert_no_match)
+    verify_state(hosts, pkg, '(?:purged|absent)', :refute_match)
   end
 
   step "Managing a package which does not include an epoch in its version" do
@@ -149,7 +149,7 @@ test_name "test the yum package provider" do
         end
 
         apply_manifest_on(agent, "package {'epoch': ensure => '1:1.1-1.noarch'}") do |result|
-          assert_no_match(/epoch/, result.stdout)
+          refute_match(/epoch/, result.stdout)
         end
       end
 
@@ -167,11 +167,11 @@ test_name "test the yum package provider" do
           end
 
           apply_manifest_on(agent, 'package {"epoch": ensure => "1:1.1-1"}') do |result|
-            assert_no_match(/epoch/, result.stdout)
+            refute_match(/epoch/, result.stdout)
           end
 
           apply_manifest_on(agent, "package {'epoch': ensure => '1:1.1-1.noarch'}") do |result|
-            assert_no_match(/epoch/, result.stdout)
+            refute_match(/epoch/, result.stdout)
           end
         end
       end
@@ -190,11 +190,11 @@ test_name "test the yum package provider" do
           end
 
           apply_manifest_on(agent, 'package {"epoch": ensure => "1.1-1"}') do |result|
-            assert_no_match(/epoch/, result.stdout)
+            refute_match(/epoch/, result.stdout)
           end
 
           apply_manifest_on(agent, "package {'epoch': ensure => '1:1.1-1.noarch'}") do |result|
-            assert_no_match(/epoch/, result.stdout)
+            refute_match(/epoch/, result.stdout)
           end
         end
       end

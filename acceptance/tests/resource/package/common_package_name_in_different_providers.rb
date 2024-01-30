@@ -70,7 +70,7 @@ test_name "ticket 1073: common package name in two different providers should be
   end
 
   def verify_absent(hosts, pkg)
-    verify_state(hosts, pkg, '(?:purged|absent)', :assert_no_match)
+    verify_state(hosts, pkg, '(?:purged|absent)', :refute_match)
   end
 
   # Setup repo and package
