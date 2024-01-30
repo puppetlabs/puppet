@@ -238,3 +238,6 @@ Style/Dir:
 
 Style/DocumentDynamicEvalDefinition:
   Enabled: true
+
+Style/DoubleCopDisableDirective:
+  Enabled: true
