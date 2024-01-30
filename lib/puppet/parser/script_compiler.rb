@@ -61,7 +61,7 @@ class Puppet::Parser::ScriptCompiler
   end
 
   # Constructs the overrides for the context
-  def context_overrides()
+  def context_overrides
     {
       :current_environment => environment,
       :global_scope => @topscope, # 4x placeholder for new global scope

@@ -592,7 +592,7 @@ Puppet::Type.newtype(:file) do
     # or so.  Unfortunately, we don't have a straightforward way to manage
     # the different lifetimes of this data, so we kludge it like this.
     # The right-side hash wins in the merge.
-    options = @original_parameters.merge(:path => full_path).reject { |_param, value| value.nil? }
+    options = @original_parameters.merge(:path => full_path).compact
 
     # These should never be passed to our children.
     [:parent, :ensure, :recurse, :recurselimit, :max_files, :target, :alias, :source].each do |param|
@@ -899,7 +899,7 @@ Puppet::Type.newtype(:file) do
     method = :stat
 
     # Files are the only types that support links
-    if (self.class.name == :file and self[:links] != :follow) or self.class.name == :tidy
+    if (self.instance_of?(Puppet::Type::File) and self[:links] != :follow)
       method = :lstat
     end
 

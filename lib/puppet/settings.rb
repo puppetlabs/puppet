@@ -69,7 +69,7 @@ class Puppet::Settings
     }
   end
 
-  def self.default_certname()
+  def self.default_certname
     hostname = hostname_fact
     domain = domain_fact
     if domain and domain != ""
@@ -80,11 +80,11 @@ class Puppet::Settings
     fqdn.to_s.gsub(/\.$/, '')
   end
 
-  def self.hostname_fact()
+  def self.hostname_fact
     Puppet.runtime[:facter].value 'networking.hostname'
   end
 
-  def self.domain_fact()
+  def self.domain_fact
     Puppet.runtime[:facter].value 'networking.domain'
   end
 
@@ -314,7 +314,7 @@ class Puppet::Settings
     @used = []
   end
 
-  def global_defaults_initialized?()
+  def global_defaults_initialized?
     @global_defaults_initialized
   end
 
@@ -1390,7 +1390,7 @@ Generated on #{Time.now}.
   # Private method for internal test use only; allows to do a comprehensive clear of all settings between tests.
   #
   # @return nil
-  def clear_everything_for_tests()
+  def clear_everything_for_tests
     unsafe_clear(true, true)
     @configuration_file = nil
     @global_defaults_initialized = false

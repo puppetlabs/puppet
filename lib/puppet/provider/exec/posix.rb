@@ -55,7 +55,7 @@ Puppet::Type.type(:exec).provide :posix, :parent => Puppet::Provider::Exec do
 
   def run(command, check = false)
     if resource[:umask]
-      Puppet::Util::withumask(resource[:umask]) { super(command, check) }
+      Puppet::Util.withumask(resource[:umask]) { super(command, check) }
     else
       super(command, check)
     end

@@ -72,7 +72,7 @@ class PSensitiveType < PTypeWithContainedType
   private
 
   def _assignable?(o, guard)
-    self.class == o.class && @type.assignable?(o.type, guard)
+    self.instance_of?(o.class) && @type.assignable?(o.type, guard)
   end
 
   DEFAULT = PSensitiveType.new

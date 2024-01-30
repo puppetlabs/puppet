@@ -84,7 +84,7 @@ class Parser
     _parse
   end
 
-  def initialize()
+  def initialize
     @lexer = Lexer2.new
     @namestack = []
     @definitions = []
@@ -172,7 +172,7 @@ class Parser
     @namestack << name
   end
 
-  def namepop()
+  def namepop
     @namestack.pop
   end
 
@@ -220,7 +220,7 @@ class Parser
 
   # Creates an empty program with a single No-op at the input's EOF offset with 0 length.
   #
-  def create_empty_program()
+  def create_empty_program
     locator = @lexer.locator
     no_op = Factory.literal(nil)
     # Create a synthetic NOOP token at EOF offset with 0 size. The lexer does not produce an EOF token that is
@@ -238,7 +238,7 @@ class Parser
   #
   # @api private
   #
-  def _parse()
+  def _parse
     begin
       @yydebug = false
       main = yyparse(@lexer, :scan)

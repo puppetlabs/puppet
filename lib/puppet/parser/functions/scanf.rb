@@ -2,7 +2,7 @@
 
 require 'scanf'
 
-Puppet::Parser::Functions::newfunction(
+Puppet::Parser::Functions.newfunction(
   :scanf,
   :type => :rvalue,
   :arity => 2,

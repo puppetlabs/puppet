@@ -299,7 +299,7 @@ class Puppet::Transaction
     # explosion of edges, we also ended up reporting failures for containers
     # like class and stage.  This is undesirable; while just skipping the
     # output isn't perfect, it is RC-safe. --daniel 2011-06-07
-    is_puppet_class = resource.class == Puppet::Type.type(:whit)
+    is_puppet_class = resource.instance_of?(Puppet::Type.type(:whit))
     # With merge_dependency_warnings, notify about class dependency failures ... just once per class. TJK 2019-09-09
     s = resource_status(resource)
     if s && s.dependency_failed?
@@ -415,7 +415,7 @@ class Puppet::Transaction
       # like class and stage.  This is undesirable; while just skipping the
       # output isn't perfect, it is RC-safe. --daniel 2011-06-07
       # With merge_dependency_warnings, warn about class dependency failures ... just once per class. TJK 2019-09-09
-      unless resource.class == Puppet::Type.type(:whit)
+      unless resource.instance_of?(Puppet::Type.type(:whit))
         if @merge_dependency_warnings && resource.parent && failed_dependencies?(resource.parent)
           ps = resource_status(resource.parent)
           ps.failed_dependencies.find_all { |d| !(@failed_class_dependencies_already_warned.include?(d.ref)) }.each do |dep|

@@ -295,7 +295,7 @@ class TypeFormatter
 
   def append_callable_params(t)
     # translate to string, and skip Unit types
-    append_strings(t.param_types.types.reject { |t2| t2.class == PUnitType }, true)
+    append_strings(t.param_types.types.reject { |t2| t2.instance_of?(PUnitType) }, true)
 
     if t.param_types.types.empty?
       append_strings([0, 0], true)
@@ -444,7 +444,7 @@ class TypeFormatter
   # @api private
   def string_PNotUndefType(t)
     contained_type = t.type
-    append_array('NotUndef', contained_type.nil? || contained_type.class == PAnyType) do
+    append_array('NotUndef', contained_type.nil? || contained_type.instance_of?(PAnyType)) do
       if contained_type.is_a?(PStringType) && !contained_type.value.nil?
         append_string(contained_type.value)
       else

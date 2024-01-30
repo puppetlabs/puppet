@@ -23,7 +23,7 @@ class Puppet::Parser::AST::Hostclass < Puppet::Parser::AST::TopLevelConstruct
     return all_types
   end
 
-  def code()
+  def code
     @context[:code]
   end
 end

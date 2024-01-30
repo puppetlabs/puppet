@@ -117,7 +117,7 @@ class DeferredResolver
   private :mark_sensitive_parameters
 
   def resolve(x)
-    if x.class == @deferred_class
+    if x.instance_of?(@deferred_class)
       resolve_future(x)
     elsif x.is_a?(Array)
       x.map { |v| resolve(v) }

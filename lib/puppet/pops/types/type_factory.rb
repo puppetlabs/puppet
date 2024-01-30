@@ -418,7 +418,7 @@ module TypeFactory
 
   # Produces an instance of the SemVer type
   def self.sem_ver(*ranges)
-    ranges.empty? ? PSemVerType::DEFAULT : PSemVerType::new(ranges)
+    ranges.empty? ? PSemVerType::DEFAULT : PSemVerType.new(ranges)
   end
 
   # Produces a PResourceType with a String type_name A PResourceType with a nil

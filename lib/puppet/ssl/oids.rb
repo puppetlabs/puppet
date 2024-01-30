@@ -81,7 +81,7 @@ module Puppet::SSL::Oids
   # Register our custom Puppet OIDs with OpenSSL so they can be used as CSR
   # extensions. Without registering these OIDs, OpenSSL will fail when it
   # encounters such an extension in a CSR.
-  def self.register_puppet_oids()
+  def self.register_puppet_oids
     if !@did_register_puppet_oids
       PUPPET_OIDS.each do |oid_defn|
         OpenSSL::ASN1::ObjectId.register(*oid_defn)

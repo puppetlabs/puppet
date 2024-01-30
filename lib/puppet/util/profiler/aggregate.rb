@@ -9,7 +9,7 @@ class Puppet::Util::Profiler::Aggregate < Puppet::Util::Profiler::WallClock
     @metrics_hash = Metric.new
   end
 
-  def shutdown()
+  def shutdown
     super
     @logger.call("AGGREGATE PROFILING RESULTS:")
     @logger.call("----------------------------")

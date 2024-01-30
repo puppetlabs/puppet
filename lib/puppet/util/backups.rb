@@ -19,7 +19,7 @@ module Puppet::Util::Backups
   private
 
   def perform_backup_with_bucket(fileobj)
-    file = (fileobj.class == String) ? fileobj : fileobj.name
+    file = (fileobj.instance_of?(String)) ? fileobj : fileobj.name
     case Puppet::FileSystem.lstat(file).ftype
     when "directory"
       # we don't need to backup directories when recurse is on
@@ -34,7 +34,7 @@ module Puppet::Util::Backups
   end
 
   def perform_backup_with_backuplocal(fileobj, backup)
-    file = (fileobj.class == String) ? fileobj : fileobj.name
+    file = (fileobj.instance_of?(String)) ? fileobj : fileobj.name
     newfile = file + backup
 
     remove_backup(newfile)
@@ -53,7 +53,7 @@ module Puppet::Util::Backups
   end
 
   def remove_backup(newfile)
-    if self.class.name == :file and self[:links] != :follow
+    if self.instance_of?(Puppet::Type::File) and self[:links] != :follow
       method = :lstat
     else
       method = :stat

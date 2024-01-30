@@ -332,7 +332,7 @@ module Types
     def short_name(t)
       # Ensure that Optional, NotUndef, Sensitive, and Type are reported with included
       # type parameter.
-      if t.is_a?(PTypeWithContainedType) && !(t.type.nil? || t.type.class == PAnyType)
+      if t.is_a?(PTypeWithContainedType) && !(t.type.nil? || t.type.instance_of?(PAnyType))
         "#{t.name}[#{t.type.name}]"
       else
         t.name.nil? ? t.simple_name : t.name
@@ -367,7 +367,7 @@ module Types
       if e.is_a?(Array)
         e.any? { |t| always_fully_detailed?(t, a) }
       else
-        e.class == a.class || e.is_a?(PTypeAliasType) || a.is_a?(PTypeAliasType) || specialization(e, a)
+        e.instance_of?(a.class) || e.is_a?(PTypeAliasType) || a.is_a?(PTypeAliasType) || specialization(e, a)
       end
     end
 

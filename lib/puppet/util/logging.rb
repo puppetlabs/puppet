@@ -201,7 +201,7 @@ module Logging
     end
   end
 
-  def get_deprecation_offender()
+  def get_deprecation_offender
     # we have to put this in its own method to simplify testing; we need to be able to mock the offender results in
     # order to test this class, and our framework does not appear to enjoy it if you try to mock Kernel.caller
     #

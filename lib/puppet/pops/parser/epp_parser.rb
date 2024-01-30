@@ -29,7 +29,7 @@ class Puppet::Pops::Parser::EppParser < Puppet::Pops::Parser::Parser
   #
   # @api private
   #
-  def _parse()
+  def _parse
     begin
       @yydebug = false
       main = yyparse(@lexer, :scan_epp)

@@ -335,7 +335,7 @@ module LoaderPaths
       PLAN_PATH
     end
 
-    def instantiator()
+    def instantiator
       Puppet::Pops::Loader::GenericPlanInstantiator
     end
 

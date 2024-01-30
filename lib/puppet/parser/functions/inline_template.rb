@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-Puppet::Parser::Functions::newfunction(:inline_template, :type => :rvalue, :arity => -2, :doc =>
+Puppet::Parser::Functions.newfunction(:inline_template, :type => :rvalue, :arity => -2, :doc =>
   "Evaluate a template string and return its value.  See
   [the templating docs](https://puppet.com/docs/puppet/latest/lang_template.html) for
   more information. Note that if multiple template strings are specified, their

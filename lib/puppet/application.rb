@@ -372,7 +372,7 @@ class Application
   # Initialize application defaults. It's usually not necessary to override this method.
   # @return [void]
   # @api public
-  def initialize_app_defaults()
+  def initialize_app_defaults
     Puppet.settings.initialize_app_defaults(app_defaults)
   end
 

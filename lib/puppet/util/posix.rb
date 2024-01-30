@@ -47,7 +47,7 @@ module Puppet::Util::POSIX
             old_ngroups = ngroups
             ngroups_ptr.write_int(ngroups)
 
-            if Puppet::FFI::POSIX::Functions::getgrouplist(user, user_gid, groups_ptr, ngroups_ptr) != -1
+            if Puppet::FFI::POSIX::Functions.getgrouplist(user, user_gid, groups_ptr, ngroups_ptr) != -1
               groups_gids = groups_ptr.get_array_of_uint(0, ngroups_ptr.read_int)
 
               result = []

@@ -468,7 +468,7 @@ module ModuleLoaders
       !add_to_index(smart_path).empty?
     end
 
-    def to_s()
+    def to_s
       "(ModuleLoader::FileBased '#{loader_name}' '#{module_name}')"
     end
 
@@ -544,7 +544,7 @@ module ModuleLoaders
       super parent_loader, loaders, module_name, gem_dir(gem_ref), loader_name, loadables
     end
 
-    def to_s()
+    def to_s
       "(ModuleLoader::GemBased '#{loader_name}' '#{@gem_ref}' [#{module_name}])"
     end
   end

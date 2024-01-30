@@ -374,7 +374,7 @@ class PTypeSetType < PMetaType
 
   # @api_private
   def _assignable?(o, guard)
-    self.class == o.class && (self == DEFAULT || eql?(o))
+    self.instance_of?(o.class) && (self == DEFAULT || eql?(o))
   end
 
   private

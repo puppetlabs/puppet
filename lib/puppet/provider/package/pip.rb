@@ -214,7 +214,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     should_range
   end
 
-  def get_install_command_options()
+  def get_install_command_options
     should = @resource[:ensure]
     command_options = %w{install -q}
     command_options += install_options if @resource[:install_options]

@@ -208,3 +208,27 @@ Style/CaseEquality:
 
 Style/CaseLikeIf:
   Enabled: true
+
+Style/ClassCheck:
+  Enabled: true
+
+Style/ClassEqualityComparison:
+  Enabled: true
+
+Style/ClassMethods:
+  Enabled: true
+
+Style/CollectionCompact:
+  Enabled: true
+
+Style/ColonMethodCall:
+  Enabled: true
+
+Style/CombinableLoops:
+  Enabled: true
+
+Style/ColonMethodDefinition:
+  Enabled: true
+
+Style/DefWithParentheses:
+  Enabled: true

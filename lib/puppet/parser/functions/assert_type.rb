@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-Puppet::Parser::Functions::newfunction(
+Puppet::Parser::Functions.newfunction(
   :assert_type,
   :type => :rvalue,
   :arity => -3,

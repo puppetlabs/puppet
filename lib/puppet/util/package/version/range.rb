@@ -38,15 +38,15 @@ module Puppet::Util::Package::Version
 
         case operator
         when '>'
-          Gt.new(version_class::parse(version))
+          Gt.new(version_class.parse(version))
         when '>='
-          GtEq.new(version_class::parse(version))
+          GtEq.new(version_class.parse(version))
         when '<'
-          Lt.new(version_class::parse(version))
+          Lt.new(version_class.parse(version))
         when '<='
-          LtEq.new(version_class::parse(version))
+          LtEq.new(version_class.parse(version))
         when ''
-          Eq.new(version_class::parse(version))
+          Eq.new(version_class.parse(version))
         else
           raise ValidationFailure, "Operator '#{operator}' is not implemented"
         end

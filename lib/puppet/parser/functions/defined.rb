@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-Puppet::Parser::Functions::newfunction(
+Puppet::Parser::Functions.newfunction(
   :defined,
   :type => :rvalue,
   :arity => -2,

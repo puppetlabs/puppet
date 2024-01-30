@@ -125,7 +125,7 @@ class PBinaryType < PAnyType
       self.eql?(o)
     end
 
-    def length()
+    def length
       @binary_buffer.length
     end
   end
@@ -225,7 +225,7 @@ class PBinaryType < PAnyType
   protected
 
   def _assignable?(o, guard)
-    o.class == self.class
+    o.instance_of?(self.class)
   end
 end
 end

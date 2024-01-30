@@ -349,7 +349,7 @@ class Puppet::Parser::Scope
     environment.known_resource_types.find_definition(name)
   end
 
-  def find_global_scope()
+  def find_global_scope
     # walk upwards until first found node_scope or top_scope
     if is_nodescope? || is_topscope?
       self

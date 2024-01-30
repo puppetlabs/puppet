@@ -14,7 +14,7 @@ class Puppet::Pops::Loader::SimpleEnvironmentLoader < Puppet::Pops::Loader::Base
     nil
   end
 
-  def to_s()
+  def to_s
     "(SimpleEnvironmentLoader '#{loader_name}')"
   end
 end

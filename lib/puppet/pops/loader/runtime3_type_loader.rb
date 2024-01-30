@@ -21,7 +21,7 @@ class Runtime3TypeLoader < BaseLoader
     parent.discover(type, error_collector, name_authority, &block)
   end
 
-  def to_s()
+  def to_s
     "(Runtime3TypeLoader '#{loader_name()}')"
   end
 

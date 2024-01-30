@@ -9,7 +9,7 @@ class Puppet::Pops::Functions::Dispatcher
   attr_reader :dispatchers
 
   # @api private
-  def initialize()
+  def initialize
     @dispatchers = []
   end
 
@@ -58,7 +58,7 @@ class Puppet::Pops::Functions::Dispatcher
   # Produces a CallableType for a single signature, and a Variant[<callables>] otherwise
   #
   # @api private
-  def to_type()
+  def to_type
     # make a copy to make sure it can be contained by someone else (even if it is not contained here, it
     # should be treated as immutable).
     #

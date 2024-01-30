@@ -170,7 +170,7 @@ class PObjectType < PMetaType
     # @raises [Puppet::ParseError] if the assertion fails
     # @api private
     def assert_can_be_overridden(member)
-      unless self.class == member.class
+      unless self.instance_of?(member.class)
         raise Puppet::ParseError, _("%{member} attempts to override %{label}") % { member: member.label, label: label }
       end
       if @final && !(constant? && member.constant?)

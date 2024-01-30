@@ -37,7 +37,7 @@ Puppet::Functions.create_function(:break) do
   dispatch :break_impl do
   end
 
-  def break_impl()
+  def break_impl
     # get file, line if available, else they are set to nil
     file, line = Puppet::Pops::PuppetStack.top_of_stack
 

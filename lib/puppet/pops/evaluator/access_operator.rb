@@ -378,7 +378,7 @@ class AccessOperator
       when String
         type = Types::TypeFactory.string(type)
       when Types::PAnyType
-        type = nil if type.class == Types::PAnyType
+        type = nil if type.instance_of?(Types::PAnyType)
       else
         fail(Issues::BAD_NOT_UNDEF_SLICE_TYPE, @semantic.keys[0], { :base_type => 'NotUndef-Type', :actual => type.class })
       end

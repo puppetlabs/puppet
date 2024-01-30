@@ -20,7 +20,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
   end
 
   def roles
-    Puppet::Util::Windows::User::get_rights(@resource[:name])
+    Puppet::Util::Windows::User.get_rights(@resource[:name])
   end
 
   def roles=(value)
@@ -28,11 +28,11 @@ Puppet::Type.type(:user).provide :windows_adsi do
     should  = value.split(',')
 
     add_list = should - current
-    Puppet::Util::Windows::User::set_rights(@resource[:name], add_list) unless add_list.empty?
+    Puppet::Util::Windows::User.set_rights(@resource[:name], add_list) unless add_list.empty?
 
     if @resource[:role_membership] == :inclusive
       remove_list = current - should
-      Puppet::Util::Windows::User::remove_rights(@resource[:name], remove_list) unless remove_list.empty?
+      Puppet::Util::Windows::User.remove_rights(@resource[:name], remove_list) unless remove_list.empty?
     end
   end
 

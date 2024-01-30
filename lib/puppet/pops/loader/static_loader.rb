@@ -73,7 +73,7 @@ class StaticLoader < Loader
     nil # at top of the hierarchy
   end
 
-  def to_s()
+  def to_s
     "(StaticLoader)"
   end
 
@@ -108,7 +108,7 @@ class StaticLoader < Loader
     end
   end
 
-  def create_resource_type_references()
+  def create_resource_type_references
     # These needs to be done quickly and we do not want to scan the file system for these
     # We are also not interested in their definition only that they exist.
     # These types are in all environments.

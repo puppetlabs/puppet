@@ -986,7 +986,7 @@ class Type
   # Removes this object (FROM WHERE?)
   # @todo removes if from where?
   # @return [void]
-  def remove()
+  def remove
     # This is hackish (mmm, cut and paste), but it works for now, and it's
     # better than warnings.
     @parameters.each do |_name, obj|
@@ -2149,7 +2149,7 @@ class Type
     self.class.relationship_params.collect do |klass|
       param = @parameters[klass.name]
       param.to_edges if param
-    end.flatten.reject { |r| r.nil? }
+    end.flatten.compact
   end
 
   # Sets the initial list of tags to associate to this resource.
@@ -2504,7 +2504,7 @@ class Type
     self.class.relationship_params.collect do |klass|
       param = @parameters[klass.name]
       param.validate_relationship if param
-    end.flatten.reject { |r| r.nil? }
+    end.flatten.compact
   end
 
   # @comment For now, leave the 'name' method functioning like it used to.  Once 'title'

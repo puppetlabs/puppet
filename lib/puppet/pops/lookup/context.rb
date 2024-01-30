@@ -135,7 +135,7 @@ class Context
     tf = Types::TypeFactory
     key_type = tf.optional(tf.scalar)
     @type =
-      Pcore::create_object_type(
+      Pcore.create_object_type(
         loader,
         ir,
         self,

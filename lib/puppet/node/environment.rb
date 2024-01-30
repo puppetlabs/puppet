@@ -552,7 +552,7 @@ class Puppet::Node::Environment
   end
 
   # not private so it can be called in tests
-  def self.extralibs()
+  def self.extralibs
     if ENV['PUPPETLIB']
       split_path(ENV['PUPPETLIB'])
     else

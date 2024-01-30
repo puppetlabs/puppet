@@ -2,7 +2,7 @@
 
 require_relative '../../../puppet/file_system'
 
-Puppet::Parser::Functions::newfunction(
+Puppet::Parser::Functions.newfunction(
   :file, :arity => -2, :type => :rvalue,
          :doc => "Loads a file from a module and returns its contents as a string.
 

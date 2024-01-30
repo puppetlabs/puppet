@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Include the specified classes
-Puppet::Parser::Functions::newfunction(:include, :arity => -2, :doc =>
+Puppet::Parser::Functions.newfunction(:include, :arity => -2, :doc =>
 "Declares one or more classes, causing the resources in them to be
 evaluated and added to the catalog. Accepts a class name, an array of class
 names, or a comma-separated list of class names.

@@ -17,7 +17,7 @@ module Types
     # @return [Boolean] `true` if this range intersects with the other range
     # @api public
     def intersect?(o)
-      self.class == o.class && !(@to < o.numeric_from || o.numeric_to < @from)
+      self.instance_of?(o.class) && !(@to < o.numeric_from || o.numeric_to < @from)
     end
 
     # Returns the lower bound of the numeric range or `nil` if no lower bound is set.
@@ -94,7 +94,7 @@ module Types
     end
 
     def _assignable?(o, guard)
-      self.class == o.class && numeric_from <= o.numeric_from && numeric_to >= o.numeric_to
+      self.instance_of?(o.class) && numeric_from <= o.numeric_from && numeric_to >= o.numeric_to
     end
   end
 

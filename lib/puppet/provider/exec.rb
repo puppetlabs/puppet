@@ -52,7 +52,7 @@ class Puppet::Provider::Exec < Puppet::Provider
     # raised that can be rescued inside of the block by cleanup routines.
     #
     # This is backwards compatible all the way to Ruby 1.8.7.
-    Timeout::timeout(resource[:timeout], Timeout::Error) do
+    Timeout.timeout(resource[:timeout], Timeout::Error) do
       cwd = resource[:cwd]
       # It's ok if cwd is nil. In that case Puppet::Util::Execution.execute() simply will not attempt to
       # change the working directory, which is exactly the right behavior when no cwd parameter is

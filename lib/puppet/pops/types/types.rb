@@ -51,7 +51,7 @@ class TypedModelObject < Object
   end
 
   def self.create_ptype(loader, ir, parent_name, attributes_hash = EMPTY_HASH)
-    @type = Pcore::create_object_type(loader, ir, self, "Pcore::#{simple_name}Type", "Pcore::#{parent_name}", attributes_hash)
+    @type = Pcore.create_object_type(loader, ir, self, "Pcore::#{simple_name}Type", "Pcore::#{parent_name}", attributes_hash)
   end
 
   def self.register_ptypes(loader, ir)
@@ -77,7 +77,7 @@ end
 #
 class PAnyType < TypedModelObject
   def self.register_ptype(loader, ir)
-    @type = Pcore::create_object_type(loader, ir, self, 'Pcore::AnyType', 'Any', EMPTY_HASH)
+    @type = Pcore.create_object_type(loader, ir, self, 'Pcore::AnyType', 'Any', EMPTY_HASH)
   end
 
   def self.create(*args)
@@ -131,7 +131,7 @@ class PAnyType < TypedModelObject
       end
     when PVariantType
       # Assignable if all contained types are assignable, or if this is exactly Any
-      return true if self.class == PAnyType
+      return true if self.instance_of?(PAnyType)
       # An empty variant may be assignable to NotUndef[T] if T is assignable to empty variant
       return _assignable?(o, guard) if is_a?(PNotUndefType) && o.types.empty?
 
@@ -557,7 +557,7 @@ class PNotUndefType < PTypeWithContainedType
   end
 
   def initialize(type = nil)
-    super(type.class == PAnyType ? nil : type)
+    super(type.instance_of?(PAnyType) ? nil : type)
   end
 
   def instance?(o, guard = nil)
@@ -954,7 +954,7 @@ class PNumericType < PScalarDataType
   # @return [Boolean] `true` if this range intersects with the other range
   # @api public
   def intersect?(o)
-    self.class == o.class && !(@to < o.numeric_from || o.numeric_to < @from)
+    self.instance_of?(o.class) && !(@to < o.numeric_from || o.numeric_to < @from)
   end
 
   # Returns the lower bound of the numeric range or `nil` if no lower bound is set.
@@ -1921,9 +1921,9 @@ end
 #
 class PStructElement < TypedModelObject
   def self.register_ptype(loader, ir)
-    @type = Pcore::create_object_type(loader, ir, self, 'Pcore::StructElement', nil,
-                                      'key_type' => PTypeType::DEFAULT,
-                                      'value_type' => PTypeType::DEFAULT)
+    @type = Pcore.create_object_type(loader, ir, self, 'Pcore::StructElement', nil,
+                                     'key_type' => PTypeType::DEFAULT,
+                                     'value_type' => PTypeType::DEFAULT)
   end
 
   attr_accessor :key_type, :value_type
