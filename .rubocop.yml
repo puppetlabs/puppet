@@ -274,3 +274,6 @@ Style/FetchEnvVar:
 
 Style/FileRead:
   Enabled: true
+
+Style/FileWrite:
+  Enabled: true
