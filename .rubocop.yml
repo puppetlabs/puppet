@@ -241,3 +241,6 @@ Style/DocumentDynamicEvalDefinition:
 
 Style/DoubleCopDisableDirective:
   Enabled: true
+
+Style/EachForSimpleLoop:
+  Enabled: true
