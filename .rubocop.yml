@@ -235,3 +235,6 @@ Style/DefWithParentheses:
 
 Style/Dir:
   Enabled: true
+
+Style/DocumentDynamicEvalDefinition:
+  Enabled: true

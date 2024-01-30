@@ -34,14 +34,14 @@ class Puppet::Interface
       # without as methods.  When we are 1.9 only (hah!) you can totally
       # replace this with some up-and-up define_method. --daniel 2011-04-29
       module_eval(<<-EOT, __FILE__, __LINE__ + 1)
-        def #{name}(value = nil)
-          self.#{name} = value unless value.nil?
-          @#{name}
-        end
+        def #{name}(value = nil)                 # def attribute(value=nil)
+          self.#{name} = value unless value.nil? #   self.attribute = value unless value.nil?
+          @#{name}                               #   @value
+        end                                      # end
 
-        def #{name}=(value)
-          @#{name} = Puppet::Interface::DocGen.strip_whitespace(#{get_arg})
-        end
+        def #{name}=(value)                                                 # def attribute=(value)
+          @#{name} = Puppet::Interface::DocGen.strip_whitespace(#{get_arg}) #   @value = Puppet::Interface::DocGen.strip_whitespace(#{get_arg})
+        end                                                                 # end
       EOT
     end
   end
