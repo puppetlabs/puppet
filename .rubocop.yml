@@ -286,3 +286,6 @@ Style/For:
 
 Style/FrozenStringLiteralComment:
   Enabled: true
+
+Style/GlobalStdStream:
+  Enabled: true
