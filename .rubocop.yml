@@ -289,3 +289,6 @@ Style/FrozenStringLiteralComment:
 
 Style/GlobalStdStream:
   Enabled: true
+
+Style/GlobalVars:
+  Enabled: true
