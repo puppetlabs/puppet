@@ -283,3 +283,6 @@ Style/FloatDivision:
 
 Style/For:
   Enabled: true
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
