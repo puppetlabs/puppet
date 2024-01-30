@@ -374,9 +374,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def read_script_from(filename)
-    File.open(filename) do |file|
-      file.read
-    end
+    File.read(filename)
   end
 
   def write_script_to(file, text)

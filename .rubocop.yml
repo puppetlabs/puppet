@@ -271,3 +271,6 @@ Style/ExpandPathArguments:
 
 Style/FetchEnvVar:
   Enabled: true
+
+Style/FileRead:
+  Enabled: true
