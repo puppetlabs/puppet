@@ -226,3 +226,6 @@ Style/ColonMethodCall:
 
 Style/CombinableLoops:
   Enabled: true
+
+Style/ColonMethodDefinition:
+  Enabled: true
