@@ -280,3 +280,6 @@ Style/FileWrite:
 
 Style/FloatDivision:
   Enabled: true
+
+Style/For:
+  Enabled: true
