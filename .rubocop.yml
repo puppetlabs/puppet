@@ -268,3 +268,6 @@ Style/EvenOdd:
 
 Style/ExpandPathArguments:
   Enabled: true
+
+Style/FetchEnvVar:
+  Enabled: true

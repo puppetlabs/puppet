@@ -33,7 +33,7 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
   # CommandDefiner in provider.rb will set failonfail, combine, and environment.
 
   has_command(:puppetservercmd, '/opt/puppetlabs/bin/puppetserver') do
-    environment(HOME: ENV['HOME'])
+    environment(HOME: ENV.fetch('HOME', nil))
   end
 
   def self.gemlist(options)

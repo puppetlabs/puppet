@@ -117,7 +117,7 @@ module Puppet
       private
 
       def windows_common_base(*extra)
-        [ENV['ALLUSERSPROFILE'], "PuppetLabs"] + extra
+        [ENV.fetch('ALLUSERSPROFILE', nil), "PuppetLabs"] + extra
       end
     end
   end

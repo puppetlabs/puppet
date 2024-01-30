@@ -20,7 +20,7 @@ module Parallel
 
       def initialize(group_size)
         config = ::RSpec::Core::Configuration.new
-        options = ::RSpec::Core::ConfigurationOptions.new((ENV['TEST'] || ENV['TESTS'] || 'spec').split(';'))
+        options = ::RSpec::Core::ConfigurationOptions.new((ENV.fetch('TEST', nil) || ENV.fetch('TESTS', nil) || 'spec').split(';'))
         options.configure config
 
         # This will scan and load all spec examples

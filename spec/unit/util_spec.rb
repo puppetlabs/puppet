@@ -706,8 +706,8 @@ describe Puppet::Util do
       end
 
       it "should walk the search PATH returning the first executable" do
-        allow(ENV).to receive(:[]).with('PATH').and_return(File.expand_path('/bin'))
-        allow(ENV).to receive(:[]).with('PATHEXT').and_return(nil)
+        allow(ENV).to receive(:fetch).with('PATH').and_return(File.expand_path('/bin'))
+        allow(ENV).to receive(:fetch).with('PATHEXT', anything).and_return(nil)
 
         expect(Puppet::Util.which('foo')).to eq(path)
       end
@@ -723,8 +723,8 @@ describe Puppet::Util do
 
       describe "when a file extension is specified" do
         it "should walk each directory in PATH ignoring PATHEXT" do
-          allow(ENV).to receive(:[]).with('PATH').and_return(%w[/bar /bin].map{|dir| File.expand_path(dir)}.join(File::PATH_SEPARATOR))
-          allow(ENV).to receive(:[]).with('PATHEXT').and_return('.FOOBAR')
+          allow(ENV).to receive(:fetch).with('PATH').and_return(%w[/bar /bin].map{|dir| File.expand_path(dir)}.join(File::PATH_SEPARATOR))
+          allow(ENV).to receive(:fetch).with('PATHEXT', anything).and_return('.FOOBAR')
 
           expect(FileTest).to receive(:file?).with(File.join(File.expand_path('/bar'), 'foo.CMD')).and_return(false)
 
@@ -735,8 +735,8 @@ describe Puppet::Util do
       describe "when a file extension is not specified" do
         it "should walk each extension in PATHEXT until an executable is found" do
           bar = File.expand_path('/bar')
-          allow(ENV).to receive(:[]).with('PATH').and_return("#{bar}#{File::PATH_SEPARATOR}#{base}")
-          allow(ENV).to receive(:[]).with('PATHEXT').and_return(".EXE#{File::PATH_SEPARATOR}.CMD")
+          allow(ENV).to receive(:fetch).with('PATH').and_return("#{bar}#{File::PATH_SEPARATOR}#{base}")
+          allow(ENV).to receive(:fetch).with('PATHEXT', anything).and_return(".EXE#{File::PATH_SEPARATOR}.CMD")
 
           expect(FileTest).to receive(:file?).ordered().with(File.join(bar, 'foo.EXE')).and_return(false)
           expect(FileTest).to receive(:file?).ordered().with(File.join(bar, 'foo.CMD')).and_return(false)
@@ -747,8 +747,8 @@ describe Puppet::Util do
         end
 
         it "should walk the default extension path if the environment variable is not defined" do
-          allow(ENV).to receive(:[]).with('PATH').and_return(base)
-          allow(ENV).to receive(:[]).with('PATHEXT').and_return(nil)
+          allow(ENV).to receive(:fetch).with('PATH').and_return(base)
+          allow(ENV).to receive(:fetch).with('PATHEXT', anything).and_return(nil)
 
           %w[.COM .EXE .BAT].each do |ext|
             expect(FileTest).to receive(:file?).ordered().with(File.join(base, "foo#{ext}")).and_return(false)
@@ -759,8 +759,8 @@ describe Puppet::Util do
         end
 
         it "should fall back if no extension matches" do
-          allow(ENV).to receive(:[]).with('PATH').and_return(base)
-          allow(ENV).to receive(:[]).with('PATHEXT').and_return(".EXE")
+          allow(ENV).to receive(:fetch).with('PATH').and_return(base)
+          allow(ENV).to receive(:fetch).with('PATHEXT', anything).and_return(".EXE")
 
           allow(FileTest).to receive(:file?).with(File.join(base, 'foo.EXE')).and_return(false)
           allow(FileTest).to receive(:file?).with(File.join(base, 'foo')).and_return(true)
