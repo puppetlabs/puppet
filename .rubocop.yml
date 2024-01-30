@@ -253,3 +253,18 @@ Style/EmptyBlockParameter:
 
 Style/EmptyCaseCondition:
   Enabled: true
+
+Style/EmptyLambdaParameter:
+  Enabled: true
+
+Style/EmptyLiteral:
+  Enabled: true
+
+Style/EvalWithLocation:
+  Enabled: true
+
+Style/EvenOdd:
+  Enabled: true
+
+Style/ExpandPathArguments:
+  Enabled: true
