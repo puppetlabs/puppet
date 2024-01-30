@@ -250,3 +250,6 @@ Style/EachWithObject:
 
 Style/EmptyBlockParameter:
   Enabled: true
+
+Style/EmptyCaseCondition:
+  Enabled: true
