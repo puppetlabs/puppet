@@ -352,3 +352,6 @@ Style/MapCompactWithConditionalBlock:
 
 Style/MapToHash:
   Enabled: true
+
+Style/MapToSet:
+  Enabled: true
