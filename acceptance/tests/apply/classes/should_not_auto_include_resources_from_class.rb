@@ -4,7 +4,7 @@ tag 'audit:high',
     'audit:unit'   # This should be covered at the unit layer.
 
 manifest = %q{ class x { notify { 'test': message => 'never invoked' } } }
-apply_manifest_on(agents, manifest) do
+apply_manifest_on(agents, manifest) do |result|
     fail_test "found the notify despite not including it" if
-        stdout.include? "never invoked"
+        result.stdout.include? "never invoked"
 end

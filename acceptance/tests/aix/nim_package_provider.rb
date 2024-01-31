@@ -20,8 +20,8 @@ def assert_package_version(package, expected_version)
   # The output of lslpp is a colon-delimited list like:
   # sudo:sudo.rte:1.8.6.4: : :C: :Configurable super-user privileges runtime: : : : : : :0:0:/:
   # We want the version, so grab the third field
-  on hosts, "lslpp -qLc #{package} | cut -f3 -d:" do
-    actual_version = stdout.chomp
+  on(hosts, "lslpp -qLc #{package} | cut -f3 -d:") do |result|
+    actual_version = result.stdout.chomp
     assert_equal(expected_version, actual_version, "Installed package version #{actual_version} does not match expected version #{expected_version}")
   end
 end
@@ -109,11 +109,11 @@ package_types.each do |package_type, details|
     version = details[:old_version]
 
     manifest = get_manifest(package_name, version)
-    on hosts, puppet_apply("--verbose", "--detailed-exitcodes"),
+    on(hosts, puppet_apply("--verbose", "--detailed-exitcodes"),
        { :stdin => manifest,
-         :acceptable_exit_codes => [4,6] } do
+         :acceptable_exit_codes => [4,6] }) do |result|
 
-        assert_match(/NIM package provider is unable to downgrade packages/, stderr, "Didn't get an error about downgrading packages")
+        assert_match(/NIM package provider is unable to downgrade packages/, result.stderr, "Didn't get an error about downgrading packages")
     end
   end
 

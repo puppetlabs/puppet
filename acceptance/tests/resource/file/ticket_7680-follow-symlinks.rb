@@ -31,8 +31,8 @@ agents.each do |agent|
   MANIFEST
   apply_manifest_on(agent, manifest, :trace => true)
 
-  on agent, "cat #{dest}" do
-    assert_match(/This is the real content/, stdout)
+  on(agent, "cat #{dest}") do |result|
+    assert_match(/This is the real content/, result.stdout)
   end
 
   step "Cleanup"

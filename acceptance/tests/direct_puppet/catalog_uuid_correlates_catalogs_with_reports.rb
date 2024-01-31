@@ -13,16 +13,16 @@ test_name "PUP-5872: catalog_uuid correlates catalogs with reports" do
 
   def get_catalog_uuid_from_cached_catalog(host, agent_vardir, agent_node_name)
     cache_catalog_uuid = nil
-    on(host, "cat #{agent_vardir}/client_data/catalog/#{agent_node_name}.json") do
-      cache_catalog_uuid = stdout.match(/"catalog_uuid":"([a-z0-9\-]*)",/)[1]
+    on(host, "cat #{agent_vardir}/client_data/catalog/#{agent_node_name}.json") do |result|
+      cache_catalog_uuid = result.stdout.match(/"catalog_uuid":"([a-z0-9\-]*)",/)[1]
     end
     cache_catalog_uuid
   end
 
   def get_catalog_uuid_from_report(master_reportdir, agent_node_name)
     report_catalog_uuid = nil
-    on(master, "cat #{master_reportdir}/#{agent_node_name}/*") do
-      report_catalog_uuid = stdout.match(/catalog_uuid: '?([a-z0-9\-]*)'?/)[1]
+    on(master, "cat #{master_reportdir}/#{agent_node_name}/*") do |result|
+      report_catalog_uuid = result.stdout.match(/catalog_uuid: '?([a-z0-9\-]*)'?/)[1]
     end
     report_catalog_uuid
   end

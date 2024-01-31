@@ -34,8 +34,8 @@ test_name "test the yum package provider" do
     hosts.each do |agent|
       cmd = rpm_provider(agent)
       # Note yum and dnf list packages as <name>.<arch>
-      on agent, "#{cmd} list installed" do
-        method(match).call(/^#{pkg}\./, stdout)
+      on(agent, "#{cmd} list installed") do |result|
+        method(match).call(/^#{pkg}\./, result.stdout)
       end
     end
   end

@@ -41,9 +41,9 @@ agents.each do |agent|
   end
 
   step "puppet ensures '#{random_user}' as owner of path" do
-    apply_manifest_on(agent, ensure_owner_recursively_manifest(tmp_path, random_user), :acceptable_exit_codes => [0]) do
-      assert_match(/#{tmp_path}\]\/owner: owner changed '#{initial_owner}' to '#{random_user}'/, stdout)
-      refute_match(/Error: .+ Failed to generate additional resources using ‘eval_generate’: Cannot manage files of type fifo/, stderr)
+    apply_manifest_on(agent, ensure_owner_recursively_manifest(tmp_path, random_user), :acceptable_exit_codes => [0]) do |result|
+      assert_match(/#{tmp_path}\]\/owner: owner changed '#{initial_owner}' to '#{random_user}'/, result.stdout)
+      refute_match(/Error: .+ Failed to generate additional resources using ‘eval_generate’: Cannot manage files of type fifo/, result.stderr)
     end
   end
 

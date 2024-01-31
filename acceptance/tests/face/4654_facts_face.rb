@@ -60,8 +60,8 @@ agents.each do |agent|
 MANIFEST
 
   step "Agent #{agent}: custom_fact and external_fact should be present in the output of `puppet facts`"
-  on agent, puppet('facts') do
-    assert_match(/"custom_fact": "foo"/, stdout, "custom_fact did not match expected output")
-    assert_match(/"external_fact": "bar"/, stdout, "external_fact did not match expected output")
+  on agent, puppet('facts') do |result|
+    assert_match(/"custom_fact": "foo"/, result.stdout, "custom_fact did not match expected output")
+    assert_match(/"external_fact": "bar"/, result.stdout, "external_fact did not match expected output")
   end
 end

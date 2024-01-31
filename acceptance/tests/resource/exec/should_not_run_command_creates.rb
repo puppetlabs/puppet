@@ -15,9 +15,9 @@ manifest = %Q{
   on agent, "touch #{touch} && rm -f #{donottouch}"
 
   step "test using puppet apply"
-  apply_manifest_on(agent, manifest) do
+  apply_manifest_on(agent, manifest) do |result|
     fail_test "looks like the thing executed, which it shouldn't" if
-      stdout.include? 'executed successfully'
+      result.stdout.include? 'executed successfully'
   end
 
   step "verify the file didn't get created"
@@ -29,9 +29,9 @@ manifest = %Q{
   step "test using puppet resource"
   on(agent, puppet_resource('exec', "test#{Time.new.to_i}",
                    "command='#{agent.touch(donottouch)}'",
-                   "creates='#{touch}'")) do
+                   "creates='#{touch}'")) do |result|
     fail_test "looks like the thing executed, which it shouldn't" if
-      stdout.include? 'executed successfully'
+      result.stdout.include? 'executed successfully'
   end
 
   step "verify the file didn't get created the second time"

@@ -5,7 +5,7 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
       'audit:integration',
       'server'             # Ruby implementation is deprecated
 
-  def assert_key_generated(name)
+  def assert_key_generated(name, stdout)
     assert_match(/Creating a new RSA SSL key for #{name}/, stdout, "Expected agent to create a new SSL key for autosigning")
   end
 
@@ -66,10 +66,11 @@ EOF
         on(agent, puppet("agent --test",
                   "--waitforcert 0",
                   "--ssldir", "'#{testdirs[agent]}/ssldir-autosign'",
-                  "--certname #{certname}"), :acceptable_exit_codes => [0,2])
-        unless agent['locale'] == 'ja'
-          assert_key_generated(agent)
-          assert_match(/Downloaded certificate for #{agent}/, stdout, "Expected certificate to be autosigned")
+                  "--certname #{certname}"), :acceptable_exit_codes => [0,2]) do |result|
+          unless agent['locale'] == 'ja'
+            assert_key_generated(agent, result.stdout)
+            assert_match(/Downloaded certificate for #{agent}/, result.stdout, "Expected certificate to be autosigned")
+          end
         end
       end
     end
@@ -106,10 +107,11 @@ EOF
         on(agent, puppet("agent --test",
                         "--waitforcert 0",
                         "--ssldir", "'#{testdirs[agent]}/ssldir-reject'",
-                        "--certname #{certname}"), :acceptable_exit_codes => [1])
-        unless agent['locale'] == 'ja'
-          assert_key_generated(agent)
-          assert_match(/Certificate for #{agent}-reject has not been signed yet/, stdout, "Expected certificate to not be autosigned")
+                        "--certname #{certname}"), :acceptable_exit_codes => [1]) do |result|
+          unless agent['locale'] == 'ja'
+            assert_key_generated(agent, result.stdout)
+            assert_match(/Certificate for #{agent}-reject has not been signed yet/, result.stdout, "Expected certificate to not be autosigned")
+          end
         end
       end
     end
@@ -175,9 +177,10 @@ custom_attributes:
                          "--waitforcert 0",
                          "--ssldir", "'#{testdirs[agent]}/ssldir-attrs'",
                          "--csr_attributes '#{agent_csr_attributes[agent]}'",
-                         "--certname #{certname}"), :acceptable_exit_codes => [0,2])
-        assert_key_generated(agent) unless agent['locale'] == 'ja'
-        assert_match(/Downloaded certificate for #{agent}/, stdout, "Expected certificate to be autosigned")
+                         "--certname #{certname}"), :acceptable_exit_codes => [0,2]) do |result|
+          assert_key_generated(agent, result.stdout) unless agent['locale'] == 'ja'
+          assert_match(/Downloaded certificate for #{agent}/, result.stdout, "Expected certificate to be autosigned")
+        end
       end
     end
   end
