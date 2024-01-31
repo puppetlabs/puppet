@@ -591,12 +591,10 @@ module Util
       end
 
       mode = symbolic_mode_to_int(normalize_symbolic_mode(default_mode))
+    elsif Puppet::Util::Platform.windows?
+      mode = DEFAULT_WINDOWS_MODE
     else
-      if Puppet::Util::Platform.windows?
-        mode = DEFAULT_WINDOWS_MODE
-      else
-        mode = DEFAULT_POSIX_MODE
-      end
+      mode = DEFAULT_POSIX_MODE
     end
 
     begin

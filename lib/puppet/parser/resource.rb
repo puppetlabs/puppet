@@ -305,14 +305,12 @@ class Puppet::Parser::Resource < Puppet::Resource
                 _("Parameter '%{name}' is already set on %{resource} at %{error_location}; cannot redefine") %
                   { name: param.name, resource: ref, error_location: error_location_str }
               end
+            elsif error_location_str.empty?
+              _("Parameter '%{name}' is already set on %{resource} by %{source}; cannot redefine") %
+                { name: param.name, resource: ref, source: current.source.to_s }
             else
-              if error_location_str.empty?
-                _("Parameter '%{name}' is already set on %{resource} by %{source}; cannot redefine") %
-                  { name: param.name, resource: ref, source: current.source.to_s }
-              else
-                _("Parameter '%{name}' is already set on %{resource} by %{source} at %{error_location}; cannot redefine") %
-                  { name: param.name, resource: ref, source: current.source.to_s, error_location: error_location_str }
-              end
+              _("Parameter '%{name}' is already set on %{resource} by %{source} at %{error_location}; cannot redefine") %
+                { name: param.name, resource: ref, source: current.source.to_s, error_location: error_location_str }
             end
       raise Puppet::ParseError.new(msg, param.file, param.line)
     end

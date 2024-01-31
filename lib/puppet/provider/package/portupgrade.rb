@@ -146,16 +146,14 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
         return installedversion
       end
 
-    else
+    elsif output =~ /^\*\* No matching package /
       # error: output not parsed correctly, error out with nil.
       # Seriously - this section should never be called in a perfect world.
       # as verification that the port is installed has already happened in query.
-      if output =~ /^\*\* No matching package /
-        raise Puppet::ExecutionFailure, _("Could not find package %{name}") % { name: @resource[:name] }
-      else
-        # Any other error (dump output to log)
-        raise Puppet::ExecutionFailure, _("Unexpected output from portversion: %{output}") % { output: output }
-      end
+      raise Puppet::ExecutionFailure, _("Could not find package %{name}") % { name: @resource[:name] }
+    else
+      # Any other error (dump output to log)
+      raise Puppet::ExecutionFailure, _("Unexpected output from portversion: %{output}") % { output: output }
     end
   end
 

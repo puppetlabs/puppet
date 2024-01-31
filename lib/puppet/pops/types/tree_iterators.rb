@@ -99,12 +99,10 @@ class TreeIterator
       val.size.times
     elsif val.is_a?(Hash)
       val.each_key
+    elsif @include_refs
+      val._pcore_type.attributes.each_key
     else
-      if @include_refs
-        val._pcore_type.attributes.each_key
-      else
-        val._pcore_type.attributes.reject { |_k, v| v.kind == PObjectType::ATTRIBUTE_KIND_REFERENCE }.each_key
-      end
+      val._pcore_type.attributes.reject { |_k, v| v.kind == PObjectType::ATTRIBUTE_KIND_REFERENCE }.each_key
     end
   end
   private :indexer_on

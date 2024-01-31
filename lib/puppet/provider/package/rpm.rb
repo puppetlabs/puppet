@@ -149,16 +149,12 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     nvr = "#{nav}-#{release}"
     if @resource[:name].start_with? nvr
       identifier = nvr
+    elsif @resource[:name].start_with? nav
+      identifier = nav
+    elsif @resource[:install_only]
+      identifier = get(:ensure).split(self.class::MULTIVERSION_SEPARATOR).map { |ver| "#{name}-#{ver}" }
     else
-      if @resource[:name].start_with? nav
-        identifier = nav
-      else
-        if @resource[:install_only]
-          identifier = get(:ensure).split(self.class::MULTIVERSION_SEPARATOR).map { |ver| "#{name}-#{ver}" }
-        else
-          identifier = name
-        end
-      end
+      identifier = name
     end
     # If an arch is specified in the resource, uninstall that arch,
     # otherwise uninstall the arch returned by query.

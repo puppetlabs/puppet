@@ -298,12 +298,10 @@ class HieraConfig
           hiera3_config[key] = val
         end
       end
+    elsif hiera3_config.include?(KEY_LOGGER)
+      Hiera.logger = hiera3_config[KEY_LOGGER].to_s
     else
-      if hiera3_config.include?(KEY_LOGGER)
-        Hiera.logger = hiera3_config[KEY_LOGGER].to_s
-      else
-        Hiera.logger = 'puppet'
-      end
+      Hiera.logger = 'puppet'
     end
 
     unless Hiera::Interpolate.const_defined?(:PATCHED_BY_HIERA_5)

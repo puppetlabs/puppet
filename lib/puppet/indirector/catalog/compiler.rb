@@ -323,15 +323,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         benchmark_str = _("Compiled static catalog for %{node} in %%{seconds} seconds") % { node: escaped_node_name }
         profile_str   = _("Compiled static catalog for %{node}") % { node: node.name }
       end
+    elsif node.environment
+      escaped_node_environment = node.environment.to_s.gsub(/%/, '%%')
+      benchmark_str = _("Compiled catalog for %{node} in environment %{environment} in %%{seconds} seconds") % { node: escaped_node_name, environment: escaped_node_environment }
+      profile_str   = _("Compiled catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
     else
-      if node.environment
-        escaped_node_environment = node.environment.to_s.gsub(/%/, '%%')
-        benchmark_str = _("Compiled catalog for %{node} in environment %{environment} in %%{seconds} seconds") % { node: escaped_node_name, environment: escaped_node_environment }
-        profile_str   = _("Compiled catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
-      else
-        benchmark_str = _("Compiled catalog for %{node} in %%{seconds} seconds") % { node: escaped_node_name }
-        profile_str   = _("Compiled catalog for %{node}") % { node: node.name }
-      end
+      benchmark_str = _("Compiled catalog for %{node} in %%{seconds} seconds") % { node: escaped_node_name }
+      profile_str   = _("Compiled catalog for %{node}") % { node: node.name }
     end
     config = nil
 

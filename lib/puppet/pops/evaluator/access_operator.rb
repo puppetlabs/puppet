@@ -349,12 +349,10 @@ class AccessOperator
     keys.flatten!
     if o.resolved? && !o.name.nil?
       Types::PObjectTypeExtension.create(o, keys)
+    elsif keys.size == 1
+      Types::TypeFactory.object(keys[0])
     else
-      if keys.size == 1
-        Types::TypeFactory.object(keys[0])
-      else
-        fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, { :base_type => 'Object-Type', :min => 1, :actual => keys.size })
-      end
+      fail(Issues::BAD_TYPE_SLICE_ARITY, @semantic, { :base_type => 'Object-Type', :min => 1, :actual => keys.size })
     end
   end
 

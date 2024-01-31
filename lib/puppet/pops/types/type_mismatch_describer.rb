@@ -707,13 +707,11 @@ module Types
           # Check that the block is of the right type
           describe(param_block_t, arg_block_t, path + [BlockPathElement.new])
         end
-      else
+      elsif param_block_t.nil? || param_block_t.assignable?(PUndefType::DEFAULT)
         # Check that the block is optional
-        if param_block_t.nil? || param_block_t.assignable?(PUndefType::DEFAULT)
-          EMPTY_ARRAY
-        else
-          [MissingRequiredBlock.new(path)]
-        end
+        EMPTY_ARRAY
+      else
+        [MissingRequiredBlock.new(path)]
       end
     end
 

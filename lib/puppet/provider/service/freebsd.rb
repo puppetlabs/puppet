@@ -93,20 +93,18 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
         f << append
         self.debug("Appended to #{f.path}")
       }
-    else
+    elsif Puppet::FileSystem.exist?(rcconf_local)
       # Else, check the local rc file first, but don't create it
-      if Puppet::FileSystem.exist?(rcconf_local)
-        File.open(rcconf_local, File::WRONLY | File::APPEND) { |f|
-          f << append
-          self.debug("Appended to #{f.path}")
-        }
-      else
-        # At last use the standard rc.conf file
-        File.open(rcconf, File::WRONLY | File::APPEND | File::CREAT, 0644) { |f|
-          f << append
-          self.debug("Appended to #{f.path}")
-        }
-      end
+      File.open(rcconf_local, File::WRONLY | File::APPEND) { |f|
+        f << append
+        self.debug("Appended to #{f.path}")
+      }
+    else
+      # At last use the standard rc.conf file
+      File.open(rcconf, File::WRONLY | File::APPEND | File::CREAT, 0644) { |f|
+        f << append
+        self.debug("Appended to #{f.path}")
+      }
     end
   end
 

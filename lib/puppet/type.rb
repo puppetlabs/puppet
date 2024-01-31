@@ -1121,12 +1121,10 @@ class Type
       if property.name == :ensure
         ensure_state = property.retrieve
         prophash[property] = ensure_state
+      elsif ensure_state == :absent
+        prophash[property] = :absent
       else
-        if ensure_state == :absent
-          prophash[property] = :absent
-        else
-          prophash[property] = property.retrieve
-        end
+        prophash[property] = property.retrieve
       end
     end
   end

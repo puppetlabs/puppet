@@ -90,15 +90,13 @@ class Dispatch < Evaluator::CallableSignature
             else
               raise ArgumentError, _("Unknown injection %{injection_name}") % { injection_name: injection_name }
             end
-        else
+        elsif knit < 0
           # Careful so no new nil arguments are added since they would override default
           # parameter values in the received
-          if knit < 0
-            idx = -knit - 1
-            new_args += args[idx..] if idx < args.size
-          else
-            new_args << args[knit] if knit < args.size
-          end
+          idx = -knit - 1
+          new_args += args[idx..] if idx < args.size
+        elsif knit < args.size
+          new_args << args[knit]
         end
       end
       new_args

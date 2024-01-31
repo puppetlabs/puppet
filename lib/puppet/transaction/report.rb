@@ -305,14 +305,12 @@ class Puppet::Transaction::Report
       @resource_statuses[key] =
         if rs == Puppet::Resource::EMPTY_HASH
           nil
-        else
+        elsif rs.is_a?(Puppet::Resource::Status)
           # Older versions contain tags that causes Psych to create instances
           # directly
-          if rs.is_a?(Puppet::Resource::Status)
-            rs
-          else
-            Puppet::Resource::Status.from_data_hash(rs)
-          end
+          rs
+        else
+          Puppet::Resource::Status.from_data_hash(rs)
         end
     end
   end

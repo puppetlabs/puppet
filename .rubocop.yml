@@ -316,3 +316,6 @@ Style/HashTransformValues:
 
 Style/IdenticalConditionalBranches:
   Enabled: true
+
+Style/IfInsideElse:
+  Enabled: true

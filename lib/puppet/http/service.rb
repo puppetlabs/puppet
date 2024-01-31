@@ -107,12 +107,10 @@ class Puppet::HTTP::Service
     Puppet[:http_extra_headers].each do |name, value|
       if modified_headers.keys.find { |key| key.casecmp(name) == 0 }
         Puppet.warning(_('Ignoring extra header "%{name}" as it was previously set.') % { name: name })
+      elsif value.nil? || value.empty?
+        Puppet.warning(_('Ignoring extra header "%{name}" as it has no value.') % { name: name })
       else
-        if value.nil? || value.empty?
-          Puppet.warning(_('Ignoring extra header "%{name}" as it has no value.') % { name: name })
-        else
-          modified_headers[name] = value
-        end
+        modified_headers[name] = value
       end
     end
     modified_headers
