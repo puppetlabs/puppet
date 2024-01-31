@@ -379,7 +379,7 @@ class Puppet::Node::Environment
 
   # @api private
   def modules_by_name
-    @modules_by_name ||= modules.map { |mod| [mod.name, mod] }.to_h
+    @modules_by_name ||= modules.to_h { |mod| [mod.name, mod] }
   end
   private :modules_by_name
 

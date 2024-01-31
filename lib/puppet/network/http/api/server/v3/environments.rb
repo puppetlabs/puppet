@@ -13,7 +13,6 @@ module Puppet
                 @env_loader = env_loader
               end
 
-              # rubocop:disable Layout/MultilineMethodCallIndentation
               def call(request, response)
                 response
                   .respond_with(
@@ -22,7 +21,7 @@ module Puppet
                     Puppet::Util::Json
                       .dump({
                               "search_paths" => @env_loader.search_paths,
-                              "environments" => @env_loader.list.collect do |env|
+                              "environments" => @env_loader.list.to_h do |env|
                                 [env.name, {
                                   "settings" => {
                                     "modulepath" => env.full_modulepath,
@@ -31,11 +30,10 @@ module Puppet
                                     "config_version" => env.config_version || '',
                                   }
                                 }]
-                              end.to_h
+                              end
                             })
                   )
               end
-              # rubocop:enable Layout/MultilineMethodCallIndentation
 
               private
 

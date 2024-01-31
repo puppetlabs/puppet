@@ -183,7 +183,7 @@ class PTypeSetType < PMetaType
     result[KEY_NAME] = @name
     result[KEY_VERSION] = @version.to_s unless @version.nil?
     result[KEY_TYPES] = @types unless @types.empty?
-    result[KEY_REFERENCES] = @references.map { |ref_alias, ref| [ref_alias, ref._pcore_init_hash] }.to_h unless @references.empty?
+    result[KEY_REFERENCES] = @references.to_h { |ref_alias, ref| [ref_alias, ref._pcore_init_hash] } unless @references.empty?
     result
   end
 
@@ -328,11 +328,11 @@ class PTypeSetType < PMetaType
 
   # @api private
   def resolve_hash(loader, init_hash)
-    result = init_hash.map do |key, value|
+    result = init_hash.to_h do |key, value|
       key = resolve_type_refs(loader, key)
       value = resolve_type_refs(loader, value) unless key == KEY_TYPES && value.is_a?(Hash)
       [key, value]
-    end.to_h
+    end
     name_auth = resolve_name_authority(result, loader)
     types = result[KEY_TYPES]
     if types.is_a?(Hash)

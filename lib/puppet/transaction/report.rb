@@ -328,7 +328,7 @@ class Puppet::Transaction::Report
                         else
                           @resource_statuses
                         end
-    resource_statuses.map { |key, rs| [key, rs.nil? ? nil : rs.to_data_hash] }.to_h
+    resource_statuses.to_h { |key, rs| [key, rs.nil? ? nil : rs.to_data_hash] }
   end
 
   def to_data_hash
@@ -345,7 +345,7 @@ class Puppet::Transaction::Report
       'noop_pending' => @noop_pending,
       'environment' => @environment,
       'logs' => @logs.map { |log| log.to_data_hash },
-      'metrics' => @metrics.map { |key, metric| [key, metric.to_data_hash] }.to_h,
+      'metrics' => @metrics.to_h { |key, metric| [key, metric.to_data_hash] },
       'resource_statuses' => calculate_resource_statuses,
       'corrective_change' => @corrective_change,
     }

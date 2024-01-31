@@ -349,3 +349,6 @@ Style/LineEndConcatenation:
 
 Style/MapCompactWithConditionalBlock:
   Enabled: true
+
+Style/MapToHash:
+  Enabled: true

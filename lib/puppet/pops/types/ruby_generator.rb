@@ -30,7 +30,7 @@ class RubyGenerator < TypeFormatter
     'yield' => '_yield',
   }
 
-  RUBY_RESERVED_WORDS_REVERSED = RUBY_RESERVED_WORDS.map { |k, v| [v, k] }.to_h
+  RUBY_RESERVED_WORDS_REVERSED = RUBY_RESERVED_WORDS.to_h { |k, v| [v, k] }
 
   def self.protect_reserved_name(name)
     RUBY_RESERVED_WORDS[name] || name
@@ -126,7 +126,7 @@ class RubyGenerator < TypeFormatter
       added_to_common_prefix.size.times { bld << "end\n" }
     end
 
-    aliases = aliased_types.map { |type| [type.name, type.resolved_type] }.to_h
+    aliases = aliased_types.to_h { |type| [type.name, type.resolved_type] }
     end_module(common_prefix, aliases, class_names, bld)
     bld
   end

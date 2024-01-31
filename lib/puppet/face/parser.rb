@@ -86,10 +86,10 @@ Puppet::Face.define(:parser, '0.0.1') do
       unless errors.empty?
         ignore_error_keys = [:arguments, :environment, :node]
 
-        data = errors.map do |file, error|
+        data = errors.to_h do |file, error|
           file_errors = error.to_h.reject { |k, _| ignore_error_keys.include?(k) }
           [file, file_errors]
-        end.to_h
+        end
 
         puts Puppet::Util::Json.dump(Puppet::Pops::Serialization::ToDataConverter.convert(data, rich_data: false, symbol_as_string: true), :pretty => true)
 
