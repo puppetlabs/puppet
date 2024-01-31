@@ -325,3 +325,6 @@ Style/IfUnlessModifierOfIfUnless:
 
 Style/IfWithBooleanLiteralBranches:
   Enabled: true
+
+Style/IfWithSemicolon:
+  Enabled: true
