@@ -328,3 +328,24 @@ Style/IfWithBooleanLiteralBranches:
 
 Style/IfWithSemicolon:
   Enabled: true
+
+Style/InfiniteLoop:
+  Enabled: true
+
+Style/InverseMethods:
+  Enabled: true
+
+Style/KeywordParametersOrder:
+  Enabled: true
+
+Style/Lambda:
+  Enabled: true
+
+Style/LambdaCall:
+  Enabled: true
+
+Style/LineEndConcatenation:
+  Enabled: true
+
+Style/MapCompactWithConditionalBlock:
+  Enabled: true
