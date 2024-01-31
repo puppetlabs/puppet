@@ -307,3 +307,12 @@ Style/HashEachMethods:
 
 Style/HashLikeCase:
   Enabled: true
+
+Style/HashTransformKeys:
+  Enabled: true
+
+Style/HashTransformValues:
+  Enabled: true
+
+Style/IdenticalConditionalBranches:
+  Enabled: true
