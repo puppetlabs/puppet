@@ -415,11 +415,7 @@ module Puppet
       # on refresh.
       def check(value)
         # We have to invert the values.
-        if value == :true
-          false
-        else
-          true
-        end
+        value != :true
       end
     end
 

@@ -322,3 +322,6 @@ Style/IfInsideElse:
 
 Style/IfUnlessModifierOfIfUnless:
   Enabled: true
+
+Style/IfWithBooleanLiteralBranches:
+  Enabled: true

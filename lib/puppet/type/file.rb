@@ -874,7 +874,7 @@ Puppet::Type.newtype(:file) do
     if self[:ensure] == :present
       return true unless stat
 
-      return(stat.ftype == "file" ? true : false)
+      return(stat.ftype == "file")
     end
 
     # If we've gotten here, then :ensure isn't set
@@ -1023,11 +1023,8 @@ Puppet::Type.newtype(:file) do
       # (#18110) Directories cannot be removed without :force,
       # so it doesn't make sense to back them up unless removing with :force.
       true
-    elsif type == "file" or type == "link"
-      true
     else
-      # Including: “blockSpecial”, “characterSpecial”, "fifo", "socket", “unknown”
-      false
+      type == "file" or type == "link"
     end
   end
 
