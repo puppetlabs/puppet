@@ -18,7 +18,7 @@ module Puppet::HTTP::Proxy
 
   def self.http_proxy_env
     # Returns a URI object if proxy is set, or nil
-    proxy_env = ENV["http_proxy"] || ENV["HTTP_PROXY"]
+    proxy_env = ENV.fetch("http_proxy", nil) || ENV.fetch("HTTP_PROXY", nil)
     begin
       return URI.parse(proxy_env) if proxy_env
     rescue URI::InvalidURIError
@@ -124,7 +124,7 @@ module Puppet::HTTP::Proxy
   end
 
   def self.no_proxy
-    no_proxy_env = ENV["no_proxy"] || ENV["NO_PROXY"]
+    no_proxy_env = ENV.fetch("no_proxy", nil) || ENV.fetch("NO_PROXY", nil)
 
     if no_proxy_env
       return no_proxy_env

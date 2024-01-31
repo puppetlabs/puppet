@@ -535,7 +535,7 @@ class StringConverter
       raise ArgumentError, "expected a hash with type to format mappings, got instance of '#{fmt.class}'"
     end
 
-    fmt.reduce({}) do |result, entry|
+    fmt.each_with_object({}) do |entry, result|
       key, value = entry
       unless key.is_a?(Types::PAnyType)
         raise ArgumentError, "top level keys in the format hash must be data types, got instance of '#{key.class}'"
@@ -546,7 +546,6 @@ class StringConverter
       else
         result[key] = Format.new(value)
       end
-      result
     end
   end
   private :validate_input
@@ -969,14 +968,13 @@ class StringConverter
       # compute widest run in the array, skip nested arrays and hashes
       # then if size > width, set flag if a break on each element should be performed
       if format.alt? && format.width
-        widest = val.each_with_index.reduce([0]) do |memo, v_i|
+        widest = val.each_with_index.each_with_object([0]) do |v_i, memo|
           # array or hash breaks
           if is_a_or_h?(v_i[0])
             memo << 0
           else
             memo[-1] += mapped[v_i[1]].length
           end
-          memo
         end
         widest = widest.max
         sz_break = widest > (format.width || Float::INFINITY)

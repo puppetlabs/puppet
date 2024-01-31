@@ -12,7 +12,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
   confine 'os.family' => :solaris
 
   has_command(:pkguti, pkgutil_bin) do
-    environment :HOME => ENV['HOME']
+    environment :HOME => ENV.fetch('HOME', nil)
   end
 
   def self.healthcheck

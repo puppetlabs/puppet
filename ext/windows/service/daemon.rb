@@ -18,7 +18,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
   @run_thread = nil
   @LOG_TO_FILE = false
   @loglevel = 0
-  LOG_FILE =  File.expand_path(File.join(ENV['ALLUSERSPROFILE'], 'PuppetLabs', 'puppet', 'var', 'log', 'windows.log'))
+  LOG_FILE =  File.expand_path(File.join(ENV.fetch('ALLUSERSPROFILE', nil), 'PuppetLabs', 'puppet', 'var', 'log', 'windows.log'))
   LEVELS = [:debug, :info, :notice, :warning, :err, :alert, :emerg, :crit]
   LEVELS.each do |level|
     define_method("log_#{level}") do |msg|
@@ -203,10 +203,10 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
       ENV['Path'] = [
         File.join(base_dir, 'puppet', 'bin'),
         File.join(base_dir, 'bin'),
-      ].join(';').tr('/', '\\') + ';' + ENV['Path']
+      ].join(';').tr('/', '\\') + ';' + ENV.fetch('Path', nil)
 
       # ENV that uses forward slashes
-      ENV['RUBYLIB'] = "#{File.join(base_dir, 'puppet', 'lib')};#{ENV['RUBYLIB']}"
+      ENV['RUBYLIB'] = "#{File.join(base_dir, 'puppet', 'lib')};#{ENV.fetch('RUBYLIB', nil)}"
     rescue => e
       log_exception(e)
     end

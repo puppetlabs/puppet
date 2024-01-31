@@ -304,7 +304,7 @@ Puppet::Type.newtype(:tidy) do
 
     # Now make sure that all directories require the files they contain, if all are available,
     # so that a directory is emptied before we try to remove it.
-    files_by_name = result.inject({}) { |hash, file| hash[file[:path]] = file; hash }
+    files_by_name = result.each_with_object({}) { |file, hash| hash[file[:path]] = file; }
 
     files_by_name.keys.sort { |a, b| b <=> a }.each do |path|
       dir = ::File.dirname(path)

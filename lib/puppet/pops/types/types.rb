@@ -2029,7 +2029,7 @@ class PStructType < PAnyType
 
   # rubocop:disable Naming/MemoizedInstanceVariableName
   def hashed_elements
-    @hashed ||= @elements.reduce({}) { |memo, e| memo[e.name] = e; memo }
+    @hashed ||= @elements.each_with_object({}) { |e, memo| memo[e.name] = e; }
   end
   # rubocop:enable Naming/MemoizedInstanceVariableName
 

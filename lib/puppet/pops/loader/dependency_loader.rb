@@ -90,6 +90,6 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
 
   # An index of module_name to module loader used to speed up lookup of qualified names
   def index
-    @index ||= @dependency_loaders.reduce({}) { |index, loader| index[loader.module_name] = loader; index }
+    @index ||= @dependency_loaders.each_with_object({}) { |loader, index| index[loader.module_name] = loader; }
   end
 end

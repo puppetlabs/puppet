@@ -180,14 +180,13 @@ Puppet::Face.define(:epp, '0.0.1') do
           raise Puppet::Error, _("No input to parse given on command line or stdin")
         end
       else
-        templates, missing_files = args.reduce([[], []]) do |memo, file|
+        templates, missing_files = args.each_with_object([[], []]) do |file, memo|
           template_file = effective_template(file, compiler.environment)
           if template_file.nil?
             memo[1] << file
           else
             memo[0] << template_file
           end
-          memo
         end
 
         show_filename = templates.count > 1

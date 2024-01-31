@@ -49,7 +49,7 @@ module Puppet
   def self.default_basemodulepath
     if Puppet::Util::Platform.windows?
       path = ['$codedir/modules']
-      installdir = ENV["FACTER_env_windows_installdir"]
+      installdir = ENV.fetch("FACTER_env_windows_installdir", nil)
       if installdir
         path << "#{installdir}/puppet/modules"
       end
@@ -61,7 +61,7 @@ module Puppet
 
   def self.default_vendormoduledir
     if Puppet::Util::Platform.windows?
-      installdir = ENV["FACTER_env_windows_installdir"]
+      installdir = ENV.fetch("FACTER_env_windows_installdir", nil)
       if installdir
         "#{installdir}\\puppet\\vendor_modules"
       else
@@ -373,7 +373,7 @@ module Puppet
           Puppet::Util::Platform.default_paths.each do |path|
             next if paths.include?(path)
 
-            ENV['PATH'] = ENV['PATH'] + File::PATH_SEPARATOR + path
+            ENV['PATH'] = ENV.fetch('PATH', nil) + File::PATH_SEPARATOR + path
           end
           value
         end

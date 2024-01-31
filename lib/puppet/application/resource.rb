@@ -188,7 +188,7 @@ class Puppet::Application::Resource < Puppet::Application
       tmpfile.puts text
 
       # edit the content
-      system(ENV["EDITOR"] || 'vi', tmpfile.path)
+      system(ENV.fetch("EDITOR", nil) || 'vi', tmpfile.path)
 
       # ...and, now, pass that file to puppet to apply.  Because
       # many editors rename or replace the original file we need to

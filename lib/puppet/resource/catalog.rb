@@ -452,16 +452,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
     result.add_class(*data['classes']) if data['classes']
 
-    result.metadata = data['metadata'].inject({}) { |h, (k, v)| h[k] = Puppet::FileServing::Metadata.from_data_hash(v); h } if data['metadata']
+    result.metadata = data['metadata'].transform_values { |v| Puppet::FileServing::Metadata.from_data_hash(v); } if data['metadata']
 
     recursive_metadata = data['recursive_metadata']
     if recursive_metadata
-      result.recursive_metadata = recursive_metadata.inject({}) do |h, (title, source_to_meta_hash)|
-        h[title] = source_to_meta_hash.inject({}) do |inner_h, (source, metas)|
-          inner_h[source] = metas.map { |meta| Puppet::FileServing::Metadata.from_data_hash(meta) }
-          inner_h
+      result.recursive_metadata = recursive_metadata.transform_values do |source_to_meta_hash|
+        source_to_meta_hash.transform_values do |metas|
+          metas.map { |meta| Puppet::FileServing::Metadata.from_data_hash(meta) }
         end
-        h
       end
     end
 
@@ -469,13 +467,11 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   def to_data_hash
-    metadata_hash = metadata.inject({}) { |h, (k, v)| h[k] = v.to_data_hash; h }
-    recursive_metadata_hash = recursive_metadata.inject({}) do |h, (title, source_to_meta_hash)|
-      h[title] = source_to_meta_hash.inject({}) do |inner_h, (source, metas)|
-        inner_h[source] = metas.map { |meta| meta.to_data_hash }
-        inner_h
+    metadata_hash = metadata.transform_values { |v| v.to_data_hash; }
+    recursive_metadata_hash = recursive_metadata.transform_values do |source_to_meta_hash|
+      source_to_meta_hash.transform_values do |metas|
+        metas.map { |meta| meta.to_data_hash }
       end
-      h
     end
 
     {

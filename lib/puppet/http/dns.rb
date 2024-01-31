@@ -146,10 +146,9 @@ module Puppet::HTTP
     # @yields [[Resolv::DNS::Resource::IN::SRV]] a group of records of
     #         the same priority
     def each_priority(records)
-      pri_hash = records.inject({}) do |groups, element|
+      pri_hash = records.each_with_object({}) do |element, groups|
         groups[element.priority] ||= []
         groups[element.priority] << element
-        groups
       end
 
       pri_hash.keys.sort.each do |key|

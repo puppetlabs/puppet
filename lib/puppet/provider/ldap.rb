@@ -84,7 +84,7 @@ class Puppet::Provider::Ldap < Puppet::Provider
 
     super
 
-    @property_hash = @property_hash.inject({}) do |result, ary|
+    @property_hash = @property_hash.each_with_object({}) do |ary, result|
       param, values = ary
 
       # Skip any attributes we don't manage.
@@ -104,7 +104,6 @@ class Puppet::Provider::Ldap < Puppet::Provider
       else
         result[param] = values
       end
-      result
     end
 
     # Make a duplicate, so that we have a copy for comparison

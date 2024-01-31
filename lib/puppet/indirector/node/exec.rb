@@ -54,7 +54,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
 
   # Translate the yaml string into Ruby objects.
   def translate(name, output)
-    Puppet::Util::Yaml.safe_load(output, [Symbol]).inject({}) do |hash, data|
+    Puppet::Util::Yaml.safe_load(output, [Symbol]).each_with_object({}) do |data, hash|
       case data[0]
       when String
         hash[data[0].intern] = data[1]
@@ -63,8 +63,6 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
       else
         raise Puppet::Error, _("key is a %{klass}, not a string or symbol") % { klass: data[0].class }
       end
-
-      hash
     end
   rescue => detail
     raise Puppet::Error, _("Could not load external node results for %{name}: %{detail}") % { name: name, detail: detail }, detail.backtrace
