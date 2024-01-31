@@ -11,8 +11,8 @@ test_name "aix package provider should work correctly" do
     # The output of lslpp is a colon-delimited list like:
     # sudo:sudo.rte:1.8.6.4: : :C: :Configurable super-user privileges runtime: : : : : : :0:0:/:
     # We want the version, so grab the third field
-    on hosts, "lslpp -qLc #{package} | cut -f3 -d:" do
-      actual_version = stdout.chomp
+    on(hosts, "lslpp -qLc #{package} | cut -f3 -d:") do |result|
+      actual_version = result.stdout.chomp
       assert_equal(expected_version, actual_version, "Installed package version #{actual_version} does not match expected version #{expected_version}")
     end
   end

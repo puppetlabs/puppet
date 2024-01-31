@@ -115,9 +115,9 @@ SCRIPT
 
     step "Start the fixture service on #{agent} "
     on(agent, puppet("resource service #{fixture_service} provider=init ensure=stopped"))
-    on(agent, puppet("resource service #{fixture_service} provider=init ensure=running"))
-
-    assert_match(/ensure changed 'stopped' to 'running'/, stdout, "The fixture service #{fixture_service} is not in a testable state on #{agent}.")
+    on(agent, puppet("resource service #{fixture_service} provider=init ensure=running")) do |result|
+      assert_match(/ensure changed 'stopped' to 'running'/, stdout, "The fixture service #{fixture_service} is not in a testable state on #{agent}.")
+    end
 
     step "Verify whether the fixture process is alone in its SMF contract on #{agent}"
     service_ctid = on(agent, "sleep 10;ps -eo ctid,args | grep #{fixture_service} | grep -v grep | awk '{print $1}'").stdout.chomp.to_i

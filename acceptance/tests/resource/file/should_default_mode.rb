@@ -13,8 +13,8 @@ agents.each do |agent|
   on(agent, "rm -rf #{parent}")
 
   step "puppet should set execute bit on readable directories"
-  on(agent, puppet_resource("file", parent, "ensure=directory", "mode=0644")) do
-    assert_match(regexp_mode(755), stdout)
+  on(agent, puppet_resource("file", parent, "ensure=directory", "mode=0644")) do |result|
+    assert_match(regexp_mode(755), result.stdout)
   end
 
   step "include execute bit on newly created directories"
@@ -24,20 +24,20 @@ agents.each do |agent|
   step "exclude execute bit from newly created files"
   file = "#{parent}/file.txt"
   on(agent, "echo foobar > #{file}")
-  on(agent, "#{file}", :acceptable_exit_codes => (1..255)) do
-    refute_match(/foobar/, stdout)
+  on(agent, "#{file}", :acceptable_exit_codes => (1..255)) do |result|
+    refute_match(/foobar/, result.stdout)
   end
 
   step "set execute bit on file if explicitly specified"
   file_750 = "#{parent}/file_750.txt"
-  on(agent, puppet_resource("file", file_750, "ensure=file", "mode=0750")) do
-    assert_match(regexp_mode(750), stdout)
+  on(agent, puppet_resource("file", file_750, "ensure=file", "mode=0750")) do |result|
+    assert_match(regexp_mode(750), result.stdout)
   end
 
   step "don't set execute bit if directory not readable"
   dir_600 = "#{parent}/dir_600"
-  on(agent, puppet_resource("file", dir_600, "ensure=directory", "mode=0600")) do
-    assert_match(regexp_mode(700), stdout) # readable by owner, but not group
+  on(agent, puppet_resource("file", dir_600, "ensure=directory", "mode=0600")) do |result|
+    assert_match(regexp_mode(700), result.stdout) # readable by owner, but not group
   end
 
   on(agent, "rm -rf #{parent}")

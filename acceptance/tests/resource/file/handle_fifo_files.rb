@@ -31,8 +31,8 @@ agents.each do |agent|
   end
 
   step "puppet ensures given fifo is present" do
-    apply_manifest_on(agent, ensure_content_to_file_manifest(fifo_path, 'present'), :acceptable_exit_codes => [2]) do
-      assert_match(/Warning: .+ Ensure set to :present but file type is fifo so no content will be synced/, stderr)
+    apply_manifest_on(agent, ensure_content_to_file_manifest(fifo_path, 'present'), :acceptable_exit_codes => [2]) do |result|
+      assert_match(/Warning: .+ Ensure set to :present but file type is fifo so no content will be synced/, result.stderr)
     end
   end
 
@@ -43,9 +43,9 @@ agents.each do |agent|
   end
 
   step "puppet ensures given fifo is a regular file" do
-    apply_manifest_on(agent, ensure_content_to_file_manifest(fifo_path, 'file'), :acceptable_exit_codes => [0]) do
-      assert_match(/Notice: .+\/myfifo\]\/ensure: defined content as '{/, stdout)
-      refute_match(/Warning: .+ Ensure set to :present but file type is fifo so no content will be synced/, stderr)
+    apply_manifest_on(agent, ensure_content_to_file_manifest(fifo_path, 'file'), :acceptable_exit_codes => [0]) do |result|
+      assert_match(/Notice: .+\/myfifo\]\/ensure: defined content as '{/, result.stdout)
+      refute_match(/Warning: .+ Ensure set to :present but file type is fifo so no content will be synced/, result.stderr)
     end
   end
 

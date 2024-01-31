@@ -306,26 +306,27 @@ PP
   with_puppet_running_on master, master_opts, testdir do
     step "Lookup string data, binding specified in metadata.json" do
       agents.each do |agent|
-        on(agent, puppet('agent', "-t"), :acceptable_exit_codes => [0, 2])
-        assert_match("#{env_data_implied_key} #{env_data_implied_value}", stdout)
-        assert_match("#{env_data_key} #{env_data_value}", stdout)
+        on(agent, puppet('agent', "-t"), :acceptable_exit_codes => [0, 2]) do |result|
+          assert_match("#{env_data_implied_key} #{env_data_implied_value}", result.stdout)
+          assert_match("#{env_data_key} #{env_data_value}", result.stdout)
 
-        assert_match("#{module_data_implied_key} #{module_data_implied_value}", stdout)
-        assert_match("#{module_data_key} #{module_data_value}", stdout)
+          assert_match("#{module_data_implied_key} #{module_data_implied_value}", result.stdout)
+          assert_match("#{module_data_key} #{module_data_value}", result.stdout)
 
-        assert_match("#{module_data_key} #{module_data_value_other}", stdout)
+          assert_match("#{module_data_key} #{module_data_value_other}", result.stdout)
 
-        assert_match("#{env_data_override_implied_key} #{env_data_override_implied_value}", stdout)
-        assert_match("#{env_data_override_key} #{env_data_override_value}", stdout)
+          assert_match("#{env_data_override_implied_key} #{env_data_override_implied_value}", result.stdout)
+          assert_match("#{env_data_override_key} #{env_data_override_value}", result.stdout)
 
-        assert_match("#{hiera_data_implied_key} #{hiera_data_implied_value}", stdout)
-        assert_match("#{hiera_data_key} #{hiera_data_value}", stdout)
+          assert_match("#{hiera_data_implied_key} #{hiera_data_implied_value}", result.stdout)
+          assert_match("#{hiera_data_key} #{hiera_data_value}", result.stdout)
 
-        assert_match("#{hash_name} {#{module_hash_key} => #{module_hash_value}, #{env_hash_key} => #{env_hash_value}, #{hiera_hash_key} => #{hiera_hash_value}}", stdout)
+          assert_match("#{hash_name} {#{module_hash_key} => #{module_hash_value}, #{env_hash_key} => #{env_hash_value}, #{hiera_hash_key} => #{hiera_hash_value}}", result.stdout)
 
-        assert_match("#{array_key} [#{hiera_array_value0}, #{hiera_array_value1}, #{env_array_value0}, #{env_array_value1}, #{module_array_value0}, #{module_array_value1}]", stdout)
+          assert_match("#{array_key} [#{hiera_array_value0}, #{hiera_array_value1}, #{env_array_value0}, #{env_array_value1}, #{module_array_value0}, #{module_array_value1}]", result.stdout)
 
-        assert_match("#{automatic_data_key} #{automatic_data_value}", stdout)
+          assert_match("#{automatic_data_key} #{automatic_data_value}", result.stdout)
+        end
       end
     end
   end

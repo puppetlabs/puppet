@@ -42,14 +42,8 @@ PP
           :environment => {:LANG => "en_US.UTF-8"}
         }
       )
-      on(
-        agent, "cat #{agent_file}", :environment => {:LANG => "en_US.UTF-8"}
-      ) do
-        assert_match(
-          /#{utf8chars}/,
-          stdout,
-          "result stdout did not contain \"#{utf8chars}\"",
-        )
+      on(agent, "cat #{agent_file}", :environment => {:LANG => "en_US.UTF-8"}) do |result|
+        assert_match(/#{utf8chars}/, result.stdout, "result stdout did not contain \"#{utf8chars}\"")
       end
     end
 
@@ -68,16 +62,8 @@ PP
           :environment => {:LANG => "en_US.UTF-8"}
         }
       )
-      on(
-        agent,
-        "cat #{agent_file}",
-        :environment => {:LANG => "en_US.UTF-8"}
-      ) do
-        assert_match(
-          /#{utf8chars}/,
-          stdout,
-          "result stdout did not contain \"#{utf8chars}\""
-        )
+      on(agent, "cat #{agent_file}", :environment => {:LANG => "en_US.UTF-8"}) do |result|
+        assert_match(/#{utf8chars}/, result.stdout, "result stdout did not contain \"#{utf8chars}\"")
       end
     end
   end

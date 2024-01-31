@@ -35,8 +35,8 @@ test_name 'should create a user with password and modify the password' do
     end
 
     step 'verify the password was set correctly' do
-      on(agent, puppet('resource', 'user', name), acceptable_exit_codes: 0) do
-        assert_match(/password\s*=>\s*'#{initial_password}'/, stdout, 'Password was not set correctly')
+      on(agent, puppet('resource', 'user', name), acceptable_exit_codes: 0) do |result|
+        assert_match(/password\s*=>\s*'#{initial_password}'/, result.stdout, 'Password was not set correctly')
       end
     end
 
@@ -50,8 +50,8 @@ test_name 'should create a user with password and modify the password' do
     end
 
     step 'verify the password was set correctly' do
-      on(agent, "puppet resource user #{name}", acceptable_exit_codes: 0) do
-        assert_match(/password\s*=>\s*'#{modified_password}'/, stdout, 'Password was not changed correctly')
+      on(agent, "puppet resource user #{name}", acceptable_exit_codes: 0) do |result|
+        assert_match(/password\s*=>\s*'#{modified_password}'/, result.stdout, 'Password was not changed correctly')
       end
     end
 

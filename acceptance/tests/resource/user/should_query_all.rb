@@ -14,8 +14,8 @@ agents.each do |agent|
   fail_test("No users found") unless users
 
   step "query with puppet"
-  on(agent, puppet_resource('user')) do
-    stdout.each_line do |line|
+  on(agent, puppet_resource('user')) do |result|
+    result.stdout.each_line do |line|
       name = ( line.match(/^user \{ '([^']+)'/) or next )[1]
 
       unless users.delete(name)

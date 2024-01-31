@@ -15,15 +15,15 @@ occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim 
 EOF
   create_remote_file(agent, testfile, lorem_ipsum*1024)
 
-  apply_manifest_on(agent, "exec {'cat #{testfile}': path => ['/bin', '/usr/bin', 'C:/cygwin32/bin', 'C:/cygwin64/bin', 'C:/cygwin/bin'], logoutput => true}") do
+  apply_manifest_on(agent, "exec {'cat #{testfile}': path => ['/bin', '/usr/bin', 'C:/cygwin32/bin', 'C:/cygwin64/bin', 'C:/cygwin/bin'], logoutput => true}") do |result|
     fail_test "didn't seem to run the command" unless
-      stdout.include? 'executed successfully' unless agent['locale'] == 'ja'
+      result.stdout.include? 'executed successfully' unless agent['locale'] == 'ja'
     fail_test "didn't print output correctly" unless
-      stdout.lines.select {|line| line =~ /\/returns:/}.count == 4097
+      result.stdout.lines.select {|line| line =~ /\/returns:/}.count == 4097
   end
 
-  apply_manifest_on(agent, "exec {'echo': path => ['/bin', '/usr/bin', 'C:/cygwin32/bin', 'C:/cygwin64/bin', 'C:/cygwin/bin'], logoutput => true}") do
+  apply_manifest_on(agent, "exec {'echo': path => ['/bin', '/usr/bin', 'C:/cygwin32/bin', 'C:/cygwin64/bin', 'C:/cygwin/bin'], logoutput => true}") do |result|
     fail_test "didn't seem to run the command" unless
-      stdout.include? 'executed successfully' unless agent['locale'] == 'ja'
+      result.stdout.include? 'executed successfully' unless agent['locale'] == 'ja'
   end
 end

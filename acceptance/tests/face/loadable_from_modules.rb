@@ -93,21 +93,21 @@ module Puppet::Helloworld
 end
 EOM
 
-  on(agent, puppet('help', '--config', puppetconf)) do
-    assert_match(/helloworld\s*Hello world face/, stdout, "Face missing from list of available subcommands")
+  on(agent, puppet('help', '--config', puppetconf)) do |result|
+    assert_match(/helloworld\s*Hello world face/, result.stdout, "Face missing from list of available subcommands")
   end
 
-  on(agent, puppet('help', 'helloworld', '--config', puppetconf)) do
-    assert_match(/This is the hello world face/, stdout, "Descripion help missing")
-    assert_match(/moduleprint\s*Prints hello world from a required module/, stdout, "help for moduleprint action missing")
-    assert_match(/actionprint\s*Prints hello world from an action/, stdout, "help for actionprint action missing")
+  on(agent, puppet('help', 'helloworld', '--config', puppetconf)) do |result|
+    assert_match(/This is the hello world face/, result.stdout, "Descripion help missing")
+    assert_match(/moduleprint\s*Prints hello world from a required module/, result.stdout, "help for moduleprint action missing")
+    assert_match(/actionprint\s*Prints hello world from an action/, result.stdout, "help for actionprint action missing")
   end
 
-  on(agent, puppet('helloworld', 'actionprint', '--config', puppetconf)) do
-    assert_match(/^Hello world from an action$/, stdout, "face did not print hello world")
+  on(agent, puppet('helloworld', 'actionprint', '--config', puppetconf)) do |result|
+    assert_match(/^Hello world from an action$/, result.stdout, "face did not print hello world")
   end
 
-  on(agent, puppet('helloworld', 'moduleprint', '--config', puppetconf)) do
-    assert_match(/^Hello world from a required module$/, stdout, "face did not load module to print hello world")
+  on(agent, puppet('helloworld', 'moduleprint', '--config', puppetconf)) do |result|
+    assert_match(/^Hello world from a required module$/, result.stdout, "face did not load module to print hello world")
   end
 end

@@ -100,9 +100,9 @@ master_opts = {
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
-    on(agent, puppet('agent', "-t"), :acceptable_exit_codes => [2])
-
-    assert_match("ntpserver global.ntp.puppetlabs.com", stdout)
-    assert_match("ntpserver production.ntp.puppetlabs.com", stdout)
+    on(agent, puppet('agent', "-t"), :acceptable_exit_codes => [2]) do |result|
+      assert_match('ntpserver global.ntp.puppetlabs.com', result.stdout)
+      assert_match('ntpserver production.ntp.puppetlabs.com', result.stdout)
+    end
   end
 end

@@ -21,19 +21,19 @@ end
 
 def missing_directory_for(agent, dir)
   agent_dir = get_test_file_path(agent, dir)
-  on agent, "rm -rf #{agent_dir}"
+  on(agent, "rm -rf #{agent_dir}")
   agent_dir
 end
 
 teardown do
   agents.each do |agent|
     step "ensure puppet resets it's user/group settings"
-    on agent, puppet('apply', '-e', '"notify { puppet_run: }"')
-    on agent, "find \"#{agent.puppet['vardir']}\" -user exist_u", {:acceptable_exit_codes => [0, 1]} do
-      assert_equal('',stdout)
+    on(agent, puppet('apply', '-e', '"notify { puppet_run: }"'))
+    on(agent, "find \"#{agent.puppet['vardir']}\" -user exist_u", {:acceptable_exit_codes => [0, 1]}) do |result|
+      assert_equal('', result.stdout)
     end
-    on agent, puppet('resource', 'user', 'exist_u', 'ensure=absent')
-    on agent, puppet('resource', 'group', 'exist_g', 'ensure=absent')
+    on(agent, puppet('resource', 'user', 'exist_u', 'ensure=absent'))
+    on(agent, puppet('resource', 'group', 'exist_g', 'ensure=absent'))
   end
 end
 
@@ -41,13 +41,13 @@ step "when the user and group are missing"
 agents.each do |agent|
   logdir = missing_directory_for(agent, 'log')
 
-  on agent, puppet('apply',
+  on(agent, puppet('apply',
                    '-e', '"notify { puppet_run: }"',
                    '--logdir', logdir,
                    '--user', 'missinguser',
-                   '--group', 'missinggroup') do
+                   '--group', 'missinggroup')) do |result|
 
-    assert_match(/puppet_run/, stdout)
+    assert_match(/puppet_run/, result.stdout)
     assert_ownership(agent, logdir, root_user(agent), root_group(agent))
   end
 end
@@ -56,16 +56,16 @@ step "when the user and group exist"
 agents.each do |agent|
   logdir = missing_directory_for(agent, 'log')
 
-  on agent, puppet('resource', 'user', 'exist_u', 'ensure=present')
-  on agent, puppet('resource', 'group', 'exist_g', 'ensure=present')
+  on(agent, puppet('resource', 'user', 'exist_u', 'ensure=present'))
+  on(agent, puppet('resource', 'group', 'exist_g', 'ensure=present'))
 
-  on agent, puppet('apply',
+  on(agent, puppet('apply',
                    '-e', '"notify { puppet_run: }"',
                    '--logdir', logdir,
                    '--user', 'exist_u',
-                   '--group', 'exist_g') do
+                   '--group', 'exist_g')) do |result|
 
-    assert_match(/puppet_run/, stdout)
+    assert_match(/puppet_run/, result.stdout)
     assert_ownership(agent, logdir, 'exist_u', 'exist_g')
   end
 end

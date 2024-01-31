@@ -65,8 +65,9 @@ PP
     end
 
     step 'Invoke class with undef param and verify hiera value was applied' do
-      on(agent, puppet('apply', "-e 'class {\"test\": my_param => undef }'", "--modulepath=#{testdir}/environments/production/modules", "--hiera_config=#{testdir}/hiera.yaml" ), :acceptable_exit_codes => [0,2])
-      assert_match("hiera lookup value", stdout)
+      on(agent, puppet('apply', "-e 'class {\"test\": my_param => undef }'", "--modulepath=#{testdir}/environments/production/modules", "--hiera_config=#{testdir}/hiera.yaml" ), :acceptable_exit_codes => [0,2]) do |result|
+        assert_match('hiera lookup value', result.stdout)
+      end
     end
 
   end

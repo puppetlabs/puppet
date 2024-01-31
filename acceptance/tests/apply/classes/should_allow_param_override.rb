@@ -16,8 +16,8 @@ include parent
 include child
 }
 
-apply_manifest_on(agents, manifest) do
+apply_manifest_on(agents, manifest) do |result|
     fail_test "parameter override didn't work" unless
-        stdout.include? "defined 'message' as 'child'"
+        result.stdout.include? "defined 'message' as 'child'"
 end
 

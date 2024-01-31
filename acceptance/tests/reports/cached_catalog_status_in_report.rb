@@ -22,8 +22,8 @@ test_name "PUP-5867: The report specifies whether a cached catalog was used, and
 
         step "Run again and ensure report indicates that the cached catalog was not used" do
           on(agent, puppet("agent", "--onetime", "--no-daemonize"), :acceptable_exit_codes => [0, 2])
-          on(master, "cat #{master_reportdir}/#{agent.node_name}/*") do
-            assert_match(/cached_catalog_status: not_used/, stdout, "expected to find 'cached_catalog_status: not_used' in the report")
+          on(master, "cat #{master_reportdir}/#{agent.node_name}/*") do |result|
+            assert_match(/cached_catalog_status: not_used/, result.stdout, "expected to find 'cached_catalog_status: not_used' in the report")
           end
           remove_reports_on_master(master_reportdir, agent.node_name)
         end
@@ -31,16 +31,16 @@ test_name "PUP-5867: The report specifies whether a cached catalog was used, and
 
       step "Run with --use_cached_catalog and ensure report indicates cached catalog was explicitly requested" do
         on(agent, puppet("agent", "--onetime", "--no-daemonize", "--use_cached_catalog"), :acceptable_exit_codes => [0, 2])
-        on(master, "cat #{master_reportdir}/#{agent.node_name}/*") do
-          assert_match(/cached_catalog_status: explicitly_requested/, stdout, "expected to find 'cached_catalog_status: explicitly_requested' in the report")
+        on(master, "cat #{master_reportdir}/#{agent.node_name}/*") do |result|
+          assert_match(/cached_catalog_status: explicitly_requested/, result.stdout, "expected to find 'cached_catalog_status: explicitly_requested' in the report")
         end
         remove_reports_on_master(master_reportdir, agent.node_name)
       end
 
       step "On a run which fails to retrieve a new catalog, ensure report indicates cached catalog was used on failure" do
         on(agent, puppet("agent", "--onetime", "--no-daemonize", "--report_server #{master}", "--server nonexist"), :acceptable_exit_codes => [0, 2])
-        on(master, "cat #{master_reportdir}/#{agent.node_name}/*") do
-          assert_match(/cached_catalog_status: on_failure/, stdout, "expected to find 'cached_catalog_status: on_failure' in the report")
+        on(master, "cat #{master_reportdir}/#{agent.node_name}/*") do |result|
+          assert_match(/cached_catalog_status: on_failure/, result.stdout, "expected to find 'cached_catalog_status: on_failure' in the report")
         end
       end
     end

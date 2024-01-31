@@ -23,18 +23,18 @@ test_name "ASCII Diff Output of Content Attribute" do
       step 'Create ASCII file using content' do
         manifest = "file { '#{target}': content => '#{initial_text}', ensure => present , checksum => 'sha256'}"
 
-        on(agent, puppet('apply'), :stdin => manifest) do
-          assert_match(/ensure: defined content as '{sha256}#{initial_text_sha_checksum}'/, stdout, "#{agent}: checksum of ASCII file not matched")
+        on(agent, puppet('apply'), :stdin => manifest) do |result|
+          assert_match(/ensure: defined content as '{sha256}#{initial_text_sha_checksum}'/, result.stdout, "#{agent}: checksum of ASCII file not matched")
         end
       end
 
       step 'Update existing ASCII file content' do
         manifest = "file { '#{target}': content => '#{updated_text}', ensure => present , checksum => 'sha256'}"
 
-        on(agent, puppet('apply','--show_diff'), :stdin => manifest) do
-          assert_match(/content: content changed '{sha256}#{initial_text_sha_checksum}' to '{sha256}#{updated_text_sha_checksum}'/, stdout, "#{agent}: checksum of ASCII file not matched after update")
-          assert_match(/^- ?#{initial_text}$/, stdout, "#{agent}: initial text not found in diff")
-          assert_match(/^\+ ?#{updated_text}$/, stdout, "#{agent}: updated text not found in diff")
+        on(agent, puppet('apply','--show_diff'), :stdin => manifest) do |result|
+          assert_match(/content: content changed '{sha256}#{initial_text_sha_checksum}' to '{sha256}#{updated_text_sha_checksum}'/, result.stdout, "#{agent}: checksum of ASCII file not matched after update")
+          assert_match(/^- ?#{initial_text}$/, result.stdout, "#{agent}: initial text not found in diff")
+          assert_match(/^\+ ?#{updated_text}$/, result.stdout, "#{agent}: updated text not found in diff")
         end
       end
     end

@@ -129,8 +129,8 @@ MANIFEST
 
       step "Run agent again using --use_cached_catalog and ensure content from the first code_id is used"
       on(agent, puppet("agent", "-t", "--use_cached_catalog"), :acceptable_exit_codes => [0,2])
-      on(agent, "cat #{agent_test_file_path}") do
-        assert_equal('code_version_1', stdout)
+      on(agent, "cat #{agent_test_file_path}") do |result|
+        assert_equal('code_version_1', result.stdout)
       end
     end
   end

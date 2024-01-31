@@ -30,9 +30,9 @@ manifest = %Q{
   step "apply the manifest"
   apply_manifest_on(agent, manifest)
   step "verify the file content"
-  on(agent, "cat #{out}") do
-    fail_test "the file was not touched" if stdout.include? "hello world!"
-    fail_test "the file was not updated" unless stdout.include? "hello new world"
+  on(agent, "cat #{out}") do |result|
+    fail_test "the file was not touched" if result.stdout.include? "hello world!"
+    fail_test "the file was not updated" unless result.stdout.include? "hello new world"
   end
 
   on(agent, "rm -rf #{dir}")
