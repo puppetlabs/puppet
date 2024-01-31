@@ -304,3 +304,6 @@ Style/HashConversion:
 # not #each_value
 Style/HashEachMethods:
   Enabled: false
+
+Style/HashLikeCase:
+  Enabled: true
