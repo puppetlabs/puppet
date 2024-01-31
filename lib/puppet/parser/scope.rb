@@ -496,7 +496,7 @@ class Puppet::Parser::Scope
     # If name has '::' in it, it is resolved as a qualified variable
     unless (idx = name.index('::')).nil?
       # Always drop leading '::' if present as that is how the values are keyed.
-      return lookup_qualified_variable(idx == 0 ? name[2..-1] : name, options)
+      return lookup_qualified_variable(idx == 0 ? name[2..] : name, options)
     end
 
     # At this point, search is for a non qualified (simple) name
@@ -609,7 +609,7 @@ class Puppet::Parser::Scope
     # not found - search inherited scope for class
     leaf_index = fqn.rindex('::')
     unless leaf_index.nil?
-      leaf_name = fqn[(leaf_index + 2)..-1]
+      leaf_name = fqn[(leaf_index + 2)..]
       class_name = fqn[0, leaf_index]
       begin
         qs = qualified_scope(class_name)
@@ -898,9 +898,9 @@ class Puppet::Parser::Scope
     # check module paths first since they may be in the environment (i.e. they are longer)
     module_path = environment.full_modulepath.detect { |m_path| path.start_with?(m_path) }
     if module_path
-      path = "<module>" + path[module_path.length..-1]
+      path = "<module>" + path[module_path.length..]
     elsif env_path && path && path.start_with?(env_path)
-      path = "<env>" + path[env_path.length..-1]
+      path = "<env>" + path[env_path.length..]
     end
     # Make the output appear as "Scope(path, line)"
     "Scope(#{[path, detail[1]].join(', ')})"

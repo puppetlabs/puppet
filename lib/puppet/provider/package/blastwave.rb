@@ -41,13 +41,13 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
 
     output = Puppet::Util.withenv(:PAGER => "/usr/bin/cat") { pkgget command }
 
-    list = output.split("\n").collect do |line|
+    list = output.split("\n").filter_map do |line|
       next if line =~ /^#/
       next if line =~ /^WARNING/
       next if line =~ /localrev\s+remoterev/
 
       blastsplit(line)
-    end.compact
+    end
 
     if hash[:justme]
       return list[0]

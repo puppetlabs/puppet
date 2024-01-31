@@ -111,7 +111,7 @@ class LookupAdapter < DataAdapter
       end
     end
     begin
-      result = lookup_invocation.scope.call_function(NEW, [convert_to[0], result, *convert_to[1..-1]])
+      result = lookup_invocation.scope.call_function(NEW, [convert_to[0], result, *convert_to[1..]])
       # TRANSLATORS 'lookup_options', 'convert_to' and args_string variable should not be translated,
       args_string = Puppet::Pops::Types::StringConverter.singleton.convert(convert_to)
       lookup_invocation.report_text { _("Applying convert_to lookup_option with arguments %{args}") % { args: args_string } }

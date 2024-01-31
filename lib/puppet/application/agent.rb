@@ -410,6 +410,7 @@ class Puppet::Application::Agent < Puppet::Application
     end
   end
 
+  # rubocop:disable Lint/RedundantStringCoercion
   def fingerprint
     Puppet::Util::Log.newdestination(:console)
     cert_provider = Puppet::X509::CertProvider.new
@@ -429,6 +430,7 @@ class Puppet::Application::Agent < Puppet::Application
     Puppet.log_exception(e, _("Failed to generate fingerprint: %{message}") % { message: e.message })
     exit(1)
   end
+  # rubocop:enable Lint/RedundantStringCoercion
 
   def onetime(daemon)
     begin

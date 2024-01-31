@@ -45,7 +45,7 @@ Puppet::Parser::Functions.newfunction(
   This statement produces a notice of `value is : 42`."
 ) do |args|
   fmt = args[0]
-  args = args[1..-1]
+  args = args[1..]
   begin
     return sprintf(fmt, *args)
   rescue KeyError => e

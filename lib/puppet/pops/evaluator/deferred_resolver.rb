@@ -161,7 +161,7 @@ class DeferredResolver
     mapped_arguments = map_arguments(f.arguments)
     # if name starts with $ then this is a call to dig
     if func_name[0] == DOLLAR
-      var_name = func_name[1..-1]
+      var_name = func_name[1..]
       func_name = DIG
       mapped_arguments.insert(0, @scope[var_name])
     end

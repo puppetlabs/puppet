@@ -458,7 +458,7 @@ class Lexer2
         before = scn.pos
         value = scn.scan(PATTERN_DOLLAR_VAR)
         if value
-          emit_completed([:VARIABLE, value[1..-1].freeze, scn.pos - before], before)
+          emit_completed([:VARIABLE, value[1..].freeze, scn.pos - before], before)
         else
           # consume the $ and let higher layer complain about the error instead of getting a syntax error
           emit(TOKEN_VARIABLE_EMPTY, before)

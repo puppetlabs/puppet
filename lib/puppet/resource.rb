@@ -453,10 +453,12 @@ class Puppet::Resource
       attr.unshift(:ensure)
     end
 
+    # rubocop:disable Lint/FormatParameterMismatch
     attributes = attr.collect { |k|
       v = parameters[k]
       "    %-#{attr_max}s: %s\n" % [k, Puppet::Parameter.format_value_for_display(v)]
     }.join
+    # rubocop:enable Lint/FormatParameterMismatch
 
     "  %s:\n%s" % [self.title, attributes]
   end
@@ -488,10 +490,12 @@ class Puppet::Resource
       attr.unshift(:ensure)
     end
 
+    # rubocop:disable Lint/FormatParameterMismatch
     attributes = attr.collect { |k|
       v = parameters[k]
       "  %-#{attr_max}s => %s,\n" % [k, Puppet::Parameter.format_value_for_display(v)]
     }.join
+    # rubocop:enable Lint/FormatParameterMismatch
 
     escaped = self.title.gsub(/'/, "\\\\'")
     "%s { '%s':\n%s}" % [self.type.to_s.downcase, escaped, attributes]
@@ -643,7 +647,7 @@ class Puppet::Resource
       type.title_patterns.each do |regexp, symbols_and_lambdas|
         captures = regexp.match(title.to_s)
         if captures
-          symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda, capture|
+          symbols_and_lambdas.zip(captures[1..]).each do |symbol_and_lambda, capture|
             symbol, proc = symbol_and_lambda
             # Many types pass "identity" as the proc; we might as well give
             # them a shortcut to delivering that without the extra cost.

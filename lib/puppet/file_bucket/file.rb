@@ -13,7 +13,7 @@ class Puppet::FileBucket::File
   extend Puppet::Indirector
   indirects :file_bucket_file, :terminus_class => :selector
 
-  attr :bucket_path
+  attr_reader :bucket_path
 
   def self.supported_formats
     [:binary]

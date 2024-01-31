@@ -42,7 +42,7 @@ class Puppet::Util::AtFork::Solaris
     libhandle = Fiddle::Handle.new(library)
 
     functions.each do |f|
-      define_method f[0], Fiddle::Function.new(libhandle[f[0].to_s], f[2..-1], f[1]).method(:call).to_proc
+      define_method f[0], Fiddle::Function.new(libhandle[f[0].to_s], f[2..], f[1]).method(:call).to_proc
     end
   end
 

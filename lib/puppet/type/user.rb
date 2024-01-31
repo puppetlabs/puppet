@@ -434,7 +434,7 @@ module Puppet
         run.
 
         Note that on Windows, this manages creation/deletion of the user profile instead of the
-        home directory. The user profile is stored in the `C:\Users\<username>` directory."
+        home directory. The user profile is stored in the `C:\\Users\\<username>` directory."
 
       defaultto false
 

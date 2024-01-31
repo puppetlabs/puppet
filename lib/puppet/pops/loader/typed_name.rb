@@ -21,7 +21,7 @@ class TypedName
     parts = name.to_s.split(DOUBLE_COLON)
     if parts[0].empty?
       parts.shift
-      @name = name[2..-1]
+      @name = name[2..]
     else
       @name = name
     end

@@ -404,7 +404,7 @@ class TypeParser
         if param_start.nil?
           type = type_str
         else
-          tps = interpret_any(@parser.parse_string(type_str[param_start..-1]).model, context)
+          tps = interpret_any(@parser.parse_string(type_str[param_start..]).model, context)
           raise_invalid_parameters_error(type.to_s, '1', tps.size) unless tps.size == 1
           type = type_str[0..param_start - 1]
           parameters = [type] + tps

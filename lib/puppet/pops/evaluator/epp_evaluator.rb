@@ -86,7 +86,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
     filtered_args = {}
     template_args.each_pair do |k, v|
       if k =~ /::/
-        k = k[2..-1] if k.start_with?('::')
+        k = k[2..] if k.start_with?('::')
         scope[k] = v
       else
         filtered_args[k] = v

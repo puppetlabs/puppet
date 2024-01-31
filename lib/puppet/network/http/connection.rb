@@ -266,7 +266,7 @@ class Puppet::Network::HTTP::Connection
 
   def normalize_path(path)
     if path[0] == '/'
-      path[1..-1]
+      path[1..]
     else
       path
     end

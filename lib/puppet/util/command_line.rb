@@ -56,7 +56,7 @@ module Puppet
         if subcommand_name.nil?
           @argv
         else
-          @argv[1..-1]
+          @argv[1..]
         end
       end
 

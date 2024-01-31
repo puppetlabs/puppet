@@ -9,7 +9,7 @@ module Puppet
         @name = name.to_sym
       end
 
-      attr :name
+      attr_reader :name
 
       def self.[](name)
         @run_modes ||= {}

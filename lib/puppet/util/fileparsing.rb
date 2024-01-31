@@ -105,7 +105,7 @@ module Puppet::Util::FileParsing
     def join(details)
       joinchar = self.joiner
 
-      fields.collect { |field|
+      fields.filter_map { |field|
         # If the field is marked absent, use the appropriate replacement
         if details[field] == :absent or details[field] == [:absent] or details[field].nil?
           if self.optional.include?(field)
@@ -116,7 +116,7 @@ module Puppet::Util::FileParsing
         else
           details[field].to_s
         end
-      }.compact.join(joinchar)
+      }.join(joinchar)
     end
 
     # Customize this so we can do a bit of validation.
