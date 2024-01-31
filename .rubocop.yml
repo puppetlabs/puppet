@@ -319,3 +319,6 @@ Style/IdenticalConditionalBranches:
 
 Style/IfInsideElse:
   Enabled: true
+
+Style/IfUnlessModifierOfIfUnless:
+  Enabled: true
