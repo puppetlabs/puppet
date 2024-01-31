@@ -298,3 +298,9 @@ Style/HashAsLastArrayItem:
 
 Style/HashConversion:
   Enabled: true
+
+# HashEachMethods does not guarantee the receiver is a Hash, so
+# this will not work since numerous puppet classes define #value
+# not #each_value
+Style/HashEachMethods:
+  Enabled: false
