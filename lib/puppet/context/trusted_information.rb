@@ -54,9 +54,9 @@ class Puppet::Context::TrustedInformation
       if certificate.nil?
         Puppet.info(_('TrustedInformation expected a certificate, but none was given.'))
       else
-        extensions = Hash[certificate.custom_extensions.collect do |ext|
+        extensions = certificate.custom_extensions.collect do |ext|
           [ext['oid'].freeze, ext['value'].freeze]
-        end]
+        end.to_h
       end
       new('remote', node_name, extensions, external)
     else

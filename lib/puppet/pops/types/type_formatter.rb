@@ -311,7 +311,7 @@ class TypeFormatter
 
   # @api private
   def string_PStructType(t)
-    append_array('Struct', t.elements.empty?) { append_hash(Hash[t.elements.map { |e| struct_element_pair(e) }]) }
+    append_array('Struct', t.elements.empty?) { append_hash(t.elements.map { |e| struct_element_pair(e) }.to_h) }
   end
 
   # @api private

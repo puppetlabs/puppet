@@ -306,11 +306,10 @@ class Puppet::Resource::Type
     # recreated as a Sensitive in order to perform correct type checking.
     sensitives = Set.new(resource.sensitive_parameters)
     validate_resource_hash(resource,
-                           Hash[resource.parameters.map do |name, value|
+                           resource.parameters.map do |name, value|
                              value_to_validate = sensitives.include?(name) ? Puppet::Pops::Types::PSensitiveType::Sensitive.new(value.value) : value.value
                              [name.to_s, value_to_validate]
-                           end
-                         ])
+                           end.to_h)
   end
 
   # Check whether a given argument is valid.

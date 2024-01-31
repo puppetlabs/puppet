@@ -295,3 +295,6 @@ Style/GlobalVars:
 
 Style/HashAsLastArrayItem:
   Enabled: true
+
+Style/HashConversion:
+  Enabled: true

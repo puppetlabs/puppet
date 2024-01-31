@@ -152,7 +152,7 @@ module Puppet
           [hash_key.to_s.strip.to_sym, hash_value.to_s]
         end
 
-        Hash[munged_value]
+        munged_value.to_h
       end
     end
   end

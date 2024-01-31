@@ -108,7 +108,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       @users = []
       Puppet::FileSystem.each_line(passwd_file) do |line|
         user = line.chomp.split(':')
-        @users << Hash[passwd_keys.zip(user)]
+        @users << passwd_keys.zip(user).to_h
       end
     end
     @users.find { |param| param[key] == value } || false

@@ -75,7 +75,7 @@ module Puppet::Util::Windows::COM
         const_set(:IID, iid)
 
         vtable = Class.new(FFI::Struct) do
-          vtable_hash = Hash[(ifaces.map { |iface| iface::VTBL::SPEC.to_a } << spec.to_a).flatten(1)]
+          vtable_hash = (ifaces.map { |iface| iface::VTBL::SPEC.to_a } << spec.to_a).flatten(1).to_h
           const_set(:SPEC, vtable_hash)
 
           layout(

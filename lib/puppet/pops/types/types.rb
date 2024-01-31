@@ -2805,7 +2805,7 @@ class PHashType < PCollectionType
       end
 
       def from_tuples(tuple_array)
-        Hash[tuple_array]
+        tuple_array.to_h
       end
 
       def from_tree(tuple_array, build_option = nil)

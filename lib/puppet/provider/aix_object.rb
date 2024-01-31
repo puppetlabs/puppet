@@ -258,11 +258,11 @@ class Puppet::Provider::AixObject < Puppet::Provider
 
         values = parse_colon_separated_list(values_line.chomp)
 
-        attributes_hash = Hash[attributes.zip(values)]
+        attributes_hash = attributes.zip(values).to_h
 
         object_name = attributes_hash.delete(:name)
 
-        Hash[[[:name, object_name.to_s], [:attributes, attributes_hash]]]
+        [[:name, object_name.to_s], [:attributes, attributes_hash]].to_h
       end
 
       objects

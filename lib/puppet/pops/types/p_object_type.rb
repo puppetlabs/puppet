@@ -734,7 +734,7 @@ class PObjectType < PMetaType
       attr_specs = {}
     else
       # attr_specs might be frozen
-      attr_specs = Hash[attr_specs]
+      attr_specs = attr_specs.to_h
     end
     unless constants.nil? || constants.empty?
       constants.each do |key, value|
@@ -755,7 +755,7 @@ class PObjectType < PMetaType
     end
 
     unless attr_specs.empty?
-      @attributes = Hash[attr_specs.map do |key, attr_spec|
+      @attributes = attr_specs.map do |key, attr_spec|
         unless attr_spec.is_a?(Hash)
           attr_type = TypeAsserter.assert_instance_of(nil, PTypeType::DEFAULT, attr_spec) { "attribute #{label}[#{key}]" }
           attr_spec = { KEY_TYPE => attr_type }
@@ -763,19 +763,19 @@ class PObjectType < PMetaType
         end
         attr = PAttribute.new(key, self, attr_spec)
         [attr.name, attr.assert_override(parent_members)]
-      end].freeze
+      end.to_h.freeze
     end
 
     func_specs = init_hash[KEY_FUNCTIONS]
     unless func_specs.nil? || func_specs.empty?
-      @functions = Hash[func_specs.map do |key, func_spec|
+      @functions = func_specs.map do |key, func_spec|
         func_spec = { KEY_TYPE => TypeAsserter.assert_instance_of(nil, TYPE_FUNCTION_TYPE, func_spec) { "function #{label}[#{key}]" } } unless func_spec.is_a?(Hash)
         func = PFunction.new(key, self, func_spec)
         name = func.name
         raise Puppet::ParseError, _("%{label} conflicts with attribute with the same name") % { label: func.label } if @attributes.include?(name)
 
         [name, func.assert_override(parent_members)]
-      end].freeze
+      end.to_h.freeze
     end
 
     @equality_include_type = init_hash[KEY_EQUALITY_INCLUDE_TYPE]
@@ -901,7 +901,7 @@ class PObjectType < PMetaType
       tc = TypeCalculator.singleton
       constants, others = @attributes.partition do |_, a|
         a.kind == ATTRIBUTE_KIND_CONSTANT && a.type == tc.infer(a.value).generalize
-      end.map { |ha| Hash[ha] }
+      end.map { |ha| ha.to_h }
 
       result[KEY_ATTRIBUTES] = compressed_members_hash(others) unless others.empty?
       unless constants.empty?
@@ -1081,7 +1081,7 @@ class PObjectType < PMetaType
       # All attributes except constants participate
       collector.merge!(@attributes.reject { |_, attr| attr.kind == ATTRIBUTE_KIND_CONSTANT })
     else
-      collector.merge!(Hash[@equality.map { |attr_name| [attr_name, @attributes[attr_name]] }])
+      collector.merge!(@equality.map { |attr_name| [attr_name, @attributes[attr_name]] }.to_h)
     end
     nil
   end
@@ -1098,14 +1098,14 @@ class PObjectType < PMetaType
   private
 
   def compressed_members_hash(features)
-    Hash[features.values.map do |feature|
+    features.values.map do |feature|
       fh = feature._pcore_init_hash
       if fh.size == 1
         type = fh[KEY_TYPE]
         fh = type unless type.nil?
       end
       [feature.name, fh]
-    end]
+    end.to_h
   end
 
   # @return [PObjectType] the topmost parent who's #equality_attributes include the given _attr_

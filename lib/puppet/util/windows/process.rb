@@ -326,7 +326,7 @@ module Puppet::Util::Windows::Process
                      end
                    end
                    .map { |env_pair| env_pair.split('=', 2) }
-    Hash[pairs]
+    pairs.to_h
   ensure
     if env_ptr && !env_ptr.null?
       if FreeEnvironmentStringsW(env_ptr) == FFI::WIN32_FALSE

@@ -204,7 +204,7 @@ class StringConverter
           end
         end
       end
-      Hash[format_map]
+      format_map.to_h
     end
 
     # Ranks type on specificity where it matters

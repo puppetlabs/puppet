@@ -224,7 +224,7 @@ class Puppet::SSL::SSLProvider
         end
       end
       ssl_context.crls.each do |crl|
-        oid_values = Hash[crl.extensions.map { |ext| [ext.oid, ext.value] }]
+        oid_values = crl.extensions.map { |ext| [ext.oid, ext.value] }.to_h
         crlNumber = oid_values['crlNumber'] || 'unknown'
         authKeyId = (oid_values['authorityKeyIdentifier'] || 'unknown').chomp
         Puppet.debug("Using CRL '#{crl.issuer.to_utf8}' authorityKeyIdentifier '#{authKeyId}' crlNumber '#{crlNumber}'")

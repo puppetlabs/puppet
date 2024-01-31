@@ -96,14 +96,14 @@ Puppet::Functions.create_function(:filter) do
   def filter_Hash_1(hash)
     result = hash.select { |x, y| yield([x, y]) }
     # Ruby 1.8.7 returns Array
-    result = Hash[result] unless result.is_a? Hash
+    result = result.to_h unless result.is_a? Hash
     result
   end
 
   def filter_Hash_2(hash)
     result = hash.select { |x, y| yield(x, y) }
     # Ruby 1.8.7 returns Array
-    result = Hash[result] unless result.is_a? Hash
+    result = result.to_h unless result.is_a? Hash
     result
   end
 

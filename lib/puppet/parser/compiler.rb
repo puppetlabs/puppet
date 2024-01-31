@@ -191,7 +191,7 @@ class Puppet::Parser::Compiler
       # The results from Hash#partition are arrays of pairs rather than hashes,
       # so we have to convert to the forms evaluate_classes expects (Hash, and
       # Array of class names)
-      classes_with_params = Hash[classes_with_params]
+      classes_with_params = classes_with_params.to_h
       classes_without_params.map!(&:first)
     else
       classes_with_params = {}
