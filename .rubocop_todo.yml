@@ -519,11 +519,6 @@ Style/ImplicitRuntimeError:
   Enabled: false
 
 # This cop supports unsafe auto-correction (--auto-correct-all).
-Style/InfiniteLoop:
-  Exclude:
-    - 'lib/puppet/util/posix.rb'
-
-# This cop supports unsafe auto-correction (--auto-correct-all).
 # Configuration parameters: InverseMethods, InverseBlocks.
 Style/InverseMethods:
   Exclude:
