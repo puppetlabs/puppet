@@ -509,11 +509,6 @@ Style/IfUnlessModifier:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/IfUnlessModifierOfIfUnless:
-  Exclude:
-    - 'lib/puppet/util/command_line/trollop.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/IfWithSemicolon:
   Exclude:
     - 'lib/puppet/pops/parser/evaluating_parser.rb'
