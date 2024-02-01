@@ -423,17 +423,6 @@ Style/DoubleNegation:
     - 'lib/puppet/util/windows/adsi.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/EmptyCaseCondition:
-  Exclude:
-    - 'lib/puppet/pops/serialization/serializer.rb'
-    - 'lib/puppet/pops/types/type_calculator.rb'
-    - 'lib/puppet/settings.rb'
-    - 'lib/puppet/settings/duration_setting.rb'
-    - 'lib/puppet/settings/priority_setting.rb'
-    - 'lib/puppet/settings/ttl_setting.rb'
-    - 'lib/puppet/type.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: empty, nil, both
 Style/EmptyElse:

@@ -105,32 +105,31 @@ module Serialization
     # @param [Object] value the value to write
     # @api private
     def write_tabulated_first_time(value)
-      case
-      when value.instance_of?(Symbol),
-          value.instance_of?(Regexp),
-          value.instance_of?(SemanticPuppet::Version),
-          value.instance_of?(SemanticPuppet::VersionRange),
-          value.instance_of?(Time::Timestamp),
-          value.instance_of?(Time::Timespan),
-          value.instance_of?(Types::PBinaryType::Binary),
-          value.is_a?(URI)
+      if value.instance_of?(Symbol) ||
+         value.instance_of?(Regexp) ||
+         value.instance_of?(SemanticPuppet::Version) ||
+         value.instance_of?(SemanticPuppet::VersionRange) ||
+         value.instance_of?(Time::Timestamp) ||
+         value.instance_of?(Time::Timespan) ||
+         value.instance_of?(Types::PBinaryType::Binary) ||
+         value.is_a?(URI)
         push_written(value)
         @writer.write(value)
-      when value.instance_of?(Array)
+      elsif value.instance_of?(Array)
         push_written(value)
         start_array(value.size)
         value.each { |elem| write(elem) }
-      when value.instance_of?(Hash)
+      elsif value.instance_of?(Hash)
         push_written(value)
         start_map(value.size)
         value.each_pair { |key, val| write(key); write(val) }
-      when value.instance_of?(Types::PSensitiveType::Sensitive)
+      elsif value.instance_of?(Types::PSensitiveType::Sensitive)
         start_sensitive
         write(value.unwrap)
-      when value.instance_of?(Types::PTypeReferenceType)
+      elsif value.instance_of?(Types::PTypeReferenceType)
         push_written(value)
         @writer.write(value)
-      when value.is_a?(Types::PuppetObject)
+      elsif value.is_a?(Types::PuppetObject)
         value._pcore_type.write(value, self)
       else
         impl_class = value.class

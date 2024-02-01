@@ -34,18 +34,17 @@ class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
 
   # Convert the value to Numeric, parsing numeric string with units if necessary.
   def self.munge(value, param_name)
-    case
-    when value.is_a?(Numeric)
+    if value.is_a?(Numeric)
       if value < 0
         raise Puppet::Settings::ValidationError, _("Invalid negative 'time to live' %{value} - did you mean 'unlimited'?") % { value: value.inspect }
       end
 
       value
 
-    when value == 'unlimited'
+    elsif value == 'unlimited'
       Float::INFINITY
 
-    when (value.is_a?(String) and value =~ FORMAT)
+    elsif (value.is_a?(String) and value =~ FORMAT)
       $1.to_i * UNITMAP[$2 || 's']
     else
       raise Puppet::Settings::ValidationError, _("Invalid 'time to live' format '%{value}' for parameter: %{param_name}") % { value: value.inspect, param_name: param_name }
