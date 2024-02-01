@@ -358,12 +358,6 @@ Style/ClassAndModuleChildren:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: IgnoredMethods.
-# IgnoredMethods: ==, equal?, eql?
-Style/ClassEqualityComparison:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/ClassMethods:
   Exclude:
     - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
