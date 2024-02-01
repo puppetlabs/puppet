@@ -642,7 +642,7 @@ module Puppet::Functions
             ruby_file_location: rb_location
           }
       end
-      unless result.body.kind_of?(Puppet::Pops::Model::TypeAlias)
+      unless result.body.is_a?(Puppet::Pops::Model::TypeAlias)
         rb_location = rb_location.gsub(/:in.*$/, '')
         raise ArgumentError, _("Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'.\n" +
         "Called from <%{ruby_file_location}>") % {

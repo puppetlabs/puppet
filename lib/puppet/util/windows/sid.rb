@@ -159,7 +159,7 @@ module Puppet::Util::Windows
 
     # Convert a SID pointer to a SID string, e.g. "S-1-5-32-544".
     def sid_ptr_to_string(psid)
-      if !psid.kind_of?(FFI::Pointer) || IsValidSid(psid) == FFI::WIN32_FALSE
+      if !psid.is_a?(FFI::Pointer) || IsValidSid(psid) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new(_("Invalid SID"))
       end
 
@@ -220,7 +220,7 @@ module Puppet::Util::Windows
 
     def get_length_sid(sid_ptr)
       # MSDN states IsValidSid should be called on pointer first
-      if !sid_ptr.kind_of?(FFI::Pointer) || IsValidSid(sid_ptr) == FFI::WIN32_FALSE
+      if !sid_ptr.is_a?(FFI::Pointer) || IsValidSid(sid_ptr) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new(_("Invalid SID"))
       end
 

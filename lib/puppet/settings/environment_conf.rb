@@ -100,7 +100,7 @@ class Puppet::Settings::EnvironmentConf
   def modulepath
     default_modulepath = [File.join(@path_to_env, "modules")] + @global_module_path
     get_setting(:modulepath, default_modulepath) do |modulepath|
-      path = modulepath.kind_of?(String) ?
+      path = modulepath.is_a?(String) ?
         modulepath.split(File::PATH_SEPARATOR) :
         modulepath
       path.map { |p| expand_glob(absolute(p)) }.flatten.join(File::PATH_SEPARATOR)

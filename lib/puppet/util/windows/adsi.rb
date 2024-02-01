@@ -83,7 +83,7 @@ module Puppet::Util::Windows::ADSI
     # account name with or without domain prefix
     # @api private
     def sid_uri_safe(sid)
-      return sid_uri(sid) if sid.kind_of?(Puppet::Util::Windows::SID::Principal)
+      return sid_uri(sid) if sid.is_a?(Puppet::Util::Windows::SID::Principal)
 
       begin
         sid = Puppet::Util::Windows::SID.name_to_principal(sid)
@@ -97,7 +97,7 @@ module Puppet::Util::Windows::ADSI
     # used for IAdsGroup::Add / IAdsGroup::Remove.  These URIs are not useable
     # to resolve an account with WIN32OLE.connect
     def sid_uri(sid)
-      raise Puppet::Error.new(_("Must use a valid SID::Principal")) if !sid.kind_of?(Puppet::Util::Windows::SID::Principal)
+      raise Puppet::Error.new(_("Must use a valid SID::Principal")) if !sid.is_a?(Puppet::Util::Windows::SID::Principal)
 
       "WinNT://#{sid.sid}"
     end

@@ -127,7 +127,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
   end
 
   def members_to_s(current)
-    return '' if current.nil? || !current.kind_of?(Array)
+    return '' if current.nil? || !current.is_a?(Array)
 
     current.join(',')
   end

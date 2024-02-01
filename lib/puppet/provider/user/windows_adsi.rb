@@ -69,7 +69,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
   end
 
   def groups_to_s(groups)
-    return '' if groups.nil? || !groups.kind_of?(Array)
+    return '' if groups.nil? || !groups.is_a?(Array)
 
     groups = groups.map do |group_name|
       sid = Puppet::Util::Windows::SID.name_to_principal(group_name)

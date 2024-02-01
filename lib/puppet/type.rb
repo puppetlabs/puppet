@@ -1338,7 +1338,7 @@ class Type
     end
 
     def properties_to_audit(list)
-      if !list.kind_of?(Array) && list.to_sym == :all
+      if !list.is_a?(Array) && list.to_sym == :all
         all_properties
       else
         Array(list).collect { |p| p.to_sym }
