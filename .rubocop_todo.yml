@@ -423,10 +423,6 @@ Style/DoubleNegation:
     - 'lib/puppet/util/windows/adsi.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/EachWithObject:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/EmptyBlockParameter:
   Exclude:
     - 'lib/puppet/parser/type_loader.rb'
