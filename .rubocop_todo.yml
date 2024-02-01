@@ -460,12 +460,6 @@ Style/Encoding:
     - 'lib/puppet/util/windows/service.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/EvenOdd:
-  Exclude:
-    - 'lib/puppet/pops/serialization/json.rb'
-    - 'lib/puppet/pops/types/types.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/ExpandPathArguments:
   Exclude:
     - 'lib/puppet/util/libuser.rb'
