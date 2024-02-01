@@ -113,7 +113,7 @@ class Puppet::Parser::TypeLoader
       # for information and it should not abort.
       # There is currently one user in indirector/resourcetype/parser
       #
-      if Puppet.lookup(:squelch_parse_errors) { || false }
+      if Puppet.lookup(:squelch_parse_errors) { false }
         begin
           loaded_asts << parse_file(file)
         rescue => e
