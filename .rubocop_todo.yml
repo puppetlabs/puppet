@@ -475,6 +475,7 @@ Style/FormatStringToken:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
+# Applying the safe auto-correct results in util_spec failures.
 Style/GlobalStdStream:
   Exclude:
     - 'lib/puppet/application/apply.rb'
