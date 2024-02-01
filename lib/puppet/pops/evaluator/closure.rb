@@ -253,14 +253,12 @@ module Evaluator
                 # correct non array default value
                 value = [value]
               end
-            else
+            elsif param_captures
               # not given, does not have default
-              if param_captures
-                # default for captures rest is an empty array
-                value = []
-              else
-                @evaluator.fail(Issues::MISSING_REQUIRED_PARAMETER, parameter, { :param_name => parameter.name })
-              end
+              value = []
+            # default for captures rest is an empty array
+            else
+              @evaluator.fail(Issues::MISSING_REQUIRED_PARAMETER, parameter, { :param_name => parameter.name })
             end
           else
             given_argument = args[index]

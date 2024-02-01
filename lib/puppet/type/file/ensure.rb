@@ -172,12 +172,10 @@ module Puppet
       stat = @resource.stat
       if stat
         return stat.ftype.intern
+      elsif self.should == :false
+        return :false
       else
-        if self.should == :false
-          return :false
-        else
-          return :absent
-        end
+        return :absent
       end
     end
 

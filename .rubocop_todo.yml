@@ -640,6 +640,10 @@ Style/IfWithSemicolon:
   Exclude:
     - 'lib/puppet/pops/parser/evaluating_parser.rb'
 
+# This cop requires significant changes to testing, will require its own effort
+Style/ImplicitRuntimeError:
+  Enabled: false
+
 # This cop supports unsafe auto-correction (--auto-correct-all).
 Style/InfiniteLoop:
   Exclude:

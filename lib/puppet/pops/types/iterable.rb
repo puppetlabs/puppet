@@ -336,8 +336,8 @@ module Puppet::Pops::Types
       value = @current + @step_size
       if @step_size < 0
         raise StopIteration if value < @range.from
-      else
-        raise StopIteration if value > @range.to
+      elsif value > @range.to
+        raise StopIteration
       end
       @current = value
     end

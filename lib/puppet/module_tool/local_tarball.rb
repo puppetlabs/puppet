@@ -56,7 +56,7 @@ module Puppet::ModuleTool
           dependencies = mod.dependencies.map do |dep|
             Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
           end
-          dependencies = Hash[dependencies]
+          dependencies = dependencies.to_h
         end
 
         super(source, name, version, dependencies || {})

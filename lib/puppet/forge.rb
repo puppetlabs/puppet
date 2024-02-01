@@ -146,7 +146,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
         dependencies = []
       end
 
-      super(source, name, version, Hash[dependencies])
+      super(source, name, version, dependencies.to_h)
     end
 
     def install(dir)

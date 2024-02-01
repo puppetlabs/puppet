@@ -154,8 +154,8 @@ class Puppet::Parameter::ValueCollection
       devfail "Cannot use :call value ':none' in combination with a block for property '#{self.class.name}'" if call_opt == :none
       value.block = block
       value.method ||= "set_#{value.name}" if !value.regex?
-    else
-      devfail "Cannot use :call value ':instead' without a block for property '#{self.class.name}'" if call_opt == :instead
+    elsif call_opt == :instead
+      devfail "Cannot use :call value ':instead' without a block for property '#{self.class.name}'"
     end
     value
   end

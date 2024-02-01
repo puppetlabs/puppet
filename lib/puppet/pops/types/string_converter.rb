@@ -204,7 +204,7 @@ class StringConverter
           end
         end
       end
-      Hash[format_map]
+      format_map.to_h
     end
 
     # Ranks type on specificity where it matters
@@ -871,16 +871,14 @@ class StringConverter
       if escaped
         bld << 0x5c << codepoint
         escaped = false
+      elsif codepoint == 0x27
+        bld << 0x5c << codepoint
+      elsif codepoint == 0x5c
+        escaped = true
+      elsif codepoint <= 0x7f
+        bld << codepoint
       else
-        if codepoint == 0x27
-          bld << 0x5c << codepoint
-        elsif codepoint == 0x5c
-          escaped = true
-        elsif codepoint <= 0x7f
-          bld << codepoint
-        else
-          bld << [codepoint].pack('U')
-        end
+        bld << [codepoint].pack('U')
       end
     end
 

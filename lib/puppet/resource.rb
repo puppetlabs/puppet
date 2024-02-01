@@ -473,7 +473,7 @@ class Puppet::Resource
 
     res = {}
     res['ensure'] = value if value
-    res.merge!(Hash[params.sort])
+    res.merge!(params.sort.to_h)
 
     return { h['title'] => res }
   end

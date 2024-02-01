@@ -126,17 +126,15 @@ module Puppet::Util::SUIDManager
       initgroups(uid)
 
       Process::UID.change_privilege(uid)
-    else
+    elsif Process.euid == 0
       # We must be root to initgroups, so initgroups before dropping euid if
       # we're root, otherwise elevate euid before initgroups.
       # change euid (to root) first.
-      if Process.euid == 0
-        initgroups(uid)
-        Process.euid = uid
-      else
-        Process.euid = uid
-        initgroups(uid)
-      end
+      initgroups(uid)
+      Process.euid = uid
+    else
+      Process.euid = uid
+      initgroups(uid)
     end
   end
   module_function :change_user

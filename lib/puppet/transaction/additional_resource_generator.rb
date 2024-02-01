@@ -68,7 +68,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
     end
     add_resources(generated, resource)
 
-    made = Hash[generated.map(&:name).zip(generated)]
+    made = generated.map(&:name).zip(generated).to_h
     contain_generated_resources_in(resource, made)
     connect_resources_to_ancestors(resource, made)
 

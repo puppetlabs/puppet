@@ -69,7 +69,7 @@ class PMetaType < PAnyType
   def resolve_type_refs(loader, o)
     case o
     when Hash
-      Hash[o.map { |k, v| [resolve_type_refs(loader, k), resolve_type_refs(loader, v)] }]
+      o.to_h { |k, v| [resolve_type_refs(loader, k), resolve_type_refs(loader, v)] }
     when Array
       o.map { |e| resolve_type_refs(loader, e) }
     when PAnyType

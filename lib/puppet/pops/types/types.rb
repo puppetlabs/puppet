@@ -568,16 +568,14 @@ class PNotUndefType < PTypeWithContainedType
     n = super
     if n.type.nil?
       n
+    elsif n.type.is_a?(POptionalType)
+      PNotUndefType.new(n.type.type).normalize
+    # No point in having an optional in a NotUndef
+    elsif !n.type.assignable?(PUndefType::DEFAULT)
+      # THe type is NotUndef anyway, so it can be stripped of
+      n.type
     else
-      if n.type.is_a?(POptionalType)
-        # No point in having an optional in a NotUndef
-        PNotUndefType.new(n.type.type).normalize
-      elsif !n.type.assignable?(PUndefType::DEFAULT)
-        # THe type is NotUndef anyway, so it can be stripped of
-        n.type
-      else
-        n
-      end
+      n
     end
   end
 
@@ -2805,7 +2803,7 @@ class PHashType < PCollectionType
       end
 
       def from_tuples(tuple_array)
-        Hash[tuple_array]
+        tuple_array.to_h
       end
 
       def from_tree(tuple_array, build_option = nil)
@@ -3283,16 +3281,14 @@ class POptionalType < PTypeWithContainedType
     n = super
     if n.type.nil?
       n
+    elsif n.type.is_a?(PNotUndefType)
+      POptionalType.new(n.type.type).normalize
+    # No point in having an NotUndef in an Optional
+    elsif n.type.assignable?(PUndefType::DEFAULT)
+      # THe type is Optional anyway, so it can be stripped of
+      n.type
     else
-      if n.type.is_a?(PNotUndefType)
-        # No point in having an NotUndef in an Optional
-        POptionalType.new(n.type.type).normalize
-      elsif n.type.assignable?(PUndefType::DEFAULT)
-        # THe type is Optional anyway, so it can be stripped of
-        n.type
-      else
-        n
-      end
+      n
     end
   end
 

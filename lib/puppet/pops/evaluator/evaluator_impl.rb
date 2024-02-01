@@ -1231,7 +1231,7 @@ class EvaluatorImpl
             # of call
             t = @@type_calculator.infer(y)
             if t.element_type.is_a? Types::PArrayType
-              Hash[y]
+              y.to_h
             else
               Hash[*y]
             end

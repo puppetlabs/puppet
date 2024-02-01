@@ -32,8 +32,8 @@ module Types
         if o.is_a?(Annotatable)
           init_hash = o.annotations[_pcore_type]
           init_hash = yield if init_hash.nil? && block_given?
-        else
-          init_hash = yield if block_given?
+        elsif block_given?
+          init_hash = yield
         end
         adapter = associate_adapter(_pcore_type.from_hash(init_hash), o) unless init_hash.nil?
       end

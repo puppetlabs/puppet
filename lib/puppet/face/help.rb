@@ -50,11 +50,9 @@ Puppet::Face.define(:help, '0.0.1') do
       if options.has_key? :version
         if options[:version].to_s !~ /^current$/i
           version = options[:version]
-        else
-          if args.length == 0
-            # TRANSLATORS '--version' is a command line option and should not be translated
-            raise ArgumentError, _("Supplying a '--version' only makes sense when a Faces subcommand is given")
-          end
+        elsif args.length == 0
+          raise ArgumentError, _("Supplying a '--version' only makes sense when a Faces subcommand is given")
+          # TRANSLATORS '--version' is a command line option and should not be translated
         end
       end
 
@@ -66,18 +64,16 @@ Puppet::Face.define(:help, '0.0.1') do
 
         # legacy apps already emit ronn output
         return render_application_help(facename)
+      elsif options[:ronn]
+        render_face_man(facename || :help)
+      # Calling `puppet help <app> --ronn` normally calls this action with
+      # <app> as the first argument in the `args` array. However, if <app>
+      # happens to match the name of an action, like `puppet help help
+      # --ronn`, then face_base "eats" the argument and `args` will be
+      # empty. Rather than force users to type `puppet help help help
+      # --ronn`, default the facename to `:help`
       else
-        if options[:ronn]
-          # Calling `puppet help <app> --ronn` normally calls this action with
-          # <app> as the first argument in the `args` array. However, if <app>
-          # happens to match the name of an action, like `puppet help help
-          # --ronn`, then face_base "eats" the argument and `args` will be
-          # empty. Rather than force users to type `puppet help help help
-          # --ronn`, default the facename to `:help`
-          render_face_man(facename || :help)
-        else
-          render_face_help(facename, actionname, version)
-        end
+        render_face_help(facename, actionname, version)
       end
     end
   end

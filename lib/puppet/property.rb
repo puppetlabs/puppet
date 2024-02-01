@@ -452,12 +452,10 @@ class Puppet::Property < Puppet::Parameter
     # This is only here to make testing easier.
     if @resource.respond_to?(:noop?)
       @resource.noop?
+    elsif defined?(@noop)
+      @noop
     else
-      if defined?(@noop)
-        @noop
-      else
-        Puppet[:noop]
-      end
+      Puppet[:noop]
     end
   end
 

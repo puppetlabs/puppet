@@ -489,7 +489,7 @@ module Puppet
     },
     :daemonize => {
         :type     => :boolean,
-        :default  => (Puppet::Util::Platform.windows? ? false : true),
+        :default  => (!Puppet::Util::Platform.windows?),
         :desc     => "Whether to send the process into the background.  This defaults
           to true on POSIX systems, and to false on Windows (where Puppet
           currently cannot daemonize).",

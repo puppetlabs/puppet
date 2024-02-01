@@ -187,12 +187,10 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         # return the should value, so the resource shuts up.
         if @property_hash[attr] or self.class.valid_attr?(self.class.name, attr)
           @property_hash[attr] || :absent
+        elsif defined?(@resource)
+          @resource.should(attr)
         else
-          if defined?(@resource)
-            @resource.should(attr)
-          else
-            nil
-          end
+          nil
         end
       end
 

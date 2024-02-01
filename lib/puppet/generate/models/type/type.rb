@@ -40,7 +40,7 @@ module Puppet
               Property.new(type.paramclass(name))
             end
             sc = Puppet::Pops::Types::StringConverter.singleton
-            @title_patterns = Hash[type.title_patterns.map do |mapping|
+            @title_patterns = type.title_patterns.to_h do |mapping|
               [
                 sc.convert(mapping[0], '%p'),
                 sc.convert(mapping[1].map do |names|
@@ -50,7 +50,7 @@ module Puppet
                   names[0].to_s
                 end, '%p')
               ]
-            end]
+            end
             @isomorphic = type.isomorphic?
             # continue to emit capability as false when rendering the ERB
             # template, so that pcore modules generated prior to puppet7 can be

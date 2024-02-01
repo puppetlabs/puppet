@@ -79,13 +79,11 @@ module Pal
 
       # Use the manifest setting
       manifest_file = Puppet[:manifest]
-    else
+    elsif manifest_file.nil? && code_string.nil?
       # An "undef" code_string is the only way to override Puppet[:manifest] & Puppet[:code] settings since an
       # empty string is taken as Puppet[:code] not being set.
       #
-      if manifest_file.nil? && code_string.nil?
-        code_string = 'undef'
-      end
+      code_string = 'undef'
     end
 
     previous_tasks_value = Puppet[:tasks]
@@ -186,13 +184,11 @@ module Pal
 
       # Use the manifest setting
       manifest_file = Puppet[:manifest]
-    else
+    elsif manifest_file.nil? && code_string.nil?
       # An "undef" code_string is the only way to override Puppet[:manifest] & Puppet[:code] settings since an
       # empty string is taken as Puppet[:code] not being set.
       #
-      if manifest_file.nil? && code_string.nil?
-        code_string = 'undef'
-      end
+      code_string = 'undef'
     end
 
     # We need to make sure to set these back when we're done

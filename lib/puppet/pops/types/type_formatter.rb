@@ -280,15 +280,13 @@ class TypeFormatter
   def string_PCallableType(t)
     if t.return_type.nil?
       append_array('Callable', t.param_types.nil?) { append_callable_params(t) }
+    elsif t.param_types.nil?
+      append_array('Callable', false) { append_strings([[], t.return_type], false) }
     else
-      if t.param_types.nil?
-        append_array('Callable', false) { append_strings([[], t.return_type], false) }
-      else
-        append_array('Callable', false) do
-          append_array('', false) { append_callable_params(t) }
-          @bld << COMMA_SEP
-          append_string(t.return_type)
-        end
+      append_array('Callable', false) do
+        append_array('', false) { append_callable_params(t) }
+        @bld << COMMA_SEP
+        append_string(t.return_type)
       end
     end
   end
@@ -311,7 +309,7 @@ class TypeFormatter
 
   # @api private
   def string_PStructType(t)
-    append_array('Struct', t.elements.empty?) { append_hash(Hash[t.elements.map { |e| struct_element_pair(e) }]) }
+    append_array('Struct', t.elements.empty?) { append_hash(t.elements.to_h { |e| struct_element_pair(e) }) }
   end
 
   # @api private
@@ -554,12 +552,10 @@ class TypeFormatter
         @bld << ' = '
         append_string(t.resolved_type)
       end
+    elsif expand && @type_set.defines_type?(t)
+      append_string(t.resolved_type)
     else
-      if expand && @type_set.defines_type?(t)
-        append_string(t.resolved_type)
-      else
-        @bld << @type_set.name_for(t, t.name)
-      end
+      @bld << @type_set.name_for(t, t.name)
     end
   end
 

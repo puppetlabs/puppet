@@ -150,7 +150,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
       @groups = []
       Puppet::FileSystem.each_line(group_file) do |line|
         group = line.chomp.split(':')
-        @groups << Hash[group_keys.zip(group)]
+        @groups << group_keys.zip(group).to_h
       end
     end
 

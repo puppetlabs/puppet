@@ -379,12 +379,10 @@ module Puppet::Util::FileParsing
     record = record_type(type)
     if record && record.fields.include?(attr.intern)
       return true
+    elsif attr.intern == :ensure
+      return true
     else
-      if attr.intern == :ensure
-        return true
-      else
-        false
-      end
+      false
     end
   end
 

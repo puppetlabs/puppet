@@ -57,12 +57,10 @@ end
 if __FILE__ == $0
   if ARGV.length < 1
     print_usage
+  elsif ARGV.length == 1
+    exit Parallel::RSpec::Runner.new(ARGV[0]).run
   else
-    if ARGV.length == 1
-      exit Parallel::RSpec::Runner.new(ARGV[0]).run
-    else
-      spec_file, *options = ARGV
-      exit Parallel::RSpec::Runner.new(spec_file, options).run
-    end
+    spec_file, *options = ARGV
+    exit Parallel::RSpec::Runner.new(spec_file, options).run
   end
 end

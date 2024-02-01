@@ -21,7 +21,7 @@ module Puppet
                     Puppet::Util::Json
                       .dump({
                               "search_paths" => @env_loader.search_paths,
-                              "environments" => Hash[@env_loader.list.collect do |env|
+                              "environments" => @env_loader.list.to_h do |env|
                                 [env.name, {
                                   "settings" => {
                                     "modulepath" => env.full_modulepath,
@@ -30,7 +30,7 @@ module Puppet
                                     "config_version" => env.config_version || '',
                                   }
                                 }]
-                              end]
+                              end
                             })
                   )
               end
