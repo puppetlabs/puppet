@@ -323,7 +323,7 @@ module Generators
       end
 
       unless ref
-        for file in @files
+        @files.each do |file|
           if file.document_self and file.context.global
             ref = CGI.escapeHTML("#{CLASS_DIR}/#{file.context.module_name}.html")
             break
@@ -332,7 +332,7 @@ module Generators
       end
 
       unless ref
-        for file in @files
+        @files.each do |file|
           if file.document_self and !file.context.global
             ref = CGI.escapeHTML("#{CLASS_DIR}/#{file.context.module_name}.html")
             break

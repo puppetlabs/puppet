@@ -465,15 +465,6 @@ Style/ExplicitBlockArgument:
 
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
-# SupportedStyles: each, for
-Style/For:
-  Exclude:
-    - 'lib/puppet/file_system/uniquefile.rb'
-    - 'lib/puppet/module_tool/contents_description.rb'
-    - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
 # SupportedStyles: format, sprintf, percent
 Style/FormatString:
   Enabled: false

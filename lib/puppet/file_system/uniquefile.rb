@@ -153,7 +153,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
 
   def tmpdir
     tmp = '.'
-    for dir in [ENV.fetch('TMPDIR', nil), ENV.fetch('TMP', nil), ENV.fetch('TEMP', nil), @@systmpdir, '/tmp']
+    [ENV.fetch('TMPDIR', nil), ENV.fetch('TMP', nil), ENV.fetch('TEMP', nil), @@systmpdir, '/tmp'].each do |dir|
       stat = File.stat(dir) if dir
       if stat && stat.directory? && stat.writable?
         tmp = dir
