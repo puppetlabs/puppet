@@ -351,10 +351,6 @@ Style/CaseEquality:
     - 'lib/puppet/util/multi_match.rb'
     - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
 
-# This cop supports unsafe auto-correction (--auto-correct-all).
-Style/CaseLikeIf:
-  Enabled: false
-
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: nested, compact
