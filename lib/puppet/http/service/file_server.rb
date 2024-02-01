@@ -100,7 +100,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   #
   # @api public
   #
-  def get_file_metadatas(path: nil, environment:, recurse: :false, recurselimit: nil, max_files: nil, ignore: nil, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore) # rubocop:disable Lint/BooleanSymbol
+  def get_file_metadatas(environment:, path: nil, recurse: :false, recurselimit: nil, max_files: nil, ignore: nil, links: :manage, checksum_type: Puppet[:digest_algorithm], source_permissions: :ignore) # rubocop:disable Lint/BooleanSymbol
     validate_path(path)
 
     headers = add_puppet_headers('Accept' => get_mime_types(Puppet::FileServing::Metadata).join(', '))

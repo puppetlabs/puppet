@@ -535,11 +535,6 @@ Style/InverseMethods:
     - 'lib/puppet/type/file.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/KeywordParametersOrder:
-  Exclude:
-    - 'lib/puppet/http/service/file_server.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: line_count_dependent, lambda, literal
 Style/Lambda:
