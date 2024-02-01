@@ -509,6 +509,7 @@ Style/IfUnlessModifier:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
+# The auto-correct function introduces testing errors in the evaluating_parser_spec
 Style/IfWithSemicolon:
   Exclude:
     - 'lib/puppet/pops/parser/evaluating_parser.rb'
