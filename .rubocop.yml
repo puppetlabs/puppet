@@ -312,6 +312,8 @@ Style/HashEachMethods:
 
 Style/HashLikeCase:
   Enabled: true
+  Exclude:
+    - 'lib/puppet/util/command_line/trollop.rb'
 
 Style/HashTransformKeys:
   Enabled: true

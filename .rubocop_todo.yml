@@ -497,11 +497,6 @@ Style/GlobalVars:
 Style/GuardClause:
   Enabled: false
 
-# Configuration parameters: MinBranchesCount.
-Style/HashLikeCase:
-  Exclude:
-    - 'lib/puppet/util/command_line/trollop.rb'
-
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, EnforcedShorthandSyntax, UseHashRocketsWithSymbolValues, PreferHashRocketsForNonAlnumEndingSymbols.
 # SupportedStyles: ruby19, hash_rockets, no_mixed_keys, ruby19_no_mixed_keys
