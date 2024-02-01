@@ -504,15 +504,6 @@ Style/GuardClause:
 Style/HashSyntax:
   Enabled: false
 
-# This cop supports unsafe auto-correction (--auto-correct-all).
-Style/HashTransformValues:
-  Exclude:
-    - 'lib/puppet/functions/group_by.rb'
-    - 'lib/puppet/parser/scope.rb'
-    - 'lib/puppet/pops/loader/task_instantiator.rb'
-    - 'lib/puppet/pops/types/p_type_set_type.rb'
-    - 'lib/puppet/transaction/report.rb'
-
 # This cop supports safe auto-correction (--auto-correct).
 Style/IdenticalConditionalBranches:
   Exclude:

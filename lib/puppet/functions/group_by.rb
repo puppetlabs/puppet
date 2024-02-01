@@ -49,8 +49,8 @@ Puppet::Functions.create_function(:group_by) do
       yield(k, v)
     end
 
-    grouped.each_with_object({}) do |(k, v), hsh|
-      hsh[k] = v.map { |item| item[1] }
+    grouped.transform_values do |v|
+      v.map { |item| item[1] }
     end.freeze
   end
 

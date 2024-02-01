@@ -183,7 +183,7 @@ class PTypeSetType < PMetaType
     result[KEY_NAME] = @name
     result[KEY_VERSION] = @version.to_s unless @version.nil?
     result[KEY_TYPES] = @types unless @types.empty?
-    result[KEY_REFERENCES] = @references.to_h { |ref_alias, ref| [ref_alias, ref._pcore_init_hash] } unless @references.empty?
+    result[KEY_REFERENCES] = @references.transform_values { |ref| ref._pcore_init_hash } unless @references.empty?
     result
   end
 
