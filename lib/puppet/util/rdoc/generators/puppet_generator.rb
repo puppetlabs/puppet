@@ -52,7 +52,7 @@ module Generators
 
   # This is a specialized HTMLGenerator tailored to Puppet manifests
   class PuppetGenerator < HTMLGenerator
-    def PuppetGenerator.for(options)
+    def self.for(options)
       AllReferences.reset
       HtmlMethod.reset
 

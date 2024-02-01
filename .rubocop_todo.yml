@@ -357,11 +357,6 @@ Style/CaseEquality:
 Style/ClassAndModuleChildren:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-Style/ClassMethods:
-  Exclude:
-    - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
-
 Style/ClassVars:
   Enabled: false
 
