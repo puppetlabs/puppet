@@ -70,7 +70,7 @@ module Puppet
         end
 
         def parse(*args)
-          args = args[0] if args.size == 1 and Array === args[0]
+          args = args[0] if args.size == 1 and args[0].is_a?(Array)
           args_copy = args.dup
           begin
             @parser.parse args_copy

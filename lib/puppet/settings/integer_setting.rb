@@ -2,7 +2,7 @@
 
 class Puppet::Settings::IntegerSetting < Puppet::Settings::BaseSetting
   def munge(value)
-    return value if Integer === value
+    return value if value.is_a?(Integer)
 
     begin
       value = Integer(value)

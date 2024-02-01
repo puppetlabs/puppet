@@ -64,7 +64,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
   end
 
   def install
-    if String === @resource[:ensure]
+    if @resource[:ensure].is_a?(String)
       pkgin("-y", :install, "#{resource[:name]}-#{resource[:ensure]}")
     else
       pkgin("-y", :install, resource[:name])

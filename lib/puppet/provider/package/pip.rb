@@ -220,7 +220,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     command_options += install_options if @resource[:install_options]
 
     if @resource[:source]
-      if String === should
+      if should.is_a?(String)
         command_options << "#{@resource[:source]}@#{should}#egg=#{@resource[:name]}"
       else
         command_options << "#{@resource[:source]}#egg=#{@resource[:name]}"
@@ -235,7 +235,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
       return command_options
     end
 
-    unless String === should
+    unless should.is_a?(String)
       command_options << @resource[:name]
 
       return command_options
