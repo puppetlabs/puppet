@@ -505,18 +505,6 @@ Style/HashSyntax:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/IdenticalConditionalBranches:
-  Exclude:
-    - 'lib/puppet/functions/filter.rb'
-    - 'lib/puppet/network/http_pool.rb'
-    - 'lib/puppet/node.rb'
-    - 'lib/puppet/parser/resource.rb'
-    - 'lib/puppet/pops/loader/module_loaders.rb'
-    - 'lib/puppet/pops/types/p_type_set_type.rb'
-    - 'lib/puppet/type.rb'
-    - 'lib/puppet/util/feature.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: AllowIfModifier.
 Style/IfInsideElse:
   Enabled: false

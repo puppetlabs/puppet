@@ -955,9 +955,7 @@ class Type
     # Once an object is managed, it always stays managed; but an object
     # that is listed as unmanaged might become managed later in the process,
     # so we have to check that every time
-    if @managed
-      return @managed
-    else
+    unless @managed
       @managed = false
       properties.each { |property|
         s = property.should
@@ -966,8 +964,8 @@ class Type
           break
         end
       }
-      return @managed
     end
+    return @managed
   end
 
   ###############################

@@ -52,13 +52,11 @@ class Puppet::Util::Feature
       #    * the result was true/false
       #    OR
       #    * we're configured to never retry
-      if @results.has_key?(name) &&
-         (!@results[name].nil? || !Puppet[:always_retry_plugins])
-        !!@results[name]
-      else
+      unless @results.has_key?(name) &&
+             (!@results[name].nil? || !Puppet[:always_retry_plugins])
         @results[name] = test(name, options, &block)
-        !!@results[name]
       end
+      !!@results[name]
     end
   end
 

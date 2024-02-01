@@ -410,11 +410,10 @@ module ModuleLoaders
             # related to origin
             if origin.is_a?(Array)
               origins = origin.filter_map { |ori| existing_path(ori) }
-              return [origins, sp] unless origins.empty?
             else
               origins = candidate_paths(origin)
-              return [origins, sp] unless origins.empty?
             end
+            return [origins, sp] unless origins.empty?
           else
             existing = existing_path(origin)
             return [origin, sp] unless existing.nil?

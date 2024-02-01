@@ -90,10 +90,9 @@ class Puppet::Parser::Resource < Puppet::Resource
   def exported=(value)
     if value
       @virtual = true
-      @exported = value
     else
-      @exported = value
     end
+    @exported = value
   end
 
   # Finish the evaluation by assigning defaults and scope tags
@@ -226,10 +225,9 @@ class Puppet::Parser::Resource < Puppet::Resource
           if value.is_a?(Array)
             value = value.flatten.reject { |v| v.nil? || :undef == v }
           end
-          result[param.name] = value
         else
-          result[param.name] = value
         end
+        result[param.name] = value
       end
     end)
   end

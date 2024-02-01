@@ -238,15 +238,13 @@ class PTypeSetType < PMetaType
   def name_for(t, default_name)
     key = @types.key(t)
     if key.nil?
-      if @references.empty?
-        default_name
-      else
+      unless @references.empty?
         @references.each_pair do |ref_key, ref|
           ref_name = ref.type_set.name_for(t, nil)
           return "#{ref_key}::#{ref_name}" unless ref_name.nil?
         end
-        default_name
       end
+      default_name
     else
       key
     end
