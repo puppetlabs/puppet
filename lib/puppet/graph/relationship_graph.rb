@@ -99,12 +99,12 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
   end
 
   def traverse(options = {}, &block)
-    continue_while = options[:while] || lambda { true }
-    pre_process = options[:pre_process] || lambda { |resource| }
-    overly_deferred_resource_handler = options[:overly_deferred_resource_handler] || lambda { |resource| }
-    canceled_resource_handler = options[:canceled_resource_handler] || lambda { |resource| }
-    teardown = options[:teardown] || lambda {}
-    graph_cycle_handler = options[:graph_cycle_handler] || lambda { [] }
+    continue_while = options[:while] || -> { true }
+    pre_process = options[:pre_process] || ->(resource) {}
+    overly_deferred_resource_handler = options[:overly_deferred_resource_handler] || ->(resource) {}
+    canceled_resource_handler = options[:canceled_resource_handler] || ->(resource) {}
+    teardown = options[:teardown] || -> {}
+    graph_cycle_handler = options[:graph_cycle_handler] || -> { [] }
 
     cycles = report_cycles_in_graph
     if cycles

@@ -535,23 +535,6 @@ Style/InverseMethods:
     - 'lib/puppet/type/file.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: line_count_dependent, lambda, literal
-Style/Lambda:
-  Exclude:
-    - 'lib/puppet/defaults.rb'
-    - 'lib/puppet/functions/unique.rb'
-    - 'lib/puppet/graph/relationship_graph.rb'
-    - 'lib/puppet/http/session.rb'
-    - 'lib/puppet/pops/lookup/interpolation.rb'
-    - 'lib/puppet/pops/parser/lexer2.rb'
-    - 'lib/puppet/provider/aix_object.rb'
-    - 'lib/puppet/provider/service/upstart.rb'
-    - 'lib/puppet/transaction.rb'
-    - 'lib/puppet/util/command_line/puppet_option_parser.rb'
-    - 'lib/puppet/util/symbolic_file_mode.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/LineEndConcatenation:
   Exclude:
     - 'lib/puppet/functions.rb'

@@ -187,8 +187,8 @@ class Lexer2
 
   def initialize
     @selector = {
-      '.' => lambda { emit(TOKEN_DOT, @scanner.pos) },
-      ',' => lambda { emit(TOKEN_COMMA, @scanner.pos) },
+      '.' => -> { emit(TOKEN_DOT, @scanner.pos) },
+      ',' => -> { emit(TOKEN_COMMA, @scanner.pos) },
       '[' => lambda do
         before = @scanner.pos
         # Must check the preceding character to see if it is whitespace.
@@ -202,7 +202,7 @@ class Lexer2
           emit(TOKEN_LBRACK, before)
         end
       end,
-      ']' => lambda { emit(TOKEN_RBRACK, @scanner.pos) },
+      ']' => -> { emit(TOKEN_RBRACK, @scanner.pos) },
       '(' => lambda do
         before = @scanner.pos
         # If first on a line, or only whitespace between start of line and '('
@@ -214,10 +214,10 @@ class Lexer2
           emit(TOKEN_LPAREN, before)
         end
       end,
-      ')' => lambda { emit(TOKEN_RPAREN, @scanner.pos) },
-      ';' => lambda { emit(TOKEN_SEMIC, @scanner.pos) },
-      '?' => lambda { emit(TOKEN_QMARK, @scanner.pos) },
-      '*' => lambda { emit(TOKEN_TIMES, @scanner.pos) },
+      ')' => -> { emit(TOKEN_RPAREN, @scanner.pos) },
+      ';' => -> { emit(TOKEN_SEMIC, @scanner.pos) },
+      '?' => -> { emit(TOKEN_QMARK, @scanner.pos) },
+      '*' => -> { emit(TOKEN_TIMES, @scanner.pos) },
       '%' => lambda do
         scn = @scanner
         before = scn.pos
@@ -345,7 +345,7 @@ class Lexer2
         emit(la[1] == '>' ? TOKEN_IN_EDGE_SUB : TOKEN_TILDE, scn.pos)
       end,
 
-      '#' => lambda { @scanner.skip(PATTERN_COMMENT); nil },
+      '#' => -> { @scanner.skip(PATTERN_COMMENT); nil },
 
       # TOKENS '/', '/*' and '/ regexp /'
       '/' => lambda do
@@ -491,10 +491,10 @@ class Lexer2
         ctx[:line_lexical_start] = @scanner.pos
         nil
       end,
-      '' => lambda { nil } # when the peek(1) returns empty
+      '' => -> { nil } # when the peek(1) returns empty
     }
 
-    [' ', "\t", "\r"].each { |c| @selector[c] = lambda { @scanner.skip(PATTERN_WS); nil } }
+    [' ', "\t", "\r"].each { |c| @selector[c] = -> { @scanner.skip(PATTERN_WS); nil } }
 
     ('0'..'9').each do |c|
       @selector[c] = lambda do

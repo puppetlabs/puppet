@@ -111,7 +111,7 @@ Puppet::Functions.create_function(:unique) do
   end
 
   def unique_hash(hash, &block)
-    block = lambda { |v| v } unless block_given?
+    block = ->(v) { v } unless block_given?
     result = Hash.new { |h, k| h[k] = { :keys => [], :values => [] } }
     hash.each_pair do |k, v|
       rc = result[block.call(v)]

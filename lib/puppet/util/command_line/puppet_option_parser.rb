@@ -80,7 +80,7 @@ module Puppet
         end
 
         def pass_only_last_value_on_to(block)
-          lambda { |values| block.call(values.is_a?(Array) ? values.last : values) }
+          ->(values) { block.call(values.is_a?(Array) ? values.last : values) }
         end
         private :pass_only_last_value_on_to
       end
