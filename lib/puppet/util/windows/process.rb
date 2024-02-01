@@ -138,7 +138,7 @@ module Puppet::Util::Windows::Process
             result = QueryFullProcessImageNameW(phandle, use_win32_path_format, exe_name_ptr, exe_name_length_ptr)
             if result == FFI::WIN32_FALSE
               raise Puppet::Util::Windows::Error.new(
-                "QueryFullProcessImageNameW(phandle, #{use_win32_path_format}, " +
+                "QueryFullProcessImageNameW(phandle, #{use_win32_path_format}, " \
                 "exe_name_ptr, #{max_chars}"
               )
             end
@@ -193,8 +193,8 @@ module Puppet::Util::Windows::Process
 
         if result == FFI::WIN32_FALSE
           raise Puppet::Util::Windows::Error.new(
-            "GetTokenInformation(#{token_handle}, #{token_information}, #{token_information_buf}, " +
-              "#{return_length}, #{return_length_ptr})"
+            "GetTokenInformation(#{token_handle}, #{token_information}, #{token_information_buf}, " \
+            "#{return_length}, #{return_length_ptr})"
           )
         end
 

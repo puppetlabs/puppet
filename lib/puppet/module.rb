@@ -465,7 +465,7 @@ class Puppet::Module
       relative_pattern = Puppet::FileSystem::PathPattern.relative(extended)
     rescue Puppet::FileSystem::PathPattern::InvalidPattern => error
       raise Puppet::Module::InvalidFilePattern.new(
-        "The pattern \"#{pattern}\" to find manifests in the module \"#{name}\" " +
+        "The pattern \"#{pattern}\" to find manifests in the module \"#{name}\" " \
         "is invalid and potentially unsafe.", error
       )
     end

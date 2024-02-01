@@ -635,20 +635,20 @@ module Puppet::Functions
         rb_location = rb_location.gsub(/:in.*$/, '')
         # Create a meaningful location for parse errors - show both what went wrong with the parsing
         # and in which ruby file it was found.
-        raise ArgumentError, _("Parsing of 'type \"%{assignment_string}\"' failed with message: <%{message}>.\n" +
-          "Called from <%{ruby_file_location}>") % {
-            assignment_string: assignment_string,
-            message: e.message,
-            ruby_file_location: rb_location
-          }
+        raise ArgumentError, _("Parsing of 'type \"%{assignment_string}\"' failed with message: <%{message}>.\n" \
+                               "Called from <%{ruby_file_location}>") % {
+                                 assignment_string: assignment_string,
+                                 message: e.message,
+                                 ruby_file_location: rb_location
+                               }
       end
       unless result.body.is_a?(Puppet::Pops::Model::TypeAlias)
         rb_location = rb_location.gsub(/:in.*$/, '')
-        raise ArgumentError, _("Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'.\n" +
-        "Called from <%{ruby_file_location}>") % {
-          assignment_string: assignment_string,
-          ruby_file_location: rb_location
-        }
+        raise ArgumentError, _("Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'.\n" \
+                               "Called from <%{ruby_file_location}>") % {
+                                 assignment_string: assignment_string,
+                                 ruby_file_location: rb_location
+                               }
       end
       @local_types << result.body
     end

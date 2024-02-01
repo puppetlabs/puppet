@@ -535,16 +535,6 @@ Style/InverseMethods:
     - 'lib/puppet/type/file.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/LineEndConcatenation:
-  Exclude:
-    - 'lib/puppet/functions.rb'
-    - 'lib/puppet/module.rb'
-    - 'lib/puppet/network/http/api.rb'
-    - 'lib/puppet/provider/user/directoryservice.rb'
-    - 'lib/puppet/util/windows/file.rb'
-    - 'lib/puppet/util/windows/process.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: IgnoredMethods.
 Style/MethodCallWithoutArgsParentheses:
   Enabled: false
