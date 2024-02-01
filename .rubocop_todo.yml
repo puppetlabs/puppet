@@ -497,11 +497,6 @@ Style/GlobalVars:
 Style/GuardClause:
   Enabled: false
 
-# This cop supports unsafe auto-correction (--auto-correct-all).
-# Configuration parameters: AllowedReceivers.
-Style/HashEachMethods:
-  Enabled: false
-
 # Configuration parameters: MinBranchesCount.
 Style/HashLikeCase:
   Exclude:
