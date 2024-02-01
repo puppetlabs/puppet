@@ -400,9 +400,6 @@ Style/ConditionalAssignment:
 Style/DateTime:
   Enabled: false
 
-Style/DefWithParentheses:
-  Enabled: false
-
 # Configuration parameters: AllowedConstants.
 Style/Documentation:
   Enabled: false
