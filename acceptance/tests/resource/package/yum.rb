@@ -6,6 +6,9 @@ test_name "test the yum package provider" do
     skip_test('Skipping EC2 Hosts') if fact_on(agent, 'ec2_metadata')
   end
 
+  # Upgrade the AlmaLinux release package for newer keys until our image is updated (RE-16096)
+  on(agent, 'dnf -y upgrade almalinux-release') if on(agent, facter('os.name')).stdout.strip == 'AlmaLinux'
+
   tag 'audit:high',
       'audit:acceptance' # Could be done at the integration (or unit) layer though
                          # actual changing of resources could irreparably damage a
