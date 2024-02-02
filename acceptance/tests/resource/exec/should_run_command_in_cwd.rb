@@ -1,6 +1,7 @@
 test_name "The Exec resource should run commands in the specified cwd" do
   tag 'audit:high',
       'audit:acceptance'
+  confine :except, :platform => /debian-12-amd64/ # PUP-12020
 
   require 'puppet/acceptance/windows_utils'
   extend Puppet::Acceptance::WindowsUtils
