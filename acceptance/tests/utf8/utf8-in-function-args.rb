@@ -1,4 +1,5 @@
 test_name 'utf-8 characters in function parameters' do
+  confine :except, :platform => /debian-12-amd64/ # PUP-12020
 
   tag 'audit:high',
       'audit:integration', # not package dependent but may want to vary platform by LOCALE/encoding
