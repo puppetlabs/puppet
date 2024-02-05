@@ -184,7 +184,7 @@ class Type
   #   specification to clearly state that the type is ensurable.
   #
   # @overload ensurable()
-  # @overload ensurable({|| ... })
+  # @overload ensurable({ ... })
   # @yield [ ] A block evaluated in scope of the new Parameter
   # @yieldreturn [void]
   # @return [void]
@@ -1987,16 +1987,16 @@ class Type
   # requirement.
   #
   # @example Autorequire the files File['foo', 'bar']
-  #   autorequire( 'file', {|| ['foo', 'bar'] })
+  #   autorequire( 'file', { ['foo', 'bar'] })
   #
   # @example Autobefore the files File['foo', 'bar']
-  #   autobefore( 'file', {|| ['foo', 'bar'] })
+  #   autobefore( 'file', { ['foo', 'bar'] })
   #
   # @example Autosubscribe the files File['foo', 'bar']
-  #   autosubscribe( 'file', {|| ['foo', 'bar'] })
+  #   autosubscribe( 'file', { ['foo', 'bar'] })
   #
   # @example Autonotify the files File['foo', 'bar']
-  #   autonotify( 'file', {|| ['foo', 'bar'] })
+  #   autonotify( 'file', { ['foo', 'bar'] })
   #
   # @param name [String] the name of a type of which one or several resources should be autorelated e.g. "file"
   # @yield [ ] a block returning list of names of given type to auto require

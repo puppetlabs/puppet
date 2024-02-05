@@ -13,7 +13,7 @@ module Puppet::Interface::ActionManager
   # the methods on {Puppet::Interface::ActionBuilder}.
   # @param name [Symbol] The name that will be used to invoke the
   #   action
-  # @overload action(name, {|| block})
+  # @overload action(name, { block })
   # @return [void]
   # @api public
   # @dsl Faces

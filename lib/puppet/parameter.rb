@@ -72,7 +72,7 @@ class Puppet::Parameter
     # @overload defaultto(value)
     #   Defines the default value with a literal value
     #   @param value [Object] the literal value to use as the default value
-    # @overload defaultto({|| ... })
+    # @overload defaultto({ ... })
     #   Defines that the default value is produced by the given block. The given block
     #   should produce the default value.
     # @raise [Puppet::DevError] if value is nil, and no block is given.
@@ -164,7 +164,7 @@ class Puppet::Parameter
       @value_collection = ValueCollection.new
     end
 
-    # @overload munge {|| ... }
+    # @overload munge { ... }
     # Defines an optional method used to convert the parameter value from DSL/string form to an internal form.
     # If a munge method is not defined, the DSL/string value is used as is.
     # @note This adds a method with the name `unsafe_munge` in the created parameter class. Later this method is
@@ -180,7 +180,7 @@ class Puppet::Parameter
       define_method(:unsafe_munge, &block)
     end
 
-    # @overload unmunge {|| ... }
+    # @overload unmunge { ... }
     # Defines an optional method used to convert the parameter value from internal form to DSL/string form.
     # If an `unmunge` method is not defined, the internal form is used.
     # @see munge
@@ -240,7 +240,7 @@ class Puppet::Parameter
       @required
     end
 
-    # @overload validate {|| ... }
+    # @overload validate { ... }
     # Defines an optional method that is used to validate the parameter's DSL/string value.
     # Validation should raise appropriate exceptions, the return value of the given block is ignored.
     # The easiest way to raise an appropriate exception is to call the method {Puppet::Util::Errors.fail} with

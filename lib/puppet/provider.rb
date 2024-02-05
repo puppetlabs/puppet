@@ -195,7 +195,7 @@ class Puppet::Provider
   # @param name [Symbol] The name of the command (will become the name of the generated method that executes the command)
   # @param path [String] The path to the executable for the command
   # @yield [ ] A block that configures the command (see {Puppet::Provider::Command})
-  # @comment a yield [ ] produces {|| ...} in the signature, do not remove the space.
+  # @comment a yield [ ] produces { ... } in the signature, do not remove the space.
   # @note the name ´has_command´ looks odd in an API context, but makes more sense when seen in the internal
   #   DSL context where a Provider is declaratively defined.
   # @api public
