@@ -7,7 +7,9 @@ test_name "ticket 1073: common package name in two different providers should be
   end
 
   # Upgrade the AlmaLinux release package for newer keys until our image is updated (RE-16096)
-  on(agent, 'dnf -y upgrade almalinux-release') if on(agent, facter('os.name')).stdout.strip == 'AlmaLinux'
+  agents.each do |agent|
+    on(agent, 'dnf -y upgrade almalinux-release') if fact_on(agent, 'os.name') == 'AlmaLinux'
+  end
 
   tag 'audit:high',
       'audit:acceptance' # Uses a provider that depends on AIO packaging
