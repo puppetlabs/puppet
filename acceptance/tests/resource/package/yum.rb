@@ -7,7 +7,9 @@ test_name "test the yum package provider" do
   end
 
   # Upgrade the AlmaLinux release package for newer keys until our image is updated (RE-16096)
-  on(agent, 'dnf -y upgrade almalinux-release') if on(agent, facter('os.name')).stdout.strip == 'AlmaLinux'
+  agents.each do |agent|
+    on(agent, 'dnf -y upgrade almalinux-release') if fact_on(agent, 'os.name') == 'AlmaLinux'
+  end
 
   tag 'audit:high',
       'audit:acceptance' # Could be done at the integration (or unit) layer though
