@@ -93,10 +93,10 @@ module SymbolicFileMode
 
           action = '!'
           actions = {
-            '!' => lambda { |_, _| raise Puppet::Error, _('Missing operation (-, =, or +)') },
-            '=' => lambda { |m, v| m | v },
-            '+' => lambda { |m, v| m | v },
-            '-' => lambda { |m, v| m & ~v },
+            '!' => ->(_, _) { raise Puppet::Error, _('Missing operation (-, =, or +)') },
+            '=' => ->(m, v) { m | v },
+            '+' => ->(m, v) { m | v },
+            '-' => ->(m, v) { m & ~v },
           }
 
           dsl.split('').each do |op|

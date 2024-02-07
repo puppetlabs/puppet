@@ -183,7 +183,7 @@ class PTypeSetType < PMetaType
     result[KEY_NAME] = @name
     result[KEY_VERSION] = @version.to_s unless @version.nil?
     result[KEY_TYPES] = @types unless @types.empty?
-    result[KEY_REFERENCES] = @references.to_h { |ref_alias, ref| [ref_alias, ref._pcore_init_hash] } unless @references.empty?
+    result[KEY_REFERENCES] = @references.transform_values { |ref| ref._pcore_init_hash } unless @references.empty?
     result
   end
 
@@ -238,15 +238,13 @@ class PTypeSetType < PMetaType
   def name_for(t, default_name)
     key = @types.key(t)
     if key.nil?
-      if @references.empty?
-        default_name
-      else
+      unless @references.empty?
         @references.each_pair do |ref_key, ref|
           ref_name = ref.type_set.name_for(t, nil)
           return "#{ref_key}::#{ref_name}" unless ref_name.nil?
         end
-        default_name
       end
+      default_name
     else
       key
     end

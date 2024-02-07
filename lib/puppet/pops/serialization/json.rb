@@ -182,7 +182,7 @@ module JSON
         @nested.pop
         write_delim
       when Integer
-        if (cnt % 2) == 0 || !nesting[0]
+        if cnt.even? || !nesting[0]
           @io << ','
         else
           @io << ':'

@@ -124,7 +124,6 @@ Puppet::Functions.create_function(:filter) do
     if enum.hash_style?
       result = {}
       enum.each { |k, v| result[k] = v if yield(k, v) }
-      result
     else
       result = []
       begin
@@ -133,7 +132,7 @@ Puppet::Functions.create_function(:filter) do
         end
       rescue StopIteration
       end
-      result
     end
+    result
   end
 end

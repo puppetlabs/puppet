@@ -241,7 +241,7 @@ class Puppet::Settings
   # Is our setting a boolean setting?
   def boolean?(param)
     param = param.to_sym
-    @config.include?(param) and @config[param].kind_of?(BooleanSetting)
+    @config.include?(param) and @config[param].is_a?(BooleanSetting)
   end
 
   # Remove all set values, potentially skipping cli values.
@@ -1306,15 +1306,14 @@ Generated on #{Time.now}.
     name = setting.name
     ref = DEPRECATION_REFS.find { |params, _reference| params.include?(name) }
     ref = ref[1] if ref
-    case
-    when msg
+    if msg
       msg << " #{ref}" if ref
       Puppet.deprecation_warning(msg)
-    when setting.completely_deprecated?
+    elsif setting.completely_deprecated?
       message = _("Setting %{name} is deprecated.") % { name: name }
       message += " #{ref}"
       Puppet.deprecation_warning(message, "setting-#{name}")
-    when setting.allowed_on_commandline?
+    elsif setting.allowed_on_commandline?
       # TRANSLATORS 'puppet.conf' is a file name and should not be translated
       message = _("Setting %{name} is deprecated in puppet.conf.") % { name: name }
       message += " #{ref}"

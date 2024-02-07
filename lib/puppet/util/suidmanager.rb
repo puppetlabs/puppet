@@ -141,7 +141,7 @@ module Puppet::Util::SUIDManager
 
   # Make sure the passed argument is a number.
   def convert_xid(type, id)
-    return id if id.kind_of? Integer
+    return id if id.is_a? Integer
 
     map = { :gid => :group, :uid => :user }
     raise ArgumentError, _("Invalid id type %{type}") % { type: type } unless map.include?(type)

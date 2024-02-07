@@ -230,7 +230,9 @@ class CommandLine
       raise ArgumentError, _("long option name %{value0} is already taken; please specify a (different) :long") % { value0: opts[:long].inspect } if @long[opts[:long]]
 
       ## fill in :short
-      opts[:short] = opts[:short].to_s if opts[:short] unless opts[:short] == :none
+      unless opts[:short] == :none
+        opts[:short] = opts[:short].to_s if opts[:short]
+      end
       opts[:short] = case opts[:short]
                      when /^-(.)$/; $1
                      when nil, :none, /^.$/; opts[:short]
@@ -312,7 +314,9 @@ class CommandLine
       required = {}
 
       if handle_help_and_version
-        opt :version, _("Print version and exit") if @version unless @specs[:version] || @long["version"]
+        unless @specs[:version] || @long["version"]
+          opt :version, _("Print version and exit") if @version
+        end
         opt :help, _("Show this message") unless @specs[:help] || @long["help"]
       end
 

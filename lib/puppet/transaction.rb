@@ -107,7 +107,7 @@ class Puppet::Transaction
 
     Puppet.info _("Applying configuration version '%{version}'") % { version: catalog.version } if catalog.version
 
-    continue_while = lambda { !stop_processing? }
+    continue_while = -> { !stop_processing? }
 
     post_evalable_providers = Set.new
     pre_process = lambda do |resource|

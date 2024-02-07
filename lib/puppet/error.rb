@@ -21,7 +21,7 @@ module Puppet
     # 4 args including the position on the line.
     #
     def initialize(message, file = nil, line = nil, pos = nil, original = nil)
-      if pos.kind_of? Exception
+      if pos.is_a? Exception
         original = pos
         pos = nil
       end

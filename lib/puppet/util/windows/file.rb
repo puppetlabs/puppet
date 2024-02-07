@@ -138,9 +138,9 @@ module Puppet::Util::Windows::File
     return result unless result == INVALID_HANDLE_VALUE
 
     raise Puppet::Util::Windows::Error.new(
-      "CreateFile(#{file_name}, #{desired_access.to_s(8)}, #{share_mode.to_s(8)}, " +
-        "#{security_attributes}, #{creation_disposition.to_s(8)}, " +
-        "#{flags_and_attributes.to_s(8)}, #{template_file_handle})"
+      "CreateFile(#{file_name}, #{desired_access.to_s(8)}, #{share_mode.to_s(8)}, " \
+      "#{security_attributes}, #{creation_disposition.to_s(8)}, " \
+      "#{flags_and_attributes.to_s(8)}, #{template_file_handle})"
     )
   end
 
@@ -158,8 +158,8 @@ module Puppet::Util::Windows::File
                     when IO_REPARSE_TAG_NFS
                       raise Puppet::Util::Windows::Error.new("Retrieving NFS reparse point data is unsupported")
                     else
-                      raise Puppet::Util::Windows::Error.new("DeviceIoControl(#{handle}, " +
-                        "FSCTL_GET_REPARSE_POINT) returned unknown tag 0x#{reparse_tag.to_s(16).upcase}")
+                      raise Puppet::Util::Windows::Error.new("DeviceIoControl(#{handle}, " \
+                                                             "FSCTL_GET_REPARSE_POINT) returned unknown tag 0x#{reparse_tag.to_s(16).upcase}")
                     end
 
       yield buffer_type.new(reparse_data_buffer_ptr)
@@ -200,8 +200,8 @@ module Puppet::Util::Windows::File
 
       if result == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new(
-          "DeviceIoControl(#{handle}, #{io_control_code}, " +
-          "#{in_buffer}, #{in_buffer ? in_buffer.size : ''}, " +
+          "DeviceIoControl(#{handle}, #{io_control_code}, " \
+          "#{in_buffer}, #{in_buffer ? in_buffer.size : ''}, " \
           "#{out_buffer}, #{out_buffer ? out_buffer.size : ''}"
         )
       end

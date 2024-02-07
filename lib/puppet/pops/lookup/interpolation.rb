@@ -125,7 +125,7 @@ module Interpolation
         :hiera => global_lookup, # this is just an alias for 'lookup'
         :alias => global_lookup, # same as 'lookup' but expression must be entire string and result is not subject to string substitution
         :scope => scope_lookup,
-        :literal => lambda { |key, _, _| key }
+        :literal => ->(key, _, _) { key }
       }.freeze
     end
     interpolate_method = @@interpolate_methods[method_key]

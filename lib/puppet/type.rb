@@ -184,7 +184,7 @@ class Type
   #   specification to clearly state that the type is ensurable.
   #
   # @overload ensurable()
-  # @overload ensurable({|| ... })
+  # @overload ensurable({ ... })
   # @yield [ ] A block evaluated in scope of the new Parameter
   # @yieldreturn [void]
   # @return [void]
@@ -955,9 +955,7 @@ class Type
     # Once an object is managed, it always stays managed; but an object
     # that is listed as unmanaged might become managed later in the process,
     # so we have to check that every time
-    if @managed
-      return @managed
-    else
+    unless @managed
       @managed = false
       properties.each { |property|
         s = property.should
@@ -966,8 +964,8 @@ class Type
           break
         end
       }
-      return @managed
     end
+    return @managed
   end
 
   ###############################
@@ -1338,7 +1336,7 @@ class Type
     end
 
     def properties_to_audit(list)
-      if !list.kind_of?(Array) && list.to_sym == :all
+      if !list.is_a?(Array) && list.to_sym == :all
         all_properties
       else
         Array(list).collect { |p| p.to_sym }
@@ -1989,16 +1987,16 @@ class Type
   # requirement.
   #
   # @example Autorequire the files File['foo', 'bar']
-  #   autorequire( 'file', {|| ['foo', 'bar'] })
+  #   autorequire( 'file', { ['foo', 'bar'] })
   #
   # @example Autobefore the files File['foo', 'bar']
-  #   autobefore( 'file', {|| ['foo', 'bar'] })
+  #   autobefore( 'file', { ['foo', 'bar'] })
   #
   # @example Autosubscribe the files File['foo', 'bar']
-  #   autosubscribe( 'file', {|| ['foo', 'bar'] })
+  #   autosubscribe( 'file', { ['foo', 'bar'] })
   #
   # @example Autonotify the files File['foo', 'bar']
-  #   autonotify( 'file', {|| ['foo', 'bar'] })
+  #   autonotify( 'file', { ['foo', 'bar'] })
   #
   # @param name [String] the name of a type of which one or several resources should be autorelated e.g. "file"
   # @yield [ ] a block returning list of names of given type to auto require

@@ -95,7 +95,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     # NOTE: 'Impure' lambdas are useful in case we need to generate more specific error
     # messages or pass-in instance-specific command-line arguments.
     def mapping(info = {})
-      identity_fn = lambda { |x| x }
+      identity_fn = ->(x) { x }
       info[:aix_attribute] ||= info[:puppet_property]
       info[:property_to_attribute] ||= identity_fn
       info[:attribute_to_property] ||= identity_fn

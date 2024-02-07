@@ -467,7 +467,7 @@ module Puppet
         EOT
     },
     :diff_args => {
-        :default  => lambda { default_diffargs },
+        :default  => -> { default_diffargs },
         :desc     => "Which arguments to pass to the diff command when printing differences between
           files. The command to use can be chosen with the `diff` setting.",
     },
@@ -818,7 +818,7 @@ Valid values are 0 (never cache) and 15 (15 second minimum wait time).
     # We have to downcase the fqdn, because the current ssl stuff (as opposed to in master) doesn't have good facilities for
     # manipulating naming.
     :certname => {
-      :default => lambda { Puppet::Settings.default_certname.downcase },
+      :default => -> { Puppet::Settings.default_certname.downcase },
       :desc => "The name to use when handling certificates. When a node
         requests a certificate from the CA Puppet Server, it uses the value of the
         `certname` setting as its requested Subject CN.
@@ -1086,7 +1086,7 @@ EOT
                    Default is `prime256v1`."
     },
     :digest_algorithm => {
-        :default  => lambda { default_digest_algorithm },
+        :default  => -> { default_digest_algorithm },
         :type     => :enum,
         :values   => valid_digest_algorithms,
         :desc     => "Which digest algorithm to use for file resources and the filebucket.
@@ -1094,7 +1094,7 @@ EOT
                       #{default_digest_algorithm}.",
     },
     :supported_checksum_types => {
-      :default => lambda { default_file_checksum_types },
+      :default => -> { default_file_checksum_types },
       :type    => :array,
       :desc    => "Checksum types supported by this agent for use in file resources of a
                    static catalog. Values must be comma-separated. Valid types are
@@ -1129,7 +1129,7 @@ EOT
       :desc    => "The name to use the Certificate Authority certificate.",
     },
     :cadir => {
-      :default => lambda { default_cadir },
+      :default => -> { default_cadir },
       :type => :directory,
       :desc => "The root directory for the certificate authority.",
     },
@@ -1419,7 +1419,7 @@ EOT
       :desc       => "File that provides mapping between custom SSL oids and user-friendly names"
     },
     :basemodulepath => {
-      :default => lambda { default_basemodulepath },
+      :default => -> { default_basemodulepath },
       :type => :path,
       :desc => "The search path for **global** modules. Should be specified as a
         list of directories separated by the system path separator character. (The
@@ -1431,7 +1431,7 @@ EOT
         <https://puppet.com/docs/puppet/latest/environments_about.html>",
     },
     :vendormoduledir => {
-      :default => lambda { default_vendormoduledir },
+      :default => -> { default_vendormoduledir },
       :type => :string,
       :desc => "The directory containing **vendored** modules. These modules will
       be used by _all_ environments like those in the `basemodulepath`. The only
@@ -1666,7 +1666,7 @@ EOT
       :desc       => "Whether the server will search for SRV records in DNS for the current domain.",
     },
     :srv_domain => {
-      :default    => lambda { Puppet::Settings.domain_fact },
+      :default    => -> { Puppet::Settings.domain_fact },
       :desc       => "The domain which will be queried to find the SRV records of servers to use.",
     },
     :http_extra_headers => {

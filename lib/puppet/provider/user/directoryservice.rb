@@ -458,14 +458,14 @@ Puppet::Type.type(:user).provide :directoryservice do
         begin
           dscl '.', '-change', "/Users/#{resource.name}", self.class.ns_to_ds_attribute_map[setter_method.intern], @property_hash[setter_method.intern], value
         rescue Puppet::ExecutionFailure => e
-          raise Puppet::Error, "Cannot set the #{setter_method} value of '#{value}' for user " +
+          raise Puppet::Error, "Cannot set the #{setter_method} value of '#{value}' for user " \
                                "#{@resource.name} due to the following error: #{e.inspect}", e.backtrace
         end
       else
         begin
           dscl '.', '-create', "/Users/#{resource.name}", self.class.ns_to_ds_attribute_map[setter_method.intern], value
         rescue Puppet::ExecutionFailure => e
-          raise Puppet::Error, "Cannot set the #{setter_method} value of '#{value}' for user " +
+          raise Puppet::Error, "Cannot set the #{setter_method} value of '#{value}' for user " \
                                "#{@resource.name} due to the following error: #{e.inspect}", e.backtrace
         end
       end

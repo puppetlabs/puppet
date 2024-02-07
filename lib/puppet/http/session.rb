@@ -62,7 +62,7 @@ class Puppet::HTTP::Session
     return cached if cached
 
     canceled = false
-    canceled_handler = lambda { |cancel| canceled = cancel }
+    canceled_handler = ->(cancel) { canceled = cancel }
 
     @resolvers.each do |resolver|
       Puppet.debug("Resolving service '#{name}' using #{resolver.class}")

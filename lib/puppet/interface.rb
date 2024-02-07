@@ -51,7 +51,7 @@ class Puppet::Interface
     # @param name [Symbol] the name of the face
     # @param version [String] the version of the face (this should
     #   conform to {http://semver.org/ Semantic Versioning})
-    # @overload define(name, version, {|| ... })
+    # @overload define(name, version, { ... })
     # @return [Puppet::Interface] The created face
     # @api public
     # @dsl Faces

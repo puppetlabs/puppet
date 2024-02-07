@@ -346,17 +346,10 @@ Style/CaseEquality:
     - 'lib/puppet/interface/face_collection.rb'
     - 'lib/puppet/module_tool/installed_modules.rb'
     - 'lib/puppet/module_tool/shared_behaviors.rb'
-    - 'lib/puppet/provider/package/pip.rb'
-    - 'lib/puppet/provider/package/pkgin.rb'
-    - 'lib/puppet/settings/integer_setting.rb'
     - 'lib/puppet/util/command_line/puppet_option_parser.rb'
     - 'lib/puppet/util/log/destination.rb'
     - 'lib/puppet/util/multi_match.rb'
     - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
-
-# This cop supports unsafe auto-correction (--auto-correct-all).
-Style/CaseLikeIf:
-  Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
@@ -364,49 +357,12 @@ Style/CaseLikeIf:
 Style/ClassAndModuleChildren:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: is_a?, kind_of?
-Style/ClassCheck:
-  Exclude:
-    - 'lib/puppet/error.rb'
-    - 'lib/puppet/functions.rb'
-    - 'lib/puppet/graph/simple_graph.rb'
-    - 'lib/puppet/node/environment.rb'
-    - 'lib/puppet/provider/group/groupadd.rb'
-    - 'lib/puppet/provider/group/windows_adsi.rb'
-    - 'lib/puppet/provider/user/windows_adsi.rb'
-    - 'lib/puppet/settings.rb'
-    - 'lib/puppet/settings/environment_conf.rb'
-    - 'lib/puppet/type.rb'
-    - 'lib/puppet/util/suidmanager.rb'
-    - 'lib/puppet/util/windows/adsi.rb'
-    - 'lib/puppet/util/windows/sid.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: IgnoredMethods.
-# IgnoredMethods: ==, equal?, eql?
-Style/ClassEqualityComparison:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/ClassMethods:
-  Exclude:
-    - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
-
 Style/ClassVars:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
 Style/ColonMethodCall:
   Enabled: false
-
-Style/CombinableLoops:
-  Exclude:
-    - 'lib/puppet/graph/relationship_graph.rb'
-    - 'lib/puppet/pops/types/ruby_generator.rb'
-    - 'lib/puppet/provider/service/init.rb'
-    - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, AllowInnerBackticks.
@@ -444,9 +400,6 @@ Style/ConditionalAssignment:
 Style/DateTime:
   Enabled: false
 
-Style/DefWithParentheses:
-  Enabled: false
-
 # Configuration parameters: AllowedConstants.
 Style/Documentation:
   Enabled: false
@@ -468,26 +421,6 @@ Style/DoubleNegation:
     - 'lib/puppet/type.rb'
     - 'lib/puppet/util/feature.rb'
     - 'lib/puppet/util/windows/adsi.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/EachWithObject:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/EmptyBlockParameter:
-  Exclude:
-    - 'lib/puppet/parser/type_loader.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/EmptyCaseCondition:
-  Exclude:
-    - 'lib/puppet/pops/serialization/serializer.rb'
-    - 'lib/puppet/pops/types/type_calculator.rb'
-    - 'lib/puppet/settings.rb'
-    - 'lib/puppet/settings/duration_setting.rb'
-    - 'lib/puppet/settings/priority_setting.rb'
-    - 'lib/puppet/settings/ttl_setting.rb'
-    - 'lib/puppet/type.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
@@ -527,28 +460,8 @@ Style/Encoding:
     - 'lib/puppet/util/windows/service.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/EvenOdd:
-  Exclude:
-    - 'lib/puppet/pops/serialization/json.rb'
-    - 'lib/puppet/pops/types/types.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/ExpandPathArguments:
-  Exclude:
-    - 'lib/puppet/util/libuser.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/ExplicitBlockArgument:
   Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: each, for
-Style/For:
-  Exclude:
-    - 'lib/puppet/file_system/uniquefile.rb'
-    - 'lib/puppet/module_tool/contents_description.rb'
-    - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
@@ -562,6 +475,7 @@ Style/FormatStringToken:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
+# Applying the safe auto-correct results in util_spec failures.
 Style/GlobalStdStream:
   Exclude:
     - 'lib/puppet/application/apply.rb'
@@ -583,16 +497,6 @@ Style/GlobalVars:
 Style/GuardClause:
   Enabled: false
 
-# This cop supports unsafe auto-correction (--auto-correct-all).
-# Configuration parameters: AllowedReceivers.
-Style/HashEachMethods:
-  Enabled: false
-
-# Configuration parameters: MinBranchesCount.
-Style/HashLikeCase:
-  Exclude:
-    - 'lib/puppet/util/command_line/trollop.rb'
-
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, EnforcedShorthandSyntax, UseHashRocketsWithSymbolValues, PreferHashRocketsForNonAlnumEndingSymbols.
 # SupportedStyles: ruby19, hash_rockets, no_mixed_keys, ruby19_no_mixed_keys
@@ -600,42 +504,12 @@ Style/HashLikeCase:
 Style/HashSyntax:
   Enabled: false
 
-# This cop supports unsafe auto-correction (--auto-correct-all).
-Style/HashTransformValues:
-  Exclude:
-    - 'lib/puppet/functions/group_by.rb'
-    - 'lib/puppet/parser/scope.rb'
-    - 'lib/puppet/pops/loader/task_instantiator.rb'
-    - 'lib/puppet/pops/types/p_type_set_type.rb'
-    - 'lib/puppet/transaction/report.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/IdenticalConditionalBranches:
-  Exclude:
-    - 'lib/puppet/functions/filter.rb'
-    - 'lib/puppet/network/http_pool.rb'
-    - 'lib/puppet/node.rb'
-    - 'lib/puppet/parser/resource.rb'
-    - 'lib/puppet/pops/loader/module_loaders.rb'
-    - 'lib/puppet/pops/types/p_type_set_type.rb'
-    - 'lib/puppet/type.rb'
-    - 'lib/puppet/util/feature.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: AllowIfModifier.
-Style/IfInsideElse:
-  Enabled: false
-
 # This cop supports safe auto-correction (--auto-correct).
 Style/IfUnlessModifier:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/IfUnlessModifierOfIfUnless:
-  Exclude:
-    - 'lib/puppet/util/command_line/trollop.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
+# The auto-correct function introduces testing errors in the evaluating_parser_spec
 Style/IfWithSemicolon:
   Exclude:
     - 'lib/puppet/pops/parser/evaluating_parser.rb'
@@ -643,11 +517,6 @@ Style/IfWithSemicolon:
 # This cop requires significant changes to testing, will require its own effort
 Style/ImplicitRuntimeError:
   Enabled: false
-
-# This cop supports unsafe auto-correction (--auto-correct-all).
-Style/InfiniteLoop:
-  Exclude:
-    - 'lib/puppet/util/posix.rb'
 
 # This cop supports unsafe auto-correction (--auto-correct-all).
 # Configuration parameters: InverseMethods, InverseBlocks.
@@ -664,38 +533,6 @@ Style/InverseMethods:
     - 'lib/puppet/provider/user/user_role_add.rb'
     - 'lib/puppet/reference/providers.rb'
     - 'lib/puppet/type/file.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/KeywordParametersOrder:
-  Exclude:
-    - 'lib/puppet/http/service/file_server.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: line_count_dependent, lambda, literal
-Style/Lambda:
-  Exclude:
-    - 'lib/puppet/defaults.rb'
-    - 'lib/puppet/functions/unique.rb'
-    - 'lib/puppet/graph/relationship_graph.rb'
-    - 'lib/puppet/http/session.rb'
-    - 'lib/puppet/pops/lookup/interpolation.rb'
-    - 'lib/puppet/pops/parser/lexer2.rb'
-    - 'lib/puppet/provider/aix_object.rb'
-    - 'lib/puppet/provider/service/upstart.rb'
-    - 'lib/puppet/transaction.rb'
-    - 'lib/puppet/util/command_line/puppet_option_parser.rb'
-    - 'lib/puppet/util/symbolic_file_mode.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/LineEndConcatenation:
-  Exclude:
-    - 'lib/puppet/functions.rb'
-    - 'lib/puppet/module.rb'
-    - 'lib/puppet/network/http/api.rb'
-    - 'lib/puppet/provider/user/directoryservice.rb'
-    - 'lib/puppet/util/windows/file.rb'
-    - 'lib/puppet/util/windows/process.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: IgnoredMethods.

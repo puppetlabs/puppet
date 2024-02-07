@@ -31,12 +31,11 @@ class Puppet::Settings::PrioritySetting < Puppet::Settings::BaseSetting
   def munge(value)
     return unless value
 
-    case
-    when value.is_a?(Integer)
+    if value.is_a?(Integer)
       value
-    when (value.is_a?(String) and value =~ /\d+/)
+    elsif (value.is_a?(String) and value =~ /\d+/)
       value.to_i
-    when (value.is_a?(String) and PRIORITY_MAP[value.to_sym])
+    elsif (value.is_a?(String) and PRIORITY_MAP[value.to_sym])
       PRIORITY_MAP[value.to_sym]
     else
       raise Puppet::Settings::ValidationError, _("Invalid priority format '%{value}' for parameter: %{name}") % { value: value.inspect, name: @name }

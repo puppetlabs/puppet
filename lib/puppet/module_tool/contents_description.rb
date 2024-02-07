@@ -32,12 +32,12 @@ module Puppet::ModuleTool
       unless @data
         @data = []
         type_names = []
-        for module_filename in Dir[File.join(@module_path, "lib/puppet/type/*.rb")]
+        (Dir[File.join(@module_path, "lib/puppet/type/*.rb")]).each do |module_filename|
           require module_filename
           type_name = File.basename(module_filename, ".rb")
           type_names << type_name
 
-          for provider_filename in Dir[File.join(@module_path, "lib/puppet/provider/#{type_name}/*.rb")]
+          (Dir[File.join(@module_path, "lib/puppet/provider/#{type_name}/*.rb")]).each do |provider_filename|
             require provider_filename
           end
         end

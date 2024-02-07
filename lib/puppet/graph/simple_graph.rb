@@ -458,7 +458,7 @@ class Puppet::Graph::SimpleGraph
                  'fontsize' => fontsize,
                  'label' => name }
       v_label = v.ref
-      params.merge!(v_label) if v_label and v_label.kind_of? Hash
+      params.merge!(v_label) if v_label and v_label.is_a? Hash
       graph << DOT::DOTNode.new(params)
     end
     edges.each do |e|
@@ -466,7 +466,7 @@ class Puppet::Graph::SimpleGraph
                  'to' => stringify(e.target.ref),
                  'fontsize' => fontsize }
       e_label = e.ref
-      params.merge!(e_label) if e_label and e_label.kind_of? Hash
+      params.merge!(e_label) if e_label and e_label.is_a? Hash
       graph << edge_klass.new(params)
     end
     graph

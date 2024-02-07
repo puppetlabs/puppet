@@ -2841,7 +2841,7 @@ class PHashType < PCollectionType
           if from.size == 0
             {}
           else
-            unless from.size % 2 == 0
+            unless from.size.even?
               raise TypeConversionError.new(_('odd number of arguments for Hash'))
             end
 

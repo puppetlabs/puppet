@@ -214,27 +214,26 @@ class TypeCalculator
     raise ArgumentError, 'Argument must be a Module' unless c.is_a? Module
 
     # Can't use a visitor here since we don't have an instance of the class
-    case
-    when c <= Integer
+    if c <= Integer
       type = PIntegerType::DEFAULT
-    when c == Float
+    elsif c == Float
       type = PFloatType::DEFAULT
-    when c == Numeric
+    elsif c == Numeric
       type = PNumericType::DEFAULT
-    when c == String
+    elsif c == String
       type = PStringType::DEFAULT
-    when c == Regexp
+    elsif c == Regexp
       type = PRegexpType::DEFAULT
-    when c == NilClass
+    elsif c == NilClass
       type = PUndefType::DEFAULT
-    when c == FalseClass, c == TrueClass
+    elsif c == FalseClass || c == TrueClass
       type = PBooleanType::DEFAULT
-    when c == Class
+    elsif c == Class
       type = PTypeType::DEFAULT
-    when c == Array
+    elsif c == Array
       # Assume array of any
       type = PArrayType::DEFAULT
-    when c == Hash
+    elsif c == Hash
       # Assume hash of any
       type = PHashType::DEFAULT
     else

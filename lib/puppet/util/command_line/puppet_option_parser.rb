@@ -70,7 +70,7 @@ module Puppet
         end
 
         def parse(*args)
-          args = args[0] if args.size == 1 and Array === args[0]
+          args = args[0] if args.size == 1 and args[0].is_a?(Array)
           args_copy = args.dup
           begin
             @parser.parse args_copy
@@ -80,7 +80,7 @@ module Puppet
         end
 
         def pass_only_last_value_on_to(block)
-          lambda { |values| block.call(values.is_a?(Array) ? values.last : values) }
+          ->(values) { block.call(values.is_a?(Array) ? values.last : values) }
         end
         private :pass_only_last_value_on_to
       end

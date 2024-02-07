@@ -539,7 +539,7 @@ class Puppet::Node::Environment
   end
 
   def ==(other)
-    return true if other.kind_of?(Puppet::Node::Environment) &&
+    return true if other.is_a?(Puppet::Node::Environment) &&
                    self.name == other.name &&
                    self.full_modulepath == other.full_modulepath &&
                    self.manifest == other.manifest

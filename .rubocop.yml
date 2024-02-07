@@ -226,6 +226,11 @@ Style/ColonMethodCall:
 
 Style/CombinableLoops:
   Enabled: true
+  Exclude:
+    - 'lib/puppet/graph/relationship_graph.rb'
+    - 'lib/puppet/pops/types/ruby_generator.rb'
+    - 'lib/puppet/provider/service/init.rb'
+    - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
 
 Style/ColonMethodDefinition:
   Enabled: true
@@ -307,6 +312,8 @@ Style/HashEachMethods:
 
 Style/HashLikeCase:
   Enabled: true
+  Exclude:
+    - 'lib/puppet/util/command_line/trollop.rb'
 
 Style/HashTransformKeys:
   Enabled: true

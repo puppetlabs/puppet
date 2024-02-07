@@ -60,9 +60,7 @@ class Puppet::Node
   end
 
   def environment
-    if @environment
-      @environment
-    else
+    unless @environment
       env = parameters[ENVIRONMENT]
       if env
         self.environment = env
@@ -76,8 +74,8 @@ class Puppet::Node
         self.environment = Puppet.lookup(:environments).get!(Puppet[:environment])
       end
 
-      @environment
     end
+    @environment
   end
 
   def environment=(env)
