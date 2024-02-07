@@ -62,9 +62,9 @@ agents.each do |agent|
   create_remote_file(agent, daemon, sleepy_daemon_script(agent))
   on(agent, "chmod +x #{daemon}")
 
-  apply_manifest_on(agent, "exec {'#{daemon}': logoutput => true}") do
+  apply_manifest_on(agent, "exec {'#{daemon}': logoutput => true}") do |result|
     fail_test "didn't seem to run the command" unless
-      stdout.include? 'executed successfully' unless agent['locale'] == 'ja'
+      result.stdout.include? 'executed successfully' unless agent['locale'] == 'ja'
   end
 end
 

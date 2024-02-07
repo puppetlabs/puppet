@@ -13,8 +13,8 @@ agents.each do |agent|
   fail_test("No groups found") unless groups
 
   step "query with puppet"
-  on(agent, puppet_resource('group')) do
-    stdout.each_line do |line|
+  on(agent, puppet_resource('group')) do |result|
+    result.stdout.each_line do |line|
       name = ( line.match(/^group \{ '([^']+)'/) or next )[1]
 
       unless groups.delete(name)

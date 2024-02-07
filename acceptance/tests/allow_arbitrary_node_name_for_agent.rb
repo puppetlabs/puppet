@@ -127,8 +127,8 @@ step "Ensure nodes are classified based on the node name fact" do
     },
   }
   with_puppet_running_on(master, master_opts, testdir) do
-    on(agents, puppet('agent', "-t --node_name_value specified_node_name"), :acceptable_exit_codes => [0,2]) do
-      assert_match(/defined 'message'.*#{success_message}/, stdout)
+    on(agents, puppet('agent', "-t --node_name_value specified_node_name"), :acceptable_exit_codes => [0,2]) do |result|
+      assert_match(/defined 'message'.*#{success_message}/, result.stdout)
     end
   end
 end

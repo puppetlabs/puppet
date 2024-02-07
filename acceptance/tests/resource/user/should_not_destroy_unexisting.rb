@@ -15,6 +15,6 @@ agents.each do |agent|
 end
 
 step "ensure absent doesn't try and do anything"
-on(agents, puppet_resource('user', name, 'ensure=absent')) do
-  fail_test "tried to remove the user, apparently" if stdout.include? 'removed'
+on(agents, puppet_resource('user', name, 'ensure=absent')) do |result|
+  fail_test "tried to remove the user, apparently" if result.stdout.include? 'removed'
 end

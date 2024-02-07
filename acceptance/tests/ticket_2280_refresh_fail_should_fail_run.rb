@@ -27,7 +27,7 @@ EOS
   agents.each do |agent|
     step 'Apply manifest with fail on refresh. Ensure that this results in a failed dependency' do
       apply_manifest_on(agent, manifest, :expect_failures => true) do |res|
-        assert_no_match(/require_echo.*returns: executed successfully/, res.stdout)
+        refute_match(/require_echo.*returns: executed successfully/, res.stdout)
         assert_match(/require_echo.*Skipping because of failed dependencies/, res.stderr) unless agent['locale'] == 'ja'
       end
     end

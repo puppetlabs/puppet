@@ -55,12 +55,12 @@ test_name "ticket 1073: common package name in two different providers should be
     hosts.each do |agent|
       cmd = rpm_provider(agent)
       # Note yum lists packages as <name>.<arch>
-      on agent, "#{cmd} list installed" do
-        method(match).call(/^#{pkg}\./, stdout)
+      on(agent, "#{cmd} list installed") do |result|
+        method(match).call(/^#{pkg}\./, result.stdout)
       end
 
-      on agent, "#{gem_command(agent, @options[:type])} list --local" do
-        method(match).call(/^#{pkg} /, stdout)
+      on(agent, "#{gem_command(agent, @options[:type])} list --local") do |result|
+        method(match).call(/^#{pkg} /, result.stdout)
       end
     end
   end
@@ -70,7 +70,7 @@ test_name "ticket 1073: common package name in two different providers should be
   end
 
   def verify_absent(hosts, pkg)
-    verify_state(hosts, pkg, '(?:purged|absent)', :assert_no_match)
+    verify_state(hosts, pkg, '(?:purged|absent)', :refute_match)
   end
 
   # Setup repo and package

@@ -23,8 +23,8 @@ HERE
 
   apply_manifest_on agent, test_manifest
 
-  on(agent, "cat #{temp_file_name}") do
-    assert_equal(expected_results, stdout, "Unexpected result for host '#{agent}'")
+  on(agent, "cat #{temp_file_name}") do |result|
+    assert_equal(expected_results, result.stdout, "Unexpected result for host '#{agent}'")
   end
 
   on(agent, "rm -f #{temp_file_name}")

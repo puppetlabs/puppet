@@ -101,7 +101,7 @@ MANIFEST
 
     step 'compile catalog and make sure that ruby code is NOT executed' do
       on master, puppet('catalog', 'find', master.hostname) do |result|
-        assert_no_match(/running ruby code/, result.stderr)
+        refute_match(/running ruby code/, result.stderr)
         catalog_results[master.hostname]['pcore_cat'] = JSON.parse(result.stdout.sub(/^[^{]+/,''))
       end
     end

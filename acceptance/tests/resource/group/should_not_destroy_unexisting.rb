@@ -14,8 +14,8 @@ agents.each do |agent|
 end
 
 step "verify that we don't remove the group when it doesn't exist"
-on(agents, puppet_resource('group', name, 'ensure=absent')) do
+on(agents, puppet_resource('group', name, 'ensure=absent')) do |result|
   fail_test "it looks like we tried to remove the group" if
-    stdout.include? "/Group[#{name}]/ensure: removed"
+    result.stdout.include? "/Group[#{name}]/ensure: removed"
 end
 

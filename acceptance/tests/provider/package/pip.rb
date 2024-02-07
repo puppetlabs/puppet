@@ -74,7 +74,7 @@ test_name "pip provider should install, use install_options with latest, and uni
       package_manifest = resource_manifest('package', package, { ensure: 'absent', provider: 'pip' } )
       apply_manifest_on(agent, package_manifest, :catch_failures => true) do
         list = on(agent, "#{pip_command} list --disable-pip-version-check").stdout
-        assert_no_match(/#{package} \(/, list)
+        refute_match(/#{package} \(/, list)
       end
     end
   end

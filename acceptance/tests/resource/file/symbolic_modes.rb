@@ -59,9 +59,9 @@ test_name 'file resource: symbolic modes' do
 
     def puppet_reapply
       @testcase.apply_manifest_on(@agent, manifest) do |apply_result|
-        assert_no_match(/mode changed/, apply_result.stdout, "reapplied the symbolic mode change")
+        refute_match(/mode changed/, apply_result.stdout, "reapplied the symbolic mode change")
         (@file_list + @directory_list).each do |file|
-          assert_no_match(/#{Regexp.escape(file.path)}/, apply_result.stdout, "Expected to not see '#{file.path}' in 'puppet apply' output")
+          refute_match(/#{Regexp.escape(file.path)}/, apply_result.stdout, "Expected to not see '#{file.path}' in 'puppet apply' output")
         end
       end
     end
@@ -119,7 +119,7 @@ test_name 'file resource: symbolic modes' do
           assert_match(/File\[#{Regexp.escape(file.path)}.* mode changed '#{'%04o' % file.start_mode}'.* to '#{'%04o' % file.mode}'/,
                        apply_result, "couldn't set mode to #{file.symbolic_mode}")
         else
-          assert_no_match(/#{Regexp.escape(file.path)}.*mode changed/, apply_result, "reapplied the symbolic mode change for file #{file.path}")
+          refute_match(/#{Regexp.escape(file.path)}.*mode changed/, apply_result, "reapplied the symbolic mode change for file #{file.path}")
         end
         assert_mode(@agent, file.path, file.mode)
       end

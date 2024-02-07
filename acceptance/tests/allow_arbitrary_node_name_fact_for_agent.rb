@@ -10,8 +10,8 @@ success_message = "node_name_fact setting was correctly used to determine the no
 testdir = master.tmpdir("nodenamefact")
 node_names = []
 
-on agents, facter('kernel') do
-  node_names << stdout.chomp
+on agents, facter('kernel') do |result|
+  node_names << result.stdout.chomp
 end
 
 node_names.uniq!
@@ -147,8 +147,8 @@ step "Ensure nodes are classified based on the node name fact" do
   }
 
   with_puppet_running_on(master, master_opts, testdir) do
-    on(agents, puppet('agent', "--no-daemonize --verbose --onetime --node_name_fact kernel")) do
-      assert_match(/defined 'message'.*#{success_message}/, stdout)
+    on(agents, puppet('agent', "--no-daemonize --verbose --onetime --node_name_fact kernel")) do |result|
+      assert_match(/defined 'message'.*#{success_message}/, result.stdout)
     end
   end
 end

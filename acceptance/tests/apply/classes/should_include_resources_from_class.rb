@@ -9,7 +9,6 @@ class x {
 }
 include x
 }
-apply_manifest_on(agents, manifest) do
-    fail_test "the resource did not apply" unless
-        stdout.include? "defined 'message' as 'a'"
+apply_manifest_on(agents, manifest) do |result|
+    fail_test "the resource did not apply" unless result.stdout.include?("defined 'message' as 'a'")
 end

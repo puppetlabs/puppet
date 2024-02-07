@@ -70,11 +70,11 @@ class helloworld {
 SOURCE
 
   # Run apply to generate the file with the output
-  on agent, puppet('apply', '-e', "'include helloworld'", '--config', puppetconf)
+  on(agent, puppet('apply', '-e', "'include helloworld'", '--config', puppetconf))
 
   # Assert that the file was written with the generated content
-  on(agent, "cat #{File.join(target_path, 'result.txt')}") do
-    assert_match(/^Generated, 1 => 10, 2 => 20, 3 => 30$/, stdout, "Generated the wrong content")
+  on(agent, "cat #{File.join(target_path, 'result.txt')}") do |result|
+    assert_match(/^Generated, 1 => 10, 2 => 20, 3 => 30$/, result.stdout, "Generated the wrong content")
   end
 
 end

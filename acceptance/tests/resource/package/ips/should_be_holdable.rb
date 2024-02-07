@@ -62,7 +62,7 @@ agents.each do |agent|
   setup_fakeroot2 agent
   send_pkg2 agent, :pkg => 'mypkg2@0.0.3', :pkgdep => 'mypkg@0.0.3'
   apply_manifest_on(agent, 'package {mypkg2 : ensure=>"0.0.2"}') do
-    assert_no_match( /changed/, result.stdout, "err: #{agent}")
+    refute_match( /changed/, result.stdout, "err: #{agent}")
   end
   on agent, "pkg list -v mypkg" do
     assert_match( /mypkg@0.0.2/, result.stdout, "err: #{agent}")

@@ -79,7 +79,7 @@ end
 
         step "run the agent" do
           on(agent, puppet("agent --libdir='#{agent_lib_dir}' --test --environment '#{tmp_environment}'")) do |result|
-            assert_no_match(
+            refute_match(
               /The \`source_permissions\` parameter is deprecated/,
               result.stderr,
               "pluginsync should not get a deprecation warning for source_permissions")
