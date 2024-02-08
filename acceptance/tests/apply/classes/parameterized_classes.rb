@@ -12,8 +12,8 @@ class x($y, $z) {
 class {x: y => '1', z => '2'}
 }
 
-apply_manifest_on(agents, manifest) do
-    fail_test "inclusion after parameterization failed" unless stdout.include? "1-2"
+apply_manifest_on(agents, manifest) do |result|
+    fail_test "inclusion after parameterization failed" unless result.stdout.include? "1-2"
 end
 
 ########################################################################
@@ -28,8 +28,8 @@ class {x: y => '1', z => '2'}
 include x
 }
 
-apply_manifest_on(agents, manifest) do
-    fail_test "inclusion after parameterization failed" unless stdout.include? "1-2"
+apply_manifest_on(agents, manifest) do |result|
+    fail_test "inclusion after parameterization failed" unless result.stdout.include? "1-2"
 end
 
 ########################################################################
@@ -41,8 +41,8 @@ class x($y, $z='2') {
 class {x: y => '1'}
 }
 
-apply_manifest_on(agents, manifest) do
-    fail_test "the default didn't apply as expected" unless stdout.include? "1-2"
+apply_manifest_on(agents, manifest) do |result|
+    fail_test "the default didn't apply as expected" unless result.stdout.include? "1-2"
 end
 
 ########################################################################
@@ -54,6 +54,6 @@ class x($y, $z='2') {
 class {x: y => '1', z => '3'}
 }
 
-apply_manifest_on(agents, manifest) do
-    fail_test "the override didn't happen as we expected" unless stdout.include? "1-3"
+apply_manifest_on(agents, manifest) do |result|
+    fail_test "the override didn't happen as we expected" unless result.stdout.include? "1-3"
 end

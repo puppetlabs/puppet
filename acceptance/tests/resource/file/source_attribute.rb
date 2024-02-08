@@ -167,19 +167,19 @@ test_name "The source attribute" do
         dir_to_check = agent['platform'] =~ /windows/ ? @target_dir_on_windows : @target_dir_on_nix
 
         checksums.each do |checksum_type|
-          on agent, "cat #{file_to_check}#{checksum_type}" do
-            assert_match(/the content is present/, stdout, "Result file not created #{checksum_type}")
+          on agent, "cat #{file_to_check}#{checksum_type}" do |result|
+            assert_match(/the content is present/, result.stdout, "Result file not created #{checksum_type}")
           end
 
-          on agent, "cat #{dir_to_check}#{checksum_type}/source_dir_file" do
-            assert_match(/the content is present/, stdout, "Result file not created #{checksum_type}")
+          on agent, "cat #{dir_to_check}#{checksum_type}/source_dir_file" do |result|
+            assert_match(/the content is present/, result.stdout, "Result file not created #{checksum_type}")
           end
         end
       end
 
       step "second run should not update file"
-      on(agent, puppet('agent', "--test"), :acceptable_exit_codes => [0,2]) do
-        assert_no_match(/content changed.*(md5|sha256)/, stdout, "Shouldn't have overwritten any files")
+      on(agent, puppet('agent', "--test"), :acceptable_exit_codes => [0,2]) do |result|
+        refute_match(/content changed.*(md5|sha256)/, result.stdout, "Shouldn't have overwritten any files")
 
         # When using ctime/mtime, the agent compares the values from its
         # local file with the values on the master to determine if the
@@ -190,11 +190,11 @@ test_name "The source attribute" do
         # again. This process will repeat until the agent updates the
         # file, and the resulting ctime/mtime are after the values on
         # the master, at which point it will have converged.
-        if stdout =~ /content changed.*ctime/
+        if result.stdout =~ /content changed.*ctime/
           Log.warn "Agent did not converge using ctime"
         end
 
-        if stdout =~ /content changed.*mtime/
+        if result.stdout =~ /content changed.*mtime/
           Log.warn "Agent did not converge using mtime"
         end
       end
@@ -248,14 +248,14 @@ test_name "The source attribute" do
 
     checksums.each do |checksum_type|
       step "Using a local file path. #{checksum_type}"
-      on agent, "cat #{target[checksum_type]}" do
-        assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
+      on(agent, "cat #{target[checksum_type]}") do |result|
+        assert_match(/Yay, this is the local file./, result.stdout, "FIRST: File contents not matched on #{agent}")
       end
     end
 
     step "second run should not update any files"
-    apply_manifest_on agent, local_apply_manifest do
-      assert_no_match(/content changed/, stdout, "Shouldn't have overwrote any files")
+    apply_manifest_on(agent, local_apply_manifest) do |result|
+      refute_match(/content changed/, result.stdout, "Shouldn't have overwrote any files")
     end
 
     # changes in source file producing updates is tested elsewhere
@@ -265,12 +265,12 @@ test_name "The source attribute" do
     create_remote_file agent, source, source_content
 
     if fips_host_present
-      apply_manifest_on agent, "file { '#{localsource_testdir}/targetsha256lite': source => '#{source}', ensure => present, checksum => sha256lite }" do
-        assert_no_match(/(content changed|defined content)/, stdout, "Shouldn't have overwrote any files")
+      apply_manifest_on(agent, "file { '#{localsource_testdir}/targetsha256lite': source => '#{source}', ensure => present, checksum => sha256lite }") do |result|
+        refute_match(/(content changed|defined content)/, result.stdout, "Shouldn't have overwrote any files")
       end
     else
-      apply_manifest_on agent, "file { '#{localsource_testdir}/targetmd5lite': source => '#{source}', ensure => present, checksum => md5lite } file { '#{localsource_testdir}/targetsha256lite': source => '#{source}', ensure => present, checksum => sha256lite }" do
-        assert_no_match(/(content changed|defined content)/, stdout, "Shouldn't have overwrote any files")
+      apply_manifest_on(agent, "file { '#{localsource_testdir}/targetmd5lite': source => '#{source}', ensure => present, checksum => md5lite } file { '#{localsource_testdir}/targetsha256lite': source => '#{source}', ensure => present, checksum => sha256lite }") do |result|
+        refute_match(/(content changed|defined content)/, result.stdout, "Shouldn't have overwrote any files")
       end
     end
 
@@ -287,14 +287,14 @@ test_name "The source attribute" do
 
     checksums.each do |checksum_type|
       step "Using a puppet:/// URI with checksum type: #{checksum_type}"
-      on agent, "cat #{target[checksum_type]}" do
-        assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
+      on(agent, "cat #{target[checksum_type]}") do |result|
+        assert_match(/Yay, this is the local file./, result.stdout, "FIRST: File contents not matched on #{agent}")
       end
     end
 
     step "second run should not update any files using apply with puppet:/// URI source"
-    on agent, puppet( %{apply --modulepath=#{localsource_testdir} #{localsource_test_manifest}} ) do
-      assert_no_match(/content changed/, stdout, "Shouldn't have overwrote any files")
+    on(agent, puppet( %{apply --modulepath=#{localsource_testdir} #{localsource_test_manifest}} )) do |result|
+      refute_match(/content changed/, result.stdout, "Shouldn't have overwrote any files")
     end
   end
 

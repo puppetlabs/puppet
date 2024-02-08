@@ -20,11 +20,11 @@ svc = 'com.puppetlabs.sloth'
 launchd_script_path = "/Library/LaunchDaemons/#{svc}.plist"
 
 def launchctl_assert_status(host, service, expect_running)
-  on host, 'launchctl list' do
+  on(host, 'launchctl list') do |result|
     if expect_running
-      assert_match(/#{service}/, stdout, 'Service was not found in launchctl list')
+      assert_match(/#{service}/, result.stdout, 'Service was not found in launchctl list')
     else
-      assert_no_match(/#{service}/, stdout, 'Service was not expected in launchctl list')
+      refute_match(/#{service}/, result.stdout, 'Service was not expected in launchctl list')
     end
   end
 end

@@ -39,7 +39,7 @@ MANIFEST
 
     step "Verify that a new user has no roles" do
       on(agent, puppet("resource user #{newUser}")) do |result|
-        assert_no_match(/roles\s+=>/, result.stdout)
+        refute_match(/roles\s+=>/, result.stdout)
       end
     end
 
@@ -81,13 +81,13 @@ MANIFEST
 
     step "Verify that :roles noops when #{newUser} already has given role while managing :role_membership as minimum" do
       apply_manifest_on(agent, user_manifest(newUser, roles: ['SeBackupPrivilege'], role_membership: :minimum), catch_changes: true) do |result|
-        assert_no_match(/User\[#{newUser}\]\/roles: roles changed/, result.stdout)
+        refute_match(/User\[#{newUser}\]\/roles: roles changed/, result.stdout)
       end
     end
 
     step "Verify that while not managing :role_membership, the behaviour remains the same, with noop from :roles when #{newUser} already has the given role" do
       apply_manifest_on(agent, user_manifest(newUser, roles: ['SeBackupPrivilege']), catch_changes: true) do |result|
-        assert_no_match(/User\[#{newUser}\]\/roles: roles changed/, result.stdout)
+        refute_match(/User\[#{newUser}\]\/roles: roles changed/, result.stdout)
       end
     end
 

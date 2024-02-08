@@ -38,7 +38,7 @@ agents.each do |agent|
     assert_match( /ensure changed/, result.stdout, "err: #{agent}")
   end
   on agent, "pkg list mypkg" do
-    assert_no_match( /0.0.1/, result.stdout, "err: #{agent}")
+    refute_match( /0.0.1/, result.stdout, "err: #{agent}")
     assert_match( /0.0.2/, result.stdout, "err: #{agent}")
   end
   step "IPS: it should downpgrade if asked for previous version"
@@ -46,7 +46,7 @@ agents.each do |agent|
     assert_match( /ensure changed/, result.stdout, "err: #{agent}")
   end
   on agent, "pkg list mypkg" do
-    assert_no_match( /0.0.2/, result.stdout, "err: #{agent}")
+    refute_match( /0.0.2/, result.stdout, "err: #{agent}")
     assert_match( /0.0.1/, result.stdout, "err: #{agent}")
   end
 end

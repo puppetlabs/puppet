@@ -15,24 +15,24 @@ end
 
 def verify_symlink(agent, link, target)
   step "verify the symlink was created"
-  on agent, "test -L #{link} && test -f #{link}"
+  on(agent, "test -L #{link} && test -f #{link}")
   step "verify the symlink points to a file"
-  on agent, "test -f #{target}"
+  on(agent, "test -f #{target}")
 
   step "verify the content is identical on both sides"
-  on(agent, "cat #{link}") do
-    fail_test "link missing content" unless stdout.include? message
+  on(agent, "cat #{link}") do |result|
+    fail_test "link missing content" unless result.stdout.include?(message)
   end
-  on(agent, "cat #{target}") do
-    fail_test "target missing content" unless stdout.include? message
+  on(agent, "cat #{target}") do |result|
+    fail_test "target missing content" unless result.stdout.include?(message)
   end
 end
 
 agents.each do |agent|
   if agent.platform.variant == 'windows'
     # symlinks are supported only on Vista+ (version 6.0 and higher)
-    on agent, facter('kernelmajversion') do
-      skip_test "Test not supported on this platform" if stdout.chomp.to_f < 6.0
+    on(agent, facter('kernelmajversion')) do |result|
+      skip_test "Test not supported on this platform" if result.stdout.chomp.to_f < 6.0
     end
   end
 

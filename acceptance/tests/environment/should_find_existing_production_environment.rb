@@ -95,7 +95,7 @@ agents.each do |agent|
 
   step 'Expect no production environment folder changes' do
     on(agent, "ls #{custom_environment_path}") do |result|
-      assert_no_match(/production/, result.stdout)
+      refute_match(/production/, result.stdout)
     end
 
     on(agent, "ls #{default_environment_path}") do |result|
@@ -110,7 +110,7 @@ agents.each do |agent|
   step 'Expect production environment folder to be recreated in the custom path' do
     on(agent, puppet("agent -t"), :acceptable_exit_codes => [0, 2]) do |result|
       step 'Expect the module to be gone on the server node' do
-        assert_no_match(/Error:.*i18ndemo/, result.stderr)
+        refute_match(/Error:.*i18ndemo/, result.stderr)
       end if agent == master
 
       step 'Expect the production environment, along with the module, to be synced back on the agent node' do
@@ -123,7 +123,7 @@ agents.each do |agent|
     end
 
     on(agent, "ls #{default_environment_path}") do |result|
-      assert_no_match(/production/, result.stdout)
+      refute_match(/production/, result.stdout)
     end
   end
 
@@ -134,7 +134,7 @@ agents.each do |agent|
   step 'Expect production environment folder to be found in both paths but use the default one' do
     on(agent, puppet("agent -t"), :acceptable_exit_codes => [0, 2]) do |result|
       step 'Expect the module to be gone' do
-        assert_no_match(/Error:.*i18ndemo/, result.stderr)
+        refute_match(/Error:.*i18ndemo/, result.stderr)
       end if agent == master
     end
 

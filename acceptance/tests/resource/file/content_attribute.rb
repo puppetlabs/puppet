@@ -24,35 +24,35 @@ agents.each do |agent|
   manifest += checksums.collect {|checksum_type|
     "file { '#{target+checksum_type}': content => 'This is the test file content', ensure => present, checksum => #{checksum_type} }"
   }.join("\n")
-  apply_manifest_on agent, manifest do
+  apply_manifest_on(agent, manifest) do |result|
     checksums.each do |checksum_type|
-      assert_no_match(/content changed/, stdout, "#{agent}: shouldn't have overwrote #{target+checksum_type}")
+      refute_match(/content changed/, result.stdout, "#{agent}: shouldn't have overwrote #{target+checksum_type}")
     end
   end
 
-  on agent, "cat #{target}" do
-    assert_match(/This is the test file content/, stdout, "File content not matched on #{agent}") unless agent['locale'] == 'ja'
+  on(agent, "cat #{target}") do |result|
+    assert_match(/This is the test file content/, result.stdout, "File content not matched on #{agent}") unless agent['locale'] == 'ja'
   end
 
   step "Content Attribute: illegal timesteps"
   ['mtime', 'ctime'].each do |checksum_type|
     manifest = "file { '#{target+checksum_type}': content => 'This is the test file content', ensure => present, checksum => #{checksum_type} }"
-    apply_manifest_on agent, manifest, :acceptable_exit_codes => [1] do
-      assert_match(/Error: Validation of File\[#{target+checksum_type}\] failed: You cannot specify content when using checksum '#{checksum_type}'/, stderr, "#{agent}: expected failure") unless agent['locale'] == 'ja'
+    apply_manifest_on(agent, manifest, :acceptable_exit_codes => [1]) do |result|
+      assert_match(/Error: Validation of File\[#{target+checksum_type}\] failed: You cannot specify content when using checksum '#{checksum_type}'/, result.stderr, "#{agent}: expected failure") unless agent['locale'] == 'ja'
     end
   end
 
   step "Ensure the test environment is clean"
-  on agent, "rm -f #{target}"
+  on(agent, "rm -f #{target}")
 
   step "Content Attribute: using a checksum from filebucket"
-  on agent, "echo 'This is the checksum file contents' > #{target}"
+  on(agent, "echo 'This is the checksum file contents' > #{target}")
 
   step "Backup file into the filebucket"
-  on agent, puppet_filebucket("backup --local #{target}")
+  on(agent, puppet_filebucket("backup --local #{target}"))
 
   step "Modify file to force apply to retrieve file from local clientbucket"
-  on agent, "echo 'This is the modified file contents' > #{target}"
+  on(agent, "echo 'This is the modified file contents' > #{target}")
 
   dir = on(agent, puppet_filebucket("--configprint clientbucketdir")).stdout.chomp
 
@@ -72,7 +72,7 @@ agents.each do |agent|
   apply_manifest_on agent, sha256_manifest
 
   step "Validate filebucket checksum file contents"
-  on agent, "cat #{target}" do
-    assert_match(/This is the checksum file content/, stdout, "File content not matched on #{agent}") unless agent['locale'] == 'ja'
+  on(agent, "cat #{target}") do |result|
+    assert_match(/This is the checksum file content/, result.stdout, "File content not matched on #{agent}") unless agent['locale'] == 'ja'
   end
 end

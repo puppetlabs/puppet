@@ -26,7 +26,7 @@ test_name "verifies that puppet resource creates a user and assigns the correct 
     step "verify the user exists and expiry is not set (meaning never expire)"
     on(host, puppet_resource('user', user)) do |result|
       assert_match(/ensure.*=> 'present'/, result.stdout)
-      assert_no_match(/expiry.*=>/, result.stdout)
+      refute_match(/expiry.*=>/, result.stdout)
     end
   end
 end

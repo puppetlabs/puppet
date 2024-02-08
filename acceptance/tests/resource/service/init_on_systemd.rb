@@ -1,8 +1,9 @@
 test_name 'SysV on default Systemd Service Provider Validation' do
 
   confine :to, :platform => /el-[6-8]|centos|fedora-(2[0-9])/ do |h|
-    on h, 'which systemctl', :acceptable_exit_codes => [0, 1]
-    stdout =~ /systemctl/
+    on(h, 'which systemctl', :acceptable_exit_codes => [0, 1]) do |result|
+      result.stdout =~ /systemctl/
+    end
   end
 
   tag 'audit:high',
@@ -80,12 +81,11 @@ INITD
   end
 
   def assert_service_status(agent, pidfile, expected_running)
-    on agent, "ps -p `cat #{pidfile}`", :acceptable_exit_codes => (expected_running ? [0] : [1])
+    on(agent, "ps -p `cat #{pidfile}`", :acceptable_exit_codes => (expected_running ? [0] : [1]))
   end
 
   agents.each do |agent|
-    on agent, 'which sleep'
-    sleep_bin = stdout.chomp
+    sleep_bin = on(agent, 'which sleep').stdout.chomp
 
     step "Create initd script with status command" do
       create_remote_file agent, initd_location, initd_file(svc, pidfile, initd_location, true)
@@ -93,9 +93,9 @@ INITD
 file {'/usr/bin/#{svc}': ensure => link, target => '#{sleep_bin}', }
 file {'#{initd_location}': ensure => file, mode   => '0755', }
 MANIFEST
-      on agent, "chkconfig --add #{svc}"
-      on agent, "chkconfig #{svc}", :acceptable_exit_codes => [0]
-      on agent, "service #{svc} status", :acceptable_exit_codes => [3]
+      on(agent, "chkconfig --add #{svc}")
+      on(agent, "chkconfig #{svc}", :acceptable_exit_codes => [0])
+      on(agent, "service #{svc} status", :acceptable_exit_codes => [3])
     end
 
     step "Verify the service exists on #{agent}" do
@@ -134,9 +134,9 @@ MANIFEST
 file {'/usr/bin/#{svc}': ensure => link, target => '#{sleep_bin}', }
 file {'#{initd_location}': ensure => file, mode   => '0755', }
 MANIFEST
-      on agent, "chkconfig --add #{svc}"
-      on agent, "chkconfig #{svc}", :acceptable_exit_codes => [0]
-      on agent, "service #{svc} status", :acceptable_exit_codes => [1]
+      on(agent, "chkconfig --add #{svc}")
+      on(agent, "chkconfig #{svc}", :acceptable_exit_codes => [0])
+      on(agent, "service #{svc} status", :acceptable_exit_codes => [1])
     end
 
     step "Verify the service exists on #{agent}" do
@@ -176,9 +176,9 @@ MANIFEST
     end
 
     teardown do
-      on agent, "service #{svc} stop", :accept_any_exit_code => true
-      on agent, "chkconfig --del #{svc}"
-      on agent, "rm /usr/bin/#{svc} #{initd_location}"
+      on(agent, "service #{svc} stop", :accept_any_exit_code => true)
+      on(agent, "chkconfig --del #{svc}")
+      on(agent, "rm /usr/bin/#{svc} #{initd_location}")
     end
   end
 end

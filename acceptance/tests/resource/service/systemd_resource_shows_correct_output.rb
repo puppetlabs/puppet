@@ -24,9 +24,9 @@ test_name 'systemd service shows correct output when queried with "puppet resour
     end
 
     step "Expect reported status to match system state" do
-      on(agent, puppet_resource('service', package_name, 'ensure=stopped', 'enable=true')) do
-        assert_match(/ensure\s*=>\s*'stopped'/, stdout, "Expected '#{package_name}' service to appear as stopped")
-        assert_match(/enable\s*=>\s*'true'/, stdout, "Expected '#{package_name}' service to appear as enabled")
+      on(agent, puppet_resource('service', package_name, 'ensure=stopped', 'enable=true')) do |result|
+        assert_match(/ensure\s*=>\s*'stopped'/, result.stdout, "Expected '#{package_name}' service to appear as stopped")
+        assert_match(/enable\s*=>\s*'true'/, result.stdout, "Expected '#{package_name}' service to appear as enabled")
       end
     end
   end
