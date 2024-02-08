@@ -42,9 +42,9 @@ module Puppet
         # that the exit code is either
         #   2 => something changed, or
         #   0 => no change needed
-        apply_manifest_on host, service_manifest(service, status), :acceptable_exit_codes => [0, 2] do
-          assert_match(/Service\[#{service}\]\/ensure: ensure changed '\w+' to '#{status[:ensure]}'/, stdout, 'Service status change failed') if status[:ensure]
-          assert_match(/Service\[#{service}\]\/enable: enable changed '\w+' to '#{status[:enable]}'/, stdout, 'Service enable change failed') if status[:enable]
+        apply_manifest_on(host, service_manifest(service, status), :acceptable_exit_codes => [0, 2]) do |result|
+          assert_match(/Service\[#{service}\]\/ensure: ensure changed '\w+' to '#{status[:ensure]}'/, result.stdout, 'Service status change failed') if status[:ensure]
+          assert_match(/Service\[#{service}\]\/enable: enable changed '\w+' to '#{status[:enable]}'/, result.stdout, 'Service enable change failed') if status[:enable]
         end
       end
 
@@ -56,9 +56,9 @@ module Puppet
       # @return None
       def ensure_service_idempotent_on_host(host, service, status)
         # ensure idempotency
-        apply_manifest_on host, service_manifest(service, status) do
-          assert_no_match(/Service\[#{service}\]\/ensure/, stdout, 'Service status not idempotent') if status[:ensure]
-          assert_no_match(/Service\[#{service}\]\/enable/, stdout, 'Service enable not idempotent') if status[:enable]
+        apply_manifest_on(host, service_manifest(service, status)) do |result|
+          assert_no_match(/Service\[#{service}\]\/ensure/, result.stdout, 'Service status not idempotent') if status[:ensure]
+          assert_no_match(/Service\[#{service}\]\/enable/, result.stdout, 'Service enable not idempotent') if status[:enable]
         end
       end
 
@@ -86,8 +86,8 @@ module Puppet
         ensure_status = "ensure.+=> '#{status[:ensure]}'" if status[:ensure]
         enable_status = "enable.+=> '#{status[:enable]}'" if status[:enable]
 
-        on host, puppet_resource('service', service) do
-          assert_match(/'#{service}'.+#{ensure_status}.+#{enable_status}/m, stdout, "Service status does not match expectation #{status}")
+        on(host, puppet_resource('service', service)) do |result|
+          assert_match(/'#{service}'.+#{ensure_status}.+#{enable_status}/m, result.stdout, "Service status does not match expectation #{status}")
         end
 
         # Verify service state on the system using a custom block
