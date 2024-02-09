@@ -57,8 +57,8 @@ module Puppet
       def ensure_service_idempotent_on_host(host, service, status)
         # ensure idempotency
         apply_manifest_on(host, service_manifest(service, status)) do |result|
-          assert_no_match(/Service\[#{service}\]\/ensure/, result.stdout, 'Service status not idempotent') if status[:ensure]
-          assert_no_match(/Service\[#{service}\]\/enable/, result.stdout, 'Service enable not idempotent') if status[:enable]
+          refute_match(/Service\[#{service}\]\/ensure/, result.stdout, 'Service status not idempotent') if status[:ensure]
+          refute_match(/Service\[#{service}\]\/enable/, result.stdout, 'Service enable not idempotent') if status[:enable]
         end
       end
 
@@ -121,7 +121,7 @@ module Puppet
             { enable: false, ensure: :stopped }.each do |property, value|
               assert_match(/#{property}.*#{value}.*$/, result.stdout, "Puppet does not report #{property}=#{value} for a non-existent service")
             end
-            assert_no_match(/logonaccount\s+=>/, result.stdout, "Puppet reports logonaccount for a non-existent service")
+            refute_match(/logonaccount\s+=>/, result.stdout, "Puppet reports logonaccount for a non-existent service")
           end
         end
       
