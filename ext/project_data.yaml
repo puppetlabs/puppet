@@ -7,10 +7,10 @@ summary: 'Puppet, an automated configuration management tool'
 description: 'Puppet, an automated configuration management tool'
 version_file: 'lib/puppet/version.rb'
 # files and gem_files are space separated lists
-files: '[A-Z]* install.rb bin lib conf man examples ext tasks spec locales'
-# Make sure these gem requirements are in sync with the gempspec and Gemfile
-gem_files: '[A-Z]* install.rb bin lib conf man examples ext tasks spec locales'
-gem_test_files: 'spec/**/*'
+files: '[A-Z]* install.rb bin lib conf man examples ext tasks locales'
+# Make sure these gem requirements are in sync with the gemspec and Gemfile
+gem_files: '[A-Z]* install.rb bin lib conf man examples ext tasks locales'
+gem_test_files:
 gem_executables: 'puppet'
 gem_default_executables: 'puppet'
 gem_license: 'Apache-2.0'
