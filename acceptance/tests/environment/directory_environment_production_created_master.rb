@@ -34,9 +34,9 @@ with_puppet_running_on(master, master_opts, testdir) do
 
   step 'ensure catalog returned from production env with no changes'
   agents.each do |agent|
-    on(agent, puppet("agent -t --environment production --detailed-exitcodes")) do
+    on(agent, puppet("agent -t --environment production --detailed-exitcodes")) do |result|
       # detailed-exitcodes produces a 0 when no changes are made.
-      assert_equal(0, exit_code)
+      assert_equal(0, result.exit_code)
     end
   end
 end

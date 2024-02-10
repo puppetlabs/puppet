@@ -133,7 +133,7 @@ begin
 
   step "verify that the application shows up in help" do
     agents.each do |agent|
-      on(agent, PuppetCommand.new(:help, "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\"")) do
+      on(agent, PuppetCommand.new(:help, "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\"")) do |result|
         assert_match(/^\s+#{app_name}\s+#{app_desc % "face"}/, result.stdout)
       end
     end
@@ -141,7 +141,7 @@ begin
 
   step "verify that we can run the application" do
     agents.each do |agent|
-      on(agent, PuppetCommand.new(:"#{app_name}", "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\"")) do
+      on(agent, PuppetCommand.new(:"#{app_name}", "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\"")) do |result|
         assert_match(/^#{app_output % "face"}/, result.stdout)
       end
     end
