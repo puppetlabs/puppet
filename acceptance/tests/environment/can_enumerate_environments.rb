@@ -65,8 +65,8 @@ with_puppet_running_on(master, master_opts) do
   end
 
   step "Ensure that an authenticated client can retrieve the list of environments" do
-    curl_master_from(master, '/puppet/v3/environments') do
-      data = JSON.parse(stdout)
+    curl_master_from(master, '/puppet/v3/environments') do |result|
+      data = JSON.parse(result.stdout)
       assert_equal(["env1", "env2", "production"], data["environments"].keys.sort)
     end
   end

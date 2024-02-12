@@ -66,8 +66,7 @@ with_puppet_running_on(master, {}) do
 
     step "attempt to run the agent (message: '#{expected_message}')" do
       agents.each do |agent|
-        on(agent, puppet('agent', "--test"),
-                     :acceptable_exit_codes => [1]) do
+        on(agent, puppet('agent', "--test"), :acceptable_exit_codes => [1]) do |result|
           disabled_regex = /administratively disabled.*'#{expected_message}'/
           unless result.stdout =~ disabled_regex
             fail_test("Unexpected output from attempt to run agent disabled; expecting to match '#{disabled_regex}', got '#{result.stdout}' on agent '#{agent}'") unless agent['locale'] == 'ja'
