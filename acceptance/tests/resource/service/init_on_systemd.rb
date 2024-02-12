@@ -1,9 +1,8 @@
 test_name 'SysV on default Systemd Service Provider Validation' do
 
   confine :to, :platform => /el-[6-8]|centos|fedora-(2[0-9])/ do |h|
-    on(h, 'which systemctl', :acceptable_exit_codes => [0, 1]) do |result|
-      result.stdout =~ /systemctl/
-    end
+    result = on(h, 'which systemctl', :acceptable_exit_codes => [0, 1])
+    result.stdout =~ /systemctl/
   end
 
   tag 'audit:high',
