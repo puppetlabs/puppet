@@ -238,8 +238,7 @@ class Puppet::Application::Resource < Puppet::Application
           # save returns [resource that was saved, transaction log from applying the resource]
           save_result, report = Puppet::Resource.indirection.save(resource, key)
           status = report.resource_statuses[resource.ref]
-          raise "Failed to manage resource #{resource.ref}" if status&.failed?
-
+          raise "Failed to manage resource #{resource.ref}" if status&.failed? && !Puppet.settings[:fail_if_resource_service_not_found].nil? && Puppet.settings[:fail_if_resource_service_not_found]
           [ save_result ]
         end
       else

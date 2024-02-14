@@ -102,6 +102,12 @@ module Puppet
           directory, but if it's running as any other user, it defaults to being
           in the user's home directory.",
     },
+    :fail_if_resource_service_not_found  => {
+        :default  => false,
+        :type     => :boolean,
+        :desc     => "Fails the `puppet resource service` check on a given service if the service
+        is not found. Defaults to false",
+    },
     :vardir   => {
         :default  => nil,
         :type     => :directory,
