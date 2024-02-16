@@ -414,8 +414,32 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
       expect(provider).to receive(:execute).
 			    with(['/bin/systemctl','is-active', '--', 'doesexist.service'], {:combine=>true, :failonfail=>false, :override_locale=>false, :squelch=>false}).
                             and_return(Puppet::Util::Execution::ProcessOutput.new("inactive\n", 3)).once
-      expect(provider.status).to eq(:stopped)
+                            expect(provider.status).to eq(:stopped)
     end
+
+    it 'when called on a service that does not exist returns absent' do
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'doesnotexist.service'))
+      Puppet.settings[:fail_if_resource_service_not_found]
+      expect(provider).to receive(:execute).
+                            with(['/bin/systemctl','cat', '--', 'doesnotexist.service'], {:failonfail=>false}).
+                            and_return(Puppet::Util::Execution::ProcessOutput.new("No files found for doesnotexist.service.\n", 1))
+      expect(provider.status).to eq(:absent)
+    end
+
+   # it 'when called on a service that does not exist returns stopped when no-fail_if_resource_service_not_found option used' do
+   #   provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'doesnotexist.service'))
+   #
+   #  Open question, how do i set the negative of fail_if_resource_service_not_found
+   #
+   #   Puppet.settings[:no-fail_if_resource_service_not_found]
+   #   expect(provider).to receive(:execute).
+   #                         with(['/bin/systemctl','cat', '--', 'doesnotexist.service'], {:failonfail=>false}).
+   #                         and_return(Puppet::Util::Execution::ProcessOutput.new("No files found for doesnotexist.service.\n", 1))
+   #   expect(provider).to receive(:execute).
+   #   with(['/bin/systemctl','is-active', '--', 'doesexist.service'], {:combine=>true, :failonfail=>false, :override_locale=>false, :squelch=>false}).
+   #                     and_return(Puppet::Util::Execution::ProcessOutput.new("inactive\n", 3)).once
+   #   expect(provider.status).to eq(:stopped)
+   # end
 
     [-10,-1,3,10].each { |ec|
       it "should return stopped if the command returns something non-0" do

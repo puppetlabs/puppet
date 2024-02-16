@@ -231,7 +231,7 @@ class Puppet::Application::Resource < Puppet::Application
     Puppet.override(stringify_rich: true) do
       if name
         if params.empty?
-          [ Puppet::Resource.indirection.find( key ) ]
+          [Puppet::Resource.indirection.find(key)]
         else
           resource = Puppet::Resource.new(type, name, :parameters => params)
 
@@ -239,7 +239,8 @@ class Puppet::Application::Resource < Puppet::Application
           save_result, report = Puppet::Resource.indirection.save(resource, key)
           status = report.resource_statuses[resource.ref]
           raise "Failed to manage resource #{resource.ref}" if status&.failed? && !Puppet.settings[:fail_if_resource_service_not_found].nil? && Puppet.settings[:fail_if_resource_service_not_found]
-          [ save_result ]
+
+          [save_result]
         end
       else
         if type == "file"
