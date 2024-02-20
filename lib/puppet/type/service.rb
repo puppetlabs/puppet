@@ -110,6 +110,12 @@ module Puppet
         provider.start
       end
 
+      newvalue(:absent)
+
+      validate do |val|
+        fail "Managing absent on a service is not supported" if val.to_s == 'absent'
+      end
+
       aliasvalue(:false, :stopped)
       aliasvalue(:true, :running)
 

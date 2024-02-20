@@ -389,19 +389,42 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
   # Note: systemd provider does not care about hasstatus or a custom status
   # command. I just assume that it does not make sense for systemd.
   describe "#status" do
-    it "should return running if the command returns 0" do
-      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute)
-        .with(['/bin/systemctl','is-active', '--', 'sshd.service'], {:failonfail => false, :override_locale => false, :squelch => false, :combine => true})
-        .and_return(Puppet::Util::Execution::ProcessOutput.new("active\n", 0))
+    it 'when called on a service that does not exist returns absent' do
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'doesnotexist.service'))
+      expect(provider).to receive(:exist?).and_return(false)
+      expect(provider.status).to eq(:absent)
+    end
+
+    it 'when called on a service that does exist and is running returns running' do
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'doesexist.service'))
+      expect(provider).to receive(:execute).
+                            with(['/bin/systemctl','cat', '--', 'doesexist.service'], {:failonfail=>false}).
+                            and_return(Puppet::Util::Execution::ProcessOutput.new("# /lib/systemd/system/doesexist.service\n...", 0)).once
+      expect(provider).to receive(:execute).
+                            with(['/bin/systemctl','is-active', '--', 'doesexist.service'], {:combine=>true, :failonfail=>false, :override_locale=>false, :squelch=>false}).
+                            and_return(Puppet::Util::Execution::ProcessOutput.new("# /lib/systemd/system/doesexist.service\n...", 0)).once
       expect(provider.status).to eq(:running)
+    end
+
+    it 'when called on a service that does exist and is not running returns stopped' do
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'doesexist.service'))
+      expect(provider).to receive(:execute).
+                            with(['/bin/systemctl','cat', '--', 'doesexist.service'], {:failonfail=>false}).
+                            and_return(Puppet::Util::Execution::ProcessOutput.new("# /lib/systemd/system/doesexist.service\n...", 0)).once
+      expect(provider).to receive(:execute).
+			    with(['/bin/systemctl','is-active', '--', 'doesexist.service'], {:combine=>true, :failonfail=>false, :override_locale=>false, :squelch=>false}).
+                            and_return(Puppet::Util::Execution::ProcessOutput.new("inactive\n", 3)).once
+      expect(provider.status).to eq(:stopped)
     end
 
     [-10,-1,3,10].each { |ec|
       it "should return stopped if the command returns something non-0" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+        expect(provider).to receive(:execute).
+                              with(['/bin/systemctl','cat', '--', 'sshd.service'], {:failonfail=>false}).
+                              and_return(Puppet::Util::Execution::ProcessOutput.new("# /lib/systemd/system/sshd.service\n...", 0)).once
         expect(provider).to receive(:execute)
-          .with(['/bin/systemctl','is-active', '--', 'sshd.service'], {:failonfail => false, :override_locale => false, :squelch => false, :combine => true})
+                                        .with(['/bin/systemctl','is-active', '--', 'sshd.service'], {:failonfail => false, :override_locale => false, :squelch => false, :combine => true})
           .and_return(Puppet::Util::Execution::ProcessOutput.new("inactive\n", ec))
         expect(provider.status).to eq(:stopped)
       end
@@ -409,6 +432,9 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
 
     it "should use the supplied status command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :status => '/bin/foo'))
+      expect(provider).to receive(:execute).
+                            with(['/bin/systemctl','cat', '--', 'sshd.service'], {:failonfail=>false}).
+                            and_return(Puppet::Util::Execution::ProcessOutput.new("# /lib/systemd/system/sshd.service\n...", 0)).once
       expect(provider).to receive(:execute)
         .with(['/bin/foo'], {:failonfail => false, :override_locale => false, :squelch => false, :combine => true})
         .and_return(process_output)
