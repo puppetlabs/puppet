@@ -51,7 +51,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   def find(request)
     facts = extract_facts_from_request(request)
 
-    save_facts_from_request(facts, request) if !facts.nil?
+    save_facts_from_request(facts, request) unless facts.nil?
 
     node = node_from_request(facts, request)
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
@@ -241,7 +241,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
             basedir_meta = list_of_data.find { |meta| meta.relative_path == '.' }
             devfail "FileServing::Metadata search should always return the root search path" if basedir_meta.nil?
 
-            if !inlineable_metadata?(basedir_meta, source, environment_path)
+            unless inlineable_metadata?(basedir_meta, source, environment_path)
               # If any source is not in the environment path, skip inlining this resource.
               log_file_outside_environment
               sources_in_environment = false
@@ -443,7 +443,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       "serverip" => "networking.ip",
       "serverip6" => "networking.ip6" }.each do |var, fact|
       value = Puppet.runtime[:facter].value(fact)
-      if !value.nil?
+      unless value.nil?
         @server_facts[var] = value
       end
     end

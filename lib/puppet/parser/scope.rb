@@ -676,7 +676,7 @@ class Puppet::Parser::Scope
   def to_hash(recursive = true, include_undef = false)
     if recursive and has_enclosing_scope?
       target = enclosing_scope.to_hash(recursive)
-      if !(inherited = inherited_scope).nil?
+      unless (inherited = inherited_scope).nil?
         target.merge!(inherited.to_hash(recursive))
       end
     else

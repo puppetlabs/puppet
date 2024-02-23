@@ -194,7 +194,7 @@ Puppet::Face.define(:epp, '0.0.1') do
           buffer.print dump_parse(Puppet::FileSystem.read(file, :encoding => 'utf-8'), file, options, show_filename)
         end
 
-        if !missing_files.empty?
+        unless missing_files.empty?
           raise Puppet::Error, _("One or more file(s) specified did not exist:\n%{missing_files_list}") %
                                { missing_files_list: missing_files.collect { |f| "   #{f}" }.join("\n") }
         end
@@ -417,7 +417,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       rescue => e
         Puppet.err(_("Could not load --values_file %{error}") % { error: e.message })
       end
-      if !(template_values.nil? || template_values.is_a?(Hash))
+      unless (template_values.nil? || template_values.is_a?(Hash))
         Puppet.err(_("--values_file option must evaluate to a Hash or undef/nil, got: '%{template_class}'") % { template_class: template_values.class })
       end
     end

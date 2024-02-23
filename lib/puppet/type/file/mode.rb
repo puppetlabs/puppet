@@ -76,7 +76,7 @@ module Puppet
     EOT
 
     validate do |value|
-      if !value.is_a?(String)
+      unless value.is_a?(String)
         raise Puppet::Error, "The file mode specification must be a string, not '#{value.class.name}'"
       end
       unless value.nil? or valid_symbolic_mode?(value)

@@ -24,7 +24,7 @@ class Puppet::Parser::Compiler
     node.environment.check_for_reparse
 
     errors = node.environment.validation_errors
-    if !errors.empty?
+    unless errors.empty?
       errors.each { |e| Puppet.err(e) } if errors.size > 1
       errmsg = [
         _("Compilation has been halted because: %{error}") % { error: errors.first },
@@ -251,14 +251,14 @@ class Puppet::Parser::Compiler
 
     if class_parameters
       resources = ensure_classes_with_parameters(scope, hostclasses, class_parameters)
-      if !lazy_evaluate
+      unless lazy_evaluate
         resources.each(&:evaluate)
       end
 
       resources
     else
       already_included, newly_included = ensure_classes_without_parameters(scope, hostclasses)
-      if !lazy_evaluate
+      unless lazy_evaluate
         newly_included.each(&:evaluate)
       end
 
@@ -413,7 +413,7 @@ class Puppet::Parser::Compiler
   def fail_on_unevaluated_overrides
     remaining = @resource_overrides.values.flatten.collect(&:ref)
 
-    if !remaining.empty?
+    unless remaining.empty?
       raise Puppet::ParseError, _("Could not find resource(s) %{resources} for overriding") % { resources: remaining.join(', ') }
     end
   end
@@ -424,7 +424,7 @@ class Puppet::Parser::Compiler
   #
   def fail_on_unevaluated_resource_collections
     remaining = @collections.collect(&:unresolved_resources).flatten.compact
-    if !remaining.empty?
+    unless remaining.empty?
       raise Puppet::ParseError, _("Failed to realize virtual resources %{resources}") % { resources: remaining.join(', ') }
     end
   end

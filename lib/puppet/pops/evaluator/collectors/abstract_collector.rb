@@ -28,7 +28,7 @@ class Puppet::Pops::Evaluator::Collectors::AbstractCollector
     @collected = {}
     @scope = scope
 
-    if !(overrides.nil? || overrides[:parameters])
+    unless (overrides.nil? || overrides[:parameters])
       raise ArgumentError, _("Exported resource try to override without parameters")
     end
 

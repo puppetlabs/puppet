@@ -125,7 +125,7 @@ class StringConverter
       @delimiters = nil
       DELIMITERS.each do |d|
         next unless flags.include?(d)
-        if !@delimiters.nil?
+        unless @delimiters.nil?
           raise ArgumentError, "Only one of the delimiters [ { ( < | can be given in the format flags, got '#{fmt}'"
         end
 

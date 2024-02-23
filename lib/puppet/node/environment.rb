@@ -220,7 +220,7 @@ class Puppet::Node::Environment
   #   Puppet[:default_manifest].
   # @api private
   def conflicting_manifest_settings?
-    return false if !Puppet[:disable_per_environment_manifest]
+    return false unless Puppet[:disable_per_environment_manifest]
 
     original_manifest = configuration.raw_setting(:manifest)
     !original_manifest.nil? && !original_manifest.empty? && original_manifest != Puppet[:default_manifest]
@@ -358,7 +358,7 @@ class Puppet::Node::Environment
           next unless Puppet::Module.is_module_directory?(name, path)
 
           warn_about_mistaken_path(path, name)
-          if not seen_modules[name]
+          unless seen_modules[name]
             module_references << { :name => name, :path => File.join(path, name) }
             seen_modules[name] = true
           end

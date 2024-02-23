@@ -388,7 +388,7 @@ class Puppet::Resource
     when TYPE_NODE; environment.known_resource_types.node(title)
     else
       result = Puppet::Type.type(type)
-      if !result
+      unless result
         krt = environment.known_resource_types
         result = krt.definition(type)
       end

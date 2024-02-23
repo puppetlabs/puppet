@@ -121,10 +121,10 @@ class Puppet::Indirector::Indirection
   def set_global_setting(setting, value)
     case setting
     when :cache_class
-      validate_terminus_class(value) if !value.nil?
+      validate_terminus_class(value) unless value.nil?
       @cache_class = Puppet::ThreadLocal.new(value)
     when :terminus_class
-      validate_terminus_class(value) if !value.nil?
+      validate_terminus_class(value) unless value.nil?
       @terminus_class = Puppet::ThreadLocal.new(value)
     when :terminus_setting
       @terminus_setting = Puppet::ThreadLocal.new(value)
@@ -228,7 +228,7 @@ class Puppet::Indirector::Indirection
       # Otherwise, return the result from the terminus, caching if
       # appropriate.
       result = terminus.find(request)
-      if not result.nil?
+      unless result.nil?
         result.expiration ||= self.expiration if result.respond_to?(:expiration)
         if cache? && !request.ignore_cache_save?
           Puppet.info _("Caching %{indirection} for %{request}") % { indirection: self.name, request: request.key }
@@ -323,7 +323,7 @@ class Puppet::Indirector::Indirection
     request = request(:save, key, instance, options)
     terminus = prepare(request)
 
-    result = terminus.save(request) if !request.ignore_terminus?
+    result = terminus.save(request) unless request.ignore_terminus?
 
     # If caching is enabled, save our document there
     cache.save(request) if cache? && !request.ignore_cache_save?

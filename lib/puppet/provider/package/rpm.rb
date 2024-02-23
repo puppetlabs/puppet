@@ -228,7 +228,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     multiversion_hash = {}
     multiline.each_line do |line|
       hash = self.nevra_to_hash(line)
-      if !hash.empty?
+      unless hash.empty?
         if multiversion_hash.empty?
           multiversion_hash = hash.dup
           next
@@ -240,7 +240,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
           next
         end
 
-        if !multiversion_hash[:ensure].include?(hash[:ensure])
+        unless multiversion_hash[:ensure].include?(hash[:ensure])
           multiversion_hash[:ensure].concat("#{self::MULTIVERSION_SEPARATOR}#{hash[:ensure]}")
         end
       end

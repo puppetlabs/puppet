@@ -143,7 +143,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
       end
     end
 
-    if !continue_while.call()
+    unless continue_while.call()
       while (resource = next_resource)
         canceled_resource_handler.call(resource)
         finish(resource)

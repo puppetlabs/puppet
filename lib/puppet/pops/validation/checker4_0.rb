@@ -670,7 +670,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # Do not include name of module init file at top level of module
     # e.g. <module name>/manifests/init.pp
     filename = path_components[-1]
-    if !(path_components.length == 3 && filename == 'init.pp')
+    unless (path_components.length == 3 && filename == 'init.pp')
       names.push(filename[0..-4]) # Remove .pp from filename
     end
 
@@ -1124,7 +1124,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   # Case expression is idem, if test, and all options are idem
   def idem_CaseExpression(o)
-    return false if !idem(o.test)
+    return false unless idem(o.test)
 
     !o.options.any? { |opt| !idem(opt) }
   end

@@ -26,7 +26,7 @@ class CollectorTransformer
 
     fail "Resource type #{type} doesn't exist" unless resource_type
 
-    if !o.operations.empty?
+    unless o.operations.empty?
       overrides = {
         :parameters => o.operations.map { |x| @@evaluator.evaluate(x, scope) }.flatten,
         :file => o.file,

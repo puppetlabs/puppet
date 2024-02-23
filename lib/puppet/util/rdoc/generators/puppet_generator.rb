@@ -138,7 +138,7 @@ module Generators
         end
 
         classes.each do |k|
-          @allclasses[k.index_name] = k if !@allclasses.has_key?(k.index_name)
+          @allclasses[k.index_name] = k unless @allclasses.has_key?(k.index_name)
         end
 
         # generate nodes and plugins found

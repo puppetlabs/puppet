@@ -52,7 +52,7 @@ module Puppet::Util::Windows
 
       loop do
         subkey, filetime = reg_enum_key(key, index, subkey_max_len)
-        yield subkey, filetime if !subkey.nil?
+        yield subkey, filetime unless subkey.nil?
         index += 1
         break if subkey.nil?
       end
@@ -100,7 +100,7 @@ module Puppet::Util::Windows
 
       loop do
         subkey, type, data = reg_enum_value(key, index, value_max_len)
-        yield subkey, type, data if !subkey.nil?
+        yield subkey, type, data unless subkey.nil?
         index += 1
         break if subkey.nil?
       end

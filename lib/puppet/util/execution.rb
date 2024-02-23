@@ -296,7 +296,7 @@ module Puppet::Util::Execution
     ensure
       # Make sure all handles are closed in case an exception was thrown attempting to execute.
       [stdin, stdout, stderr].each { |io| io.close rescue nil }
-      if !options[:squelch]
+      unless options[:squelch]
         # if we opened a pipe, we need to clean it up.
         reader.close if reader
         stdout.close! if Puppet::Util::Platform.windows?

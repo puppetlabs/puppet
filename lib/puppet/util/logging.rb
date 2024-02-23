@@ -183,7 +183,7 @@ module Logging
 
     $unique_warnings ||= {}
     if $unique_warnings.length < 100 then
-      if (!$unique_warnings.has_key?(key)) then
+      unless ($unique_warnings.has_key?(key)) then
         $unique_warnings[key] = message
         call_trace = if file == :default and line == :default
                        # Suppress the file and line number output
@@ -240,7 +240,7 @@ module Logging
     Puppet::FileSystem.open(deprecations_file, nil, "a:UTF-8") do |f|
       if ($deprecation_warnings) then
         $deprecation_warnings.each do |offender, message|
-          if (!$logged_deprecation_warnings.has_key?(offender)) then
+          unless ($logged_deprecation_warnings.has_key?(offender)) then
             $logged_deprecation_warnings[offender] = true
             if ((pattern.nil?) || (message =~ pattern)) then
               f.puts(message)

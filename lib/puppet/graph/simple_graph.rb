@@ -171,7 +171,7 @@ class Puppet::Graph::SimpleGraph
 
     # we usually have a disconnected graph, must walk all possible roots
     vertices.each do |vertex|
-      if !state[:index][vertex] then
+      unless state[:index][vertex] then
         tarjan vertex, state
       end
     end

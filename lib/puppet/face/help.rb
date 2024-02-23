@@ -121,7 +121,7 @@ Puppet::Face.define(:help, '0.0.1') do
     face = Puppet::Face[facename.to_sym, version]
     if actionname
       action = face.get_action(actionname.to_sym)
-      if !action
+      unless action
         fail ArgumentError, _("Unable to load action %{actionname} from %{face}") % { actionname: actionname, face: face }
       end
     end

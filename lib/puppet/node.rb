@@ -142,7 +142,7 @@ class Puppet::Node
       raise error
     end
 
-    if !@facts.nil?
+    unless @facts.nil?
       @facts.sanitize
       # facts should never modify the environment parameter
       orig_param_env = @parameters[ENVIRONMENT]
@@ -245,7 +245,7 @@ class Puppet::Node
     #
     # Note that trusted_data should be a hash, but (2) and (4) are not
     # hashes, so we to_h at the end
-    if !trusted_data
+    unless trusted_data
       trusted = Puppet.lookup(:trusted_information) do
         trusted_param || Puppet::Context::TrustedInformation.local(self)
       end

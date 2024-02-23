@@ -44,7 +44,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
 
     users = users.map do |user_name|
       sid = Puppet::Util::Windows::SID.name_to_principal(user_name)
-      if !sid
+      unless sid
         resource.debug("#{user_name} (unresolvable to SID)")
         next user_name
       end

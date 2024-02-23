@@ -160,7 +160,7 @@ class Puppet::Application::Ssl < Puppet::Application
 
       clean(certname)
     when 'bootstrap'
-      if !Puppet::Util::Log.sendlevel?(:info)
+      unless Puppet::Util::Log.sendlevel?(:info)
         Puppet::Util::Log.level = :info
       end
       @machine.ensure_client_certificate

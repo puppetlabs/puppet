@@ -630,12 +630,6 @@ Style/MutableConstant:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: both, prefix, postfix
-Style/NegatedIf:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/NegatedWhile:
   Exclude:
     - 'lib/puppet/file_system/file_impl.rb'

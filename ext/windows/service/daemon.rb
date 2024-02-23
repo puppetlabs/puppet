@@ -153,7 +153,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
     rescue Exception
       # Ignore all errors
     ensure
-      if (!eventlog.nil?)
+      unless (eventlog.nil?)
         eventlog.close
       end
     end

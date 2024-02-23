@@ -64,7 +64,7 @@ class Puppet::Transaction::Persistence
   def copy_skipped(resource_name)
     @old_data["resources"] ||= {}
     old_value = @old_data["resources"][resource_name]
-    if !old_value.nil?
+    unless old_value.nil?
       @new_data["resources"][resource_name] = old_value
     end
   end

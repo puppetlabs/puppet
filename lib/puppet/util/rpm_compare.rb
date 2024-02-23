@@ -173,7 +173,7 @@ module Puppet::Util::RpmCompare
     should_hash = rpm_parse_evr(should)
     is_hash = rpm_parse_evr(is)
 
-    if !should_hash[:epoch].nil?
+    unless should_hash[:epoch].nil?
       rc = compare_values(should_hash[:epoch], is_hash[:epoch])
       return rc unless rc == 0
     end

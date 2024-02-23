@@ -55,7 +55,7 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
       end
     end
     Etc.endpwent()
-    if !temp
+    unless temp
       return nil
     end
 

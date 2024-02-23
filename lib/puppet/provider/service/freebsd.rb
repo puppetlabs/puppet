@@ -63,7 +63,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     service = self.service_name
     rcvar = self.rcvar_name
     self.debug("Editing rc files: setting #{rcvar} to #{yesno} for #{service}")
-    self.rc_add(service, rcvar, yesno) if not self.rc_replace(service, rcvar, yesno)
+    self.rc_add(service, rcvar, yesno) unless self.rc_replace(service, rcvar, yesno)
   end
 
   # Try to find an existing setting in the rc files

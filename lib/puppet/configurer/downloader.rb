@@ -77,7 +77,7 @@ class Puppet::Configurer::Downloader
       :noop => false,
       :max_files => -1
     }
-    if !Puppet::Util::Platform.windows?
+    unless Puppet::Util::Platform.windows?
       defargs[:owner] = Process.uid
       defargs[:group] = Process.gid
     end

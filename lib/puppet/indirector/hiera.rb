@@ -9,7 +9,7 @@ require 'hiera/scope'
 # Use `Puppet::DataBinding.indirection.terminus(:hiera)` instead.
 class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   def initialize(*args)
-    if !Puppet.features.hiera?
+    unless Puppet.features.hiera?
       # TRANSLATORS "Hiera" is the name of a code library and should not be translated
       raise _("Hiera terminus not supported without hiera library")
     end

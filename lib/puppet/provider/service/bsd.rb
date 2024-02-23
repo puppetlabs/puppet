@@ -34,7 +34,7 @@ Puppet::Type.type(:service).provide :bsd, :parent => :init do
   # enable service by creating a service file under rc.conf.d with the
   # proper contents
   def enable
-    Dir.mkdir(rcconf_dir) if not Puppet::FileSystem.exist?(rcconf_dir)
+    Dir.mkdir(rcconf_dir) unless Puppet::FileSystem.exist?(rcconf_dir)
     rcfile = File.join(rcconf_dir, @resource[:name])
     File.open(rcfile, File::WRONLY | File::APPEND | File::CREAT, 0644) { |f|
       f << "%s_enable=\"YES\"\n" % @resource[:name]

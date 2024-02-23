@@ -191,7 +191,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
       parent_contains || child_contains
     }
 
-    if not edge_exists
+    unless edge_exists
       # We *cannot* use target.to_resource here!
       #
       # For reasons that are beyond my (and, perhaps, human)

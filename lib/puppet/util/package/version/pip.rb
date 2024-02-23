@@ -93,7 +93,7 @@ module Puppet::Util::Package::Version
 
     def parse_letter_version(letter, number)
       if letter
-        number = 0 if !number
+        number ||= 0
         letter.downcase!
 
         if letter == "alpha"

@@ -452,7 +452,7 @@ class Application
   # @return [void]
   # @api public
   def setup_logs
-    handle_logdest_arg(Puppet[:logdest]) if !options[:setdest]
+    handle_logdest_arg(Puppet[:logdest]) unless options[:setdest]
 
     unless options[:setdest]
       if options[:debug] || options[:verbose]

@@ -65,7 +65,7 @@ class Puppet::Module
     # Determine whether a file has a legal name for either a task's executable or metadata file.
     def self.is_tasks_filename?(path)
       name_less_extension = File.basename(path, '.*')
-      return false if not is_task_name?(name_less_extension)
+      return false unless is_task_name?(name_less_extension)
 
       FORBIDDEN_EXTENSIONS.each do |ext|
         return false if path.end_with?(ext)
@@ -226,7 +226,7 @@ class Puppet::Module
 
     # file paths must be relative to the modules task directory
     def initialize(pup_module, task_name, module_executables, metadata_file = nil)
-      if !Puppet::Module::Task.is_task_name?(task_name)
+      unless Puppet::Module::Task.is_task_name?(task_name)
         raise InvalidName, _("Task names must start with a lowercase letter and be composed of only lowercase letters, numbers, and underscores")
       end
 

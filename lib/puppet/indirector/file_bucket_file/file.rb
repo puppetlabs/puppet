@@ -168,7 +168,7 @@ module Puppet::FileBucketFile
               Puppet.info _("FileBucket got a duplicate file %{file_checksum}") % { file_checksum: bucket_file.checksum }
               # Don't touch the contents file on Windows, since we can't update the
               # mtime of read-only files there.
-              if !Puppet::Util::Platform.windows?
+              unless Puppet::Util::Platform.windows?
                 Puppet::FileSystem.touch(contents_file)
               end
             elsif contents_file_matches_checksum?(contents_file, bucket_file.checksum_data, bucket_file.checksum_type)

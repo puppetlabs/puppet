@@ -442,7 +442,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
   def remove_unwanted_members(current_members, new_members)
     current_members.each do |member|
-      if not new_members.flatten.include?(member)
+      unless new_members.flatten.include?(member)
         cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-d", member, @resource[:name]]
         begin
           execute(cmd)

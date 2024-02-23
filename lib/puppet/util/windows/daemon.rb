@@ -97,7 +97,7 @@ module Puppet::Util::Windows
       @@dwServiceState = dwCurrentState
 
       # Send status of the service to the Service Controller.
-      if !SetServiceStatus(@@ssh, ss)
+      unless SetServiceStatus(@@ssh, ss)
         SetEvent(@@hStopEvent)
       end
     end
@@ -201,7 +201,7 @@ module Puppet::Util::Windows
       s[:lpServiceProc] = nil
 
       # No service to step, no service handle, no ruby exceptions, just terminate the thread..
-      if !StartServiceCtrlDispatcherW(ste)
+      unless StartServiceCtrlDispatcherW(ste)
         return 1
       end
 

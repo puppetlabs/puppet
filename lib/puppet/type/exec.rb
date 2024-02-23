@@ -657,7 +657,7 @@ module Puppet
           val = @parameters[check].value
           val = [val] unless val.is_a? Array
           val.each do |value|
-            if !@parameters[check].check(value)
+            unless @parameters[check].check(value)
               # Give a debug message so users can figure out what command would have been
               # but don't print sensitive commands or parameters in the clear
               cmdstring = @parameters[:command].sensitive ? "[command redacted]" : @parameters[:command].value

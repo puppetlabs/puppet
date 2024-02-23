@@ -83,8 +83,8 @@ class Puppet::Configurer
     else
       result = retrieve_new_catalog(facts, query_options)
 
-      if !result
-        if !Puppet[:usecacheonfailure]
+      unless result
+        unless Puppet[:usecacheonfailure]
           Puppet.warning _("Not using cache on failed catalog")
           return nil
         end

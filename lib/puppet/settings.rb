@@ -421,7 +421,7 @@ class Puppet::Settings
   def create_ancestors(dir)
     parent_dir = File.dirname(dir)
 
-    if !File.exist?(parent_dir)
+    unless File.exist?(parent_dir)
       FileUtils.mkdir_p(parent_dir)
     end
   end
@@ -1275,7 +1275,7 @@ Generated on #{Time.now}.
   def screen_non_puppet_conf_settings(puppet_conf)
     puppet_conf.sections.values.each do |section|
       forbidden = section.settings.select { |setting| Puppet::Settings::EnvironmentConf::ENVIRONMENT_CONF_ONLY_SETTINGS.include?(setting.name) }
-      raise(SettingsError, "Cannot set #{forbidden.map { |s| s.name }.join(", ")} settings in puppet.conf") if !forbidden.empty?
+      raise(SettingsError, "Cannot set #{forbidden.map { |s| s.name }.join(", ")} settings in puppet.conf") unless forbidden.empty?
     end
   end
 
@@ -1448,7 +1448,7 @@ Generated on #{Time.now}.
       end
       if set
         value = set.lookup(name)
-        if !value.nil?
+        unless value.nil?
           return value
         end
       end
@@ -1567,7 +1567,7 @@ Generated on #{Time.now}.
     def set(name, value)
       default = @defaults[name]
 
-      if !default
+      unless default
         raise ArgumentError, _("Attempt to assign a value to unknown setting %{name}") % { name: name.inspect }
       end
 

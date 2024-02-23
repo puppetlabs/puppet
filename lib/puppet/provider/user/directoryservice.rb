@@ -234,7 +234,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     password_hash = nil
     password_hash_file = "#{password_hash_dir}/#{guid}"
     if Puppet::FileSystem.exist?(password_hash_file) and File.file?(password_hash_file)
-      raise Puppet::Error, "Could not read password hash file at #{password_hash_file}" if not File.readable?(password_hash_file)
+      raise Puppet::Error, "Could not read password hash file at #{password_hash_file}" unless File.readable?(password_hash_file)
 
       f = File.new(password_hash_file)
       password_hash = f.read
@@ -479,7 +479,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   def assert_full_pbkdf2_password
     missing = [:password, :salt, :iterations].select { |parameter| @resource[parameter].nil? }
 
-    if !missing.empty?
+    unless missing.empty?
       raise Puppet::Error, "OS X versions > 10\.7 use PBKDF2 password hashes, which requires all three of salt, iterations, and password hash. This resource is missing: #{missing.join(', ')}."
     end
   end

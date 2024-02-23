@@ -37,7 +37,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     installable_versions_format = self.eix_install_versions_format
     begin
       eix_file = File.directory?('/var/cache/eix') ? '/var/cache/eix/portage.eix' : '/var/cache/eix'
-      update_eix if !FileUtils.uptodate?(eix_file, %w{/usr/bin/eix /usr/portage/metadata/timestamp})
+      update_eix unless FileUtils.uptodate?(eix_file, %w{/usr/bin/eix /usr/portage/metadata/timestamp})
 
       search_output = nil
       Puppet::Util.withenv :EIX_LIMIT => limit, :LASTVERSION => version_format, :LASTSLOTVERSIONS => slot_versions_format, :INSTALLEDVERSIONS => installed_versions_format, :STABLEVERSIONS => installable_versions_format do
@@ -186,7 +186,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       end
 
       eix_file = File.directory?('/var/cache/eix') ? '/var/cache/eix/portage.eix' : '/var/cache/eix'
-      update_eix if !FileUtils.uptodate?(eix_file, %w{/usr/bin/eix /usr/portage/metadata/timestamp})
+      update_eix unless FileUtils.uptodate?(eix_file, %w{/usr/bin/eix /usr/portage/metadata/timestamp})
 
       search_output = nil
       Puppet::Util.withenv :EIX_LIMIT => limit, :LASTVERSION => version_format, :LASTSLOTVERSIONS => slot_versions_format, :INSTALLEDVERSIONS => installed_versions_format, :STABLEVERSIONS => installable_versions_format do

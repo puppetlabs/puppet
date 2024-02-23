@@ -149,7 +149,7 @@ class Puppet::Settings::EnvironmentConf
     end
 
     extraneous_settings = main.settings.map(&:name) - VALID_SETTINGS
-    if !extraneous_settings.empty?
+    unless extraneous_settings.empty?
       # warn once per config file path
       Puppet.warn_once(
         :invalid_settings, "EnvironmentConf-settings:#{path_to_conf_file}",

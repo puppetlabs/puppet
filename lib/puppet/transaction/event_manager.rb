@@ -142,14 +142,14 @@ class Puppet::Transaction::EventManager
   #   associated with this callback and resource.
   # @return [true, false] Whether the callback was successfully run.
   def process_callback(resource, callback, events)
-    if !process_callback?(resource, events)
+    unless process_callback?(resource, events)
       process_noop_events(resource, callback, events)
       return false
     end
 
     resource.send(callback)
 
-    if not resource.is_a?(Puppet::Type.type(:whit))
+    unless resource.is_a?(Puppet::Type.type(:whit))
       message = n_("Triggered '%{callback}' from %{count} event", "Triggered '%{callback}' from %{count} events", events.length) % { count: events.length, callback: callback }
       resource.notice message
       add_callback_status_event(resource, callback, message, "success")

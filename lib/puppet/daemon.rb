@@ -115,7 +115,7 @@ class Puppet::Daemon
     end
 
     # extended signals not supported under windows
-    if !Puppet::Util::Platform.windows?
+    unless Puppet::Util::Platform.windows?
       signals = { :HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs }
       signals.each do |signal, method|
         Signal.trap(signal) do

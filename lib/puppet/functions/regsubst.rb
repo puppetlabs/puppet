@@ -78,7 +78,7 @@ Puppet::Functions.create_function(:regsubst) do
   def regsubst_string(target, pattern, replacement, flags = nil, encoding = nil)
     re_flags = 0
     operation = :sub
-    if !flags.nil?
+    unless flags.nil?
       flags.split(//).each do |f|
         case f
         when 'G' then operation = :gsub

@@ -425,7 +425,7 @@ module Util
     encoded += rfc2396_escape(parts[:path]) unless parts[:path].nil?
 
     # each query parameter
-    if !parts[:query].nil?
+    unless parts[:query].nil?
       query_string = parts[:query].split('&').map do |pair|
         # can optionally be separated by an =
         pair.split('=').map do |v|
@@ -608,7 +608,7 @@ module Util
       end
 
       effective_mode =
-        if !Puppet::Util::Platform.windows?
+        unless Puppet::Util::Platform.windows?
           # Grab the current file mode, and fall back to the defaults.
 
           if Puppet::FileSystem.exist?(file)
@@ -651,7 +651,7 @@ module Util
 
       if Puppet::Util::Platform.windows?
         # Windows ReplaceFile needs a file to exist, so touch handles this
-        if !Puppet::FileSystem.exist?(file)
+        unless Puppet::FileSystem.exist?(file)
           Puppet::FileSystem.touch(file)
           if mode
             Puppet::Util::Windows::Security.set_mode(mode, Puppet::FileSystem.path_string(file))

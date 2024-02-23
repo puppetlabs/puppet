@@ -22,7 +22,7 @@ class Puppet::Settings::ConfigFile
   # @return A Struct with a +sections+ array representing each configuration section
   def parse_file(file, text, allowed_section_names = [])
     result = Conf.new
-    if !allowed_section_names.empty?
+    unless allowed_section_names.empty?
       allowed_section_names << 'main' unless allowed_section_names.include?('main')
     end
 

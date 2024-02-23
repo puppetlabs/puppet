@@ -44,7 +44,7 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
       # (Note: superclass caches the result in this loader as it would have to repeat this search for every
       # lookup otherwise).
       loaded = @dependency_loaders.reduce(nil) do |previous, loader|
-        break previous if !previous.nil?
+        break previous unless previous.nil?
 
         loader.load_typed(typed_name)
       end
@@ -81,7 +81,7 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
       # (Note: superclass caches the result in this loader as it would have to repeat this search for every
       # lookup otherwise).
       @dependency_loaders.reduce(nil) do |previous, loader|
-        break previous if !previous.nil?
+        break previous unless previous.nil?
 
         loader.loaded_entry(typed_name, check_dependencies)
       end
