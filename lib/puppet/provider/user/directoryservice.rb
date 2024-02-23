@@ -94,7 +94,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # Return an array of hashes containing information about every user on
   # the system.
   def self.get_all_users
-    Puppet::Util::Plist.parse_plist(dscl '-plist', '.', 'readall', '/Users')
+    Puppet::Util::Plist.parse_plist(dscl('-plist', '.', 'readall', '/Users'))
   end
 
   # This method accepts an individual user plist, passed as a hash, and
@@ -171,7 +171,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # of the local groups on the machine.
   def self.get_list_of_groups
     # rubocop:disable Naming/MemoizedInstanceVariableName
-    @groups ||= Puppet::Util::Plist.parse_plist(dscl '-plist', '.', 'readall', '/Groups')
+    @groups ||= Puppet::Util::Plist.parse_plist(dscl('-plist', '.', 'readall', '/Groups'))
     # rubocop:enable Naming/MemoizedInstanceVariableName
   end
 
@@ -179,7 +179,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # value. The value returned is the first item within the array returned
   # from dscl
   def self.get_attribute_from_dscl(path, username, keyname)
-    Puppet::Util::Plist.parse_plist(dscl '-plist', '.', 'read', "/#{path}/#{username}", keyname)
+    Puppet::Util::Plist.parse_plist(dscl('-plist', '.', 'read', "/#{path}/#{username}", keyname))
   end
 
   # The plist embedded in the ShadowHashData key is a binary plist. The
