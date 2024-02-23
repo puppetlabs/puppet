@@ -1088,7 +1088,11 @@ class PIntegerType < PNumericType
   # numbers are converted to zero
   # @return [PIntegerType] a positive range
   def to_size
-    @from >= 0 ? self : PIntegerType.new(0, @to < 0 ? 0 : @to)
+    if @from >= 0
+      self
+    else
+      PIntegerType.new(0, @to < 0 ? 0 : @to)
+    end
   end
 
   def new_function

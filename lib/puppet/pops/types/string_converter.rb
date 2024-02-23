@@ -119,7 +119,11 @@ class StringConverter
 
       @left  = flags.include?('-')
       @alt   = flags.include?('#')
-      @plus  = (flags.include?(' ') ? :space : (flags.include?('+') ? :plus : :ignore))
+      @plus  = (if flags.include?(' ')
+                  :space
+                else
+                  (flags.include?('+') ? :plus : :ignore)
+                end)
       @zero_pad = flags.include?('0')
 
       @delimiters = nil

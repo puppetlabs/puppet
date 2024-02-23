@@ -630,19 +630,6 @@ Style/MutableConstant:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/NestedTernaryOperator:
-  Exclude:
-    - 'lib/puppet/external/dot.rb'
-    - 'lib/puppet/module_tool/shared_behaviors.rb'
-    - 'lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb'
-    - 'lib/puppet/pops/lookup/hiera_config.rb'
-    - 'lib/puppet/pops/parser/lexer2.rb'
-    - 'lib/puppet/pops/types/string_converter.rb'
-    - 'lib/puppet/pops/types/type_factory.rb'
-    - 'lib/puppet/pops/types/types.rb'
-    - 'lib/puppet/util/log.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, MinBodyLength.
 # SupportedStyles: skip_modifier_ifs, always
 Style/Next:

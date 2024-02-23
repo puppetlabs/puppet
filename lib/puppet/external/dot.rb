@@ -196,16 +196,18 @@ module DOT
     def to_s(t = '')
       # This code is totally incomprehensible; it needs to be replaced!
 
-      label = @options['shape'] != 'record' && @ports.length == 0 ?
-          @options['label'] ?
-            t + $tab + "label = #{stringify(@options['label'])}\n" :
-            '' :
-          t + $tab + 'label = "' + " \\\n" +
-            t + $tab2 + "#{stringify(@options['label'])}| \\\n" +
-            @ports.collect { |i|
-              t + $tab2 + i.to_s
-            }.join("| \\\n") + " \\\n" +
-            t + $tab + '"' + "\n"
+      label = if @options['shape'] != 'record' && @ports.length == 0
+                @options['label'] ?
+                            t + $tab + "label = #{stringify(@options['label'])}\n" :
+                            ''
+              else
+                t + $tab + 'label = "' + " \\\n" +
+                  t + $tab2 + "#{stringify(@options['label'])}| \\\n" +
+                  @ports.collect { |i|
+                    t + $tab2 + i.to_s
+                  }.join("| \\\n") + " \\\n" +
+                  t + $tab + '"' + "\n"
+              end
 
       t + "#{@name} [\n" +
         @options.to_a.filter_map { |i|
@@ -253,9 +255,11 @@ module DOT
       hdr = t + "#{@dot_string} #{@name} {\n"
 
       options = @options.to_a.filter_map { |name, val|
-        val && name != 'label' ?
-          t + $tab + "#{name} = #{val}" :
+        if val && name != 'label'
+          t + $tab + "#{name} = #{val}"
+        else
           name ? t + $tab + "#{name} = \"#{val}\"" : nil
+        end
       }.join("\n") + "\n"
 
       nodes = @nodes.collect { |i|
@@ -292,9 +296,11 @@ module DOT
     def to_s(t = '')
       t + "#{@from} #{edge_link} #{to} [\n" +
         @options.to_a.filter_map { |i|
-          i[1] && i[0] != 'label' ?
-            t + $tab + "#{i[0]} = #{i[1]}" :
+          if i[1] && i[0] != 'label'
+            t + $tab + "#{i[0]} = #{i[1]}"
+          else
             i[1] ? t + $tab + "#{i[0]} = \"#{i[1]}\"" : nil
+          end
         }.join("\n") + "\n#{t}]\n"
     end
   end

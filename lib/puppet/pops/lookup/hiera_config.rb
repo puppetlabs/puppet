@@ -700,9 +700,13 @@ class HieraConfigV5 < HieraConfig
                                          locations,
                                          {
                                            :hierarchy =>
-                                             locations.nil? ? [] : locations.map do |loc|
-                                               path = loc.original_location
-                                               path.end_with?(".#{function_name}") ? path[0..-(function_name.length + 2)] : path
+                                             if locations.nil?
+                                               []
+                                             else
+                                               locations.map do |loc|
+                                                 path = loc.original_location
+                                                 path.end_with?(".#{function_name}") ? path[0..-(function_name.length + 2)] : path
+                                               end
                                              end,
                                            function_name.to_sym => v3options,
                                            :backends => [function_name],

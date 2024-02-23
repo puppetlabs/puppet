@@ -268,7 +268,11 @@ class Lexer2
       '|' => lambda do
         scn = @scanner
         la = scn.peek(3)
-        emit(la[1] == '>' ? (la[2] == '>' ? TOKEN_RRCOLLECT : TOKEN_RCOLLECT) : TOKEN_PIPE, scn.pos)
+        emit(if la[1] == '>'
+               la[2] == '>' ? TOKEN_RRCOLLECT : TOKEN_RCOLLECT
+             else
+               TOKEN_PIPE
+             end, scn.pos)
       end,
 
       # TOKENS =, =>, ==, =~
@@ -635,7 +639,11 @@ class Lexer2
     @scanner = StringScanner.new(string)
     @locator = locator || Locator.locator(string, '')
     @lexing_context[:escapes] = escapes || UQ_ESCAPES
-    @lexing_context[:uq_slurp_pattern] = interpolate ? (escapes.include?('$') ? SLURP_UQ_PATTERN : SLURP_UQNE_PATTERN) : SLURP_ALL_PATTERN
+    @lexing_context[:uq_slurp_pattern] = if interpolate
+                                           escapes.include?('$') ? SLURP_UQ_PATTERN : SLURP_UQNE_PATTERN
+                                         else
+                                           SLURP_ALL_PATTERN
+                                         end
   end
 
   # Convenience method, and for compatibility with older lexer. Use the lex_file instead.
