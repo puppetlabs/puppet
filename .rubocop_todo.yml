@@ -630,11 +630,6 @@ Style/MutableConstant:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/NestedModifier:
-  Exclude:
-    - 'lib/puppet/util/command_line/trollop.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: AllowedMethods.
 # AllowedMethods: be, be_a, be_an, be_between, be_falsey, be_kind_of, be_instance_of, be_truthy, be_within, eq, eql, end_with, include, match, raise_error, respond_to, start_with
 Style/NestedParenthesizedCalls:
