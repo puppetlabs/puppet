@@ -83,7 +83,7 @@ module HeredocSupport
     # (Endline in EBNF form): WS* ('|' WS*)? ('-' WS*)? endtag WS* \r? (\n|$)
     endline_pattern = /([[:blank:]]*)(?:([|])[[:blank:]]*)?(?:(\-)[[:blank:]]*)?#{Regexp.escape(endtag)}[[:blank:]]*\r?(?:\n|\z)/
     lines = []
-    while !scn.eos? do
+    until scn.eos? do
       one_line = scn.scan_until(/(?:\n|\z)/)
       raise eof_error unless one_line
 

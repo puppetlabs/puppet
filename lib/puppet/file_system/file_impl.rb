@@ -52,7 +52,7 @@ class Puppet::FileSystem::FileImpl
   def exclusive_open(path, mode, options = 'r', timeout = 300, &block)
     wait = 0.001 + (Kernel.rand / 1000)
     written = false
-    while !written
+    until written
       ::File.open(path, options, mode) do |rf|
         if rf.flock(::File::LOCK_EX | ::File::LOCK_NB)
           Puppet.debug { _("Locked '%{path}'") % { path: path } }

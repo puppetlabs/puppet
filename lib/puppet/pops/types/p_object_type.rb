@@ -1111,7 +1111,7 @@ class PObjectType < PMetaType
   # @return [PObjectType] the topmost parent who's #equality_attributes include the given _attr_
   def find_equality_definer_of(attr)
     type = self
-    while !type.nil? do
+    until type.nil? do
       p = type.resolved_parent
       return type unless p.is_a?(PObjectType)
       return type unless p.equality_attributes.include?(attr.name)

@@ -630,16 +630,6 @@ Style/MutableConstant:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/NegatedWhile:
-  Exclude:
-    - 'lib/puppet/file_system/file_impl.rb'
-    - 'lib/puppet/graph/simple_graph.rb'
-    - 'lib/puppet/http/client.rb'
-    - 'lib/puppet/pops/parser/heredoc_support.rb'
-    - 'lib/puppet/pops/types/p_object_type.rb'
-    - 'lib/puppet/scheduler/scheduler.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/NestedModifier:
   Exclude:
     - 'lib/puppet/util/command_line/trollop.rb'
