@@ -64,14 +64,14 @@ module Puppet::FileBucketFile
       msg = ''.dup
       # Get all files with mtime between 'from' and 'to'
       Pathname.new(request.options[:bucket_path]).find { |item|
-        if item.file? and item.basename.to_s == "paths"
-          filenames = item.read.strip.split("\n")
-          filestat = Time.parse(item.stat.mtime.to_s)
-          if from <= filestat and filestat <= to
-            filenames.each do |filename|
-              bucket[filename] += [[item.stat.mtime, item.parent.basename]]
-            end
-          end
+        next unless item.file? and item.basename.to_s == "paths"
+
+        filenames = item.read.strip.split("\n")
+        filestat = Time.parse(item.stat.mtime.to_s)
+        next unless from <= filestat and filestat <= to
+
+        filenames.each do |filename|
+          bucket[filename] += [[item.stat.mtime, item.parent.basename]]
         end
       }
       # Sort the results

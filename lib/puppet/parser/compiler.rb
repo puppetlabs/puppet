@@ -484,14 +484,14 @@ class Puppet::Parser::Compiler
   def metaparams_as_data(resource, params)
     data = nil
     params.each do |param|
-      unless resource[param].nil?
-        # Because we could be creating a hash for every resource,
-        # and we actually probably don't often have any data here at all,
-        # we're optimizing a bit by only creating a hash if there's
-        # any data to put in it.
-        data ||= {}
-        data[param] = resource[param]
-      end
+      next if resource[param].nil?
+
+      # Because we could be creating a hash for every resource,
+      # and we actually probably don't often have any data here at all,
+      # we're optimizing a bit by only creating a hash if there's
+      # any data to put in it.
+      data ||= {}
+      data[param] = resource[param]
     end
     data
   end

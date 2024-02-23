@@ -85,11 +85,11 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     # Add any per-module external fact directories to facter's external search path
     dirs = []
     request.environment.modules.each do |m|
-      if m.has_external_facts?
-        dir = m.plugin_fact_directory
-        Puppet.debug { "Loading external facts from #{dir}" }
-        dirs << dir
-      end
+      next unless m.has_external_facts?
+
+      dir = m.plugin_fact_directory
+      Puppet.debug { "Loading external facts from #{dir}" }
+      dirs << dir
     end
 
     # Add system external fact directory if it exists

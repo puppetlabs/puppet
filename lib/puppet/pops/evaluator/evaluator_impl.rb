@@ -693,7 +693,7 @@ class EvaluatorImpl
       the_default = nil
       if o.options.find do |co|
         # the first case option that matches
-        if co.values.find do |c|
+        next unless co.values.find do |c|
           c = unwind_parentheses(c)
           case c
           when Model::LiteralDefault
@@ -707,9 +707,9 @@ class EvaluatorImpl
             is_match?(test, evaluate(c, scope), c, co, scope)
           end
         end
-          result = evaluate(co.then_expr, scope)
-          true # the option was picked
-        end
+
+        result = evaluate(co.then_expr, scope)
+        true # the option was picked
       end
         result # an option was picked, and produced a result
       else

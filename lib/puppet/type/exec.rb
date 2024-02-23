@@ -653,20 +653,20 @@ module Puppet
       self.class.checks.each { |check|
         next if refreshing and check == :refreshonly
 
-        if @parameters.include?(check)
-          val = @parameters[check].value
-          val = [val] unless val.is_a? Array
-          val.each do |value|
-            unless @parameters[check].check(value)
-              # Give a debug message so users can figure out what command would have been
-              # but don't print sensitive commands or parameters in the clear
-              cmdstring = @parameters[:command].sensitive ? "[command redacted]" : @parameters[:command].value
+        next unless @parameters.include?(check)
 
-              debug(_("'%{cmd}' won't be executed because of failed check '%{check}'") % { cmd: cmdstring, check: check })
+        val = @parameters[check].value
+        val = [val] unless val.is_a? Array
+        val.each do |value|
+          next if @parameters[check].check(value)
 
-              return false
-            end
-          end
+          # Give a debug message so users can figure out what command would have been
+          # but don't print sensitive commands or parameters in the clear
+          cmdstring = @parameters[:command].sensitive ? "[command redacted]" : @parameters[:command].value
+
+          debug(_("'%{cmd}' won't be executed because of failed check '%{check}'") % { cmd: cmdstring, check: check })
+
+          return false
         end
       }
 

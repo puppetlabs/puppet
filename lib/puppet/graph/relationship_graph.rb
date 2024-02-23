@@ -128,19 +128,19 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
         deferred_resources << resource
       end
 
-      if @ready.empty? and deferred_resources.any?
-        if made_progress
-          enqueue(*deferred_resources)
-        else
-          deferred_resources.each do |res|
-            overly_deferred_resource_handler.call(res)
-            finish(res)
-          end
-        end
+      next unless @ready.empty? and deferred_resources.any?
 
-        made_progress = false
-        deferred_resources = []
+      if made_progress
+        enqueue(*deferred_resources)
+      else
+        deferred_resources.each do |res|
+          overly_deferred_resource_handler.call(res)
+          finish(res)
+        end
       end
+
+      made_progress = false
+      deferred_resources = []
     end
 
     unless continue_while.call()

@@ -240,14 +240,14 @@ module Logging
     Puppet::FileSystem.open(deprecations_file, nil, "a:UTF-8") do |f|
       if ($deprecation_warnings) then
         $deprecation_warnings.each do |offender, message|
-          unless ($logged_deprecation_warnings.has_key?(offender)) then
-            $logged_deprecation_warnings[offender] = true
-            if ((pattern.nil?) || (message =~ pattern)) then
-              f.puts(message)
-              f.puts(offender)
-              f.puts()
-            end
-          end
+          next if ($logged_deprecation_warnings.has_key?(offender))
+
+          $logged_deprecation_warnings[offender] = true
+          next unless ((pattern.nil?) || (message =~ pattern))
+
+          f.puts(message)
+          f.puts(offender)
+          f.puts()
         end
       end
     end

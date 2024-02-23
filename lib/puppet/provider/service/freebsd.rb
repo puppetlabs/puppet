@@ -72,14 +72,14 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     success = false
     # Replace in all files, not just in the first found with a match
     [rcconf, rcconf_local, rcconf_dir + "/#{service}"].each do |filename|
-      if Puppet::FileSystem.exist?(filename)
-        s = File.read(filename)
-        if s.gsub!(/^(#{rcvar}(_enable)?)=\"?(YES|NO)\"?/, "\\1=\"#{yesno}\"")
-          Puppet::FileSystem.replace_file(filename) { |f| f << s }
-          self.debug("Replaced in #{filename}")
-          success = true
-        end
-      end
+      next unless Puppet::FileSystem.exist?(filename)
+
+      s = File.read(filename)
+      next unless s.gsub!(/^(#{rcvar}(_enable)?)=\"?(YES|NO)\"?/, "\\1=\"#{yesno}\"")
+
+      Puppet::FileSystem.replace_file(filename) { |f| f << s }
+      self.debug("Replaced in #{filename}")
+      success = true
     end
     success
   end

@@ -300,22 +300,22 @@ Puppet::Type.type(:user).provide :directoryservice do
       # For the :password and :groups properties, call the setter methods
       # to enforce those values. For everything else, use dscl with the
       # ns_to_ds_attribute_map to set the appropriate values.
-      if value != "" and not value.nil?
-        case attribute
-        when :password
-          self.password = value
-        when :iterations
-          self.iterations = value
-        when :salt
-          self.salt = value
-        when :groups
-          value.split(',').each do |group|
-            merge_attribute_with_dscl('Groups', group, 'GroupMembership', @resource.name)
-            merge_attribute_with_dscl('Groups', group, 'GroupMembers', @guid)
-          end
-        else
-          create_attribute_with_dscl('Users', @resource.name, self.class.ns_to_ds_attribute_map[attribute], value)
+      next unless value != "" and not value.nil?
+
+      case attribute
+      when :password
+        self.password = value
+      when :iterations
+        self.iterations = value
+      when :salt
+        self.salt = value
+      when :groups
+        value.split(',').each do |group|
+          merge_attribute_with_dscl('Groups', group, 'GroupMembership', @resource.name)
+          merge_attribute_with_dscl('Groups', group, 'GroupMembers', @guid)
         end
+      else
+        create_attribute_with_dscl('Users', @resource.name, self.class.ns_to_ds_attribute_map[attribute], value)
       end
     end
   end

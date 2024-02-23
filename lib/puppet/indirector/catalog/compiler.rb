@@ -237,31 +237,31 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
           source = Puppet::Type.type(:file).attrclass(:source).normalize(source)
 
           list_of_data = Puppet::FileServing::Metadata.indirection.search(source, options)
-          if list_of_data
-            basedir_meta = list_of_data.find { |meta| meta.relative_path == '.' }
-            devfail "FileServing::Metadata search should always return the root search path" if basedir_meta.nil?
+          next unless list_of_data
 
-            unless inlineable_metadata?(basedir_meta, source, environment_path)
-              # If any source is not in the environment path, skip inlining this resource.
-              log_file_outside_environment
-              sources_in_environment = false
-              break
-            end
+          basedir_meta = list_of_data.find { |meta| meta.relative_path == '.' }
+          devfail "FileServing::Metadata search should always return the root search path" if basedir_meta.nil?
 
-            base_content_uri = get_content_uri(basedir_meta, source, environment_path)
-            list_of_data.each do |metadata|
-              if metadata.relative_path == '.'
-                metadata.content_uri = base_content_uri
-              else
-                metadata.content_uri = "#{base_content_uri}/#{metadata.relative_path}"
-              end
-            end
+          unless inlineable_metadata?(basedir_meta, source, environment_path)
+            # If any source is not in the environment path, skip inlining this resource.
+            log_file_outside_environment
+            sources_in_environment = false
+            break
+          end
 
-            source_to_metadatas[source] = list_of_data
-            # Optimize for returning less data if sourceselect is first
-            if resource[:sourceselect] == 'first' || resource[:sourceselect].nil?
-              break
+          base_content_uri = get_content_uri(basedir_meta, source, environment_path)
+          list_of_data.each do |metadata|
+            if metadata.relative_path == '.'
+              metadata.content_uri = base_content_uri
+            else
+              metadata.content_uri = "#{base_content_uri}/#{metadata.relative_path}"
             end
+          end
+
+          source_to_metadatas[source] = list_of_data
+          # Optimize for returning less data if sourceselect is first
+          if resource[:sourceselect] == 'first' || resource[:sourceselect].nil?
+            break
           end
         end
 
@@ -282,11 +282,11 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
           source = Puppet::Type.type(:file).attrclass(:source).normalize(source)
 
           data = Puppet::FileServing::Metadata.indirection.find(source, options)
-          if data
-            metadata = data
-            metadata.source = source
-            break
-          end
+          next unless data
+
+          metadata = data
+          metadata.source = source
+          break
         end
 
         raise _("Could not get metadata for %{resource}") % { resource: resource[:source] } unless metadata

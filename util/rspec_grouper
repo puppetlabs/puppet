@@ -44,11 +44,11 @@ module Parallel
         @files.each do |file, count|
           group = [] unless group
           group << file
-          if (example_count += count) > group_size
-            example_count = 0
-            @groups << group
-            group = nil
-          end
+          next unless (example_count += count) > group_size
+
+          example_count = 0
+          @groups << group
+          group = nil
         end
         @groups << group if group
       end

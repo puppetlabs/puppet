@@ -123,22 +123,22 @@ Puppet::Face.define(:module, '1.0.0') do
         acc[dep[:reason]] << dep
       end
       unmet_grouped.each do |type, deps|
-        unless deps.empty?
-          unmet_grouped[type].sort_by { |dep| dep[:name] }.each do |dep|
-            dep_name           = dep[:name].tr('/', '-')
-            installed_version  = dep[:mod_details][:installed_version]
-            version_constraint = dep[:version_constraint]
-            parent_name        = dep[:parent][:name].tr('/', '-')
-            parent_version     = dep[:parent][:version]
+        next if deps.empty?
 
-            msg = _("'%{parent_name}' (%{parent_version}) requires '%{dependency_name}' (%{dependency_version})") % { parent_name: parent_name, parent_version: parent_version, dependency_name: dep_name, dependency_version: version_constraint }
-            unmet_deps[type][dep[:name]][:errors] << msg
-            unmet_deps[type][dep[:name]][:parent] = {
-              :name => dep[:parent][:name],
-              :version => parent_version
-            }
-            unmet_deps[type][dep[:name]][:version] = installed_version
-          end
+        unmet_grouped[type].sort_by { |dep| dep[:name] }.each do |dep|
+          dep_name           = dep[:name].tr('/', '-')
+          installed_version  = dep[:mod_details][:installed_version]
+          version_constraint = dep[:version_constraint]
+          parent_name        = dep[:parent][:name].tr('/', '-')
+          parent_version     = dep[:parent][:version]
+
+          msg = _("'%{parent_name}' (%{parent_version}) requires '%{dependency_name}' (%{dependency_version})") % { parent_name: parent_name, parent_version: parent_version, dependency_name: dep_name, dependency_version: version_constraint }
+          unmet_deps[type][dep[:name]][:errors] << msg
+          unmet_deps[type][dep[:name]][:parent] = {
+            :name => dep[:parent][:name],
+            :version => parent_version
+          }
+          unmet_deps[type][dep[:name]][:version] = installed_version
         end
       end
     end
@@ -151,24 +151,24 @@ Puppet::Face.define(:module, '1.0.0') do
     # Display unmet dependencies by category.
     error_display_order = [:non_semantic_version, :version_mismatch, :missing]
     error_display_order.each do |type|
-      unless @unmet_deps[type].empty?
-        @unmet_deps[type].keys.sort.each do |dep|
-          name    = dep.tr('/', '-')
-          errors  = @unmet_deps[type][dep][:errors]
-          version = @unmet_deps[type][dep][:version]
+      next if @unmet_deps[type].empty?
 
-          msg = case type
-                when :version_mismatch
-                  _("Module '%{name}' (v%{version}) fails to meet some dependencies:\n") % { name: name, version: version }
-                when :non_semantic_version
-                  _("Non semantic version dependency %{name} (v%{version}):\n") % { name: name, version: version }
-                else
-                  _("Missing dependency '%{name}':\n") % { name: name }
-                end
+      @unmet_deps[type].keys.sort.each do |dep|
+        name    = dep.tr('/', '-')
+        errors  = @unmet_deps[type][dep][:errors]
+        version = @unmet_deps[type][dep][:version]
 
-          errors.each { |error_string| msg << "  #{error_string}\n" }
-          Puppet.warning msg.chomp
-        end
+        msg = case type
+              when :version_mismatch
+                _("Module '%{name}' (v%{version}) fails to meet some dependencies:\n") % { name: name, version: version }
+              when :non_semantic_version
+                _("Non semantic version dependency %{name} (v%{version}):\n") % { name: name, version: version }
+              else
+                _("Missing dependency '%{name}':\n") % { name: name }
+              end
+
+        errors.each { |error_string| msg << "  #{error_string}\n" }
+        Puppet.warning msg.chomp
       end
     end
   end

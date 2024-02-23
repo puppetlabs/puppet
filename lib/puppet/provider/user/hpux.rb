@@ -66,11 +66,11 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
       if File.file?(file_name)
         # Found the tcb user for the specific user, now get passwd
         File.open(file_name).each do |line|
-          if (line =~ /u_pwd/)
-            temp_passwd = line.split(":")[1].split("=")[1]
-            ent.passwd = temp_passwd
-            return ent.passwd
-          end
+          next unless (line =~ /u_pwd/)
+
+          temp_passwd = line.split(":")[1].split("=")[1]
+          ent.passwd = temp_passwd
+          return ent.passwd
         end
       else
         debug "No trusted computing user file #{file_name} found."

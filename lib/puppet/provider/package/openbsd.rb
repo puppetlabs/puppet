@@ -207,13 +207,13 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
       process.each_line do |line|
         match = regex.match(line.split[0])
-        if match
-          # now we return the first version, unless ensure is latest
-          version = match.captures[1]
-          return version unless @resource[:ensure] == "latest"
+        next unless match
 
-          master_version = version unless master_version > version
-        end
+        # now we return the first version, unless ensure is latest
+        version = match.captures[1]
+        return version unless @resource[:ensure] == "latest"
+
+        master_version = version unless master_version > version
       end
 
       return master_version unless master_version == 0

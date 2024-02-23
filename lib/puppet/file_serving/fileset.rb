@@ -165,11 +165,11 @@ class Puppet::FileServing::Fileset
     result = []
 
     while entry = current_dirs.shift # rubocop:disable Lint/AssignmentInCondition
-      if continue_recursion_at?(entry.depth + 1)
-        entry.children.each do |child|
-          result << child.path
-          current_dirs << child
-        end
+      next unless continue_recursion_at?(entry.depth + 1)
+
+      entry.children.each do |child|
+        result << child.path
+        current_dirs << child
       end
     end
 

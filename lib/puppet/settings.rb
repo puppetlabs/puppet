@@ -631,24 +631,24 @@ class Puppet::Settings
     value_sets = value_sets_for(env, preferred_run_mode)
     @config.values.select(&:has_hook?).each do |setting|
       value_sets.each do |source|
-        if source.include?(setting.name)
-          # We still have to use value to retrieve the value, since
-          # we want the fully interpolated value, not $vardir/lib or whatever.
-          # This results in extra work, but so few of the settings
-          # will have associated hooks that it ends up being less work this
-          # way overall.
-          if setting.call_hook_on_initialize?
-            @hooks_to_call_on_application_initialization |= [setting]
-          else
-            setting.handle(ChainedValues.new(
-              preferred_run_mode,
-              env,
-              value_sets,
-              @config
-            ).interpolate(setting.name))
-          end
-          break
+        next unless source.include?(setting.name)
+
+        # We still have to use value to retrieve the value, since
+        # we want the fully interpolated value, not $vardir/lib or whatever.
+        # This results in extra work, but so few of the settings
+        # will have associated hooks that it ends up being less work this
+        # way overall.
+        if setting.call_hook_on_initialize?
+          @hooks_to_call_on_application_initialization |= [setting]
+        else
+          setting.handle(ChainedValues.new(
+            preferred_run_mode,
+            env,
+            value_sets,
+            @config
+          ).interpolate(setting.name))
         end
+        break
       end
     end
 

@@ -18,11 +18,11 @@ class Puppet::Pops::Evaluator::Collectors::FixedSetCollector < Puppet::Pops::Eva
     resolved = []
     result = @resources.each_with_object([]) do |ref, memo|
       res = @scope.findresource(ref.to_s)
-      if res
-        res.virtual = false
-        memo << res
-        resolved << ref
-      end
+      next unless res
+
+      res.virtual = false
+      memo << res
+      resolved << ref
     end
 
     @resources = @resources - resolved

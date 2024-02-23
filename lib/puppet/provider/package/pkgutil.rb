@@ -50,11 +50,11 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
       # Create a second instance with the alias if it's different
       pkgalias = aliases[pkg[:name]]
-      if pkgalias and pkg[:name] != pkgalias
-        apkg = pkg.dup
-        apkg[:name] = pkgalias
-        pkginsts << new(apkg)
-      end
+      next unless pkgalias and pkg[:name] != pkgalias
+
+      apkg = pkg.dup
+      apkg[:name] = pkgalias
+      pkginsts << new(apkg)
     end
 
     pkginsts

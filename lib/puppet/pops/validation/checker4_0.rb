@@ -325,11 +325,11 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     found_default = false
     o.options.each do |option|
       option.values.each do |value|
-        if value.is_a?(Model::LiteralDefault)
-          # Flag the second default as 'unreachable'
-          acceptor.accept(Issues::DUPLICATE_DEFAULT, value, :container => o) if found_default
-          found_default = true
-        end
+        next unless value.is_a?(Model::LiteralDefault)
+
+        # Flag the second default as 'unreachable'
+        acceptor.accept(Issues::DUPLICATE_DEFAULT, value, :container => o) if found_default
+        found_default = true
       end
     end
   end

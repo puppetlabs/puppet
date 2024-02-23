@@ -646,25 +646,25 @@ class Puppet::Resource
     if type.respond_to?(:title_patterns) && !type.title_patterns.nil?
       type.title_patterns.each do |regexp, symbols_and_lambdas|
         captures = regexp.match(title.to_s)
-        if captures
-          symbols_and_lambdas.zip(captures[1..]).each do |symbol_and_lambda, capture|
-            symbol, proc = symbol_and_lambda
-            # Many types pass "identity" as the proc; we might as well give
-            # them a shortcut to delivering that without the extra cost.
-            #
-            # Especially because the global type defines title_patterns and
-            # uses the identity patterns.
-            #
-            # This was worth about 8MB of memory allocation saved in my
-            # testing, so is worth the complexity for the API.
-            if proc then
-              h[symbol] = proc.call(capture)
-            else
-              h[symbol] = capture
-            end
+        next unless captures
+
+        symbols_and_lambdas.zip(captures[1..]).each do |symbol_and_lambda, capture|
+          symbol, proc = symbol_and_lambda
+          # Many types pass "identity" as the proc; we might as well give
+          # them a shortcut to delivering that without the extra cost.
+          #
+          # Especially because the global type defines title_patterns and
+          # uses the identity patterns.
+          #
+          # This was worth about 8MB of memory allocation saved in my
+          # testing, so is worth the complexity for the API.
+          if proc then
+            h[symbol] = proc.call(capture)
+          else
+            h[symbol] = capture
           end
-          return h
         end
+        return h
       end
       # If we've gotten this far, then none of the provided title patterns
       # matched. Since there's no way to determine the title then the

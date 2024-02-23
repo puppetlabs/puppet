@@ -442,19 +442,19 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
   def remove_unwanted_members(current_members, new_members)
     current_members.each do |member|
-      unless new_members.flatten.include?(member)
-        cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-d", member, @resource[:name]]
+      next if new_members.flatten.include?(member)
+
+      cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-d", member, @resource[:name]]
+      begin
+        execute(cmd)
+      rescue Puppet::ExecutionFailure
+        # TODO: We're falling back to removing the member using dscl due to rdar://8481241
+        # This bug causes dseditgroup to fail to remove a member if that member doesn't exist
+        cmd = [:dscl, ".", "-delete", "/Groups/#{@resource.name}", "GroupMembership", member]
         begin
           execute(cmd)
-        rescue Puppet::ExecutionFailure
-          # TODO: We're falling back to removing the member using dscl due to rdar://8481241
-          # This bug causes dseditgroup to fail to remove a member if that member doesn't exist
-          cmd = [:dscl, ".", "-delete", "/Groups/#{@resource.name}", "GroupMembership", member]
-          begin
-            execute(cmd)
-          rescue Puppet::ExecutionFailure => detail
-            fail(_("Could not remove %{member} from group: %{resource}, %{detail}") % { member: member, resource: @resource.name, detail: detail })
-          end
+        rescue Puppet::ExecutionFailure => detail
+          fail(_("Could not remove %{member} from group: %{resource}, %{detail}") % { member: member, resource: @resource.name, detail: detail })
         end
       end
     end
@@ -462,13 +462,13 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
   def add_members(current_members, new_members)
     new_members.flatten.each do |new_member|
-      if current_members.nil? or not current_members.include?(new_member)
-        cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-a", new_member, @resource[:name]]
-        begin
-          execute(cmd)
-        rescue Puppet::ExecutionFailure => detail
-          fail(_("Could not add %{new_member} to group: %{name}, %{detail}") % { new_member: new_member, name: @resource.name, detail: detail })
-        end
+      next unless current_members.nil? or not current_members.include?(new_member)
+
+      cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-a", new_member, @resource[:name]]
+      begin
+        execute(cmd)
+      rescue Puppet::ExecutionFailure => detail
+        fail(_("Could not add %{new_member} to group: %{name}, %{detail}") % { new_member: new_member, name: @resource.name, detail: detail })
       end
     end
   end

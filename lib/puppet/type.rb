@@ -1494,11 +1494,11 @@ class Type
     # @return [void]
     def validate_relationship
       @value.each do |ref|
-        unless @resource.catalog.resource(ref.to_s)
-          description = self.class.direction == :in ? "dependency" : "dependent"
-          fail ResourceError, _("Could not find %{description} %{ref} for %{resource}") %
-                              { description: description, ref: ref, resource: resource.ref }
-        end
+        next if @resource.catalog.resource(ref.to_s)
+
+        description = self.class.direction == :in ? "dependency" : "dependent"
+        fail ResourceError, _("Could not find %{description} %{ref} for %{resource}") %
+                            { description: description, ref: ref, resource: resource.ref }
       end
     end
 

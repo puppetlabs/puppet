@@ -51,11 +51,11 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
     table = table.scrub unless table.valid_encoding?
 
     table.each_line { |line|
-      if regex.match(line)
-        self.debug "Process matched: #{line}"
-        ary = line.sub(/^[[:space:]]+/u, '').split(/[[:space:]]+/u)
-        return ary[1]
-      end
+      next unless regex.match(line)
+
+      self.debug "Process matched: #{line}"
+      ary = line.sub(/^[[:space:]]+/u, '').split(/[[:space:]]+/u)
+      return ary[1]
     }
 
     nil

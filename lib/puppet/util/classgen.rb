@@ -177,11 +177,11 @@ module Puppet::Util::ClassGen
 
     [:include, :extend].each do |method|
       set = options[method]
-      if set
-        set = [set] unless set.is_a?(Array)
-        set.each do |mod|
-          klass.send(method, mod)
-        end
+      next unless set
+
+      set = [set] unless set.is_a?(Array)
+      set.each do |mod|
+        klass.send(method, mod)
       end
     end
 

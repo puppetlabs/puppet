@@ -54,20 +54,20 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     updates = {}
     sources.each do |source|
       execute(self.srclistcmd(source)).each_line do |line|
-        if line =~ /^[^#][^:]*:([^:]*):([^:]*)/
-          current = {}
-          current[:name]    = $1
-          current[:version] = $2
-          current[:source]  = source
+        next unless line =~ /^[^#][^:]*:([^:]*):([^:]*)/
 
-          if updates.key?(current[:name])
-            previous = updates[current[:name]]
+        current = {}
+        current[:name]    = $1
+        current[:version] = $2
+        current[:source]  = source
 
-            updates[current[:name]] = current unless Puppet::Util::Package.versioncmp(previous[:version], current[:version]) == 1
+        if updates.key?(current[:name])
+          previous = updates[current[:name]]
 
-          else
-            updates[current[:name]] = current
-          end
+          updates[current[:name]] = current unless Puppet::Util::Package.versioncmp(previous[:version], current[:version]) == 1
+
+        else
+          updates[current[:name]] = current
         end
       end
     end

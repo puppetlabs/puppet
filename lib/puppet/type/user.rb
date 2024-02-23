@@ -173,11 +173,11 @@ module Puppet
         found = false
         @should.each do |value|
           number = Puppet::Util.gid(value)
-          if number
-            provider.gid = number
-            found = true
-            break
-          end
+          next unless number
+
+          provider.gid = number
+          found = true
+          break
         end
 
         fail _("Could not find group(s) %{groups}") % { groups: @should.join(",") } unless found

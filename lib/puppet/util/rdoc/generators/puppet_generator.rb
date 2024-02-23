@@ -143,17 +143,17 @@ module Generators
 
         # generate nodes and plugins found
         classes.each do |k|
-          if k.context.is_module?
-            k.context.each_node do |_name, node|
-              nodes << HTMLPuppetNode.new(node, toplevel, NODE_DIR, @options)
-              @nodes << nodes.last
-            end
-            k.context.each_plugin do |plugin|
-              @plugins << HTMLPuppetPlugin.new(plugin, toplevel, PLUGIN_DIR, @options)
-            end
-            k.context.each_fact do |fact|
-              @plugins << HTMLPuppetPlugin.new(fact, toplevel, PLUGIN_DIR, @options)
-            end
+          next unless k.context.is_module?
+
+          k.context.each_node do |_name, node|
+            nodes << HTMLPuppetNode.new(node, toplevel, NODE_DIR, @options)
+            @nodes << nodes.last
+          end
+          k.context.each_plugin do |plugin|
+            @plugins << HTMLPuppetPlugin.new(plugin, toplevel, PLUGIN_DIR, @options)
+          end
+          k.context.each_fact do |fact|
+            @plugins << HTMLPuppetPlugin.new(fact, toplevel, PLUGIN_DIR, @options)
           end
         end
 
@@ -164,11 +164,11 @@ module Generators
       # scan all classes to create the child's references
       @allclasses.values.each do |klass|
         superklass = klass.context.superclass
-        if superklass
-          superklass = AllReferences[superklass]
-          if superklass && (superklass.is_a?(HTMLPuppetClass) || superklass.is_a?(HTMLPuppetNode))
-            superklass.context.add_child(klass.context)
-          end
+        next unless superklass
+
+        superklass = AllReferences[superklass]
+        if superklass && (superklass.is_a?(HTMLPuppetClass) || superklass.is_a?(HTMLPuppetNode))
+          superklass.context.add_child(klass.context)
         end
       end
 
@@ -237,14 +237,13 @@ module Generators
     def gen_class_index
       gen_an_index(@classes, 'All Classes', RDoc::Page::CLASS_INDEX, "fr_class_index.html")
       @allfiles.each do |file|
-        unless file['file'].context.file_relative_name =~ /\.rb$/
+        next if file['file'].context.file_relative_name =~ /\.rb$/
 
-          gen_composite_index(
-            file,
-            RDoc::Page::COMBO_INDEX,
-            "#{MODULE_DIR}/fr_#{file["file"].context.module_name}.html"
-          )
-        end
+        gen_composite_index(
+          file,
+          RDoc::Page::COMBO_INDEX,
+          "#{MODULE_DIR}/fr_#{file["file"].context.module_name}.html"
+        )
       end
     end
 
@@ -274,10 +273,10 @@ module Generators
             res3 << { "href" => "../" + CGI.escapeHTML(AllReferences["PLUGIN(#{fact.name})"].path), "name" => CGI.escapeHTML(fact.name) }
           end
         end
-        unless f.plugins.nil?
-          f.plugins.each do |plugin|
-            res4 << { "href" => "../" + CGI.escapeHTML(AllReferences["PLUGIN(#{plugin.name})"].path), "name" => CGI.escapeHTML(plugin.name) }
-          end
+        next if f.plugins.nil?
+
+        f.plugins.each do |plugin|
+          res4 << { "href" => "../" + CGI.escapeHTML(AllReferences["PLUGIN(#{plugin.name})"].path), "name" => CGI.escapeHTML(plugin.name) }
         end
       end
 
@@ -396,14 +395,14 @@ module Generators
       resources = @resources.sort
       resources.each do |r|
         row = {}
-        if r.section == section and r.document_self
-          row["name"] = CGI.escapeHTML(r.name)
-          desc = r.description.strip
-          row["m_desc"]      = desc unless desc.empty?
-          row["aref"]        = r.aref
-          row["params"]      = r.params
-          outer << row
-        end
+        next unless r.section == section and r.document_self
+
+        row["name"] = CGI.escapeHTML(r.name)
+        desc = r.description.strip
+        row["m_desc"]      = desc unless desc.empty?
+        row["aref"]        = r.aref
+        row["params"]      = r.params
+        outer << row
       end
       outer
     end
@@ -419,12 +418,12 @@ module Generators
 
       @context.sections.each do |section|
         secdata = @values["sections"].select { |s| s["secsequence"] == section.sequence }
-        if secdata.size == 1
-          secdata = secdata[0]
+        next unless secdata.size == 1
 
-          rdl = build_resource_detail_list(section)
-          secdata["resource_list"] = rdl unless rdl.empty?
-        end
+        secdata = secdata[0]
+
+        rdl = build_resource_detail_list(section)
+        secdata["resource_list"] = rdl unless rdl.empty?
       end
 
       rl = build_require_list(@context)
@@ -571,17 +570,17 @@ module Generators
       atts.each do |att|
         next unless att.section == section
 
-        if att.visibility == :public || att.visibility == :protected || @options.show_all
-          entry = {
-            "name" => CGI.escapeHTML(att.name),
-            "rw" => att.rw,
-            "a_desc" => markup(att.comment, true)
-          }
-          unless att.visibility == :public || att.visibility == :protected
-            entry["rw"] << "-"
-          end
-          res << entry
+        next unless att.visibility == :public || att.visibility == :protected || @options.show_all
+
+        entry = {
+          "name" => CGI.escapeHTML(att.name),
+          "rw" => att.rw,
+          "a_desc" => markup(att.comment, true)
+        }
+        unless att.visibility == :public || att.visibility == :protected
+          entry["rw"] << "-"
         end
+        res << entry
       end
       res
     end
@@ -668,13 +667,13 @@ module Generators
       prefix = "&nbsp;&nbsp;::" * level;
 
       context.nodes.sort.each do |node|
-        if node.document_self
-          res <<
-            prefix <<
-            "Node " <<
-            href(url(node.viewer.path), "link", node.full_name) <<
-            "<br />\n"
-        end
+        next unless node.document_self
+
+        res <<
+          prefix <<
+          "Node " <<
+          href(url(node.viewer.path), "link", node.full_name) <<
+          "<br />\n"
       end
       res
     end
