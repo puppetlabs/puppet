@@ -147,7 +147,7 @@ module Puppet::Util::SUIDManager
     raise ArgumentError, _("Invalid id type %{type}") % { type: type } unless map.include?(type)
 
     ret = Puppet::Util.send(type, id)
-    if ret == nil
+    if ret.nil?
       raise Puppet::Error, _("Invalid %{klass}: %{id}") % { klass: map[type], id: id }
     end
 

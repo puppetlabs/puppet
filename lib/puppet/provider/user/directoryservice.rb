@@ -216,7 +216,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     case field
     when 'salt', 'entropy'
       value = embedded_binary_plist['SALTED-SHA512-PBKDF2'][field]
-      if value == nil
+      if value.nil?
         raise Puppet::Error, "Invalid #{field} given for user #{user_name}"
       end
 

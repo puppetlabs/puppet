@@ -630,21 +630,6 @@ Style/MutableConstant:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: predicate, comparison
-Style/NilComparison:
-  Exclude:
-    - 'lib/puppet/pops/types/type_factory.rb'
-    - 'lib/puppet/pops/types/types.rb'
-    - 'lib/puppet/provider/package/dnfmodule.rb'
-    - 'lib/puppet/provider/package/nim.rb'
-    - 'lib/puppet/provider/package/windows/exe_package.rb'
-    - 'lib/puppet/provider/user/directoryservice.rb'
-    - 'lib/puppet/type/file.rb'
-    - 'lib/puppet/util/pidlock.rb'
-    - 'lib/puppet/util/suidmanager.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: IncludeSemanticChanges.
 Style/NonNilCheck:
   Exclude:

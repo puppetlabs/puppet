@@ -827,7 +827,7 @@ Puppet::Type.newtype(:file) do
        [:use, :use_when_creating].include?(self[:source_permissions])
       # TRANSLATORS "source_permissions => ignore" should not be translated
       err_msg = _("Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore.")
-      if self[:owner] == nil || self[:group] == nil || self[:mode] == nil
+      if self[:owner].nil? || self[:group].nil? || self[:mode].nil?
         # Fail on Windows if source permissions are being used and the file resource
         # does not have mode owner, group, and mode all set (which would take precedence).
         self.fail err_msg

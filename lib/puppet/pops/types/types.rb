@@ -2438,7 +2438,7 @@ class PCallableType < PAnyType
     return false unless @param_types.instance?(args)
 
     if @block_type.nil?
-      block == nil
+      block.nil?
     else
       @block_type.instance?(block)
     end

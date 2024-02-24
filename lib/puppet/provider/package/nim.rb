@@ -96,7 +96,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
       package_type, version = determine_latest_version(output, pkg)
     end
 
-    if (package_type == nil)
+    if (package_type.nil?)
 
       errmsg = if version_specified
                  _("Unable to find package '%{package}' with version '%{version}' on lpp_source '%{source}'") %
