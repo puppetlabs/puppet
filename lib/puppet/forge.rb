@@ -235,7 +235,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     end
 
     def deprecated?
-      @data['module'] && (@data['module']['deprecated_at'] != nil)
+      @data['module'] && (!@data['module']['deprecated_at'].nil?)
     end
   end
 

@@ -78,6 +78,6 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
 
   def valid_network_format?(format)
     # YAML in network requests is not supported. See http://links.puppet.com/deprecate_yaml_on_network
-    format != nil && format.name != :yaml && format.name != :b64_zlib_yaml
+    !format.nil? && format.name != :yaml && format.name != :b64_zlib_yaml
   end
 end

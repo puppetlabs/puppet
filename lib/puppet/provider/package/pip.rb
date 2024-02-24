@@ -32,7 +32,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   # Required by Puppet::Provider::Package::Targetable::resource_or_provider_command
   def self.provider_command
     # Ensure pip can upgrade pip, which usually puts pip into a new path /usr/local/bin/pip (compared to /usr/bin/pip)
-    self.cmd.map { |c| which(c) }.find { |c| c != nil }
+    self.cmd.map { |c| which(c) }.find { |c| !c.nil? }
   end
 
   def self.cmd

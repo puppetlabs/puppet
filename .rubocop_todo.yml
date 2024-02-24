@@ -630,15 +630,6 @@ Style/MutableConstant:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: IncludeSemanticChanges.
-Style/NonNilCheck:
-  Exclude:
-    - 'lib/puppet/forge.rb'
-    - 'lib/puppet/http/session.rb'
-    - 'lib/puppet/network/http/request.rb'
-    - 'lib/puppet/provider/package/pip.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/Not:
   Enabled: false
 
