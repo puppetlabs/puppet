@@ -107,7 +107,7 @@ class Timestamp < TimeData
     fraction = parsed[:sec_fraction]
 
     # Convert msec rational found in _strptime hash to usec
-    fraction = fraction * 1000000 unless fraction.nil?
+    fraction = fraction * 1_000_000 unless fraction.nil?
 
     # Create the Time instance and adjust for timezone
     parsed_time = ::Time.utc(parsed[:year], parsed[:mon], parsed[:mday], parsed[:hour], parsed[:min], parsed[:sec], fraction)

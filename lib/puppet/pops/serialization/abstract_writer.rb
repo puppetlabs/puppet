@@ -178,11 +178,11 @@ class AbstractWriter
     end
 
     register_type(Extension::TIME, Time::Timestamp) do |o|
-      build_payload { |ep| nsecs = o.nsecs; ep.write(nsecs / 1000000000); ep.write(nsecs % 1000000000) }
+      build_payload { |ep| nsecs = o.nsecs; ep.write(nsecs / 1_000_000_000); ep.write(nsecs % 1_000_000_000) }
     end
 
     register_type(Extension::TIMESPAN, Time::Timespan) do |o|
-      build_payload { |ep| nsecs = o.nsecs; ep.write(nsecs / 1000000000); ep.write(nsecs % 1000000000) }
+      build_payload { |ep| nsecs = o.nsecs; ep.write(nsecs / 1_000_000_000); ep.write(nsecs % 1_000_000_000) }
     end
 
     register_type(Extension::VERSION, SemanticPuppet::Version) do |o|

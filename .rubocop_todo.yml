@@ -629,11 +629,6 @@ Style/MultipleComparison:
 Style/MutableConstant:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: Strict, AllowedNumbers.
-Style/NumericLiterals:
-  MinDigits: 11
-
 # This cop supports unsafe auto-correction (--auto-correct-all).
 # Configuration parameters: EnforcedStyle, IgnoredMethods.
 # SupportedStyles: predicate, comparison

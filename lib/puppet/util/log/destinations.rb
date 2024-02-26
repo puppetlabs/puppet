@@ -211,7 +211,7 @@ Puppet::Util::Log.newdesttype :eventlog do
   Puppet::Util::Log::DestEventlog::EVENTLOG_ERROR_TYPE       = 0x0001
   Puppet::Util::Log::DestEventlog::EVENTLOG_WARNING_TYPE     = 0x0002
   Puppet::Util::Log::DestEventlog::EVENTLOG_INFORMATION_TYPE = 0x0004
-  Puppet::Util::Log::DestEventlog::EVENTLOG_CHARACTER_LIMIT  = 31838
+  Puppet::Util::Log::DestEventlog::EVENTLOG_CHARACTER_LIMIT  = 31_838
 
   def self.suitable?(obj)
     Puppet::Util::Platform.windows?

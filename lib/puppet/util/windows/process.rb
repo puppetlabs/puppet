@@ -15,7 +15,7 @@ module Puppet::Util::Windows::Process
   # https://docs.microsoft.com/en-us/windows/desktop/ProcThread/process-security-and-access-rights
   PROCESS_QUERY_INFORMATION = 0x0400
   # https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file#maximum-path-length-limitation
-  MAX_PATH_LENGTH = 32767
+  MAX_PATH_LENGTH = 32_767
 
   def execute(command, arguments, stdin, stdout, stderr)
     create_args = {
@@ -315,7 +315,7 @@ module Puppet::Util::Windows::Process
     env_ptr = GetEnvironmentStringsW()
 
     # pass :invalid => :replace to the Ruby String#encode to use replacement characters
-    pairs = env_ptr.read_arbitrary_wide_string_up_to(65534, :double_null, { :invalid => :replace })
+    pairs = env_ptr.read_arbitrary_wide_string_up_to(65_534, :double_null, { :invalid => :replace })
                    .split(?\x00)
                    .reject { |env_str| env_str.nil? || env_str.empty? || env_str[0] == '=' }
                    .reject do |env_str|

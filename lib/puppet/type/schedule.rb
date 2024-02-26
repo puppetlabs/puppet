@@ -232,9 +232,9 @@ module Puppet
 
       ScheduleScales = {
         :hourly => 3600,
-        :daily => 86400,
-        :weekly => 604800,
-        :monthly => 2592000
+        :daily => 86_400,
+        :weekly => 604_800,
+        :monthly => 2_592_000
       }
       ScheduleMethods = {
         :hourly => :hour,

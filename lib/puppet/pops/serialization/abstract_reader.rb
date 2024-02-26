@@ -143,7 +143,7 @@ class AbstractReader
       read_payload(data) do |ep|
         sec = ep.read
         nsec = ep.read
-        Time::Timestamp.new(sec * 1000000000 + nsec)
+        Time::Timestamp.new(sec * 1_000_000_000 + nsec)
       end
     end
 
@@ -151,7 +151,7 @@ class AbstractReader
       read_payload(data) do |ep|
         sec = ep.read
         nsec = ep.read
-        Time::Timespan.new(sec * 1000000000 + nsec)
+        Time::Timespan.new(sec * 1_000_000_000 + nsec)
       end
     end
 

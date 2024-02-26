@@ -149,7 +149,7 @@ module Puppet::Util::Windows
     end
 
     # max number of wide characters including NULL terminator
-    MAX_VALUE_CHAR_LENGTH = 16383 + 1
+    MAX_VALUE_CHAR_LENGTH = 16_383 + 1
 
     def reg_enum_value(key, index, max_value_length = MAX_VALUE_CHAR_LENGTH)
       subkey, type, data = nil, nil, nil

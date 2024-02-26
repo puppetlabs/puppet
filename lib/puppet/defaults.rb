@@ -501,7 +501,7 @@ module Puppet
                      end
     },
     :maximum_uid => {
-        :default  => 4294967290,
+        :default  => 4_294_967_290,
         :type     => :integer,
         :desc     => "The maximum allowed UID.  Some platforms use negative UIDs
           but then ship with tools that do not know how to handle signed ints,
