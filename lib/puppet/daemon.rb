@@ -68,7 +68,7 @@ class Puppet::Daemon
       Puppet.debug("Finished closing streams for daemon mode")
     rescue => detail
       Puppet.err "Could not start #{Puppet.run_mode.name}: #{detail}"
-      Puppet::Util.replace_file("/tmp/daemonout", 0644) do |f|
+      Puppet::Util.replace_file("/tmp/daemonout", 0o644) do |f|
         f.puts "Could not start #{Puppet.run_mode.name}: #{detail}"
       end
       exit(12)

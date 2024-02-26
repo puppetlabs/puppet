@@ -128,7 +128,7 @@ Puppet::Type.type(:file).provide :posix do
   def mode
     stat = resource.stat
     if stat
-      return (stat.mode & 007777).to_s(8).rjust(4, '0')
+      return (stat.mode & 0o07777).to_s(8).rjust(4, '0')
     else
       return :absent
     end

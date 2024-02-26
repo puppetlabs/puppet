@@ -87,8 +87,8 @@ module Puppet
               "Cannot create #{@resource[:path]}; parent directory #{parent} does not exist"
       end
       if mode
-        Puppet::Util.withumask(000) do
-          Dir.mkdir(@resource[:path], symbolic_mode_to_int(mode, 0755, true))
+        Puppet::Util.withumask(0o00) do
+          Dir.mkdir(@resource[:path], symbolic_mode_to_int(mode, 0o755, true))
         end
       else
         Dir.mkdir(@resource[:path])

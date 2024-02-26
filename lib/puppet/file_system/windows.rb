@@ -136,11 +136,11 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_sam_compatible_user_name) unless current_sid
 
     dacl = case mode
-           when 0644
+           when 0o644
              dacl = secure_dacl(current_sid)
              dacl.allow(Puppet::Util::Windows::SID::BuiltinUsers, FILE_READ)
              dacl
-           when 0660, 0640, 0600, 0440
+           when 0o660, 0o640, 0o600, 0o440
              secure_dacl(current_sid)
            when nil
              get_dacl_from_file(path) || secure_dacl(current_sid)

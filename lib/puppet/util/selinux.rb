@@ -14,9 +14,9 @@ Puppet.features.selinux? # check, but continue even if it's not
 require 'pathname'
 
 module Puppet::Util::SELinux
-  S_IFREG = 0100000
-  S_IFDIR = 0040000
-  S_IFLNK = 0120000
+  S_IFREG = 0o100000
+  S_IFDIR = 0o040000
+  S_IFLNK = 0o120000
 
   def self.selinux_support?
     return false unless defined?(Selinux)

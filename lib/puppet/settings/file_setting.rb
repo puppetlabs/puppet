@@ -215,12 +215,12 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
 
     Puppet::Util::SUIDManager.asuser(*chown) do
       # Update the umask to make non-executable files
-      Puppet::Util.withumask(File.umask ^ 0111) do
+      Puppet::Util.withumask(File.umask ^ 0o111) do
         yielded_value = case self.mode
                         when String
                           self.mode.to_i(8)
                         when NilClass
-                          0640
+                          0o640
                         else
                           self.mode
                         end

@@ -378,7 +378,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def write_script_to(file, text)
-    Puppet::Util.replace_file(file, 0644) do |f|
+    Puppet::Util.replace_file(file, 0o644) do |f|
       f.write(text)
     end
   end

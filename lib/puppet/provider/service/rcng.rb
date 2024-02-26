@@ -41,11 +41,11 @@ Puppet::Type.type(:service).provide :rcng, :parent => :bsd do
         end
         newcontents.push(line)
       end
-      Puppet::Util.replace_file(rcfile, 0644) do |f|
+      Puppet::Util.replace_file(rcfile, 0o644) do |f|
         f.puts newcontents
       end
     else
-      Puppet::Util.replace_file(rcfile, 0644) do |f|
+      Puppet::Util.replace_file(rcfile, 0o644) do |f|
         f.puts "%s=${%s:=YES}\n" % [@resource[:name], @resource[:name]]
       end
     end

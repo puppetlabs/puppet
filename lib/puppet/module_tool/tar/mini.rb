@@ -44,9 +44,9 @@ class Puppet::ModuleTool::Tar::Mini
 
   private
 
-  EXECUTABLE = 0755
-  NOT_EXECUTABLE = 0644
-  USER_EXECUTE = 0100
+  EXECUTABLE = 0o755
+  NOT_EXECUTABLE = 0o644
+  USER_EXECUTE = 0o100
 
   def set_dir_mode!(stats)
     if stats.key?(:mode)

@@ -31,7 +31,7 @@ module Puppet::X509::PemStore
   # @raise [Errno::EACCES] if permission is denied
   # @raise [Errno::EPERM] if the operation cannot be completed
   # @api private
-  def save_pem(pem, path, owner: nil, group: nil, mode: 0644)
+  def save_pem(pem, path, owner: nil, group: nil, mode: 0o644)
     Puppet::FileSystem.replace_file(path, mode) do |f|
       f.set_encoding('UTF-8')
       f.write(pem.encode('UTF-8'))

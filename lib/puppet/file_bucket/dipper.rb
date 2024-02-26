@@ -139,7 +139,7 @@ class Puppet::FileBucket::Dipper
         changed = nil
         if Puppet::FileSystem.exist?(file_handle) and !Puppet::FileSystem.writable?(file_handle)
           changed = Puppet::FileSystem.stat(file_handle).mode
-          ::File.chmod(changed | 0200, file)
+          ::File.chmod(changed | 0o200, file)
         end
         ::File.open(file, ::File::WRONLY | ::File::TRUNC | ::File::CREAT) { |of|
           of.binmode

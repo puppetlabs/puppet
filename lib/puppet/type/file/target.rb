@@ -48,7 +48,7 @@ module Puppet
         Puppet::Util::SUIDManager.asuser(@resource.asuser) do
           mode = @resource.should(:mode)
           if mode
-            Puppet::Util.withumask(000) do
+            Puppet::Util.withumask(0o00) do
               Puppet::FileSystem.symlink(target, @resource[:path])
             end
           else

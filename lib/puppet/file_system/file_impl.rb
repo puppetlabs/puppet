@@ -163,9 +163,9 @@ class Puppet::FileSystem::FileImpl
       stat = lstat(path)
       gid = stat.gid
       uid = stat.uid
-      mode ||= stat.mode & 07777
+      mode ||= stat.mode & 0o7777
     rescue Errno::ENOENT
-      mode ||= 0640
+      mode ||= 0o640
     end
 
     tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(path), Puppet::FileSystem.dir_string(path))

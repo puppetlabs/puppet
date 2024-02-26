@@ -21,7 +21,7 @@ Puppet::Reports.register_report(:store) do
 
     unless Puppet::FileSystem.exist?(dir)
       FileUtils.mkdir_p(dir)
-      FileUtils.chmod_R(0750, dir)
+      FileUtils.chmod_R(0o750, dir)
     end
 
     # Now store the report.
@@ -34,7 +34,7 @@ Puppet::Reports.register_report(:store) do
     file = File.join(dir, name)
 
     begin
-      Puppet::FileSystem.replace_file(file, 0640) do |fh|
+      Puppet::FileSystem.replace_file(file, 0o640) do |fh|
         fh.print to_yaml
       end
     rescue => detail

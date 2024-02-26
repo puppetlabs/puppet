@@ -962,7 +962,7 @@ Puppet::Type.newtype(:file) do
         fail_if_checksum_is_wrong(property, file.path, content_checksum)
       end
     else
-      umask = mode ? 000 : 022
+      umask = mode ? 0o00 : 0o22
       Puppet::Util.withumask(umask) { ::File.open(self[:path], 'wb', mode_int) { |f| property.write(f) if property } }
     end
 

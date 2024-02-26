@@ -24,7 +24,7 @@ class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
     filename = path(request.key)
     FileUtils.mkdir_p(File.dirname(filename))
 
-    Puppet::FileSystem.replace_file(filename, 0660) { |f| f.print to_msgpack(request.instance) }
+    Puppet::FileSystem.replace_file(filename, 0o660) { |f| f.print to_msgpack(request.instance) }
   rescue TypeError => detail
     Puppet.log_exception(detail, _("Could not save %{name} %{request}: %{detail}") % { name: self.name, request: request.key, detail: detail })
   end

@@ -579,7 +579,7 @@ module Util
   # The staging_location is a location to render the temporary file before
   # moving the file to it's final location.
 
-  DEFAULT_POSIX_MODE = 0644
+  DEFAULT_POSIX_MODE = 0o644
   DEFAULT_WINDOWS_MODE = nil
 
   def replace_file(file, default_mode, staging_location: nil, validate_callback: nil, &block)
@@ -626,7 +626,7 @@ module Util
       if effective_mode
         # We only care about the bottom four slots, which make the real mode,
         # and not the rest of the platform stat call fluff and stuff.
-        tempfile.chmod(effective_mode & 07777)
+        tempfile.chmod(effective_mode & 0o7777)
       end
 
       # Now, make sure the data (which includes the mode) is safe on disk.

@@ -111,9 +111,9 @@ module Puppet
     def dirmask(value)
       if FileTest.directory?(resource[:path]) and value =~ /^\d+$/ then
         value = value.to_i(8)
-        value |= 0100 if value & 0400 != 0
-        value |= 010 if value & 040 != 0
-        value |= 01 if value & 04 != 0
+        value |= 0o100 if value & 0o400 != 0
+        value |= 0o10 if value & 0o40 != 0
+        value |= 0o1 if value & 0o4 != 0
         value = value.to_s(8)
       end
 
@@ -163,7 +163,7 @@ module Puppet
     # don't have access to the calculated "desired" value here, or the
     # "current" value, only the "should" value we need to retrieve again.
     def sync
-      current = @resource.stat ? @resource.stat.mode : 0644
+      current = @resource.stat ? @resource.stat.mode : 0o644
       set(desired_mode_from_current(@should[0], current).to_s(8))
     end
 
