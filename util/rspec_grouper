@@ -42,7 +42,7 @@ module Parallel
         group = nil
         example_count = 0
         @files.each do |file, count|
-          group = [] unless group
+          group ||= []
           group << file
           next unless (example_count += count) > group_size
 

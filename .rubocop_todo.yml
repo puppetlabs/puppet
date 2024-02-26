@@ -641,18 +641,6 @@ Style/OptionalBooleanParameter:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/OrAssignment:
-  Exclude:
-    - 'lib/puppet/application/lookup.rb'
-    - 'lib/puppet/file_system/windows.rb'
-    - 'lib/puppet/pops/parser/lexer2.rb'
-    - 'lib/puppet/pops/types/types.rb'
-    - 'lib/puppet/provider/user/directoryservice.rb'
-    - 'lib/puppet/ssl/base.rb'
-    - 'lib/puppet/util/errors.rb'
-    - 'util/rspec_grouper'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/ParallelAssignment:
   Exclude:
     - 'lib/puppet/configurer/downloader.rb'

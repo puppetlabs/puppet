@@ -526,7 +526,7 @@ class Lexer2
               end
             end
             scn.pos = before
-            invalid_number = scn.peek(after - before) unless invalid_number
+            invalid_number ||= scn.peek(after - before)
           end
           assert_numeric(invalid_number, before)
           scn.pos = before + 1

@@ -133,7 +133,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     end
 
     current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
-    current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_sam_compatible_user_name) unless current_sid
+    current_sid ||= Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_sam_compatible_user_name)
 
     dacl = case mode
            when 0o644

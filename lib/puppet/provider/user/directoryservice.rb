@@ -661,7 +661,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # the user's plist itself, and the shadow_hash_data hash containing the
   # existing PBKDF2 values.
   def set_salted_pbkdf2(users_plist, shadow_hash_data, field, value)
-    shadow_hash_data = Hash.new unless shadow_hash_data
+    shadow_hash_data ||= Hash.new
     shadow_hash_data['SALTED-SHA512-PBKDF2'] = Hash.new unless shadow_hash_data['SALTED-SHA512-PBKDF2']
     case field
     when 'salt', 'entropy'

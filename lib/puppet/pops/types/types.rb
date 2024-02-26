@@ -400,7 +400,7 @@ class PAnyType < TypedModelObject
     modified = false
     modified_types = types.map do |t|
       t_mod = t.send(method, *method_args)
-      modified = !t.equal?(t_mod) unless modified
+      modified ||= !t.equal?(t_mod)
       t_mod
     end
     if modified

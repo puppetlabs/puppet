@@ -354,7 +354,7 @@ class Puppet::Application::Lookup < Puppet::Application
         given_facts = Puppet::Util::Yaml.safe_load_file(fact_file)
       else
         given_facts = Puppet::Util::Json.load_file_if_valid(fact_file)
-        given_facts = Puppet::Util::Yaml.safe_load_file_if_valid(fact_file) unless given_facts
+        given_facts ||= Puppet::Util::Yaml.safe_load_file_if_valid(fact_file)
       end
 
       unless given_facts.instance_of?(Hash)

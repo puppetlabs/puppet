@@ -87,8 +87,8 @@ module Puppet::Util::Errors
   def self.error_location_with_unknowns(file, line)
     file = nil if (file.is_a?(String) && file.empty?)
     line = nil if (line.is_a?(String) && line.empty?)
-    file = _('unknown') unless file
-    line = _('unknown') unless line
+    file ||= _('unknown')
+    line ||= _('unknown')
     error_location(file, line)
   end
 
