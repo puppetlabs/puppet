@@ -313,7 +313,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     # Yum on el-4 and el-5 returns exit status 0 when trying to install a package it doesn't recognize;
     # ensure we capture output to check for errors.
-    no_debug = if Puppet.runtime[:facter].value('os.release.major').to_i > 5 then ["-d", "0"] else [] end
+    no_debug = Puppet.runtime[:facter].value('os.release.major').to_i > 5 ? ["-d", "0"] : []
     command = [command(:cmd)] + no_debug + ["-e", error_level, "-y", install_options, operation, wanted].compact
     output = execute(command)
 

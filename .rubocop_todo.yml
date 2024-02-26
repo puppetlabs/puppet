@@ -635,14 +635,6 @@ Style/MutableConstant:
 Style/NumericPredicate:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: AlwaysCorrectToMultiline.
-Style/OneLineConditional:
-  Exclude:
-    - 'lib/puppet/pops/parser/evaluating_parser.rb'
-    - 'lib/puppet/provider/package/yum.rb'
-    - 'lib/puppet/provider/service/openwrt.rb'
-
 # Configuration parameters: AllowedMethods.
 # AllowedMethods: respond_to_missing?
 Style/OptionalBooleanParameter:

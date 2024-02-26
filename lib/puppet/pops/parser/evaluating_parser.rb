@@ -146,7 +146,7 @@ class EvaluatingParser
       when '"'
         escaped << '\\"'
       when '\\'
-        escaped << if c == '$' || c == 's'; p; else '\\\\'; end # don't escape \ when followed by s or $
+        escaped << ((c == '$' || c == 's') ? p : '\\\\') # don't escape \ when followed by s or $
       else
         escaped << p
       end
