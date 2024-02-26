@@ -178,7 +178,7 @@ module Puppet::Network::HTTP::Handler
   end
 
   def allowed_parameter?(name)
-    not (name.nil? || name.empty? || DISALLOWED_KEYS.include?(name))
+    !(name.nil? || name.empty? || DISALLOWED_KEYS.include?(name))
   end
 
   def parse_parameter_value(param, value)

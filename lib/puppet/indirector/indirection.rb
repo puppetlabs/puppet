@@ -220,7 +220,7 @@ class Puppet::Indirector::Indirection
     terminus = prepare(request)
 
     result = find_in_cache(request)
-    if not result.nil?
+    if !result.nil?
       result
     elsif request.ignore_terminus?
       nil

@@ -149,8 +149,8 @@ module Puppet::Util::RpmCompare
   # found in python/header-py.c, as used by rpm.
   def compare_values(s1, s2)
     return 0 if s1.nil? && s2.nil?
-    return 1 if (not s1.nil?) && s2.nil?
-    return -1 if s1.nil? && (not s2.nil?)
+    return 1 if (!s1.nil?) && s2.nil?
+    return -1 if s1.nil? && (!s2.nil?)
 
     return rpmvercmp(s1, s2)
   end

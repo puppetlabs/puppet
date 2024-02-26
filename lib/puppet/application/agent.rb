@@ -441,7 +441,7 @@ class Puppet::Application::Agent < Puppet::Application
 
     daemon.stop(:exit => false)
 
-    if not exitstatus
+    if !exitstatus
       exit(1)
     elsif options[:detailed_exitcodes] then
       exit(exitstatus)
@@ -509,7 +509,7 @@ class Puppet::Application::Agent < Puppet::Application
   end
 
   def setup_agent
-    agent = Puppet::Agent.new(Puppet::Configurer, (not(Puppet[:onetime])))
+    agent = Puppet::Agent.new(Puppet::Configurer, (!((Puppet[:onetime]))))
 
     enable_disable_client(agent) if options[:enable] or options[:disable]
 

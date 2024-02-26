@@ -16,7 +16,7 @@ module Puppet::Util::RubyGems
         # rubygems installs. So when Bundler is around we have to act
         # as though rubygems is not, e.g. we shouldn't be able to load
         # a gem that Bundler doesn't want us to see.
-        defined? ::Gem and not defined? ::Bundler
+        defined? ::Gem and !defined? ::Bundler
       end
 
       # @api private

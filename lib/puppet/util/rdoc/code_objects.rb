@@ -147,7 +147,7 @@ module RDoc
     # ourselves.
     def find_symbol(symbol, method = nil)
       result = super(symbol)
-      if not result and symbol =~ /::/
+      if !result and symbol =~ /::/
         modules = symbol.split(/::/)
         unless modules.empty?
           module_name = modules.shift

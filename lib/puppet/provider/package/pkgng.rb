@@ -120,7 +120,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
       end
     end
 
-    if not source # install using default repo logic
+    if !source # install using default repo logic
       args = ['install', '-qy']
     elsif source.scheme == 'urn' # install from repo named in URN
       tag = repo_tag_from_urn(source.to_s)

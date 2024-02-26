@@ -71,7 +71,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       status = true # no validation error yet
       files = args
       if files.empty?
-        if not STDIN.tty?
+        if !STDIN.tty?
           tmp = validate_template_string(STDIN.read)
           status &&= tmp
         else

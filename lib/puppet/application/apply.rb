@@ -276,7 +276,7 @@ class Puppet::Application::Apply < Puppet::Application
 
         exit_status = apply_catalog(catalog)
 
-        if not exit_status
+        if !exit_status
           exit(1)
         elsif options[:detailed_exitcodes] then
           exit(exit_status)

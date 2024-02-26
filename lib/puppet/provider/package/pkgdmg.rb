@@ -90,7 +90,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
         args = ["-o", cached_source, "-C", "-", "-L", "-s", "--fail", "--url", source]
         if http_proxy_host and http_proxy_port
           args << "--proxy" << "#{http_proxy_host}:#{http_proxy_port}"
-        elsif http_proxy_host and not http_proxy_port
+        elsif http_proxy_host and !http_proxy_port
           args << "--proxy" << http_proxy_host
         end
         begin

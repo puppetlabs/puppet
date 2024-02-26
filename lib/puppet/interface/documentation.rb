@@ -250,7 +250,7 @@ class Puppet::Interface
     # @api public
     # @dsl Faces
     def copyright(owner = nil, years = nil)
-      if years.nil? and not owner.nil? then
+      if years.nil? and !owner.nil? then
         # TRANSLATORS 'copyright' is an attribute name and should not be translated
         raise ArgumentError, _('copyright takes the owners names, then the years covered')
       end

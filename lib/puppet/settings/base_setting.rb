@@ -97,10 +97,10 @@ class Puppet::Settings::BaseSetting
     @name = args[:name] if args.include? :name
 
     # set the default value for call_hook
-    @call_hook = :on_write_only if args[:hook] and not args[:call_hook]
+    @call_hook = :on_write_only if args[:hook] and !(args[:call_hook])
     @has_hook = false
 
-    if args[:call_hook] and not args[:hook]
+    if args[:call_hook] and !(args[:hook])
       # TRANSLATORS ':call_hook' and ':hook' are specific setting names and should not be translated
       raise ArgumentError, _("Cannot reference :call_hook for :%{name} if no :hook is defined") % { name: @name }
     end

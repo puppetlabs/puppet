@@ -28,7 +28,7 @@ class Puppet::Indirector::Memory < Puppet::Indirector::Terminus
   end
 
   def head(request)
-    not find(request).nil?
+    !find(request).nil?
   end
 
   def save(request)

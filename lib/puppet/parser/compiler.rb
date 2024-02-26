@@ -79,7 +79,7 @@ class Puppet::Parser::Compiler
     # Note that this will fail if the resource is not unique.
     @catalog.add_resource(resource)
 
-    if not resource.class? and resource[:stage]
+    if !resource.class? and resource[:stage]
       # TRANSLATORS "stage" is a keyword in Puppet and should not be translated
       raise ArgumentError, _("Only classes can set 'stage'; normal resources like %{resource} cannot change run stage") % { resource: resource }
     end

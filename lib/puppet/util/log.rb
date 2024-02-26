@@ -135,7 +135,7 @@ class Puppet::Util::Log
       klass.match?(dest)
     end
 
-    if type.respond_to?(:suitable?) and not type.suitable?(dest)
+    if type.respond_to?(:suitable?) and !type.suitable?(dest)
       return
     end
 

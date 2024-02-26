@@ -440,7 +440,7 @@ module Puppet
 
       validate do |val|
         if munge(val)
-          raise ArgumentError, _("User provider %{name} can not manage home directories") % { name: provider.class.name } if provider and not provider.class.manages_homedir?
+          raise ArgumentError, _("User provider %{name} can not manage home directories") % { name: provider.class.name } if provider and !provider.class.manages_homedir?
         end
       end
     end
