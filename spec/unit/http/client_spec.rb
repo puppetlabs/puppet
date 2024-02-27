@@ -820,6 +820,17 @@ describe Puppet::HTTP::Client do
       response = client.get(https)
       expect(response).to be_success
     end
+
+    it "does not preserve accept-encoding header when redirecting" do
+      headers = { 'Accept-Encoding' => 'unwanted-encoding'}
+
+      stub_request(:get, start_url).with(headers: headers).to_return(redirect_to(url: other_host))
+      stub_request(:get, other_host).to_return(status: 200)
+
+      client.get(start_url, headers: headers)
+      expect(a_request(:get, other_host).
+      with{ |req| req.headers['Accept-Encoding'] != 'unwanted-encoding' }).to have_been_made
+    end
   end
 
   context "when response indicates an overloaded server" do

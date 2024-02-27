@@ -54,6 +54,10 @@ class Puppet::HTTP::Redirector
         next if header.casecmp('Authorization').zero? && request.uri.host.casecmp(location.host) != 0
         next if header.casecmp('Cookie').zero? && request.uri.host.casecmp(location.host) != 0
       end
+      # Allow Net::HTTP to set its own Accept-Encoding header to avoid errors with HTTP compression.
+      # See https://github.com/puppetlabs/puppet/issues/9143
+      next if header.casecmp('Accept-Encoding').zero?
+
       new_request[header] = value
     end
 
