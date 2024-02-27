@@ -251,7 +251,7 @@ module TypeFactory
     if value.nil?
       PBooleanType::DEFAULT
     else
-      (value ? PBooleanType::TRUE : PBooleanType::FALSE)
+      value ? PBooleanType::TRUE : PBooleanType::FALSE
     end
   end
 

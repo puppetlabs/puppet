@@ -509,7 +509,7 @@ class Puppet::Application::Agent < Puppet::Application
   end
 
   def setup_agent
-    agent = Puppet::Agent.new(Puppet::Configurer, (!((Puppet[:onetime]))))
+    agent = Puppet::Agent.new(Puppet::Configurer, (!(Puppet[:onetime])))
 
     enable_disable_client(agent) if options[:enable] or options[:disable]
 

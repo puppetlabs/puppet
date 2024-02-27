@@ -257,11 +257,11 @@ class Puppet::Util::Log
 
   def self.setup_default
     Log.newdestination(
-      (if Puppet.features.syslog?
-         :syslog
-       else
-         (Puppet.features.eventlog? ? :eventlog : Puppet[:puppetdlog])
-       end)
+      if Puppet.features.syslog?
+        :syslog
+      else
+        Puppet.features.eventlog? ? :eventlog : Puppet[:puppetdlog]
+      end
     )
   end
 

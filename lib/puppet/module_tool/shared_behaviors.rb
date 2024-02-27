@@ -139,7 +139,7 @@ module Puppet::ModuleTool::Shared
         :path => if action == :install
                    @options[:target_dir]
                  else
-                   (@installed[mod].empty? ? @options[:target_dir] : @installed[mod].first.modulepath)
+                   @installed[mod].empty? ? @options[:target_dir] : @installed[mod].first.modulepath
                  end,
         :dependencies => []
       }

@@ -197,9 +197,11 @@ module DOT
       # This code is totally incomprehensible; it needs to be replaced!
 
       label = if @options['shape'] != 'record' && @ports.length == 0
-                @options['label'] ?
-                            t + $tab + "label = #{stringify(@options['label'])}\n" :
-                            ''
+                if @options['label']
+                  t + $tab + "label = #{stringify(@options['label'])}\n"
+                else
+                  ''
+                end
               else
                 t + $tab + 'label = "' + " \\\n" +
                   t + $tab2 + "#{stringify(@options['label'])}| \\\n" +
