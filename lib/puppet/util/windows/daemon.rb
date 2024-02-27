@@ -74,7 +74,7 @@ module Puppet::Util::Windows
     NO_ERROR = 0
 
     # Wraps SetServiceStatus.
-    SetTheServiceStatus = Proc.new do |dwCurrentState, dwWin32ExitCode, dwCheckPoint, dwWaitHint|
+    SetTheServiceStatus = proc do |dwCurrentState, dwWin32ExitCode, dwCheckPoint, dwWaitHint|
       ss = SERVICE_STATUS.new # Current status of the service.
 
       # Disable control requests until the service is started.
@@ -105,7 +105,7 @@ module Puppet::Util::Windows
     ERROR_CALL_NOT_IMPLEMENTED = 0x78
 
     # Handles control signals from the service control manager.
-    Service_Ctrl_ex = Proc.new do |dwCtrlCode, _dwEventType, _lpEventData, _lpContext|
+    Service_Ctrl_ex = proc do |dwCtrlCode, _dwEventType, _lpEventData, _lpContext|
       @@waiting_control_code = dwCtrlCode;
       return_value = NO_ERROR
 

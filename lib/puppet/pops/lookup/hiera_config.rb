@@ -308,7 +308,7 @@ class HieraConfig
       # Replace the class methods 'hiera_interpolate' and 'alias_interpolate' with a method that wires back and performs global
       # lookups using the lookup framework. This is necessary since the classic Hiera is made aware only of custom backends.
       class << Hiera::Interpolate
-        hiera_interpolate = Proc.new do |_data, key, scope, _extra_data, context|
+        hiera_interpolate = proc do |_data, key, scope, _extra_data, context|
           override = context[:order_override]
           invocation = Puppet::Pops::Lookup::Invocation.current
           unless override.nil? && invocation.global_only?

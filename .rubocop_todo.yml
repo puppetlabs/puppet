@@ -647,13 +647,6 @@ Style/PreferredHashMethods:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/Proc:
-  Exclude:
-    - 'lib/puppet/pops/evaluator/deferred_resolver.rb'
-    - 'lib/puppet/pops/lookup/hiera_config.rb'
-    - 'lib/puppet/util/windows/daemon.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, AllowedCompactTypes.
 # SupportedStyles: compact, exploded
 Style/RaiseArgs:

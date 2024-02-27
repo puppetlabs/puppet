@@ -172,7 +172,7 @@ class DeferredResolver
     else
       # call the function later
       DeferredValue.new(
-        Proc.new {
+        proc {
           # deferred functions can have nested deferred arguments
           resolved_arguments = mapped_arguments.map { |arg| resolve_lazy_args(arg) }
           @scope.call_function(func_name, resolved_arguments)
