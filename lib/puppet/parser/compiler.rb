@@ -216,7 +216,7 @@ class Puppet::Parser::Compiler
       break if astnode
     end
 
-    unless (astnode ||= krt.node("default"))
+    unless astnode ||= krt.node("default")
       raise Puppet::ParseError, _("Could not find node statement with name 'default' or '%{names}'") % { names: node.names.join(", ") }
     end
 

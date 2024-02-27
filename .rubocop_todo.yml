@@ -641,11 +641,6 @@ Style/OptionalBooleanParameter:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: AllowSafeAssignment, AllowInMultilineConditions.
-Style/ParenthesesAroundCondition:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: PreferredDelimiters.
 Style/PercentLiteralDelimiters:
   Enabled: false

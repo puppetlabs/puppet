@@ -894,7 +894,7 @@ class Puppet::Parser::Scope
     # shorten the path if possible
     path = detail[0]
     env_path = nil
-    env_path = environment.configuration.path_to_env unless (environment.nil? || environment.configuration.nil?)
+    env_path = environment.configuration.path_to_env unless environment.nil? || environment.configuration.nil?
     # check module paths first since they may be in the environment (i.e. they are longer)
     module_path = environment.full_modulepath.detect { |m_path| path.start_with?(m_path) }
     if module_path

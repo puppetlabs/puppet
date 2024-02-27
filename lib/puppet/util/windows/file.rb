@@ -213,7 +213,7 @@ module Puppet::Util::Windows::File
   def reparse_point?(file_name)
     attributes = get_attributes(file_name, false)
 
-    return false if (attributes == INVALID_FILE_ATTRIBUTES)
+    return false if attributes == INVALID_FILE_ATTRIBUTES
 
     (attributes & FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT
   end

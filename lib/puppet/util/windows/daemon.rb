@@ -155,7 +155,7 @@ module Puppet::Util::Windows
         end
 
         # Args passed to Service.start
-        if (dwArgc > 1)
+        if dwArgc > 1
           @@Argv = argv[1..]
         else
           @@Argv = nil
@@ -177,11 +177,11 @@ module Puppet::Util::Windows
         SetEvent(@@hStartEvent)
 
         # Main loop for the service.
-        while (WaitForSingleObject(@@hStopEvent, 1000) != WAIT_OBJECT_0) do
+        while WaitForSingleObject(@@hStopEvent, 1000) != WAIT_OBJECT_0 do
         end
 
         # Main loop for the service.
-        while (WaitForSingleObject(@@hStopCompletedEvent, 1000) != WAIT_OBJECT_0) do
+        while WaitForSingleObject(@@hStopCompletedEvent, 1000) != WAIT_OBJECT_0 do
         end
       ensure
         # Stop the service.
@@ -267,7 +267,7 @@ module Puppet::Util::Windows
       events.put_pointer(0, FFI::Pointer.new(hThread))
       events.put_pointer(FFI::Pointer.size, FFI::Pointer.new(@@hStartEvent))
 
-      while ((index = WaitForMultipleObjects(2, events, 0, 1000)) == WAIT_TIMEOUT) do
+      while (index = WaitForMultipleObjects(2, events, 0, 1000)) == WAIT_TIMEOUT do
       end
 
       if index == WAIT_FAILED
@@ -281,7 +281,7 @@ module Puppet::Util::Windows
 
       thr = Thread.new do
         begin
-          while (WaitForSingleObject(@@hStopEvent, 1000) == WAIT_TIMEOUT)
+          while WaitForSingleObject(@@hStopEvent, 1000) == WAIT_TIMEOUT
             # Check to see if anything interesting has been signaled
             case @@waiting_control_code
             when SERVICE_CONTROL_PAUSE

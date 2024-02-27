@@ -24,7 +24,7 @@ class Puppet::Settings::DurationSetting < Puppet::Settings::BaseSetting
   def munge(value)
     if value.is_a?(Integer) || value.nil?
       value
-    elsif (value.is_a?(String) and value =~ FORMAT)
+    elsif value.is_a?(String) and value =~ FORMAT
       $1.to_i * UNITMAP[$2 || 's']
     else
       raise Puppet::Settings::ValidationError, _("Invalid duration format '%{value}' for parameter: %{name}") % { value: value.inspect, name: @name }

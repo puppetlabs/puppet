@@ -180,7 +180,7 @@ class Application
     def option(*options, &block)
       long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1').tr('-', '_')
       fname = "handle_#{long}".intern
-      if (block_given?)
+      if block_given?
         define_method(fname, &block)
       else
         define_method(fname) do |value|
@@ -242,7 +242,7 @@ class Application
       ####  eventually we need to issue a deprecation warning here,
       ####  and then get rid of this stanza in a subsequent release.
       ################################################################
-      if (clazz.nil?)
+      if clazz.nil?
         class_name = application_name.capitalize
         clazz = try_load_class(class_name)
       end

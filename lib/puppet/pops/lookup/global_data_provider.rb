@@ -13,7 +13,7 @@ class GlobalDataProvider < ConfiguredDataProvider
 
   def unchecked_key_lookup(key, lookup_invocation, merge)
     config = config(lookup_invocation)
-    if (config.version == 3)
+    if config.version == 3
       # Hiera version 3 needs access to special scope variables
       scope = lookup_invocation.scope
       unless scope.is_a?(Hiera::Scope)

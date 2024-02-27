@@ -28,7 +28,7 @@ module Puppet
 
       super(message, original)
 
-      @file = file unless (file.is_a?(String) && file.empty?)
+      @file = file unless file.is_a?(String) && file.empty?
       @line = line
       @pos = pos
 
@@ -41,7 +41,7 @@ module Puppet
 
     def to_s
       msg = super
-      @file = nil if (@file.is_a?(String) && @file.empty?)
+      @file = nil if @file.is_a?(String) && @file.empty?
       msg += Puppet::Util::Errors.error_location_with_space(@file, @line, @pos)
       msg
     end

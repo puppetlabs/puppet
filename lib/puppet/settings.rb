@@ -1072,7 +1072,7 @@ class Puppet::Settings
     @config.keys.find_all { |key| @config[key].is_a?(FileSetting) }.each do |key|
       file = @config[key]
       next if file.value.nil?
-      next unless (sections.nil? or sections.include?(file.section))
+      next unless sections.nil? or sections.include?(file.section)
 
       resource = file.to_resource
       next unless resource

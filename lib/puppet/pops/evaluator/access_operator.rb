@@ -448,7 +448,7 @@ class AccessOperator
 
     keys.each_with_index do |x, index|
       fail(Issues::BAD_INTEGER_SLICE_TYPE, @semantic.keys[index],
-           { :actual => x.class }) unless (x.is_a?(Integer) || x == :default)
+           { :actual => x.class }) unless x.is_a?(Integer) || x == :default
     end
     Types::PIntegerType.new(*keys)
   end
@@ -461,7 +461,7 @@ class AccessOperator
 
     keys.each_with_index do |x, index|
       fail(Issues::BAD_FLOAT_SLICE_TYPE, @semantic.keys[index],
-           { :actual => x.class }) unless (x.is_a?(Float) || x.is_a?(Integer) || x == :default)
+           { :actual => x.class }) unless x.is_a?(Float) || x.is_a?(Integer) || x == :default
     end
     from, to = keys
     from = from == :default || from.nil? ? nil : Float(from)
@@ -556,7 +556,7 @@ class AccessOperator
     else
       keys.each_with_index do |x, index|
         fail(Issues::BAD_COLLECTION_SLICE_TYPE, @semantic.keys[start_index + index],
-             { :actual => x.class }) unless (x.is_a?(Integer) || x == :default)
+             { :actual => x.class }) unless x.is_a?(Integer) || x == :default
       end
       Types::PIntegerType.new(*keys)
     end

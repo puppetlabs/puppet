@@ -340,7 +340,7 @@ module Puppet::Util::Windows::Process
     raise Puppet::Util::Windows::Error(_('environment variable name must not be nil or empty')) if !name || name.empty?
 
     FFI::MemoryPointer.from_string_to_wide_string(name) do |name_ptr|
-      if (val.nil?)
+      if val.nil?
         if SetEnvironmentVariableW(name_ptr, FFI::MemoryPointer::NULL) == FFI::WIN32_FALSE
           raise Puppet::Util::Windows::Error.new(_("Failed to remove environment variable: %{name}") % { name: name })
         end

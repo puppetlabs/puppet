@@ -33,9 +33,9 @@ class Puppet::Settings::PrioritySetting < Puppet::Settings::BaseSetting
 
     if value.is_a?(Integer)
       value
-    elsif (value.is_a?(String) and value =~ /\d+/)
+    elsif value.is_a?(String) and value =~ /\d+/
       value.to_i
-    elsif (value.is_a?(String) and PRIORITY_MAP[value.to_sym])
+    elsif value.is_a?(String) and PRIORITY_MAP[value.to_sym]
       PRIORITY_MAP[value.to_sym]
     else
       raise Puppet::Settings::ValidationError, _("Invalid priority format '%{value}' for parameter: %{name}") % { value: value.inspect, name: @name }

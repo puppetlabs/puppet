@@ -210,9 +210,9 @@ module Puppet::Util::ClassGen
     # If we were told to stick it in a hash, then do so
     array = options[:array]
     if array
-      if (klass.respond_to? :name and
-              array.find { |c| c.name == klassname } and
-              !options[:overwrite])
+      if klass.respond_to? :name and
+         array.find { |c| c.name == klassname } and
+         !options[:overwrite]
         raise Puppet::SubclassAlreadyDefined,
               _("Already a generated class named %{klassname}") % { klassname: klassname }
       end

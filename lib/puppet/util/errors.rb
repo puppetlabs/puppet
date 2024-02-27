@@ -42,9 +42,9 @@ module Puppet::Util::Errors
   # @return [String] description of file, line, and column
   #
   def self.error_location(file, line = nil, column = nil)
-    file = nil if (file.is_a?(String) && file.empty?)
-    line = nil if (line.is_a?(String) && line.empty?)
-    column = nil if (column.is_a?(String) && column.empty?)
+    file = nil if file.is_a?(String) && file.empty?
+    line = nil if line.is_a?(String) && line.empty?
+    column = nil if column.is_a?(String) && column.empty?
     if file and line and column
       _("(file: %{file}, line: %{line}, column: %{column})") % { file: file, line: line, column: column }
     elsif file and line
@@ -85,8 +85,8 @@ module Puppet::Util::Errors
   # @param line [String] the line number for the error (nil or "", for not known)
   # @return [String] description of file, and line
   def self.error_location_with_unknowns(file, line)
-    file = nil if (file.is_a?(String) && file.empty?)
-    line = nil if (line.is_a?(String) && line.empty?)
+    file = nil if file.is_a?(String) && file.empty?
+    line = nil if line.is_a?(String) && line.empty?
     file ||= _('unknown')
     line ||= _('unknown')
     error_location(file, line)

@@ -266,7 +266,7 @@ module Puppet
         value = value.to_s(8) if param_name == :mode && value.is_a?(Numeric)
         resource[param_name] = value
 
-        if (metadata_method == :checksum)
+        if metadata_method == :checksum
           # If copying checksum, also copy checksum_type
           resource[:checksum] = metadata.checksum_type
         end

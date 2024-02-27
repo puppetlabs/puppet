@@ -395,7 +395,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # we have to treat the ds cache just like you would in the password=
   # method.
   def iterations=(value)
-    if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') > 0)
+    if Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') > 0
       assert_full_pbkdf2_password
 
       sleep 3
@@ -412,12 +412,12 @@ Puppet::Type.type(:user).provide :directoryservice do
   # we have to treat the ds cache just like you would in the password=
   # method.
   def salt=(value)
-    if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.15') >= 0)
+    if Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.15') >= 0
       if value.length != 64
         self.fail "macOS versions 10.15 and higher require the salt to be 32-bytes. Since Puppet's user resource requires the value to be hex encoded, the length of the salt's string must be 64. Please check your salt and try again."
       end
     end
-    if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') > 0)
+    if Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') > 0
       assert_full_pbkdf2_password
 
       sleep 3

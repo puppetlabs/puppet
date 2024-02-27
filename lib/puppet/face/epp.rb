@@ -417,7 +417,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       rescue => e
         Puppet.err(_("Could not load --values_file %{error}") % { error: e.message })
       end
-      unless (template_values.nil? || template_values.is_a?(Hash))
+      unless template_values.nil? || template_values.is_a?(Hash)
         Puppet.err(_("--values_file option must evaluate to a Hash or undef/nil, got: '%{template_class}'") % { template_class: template_values.class })
       end
     end

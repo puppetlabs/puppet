@@ -160,9 +160,9 @@ Puppet::Face.define(:help, '0.0.1') do
     available_application_names_special_sort().inject([]) do |result, appname|
       next result if exclude_from_docs?(appname)
 
-      if (appname == COMMON || appname == SPECIALIZED || appname == BLANK)
+      if appname == COMMON || appname == SPECIALIZED || appname == BLANK
         result << appname
-      elsif (is_face_app?(appname))
+      elsif is_face_app?(appname)
         begin
           face = Puppet::Face[appname, :current]
           # Add deprecation message to summary if the face is deprecated

@@ -259,8 +259,8 @@ Puppet::Face.define(:module, '1.0.0') do
         str << '  ' + colorize(:red, _('invalid'))
       elsif parent.respond_to?(:forge_name)
         unmet_parent = @unmet_deps[:version_mismatch][mod.forge_name][:parent]
-        if (unmet_parent[:name] == parent.forge_name &&
-            unmet_parent[:version] == "v#{parent.version}")
+        if unmet_parent[:name] == parent.forge_name &&
+           unmet_parent[:version] == "v#{parent.version}"
           str << '  ' + colorize(:red, _('invalid'))
         end
       end

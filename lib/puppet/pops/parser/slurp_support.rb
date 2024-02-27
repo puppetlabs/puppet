@@ -76,7 +76,7 @@ module SlurpSupport
     # If later a \u is found it is warned not to be a unicode escape
     if escapes.include?('u')
       # gsub must be repeated to cater for adjacent escapes
-      while (str.gsub!(/((?:[^\\]|^)(?:[\\]{2})*)\\u(?:([\da-fA-F]{4})|\{([\da-fA-F]{1,6})\})/m) { $1 + [($2 || $3).hex].pack("U") })
+      while str.gsub!(/((?:[^\\]|^)(?:[\\]{2})*)\\u(?:([\da-fA-F]{4})|\{([\da-fA-F]{1,6})\})/m) { $1 + [($2 || $3).hex].pack("U") }
         # empty block. Everything happens in the gsub block
       end
     end

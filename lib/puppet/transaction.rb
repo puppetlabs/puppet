@@ -270,7 +270,7 @@ class Puppet::Transaction
     status = resource_harness.evaluate(resource)
     add_resource_status(status)
     ancestor ||= resource
-    unless (status.failed? || status.failed_to_restart?)
+    unless status.failed? || status.failed_to_restart?
       event_manager.queue_events(ancestor, status.events)
     end
   rescue => detail

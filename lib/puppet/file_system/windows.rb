@@ -28,8 +28,8 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
       string_path = Puppet::Util::Windows::File.get_long_pathname(string_path)
     rescue Puppet::Util::Windows::Error => e
       # preserve original File.expand_path behavior for file / path not found by returning string
-      raise if (e.code != Puppet::Util::Windows::File::ERROR_FILE_NOT_FOUND &&
-        e.code != Puppet::Util::Windows::File::ERROR_PATH_NOT_FOUND)
+      raise if e.code != Puppet::Util::Windows::File::ERROR_FILE_NOT_FOUND &&
+               e.code != Puppet::Util::Windows::File::ERROR_PATH_NOT_FOUND
     end
 
     string_path

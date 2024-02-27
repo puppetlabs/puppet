@@ -573,7 +573,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     body = prog.body
     return if prog.body.is_a?(Model::Nop) # Ignore empty or comment-only files
 
-    if (body.is_a?(Model::BlockExpression))
+    if body.is_a?(Model::BlockExpression)
       body.statements.each { |s| acceptor.accept(Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION, s) unless valid_top_construct?(s) }
     else
       acceptor.accept(Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION, body) unless valid_top_construct?(body)
@@ -670,7 +670,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # Do not include name of module init file at top level of module
     # e.g. <module name>/manifests/init.pp
     filename = path_components[-1]
-    unless (path_components.length == 3 && filename == 'init.pp')
+    unless path_components.length == 3 && filename == 'init.pp'
       names.push(filename[0..-4]) # Remove .pp from filename
     end
 

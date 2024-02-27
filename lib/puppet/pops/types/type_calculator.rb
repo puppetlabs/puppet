@@ -132,15 +132,15 @@ class TypeCalculator
   # @api private
   def self.infer_callable_methods_t(o)
     # If being a value that cannot have Pcore based methods callable from Puppet Language
-    if (o.is_a?(String) ||
-      o.is_a?(Numeric) ||
-      o.is_a?(TrueClass) ||
-      o.is_a?(FalseClass) ||
-      o.is_a?(Regexp) ||
-      o.instance_of?(Array) ||
-      o.instance_of?(Hash) ||
-      Types::PUndefType::DEFAULT.instance?(o)
-       )
+    if o.is_a?(String) ||
+       o.is_a?(Numeric) ||
+       o.is_a?(TrueClass) ||
+       o.is_a?(FalseClass) ||
+       o.is_a?(Regexp) ||
+       o.instance_of?(Array) ||
+       o.instance_of?(Hash) ||
+       Types::PUndefType::DEFAULT.instance?(o)
+
       return nil
     end
 
@@ -386,7 +386,7 @@ class TypeCalculator
     end
 
     if t1.is_a?(PStringType) && (t2.is_a?(PStringType) || t2.is_a?(PEnumType))
-      if (t2.is_a?(PEnumType))
+      if t2.is_a?(PEnumType)
         return t1.value.nil? ? PEnumType::DEFAULT : PEnumType.new(t2.values | [t1.value])
       end
 

@@ -261,7 +261,7 @@ class PObjectType < PMetaType
     # @api private
     def create_dispatch(instance)
       # TODO: Assumes Ruby implementation for now
-      if (callable_type.is_a?(PVariantType))
+      if callable_type.is_a?(PVariantType)
         callable_type.types.map do |ct|
           Functions::Dispatch.new(ct, RubyGenerator.protect_reserved_name(name), [], false, ct.block_type.nil? ? nil : 'block')
         end

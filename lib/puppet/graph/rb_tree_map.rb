@@ -270,7 +270,7 @@ class Puppet::Graph::RbTreeMap
 
     def move_red_left
       colorflip
-      if (@right.left && @right.left.red?)
+      if @right.left && @right.left.red?
         @right.rotate_right
         rotate_left
         colorflip
@@ -280,7 +280,7 @@ class Puppet::Graph::RbTreeMap
 
     def move_red_right
       colorflip
-      if (@left.left && @left.left.red?)
+      if @left.left && @left.left.red?
         rotate_right
         colorflip
       end
@@ -308,15 +308,15 @@ class Puppet::Graph::RbTreeMap
 
   def delete_recursive(node, key)
     if (key <=> node.key) == -1
-      node.move_red_left if (!isred(node.left) && !isred(node.left.left))
+      node.move_red_left if !isred(node.left) && !isred(node.left.left)
       node.left, result = delete_recursive(node.left, key)
     else
       node.rotate_right if isred(node.left)
-      if (((key <=> node.key) == 0) && node.right.nil?)
+      if ((key <=> node.key) == 0) && node.right.nil?
         return nil, node.value
       end
 
-      if (!isred(node.right) && !isred(node.right.left))
+      if !isred(node.right) && !isred(node.right.left)
         node.move_red_right
       end
       if (key <=> node.key) == 0
@@ -337,7 +337,7 @@ class Puppet::Graph::RbTreeMap
       return nil, node.value
     end
 
-    if (!isred(node.left) && !isred(node.left.left))
+    if !isred(node.left) && !isred(node.left.left)
       node.move_red_left
     end
     node.left, result = delete_min_recursive(node.left)
@@ -346,12 +346,12 @@ class Puppet::Graph::RbTreeMap
   end
 
   def delete_max_recursive(node)
-    if (isred(node.left))
+    if isred(node.left)
       node = node.rotate_right
     end
     return nil, node.value if node.right.nil?
 
-    if (!isred(node.right) && !isred(node.right.left))
+    if !isred(node.right) && !isred(node.right.left)
       node.move_red_right
     end
     node.right, result = delete_max_recursive(node.right)
@@ -393,9 +393,9 @@ class Puppet::Graph::RbTreeMap
     when  1 then node.right = insert(node.right, key, value)
     end
 
-    node.rotate_left if (node.right && node.right.red?)
-    node.rotate_right if (node.left && node.left.red? && node.left.left && node.left.left.red?)
-    node.colorflip if (node.left && node.left.red? && node.right && node.right.red?)
+    node.rotate_left if node.right && node.right.red?
+    node.rotate_right if node.left && node.left.red? && node.left.left && node.left.left.red?
+    node.colorflip if node.left && node.left.red? && node.right && node.right.red?
     node
   end
 

@@ -259,7 +259,7 @@ module Puppet::Util::Windows
                      raise TypeError, _("Type %{type} is not supported.") % { type: type }
                    end
         rescue IndexError => ex
-          raise if (ex.message !~ /^Memory access .* is out of bounds$/i)
+          raise if ex.message !~ /^Memory access .* is out of bounds$/i
 
           parent_key_name = key.parent ? "#{key.parent.keyname}\\" : ""
           Puppet.warning _("A value in the registry key %{parent_key_name}%{key} is corrupt or invalid") % { parent_key_name: parent_key_name, key: key.keyname }

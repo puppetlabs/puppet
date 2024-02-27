@@ -314,10 +314,10 @@ module Puppet::Util::Windows::Security
 
     # With a mode value of '7' for group / other, the value must then include
     # additional perms beyond STANDARD_RIGHTS_READ to allow DACL modification
-    if ((mode & S_IRWXG) == S_IRWXG)
+    if (mode & S_IRWXG) == S_IRWXG
       group_allow |= FILE::DELETE | FILE::WRITE_DAC | FILE::WRITE_OWNER
     end
-    if ((mode & S_IRWXO) == S_IRWXO)
+    if (mode & S_IRWXO) == S_IRWXO
       other_allow |= FILE::DELETE | FILE::WRITE_DAC | FILE::WRITE_OWNER
     end
 

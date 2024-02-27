@@ -205,7 +205,7 @@ module Puppet::Network::HTTP::Handler
   end
 
   def configure_profiler(request_headers, request_params)
-    if (request_headers.has_key?(Puppet::Network::HTTP::HEADER_ENABLE_PROFILING.downcase) or Puppet[:profile])
+    if request_headers.has_key?(Puppet::Network::HTTP::HEADER_ENABLE_PROFILING.downcase) or Puppet[:profile]
       Puppet::Util::Profiler.add_profiler(Puppet::Util::Profiler::Aggregate.new(Puppet.method(:info), request_params.object_id))
     end
   end

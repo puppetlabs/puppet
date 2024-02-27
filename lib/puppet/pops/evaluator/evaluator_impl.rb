@@ -811,7 +811,7 @@ class EvaluatorImpl
 
     # This is a runtime check - the model is valid, but will have runtime issues when evaluated
     # and storeconfigs is not set.
-    if (o.exported)
+    if o.exported
       optionally_fail(Issues::RT_NO_STORECONFIGS_EXPORT, o);
     end
 

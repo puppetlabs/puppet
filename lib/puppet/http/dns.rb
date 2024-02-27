@@ -41,7 +41,7 @@ module Puppet::HTTP
     # @param [Symbol] service_name the key of the service we are querying
     # @yields [String, Integer] server and port of selected record
     def each_srv_record(domain, service_name = :puppet, &block)
-      if (domain.nil? or domain.empty?)
+      if domain.nil? or domain.empty?
         Puppet.debug "Domain not known; skipping SRV lookup"
         return
       end

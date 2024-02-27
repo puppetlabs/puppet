@@ -345,7 +345,7 @@ module Puppet::Util::Execution
         Puppet::Util::SUIDManager.change_privileges(options[:uid], options[:gid], true)
 
         # if the caller has requested that we override locale environment variables,
-        if (options[:override_locale]) then
+        if options[:override_locale] then
           # loop over them and clear them
           Puppet::Util::POSIX::LOCALE_ENV_VARS.each { |name| ENV.delete(name) }
           # set LANG and LC_ALL to 'C' so that the command will have consistent, predictable output

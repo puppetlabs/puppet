@@ -88,7 +88,7 @@ class Puppet::Application::FaceBase < Puppet::Application
           # when we get there. --daniel 2011-04-04
           if option.takes_argument? and !item.index('=')
             index += 1 unless
-              (option.optional_argument? and command_line.args[index + 1] =~ /^-/)
+              option.optional_argument? and command_line.args[index + 1] =~ /^-/
           end
         else
           option = find_global_settings_argument(item)
@@ -103,7 +103,7 @@ class Puppet::Application::FaceBase < Puppet::Application
           else
             option = find_application_argument(item)
             if option
-              index += 1 if (option[:argument] and !(option[:optional]))
+              index += 1 if option[:argument] and !(option[:optional])
             else
               raise OptionParser::InvalidOption.new(item.sub(/=.*$/, ''))
             end

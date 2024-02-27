@@ -499,7 +499,7 @@ class Puppet::Node::Environment
   #
   def check_for_reparse
     @lock.synchronize do
-      if (Puppet[:code] != @parsed_code || @known_resource_types.parse_failed?)
+      if Puppet[:code] != @parsed_code || @known_resource_types.parse_failed?
         @parsed_code = nil
         @known_resource_types = nil
       end

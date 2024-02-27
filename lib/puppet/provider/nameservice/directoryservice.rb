@@ -119,7 +119,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     attribute_hash = {}
     input_hash.each_key do |key|
       ds_attribute = key.sub("dsAttrTypeStandard:", "")
-      next unless (ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? ds_to_ns_attribute_map[ds_attribute])
+      next unless ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? ds_to_ns_attribute_map[ds_attribute]
 
       ds_value = input_hash[key]
       case ds_to_ns_attribute_map[ds_attribute]

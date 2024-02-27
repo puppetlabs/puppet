@@ -390,7 +390,7 @@ class Puppet::Configurer
       configured_environment = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
 
       # We only need to find out the environment to run in if we don't already have a catalog
-      unless (cached_catalog || options[:catalog] || Puppet.settings.set_by_cli?(:environment) || Puppet[:strict_environment_mode])
+      unless cached_catalog || options[:catalog] || Puppet.settings.set_by_cli?(:environment) || Puppet[:strict_environment_mode]
         Puppet.debug(_("Environment not passed via CLI and no catalog was given, attempting to find out the last server-specified environment"))
         initial_environment, loaded_last_environment = last_server_specified_environment
 
