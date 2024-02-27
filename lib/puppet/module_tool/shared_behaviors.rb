@@ -13,7 +13,8 @@ module Puppet::ModuleTool::Shared
       @installed[mod_name] << mod
       d = @local["#{mod_name}@#{mod.version}"]
       (mod.dependencies || []).each do |hash|
-        name, conditions = hash['name'], hash['version_requirement']
+        name = hash['name']
+        conditions = hash['version_requirement']
         name = name.tr('/', '-')
         d[name] = conditions
         @conditions[name] << {

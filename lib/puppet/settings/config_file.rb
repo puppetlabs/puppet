@@ -126,7 +126,8 @@ class Puppet::Settings::ConfigFile
       params = $1
       params.split(/\s*,\s*/).each do |str|
         if str =~ /^\s*(\w+)\s*=\s*([\w]+)\s*$/
-          param, value = $1.intern, $2
+          param = $1.intern
+          value = $2
           result[param] = value
           unless [:owner, :mode, :group].include?(param)
             raise ArgumentError, _("Invalid file option '%{parameter}'") % { parameter: param }

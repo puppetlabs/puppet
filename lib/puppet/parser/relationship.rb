@@ -26,7 +26,9 @@ class Puppet::Parser::Relationship
   end
 
   def initialize(source, target, type)
-    @source, @target, @type = source, target, type
+    @source = source
+    @target = target
+    @type = type
   end
 
   def param_name

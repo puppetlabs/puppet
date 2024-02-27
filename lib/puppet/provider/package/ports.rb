@@ -62,7 +62,8 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
             _("Could not match version info '%{info}'") % { info: info }
     end
 
-    source, newversion = $1, $2
+    source = $1
+    newversion = $2
 
     debug "Newer version in #{source}"
     newversion

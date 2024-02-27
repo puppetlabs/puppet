@@ -40,7 +40,12 @@ class Puppet::Configurer::Downloader
   end
 
   def initialize(name, path, source, ignore = nil, environment = nil, source_permissions = :ignore)
-    @name, @path, @source, @ignore, @environment, @source_permissions = name, path, source, ignore, environment, source_permissions
+    @name = name
+    @path = path
+    @source = source
+    @ignore = ignore
+    @environment = environment
+    @source_permissions = source_permissions
   end
 
   def file

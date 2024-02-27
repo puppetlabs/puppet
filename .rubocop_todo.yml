@@ -641,23 +641,6 @@ Style/OptionalBooleanParameter:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/ParallelAssignment:
-  Exclude:
-    - 'lib/puppet/configurer/downloader.rb'
-    - 'lib/puppet/graph/rb_tree_map.rb'
-    - 'lib/puppet/module_tool/shared_behaviors.rb'
-    - 'lib/puppet/network/client_request.rb'
-    - 'lib/puppet/parser/relationship.rb'
-    - 'lib/puppet/provider/package/ports.rb'
-    - 'lib/puppet/provider/service/smf.rb'
-    - 'lib/puppet/provider/user/aix.rb'
-    - 'lib/puppet/relationship.rb'
-    - 'lib/puppet/settings/config_file.rb'
-    - 'lib/puppet/type/file/ensure.rb'
-    - 'lib/puppet/util/suidmanager.rb'
-    - 'lib/puppet/util/windows/registry.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: AllowSafeAssignment, AllowInMultilineConditions.
 Style/ParenthesesAroundCondition:
   Enabled: false
