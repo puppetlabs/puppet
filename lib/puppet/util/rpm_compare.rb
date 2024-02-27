@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 module Puppet::Util::RpmCompare
-  ARCH_LIST = %w(
+  ARCH_LIST = %w[
     noarch i386 i686 ppc ppc64 armv3l armv4b armv4l armv4tl armv5tel
     armv5tejl armv6l armv7l m68kmint s390 s390x ia64 x86_64 sh3 sh4
-  ).freeze
+  ].freeze
 
   ARCH_REGEX = Regexp.new(ARCH_LIST.join('|\.'))
 

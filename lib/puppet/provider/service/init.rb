@@ -35,9 +35,9 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   def self.excludes
     excludes = []
     # these exclude list was found with grep -L '\/sbin\/runscript' /etc/init.d/* on gentoo
-    excludes += %w{functions.sh reboot.sh shutdown.sh}
+    excludes += %w[functions.sh reboot.sh shutdown.sh]
     # this exclude list is all from /sbin/service (5.x), but I did not exclude kudzu
-    excludes += %w{functions halt killall single linuxconf reboot boot}
+    excludes += %w[functions halt killall single linuxconf reboot boot]
     # 'wait-for-state' and 'portmap-wait' are excluded from instances here
     # because they take parameters that have unclear meaning. It looks like
     # 'wait-for-state' is a generic waiter mainly used internally for other
@@ -49,28 +49,28 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     # eventually explain how to use the wait-for-state service or perhaps why
     # it should remain excluded. When that bug is addressed this should be
     # reexamined.
-    excludes += %w{wait-for-state portmap-wait}
+    excludes += %w[wait-for-state portmap-wait]
     # these excludes were found with grep -r -L start /etc/init.d
-    excludes += %w{rcS module-init-tools}
+    excludes += %w[rcS module-init-tools]
     # Prevent puppet failing on unsafe scripts from Yocto Linux
     if Puppet.runtime[:facter].value('os.family') == "cisco-wrlinux"
-      excludes += %w{banner.sh bootmisc.sh checkroot.sh devpts.sh dmesg.sh
+      excludes += %w[banner.sh bootmisc.sh checkroot.sh devpts.sh dmesg.sh
                      hostname.sh mountall.sh mountnfs.sh populate-volatile.sh
                      rmnologin.sh save-rtc.sh sendsigs sysfs.sh umountfs
-                     umountnfs.sh}
+                     umountnfs.sh]
     end
     # Prevent puppet failing to get status of the new service introduced
     # by the fix for this (bug https://bugs.launchpad.net/ubuntu/+source/lightdm/+bug/982889)
     # due to puppet's inability to deal with upstart services with instances.
-    excludes += %w{plymouth-ready}
+    excludes += %w[plymouth-ready]
     # Prevent puppet failing to get status of these services, which need parameters
     # passed in (see https://bugs.launchpad.net/ubuntu/+source/puppet/+bug/1276766).
-    excludes += %w{idmapd-mounting startpar-bridge}
+    excludes += %w[idmapd-mounting startpar-bridge]
     # Prevent puppet failing to get status of these services, additional upstart
     # service with instances
-    excludes += %w{cryptdisks-udev}
-    excludes += %w{statd-mounting}
-    excludes += %w{gssd-mounting}
+    excludes += %w[cryptdisks-udev]
+    excludes += %w[statd-mounting]
+    excludes += %w[gssd-mounting]
     excludes
   end
 

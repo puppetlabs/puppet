@@ -451,7 +451,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   ['home', 'uid', 'gid', 'comment', 'shell'].each do |setter_method|
     define_method("#{setter_method}=") do |value|
       if @property_hash[setter_method.intern]
-        if %w(home uid).include?(setter_method)
+        if %w[home uid].include?(setter_method)
           raise Puppet::Error, "OS X version #{self.class.get_os_version} does not allow changing #{setter_method} using puppet"
         end
 

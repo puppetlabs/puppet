@@ -641,11 +641,6 @@ Style/OptionalBooleanParameter:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: PreferredDelimiters.
-Style/PercentLiteralDelimiters:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: lower_case_q, upper_case_q
 Style/PercentQLiterals:

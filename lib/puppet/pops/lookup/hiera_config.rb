@@ -431,8 +431,8 @@ class HieraConfigV3 < HieraConfig
   end
 
   DEFAULT_CONFIG_HASH = {
-    KEY_BACKENDS => %w(yaml),
-    KEY_HIERARCHY => %w(nodes/%{::trusted.certname} common),
+    KEY_BACKENDS => %w[yaml],
+    KEY_HIERARCHY => %w[nodes/%{::trusted.certname} common],
     KEY_MERGE_BEHAVIOR => 'native'
   }
 

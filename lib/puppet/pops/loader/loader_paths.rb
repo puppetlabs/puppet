@@ -234,7 +234,7 @@ module LoaderPaths
   # match more than one path with one name
   class TaskPath < PuppetSmartPath
     TASKS_PATH = 'tasks'
-    FORBIDDEN_EXTENSIONS = %w{.conf .md}.freeze
+    FORBIDDEN_EXTENSIONS = %w[.conf .md].freeze
 
     def extension
       EMPTY_STRING

@@ -228,7 +228,7 @@ class Puppet::Node
     if trusted_param
       # Blows up if it is a parameter as it will be set as $trusted by the compiler as if it was a variable
       @parameters.delete('trusted')
-      unless trusted_param.is_a?(Hash) && %w{authenticated certname extensions}.all? { |key| trusted_param.has_key?(key) }
+      unless trusted_param.is_a?(Hash) && %w[authenticated certname extensions].all? { |key| trusted_param.has_key?(key) }
         # trusted is some kind of garbage, do not resurrect
         trusted_param = nil
       end

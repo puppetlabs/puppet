@@ -211,7 +211,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
     end
 
     if Puppet::Util::Platform.windows?
-      command_options << "-v" << %Q["#{should}"] if useversion && !should.is_a?(Symbol)
+      command_options << "-v" << %Q("#{should}") if useversion && !should.is_a?(Symbol)
     elsif useversion && !should.is_a?(Symbol)
       command_options << "-v" << should
     end

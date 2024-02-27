@@ -250,8 +250,8 @@ module Util
   # Escape once for the string literal, and once for the regex.
   slash = '[\\\\/]'
   label = '[^\\\\/]+'
-  AbsolutePathWindows = %r!^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))!io
-  AbsolutePathPosix   = %r!^/!
+  AbsolutePathWindows = %r{^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))}io
+  AbsolutePathPosix   = %r{^/}
   def absolute_path?(path, platform = nil)
     unless path.is_a?(String)
       Puppet.warning("Cannot check if #{path} is an absolute path because it is a '#{path.class}' and not a String'")

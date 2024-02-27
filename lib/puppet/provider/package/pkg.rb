@@ -103,12 +103,12 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     (case line.chomp
      # FMRI                                                                         IFO
      # pkg://omnios/SUNWcs@0.5.11,5.11-0.151008:20131204T022241Z                    ---
-     when %r'^pkg://([^/]+)/([^@]+)@(\S+) +(...)$'
+     when %r{^pkg://([^/]+)/([^@]+)@(\S+) +(...)$}
        { :publisher => $1, :name => $2, :ensure => $3 }.merge ifo_flag($4)
 
      # FMRI                                                             STATE      UFOXI
      # pkg://solaris/SUNWcs@0.5.11,5.11-0.151.0.1:20101105T001108Z      installed  u----
-     when %r'^pkg://([^/]+)/([^@]+)@(\S+) +(\S+) +(.....)$'
+     when %r{^pkg://([^/]+)/([^@]+)@(\S+) +(\S+) +(.....)$}
        { :publisher => $1, :name => $2, :ensure => $3 }.merge pkg_state($4).merge(ufoxi_flag($5))
 
      else

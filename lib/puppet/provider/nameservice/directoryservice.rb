@@ -395,7 +395,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # requiring people install a UUID library that doesn't come with the system.
     # This should be revisited if Puppet starts managing UUIDs for other platform
     # user records.
-    guid = %x{/usr/bin/uuidgen}.chomp
+    guid = %x(/usr/bin/uuidgen).chomp
 
     exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
     exec_arg_vector << ns_to_ds_attribute_map[:guid] << guid

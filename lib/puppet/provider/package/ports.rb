@@ -8,14 +8,14 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
            :portuninstall => "/usr/local/sbin/pkg_deinstall",
            :portinfo => "/usr/sbin/pkg_info"
 
-  %w{INTERACTIVE UNAME}.each do |var|
+  %w[INTERACTIVE UNAME].each do |var|
     ENV.delete(var) if ENV.include?(var)
   end
 
   def install
     # -N: install if the package is missing, otherwise upgrade
     # -M: yes, we're a batch, so don't ask any questions
-    cmd = %w{-N -M BATCH=yes} << @resource[:name]
+    cmd = %w[-N -M BATCH=yes] << @resource[:name]
 
     output = portupgrade(*cmd)
     if output =~ /\*\* No such /

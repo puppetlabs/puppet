@@ -225,7 +225,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   has_features :manages_homedir, :allows_duplicates, :manages_expiry
-  has_features :system_users unless %w{HP-UX Solaris}.include? Puppet.runtime[:facter].value('os.name')
+  has_features :system_users unless %w[HP-UX Solaris].include? Puppet.runtime[:facter].value('os.name')
 
   has_features :manages_passwords, :manages_password_age if Puppet.features.libshadow?
   has_features :manages_shell

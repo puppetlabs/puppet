@@ -161,7 +161,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
 
   def parse_runinterval(puppet_path)
     begin
-      runinterval = %x{#{puppet_path} config --section agent --log_level notice print runinterval}.to_i
+      runinterval = %x(#{puppet_path} config --section agent --log_level notice print runinterval).to_i
       if runinterval == 0
         runinterval = 1800
         log_err("Failed to determine runinterval, defaulting to #{runinterval} seconds")
@@ -176,7 +176,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
 
   def parse_log_level(puppet_path, cmdline_debug)
     begin
-      loglevel = %x{#{puppet_path} config --section agent --log_level notice print log_level}.chomp
+      loglevel = %x(#{puppet_path} config --section agent --log_level notice print log_level).chomp
       unless loglevel && respond_to?("log_#{loglevel}")
         loglevel = :notice
         log_err("Failed to determine loglevel, defaulting to #{loglevel}")

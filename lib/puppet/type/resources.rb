@@ -163,7 +163,7 @@ Puppet::Type.newtype(:resources) do
   end
 
   def system_users
-    %w{root nobody bin noaccess daemon sys}
+    %w[root nobody bin noaccess daemon sys]
   end
 
   def self.system_users_max_uid

@@ -381,7 +381,7 @@ module Puppet::Util::Execution
   #
   def self.execute_windows(command, options, stdin, stdout, stderr)
     command = command.map do |part|
-      part.include?(' ') ? %Q["#{part.gsub(/"/, '\"')}"] : part
+      part.include?(' ') ? %Q("#{part.gsub(/"/, '\"')}") : part
     end.join(" ") if command.is_a?(Array)
 
     options[:custom_environment] ||= {}

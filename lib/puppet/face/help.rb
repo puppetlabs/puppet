@@ -194,7 +194,7 @@ Puppet::Face.define(:help, '0.0.1') do
   BLANK = "\n"
   def available_application_names_special_sort
     full_list = Puppet::Application.available_application_names
-    a_list = full_list & %w{apply agent config help lookup module resource}
+    a_list = full_list & %w[apply agent config help lookup module resource]
     a_list = a_list.sort
     also_ran = full_list - a_list
     also_ran = also_ran.sort
@@ -221,7 +221,7 @@ Puppet::Face.define(:help, '0.0.1') do
   # private :horribly_extract_summary_from
 
   def exclude_from_docs?(appname)
-    %w{face_base indirection_base report status}.include? appname
+    %w[face_base indirection_base report status].include? appname
   end
   # This should absolutely be a private method, but for some reason it appears
   #  that you can't use the 'private' keyword inside of a Face definition.

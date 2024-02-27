@@ -336,7 +336,7 @@ class Puppet::Util::Log
       @time = Time.parse(@time)
     end
     # Don't add these unless defined (preserve 3.x API as much as possible)
-    %w(file line pos issue_code environment node backtrace).each do |name|
+    %w[file line pos issue_code environment node backtrace].each do |name|
       value = data[name]
       next unless value
 
@@ -368,7 +368,7 @@ class Puppet::Util::Log
       'tags' => @tags.to_a,
       'time' => @time.iso8601(9),
     }
-    %w(file line pos issue_code environment node backtrace).each do |name|
+    %w[file line pos issue_code environment node backtrace].each do |name|
       attr_name = "@#{name}"
       hash[name] = instance_variable_get(attr_name) if instance_variable_defined?(attr_name)
     end

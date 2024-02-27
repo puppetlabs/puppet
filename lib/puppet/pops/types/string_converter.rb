@@ -554,7 +554,7 @@ class StringConverter
   end
   private :validate_input
 
-  FMT_KEYS = %w{separator separator2 format string_formats}.freeze
+  FMT_KEYS = %w[separator separator2 format string_formats].freeze
 
   def validate_container_input(fmt)
     if (fmt.keys - FMT_KEYS).size > 0

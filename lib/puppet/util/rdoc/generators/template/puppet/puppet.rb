@@ -25,7 +25,7 @@ module RDoc
   module Page
     FONTS = "Verdana,Arial,Helvetica,sans-serif"
 
-    STYLE = %{
+    STYLE = %(
 /* Reset */
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-weight:inherit;font-style:inherit;font-size:100%;font-family:inherit;vertical-align:baseline;}
 :focus{outline:0;}
@@ -244,17 +244,17 @@ div.method-source-code pre { color: #ffdead; overflow: hidden; }
 .ruby-comment { color: #b22222; font-weight: bold; background: transparent; }
 .ruby-regexp  { color: #ffa07a; background: transparent; }
 .ruby-value   { color: #7fffd4; background: transparent; }
-}
+)
 
     #####################################################################
     ### H E A D E R   T E M P L A T E
     #####################################################################
 
-    XHTML_PREAMBLE = %{<?xml version="1.0" encoding="%charset%"?>
+    XHTML_PREAMBLE = %(<?xml version="1.0" encoding="%charset%"?>
 <!DOCTYPE html
      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-}
+)
 
     HEADER = XHTML_PREAMBLE + %{
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -303,20 +303,20 @@ div.method-source-code pre { color: #ffdead; overflow: hidden; }
     ### C O N T E X T   C O N T E N T   T E M P L A T E
     #####################################################################
 
-    CONTEXT_CONTENT = %{
-}
+    CONTEXT_CONTENT = %(
+)
 
     #####################################################################
     ### F O O T E R   T E M P L A T E
     #####################################################################
-    FOOTER = %{
+    FOOTER = %(
 <div id="validator-badges">
   <p><small><a href="http://validator.w3.org/check/referer">[Validate]</a></small></p>
 </div>
 
 </body>
 </html>
-}
+)
 
     #####################################################################
     ### F I L E   P A G E   H E A D E R   T E M P L A T E
@@ -467,7 +467,7 @@ END:infiles
     ### M E T H O D   L I S T   T E M P L A T E
     #####################################################################
 
-    PLUGIN_LIST = %{
+    PLUGIN_LIST = %(
 
   <div id="contextContent">
 IF:description
@@ -523,7 +523,7 @@ IF:seccomment
 ENDIF:seccomment
 ENDIF:sectitle
 END:sections
-}
+)
 
     METHOD_LIST = %{
 
@@ -844,17 +844,17 @@ END:sections
     ### B O D Y   T E M P L A T E
     #####################################################################
 
-    BODY = HEADER + %{
+    BODY = HEADER + %(
 
 !INCLUDE!  <!-- banner header -->
 
   <div id="bodyContent">
-} + METHOD_LIST + %{
+) + METHOD_LIST + %(
 
   </div>
-} + FOOTER
+) + FOOTER
 
-    BODYINC = HEADER + %{
+    BODYINC = HEADER + %(
 
 !INCLUDE!  <!-- banner header -->
 
@@ -863,13 +863,13 @@ END:sections
 !INCLUDE!
 
   </div>
-} + FOOTER
+) + FOOTER
 
     #####################################################################
     ### S O U R C E   C O D E   T E M P L A T E
     #####################################################################
 
-    SRC_PAGE = XHTML_PREAMBLE + %{
+    SRC_PAGE = XHTML_PREAMBLE + %(
 <html>
 <head>
   <title>%title%</title>
@@ -880,17 +880,17 @@ END:sections
   <pre>%code%</pre>
 </body>
 </html>
-}
+)
 
     #####################################################################
     ### I N D E X   F I L E   T E M P L A T E S
     #####################################################################
 
-    FR_INDEX_BODY = %{
+    FR_INDEX_BODY = %(
 !INCLUDE!
-}
+)
 
-    FILE_INDEX = XHTML_PREAMBLE + %{
+    FILE_INDEX = XHTML_PREAMBLE + %(
 <!--
 
     %list_title%
@@ -914,7 +914,7 @@ END:entries
 </div>
 </body>
 </html>
-}
+)
 
     TOP_INDEX = XHTML_PREAMBLE + %{
 <!--
@@ -1038,7 +1038,7 @@ ENDIF:plugins
 </html>
 }
 
-    INDEX = %{<?xml version="1.0" encoding="%charset%"?>
+    INDEX = %(<?xml version="1.0" encoding="%charset%"?>
 <!DOCTYPE html
      PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN"
      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
@@ -1061,7 +1061,7 @@ ENDIF:plugins
     <frame src="%initial_page%" name="docwin" />
 </frameset>
 </html>
-}
+)
   end # module Page
 end # class RDoc
 

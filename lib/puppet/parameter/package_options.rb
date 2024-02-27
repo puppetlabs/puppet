@@ -28,6 +28,6 @@ class Puppet::Parameter::PackageOptions < Puppet::Parameter
 
   # @api private
   def quote(value)
-    value.include?(' ') ? %Q["#{value.gsub(/"/, '\"')}"] : value
+    value.include?(' ') ? %Q("#{value.gsub(/"/, '\"')}") : value
   end
 end

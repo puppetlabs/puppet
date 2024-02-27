@@ -35,7 +35,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
       # Add the package version
       str += "=#{should}"
     end
-    cmd = %w{-b -q -y}
+    cmd = %w[-b -q -y]
 
     cmd << :install << str
 

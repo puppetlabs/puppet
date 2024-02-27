@@ -26,7 +26,7 @@ Puppet::Reports.register_report(:store) do
 
     # Now store the report.
     now = Time.now.gmtime
-    name = %w{year month day hour min}.collect do |method|
+    name = %w[year month day hour min].collect do |method|
       # Make sure we're at least two digits everywhere
       "%02d" % now.send(method).to_s
     end.join("") + ".yaml"

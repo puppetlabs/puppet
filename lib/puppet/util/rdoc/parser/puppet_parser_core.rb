@@ -103,7 +103,7 @@ module RDoc::PuppetParserCore
   def scan_top_level(container, environment)
     # use the module README as documentation for the module
     comment = ""
-    %w{README README.rdoc}.each do |rfile|
+    %w[README README.rdoc].each do |rfile|
       readme = File.join(File.dirname(File.dirname(@input_file_name)), rfile)
       # module README should be UTF-8, not default system encoding
       comment = File.open(readme, "r:UTF-8") { |f| f.read } if FileTest.readable?(readme)

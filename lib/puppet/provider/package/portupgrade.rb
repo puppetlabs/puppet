@@ -23,7 +23,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
   # defaultfor 'os.name' => :freebsd
 
   # Remove unwanted environment variables.
-  %w{INTERACTIVE UNAME}.each do |var|
+  %w[INTERACTIVE UNAME].each do |var|
     if ENV.include?(var)
       ENV.delete(var)
     end

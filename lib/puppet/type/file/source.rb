@@ -96,7 +96,7 @@ module Puppet
 
         self.fail "Cannot use relative URLs '#{source}'" unless uri.absolute?
         self.fail "Cannot use opaque URLs '#{source}'" unless uri.hierarchical?
-        unless %w{file puppet http https}.include?(uri.scheme)
+        unless %w[file puppet http https].include?(uri.scheme)
           self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving"
         end
       end

@@ -39,7 +39,7 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
       # Add the package version
       str += "=#{should}"
     end
-    cmd = %w{-q -y}
+    cmd = %w[-q -y]
 
     cmd << 'install' << str
 

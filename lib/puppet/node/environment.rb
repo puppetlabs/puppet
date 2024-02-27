@@ -520,7 +520,7 @@ class Puppet::Node::Environment
 
   # @api public
   def inspect
-    %Q{<#{self.class}:#{self.object_id} @name="#{name}" @manifest="#{manifest}" @modulepath="#{full_modulepath.join(":")}" >}
+    %Q(<#{self.class}:#{self.object_id} @name="#{name}" @manifest="#{manifest}" @modulepath="#{full_modulepath.join(":")}" >)
   end
 
   # @return [Symbol] The `name` value, cast to a string, then cast to a symbol.

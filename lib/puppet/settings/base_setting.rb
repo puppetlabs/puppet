@@ -223,6 +223,6 @@ class Puppet::Settings::BaseSetting
   end
 
   def inspect
-    %Q{<#{self.class}:#{self.object_id} @name="#{@name}" @section="#{@section}" @default="#{@default}" @call_hook="#{@call_hook}">}
+    %Q(<#{self.class}:#{self.object_id} @name="#{@name}" @section="#{@section}" @default="#{@default}" @call_hook="#{@call_hook}">)
   end
 end

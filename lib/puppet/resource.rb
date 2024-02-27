@@ -167,7 +167,7 @@ class Puppet::Resource
 
   # Proxy these methods to the parameters hash.  It's likely they'll
   # be overridden at some point, but this works for now.
-  %w{has_key? keys length delete empty? <<}.each do |method|
+  %w[has_key? keys length delete empty? <<].each do |method|
     define_method(method) do |*args|
       parameters.send(method, *args)
     end
@@ -227,7 +227,7 @@ class Puppet::Resource
     super || parameters.keys.include?(parameter_name(parameter))
   end
 
-  %w{exported virtual strict}.each do |m|
+  %w[exported virtual strict].each do |m|
     define_method(m + "?") do
       self.send(m)
     end

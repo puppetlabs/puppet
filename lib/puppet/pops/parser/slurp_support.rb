@@ -19,9 +19,9 @@ module SlurpSupport
   # unquoted, no escapes
   SLURP_UQNE_PATTERN = /(\$\{?|\z)/m
   SLURP_ALL_PATTERN = /.*(\z)/m
-  SQ_ESCAPES = %w{\\ '}
-  DQ_ESCAPES = %w{\\  $ ' " r n t s u} + ["\r\n", "\n"]
-  UQ_ESCAPES = %w{\\  $ r n t s u} + ["\r\n", "\n"]
+  SQ_ESCAPES = %w[\\ ']
+  DQ_ESCAPES = %w[\\  $ ' " r n t s u] + ["\r\n", "\n"]
+  UQ_ESCAPES = %w[\\  $ r n t s u] + ["\r\n", "\n"]
 
   def slurp_sqstring
     # skip the leading '

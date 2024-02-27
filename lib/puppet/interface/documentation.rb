@@ -79,7 +79,7 @@ class Puppet::Interface
 
         options.each do |option|
           option = get_option(option)
-          wrap = option.required? ? %w{< >} : %w{[ ]}
+          wrap = option.required? ? %w[< >] : %w{[ ]}
 
           s.group(0, *wrap) do
             option.optparse.each do |item|

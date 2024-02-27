@@ -1091,7 +1091,7 @@ class Puppet::Settings
 
   # Convert our list of config settings into a configuration file.
   def to_config
-    str = %{The configuration file for #{Puppet.run_mode.name}.  Note that this file
+    str = %(The configuration file for #{Puppet.run_mode.name}.  Note that this file
 is likely to have unused settings in it; any setting that's
 valid anywhere in Puppet can be in any config file, even if it's not used.
 
@@ -1103,7 +1103,7 @@ own configured state, so they can be used to make Puppet a bit more self-managin
 The file format supports octothorpe-commented lines, but not partial-line comments.
 
 Generated on #{Time.now}.
-}.gsub(/^/, "# ")
+).gsub(/^/, "# ")
 
     #         Add a section heading that matches our name.
     str += "[#{preferred_run_mode}]\n"
@@ -1369,7 +1369,7 @@ Generated on #{Time.now}.
         catalog.add_resource resource
       end
       group = setting.group
-      if group && !%w{root wheel}.include?(group) && catalog.resource(:group, group).nil?
+      if group && !%w[root wheel].include?(group) && catalog.resource(:group, group).nil?
         catalog.add_resource Puppet::Resource.new(:group, group, :parameters => { :ensure => :present })
       end
     end
@@ -1588,7 +1588,7 @@ Generated on #{Time.now}.
     end
 
     def inspect
-      %Q{<#{self.class}:#{self.object_id} @name="#{@name}" @values="#{@values}">}
+      %Q(<#{self.class}:#{self.object_id} @name="#{@name}" @values="#{@values}">)
     end
   end
 
@@ -1612,7 +1612,7 @@ Generated on #{Time.now}.
     end
 
     def inspect
-      %Q{<#{self.class}:#{self.object_id} @name="#{@name}" @section="#{@section}">}
+      %Q(<#{self.class}:#{self.object_id} @name="#{@name}" @section="#{@section}">)
     end
   end
 
@@ -1649,7 +1649,7 @@ Generated on #{Time.now}.
     end
 
     def inspect
-      %Q{<#{self.class}:#{self.object_id} @environment_name="#{@environment_name}" @conf="#{@conf}">}
+      %Q(<#{self.class}:#{self.object_id} @environment_name="#{@environment_name}" @conf="#{@conf}">)
     end
   end
 end

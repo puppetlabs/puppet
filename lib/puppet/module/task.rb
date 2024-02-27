@@ -49,7 +49,7 @@ class Puppet::Module
       end
     end
 
-    FORBIDDEN_EXTENSIONS = %w{.conf .md}
+    FORBIDDEN_EXTENSIONS = %w[.conf .md]
     MOUNTS = %w[files lib scripts tasks]
 
     def self.is_task_name?(name)

@@ -48,13 +48,13 @@ class Puppet::Module
       end
     end
 
-    ALLOWED_EXTENSIONS = %w{.pp .yaml}
-    RESERVED_WORDS = %w{and application attr case class consumes default else
+    ALLOWED_EXTENSIONS = %w[.pp .yaml]
+    RESERVED_WORDS = %w[and application attr case class consumes default else
                         elsif environment false function if import in inherits node or private
-                        produces site true type undef unless}
-    RESERVED_DATA_TYPES = %w{any array boolean catalogentry class collection
+                        produces site true type undef unless]
+    RESERVED_DATA_TYPES = %w[any array boolean catalogentry class collection
                              callable data default enum float hash integer numeric optional pattern
-                             resource runtime scalar string struct tuple type undef variant}
+                             resource runtime scalar string struct tuple type undef variant]
 
     def self.is_plan_name?(name)
       return true if name =~ /^[a-z][a-z0-9_]*$/

@@ -54,7 +54,7 @@ module Puppet::Util::Windows::Process
       # and since it's read-only, we can't set it. But we can execute a
       # a shell that simply returns the desired exit status, which has the
       # desired effect.
-      %x{#{ENV.fetch('COMSPEC', nil)} /c exit #{exit_status}}
+      %x(#{ENV.fetch('COMSPEC', nil)} /c exit #{exit_status})
     end
 
     exit_status
