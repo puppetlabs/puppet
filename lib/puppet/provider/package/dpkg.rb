@@ -45,8 +45,8 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
   # Note: self:: is required here to keep these constants in the context of what will
   # eventually become this Puppet::Type::Package::ProviderDpkg class.
-  self::DPKG_QUERY_FORMAT_STRING = %Q('${Status} ${Package} ${Version}\\n')
-  self::DPKG_QUERY_PROVIDES_FORMAT_STRING = %Q('${Status} ${Package} ${Version} [${Provides}]\\n')
+  self::DPKG_QUERY_FORMAT_STRING = %q('${Status} ${Package} ${Version}\\n')
+  self::DPKG_QUERY_PROVIDES_FORMAT_STRING = %q('${Status} ${Package} ${Version} [${Provides}]\\n')
   self::FIELDS_REGEX = %r{^'?(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
   self::FIELDS_REGEX_WITH_PROVIDES = %r{^'?(\S+) +(\S+) +(\S+) (\S+) (\S*) \[.*\]$}
   self::FIELDS = [:desired, :error, :status, :name, :ensure]

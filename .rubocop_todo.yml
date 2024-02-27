@@ -641,14 +641,6 @@ Style/OptionalBooleanParameter:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: lower_case_q, upper_case_q
-Style/PercentQLiterals:
-  Exclude:
-    - 'lib/puppet/provider/package/dpkg.rb'
-    - 'lib/puppet/provider/package/rpm.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/PerlBackrefs:
   Enabled: false
 
