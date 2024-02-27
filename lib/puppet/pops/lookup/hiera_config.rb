@@ -212,7 +212,7 @@ class HieraConfig
         # Raise a LookupError with a RUNTIME_ERROR issue to prevent this being translated to an evaluation error triggered in the pp file
         # where the lookup started
         if e.message =~ /^Undefined variable '([^']+)'/
-          var = $1
+          var = ::Regexp.last_match(1)
           fail(Issues::HIERA_UNDEFINED_VARIABLE, { :name => var }, find_line_matching(/%\{['"]?#{var}['"]?}/))
         end
         raise e

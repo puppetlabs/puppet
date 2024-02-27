@@ -25,10 +25,10 @@ class Puppet::FileServing::Configuration::Parser
         when /^\s*#/; next # skip comments
         when /^\s*$/; next # skip blank lines
         when /\[([-\w]+)\]/
-          mount = newmount($1)
+          mount = newmount(::Regexp.last_match(1))
         when /^\s*(\w+)\s+(.+?)(\s*#.*)?$/
-          var = $1
-          value = $2
+          var = ::Regexp.last_match(1)
+          value = ::Regexp.last_match(2)
           value.strip!
           raise(ArgumentError, _("Fileserver configuration file does not use '=' as a separator")) if value =~ /^=/
 

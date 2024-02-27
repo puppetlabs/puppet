@@ -63,13 +63,13 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
   def self.blastsplit(line)
     if line =~ /\s*(\S+)\s+((\[Not installed\])|(\S+))\s+(\S+)/
       hash = {}
-      hash[:name] = $1
-      hash[:ensure] = if $2 == "[Not installed]"
+      hash[:name] = Regexp.last_match(1)
+      hash[:ensure] = if Regexp.last_match(2) == "[Not installed]"
                         :absent
                       else
-                        $2
+                        Regexp.last_match(2)
                       end
-      hash[:avail] = $5
+      hash[:avail] = Regexp.last_match(5)
 
       hash[:avail] = hash[:ensure] if hash[:avail] == "SAME"
 

@@ -1516,7 +1516,7 @@ Generated on #{Time.now}.
       when String
         failed_environment_interpolation = false
         interpolated_value = value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |expression|
-          varname = $2 || $1
+          varname = ::Regexp.last_match(2) || ::Regexp.last_match(1)
           interpolated_expression =
             if varname != ENVIRONMENT_SETTING || ok_to_interpolate_environment(setting_name)
               if varname == ENVIRONMENT_SETTING && @environment

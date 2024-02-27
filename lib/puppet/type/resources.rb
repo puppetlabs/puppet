@@ -172,7 +172,7 @@ Puppet::Type.newtype(:resources) do
     # First try to read the minimum user id from login.defs
     if Puppet::FileSystem.exist?('/etc/login.defs')
       @system_users_max_uid = Puppet::FileSystem.each_line '/etc/login.defs' do |line|
-        break $1.to_i - 1 if line =~ /^\s*UID_MIN\s+(\d+)(\s*#.*)?$/
+        break Regexp.last_match(1).to_i - 1 if line =~ /^\s*UID_MIN\s+(\d+)(\s*#.*)?$/
       end
     end
 

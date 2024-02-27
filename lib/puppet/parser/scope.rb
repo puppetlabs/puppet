@@ -283,8 +283,8 @@ class Puppet::Parser::Scope
   def exist?(name)
     # Note !! ensure the answer is boolean
     !!if name =~ /^(.*)::(.+)$/
-        class_name = $1
-        variable_name = $2
+        class_name = ::Regexp.last_match(1)
+        variable_name = ::Regexp.last_match(2)
         return true if class_name == '' && BUILT_IN_VARS.include?(variable_name)
 
         # lookup class, but do not care if it is not evaluated since that will result
@@ -1046,7 +1046,7 @@ class Puppet::Parser::Scope
 
   def method_missing(method, *args, &block)
     method.to_s =~ /^function_(.*)$/
-    name = $1
+    name = ::Regexp.last_match(1)
     super unless name
     super unless Puppet::Parser::Functions.function(name)
     # In odd circumstances, this might not end up defined by the previous

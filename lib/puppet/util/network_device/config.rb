@@ -51,7 +51,7 @@ class Puppet::Util::NetworkDevice::Config
             file_line_count += 1
             next
           when /^\[([\w.-]+)\]\s*$/ # [device.fqdn]
-            name = $1
+            name = ::Regexp.last_match(1)
             name.chomp!
             if devices.include?(name)
               file_error_location = Puppet::Util::Errors.error_location(nil, file_line_count)
@@ -66,7 +66,7 @@ class Puppet::Util::NetworkDevice::Config
             Puppet.debug "found device: #{device.name} at #{device.line}"
             devices[name] = device
           when /^\s*(type|url|debug)(\s+(.+)\s*)*$/
-            parse_directive(device, $1, $3, file_line_count)
+            parse_directive(device, ::Regexp.last_match(1), ::Regexp.last_match(3), file_line_count)
           else
             error_location_str = Puppet::Util::Errors.error_location(nil, file_line_count)
             raise Puppet::Error, _("Invalid entry at %{error_location}: %{file_text}") %

@@ -640,10 +640,6 @@ Style/NumericPredicate:
 Style/OptionalBooleanParameter:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-Style/PerlBackrefs:
-  Enabled: false
-
 # This cop supports unsafe auto-correction (--auto-correct-all).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: short, verbose

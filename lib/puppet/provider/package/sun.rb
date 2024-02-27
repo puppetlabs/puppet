@@ -47,7 +47,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
         pkgs << pkg unless pkg.empty?
         pkg = {}
       when /^\s*([^:]+):\s+(.+)$/
-        pkg[$1] = $2
+        pkg[Regexp.last_match(1)] = Regexp.last_match(2)
       end
     end
     pkgs << pkg unless pkg.empty?

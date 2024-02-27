@@ -207,7 +207,7 @@ class Puppet::Application::Resource < Puppet::Application
     params = {}
     args.each do |setting|
       if setting =~ /^(\w+)=(.+)$/
-        params[$1] = $2
+        params[::Regexp.last_match(1)] = ::Regexp.last_match(2)
       else
         raise _("Invalid parameter setting %{setting}") % { setting: setting }
       end

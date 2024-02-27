@@ -228,7 +228,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   def query
     # Search for the version info
     if pkginfo(@resource[:name]) =~ /Information for (inst:)?#{@resource[:name]}-(\S+)/
-      return { :ensure => $2 }
+      return { :ensure => Regexp.last_match(2) }
     else
       return nil
     end

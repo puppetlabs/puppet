@@ -39,16 +39,16 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
       return :latest
     end
 
-    pkgstuff = $1
-    match = $2
-    info = $3
+    pkgstuff = Regexp.last_match(1)
+    match = Regexp.last_match(2)
+    info = Regexp.last_match(3)
 
     unless pkgstuff =~ /^\S+-([^-\s]+)$/
       raise Puppet::Error,
             _("Could not match package info '%{pkgstuff}'") % { pkgstuff: pkgstuff }
     end
 
-    version = $1
+    version = Regexp.last_match(1)
 
     if match == "=" or match == ">"
       # we're up to date or more recent
@@ -62,8 +62,8 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
             _("Could not match version info '%{info}'") % { info: info }
     end
 
-    source = $1
-    newversion = $2
+    source = Regexp.last_match(1)
+    newversion = Regexp.last_match(2)
 
     debug "Newer version in #{source}"
     newversion

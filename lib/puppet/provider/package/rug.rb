@@ -38,7 +38,7 @@ Puppet::Type.type(:package).provide :rug, :parent => :rpm do
     output = rug "list-updates"
 
     if output =~ /#{Regexp.escape @resource[:name]}\s*\|\s*([^\s\|]+)/
-      return $1
+      return Regexp.last_match(1)
     else
       # rug didn't find updates, pretend the current
       # version is the latest

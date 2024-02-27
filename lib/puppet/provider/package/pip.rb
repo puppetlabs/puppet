@@ -103,7 +103,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   # _package_==_version_ or _package_===_version_
   def self.parse(line)
     if line.chomp =~ /^([^=]+)===?([^=]+)$/
-      { :ensure => $2, :name => $1, :provider => name }
+      { :ensure => Regexp.last_match(2), :name => Regexp.last_match(1), :provider => name }
     end
   end
 
@@ -168,7 +168,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
         # PIP OUTPUT: Could not find a version that satisfies the requirement example==versionplease (from versions: 1.2.3, 4.5.6)
         next unless line =~ /from versions: (.+)\)/
 
-        versionList = $1.split(', ').sort do |x, y|
+        versionList = Regexp.last_match(1).split(', ').sort do |x, y|
           self.class.compare_pip_versions(x, y)
         end
         return versionList
@@ -189,7 +189,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
           # PIP OUTPUT: Using version 0.10.1 (newest of versions: 1.2.3, 4.5.6)
           next unless line =~ /Using version .+? \(newest of versions: (.+?)\)/
 
-          versionList = $1.split(', ').sort do |x, y|
+          versionList = Regexp.last_match(1).split(', ').sort do |x, y|
             self.class.compare_pip_versions(x, y)
           end
           return versionList

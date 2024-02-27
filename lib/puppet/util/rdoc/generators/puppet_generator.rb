@@ -482,7 +482,7 @@ module Generators
     # which is also its url
     def http_url(full_name, prefix)
       path = full_name.dup
-      path.gsub!(/<<\s*(\w*)/) { "from-#$1" } if path['<<']
+      path.gsub!(/<<\s*(\w*)/) { "from-#{::Regexp.last_match(1)}" } if path['<<']
       File.join(prefix, path.split("::").collect { |p| Digest::MD5.hexdigest(p) }) + ".html"
     end
 
@@ -724,7 +724,7 @@ module Generators
     # which is also its url
     def http_url(full_name, prefix)
       path = full_name.dup
-      path.gsub!(/<<\s*(\w*)/) { "from-#$1" } if path['<<']
+      path.gsub!(/<<\s*(\w*)/) { "from-#{::Regexp.last_match(1)}" } if path['<<']
       File.join(prefix, path.split("::")) + ".html"
     end
 

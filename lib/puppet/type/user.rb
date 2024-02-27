@@ -840,9 +840,9 @@ module Puppet
         next unless line =~ Puppet::Type.type(:ssh_authorized_key).keyline_regex
 
         # the name is stored in the 4th capture of the regex
-        name = $4
+        name = ::Regexp.last_match(4)
         if name.empty?
-          $3.delete("\n")
+          ::Regexp.last_match(3).delete("\n")
           # If no comment is specified for this key, generate a unique internal
           # name. This uses the same rules as
           # provider/ssh_authorized_key/parsed (PUP-3357)

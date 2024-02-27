@@ -465,7 +465,7 @@ module Util
   def uri_unescape(str)
     enc = str.encoding
     enc = Encoding::UTF_8 if enc == Encoding::US_ASCII
-    str.gsub(ESCAPED) { [$&[1, 2]].pack('H2').force_encoding(enc) }
+    str.gsub(ESCAPED) { [::Regexp.last_match(0)[1, 2]].pack('H2').force_encoding(enc) }
   end
   module_function :uri_unescape
 

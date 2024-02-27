@@ -100,7 +100,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
     end
 
     path.gsub(/%(.)/) do |v|
-      key = $1
+      key = ::Regexp.last_match(1)
       if key == "%"
         "%"
       else

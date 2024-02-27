@@ -123,11 +123,11 @@ class Puppet::Settings::ConfigFile
   def extract_fileinfo(string)
     result = {}
     value = string.sub(/\{\s*([^}]+)\s*\}/) do
-      params = $1
+      params = ::Regexp.last_match(1)
       params.split(/\s*,\s*/).each do |str|
         if str =~ /^\s*(\w+)\s*=\s*([\w]+)\s*$/
-          param = $1.intern
-          value = $2
+          param = ::Regexp.last_match(1).intern
+          value = ::Regexp.last_match(2)
           result[param] = value
           unless [:owner, :mode, :group].include?(param)
             raise ArgumentError, _("Invalid file option '%{parameter}'") % { parameter: param }

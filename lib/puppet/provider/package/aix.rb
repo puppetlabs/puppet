@@ -57,8 +57,8 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
         next unless line =~ /^[^#][^:]*:([^:]*):([^:]*)/
 
         current = {}
-        current[:name]    = $1
-        current[:version] = $2
+        current[:name]    = Regexp.last_match(1)
+        current[:version] = Regexp.last_match(2)
         current[:source]  = source
 
         if updates.key?(current[:name])

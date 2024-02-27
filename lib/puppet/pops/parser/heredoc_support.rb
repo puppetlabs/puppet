@@ -32,7 +32,7 @@ module HeredocSupport
     # Is this a dq string style heredoc? (endtag enclosed in "")
     if endtag =~ /^"(.*)"$/
       dqstring_style = true
-      endtag = $1.strip
+      endtag = ::Regexp.last_match(1).strip
     end
 
     lex_error(Issues::HEREDOC_EMPTY_ENDTAG) unless endtag.length >= 1

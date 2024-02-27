@@ -76,14 +76,14 @@ module SlurpSupport
     # If later a \u is found it is warned not to be a unicode escape
     if escapes.include?('u')
       # gsub must be repeated to cater for adjacent escapes
-      while str.gsub!(/((?:[^\\]|^)(?:[\\]{2})*)\\u(?:([\da-fA-F]{4})|\{([\da-fA-F]{1,6})\})/m) { $1 + [($2 || $3).hex].pack("U") }
+      while str.gsub!(/((?:[^\\]|^)(?:[\\]{2})*)\\u(?:([\da-fA-F]{4})|\{([\da-fA-F]{1,6})\})/m) { ::Regexp.last_match(1) + [(::Regexp.last_match(2) || ::Regexp.last_match(3)).hex].pack("U") }
         # empty block. Everything happens in the gsub block
       end
     end
 
     begin
       str.gsub!(/\\([^\r\n]|(?:\r?\n))/m) {
-        ch = $1
+        ch = ::Regexp.last_match(1)
         if escapes.include? ch
           case ch
           when 'r'; "\r"

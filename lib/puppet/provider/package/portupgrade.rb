@@ -117,9 +117,9 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 
     # Check: output format.
     if output =~ /^\S+-([^-\s]+)\s+(\S)\s+(.*)/
-      installedversion = $1
-      comparison = $2
-      otherdata = $3
+      installedversion = Regexp.last_match(1)
+      comparison = Regexp.last_match(2)
+      otherdata = Regexp.last_match(3)
 
       # Only return a new version number when it's clear that there is a new version
       # all others return the current version so no unexpected 'upgrades' occur.
@@ -131,7 +131,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
         # "portpkg-1.7_5 < needs updating (port has 1.14)"
         # "portpkg-1.7_5 < needs updating (port has 1.14) (=> 'newport/pkg')
         if otherdata =~ /\(port has (\S+)\)/
-          newversion = $1
+          newversion = Regexp.last_match(1)
           Puppet.debug "portupgrade.latest() - Installed version needs updating to (#{newversion})"
           return newversion
         else
@@ -175,8 +175,8 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
       # Fill in the details
       hash = Hash.new
       hash[:portorigin] = self.name
-      hash[:portname]   = $1
-      hash[:ensure]     = $2
+      hash[:portname]   = Regexp.last_match(1)
+      hash[:ensure]     = Regexp.last_match(2)
 
       # If more details are required, then we can do another pkg_info
       # query here and parse out that output and add to the hash
@@ -202,7 +202,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 
     if output =~ /^(\S+)/
       # output matches, so uninstall it
-      portuninstall $1
+      portuninstall Regexp.last_match(1)
     end
   end
 
@@ -220,7 +220,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 
     if output =~ /^(\S+)/
       # output matches, so upgrade the software
-      cmdline = ["-M BATCH=yes", $1]
+      cmdline = ["-M BATCH=yes", Regexp.last_match(1)]
       begin
         output = portupgrade(*cmdline)
       rescue Puppet::ExecutionFailure

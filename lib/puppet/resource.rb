@@ -589,9 +589,9 @@ class Puppet::Resource
 
   def self.extract_type_and_title(argtype, argtitle)
     if (argtype.nil? || argtype == :component || argtype == :whit) &&
-       argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                  then [$1, $2]
+       argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                  then [::Regexp.last_match(1), ::Regexp.last_match(2)]
     elsif argtitle.nil? && argtype.is_a?(String) &&
-          argtype =~ /^([^\[\]]+)\[(.+)\]$/m                   then [$1,                 $2]
+          argtype =~ /^([^\[\]]+)\[(.+)\]$/m                   then [::Regexp.last_match(1), ::Regexp.last_match(2)]
     elsif argtitle                                             then [argtype,            argtitle]
     elsif argtype.is_a?(Puppet::Type)                          then [argtype.class.name, argtype.title]
     else  raise ArgumentError, _("No title provided and %{type} is not a valid resource reference") % { type: argtype.inspect } # rubocop:disable Lint/ElseLayout

@@ -52,7 +52,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
     output = aptcache :policy, @resource[:name]
 
     if output =~ /Candidate:\s+(\S+)\s/
-      return $1
+      return Regexp.last_match(1)
     else
       self.err _("Could not find latest version")
       return nil
