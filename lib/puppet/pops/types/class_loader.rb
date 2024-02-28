@@ -105,11 +105,9 @@ class ClassLoader
 
   def self.find_class(name_path)
     name_path.reduce(Object) do |ns, name|
-      begin
-        ns.const_get(name, false) # don't search ancestors
-      rescue NameError
-        return nil
-      end
+      ns.const_get(name, false) # don't search ancestors
+    rescue NameError
+      return nil
     end
   end
   private_class_method :find_class

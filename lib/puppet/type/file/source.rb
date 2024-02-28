@@ -189,23 +189,21 @@ module Puppet
       return nil unless value
 
       value.each do |source|
-        begin
-          options = {
-            :environment => resource.catalog.environment_instance,
-            :links => resource[:links],
-            :checksum_type => resource[:checksum],
-            :source_permissions => resource[:source_permissions]
-          }
+        options = {
+          :environment => resource.catalog.environment_instance,
+          :links => resource[:links],
+          :checksum_type => resource[:checksum],
+          :source_permissions => resource[:source_permissions]
+        }
 
-          data = Puppet::FileServing::Metadata.indirection.find(source, options)
-          if data
-            @metadata = data
-            @metadata.source = source
-            break
-          end
-        rescue => detail
-          self.fail Puppet::Error, "Could not retrieve file metadata for #{source}: #{detail}", detail
+        data = Puppet::FileServing::Metadata.indirection.find(source, options)
+        if data
+          @metadata = data
+          @metadata.source = source
+          break
         end
+      rescue => detail
+        self.fail Puppet::Error, "Could not retrieve file metadata for #{source}: #{detail}", detail
       end
       self.fail "Could not retrieve information from environment #{resource.catalog.environment} source(s) #{value.join(", ")}" unless @metadata
       @metadata

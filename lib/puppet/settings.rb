@@ -429,13 +429,11 @@ class Puppet::Settings
 
   def call_hooks_deferred_to_application_initialization(options = {})
     @hooks_to_call_on_application_initialization.each do |setting|
-      begin
-        setting.handle(self.value(setting.name))
-      rescue InterpolationError => err
-        raise InterpolationError, err.message, err.backtrace unless options[:ignore_interpolation_dependency_errors]
-        # swallow. We're not concerned if we can't call hooks because dependencies don't exist yet
-        # we'll get another chance after application defaults are initialized
-      end
+      setting.handle(self.value(setting.name))
+    rescue InterpolationError => err
+      raise InterpolationError, err.message, err.backtrace unless options[:ignore_interpolation_dependency_errors]
+      # swallow. We're not concerned if we can't call hooks because dependencies don't exist yet
+      # we'll get another chance after application defaults are initialized
     end
   end
   private :call_hooks_deferred_to_application_initialization
@@ -1408,14 +1406,13 @@ Generated on #{Time.now}.
     # If they've specified neither, then the interpolation will fail and we'll
     #  get an exception.
     #
-    begin
-      return true if self[:config]
-    rescue InterpolationError
-      # This means we failed to interpolate, which means that they didn't
-      #  explicitly specify either :config or :confdir... so we'll fall out to
-      #  the default value.
-      return false
-    end
+
+    return true if self[:config]
+  rescue InterpolationError
+    # This means we failed to interpolate, which means that they didn't
+    #  explicitly specify either :config or :confdir... so we'll fall out to
+    #  the default value.
+    return false
   end
   private :explicit_config_file?
 

@@ -350,12 +350,10 @@ Puppet::Face.define(:epp, '0.0.1') do
           show_filename = args.count > 1
           file_nbr = 0
           args.each do |file|
-            begin
-              buffer.print render_file(file, compiler, options, show_filename, file_nbr += 1)
-            rescue Puppet::ParseError => detail
-              Puppet.err(detail.message)
-              status = false
-            end
+            buffer.print render_file(file, compiler, options, show_filename, file_nbr += 1)
+          rescue Puppet::ParseError => detail
+            Puppet.err(detail.message)
+            status = false
           end
         end
         raise Puppet::Error, _("error while rendering epp") unless status

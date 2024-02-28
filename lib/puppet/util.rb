@@ -211,33 +211,31 @@ module Util
       exts = ENV.fetch('PATHEXT', nil)
       exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
       ENV.fetch('PATH').split(File::PATH_SEPARATOR).each do |dir|
-        begin
-          dest = File.expand_path(File.join(dir, bin))
-        rescue ArgumentError => e
-          # if the user's PATH contains a literal tilde (~) character and HOME is not set, we may get
-          # an ArgumentError here.  Let's check to see if that is the case; if not, re-raise whatever error
-          # was thrown.
-          if e.to_s =~ /HOME/ and (ENV['HOME'].nil? || ENV.fetch('HOME', nil) == "")
-            # if we get here they have a tilde in their PATH.  We'll issue a single warning about this and then
-            # ignore this path element and carry on with our lives.
-            # TRANSLATORS PATH and HOME are environment variables and should not be translated
-            Puppet::Util::Warnings.warnonce(_("PATH contains a ~ character, and HOME is not set; ignoring PATH element '%{dir}'.") % { dir: dir })
-          elsif e.to_s =~ /doesn't exist|can't find user/
-            # ...otherwise, we just skip the non-existent entry, and do nothing.
-            # TRANSLATORS PATH is an environment variable and should not be translated
-            Puppet::Util::Warnings.warnonce(_("Couldn't expand PATH containing a ~ character; ignoring PATH element '%{dir}'.") % { dir: dir })
-          else
-            raise
-          end
+        dest = File.expand_path(File.join(dir, bin))
+      rescue ArgumentError => e
+        # if the user's PATH contains a literal tilde (~) character and HOME is not set, we may get
+        # an ArgumentError here.  Let's check to see if that is the case; if not, re-raise whatever error
+        # was thrown.
+        if e.to_s =~ /HOME/ and (ENV['HOME'].nil? || ENV.fetch('HOME', nil) == "")
+          # if we get here they have a tilde in their PATH.  We'll issue a single warning about this and then
+          # ignore this path element and carry on with our lives.
+          # TRANSLATORS PATH and HOME are environment variables and should not be translated
+          Puppet::Util::Warnings.warnonce(_("PATH contains a ~ character, and HOME is not set; ignoring PATH element '%{dir}'.") % { dir: dir })
+        elsif e.to_s =~ /doesn't exist|can't find user/
+          # ...otherwise, we just skip the non-existent entry, and do nothing.
+          # TRANSLATORS PATH is an environment variable and should not be translated
+          Puppet::Util::Warnings.warnonce(_("Couldn't expand PATH containing a ~ character; ignoring PATH element '%{dir}'.") % { dir: dir })
         else
-          if Puppet::Util::Platform.windows? && File.extname(dest).empty?
-            exts.each do |ext|
-              destext = File.expand_path(dest + ext)
-              return destext if FileTest.file? destext and FileTest.executable? destext
-            end
-          end
-          return dest if FileTest.file? dest and FileTest.executable? dest
+          raise
         end
+      else
+        if Puppet::Util::Platform.windows? && File.extname(dest).empty?
+          exts.each do |ext|
+            destext = File.expand_path(dest + ext)
+            return destext if FileTest.file? destext and FileTest.executable? destext
+          end
+        end
+        return dest if FileTest.file? dest and FileTest.executable? dest
       end
     end
     nil

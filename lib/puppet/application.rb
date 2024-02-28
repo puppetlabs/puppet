@@ -481,12 +481,10 @@ class Application
     Puppet[:logdest] = arg
 
     logdest.each do |dest|
-      begin
-        Puppet::Util::Log.newdestination(dest)
-        options[:setdest] = true
-      rescue => detail
-        Puppet.log_and_raise(detail, _("Could not set logdest to %{dest}.") % { dest: arg })
-      end
+      Puppet::Util::Log.newdestination(dest)
+      options[:setdest] = true
+    rescue => detail
+      Puppet.log_and_raise(detail, _("Could not set logdest to %{dest}.") % { dest: arg })
     end
   end
 

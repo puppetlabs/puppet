@@ -57,11 +57,9 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
   end
 
   def _close
-    begin
-      @tmpfile.close if @tmpfile
-    ensure
-      @tmpfile = nil
-    end
+    @tmpfile.close if @tmpfile
+  ensure
+    @tmpfile = nil
   end
   protected :_close
 
@@ -142,11 +140,9 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
   end
 
   def try_convert_to_hash(h)
-    begin
-      h.to_hash
-    rescue NoMethodError
-      nil
-    end
+    h.to_hash
+  rescue NoMethodError
+    nil
   end
 
   @@systmpdir ||= defined?(Etc.systmpdir) ? Etc.systmpdir : '/tmp'

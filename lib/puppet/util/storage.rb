@@ -55,16 +55,14 @@ class Puppet::Util::Storage
       return
     end
     Puppet::Util.benchmark(:debug, "Loaded state in %{seconds} seconds") do
-      begin
-        @@state = Puppet::Util::Yaml.safe_load_file(filename, [Symbol, Time])
-      rescue Puppet::Util::Yaml::YamlLoadError => detail
-        Puppet.err _("Checksumfile %{filename} is corrupt (%{detail}); replacing") % { filename: filename, detail: detail }
+      @@state = Puppet::Util::Yaml.safe_load_file(filename, [Symbol, Time])
+    rescue Puppet::Util::Yaml::YamlLoadError => detail
+      Puppet.err _("Checksumfile %{filename} is corrupt (%{detail}); replacing") % { filename: filename, detail: detail }
 
-        begin
-          File.rename(filename, filename + ".bad")
-        rescue
-          raise Puppet::Error, _("Could not rename corrupt %{filename}; remove manually") % { filename: filename }, detail.backtrace
-        end
+      begin
+        File.rename(filename, filename + ".bad")
+      rescue
+        raise Puppet::Error, _("Could not rename corrupt %{filename}; remove manually") % { filename: filename }, detail.backtrace
       end
     end
 

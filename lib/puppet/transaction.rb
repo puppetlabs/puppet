@@ -78,11 +78,9 @@ class Puppet::Transaction
     prerun_errors = {}
 
     @catalog.vertices.each do |res|
-      begin
-        res.pre_run_check
-      rescue Puppet::Error => detail
-        prerun_errors[res] = detail
-      end
+      res.pre_run_check
+    rescue Puppet::Error => detail
+      prerun_errors[res] = detail
     end
 
     unless prerun_errors.empty?
@@ -149,11 +147,9 @@ class Puppet::Transaction
       end
 
       post_evalable_providers.each do |provider|
-        begin
-          provider.post_resource_eval
-        rescue => detail
-          Puppet.log_exception(detail, _("post_resource_eval failed for provider %{provider}") % { provider: provider })
-        end
+        provider.post_resource_eval
+      rescue => detail
+        Puppet.log_exception(detail, _("post_resource_eval failed for provider %{provider}") % { provider: provider })
       end
 
       persistence.save if persistence.enabled?(catalog)

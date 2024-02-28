@@ -134,13 +134,11 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
 
       if meta['dependencies']
         dependencies = meta['dependencies'].collect do |dep|
-          begin
-            Puppet::ModuleTool::Metadata.new.add_dependency(dep['name'], dep['version_requirement'], dep['repository'])
-            Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
-          rescue ArgumentError => e
-            raise ArgumentError, _("Malformed dependency: %{name}.") % { name: dep['name'] } +
-                                 ' ' + _("Exception was: %{detail}") % { detail: e }
-          end
+          Puppet::ModuleTool::Metadata.new.add_dependency(dep['name'], dep['version_requirement'], dep['repository'])
+          Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
+        rescue ArgumentError => e
+          raise ArgumentError, _("Malformed dependency: %{name}.") % { name: dep['name'] } +
+                               ' ' + _("Exception was: %{detail}") % { detail: e }
         end
       else
         dependencies = []
@@ -227,11 +225,9 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     end
 
     def unpack(file, destination)
-      begin
-        Puppet::ModuleTool::Applications::Unpacker.unpack(file.path, destination)
-      rescue Puppet::ExecutionFailure => e
-        raise RuntimeError, _("Could not extract contents of module archive: %{message}") % { message: e.message }
-      end
+      Puppet::ModuleTool::Applications::Unpacker.unpack(file.path, destination)
+    rescue Puppet::ExecutionFailure => e
+      raise RuntimeError, _("Could not extract contents of module archive: %{message}") % { message: e.message }
     end
 
     def deprecated?

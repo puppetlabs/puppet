@@ -47,11 +47,9 @@ Puppet::Type.type(:service).provide :service do
   #
   # @return [Puppet::Util::Execution::ProcessOutput]
   def service_execute(type, command, fof = true, squelch = false, combine = true)
-    begin
-      execute(command, :failonfail => fof, :override_locale => false, :squelch => squelch, :combine => combine)
-    rescue Puppet::ExecutionFailure => detail
-      @resource.fail Puppet::Error, "Could not #{type} #{@resource.ref}: #{detail}", detail
-    end
+    execute(command, :failonfail => fof, :override_locale => false, :squelch => squelch, :combine => combine)
+  rescue Puppet::ExecutionFailure => detail
+    @resource.fail Puppet::Error, "Could not #{type} #{@resource.ref}: #{detail}", detail
   end
 
   # Use either a specified command or the default for our provider.

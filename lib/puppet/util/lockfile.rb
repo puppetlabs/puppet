@@ -25,14 +25,12 @@ class Puppet::Util::Lockfile
 
   # @return [boolean] true if lock is successfully acquired, false otherwise.
   def lock(lock_data = nil)
-    begin
-      Puppet::FileSystem.exclusive_create(@file_path, nil) do |fd|
-        fd.print(lock_data)
-      end
-      true
-    rescue Errno::EEXIST
-      false
+    Puppet::FileSystem.exclusive_create(@file_path, nil) do |fd|
+      fd.print(lock_data)
     end
+    true
+  rescue Errno::EEXIST
+    false
   end
 
   def unlock

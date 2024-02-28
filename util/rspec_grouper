@@ -97,10 +97,8 @@ if __FILE__ == $0
     rescue Exception
       # Delete all files on an exception
       paths.each do |path|
-        begin
-          File.delete path
-        rescue Exception
-        end
+        File.delete path
+      rescue Exception
       end
       raise
     end

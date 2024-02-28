@@ -116,14 +116,12 @@ class Puppet::Util::Ldap::Manager
   # 'dn', or nil if the entry cannot be found.
   def find(name)
     connect do |conn|
-      begin
-        conn.search2(dn(name), 0, "objectclass=*") do |result|
-          # Convert to puppet-appropriate attributes
-          return entry2provider(result)
-        end
-      rescue
-        return nil
+      conn.search2(dn(name), 0, "objectclass=*") do |result|
+        # Convert to puppet-appropriate attributes
+        return entry2provider(result)
       end
+    rescue
+      return nil
     end
   end
 

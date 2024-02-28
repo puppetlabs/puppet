@@ -128,12 +128,11 @@ module Puppet::DataTypes
     # and it will fail unless protected with an if defined? if the local
     # variable does not exist in the block's binder.
     #
-    begin
-      loader = block.binding.eval('loader_injected_arg if defined?(loader_injected_arg)')
-      create_loaded_type(type_name, loader, &block)
-    rescue StandardError => e
-      raise ArgumentError, _("Data Type Load Error for type '%{type_name}': %{message}") % { type_name: type_name, message: e.message }
-    end
+
+    loader = block.binding.eval('loader_injected_arg if defined?(loader_injected_arg)')
+    create_loaded_type(type_name, loader, &block)
+  rescue StandardError => e
+    raise ArgumentError, _("Data Type Load Error for type '%{type_name}': %{message}") % { type_name: type_name, message: e.message }
   end
 
   def self.create_loaded_type(type_name, loader, &block)

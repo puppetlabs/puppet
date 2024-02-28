@@ -135,12 +135,10 @@ Puppet::Type.type(:file).provide :posix do
   end
 
   def mode=(value)
-    begin
-      File.chmod(value.to_i(8), resource[:path])
-    rescue => detail
-      error = Puppet::Error.new(_("failed to set mode %{mode} on %{path}: %{message}") % { mode: mode, path: resource[:path], message: detail.message })
-      error.set_backtrace detail.backtrace
-      raise error
-    end
+    File.chmod(value.to_i(8), resource[:path])
+  rescue => detail
+    error = Puppet::Error.new(_("failed to set mode %{mode} on %{path}: %{message}") % { mode: mode, path: resource[:path], message: detail.message })
+    error.set_backtrace detail.backtrace
+    raise error
   end
 end

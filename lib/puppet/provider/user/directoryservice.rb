@@ -503,11 +503,9 @@ Puppet::Type.type(:user).provide :directoryservice do
   end
 
   def set_attribute_with_dscl(dscl_command, path, username, keyname, value)
-    begin
-      dscl '.', dscl_command, "/#{path}/#{username}", keyname, value
-    rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not set the dscl #{keyname} key with value: #{value} - #{detail.inspect}", detail.backtrace
-    end
+    dscl '.', dscl_command, "/#{path}/#{username}", keyname, value
+  rescue Puppet::ExecutionFailure => detail
+    raise Puppet::Error, "Could not set the dscl #{keyname} key with value: #{value} - #{detail.inspect}", detail.backtrace
   end
 
   # Create the new user with dscl

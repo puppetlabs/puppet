@@ -45,37 +45,35 @@ module Utils
   # @api public
   #
   def self.to_n_with_radix o
-    begin
-      case o
-      when String
-        match = Patterns::NUMERIC.match(relativize_name(o))
-        if !match
-          nil
-        elsif match[5].to_s.length > 0
-          fp_value = match_to_fp(match)
-          fp_value.nil? ? nil : [fp_value, 10]
-        else
-          # Set radix (default is decimal == 10)
-          radix = 10
-          if match[3].to_s.length > 0
-            radix = 16
-          elsif match[4].to_s.length > 1 && match[4][0, 1] == '0'
-            radix = 8
-          end
-          # Ruby 1.8.7 does not have a second argument to Kernel method that creates an
-          # integer from a string, it relies on the prefix 0x, 0X, 0 (and unsupported in puppet binary 'b')
-          # We have the correct string here, match[2] is safe to parse without passing on radix
-          match[1] == '-' ? [-Integer(match[2]), radix] : [Integer(match[2]), radix]
-        end
-      when Numeric
-        # Impossible to calculate radix, assume decimal
-        [o, 10]
-      else
+    case o
+    when String
+      match = Patterns::NUMERIC.match(relativize_name(o))
+      if !match
         nil
+      elsif match[5].to_s.length > 0
+        fp_value = match_to_fp(match)
+        fp_value.nil? ? nil : [fp_value, 10]
+      else
+        # Set radix (default is decimal == 10)
+        radix = 10
+        if match[3].to_s.length > 0
+          radix = 16
+        elsif match[4].to_s.length > 1 && match[4][0, 1] == '0'
+          radix = 8
+        end
+        # Ruby 1.8.7 does not have a second argument to Kernel method that creates an
+        # integer from a string, it relies on the prefix 0x, 0X, 0 (and unsupported in puppet binary 'b')
+        # We have the correct string here, match[2] is safe to parse without passing on radix
+        match[1] == '-' ? [-Integer(match[2]), radix] : [Integer(match[2]), radix]
       end
-    rescue ArgumentError
+    when Numeric
+      # Impossible to calculate radix, assume decimal
+      [o, 10]
+    else
       nil
     end
+  rescue ArgumentError
+    nil
   end
 
   # To Numeric (or already numeric)
@@ -84,25 +82,23 @@ module Utils
   # A leading '::' is accepted (and ignored)
   #
   def self.to_n o
-    begin
-      case o
-      when String
-        match = Patterns::NUMERIC.match(relativize_name(o))
-        if !match
-          nil
-        elsif match[5].to_s.length > 0
-          match_to_fp(match)
-        else
-          match[1] == '-' ? -Integer(match[2]) : Integer(match[2])
-        end
-      when Numeric
-        o
-      else
+    case o
+    when String
+      match = Patterns::NUMERIC.match(relativize_name(o))
+      if !match
         nil
+      elsif match[5].to_s.length > 0
+        match_to_fp(match)
+      else
+        match[1] == '-' ? -Integer(match[2]) : Integer(match[2])
       end
-    rescue ArgumentError
+    when Numeric
+      o
+    else
       nil
     end
+  rescue ArgumentError
+    nil
   end
 
   # is the name absolute (i.e. starts with ::)

@@ -168,12 +168,10 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
       end
 
       return is.any? do |version|
-        begin
-          should_range.include?(GEM_VERSION.parse(version))
-        rescue GEM_VERSION::ValidationFailure
-          Puppet.debug("Cannot parse #{version} as a ruby gem version")
-          false
-        end
+        should_range.include?(GEM_VERSION.parse(version))
+      rescue GEM_VERSION::ValidationFailure
+        Puppet.debug("Cannot parse #{version} as a ruby gem version")
+        false
       end
     end
 

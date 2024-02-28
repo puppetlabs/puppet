@@ -368,15 +368,13 @@ Puppet::Type.newtype(:tidy) do
   end
 
   def stat(path)
-    begin
-      Puppet::FileSystem.lstat(path)
-    rescue Errno::ENOENT
-      debug _("File does not exist")
-      return nil
-    rescue Errno::EACCES
-      # TRANSLATORS "stat" is a program name and should not be translated
-      warning _("Could not stat; permission denied")
-      return nil
-    end
+    Puppet::FileSystem.lstat(path)
+  rescue Errno::ENOENT
+    debug _("File does not exist")
+    return nil
+  rescue Errno::EACCES
+    # TRANSLATORS "stat" is a program name and should not be translated
+    warning _("Could not stat; permission denied")
+    return nil
   end
 end

@@ -75,18 +75,16 @@ module Puppet::Util::Windows::User
   module_function :check_token_membership
 
   def password_is?(name, password, domain = '.')
-    begin
-      logon_user(name, password, domain) { |token| }
-    rescue Puppet::Util::Windows::Error => detail
-      authenticated_error_codes = Set[
-        ERROR_ACCOUNT_RESTRICTION,
-        ERROR_INVALID_LOGON_HOURS,
-        ERROR_INVALID_WORKSTATION,
-        ERROR_ACCOUNT_DISABLED,
-      ]
+    logon_user(name, password, domain) { |token| }
+  rescue Puppet::Util::Windows::Error => detail
+    authenticated_error_codes = Set[
+      ERROR_ACCOUNT_RESTRICTION,
+      ERROR_INVALID_LOGON_HOURS,
+      ERROR_INVALID_WORKSTATION,
+      ERROR_ACCOUNT_DISABLED,
+    ]
 
-      return authenticated_error_codes.include?(detail.code)
-    end
+    return authenticated_error_codes.include?(detail.code)
   end
   module_function :password_is?
 

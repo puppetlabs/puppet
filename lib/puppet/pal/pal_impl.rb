@@ -443,64 +443,62 @@ module Pal
 
     # TRANSLATORS, the string "For puppet PAL" is not user facing
     Puppet.override({ :current_environment => apply_environment }, "For puppet PAL") do
-      begin
-        node.sanitize()
-        compiler = create_internal_compiler(internal_compiler_class, node)
+      node.sanitize()
+      compiler = create_internal_compiler(internal_compiler_class, node)
 
-        case internal_compiler_class
-        when :script
-          pal_compiler = ScriptCompiler.new(compiler)
-          overrides[:pal_script_compiler] = overrides[:pal_compiler] = pal_compiler
-        when :catalog
-          pal_compiler = CatalogCompiler.new(compiler)
-          overrides[:pal_catalog_compiler] = overrides[:pal_compiler] = pal_compiler
-        end
+      case internal_compiler_class
+      when :script
+        pal_compiler = ScriptCompiler.new(compiler)
+        overrides[:pal_script_compiler] = overrides[:pal_compiler] = pal_compiler
+      when :catalog
+        pal_compiler = CatalogCompiler.new(compiler)
+        overrides[:pal_catalog_compiler] = overrides[:pal_compiler] = pal_compiler
+      end
 
-        # When scripting the trusted data are always local; default is to set them anyway
-        # When compiling for a catalog, the catalog compiler does this
-        if set_local_facts
-          compiler.topscope.set_trusted(node.trusted_data)
+      # When scripting the trusted data are always local; default is to set them anyway
+      # When compiling for a catalog, the catalog compiler does this
+      if set_local_facts
+        compiler.topscope.set_trusted(node.trusted_data)
 
-          # Server facts are always about the local node's version etc.
-          compiler.topscope.set_server_facts(node.server_facts)
+        # Server facts are always about the local node's version etc.
+        compiler.topscope.set_server_facts(node.server_facts)
 
-          # Set $facts for the node running the script
-          facts_hash = node.facts.nil? ? {} : node.facts.values
-          compiler.topscope.set_facts(facts_hash)
+        # Set $facts for the node running the script
+        facts_hash = node.facts.nil? ? {} : node.facts.values
+        compiler.topscope.set_facts(facts_hash)
 
-          # create the $settings:: variables
-          compiler.topscope.merge_settings(node.environment.name, false)
-        end
+        # create the $settings:: variables
+        compiler.topscope.merge_settings(node.environment.name, false)
+      end
 
-        # Make compiler available to Puppet#lookup and injection in functions
-        # TODO: The compiler instances should be available under non PAL use as well!
-        # TRANSLATORS: Do not translate, symbolic name
-        Puppet.override(overrides, "PAL::with_#{internal_compiler_class}_compiler") do
-          compiler.compile do |_compiler_yield|
-            # In case the variables passed to the compiler are PCore types defined in modules, they
-            # need to be deserialized and added from within the this scope, so that loaders are
-            # available during deserizlization.
-            pal_variables = Puppet::Pops::Serialization::FromDataConverter.convert(pal_variables)
-            variables     = Puppet::Pops::Serialization::FromDataConverter.convert(variables)
+      # Make compiler available to Puppet#lookup and injection in functions
+      # TODO: The compiler instances should be available under non PAL use as well!
+      # TRANSLATORS: Do not translate, symbolic name
+      Puppet.override(overrides, "PAL::with_#{internal_compiler_class}_compiler") do
+        compiler.compile do |_compiler_yield|
+          # In case the variables passed to the compiler are PCore types defined in modules, they
+          # need to be deserialized and added from within the this scope, so that loaders are
+          # available during deserizlization.
+          pal_variables = Puppet::Pops::Serialization::FromDataConverter.convert(pal_variables)
+          variables     = Puppet::Pops::Serialization::FromDataConverter.convert(variables)
 
-            # Merge together target variables and plan variables. This will also shadow any
-            # collisions with facts and emit a warning.
-            topscope_vars = pal_variables.merge(merge_vars(target_variables, variables, node.facts.values))
+          # Merge together target variables and plan variables. This will also shadow any
+          # collisions with facts and emit a warning.
+          topscope_vars = pal_variables.merge(merge_vars(target_variables, variables, node.facts.values))
 
-            add_variables(compiler.topscope, topscope_vars)
-            # wrap the internal compiler to prevent it from leaking in the PAL API
-            if block_given?
-              yield(pal_compiler)
-            end
+          add_variables(compiler.topscope, topscope_vars)
+          # wrap the internal compiler to prevent it from leaking in the PAL API
+          if block_given?
+            yield(pal_compiler)
           end
         end
-      rescue Puppet::Error
-        # already logged and handled by the compiler, including Puppet::ParseErrorWithIssue
-        raise
-      rescue => detail
-        Puppet.log_exception(detail)
-        raise
       end
+    rescue Puppet::Error
+      # already logged and handled by the compiler, including Puppet::ParseErrorWithIssue
+      raise
+    rescue => detail
+      Puppet.log_exception(detail)
+      raise
     end
   end
   private_class_method :main

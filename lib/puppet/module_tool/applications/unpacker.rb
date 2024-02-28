@@ -54,11 +54,9 @@ module Puppet::ModuleTool
 
       # @api private
       def unpack
-        begin
-          Puppet::ModuleTool::Tar.instance.unpack(@filename.to_s, tmpdir, [@module_path.stat.uid, @module_path.stat.gid].join(':'))
-        rescue Puppet::ExecutionFailure => e
-          raise RuntimeError, _("Could not extract contents of module archive: %{message}") % { message: e.message }
-        end
+        Puppet::ModuleTool::Tar.instance.unpack(@filename.to_s, tmpdir, [@module_path.stat.uid, @module_path.stat.gid].join(':'))
+      rescue Puppet::ExecutionFailure => e
+        raise RuntimeError, _("Could not extract contents of module archive: %{message}") % { message: e.message }
       end
 
       # @api private

@@ -37,37 +37,33 @@ class Puppet::Util::FileType
       # Rename the read method
       define_method(:real_read, instance_method(:read))
       define_method(:read) do
-        begin
-          val = real_read
-          @loaded = Time.now
-          if val
-            return val.gsub(/# HEADER.*\n/, '')
-          else
-            return ""
-          end
-        rescue Puppet::Error
-          raise
-        rescue => detail
-          message = _("%{klass} could not read %{path}: %{detail}") % { klass: self.class, path: @path, detail: detail }
-          Puppet.log_exception(detail, message)
-          raise Puppet::Error, message, detail.backtrace
+        val = real_read
+        @loaded = Time.now
+        if val
+          return val.gsub(/# HEADER.*\n/, '')
+        else
+          return ""
         end
+      rescue Puppet::Error
+        raise
+      rescue => detail
+        message = _("%{klass} could not read %{path}: %{detail}") % { klass: self.class, path: @path, detail: detail }
+        Puppet.log_exception(detail, message)
+        raise Puppet::Error, message, detail.backtrace
       end
 
       # And then the write method
       define_method(:real_write, instance_method(:write))
       define_method(:write) do |text|
-        begin
-          val = real_write(text)
-          @synced = Time.now
-          return val
-        rescue Puppet::Error
-          raise
-        rescue => detail
-          message = _("%{klass} could not write %{path}: %{detail}") % { klass: self.class, path: @path, detail: detail }
-          Puppet.log_exception(detail, message)
-          raise Puppet::Error, message, detail.backtrace
-        end
+        val = real_write(text)
+        @synced = Time.now
+        return val
+      rescue Puppet::Error
+        raise
+      rescue => detail
+        message = _("%{klass} could not write %{path}: %{detail}") % { klass: self.class, path: @path, detail: detail }
+        Puppet.log_exception(detail, message)
+        raise Puppet::Error, message, detail.backtrace
       end
     end
   end

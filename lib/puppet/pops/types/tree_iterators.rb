@@ -108,12 +108,10 @@ class TreeIterator
   private :indexer_on
 
   def has_next?(iterator)
-    begin
-      iterator.peek
-      true
-    rescue StopIteration
-      false
-    end
+    iterator.peek
+    true
+  rescue StopIteration
+    false
   end
   private :has_next?
 

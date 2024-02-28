@@ -140,19 +140,15 @@ class Puppet::HTTP::Service
   end
 
   def serialize(formatter, object)
-    begin
-      formatter.render(object)
-    rescue => err
-      raise Puppet::HTTP::SerializationError.new("Failed to serialize #{object.class} to #{formatter.name}: #{err.message}", err)
-    end
+    formatter.render(object)
+  rescue => err
+    raise Puppet::HTTP::SerializationError.new("Failed to serialize #{object.class} to #{formatter.name}: #{err.message}", err)
   end
 
   def serialize_multiple(formatter, object)
-    begin
-      formatter.render_multiple(object)
-    rescue => err
-      raise Puppet::HTTP::SerializationError.new("Failed to serialize multiple #{object.class} to #{formatter.name}: #{err.message}", err)
-    end
+    formatter.render_multiple(object)
+  rescue => err
+    raise Puppet::HTTP::SerializationError.new("Failed to serialize multiple #{object.class} to #{formatter.name}: #{err.message}", err)
   end
 
   def deserialize(response, model)

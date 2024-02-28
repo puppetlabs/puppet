@@ -40,23 +40,21 @@ class Puppet::Pops::Functions::Function
   #
   # @api public
   def call(scope, *args, &block)
+    result = catch(:return) do
+      return self.class.dispatcher.dispatch(self, scope, args, &block)
+    end
+    return result.value
+  rescue Puppet::Pops::Evaluator::Next => jumper
     begin
-      result = catch(:return) do
-        return self.class.dispatcher.dispatch(self, scope, args, &block)
-      end
-      return result.value
-    rescue Puppet::Pops::Evaluator::Next => jumper
-      begin
-        throw :next, jumper.value
-      rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
-        raise Puppet::ParseError.new("next() from context where this is illegal", jumper.file, jumper.line)
-      end
-    rescue Puppet::Pops::Evaluator::Return => jumper
-      begin
-        throw :return, jumper
-      rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
-        raise Puppet::ParseError.new("return() from context where this is illegal", jumper.file, jumper.line)
-      end
+      throw :next, jumper.value
+    rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
+      raise Puppet::ParseError.new("next() from context where this is illegal", jumper.file, jumper.line)
+    end
+  rescue Puppet::Pops::Evaluator::Return => jumper
+    begin
+      throw :return, jumper
+    rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
+      raise Puppet::ParseError.new("return() from context where this is illegal", jumper.file, jumper.line)
     end
   end
 

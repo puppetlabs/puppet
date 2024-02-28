@@ -188,12 +188,11 @@ module Puppet::Functions
     # and it will fail unless protected with an if defined? if the local
     # variable does not exist in the block's binder.
     #
-    begin
-      loader = block.binding.eval('loader_injected_arg if defined?(loader_injected_arg)')
-      create_loaded_function(func_name, loader, function_base, &block)
-    rescue StandardError => e
-      raise ArgumentError, _("Function Load Error for function '%{function_name}': %{message}") % { function_name: func_name, message: e.message }
-    end
+
+    loader = block.binding.eval('loader_injected_arg if defined?(loader_injected_arg)')
+    create_loaded_function(func_name, loader, function_base, &block)
+  rescue StandardError => e
+    raise ArgumentError, _("Function Load Error for function '%{function_name}': %{message}") % { function_name: func_name, message: e.message }
   end
 
   # Creates a function in, or in a local loader under the given loader.
@@ -591,14 +590,12 @@ module Puppet::Functions
     end
 
     def internal_type_parse(type_string, loader)
-      begin
-        Puppet::Pops::Types::TypeParser.singleton.parse(type_string, loader)
-      rescue StandardError => e
-        raise ArgumentError, _("Parsing of type string '\"%{type_string}\"' failed with message: <%{message}>.\n") % {
-          type_string: type_string,
-          message: e.message
-        }
-      end
+      Puppet::Pops::Types::TypeParser.singleton.parse(type_string, loader)
+    rescue StandardError => e
+      raise ArgumentError, _("Parsing of type string '\"%{type_string}\"' failed with message: <%{message}>.\n") % {
+        type_string: type_string,
+        message: e.message
+      }
     end
     private :internal_type_parse
   end
@@ -746,25 +743,23 @@ module Puppet::Functions
         # used to support other features than calling.
         #
         def call(scope, *args, &block)
+          result = catch(:return) do
+            mapped_args = Puppet::Pops::Evaluator::Runtime3FunctionArgumentConverter.map_args(args, scope, '')
+            # this is the scope.function_xxx(...) call
+            return scope.send(self.class.method3x, mapped_args)
+          end
+          return result.value
+        rescue Puppet::Pops::Evaluator::Next => jumper
           begin
-            result = catch(:return) do
-              mapped_args = Puppet::Pops::Evaluator::Runtime3FunctionArgumentConverter.map_args(args, scope, '')
-              # this is the scope.function_xxx(...) call
-              return scope.send(self.class.method3x, mapped_args)
-            end
-            return result.value
-          rescue Puppet::Pops::Evaluator::Next => jumper
-            begin
-              throw :next, jumper.value
-            rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
-              raise Puppet::ParseError.new("next() from context where this is illegal", jumper.file, jumper.line)
-            end
-          rescue Puppet::Pops::Evaluator::Return => jumper
-            begin
-              throw :return, jumper
-            rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
-              raise Puppet::ParseError.new("return() from context where this is illegal", jumper.file, jumper.line)
-            end
+            throw :next, jumper.value
+          rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
+            raise Puppet::ParseError.new("next() from context where this is illegal", jumper.file, jumper.line)
+          end
+        rescue Puppet::Pops::Evaluator::Return => jumper
+          begin
+            throw :return, jumper
+          rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
+            raise Puppet::ParseError.new("return() from context where this is illegal", jumper.file, jumper.line)
           end
         end
       end

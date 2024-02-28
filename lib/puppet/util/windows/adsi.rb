@@ -24,19 +24,15 @@ module Puppet::Util::Windows::ADSI
     extend FFI::Library
 
     def connectable?(uri)
-      begin
-        !!connect(uri)
-      rescue
-        false
-      end
+      !!connect(uri)
+    rescue
+      false
     end
 
     def connect(uri)
-      begin
-        WIN32OLE.connect(uri)
-      rescue WIN32OLERuntimeError => e
-        raise Puppet::Error.new(_("ADSI connection error: %{e}") % { e: e }, e)
-      end
+      WIN32OLE.connect(uri)
+    rescue WIN32OLERuntimeError => e
+      raise Puppet::Error.new(_("ADSI connection error: %{e}") % { e: e }, e)
     end
 
     def create(name, resource_type)
@@ -581,17 +577,15 @@ module Puppet::Util::Windows::ADSI
 
   class UserProfile
     def self.delete(sid)
-      begin
-        Puppet::Util::Windows::ADSI.wmi_connection.Delete("Win32_UserProfile.SID='#{sid}'")
-      rescue WIN32OLERuntimeError => e
-        # https://social.technet.microsoft.com/Forums/en/ITCG/thread/0f190051-ac96-4bf1-a47f-6b864bfacee5
-        # Prior to Vista SP1, there's no built-in way to programmatically
-        # delete user profiles (except for delprof.exe). So try to delete
-        # but warn if we fail
-        raise e unless e.message.include?('80041010')
+      Puppet::Util::Windows::ADSI.wmi_connection.Delete("Win32_UserProfile.SID='#{sid}'")
+    rescue WIN32OLERuntimeError => e
+      # https://social.technet.microsoft.com/Forums/en/ITCG/thread/0f190051-ac96-4bf1-a47f-6b864bfacee5
+      # Prior to Vista SP1, there's no built-in way to programmatically
+      # delete user profiles (except for delprof.exe). So try to delete
+      # but warn if we fail
+      raise e unless e.message.include?('80041010')
 
-        Puppet.warning _("Cannot delete user profile for '%{sid}' prior to Vista SP1") % { sid: sid }
-      end
+      Puppet.warning _("Cannot delete user profile for '%{sid}' prior to Vista SP1") % { sid: sid }
     end
   end
 

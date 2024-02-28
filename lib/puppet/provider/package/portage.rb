@@ -155,9 +155,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   def self.get_sets
-    @sets ||= begin
-      @sets = emerge(*(['--list-sets']))
-    end
+    @sets ||= @sets = emerge(*(['--list-sets']))
   end
 
   def query

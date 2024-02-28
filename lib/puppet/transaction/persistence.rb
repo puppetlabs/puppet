@@ -83,20 +83,18 @@ class Puppet::Transaction::Persistence
 
     result = nil
     Puppet::Util.benchmark(:debug, _("Loaded transaction store file in %{seconds} seconds")) do
+      result = Puppet::Util::Yaml.safe_load_file(filename, self.class.allowed_classes)
+    rescue Puppet::Util::Yaml::YamlLoadError => detail
+      Puppet.log_exception(detail, _("Transaction store file %{filename} is corrupt (%{detail}); replacing") % { filename: filename, detail: detail })
+
       begin
-        result = Puppet::Util::Yaml.safe_load_file(filename, self.class.allowed_classes)
-      rescue Puppet::Util::Yaml::YamlLoadError => detail
-        Puppet.log_exception(detail, _("Transaction store file %{filename} is corrupt (%{detail}); replacing") % { filename: filename, detail: detail })
-
-        begin
-          File.rename(filename, filename + ".bad")
-        rescue => detail
-          Puppet.log_exception(detail, _("Unable to rename corrupt transaction store file: %{detail}") % { detail: detail })
-          raise Puppet::Error, _("Could not rename corrupt transaction store file %{filename}; remove manually") % { filename: filename }, detail.backtrace
-        end
-
-        result = {}
+        File.rename(filename, filename + ".bad")
+      rescue => detail
+        Puppet.log_exception(detail, _("Unable to rename corrupt transaction store file: %{detail}") % { detail: detail })
+        raise Puppet::Error, _("Could not rename corrupt transaction store file %{filename}; remove manually") % { filename: filename }, detail.backtrace
       end
+
+      result = {}
     end
 
     unless result.is_a?(Hash)

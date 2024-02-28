@@ -184,19 +184,17 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
   def first_response_formatter_for(model, request, key, &block)
     formats = accepted_response_formatters_for(model, request)
     formatter = formats.find do |format|
-      begin
-        yield format
-        true
-      rescue Puppet::Network::FormatHandler::FormatError => err
-        msg = _("Failed to serialize %{model} for '%{key}': %{detail}") %
-              { model: model, key: key, detail: err }
-        if Puppet[:allow_pson_serialization]
-          Puppet.warning(msg)
-        else
-          raise Puppet::Network::FormatHandler::FormatError, msg
-        end
-        false
+      yield format
+      true
+    rescue Puppet::Network::FormatHandler::FormatError => err
+      msg = _("Failed to serialize %{model} for '%{key}': %{detail}") %
+            { model: model, key: key, detail: err }
+      if Puppet[:allow_pson_serialization]
+        Puppet.warning(msg)
+      else
+        raise Puppet::Network::FormatHandler::FormatError, msg
       end
+      false
     end
 
     return formatter if formatter

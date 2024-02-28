@@ -28,12 +28,10 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   # Checks if a given name is a group
   def self.group?(name)
-    begin
-      !pacman("-Sg", name).empty?
-    rescue Puppet::ExecutionFailure
-      # pacman returns an expected non-zero exit code when the name is not a group
-      false
-    end
+    !pacman("-Sg", name).empty?
+  rescue Puppet::ExecutionFailure
+    # pacman returns an expected non-zero exit code when the name is not a group
+    false
   end
 
   # Install a package using 'pacman', or 'yaourt' if available.
@@ -74,24 +72,22 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   # returns a hash package => version of installed packages
   def self.get_installed_packages
-    begin
-      packages = {}
-      execpipe([command(:pacman), "-Q"]) do |pipe|
-        # pacman -Q output is 'packagename version-rel'
-        regex = %r{^(\S+)\s(\S+)}
-        pipe.each_line do |line|
-          match = regex.match(line)
-          if match
-            packages[match.captures[0]] = match.captures[1]
-          else
-            warning(_("Failed to match line '%{line}'") % { line: line })
-          end
+    packages = {}
+    execpipe([command(:pacman), "-Q"]) do |pipe|
+      # pacman -Q output is 'packagename version-rel'
+      regex = %r{^(\S+)\s(\S+)}
+      pipe.each_line do |line|
+        match = regex.match(line)
+        if match
+          packages[match.captures[0]] = match.captures[1]
+        else
+          warning(_("Failed to match line '%{line}'") % { line: line })
         end
       end
-      packages
-    rescue Puppet::ExecutionFailure
-      fail(_("Error getting installed packages"))
     end
+    packages
+  rescue Puppet::ExecutionFailure
+    fail(_("Error getting installed packages"))
   end
 
   # returns a hash of group => version of installed groups
