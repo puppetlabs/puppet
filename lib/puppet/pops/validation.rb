@@ -126,13 +126,13 @@ module Validation
     #
     def []=(issue, level)
       unless issue.is_a? Issues::Issue
-        raise Puppet::DevError.new(_("Attempt to set validation severity for something that is not an Issue. (Got %{issue})") % { issue: issue.class })
+        raise Puppet::DevError, _("Attempt to set validation severity for something that is not an Issue. (Got %{issue})") % { issue: issue.class }
       end
       unless SEVERITIES[level]
-        raise Puppet::DevError.new(_("Illegal severity level: %{level} for '%{issue_code}'") % { issue_code: issue.issue_code, level: level })
+        raise Puppet::DevError, _("Illegal severity level: %{level} for '%{issue_code}'") % { issue_code: issue.issue_code, level: level }
       end
       unless issue.demotable? || level == :error
-        raise Puppet::DevError.new(_("Attempt to demote the hard issue '%{issue_code}' to %{level}") % { issue_code: issue.issue_code, level: level })
+        raise Puppet::DevError, _("Attempt to demote the hard issue '%{issue_code}' to %{level}") % { issue_code: issue.issue_code, level: level }
       end
 
       @severities[issue] = level
@@ -153,7 +153,7 @@ module Validation
     #
     def assert_issue issue
       unless issue.is_a? Issues::Issue
-        raise Puppet::DevError.new(_("Attempt to get validation severity for something that is not an Issue. (Got %{issue})") % { issue: issue.class })
+        raise Puppet::DevError, _("Attempt to get validation severity for something that is not an Issue. (Got %{issue})") % { issue: issue.class }
       end
     end
   end

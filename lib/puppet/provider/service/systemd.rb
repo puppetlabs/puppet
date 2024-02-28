@@ -220,7 +220,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
       daemon_reload?
       super
     rescue Puppet::Error => e
-      raise Puppet::Error.new(prepare_error_message(@resource[:name], 'restart', e))
+      raise Puppet::Error, prepare_error_message(@resource[:name], 'restart', e)
     end
   end
 
@@ -229,7 +229,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
       daemon_reload?
       super
     rescue Puppet::Error => e
-      raise Puppet::Error.new(prepare_error_message(@resource[:name], 'start', e))
+      raise Puppet::Error, prepare_error_message(@resource[:name], 'start', e)
     end
   end
 
@@ -237,7 +237,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     begin
       super
     rescue Puppet::Error => e
-      raise Puppet::Error.new(prepare_error_message(@resource[:name], 'stop', e))
+      raise Puppet::Error, prepare_error_message(@resource[:name], 'stop', e)
     end
   end
 

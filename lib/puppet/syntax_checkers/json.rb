@@ -15,9 +15,9 @@ class Puppet::SyntaxCheckers::Json < Puppet::Plugins::SyntaxCheckers::SyntaxChec
   # @api public
   #
   def check(text, syntax, acceptor, source_pos)
-    raise ArgumentError.new(_("Json syntax checker: the text to check must be a String.")) unless text.is_a?(String)
-    raise ArgumentError.new(_("Json syntax checker: the syntax identifier must be a String, e.g. json, data+json")) unless syntax.is_a?(String)
-    raise ArgumentError.new(_("Json syntax checker: invalid Acceptor, got: '%{klass}'.") % { klass: acceptor.class.name }) unless acceptor.is_a?(Puppet::Pops::Validation::Acceptor)
+    raise ArgumentError, _("Json syntax checker: the text to check must be a String.") unless text.is_a?(String)
+    raise ArgumentError, _("Json syntax checker: the syntax identifier must be a String, e.g. json, data+json") unless syntax.is_a?(String)
+    raise ArgumentError, _("Json syntax checker: invalid Acceptor, got: '%{klass}'.") % { klass: acceptor.class.name } unless acceptor.is_a?(Puppet::Pops::Validation::Acceptor)
 
     begin
       Puppet::Util::Json.load(text)

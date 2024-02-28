@@ -238,7 +238,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
         command_options << uri.path
       when 'puppet'
         # we don't support puppet:// URLs (yet)
-        raise Puppet::Error.new(_("puppet:// URLs are not supported as gem sources"))
+        raise Puppet::Error, _("puppet:// URLs are not supported as gem sources")
       else
         # check whether it's an absolute file path to help Windows out
         if Puppet::Util.absolute_path?(source)

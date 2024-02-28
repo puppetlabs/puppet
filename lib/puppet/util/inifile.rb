@@ -184,7 +184,7 @@ module Puppet::Util::IniConfig
           val = match[2].rstrip
 
           if section.nil?
-            raise IniParseError.new(_("Property with key %{key} outside of a section") % { key: key.inspect })
+            raise IniParseError, _("Property with key %{key} outside of a section") % { key: key.inspect }
           end
 
           section[key] = val

@@ -342,7 +342,7 @@ class PAnyType < TypedModelObject
   # @raises ArgumentError
   #
   def self.new_function(type)
-    raise ArgumentError.new("Creation of new instance of type '#{type}' is not supported")
+    raise ArgumentError, "Creation of new instance of type '#{type}' is not supported"
   end
 
   # Answers the question if instances of this type can represent themselves as a string that
@@ -919,9 +919,9 @@ class PNumericType < PScalarDataType
 
             Puppet::Pops::Utils.to_n(from)
           rescue TypeError => e
-            raise TypeConversionError.new(e.message)
+            raise TypeConversionError, e.message
           rescue ArgumentError => e
-            raise TypeConversionError.new(e.message)
+            raise TypeConversionError, e.message
           end
         end
       end
@@ -1146,7 +1146,7 @@ class PIntegerType < PNumericType
           begin
             radix == :default ? Integer(from) : Integer(from, radix)
           rescue TypeError => e
-            raise TypeConversionError.new(e.message)
+            raise TypeConversionError, e.message
           rescue ArgumentError => e
             # Test for special case where there is whitespace between sign and number
             match = Patterns::WS_BETWEEN_SIGN_AND_NUMBER.match(from)
@@ -1158,7 +1158,7 @@ class PIntegerType < PNumericType
                 # Ignored to retain original error
               end
             end
-            raise TypeConversionError.new(e.message)
+            raise TypeConversionError, e.message
           end
         end
       end
@@ -1188,7 +1188,7 @@ class PIntegerType < PNumericType
         when 2, 8, 10, 16
           # do nothing
         else
-          raise ArgumentError.new(_("Illegal radix: %{radix}, expected 2, 8, 10, 16, or default") % { radix: radix })
+          raise ArgumentError, _("Illegal radix: %{radix}, expected 2, 8, 10, 16, or default") % { radix: radix }
         end
         radix
       end
@@ -1281,7 +1281,7 @@ class PFloatType < PNumericType
             end
             Float(from)
           rescue TypeError => e
-            raise TypeConversionError.new(e.message)
+            raise TypeConversionError, e.message
           rescue ArgumentError => e
             # Test for special case where there is whitespace between sign and number
             match = Patterns::WS_BETWEEN_SIGN_AND_NUMBER.match(from)
@@ -1293,7 +1293,7 @@ class PFloatType < PNumericType
                 # Ignored to retain original error
               end
             end
-            raise TypeConversionError.new(e.message)
+            raise TypeConversionError, e.message
           end
         end
       end
@@ -2846,7 +2846,7 @@ class PHashType < PCollectionType
             {}
           else
             unless from.size.even?
-              raise TypeConversionError.new(_('odd number of arguments for Hash'))
+              raise TypeConversionError, _('odd number of arguments for Hash')
             end
 
             Hash[*from]
@@ -2858,7 +2858,7 @@ class PHashType < PCollectionType
             Hash[*Iterable.on(from).to_a]
           else
             t = TypeCalculator.singleton.infer(from).generalize
-            raise TypeConversionError.new(_("Value of type %{type} cannot be converted to Hash") % { type: t })
+            raise TypeConversionError, _("Value of type %{type} cannot be converted to Hash") % { type: t }
           end
         end
       end

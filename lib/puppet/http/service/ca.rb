@@ -124,7 +124,7 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
       options: { ssl_context: ssl_context }
     )
 
-    raise ArgumentError.new(_('SSL context must contain a client certificate.')) unless ssl_context.client_cert
+    raise ArgumentError, _('SSL context must contain a client certificate.') unless ssl_context.client_cert
 
     process_response(response)
 

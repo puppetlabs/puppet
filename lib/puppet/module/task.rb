@@ -130,7 +130,7 @@ class Puppet::Module
 
         unless File.exist?(path)
           msg = _("Could not find %{path} on disk" % { path: path })
-          raise InvalidFile.new(msg)
+          raise InvalidFile, msg
         end
 
         last_char = file[-1] == '/'

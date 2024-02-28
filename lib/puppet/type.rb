@@ -680,7 +680,7 @@ class Type
       nv = name_var
       name = nv if nv
     end
-    raise Puppet::Error.new("Got nil value for #{name}") if value.nil?
+    raise Puppet::Error, "Got nil value for #{name}" if value.nil?
 
     property = self.newattr(name)
 
@@ -710,7 +710,7 @@ class Type
     if @parameters.has_key?(attr)
       @parameters.delete(attr)
     else
-      raise Puppet::DevError.new(_("Undefined attribute '%{attribute}' in %{name}") % { attribute: attr, name: self })
+      raise Puppet::DevError, _("Undefined attribute '%{attribute}' in %{name}") % { attribute: attr, name: self }
     end
   end
 

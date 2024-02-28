@@ -26,9 +26,7 @@ Puppet::Type.type(:package).provide :rug, :parent => :rpm do
     rug "--quiet", :install, "-y", wanted
 
     unless self.query
-      raise Puppet::ExecutionFailure.new(
-        _("Could not find package %{name}") % { name: self.name }
-      )
+      raise Puppet::ExecutionFailure, _("Could not find package %{name}") % { name: self.name }
     end
   end
 

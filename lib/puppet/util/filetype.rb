@@ -82,7 +82,7 @@ class Puppet::Util::FileType
   end
 
   def initialize(path, default_mode = nil)
-    raise ArgumentError.new(_("Path is nil")) if path.nil?
+    raise ArgumentError, _("Path is nil") if path.nil?
 
     @path = path
     @default_mode = default_mode

@@ -105,7 +105,7 @@ class Puppet::Application::FaceBase < Puppet::Application
             if option
               index += 1 if option[:argument] and !(option[:optional])
             else
-              raise OptionParser::InvalidOption.new(item.sub(/=.*$/, ''))
+              raise OptionParser::InvalidOption, item.sub(/=.*$/, '')
             end
           end
         end

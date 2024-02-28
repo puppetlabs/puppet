@@ -63,7 +63,7 @@ module Puppet
           when :NONE
             options[:type] = :flag
           else
-            raise PuppetOptionError.new(_("Unsupported type: '%{type}'") % { type: type })
+            raise PuppetOptionError, _("Unsupported type: '%{type}'") % { type: type }
           end
 
           @parser.opt long.sub("^--", "").intern, desc, options

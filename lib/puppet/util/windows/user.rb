@@ -52,17 +52,17 @@ module Puppet::Util::Windows::User
         size_pointer.write_uint32(SECURITY_MAX_SID_SIZE)
 
         if CreateWellKnownSid(:WinBuiltinAdministratorsSid, FFI::Pointer::NULL, sid_pointer, size_pointer) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new(_("Failed to create administrators SID"))
+          raise Puppet::Util::Windows::Error, _("Failed to create administrators SID")
         end
       end
 
       if IsValidSid(sid_pointer) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new(_("Invalid SID"))
+        raise Puppet::Util::Windows::Error, _("Invalid SID")
       end
 
       FFI::MemoryPointer.new(:win32_bool, 1) do |ismember_pointer|
         if CheckTokenMembership(FFI::Pointer::NULL_HANDLE, sid_pointer, ismember_pointer) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new(_("Failed to check membership"))
+          raise Puppet::Util::Windows::Error, _("Failed to check membership")
         end
 
         # Is administrators SID enabled in calling thread's access token?
@@ -101,7 +101,7 @@ module Puppet::Util::Windows::User
         # try logon using network else try logon using interactive mode
         if logon_user_by_logon_type(name, domain, password, fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
           if logon_user_by_logon_type(name, domain, password, fLOGON32_LOGON_INTERACTIVE, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
-            raise Puppet::Util::Windows::Error.new(_("Failed to logon user %{name}") % { name: name.inspect })
+            raise Puppet::Util::Windows::Error, _("Failed to logon user %{name}") % { name: name.inspect }
           end
         end
 
@@ -132,13 +132,13 @@ module Puppet::Util::Windows::User
 
         # Load the profile. Since it doesn't exist, it will be created
         if LoadUserProfileW(token, pi.pointer) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new(_("Failed to load user profile %{user}") % { user: user.inspect })
+          raise Puppet::Util::Windows::Error, _("Failed to load user profile %{user}") % { user: user.inspect }
         end
 
         Puppet.debug("Loaded profile for #{user}")
 
         if UnloadUserProfile(token, pi[:hProfile]) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new(_("Failed to unload user profile %{user}") % { user: user.inspect })
+          raise Puppet::Util::Windows::Error, _("Failed to unload user profile %{user}") % { user: user.inspect }
         end
       end
     end
@@ -260,7 +260,7 @@ module Puppet::Util::Windows::User
                      "The RPC server is unavailable or given domain name is invalid."
                    end
 
-    raise Puppet::Error.new("Calling `#{method_name}` returned 'Win32 Error Code 0x%08X'. #{error_reason}" % error_code)
+    raise Puppet::Error, "Calling `#{method_name}` returned 'Win32 Error Code 0x%08X'. #{error_reason}" % error_code
   end
   private_class_method :check_lsa_nt_status_and_raise_failures
 

@@ -19,7 +19,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
 
   # Convert our object to YAML and store it to the disk.
   def save(request)
-    raise ArgumentError.new(_("You can only save objects that respond to :name")) unless request.instance.respond_to?(:name)
+    raise ArgumentError, _("You can only save objects that respond to :name") unless request.instance.respond_to?(:name)
 
     file = path(request.key)
 

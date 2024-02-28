@@ -43,13 +43,13 @@ class Puppet::FileServing::Configuration::Parser
             end
           else
             error_location_str = Puppet::Util::Errors.error_location(@file.filename, @count)
-            raise ArgumentError.new(_("Invalid argument '%{var}' at %{error_location}") %
-                                        { var: var, error_location: error_location_str })
+            raise ArgumentError, _("Invalid argument '%{var}' at %{error_location}") %
+                                 { var: var, error_location: error_location_str }
           end
         else
           error_location_str = Puppet::Util::Errors.error_location(@file.filename, @count)
-          raise ArgumentError.new(_("Invalid entry at %{error_location}: '%{file_text}'") %
-                                      { file_text: line.chomp, error_location: error_location_str })
+          raise ArgumentError, _("Invalid entry at %{error_location}: '%{file_text}'") %
+                               { file_text: line.chomp, error_location: error_location_str }
         end
       end
     end
@@ -73,8 +73,8 @@ class Puppet::FileServing::Configuration::Parser
   def newmount(name)
     if @mounts.include?(name)
       error_location_str = Puppet::Util::Errors.error_location(@file, @count)
-      raise ArgumentError.new(_("%{mount} is already mounted at %{name} at %{error_location}") %
-                                  { mount: @mounts[name], name: name, error_location: error_location_str })
+      raise ArgumentError, _("%{mount} is already mounted at %{name} at %{error_location}") %
+                           { mount: @mounts[name], name: name, error_location: error_location_str }
     end
     case name
     when "modules"

@@ -60,7 +60,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
       return packages
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error.new(detail)
+      raise Puppet::Error, detail
     end
   end
 
@@ -138,7 +138,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       end
       @atom = package_info
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error.new(detail)
+      raise Puppet::Error, detail
     end
   end
 
@@ -224,14 +224,14 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
       case packages.size
       when 0
-        raise Puppet::Error.new(_("No package found with the specified name [%{name}]") % { name: @resource[:name] })
+        raise Puppet::Error, _("No package found with the specified name [%{name}]") % { name: @resource[:name] }
       when 1
         @eix_result = packages[0]
       else
-        raise Puppet::Error.new(_("More than one package with the specified name [%{search_value}], please use the category parameter to disambiguate") % { search_value: search_value })
+        raise Puppet::Error, _("More than one package with the specified name [%{search_value}], please use the category parameter to disambiguate") % { search_value: search_value }
       end
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error.new(detail)
+      raise Puppet::Error, detail
     end
   end
 

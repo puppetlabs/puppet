@@ -773,7 +773,7 @@ class Puppet::Parser::Scope
   # when you need to set options.
   def setvar(name, value, options = EMPTY_HASH)
     if name =~ /^[0-9]+$/
-      raise Puppet::ParseError.new(_("Cannot assign to a numeric match result variable '$%{name}'") % { name: name }) # unless options[:ephemeral]
+      raise Puppet::ParseError, _("Cannot assign to a numeric match result variable '$%{name}'") % { name: name } # unless options[:ephemeral]
     end
     unless name.is_a? String
       raise Puppet::ParseError, _("Scope variable name %{name} is a %{class_type}, not a string") % { name: name.inspect, class_type: name.class }

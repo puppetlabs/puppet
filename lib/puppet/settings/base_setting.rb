@@ -89,7 +89,7 @@ class Puppet::Settings::BaseSetting
   def initialize(args = {})
     @settings = args.delete(:settings)
     unless @settings
-      raise ArgumentError.new("You must refer to a settings object")
+      raise ArgumentError, "You must refer to a settings object"
     end
 
     # explicitly set name prior to calling other param= methods to provide meaningful feedback during

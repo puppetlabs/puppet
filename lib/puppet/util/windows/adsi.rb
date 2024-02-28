@@ -58,7 +58,7 @@ module Puppet::Util::Windows::ADSI
             buffer_size.write_dword(max_length) # length in TCHARs
 
             if GetComputerNameW(buffer, buffer_size) == FFI::WIN32_FALSE
-              raise Puppet::Util::Windows::Error.new(_("Failed to get computer name"))
+              raise Puppet::Util::Windows::Error, _("Failed to get computer name")
             end
 
             @computer_name = buffer.read_wide_string(buffer_size.read_dword)
@@ -97,7 +97,7 @@ module Puppet::Util::Windows::ADSI
     # used for IAdsGroup::Add / IAdsGroup::Remove.  These URIs are not useable
     # to resolve an account with WIN32OLE.connect
     def sid_uri(sid)
-      raise Puppet::Error.new(_("Must use a valid SID::Principal")) unless sid.is_a?(Puppet::Util::Windows::SID::Principal)
+      raise Puppet::Error, _("Must use a valid SID::Principal") unless sid.is_a?(Puppet::Util::Windows::SID::Principal)
 
       "WinNT://#{sid.sid}"
     end
@@ -162,7 +162,7 @@ module Puppet::Util::Windows::ADSI
 
       def parse_name(name)
         if name =~ /\//
-          raise Puppet::Error.new(_("Value must be in DOMAIN\\%{object_class} style syntax") % { object_class: @object_class })
+          raise Puppet::Error, _("Value must be in DOMAIN\\%{object_class} style syntax") % { object_class: @object_class }
         end
 
         matches = name.scan(/((.*)\\)?(.*)/)
@@ -195,7 +195,7 @@ module Puppet::Util::Windows::ADSI
 
         sids = names.map do |name|
           sid = Puppet::Util::Windows::SID.name_to_principal(name, allow_unresolved)
-          raise Puppet::Error.new(_("Could not resolve name: %{name}") % { name: name }) unless sid
+          raise Puppet::Error, _("Could not resolve name: %{name}") % { name: name } unless sid
 
           [sid.sid, sid]
         end
@@ -292,9 +292,7 @@ module Puppet::Util::Windows::ADSI
       rescue WIN32OLERuntimeError => e
         # ERROR_BAD_USERNAME 2202L from winerror.h
         if e.message =~ /8007089A/m
-          raise Puppet::Error.new(
-            _("Puppet is not able to create/delete domain %{object_class} objects with the %{object_class} resource.") % { object_class: object_class },
-          )
+          raise Puppet::Error, _("Puppet is not able to create/delete domain %{object_class} objects with the %{object_class} resource.") % { object_class: object_class }
         end
 
         raise Puppet::Error.new(_("%{object_class} update failed: %{error}") % { object_class: object_class.capitalize, error: e }, e)
@@ -323,7 +321,7 @@ module Puppet::Util::Windows::ADSI
 
       def create(name)
         # Windows error 1379: The specified local group already exists.
-        raise Puppet::Error.new(_("Cannot create user if group '%{name}' exists.") % { name: name }) if Puppet::Util::Windows::ADSI::Group.exists? name
+        raise Puppet::Error, _("Cannot create user if group '%{name}' exists.") % { name: name } if Puppet::Util::Windows::ADSI::Group.exists? name
 
         new(name, Puppet::Util::Windows::ADSI.create(name, @object_class))
       end
@@ -508,7 +506,7 @@ module Puppet::Util::Windows::ADSI
           buffer_size.write_dword(max_length) # length in TCHARs
 
           if GetUserNameW(buffer, buffer_size) == FFI::WIN32_FALSE
-            raise Puppet::Util::Windows::Error.new(_("Failed to get user name"))
+            raise Puppet::Util::Windows::Error, _("Failed to get user name")
           end
 
           # buffer_size includes trailing NULL
@@ -609,7 +607,7 @@ module Puppet::Util::Windows::ADSI
 
       def create(name)
         # Windows error 2224: The account already exists.
-        raise Puppet::Error.new(_("Cannot create group if user '%{name}' exists.") % { name: name }) if Puppet::Util::Windows::ADSI::User.exists?(name)
+        raise Puppet::Error, _("Cannot create group if user '%{name}' exists.") % { name: name } if Puppet::Util::Windows::ADSI::User.exists?(name)
 
         new(name, Puppet::Util::Windows::ADSI.create(name, @object_class))
       end

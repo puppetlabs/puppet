@@ -647,12 +647,6 @@ Style/PreferredHashMethods:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, AllowedCompactTypes.
-# SupportedStyles: compact, exploded
-Style/RaiseArgs:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/RedundantAssignment:
   Exclude:
     - 'lib/puppet/file_serving/mount/locales.rb'

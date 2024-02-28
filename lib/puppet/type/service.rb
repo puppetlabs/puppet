@@ -289,7 +289,7 @@ module Puppet
 
           value
         rescue
-          raise Puppet::Error.new(_("\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer") % { value: value })
+          raise Puppet::Error, _("\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer") % { value: value }
         end
       end
     end
@@ -311,7 +311,7 @@ module Puppet
 
     validate do
       if @parameters[:logonpassword] && @parameters[:logonaccount].nil?
-        raise Puppet::Error.new(_("The 'logonaccount' parameter is mandatory when setting 'logonpassword'."))
+        raise Puppet::Error, _("The 'logonaccount' parameter is mandatory when setting 'logonpassword'.")
       end
     end
   end

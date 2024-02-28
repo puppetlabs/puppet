@@ -108,11 +108,11 @@ module LoaderPaths
     end
 
     def relative_path
-      raise NotImplementedError.new
+      raise NotImplementedError
     end
 
     def instantiator
-      raise NotImplementedError.new
+      raise NotImplementedError
     end
   end
 

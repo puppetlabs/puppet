@@ -4,6 +4,6 @@
 #
 Puppet::Functions.create_function(:import) do
   def import(*args)
-    raise Puppet::Pops::SemanticError.new(Puppet::Pops::Issues::DISCONTINUED_IMPORT)
+    raise Puppet::Pops::SemanticError, Puppet::Pops::Issues::DISCONTINUED_IMPORT
   end
 end

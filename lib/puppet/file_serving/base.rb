@@ -59,7 +59,7 @@ class Puppet::FileServing::Base
   attr_reader :path
 
   def path=(path)
-    raise ArgumentError.new(_("Paths must be fully qualified")) unless Puppet::FileServing::Base.absolute?(path)
+    raise ArgumentError, _("Paths must be fully qualified") unless Puppet::FileServing::Base.absolute?(path)
 
     @path = path
   end
@@ -69,7 +69,7 @@ class Puppet::FileServing::Base
   attr_reader :relative_path
 
   def relative_path=(path)
-    raise ArgumentError.new(_("Relative paths must not be fully qualified")) if Puppet::FileServing::Base.absolute?(path)
+    raise ArgumentError, _("Relative paths must not be fully qualified") if Puppet::FileServing::Base.absolute?(path)
 
     @relative_path = path
   end

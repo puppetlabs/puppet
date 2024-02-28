@@ -175,7 +175,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
       end
     end
   rescue Timeout::Error
-    raise Puppet::Error.new("Timed out waiting for #{@resource[:name]} to transition states")
+    raise Puppet::Error, "Timed out waiting for #{@resource[:name]} to transition states"
   end
 
   def start

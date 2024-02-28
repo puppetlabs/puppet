@@ -138,7 +138,7 @@ module Puppet::Util::Plist
       when :plain
         CFPropertyList::List::FORMAT_PLAIN
       else
-        raise FormatError.new "Unknown plist format #{format}"
+        raise FormatError, "Unknown plist format #{format}"
       end
     end
 

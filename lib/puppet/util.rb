@@ -407,7 +407,7 @@ module Util
   #   query will encode + as %2B and space as %20
   #   fragment behaves like query
   def uri_encode(path, opts = { :allow_fragment => false })
-    raise ArgumentError.new(_('path may not be nil')) if path.nil?
+    raise ArgumentError, _('path may not be nil') if path.nil?
 
     encoded = ''.dup
 

@@ -42,7 +42,7 @@ module Puppet::Util::FileParsing
     def fields=(fields)
       @fields = fields.collect do |field|
         r = field.intern
-        raise ArgumentError.new(_("Cannot have fields named %{name}") % { name: r }) if INVALID_FIELDS.include?(r)
+        raise ArgumentError, _("Cannot have fields named %{name}") % { name: r } if INVALID_FIELDS.include?(r)
 
         r
       end

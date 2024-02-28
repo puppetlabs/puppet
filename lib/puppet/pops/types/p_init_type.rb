@@ -152,7 +152,7 @@ class PInitType < PTypeWithContainedType
       # The Optional is the same as Variant[T,Undef].
       # The NotUndef is not meaningful to create instances of
       if @type.instance_of?(PInitType) || @type.instance_of?(POptionalType) || @type.instance_of?(PNotUndefType)
-        raise ArgumentError.new
+        raise ArgumentError
       end
 
       new_func = @type.new_function

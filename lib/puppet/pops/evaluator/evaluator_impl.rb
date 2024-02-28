@@ -1236,15 +1236,15 @@ class EvaluatorImpl
               Hash[*y]
             end
           else
-            raise ArgumentError.new(_('Can only append Array or Hash to a Hash'))
+            raise ArgumentError, _('Can only append Array or Hash to a Hash')
           end
       x.merge y # new hash with overwrite
     when URI
-      raise ArgumentError.new(_('An URI can only be merged with an URI or String')) unless y.is_a?(String) || y.is_a?(URI)
+      raise ArgumentError, _('An URI can only be merged with an URI or String') unless y.is_a?(String) || y.is_a?(URI)
 
       x + y
     when Types::PBinaryType::Binary
-      raise ArgumentError.new(_('Can only append Binary to a Binary')) unless y.is_a?(Types::PBinaryType::Binary)
+      raise ArgumentError, _('Can only append Binary to a Binary') unless y.is_a?(Types::PBinaryType::Binary)
 
       Types::PBinaryType::Binary.from_binary_string(x.binary_buffer + y.binary_buffer)
     else
@@ -1276,7 +1276,7 @@ class EvaluatorImpl
           end
       y.each { |e| result.delete(e) }
     else
-      raise ArgumentError.new(_("Can only delete from an Array or Hash."))
+      raise ArgumentError, _("Can only delete from an Array or Hash.")
     end
     result
   end

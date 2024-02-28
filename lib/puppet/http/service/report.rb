@@ -56,7 +56,7 @@ class Puppet::HTTP::Service::Report < Puppet::HTTP::Service
     if response.success?
       response
     else
-      raise Puppet::HTTP::ResponseError.new(response)
+      raise Puppet::HTTP::ResponseError, response
     end
   end
 end

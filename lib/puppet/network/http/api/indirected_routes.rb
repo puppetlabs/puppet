@@ -62,9 +62,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     environment = params.delete(:environment)
 
     if indirection_name !~ /^\w+$/
-      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        _("The indirection name must be purely alphanumeric, not '%{indirection_name}'") % { indirection_name: indirection_name }
-      )
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError, _("The indirection name must be purely alphanumeric, not '%{indirection_name}'") % { indirection_name: indirection_name }
     end
 
     # this also depluralizes the indirection_name if it is a search
@@ -73,9 +71,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     # check whether this indirection matches the prefix and version in the
     # request
     if url_prefix != IndirectionType.url_prefix_for(indirection_name)
-      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        _("Indirection '%{indirection_name}' does not match url prefix '%{url_prefix}'") % { indirection_name: indirection_name, url_prefix: url_prefix }
-      )
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError, _("Indirection '%{indirection_name}' does not match url prefix '%{url_prefix}'") % { indirection_name: indirection_name, url_prefix: url_prefix }
     end
 
     indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
@@ -87,15 +83,11 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     end
 
     unless environment
-      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        _("An environment parameter must be specified")
-      )
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError, _("An environment parameter must be specified")
     end
 
     unless Puppet::Node::Environment.valid_name?(environment)
-      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        _("The environment must be purely alphanumeric, not '%{environment}'") % { environment: environment }
-      )
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError, _("The environment must be purely alphanumeric, not '%{environment}'") % { environment: environment }
     end
 
     configured_environment = Puppet.lookup(:environments).get(environment)
@@ -105,17 +97,13 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     end
 
     if configured_environment.nil? && indirection.terminus.require_environment?
-      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
-        _("Could not find environment '%{environment}'") % { environment: environment }
-      )
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError, _("Could not find environment '%{environment}'") % { environment: environment }
     end
 
     params.delete(:bucket_path)
 
     if key == "" or key.nil?
-      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        _("No request key specified in %{uri}") % { uri: uri }
-      )
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError, _("No request key specified in %{uri}") % { uri: uri }
     end
 
     [indirection, method, key, params]
@@ -205,7 +193,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
         if Puppet[:allow_pson_serialization]
           Puppet.warning(msg)
         else
-          raise Puppet::Network::FormatHandler::FormatError.new(msg)
+          raise Puppet::Network::FormatHandler::FormatError, msg
         end
         false
       end
@@ -239,9 +227,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       begin
         return model_class.convert_from(formatter.name.to_s, data)
       rescue => e
-        raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-          _("The request body is invalid: %{message}") % { message: e.message }
-        )
+        raise Puppet::Network::HTTP::Error::HTTPBadRequestError, _("The request body is invalid: %{message}") % { message: e.message }
       end
     end
 
@@ -253,15 +239,11 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
   end
 
   def indirection_method(http_method, indirection)
-    raise Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError.new(
-      _("No support for http method %{http_method}") % { http_method: http_method }
-    ) unless METHOD_MAP[http_method]
+    raise Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError, _("No support for http method %{http_method}") % { http_method: http_method } unless METHOD_MAP[http_method]
 
     method = METHOD_MAP[http_method][plurality(indirection)]
     unless method
-      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
-        _("No support for plurality %{indirection} for %{http_method} operations") % { indirection: plurality(indirection), http_method: http_method }
-      )
+      raise Puppet::Network::HTTP::Error::HTTPBadRequestError, _("No support for plurality %{indirection} for %{http_method} operations") % { indirection: plurality(indirection), http_method: http_method }
     end
 
     method

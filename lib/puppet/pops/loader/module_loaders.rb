@@ -297,7 +297,7 @@ module ModuleLoaders
     # @return [Boolean] true if there is content in the directory appointed by the relative path
     #
     def meaningful_to_search?(smart_path)
-      raise NotImplementedError.new
+      raise NotImplementedError
     end
 
     # Abstract method that subclasses override to answer if the given relative path exists, and if so returns that path
@@ -306,7 +306,7 @@ module ModuleLoaders
     # @return [String, nil] the found path or nil if no such path was found
     #
     def existing_path(resolved_path)
-      raise NotImplementedError.new
+      raise NotImplementedError
     end
 
     # Abstract method that subclasses override to return an array of paths that may be associated with the resolved path.
@@ -315,7 +315,7 @@ module ModuleLoaders
     # @return [Array<String>]
     #
     def candidate_paths(resolved_path)
-      raise NotImplementedError.new
+      raise NotImplementedError
     end
 
     # Abstract method that subclasses override to produce the content of the effective path.
@@ -325,7 +325,7 @@ module ModuleLoaders
     # @return [String] the content of the file
     #
     def get_contents(effective_path)
-      raise NotImplementedError.new
+      raise NotImplementedError
     end
 
     # Abstract method that subclasses override to produce a source reference String used to identify the
@@ -335,7 +335,7 @@ module ModuleLoaders
     # @return [String] a reference to the source file (in file system, zip file, or elsewhere).
     #
     def get_source_ref(relative_path)
-      raise NotImplementedError.new
+      raise NotImplementedError
     end
 
     # Answers the question if this loader represents a global component (true for resource type loader and environment loader)
@@ -370,7 +370,7 @@ module ModuleLoaders
     # @param smart_path [SmartPath] the path to find relative paths for
     # @return [Array<String>] found paths
     def relative_paths(smart_path)
-      raise NotImplementedError.new
+      raise NotImplementedError
     end
 
     private

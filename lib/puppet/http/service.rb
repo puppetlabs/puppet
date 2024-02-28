@@ -129,12 +129,12 @@ class Puppet::HTTP::Service
 
   def formatter_for_response(response)
     header = response['Content-Type']
-    raise Puppet::HTTP::ProtocolError.new(_("No content type in http response; cannot parse")) unless header
+    raise Puppet::HTTP::ProtocolError, _("No content type in http response; cannot parse") unless header
 
     header.gsub!(/\s*;.*$/, '') # strip any charset
 
     formatter = Puppet::Network::FormatHandler.mime(header)
-    raise Puppet::HTTP::ProtocolError.new("Content-Type is unsupported") if EXCLUDED_FORMATS.include?(formatter.name)
+    raise Puppet::HTTP::ProtocolError, "Content-Type is unsupported" if EXCLUDED_FORMATS.include?(formatter.name)
 
     formatter
   end
@@ -176,6 +176,6 @@ class Puppet::HTTP::Service
   def process_response(response)
     @session.process_response(response)
 
-    raise Puppet::HTTP::ResponseError.new(response) unless response.success?
+    raise Puppet::HTTP::ResponseError, response unless response.success?
   end
 end

@@ -37,7 +37,7 @@ module Runtime3Support
     if except.nil? && diagnostic_producer.severity_producer[issue] == :error
       # Want a stacktrace, and it must be passed as an exception
       begin
-        raise EvaluationError.new()
+        raise EvaluationError
       rescue EvaluationError => e
         except = e
       end

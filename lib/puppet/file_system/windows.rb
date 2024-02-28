@@ -11,7 +11,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     # PUP-6959 mode is explicitly ignored until it can be implemented
     # Ruby on Windows uses mode for setting file attributes like read-only and
     # archived, not for setting permissions like POSIX
-    raise TypeError.new('mode must be specified as an Integer') if mode && !mode.is_a?(Numeric)
+    raise TypeError, 'mode must be specified as an Integer' if mode && !mode.is_a?(Numeric)
 
     ::File.open(path, options, nil, &block)
   end
@@ -87,7 +87,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
         if Puppet::Util::Windows::File.symlink?(file_name)
           Dir.rmdir(file_name)
         else
-          raise Errno::EPERM.new(file_name)
+          raise Errno::EPERM, file_name
         end
       else
         ::File.unlink(file_name)
@@ -172,7 +172,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     when ACCESS_DENIED, SHARING_VIOLATION, LOCK_VIOLATION
       raise Errno::EACCES.new(path_string(path), e)
     else
-      raise SystemCallError.new(e.message)
+      raise SystemCallError, e.message
     end
   end
 
@@ -206,7 +206,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
   def raise_if_symlinks_unsupported
     unless Puppet.features.manages_symlinks?
       msg = _("This version of Windows does not support symlinks.  Windows Vista / 2008 or higher is required.")
-      raise Puppet::Util::Windows::Error.new(msg)
+      raise Puppet::Util::Windows::Error, msg
     end
 
     unless Puppet::Util::Windows::Process.process_privilege_symlink?

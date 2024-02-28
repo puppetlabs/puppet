@@ -64,7 +64,7 @@ class Puppet::Util::Log
       close(dest)
     }
     # TRANSLATORS "Log.close_all" is a method name and should not be translated
-    raise Puppet::DevError.new(_("Log.close_all failed to close %{destinations}") % { destinations: @destinations.keys.inspect }) unless @destinations.empty?
+    raise Puppet::DevError, _("Log.close_all failed to close %{destinations}") % { destinations: @destinations.keys.inspect } unless @destinations.empty?
   end
 
   # Flush any log destinations that support such operations.

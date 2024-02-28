@@ -37,7 +37,7 @@ class Loaders
 
   def initialize(environment, for_agent, load_from_pcore = true)
     # Protect against environment havoc
-    raise ArgumentError.new(_("Attempt to redefine already initialized loaders for environment")) unless environment.loaders.nil?
+    raise ArgumentError, _("Attempt to redefine already initialized loaders for environment") unless environment.loaders.nil?
 
     environment.loaders = self
     @environment = environment

@@ -37,7 +37,7 @@ class ClassLoader
   def self.provide_from_type(type)
     case type
     when PRuntimeType
-      raise ArgumentError.new("Only Runtime type 'ruby' is supported, got #{type.runtime}") unless type.runtime == :ruby
+      raise ArgumentError, "Only Runtime type 'ruby' is supported, got #{type.runtime}" unless type.runtime == :ruby
 
       provide_from_string(type.runtime_type_name)
 
