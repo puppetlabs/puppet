@@ -76,6 +76,10 @@ class LiteralEvaluator
     o.keys.map { |v| literal(v) }
   end
 
+  def literal_UnaryMinusExpression(o)
+    -literal(o.expr)
+  end
+
   def literal_ConcatenatedString(o)
     # use double quoted string value if there is no interpolation
     throw :not_literal unless o.segments.size == 1 && o.segments[0].is_a?(Model::LiteralString)
