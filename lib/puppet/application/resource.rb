@@ -15,6 +15,7 @@ class Puppet::Application::Resource < Puppet::Application
   option("--verbose", "-v")
   option("--edit", "-e")
   option("--to_yaml", "-y")
+  option('--fail', '-f')
 
   option("--types", "-t") do |_arg|
     env = Puppet.lookup(:environments).get(Puppet[:environment]) || create_default_environment
@@ -108,6 +109,9 @@ class Puppet::Application::Resource < Puppet::Application
       * --to_yaml:
         Output found resources in yaml format, suitable to use with Hiera and
         create_resources.
+
+      * --fail:
+        Fails and returns an exit code of 1 if the resource is not found.
 
       EXAMPLE
       -------
@@ -236,8 +240,11 @@ class Puppet::Application::Resource < Puppet::Application
           resource = Puppet::Resource.new(type, name, :parameters => params)
 
           # save returns [resource that was saved, transaction log from applying the resource]
-          save_result = Puppet::Resource.indirection.save(resource, key)
-          [save_result.first]
+          save_result, report = Puppet::Resource.indirection.save(resource, key)
+          status = report.resource_statuses[resource.ref]
+          raise "Failed to manage resource #{resource.ref}" if status&.failed? && !options[:fail].nil? && options[:fail]
+
+          [save_result]
         end
       else
         if type == "file"

@@ -67,6 +67,12 @@ describe test_title, "when validating attribute values" do
     expect(svc.should(:ensure)).to eq(:stopped)
   end
 
+  describe 'the absent property' do
+    it 'should fail validate if it is a service' do
+      expect { Puppet::Type.type(:service).new(:name => "service_name", :ensure => :absent) }.to raise_error(Puppet::Error, /Managing absent on a service is not supported/)
+    end
+  end
+
   describe "the enable property" do
     before :each do
       allow(@provider.class).to receive(:supports_parameter?).and_return(true)
