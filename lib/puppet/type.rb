@@ -1817,7 +1817,7 @@ class Type
 
     self.providify
 
-    provider = genclass(
+    genclass(
       name,
       :parent => parent,
       :hash => provider_hash,
@@ -1827,8 +1827,6 @@ class Type
       :extend => feature_module,
       :attributes => options
     )
-
-    provider
   end
 
   # Ensures there is a `:provider` parameter defined.

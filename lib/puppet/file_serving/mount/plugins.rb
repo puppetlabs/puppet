@@ -11,9 +11,7 @@ class Puppet::FileServing::Mount::Plugins < Puppet::FileServing::Mount
     mod = request.environment.modules.find { |m| m.plugin(relative_path) }
     return nil unless mod
 
-    path = mod.plugin(relative_path)
-
-    path
+    mod.plugin(relative_path)
   end
 
   def search(relative_path, request)

@@ -173,7 +173,7 @@ class Puppet::Parser::AST::PopsBridge
 
     # Obtains the scope or issues a warning if :global_scope is not bound
     def obtain_scope
-      scope = Puppet.lookup(:global_scope) do
+      Puppet.lookup(:global_scope) do
         # This occurs when testing and when applying a catalog (there is no scope available then), and
         # when running tests that run a partial setup.
         # This is bad if the logic is trying to compile, but a warning can not be issues since it is a normal
@@ -181,7 +181,6 @@ class Puppet::Parser::AST::PopsBridge
         Puppet.debug { _("Instantiating Resource with type checked parameters - scope is missing, skipping type checking.") }
         nil
       end
-      scope
     end
 
     # Produces a hash with data for Definition and HostClass

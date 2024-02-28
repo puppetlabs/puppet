@@ -783,9 +783,7 @@ class Puppet::Settings
       klass = StringSetting
     end
     hash[:settings] = self
-    setting = klass.new(hash)
-
-    setting
+    klass.new(hash)
   end
 
   # This has to be private, because it doesn't add the settings to @config

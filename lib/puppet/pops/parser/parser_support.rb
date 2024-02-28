@@ -229,8 +229,7 @@ class Parser
     _, token = @lexer.emit_completed([:NOOP, '', 0], locator.string.bytesize)
     loc(no_op, token)
     # Program with a Noop
-    program = Factory.PROGRAM(no_op, [], locator)
-    program
+    Factory.PROGRAM(no_op, [], locator)
   end
 
   # Performs the parsing and returns the resulting model.

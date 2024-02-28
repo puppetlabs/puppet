@@ -1052,8 +1052,7 @@ class Factory
     end
     a_hash = HASH(keyed_entries)
     a_hash.record_position(left[KEY_LOCATOR], lbrace_token, rbrace_token)
-    result = block_or_expression(transform_calls([left, a_hash]))
-    result
+    block_or_expression(transform_calls([left, a_hash]))
   end
 
   def interpolate_Factory(c)

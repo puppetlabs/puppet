@@ -327,7 +327,7 @@ module Puppet::Util::Execution
   # @api private
   #
   def self.execute_posix(command, options, stdin, stdout, stderr)
-    child_pid = Puppet::Util.safe_posix_fork(stdin, stdout, stderr) do
+    Puppet::Util.safe_posix_fork(stdin, stdout, stderr) do
       # We can't just call Array(command), and rely on it returning
       # things like ['foo'], when passed ['foo'], because
       # Array(command) will call command.to_a internally, which when
@@ -371,7 +371,6 @@ module Puppet::Util::Execution
         exit!(1)
       end
     end
-    child_pid
   end
   private_class_method :execute_posix
 
