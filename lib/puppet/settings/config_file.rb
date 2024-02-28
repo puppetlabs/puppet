@@ -22,7 +22,7 @@ class Puppet::Settings::ConfigFile
   # @return A Struct with a +sections+ array representing each configuration section
   def parse_file(file, text, allowed_section_names = [])
     result = Conf.new
-    if !allowed_section_names.empty?
+    unless allowed_section_names.empty?
       allowed_section_names << 'main' unless allowed_section_names.include?('main')
     end
 
@@ -123,10 +123,11 @@ class Puppet::Settings::ConfigFile
   def extract_fileinfo(string)
     result = {}
     value = string.sub(/\{\s*([^}]+)\s*\}/) do
-      params = $1
+      params = ::Regexp.last_match(1)
       params.split(/\s*,\s*/).each do |str|
         if str =~ /^\s*(\w+)\s*=\s*([\w]+)\s*$/
-          param, value = $1.intern, $2
+          param = ::Regexp.last_match(1).intern
+          value = ::Regexp.last_match(2)
           result[param] = value
           unless [:owner, :mode, :group].include?(param)
             raise ArgumentError, _("Invalid file option '%{parameter}'") % { parameter: param }

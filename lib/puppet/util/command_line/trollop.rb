@@ -221,7 +221,7 @@ class CommandLine
       opts[:long] =
         case opts[:long]
         when /^--([^-].*)$/
-          $1
+          ::Regexp.last_match(1)
         when /^[^-]/
           opts[:long]
         else
@@ -234,7 +234,7 @@ class CommandLine
         opts[:short] = opts[:short].to_s if opts[:short]
       end
       opts[:short] = case opts[:short]
-                     when /^-(.)$/; $1
+                     when /^-(.)$/; ::Regexp.last_match(1)
                      when nil, :none, /^.$/; opts[:short]
                      else raise ArgumentError, _("invalid short option name '%{name}'") % { name: opts[:short].inspect }
                      end
@@ -333,11 +333,11 @@ class CommandLine
       @leftovers = each_arg cmdline do |arg, params|
         sym = case arg
               when /^-([^-])$/
-                @short[$1]
+                @short[::Regexp.last_match(1)]
               when /^--no-([^-]\S*)$/
-                @long["[no-]#{$1}"]
+                @long["[no-]#{::Regexp.last_match(1)}"]
               when /^--([^-]\S*)$/
-                @long[$1] ? @long[$1] : @long["[no-]#{$1}"]
+                @long[::Regexp.last_match(1)] ? @long[::Regexp.last_match(1)] : @long["[no-]#{::Regexp.last_match(1)}"]
               else
                 raise CommandlineError, _("invalid argument syntax: '%{arg}'") % { arg: arg }
               end
@@ -582,7 +582,7 @@ class CommandLine
           remains += args[(i + 1)..]
           return remains
         when /^--(\S+?)=(.*)$/ # long argument with equals
-          yield "--#{$1}", [$2]
+          yield "--#{::Regexp.last_match(1)}", [::Regexp.last_match(2)]
           i += 1
         when /^--(\S+)$/ # long argument
           params = collect_argument_parameters(args, i + 1)
@@ -602,7 +602,7 @@ class CommandLine
             i += 1
           end
         when /^-(\S+)$/ # one or more short arguments
-          shortargs = $1.split(//)
+          shortargs = ::Regexp.last_match(1).split(//)
           shortargs.each_with_index do |a, j|
             if j == (shortargs.length - 1)
               params = collect_argument_parameters(args, i + 1)

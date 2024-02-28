@@ -35,7 +35,7 @@ module Puppet
         return true
       end
 
-      return true if !resource.replace?
+      return true unless resource.replace?
 
       is_insync = yield(is)
 
@@ -61,7 +61,7 @@ module Puppet
 
     def date_matches?(checksum_type, current, desired)
       time_types = [:mtime, :ctime]
-      return false if !time_types.include?(checksum_type)
+      return false unless time_types.include?(checksum_type)
       return false unless current && desired
 
       begin

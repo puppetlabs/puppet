@@ -40,7 +40,7 @@ class Puppet::Util::Windows::RootCerts
     ptr = FFI::Pointer::NULL
     store = CertOpenSystemStoreA(nil, "ROOT")
     begin
-      while (ptr = CertEnumCertificatesInStore(store, ptr)) and not ptr.null?
+      while (ptr = CertEnumCertificatesInStore(store, ptr)) and !ptr.null?
         context = CERT_CONTEXT.new(ptr)
         cert_buf = context[:pbCertEncoded].read_bytes(context[:cbCertEncoded])
         begin

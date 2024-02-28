@@ -20,8 +20,8 @@ class Formatter
 
     while work.length > textLen
       if work =~ patt
-        res << $1
-        work.slice!(0, $MATCH.length)
+        res << ::Regexp.last_match(1)
+        work.slice!(0, ::Regexp.last_match(0).length)
       else
         res << work.slice!(0, textLen)
       end
@@ -43,7 +43,7 @@ class Formatter
     # If we can match an indentation, then just remove that same level of
     # indent from every line.
     if text =~ /^(\s+)/
-      indent = $1
+      indent = ::Regexp.last_match(1)
       return text.gsub(/^#{indent}/, '')
     else
       return text

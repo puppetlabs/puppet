@@ -59,7 +59,7 @@ class Puppet::Util::Pidlock
 
   def clear_if_stale
     pid = lock_pid
-    return @lockfile.unlock if pid == nil
+    return @lockfile.unlock if pid.nil?
     return if Process.pid == pid
 
     errors = [Errno::ESRCH]

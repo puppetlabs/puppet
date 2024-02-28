@@ -36,7 +36,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     indirection, method, key, params = uri2indirection(request.method, request.path, request.params)
     certificate = request.client_cert
 
-    if !indirection.allow_remote_requests?
+    unless indirection.allow_remote_requests?
       # TODO: should we tell the user we found an indirection but it doesn't
       # allow remote requests, or just pretend there's no handler at all? what
       # are the security implications for the former?
@@ -79,20 +79,20 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     end
 
     indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
-    if !indirection
+    unless indirection
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
         _("Could not find indirection '%{indirection_name}'") % { indirection_name: indirection_name },
         Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND
       )
     end
 
-    if !environment
+    unless environment
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
         _("An environment parameter must be specified")
       )
     end
 
-    if !Puppet::Node::Environment.valid_name?(environment)
+    unless Puppet::Node::Environment.valid_name?(environment)
       raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
         _("The environment must be purely alphanumeric, not '%{environment}'") % { environment: environment }
       )

@@ -142,7 +142,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       # loop.  Thanks, Ruby, for your awesome abstractions. --daniel 2012-03-23
       highest = []
       Puppet::Etc.send(database) { |entry| highest << entry.send(method) }
-      highest = highest.reject { |x| x > 65000 }.max
+      highest = highest.reject { |x| x > 65_000 }.max
 
       @prevauto = highest || 1000
     end

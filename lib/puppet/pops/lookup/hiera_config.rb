@@ -212,7 +212,7 @@ class HieraConfig
         # Raise a LookupError with a RUNTIME_ERROR issue to prevent this being translated to an evaluation error triggered in the pp file
         # where the lookup started
         if e.message =~ /^Undefined variable '([^']+)'/
-          var = $1
+          var = ::Regexp.last_match(1)
           fail(Issues::HIERA_UNDEFINED_VARIABLE, { :name => var }, find_line_matching(/%\{['"]?#{var}['"]?}/))
         end
         raise e
@@ -287,7 +287,7 @@ class HieraConfig
 
   def create_hiera3_backend_provider(name, backend, parent_data_provider, datadir, paths, hiera3_config)
     # Custom backend. Hiera 3 must be installed, its logger configured, and it must be made aware of the loaded config
-    raise Puppet::DataBinding::LookupError, 'Hiera 3 is not installed' if !Puppet.features.hiera?
+    raise Puppet::DataBinding::LookupError, 'Hiera 3 is not installed' unless Puppet.features.hiera?
 
     if Hiera::Config.instance_variable_defined?(:@config) && (current_config = Hiera::Config.instance_variable_get(:@config)).is_a?(Hash)
       current_config.each_pair do |key, val|
@@ -308,7 +308,7 @@ class HieraConfig
       # Replace the class methods 'hiera_interpolate' and 'alias_interpolate' with a method that wires back and performs global
       # lookups using the lookup framework. This is necessary since the classic Hiera is made aware only of custom backends.
       class << Hiera::Interpolate
-        hiera_interpolate = Proc.new do |_data, key, scope, _extra_data, context|
+        hiera_interpolate = proc do |_data, key, scope, _extra_data, context|
           override = context[:order_override]
           invocation = Puppet::Pops::Lookup::Invocation.current
           unless override.nil? && invocation.global_only?
@@ -431,8 +431,8 @@ class HieraConfigV3 < HieraConfig
   end
 
   DEFAULT_CONFIG_HASH = {
-    KEY_BACKENDS => %w(yaml),
-    KEY_HIERARCHY => %w(nodes/%{::trusted.certname} common),
+    KEY_BACKENDS => %w[yaml],
+    KEY_HIERARCHY => %w[nodes/%{::trusted.certname} common],
     KEY_MERGE_BEHAVIOR => 'native'
   }
 
@@ -689,7 +689,7 @@ class HieraConfigV5 < HieraConfig
 
       options = he[KEY_OPTIONS] || defaults[KEY_OPTIONS]
       options = options.nil? ? EMPTY_HASH : interpolate(options, lookup_invocation, false)
-      if (function_kind == KEY_V3_BACKEND)
+      if function_kind == KEY_V3_BACKEND
         v3options = { :datadir => entry_datadir.to_s }
         options.each_pair { |k, v| v3options[k.to_sym] = v }
         data_providers[name] =
@@ -700,9 +700,13 @@ class HieraConfigV5 < HieraConfig
                                          locations,
                                          {
                                            :hierarchy =>
-                                             locations.nil? ? [] : locations.map do |loc|
-                                               path = loc.original_location
-                                               path.end_with?(".#{function_name}") ? path[0..-(function_name.length + 2)] : path
+                                             if locations.nil?
+                                               []
+                                             else
+                                               locations.map do |loc|
+                                                 path = loc.original_location
+                                                 path.end_with?(".#{function_name}") ? path[0..-(function_name.length + 2)] : path
+                                               end
                                              end,
                                            function_name.to_sym => v3options,
                                            :backends => [function_name],

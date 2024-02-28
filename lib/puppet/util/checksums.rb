@@ -45,12 +45,12 @@ module Puppet::Util::Checksums
 
   # Strip the checksum type from an existing checksum
   def sumdata(checksum)
-    checksum =~ /^\{(\w+)\}(.+)/ ? $2 : nil
+    checksum =~ /^\{(\w+)\}(.+)/ ? ::Regexp.last_match(2) : nil
   end
 
   # Strip the checksum type from an existing checksum
   def sumtype(checksum)
-    checksum =~ /^\{(\w+)\}/ ? $1 : nil
+    checksum =~ /^\{(\w+)\}/ ? ::Regexp.last_match(1) : nil
   end
 
   # Calculate a checksum using Digest::SHA256.

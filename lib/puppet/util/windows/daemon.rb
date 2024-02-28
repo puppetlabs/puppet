@@ -74,7 +74,7 @@ module Puppet::Util::Windows
     NO_ERROR = 0
 
     # Wraps SetServiceStatus.
-    SetTheServiceStatus = Proc.new do |dwCurrentState, dwWin32ExitCode, dwCheckPoint, dwWaitHint|
+    SetTheServiceStatus = proc do |dwCurrentState, dwWin32ExitCode, dwCheckPoint, dwWaitHint|
       ss = SERVICE_STATUS.new # Current status of the service.
 
       # Disable control requests until the service is started.
@@ -97,7 +97,7 @@ module Puppet::Util::Windows
       @@dwServiceState = dwCurrentState
 
       # Send status of the service to the Service Controller.
-      if !SetServiceStatus(@@ssh, ss)
+      unless SetServiceStatus(@@ssh, ss)
         SetEvent(@@hStopEvent)
       end
     end
@@ -105,7 +105,7 @@ module Puppet::Util::Windows
     ERROR_CALL_NOT_IMPLEMENTED = 0x78
 
     # Handles control signals from the service control manager.
-    Service_Ctrl_ex = Proc.new do |dwCtrlCode, _dwEventType, _lpEventData, _lpContext|
+    Service_Ctrl_ex = proc do |dwCtrlCode, _dwEventType, _lpEventData, _lpContext|
       @@waiting_control_code = dwCtrlCode;
       return_value = NO_ERROR
 
@@ -155,7 +155,7 @@ module Puppet::Util::Windows
         end
 
         # Args passed to Service.start
-        if (dwArgc > 1)
+        if dwArgc > 1
           @@Argv = argv[1..]
         else
           @@Argv = nil
@@ -177,11 +177,11 @@ module Puppet::Util::Windows
         SetEvent(@@hStartEvent)
 
         # Main loop for the service.
-        while (WaitForSingleObject(@@hStopEvent, 1000) != WAIT_OBJECT_0) do
+        while WaitForSingleObject(@@hStopEvent, 1000) != WAIT_OBJECT_0 do
         end
 
         # Main loop for the service.
-        while (WaitForSingleObject(@@hStopCompletedEvent, 1000) != WAIT_OBJECT_0) do
+        while WaitForSingleObject(@@hStopCompletedEvent, 1000) != WAIT_OBJECT_0 do
         end
       ensure
         # Stop the service.
@@ -201,7 +201,7 @@ module Puppet::Util::Windows
       s[:lpServiceProc] = nil
 
       # No service to step, no service handle, no ruby exceptions, just terminate the thread..
-      if !StartServiceCtrlDispatcherW(ste)
+      unless StartServiceCtrlDispatcherW(ste)
         return 1
       end
 
@@ -267,7 +267,7 @@ module Puppet::Util::Windows
       events.put_pointer(0, FFI::Pointer.new(hThread))
       events.put_pointer(FFI::Pointer.size, FFI::Pointer.new(@@hStartEvent))
 
-      while ((index = WaitForMultipleObjects(2, events, 0, 1000)) == WAIT_TIMEOUT) do
+      while (index = WaitForMultipleObjects(2, events, 0, 1000)) == WAIT_TIMEOUT do
       end
 
       if index == WAIT_FAILED
@@ -281,7 +281,7 @@ module Puppet::Util::Windows
 
       thr = Thread.new do
         begin
-          while (WaitForSingleObject(@@hStopEvent, 1000) == WAIT_TIMEOUT)
+          while WaitForSingleObject(@@hStopEvent, 1000) == WAIT_TIMEOUT
             # Check to see if anything interesting has been signaled
             case @@waiting_control_code
             when SERVICE_CONTROL_PAUSE

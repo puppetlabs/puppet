@@ -44,10 +44,10 @@ class Puppet::Provider::Package::Windows
          values['UninstallString'].length > 0 &&
          values['WindowsInstaller'] != 1 && # DWORD
          name !~ /^KB[0-9]{6}/ &&
-         values['ParentKeyName'] == nil &&
-         values['Security Update'] == nil &&
-         values['Update Rollup'] == nil &&
-         values['Hotfix'] == nil)
+         values['ParentKeyName'].nil? &&
+         values['Security Update'].nil? &&
+         values['Update Rollup'].nil? &&
+         values['Hotfix'].nil?)
     end
 
     def initialize(name, version, uninstall_string)

@@ -16,9 +16,9 @@ class Puppet::Settings::IniFile
     config_fh.each_line do |line|
       case line.chomp
       when /^(\s*)\[([[:word:]]+)\](\s*)$/
-        config.append(SectionLine.new($1, $2, $3))
+        config.append(SectionLine.new(::Regexp.last_match(1), ::Regexp.last_match(2), ::Regexp.last_match(3)))
       when /^(\s*)([[:word:]]+)(\s*=\s*)(.*?)(\s*)$/
-        config.append(SettingLine.new($1, $2, $3, $4, $5))
+        config.append(SettingLine.new(::Regexp.last_match(1), ::Regexp.last_match(2), ::Regexp.last_match(3), ::Regexp.last_match(4), ::Regexp.last_match(5)))
       else
         config.append(Line.new(line))
       end

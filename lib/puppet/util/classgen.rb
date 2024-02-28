@@ -177,11 +177,11 @@ module Puppet::Util::ClassGen
 
     [:include, :extend].each do |method|
       set = options[method]
-      if set
-        set = [set] unless set.is_a?(Array)
-        set.each do |mod|
-          klass.send(method, mod)
-        end
+      next unless set
+
+      set = [set] unless set.is_a?(Array)
+      set.each do |mod|
+        klass.send(method, mod)
       end
     end
 
@@ -210,9 +210,9 @@ module Puppet::Util::ClassGen
     # If we were told to stick it in a hash, then do so
     array = options[:array]
     if array
-      if (klass.respond_to? :name and
-              array.find { |c| c.name == klassname } and
-              !options[:overwrite])
+      if klass.respond_to? :name and
+         array.find { |c| c.name == klassname } and
+         !options[:overwrite]
         raise Puppet::SubclassAlreadyDefined,
               _("Already a generated class named %{klassname}") % { klassname: klassname }
       end

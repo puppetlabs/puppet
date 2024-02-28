@@ -39,7 +39,7 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
       # Add the package version
       str += "=#{should}"
     end
-    cmd = %w{-q -y}
+    cmd = %w[-q -y]
 
     cmd << 'install' << str
 
@@ -51,10 +51,10 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
     output = aptcache :showpkg, @resource[:name]
 
     if output =~ /Versions:\s*\n((\n|.)+)^$/
-      versions = $1
+      versions = Regexp.last_match(1)
       available_versions = versions.split(/\n/).filter_map { |version|
         if version =~ /^([^\(]+)\(/
-          $1
+          Regexp.last_match(1)
         else
           self.warning _("Could not match version '%{version}'") % { version: version }
           nil

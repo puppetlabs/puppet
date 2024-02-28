@@ -219,7 +219,7 @@ class Puppet::Util::FileType
     # Remove a specific @path's cron tab.
     def remove
       cmd = "#{cmdbase} -r"
-      if %w{Darwin FreeBSD DragonFly}.include?(Puppet.runtime[:facter].value('os.name'))
+      if %w[Darwin FreeBSD DragonFly].include?(Puppet.runtime[:facter].value('os.name'))
         cmd = "/bin/echo yes | #{cmd}"
       end
 
@@ -267,7 +267,7 @@ class Puppet::Util::FileType
         return ""
       end
 
-      Puppet::Util::Execution.execute(%w{crontab -l}, cronargs)
+      Puppet::Util::Execution.execute(%w[crontab -l], cronargs)
     rescue => detail
       case detail.to_s
       when /can't open your crontab/
@@ -283,7 +283,7 @@ class Puppet::Util::FileType
 
     # Remove a specific @path's cron tab.
     def remove
-      Puppet::Util::Execution.execute(%w{crontab -r}, cronargs)
+      Puppet::Util::Execution.execute(%w[crontab -r], cronargs)
     rescue => detail
       raise FileReadError, _("Could not remove crontab for %{path}: %{detail}") % { path: @path, detail: detail }, detail.backtrace
     end
@@ -318,7 +318,7 @@ class Puppet::Util::FileType
         return ""
       end
 
-      Puppet::Util::Execution.execute(%w{crontab -l}, cronargs)
+      Puppet::Util::Execution.execute(%w[crontab -l], cronargs)
     rescue => detail
       case detail.to_s
       when /open.*in.*directory/
@@ -334,7 +334,7 @@ class Puppet::Util::FileType
 
     # Remove a specific @path's cron tab.
     def remove
-      Puppet::Util::Execution.execute(%w{crontab -r}, cronargs)
+      Puppet::Util::Execution.execute(%w[crontab -r], cronargs)
     rescue => detail
       raise FileReadError, _("Could not remove crontab for %{path}: %{detail}") % { path: @path, detail: detail }, detail.backtrace
     end

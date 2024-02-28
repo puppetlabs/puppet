@@ -27,7 +27,7 @@ Puppet::Type.type(:service).provide :openwrt, :parent => :init, :source => :init
 
   def enabled?
     # We can't define the "command" for the init script, so we call system?
-    if system(self.initscript, 'enabled') then return :true else return :false end
+    system(self.initscript, 'enabled') ? (return :true) : (return :false)
   end
 
   # Purposely leave blank so we fail back to ps based status detection

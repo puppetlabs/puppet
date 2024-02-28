@@ -13,7 +13,7 @@ class Puppet::Util::Reference
   instance_load(:reference, 'puppet/reference')
 
   def self.modes
-    %w{pdf text}
+    %w[pdf text]
   end
 
   def self.newreference(name, options = {}, &block)
@@ -37,13 +37,13 @@ class Puppet::Util::Reference
     rst2latex = which('rst2latex') || which('rst2latex.py') ||
                 raise(_("Could not find rst2latex"))
 
-    cmd = %{#{rst2latex} /tmp/puppetdoc.txt > /tmp/puppetdoc.tex}
+    cmd = %(#{rst2latex} /tmp/puppetdoc.txt > /tmp/puppetdoc.tex)
     Puppet::Util.replace_file("/tmp/puppetdoc.txt") { |f| f.puts text }
     # There used to be an attempt to use secure_open / replace_file to secure
     # the target, too, but that did nothing: the race was still here.  We can
     # get exactly the same benefit from running this effort:
     Puppet::FileSystem.unlink('/tmp/puppetdoc.tex') rescue nil
-    output = %x{#{cmd}}
+    output = %x(#{cmd})
     unless $CHILD_STATUS == 0
       $stderr.puts _("rst2latex failed")
       $stderr.puts output
@@ -53,7 +53,7 @@ class Puppet::Util::Reference
 
     # Now convert to pdf
     Dir.chdir("/tmp") do
-      %x{texi2pdf puppetdoc.tex >/dev/null 2>/dev/null}
+      %x(texi2pdf puppetdoc.tex >/dev/null 2>/dev/null)
     end
   end
 

@@ -59,7 +59,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     end
 
     def mode
-      @source_permissions_ignore ? 0644 : @stat.mode
+      @source_permissions_ignore ? 0o644 : @stat.mode
     end
 
     def_delegators :@stat, :ftype
@@ -78,7 +78,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
 
     { :owner => 'S-1-5-32-544',
       :group => 'S-1-0-0',
-      :mode => 0644 }.each do |method, default_value|
+      :mode => 0o644 }.each do |method, default_value|
       define_method method do
         return default_value
       end
@@ -107,7 +107,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     @ftype = stat.ftype
 
     # We have to mask the mode, yay.
-    @mode = stat.mode & 007777
+    @mode = stat.mode & 0o07777
 
     case stat.ftype
     when "file"

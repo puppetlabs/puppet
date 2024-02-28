@@ -373,7 +373,7 @@ class LookupAdapter < DataAdapter
 
   # Retrieve and cache the global lookup options
   def global_lookup_options(lookup_invocation, merge_strategy)
-    if !instance_variable_defined?(:@global_lookup_options)
+    unless instance_variable_defined?(:@global_lookup_options)
       @global_lookup_options = nil
       catch(:no_such_key) { @global_lookup_options = validate_lookup_options(lookup_global(LookupKey::LOOKUP_OPTIONS, lookup_invocation, merge_strategy), nil) }
     end
@@ -383,7 +383,7 @@ class LookupAdapter < DataAdapter
   # Retrieve and cache lookup options specific to the environment of the compiler that this adapter is attached to (i.e. a merge
   # of global and environment lookup options).
   def env_lookup_options(lookup_invocation, merge_strategy)
-    if !instance_variable_defined?(:@env_lookup_options)
+    unless instance_variable_defined?(:@env_lookup_options)
       global_options = global_lookup_options(lookup_invocation, merge_strategy)
       @env_only_lookup_options = nil
       catch(:no_such_key) { @env_only_lookup_options = validate_lookup_options(lookup_in_environment(LookupKey::LOOKUP_OPTIONS, lookup_invocation, merge_strategy), nil) }

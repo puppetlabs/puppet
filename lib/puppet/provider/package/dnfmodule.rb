@@ -95,7 +95,7 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
         # module has no default profile and no profile was requested, so just enable the stream
         # DNF versions prior to 4.2.8 do not need this workaround
         # see https://bugzilla.redhat.com/show_bug.cgi?id=1669527
-        if @resource[:flavor] == nil && e.message =~ /^(?:missing|broken) groups or modules: #{Regexp.quote(args)}$/
+        if @resource[:flavor].nil? && e.message =~ /^(?:missing|broken) groups or modules: #{Regexp.quote(args)}$/
           enable(args)
         else
           raise

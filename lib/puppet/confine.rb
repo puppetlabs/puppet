@@ -31,7 +31,7 @@ class Puppet::Confine
           Puppet.warning("Could not load confine test '#{name}': #{detail}")
         end
         # Could not find file
-        if !Puppet[:always_retry_plugins]
+        unless Puppet[:always_retry_plugins]
           @tests[name] = nil
         end
       end

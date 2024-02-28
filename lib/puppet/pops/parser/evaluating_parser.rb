@@ -71,7 +71,7 @@ class EvaluatingParser
 
   def evaluator
     # Do not use the cached evaluator if this is a migration run
-    if (Puppet.lookup(:migration_checker) { nil })
+    if Puppet.lookup(:migration_checker) { nil }
       return Evaluator::EvaluatorImpl.new()
     end
 
@@ -146,7 +146,7 @@ class EvaluatingParser
       when '"'
         escaped << '\\"'
       when '\\'
-        escaped << if c == '$' || c == 's'; p; else '\\\\'; end # don't escape \ when followed by s or $
+        escaped << ((c == '$' || c == 's') ? p : '\\\\') # don't escape \ when followed by s or $
       else
         escaped << p
       end

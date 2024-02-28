@@ -13,7 +13,8 @@ module Puppet::ModuleTool::Shared
       @installed[mod_name] << mod
       d = @local["#{mod_name}@#{mod.version}"]
       (mod.dependencies || []).each do |hash|
-        name, conditions = hash['name'], hash['version_requirement']
+        name = hash['name']
+        conditions = hash['version_requirement']
         name = name.tr('/', '-')
         d[name] = conditions
         @conditions[name] << {
@@ -135,7 +136,11 @@ module Puppet::ModuleTool::Shared
         :action => action,
         :previous_version => @installed[mod].empty? ? nil : @installed[mod].first.version,
         :file => @urls["#{mod}@#{version[:vstring]}"],
-        :path => action == :install ? @options[:target_dir] : (@installed[mod].empty? ? @options[:target_dir] : @installed[mod].first.modulepath),
+        :path => if action == :install
+                   @options[:target_dir]
+                 else
+                   @installed[mod].empty? ? @options[:target_dir] : @installed[mod].first.modulepath
+                 end,
         :dependencies => []
       }
     end

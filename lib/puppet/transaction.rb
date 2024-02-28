@@ -270,7 +270,7 @@ class Puppet::Transaction
     status = resource_harness.evaluate(resource)
     add_resource_status(status)
     ancestor ||= resource
-    if !(status.failed? || status.failed_to_restart?)
+    unless status.failed? || status.failed_to_restart?
       event_manager.queue_events(ancestor, status.events)
     end
   rescue => detail
@@ -450,7 +450,7 @@ class Puppet::Transaction
     return false if ignore_tags?
     return false if tags.empty?
 
-    not resource.tagged?(*tags)
+    !resource.tagged?(*tags)
   end
 
   def skip_tags?(resource)

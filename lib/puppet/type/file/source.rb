@@ -96,7 +96,7 @@ module Puppet
 
         self.fail "Cannot use relative URLs '#{source}'" unless uri.absolute?
         self.fail "Cannot use opaque URLs '#{source}'" unless uri.hierarchical?
-        unless %w{file puppet http https}.include?(uri.scheme)
+        unless %w[file puppet http https].include?(uri.scheme)
           self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving"
         end
       end
@@ -266,7 +266,7 @@ module Puppet
         value = value.to_s(8) if param_name == :mode && value.is_a?(Numeric)
         resource[param_name] = value
 
-        if (metadata_method == :checksum)
+        if metadata_method == :checksum
           # If copying checksum, also copy checksum_type
           resource[:checksum] = metadata.checksum_type
         end

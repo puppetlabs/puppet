@@ -173,11 +173,11 @@ module Puppet
         found = false
         @should.each do |value|
           number = Puppet::Util.gid(value)
-          if number
-            provider.gid = number
-            found = true
-            break
-          end
+          next unless number
+
+          provider.gid = number
+          found = true
+          break
         end
 
         fail _("Could not find group(s) %{groups}") % { groups: @should.join(",") } unless found
@@ -440,7 +440,7 @@ module Puppet
 
       validate do |val|
         if munge(val)
-          raise ArgumentError, _("User provider %{name} can not manage home directories") % { name: provider.class.name } if provider and not provider.class.manages_homedir?
+          raise ArgumentError, _("User provider %{name} can not manage home directories") % { name: provider.class.name } if provider and !provider.class.manages_homedir?
         end
       end
     end
@@ -700,7 +700,7 @@ module Puppet
     end
 
     def generate
-      if !self[:purge_ssh_keys].empty?
+      unless self[:purge_ssh_keys].empty?
         if Puppet::Type.type(:ssh_authorized_key).nil?
           warning _("Ssh_authorized_key type is not available. Cannot purge SSH keys.")
         else
@@ -840,9 +840,9 @@ module Puppet
         next unless line =~ Puppet::Type.type(:ssh_authorized_key).keyline_regex
 
         # the name is stored in the 4th capture of the regex
-        name = $4
+        name = ::Regexp.last_match(4)
         if name.empty?
-          $3.delete("\n")
+          ::Regexp.last_match(3).delete("\n")
           # If no comment is specified for this key, generate a unique internal
           # name. This uses the same rules as
           # provider/ssh_authorized_key/parsed (PUP-3357)

@@ -64,7 +64,7 @@ class Puppet::Interface::Option
     # incoherence here makes our life super-difficult, and we can more easily
     # relax this rule later if we find a valid use case for it. --daniel 2011-03-30
     @argument = @optparse.any? { |o| o =~ /[ =]/ }
-    if @argument and not @optparse.all? { |o| o =~ /[ =]/ } then
+    if @argument and !@optparse.all? { |o| o =~ /[ =]/ } then
       raise ArgumentError, _("Option %{name} is inconsistent about taking an argument") % { name: @name }
     end
 
@@ -74,7 +74,7 @@ class Puppet::Interface::Option
     if @optional_argument
       raise ArgumentError, _("Options with optional arguments are not supported")
     end
-    if @optional_argument and not @optparse.all? { |o| o =~ /[ =]\[/ } then
+    if @optional_argument and !@optparse.all? { |o| o =~ /[ =]\[/ } then
       raise ArgumentError, _("Option %{name} is inconsistent about the argument being optional") % { name: @name }
     end
   end

@@ -213,7 +213,7 @@ class Puppet::Application::Filebucket < Puppet::Application
   def run_command
     @args = command_line.args
     command = args.shift
-    return send(command) if %w{get backup restore diff list}.include? command
+    return send(command) if %w[get backup restore diff list].include? command
 
     help
   end

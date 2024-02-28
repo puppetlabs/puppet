@@ -64,14 +64,14 @@ module Puppet::FileBucketFile
       msg = ''.dup
       # Get all files with mtime between 'from' and 'to'
       Pathname.new(request.options[:bucket_path]).find { |item|
-        if item.file? and item.basename.to_s == "paths"
-          filenames = item.read.strip.split("\n")
-          filestat = Time.parse(item.stat.mtime.to_s)
-          if from <= filestat and filestat <= to
-            filenames.each do |filename|
-              bucket[filename] += [[item.stat.mtime, item.parent.basename]]
-            end
-          end
+        next unless item.file? and item.basename.to_s == "paths"
+
+        filenames = item.read.strip.split("\n")
+        filestat = Time.parse(item.stat.mtime.to_s)
+        next unless from <= filestat and filestat <= to
+
+        filenames.each do |filename|
+          bucket[filename] += [[item.stat.mtime, item.parent.basename]]
         end
       }
       # Sort the results
@@ -125,7 +125,7 @@ module Puppet::FileBucketFile
       # given its possible that request.options[:bucket_path] or Puppet[:bucketdir]
       # contained characters in an encoding that are not represented the
       # same way when the bytes are decoded as UTF-8, continue using system encoding
-      Puppet::FileSystem.open(paths_file, 0640, 'a+:external') do |f|
+      Puppet::FileSystem.open(paths_file, 0o640, 'a+:external') do |f|
         path_match(f, files_original_path)
       end
     end
@@ -152,7 +152,7 @@ module Puppet::FileBucketFile
     #   existing and new backup
     # @api private
     def save_to_disk(bucket_file, files_original_path, contents_file, paths_file)
-      Puppet::Util.withumask(0007) do
+      Puppet::Util.withumask(0o007) do
         unless Puppet::FileSystem.dir_exist?(paths_file)
           Puppet::FileSystem.dir_mkpath(paths_file)
         end
@@ -161,14 +161,14 @@ module Puppet::FileBucketFile
         # given its possible that request.options[:bucket_path] or Puppet[:bucketdir]
         # contained characters in an encoding that are not represented the
         # same way when the bytes are decoded as UTF-8, continue using system encoding
-        Puppet::FileSystem.exclusive_open(paths_file, 0640, 'a+:external') do |f|
+        Puppet::FileSystem.exclusive_open(paths_file, 0o640, 'a+:external') do |f|
           if Puppet::FileSystem.exist?(contents_file)
             if verify_identical_file(contents_file, bucket_file)
               # TRANSLATORS "FileBucket" should not be translated
               Puppet.info _("FileBucket got a duplicate file %{file_checksum}") % { file_checksum: bucket_file.checksum }
               # Don't touch the contents file on Windows, since we can't update the
               # mtime of read-only files there.
-              if !Puppet::Util::Platform.windows?
+              unless Puppet::Util::Platform.windows?
                 Puppet::FileSystem.touch(contents_file)
               end
             elsif contents_file_matches_checksum?(contents_file, bucket_file.checksum_data, bucket_file.checksum_type)
@@ -257,7 +257,7 @@ module Puppet::FileBucketFile
     # @return [void]
     # @api private
     def copy_bucket_file_to_contents_file(contents_file, bucket_file)
-      Puppet::FileSystem.replace_file(contents_file, 0440) do |of|
+      Puppet::FileSystem.replace_file(contents_file, 0o440) do |of|
         # PUP-1044 writes all of the contents
         bucket_file.stream() do |src|
           FileUtils.copy_stream(src, of)

@@ -466,7 +466,7 @@ class Puppet::Transaction::Report
 
   def calculate_event_metrics
     metrics = Hash.new(0)
-    %w{total failure success}.each { |m| metrics[m] = 0 }
+    %w[total failure success].each { |m| metrics[m] = 0 }
     resource_statuses.each do |_name, status|
       metrics[TOTAL] += status.events.length
       status.events.each do |event|

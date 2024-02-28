@@ -83,8 +83,8 @@ class Puppet::Configurer
     else
       result = retrieve_new_catalog(facts, query_options)
 
-      if !result
-        if !Puppet[:usecacheonfailure]
+      unless result
+        unless Puppet[:usecacheonfailure]
           Puppet.warning _("Not using cache on failed catalog")
           return nil
         end
@@ -390,7 +390,7 @@ class Puppet::Configurer
       configured_environment = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
 
       # We only need to find out the environment to run in if we don't already have a catalog
-      unless (cached_catalog || options[:catalog] || Puppet.settings.set_by_cli?(:environment) || Puppet[:strict_environment_mode])
+      unless cached_catalog || options[:catalog] || Puppet.settings.set_by_cli?(:environment) || Puppet[:strict_environment_mode]
         Puppet.debug(_("Environment not passed via CLI and no catalog was given, attempting to find out the last server-specified environment"))
         initial_environment, loaded_last_environment = last_server_specified_environment
 
@@ -442,7 +442,7 @@ class Puppet::Configurer
       # facts may be used to determine which catalog we get, we need to
       # rerun the process if the environment is changed.
       tries = 0
-      while catalog.environment and not catalog.environment.empty? and catalog.environment != @environment
+      while catalog.environment and !catalog.environment.empty? and catalog.environment != @environment
         if tries > 3
           raise Puppet::Error, _("Catalog environment didn't stabilize after %{tries} fetches, aborting run") % { tries: tries }
         end

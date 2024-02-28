@@ -25,7 +25,7 @@ module Puppet
 
     # Anything else, basically
     newvalue(/./) do
-      @resource[:ensure] = :link if !@resource.should(:ensure)
+      @resource[:ensure] = :link unless @resource.should(:ensure)
 
       # Only call mklink if ensure didn't call us in the first place.
       currentensure = @resource.property(:ensure).retrieve
@@ -34,7 +34,7 @@ module Puppet
 
     # Create our link.
     def mklink
-      raise Puppet::Error, "Cannot symlink on this platform version" if !provider.feature?(:manages_symlinks)
+      raise Puppet::Error, "Cannot symlink on this platform version" unless provider.feature?(:manages_symlinks)
 
       target = self.should
 
@@ -48,7 +48,7 @@ module Puppet
         Puppet::Util::SUIDManager.asuser(@resource.asuser) do
           mode = @resource.should(:mode)
           if mode
-            Puppet::Util.withumask(000) do
+            Puppet::Util.withumask(0o00) do
               Puppet::FileSystem.symlink(target, @resource[:path])
             end
           else

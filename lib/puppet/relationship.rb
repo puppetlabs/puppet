@@ -34,7 +34,8 @@ class Puppet::Relationship
   end
 
   def initialize(source, target, options = {})
-    @source, @target = source, target
+    @source = source
+    @target = target
 
     options = (options || {}).each_with_object({}) { |a, h| h[a[0].to_sym] = a[1]; }
     [:callback, :event].each do |option|

@@ -248,7 +248,8 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   def flush
     # We append the "_" because ensure is a Ruby keyword, and it is good to keep property
     # variable names consistent with each other.
-    enable_, ensure_ = @properties_to_sync[:enable], @properties_to_sync[:ensure]
+    enable_ = @properties_to_sync[:enable]
+    ensure_ = @properties_to_sync[:ensure]
 
     # All of the relevant properties are in sync., so we do not need to do
     # anything here.

@@ -325,11 +325,11 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     found_default = false
     o.options.each do |option|
       option.values.each do |value|
-        if value.is_a?(Model::LiteralDefault)
-          # Flag the second default as 'unreachable'
-          acceptor.accept(Issues::DUPLICATE_DEFAULT, value, :container => o) if found_default
-          found_default = true
-        end
+        next unless value.is_a?(Model::LiteralDefault)
+
+        # Flag the second default as 'unreachable'
+        acceptor.accept(Issues::DUPLICATE_DEFAULT, value, :container => o) if found_default
+        found_default = true
       end
     end
   end
@@ -573,7 +573,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     body = prog.body
     return if prog.body.is_a?(Model::Nop) # Ignore empty or comment-only files
 
-    if (body.is_a?(Model::BlockExpression))
+    if body.is_a?(Model::BlockExpression)
       body.statements.each { |s| acceptor.accept(Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION, s) unless valid_top_construct?(s) }
     else
       acceptor.accept(Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION, body) unless valid_top_construct?(body)
@@ -670,7 +670,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # Do not include name of module init file at top level of module
     # e.g. <module name>/manifests/init.pp
     filename = path_components[-1]
-    if !(path_components.length == 3 && filename == 'init.pp')
+    unless path_components.length == 3 && filename == 'init.pp'
       names.push(filename[0..-4]) # Remove .pp from filename
     end
 
@@ -1124,7 +1124,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   # Case expression is idem, if test, and all options are idem
   def idem_CaseExpression(o)
-    return false if !idem(o.test)
+    return false unless idem(o.test)
 
     !o.options.any? { |opt| !idem(opt) }
   end

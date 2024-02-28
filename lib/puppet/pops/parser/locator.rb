@@ -161,7 +161,7 @@ class Locator
       end
 
       return nil if low == ary.length
-      return nil if !satisfied
+      return nil unless satisfied
 
       return low
     end

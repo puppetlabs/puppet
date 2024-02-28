@@ -56,10 +56,10 @@ module Puppet::HTTP::Proxy
       # If this no_proxy entry specifies a port, we want to match it against
       # the destination port.  Otherwise just match hosts.
       if port
-        no_proxy_regex  = %r(#{host}:#{port}$)
+        no_proxy_regex  = %r{#{host}:#{port}$}
         dest_string     = "#{dest.host}:#{dest.port}"
       else
-        no_proxy_regex  = %r(#{host}$)
+        no_proxy_regex  = %r{#{host}$}
         dest_string     = "#{dest.host}"
       end
 

@@ -24,7 +24,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
 
     file = ::File.join(full_path, relative_path)
 
-    if !(Puppet::FileSystem.exist?(file) or Puppet::FileSystem.symlink?(file))
+    unless Puppet::FileSystem.exist?(file) or Puppet::FileSystem.symlink?(file)
       Puppet.info(_("File does not exist or is not accessible: %{file}") % { file: file })
       return nil
     end
@@ -100,7 +100,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
     end
 
     path.gsub(/%(.)/) do |v|
-      key = $1
+      key = ::Regexp.last_match(1)
       if key == "%"
         "%"
       else

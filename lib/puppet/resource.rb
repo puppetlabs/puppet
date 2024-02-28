@@ -167,7 +167,7 @@ class Puppet::Resource
 
   # Proxy these methods to the parameters hash.  It's likely they'll
   # be overridden at some point, but this works for now.
-  %w{has_key? keys length delete empty? <<}.each do |method|
+  %w[has_key? keys length delete empty? <<].each do |method|
     define_method(method) do |*args|
       parameters.send(method, *args)
     end
@@ -227,7 +227,7 @@ class Puppet::Resource
     super || parameters.keys.include?(parameter_name(parameter))
   end
 
-  %w{exported virtual strict}.each do |m|
+  %w[exported virtual strict].each do |m|
     define_method(m + "?") do
       self.send(m)
     end
@@ -388,7 +388,7 @@ class Puppet::Resource
     when TYPE_NODE; environment.known_resource_types.node(title)
     else
       result = Puppet::Type.type(type)
-      if !result
+      unless result
         krt = environment.known_resource_types
         result = krt.definition(type)
       end
@@ -589,9 +589,9 @@ class Puppet::Resource
 
   def self.extract_type_and_title(argtype, argtitle)
     if (argtype.nil? || argtype == :component || argtype == :whit) &&
-       argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                  then [$1, $2]
+       argtitle =~ /^([^\[\]]+)\[(.+)\]$/m                  then [::Regexp.last_match(1), ::Regexp.last_match(2)]
     elsif argtitle.nil? && argtype.is_a?(String) &&
-          argtype =~ /^([^\[\]]+)\[(.+)\]$/m                   then [$1,                 $2]
+          argtype =~ /^([^\[\]]+)\[(.+)\]$/m                   then [::Regexp.last_match(1), ::Regexp.last_match(2)]
     elsif argtitle                                             then [argtype,            argtitle]
     elsif argtype.is_a?(Puppet::Type)                          then [argtype.class.name, argtype.title]
     else  raise ArgumentError, _("No title provided and %{type} is not a valid resource reference") % { type: argtype.inspect } # rubocop:disable Lint/ElseLayout
@@ -646,25 +646,25 @@ class Puppet::Resource
     if type.respond_to?(:title_patterns) && !type.title_patterns.nil?
       type.title_patterns.each do |regexp, symbols_and_lambdas|
         captures = regexp.match(title.to_s)
-        if captures
-          symbols_and_lambdas.zip(captures[1..]).each do |symbol_and_lambda, capture|
-            symbol, proc = symbol_and_lambda
-            # Many types pass "identity" as the proc; we might as well give
-            # them a shortcut to delivering that without the extra cost.
-            #
-            # Especially because the global type defines title_patterns and
-            # uses the identity patterns.
-            #
-            # This was worth about 8MB of memory allocation saved in my
-            # testing, so is worth the complexity for the API.
-            if proc then
-              h[symbol] = proc.call(capture)
-            else
-              h[symbol] = capture
-            end
+        next unless captures
+
+        symbols_and_lambdas.zip(captures[1..]).each do |symbol_and_lambda, capture|
+          symbol, proc = symbol_and_lambda
+          # Many types pass "identity" as the proc; we might as well give
+          # them a shortcut to delivering that without the extra cost.
+          #
+          # Especially because the global type defines title_patterns and
+          # uses the identity patterns.
+          #
+          # This was worth about 8MB of memory allocation saved in my
+          # testing, so is worth the complexity for the API.
+          if proc then
+            h[symbol] = proc.call(capture)
+          else
+            h[symbol] = capture
           end
-          return h
         end
+        return h
       end
       # If we've gotten this far, then none of the provided title patterns
       # matched. Since there's no way to determine the title then the

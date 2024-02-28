@@ -32,7 +32,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   # Required by Puppet::Provider::Package::Targetable::resource_or_provider_command
   def self.provider_command
     # Ensure pip can upgrade pip, which usually puts pip into a new path /usr/local/bin/pip (compared to /usr/bin/pip)
-    self.cmd.map { |c| which(c) }.find { |c| c != nil }
+    self.cmd.map { |c| which(c) }.find { |c| !c.nil? }
   end
 
   def self.cmd
@@ -103,7 +103,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   # _package_==_version_ or _package_===_version_
   def self.parse(line)
     if line.chomp =~ /^([^=]+)===?([^=]+)$/
-      { :ensure => $2, :name => $1, :provider => name }
+      { :ensure => Regexp.last_match(2), :name => Regexp.last_match(1), :provider => name }
     end
   end
 
@@ -166,12 +166,12 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     execpipe command_and_options do |process|
       process.collect do |line|
         # PIP OUTPUT: Could not find a version that satisfies the requirement example==versionplease (from versions: 1.2.3, 4.5.6)
-        if line =~ /from versions: (.+)\)/
-          versionList = $1.split(', ').sort do |x, y|
-            self.class.compare_pip_versions(x, y)
-          end
-          return versionList
+        next unless line =~ /from versions: (.+)\)/
+
+        versionList = Regexp.last_match(1).split(', ').sort do |x, y|
+          self.class.compare_pip_versions(x, y)
         end
+        return versionList
       end
     end
     []
@@ -187,12 +187,12 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
       execpipe command_and_options do |process|
         process.collect do |line|
           # PIP OUTPUT: Using version 0.10.1 (newest of versions: 1.2.3, 4.5.6)
-          if line =~ /Using version .+? \(newest of versions: (.+?)\)/
-            versionList = $1.split(', ').sort do |x, y|
-              self.class.compare_pip_versions(x, y)
-            end
-            return versionList
+          next unless line =~ /Using version .+? \(newest of versions: (.+?)\)/
+
+          versionList = Regexp.last_match(1).split(', ').sort do |x, y|
+            self.class.compare_pip_versions(x, y)
           end
+          return versionList
         end
       end
       return []
@@ -216,7 +216,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
 
   def get_install_command_options
     should = @resource[:ensure]
-    command_options = %w{install -q}
+    command_options = %w[install -q]
     command_options += install_options if @resource[:install_options]
 
     if @resource[:source]

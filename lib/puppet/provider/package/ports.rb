@@ -8,14 +8,14 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
            :portuninstall => "/usr/local/sbin/pkg_deinstall",
            :portinfo => "/usr/sbin/pkg_info"
 
-  %w{INTERACTIVE UNAME}.each do |var|
+  %w[INTERACTIVE UNAME].each do |var|
     ENV.delete(var) if ENV.include?(var)
   end
 
   def install
     # -N: install if the package is missing, otherwise upgrade
     # -M: yes, we're a batch, so don't ask any questions
-    cmd = %w{-N -M BATCH=yes} << @resource[:name]
+    cmd = %w[-N -M BATCH=yes] << @resource[:name]
 
     output = portupgrade(*cmd)
     if output =~ /\*\* No such /
@@ -39,16 +39,16 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
       return :latest
     end
 
-    pkgstuff = $1
-    match = $2
-    info = $3
+    pkgstuff = Regexp.last_match(1)
+    match = Regexp.last_match(2)
+    info = Regexp.last_match(3)
 
     unless pkgstuff =~ /^\S+-([^-\s]+)$/
       raise Puppet::Error,
             _("Could not match package info '%{pkgstuff}'") % { pkgstuff: pkgstuff }
     end
 
-    version = $1
+    version = Regexp.last_match(1)
 
     if match == "=" or match == ">"
       # we're up to date or more recent
@@ -62,7 +62,8 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
             _("Could not match version info '%{info}'") % { info: info }
     end
 
-    source, newversion = $1, $2
+    source = Regexp.last_match(1)
+    newversion = Regexp.last_match(2)
 
     debug "Newer version in #{source}"
     newversion

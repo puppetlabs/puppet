@@ -30,7 +30,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
     ret << "\n" # add a trailing newline
 
     # Now build up a table of provider suitability.
-    headers = %w{Provider Suitable?} + features.collect { |f| f.to_s }.sort
+    headers = %w[Provider Suitable?] + features.collect { |f| f.to_s }.sort
 
     table_data = {}
 

@@ -4,8 +4,8 @@
 # This simple implementation calls #to_s on the given object, and handles articles 'a/an/the'.
 #
 module Puppet::Pops::LabelProvider
-  VOWELS = %w{a e i o u y}
-  SKIPPED_CHARACTERS = %w{" '}
+  VOWELS = %w[a e i o u y]
+  SKIPPED_CHARACTERS = %w[" ']
   A = "a"
   AN = "an"
 

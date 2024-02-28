@@ -184,7 +184,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   def alias(resource, key)
     ref = resource.ref
     ref =~ /^(.+)\[/
-    class_name = $1 || resource.class.name
+    class_name = ::Regexp.last_match(1) || resource.class.name
 
     newref = [class_name, key].flatten
 

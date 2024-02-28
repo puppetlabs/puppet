@@ -109,7 +109,7 @@ module Puppet::FFI::Windows
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364571(v=vs.85).aspx
     FSCTL_GET_REPARSE_POINT = 0x900a8
 
-    MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16384
+    MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16_384
 
     # Priority constants
     # https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setpriorityclass

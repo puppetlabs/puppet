@@ -6,7 +6,7 @@
 module Puppet::Pops
 module Loader
 class StaticLoader < Loader
-  BUILTIN_TYPE_NAMES = %w{
+  BUILTIN_TYPE_NAMES = %w[
     Component
     Exec
     File
@@ -22,7 +22,7 @@ class StaticLoader < Loader
     Tidy
     User
     Whit
-  }.freeze
+  ].freeze
 
   BUILTIN_TYPE_NAMES_LC = Set.new(BUILTIN_TYPE_NAMES.map { |n| n.downcase }).freeze
 

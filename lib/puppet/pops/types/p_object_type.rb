@@ -261,7 +261,7 @@ class PObjectType < PMetaType
     # @api private
     def create_dispatch(instance)
       # TODO: Assumes Ruby implementation for now
-      if (callable_type.is_a?(PVariantType))
+      if callable_type.is_a?(PVariantType)
         callable_type.types.map do |ct|
           Functions::Dispatch.new(ct, RubyGenerator.protect_reserved_name(name), [], false, ct.block_type.nil? ? nil : 'block')
         end
@@ -1111,7 +1111,7 @@ class PObjectType < PMetaType
   # @return [PObjectType] the topmost parent who's #equality_attributes include the given _attr_
   def find_equality_definer_of(attr)
     type = self
-    while !type.nil? do
+    until type.nil? do
       p = type.resolved_parent
       return type unless p.is_a?(PObjectType)
       return type unless p.equality_attributes.include?(attr.name)

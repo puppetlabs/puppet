@@ -107,22 +107,22 @@ module Puppet::ModuleTool
 
             version = release.version
 
-            unless forced?
-              # Since upgrading already installed modules can be troublesome,
-              # we'll place constraints on the graph for each installed module,
-              # locking it to upgrades within the same major version.
-              installed_range = ">=#{version} #{version.major}.x"
-              graph.add_constraint('installed', mod, installed_range) do |node|
-                Puppet::Module.parse_range(installed_range).include? node.version
-              end
+            next if forced?
 
-              release.mod.dependencies.each do |dep|
-                dep_name = dep['name'].tr('/', '-')
+            # Since upgrading already installed modules can be troublesome,
+            # we'll place constraints on the graph for each installed module,
+            # locking it to upgrades within the same major version.
+            installed_range = ">=#{version} #{version.major}.x"
+            graph.add_constraint('installed', mod, installed_range) do |node|
+              Puppet::Module.parse_range(installed_range).include? node.version
+            end
 
-                range = dep['version_requirement']
-                graph.add_constraint("#{mod} constraint", dep_name, range) do |node|
-                  Puppet::Module.parse_range(range).include? node.version
-                end
+            release.mod.dependencies.each do |dep|
+              dep_name = dep['name'].tr('/', '-')
+
+              range = dep['version_requirement']
+              graph.add_constraint("#{mod} constraint", dep_name, range) do |node|
+                Puppet::Module.parse_range(range).include? node.version
               end
             end
           end
@@ -194,23 +194,22 @@ module Puppet::ModuleTool
             # Check for module name conflicts.
             releases.each do |rel|
               installed_module = installed_modules_source.by_name[rel.name.split('-').last]
-              if installed_module
-                next if installed_module.has_metadata? && installed_module.forge_name.tr('/', '-') == rel.name
+              next unless installed_module
+              next if installed_module.has_metadata? && installed_module.forge_name.tr('/', '-') == rel.name
 
-                if rel.name != name
-                  dependency = {
-                    :name => rel.name,
-                    :version => rel.version
-                  }
-                end
-
-                raise InstallConflictError,
-                      :requested_module => name,
-                      :requested_version => options[:version] || 'latest',
-                      :dependency => dependency,
-                      :directory => installed_module.path,
-                      :metadata => installed_module.metadata
+              if rel.name != name
+                dependency = {
+                  :name => rel.name,
+                  :version => rel.version
+                }
               end
+
+              raise InstallConflictError,
+                    :requested_module => name,
+                    :requested_version => options[:version] || 'latest',
+                    :dependency => dependency,
+                    :directory => installed_module.path,
+                    :metadata => installed_module.metadata
             end
           end
 
@@ -368,24 +367,24 @@ module Puppet::ModuleTool
               metadata = nil
             end
 
-            if release[:module] =~ /-#{mod.name}$/
-              dependency_info = {
-                :name => release[:module],
-                :version => release[:version][:vstring]
-              }
-              dependency = is_dependency ? dependency_info : nil
-              all_versions = @versions["#{@module_name}"].sort_by { |h| h[:semver] }
-              versions = all_versions.select { |x| x[:semver].special == '' }
-              versions = all_versions if versions.empty?
-              latest_version = versions.last[:vstring]
+            next unless release[:module] =~ /-#{mod.name}$/
 
-              raise InstallConflictError,
-                    :requested_module => @module_name,
-                    :requested_version => @version || "latest: v#{latest_version}",
-                    :dependency => dependency,
-                    :directory => mod.path,
-                    :metadata => metadata
-            end
+            dependency_info = {
+              :name => release[:module],
+              :version => release[:version][:vstring]
+            }
+            dependency = is_dependency ? dependency_info : nil
+            all_versions = @versions["#{@module_name}"].sort_by { |h| h[:semver] }
+            versions = all_versions.select { |x| x[:semver].special == '' }
+            versions = all_versions if versions.empty?
+            latest_version = versions.last[:vstring]
+
+            raise InstallConflictError,
+                  :requested_module => @module_name,
+                  :requested_version => @version || "latest: v#{latest_version}",
+                  :dependency => dependency,
+                  :directory => mod.path,
+                  :metadata => metadata
           end
 
           deps = release[:dependencies]

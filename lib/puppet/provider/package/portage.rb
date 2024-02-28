@@ -37,7 +37,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     installable_versions_format = self.eix_install_versions_format
     begin
       eix_file = File.directory?('/var/cache/eix') ? '/var/cache/eix/portage.eix' : '/var/cache/eix'
-      update_eix if !FileUtils.uptodate?(eix_file, %w{/usr/bin/eix /usr/portage/metadata/timestamp})
+      update_eix unless FileUtils.uptodate?(eix_file, %w[/usr/bin/eix /usr/portage/metadata/timestamp])
 
       search_output = nil
       Puppet::Util.withenv :EIX_LIMIT => limit, :LASTVERSION => version_format, :LASTSLOTVERSIONS => slot_versions_format, :INSTALLEDVERSIONS => installed_versions_format, :STABLEVERSIONS => installable_versions_format do
@@ -48,14 +48,14 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       search_output.each_line do |search_result|
         match = result_format.match(search_result)
 
-        if match
-          package = {}
-          result_fields.zip(match.captures) do |field, value|
-            package[field] = value unless !value or value.empty?
-          end
-          package[:provider] = :portage
-          packages << new(package)
+        next unless match
+
+        package = {}
+        result_fields.zip(match.captures) do |field, value|
+          package[field] = value unless !value or value.empty?
         end
+        package[:provider] = :portage
+        packages << new(package)
       end
 
       return packages
@@ -66,7 +66,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
   def install
     should = @resource.should(:ensure)
-    cmd = %w{}
+    cmd = %w[]
     name = qatom[:category] ? "#{qatom[:category]}/#{qatom[:pn]}" : qatom[:pn]
     name = qatom[:pfx] + name if qatom[:pfx]
     name = name + '-' + qatom[:pv] if qatom[:pv]
@@ -80,7 +80,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
   def uninstall
     should = @resource.should(:ensure)
-    cmd = %w{--rage-clean}
+    cmd = %w[--rage-clean]
     name = qatom[:category] ? "#{qatom[:category]}/#{qatom[:pn]}" : qatom[:pn]
     name = qatom[:pfx] + name if qatom[:pfx]
     name = name + '-' + qatom[:pv] if qatom[:pv]
@@ -186,7 +186,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       end
 
       eix_file = File.directory?('/var/cache/eix') ? '/var/cache/eix/portage.eix' : '/var/cache/eix'
-      update_eix if !FileUtils.uptodate?(eix_file, %w{/usr/bin/eix /usr/portage/metadata/timestamp})
+      update_eix unless FileUtils.uptodate?(eix_file, %w[/usr/bin/eix /usr/portage/metadata/timestamp])
 
       search_output = nil
       Puppet::Util.withenv :EIX_LIMIT => limit, :LASTVERSION => version_format, :LASTSLOTVERSIONS => slot_versions_format, :INSTALLEDVERSIONS => installed_versions_format, :STABLEVERSIONS => installable_versions_format do
@@ -197,29 +197,29 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       search_output.each_line do |search_result|
         match = result_format.match(search_result)
 
-        if match
-          package = {}
-          result_fields.zip(match.captures) do |field, value|
-            package[field] = value unless !value or value.empty?
-          end
-          # dev-lang python [3.4.5] [3.5.2] [2.7.12:2.7,3.4.5:3.4] [2.7.12:2.7,3.4.5:3.4,3.5.2:3.5] https://www.python.org/ An interpreted, interactive, object-oriented programming language
-          # version_available is what we CAN install / update to
-          # ensure is what is currently installed
-          # This DOES NOT choose to install/upgrade or not, just provides current info
-          # prefer checking versions to slots as versions are finer grained
-          search = qatom[:pv]
-          search = search + '-' + qatom[:pr] if qatom[:pr]
-          if search
-            package[:version_available] = eix_get_version_for_versions(package[:installable_versions], search)
-            package[:ensure] = eix_get_version_for_versions(package[:installed_versions], search)
-          elsif qatom[:slot]
-            package[:version_available] = eix_get_version_for_slot(package[:slot_versions_available], qatom[:slot])
-            package[:ensure] = eix_get_version_for_slot(package[:installed_slots], qatom[:slot])
-          end
+        next unless match
 
-          package[:ensure] = package[:ensure] ? package[:ensure] : :absent
-          packages << package
+        package = {}
+        result_fields.zip(match.captures) do |field, value|
+          package[field] = value unless !value or value.empty?
         end
+        # dev-lang python [3.4.5] [3.5.2] [2.7.12:2.7,3.4.5:3.4] [2.7.12:2.7,3.4.5:3.4,3.5.2:3.5] https://www.python.org/ An interpreted, interactive, object-oriented programming language
+        # version_available is what we CAN install / update to
+        # ensure is what is currently installed
+        # This DOES NOT choose to install/upgrade or not, just provides current info
+        # prefer checking versions to slots as versions are finer grained
+        search = qatom[:pv]
+        search = search + '-' + qatom[:pr] if qatom[:pr]
+        if search
+          package[:version_available] = eix_get_version_for_versions(package[:installable_versions], search)
+          package[:ensure] = eix_get_version_for_versions(package[:installed_versions], search)
+        elsif qatom[:slot]
+          package[:version_available] = eix_get_version_for_slot(package[:slot_versions_available], qatom[:slot])
+          package[:ensure] = eix_get_version_for_slot(package[:installed_slots], qatom[:slot])
+        end
+
+        package[:ensure] = package[:ensure] ? package[:ensure] : :absent
+        packages << package
       end
 
       case packages.size

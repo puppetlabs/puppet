@@ -63,7 +63,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     service = self.service_name
     rcvar = self.rcvar_name
     self.debug("Editing rc files: setting #{rcvar} to #{yesno} for #{service}")
-    self.rc_add(service, rcvar, yesno) if not self.rc_replace(service, rcvar, yesno)
+    self.rc_add(service, rcvar, yesno) unless self.rc_replace(service, rcvar, yesno)
   end
 
   # Try to find an existing setting in the rc files
@@ -72,14 +72,14 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     success = false
     # Replace in all files, not just in the first found with a match
     [rcconf, rcconf_local, rcconf_dir + "/#{service}"].each do |filename|
-      if Puppet::FileSystem.exist?(filename)
-        s = File.read(filename)
-        if s.gsub!(/^(#{rcvar}(_enable)?)=\"?(YES|NO)\"?/, "\\1=\"#{yesno}\"")
-          Puppet::FileSystem.replace_file(filename) { |f| f << s }
-          self.debug("Replaced in #{filename}")
-          success = true
-        end
-      end
+      next unless Puppet::FileSystem.exist?(filename)
+
+      s = File.read(filename)
+      next unless s.gsub!(/^(#{rcvar}(_enable)?)=\"?(YES|NO)\"?/, "\\1=\"#{yesno}\"")
+
+      Puppet::FileSystem.replace_file(filename) { |f| f << s }
+      self.debug("Replaced in #{filename}")
+      success = true
     end
     success
   end
@@ -89,7 +89,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     append = "\# Added by Puppet\n#{rcvar}_enable=\"#{yesno}\"\n"
     # First, try the one-file-per-service style
     if Puppet::FileSystem.exist?(rcconf_dir)
-      File.open(rcconf_dir + "/#{service}", File::WRONLY | File::APPEND | File::CREAT, 0644) { |f|
+      File.open(rcconf_dir + "/#{service}", File::WRONLY | File::APPEND | File::CREAT, 0o644) { |f|
         f << append
         self.debug("Appended to #{f.path}")
       }
@@ -101,7 +101,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
       }
     else
       # At last use the standard rc.conf file
-      File.open(rcconf, File::WRONLY | File::APPEND | File::CREAT, 0644) { |f|
+      File.open(rcconf, File::WRONLY | File::APPEND | File::CREAT, 0o644) { |f|
         f << append
         self.debug("Appended to #{f.path}")
       }

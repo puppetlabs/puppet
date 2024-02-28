@@ -23,13 +23,13 @@ class Puppet::SSL::CertificateRequestAttributes
     Puppet.info(_("csr_attributes file loading from %{path}") % { path: path })
     if Puppet::FileSystem.exist?(path)
       hash = Puppet::Util::Yaml.safe_load_file(path, [Symbol]) || {}
-      if !hash.is_a?(Hash)
+      unless hash.is_a?(Hash)
         raise Puppet::Error, _("invalid CSR attributes, expected instance of Hash, received instance of %{klass}") % { klass: hash.class }
       end
 
       @custom_attributes = hash.delete('custom_attributes') || {}
       @extension_requests = hash.delete('extension_requests') || {}
-      if not hash.keys.empty?
+      unless hash.keys.empty?
         raise Puppet::Error, _("unexpected attributes %{keys} in %{path}") % { keys: hash.keys.inspect, path: @path.inspect }
       end
 

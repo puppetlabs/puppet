@@ -121,7 +121,7 @@ Puppet::Face.define(:help, '0.0.1') do
     face = Puppet::Face[facename.to_sym, version]
     if actionname
       action = face.get_action(actionname.to_sym)
-      if !action
+      unless action
         fail ArgumentError, _("Unable to load action %{actionname} from %{face}") % { actionname: actionname, face: face }
       end
     end
@@ -160,9 +160,9 @@ Puppet::Face.define(:help, '0.0.1') do
     available_application_names_special_sort().inject([]) do |result, appname|
       next result if exclude_from_docs?(appname)
 
-      if (appname == COMMON || appname == SPECIALIZED || appname == BLANK)
+      if appname == COMMON || appname == SPECIALIZED || appname == BLANK
         result << appname
-      elsif (is_face_app?(appname))
+      elsif is_face_app?(appname)
         begin
           face = Puppet::Face[appname, :current]
           # Add deprecation message to summary if the face is deprecated
@@ -194,7 +194,7 @@ Puppet::Face.define(:help, '0.0.1') do
   BLANK = "\n"
   def available_application_names_special_sort
     full_list = Puppet::Application.available_application_names
-    a_list = full_list & %w{apply agent config help lookup module resource}
+    a_list = full_list & %w[apply agent config help lookup module resource]
     a_list = a_list.sort
     also_ran = full_list - a_list
     also_ran = also_ran.sort
@@ -221,7 +221,7 @@ Puppet::Face.define(:help, '0.0.1') do
   # private :horribly_extract_summary_from
 
   def exclude_from_docs?(appname)
-    %w{face_base indirection_base report status}.include? appname
+    %w[face_base indirection_base report status].include? appname
   end
   # This should absolutely be a private method, but for some reason it appears
   #  that you can't use the 'private' keyword inside of a Face definition.

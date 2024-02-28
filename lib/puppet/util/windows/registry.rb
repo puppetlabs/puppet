@@ -52,7 +52,7 @@ module Puppet::Util::Windows
 
       loop do
         subkey, filetime = reg_enum_key(key, index, subkey_max_len)
-        yield subkey, filetime if !subkey.nil?
+        yield subkey, filetime unless subkey.nil?
         index += 1
         break if subkey.nil?
       end
@@ -100,7 +100,7 @@ module Puppet::Util::Windows
 
       loop do
         subkey, type, data = reg_enum_value(key, index, value_max_len)
-        yield subkey, type, data if !subkey.nil?
+        yield subkey, type, data unless subkey.nil?
         index += 1
         break if subkey.nil?
       end
@@ -118,7 +118,8 @@ module Puppet::Util::Windows
     MAX_KEY_CHAR_LENGTH = 255 + 1
 
     def reg_enum_key(key, index, max_key_char_length = MAX_KEY_CHAR_LENGTH)
-      subkey, filetime = nil, nil
+      subkey = nil
+      filetime = nil
 
       FFI::MemoryPointer.new(:dword) do |subkey_length_ptr|
         FFI::MemoryPointer.new(FFI::WIN32::FILETIME.size) do |filetime_ptr|
@@ -149,10 +150,12 @@ module Puppet::Util::Windows
     end
 
     # max number of wide characters including NULL terminator
-    MAX_VALUE_CHAR_LENGTH = 16383 + 1
+    MAX_VALUE_CHAR_LENGTH = 16_383 + 1
 
     def reg_enum_value(key, index, max_value_length = MAX_VALUE_CHAR_LENGTH)
-      subkey, type, data = nil, nil, nil
+      subkey = nil
+      type = nil
+      data = nil
 
       FFI::MemoryPointer.new(:dword) do |subkey_length_ptr|
         FFI::MemoryPointer.new(:wchar, max_value_length) do |subkey_ptr|
@@ -256,7 +259,7 @@ module Puppet::Util::Windows
                      raise TypeError, _("Type %{type} is not supported.") % { type: type }
                    end
         rescue IndexError => ex
-          raise if (ex.message !~ /^Memory access .* is out of bounds$/i)
+          raise if ex.message !~ /^Memory access .* is out of bounds$/i
 
           parent_key_name = key.parent ? "#{key.parent.keyname}\\" : ""
           Puppet.warning _("A value in the registry key %{parent_key_name}%{key} is corrupt or invalid") % { parent_key_name: parent_key_name, key: key.keyname }

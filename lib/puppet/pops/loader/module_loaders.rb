@@ -199,7 +199,7 @@ module ModuleLoaders
           # Can be defined in module using a global name. No action required
 
         when :plan
-          if !global?
+          unless global?
             # Global name must be the name of the module
             return nil unless name_parts[0] == module_name
 
@@ -209,7 +209,7 @@ module ModuleLoaders
           end
 
         when :task
-          if !global?
+          unless global?
             # Global name must be the name of the module
             return nil unless name_parts[0] == module_name
 
@@ -219,7 +219,7 @@ module ModuleLoaders
           end
 
         when :type
-          if !global?
+          unless global?
             # Global name must be the name of the module
             unless name_parts[0] == module_name || module_name == NAMESPACE_WILDCARD
               # Check for ruby defined data type in global namespace before giving up

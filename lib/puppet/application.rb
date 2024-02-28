@@ -180,7 +180,7 @@ class Application
     def option(*options, &block)
       long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1').tr('-', '_')
       fname = "handle_#{long}".intern
-      if (block_given?)
+      if block_given?
         define_method(fname, &block)
       else
         define_method(fname) do |value|
@@ -242,7 +242,7 @@ class Application
       ####  eventually we need to issue a deprecation warning here,
       ####  and then get rid of this stanza in a subsequent release.
       ################################################################
-      if (clazz.nil?)
+      if clazz.nil?
         class_name = application_name.capitalize
         clazz = try_load_class(class_name)
       end
@@ -284,7 +284,7 @@ class Application
         Puppet.settings.preferred_run_mode = mode_name
       end
 
-      return @run_mode if @run_mode and not mode_name
+      return @run_mode if @run_mode and !mode_name
 
       require_relative '../puppet/util/run_mode'
       @run_mode = Puppet::Util::RunMode[mode_name || Puppet.settings.preferred_run_mode]
@@ -452,7 +452,7 @@ class Application
   # @return [void]
   # @api public
   def setup_logs
-    handle_logdest_arg(Puppet[:logdest]) if !options[:setdest]
+    handle_logdest_arg(Puppet[:logdest]) unless options[:setdest]
 
     unless options[:setdest]
       if options[:debug] || options[:verbose]

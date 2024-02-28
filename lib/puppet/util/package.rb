@@ -12,7 +12,7 @@ module Puppet::Util::Package
     ax = version_a.scan(vre)
     bx = version_b.scan(vre)
 
-    while (ax.length > 0 && bx.length > 0)
+    while ax.length > 0 && bx.length > 0
       a = ax.shift
       b = bx.shift
 

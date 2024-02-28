@@ -97,7 +97,7 @@ module Puppet::Util::Windows::ADSI
     # used for IAdsGroup::Add / IAdsGroup::Remove.  These URIs are not useable
     # to resolve an account with WIN32OLE.connect
     def sid_uri(sid)
-      raise Puppet::Error.new(_("Must use a valid SID::Principal")) if !sid.is_a?(Puppet::Util::Windows::SID::Principal)
+      raise Puppet::Error.new(_("Must use a valid SID::Principal")) unless sid.is_a?(Puppet::Util::Windows::SID::Principal)
 
       "WinNT://#{sid.sid}"
     end
@@ -195,7 +195,7 @@ module Puppet::Util::Windows::ADSI
 
         sids = names.map do |name|
           sid = Puppet::Util::Windows::SID.name_to_principal(name, allow_unresolved)
-          raise Puppet::Error.new(_("Could not resolve name: %{name}") % { name: name }) if !sid
+          raise Puppet::Error.new(_("Could not resolve name: %{name}") % { name: name }) unless sid
 
           [sid.sid, sid]
         end
@@ -342,7 +342,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     def password=(password)
-      if !password.nil?
+      unless password.nil?
         native_object.SetPassword(password)
         commit
       end
@@ -401,14 +401,14 @@ module Puppet::Util::Windows::ADSI
       desired_hash = self.class.name_sid_hash(desired_groups)
 
       # First we add the user to all the groups it should be in but isn't
-      if !desired_groups.empty?
+      unless desired_groups.empty?
         groups_to_add = (desired_hash.keys - current_hash.keys).map { |sid| desired_hash[sid] }
         add_group_sids(*groups_to_add)
       end
 
       # Then we remove the user from all groups it is in but shouldn't be, if
       # that's been requested
-      if !minimum
+      unless minimum
         if desired_hash.empty?
           groups_to_remove = current_hash.values
         else
@@ -642,7 +642,7 @@ module Puppet::Util::Windows::ADSI
       desired_hash = self.class.name_sid_hash(desired_members)
 
       # First we add all missing members
-      if !desired_hash.empty?
+      unless desired_hash.empty?
         members_to_add = (desired_hash.keys - current_hash.keys).map { |sid| desired_hash[sid] }
         add_member_sids(*members_to_add)
       end

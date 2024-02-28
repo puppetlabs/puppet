@@ -296,7 +296,7 @@ module Puppet::Util::Execution
     ensure
       # Make sure all handles are closed in case an exception was thrown attempting to execute.
       [stdin, stdout, stderr].each { |io| io.close rescue nil }
-      if !options[:squelch]
+      unless options[:squelch]
         # if we opened a pipe, we need to clean it up.
         reader.close if reader
         stdout.close! if Puppet::Util::Platform.windows?
@@ -345,7 +345,7 @@ module Puppet::Util::Execution
         Puppet::Util::SUIDManager.change_privileges(options[:uid], options[:gid], true)
 
         # if the caller has requested that we override locale environment variables,
-        if (options[:override_locale]) then
+        if options[:override_locale] then
           # loop over them and clear them
           Puppet::Util::POSIX::LOCALE_ENV_VARS.each { |name| ENV.delete(name) }
           # set LANG and LC_ALL to 'C' so that the command will have consistent, predictable output
@@ -381,7 +381,7 @@ module Puppet::Util::Execution
   #
   def self.execute_windows(command, options, stdin, stdout, stderr)
     command = command.map do |part|
-      part.include?(' ') ? %Q["#{part.gsub(/"/, '\"')}"] : part
+      part.include?(' ') ? %Q("#{part.gsub(/"/, '\"')}") : part
     end.join(" ") if command.is_a?(Array)
 
     options[:custom_environment] ||= {}

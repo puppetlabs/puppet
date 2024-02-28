@@ -55,7 +55,7 @@ class Puppet::Util::Profiler::Aggregate < Puppet::Util::Profiler::WallClock
     attr_reader :count, :time
 
     def [](key)
-      if !has_key?(key)
+      unless has_key?(key)
         self[key] = Metric.new
       end
       super(key)

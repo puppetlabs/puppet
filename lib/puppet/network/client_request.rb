@@ -20,7 +20,9 @@ module Puppet::Network # :nodoc:
     end
 
     def initialize(name, ip, authenticated)
-      @name, @ip, @authenticated = name, ip, authenticated
+      @name = name
+      @ip = ip
+      @authenticated = authenticated
     end
 
     def to_s

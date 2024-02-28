@@ -758,19 +758,19 @@ module Types
       descriptions = variant_descriptions.flatten
       [size_mismatch_class, MissingRequiredBlock, UnexpectedBlock, TypeMismatch].each do |mismatch_class|
         mismatches = descriptions.select { |desc| desc.is_a?(mismatch_class) }
-        if mismatches.size == variant_descriptions.size
-          # If they all have the same canonical path, then we can compact this into one
-          generic_mismatch = mismatches.inject do |prev, curr|
-            break nil unless prev.canonical_path == curr.canonical_path
+        next unless mismatches.size == variant_descriptions.size
 
-            prev.merge(prev.path, curr)
-          end
-          unless generic_mismatch.nil?
-            # Report the generic mismatch and skip the rest
-            descriptions = [generic_mismatch]
-            break
-          end
+        # If they all have the same canonical path, then we can compact this into one
+        generic_mismatch = mismatches.inject do |prev, curr|
+          break nil unless prev.canonical_path == curr.canonical_path
+
+          prev.merge(prev.path, curr)
         end
+        next if generic_mismatch.nil?
+
+        # Report the generic mismatch and skip the rest
+        descriptions = [generic_mismatch]
+        break
       end
       descriptions = descriptions.uniq
       descriptions.size == 1 ? [descriptions[0].chop_path(varying_path_position)] : descriptions

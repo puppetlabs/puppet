@@ -79,7 +79,7 @@ class Puppet::Interface
 
         options.each do |option|
           option = get_option(option)
-          wrap = option.required? ? %w{< >} : %w{[ ]}
+          wrap = option.required? ? %w[< >] : %w{[ ]}
 
           s.group(0, *wrap) do
             option.optparse.each do |item|
@@ -184,7 +184,7 @@ class Puppet::Interface
         first_paragraph_break = lines.index('') || 5
         grab = [5, first_paragraph_break].min
         @short_description = lines[0, grab].join("\n")
-        @short_description += ' [...]' if (grab < lines.length and first_paragraph_break >= 5)
+        @short_description += ' [...]' if grab < lines.length and first_paragraph_break >= 5
       end
       @short_description
     end
@@ -250,7 +250,7 @@ class Puppet::Interface
     # @api public
     # @dsl Faces
     def copyright(owner = nil, years = nil)
-      if years.nil? and not owner.nil? then
+      if years.nil? and !owner.nil? then
         # TRANSLATORS 'copyright' is an attribute name and should not be translated
         raise ArgumentError, _('copyright takes the owners names, then the years covered')
       end

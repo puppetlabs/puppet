@@ -19,9 +19,9 @@ module Puppet::Util::Windows::SID
       #   otherwise if domain is available then combine it with parsed account
       #   otherwise when the domain is not available, use the account value directly
       # WinNT naming standard https://msdn.microsoft.com/en-us/library/windows/desktop/aa746534(v=vs.85).aspx
-      if (domain && !domain.empty? && @account_type == :SidTypeDomain)
+      if domain && !domain.empty? && @account_type == :SidTypeDomain
         @domain_account = @domain
-      elsif (domain && !domain.empty?)
+      elsif domain && !domain.empty?
         @domain_account = "#{domain}\\#{@account}"
       else
         @domain_account = account
@@ -65,7 +65,7 @@ module Puppet::Util::Windows::SID
                                                FFI::Pointer::NULL, domain_length_ptr, name_use_enum_ptr)
                   last_error = FFI.errno
 
-                  if (success == FFI::WIN32_FALSE && last_error != ERROR_INSUFFICIENT_BUFFER)
+                  if success == FFI::WIN32_FALSE && last_error != ERROR_INSUFFICIENT_BUFFER
                     raise Puppet::Util::Windows::Error.new(_('Failed to call LookupAccountNameW with account: %{account_name}') % { account_name: account_name }, last_error)
                   end
 
@@ -95,7 +95,7 @@ module Puppet::Util::Windows::SID
 
     def self.lookup_account_sid(system_name = nil, sid_bytes)
       system_name_ptr = FFI::Pointer::NULL
-      if (sid_bytes.nil? || (!sid_bytes.is_a? Array) || (sid_bytes.length == 0))
+      if sid_bytes.nil? || (!sid_bytes.is_a? Array) || (sid_bytes.length == 0)
         # TRANSLATORS `lookup_account_sid` is a variable name and should not be translated
         raise Puppet::Util::Windows::Error.new(_('Byte array for lookup_account_sid must not be nil and must be at least 1 byte long'))
       end
@@ -120,7 +120,7 @@ module Puppet::Util::Windows::SID
                                             FFI::Pointer::NULL, domain_length_ptr, name_use_enum_ptr)
                 last_error = FFI.errno
 
-                if (success == FFI::WIN32_FALSE && last_error != ERROR_INSUFFICIENT_BUFFER)
+                if success == FFI::WIN32_FALSE && last_error != ERROR_INSUFFICIENT_BUFFER
                   raise Puppet::Util::Windows::Error.new(_('Failed to call LookupAccountSidW with bytes: %{sid_bytes}') % { sid_bytes: sid_bytes }, last_error)
                 end
 

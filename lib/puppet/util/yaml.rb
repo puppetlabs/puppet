@@ -60,7 +60,7 @@ module Puppet::Util::Yaml
   end
 
   def self.dump(structure, filename)
-    Puppet::FileSystem.replace_file(filename, 0660) do |fh|
+    Puppet::FileSystem.replace_file(filename, 0o660) do |fh|
       YAML.dump(structure, fh)
     end
   end

@@ -112,7 +112,7 @@ Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunctio
       case val
       when String
         if val =~ /^\$(.+)$/
-          scope.exist?($1)
+          scope.exist?(Regexp.last_match(1))
         else
           case val
           when ''

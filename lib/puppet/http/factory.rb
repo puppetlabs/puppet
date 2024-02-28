@@ -17,7 +17,7 @@ class Puppet::HTTP::Factory
 
   def initialize
     # PUP-1411, make sure that openssl is initialized before we try to connect
-    if !@@openssl_initialized
+    unless @@openssl_initialized
       OpenSSL::SSL::SSLContext.new
       @@openssl_initialized = true
     end

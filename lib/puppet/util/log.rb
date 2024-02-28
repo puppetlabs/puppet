@@ -64,7 +64,7 @@ class Puppet::Util::Log
       close(dest)
     }
     # TRANSLATORS "Log.close_all" is a method name and should not be translated
-    raise Puppet::DevError.new(_("Log.close_all failed to close %{destinations}") % { destinations: @destinations.keys.inspect }) if !@destinations.empty?
+    raise Puppet::DevError.new(_("Log.close_all failed to close %{destinations}") % { destinations: @destinations.keys.inspect }) unless @destinations.empty?
   end
 
   # Flush any log destinations that support such operations.
@@ -135,7 +135,7 @@ class Puppet::Util::Log
       klass.match?(dest)
     end
 
-    if type.respond_to?(:suitable?) and not type.suitable?(dest)
+    if type.respond_to?(:suitable?) and !type.suitable?(dest)
       return
     end
 
@@ -224,7 +224,7 @@ class Puppet::Util::Log
   #  error scenario.
   # @return nil
   def Log.force_flushqueue
-    if (@destinations.empty? and !(@queued.empty?))
+    if @destinations.empty? and !(@queued.empty?)
       newdestination(:console)
     end
     flushqueue
@@ -257,8 +257,11 @@ class Puppet::Util::Log
 
   def self.setup_default
     Log.newdestination(
-      (Puppet.features.syslog?   ? :syslog   :
-      (Puppet.features.eventlog? ? :eventlog : Puppet[:puppetdlog]))
+      if Puppet.features.syslog?
+        :syslog
+      else
+        Puppet.features.eventlog? ? :eventlog : Puppet[:puppetdlog]
+      end
     )
   end
 
@@ -333,7 +336,7 @@ class Puppet::Util::Log
       @time = Time.parse(@time)
     end
     # Don't add these unless defined (preserve 3.x API as much as possible)
-    %w(file line pos issue_code environment node backtrace).each do |name|
+    %w[file line pos issue_code environment node backtrace].each do |name|
       value = data[name]
       next unless value
 
@@ -365,7 +368,7 @@ class Puppet::Util::Log
       'tags' => @tags.to_a,
       'time' => @time.iso8601(9),
     }
-    %w(file line pos issue_code environment node backtrace).each do |name|
+    %w[file line pos issue_code environment node backtrace].each do |name|
       attr_name = "@#{name}"
       hash[name] = instance_variable_get(attr_name) if instance_variable_defined?(attr_name)
     end

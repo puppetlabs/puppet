@@ -248,7 +248,11 @@ module TypeFactory
   # @api public
   #
   def self.boolean(value = nil)
-    value.nil? ? PBooleanType::DEFAULT : (value ? PBooleanType::TRUE : PBooleanType::FALSE)
+    if value.nil?
+      PBooleanType::DEFAULT
+    else
+      value ? PBooleanType::TRUE : PBooleanType::FALSE
+    end
   end
 
   # Produces the Any type
@@ -623,7 +627,7 @@ module TypeFactory
   # @param type_string [String] the string form of the type
   # @return [PTypeReferenceType] the type reference
   def self.type_reference(type_string = nil)
-    type_string == nil ? PTypeReferenceType::DEFAULT : PTypeReferenceType.new(type_string)
+    type_string.nil? ? PTypeReferenceType::DEFAULT : PTypeReferenceType.new(type_string)
   end
 
   # Returns true if the given type t is of valid range parameter type (integer

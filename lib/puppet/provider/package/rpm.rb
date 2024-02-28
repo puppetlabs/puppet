@@ -24,7 +24,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   # Note: self:: is required here to keep these constants in the context of what will
   # eventually become this Puppet::Type::Package::ProviderRpm class.
   # The query format by which we identify installed packages
-  self::NEVRA_FORMAT = %Q{%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\\n}
+  self::NEVRA_FORMAT = %q(%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\\n)
   self::NEVRA_REGEX  = %r{^'?(\S+) (\S+) (\S+) (\S+) (\S+)$}
   self::NEVRA_FIELDS = [:name, :epoch, :version, :release, :arch]
   self::MULTIVERSION_SEPARATOR = "; "
@@ -228,21 +228,21 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     multiversion_hash = {}
     multiline.each_line do |line|
       hash = self.nevra_to_hash(line)
-      if !hash.empty?
-        if multiversion_hash.empty?
-          multiversion_hash = hash.dup
-          next
-        end
+      next if hash.empty?
 
-        if multiversion_hash[:name] != hash[:name]
-          list << multiversion_hash
-          multiversion_hash = hash.dup
-          next
-        end
+      if multiversion_hash.empty?
+        multiversion_hash = hash.dup
+        next
+      end
 
-        if !multiversion_hash[:ensure].include?(hash[:ensure])
-          multiversion_hash[:ensure].concat("#{self::MULTIVERSION_SEPARATOR}#{hash[:ensure]}")
-        end
+      if multiversion_hash[:name] != hash[:name]
+        list << multiversion_hash
+        multiversion_hash = hash.dup
+        next
+      end
+
+      unless multiversion_hash[:ensure].include?(hash[:ensure])
+        multiversion_hash[:ensure].concat("#{self::MULTIVERSION_SEPARATOR}#{hash[:ensure]}")
       end
     end
     list << multiversion_hash if multiversion_hash

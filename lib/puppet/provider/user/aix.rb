@@ -72,7 +72,9 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
         return :absent
       end
 
-      month, day, year = match_obj[1], match_obj[2], match_obj[-1]
+      month = match_obj[1]
+      day = match_obj[2]
+      year = match_obj[-1]
       return "20#{year}-#{month}-#{day}"
     end
 

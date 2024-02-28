@@ -49,7 +49,7 @@ module Interpolation
     lookup_invocation = context.is_a?(Invocation) ? context : context.invocation
     lookup_invocation.with(:interpolate, subject) do
       subject.gsub(/%\{([^\}]*)\}/) do |match|
-        expr = $1
+        expr = ::Regexp.last_match(1)
         # Leading and trailing spaces inside an interpolation expression are insignificant
         expr.strip!
         value = nil

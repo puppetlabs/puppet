@@ -70,7 +70,7 @@ class IssueReporter
         emitted += 1
         break if emitted >= max_errors
       end
-      giving_up_message = if (emit_warnings && warnings.size > 0)
+      giving_up_message = if emit_warnings && warnings.size > 0
                             _("Language validation logged %{error_count} errors, and %{warning_count} warnings. Giving up") %
                               { error_count: errors.size, warning_count: warnings.size }
                           else

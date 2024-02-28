@@ -36,7 +36,7 @@ module Puppet
       }
 
       def converted_to_friendly_error(module_name, version, orig_error)
-        return orig_error if not ERROR_MAPPINGS.include?(orig_error.class)
+        return orig_error unless ERROR_MAPPINGS.include?(orig_error.class)
 
         ERROR_MAPPINGS[orig_error.class].new(orig_error,
                                              :requested_module => module_name,

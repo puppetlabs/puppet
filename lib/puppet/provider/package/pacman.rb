@@ -201,7 +201,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
     fail(_("Refusing to uninstall package group %{resource_name}, because allow_virtual is false.") % { resource_name: resource_name }) if is_group && !@resource.allow_virtual?
 
-    cmd = %w{--noconfirm --noprogressbar}
+    cmd = %w[--noconfirm --noprogressbar]
     cmd += uninstall_options if @resource[:uninstall_options]
     cmd << "-R"
     cmd << '-s' if is_group
@@ -252,7 +252,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     # Refuse to install if not allowing virtual packages and the resource is a group
     fail(_("Refusing to install package group %{resource_name}, because allow_virtual is false.") % { resource_name: resource_name }) if self.class.group?(resource_name) && !@resource.allow_virtual?
 
-    cmd = %w{--noconfirm --needed --noprogressbar}
+    cmd = %w[--noconfirm --needed --noprogressbar]
     cmd += install_options if @resource[:install_options]
     cmd << "-S" << resource_name
 

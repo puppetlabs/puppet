@@ -70,8 +70,8 @@ module RDoc::PuppetParserCore
     fullpath = File.expand_path(path)
     Puppet.debug "rdoc: testing #{fullpath}"
     if fullpath =~ /(.*)\/([^\/]+)\/(?:manifests|plugins|lib)\/.+\.(rb)$/
-      modpath = $1
-      name = $2
+      modpath = ::Regexp.last_match(1)
+      name = ::Regexp.last_match(2)
       Puppet.debug "rdoc: module #{name} into #{modpath} ?"
       environment.modulepath.each do |mp|
         if File.identical?(modpath, mp)
@@ -103,7 +103,7 @@ module RDoc::PuppetParserCore
   def scan_top_level(container, environment)
     # use the module README as documentation for the module
     comment = ""
-    %w{README README.rdoc}.each do |rfile|
+    %w[README README.rdoc].each do |rfile|
       readme = File.join(File.dirname(File.dirname(@input_file_name)), rfile)
       # module README should be UTF-8, not default system encoding
       comment = File.open(readme, "r:UTF-8") { |f| f.read } if FileTest.readable?(readme)
@@ -155,16 +155,16 @@ module RDoc::PuppetParserCore
         # fetch comments
         case line
         when /^[ \t]*# ?(.*)$/
-          comments += $1 + "\n"
+          comments += ::Regexp.last_match(1) + "\n"
         when /^[ \t]*(Facter.add|Puppet\.runtime\[:facter\].add)\(['"](.*?)['"]\)/
-          current_fact = RDoc::Fact.new($1, {})
+          current_fact = RDoc::Fact.new(::Regexp.last_match(1), {})
           look_for_directives_in(container, comments) unless comments.empty?
           current_fact.comment = comments
           parsed_facts << current_fact
           comments = ""
           Puppet.debug "rdoc: found custom fact #{current_fact.name}"
         when /^[ \t]*confine[ \t]*:(.*?)[ \t]*=>[ \t]*(.*)$/
-          current_fact.confine = { :type => $1, :value => $2 } unless current_fact.nil?
+          current_fact.confine = { :type => ::Regexp.last_match(1), :value => ::Regexp.last_match(2) } unless current_fact.nil?
         else # unknown line type
           comments = ""
         end
@@ -187,9 +187,9 @@ module RDoc::PuppetParserCore
         # fetch comments
         case line
         when /^[ \t]*# ?(.*)$/
-          comments += $1 + "\n"
+          comments += ::Regexp.last_match(1) + "\n"
         when /^[ \t]*(?:Puppet::Parser::Functions::)?newfunction[ \t]*\([ \t]*:(.*?)[ \t]*,[ \t]*:type[ \t]*=>[ \t]*(:rvalue|:lvalue)/
-          current_plugin = RDoc::Plugin.new($1, "function")
+          current_plugin = RDoc::Plugin.new(::Regexp.last_match(1), "function")
           look_for_directives_in(container, comments) unless comments.empty?
           current_plugin.comment = comments
           current_plugin.record_location(@top_level)
@@ -197,7 +197,7 @@ module RDoc::PuppetParserCore
           comments = ""
           Puppet.debug "rdoc: found new function plugins #{current_plugin.name}"
         when /^[ \t]*Puppet::Type.newtype[ \t]*\([ \t]*:(.*?)\)/
-          current_plugin = RDoc::Plugin.new($1, "type")
+          current_plugin = RDoc::Plugin.new(::Regexp.last_match(1), "type")
           look_for_directives_in(container, comments) unless comments.empty?
           current_plugin.comment = comments
           current_plugin.record_location(@top_level)

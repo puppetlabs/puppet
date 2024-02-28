@@ -40,7 +40,7 @@ Puppet::Type.type(:service).provide :openrc, :parent => :base do
       when /^\S+/ # caption of a dynamic runlevel
         enabled = :false
       when self.class::STATUSLINE
-        return enabled if @resource[:name] == $1
+        return enabled if @resource[:name] == Regexp.last_match(1)
       end
     end
     :false

@@ -46,7 +46,7 @@ class Puppet::Util::AtFork::Solaris
     end
   end
 
-  CTFS_PR_ROOT = File.join('', %w(system contract process))
+  CTFS_PR_ROOT = File.join('', %w[system contract process])
   CTFS_PR_TEMPLATE = File.join(CTFS_PR_ROOT, %q(template))
   CTFS_PR_LATEST = File.join(CTFS_PR_ROOT, %q(latest))
 

@@ -27,7 +27,7 @@ Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm d
     output = up2date "--showall"
 
     if output =~ /^#{Regexp.escape @resource[:name]}-(\d+.*)\.\w+/
-      return $1
+      return Regexp.last_match(1)
     else
       # up2date didn't find updates, pretend the current
       # version is the latest

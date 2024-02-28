@@ -387,7 +387,7 @@ Puppet::Type.newtype(:file) do
   autorequire(:file) do
     req = []
     path = Pathname.new(self[:path])
-    if !path.root?
+    unless path.root?
       # Start at our parent, to avoid autorequiring ourself
       parents = path.parent.enum_for(:ascend)
       found = parents.find { |p| catalog.resource(:file, p.to_s) }
@@ -827,7 +827,7 @@ Puppet::Type.newtype(:file) do
        [:use, :use_when_creating].include?(self[:source_permissions])
       # TRANSLATORS "source_permissions => ignore" should not be translated
       err_msg = _("Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore.")
-      if self[:owner] == nil || self[:group] == nil || self[:mode] == nil
+      if self[:owner].nil? || self[:group].nil? || self[:mode].nil?
         # Fail on Windows if source permissions are being used and the file resource
         # does not have mode owner, group, and mode all set (which would take precedence).
         self.fail err_msg
@@ -898,7 +898,7 @@ Puppet::Type.newtype(:file) do
     method = :stat
 
     # Files are the only types that support links
-    if (self.instance_of?(Puppet::Type::File) and self[:links] != :follow)
+    if self.instance_of?(Puppet::Type::File) and self[:links] != :follow
       method = :lstat
     end
 
@@ -962,7 +962,7 @@ Puppet::Type.newtype(:file) do
         fail_if_checksum_is_wrong(property, file.path, content_checksum)
       end
     else
-      umask = mode ? 000 : 022
+      umask = mode ? 0o00 : 0o22
       Puppet::Util.withumask(umask) { ::File.open(self[:path], 'wb', mode_int) { |f| property.write(f) if property } }
     end
 

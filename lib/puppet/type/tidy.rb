@@ -154,10 +154,10 @@ Puppet::Type.newtype(:tidy) do
       unit = multi = nil
       case age
       when /^([0-9]+)(\w)\w*$/
-        multi = Integer($1)
-        unit = $2.downcase.intern
+        multi = Integer(Regexp.last_match(1))
+        unit = Regexp.last_match(2).downcase.intern
       when /^([0-9]+)$/
-        multi = Integer($1)
+        multi = Integer(Regexp.last_match(1))
         unit = :d
       else
         # TRANSLATORS tidy is the name of a program and should not be translated
@@ -194,10 +194,10 @@ Puppet::Type.newtype(:tidy) do
     munge do |size|
       case size
       when /^([0-9]+)(\w)\w*$/
-        multi = Integer($1)
-        unit = $2.downcase.intern
+        multi = Integer(Regexp.last_match(1))
+        unit = Regexp.last_match(2).downcase.intern
       when /^([0-9]+)$/
-        multi = Integer($1)
+        multi = Integer(Regexp.last_match(1))
         unit = :k
       else
         # TRANSLATORS tidy is the name of a program and should not be translated

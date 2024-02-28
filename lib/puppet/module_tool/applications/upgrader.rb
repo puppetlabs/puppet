@@ -117,22 +117,22 @@ module Puppet::ModuleTool
 
             version = release.version
 
-            unless forced?
-              # Since upgrading already installed modules can be troublesome,
-              # we'll place constraints on the graph for each installed
-              # module, locking it to upgrades within the same major version.
-              installed_range = ">=#{version} #{version.major}.x"
-              graph.add_constraint('installed', installed_module, installed_range) do |node|
-                Puppet::Module.parse_range(installed_range).include? node.version
-              end
+            next if forced?
 
-              release.mod.dependencies.each do |dep|
-                dep_name = dep['name'].tr('/', '-')
+            # Since upgrading already installed modules can be troublesome,
+            # we'll place constraints on the graph for each installed
+            # module, locking it to upgrades within the same major version.
+            installed_range = ">=#{version} #{version.major}.x"
+            graph.add_constraint('installed', installed_module, installed_range) do |node|
+              Puppet::Module.parse_range(installed_range).include? node.version
+            end
 
-                range = dep['version_requirement']
-                graph.add_constraint("#{installed_module} constraint", dep_name, range) do |node|
-                  Puppet::Module.parse_range(range).include? node.version
-                end
+            release.mod.dependencies.each do |dep|
+              dep_name = dep['name'].tr('/', '-')
+
+              range = dep['version_requirement']
+              graph.add_constraint("#{installed_module} constraint", dep_name, range) do |node|
+                Puppet::Module.parse_range(range).include? node.version
               end
             end
           end
@@ -146,23 +146,22 @@ module Puppet::ModuleTool
 
           releases.each do |rel|
             mod = installed_modules_source.by_name[rel.name.split('-').last]
-            if mod
-              next if mod.has_metadata? && mod.forge_name.tr('/', '-') == rel.name
+            next unless mod
+            next if mod.has_metadata? && mod.forge_name.tr('/', '-') == rel.name
 
-              if rel.name != name
-                dependency = {
-                  :name => rel.name,
-                  :version => rel.version
-                }
-              end
-
-              raise InstallConflictError,
-                    :requested_module => name,
-                    :requested_version => options[:version] || 'latest',
-                    :dependency => dependency,
-                    :directory => mod.path,
-                    :metadata => mod.metadata
+            if rel.name != name
+              dependency = {
+                :name => rel.name,
+                :version => rel.version
+              }
             end
+
+            raise InstallConflictError,
+                  :requested_module => name,
+                  :requested_version => options[:version] || 'latest',
+                  :dependency => dependency,
+                  :directory => mod.path,
+                  :metadata => mod.metadata
           end
 
           child = releases.find { |x| x.name == name }

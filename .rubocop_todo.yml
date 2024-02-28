@@ -629,160 +629,15 @@ Style/MultipleComparison:
 Style/MutableConstant:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: both, prefix, postfix
-Style/NegatedIf:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/NegatedWhile:
-  Exclude:
-    - 'lib/puppet/file_system/file_impl.rb'
-    - 'lib/puppet/graph/simple_graph.rb'
-    - 'lib/puppet/http/client.rb'
-    - 'lib/puppet/pops/parser/heredoc_support.rb'
-    - 'lib/puppet/pops/types/p_object_type.rb'
-    - 'lib/puppet/scheduler/scheduler.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/NestedModifier:
-  Exclude:
-    - 'lib/puppet/util/command_line/trollop.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: AllowedMethods.
-# AllowedMethods: be, be_a, be_an, be_between, be_falsey, be_kind_of, be_instance_of, be_truthy, be_within, eq, eql, end_with, include, match, raise_error, respond_to, start_with
-Style/NestedParenthesizedCalls:
-  Exclude:
-    - 'lib/puppet/provider/user/directoryservice.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/NestedTernaryOperator:
-  Exclude:
-    - 'lib/puppet/external/dot.rb'
-    - 'lib/puppet/module_tool/shared_behaviors.rb'
-    - 'lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb'
-    - 'lib/puppet/pops/lookup/hiera_config.rb'
-    - 'lib/puppet/pops/parser/lexer2.rb'
-    - 'lib/puppet/pops/types/string_converter.rb'
-    - 'lib/puppet/pops/types/type_factory.rb'
-    - 'lib/puppet/pops/types/types.rb'
-    - 'lib/puppet/util/log.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, MinBodyLength.
-# SupportedStyles: skip_modifier_ifs, always
-Style/Next:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: predicate, comparison
-Style/NilComparison:
-  Exclude:
-    - 'lib/puppet/pops/types/type_factory.rb'
-    - 'lib/puppet/pops/types/types.rb'
-    - 'lib/puppet/provider/package/dnfmodule.rb'
-    - 'lib/puppet/provider/package/nim.rb'
-    - 'lib/puppet/provider/package/windows/exe_package.rb'
-    - 'lib/puppet/provider/user/directoryservice.rb'
-    - 'lib/puppet/type/file.rb'
-    - 'lib/puppet/util/pidlock.rb'
-    - 'lib/puppet/util/suidmanager.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: IncludeSemanticChanges.
-Style/NonNilCheck:
-  Exclude:
-    - 'lib/puppet/forge.rb'
-    - 'lib/puppet/http/session.rb'
-    - 'lib/puppet/network/http/request.rb'
-    - 'lib/puppet/provider/package/pip.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/Not:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedOctalStyle.
-# SupportedOctalStyles: zero_with_o, zero_only
-Style/NumericLiteralPrefix:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: Strict, AllowedNumbers.
-Style/NumericLiterals:
-  MinDigits: 11
-
 # This cop supports unsafe auto-correction (--auto-correct-all).
 # Configuration parameters: EnforcedStyle, IgnoredMethods.
 # SupportedStyles: predicate, comparison
 Style/NumericPredicate:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: AlwaysCorrectToMultiline.
-Style/OneLineConditional:
-  Exclude:
-    - 'lib/puppet/pops/parser/evaluating_parser.rb'
-    - 'lib/puppet/provider/package/yum.rb'
-    - 'lib/puppet/provider/service/openwrt.rb'
-
 # Configuration parameters: AllowedMethods.
 # AllowedMethods: respond_to_missing?
 Style/OptionalBooleanParameter:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/OrAssignment:
-  Exclude:
-    - 'lib/puppet/application/lookup.rb'
-    - 'lib/puppet/file_system/windows.rb'
-    - 'lib/puppet/pops/parser/lexer2.rb'
-    - 'lib/puppet/pops/types/types.rb'
-    - 'lib/puppet/provider/user/directoryservice.rb'
-    - 'lib/puppet/ssl/base.rb'
-    - 'lib/puppet/util/errors.rb'
-    - 'util/rspec_grouper'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/ParallelAssignment:
-  Exclude:
-    - 'lib/puppet/configurer/downloader.rb'
-    - 'lib/puppet/graph/rb_tree_map.rb'
-    - 'lib/puppet/module_tool/shared_behaviors.rb'
-    - 'lib/puppet/network/client_request.rb'
-    - 'lib/puppet/parser/relationship.rb'
-    - 'lib/puppet/provider/package/ports.rb'
-    - 'lib/puppet/provider/service/smf.rb'
-    - 'lib/puppet/provider/user/aix.rb'
-    - 'lib/puppet/relationship.rb'
-    - 'lib/puppet/settings/config_file.rb'
-    - 'lib/puppet/type/file/ensure.rb'
-    - 'lib/puppet/util/suidmanager.rb'
-    - 'lib/puppet/util/windows/registry.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: AllowSafeAssignment, AllowInMultilineConditions.
-Style/ParenthesesAroundCondition:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: PreferredDelimiters.
-Style/PercentLiteralDelimiters:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: lower_case_q, upper_case_q
-Style/PercentQLiterals:
-  Exclude:
-    - 'lib/puppet/provider/package/dpkg.rb'
-    - 'lib/puppet/provider/package/rpm.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/PerlBackrefs:
   Enabled: false
 
 # This cop supports unsafe auto-correction (--auto-correct-all).
@@ -790,13 +645,6 @@ Style/PerlBackrefs:
 # SupportedStyles: short, verbose
 Style/PreferredHashMethods:
   Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/Proc:
-  Exclude:
-    - 'lib/puppet/pops/evaluator/deferred_resolver.rb'
-    - 'lib/puppet/pops/lookup/hiera_config.rb'
-    - 'lib/puppet/util/windows/daemon.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, AllowedCompactTypes.

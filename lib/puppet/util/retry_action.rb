@@ -15,7 +15,7 @@ module Puppet::Util::RetryAction
   def self.retry_action(options = {})
     # Retry actions for a specified amount of time. This method will allow the final
     # retry to complete even if that extends beyond the timeout period.
-    if !block_given?
+    unless block_given?
       raise RetryException::NoBlockGiven
     end
 

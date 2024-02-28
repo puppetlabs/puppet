@@ -429,22 +429,22 @@ class Puppet::Module
         next
       end
 
-      if version_string
-        begin
-          required_version_semver_range = self.class.parse_range(version_string)
-          actual_version_semver = SemanticPuppet::Version.parse(dep_mod.version)
-        rescue ArgumentError
-          error_details[:reason] = :non_semantic_version
-          unmet_dependencies << error_details
-          next
-        end
+      next unless version_string
 
-        unless required_version_semver_range.include? actual_version_semver
-          error_details[:reason] = :version_mismatch
-          unmet_dependencies << error_details
-          next
-        end
+      begin
+        required_version_semver_range = self.class.parse_range(version_string)
+        actual_version_semver = SemanticPuppet::Version.parse(dep_mod.version)
+      rescue ArgumentError
+        error_details[:reason] = :non_semantic_version
+        unmet_dependencies << error_details
+        next
       end
+
+      next if required_version_semver_range.include? actual_version_semver
+
+      error_details[:reason] = :version_mismatch
+      unmet_dependencies << error_details
+      next
     end
 
     unmet_dependencies

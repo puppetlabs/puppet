@@ -119,13 +119,17 @@ class StringConverter
 
       @left  = flags.include?('-')
       @alt   = flags.include?('#')
-      @plus  = (flags.include?(' ') ? :space : (flags.include?('+') ? :plus : :ignore))
+      @plus  = if flags.include?(' ')
+                 :space
+               else
+                 flags.include?('+') ? :plus : :ignore
+               end
       @zero_pad = flags.include?('0')
 
       @delimiters = nil
       DELIMITERS.each do |d|
         next unless flags.include?(d)
-        if !@delimiters.nil?
+        unless @delimiters.nil?
           raise ArgumentError, "Only one of the delimiters [ { ( < | can be given in the format flags, got '#{fmt}'"
         end
 
@@ -550,7 +554,7 @@ class StringConverter
   end
   private :validate_input
 
-  FMT_KEYS = %w{separator separator2 format string_formats}.freeze
+  FMT_KEYS = %w[separator separator2 format string_formats].freeze
 
   def validate_container_input(fmt)
     if (fmt.keys - FMT_KEYS).size > 0

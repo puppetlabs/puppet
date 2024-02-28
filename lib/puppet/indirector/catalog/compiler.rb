@@ -51,7 +51,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   def find(request)
     facts = extract_facts_from_request(request)
 
-    save_facts_from_request(facts, request) if !facts.nil?
+    save_facts_from_request(facts, request) unless facts.nil?
 
     node = node_from_request(facts, request)
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
@@ -141,7 +141,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     if agent_checksum_type
       agent_checksum_types = agent_checksum_type.split('.').map { |type| type.to_sym }
       checksum_type = agent_checksum_types.drop_while do |type|
-        not known_checksum_types.include? type
+        !known_checksum_types.include? type
       end.first
     end
     checksum_type
@@ -169,7 +169,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     when sources.empty?
       # TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
       return Puppet::Util::Profiler.profile(_("Not inlining resource without sources"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
-    when (not (sources.all? { |source| source =~ /^puppet:/ }))
+    when (!(sources.all? { |source| source =~ /^puppet:/ }))
       # TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
       return Puppet::Util::Profiler.profile(_("Not inlining unsupported source scheme"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
     else
@@ -237,31 +237,31 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
           source = Puppet::Type.type(:file).attrclass(:source).normalize(source)
 
           list_of_data = Puppet::FileServing::Metadata.indirection.search(source, options)
-          if list_of_data
-            basedir_meta = list_of_data.find { |meta| meta.relative_path == '.' }
-            devfail "FileServing::Metadata search should always return the root search path" if basedir_meta.nil?
+          next unless list_of_data
 
-            if !inlineable_metadata?(basedir_meta, source, environment_path)
-              # If any source is not in the environment path, skip inlining this resource.
-              log_file_outside_environment
-              sources_in_environment = false
-              break
-            end
+          basedir_meta = list_of_data.find { |meta| meta.relative_path == '.' }
+          devfail "FileServing::Metadata search should always return the root search path" if basedir_meta.nil?
 
-            base_content_uri = get_content_uri(basedir_meta, source, environment_path)
-            list_of_data.each do |metadata|
-              if metadata.relative_path == '.'
-                metadata.content_uri = base_content_uri
-              else
-                metadata.content_uri = "#{base_content_uri}/#{metadata.relative_path}"
-              end
-            end
+          unless inlineable_metadata?(basedir_meta, source, environment_path)
+            # If any source is not in the environment path, skip inlining this resource.
+            log_file_outside_environment
+            sources_in_environment = false
+            break
+          end
 
-            source_to_metadatas[source] = list_of_data
-            # Optimize for returning less data if sourceselect is first
-            if resource[:sourceselect] == 'first' || resource[:sourceselect].nil?
-              break
+          base_content_uri = get_content_uri(basedir_meta, source, environment_path)
+          list_of_data.each do |metadata|
+            if metadata.relative_path == '.'
+              metadata.content_uri = base_content_uri
+            else
+              metadata.content_uri = "#{base_content_uri}/#{metadata.relative_path}"
             end
+          end
+
+          source_to_metadatas[source] = list_of_data
+          # Optimize for returning less data if sourceselect is first
+          if resource[:sourceselect] == 'first' || resource[:sourceselect].nil?
+            break
           end
         end
 
@@ -282,11 +282,11 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
           source = Puppet::Type.type(:file).attrclass(:source).normalize(source)
 
           data = Puppet::FileServing::Metadata.indirection.find(source, options)
-          if data
-            metadata = data
-            metadata.source = source
-            break
-          end
+          next unless data
+
+          metadata = data
+          metadata.source = source
+          break
         end
 
         raise _("Could not get metadata for %{resource}") % { resource: resource[:source] } unless metadata
@@ -443,7 +443,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       "serverip" => "networking.ip",
       "serverip6" => "networking.ip6" }.each do |var, fact|
       value = Puppet.runtime[:facter].value(fact)
-      if !value.nil?
+      unless value.nil?
         @server_facts[var] = value
       end
     end

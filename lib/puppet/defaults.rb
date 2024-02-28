@@ -166,7 +166,7 @@ module Puppet
         values = munge(value)
         valid   = %w[deprecations undefined_variables undefined_resources]
         invalid = values - (values & valid)
-        if not invalid.empty?
+        unless invalid.empty?
           raise ArgumentError, _("Cannot disable unrecognized warning types '%{invalid}'.") % { invalid: invalid.join(',') } +
               ' ' + _("Valid values are '%{values}'.") % { values: valid.join(', ') }
         end
@@ -501,7 +501,7 @@ module Puppet
                      end
     },
     :maximum_uid => {
-        :default  => 4294967290,
+        :default  => 4_294_967_290,
         :type     => :integer,
         :desc     => "The maximum allowed UID.  Some platforms use negative UIDs
           but then ship with tools that do not know how to handle signed ints,
@@ -1104,7 +1104,7 @@ EOT
         values = munge(value)
 
         invalid = values - Puppet.valid_file_checksum_types
-        if not invalid.empty?
+        unless invalid.empty?
           raise ArgumentError, _("Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'") % {
             value: invalid.first, name: @name, allowed_values: Puppet.valid_file_checksum_types.join("', '")
           }

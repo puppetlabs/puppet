@@ -125,7 +125,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def enabled?
-    return super if not is_upstart?
+    return super unless is_upstart?
 
     script_contents = read_script_from(initscript)
     if version_is_pre_0_6_7
@@ -138,7 +138,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def enable
-    return super if not is_upstart?
+    return super unless is_upstart?
 
     script_text = read_script_from(initscript)
     if version_is_pre_0_9_0
@@ -149,7 +149,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def disable
-    return super if not is_upstart?
+    return super unless is_upstart?
 
     script_text = read_script_from(initscript)
     if version_is_pre_0_6_7
@@ -378,7 +378,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def write_script_to(file, text)
-    Puppet::Util.replace_file(file, 0644) do |f|
+    Puppet::Util.replace_file(file, 0o644) do |f|
       f.write(text)
     end
   end

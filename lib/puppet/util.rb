@@ -250,8 +250,8 @@ module Util
   # Escape once for the string literal, and once for the regex.
   slash = '[\\\\/]'
   label = '[^\\\\/]+'
-  AbsolutePathWindows = %r!^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))!io
-  AbsolutePathPosix   = %r!^/!
+  AbsolutePathWindows = %r{^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))}io
+  AbsolutePathPosix   = %r{^/}
   def absolute_path?(path, platform = nil)
     unless path.is_a?(String)
       Puppet.warning("Cannot check if #{path} is an absolute path because it is a '#{path.class}' and not a String'")
@@ -425,7 +425,7 @@ module Util
     encoded += rfc2396_escape(parts[:path]) unless parts[:path].nil?
 
     # each query parameter
-    if !parts[:query].nil?
+    unless parts[:query].nil?
       query_string = parts[:query].split('&').map do |pair|
         # can optionally be separated by an =
         pair.split('=').map do |v|
@@ -465,7 +465,7 @@ module Util
   def uri_unescape(str)
     enc = str.encoding
     enc = Encoding::UTF_8 if enc == Encoding::US_ASCII
-    str.gsub(ESCAPED) { [$&[1, 2]].pack('H2').force_encoding(enc) }
+    str.gsub(ESCAPED) { [::Regexp.last_match(0)[1, 2]].pack('H2').force_encoding(enc) }
   end
   module_function :uri_unescape
 
@@ -579,7 +579,7 @@ module Util
   # The staging_location is a location to render the temporary file before
   # moving the file to it's final location.
 
-  DEFAULT_POSIX_MODE = 0644
+  DEFAULT_POSIX_MODE = 0o644
   DEFAULT_WINDOWS_MODE = nil
 
   def replace_file(file, default_mode, staging_location: nil, validate_callback: nil, &block)
@@ -608,7 +608,7 @@ module Util
       end
 
       effective_mode =
-        if !Puppet::Util::Platform.windows?
+        unless Puppet::Util::Platform.windows?
           # Grab the current file mode, and fall back to the defaults.
 
           if Puppet::FileSystem.exist?(file)
@@ -626,7 +626,7 @@ module Util
       if effective_mode
         # We only care about the bottom four slots, which make the real mode,
         # and not the rest of the platform stat call fluff and stuff.
-        tempfile.chmod(effective_mode & 07777)
+        tempfile.chmod(effective_mode & 0o7777)
       end
 
       # Now, make sure the data (which includes the mode) is safe on disk.
@@ -651,7 +651,7 @@ module Util
 
       if Puppet::Util::Platform.windows?
         # Windows ReplaceFile needs a file to exist, so touch handles this
-        if !Puppet::FileSystem.exist?(file)
+        unless Puppet::FileSystem.exist?(file)
           Puppet::FileSystem.touch(file)
           if mode
             Puppet::Util::Windows::Security.set_mode(mode, Puppet::FileSystem.path_string(file))

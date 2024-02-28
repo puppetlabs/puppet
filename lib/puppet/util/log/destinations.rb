@@ -72,7 +72,7 @@ Puppet::Util::Log.newdesttype :file do
     # We can't just use 'Config.use' here, because they've
     # specified a "special" destination.
     unless Puppet::FileSystem.exist?(Puppet::FileSystem.dir(path))
-      FileUtils.mkdir_p(File.dirname(path), :mode => 0755)
+      FileUtils.mkdir_p(File.dirname(path), :mode => 0o755)
       Puppet.info _("Creating log directory %{dir}") % { dir: File.dirname(path) }
     end
 
@@ -211,7 +211,7 @@ Puppet::Util::Log.newdesttype :eventlog do
   Puppet::Util::Log::DestEventlog::EVENTLOG_ERROR_TYPE       = 0x0001
   Puppet::Util::Log::DestEventlog::EVENTLOG_WARNING_TYPE     = 0x0002
   Puppet::Util::Log::DestEventlog::EVENTLOG_INFORMATION_TYPE = 0x0004
-  Puppet::Util::Log::DestEventlog::EVENTLOG_CHARACTER_LIMIT  = 31838
+  Puppet::Util::Log::DestEventlog::EVENTLOG_CHARACTER_LIMIT  = 31_838
 
   def self.suitable?(obj)
     Puppet::Util::Platform.windows?

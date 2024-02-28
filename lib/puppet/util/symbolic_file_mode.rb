@@ -60,12 +60,12 @@ module SymbolicFileMode
     fail _("non-numeric current mode (%{mode})") % { mode: to_mode.inspect } unless to_mode.is_a?(Numeric)
 
     original_mode = {
-      's' => (to_mode & 07000) >> 9,
-      'u' => (to_mode & 00700) >> 6,
-      'g' => (to_mode & 00070) >> 3,
-      'o' => (to_mode & 00007) >> 0,
+      's' => (to_mode & 0o7000) >> 9,
+      'u' => (to_mode & 0o0700) >> 6,
+      'g' => (to_mode & 0o0070) >> 3,
+      'o' => (to_mode & 0o0007) >> 0,
       # Are there any execute bits set in the original mode?
-      'any x?' => (to_mode & 00111) != 0
+      'any x?' => (to_mode & 0o0111) != 0
     }
     final_mode = {
       's' => original_mode['s'],

@@ -139,7 +139,7 @@ module Puppet::ModuleTool
     # GitHub, we can predict sensible defaults for both project_page and
     # issues_url.
     def process_source(data)
-      if data['source'] =~ %r[://]
+      if data['source'] =~ %r{://}
         source_uri = URI.parse(data['source'])
       else
         source_uri = URI.parse("http://#{data['source']}")

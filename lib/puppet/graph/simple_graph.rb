@@ -106,7 +106,7 @@ class Puppet::Graph::SimpleGraph
     # decent Ruby stack.
     recur = [{ :node => root }]
 
-    while not recur.empty? do
+    until recur.empty? do
       frame = recur.last
       vertex = frame[:node]
 
@@ -171,7 +171,7 @@ class Puppet::Graph::SimpleGraph
 
     # we usually have a disconnected graph, must walk all possible roots
     vertices.each do |vertex|
-      if !state[:index][vertex] then
+      unless state[:index][vertex] then
         tarjan vertex, state
       end
     end

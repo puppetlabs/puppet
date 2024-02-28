@@ -421,7 +421,7 @@ class Puppet::Settings
   def create_ancestors(dir)
     parent_dir = File.dirname(dir)
 
-    if !File.exist?(parent_dir)
+    unless File.exist?(parent_dir)
       FileUtils.mkdir_p(parent_dir)
     end
   end
@@ -631,24 +631,24 @@ class Puppet::Settings
     value_sets = value_sets_for(env, preferred_run_mode)
     @config.values.select(&:has_hook?).each do |setting|
       value_sets.each do |source|
-        if source.include?(setting.name)
-          # We still have to use value to retrieve the value, since
-          # we want the fully interpolated value, not $vardir/lib or whatever.
-          # This results in extra work, but so few of the settings
-          # will have associated hooks that it ends up being less work this
-          # way overall.
-          if setting.call_hook_on_initialize?
-            @hooks_to_call_on_application_initialization |= [setting]
-          else
-            setting.handle(ChainedValues.new(
-              preferred_run_mode,
-              env,
-              value_sets,
-              @config
-            ).interpolate(setting.name))
-          end
-          break
+        next unless source.include?(setting.name)
+
+        # We still have to use value to retrieve the value, since
+        # we want the fully interpolated value, not $vardir/lib or whatever.
+        # This results in extra work, but so few of the settings
+        # will have associated hooks that it ends up being less work this
+        # way overall.
+        if setting.call_hook_on_initialize?
+          @hooks_to_call_on_application_initialization |= [setting]
+        else
+          setting.handle(ChainedValues.new(
+            preferred_run_mode,
+            env,
+            value_sets,
+            @config
+          ).interpolate(setting.name))
         end
+        break
       end
     end
 
@@ -1072,7 +1072,7 @@ class Puppet::Settings
     @config.keys.find_all { |key| @config[key].is_a?(FileSetting) }.each do |key|
       file = @config[key]
       next if file.value.nil?
-      next unless (sections.nil? or sections.include?(file.section))
+      next unless sections.nil? or sections.include?(file.section)
 
       resource = file.to_resource
       next unless resource
@@ -1091,7 +1091,7 @@ class Puppet::Settings
 
   # Convert our list of config settings into a configuration file.
   def to_config
-    str = %{The configuration file for #{Puppet.run_mode.name}.  Note that this file
+    str = %(The configuration file for #{Puppet.run_mode.name}.  Note that this file
 is likely to have unused settings in it; any setting that's
 valid anywhere in Puppet can be in any config file, even if it's not used.
 
@@ -1103,7 +1103,7 @@ own configured state, so they can be used to make Puppet a bit more self-managin
 The file format supports octothorpe-commented lines, but not partial-line comments.
 
 Generated on #{Time.now}.
-}.gsub(/^/, "# ")
+).gsub(/^/, "# ")
 
     #         Add a section heading that matches our name.
     str += "[#{preferred_run_mode}]\n"
@@ -1275,7 +1275,7 @@ Generated on #{Time.now}.
   def screen_non_puppet_conf_settings(puppet_conf)
     puppet_conf.sections.values.each do |section|
       forbidden = section.settings.select { |setting| Puppet::Settings::EnvironmentConf::ENVIRONMENT_CONF_ONLY_SETTINGS.include?(setting.name) }
-      raise(SettingsError, "Cannot set #{forbidden.map { |s| s.name }.join(", ")} settings in puppet.conf") if !forbidden.empty?
+      raise(SettingsError, "Cannot set #{forbidden.map { |s| s.name }.join(", ")} settings in puppet.conf") unless forbidden.empty?
     end
   end
 
@@ -1369,7 +1369,7 @@ Generated on #{Time.now}.
         catalog.add_resource resource
       end
       group = setting.group
-      if group && !%w{root wheel}.include?(group) && catalog.resource(:group, group).nil?
+      if group && !%w[root wheel].include?(group) && catalog.resource(:group, group).nil?
         catalog.add_resource Puppet::Resource.new(:group, group, :parameters => { :ensure => :present })
       end
     end
@@ -1448,7 +1448,7 @@ Generated on #{Time.now}.
       end
       if set
         value = set.lookup(name)
-        if !value.nil?
+        unless value.nil?
           return value
         end
       end
@@ -1516,7 +1516,7 @@ Generated on #{Time.now}.
       when String
         failed_environment_interpolation = false
         interpolated_value = value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |expression|
-          varname = $2 || $1
+          varname = ::Regexp.last_match(2) || ::Regexp.last_match(1)
           interpolated_expression =
             if varname != ENVIRONMENT_SETTING || ok_to_interpolate_environment(setting_name)
               if varname == ENVIRONMENT_SETTING && @environment
@@ -1567,7 +1567,7 @@ Generated on #{Time.now}.
     def set(name, value)
       default = @defaults[name]
 
-      if !default
+      unless default
         raise ArgumentError, _("Attempt to assign a value to unknown setting %{name}") % { name: name.inspect }
       end
 
@@ -1588,7 +1588,7 @@ Generated on #{Time.now}.
     end
 
     def inspect
-      %Q{<#{self.class}:#{self.object_id} @name="#{@name}" @values="#{@values}">}
+      %Q(<#{self.class}:#{self.object_id} @name="#{@name}" @values="#{@values}">)
     end
   end
 
@@ -1612,7 +1612,7 @@ Generated on #{Time.now}.
     end
 
     def inspect
-      %Q{<#{self.class}:#{self.object_id} @name="#{@name}" @section="#{@section}">}
+      %Q(<#{self.class}:#{self.object_id} @name="#{@name}" @section="#{@section}">)
     end
   end
 
@@ -1649,7 +1649,7 @@ Generated on #{Time.now}.
     end
 
     def inspect
-      %Q{<#{self.class}:#{self.object_id} @environment_name="#{@environment_name}" @conf="#{@conf}">}
+      %Q(<#{self.class}:#{self.object_id} @environment_name="#{@environment_name}" @conf="#{@conf}">)
     end
   end
 end

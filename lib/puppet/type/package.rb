@@ -270,7 +270,7 @@ module Puppet
       isnamevar
 
       validate do |value|
-        if !value.is_a?(String)
+        unless value.is_a?(String)
           raise ArgumentError, _("Name must be a String not %{klass}") % { klass: value.class }
         end
       end

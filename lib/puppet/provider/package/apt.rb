@@ -45,7 +45,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   def query
     hash = super
 
-    if !%i(absent purged).include?(hash[:ensure]) && aptmark('showmanual', @resource[:name]).strip == @resource[:name]
+    if !%i[absent purged].include?(hash[:ensure]) && aptmark('showmanual', @resource[:name]).strip == @resource[:name]
       hash[:mark] = :manual
     end
 
@@ -133,7 +133,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     end
 
     checkforcdrom
-    cmd = %w{-q -y}
+    cmd = %w[-q -y]
 
     config = @resource[:configfiles]
     if config
@@ -173,7 +173,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     end
 
     # If a source file was specified, we must make sure the expected version was installed from specified file
-    if source && !%i(present installed).include?(should)
+    if source && !%i[present installed].include?(should)
       is = self.query
       raise Puppet::Error, _("Could not find package %{name}") % { name: self.name } unless is
 
@@ -189,7 +189,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     output = aptcache :policy, @resource[:name]
 
     if output =~ /Candidate:\s+(\S+)\s/
-      return $1
+      return Regexp.last_match(1)
     else
       self.err _("Could not find latest version")
       return nil

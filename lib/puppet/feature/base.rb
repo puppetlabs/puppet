@@ -24,7 +24,7 @@ raise Puppet::Error, _("Cannot determine basic system flavour") unless Puppet.fe
 Puppet.features.add(:ldap, :libs => ["ldap"])
 
 # We have the Rdoc::Usage library.
-Puppet.features.add(:usage, :libs => %w{rdoc/ri/ri_paths rdoc/usage})
+Puppet.features.add(:usage, :libs => %w[rdoc/ri/ri_paths rdoc/usage])
 
 # We have libshadow, useful for managing passwords.
 Puppet.features.add(:libshadow, :libs => ["shadow"])
@@ -36,7 +36,7 @@ Puppet.features.add(:root) do
 end
 
 # We have lcs diff
-Puppet.features.add :diff, :libs => %w{diff/lcs diff/lcs/hunk}
+Puppet.features.add :diff, :libs => %w[diff/lcs diff/lcs/hunk]
 
 # We have OpenSSL
 Puppet.features.add(:openssl, :libs => ["openssl"])

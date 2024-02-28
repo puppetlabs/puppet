@@ -64,7 +64,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
     # list out our specific package
     output = opkg('list-installed', @resource[:name])
     if output =~ /^(\S+) - (\S+)/
-      return { :ensure => $2 }
+      return { :ensure => Regexp.last_match(2) }
     end
 
     nil

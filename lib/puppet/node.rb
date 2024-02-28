@@ -142,7 +142,7 @@ class Puppet::Node
       raise error
     end
 
-    if !@facts.nil?
+    unless @facts.nil?
       @facts.sanitize
       # facts should never modify the environment parameter
       orig_param_env = @parameters[ENVIRONMENT]
@@ -228,7 +228,7 @@ class Puppet::Node
     if trusted_param
       # Blows up if it is a parameter as it will be set as $trusted by the compiler as if it was a variable
       @parameters.delete('trusted')
-      unless trusted_param.is_a?(Hash) && %w{authenticated certname extensions}.all? { |key| trusted_param.has_key?(key) }
+      unless trusted_param.is_a?(Hash) && %w[authenticated certname extensions].all? { |key| trusted_param.has_key?(key) }
         # trusted is some kind of garbage, do not resurrect
         trusted_param = nil
       end
@@ -245,7 +245,7 @@ class Puppet::Node
     #
     # Note that trusted_data should be a hash, but (2) and (4) are not
     # hashes, so we to_h at the end
-    if !trusted_data
+    unless trusted_data
       trusted = Puppet.lookup(:trusted_information) do
         trusted_param || Puppet::Context::TrustedInformation.local(self)
       end

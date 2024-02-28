@@ -258,7 +258,7 @@ module Puppet::FFI::Windows
       )
     end
 
-    MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16384
+    MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16_384
 
     # SYMLINK_REPARSE_DATA_BUFFER
     # https://msdn.microsoft.com/en-us/library/cc232006.aspx

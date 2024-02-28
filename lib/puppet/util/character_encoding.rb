@@ -20,7 +20,7 @@ module Puppet::Util::CharacterEncoding
       string_copy = string.dup
       begin
         if original_encoding == Encoding::UTF_8
-          if !string_copy.valid_encoding?
+          unless string_copy.valid_encoding?
             Puppet.debug {
               _("%{value} is already labeled as UTF-8 but this encoding is invalid. It cannot be transcoded by Puppet.") % { value: string.dump }
             }

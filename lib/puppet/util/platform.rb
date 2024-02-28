@@ -24,7 +24,7 @@ module Puppet
       def default_paths
         return [] if windows?
 
-        %w{/usr/sbin /sbin}
+        %w[/usr/sbin /sbin]
       end
       module_function :default_paths
 

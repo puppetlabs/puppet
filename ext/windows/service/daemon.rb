@@ -36,7 +36,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
 
     @LOG_TO_FILE = (argsv.index('--logtofile') ? true : false)
 
-    if (@LOG_TO_FILE)
+    if @LOG_TO_FILE
       FileUtils.mkdir_p(File.dirname(LOG_FILE))
       args = args.gsub("--logtofile", "")
     end
@@ -131,7 +131,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
 
   def log(msg, level)
     if LEVELS.index(level) >= @loglevel
-      if (@LOG_TO_FILE)
+      if @LOG_TO_FILE
         # without this change its possible that we get Encoding errors trying to write UTF-8 messages in current codepage
         File.open(LOG_FILE, 'a:UTF-8') { |f| f.puts("#{Time.now} Puppet (#{level}): #{msg}") }
       end
@@ -153,7 +153,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
     rescue Exception
       # Ignore all errors
     ensure
-      if (!eventlog.nil?)
+      unless eventlog.nil?
         eventlog.close
       end
     end
@@ -161,7 +161,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
 
   def parse_runinterval(puppet_path)
     begin
-      runinterval = %x{#{puppet_path} config --section agent --log_level notice print runinterval}.to_i
+      runinterval = %x(#{puppet_path} config --section agent --log_level notice print runinterval).to_i
       if runinterval == 0
         runinterval = 1800
         log_err("Failed to determine runinterval, defaulting to #{runinterval} seconds")
@@ -176,7 +176,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
 
   def parse_log_level(puppet_path, cmdline_debug)
     begin
-      loglevel = %x{#{puppet_path} config --section agent --log_level notice print log_level}.chomp
+      loglevel = %x(#{puppet_path} config --section agent --log_level notice print log_level).chomp
       unless loglevel && respond_to?("log_#{loglevel}")
         loglevel = :notice
         log_err("Failed to determine loglevel, defaulting to #{loglevel}")

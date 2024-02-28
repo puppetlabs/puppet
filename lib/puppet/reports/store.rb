@@ -19,14 +19,14 @@ Puppet::Reports.register_report(:store) do
 
     dir = File.join(Puppet[:reportdir], host)
 
-    if !Puppet::FileSystem.exist?(dir)
+    unless Puppet::FileSystem.exist?(dir)
       FileUtils.mkdir_p(dir)
-      FileUtils.chmod_R(0750, dir)
+      FileUtils.chmod_R(0o750, dir)
     end
 
     # Now store the report.
     now = Time.now.gmtime
-    name = %w{year month day hour min}.collect do |method|
+    name = %w[year month day hour min].collect do |method|
       # Make sure we're at least two digits everywhere
       "%02d" % now.send(method).to_s
     end.join("") + ".yaml"
@@ -34,7 +34,7 @@ Puppet::Reports.register_report(:store) do
     file = File.join(dir, name)
 
     begin
-      Puppet::FileSystem.replace_file(file, 0640) do |fh|
+      Puppet::FileSystem.replace_file(file, 0o640) do |fh|
         fh.print to_yaml
       end
     rescue => detail

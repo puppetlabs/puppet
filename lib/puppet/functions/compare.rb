@@ -98,7 +98,7 @@ Puppet::Functions.create_function(:compare) do
   end
 
   def on_error(a, b, *ignore_case)
-    if !ignore_case.empty?
+    unless ignore_case.empty?
       unless a.is_a?(String) && b.is_a?(String)
         # TRANSLATORS 'compare' is a name
         return _("compare(): The third argument (ignore case) can only be used when comparing strings")

@@ -85,7 +85,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
               installapp("#{fspath}/#{pkg}", name, source)
             end
           end
-          Puppet.debug "Unable to find .app in .appdmg. #{name} will not be installed." if !found_app
+          Puppet.debug "Unable to find .app in .appdmg. #{name} will not be installed." unless found_app
         ensure
           hdiutil "eject", mounts[0]
         end

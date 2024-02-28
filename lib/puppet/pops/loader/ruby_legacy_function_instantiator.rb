@@ -120,7 +120,11 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
   # Returns an Array; a tuple with method name and line number or "<unknown>" if either is missing, or format is not the expected
   #
   def self.extract_name_line(x)
-    (x.is_a?(Array) ? [x[1], x[2].is_a?(Array) ? x[2][1] : nil] : [nil, nil]).map { |v| v.nil? ? UNKNOWN : v }
+    (if x.is_a?(Array)
+       [x[1], x[2].is_a?(Array) ? x[2][1] : nil]
+     else
+       [nil, nil]
+     end).map { |v| v.nil? ? UNKNOWN : v }
   end
   private_class_method :extract_name_line
 end

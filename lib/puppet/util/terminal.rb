@@ -8,8 +8,8 @@ module Puppet::Util::Terminal
   # @return [Number] The column width of the terminal.  Defaults to 80 columns.
   def self.width
     if Puppet.features.posix?
-      result = %x{stty size 2>/dev/null}.split[1] ||
-               %x{tput cols 2>/dev/null}.split[0]
+      result = %x(stty size 2>/dev/null).split[1] ||
+               %x(tput cols 2>/dev/null).split[0]
     end
     return (result || '80').to_i
   rescue

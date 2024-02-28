@@ -27,7 +27,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
         conf.each_line { |line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*(-nv|-q|--no-verbose|--quiet)/ }
       end
     end
-    if !correct_wgetopts
+    unless correct_wgetopts
       Puppet.notice _("It is highly recommended that you set 'wgetopts=-nv' in your pkgutil.conf.")
     end
   end
@@ -50,11 +50,11 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
       # Create a second instance with the alias if it's different
       pkgalias = aliases[pkg[:name]]
-      if pkgalias and pkg[:name] != pkgalias
-        apkg = pkg.dup
-        apkg[:name] = pkgalias
-        pkginsts << new(apkg)
-      end
+      next unless pkgalias and pkg[:name] != pkgalias
+
+      apkg = pkg.dup
+      apkg[:name] = pkgalias
+      pkginsts << new(apkg)
     end
 
     pkginsts
@@ -70,7 +70,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       next if noise?(line)
 
       if line =~ /\s*(\S+)\s+(\S+)\s+(.*)/
-        { :alias => $1, :name => $2, :avail => $3 }
+        { :alias => Regexp.last_match(1), :name => Regexp.last_match(2), :avail => Regexp.last_match(3) }
       else
         Puppet.warning _("Cannot match %{line}") % { line: line }
       end
@@ -127,13 +127,13 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
   def self.pkgsplit(line)
     if line =~ /\s*(\S+)\s+(\S+)\s+(.*)/
       hash = {}
-      hash[:name] = $1
-      hash[:ensure] = if $2 == "notinst"
+      hash[:name] = Regexp.last_match(1)
+      hash[:ensure] = if Regexp.last_match(2) == "notinst"
                         :absent
                       else
-                        $2
+                        Regexp.last_match(2)
                       end
-      hash[:avail] = $3
+      hash[:avail] = Regexp.last_match(3)
 
       if hash[:avail] =~ /^SAME\s*$/
         hash[:avail] = hash[:ensure]

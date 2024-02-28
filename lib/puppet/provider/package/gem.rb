@@ -140,8 +140,8 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
     # so we don't need to check for them
 
     if desc =~ /^(\S+)\s+\((.+)\)/
-      gem_name = $1
-      versions = $2.sub('default: ', '').split(/,\s*/)
+      gem_name = Regexp.last_match(1)
+      versions = Regexp.last_match(2).sub('default: ', '').split(/,\s*/)
       {
         :name => gem_name,
         :ensure => versions.map { |v| v.split[0] },
@@ -211,7 +211,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
     end
 
     if Puppet::Util::Platform.windows?
-      command_options << "-v" << %Q["#{should}"] if useversion && !should.is_a?(Symbol)
+      command_options << "-v" << %Q("#{should}") if useversion && !should.is_a?(Symbol)
     elsif useversion && !should.is_a?(Symbol)
       command_options << "-v" << should
     end

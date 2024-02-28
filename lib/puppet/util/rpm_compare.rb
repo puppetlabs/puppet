@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 module Puppet::Util::RpmCompare
-  ARCH_LIST = %w(
+  ARCH_LIST = %w[
     noarch i386 i686 ppc ppc64 armv3l armv4b armv4l armv4tl armv5tel
     armv5tejl armv6l armv7l m68kmint s390 s390x ia64 x86_64 sh3 sh4
-  ).freeze
+  ].freeze
 
   ARCH_REGEX = Regexp.new(ARCH_LIST.join('|\.'))
 
@@ -149,8 +149,8 @@ module Puppet::Util::RpmCompare
   # found in python/header-py.c, as used by rpm.
   def compare_values(s1, s2)
     return 0 if s1.nil? && s2.nil?
-    return 1 if (not s1.nil?) && s2.nil?
-    return -1 if s1.nil? && (not s2.nil?)
+    return 1 if (!s1.nil?) && s2.nil?
+    return -1 if s1.nil? && (!s2.nil?)
 
     return rpmvercmp(s1, s2)
   end
@@ -173,7 +173,7 @@ module Puppet::Util::RpmCompare
     should_hash = rpm_parse_evr(should)
     is_hash = rpm_parse_evr(is)
 
-    if !should_hash[:epoch].nil?
+    unless should_hash[:epoch].nil?
       rc = compare_values(should_hash[:epoch], is_hash[:epoch])
       return rc unless rc == 0
     end

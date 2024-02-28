@@ -400,7 +400,7 @@ class PAnyType < TypedModelObject
     modified = false
     modified_types = types.map do |t|
       t_mod = t.send(method, *method_args)
-      modified = !t.equal?(t_mod) unless modified
+      modified ||= !t.equal?(t_mod)
       t_mod
     end
     if modified
@@ -1088,7 +1088,11 @@ class PIntegerType < PNumericType
   # numbers are converted to zero
   # @return [PIntegerType] a positive range
   def to_size
-    @from >= 0 ? self : PIntegerType.new(0, @to < 0 ? 0 : @to)
+    if @from >= 0
+      self
+    else
+      PIntegerType.new(0, @to < 0 ? 0 : @to)
+    end
   end
 
   def new_function
@@ -2434,7 +2438,7 @@ class PCallableType < PAnyType
     return false unless @param_types.instance?(args)
 
     if @block_type.nil?
-      block == nil
+      block.nil?
     else
       @block_type.instance?(block)
     end

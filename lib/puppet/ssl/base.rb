@@ -119,9 +119,7 @@ class Puppet::SSL::Base
   end
 
   def digest(algorithm = nil)
-    unless algorithm
-      algorithm = digest_algorithm
-    end
+    algorithm ||= digest_algorithm
 
     Puppet::SSL::Digest.new(algorithm, content.to_der)
   end

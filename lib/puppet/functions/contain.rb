@@ -48,7 +48,7 @@ Puppet::Functions.create_function(:contain, Puppet::Functions::InternalFunction)
     # This is the same as calling the include function but faster and does not rely on the include
     # function.
     (scope.compiler.evaluate_classes(classes, scope, false) || []).each do |resource|
-      if !scope.catalog.edge?(containing_resource, resource)
+      unless scope.catalog.edge?(containing_resource, resource)
         scope.catalog.add_edge(containing_resource, resource)
       end
     end

@@ -283,8 +283,8 @@ class Puppet::Parser::Scope
   def exist?(name)
     # Note !! ensure the answer is boolean
     !!if name =~ /^(.*)::(.+)$/
-        class_name = $1
-        variable_name = $2
+        class_name = ::Regexp.last_match(1)
+        variable_name = ::Regexp.last_match(2)
         return true if class_name == '' && BUILT_IN_VARS.include?(variable_name)
 
         # lookup class, but do not care if it is not evaluated since that will result
@@ -676,7 +676,7 @@ class Puppet::Parser::Scope
   def to_hash(recursive = true, include_undef = false)
     if recursive and has_enclosing_scope?
       target = enclosing_scope.to_hash(recursive)
-      if !(inherited = inherited_scope).nil?
+      unless (inherited = inherited_scope).nil?
         target.merge!(inherited.to_hash(recursive))
       end
     else
@@ -894,7 +894,7 @@ class Puppet::Parser::Scope
     # shorten the path if possible
     path = detail[0]
     env_path = nil
-    env_path = environment.configuration.path_to_env unless (environment.nil? || environment.configuration.nil?)
+    env_path = environment.configuration.path_to_env unless environment.nil? || environment.configuration.nil?
     # check module paths first since they may be in the environment (i.e. they are longer)
     module_path = environment.full_modulepath.detect { |m_path| path.start_with?(m_path) }
     if module_path
@@ -1046,7 +1046,7 @@ class Puppet::Parser::Scope
 
   def method_missing(method, *args, &block)
     method.to_s =~ /^function_(.*)$/
-    name = $1
+    name = ::Regexp.last_match(1)
     super unless name
     super unless Puppet::Parser::Functions.function(name)
     # In odd circumstances, this might not end up defined by the previous

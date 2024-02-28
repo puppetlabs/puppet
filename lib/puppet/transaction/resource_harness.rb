@@ -217,7 +217,7 @@ class Puppet::Transaction::ResourceHarness
 
     # The event we've been provided might have been redacted so we need to use the state stored within
     # the resource application context to see if an event was actually generated.
-    if !are_audited_values_equal(context.historical_values[property.name], context.current_values[property.name])
+    unless are_audited_values_equal(context.historical_values[property.name], context.current_values[property.name])
       event.message = property.format(_("audit change: previously recorded value %s has been changed to %s"),
                                       property.is_to_s(event.historical_value),
                                       property.is_to_s(event.previous_value))

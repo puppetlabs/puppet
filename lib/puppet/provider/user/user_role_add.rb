@@ -227,7 +227,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
       # Go Mifune loves the race here where we can lose data because
       # /etc/shadow changed between reading it and writing it.
       # --daniel 2012-02-05
-      Puppet::Util.replace_file(target_file_path, 0640) do |fh|
+      Puppet::Util.replace_file(target_file_path, 0o640) do |fh|
         shadow.each_line do |line|
           line_arr = line.split(':')
           if line_arr[0] == @resource[:name]
