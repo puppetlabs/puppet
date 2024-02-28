@@ -211,6 +211,13 @@ describe "validating 4x" do
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
       end
     end
+
+    it 'produces a warning for non-literal class parameters' do
+      acceptor = validate(parse('class test(Integer[2-1] $port) {}'))
+      expect(acceptor.warning_count).to eql(1)
+      expect(acceptor.error_count).to eql(0)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_NONLITERAL_PARAMETER_TYPE)
+    end
   end
 
   context 'with --strict set to error' do
@@ -262,6 +269,13 @@ describe "validating 4x" do
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
       end
     end
+
+    it 'produces an error for non-literal class parameters' do
+      acceptor = validate(parse('class test(Integer[2-1] $port) {}'))
+      expect(acceptor.warning_count).to eql(0)
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_NONLITERAL_PARAMETER_TYPE)
+    end
   end
 
   context 'with --strict set to off' do
@@ -291,6 +305,13 @@ describe "validating 4x" do
         expect(acceptor.error_count).to eql(1)
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
       end
+    end
+
+    it 'does not produce an error or warning for non-literal class parameters' do
+      acceptor = validate(parse('class test(Integer[2-1] $port) {}'))
+      expect(acceptor.warning_count).to eql(0)
+      expect(acceptor.error_count).to eql(0)
+      expect(acceptor).to_not have_issue(Puppet::Pops::Issues::ILLEGAL_NONLITERAL_PARAMETER_TYPE)
     end
   end
 
