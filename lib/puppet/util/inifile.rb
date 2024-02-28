@@ -318,11 +318,7 @@ module Puppet::Util::IniConfig
     # Return a file if it's already been defined, create a new file if it hasn't
     # been defined.
     def get_physical_file(file)
-      if @files[file]
-        @files[file]
-      else
-        new_physical_file(file)
-      end
+      @files[file] || new_physical_file(file)
     end
 
     # Create a new physical file and set required attributes on that file.

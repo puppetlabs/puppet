@@ -216,7 +216,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
           package[:ensure] = eix_get_version_for_slot(package[:installed_slots], qatom[:slot])
         end
 
-        package[:ensure] = package[:ensure] ? package[:ensure] : :absent
+        package[:ensure] = package[:ensure] || :absent
         packages << package
       end
 

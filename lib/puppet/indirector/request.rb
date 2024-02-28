@@ -140,7 +140,7 @@ class Puppet::Indirector::Request
   end
 
   def description
-    return(uri ? uri : "/#{indirection_name}/#{key}")
+    return(uri || "/#{indirection_name}/#{key}")
   end
 
   def remote?

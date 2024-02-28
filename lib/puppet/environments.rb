@@ -35,11 +35,7 @@ module Puppet::Environments
     # @!macro loader_get_or_fail
     def get!(name)
       environment = get(name)
-      if environment
-        environment
-      else
-        raise EnvironmentNotFound, name
-      end
+      environment || raise(EnvironmentNotFound, name)
     end
 
     def clear_all

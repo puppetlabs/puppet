@@ -182,7 +182,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
       loglevel = :notice
     end
 
-    LEVELS.index(cmdline_debug ? cmdline_debug : loglevel.to_sym)
+    LEVELS.index(cmdline_debug || loglevel.to_sym)
   end
 
   private

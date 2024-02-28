@@ -647,23 +647,6 @@ Style/PreferredHashMethods:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/RedundantCondition:
-  Exclude:
-    - 'ext/windows/service/daemon.rb'
-    - 'lib/puppet/application/describe.rb'
-    - 'lib/puppet/environments.rb'
-    - 'lib/puppet/external/dot.rb'
-    - 'lib/puppet/graph/simple_graph.rb'
-    - 'lib/puppet/indirector/request.rb'
-    - 'lib/puppet/parser/templatewrapper.rb'
-    - 'lib/puppet/provider/package/blastwave.rb'
-    - 'lib/puppet/provider/package/pkgutil.rb'
-    - 'lib/puppet/provider/package/portage.rb'
-    - 'lib/puppet/type.rb'
-    - 'lib/puppet/util/command_line/trollop.rb'
-    - 'lib/puppet/util/inifile.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/RedundantConditional:
   Exclude:
     - 'lib/puppet/type/exec.rb'

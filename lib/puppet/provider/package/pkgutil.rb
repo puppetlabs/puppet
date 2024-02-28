@@ -172,11 +172,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
   def query
     hash = pkgsingle(@resource)
-    if hash
-      hash
-    else
-      { :ensure => :absent }
-    end
+    hash || { :ensure => :absent }
   end
 
   def update

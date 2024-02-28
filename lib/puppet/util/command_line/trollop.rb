@@ -337,7 +337,7 @@ class CommandLine
               when /^--no-([^-]\S*)$/
                 @long["[no-]#{::Regexp.last_match(1)}"]
               when /^--([^-]\S*)$/
-                @long[::Regexp.last_match(1)] ? @long[::Regexp.last_match(1)] : @long["[no-]#{::Regexp.last_match(1)}"]
+                @long[::Regexp.last_match(1)] || @long["[no-]#{::Regexp.last_match(1)}"]
               else
                 raise CommandlineError, _("invalid argument syntax: '%{arg}'") % { arg: arg }
               end

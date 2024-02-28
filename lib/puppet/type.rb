@@ -1803,11 +1803,7 @@ class Type
                  pname
                else
                  provider = self.provider(pname)
-                 if provider
-                   provider
-                 else
-                   raise Puppet::DevError, _("Could not find parent provider %{parent} of %{name}") % { parent: pname, name: name }
-                 end
+                 provider || raise(Puppet::DevError, _("Could not find parent provider %{parent} of %{name}") % { parent: pname, name: name })
                end
              else
                Puppet::Provider
