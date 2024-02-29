@@ -1,5 +1,5 @@
 test_name "should find existing production environment"
-tag 'audit:high'
+tag 'audit:medium'
 
 require 'puppet/acceptance/i18ndemo_utils'
 extend Puppet::Acceptance::I18nDemoUtils
