@@ -34,11 +34,11 @@ module Puppet::Environments
   module EnvironmentLoader
     # @!macro loader_get_or_fail
     def get!(name)
-      environment = get(name)
+      environment = get(name.to_s)
       if environment
         environment
       else
-        raise EnvironmentNotFound, name
+        raise EnvironmentNotFound, name.to_s
       end
     end
 
@@ -114,7 +114,7 @@ module Puppet::Environments
     # @!macro loader_get
     def get(name)
       @environments.find do |env|
-        env.name == name.intern
+        env.name == name.intern.to_s
       end
     end
 
@@ -153,7 +153,7 @@ module Puppet::Environments
     def initialize(env_name, env_dir, environment)
       super(environment)
       @env_dir = env_dir
-      @env_name = env_name.intern
+      @env_name = env_name.intern.to_s
     end
 
     # @!macro loader_get_conf
@@ -257,7 +257,7 @@ module Puppet::Environments
     end
 
     def validated_directory(envdir)
-      env_name = Puppet::FileSystem.basename_string(envdir)
+      env_name = Puppet::FileSystem.basename_string(envdir).to_s
       envdir = Puppet::Environments::Directories.real_path(envdir).to_s
       if Puppet::FileSystem.directory?(envdir) && Puppet::Node::Environment.valid_name?(env_name)
         envdir
