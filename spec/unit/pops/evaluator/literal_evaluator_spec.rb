@@ -16,8 +16,26 @@ describe "Puppet::Pops::Evaluator::LiteralEvaluator" do
     '"a"'     => 'a',
     'a'       => 'a',
     'a::b'    => 'a::b',
+    'Boolean[true]' => [true],
     'Integer[1]' => [1],
     'Integer[-1]' => [-1],
+    'Integer[-5, -1]' => [-5, -1],
+    'Integer[-5, 5]'  => [-5, 5],
+    # we can't actually represent MIN_INTEGER because it's glexed as
+    # UnaryMinusExpression containing a positive LiteralInteger and the integer
+    # must be <= MAX_INTEGER
+    "Integer[#{Puppet::Pops::MIN_INTEGER + 1}]" => [-0x7FFFFFFFFFFFFFFF],
+    "Integer[0, #{Puppet::Pops::MAX_INTEGER}]"  => [0, 0x7FFFFFFFFFFFFFFF],
+    'Integer[0, default]'         => [0, :default],
+    'Integer[Infinity]'           => ['infinity'],
+    'Float[Infinity]'             => ['infinity'],
+    'Array[Integer, 1]'           => ['integer', 1],
+    'Hash[Integer, String, 1, 3]' => ['integer', 'string', 1, 3],
+    'Regexp[/-1/]'                => [/-1/],
+    'Sensitive[-1]'               => [-1],
+    'Timespan[-5, 5]'             => [-5, 5],
+    'Timestamp["2012-10-10", 1]'  => ['2012-10-10', 1],
+    'Undef' => 'undef',
     'File' => "file",
 
     # special values
