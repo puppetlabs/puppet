@@ -515,7 +515,15 @@ describe "Puppet::InfoService" do
          })
      end
 
-     it "errors with a descriptive message if non-literal class parameter is given" do
+     it "warns with a descriptive message if non-literal class parameter is given" do
+       files = ['non_literal.pp', 'non_literal_2.pp'].map {|f| File.join(code_dir, f) }
+       Puppet::InfoService.classes_per_environment({'production' => files })
+       expect(@logs).to include(an_object_having_attributes(message: "The parameter '$bad_int' must be a literal type, not a Puppet::Pops::Model::AccessExpression"))
+       expect(@logs).to include(an_object_having_attributes(message: "The parameter '$double_brackets' must be a literal type, not a Puppet::Pops::Model::AccessExpression"))
+     end
+
+     it "errors in strict mode if non-literal class parameter is given" do
+       Puppet[:strict] = "error"
        files = ['non_literal.pp', 'non_literal_2.pp'].map {|f| File.join(code_dir, f) }
        result = Puppet::InfoService.classes_per_environment({'production' => files })
        expect(result).to eq({
