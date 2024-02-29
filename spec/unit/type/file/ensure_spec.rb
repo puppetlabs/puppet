@@ -12,10 +12,22 @@ describe Puppet::Type.type(:file).attrclass(:ensure) do
   end
 
   describe "when retrieving the current state" do
+    let(:resource_with_content) { Puppet::Type.type(:file).new(:ensure => 'file', :path => path, :replace => true, :content => 'butter' ) }
+    let(:property_with_content) { resource_with_content.property(:ensure) }
+
     it "should return :absent if the file does not exist" do
       expect(resource).to receive(:stat).and_return(nil)
 
       expect(property.retrieve).to eq(:absent)
+    end
+
+    it "prints the content or source diff, if the file is absent" do
+      null_file = Puppet::Util::Platform.windows? ? 'NUL' : '/dev/null'
+      expect(property_with_content).to receive(:show_diff?).and_return(true)
+      resource_with_content[:loglevel] = "debug"
+      expect(property_with_content).to receive(:diff).with(null_file, any_args).and_return("my diff")
+      expect(property_with_content).to receive(:debug).with("\nmy diff")
+      expect(property_with_content).not_to be_safe_insync(:absent)
     end
 
     it "should return the current file type if the file exists" do
