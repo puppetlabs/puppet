@@ -1,7 +1,7 @@
 test_name 'C100565: puppet agent with module should translate messages' do
   confine :except, :platform => /^solaris/ # translation not supported
 
-  tag 'audit:high',
+  tag 'audit:medium',
       'audit:acceptance'
 
   skip_test('i18n test module uses deprecated function; update module to resume testing.')
