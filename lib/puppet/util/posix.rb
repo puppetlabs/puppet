@@ -131,7 +131,7 @@ module Puppet::Util::POSIX
     when :gr, :group; return :gid
     when :pw, :user, :passwd; return :uid
     else
-      raise ArgumentError.new(_("Can only handle users and groups"))
+      raise ArgumentError, _("Can only handle users and groups")
     end
   end
 
@@ -141,7 +141,7 @@ module Puppet::Util::POSIX
     when :gr, :group; return :getgrgid
     when :pw, :user, :passwd; return :getpwuid
     else
-      raise ArgumentError.new(_("Can only handle users and groups"))
+      raise ArgumentError, _("Can only handle users and groups")
     end
   end
 
@@ -151,7 +151,7 @@ module Puppet::Util::POSIX
     when :gr, :group; return :getgrnam
     when :pw, :user, :passwd; return :getpwnam
     else
-      raise ArgumentError.new(_("Can only handle users and groups"))
+      raise ArgumentError, _("Can only handle users and groups")
     end
   end
 

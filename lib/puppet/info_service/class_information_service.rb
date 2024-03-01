@@ -89,12 +89,10 @@ class Puppet::InfoService::ClassInformationService
   end
 
   def typeexpr_to_string(type_expr)
-    begin
-      type_parser.interpret_any(type_expr, nil).to_s
-    rescue Puppet::ParseError
-      # type is to complex - contains expressions that are not literal
-      nil
-    end
+    type_parser.interpret_any(type_expr, nil).to_s
+  rescue Puppet::ParseError
+    # type is to complex - contains expressions that are not literal
+    nil
   end
 
   def value_as_literal(value_expr)

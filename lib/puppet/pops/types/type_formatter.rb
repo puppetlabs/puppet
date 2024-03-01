@@ -687,37 +687,35 @@ class TypeFormatter
   end
 
   def append_object_hash(hash)
-    begin
-      @expanded = false
-      append_array('Object') do
-        append_hash(hash, proc { |k| @bld << symbolic_key(k) }) do |k, v|
-          case k
-          when KEY_ATTRIBUTES, KEY_FUNCTIONS
-            # Types might need to be output as type references
-            append_hash(v) do |_, fv|
-              if fv.is_a?(Hash)
-                append_hash(fv, proc { |fak| @bld << symbolic_key(fak) }) do |fak, fav|
-                  case fak
-                  when KEY_KIND
-                    @bld << fav
-                  else
-                    append_string(fav)
-                  end
+    @expanded = false
+    append_array('Object') do
+      append_hash(hash, proc { |k| @bld << symbolic_key(k) }) do |k, v|
+        case k
+        when KEY_ATTRIBUTES, KEY_FUNCTIONS
+          # Types might need to be output as type references
+          append_hash(v) do |_, fv|
+            if fv.is_a?(Hash)
+              append_hash(fv, proc { |fak| @bld << symbolic_key(fak) }) do |fak, fav|
+                case fak
+                when KEY_KIND
+                  @bld << fav
+                else
+                  append_string(fav)
                 end
-              else
-                append_string(fv)
               end
+            else
+              append_string(fv)
             end
-          when KEY_EQUALITY
-            append_array('') { append_strings(v) } if v.is_a?(Array)
-          else
-            append_string(v)
           end
+        when KEY_EQUALITY
+          append_array('') { append_strings(v) } if v.is_a?(Array)
+        else
+          append_string(v)
         end
       end
-    ensure
-      @expanded = true
     end
+  ensure
+    @expanded = true
   end
 
   def append_elements(array, to_be_continued = false)

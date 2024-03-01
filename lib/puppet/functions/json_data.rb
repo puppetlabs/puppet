@@ -20,12 +20,10 @@ Puppet::Functions.create_function(:json_data) do
   def json_data(options, context)
     path = options['path']
     context.cached_file_data(path) do |content|
-      begin
-        Puppet::Util::Json.load(content)
-      rescue Puppet::Util::Json::ParseError => ex
-        # Filename not included in message, so we add it here.
-        raise Puppet::DataBinding::LookupError, "Unable to parse (%{path}): %{message}" % { path: path, message: ex.message }
-      end
+      Puppet::Util::Json.load(content)
+    rescue Puppet::Util::Json::ParseError => ex
+      # Filename not included in message, so we add it here.
+      raise Puppet::DataBinding::LookupError, "Unable to parse (%{path}): %{message}" % { path: path, message: ex.message }
     end
   end
 

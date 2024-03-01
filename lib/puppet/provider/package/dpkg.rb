@@ -159,9 +159,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     hash ||= { :ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok' }
 
     if hash[:error] != "ok"
-      raise Puppet::Error.new(
-        "Package #{hash[:name]}, version #{hash[:ensure]} is in error state: #{hash[:error]}"
-      )
+      raise Puppet::Error, "Package #{hash[:name]}, version #{hash[:ensure]} is in error state: #{hash[:error]}"
     end
 
     hash

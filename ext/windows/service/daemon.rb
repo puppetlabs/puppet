@@ -75,25 +75,23 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
 
     service = self
     @run_thread = Thread.new do
-      begin
-        while service.running? do
-          runinterval = service.parse_runinterval(ruby_puppet_cmd)
+      while service.running? do
+        runinterval = service.parse_runinterval(ruby_puppet_cmd)
 
-          if service.state == RUNNING or service.state == IDLE
-            service.log_notice("Executing agent with arguments: #{args}")
-            pid = Process.create(:command_line => "#{ruby_puppet_cmd} agent --onetime #{args}", :creation_flags => CREATE_NEW_CONSOLE).process_id
-            service.log_debug("Process created: #{pid}")
-          else
-            service.log_debug("Service is paused.  Not invoking Puppet agent")
-          end
-
-          service.log_debug("Service worker thread waiting for #{runinterval} seconds")
-          sleep(runinterval)
-          service.log_debug('Service worker thread woken up')
+        if service.state == RUNNING or service.state == IDLE
+          service.log_notice("Executing agent with arguments: #{args}")
+          pid = Process.create(:command_line => "#{ruby_puppet_cmd} agent --onetime #{args}", :creation_flags => CREATE_NEW_CONSOLE).process_id
+          service.log_debug("Process created: #{pid}")
+        else
+          service.log_debug("Service is paused.  Not invoking Puppet agent")
         end
-      rescue Exception => e
-        service.log_exception(e)
+
+        service.log_debug("Service worker thread waiting for #{runinterval} seconds")
+        sleep(runinterval)
+        service.log_debug('Service worker thread woken up')
       end
+    rescue Exception => e
+      service.log_exception(e)
     end
     @run_thread.join
   rescue Exception => e
@@ -142,20 +140,18 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
   end
 
   def report_windows_event(type, id, message)
-    begin
-      eventlog = nil
-      eventlog = Puppet::Util::Windows::EventLog.open("Puppet")
-      eventlog.report_event(
-        :event_type => type, # EVENTLOG_ERROR_TYPE, etc
-        :event_id => id, # 0x01 or 0x02, 0x03 etc.
-        :data => message # "the message"
-      )
-    rescue Exception
-      # Ignore all errors
-    ensure
-      unless eventlog.nil?
-        eventlog.close
-      end
+    eventlog = nil
+    eventlog = Puppet::Util::Windows::EventLog.open("Puppet")
+    eventlog.report_event(
+      :event_type => type, # EVENTLOG_ERROR_TYPE, etc
+      :event_id => id, # 0x01 or 0x02, 0x03 etc.
+      :data => message # "the message"
+    )
+  rescue Exception
+    # Ignore all errors
+  ensure
+    unless eventlog.nil?
+      eventlog.close
     end
   end
 
@@ -186,30 +182,28 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
       loglevel = :notice
     end
 
-    LEVELS.index(cmdline_debug ? cmdline_debug : loglevel.to_sym)
+    LEVELS.index(cmdline_debug || loglevel.to_sym)
   end
 
   private
 
   def load_env(base_dir)
-    begin
-      # ENV that uses backward slashes
-      ENV['FACTER_env_windows_installdir'] = base_dir.tr('/', '\\')
-      ENV['PL_BASEDIR'] = base_dir.tr('/', '\\')
-      ENV['PUPPET_DIR'] = File.join(base_dir, 'puppet').tr('/', '\\')
-      ENV['OPENSSL_CONF'] = File.join(base_dir, 'puppet', 'ssl', 'openssl.cnf').tr('/', '\\')
-      ENV['SSL_CERT_DIR'] = File.join(base_dir, 'puppet', 'ssl', 'certs').tr('/', '\\')
-      ENV['SSL_CERT_FILE'] = File.join(base_dir, 'puppet', 'ssl', 'cert.pem').tr('/', '\\')
-      ENV['Path'] = [
-        File.join(base_dir, 'puppet', 'bin'),
-        File.join(base_dir, 'bin'),
-      ].join(';').tr('/', '\\') + ';' + ENV.fetch('Path', nil)
+    # ENV that uses backward slashes
+    ENV['FACTER_env_windows_installdir'] = base_dir.tr('/', '\\')
+    ENV['PL_BASEDIR'] = base_dir.tr('/', '\\')
+    ENV['PUPPET_DIR'] = File.join(base_dir, 'puppet').tr('/', '\\')
+    ENV['OPENSSL_CONF'] = File.join(base_dir, 'puppet', 'ssl', 'openssl.cnf').tr('/', '\\')
+    ENV['SSL_CERT_DIR'] = File.join(base_dir, 'puppet', 'ssl', 'certs').tr('/', '\\')
+    ENV['SSL_CERT_FILE'] = File.join(base_dir, 'puppet', 'ssl', 'cert.pem').tr('/', '\\')
+    ENV['Path'] = [
+      File.join(base_dir, 'puppet', 'bin'),
+      File.join(base_dir, 'bin'),
+    ].join(';').tr('/', '\\') + ';' + ENV.fetch('Path', nil)
 
-      # ENV that uses forward slashes
-      ENV['RUBYLIB'] = "#{File.join(base_dir, 'puppet', 'lib')};#{ENV.fetch('RUBYLIB', nil)}"
-    rescue => e
-      log_exception(e)
-    end
+    # ENV that uses forward slashes
+    ENV['RUBYLIB'] = "#{File.join(base_dir, 'puppet', 'lib')};#{ENV.fetch('RUBYLIB', nil)}"
+  rescue => e
+    log_exception(e)
   end
 end
 

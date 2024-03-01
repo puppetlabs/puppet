@@ -221,25 +221,23 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   # data, but it is still terrible.  We still skip platform locking, so a
   # concurrent `vipw -s` session will have no idea we risk data loss.
   def password=(cryptopw)
-    begin
-      shadow = File.read(target_file_path)
+    shadow = File.read(target_file_path)
 
-      # Go Mifune loves the race here where we can lose data because
-      # /etc/shadow changed between reading it and writing it.
-      # --daniel 2012-02-05
-      Puppet::Util.replace_file(target_file_path, 0o640) do |fh|
-        shadow.each_line do |line|
-          line_arr = line.split(':')
-          if line_arr[0] == @resource[:name]
-            line_arr[1] = cryptopw
-            line_arr[2] = (Date.today - Date.new(1970, 1, 1)).to_i.to_s
-            line = line_arr.join(':')
-          end
-          fh.print line
+    # Go Mifune loves the race here where we can lose data because
+    # /etc/shadow changed between reading it and writing it.
+    # --daniel 2012-02-05
+    Puppet::Util.replace_file(target_file_path, 0o640) do |fh|
+      shadow.each_line do |line|
+        line_arr = line.split(':')
+        if line_arr[0] == @resource[:name]
+          line_arr[1] = cryptopw
+          line_arr[2] = (Date.today - Date.new(1970, 1, 1)).to_i.to_s
+          line = line_arr.join(':')
         end
+        fh.print line
       end
-    rescue => detail
-      self.fail Puppet::Error, "Could not write replace #{target_file_path}: #{detail}", detail
     end
+  rescue => detail
+    self.fail Puppet::Error, "Could not write replace #{target_file_path}: #{detail}", detail
   end
 end

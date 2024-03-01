@@ -39,11 +39,9 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
 
   def self.post_resource_eval
     @paths.each do |path|
-      begin
-        Puppet::FileSystem.unlink(path)
-      rescue => detail
-        raise Puppet::Error.new(_("Error when unlinking %{path}: %{detail}") % { path: path, detail: detail.message }, detail)
-      end
+      Puppet::FileSystem.unlink(path)
+    rescue => detail
+      raise Puppet::Error.new(_("Error when unlinking %{path}: %{detail}") % { path: path, detail: detail.message }, detail)
     end if @paths
   end
 

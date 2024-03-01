@@ -283,14 +283,12 @@ module Puppet
       defaultto { provider.respond_to?(:default_timeout) ? provider.default_timeout : 10 }
 
       munge do |value|
-        begin
-          value = value.to_i
-          raise if value < 1
+        value = value.to_i
+        raise if value < 1
 
-          value
-        rescue
-          raise Puppet::Error.new(_("\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer") % { value: value })
-        end
+        value
+      rescue
+        raise Puppet::Error, _("\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer") % { value: value }
       end
     end
 
@@ -311,7 +309,7 @@ module Puppet
 
     validate do
       if @parameters[:logonpassword] && @parameters[:logonaccount].nil?
-        raise Puppet::Error.new(_("The 'logonaccount' parameter is mandatory when setting 'logonpassword'."))
+        raise Puppet::Error, _("The 'logonaccount' parameter is mandatory when setting 'logonpassword'.")
       end
     end
   end

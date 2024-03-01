@@ -203,21 +203,19 @@ class Puppet::Property < Puppet::Parameter
   # @raise [Puppet::DevError] if there were issues formatting the message
   #
   def change_to_s(current_value, newvalue)
-    begin
-      if current_value == :absent
-        return "defined '#{name}' as #{should_to_s(newvalue)}"
-      elsif newvalue == :absent or newvalue == [:absent]
-        return "undefined '#{name}' from #{is_to_s(current_value)}"
-      else
-        return "#{name} changed #{is_to_s(current_value)} to #{should_to_s(newvalue)}"
-      end
-    rescue Puppet::Error
-      raise
-    rescue => detail
-      message = _("Could not convert change '%{name}' to string: %{detail}") % { name: name, detail: detail }
-      Puppet.log_exception(detail, message)
-      raise Puppet::DevError, message, detail.backtrace
+    if current_value == :absent
+      return "defined '#{name}' as #{should_to_s(newvalue)}"
+    elsif newvalue == :absent or newvalue == [:absent]
+      return "undefined '#{name}' from #{is_to_s(current_value)}"
+    else
+      return "#{name} changed #{is_to_s(current_value)} to #{should_to_s(newvalue)}"
     end
+  rescue Puppet::Error
+    raise
+  rescue => detail
+    message = _("Could not convert change '%{name}' to string: %{detail}") % { name: name, detail: detail }
+    Puppet.log_exception(detail, message)
+    raise Puppet::DevError, message, detail.backtrace
   end
 
   # Produces the name of the event to use to describe a change of this property's value.

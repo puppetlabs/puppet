@@ -59,15 +59,13 @@ Puppet.features.add(:manages_symlinks) do
       extend FFI::Library
 
       def self.is_implemented # rubocop:disable Naming/PredicateName
-        begin
-          ffi_lib :kernel32
-          attach_function :CreateSymbolicLinkW, [:lpwstr, :lpwstr, :dword], :boolean
+        ffi_lib :kernel32
+        attach_function :CreateSymbolicLinkW, [:lpwstr, :lpwstr, :dword], :boolean
 
-          true
-        rescue LoadError
-          Puppet.debug { "CreateSymbolicLink is not available" }
-          false
-        end
+        true
+      rescue LoadError
+        Puppet.debug { "CreateSymbolicLink is not available" }
+        false
       end
     end
 

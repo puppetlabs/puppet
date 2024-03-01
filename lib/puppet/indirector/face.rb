@@ -134,11 +134,9 @@ class Puppet::Indirector::Face < Puppet::Face
   end
 
   def set_terminus(from)
-    begin
-      indirection.terminus_class = from
-    rescue => detail
-      msg = _("Could not set '%{indirection}' terminus to '%{from}' (%{detail}); valid terminus types are %{types}") % { indirection: indirection.name, from: from, detail: detail, types: self.class.terminus_classes(indirection.name).join(", ") }
-      raise detail, msg, detail.backtrace
-    end
+    indirection.terminus_class = from
+  rescue => detail
+    msg = _("Could not set '%{indirection}' terminus to '%{from}' (%{detail}); valid terminus types are %{types}") % { indirection: indirection.name, from: from, detail: detail, types: self.class.terminus_classes(indirection.name).join(", ") }
+    raise detail, msg, detail.backtrace
   end
 end

@@ -15,9 +15,9 @@ class Puppet::SyntaxCheckers::PP < Puppet::Plugins::SyntaxCheckers::SyntaxChecke
   # @api public
   #
   def check(text, syntax, acceptor, source_pos)
-    raise ArgumentError.new(_("PP syntax checker: the text to check must be a String.")) unless text.is_a?(String)
-    raise ArgumentError.new(_("PP syntax checker: the syntax identifier must be a String, e.g. pp")) unless syntax == 'pp'
-    raise ArgumentError.new(_("PP syntax checker: invalid Acceptor, got: '%{klass}'.") % { klass: acceptor.class.name }) unless acceptor.is_a?(Puppet::Pops::Validation::Acceptor)
+    raise ArgumentError, _("PP syntax checker: the text to check must be a String.") unless text.is_a?(String)
+    raise ArgumentError, _("PP syntax checker: the syntax identifier must be a String, e.g. pp") unless syntax == 'pp'
+    raise ArgumentError, _("PP syntax checker: invalid Acceptor, got: '%{klass}'.") % { klass: acceptor.class.name } unless acceptor.is_a?(Puppet::Pops::Validation::Acceptor)
 
     begin
       Puppet::Pops::Parser::EvaluatingParser.singleton.parse_string(text)

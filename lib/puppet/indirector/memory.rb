@@ -13,7 +13,7 @@ class Puppet::Indirector::Memory < Puppet::Indirector::Terminus
   end
 
   def destroy(request)
-    raise ArgumentError.new(_("Could not find %{request} to destroy") % { request: request.key }) unless @instances.include?(request.key)
+    raise ArgumentError, _("Could not find %{request} to destroy") % { request: request.key } unless @instances.include?(request.key)
 
     @instances.delete(request.key)
   end

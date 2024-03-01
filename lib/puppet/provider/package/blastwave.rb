@@ -95,11 +95,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
 
   def query
     hash = self.class.blastlist(:justme => @resource[:name])
-    if hash
-      hash
-    else
-      { :ensure => :absent }
-    end
+    hash || { :ensure => :absent }
   end
 
   # Remove the old package, and install the new one

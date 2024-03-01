@@ -536,7 +536,7 @@ class Puppet::Configurer
     rescue Puppet::HTTP::ResponseError => detail
       if detail.response.code == 404
         if Puppet[:strict_environment_mode]
-          raise Puppet::Error.new(_("Environment '%{environment}' not found on server, aborting run.") % { environment: @environment })
+          raise Puppet::Error, _("Environment '%{environment}' not found on server, aborting run.") % { environment: @environment }
         else
           Puppet.notice(_("Environment '%{environment}' not found on server, skipping initial pluginsync.") % { environment: @environment })
         end
@@ -748,14 +748,12 @@ class Puppet::Configurer
   end
 
   def download_plugins(remote_environment_for_plugins)
-    begin
-      @handler.download_plugins(remote_environment_for_plugins)
-    rescue Puppet::Error => detail
-      if !Puppet[:ignore_plugin_errors] && Puppet[:usecacheonfailure]
-        @running_failure = true
-      else
-        raise detail
-      end
+    @handler.download_plugins(remote_environment_for_plugins)
+  rescue Puppet::Error => detail
+    if !Puppet[:ignore_plugin_errors] && Puppet[:usecacheonfailure]
+      @running_failure = true
+    else
+      raise detail
     end
   end
 end

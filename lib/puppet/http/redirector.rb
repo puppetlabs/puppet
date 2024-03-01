@@ -43,7 +43,7 @@ class Puppet::HTTP::Redirector
   #
   # @api private
   def redirect_to(request, response, redirects)
-    raise Puppet::HTTP::TooManyRedirects.new(request.uri) if redirects >= @redirect_limit
+    raise Puppet::HTTP::TooManyRedirects, request.uri if redirects >= @redirect_limit
 
     location = parse_location(response)
     url = request.uri.merge(location)
@@ -78,7 +78,7 @@ class Puppet::HTTP::Redirector
 
   def parse_location(response)
     location = response['location']
-    raise Puppet::HTTP::ProtocolError.new(_("Location response header is missing")) unless location
+    raise Puppet::HTTP::ProtocolError, _("Location response header is missing") unless location
 
     URI.parse(location)
   rescue URI::InvalidURIError => e

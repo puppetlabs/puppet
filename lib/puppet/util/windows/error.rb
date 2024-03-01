@@ -42,13 +42,13 @@ class Puppet::Util::Windows::Error < Puppet::Error
 
       if length == FFI::WIN32_FALSE
         # can't raise same error type here or potentially recurse infinitely
-        raise Puppet::Error.new(_("FormatMessageW could not format code %{code}") % { code: code })
+        raise Puppet::Error, _("FormatMessageW could not format code %{code}") % { code: code }
       end
 
       # returns an FFI::Pointer with autorelease set to false, which is what we want
       buffer_ptr.read_win32_local_pointer do |wide_string_ptr|
         if wide_string_ptr.null?
-          raise Puppet::Error.new(_("FormatMessageW failed to allocate buffer for code %{code}") % { code: code })
+          raise Puppet::Error, _("FormatMessageW failed to allocate buffer for code %{code}") % { code: code }
         end
 
         error_string = wide_string_ptr.read_wide_string(length)

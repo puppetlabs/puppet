@@ -187,7 +187,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     @job_list = Hash.new
     begin
       output = launchctl :list
-      raise Puppet::Error.new("launchctl list failed to return any data.") if output.nil?
+      raise Puppet::Error, "launchctl list failed to return any data." if output.nil?
 
       output.split("\n").each do |line|
         @job_list[line.split(/\s/).last] = :running
@@ -212,7 +212,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       Puppet.debug(_("Reading overrides plist, attempt %{i}") % { i: i }) if i > 1
       overrides = read_plist(launchd_overrides)
       break unless overrides.nil?
-      raise Puppet::Error.new(_('Unable to read overrides plist, too many attempts')) if i == 20
+      raise Puppet::Error, _('Unable to read overrides plist, too many attempts') if i == 20
 
       Puppet.info(_('Overrides file could not be read, trying again.'))
       Kernel.sleep(0.1)
@@ -239,7 +239,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     if FileTest.file?(job_path)
       job_plist = self.class.read_plist(job_path)
     else
-      raise Puppet::Error.new("Unable to parse launchd plist at path: #{job_path}")
+      raise Puppet::Error, "Unable to parse launchd plist at path: #{job_path}"
     end
     [job_path, job_plist]
   end

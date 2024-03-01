@@ -192,7 +192,7 @@ class Puppet::Application::Ssl < Puppet::Application
     Puppet.notice _("Submitted certificate request for '%{name}' to %{url}") % { name: Puppet[:certname], url: route.url }
   rescue Puppet::HTTP::ResponseError => e
     if e.response.code == 400
-      raise Puppet::Error.new(_("Could not submit certificate request for '%{name}' to %{url} due to a conflict on the server") % { name: Puppet[:certname], url: route.url })
+      raise Puppet::Error, _("Could not submit certificate request for '%{name}' to %{url} due to a conflict on the server") % { name: Puppet[:certname], url: route.url }
     else
       raise Puppet::Error.new(_("Failed to submit certificate request: %{message}") % { message: e.message }, e)
     end

@@ -47,7 +47,7 @@ class RelationshipOperator
   # Catch all non transformable objects
   # @api private
   def transform_Object(o, scope)
-    raise IllegalRelationshipOperandError.new(o)
+    raise IllegalRelationshipOperandError, o
   end
 
   # A Resource is by definition a Catalog type, but of 3.x type
@@ -98,7 +98,7 @@ class RelationshipOperator
   #
   def assert_catalog_type(o, scope)
     unless @type_calculator.assignable?(@catalog_type, o)
-      raise NotCatalogTypeError.new(o)
+      raise NotCatalogTypeError, o
     end
 
     # TODO must check if this is an abstract PResourceType (i.e. without a type_name) - which should fail ?

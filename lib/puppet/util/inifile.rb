@@ -184,7 +184,7 @@ module Puppet::Util::IniConfig
           val = match[2].rstrip
 
           if section.nil?
-            raise IniParseError.new(_("Property with key %{key} outside of a section") % { key: key.inspect })
+            raise IniParseError, _("Property with key %{key} outside of a section") % { key: key.inspect }
           end
 
           section[key] = val
@@ -318,11 +318,7 @@ module Puppet::Util::IniConfig
     # Return a file if it's already been defined, create a new file if it hasn't
     # been defined.
     def get_physical_file(file)
-      if @files[file]
-        @files[file]
-      else
-        new_physical_file(file)
-      end
+      @files[file] || new_physical_file(file)
     end
 
     # Create a new physical file and set required attributes on that file.

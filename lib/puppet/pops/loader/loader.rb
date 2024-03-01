@@ -164,7 +164,7 @@ class Loader
   # @api private
   #
   def set_entry(type, name, value, origin = nil)
-    raise NotImplementedError.new
+    raise NotImplementedError
   end
 
   # Produces a NamedEntry if a value is bound to the given name, or nil if nothing is bound.
@@ -175,7 +175,7 @@ class Loader
   # @api private
   #
   def get_entry(typed_name)
-    raise NotImplementedError.new
+    raise NotImplementedError
   end
 
   # A loader is by default a loader for all kinds of loadables. An implementation may override

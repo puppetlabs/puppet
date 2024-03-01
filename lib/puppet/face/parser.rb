@@ -214,13 +214,11 @@ Puppet::Face.define(:parser, '0.0.1') do
     loaders = Puppet::Pops::Loaders.new(env)
 
     Puppet.override({ :loaders => loaders }, _('For puppet parser validate')) do
-      begin
-        validation_environment = manifest ? env.override_with(:manifest => manifest) : env
-        validation_environment.check_for_reparse
-        validation_environment.known_resource_types.clear
-      rescue Puppet::ParseError => parse_error
-        return parse_error
-      end
+      validation_environment = manifest ? env.override_with(:manifest => manifest) : env
+      validation_environment.check_for_reparse
+      validation_environment.known_resource_types.clear
+    rescue Puppet::ParseError => parse_error
+      return parse_error
     end
 
     nil

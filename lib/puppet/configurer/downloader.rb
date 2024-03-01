@@ -20,7 +20,7 @@ class Puppet::Configurer::Downloader
           if first_failure
             event = (first_failure.events || []).first
             detail = event ? event.message : 'unknown'
-            raise Puppet::Error.new(_("Failed to retrieve %{name}: %{detail}") % { name: name, detail: detail })
+            raise Puppet::Error, _("Failed to retrieve %{name}: %{detail}") % { name: name, detail: detail }
           end
         end
 

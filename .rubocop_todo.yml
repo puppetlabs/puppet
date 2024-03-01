@@ -647,52 +647,6 @@ Style/PreferredHashMethods:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, AllowedCompactTypes.
-# SupportedStyles: compact, exploded
-Style/RaiseArgs:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/RedundantAssignment:
-  Exclude:
-    - 'lib/puppet/file_serving/mount/locales.rb'
-    - 'lib/puppet/file_serving/mount/pluginfacts.rb'
-    - 'lib/puppet/file_serving/mount/plugins.rb'
-    - 'lib/puppet/parameter.rb'
-    - 'lib/puppet/parser/ast/pops_bridge.rb'
-    - 'lib/puppet/pops/model/factory.rb'
-    - 'lib/puppet/pops/parser/parser_support.rb'
-    - 'lib/puppet/provider/nameservice/directoryservice.rb'
-    - 'lib/puppet/provider/nameservice/objectadd.rb'
-    - 'lib/puppet/provider/nameservice/pw.rb'
-    - 'lib/puppet/settings.rb'
-    - 'lib/puppet/type.rb'
-    - 'lib/puppet/type/file/ensure.rb'
-    - 'lib/puppet/util.rb'
-    - 'lib/puppet/util/execution.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/RedundantBegin:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/RedundantCondition:
-  Exclude:
-    - 'ext/windows/service/daemon.rb'
-    - 'lib/puppet/application/describe.rb'
-    - 'lib/puppet/environments.rb'
-    - 'lib/puppet/external/dot.rb'
-    - 'lib/puppet/graph/simple_graph.rb'
-    - 'lib/puppet/indirector/request.rb'
-    - 'lib/puppet/parser/templatewrapper.rb'
-    - 'lib/puppet/provider/package/blastwave.rb'
-    - 'lib/puppet/provider/package/pkgutil.rb'
-    - 'lib/puppet/provider/package/portage.rb'
-    - 'lib/puppet/type.rb'
-    - 'lib/puppet/util/command_line/trollop.rb'
-    - 'lib/puppet/util/inifile.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/RedundantConditional:
   Exclude:
     - 'lib/puppet/type/exec.rb'

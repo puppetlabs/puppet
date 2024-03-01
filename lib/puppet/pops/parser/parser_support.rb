@@ -193,16 +193,15 @@ class Parser
     # where the "10, notice" forms an argument list. The parser builds an Array with the expressions and includes
     # the comma tokens to enable the error to be reported against the first comma.
     #
-    begin
-      Factory.transform_calls(expressions)
-    rescue Factory::ArgsToNonCallError => e
-      # e.args[1] is the first comma token in the list
-      # e.name_expr is the function name expression
-      if e.name_expr.is_a?(Factory) && e.name_expr.model_class <= Model::QualifiedName
-        error(e.args[1], _("attempt to pass argument list to the function '%{name}' which cannot be called without parentheses") % { name: e.name_expr['value'] })
-      else
-        error(e.args[1], _("illegal comma separated argument list"))
-      end
+
+    Factory.transform_calls(expressions)
+  rescue Factory::ArgsToNonCallError => e
+    # e.args[1] is the first comma token in the list
+    # e.name_expr is the function name expression
+    if e.name_expr.is_a?(Factory) && e.name_expr.model_class <= Model::QualifiedName
+      error(e.args[1], _("attempt to pass argument list to the function '%{name}' which cannot be called without parentheses") % { name: e.name_expr['value'] })
+    else
+      error(e.args[1], _("illegal comma separated argument list"))
     end
   end
 
@@ -229,8 +228,7 @@ class Parser
     _, token = @lexer.emit_completed([:NOOP, '', 0], locator.string.bytesize)
     loc(no_op, token)
     # Program with a Noop
-    program = Factory.PROGRAM(no_op, [], locator)
-    program
+    Factory.PROGRAM(no_op, [], locator)
   end
 
   # Performs the parsing and returns the resulting model.

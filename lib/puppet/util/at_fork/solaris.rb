@@ -63,27 +63,25 @@ class Puppet::Util::AtFork::Solaris
   end
 
   def activate_new_contract_template
+    tmpl = File.new(CTFS_PR_TEMPLATE, File::RDWR)
+
     begin
-      tmpl = File.new(CTFS_PR_TEMPLATE, File::RDWR)
+      tmpl_fd = tmpl.fileno
 
-      begin
-        tmpl_fd = tmpl.fileno
+      raise_if_error { ct_pr_tmpl_set_param(tmpl_fd, CT_PR_PGRPONLY) }
+      raise_if_error { ct_pr_tmpl_set_fatal(tmpl_fd, CT_PR_EV_HWERR) }
+      raise_if_error { ct_tmpl_set_critical(tmpl_fd, 0) }
+      raise_if_error { ct_tmpl_set_informative(tmpl_fd, CT_PR_EV_HWERR) }
 
-        raise_if_error { ct_pr_tmpl_set_param(tmpl_fd, CT_PR_PGRPONLY) }
-        raise_if_error { ct_pr_tmpl_set_fatal(tmpl_fd, CT_PR_EV_HWERR) }
-        raise_if_error { ct_tmpl_set_critical(tmpl_fd, 0) }
-        raise_if_error { ct_tmpl_set_informative(tmpl_fd, CT_PR_EV_HWERR) }
-
-        raise_if_error { ct_tmpl_activate(tmpl_fd) }
-      rescue
-        tmpl.close
-        raise
-      end
-
-      @tmpl = tmpl
-    rescue => detail
-      Puppet.log_exception(detail, _('Failed to activate a new process contract template'))
+      raise_if_error { ct_tmpl_activate(tmpl_fd) }
+    rescue
+      tmpl.close
+      raise
     end
+
+    @tmpl = tmpl
+  rescue => detail
+    Puppet.log_exception(detail, _('Failed to activate a new process contract template'))
   end
 
   def deactivate_contract_template(parent)
@@ -108,24 +106,22 @@ class Puppet::Util::AtFork::Solaris
   end
 
   def get_latest_child_contract_id
+    stat = File.new(CTFS_PR_LATEST, File::RDONLY)
+
     begin
-      stat = File.new(CTFS_PR_LATEST, File::RDONLY)
+      stathdl = Fiddle::Pointer.new(0)
 
-      begin
-        stathdl = Fiddle::Pointer.new(0)
-
-        raise_if_error { ct_status_read(stat.fileno, CTD_COMMON, stathdl.ref) }
-        ctid = ct_status_get_id(stathdl)
-        ct_status_free(stathdl)
-      ensure
-        stat.close
-      end
-
-      ctid
-    rescue => detail
-      Puppet.log_exception(detail, _('Failed to get latest child process contract id'))
-      nil
+      raise_if_error { ct_status_read(stat.fileno, CTD_COMMON, stathdl.ref) }
+      ctid = ct_status_get_id(stathdl)
+      ct_status_free(stathdl)
+    ensure
+      stat.close
     end
+
+    ctid
+  rescue => detail
+    Puppet.log_exception(detail, _('Failed to get latest child process contract id'))
+    nil
   end
 
   def abandon_latest_child_contract

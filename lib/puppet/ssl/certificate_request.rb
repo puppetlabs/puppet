@@ -214,19 +214,17 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
 
   def add_csr_attributes(csr, csr_attributes)
     csr_attributes.each do |oid, value|
-      begin
-        if PRIVATE_CSR_ATTRIBUTES.include? oid
-          raise ArgumentError, _("Cannot specify CSR attribute %{oid}: conflicts with internally used CSR attribute") % { oid: oid }
-        end
-
-        encoded = OpenSSL::ASN1::PrintableString.new(value.to_s)
-
-        attr_set = OpenSSL::ASN1::Set.new([encoded])
-        csr.add_attribute(OpenSSL::X509::Attribute.new(oid, attr_set))
-        Puppet.debug("Added csr attribute: #{oid} => #{attr_set.inspect}")
-      rescue OpenSSL::X509::AttributeError => e
-        raise Puppet::Error, _("Cannot create CSR with attribute %{oid}: %{message}") % { oid: oid, message: e.message }, e.backtrace
+      if PRIVATE_CSR_ATTRIBUTES.include? oid
+        raise ArgumentError, _("Cannot specify CSR attribute %{oid}: conflicts with internally used CSR attribute") % { oid: oid }
       end
+
+      encoded = OpenSSL::ASN1::PrintableString.new(value.to_s)
+
+      attr_set = OpenSSL::ASN1::Set.new([encoded])
+      csr.add_attribute(OpenSSL::X509::Attribute.new(oid, attr_set))
+      Puppet.debug("Added csr attribute: #{oid} => #{attr_set.inspect}")
+    rescue OpenSSL::X509::AttributeError => e
+      raise Puppet::Error, _("Cannot create CSR with attribute %{oid}: %{message}") % { oid: oid, message: e.message }, e.backtrace
     end
   end
 
@@ -240,16 +238,14 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
 
     if options[:extension_requests]
       options[:extension_requests].each_pair do |oid, value|
-        begin
-          if PRIVATE_EXTENSIONS.include? oid
-            raise Puppet::Error, _("Cannot specify CSR extension request %{oid}: conflicts with internally used extension request") % { oid: oid }
-          end
-
-          ext = OpenSSL::X509::Extension.new(oid, OpenSSL::ASN1::UTF8String.new(value.to_s).to_der, false)
-          extensions << ext
-        rescue OpenSSL::X509::ExtensionError => e
-          raise Puppet::Error, _("Cannot create CSR with extension request %{oid}: %{message}") % { oid: oid, message: e.message }, e.backtrace
+        if PRIVATE_EXTENSIONS.include? oid
+          raise Puppet::Error, _("Cannot specify CSR extension request %{oid}: conflicts with internally used extension request") % { oid: oid }
         end
+
+        ext = OpenSSL::X509::Extension.new(oid, OpenSSL::ASN1::UTF8String.new(value.to_s).to_der, false)
+        extensions << ext
+      rescue OpenSSL::X509::ExtensionError => e
+        raise Puppet::Error, _("Cannot create CSR with extension request %{oid}: %{message}") % { oid: oid, message: e.message }, e.backtrace
       end
     end
 

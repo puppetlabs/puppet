@@ -15,9 +15,7 @@ Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm d
     up2date "-u", @resource[:name]
 
     unless self.query
-      raise Puppet::ExecutionFailure.new(
-        _("Could not find package %{name}") % { name: self.name }
-      )
+      raise Puppet::ExecutionFailure, _("Could not find package %{name}") % { name: self.name }
     end
   end
 

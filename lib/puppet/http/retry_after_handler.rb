@@ -48,7 +48,7 @@ class Puppet::HTTP::RetryAfterHandler
   #
   # @api private
   def retry_after_interval(request, response, retries)
-    raise Puppet::HTTP::TooManyRetryAfters.new(request.uri) if retries >= @retry_limit
+    raise Puppet::HTTP::TooManyRetryAfters, request.uri if retries >= @retry_limit
 
     retry_after = response['Retry-After']
     return nil unless retry_after
@@ -72,7 +72,7 @@ class Puppet::HTTP::RetryAfterHandler
       seconds = (tm.to_time - DateTime.now.to_time).to_i
       [seconds, 0].max
     rescue ArgumentError
-      raise Puppet::HTTP::ProtocolError.new(_("Failed to parse Retry-After header '%{retry_after}' as an integer or RFC 2822 date") % { retry_after: retry_after })
+      raise Puppet::HTTP::ProtocolError, _("Failed to parse Retry-After header '%{retry_after}' as an integer or RFC 2822 date") % { retry_after: retry_after }
     end
   end
 end

@@ -69,7 +69,7 @@ class Puppet::Provider::Package::Windows
           uri = URI(Puppet::Util.uri_encode(file_location))
           client = Puppet.runtime[:http]
           client.get(uri, options: { include_system_store: true }) do |response|
-            raise Puppet::HTTP::ResponseError.new(response) unless response.success?
+            raise Puppet::HTTP::ResponseError, response unless response.success?
 
             File.open(tempfile.path, 'wb') do |file|
               response.read_body do |data|

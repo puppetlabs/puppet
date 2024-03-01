@@ -50,11 +50,9 @@ module Puppet::ModuleTool
 
         if File.file?(metadata_path)
           File.open(metadata_path) do |f|
-            begin
-              @metadata.update(Puppet::Util::Json.load(f))
-            rescue Puppet::Util::Json::ParseError => ex
-              raise ArgumentError, _("Could not parse JSON %{metadata_path}") % { metadata_path: metadata_path }, ex.backtrace
-            end
+            @metadata.update(Puppet::Util::Json.load(f))
+          rescue Puppet::Util::Json::ParseError => ex
+            raise ArgumentError, _("Could not parse JSON %{metadata_path}") % { metadata_path: metadata_path }, ex.backtrace
           end
         end
 

@@ -100,12 +100,10 @@ class Puppet::Module
   end
 
   def has_metadata?
-    begin
-      load_metadata
-      @metadata.is_a?(Hash) && !@metadata.empty?
-    rescue Puppet::Module::MissingMetadata
-      false
-    end
+    load_metadata
+    @metadata.is_a?(Hash) && !@metadata.empty?
+  rescue Puppet::Module::MissingMetadata
+    false
   end
 
   FILETYPES.each do |type, location|

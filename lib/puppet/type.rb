@@ -680,7 +680,7 @@ class Type
       nv = name_var
       name = nv if nv
     end
-    raise Puppet::Error.new("Got nil value for #{name}") if value.nil?
+    raise Puppet::Error, "Got nil value for #{name}" if value.nil?
 
     property = self.newattr(name)
 
@@ -710,7 +710,7 @@ class Type
     if @parameters.has_key?(attr)
       @parameters.delete(attr)
     else
-      raise Puppet::DevError.new(_("Undefined attribute '%{attribute}' in %{name}") % { attribute: attr, name: self })
+      raise Puppet::DevError, _("Undefined attribute '%{attribute}' in %{name}") % { attribute: attr, name: self }
     end
   end
 
@@ -1803,11 +1803,7 @@ class Type
                  pname
                else
                  provider = self.provider(pname)
-                 if provider
-                   provider
-                 else
-                   raise Puppet::DevError, _("Could not find parent provider %{parent} of %{name}") % { parent: pname, name: name }
-                 end
+                 provider || raise(Puppet::DevError, _("Could not find parent provider %{parent} of %{name}") % { parent: pname, name: name })
                end
              else
                Puppet::Provider
@@ -1817,7 +1813,7 @@ class Type
 
     self.providify
 
-    provider = genclass(
+    genclass(
       name,
       :parent => parent,
       :hash => provider_hash,
@@ -1827,8 +1823,6 @@ class Type
       :extend => feature_module,
       :attributes => options
     )
-
-    provider
   end
 
   # Ensures there is a `:provider` parameter defined.
@@ -2363,13 +2357,11 @@ class Type
   #
   # @return [void]
   def validate_resource
-    begin
-      self.validate if self.respond_to?(:validate)
-    rescue Puppet::Error, ArgumentError => detail
-      error = Puppet::ResourceError.new("Validation of #{ref} failed: #{detail}")
-      adderrorcontext(error, detail)
-      raise error
-    end
+    self.validate if self.respond_to?(:validate)
+  rescue Puppet::Error, ArgumentError => detail
+    error = Puppet::ResourceError.new("Validation of #{ref} failed: #{detail}")
+    adderrorcontext(error, detail)
+    raise error
   end
 
   protected
@@ -2454,22 +2446,20 @@ class Type
     # on invalid attributes.
     no_values = []
     (self.class.allattrs + hash.keys).uniq.each do |attr|
-      begin
-        # Set any defaults immediately.  This is mostly done so
-        # that the default provider is available for any other
-        # property validation.
-        if hash.has_key?(attr)
-          self[attr] = hash[attr]
-        else
-          no_values << attr
-        end
-      rescue ArgumentError, Puppet::Error, TypeError
-        raise
-      rescue => detail
-        error = Puppet::DevError.new(_("Could not set %{attribute} on %{class_name}: %{detail}") % { attribute: attr, class_name: self.class.name, detail: detail })
-        error.set_backtrace(detail.backtrace)
-        raise error
+      # Set any defaults immediately.  This is mostly done so
+      # that the default provider is available for any other
+      # property validation.
+      if hash.has_key?(attr)
+        self[attr] = hash[attr]
+      else
+        no_values << attr
       end
+    rescue ArgumentError, Puppet::Error, TypeError
+      raise
+    rescue => detail
+      error = Puppet::DevError.new(_("Could not set %{attribute} on %{class_name}: %{detail}") % { attribute: attr, class_name: self.class.name, detail: detail })
+      error.set_backtrace(detail.backtrace)
+      raise error
     end
     no_values.each do |attr|
       set_default(attr)

@@ -16,9 +16,9 @@ class Puppet::SyntaxCheckers::Base64 < Puppet::Plugins::SyntaxCheckers::SyntaxCh
   # @api public
   #
   def check(text, syntax, acceptor, source_pos)
-    raise ArgumentError.new(_("Base64 syntax checker: the text to check must be a String.")) unless text.is_a?(String)
-    raise ArgumentError.new(_("Base64 syntax checker: the syntax identifier must be a String, e.g. json, data+json")) unless syntax.is_a?(String)
-    raise ArgumentError.new(_("Base64 syntax checker: invalid Acceptor, got: '%{klass}'.") % { klass: acceptor.class.name }) unless acceptor.is_a?(Puppet::Pops::Validation::Acceptor)
+    raise ArgumentError, _("Base64 syntax checker: the text to check must be a String.") unless text.is_a?(String)
+    raise ArgumentError, _("Base64 syntax checker: the syntax identifier must be a String, e.g. json, data+json") unless syntax.is_a?(String)
+    raise ArgumentError, _("Base64 syntax checker: invalid Acceptor, got: '%{klass}'.") % { klass: acceptor.class.name } unless acceptor.is_a?(Puppet::Pops::Validation::Acceptor)
 
     cleaned_text = text.gsub(/[\r?\n[:blank:]]/, '')
     begin

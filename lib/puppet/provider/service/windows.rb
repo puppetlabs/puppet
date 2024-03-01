@@ -56,7 +56,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
     when :SERVICE_DISABLED
       :false
     else
-      raise Puppet::Error.new(_("Unknown start type: %{start_type}") % { start_type: start_type })
+      raise Puppet::Error, _("Unknown start type: %{start_type}") % { start_type: start_type }
     end
   rescue => detail
     raise Puppet::Error.new(_("Cannot get start type %{resource_name}, error was: %{detail}") % { resource_name: @resource[:name], detail: detail }, detail)
@@ -73,7 +73,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
     if enabled? == :false
       # If disabled and not managing enable, respect disabled and fail.
       if @resource[:enable].nil?
-        raise Puppet::Error.new(_("Will not start disabled service %{resource_name} without managing enable. Specify 'enable => false' to override.") % { resource_name: @resource[:name] })
+        raise Puppet::Error, _("Will not start disabled service %{resource_name} without managing enable. Specify 'enable => false' to override.") % { resource_name: @resource[:name] }
       # Otherwise start. If enable => false, we will later sync enable and
       # disable the service again.
       elsif @resource[:enable] == :true
@@ -101,7 +101,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
             when :SERVICE_RUNNING, :SERVICE_CONTINUE_PENDING, :SERVICE_START_PENDING
               :running
             else
-              raise Puppet::Error.new(_("Unknown service state '%{current_state}' for service '%{resource_name}'") % { current_state: current_state, resource_name: @resource[:name] })
+              raise Puppet::Error, _("Unknown service state '%{current_state}' for service '%{resource_name}'") % { current_state: current_state, resource_name: @resource[:name] }
             end
     debug("Service #{@resource[:name]} is #{current_state}")
     state
@@ -164,16 +164,16 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
 
   def validate_logon_credentials
     unless Puppet::Util::Windows::User.localsystem?(@normalized_logon_account)
-      raise Puppet::Error.new("\"#{@normalized_logon_account}\" is not a valid account") unless @logonaccount_information && [:SidTypeUser, :SidTypeWellKnownGroup].include?(@logonaccount_information.account_type)
+      raise Puppet::Error, "\"#{@normalized_logon_account}\" is not a valid account" unless @logonaccount_information && [:SidTypeUser, :SidTypeWellKnownGroup].include?(@logonaccount_information.account_type)
 
       user_rights = Puppet::Util::Windows::User.get_rights(@logonaccount_information.domain_account) unless Puppet::Util::Windows::User.default_system_account?(@normalized_logon_account)
-      raise Puppet::Error.new("\"#{@normalized_logon_account}\" has the 'Log On As A Service' right set to denied.") if user_rights =~ /SeDenyServiceLogonRight/
-      raise Puppet::Error.new("\"#{@normalized_logon_account}\" is missing the 'Log On As A Service' right.") unless user_rights.nil? || user_rights =~ /SeServiceLogonRight/
+      raise Puppet::Error, "\"#{@normalized_logon_account}\" has the 'Log On As A Service' right set to denied." if user_rights =~ /SeDenyServiceLogonRight/
+      raise Puppet::Error, "\"#{@normalized_logon_account}\" is missing the 'Log On As A Service' right." unless user_rights.nil? || user_rights =~ /SeServiceLogonRight/
     end
 
     is_a_predefined_local_account = Puppet::Util::Windows::User.default_system_account?(@normalized_logon_account) || @normalized_logon_account == 'LocalSystem'
     account_info = @normalized_logon_account.split("\\")
     able_to_logon = Puppet::Util::Windows::User.password_is?(account_info[1], @resource[:logonpassword], account_info[0]) unless is_a_predefined_local_account
-    raise Puppet::Error.new("The given password is invalid for user '#{@normalized_logon_account}'.") unless is_a_predefined_local_account || able_to_logon
+    raise Puppet::Error, "The given password is invalid for user '#{@normalized_logon_account}'." unless is_a_predefined_local_account || able_to_logon
   end
 end

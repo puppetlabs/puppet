@@ -533,10 +533,10 @@ module Types
       when 0
         # do nothing
       when 1
-        raise Puppet::ParseError.new("#{subject}:#{errors[0].format}")
+        raise Puppet::ParseError, "#{subject}:#{errors[0].format}"
       else
         errors_str = errors.map { |error| error.format }.join("\n ")
-        raise Puppet::ParseError.new("#{subject}:\n #{errors_str}")
+        raise Puppet::ParseError, "#{subject}:\n #{errors_str}"
       end
     end
 
@@ -574,10 +574,10 @@ module Types
         when 0
           # do nothing
         when 1
-          raise Puppet::ParseError.new("#{subject}:#{errors[0].format}")
+          raise Puppet::ParseError, "#{subject}:#{errors[0].format}"
         else
           errors_str = errors.map { |error| error.format }.join("\n ")
-          raise Puppet::ParseError.new("#{subject}:\n #{errors_str}")
+          raise Puppet::ParseError, "#{subject}:\n #{errors_str}"
         end
       end
     end

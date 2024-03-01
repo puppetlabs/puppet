@@ -43,11 +43,9 @@ Puppet::Type.type(:file).provide :windows do
   end
 
   def owner=(should)
-    begin
-      set_owner(should, resolved_path)
-    rescue => detail
-      raise Puppet::Error, _("Failed to set owner to '%{should}': %{detail}") % { should: should, detail: detail }, detail.backtrace
-    end
+    set_owner(should, resolved_path)
+  rescue => detail
+    raise Puppet::Error, _("Failed to set owner to '%{should}': %{detail}") % { should: should, detail: detail }, detail.backtrace
   end
 
   def group
@@ -57,11 +55,9 @@ Puppet::Type.type(:file).provide :windows do
   end
 
   def group=(should)
-    begin
-      set_group(should, resolved_path)
-    rescue => detail
-      raise Puppet::Error, _("Failed to set group to '%{should}': %{detail}") % { should: should, detail: detail }, detail.backtrace
-    end
+    set_group(should, resolved_path)
+  rescue => detail
+    raise Puppet::Error, _("Failed to set group to '%{should}': %{detail}") % { should: should, detail: detail }, detail.backtrace
   end
 
   def mode
@@ -74,15 +70,13 @@ Puppet::Type.type(:file).provide :windows do
   end
 
   def mode=(value)
-    begin
-      managing_owner = !resource[:owner].nil?
-      managing_group = !resource[:group].nil?
-      set_mode(value.to_i(8), resource[:path], true, managing_owner, managing_group)
-    rescue => detail
-      error = Puppet::Error.new(_("failed to set mode %{mode} on %{path}: %{message}") % { mode: mode, path: resource[:path], message: detail.message })
-      error.set_backtrace detail.backtrace
-      raise error
-    end
+    managing_owner = !resource[:owner].nil?
+    managing_group = !resource[:group].nil?
+    set_mode(value.to_i(8), resource[:path], true, managing_owner, managing_group)
+  rescue => detail
+    error = Puppet::Error.new(_("failed to set mode %{mode} on %{path}: %{message}") % { mode: mode, path: resource[:path], message: detail.message })
+    error.set_backtrace detail.backtrace
+    raise error
   end
 
   def validate

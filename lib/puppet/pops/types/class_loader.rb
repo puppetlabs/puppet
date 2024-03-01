@@ -37,7 +37,7 @@ class ClassLoader
   def self.provide_from_type(type)
     case type
     when PRuntimeType
-      raise ArgumentError.new("Only Runtime type 'ruby' is supported, got #{type.runtime}") unless type.runtime == :ruby
+      raise ArgumentError, "Only Runtime type 'ruby' is supported, got #{type.runtime}" unless type.runtime == :ruby
 
       provide_from_string(type.runtime_type_name)
 
@@ -105,11 +105,9 @@ class ClassLoader
 
   def self.find_class(name_path)
     name_path.reduce(Object) do |ns, name|
-      begin
-        ns.const_get(name, false) # don't search ancestors
-      rescue NameError
-        return nil
-      end
+      ns.const_get(name, false) # don't search ancestors
+    rescue NameError
+      return nil
     end
   end
   private_class_method :find_class

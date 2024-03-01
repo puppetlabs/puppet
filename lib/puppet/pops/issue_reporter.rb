@@ -48,7 +48,7 @@ class IssueReporter
     errors = acceptor.errors
     if errors.size > 0
       unless emit_errors
-        raise emit_exception.new(emit_message)
+        raise emit_exception, emit_message
       end
 
       formatter = Validation::DiagnosticFormatterPuppetStyle.new

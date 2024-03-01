@@ -209,12 +209,10 @@ class PObjectTypeExtension < PAnyType
   def test_instance?(o, guard)
     eval = Parser::EvaluatingParser.singleton.evaluator
     @parameters.keys.all? do |pn|
-      begin
-        m = o.public_method(pn)
-        m.arity == 0 ? eval.match?(m.call, @parameters[pn]) : false
-      rescue NameError
-        false
-      end
+      m = o.public_method(pn)
+      m.arity == 0 ? eval.match?(m.call, @parameters[pn]) : false
+    rescue NameError
+      false
     end
   end
 

@@ -17,7 +17,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
   def complete_path(relative_path, node)
     full_path = path(node)
 
-    raise ArgumentError.new(_("Mounts without paths are not usable")) unless full_path
+    raise ArgumentError, _("Mounts without paths are not usable") unless full_path
 
     # If there's no relative path name, then we're serving the mount itself.
     return full_path unless relative_path
@@ -72,7 +72,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
   # Verify our configuration is valid.  This should really check to
   # make sure at least someone will be allowed, but, eh.
   def validate
-    raise ArgumentError.new(_("Mounts without paths are not usable")) if @path.nil?
+    raise ArgumentError, _("Mounts without paths are not usable") if @path.nil?
   end
 
   private

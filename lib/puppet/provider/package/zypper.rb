@@ -145,9 +145,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
     zypper(*options)
 
     unless self.query
-      raise Puppet::ExecutionFailure.new(
-        _("Could not find package %{name}") % { name: self.name }
-      )
+      raise Puppet::ExecutionFailure, _("Could not find package %{name}") % { name: self.name }
     end
   end
 

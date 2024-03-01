@@ -29,11 +29,9 @@ Puppet::Functions.create_function(:hocon_data) do
   def hocon_data(options, context)
     path = options['path']
     context.cached_file_data(path) do |content|
-      begin
-        Hocon.parse(content)
-      rescue Hocon::ConfigError => ex
-        raise Puppet::DataBinding::LookupError, _("Unable to parse (%{path}): %{message}") % { path: path, message: ex.message }
-      end
+      Hocon.parse(content)
+    rescue Hocon::ConfigError => ex
+      raise Puppet::DataBinding::LookupError, _("Unable to parse (%{path}): %{message}") % { path: path, message: ex.message }
     end
   end
 

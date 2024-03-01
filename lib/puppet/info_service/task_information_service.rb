@@ -10,13 +10,12 @@ class Puppet::InfoService::TaskInformationService
     env.modules.map do |mod|
       mod.tasks.map do |task|
         # If any task is malformed continue to list other tasks in module
-        begin
-          task.validate
-          { :module => { :name => task.module.name }, :name => task.name, :metadata => task.metadata }
-        rescue Puppet::Module::Task::Error => err
-          Puppet.log_exception(err)
-          nil
-        end
+
+        task.validate
+        { :module => { :name => task.module.name }, :name => task.name, :metadata => task.metadata }
+      rescue Puppet::Module::Task::Error => err
+        Puppet.log_exception(err)
+        nil
       end
     end.flatten.compact
   end

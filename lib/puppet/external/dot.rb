@@ -119,7 +119,7 @@ module DOT
     attr_accessor :name
 
     def initialize(params = {})
-      @label = params['name'] ? params['name'] : ''
+      @label = params['name'] || ''
     end
 
     def to_s
@@ -135,8 +135,8 @@ module DOT
 
     def initialize(params = {}, option_list = [])
       super(params)
-      @name   = params['name']   ? params['name']   : nil
-      @parent = params['parent'] ? params['parent'] : nil
+      @name   = params['name']   || nil
+      @parent = params['parent'] || nil
       @options = {}
       option_list.each { |i|
         @options[i] = params[i] if params[i]
@@ -161,7 +161,7 @@ module DOT
 
     def initialize(params = {})
       super(params)
-      @name = params['label'] ? params['label'] : ''
+      @name = params['label'] || ''
     end
 
     def to_s
@@ -174,7 +174,7 @@ module DOT
   class DOTNode < DOTElement
     def initialize(params = {}, option_list = NODE_OPTS)
       super(params, option_list)
-      @ports = params['ports'] ? params['ports'] : []
+      @ports = params['ports'] || []
     end
 
     def each_port
@@ -233,7 +233,7 @@ module DOT
   class DOTSubgraph < DOTElement
     def initialize(params = {}, option_list = GRAPH_OPTS)
       super(params, option_list)
-      @nodes      = params['nodes'] ? params['nodes'] : []
+      @nodes      = params['nodes'] || []
       @dot_string = 'graph'
     end
 
@@ -287,8 +287,8 @@ module DOT
 
     def initialize(params = {}, option_list = EDGE_OPTS)
       super(params, option_list)
-      @from = params['from'] ? params['from'] : nil
-      @to   = params['to'] ? params['to'] : nil
+      @from = params['from'] || nil
+      @to   = params['to'] || nil
     end
 
     def edge_link

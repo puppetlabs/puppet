@@ -251,7 +251,7 @@ class Application
       ################################################################
 
       if clazz.nil?
-        raise Puppet::Error.new(_("Unable to load application class '%{class_name}' from file 'puppet/application/%{application_name}.rb'") % { class_name: class_name, application_name: application_name })
+        raise Puppet::Error, _("Unable to load application class '%{class_name}' from file 'puppet/application/%{application_name}.rb'") % { class_name: class_name, application_name: application_name }
       end
 
       return clazz
@@ -481,12 +481,10 @@ class Application
     Puppet[:logdest] = arg
 
     logdest.each do |dest|
-      begin
-        Puppet::Util::Log.newdestination(dest)
-        options[:setdest] = true
-      rescue => detail
-        Puppet.log_and_raise(detail, _("Could not set logdest to %{dest}.") % { dest: arg })
-      end
+      Puppet::Util::Log.newdestination(dest)
+      options[:setdest] = true
+    rescue => detail
+      Puppet.log_and_raise(detail, _("Could not set logdest to %{dest}.") % { dest: arg })
     end
   end
 

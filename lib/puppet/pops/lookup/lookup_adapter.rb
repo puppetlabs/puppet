@@ -297,18 +297,18 @@ class LookupAdapter < DataAdapter
 
   def validate_lookup_options(options, module_name)
     return nil if options.nil?
-    raise Puppet::DataBinding::LookupError.new(_("value of %{opts} must be a hash") % { opts: LOOKUP_OPTIONS }) unless options.is_a?(Hash)
+    raise Puppet::DataBinding::LookupError, _("value of %{opts} must be a hash") % { opts: LOOKUP_OPTIONS } unless options.is_a?(Hash)
     return options if module_name.nil?
 
     pfx = "#{module_name}::"
     options.each_pair do |key, _value|
       if key.start_with?(LOOKUP_OPTIONS_PATTERN_START)
         unless key[1..pfx.length] == pfx
-          raise Puppet::DataBinding::LookupError.new(_("all %{opts} patterns must match a key starting with module name '%{module_name}'") % { opts: LOOKUP_OPTIONS, module_name: module_name })
+          raise Puppet::DataBinding::LookupError, _("all %{opts} patterns must match a key starting with module name '%{module_name}'") % { opts: LOOKUP_OPTIONS, module_name: module_name }
         end
       else
         unless key.start_with?(pfx)
-          raise Puppet::DataBinding::LookupError.new(_("all %{opts} keys must start with module name '%{module_name}'") % { opts: LOOKUP_OPTIONS, module_name: module_name })
+          raise Puppet::DataBinding::LookupError, _("all %{opts} keys must start with module name '%{module_name}'") % { opts: LOOKUP_OPTIONS, module_name: module_name }
         end
       end
     end
@@ -514,7 +514,7 @@ class LookupAdapter < DataAdapter
         ep.config = HieraConfigV5.v4_function_config(env_path, 'environment::data', ep)
         ep
       else
-        raise Puppet::Error.new(_("Environment '%{env}', cannot find environment_data_provider '%{provider}'") % { env: environment.name, provider: provider_name })
+        raise Puppet::Error, _("Environment '%{env}', cannot find environment_data_provider '%{provider}'") % { env: environment.name, provider: provider_name }
       end
     end
   end

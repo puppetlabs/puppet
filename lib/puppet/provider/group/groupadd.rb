@@ -144,7 +144,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
 
     unless @groups
       unless Puppet::FileSystem.exist?(group_file)
-        raise Puppet::Error.new("Forcelocal set for group resource '#{resource[:name]}', but #{group_file} does not exist")
+        raise Puppet::Error, "Forcelocal set for group resource '#{resource[:name]}', but #{group_file} does not exist"
       end
 
       @groups = []

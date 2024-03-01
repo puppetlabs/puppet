@@ -188,9 +188,7 @@ module Puppet
         return :file_removed
       end
 
-      event = super
-
-      event
+      super
     end
   end
 end

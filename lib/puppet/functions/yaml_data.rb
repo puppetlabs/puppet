@@ -22,21 +22,19 @@ Puppet::Functions.create_function(:yaml_data) do
   def yaml_data(options, context)
     path = options['path']
     context.cached_file_data(path) do |content|
-      begin
-        data = Puppet::Util::Yaml.safe_load(content, [Symbol], path)
-        if data.is_a?(Hash)
-          Puppet::Pops::Lookup::HieraConfig.symkeys_to_string(data)
-        else
-          msg = _("%{path}: file does not contain a valid yaml hash" % { path: path })
-          raise Puppet::DataBinding::LookupError, msg if Puppet[:strict] == :error && data != false
+      data = Puppet::Util::Yaml.safe_load(content, [Symbol], path)
+      if data.is_a?(Hash)
+        Puppet::Pops::Lookup::HieraConfig.symkeys_to_string(data)
+      else
+        msg = _("%{path}: file does not contain a valid yaml hash" % { path: path })
+        raise Puppet::DataBinding::LookupError, msg if Puppet[:strict] == :error && data != false
 
-          Puppet.warning(msg)
-          {}
-        end
-      rescue Puppet::Util::Yaml::YamlLoadError => ex
-        # YamlLoadErrors include the absolute path to the file, so no need to add that
-        raise Puppet::DataBinding::LookupError, _("Unable to parse %{message}") % { message: ex.message }
+        Puppet.warning(msg)
+        {}
       end
+    rescue Puppet::Util::Yaml::YamlLoadError => ex
+      # YamlLoadErrors include the absolute path to the file, so no need to add that
+      raise Puppet::DataBinding::LookupError, _("Unable to parse %{message}") % { message: ex.message }
     end
   end
 

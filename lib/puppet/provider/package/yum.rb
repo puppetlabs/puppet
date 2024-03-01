@@ -59,12 +59,10 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
 
       is.split(self.class::MULTIVERSION_SEPARATOR).any? do |version|
-        begin
-          is_version = RPM_VERSION.parse(version)
-          should_version.include?(is_version)
-        rescue RPM_VERSION::ValidationFailure
-          Puppet.debug("Cannot parse #{is} as a RPM version")
-        end
+        is_version = RPM_VERSION.parse(version)
+        should_version.include?(is_version)
+      rescue RPM_VERSION::ValidationFailure
+        Puppet.debug("Cannot parse #{is} as a RPM version")
       end
     end
   end
@@ -213,12 +211,10 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
       versions = []
       available_versions(@resource[:name], disablerepo, enablerepo, disableexcludes).each do |version|
-        begin
-          rpm_version = RPM_VERSION.parse(version)
-          versions << rpm_version if should_range.include?(rpm_version)
-        rescue RPM_VERSION::ValidationFailure
-          Puppet.debug("Cannot parse #{version} as a RPM version")
-        end
+        rpm_version = RPM_VERSION.parse(version)
+        versions << rpm_version if should_range.include?(rpm_version)
+      rescue RPM_VERSION::ValidationFailure
+        Puppet.debug("Cannot parse #{version} as a RPM version")
       end
 
       version = versions.sort.last if versions.any?

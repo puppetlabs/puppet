@@ -74,46 +74,44 @@ class EvaluatorImpl
   # @api public
   #
   def evaluate(target, scope)
-    begin
-      @@eval_visitor.visit_this_1(self, target, scope)
-    rescue SemanticError => e
-      # A raised issue may not know the semantic target, use errors call stack, but fill in the
-      # rest from a supplied semantic object, or the target instruction if there is not semantic
-      # object.
-      #
-      fail(e.issue, e.semantic || target, e.options, e)
-    rescue Puppet::PreformattedError => e
-      # Already formatted with location information, and with the wanted call stack.
-      # Note this is currently a specialized ParseError, so rescue-order is important
-      #
+    @@eval_visitor.visit_this_1(self, target, scope)
+  rescue SemanticError => e
+    # A raised issue may not know the semantic target, use errors call stack, but fill in the
+    # rest from a supplied semantic object, or the target instruction if there is not semantic
+    # object.
+    #
+    fail(e.issue, e.semantic || target, e.options, e)
+  rescue Puppet::PreformattedError => e
+    # Already formatted with location information, and with the wanted call stack.
+    # Note this is currently a specialized ParseError, so rescue-order is important
+    #
+    raise e
+  rescue Puppet::ParseError => e
+    # ParseError may be raised in ruby code without knowing the location
+    # in puppet code.
+    # Accept a ParseError that has file or line information available
+    # as an error that should be used verbatim. (Tests typically run without
+    # setting a file name).
+    # ParseError can supply an original - it is impossible to determine which
+    # call stack that should be propagated, using the ParseError's backtrace.
+    #
+    if e.file || e.line
       raise e
-    rescue Puppet::ParseError => e
-      # ParseError may be raised in ruby code without knowing the location
-      # in puppet code.
-      # Accept a ParseError that has file or line information available
-      # as an error that should be used verbatim. (Tests typically run without
-      # setting a file name).
-      # ParseError can supply an original - it is impossible to determine which
-      # call stack that should be propagated, using the ParseError's backtrace.
-      #
-      if e.file || e.line
-        raise e
-      else
-        # Since it had no location information, treat it as user intended a general purpose
-        # error. Pass on its call stack.
-        fail(Issues::RUNTIME_ERROR, target, { :detail => e.message }, e)
-      end
-    rescue Puppet::Error => e
-      # PuppetError has the ability to wrap an exception, if so, use the wrapped exception's
-      # call stack instead
-      fail(Issues::RUNTIME_ERROR, target, { :detail => e.message }, e.original || e)
-    rescue StopIteration => e
-      # Ensure these are not rescued as StandardError
-      raise e
-    rescue StandardError => e
-      # All other errors, use its message and call stack
+    else
+      # Since it had no location information, treat it as user intended a general purpose
+      # error. Pass on its call stack.
       fail(Issues::RUNTIME_ERROR, target, { :detail => e.message }, e)
     end
+  rescue Puppet::Error => e
+    # PuppetError has the ability to wrap an exception, if so, use the wrapped exception's
+    # call stack instead
+    fail(Issues::RUNTIME_ERROR, target, { :detail => e.message }, e.original || e)
+  rescue StopIteration => e
+    # Ensure these are not rescued as StandardError
+    raise e
+  rescue StandardError => e
+    # All other errors, use its message and call stack
+    fail(Issues::RUNTIME_ERROR, target, { :detail => e.message }, e)
   end
 
   # Assigns the given _value_ to the given _target_. The additional argument _o_ is the instruction that
@@ -746,17 +744,15 @@ class EvaluatorImpl
   end
 
   def eval_Program(o, scope)
-    begin
-      file = o.locator.file
-      line = 0
-      # Add stack frame for "top scope" logic. See Puppet::Pops::PuppetStack
-      return Puppet::Pops::PuppetStack.stack(file, line, self, 'evaluate', [o.body, scope])
-      # evaluate(o.body, scope)
-    rescue Puppet::Pops::Evaluator::PuppetStopIteration => ex
-      # breaking out of a file level program is not allowed
-      # TRANSLATOR break() is a method that should not be translated
-      raise Puppet::ParseError.new(_("break() from context where this is illegal"), ex.file, ex.line)
-    end
+    file = o.locator.file
+    line = 0
+    # Add stack frame for "top scope" logic. See Puppet::Pops::PuppetStack
+    return Puppet::Pops::PuppetStack.stack(file, line, self, 'evaluate', [o.body, scope])
+    # evaluate(o.body, scope)
+  rescue Puppet::Pops::Evaluator::PuppetStopIteration => ex
+    # breaking out of a file level program is not allowed
+    # TRANSLATOR break() is a method that should not be translated
+    raise Puppet::ParseError.new(_("break() from context where this is illegal"), ex.file, ex.line)
   end
 
   # Produces Array[PAnyType], an array of resource references
@@ -1236,15 +1232,15 @@ class EvaluatorImpl
               Hash[*y]
             end
           else
-            raise ArgumentError.new(_('Can only append Array or Hash to a Hash'))
+            raise ArgumentError, _('Can only append Array or Hash to a Hash')
           end
       x.merge y # new hash with overwrite
     when URI
-      raise ArgumentError.new(_('An URI can only be merged with an URI or String')) unless y.is_a?(String) || y.is_a?(URI)
+      raise ArgumentError, _('An URI can only be merged with an URI or String') unless y.is_a?(String) || y.is_a?(URI)
 
       x + y
     when Types::PBinaryType::Binary
-      raise ArgumentError.new(_('Can only append Binary to a Binary')) unless y.is_a?(Types::PBinaryType::Binary)
+      raise ArgumentError, _('Can only append Binary to a Binary') unless y.is_a?(Types::PBinaryType::Binary)
 
       Types::PBinaryType::Binary.from_binary_string(x.binary_buffer + y.binary_buffer)
     else
@@ -1276,7 +1272,7 @@ class EvaluatorImpl
           end
       y.each { |e| result.delete(e) }
     else
-      raise ArgumentError.new(_("Can only delete from an Array or Hash."))
+      raise ArgumentError, _("Can only delete from an Array or Hash.")
     end
     result
   end

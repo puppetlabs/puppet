@@ -263,115 +263,114 @@ class Puppet::Application::Device < Puppet::Application
       end
       devices.collect do |_devicename, device|
         # TODO when we drop support for ruby < 2.5 we can remove the extra block here
-        begin
-          device_url = URI.parse(device.url)
-          # Handle nil scheme & port
-          scheme = "#{device_url.scheme}://" if device_url.scheme
-          port = ":#{device_url.port}" if device_url.port
 
-          # override local $vardir and $certname
-          Puppet[:ssldir] = ::File.join(Puppet[:deviceconfdir], device.name, 'ssl')
-          Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
-          Puppet[:libdir] = options[:libdir] || ::File.join(Puppet[:devicedir], device.name, 'lib')
-          Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
-          Puppet[:certname] = device.name
-          ssl_context = nil
+        device_url = URI.parse(device.url)
+        # Handle nil scheme & port
+        scheme = "#{device_url.scheme}://" if device_url.scheme
+        port = ":#{device_url.port}" if device_url.port
 
-          # create device directory under $deviceconfdir
-          Puppet::FileSystem.dir_mkpath(Puppet[:ssldir]) unless Puppet::FileSystem.dir_exist?(Puppet[:ssldir])
+        # override local $vardir and $certname
+        Puppet[:ssldir] = ::File.join(Puppet[:deviceconfdir], device.name, 'ssl')
+        Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
+        Puppet[:libdir] = options[:libdir] || ::File.join(Puppet[:devicedir], device.name, 'lib')
+        Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
+        Puppet[:certname] = device.name
+        ssl_context = nil
 
-          # this will reload and recompute default settings and create device-specific sub vardir
-          Puppet.settings.use :main, :agent, :ssl
+        # create device directory under $deviceconfdir
+        Puppet::FileSystem.dir_mkpath(Puppet[:ssldir]) unless Puppet::FileSystem.dir_exist?(Puppet[:ssldir])
 
-          # Workaround for PUP-8736: store ssl certs outside the cache directory to prevent accidental removal and keep the old path as symlink
-          optssldir = File.join(Puppet[:confdir], 'ssl')
-          Puppet::FileSystem.symlink(Puppet[:ssldir], optssldir) unless Puppet::FileSystem.exist?(optssldir)
+        # this will reload and recompute default settings and create device-specific sub vardir
+        Puppet.settings.use :main, :agent, :ssl
 
-          unless options[:resource] || options[:facts] || options[:apply]
-            # Since it's too complicated to fix properly in the default settings, we workaround for PUP-9642 here.
-            # See https://github.com/puppetlabs/puppet/pull/7483#issuecomment-483455997 for details.
-            # This has to happen after `settings.use` above, so the directory is created and before `setup_host` below, where the SSL
-            # routines would fail with access errors
-            if Puppet.features.root? && !Puppet::Util::Platform.windows?
-              user = Puppet::Type.type(:user).new(name: Puppet[:user]).exists? ? Puppet[:user] : nil
-              group = Puppet::Type.type(:group).new(name: Puppet[:group]).exists? ? Puppet[:group] : nil
-              Puppet.debug("Fixing perms for #{user}:#{group} on #{Puppet[:confdir]}")
-              FileUtils.chown(user, group, Puppet[:confdir]) if user || group
-            end
+        # Workaround for PUP-8736: store ssl certs outside the cache directory to prevent accidental removal and keep the old path as symlink
+        optssldir = File.join(Puppet[:confdir], 'ssl')
+        Puppet::FileSystem.symlink(Puppet[:ssldir], optssldir) unless Puppet::FileSystem.exist?(optssldir)
 
-            ssl_context = setup_context
-
-            unless options[:libdir]
-              Puppet.override(ssl_context: ssl_context) do
-                Puppet::Configurer::PluginHandler.new.download_plugins(env) if Puppet::Configurer.should_pluginsync?
-              end
-            end
+        unless options[:resource] || options[:facts] || options[:apply]
+          # Since it's too complicated to fix properly in the default settings, we workaround for PUP-9642 here.
+          # See https://github.com/puppetlabs/puppet/pull/7483#issuecomment-483455997 for details.
+          # This has to happen after `settings.use` above, so the directory is created and before `setup_host` below, where the SSL
+          # routines would fail with access errors
+          if Puppet.features.root? && !Puppet::Util::Platform.windows?
+            user = Puppet::Type.type(:user).new(name: Puppet[:user]).exists? ? Puppet[:user] : nil
+            group = Puppet::Type.type(:group).new(name: Puppet[:group]).exists? ? Puppet[:group] : nil
+            Puppet.debug("Fixing perms for #{user}:#{group} on #{Puppet[:confdir]}")
+            FileUtils.chown(user, group, Puppet[:confdir]) if user || group
           end
 
-          # this inits the device singleton, so that the facts terminus
-          # and the various network_device provider can use it
-          Puppet::Util::NetworkDevice.init(device)
+          ssl_context = setup_context
 
-          if options[:resource]
-            type, name = parse_args(command_line.args)
-            Puppet.info _("retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { resource: type, target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
-            resources = find_resources(type, name)
-            if options[:to_yaml]
-              data = resources.map do |resource|
-                resource.prune_parameters(:parameters_to_include => @extra_params).to_hiera_hash
-              end.inject(:merge!)
-              text = YAML.dump(type.downcase => data)
-            else
-              text = resources.map do |resource|
-                resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest.force_encoding(Encoding.default_external)
-              end.join("\n")
-            end
-            (puts text)
-            0
-          elsif options[:facts]
-            Puppet.info _("retrieving facts from %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { resource: type, target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
-            remote_facts = Puppet::Node::Facts.indirection.find(name, :environment => env)
-            # Give a proper name to the facts
-            remote_facts.name = remote_facts.values['clientcert']
-            renderer = Puppet::Network::FormatHandler.format(:console)
-            puts renderer.render(remote_facts)
-            0
-          elsif options[:apply]
-            # avoid reporting to server
-            Puppet::Transaction::Report.indirection.terminus_class = :yaml
-            Puppet::Resource::Catalog.indirection.cache_class = nil
-
-            require_relative '../../puppet/application/apply'
-            begin
-              Puppet[:node_terminus] = :plain
-              Puppet[:catalog_terminus] = :compiler
-              Puppet[:catalog_cache_terminus] = nil
-              Puppet[:facts_terminus] = :network_device
-              Puppet.override(:network_device => true) do
-                Puppet::Application::Apply.new(Puppet::Util::CommandLine.new('puppet', ["apply", options[:apply]])).run_command
-              end
-            end
-          else
-            Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
-
-            overrides = {}
-            overrides[:ssl_context] = ssl_context if ssl_context
-            Puppet.override(overrides) do
-              configurer = Puppet::Configurer.new
-              configurer.run(:network_device => true, :pluginsync => false)
+          unless options[:libdir]
+            Puppet.override(ssl_context: ssl_context) do
+              Puppet::Configurer::PluginHandler.new.download_plugins(env) if Puppet::Configurer.should_pluginsync?
             end
           end
-        rescue => detail
-          Puppet.log_exception(detail)
-          # If we rescued an error, then we return 1 as the exit code
-          1
-        ensure
-          Puppet[:libdir] = libdir
-          Puppet[:vardir] = vardir
-          Puppet[:confdir] = confdir
-          Puppet[:ssldir] = ssldir
-          Puppet[:certname] = certname
         end
+
+        # this inits the device singleton, so that the facts terminus
+        # and the various network_device provider can use it
+        Puppet::Util::NetworkDevice.init(device)
+
+        if options[:resource]
+          type, name = parse_args(command_line.args)
+          Puppet.info _("retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { resource: type, target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
+          resources = find_resources(type, name)
+          if options[:to_yaml]
+            data = resources.map do |resource|
+              resource.prune_parameters(:parameters_to_include => @extra_params).to_hiera_hash
+            end.inject(:merge!)
+            text = YAML.dump(type.downcase => data)
+          else
+            text = resources.map do |resource|
+              resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest.force_encoding(Encoding.default_external)
+            end.join("\n")
+          end
+          (puts text)
+          0
+        elsif options[:facts]
+          Puppet.info _("retrieving facts from %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { resource: type, target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
+          remote_facts = Puppet::Node::Facts.indirection.find(name, :environment => env)
+          # Give a proper name to the facts
+          remote_facts.name = remote_facts.values['clientcert']
+          renderer = Puppet::Network::FormatHandler.format(:console)
+          puts renderer.render(remote_facts)
+          0
+        elsif options[:apply]
+          # avoid reporting to server
+          Puppet::Transaction::Report.indirection.terminus_class = :yaml
+          Puppet::Resource::Catalog.indirection.cache_class = nil
+
+          require_relative '../../puppet/application/apply'
+          begin
+            Puppet[:node_terminus] = :plain
+            Puppet[:catalog_terminus] = :compiler
+            Puppet[:catalog_cache_terminus] = nil
+            Puppet[:facts_terminus] = :network_device
+            Puppet.override(:network_device => true) do
+              Puppet::Application::Apply.new(Puppet::Util::CommandLine.new('puppet', ["apply", options[:apply]])).run_command
+            end
+          end
+        else
+          Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
+
+          overrides = {}
+          overrides[:ssl_context] = ssl_context if ssl_context
+          Puppet.override(overrides) do
+            configurer = Puppet::Configurer.new
+            configurer.run(:network_device => true, :pluginsync => false)
+          end
+        end
+      rescue => detail
+        Puppet.log_exception(detail)
+        # If we rescued an error, then we return 1 as the exit code
+        1
+      ensure
+        Puppet[:libdir] = libdir
+        Puppet[:vardir] = vardir
+        Puppet[:confdir] = confdir
+        Puppet[:ssldir] = ssldir
+        Puppet[:certname] = certname
       end
     end
 

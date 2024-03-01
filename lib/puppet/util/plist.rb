@@ -138,20 +138,18 @@ module Puppet::Util::Plist
       when :plain
         CFPropertyList::List::FORMAT_PLAIN
       else
-        raise FormatError.new "Unknown plist format #{format}"
+        raise FormatError, "Unknown plist format #{format}"
       end
     end
 
     # This method will write a plist file using a specified format (or XML
     # by default)
     def write_plist_file(plist, file_path, format = :xml)
-      begin
-        plist_to_save       = CFPropertyList::List.new
-        plist_to_save.value = CFPropertyList.guess(plist)
-        plist_to_save.save(file_path, to_format(format), :formatted => true)
-      rescue IOError => e
-        Puppet.err(_("Unable to write the file %{file_path}. %{error}") % { file_path: file_path, error: e.inspect })
-      end
+      plist_to_save       = CFPropertyList::List.new
+      plist_to_save.value = CFPropertyList.guess(plist)
+      plist_to_save.save(file_path, to_format(format), :formatted => true)
+    rescue IOError => e
+      Puppet.err(_("Unable to write the file %{file_path}. %{error}") % { file_path: file_path, error: e.inspect })
     end
 
     def dump_plist(plist_data, format = :xml)

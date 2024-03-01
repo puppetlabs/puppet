@@ -133,12 +133,10 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   end
 
   def self.compare_pip_versions(x, y)
-    begin
-      Puppet::Util::Package::Version::Pip.compare(x, y)
-    rescue PIP_VERSION::ValidationFailure => ex
-      Puppet.debug("Cannot compare #{x} and #{y}. #{ex.message} Falling through default comparison mechanism.")
-      Puppet::Util::Package.versioncmp(x, y)
-    end
+    Puppet::Util::Package::Version::Pip.compare(x, y)
+  rescue PIP_VERSION::ValidationFailure => ex
+    Puppet.debug("Cannot compare #{x} and #{y}. #{ex.message} Falling through default comparison mechanism.")
+    Puppet::Util::Package.versioncmp(x, y)
   end
 
   # Use pip CLI to look up versions from PyPI repositories,

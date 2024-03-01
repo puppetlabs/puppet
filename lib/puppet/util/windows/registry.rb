@@ -81,12 +81,10 @@ module Puppet::Util::Windows
       vals = {}
       names.each do |name|
         FFI::Pointer.from_string_to_wide_string(name) do |subkeyname_ptr|
-          begin
-            _, vals[name] = read(key, subkeyname_ptr)
-          rescue Puppet::Util::Windows::Error => e
-            # ignore missing names, but raise other errors
-            raise e unless e.code == Puppet::Util::Windows::Error::ERROR_FILE_NOT_FOUND
-          end
+          _, vals[name] = read(key, subkeyname_ptr)
+        rescue Puppet::Util::Windows::Error => e
+          # ignore missing names, but raise other errors
+          raise e unless e.code == Puppet::Util::Windows::Error::ERROR_FILE_NOT_FOUND
         end
       end
       vals

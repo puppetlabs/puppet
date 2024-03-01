@@ -163,9 +163,9 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
   #
   def post_catalog4(certname, persistence:, environment:, facts: nil, trusted_facts: nil, transaction_uuid: nil, job_id: nil, options: nil)
     unless persistence.is_a?(Hash) && (missing = [:facts, :catalog] - persistence.keys.map(&:to_sym)).empty?
-      raise ArgumentError.new("The 'persistence' hash is missing the keys: #{missing.join(', ')}")
+      raise ArgumentError, "The 'persistence' hash is missing the keys: #{missing.join(', ')}"
     end
-    raise ArgumentError.new("Facts must be a Hash not a #{facts.class}") unless facts.nil? || facts.is_a?(Hash)
+    raise ArgumentError, "Facts must be a Hash not a #{facts.class}" unless facts.nil? || facts.is_a?(Hash)
 
     body = {
       certname: certname,

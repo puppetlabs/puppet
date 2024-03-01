@@ -102,7 +102,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
     unless @users
       unless Puppet::FileSystem.exist?(passwd_file)
-        raise Puppet::Error.new("Forcelocal set for user resource '#{resource[:name]}', but #{passwd_file} does not exist")
+        raise Puppet::Error, "Forcelocal set for user resource '#{resource[:name]}', but #{passwd_file} does not exist"
       end
 
       @users = []
@@ -163,7 +163,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     @groups_of[user] = []
 
     unless Puppet::FileSystem.exist?(group_file)
-      raise Puppet::Error.new("Forcelocal set for user resource '#{user}', but #{group_file} does not exist")
+      raise Puppet::Error, "Forcelocal set for user resource '#{user}', but #{group_file} does not exist"
     end
 
     Puppet::FileSystem.each_line(group_file) do |line|
