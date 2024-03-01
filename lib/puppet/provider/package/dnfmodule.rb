@@ -35,7 +35,7 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
 
   def self.instances
     packages = []
-    cmd = "#{command(:dnf)} module list -d 0 -e #{error_level}"
+    cmd = "#{command(:dnf)} module list -y -d 0 -e #{error_level}"
     execute(cmd).each_line do |line|
       # select only lines with actual packages since DNF clutters the output
       next unless line =~ /\[[eix]\][, ]/
