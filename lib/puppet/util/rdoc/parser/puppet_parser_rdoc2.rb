@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../../../puppet/util/rdoc/parser/puppet_parser_core.rb'
+require_relative '../../../../puppet/util/rdoc/parser/puppet_parser_core'
 
 module RDoc
   PUPPET_RDOC_VERSION = 2
