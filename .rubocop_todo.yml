@@ -647,6 +647,8 @@ Style/PreferredHashMethods:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
+# Enabling this cop will remove raising RuntimeErrors and cause spec test
+# failures
 Style/RedundantException:
   Exclude:
     - 'lib/puppet/file_bucket/dipper.rb'
