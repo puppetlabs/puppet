@@ -647,12 +647,6 @@ Style/PreferredHashMethods:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/RedundantConditional:
-  Exclude:
-    - 'lib/puppet/type/exec.rb'
-    - 'lib/puppet/type/file.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/RedundantException:
   Exclude:
     - 'lib/puppet/file_bucket/dipper.rb'
